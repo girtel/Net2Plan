@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<network description="" name="" version="3">
+	<node id="0" xCoord="0.0" yCoord="0.0" name="Node 0"/>
+	<node id="1" xCoord="0.0" yCoord="0.0" name="Node 1"/>
+	<node id="2" xCoord="0.0" yCoord="0.0" name="Node 2"/>
+	<node id="3" xCoord="0.0" yCoord="0.0" name="Node 3"/>
+	<node id="4" xCoord="0.0" yCoord="0.0" name="Node 4"/>
+	<node id="5" xCoord="0.0" yCoord="0.0" name="Node 5"/>
+	<node id="6" xCoord="0.0" yCoord="0.0" name="Node 6"/>
+	<layer id="0" name="" description="" linkCapacityUnitsName="" demandTrafficUnitsName="">
+		<demand id="0" ingressNodeId="0" egressNodeId="1" offeredTraffic="18.146354012675985"/>
+		<demand id="1" ingressNodeId="0" egressNodeId="2" offeredTraffic="7.632073218170717"/>
+		<demand id="2" ingressNodeId="0" egressNodeId="3" offeredTraffic="5.374179313032314"/>
+		<demand id="3" ingressNodeId="0" egressNodeId="4" offeredTraffic="6.139522287858199"/>
+		<demand id="4" ingressNodeId="0" egressNodeId="5" offeredTraffic="3.5371239500769462"/>
+		<demand id="5" ingressNodeId="0" egressNodeId="6" offeredTraffic="2.289087048869338"/>
+		<demand id="6" ingressNodeId="1" egressNodeId="0" offeredTraffic="18.146354012675985"/>
+		<demand id="7" ingressNodeId="1" egressNodeId="2" offeredTraffic="2.0204702999384274"/>
+		<demand id="8" ingressNodeId="1" egressNodeId="3" offeredTraffic="0.5505987453064046"/>
+		<demand id="9" ingressNodeId="1" egressNodeId="4" offeredTraffic="1.5003242152851117"/>
+		<demand id="10" ingressNodeId="1" egressNodeId="5" offeredTraffic="0.40440056037613203"/>
+		<demand id="11" ingressNodeId="1" egressNodeId="6" offeredTraffic="0.4175959863322778"/>
+		<demand id="12" ingressNodeId="2" egressNodeId="0" offeredTraffic="7.632073218170717"/>
+		<demand id="13" ingressNodeId="2" egressNodeId="1" offeredTraffic="2.0204702999384274"/>
+		<demand id="14" ingressNodeId="2" egressNodeId="3" offeredTraffic="0.20409592250970626"/>
+		<demand id="15" ingressNodeId="2" egressNodeId="4" offeredTraffic="0.5017316352971574"/>
+		<demand id="16" ingressNodeId="2" egressNodeId="5" offeredTraffic="0.16306719034530934"/>
+		<demand id="17" ingressNodeId="2" egressNodeId="6" offeredTraffic="0.2906658208861275"/>
+		<demand id="18" ingressNodeId="3" egressNodeId="0" offeredTraffic="5.374179313032314"/>
+		<demand id="19" ingressNodeId="3" egressNodeId="1" offeredTraffic="0.5505987453064046"/>
+		<demand id="20" ingressNodeId="3" egressNodeId="2" offeredTraffic="0.20409592250970626"/>
+		<demand id="21" ingressNodeId="3" egressNodeId="4" offeredTraffic="0.13127055517601294"/>
+		<demand id="22" ingressNodeId="3" egressNodeId="5" offeredTraffic="0.36334784562263533"/>
+		<demand id="23" ingressNodeId="3" egressNodeId="6" offeredTraffic="0.07666542443098362"/>
+		<demand id="24" ingressNodeId="4" egressNodeId="0" offeredTraffic="6.139522287858199"/>
+		<demand id="25" ingressNodeId="4" egressNodeId="1" offeredTraffic="1.5003242152851117"/>
+		<demand id="26" ingressNodeId="4" egressNodeId="2" offeredTraffic="0.5017316352971574"/>
+		<demand id="27" ingressNodeId="4" egressNodeId="3" offeredTraffic="0.13127055517601294"/>
+		<demand id="28" ingressNodeId="4" egressNodeId="5" offeredTraffic="0.09390751790027925"/>
+		<demand id="29" ingressNodeId="4" egressNodeId="6" offeredTraffic="0.09404369524384386"/>
+		<demand id="30" ingressNodeId="5" egressNodeId="0" offeredTraffic="3.5371239500769462"/>
+		<demand id="31" ingressNodeId="5" egressNodeId="1" offeredTraffic="0.40440056037613203"/>
+		<demand id="32" ingressNodeId="5" egressNodeId="2" offeredTraffic="0.16306719034530934"/>
+		<demand id="33" ingressNodeId="5" egressNodeId="3" offeredTraffic="0.36334784562263533"/>
+		<demand id="34" ingressNodeId="5" egressNodeId="4" offeredTraffic="0.09390751790027925"/>
+		<demand id="35" ingressNodeId="5" egressNodeId="6" offeredTraffic="0.06947475466607607"/>
+		<demand id="36" ingressNodeId="6" egressNodeId="0" offeredTraffic="2.289087048869338"/>
+		<demand id="37" ingressNodeId="6" egressNodeId="1" offeredTraffic="0.4175959863322778"/>
+		<demand id="38" ingressNodeId="6" egressNodeId="2" offeredTraffic="0.2906658208861275"/>
+		<demand id="39" ingressNodeId="6" egressNodeId="3" offeredTraffic="0.07666542443098362"/>
+		<demand id="40" ingressNodeId="6" egressNodeId="4" offeredTraffic="0.09404369524384386"/>
+		<demand id="41" ingressNodeId="6" egressNodeId="5" offeredTraffic="0.06947475466607607"/>
+		<sourceRouting/>
+	</layer>
+</network>

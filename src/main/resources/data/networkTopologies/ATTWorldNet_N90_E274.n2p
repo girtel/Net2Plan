@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="utf-8"?><network description="AT&amp;T WorldNet with 90 nodes and 274 unidirectional links, including a demand set&#10;&#10;Source: Permanent virtual circuit routing dataset [Online] http://mauricio.resende.info/data/index.html" name="AT&amp;T WorldNet">
+    <physicalTopology>
+        <node name="n0" xCoord="1578.1509036130872" yCoord="118.29683709997086"/>
+        <node name="n1" xCoord="1430.9899953606034" yCoord="49.349180100734344"/>
+        <node name="n2" xCoord="1694.3809562514168" yCoord="269.91679575188306"/>
+        <node name="n3" xCoord="1445.8124403208221" yCoord="305.7843692919181"/>
+        <node name="n4" xCoord="1842.889891139687" yCoord="377.20828224879205"/>
+        <node name="n5" xCoord="1632.4010257797008" yCoord="524.2962171278535"/>
+        <node name="n6" xCoord="437.32619208161987" yCoord="572.3186573756842"/>
+        <node name="n7" xCoord="312.1291870754882" yCoord="751.9607617658025"/>
+        <node name="n8" xCoord="549.1362759145023" yCoord="403.85721326309897"/>
+        <node name="n9" xCoord="497.0269456666877" yCoord="771.6574260320357"/>
+        <node name="n10" xCoord="557.8988652354884" yCoord="508.6227502451095"/>
+        <node name="n11" xCoord="439.3933729134357" yCoord="210.51643301250982"/>
+        <node name="n12" xCoord="761.2703010150304" yCoord="294.4987203085901"/>
+        <node name="n13" xCoord="311.7565222091028" yCoord="338.30483822121414"/>
+        <node name="n14" xCoord="528.0809650351749" yCoord="670.5462018103973"/>
+        <node name="n15" xCoord="660.5053918447427" yCoord="886.1445755703552"/>
+        <node name="n16" xCoord="787.9233364326358" yCoord="818.6636258761677"/>
+        <node name="n17" xCoord="683.442674986168" yCoord="1153.968609737853"/>
+        <node name="n18" xCoord="438.7859151399327" yCoord="1002.5906132011229"/>
+        <node name="n19" xCoord="934.7070890676425" yCoord="880.6636857156581"/>
+        <node name="n20" xCoord="283.3898540901704" yCoord="578.1245577811134"/>
+        <node name="n21" xCoord="571.9749727319538" yCoord="1173.3260998384026"/>
+        <node name="n22" xCoord="779.590048929808" yCoord="1446.929660954764"/>
+        <node name="n23" xCoord="807.3078333381804" yCoord="1077.3500958876245"/>
+        <node name="n24" xCoord="1217.2653446673237" yCoord="820.7574965832881"/>
+        <node name="n25" xCoord="968.2533457288126" yCoord="1047.6178177011238"/>
+        <node name="n26" xCoord="930.2815064872643" yCoord="713.8703934432034"/>
+        <node name="n27" xCoord="688.1031563704489" yCoord="1310.8727480992595"/>
+        <node name="n28" xCoord="1309.2512423749524" yCoord="921.15995982732"/>
+        <node name="n29" xCoord="1438.7705689461427" yCoord="621.5729857655073"/>
+        <node name="n30" xCoord="1133.4174980186465" yCoord="687.9111472329674"/>
+        <node name="n31" xCoord="1372.5349486849682" yCoord="1007.5416711477533"/>
+        <node name="n32" xCoord="380.2118348155171" yCoord="443.86588877457046"/>
+        <node name="n33" xCoord="235.81758908054115" yCoord="752.1610372453066"/>
+        <node name="n34" xCoord="589.5348330014313" yCoord="1506.614429643751"/>
+        <node name="n35" xCoord="849.7427780351097" yCoord="1471.8598625802051"/>
+        <node name="n36" xCoord="793.6991857454132" yCoord="1599.8624056830424"/>
+        <node name="n37" xCoord="1038.0936950809953" yCoord="1593.1861999920568"/>
+        <node name="n38" xCoord="703.2660577411972" yCoord="1713.212493830793"/>
+        <node name="n39" xCoord="1009.9576868282269" yCoord="1477.2235946131173"/>
+        <node name="n40" xCoord="1621.9635227017616" yCoord="457.9741774996279"/>
+        <node name="n41" xCoord="1525.727692929469" yCoord="546.2061663562951"/>
+        <node name="n42" xCoord="1858.6664757303765" yCoord="612.8163343473024"/>
+        <node name="n43" xCoord="1769.1668453853026" yCoord="243.67184470038734"/>
+        <node name="n44" xCoord="1237.676980943594" yCoord="456.5484941051715"/>
+        <node name="n45" xCoord="1695.8175186939725" yCoord="697.4474701787502"/>
+        <node name="n46" xCoord="1377.9493693834966" yCoord="341.0245524578703"/>
+        <node name="n47" xCoord="1938.8030234048247" yCoord="564.2011362422746"/>
+        <node name="n48" xCoord="2105.4295639676748" yCoord="713.9006522146509"/>
+        <node name="n49" xCoord="1552.9088922661097" yCoord="1147.2252634509102"/>
+        <node name="n50" xCoord="1761.691988258169" yCoord="1120.1017820994389"/>
+        <node name="n51" xCoord="1556.6452507593156" yCoord="1415.3151296078488"/>
+        <node name="n52" xCoord="1766.9745374492693" yCoord="1251.132302736371"/>
+        <node name="n53" xCoord="1361.812870507596" yCoord="767.0169295391458"/>
+        <node name="n54" xCoord="1439.969756135499" yCoord="1237.5853655428375"/>
+        <node name="n55" xCoord="1267.77160565831" yCoord="1160.1032179035797"/>
+        <node name="n56" xCoord="1836.6248597349954" yCoord="1438.2273943281389"/>
+        <node name="n57" xCoord="1739.6709540771883" yCoord="1578.7900026766574"/>
+        <node name="n58" xCoord="2082.538821111972" yCoord="1376.318130873949"/>
+        <node name="n59" xCoord="1283.622790518921" yCoord="1537.6503021333494"/>
+        <node name="n60" xCoord="2285.487142760694" yCoord="1368.5810987523146"/>
+        <node name="n61" xCoord="2245.9305066435986" yCoord="1172.320357587503"/>
+        <node name="n62" xCoord="261.5605123019529" yCoord="217.91854713811938"/>
+        <node name="n63" xCoord="870.9829927337861" yCoord="135.49736170313662"/>
+        <node name="n64" xCoord="1005.4706189504659" yCoord="307.8019494894173"/>
+        <node name="n65" xCoord="2311.5218157679697" yCoord="736.9997094185616"/>
+        <node name="n66" xCoord="2242.2236811109924" yCoord="919.7456576254123"/>
+        <node name="n67" xCoord="1201.8750578164652" yCoord="1723.073166667701"/>
+        <node name="n68" xCoord="1011.1439619145737" yCoord="1278.0164802467468"/>
+        <node name="n69" xCoord="860.8723370077463" yCoord="1220.4637251821885"/>
+        <node name="n70" xCoord="1309.4652664444586" yCoord="585.7994868600211"/>
+        <node name="n71" xCoord="1731.6141001283347" yCoord="0.0"/>
+        <node name="n72" xCoord="1899.3366483382347" yCoord="62.356321267175204"/>
+        <node name="n73" xCoord="1502.3098304987348" yCoord="86.27580144767651"/>
+        <node name="n74" xCoord="1327.742874985113" yCoord="85.65270263446135"/>
+        <node name="n75" xCoord="247.0238953377561" yCoord="1161.660018607635"/>
+        <node name="n76" xCoord="191.8973941804158" yCoord="1033.9005585091325"/>
+        <node name="n77" xCoord="1600.11742393597" yCoord="1427.494760637867"/>
+        <node name="n78" xCoord="1449.9655779005827" yCoord="1550.8794801729048"/>
+        <node name="n79" xCoord="38.357056778303914" yCoord="887.5219639057132"/>
+        <node name="n80" xCoord="0.0" yCoord="730.1227673936608"/>
+        <node name="n81" xCoord="125.4862461339798" yCoord="413.8593361610226"/>
+        <node name="n82" xCoord="1300.6586841853323" yCoord="1372.3172559998466"/>
+        <node name="n83" xCoord="1118.932958616176" yCoord="1366.0719416009772"/>
+        <node name="n84" xCoord="990.7654498468976" yCoord="540.9914815651533"/>
+        <node name="n85" xCoord="850.9168292775973" yCoord="1922.2910516925263"/>
+        <node name="n86" xCoord="651.903528281567" yCoord="1914.4210916202521"/>
+        <node name="n87" xCoord="1113.652888326606" yCoord="1958.3043927280364"/>
+        <node name="n88" xCoord="1307.4540982928427" yCoord="2029.1645437033776"/>
+        <node name="n89" xCoord="1363.715595214665" yCoord="1823.7730323920953"/>
+        <link destinationNodeId="1" linkCapacityInErlangs="2487.0" linkLengthInKm="162.51188363741375" originNodeId="0"/>
+        <link destinationNodeId="2" linkCapacityInErlangs="2487.0" linkLengthInKm="191.04459426509942" originNodeId="0"/>
+        <link destinationNodeId="24" linkCapacityInErlangs="2487.0" linkLengthInKm="789.7400615248876" originNodeId="0"/>
+        <link destinationNodeId="0" linkCapacityInErlangs="2487.0" linkLengthInKm="162.51188363741375" originNodeId="1"/>
+        <link destinationNodeId="24" linkCapacityInErlangs="2487.0" linkLengthInKm="800.4679987684782" originNodeId="1"/>
+        <link destinationNodeId="3" linkCapacityInErlangs="2487.0" linkLengthInKm="251.1429671394127" originNodeId="2"/>
+        <link destinationNodeId="0" linkCapacityInErlangs="2487.0" linkLengthInKm="191.04459426509942" originNodeId="2"/>
+        <link destinationNodeId="65" linkCapacityInErlangs="2487.0" linkLengthInKm="773.969824168994" originNodeId="2"/>
+        <link destinationNodeId="2" linkCapacityInErlangs="2487.0" linkLengthInKm="251.1429671394127" originNodeId="3"/>
+        <link destinationNodeId="65" linkCapacityInErlangs="2487.0" linkLengthInKm="967.1604790817431" originNodeId="3"/>
+        <link destinationNodeId="5" linkCapacityInErlangs="2487.0" linkLengthInKm="256.78867386923713" originNodeId="4"/>
+        <link destinationNodeId="6" linkCapacityInErlangs="2487.0" linkLengthInKm="1419.0410038444813" originNodeId="4"/>
+        <link destinationNodeId="10" linkCapacityInErlangs="2487.0" linkLengthInKm="1291.6933455944875" originNodeId="4"/>
+        <link destinationNodeId="4" linkCapacityInErlangs="2487.0" linkLengthInKm="256.78867386923713" originNodeId="5"/>
+        <link destinationNodeId="10" linkCapacityInErlangs="2487.0" linkLengthInKm="1074.616466735135" originNodeId="5"/>
+        <link destinationNodeId="7" linkCapacityInErlangs="2487.0" linkLengthInKm="218.9647819449866" originNodeId="6"/>
+        <link destinationNodeId="4" linkCapacityInErlangs="2487.0" linkLengthInKm="1419.0410038444813" originNodeId="6"/>
+        <link destinationNodeId="38" linkCapacityInErlangs="2487.0" linkLengthInKm="1171.478876552322" originNodeId="6"/>
+        <link destinationNodeId="41" linkCapacityInErlangs="2487.0" linkLengthInKm="1088.7146959764473" originNodeId="6"/>
+        <link destinationNodeId="78" linkCapacityInErlangs="2487.0" linkLengthInKm="1408.1973617449294" originNodeId="6"/>
+        <link destinationNodeId="17" linkCapacityInErlangs="2487.0" linkLengthInKm="631.5773826224448" originNodeId="6"/>
+        <link destinationNodeId="6" linkCapacityInErlangs="2487.0" linkLengthInKm="218.9647819449866" originNodeId="7"/>
+        <link destinationNodeId="17" linkCapacityInErlangs="2487.0" linkLengthInKm="547.2513281258565" originNodeId="7"/>
+        <link destinationNodeId="9" linkCapacityInErlangs="2487.0" linkLengthInKm="371.4732545039426" originNodeId="8"/>
+        <link destinationNodeId="10" linkCapacityInErlangs="2487.0" linkLengthInKm="105.13134979984456" originNodeId="8"/>
+        <link destinationNodeId="11" linkCapacityInErlangs="2487.0" linkLengthInKm="222.315456203585" originNodeId="8"/>
+        <link destinationNodeId="17" linkCapacityInErlangs="2487.0" linkLengthInKm="762.0402325027881" originNodeId="8"/>
+        <link destinationNodeId="62" linkCapacityInErlangs="2487.0" linkLengthInKm="342.45146718575694" originNodeId="8"/>
+        <link destinationNodeId="13" linkCapacityInErlangs="2487.0" linkLengthInKm="246.26461650604227" originNodeId="8"/>
+        <link destinationNodeId="8" linkCapacityInErlangs="2487.0" linkLengthInKm="371.4732545039426" originNodeId="9"/>
+        <link destinationNodeId="13" linkCapacityInErlangs="2487.0" linkLengthInKm="471.2956557942038" originNodeId="9"/>
+        <link destinationNodeId="5" linkCapacityInErlangs="2487.0" linkLengthInKm="1074.616466735135" originNodeId="10"/>
+        <link destinationNodeId="8" linkCapacityInErlangs="2487.0" linkLengthInKm="105.13134979984456" originNodeId="10"/>
+        <link destinationNodeId="71" linkCapacityInErlangs="2487.0" linkLengthInKm="1279.1812047894027" originNodeId="10"/>
+        <link destinationNodeId="4" linkCapacityInErlangs="4974.0" linkLengthInKm="1291.6933455944875" originNodeId="10"/>
+        <link destinationNodeId="12" linkCapacityInErlangs="4974.0" linkLengthInKm="332.65264379469545" originNodeId="11"/>
+        <link destinationNodeId="8" linkCapacityInErlangs="2487.0" linkLengthInKm="222.315456203585" originNodeId="11"/>
+        <link destinationNodeId="20" linkCapacityInErlangs="2487.0" linkLengthInKm="399.3404954185464" originNodeId="11"/>
+        <link destinationNodeId="14" linkCapacityInErlangs="2487.0" linkLengthInKm="468.50066934486847" originNodeId="11"/>
+        <link destinationNodeId="11" linkCapacityInErlangs="2487.0" linkLengthInKm="332.65264379469545" originNodeId="12"/>
+        <link destinationNodeId="14" linkCapacityInErlangs="2487.0" linkLengthInKm="442.4804795226315" originNodeId="12"/>
+        <link destinationNodeId="9" linkCapacityInErlangs="2487.0" linkLengthInKm="471.2956557942038" originNodeId="13"/>
+        <link destinationNodeId="14" linkCapacityInErlangs="4974.0" linkLengthInKm="396.46007143672153" originNodeId="13"/>
+        <link destinationNodeId="15" linkCapacityInErlangs="4974.0" linkLengthInKm="649.4260172574798" originNodeId="13"/>
+        <link destinationNodeId="51" linkCapacityInErlangs="2487.0" linkLengthInKm="1646.116373232491" originNodeId="13"/>
+        <link destinationNodeId="89" linkCapacityInErlangs="2487.0" linkLengthInKm="1820.2290095402886" originNodeId="13"/>
+        <link destinationNodeId="8" linkCapacityInErlangs="2487.0" linkLengthInKm="246.26461650604227" originNodeId="13"/>
+        <link destinationNodeId="12" linkCapacityInErlangs="2487.0" linkLengthInKm="442.4804795226315" originNodeId="14"/>
+        <link destinationNodeId="13" linkCapacityInErlangs="2487.0" linkLengthInKm="396.46007143672153" originNodeId="14"/>
+        <link destinationNodeId="18" linkCapacityInErlangs="2487.0" linkLengthInKm="343.84167442531924" originNodeId="14"/>
+        <link destinationNodeId="11" linkCapacityInErlangs="2487.0" linkLengthInKm="468.50066934486847" originNodeId="14"/>
+        <link destinationNodeId="16" linkCapacityInErlangs="2487.0" linkLengthInKm="144.1839490880759" originNodeId="15"/>
+        <link destinationNodeId="13" linkCapacityInErlangs="2487.0" linkLengthInKm="649.4260172574798" originNodeId="15"/>
+        <link destinationNodeId="25" linkCapacityInErlangs="2487.0" linkLengthInKm="347.5376397515145" originNodeId="15"/>
+        <link destinationNodeId="76" linkCapacityInErlangs="2487.0" linkLengthInKm="491.35047162811804" originNodeId="15"/>
+        <link destinationNodeId="31" linkCapacityInErlangs="2487.0" linkLengthInKm="722.3041912025126" originNodeId="15"/>
+        <link destinationNodeId="15" linkCapacityInErlangs="2487.0" linkLengthInKm="144.1839490880759" originNodeId="16"/>
+        <link destinationNodeId="31" linkCapacityInErlangs="2487.0" linkLengthInKm="614.3660579539585" originNodeId="16"/>
+        <link destinationNodeId="7" linkCapacityInErlangs="2487.0" linkLengthInKm="547.2513281258565" originNodeId="17"/>
+        <link destinationNodeId="8" linkCapacityInErlangs="2487.0" linkLengthInKm="762.0402325027881" originNodeId="17"/>
+        <link destinationNodeId="40" linkCapacityInErlangs="2487.0" linkLengthInKm="1168.430413547767" originNodeId="17"/>
+        <link destinationNodeId="81" linkCapacityInErlangs="2487.0" linkLengthInKm="926.8641288408515" originNodeId="17"/>
+        <link destinationNodeId="6" linkCapacityInErlangs="2487.0" linkLengthInKm="631.5773826224448" originNodeId="17"/>
+        <link destinationNodeId="19" linkCapacityInErlangs="2487.0" linkLengthInKm="510.68971636002584" originNodeId="18"/>
+        <link destinationNodeId="14" linkCapacityInErlangs="2487.0" linkLengthInKm="343.84167442531924" originNodeId="18"/>
+        <link destinationNodeId="80" linkCapacityInErlangs="2487.0" linkLengthInKm="516.4995704975437" originNodeId="18"/>
+        <link destinationNodeId="18" linkCapacityInErlangs="4974.0" linkLengthInKm="510.68971636002584" originNodeId="19"/>
+        <link destinationNodeId="80" linkCapacityInErlangs="4974.0" linkLengthInKm="946.7522962436035" originNodeId="19"/>
+        <link destinationNodeId="21" linkCapacityInErlangs="2487.0" linkLengthInKm="661.4727858112284" originNodeId="20"/>
+        <link destinationNodeId="11" linkCapacityInErlangs="2487.0" linkLengthInKm="399.3404954185464" originNodeId="20"/>
+        <link destinationNodeId="49" linkCapacityInErlangs="2487.0" linkLengthInKm="1391.2419636731142" originNodeId="20"/>
+        <link destinationNodeId="88" linkCapacityInErlangs="2487.0" linkLengthInKm="1776.0136871656355" originNodeId="20"/>
+        <link destinationNodeId="50" linkCapacityInErlangs="2487.0" linkLengthInKm="1574.5210419570315" originNodeId="20"/>
+        <link destinationNodeId="20" linkCapacityInErlangs="2487.0" linkLengthInKm="661.4727858112284" originNodeId="21"/>
+        <link destinationNodeId="50" linkCapacityInErlangs="2487.0" linkLengthInKm="1190.906967412393" originNodeId="21"/>
+        <link destinationNodeId="23" linkCapacityInErlangs="2487.0" linkLengthInKm="370.617498895728" originNodeId="22"/>
+        <link destinationNodeId="24" linkCapacityInErlangs="2487.0" linkLengthInKm="763.9707088184601" originNodeId="22"/>
+        <link destinationNodeId="28" linkCapacityInErlangs="2487.0" linkLengthInKm="746.307415523507" originNodeId="22"/>
+        <link destinationNodeId="64" linkCapacityInErlangs="2487.0" linkLengthInKm="1161.307011492282" originNodeId="22"/>
+        <link destinationNodeId="25" linkCapacityInErlangs="2487.0" linkLengthInKm="441.63762036503294" originNodeId="22"/>
+        <link destinationNodeId="22" linkCapacityInErlangs="2487.0" linkLengthInKm="370.617498895728" originNodeId="23"/>
+        <link destinationNodeId="25" linkCapacityInErlangs="2487.0" linkLengthInKm="163.6687701574207" originNodeId="23"/>
+        <link destinationNodeId="1" linkCapacityInErlangs="2487.0" linkLengthInKm="800.4679987684782" originNodeId="24"/>
+        <link destinationNodeId="22" linkCapacityInErlangs="2487.0" linkLengthInKm="763.9707088184601" originNodeId="24"/>
+        <link destinationNodeId="54" linkCapacityInErlangs="2487.0" linkLengthInKm="472.5915014351671" originNodeId="24"/>
+        <link destinationNodeId="0" linkCapacityInErlangs="2487.0" linkLengthInKm="789.7400615248876" originNodeId="24"/>
+        <link destinationNodeId="23" linkCapacityInErlangs="2487.0" linkLengthInKm="163.6687701574207" originNodeId="25"/>
+        <link destinationNodeId="26" linkCapacityInErlangs="2487.0" linkLengthInKm="335.900586147423" originNodeId="25"/>
+        <link destinationNodeId="15" linkCapacityInErlangs="2487.0" linkLengthInKm="347.5376397515145" originNodeId="25"/>
+        <link destinationNodeId="65" linkCapacityInErlangs="2487.0" linkLengthInKm="1378.714543259182" originNodeId="25"/>
+        <link destinationNodeId="73" linkCapacityInErlangs="2487.0" linkLengthInKm="1099.7248752024525" originNodeId="25"/>
+        <link destinationNodeId="22" linkCapacityInErlangs="2487.0" linkLengthInKm="441.63762036503294" originNodeId="25"/>
+        <link destinationNodeId="27" linkCapacityInErlangs="2487.0" linkLengthInKm="644.2531837175337" originNodeId="26"/>
+        <link destinationNodeId="25" linkCapacityInErlangs="2487.0" linkLengthInKm="335.900586147423" originNodeId="26"/>
+        <link destinationNodeId="28" linkCapacityInErlangs="2487.0" linkLengthInKm="431.9572027996514" originNodeId="26"/>
+        <link destinationNodeId="26" linkCapacityInErlangs="2487.0" linkLengthInKm="644.2531837175337" originNodeId="27"/>
+        <link destinationNodeId="28" linkCapacityInErlangs="2487.0" linkLengthInKm="733.2809844048512" originNodeId="27"/>
+        <link destinationNodeId="27" linkCapacityInErlangs="2487.0" linkLengthInKm="733.2809844048512" originNodeId="28"/>
+        <link destinationNodeId="22" linkCapacityInErlangs="2487.0" linkLengthInKm="746.307415523507" originNodeId="28"/>
+        <link destinationNodeId="43" linkCapacityInErlangs="2487.0" linkLengthInKm="818.8482814481679" originNodeId="28"/>
+        <link destinationNodeId="26" linkCapacityInErlangs="2487.0" linkLengthInKm="431.9572027996514" originNodeId="28"/>
+        <link destinationNodeId="30" linkCapacityInErlangs="2487.0" linkLengthInKm="312.4759984250556" originNodeId="29"/>
+        <link destinationNodeId="31" linkCapacityInErlangs="2487.0" linkLengthInKm="391.61075507074844" originNodeId="29"/>
+        <link destinationNodeId="35" linkCapacityInErlangs="2487.0" linkLengthInKm="1034.3797713358595" originNodeId="29"/>
+        <link destinationNodeId="34" linkCapacityInErlangs="2487.0" linkLengthInKm="1226.5804876108384" originNodeId="29"/>
+        <link destinationNodeId="29" linkCapacityInErlangs="2487.0" linkLengthInKm="312.4759984250556" originNodeId="30"/>
+        <link destinationNodeId="34" linkCapacityInErlangs="4974.0" linkLengthInKm="982.8954257378654" originNodeId="30"/>
+        <link destinationNodeId="16" linkCapacityInErlangs="4974.0" linkLengthInKm="614.3660579539585" originNodeId="31"/>
+        <link destinationNodeId="29" linkCapacityInErlangs="2487.0" linkLengthInKm="391.61075507074844" originNodeId="31"/>
+        <link destinationNodeId="56" linkCapacityInErlangs="2487.0" linkLengthInKm="633.1426677217655" originNodeId="31"/>
+        <link destinationNodeId="66" linkCapacityInErlangs="2487.0" linkLengthInKm="874.1090500041742" originNodeId="31"/>
+        <link destinationNodeId="74" linkCapacityInErlangs="2487.0" linkLengthInKm="922.9764894800055" originNodeId="31"/>
+        <link destinationNodeId="15" linkCapacityInErlangs="2487.0" linkLengthInKm="722.3041912025126" originNodeId="31"/>
+        <link destinationNodeId="33" linkCapacityInErlangs="2487.0" linkLengthInKm="340.4344236001492" originNodeId="32"/>
+        <link destinationNodeId="34" linkCapacityInErlangs="2487.0" linkLengthInKm="1083.1669209725305" originNodeId="32"/>
+        <link destinationNodeId="36" linkCapacityInErlangs="2487.0" linkLengthInKm="1227.7213594637597" originNodeId="32"/>
+        <link destinationNodeId="35" linkCapacityInErlangs="2487.0" linkLengthInKm="1130.1464138868823" originNodeId="32"/>
+        <link destinationNodeId="32" linkCapacityInErlangs="2487.0" linkLengthInKm="340.4344236001492" originNodeId="33"/>
+        <link destinationNodeId="35" linkCapacityInErlangs="2487.0" linkLengthInKm="945.9759705306132" originNodeId="33"/>
+        <link destinationNodeId="30" linkCapacityInErlangs="2487.0" linkLengthInKm="982.8954257378654" originNodeId="34"/>
+        <link destinationNodeId="32" linkCapacityInErlangs="2487.0" linkLengthInKm="1083.1669209725305" originNodeId="34"/>
+        <link destinationNodeId="29" linkCapacityInErlangs="2487.0" linkLengthInKm="1226.5804876108384" originNodeId="34"/>
+        <link destinationNodeId="33" linkCapacityInErlangs="2487.0" linkLengthInKm="945.9759705306132" originNodeId="35"/>
+        <link destinationNodeId="29" linkCapacityInErlangs="2487.0" linkLengthInKm="1034.3797713358595" originNodeId="35"/>
+        <link destinationNodeId="47" linkCapacityInErlangs="2487.0" linkLengthInKm="1417.708214528694" originNodeId="35"/>
+        <link destinationNodeId="32" linkCapacityInErlangs="2487.0" linkLengthInKm="1130.1464138868823" originNodeId="35"/>
+        <link destinationNodeId="37" linkCapacityInErlangs="2487.0" linkLengthInKm="244.48568039009626" originNodeId="36"/>
+        <link destinationNodeId="32" linkCapacityInErlangs="2487.0" linkLengthInKm="1227.7213594637597" originNodeId="36"/>
+        <link destinationNodeId="45" linkCapacityInErlangs="2487.0" linkLengthInKm="1275.997728235871" originNodeId="36"/>
+        <link destinationNodeId="36" linkCapacityInErlangs="2487.0" linkLengthInKm="244.48568039009626" originNodeId="37"/>
+        <link destinationNodeId="45" linkCapacityInErlangs="4974.0" linkLengthInKm="1111.2823674636572" originNodeId="37"/>
+        <link destinationNodeId="39" linkCapacityInErlangs="4974.0" linkLengthInKm="386.97611800475033" originNodeId="38"/>
+        <link destinationNodeId="6" linkCapacityInErlangs="2487.0" linkLengthInKm="1171.478876552322" originNodeId="38"/>
+        <link destinationNodeId="40" linkCapacityInErlangs="2487.0" linkLengthInKm="1555.5154331959764" originNodeId="38"/>
+        <link destinationNodeId="38" linkCapacityInErlangs="2487.0" linkLengthInKm="386.97611800475033" originNodeId="39"/>
+        <link destinationNodeId="40" linkCapacityInErlangs="2487.0" linkLengthInKm="1188.873633919708" originNodeId="39"/>
+        <link destinationNodeId="39" linkCapacityInErlangs="2487.0" linkLengthInKm="1188.873633919708" originNodeId="40"/>
+        <link destinationNodeId="17" linkCapacityInErlangs="2487.0" linkLengthInKm="1168.430413547767" originNodeId="40"/>
+        <link destinationNodeId="38" linkCapacityInErlangs="2487.0" linkLengthInKm="1555.5154331959764" originNodeId="40"/>
+        <link destinationNodeId="42" linkCapacityInErlangs="2487.0" linkLengthInKm="339.5366660211237" originNodeId="41"/>
+        <link destinationNodeId="6" linkCapacityInErlangs="621.0" linkLengthInKm="1088.7146959764473" originNodeId="41"/>
+        <link destinationNodeId="57" linkCapacityInErlangs="621.0" linkLengthInKm="1054.5146267456882" originNodeId="41"/>
+        <link destinationNodeId="41" linkCapacityInErlangs="2487.0" linkLengthInKm="339.5366660211237" originNodeId="42"/>
+        <link destinationNodeId="57" linkCapacityInErlangs="2487.0" linkLengthInKm="973.2754297110275" originNodeId="42"/>
+        <link destinationNodeId="44" linkCapacityInErlangs="621.0" linkLengthInKm="572.5364126988547" originNodeId="43"/>
+        <link destinationNodeId="28" linkCapacityInErlangs="621.0" linkLengthInKm="818.8482814481679" originNodeId="43"/>
+        <link destinationNodeId="46" linkCapacityInErlangs="2487.0" linkLengthInKm="403.1484382171629" originNodeId="43"/>
+        <link destinationNodeId="43" linkCapacityInErlangs="2487.0" linkLengthInKm="572.5364126988547" originNodeId="44"/>
+        <link destinationNodeId="46" linkCapacityInErlangs="621.0" linkLengthInKm="181.71990549294262" originNodeId="44"/>
+        <link destinationNodeId="37" linkCapacityInErlangs="621.0" linkLengthInKm="1111.2823674636572" originNodeId="45"/>
+        <link destinationNodeId="46" linkCapacityInErlangs="2487.0" linkLengthInKm="477.5745560880857" originNodeId="45"/>
+        <link destinationNodeId="36" linkCapacityInErlangs="2487.0" linkLengthInKm="1275.997728235871" originNodeId="45"/>
+        <link destinationNodeId="44" linkCapacityInErlangs="621.0" linkLengthInKm="181.71990549294262" originNodeId="46"/>
+        <link destinationNodeId="45" linkCapacityInErlangs="621.0" linkLengthInKm="477.5745560880857" originNodeId="46"/>
+        <link destinationNodeId="43" linkCapacityInErlangs="2487.0" linkLengthInKm="403.1484382171629" originNodeId="46"/>
+        <link destinationNodeId="48" linkCapacityInErlangs="2487.0" linkLengthInKm="223.99631493019447" originNodeId="47"/>
+        <link destinationNodeId="35" linkCapacityInErlangs="621.0" linkLengthInKm="1417.708214528694" originNodeId="47"/>
+        <link destinationNodeId="50" linkCapacityInErlangs="621.0" linkLengthInKm="583.4328126143852" originNodeId="47"/>
+        <link destinationNodeId="49" linkCapacityInErlangs="2487.0" linkLengthInKm="699.1647969933091" originNodeId="47"/>
+        <link destinationNodeId="47" linkCapacityInErlangs="2487.0" linkLengthInKm="223.99631493019447" originNodeId="48"/>
+        <link destinationNodeId="49" linkCapacityInErlangs="2487.0" linkLengthInKm="702.1747014529959" originNodeId="48"/>
+        <link destinationNodeId="48" linkCapacityInErlangs="2487.0" linkLengthInKm="702.1747014529959" originNodeId="49"/>
+        <link destinationNodeId="20" linkCapacityInErlangs="621.0" linkLengthInKm="1391.2419636731142" originNodeId="49"/>
+        <link destinationNodeId="47" linkCapacityInErlangs="621.0" linkLengthInKm="699.1647969933091" originNodeId="49"/>
+        <link destinationNodeId="21" linkCapacityInErlangs="2487.0" linkLengthInKm="1190.906967412393" originNodeId="50"/>
+        <link destinationNodeId="47" linkCapacityInErlangs="2487.0" linkLengthInKm="583.4328126143852" originNodeId="50"/>
+        <link destinationNodeId="53" linkCapacityInErlangs="621.0" linkLengthInKm="533.4531112670545" originNodeId="50"/>
+        <link destinationNodeId="20" linkCapacityInErlangs="621.0" linkLengthInKm="1574.5210419570315" originNodeId="50"/>
+        <link destinationNodeId="52" linkCapacityInErlangs="2487.0" linkLengthInKm="266.822805395293" originNodeId="51"/>
+        <link destinationNodeId="13" linkCapacityInErlangs="2487.0" linkLengthInKm="1646.116373232491" originNodeId="51"/>
+        <link destinationNodeId="53" linkCapacityInErlangs="621.0" linkLengthInKm="676.9418088778906" originNodeId="51"/>
+        <link destinationNodeId="51" linkCapacityInErlangs="621.0" linkLengthInKm="266.822805395293" originNodeId="52"/>
+        <link destinationNodeId="53" linkCapacityInErlangs="2487.0" linkLengthInKm="631.2873125010861" originNodeId="52"/>
+        <link destinationNodeId="52" linkCapacityInErlangs="2487.0" linkLengthInKm="631.2873125010861" originNodeId="53"/>
+        <link destinationNodeId="50" linkCapacityInErlangs="621.0" linkLengthInKm="533.4531112670545" originNodeId="53"/>
+        <link destinationNodeId="51" linkCapacityInErlangs="621.0" linkLengthInKm="676.9418088778906" originNodeId="53"/>
+        <link destinationNodeId="55" linkCapacityInErlangs="2487.0" linkLengthInKm="188.8271331947726" originNodeId="54"/>
+        <link destinationNodeId="24" linkCapacityInErlangs="2487.0" linkLengthInKm="472.5915014351671" originNodeId="54"/>
+        <link destinationNodeId="57" linkCapacityInErlangs="621.0" linkLengthInKm="454.13809843406153" originNodeId="54"/>
+        <link destinationNodeId="56" linkCapacityInErlangs="621.0" linkLengthInKm="444.5137736073079" originNodeId="54"/>
+        <link destinationNodeId="54" linkCapacityInErlangs="2487.0" linkLengthInKm="188.8271331947726" originNodeId="55"/>
+        <link destinationNodeId="56" linkCapacityInErlangs="2487.0" linkLengthInKm="633.2038235714259" originNodeId="55"/>
+        <link destinationNodeId="55" linkCapacityInErlangs="621.0" linkLengthInKm="633.2038235714259" originNodeId="56"/>
+        <link destinationNodeId="31" linkCapacityInErlangs="621.0" linkLengthInKm="633.1426677217655" originNodeId="56"/>
+        <link destinationNodeId="54" linkCapacityInErlangs="2487.0" linkLengthInKm="444.5137736073079" originNodeId="56"/>
+        <link destinationNodeId="42" linkCapacityInErlangs="2487.0" linkLengthInKm="973.2754297110275" originNodeId="57"/>
+        <link destinationNodeId="54" linkCapacityInErlangs="2487.0" linkLengthInKm="454.13809843406153" originNodeId="57"/>
+        <link destinationNodeId="41" linkCapacityInErlangs="2487.0" linkLengthInKm="1054.5146267456882" originNodeId="57"/>
+        <link destinationNodeId="59" linkCapacityInErlangs="621.0" linkLengthInKm="815.0428782719529" originNodeId="58"/>
+        <link destinationNodeId="60" linkCapacityInErlangs="621.0" linkLengthInKm="203.0957481733291" originNodeId="58"/>
+        <link destinationNodeId="64" linkCapacityInErlangs="2487.0" linkLengthInKm="1517.1693188263466" originNodeId="58"/>
+        <link destinationNodeId="58" linkCapacityInErlangs="2487.0" linkLengthInKm="815.0428782719529" originNodeId="59"/>
+        <link destinationNodeId="64" linkCapacityInErlangs="621.0" linkLengthInKm="1260.9106237355768" originNodeId="59"/>
+        <link destinationNodeId="61" linkCapacityInErlangs="621.0" linkLengthInKm="200.2074074140652" originNodeId="60"/>
+        <link destinationNodeId="58" linkCapacityInErlangs="2487.0" linkLengthInKm="203.0957481733291" originNodeId="60"/>
+        <link destinationNodeId="73" linkCapacityInErlangs="2487.0" linkLengthInKm="1502.555682142064" originNodeId="60"/>
+        <link destinationNodeId="60" linkCapacityInErlangs="2487.0" linkLengthInKm="200.2074074140652" originNodeId="61"/>
+        <link destinationNodeId="73" linkCapacityInErlangs="2487.0" linkLengthInKm="1316.2311681126143" originNodeId="61"/>
+        <link destinationNodeId="63" linkCapacityInErlangs="621.0" linkLengthInKm="614.9707403317625" originNodeId="62"/>
+        <link destinationNodeId="8" linkCapacityInErlangs="621.0" linkLengthInKm="342.45146718575694" originNodeId="62"/>
+        <link destinationNodeId="68" linkCapacityInErlangs="2487.0" linkLengthInKm="1298.3385443382401" originNodeId="62"/>
+        <link destinationNodeId="62" linkCapacityInErlangs="2487.0" linkLengthInKm="614.9707403317625" originNodeId="63"/>
+        <link destinationNodeId="68" linkCapacityInErlangs="2487.0" linkLengthInKm="1151.0842860187804" originNodeId="63"/>
+        <link destinationNodeId="59" linkCapacityInErlangs="2487.0" linkLengthInKm="1260.9106237355768" originNodeId="64"/>
+        <link destinationNodeId="22" linkCapacityInErlangs="621.0" linkLengthInKm="1161.307011492282" originNodeId="64"/>
+        <link destinationNodeId="58" linkCapacityInErlangs="621.0" linkLengthInKm="1517.1693188263466" originNodeId="64"/>
+        <link destinationNodeId="3" linkCapacityInErlangs="2487.0" linkLengthInKm="967.1604790817431" originNodeId="65"/>
+        <link destinationNodeId="25" linkCapacityInErlangs="2487.0" linkLengthInKm="1378.714543259182" originNodeId="65"/>
+        <link destinationNodeId="2" linkCapacityInErlangs="621.0" linkLengthInKm="773.969824168994" originNodeId="65"/>
+        <link destinationNodeId="67" linkCapacityInErlangs="621.0" linkLengthInKm="1314.404939421222" originNodeId="66"/>
+        <link destinationNodeId="31" linkCapacityInErlangs="2487.0" linkLengthInKm="874.1090500041742" originNodeId="66"/>
+        <link destinationNodeId="87" linkCapacityInErlangs="2487.0" linkLengthInKm="1533.713232838506" originNodeId="66"/>
+        <link destinationNodeId="66" linkCapacityInErlangs="1242.0" linkLengthInKm="1314.404939421222" originNodeId="67"/>
+        <link destinationNodeId="87" linkCapacityInErlangs="1242.0" linkLengthInKm="251.23073240220057" originNodeId="67"/>
+        <link destinationNodeId="63" linkCapacityInErlangs="2487.0" linkLengthInKm="1151.0842860187804" originNodeId="68"/>
+        <link destinationNodeId="69" linkCapacityInErlangs="2487.0" linkLengthInKm="160.91575705212733" originNodeId="68"/>
+        <link destinationNodeId="62" linkCapacityInErlangs="2487.0" linkLengthInKm="1298.3385443382401" originNodeId="68"/>
+        <link destinationNodeId="70" linkCapacityInErlangs="2487.0" linkLengthInKm="777.1964434720916" originNodeId="69"/>
+        <link destinationNodeId="68" linkCapacityInErlangs="2487.0" linkLengthInKm="160.91575705212733" originNodeId="69"/>
+        <link destinationNodeId="81" linkCapacityInErlangs="2487.0" linkLengthInKm="1091.5142431680897" originNodeId="69"/>
+        <link destinationNodeId="69" linkCapacityInErlangs="2487.0" linkLengthInKm="777.1964434720916" originNodeId="70"/>
+        <link destinationNodeId="81" linkCapacityInErlangs="2487.0" linkLengthInKm="1196.3986526061267" originNodeId="70"/>
+        <link destinationNodeId="72" linkCapacityInErlangs="2487.0" linkLengthInKm="178.9389951352063" originNodeId="71"/>
+        <link destinationNodeId="10" linkCapacityInErlangs="2487.0" linkLengthInKm="1279.1812047894027" originNodeId="71"/>
+        <link destinationNodeId="78" linkCapacityInErlangs="2487.0" linkLengthInKm="1576.2465074011918" originNodeId="71"/>
+        <link destinationNodeId="71" linkCapacityInErlangs="2487.0" linkLengthInKm="178.9389951352063" originNodeId="72"/>
+        <link destinationNodeId="78" linkCapacityInErlangs="2487.0" linkLengthInKm="1554.8747710169373" originNodeId="72"/>
+        <link destinationNodeId="61" linkCapacityInErlangs="2487.0" linkLengthInKm="1316.2311681126143" originNodeId="73"/>
+        <link destinationNodeId="25" linkCapacityInErlangs="2487.0" linkLengthInKm="1099.7248752024525" originNodeId="73"/>
+        <link destinationNodeId="60" linkCapacityInErlangs="2487.0" linkLengthInKm="1502.555682142064" originNodeId="73"/>
+        <link destinationNodeId="75" linkCapacityInErlangs="2487.0" linkLengthInKm="1525.0394280141802" originNodeId="74"/>
+        <link destinationNodeId="31" linkCapacityInErlangs="2487.0" linkLengthInKm="922.9764894800055" originNodeId="74"/>
+        <link destinationNodeId="79" linkCapacityInErlangs="2487.0" linkLengthInKm="1518.3906283840615" originNodeId="74"/>
+        <link destinationNodeId="74" linkCapacityInErlangs="2487.0" linkLengthInKm="1525.0394280141802" originNodeId="75"/>
+        <link destinationNodeId="79" linkCapacityInErlangs="2487.0" linkLengthInKm="344.5192629594902" originNodeId="75"/>
+        <link destinationNodeId="77" linkCapacityInErlangs="2487.0" linkLengthInKm="1462.1901545811643" originNodeId="76"/>
+        <link destinationNodeId="15" linkCapacityInErlangs="2487.0" linkLengthInKm="491.35047162811804" originNodeId="76"/>
+        <link destinationNodeId="89" linkCapacityInErlangs="2487.0" linkLengthInKm="1413.1724669243793" originNodeId="76"/>
+        <link destinationNodeId="76" linkCapacityInErlangs="2487.0" linkLengthInKm="1462.1901545811643" originNodeId="77"/>
+        <link destinationNodeId="89" linkCapacityInErlangs="2487.0" linkLengthInKm="461.43503690909205" originNodeId="77"/>
+        <link destinationNodeId="72" linkCapacityInErlangs="2487.0" linkLengthInKm="1554.8747710169373" originNodeId="78"/>
+        <link destinationNodeId="6" linkCapacityInErlangs="2487.0" linkLengthInKm="1408.1973617449294" originNodeId="78"/>
+        <link destinationNodeId="71" linkCapacityInErlangs="2487.0" linkLengthInKm="1576.2465074011918" originNodeId="78"/>
+        <link destinationNodeId="75" linkCapacityInErlangs="2487.0" linkLengthInKm="344.5192629594902" originNodeId="79"/>
+        <link destinationNodeId="80" linkCapacityInErlangs="2487.0" linkLengthInKm="162.00546554772072" originNodeId="79"/>
+        <link destinationNodeId="74" linkCapacityInErlangs="2487.0" linkLengthInKm="1518.3906283840615" originNodeId="79"/>
+        <link destinationNodeId="19" linkCapacityInErlangs="2487.0" linkLengthInKm="946.7522962436035" originNodeId="80"/>
+        <link destinationNodeId="79" linkCapacityInErlangs="2487.0" linkLengthInKm="162.00546554772072" originNodeId="80"/>
+        <link destinationNodeId="18" linkCapacityInErlangs="2487.0" linkLengthInKm="516.4995704975437" originNodeId="80"/>
+        <link destinationNodeId="70" linkCapacityInErlangs="2487.0" linkLengthInKm="1196.3986526061267" originNodeId="81"/>
+        <link destinationNodeId="17" linkCapacityInErlangs="2487.0" linkLengthInKm="926.8641288408515" originNodeId="81"/>
+        <link destinationNodeId="69" linkCapacityInErlangs="2487.0" linkLengthInKm="1091.5142431680897" originNodeId="81"/>
+        <link destinationNodeId="83" linkCapacityInErlangs="2487.0" linkLengthInKm="181.83300933982545" originNodeId="82"/>
+        <link destinationNodeId="84" linkCapacityInErlangs="2487.0" linkLengthInKm="887.207055837688" originNodeId="82"/>
+        <link destinationNodeId="88" linkCapacityInErlangs="2487.0" linkLengthInKm="656.882437743907" originNodeId="82"/>
+        <link destinationNodeId="82" linkCapacityInErlangs="2487.0" linkLengthInKm="181.83300933982545" originNodeId="83"/>
+        <link destinationNodeId="88" linkCapacityInErlangs="2487.0" linkLengthInKm="689.3707413779044" originNodeId="83"/>
+        <link destinationNodeId="85" linkCapacityInErlangs="2487.0" linkLengthInKm="1388.360954186339" originNodeId="84"/>
+        <link destinationNodeId="82" linkCapacityInErlangs="2487.0" linkLengthInKm="887.207055837688" originNodeId="84"/>
+        <link destinationNodeId="86" linkCapacityInErlangs="2487.0" linkLengthInKm="1414.6152465115906" originNodeId="84"/>
+        <link destinationNodeId="84" linkCapacityInErlangs="2487.0" linkLengthInKm="1388.360954186339" originNodeId="85"/>
+        <link destinationNodeId="86" linkCapacityInErlangs="2487.0" linkLengthInKm="199.16884858048402" originNodeId="85"/>
+        <link destinationNodeId="85" linkCapacityInErlangs="2487.0" linkLengthInKm="199.16884858048402" originNodeId="86"/>
+        <link destinationNodeId="87" linkCapacityInErlangs="2487.0" linkLengthInKm="463.8299425631333" originNodeId="86"/>
+        <link destinationNodeId="84" linkCapacityInErlangs="2487.0" linkLengthInKm="1414.6152465115906" originNodeId="86"/>
+        <link destinationNodeId="67" linkCapacityInErlangs="2487.0" linkLengthInKm="251.23073240220057" originNodeId="87"/>
+        <link destinationNodeId="86" linkCapacityInErlangs="2487.0" linkLengthInKm="463.8299425631333" originNodeId="87"/>
+        <link destinationNodeId="66" linkCapacityInErlangs="2487.0" linkLengthInKm="1533.713232838506" originNodeId="87"/>
+        <link destinationNodeId="83" linkCapacityInErlangs="2487.0" linkLengthInKm="689.3707413779044" originNodeId="88"/>
+        <link destinationNodeId="20" linkCapacityInErlangs="2487.0" linkLengthInKm="1776.0136871656355" originNodeId="88"/>
+        <link destinationNodeId="82" linkCapacityInErlangs="2487.0" linkLengthInKm="656.882437743907" originNodeId="88"/>
+        <link destinationNodeId="77" linkCapacityInErlangs="2487.0" linkLengthInKm="461.43503690909205" originNodeId="89"/>
+        <link destinationNodeId="13" linkCapacityInErlangs="2487.0" linkLengthInKm="1820.2290095402886" originNodeId="89"/>
+        <link destinationNodeId="76" linkCapacityInErlangs="2487.0" linkLengthInKm="1413.1724669243793" originNodeId="89"/>
+    </physicalTopology>
+</network>

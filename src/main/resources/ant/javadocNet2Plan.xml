@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!-- enlace al codigo JAVA!!! -->
+
+<project default="full-javadoc">
+    <property name="releaseVersion" value="0.4.0"/>
+    <property name="generalNet2PlanReleasesDir" location="c:/Dropbox/net2plan"/>
+    <property name="releaseDestThisVersion" location="${generalNet2PlanReleasesDir}/Net2Plan-${releaseVersion}/"/>
+    <property name="taglet_classpath" value="bin;lib/parallelcolt-0.10.1.jar"/>
+
+    <target name="full-javadoc">
+        <antcall target="net2planExamples-javadoc-only"></antcall>
+        <antcall target="keywordsTable-only"></antcall>
+        <antcall target="bookeSectionsTable-only"></antcall>
+    </target>
+
+    <target name="net2planExamples-javadoc-only">
+
+        <javadoc access="public" author="false" destdir="${releaseDestThisVersion}/doc/javadoc/examples"
+                 nodeprecated="true" nodeprecatedlist="true" noindex="false" nonavbar="false" notree="false"
+                 source="1.7"
+                 splitindex="true" use="true" version="false" overview="overview-examples.html" linksource="yes"
+                 noqualifier="java.lang:java.util:java.io:java.awt:java.net:java.awt.geom:javax.swing:cern.colt.matrix.tdouble">
+            <classpath>
+                <pathelement path="../src"/>
+                <fileset dir="${basedir}/lib">
+                    <include name="**/*.jar"/>
+                </fileset>
+            </classpath>
+            <link href="../parallelColt-0.9.4">
+            </link>
+            <taglet name="com.net2plan.documentation.Taglet_Description" path="${taglet_classpath}"></taglet>
+            <taglet name="com.net2plan.documentation.Taglet_Keywords" path="${taglet_classpath}"></taglet>
+            <taglet name="com.net2plan.documentation.Taglet_InputParameters" path="${taglet_classpath}"></taglet>
+            <taglet name="com.net2plan.documentation.Taglet_BookSections" path="${taglet_classpath}"></taglet>
+            <packageset dir="../src" defaultexcludes="yes">
+                <include name="com/net2plan/examples/general/onlineSim/**"/>
+                <include name="com/net2plan/examples/general/reports/**"/>
+                <exclude name="com/net2plan/examples/general/reports/robustness/**"/>
+                <include name="com/net2plan/examples/ocnbook/offline/**"/>
+                <include name="com/net2plan/examples/ocnbook/onlineSim/**"/>
+                <include name="com/net2plan/examples/ocnbook/reports/**"/>
+            </packageset>
+        </javadoc>
+    </target>
+
+    <target name="keywordsTable-only">
+
+        <javadoc>
+            <classpath>
+                <pathelement path="../src"/>
+                <fileset dir="${basedir}/lib">
+                    <include name="**/*.jar"/>
+                </fileset>
+            </classpath>
+            <packageset dir="../src" defaultexcludes="yes">
+                <include name="com/net2plan/examples/general/onlineSim/**"/>
+                <include name="com/net2plan/examples/general/reports/**"/>
+                <exclude name="com/net2plan/examples/general/reports/robustness/**"/>
+                <include name="com/net2plan/examples/ocnbook/offline/**"/>
+                <include name="com/net2plan/examples/ocnbook/onlineSim/**"/>
+                <include name="com/net2plan/examples/ocnbook/reports/**"/>
+            </packageset>
+            <doclet name="com.net2plan.documentation.CreateHTMLKeywords" path="${taglet_classpath}">
+                <param name="-outputFolder" value="${releaseDestThisVersion}/doc/javadoc/examples"/>
+            </doclet>
+        </javadoc>
+
+
+    </target>
+
+    <target name="bookeSectionsTable-only">
+
+        <javadoc>
+            <classpath>
+                <pathelement path="../src"/>
+                <fileset dir="${basedir}/lib">
+                    <include name="**/*.jar"/>
+                </fileset>
+            </classpath>
+            <packageset dir="../src" defaultexcludes="yes">
+                <include name="com/net2plan/examples/general/onlineSim/**"/>
+                <include name="com/net2plan/examples/general/reports/**"/>
+                <exclude name="com/net2plan/examples/general/reports/robustness/**"/>
+                <include name="com/net2plan/examples/ocnbook/offline/**"/>
+                <include name="com/net2plan/examples/ocnbook/onlineSim/**"/>
+                <include name="com/net2plan/examples/ocnbook/reports/**"/>
+            </packageset>
+            <doclet name="com.net2plan.documentation.CreateBookSectionsTable" path="${taglet_classpath}">
+                <param name="-outputFolder" value="${releaseDestThisVersion}/doc/javadoc/examples"/>
+            </doclet>
+        </javadoc>
+
+
+    </target>
+
+
+</project>
+

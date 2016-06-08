@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?><network description="National Science Foundation (NSF) Network with 14 nodes and 42 unidirectional links, including a demand set. Shortest-path routing (measured in hops) is used. Then, with 1+1 link-disjoint dedicated protection is computed&#10;&#10;Source: R. Ramaswami, K.N. Sivarajan, &quot;Design of Logical Topologies for Wavelength-routed Optical Networks,&quot; IEEE Journal on Selected Areas in Communications, vol. 14, no. 5, pp. 840-851, June 1996" name="NSFNet">
+    <physicalTopology>
+        <node name="Seattle (WA)" population="620778" timezone="-8" xCoord="-122.2916667" yCoord="47.6583333"/>
+        <node name="Palo Alto (CA)" population="65412" timezone="-8" xCoord="-122.1633333" yCoord="37.4416667"/>
+        <node name="San Diego (CA)" population="1326000" timezone="-8" xCoord="-117.2388889" yCoord="32.8852778"/>
+        <node name="Salt Lake City (UT)" population="189899" timezone="-7" xCoord="-111.8427778" yCoord="40.7683333"/>
+        <node name="Boulder (CO)" population="98889" timezone="-7" xCoord="-105.2747222" yCoord="39.9775000"/>
+        <node name="Houston (TX)" population="2145000" timezone="-6" xCoord="-95.3602778" yCoord="29.7572222"/>
+        <node name="Lincoln (NE)" population="262341" timezone="-6" xCoord="-96.6969444" yCoord="40.8230556"/>
+        <node name="Urbana-Champaign (IL)" population="81291" timezone="-6" xCoord="-88.2266667" yCoord="40.1130556"/>
+        <node name="Pittsburgh (PA)" population="307484" timezone="-5" xCoord="-80" yCoord="40.4386111"/>
+        <node name="Atlanta (GA)" population="432427" timezone="-5" xCoord="-84.383300" yCoord="33.750000"/>
+        <node name="Ann Arbor (MI)" population="114925" timezone="-5" xCoord="-83.7144444" yCoord="42.2888889"/>
+        <node name="Ithaca (NY)" population="30054" timezone="-5" xCoord="-76.4766667" yCoord="42.4436111"/>
+        <node name="Princeton (NJ)" population="28572" timezone="-5" xCoord="-74.6516667" yCoord="40.3500000"/>
+        <node name="College Park (MD)" population="30587" timezone="-5" xCoord="-76.9416667" yCoord="38.9902778"/>
+        <link destinationNodeId="1" linkCapacityInErlangs="500.0" linkLengthInKm="1100.0" originNodeId="0"/>
+        <link destinationNodeId="2" linkCapacityInErlangs="500.0" linkLengthInKm="1600.0" originNodeId="0"/>
+        <link destinationNodeId="7" linkCapacityInErlangs="500.0" linkLengthInKm="2800.0" originNodeId="0"/>
+        <link destinationNodeId="0" linkCapacityInErlangs="500.0" linkLengthInKm="1100.0" originNodeId="1"/>
+        <link destinationNodeId="2" linkCapacityInErlangs="500.0" linkLengthInKm="600.0" originNodeId="1"/>
+        <link destinationNodeId="3" linkCapacityInErlangs="500.0" linkLengthInKm="1000.0" originNodeId="1"/>
+        <link destinationNodeId="0" linkCapacityInErlangs="500.0" linkLengthInKm="1600.0" originNodeId="2"/>
+        <link destinationNodeId="1" linkCapacityInErlangs="500.0" linkLengthInKm="600.0" originNodeId="2"/>
+        <link destinationNodeId="5" linkCapacityInErlangs="500.0" linkLengthInKm="2000.0" originNodeId="2"/>
+        <link destinationNodeId="1" linkCapacityInErlangs="500.0" linkLengthInKm="1000.0" originNodeId="3"/>
+        <link destinationNodeId="4" linkCapacityInErlangs="500.0" linkLengthInKm="600.0" originNodeId="3"/>
+        <link destinationNodeId="10" linkCapacityInErlangs="500.0" linkLengthInKm="2400.0" originNodeId="3"/>
+        <link destinationNodeId="3" linkCapacityInErlangs="500.0" linkLengthInKm="600.0" originNodeId="4"/>
+        <link destinationNodeId="5" linkCapacityInErlangs="500.0" linkLengthInKm="1100.0" originNodeId="4"/>
+        <link destinationNodeId="6" linkCapacityInErlangs="500.0" linkLengthInKm="800.0" originNodeId="4"/>
+        <link destinationNodeId="2" linkCapacityInErlangs="500.0" linkLengthInKm="2000.0" originNodeId="5"/>
+        <link destinationNodeId="4" linkCapacityInErlangs="500.0" linkLengthInKm="1100.0" originNodeId="5"/>
+        <link destinationNodeId="9" linkCapacityInErlangs="500.0" linkLengthInKm="1200.0" originNodeId="5"/>
+        <link destinationNodeId="13" linkCapacityInErlangs="500.0" linkLengthInKm="2000.0" originNodeId="5"/>
+        <link destinationNodeId="4" linkCapacityInErlangs="500.0" linkLengthInKm="800.0" originNodeId="6"/>
+        <link destinationNodeId="7" linkCapacityInErlangs="500.0" linkLengthInKm="700.0" originNodeId="6"/>
+        <link destinationNodeId="0" linkCapacityInErlangs="500.0" linkLengthInKm="2800.0" originNodeId="7"/>
+        <link destinationNodeId="6" linkCapacityInErlangs="500.0" linkLengthInKm="700.0" originNodeId="7"/>
+        <link destinationNodeId="8" linkCapacityInErlangs="500.0" linkLengthInKm="700.0" originNodeId="7"/>
+        <link destinationNodeId="7" linkCapacityInErlangs="500.0" linkLengthInKm="700.0" originNodeId="8"/>
+        <link destinationNodeId="9" linkCapacityInErlangs="500.0" linkLengthInKm="900.0" originNodeId="8"/>
+        <link destinationNodeId="11" linkCapacityInErlangs="500.0" linkLengthInKm="500.0" originNodeId="8"/>
+        <link destinationNodeId="12" linkCapacityInErlangs="500.0" linkLengthInKm="500.0" originNodeId="8"/>
+        <link destinationNodeId="5" linkCapacityInErlangs="500.0" linkLengthInKm="1200.0" originNodeId="9"/>
+        <link destinationNodeId="8" linkCapacityInErlangs="500.0" linkLengthInKm="900.0" originNodeId="9"/>
+        <link destinationNodeId="3" linkCapacityInErlangs="500.0" linkLengthInKm="2400.0" originNodeId="10"/>
+        <link destinationNodeId="11" linkCapacityInErlangs="500.0" linkLengthInKm="800.0" originNodeId="10"/>
+        <link destinationNodeId="12" linkCapacityInErlangs="500.0" linkLengthInKm="800.0" originNodeId="10"/>
+        <link destinationNodeId="8" linkCapacityInErlangs="500.0" linkLengthInKm="500.0" originNodeId="11"/>
+        <link destinationNodeId="10" linkCapacityInErlangs="500.0" linkLengthInKm="800.0" originNodeId="11"/>
+        <link destinationNodeId="13" linkCapacityInErlangs="500.0" linkLengthInKm="300.0" originNodeId="11"/>
+        <link destinationNodeId="8" linkCapacityInErlangs="500.0" linkLengthInKm="500.0" originNodeId="12"/>
+        <link destinationNodeId="10" linkCapacityInErlangs="500.0" linkLengthInKm="800.0" originNodeId="12"/>
+        <link destinationNodeId="13" linkCapacityInErlangs="500.0" linkLengthInKm="300.0" originNodeId="12"/>
+        <link destinationNodeId="5" linkCapacityInErlangs="500.0" linkLengthInKm="2000.0" originNodeId="13"/>
+        <link destinationNodeId="11" linkCapacityInErlangs="500.0" linkLengthInKm="300.0" originNodeId="13"/>
+        <link destinationNodeId="12" linkCapacityInErlangs="500.0" linkLengthInKm="300.0" originNodeId="13"/>
+    </physicalTopology>
+</network>

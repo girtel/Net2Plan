@@ -1,0 +1,220 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<network description="60-Node Network used in 'Optical Network Design and Planning' book by Jane M. Simmons, retrieved from http://monarchna.com/topology.html" name="60-Node Network" version="3">
+	<node id="0" xCoord="81.5" yCoord="41.1" name="Akron"/>
+	<node id="1" xCoord="73.8" yCoord="42.75" name="Albany"/>
+	<node id="2" xCoord="106.6" yCoord="35.05" name="Albuquerque"/>
+	<node id="3" xCoord="84.42" yCoord="33.65" name="Atlanta"/>
+	<node id="4" xCoord="76.67" yCoord="39.18" name="Baltimore"/>
+	<node id="5" xCoord="91.15" yCoord="30.53" name="BatonRouge"/>
+	<node id="6" xCoord="108.53" yCoord="45.8" name="Billings"/>
+	<node id="7" xCoord="86.75" yCoord="33.57" name="Birmingham"/>
+	<node id="8" xCoord="71.03" yCoord="42.37" name="Boston"/>
+	<node id="9" xCoord="78.73" yCoord="42.93" name="Buffalo"/>
+	<node id="10" xCoord="81.6" yCoord="38.37" name="Charleston,WV"/>
+	<node id="11" xCoord="80.93" yCoord="35.22" name="Charlotte"/>
+	<node id="12" xCoord="87.65" yCoord="41.9" name="Chicago"/>
+	<node id="13" xCoord="84.67" yCoord="39.05" name="Cincinnati"/>
+	<node id="14" xCoord="81.87" yCoord="41.42" name="Cleveland"/>
+	<node id="15" xCoord="82.88" yCoord="40.0" name="Columbus"/>
+	<node id="16" xCoord="96.85" yCoord="32.85" name="Dallas"/>
+	<node id="17" xCoord="104.87" yCoord="39.75" name="Denver"/>
+	<node id="18" xCoord="93.65" yCoord="41.53" name="DesMoines"/>
+	<node id="19" xCoord="83.33" yCoord="42.23" name="Detroit"/>
+	<node id="20" xCoord="106.4" yCoord="31.8" name="ElPaso"/>
+	<node id="21" xCoord="123.22" yCoord="44.12" name="Eugene"/>
+	<node id="22" xCoord="95.35" yCoord="29.97" name="Houston"/>
+	<node id="23" xCoord="86.27" yCoord="39.73" name="Indianapolis"/>
+	<node id="24" xCoord="81.52" yCoord="30.33" name="Jacksonville"/>
+	<node id="25" xCoord="94.6" yCoord="39.12" name="KansasCity"/>
+	<node id="26" xCoord="115.17" yCoord="36.08" name="LasVegas"/>
+	<node id="27" xCoord="92.15" yCoord="34.92" name="LittleRock"/>
+	<node id="28" xCoord="118.4" yCoord="33.93" name="LosAngeles"/>
+	<node id="29" xCoord="85.73" yCoord="38.18" name="Louisville"/>
+	<node id="30" xCoord="80.28" yCoord="25.82" name="Miami"/>
+	<node id="31" xCoord="86.68" yCoord="36.12" name="Nashville"/>
+	<node id="32" xCoord="73.98" yCoord="40.77" name="NewYork"/>
+	<node id="33" xCoord="74.17" yCoord="40.7" name="Newark"/>
+	<node id="34" xCoord="122.22" yCoord="37.73" name="Oakland"/>
+	<node id="35" xCoord="97.6" yCoord="35.4" name="OklahomaCity"/>
+	<node id="36" xCoord="81.33" yCoord="28.55" name="Orlando"/>
+	<node id="37" xCoord="75.25" yCoord="39.88" name="Philadelphia"/>
+	<node id="38" xCoord="112.02" yCoord="33.43" name="Phoenix"/>
+	<node id="39" xCoord="80.22" yCoord="40.5" name="Pittsburgh"/>
+	<node id="40" xCoord="122.6" yCoord="45.6" name="Portland"/>
+	<node id="41" xCoord="78.78" yCoord="35.87" name="Raleigh"/>
+	<node id="42" xCoord="77.33" yCoord="37.5" name="Richmond"/>
+	<node id="43" xCoord="117.45" yCoord="33.95" name="Riverside"/>
+	<node id="44" xCoord="121.5" yCoord="38.52" name="Sacramento"/>
+	<node id="45" xCoord="111.97" yCoord="40.78" name="SaltLakeCity"/>
+	<node id="46" xCoord="98.47" yCoord="29.53" name="SanAntonio"/>
+	<node id="47" xCoord="117.17" yCoord="32.73" name="SanDiego"/>
+	<node id="48" xCoord="122.38" yCoord="37.62" name="SanFrancisco"/>
+	<node id="49" xCoord="121.92" yCoord="37.37" name="SanJose"/>
+	<node id="50" xCoord="119.83" yCoord="34.43" name="SantaBarbara"/>
+	<node id="51" xCoord="122.3" yCoord="47.45" name="Seattle"/>
+	<node id="52" xCoord="93.82" yCoord="32.47" name="Shreveport"/>
+	<node id="53" xCoord="117.33" yCoord="47.67" name="Spokane"/>
+	<node id="54" xCoord="90.37" yCoord="38.75" name="StLouis"/>
+	<node id="55" xCoord="84.37" yCoord="30.38" name="Tallahassee"/>
+	<node id="56" xCoord="82.53" yCoord="27.97" name="Tampa"/>
+	<node id="57" xCoord="83.8" yCoord="41.6" name="Toledo"/>
+	<node id="58" xCoord="77.04" yCoord="38.85" name="WashingtonDC"/>
+	<node id="59" xCoord="97.43" yCoord="37.65" name="Wichita"/>
+	<layer id="0" name="" description="" linkCapacityUnitsName="" demandTrafficUnitsName="">
+		<link id="0" originNodeId="17" destinationNodeId="45" capacity="0.0" lengthInKm="850.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="1" originNodeId="45" destinationNodeId="17" capacity="0.0" lengthInKm="850.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="2" originNodeId="44" destinationNodeId="45" capacity="0.0" lengthInKm="1110.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="3" originNodeId="45" destinationNodeId="44" capacity="0.0" lengthInKm="1110.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="4" originNodeId="38" destinationNodeId="20" capacity="0.0" lengthInKm="730.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="5" originNodeId="20" destinationNodeId="38" capacity="0.0" lengthInKm="730.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="6" originNodeId="38" destinationNodeId="47" capacity="0.0" lengthInKm="623.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="7" originNodeId="47" destinationNodeId="38" capacity="0.0" lengthInKm="623.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="8" originNodeId="2" destinationNodeId="20" capacity="0.0" lengthInKm="453.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="9" originNodeId="20" destinationNodeId="2" capacity="0.0" lengthInKm="453.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="10" originNodeId="56" destinationNodeId="30" capacity="0.0" lengthInKm="430.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="11" originNodeId="30" destinationNodeId="56" capacity="0.0" lengthInKm="430.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="12" originNodeId="55" destinationNodeId="56" capacity="0.0" lengthInKm="426.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="13" originNodeId="56" destinationNodeId="55" capacity="0.0" lengthInKm="426.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="14" originNodeId="55" destinationNodeId="24" capacity="0.0" lengthInKm="328.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="15" originNodeId="24" destinationNodeId="55" capacity="0.0" lengthInKm="328.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="16" originNodeId="5" destinationNodeId="55" capacity="0.0" lengthInKm="845.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="17" originNodeId="55" destinationNodeId="5" capacity="0.0" lengthInKm="845.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="18" originNodeId="35" destinationNodeId="16" capacity="0.0" lengthInKm="395.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="19" originNodeId="16" destinationNodeId="35" capacity="0.0" lengthInKm="395.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="20" originNodeId="25" destinationNodeId="54" capacity="0.0" lengthInKm="472.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="21" originNodeId="54" destinationNodeId="25" capacity="0.0" lengthInKm="472.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="22" originNodeId="12" destinationNodeId="23" capacity="0.0" lengthInKm="341.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="23" originNodeId="23" destinationNodeId="12" capacity="0.0" lengthInKm="341.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="24" originNodeId="12" destinationNodeId="19" capacity="0.0" lengthInKm="499.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="25" originNodeId="19" destinationNodeId="12" capacity="0.0" lengthInKm="499.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="26" originNodeId="48" destinationNodeId="49" capacity="0.0" lengthInKm="103.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="27" originNodeId="49" destinationNodeId="48" capacity="0.0" lengthInKm="103.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="28" originNodeId="58" destinationNodeId="4" capacity="0.0" lengthInKm="75.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="29" originNodeId="4" destinationNodeId="58" capacity="0.0" lengthInKm="75.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="30" originNodeId="37" destinationNodeId="4" capacity="0.0" lengthInKm="186.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="31" originNodeId="4" destinationNodeId="37" capacity="0.0" lengthInKm="186.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="32" originNodeId="0" destinationNodeId="39" capacity="0.0" lengthInKm="186.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="33" originNodeId="39" destinationNodeId="0" capacity="0.0" lengthInKm="186.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="34" originNodeId="14" destinationNodeId="0" capacity="0.0" lengthInKm="75.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="35" originNodeId="0" destinationNodeId="14" capacity="0.0" lengthInKm="75.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="36" originNodeId="14" destinationNodeId="57" capacity="0.0" lengthInKm="208.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="37" originNodeId="57" destinationNodeId="14" capacity="0.0" lengthInKm="208.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="38" originNodeId="57" destinationNodeId="19" capacity="0.0" lengthInKm="116.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="39" originNodeId="19" destinationNodeId="57" capacity="0.0" lengthInKm="116.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="40" originNodeId="15" destinationNodeId="0" capacity="0.0" lengthInKm="226.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="41" originNodeId="0" destinationNodeId="15" capacity="0.0" lengthInKm="226.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="42" originNodeId="23" destinationNodeId="29" capacity="0.0" lengthInKm="225.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="43" originNodeId="29" destinationNodeId="23" capacity="0.0" lengthInKm="225.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="44" originNodeId="13" destinationNodeId="29" capacity="0.0" lengthInKm="185.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="45" originNodeId="29" destinationNodeId="13" capacity="0.0" lengthInKm="185.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="46" originNodeId="13" destinationNodeId="57" capacity="0.0" lengthInKm="364.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="47" originNodeId="57" destinationNodeId="13" capacity="0.0" lengthInKm="364.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="48" originNodeId="29" destinationNodeId="10" capacity="0.0" lengthInKm="459.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="49" originNodeId="10" destinationNodeId="29" capacity="0.0" lengthInKm="459.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="50" originNodeId="10" destinationNodeId="15" capacity="0.0" lengthInKm="270.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="51" originNodeId="15" destinationNodeId="10" capacity="0.0" lengthInKm="270.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="52" originNodeId="29" destinationNodeId="31" capacity="0.0" lengthInKm="309.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="53" originNodeId="31" destinationNodeId="29" capacity="0.0" lengthInKm="309.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="54" originNodeId="31" destinationNodeId="7" capacity="0.0" lengthInKm="366.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="55" originNodeId="7" destinationNodeId="31" capacity="0.0" lengthInKm="366.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="56" originNodeId="31" destinationNodeId="11" capacity="0.0" lengthInKm="686.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="57" originNodeId="11" destinationNodeId="31" capacity="0.0" lengthInKm="686.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="58" originNodeId="11" destinationNodeId="3" capacity="0.0" lengthInKm="457.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="59" originNodeId="3" destinationNodeId="11" capacity="0.0" lengthInKm="457.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="60" originNodeId="3" destinationNodeId="7" capacity="0.0" lengthInKm="467.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="61" originNodeId="7" destinationNodeId="3" capacity="0.0" lengthInKm="467.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="62" originNodeId="7" destinationNodeId="52" capacity="0.0" lengthInKm="872.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="63" originNodeId="52" destinationNodeId="7" capacity="0.0" lengthInKm="872.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="64" originNodeId="6" destinationNodeId="18" capacity="0.0" lengthInKm="1200.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="65" originNodeId="18" destinationNodeId="6" capacity="0.0" lengthInKm="1200.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="66" originNodeId="5" destinationNodeId="22" capacity="0.0" lengthInKm="521.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="67" originNodeId="22" destinationNodeId="5" capacity="0.0" lengthInKm="521.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="68" originNodeId="22" destinationNodeId="46" capacity="0.0" lengthInKm="380.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="69" originNodeId="46" destinationNodeId="22" capacity="0.0" lengthInKm="380.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="70" originNodeId="46" destinationNodeId="16" capacity="0.0" lengthInKm="506.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="71" originNodeId="16" destinationNodeId="46" capacity="0.0" lengthInKm="506.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="72" originNodeId="16" destinationNodeId="52" capacity="0.0" lengthInKm="351.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="73" originNodeId="52" destinationNodeId="16" capacity="0.0" lengthInKm="351.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="74" originNodeId="52" destinationNodeId="27" capacity="0.0" lengthInKm="354.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="75" originNodeId="27" destinationNodeId="52" capacity="0.0" lengthInKm="354.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="76" originNodeId="27" destinationNodeId="54" capacity="0.0" lengthInKm="591.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="77" originNodeId="54" destinationNodeId="27" capacity="0.0" lengthInKm="591.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="78" originNodeId="32" destinationNodeId="39" capacity="0.0" lengthInKm="686.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="79" originNodeId="39" destinationNodeId="32" capacity="0.0" lengthInKm="686.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="80" originNodeId="11" destinationNodeId="24" capacity="0.0" lengthInKm="687.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="81" originNodeId="24" destinationNodeId="11" capacity="0.0" lengthInKm="687.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="82" originNodeId="12" destinationNodeId="18" capacity="0.0" lengthInKm="619.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="83" originNodeId="18" destinationNodeId="12" capacity="0.0" lengthInKm="619.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="84" originNodeId="18" destinationNodeId="25" capacity="0.0" lengthInKm="590.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="85" originNodeId="25" destinationNodeId="18" capacity="0.0" lengthInKm="590.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="86" originNodeId="51" destinationNodeId="40" capacity="0.0" lengthInKm="292.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="87" originNodeId="40" destinationNodeId="51" capacity="0.0" lengthInKm="292.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="88" originNodeId="6" destinationNodeId="17" capacity="0.0" lengthInKm="941.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="89" originNodeId="17" destinationNodeId="6" capacity="0.0" lengthInKm="941.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="90" originNodeId="6" destinationNodeId="53" capacity="0.0" lengthInKm="886.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="91" originNodeId="53" destinationNodeId="6" capacity="0.0" lengthInKm="886.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="92" originNodeId="53" destinationNodeId="51" capacity="0.0" lengthInKm="464.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="93" originNodeId="51" destinationNodeId="53" capacity="0.0" lengthInKm="464.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="94" originNodeId="40" destinationNodeId="21" capacity="0.0" lengthInKm="211.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="95" originNodeId="21" destinationNodeId="40" capacity="0.0" lengthInKm="211.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="96" originNodeId="21" destinationNodeId="44" capacity="0.0" lengthInKm="871.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="97" originNodeId="44" destinationNodeId="21" capacity="0.0" lengthInKm="871.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="98" originNodeId="44" destinationNodeId="34" capacity="0.0" lengthInKm="140.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="99" originNodeId="34" destinationNodeId="44" capacity="0.0" lengthInKm="140.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="100" originNodeId="34" destinationNodeId="48" capacity="0.0" lengthInKm="38.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="101" originNodeId="48" destinationNodeId="34" capacity="0.0" lengthInKm="38.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="102" originNodeId="29" destinationNodeId="54" capacity="0.0" lengthInKm="495.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="103" originNodeId="54" destinationNodeId="29" capacity="0.0" lengthInKm="495.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="104" originNodeId="25" destinationNodeId="59" capacity="0.0" lengthInKm="364.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="105" originNodeId="59" destinationNodeId="25" capacity="0.0" lengthInKm="364.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="106" originNodeId="59" destinationNodeId="35" capacity="0.0" lengthInKm="309.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="107" originNodeId="35" destinationNodeId="59" capacity="0.0" lengthInKm="309.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="108" originNodeId="17" destinationNodeId="59" capacity="0.0" lengthInKm="868.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="109" originNodeId="59" destinationNodeId="17" capacity="0.0" lengthInKm="868.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="110" originNodeId="17" destinationNodeId="2" capacity="0.0" lengthInKm="686.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="111" originNodeId="2" destinationNodeId="17" capacity="0.0" lengthInKm="686.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="112" originNodeId="49" destinationNodeId="50" capacity="0.0" lengthInKm="465.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="113" originNodeId="50" destinationNodeId="49" capacity="0.0" lengthInKm="465.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="114" originNodeId="50" destinationNodeId="28" capacity="0.0" lengthInKm="158.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="115" originNodeId="28" destinationNodeId="50" capacity="0.0" lengthInKm="158.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="116" originNodeId="28" destinationNodeId="47" capacity="0.0" lengthInKm="239.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="117" originNodeId="47" destinationNodeId="28" capacity="0.0" lengthInKm="239.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="118" originNodeId="28" destinationNodeId="43" capacity="0.0" lengthInKm="115.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="119" originNodeId="43" destinationNodeId="28" capacity="0.0" lengthInKm="115.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="120" originNodeId="43" destinationNodeId="44" capacity="0.0" lengthInKm="787.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="121" originNodeId="44" destinationNodeId="43" capacity="0.0" lengthInKm="787.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="122" originNodeId="20" destinationNodeId="16" capacity="0.0" lengthInKm="1145.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="123" originNodeId="16" destinationNodeId="20" capacity="0.0" lengthInKm="1145.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="124" originNodeId="14" destinationNodeId="9" capacity="0.0" lengthInKm="351.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="125" originNodeId="9" destinationNodeId="14" capacity="0.0" lengthInKm="351.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="126" originNodeId="9" destinationNodeId="1" capacity="0.0" lengthInKm="523.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="127" originNodeId="1" destinationNodeId="9" capacity="0.0" lengthInKm="523.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="128" originNodeId="1" destinationNodeId="8" capacity="0.0" lengthInKm="290.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="129" originNodeId="8" destinationNodeId="1" capacity="0.0" lengthInKm="290.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="130" originNodeId="8" destinationNodeId="32" capacity="0.0" lengthInKm="392.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="131" originNodeId="32" destinationNodeId="8" capacity="0.0" lengthInKm="392.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="132" originNodeId="32" destinationNodeId="33" capacity="0.0" lengthInKm="25.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="133" originNodeId="33" destinationNodeId="32" capacity="0.0" lengthInKm="25.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="134" originNodeId="33" destinationNodeId="37" capacity="0.0" lengthInKm="142.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="135" originNodeId="37" destinationNodeId="33" capacity="0.0" lengthInKm="142.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="136" originNodeId="58" destinationNodeId="42" capacity="0.0" lengthInKm="198.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="137" originNodeId="42" destinationNodeId="58" capacity="0.0" lengthInKm="198.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="138" originNodeId="42" destinationNodeId="41" capacity="0.0" lengthInKm="271.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="139" originNodeId="41" destinationNodeId="42" capacity="0.0" lengthInKm="271.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="140" originNodeId="41" destinationNodeId="11" capacity="0.0" lengthInKm="261.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="141" originNodeId="11" destinationNodeId="41" capacity="0.0" lengthInKm="261.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="142" originNodeId="10" destinationNodeId="58" capacity="0.0" lengthInKm="520.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="143" originNodeId="58" destinationNodeId="10" capacity="0.0" lengthInKm="520.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="144" originNodeId="10" destinationNodeId="11" capacity="0.0" lengthInKm="446.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="145" originNodeId="11" destinationNodeId="10" capacity="0.0" lengthInKm="446.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="146" originNodeId="24" destinationNodeId="36" capacity="0.0" lengthInKm="256.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="147" originNodeId="36" destinationNodeId="24" capacity="0.0" lengthInKm="256.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="148" originNodeId="36" destinationNodeId="30" capacity="0.0" lengthInKm="405.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="149" originNodeId="30" destinationNodeId="36" capacity="0.0" lengthInKm="405.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="150" originNodeId="43" destinationNodeId="26" capacity="0.0" lengthInKm="416.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="151" originNodeId="26" destinationNodeId="43" capacity="0.0" lengthInKm="416.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="152" originNodeId="26" destinationNodeId="45" capacity="0.0" lengthInKm="758.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="153" originNodeId="45" destinationNodeId="26" capacity="0.0" lengthInKm="758.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<sourceRouting/>
+	</layer>
+</network>
