@@ -41,6 +41,13 @@
                 <include>**</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/src/main/resources/help</directory>
+            <outputDirectory>doc/help</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+        </fileSet>
     </fileSets>
 
     <files>
