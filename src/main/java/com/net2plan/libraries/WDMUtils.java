@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -40,6 +42,7 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Constants;
 import com.net2plan.utils.IntUtils;
 import com.net2plan.utils.Pair;
@@ -60,8 +63,6 @@ import cern.colt.matrix.tint.IntMatrix2D;
  */
 public class WDMUtils
 {
-	private final static String ATTRIBUTE_ROWSEPARATOR = ";";
-	private final static String ATTRIBUTE_COLUMNSEPARATOR = " ";
 	
 	/**
 	 * This class represents a Routing and Spectrum Assignment, valid for a lightpath. This comprises a sequence of links, and for each link the set of frequency slots occupied.
@@ -326,34 +327,6 @@ public class WDMUtils
 	}
 
 	private WDMUtils() { }
-
-//	/**
-//	 * Creates a new lightpath and updates the wavelength occupancy.
-//	 * @param demand Demand
-//	 * @param seqFibers Sequence of fibers
-//	 * @param binaryRatePerChannel Binary rate per channel in Gbps
-//	 * @param wavelengthId Wavelength identifier (the same for all traversed fibers)
-//	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
-//	 * @return The newly create lightpath (as a route)
-//	 */
-//	public static Route addLightpathAndUpdateOccupancy (Demand demand , List<Link> seqFibers, double binaryRatePerChannel , int wavelengthId, DoubleMatrix2D wavelengthFiberOccupancy)
-//	{
-//		return addLightpathAndUpdateOccupancy (demand , seqFibers, binaryRatePerChannel , IntUtils.constantArray(seqFibers.size() , wavelengthId), null , wavelengthFiberOccupancy, null);
-//	}
-//
-//	/**
-//	 * Creates a new lightpath and updates the wavelength occupancy.
-//	 * @param demand Demand
-//	 * @param seqFibers Sequence of fibers
-//	 * @param binaryRatePerChannel Binary rate per channel in Gbps
-//	 * @param seqWavelengths Sequence of wavelengths
-//	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
-//	 * @return The newly create lightpath (as a route)
-//	 */
-//	public static Route addLightpathAndUpdateOccupancy (Demand demand , List<Link> seqFibers, double binaryRatePerChannel , int[] seqWavelengths, DoubleMatrix2D wavelengthFiberOccupancy)
-//	{
-//		return addLightpathAndUpdateOccupancy (demand , seqFibers, binaryRatePerChannel , seqWavelengths, null , wavelengthFiberOccupancy, null);
-//	}
 
 	/**
 	 * Creates a new lightpath and updates the wavelength occupancy.
@@ -928,4 +901,300 @@ public class WDMUtils
 				}
 		}
 	}
+
+	/**
+	 * <p>Computes the list of spectral voids (list of available contiguous slots) 
+	 * from a slot availability vector of a path.</p>
+	 * 
+	 * @param slotOccupancy Set of slots that are already occupied
+	 * @param totalAvailableSlotsPerFiber Number of slots per fiber
+	 * @return List of spectrum voids, each one with a pair indicating both the initial slot id and the number of consecutive slots within the void. If no spectrum void is found, it returns an empty list
+	 * @since 0.3.0
+	 */
+	public static List<Pair<Integer, Integer>> computeAvailableSpectrumVoids(TreeSet<Integer> slotOccupancy, int totalAvailableSlotsPerFiber)
+	{
+		List<Pair<Integer, Integer>> out = new LinkedList<Pair<Integer, Integer>>();
+		
+		int firstAvailableSlot = 0;
+		Iterator<Integer> it = slotOccupancy.iterator();
+		while(it.hasNext())
+		{
+			int firstNotAvailableSlot = it.next();
+			if (firstAvailableSlot < firstNotAvailableSlot)
+			{
+				int numSlots_thisVoid = firstNotAvailableSlot - firstAvailableSlot;
+				out.add(Pair.of(firstAvailableSlot, numSlots_thisVoid));
+			}
+
+			firstAvailableSlot = firstNotAvailableSlot + 1;
+		}
+		
+		if (firstAvailableSlot < totalAvailableSlotsPerFiber)
+			out.add(Pair.of(firstAvailableSlot, totalAvailableSlotsPerFiber - firstAvailableSlot));
+		
+		return out;
+	}
+	
+	/**
+	 * Computes the maximum number of requests (each one measured in number of slots) which 
+	 * can be allocated in a set of spectrum voids.
+	 * 
+	 * @param availableSpectrumVoids List of available spectrum voids (first item of each pair is the initial slot identifier, whereas the second one is the number of consecutive slots)
+	 * @param numSlots Number of required slots for a reference connection
+	 * @return Maximum number of requests which can be allocated in a set of spectrum voids
+	 * @since 0.2.3
+	 */
+	public static int computeMaximumRequests(List<Pair<Integer, Integer>> availableSpectrumVoids, int numSlots)
+	{
+		int numRequests = 0;
+
+		for (Pair<Integer, Integer> spectrumVoid : availableSpectrumVoids)
+		{
+			int numSlotsThisVoid = spectrumVoid.getSecond();
+			if (numSlotsThisVoid < numSlots) continue;
+
+			numRequests += (int) Math.floor((double) numSlotsThisVoid / numSlots);
+		}
+
+		return numRequests;
+	}
+
+	/**
+	 * Returns the modulation format with the maximum spectral efficiency, whereas 
+	 * the optical reach constraint is fulfilled, for the given path.
+	 * 
+	 * @param pathLengthInKm Path length  (in kilometers)
+	 * @param availableModulationFormats Set of candidate modulation formats
+	 * @return Best modulation format for the given path length
+	 * @since 0.3.1
+	 */
+	public static ModulationFormat computeModulationFormat(double pathLengthInKm, Set<ModulationFormat> availableModulationFormats)
+	{
+		if (availableModulationFormats == null) throw new Net2PlanException("Available modulation formats cannot be null");
+
+		ModulationFormat candidateModulationFormat = null;
+		for (ModulationFormat modulationFormat : availableModulationFormats)
+		{
+			if (pathLengthInKm > modulationFormat.opticalReachInKm) continue;
+
+			if (candidateModulationFormat == null || modulationFormat.spectralEfficiencyInBpsPerHz > candidateModulationFormat.spectralEfficiencyInBpsPerHz)
+				candidateModulationFormat = modulationFormat;
+		}
+
+		if (candidateModulationFormat == null) throw new Net2PlanException("No modulation format is applicable");
+
+		return candidateModulationFormat;
+	}
+
+	/**
+	 * Returns the modulation format with the maximum spectral efficiency, whereas 
+	 * the optical reach constraint is fulfilled, for the given path.
+	 * 
+	 * @param fiberLengthInKmMap Map indicating for each link its length (in kilometers)
+	 * @param seqFibers (Loop-free) Sequence of traversed fibers (unchecked for conitinuity or cycles)
+	 * @param availableModulationFormats Set of candidate modulation formats
+	 * @return Best modulation format for the given path
+	 * @since 0.3.0
+	 */
+	public static ModulationFormat computeModulationFormat(DoubleMatrix1D fiberLengthInKmMap, List<Link> seqFibers, Set<ModulationFormat> availableModulationFormats)
+	{
+		double pathLengthInKm = GraphUtils.convertPath2PathCost(seqFibers, fiberLengthInKmMap); 
+		return computeModulationFormat(pathLengthInKm, availableModulationFormats);
+	}
+
+	/**
+	 * Returns the modulation format with the maximum spectral efficiency, while 
+	 * the optical reach constraint is fulfilled, for each path in a {@link com.net2plan.libraries.CandidatePathList CandidatePathList} 
+	 * object.
+	 * 
+	 * @param cpl Candidate path list
+	 * @param fiberLengthInKmMap Map indicating for each link its length (in kilometers)
+	 * @param availableModulationFormats Set of candidate modulation formats
+	 * @return Modulation format per path
+	 * @since 0.2.3
+	 */
+	public static Map<List<Link>, ModulationFormat> computeModulationFormatPerPath(
+			Map<Pair<Node, Node>, List<List<Link>>> cpl, DoubleMatrix1D fiberLengthInKmMap,
+			Set<ModulationFormat> availableModulationFormats) {
+		Map<List<Link>, ModulationFormat> out = new LinkedHashMap<List<Link>, ModulationFormat>();
+		for (Collection<List<Link>> paths : cpl.values())
+			for (List<Link> seqFibers : paths) 
+				out.put(seqFibers, computeModulationFormat(fiberLengthInKmMap, seqFibers, availableModulationFormats));
+		return out;
+	}
+
+	/**
+	 * Computes the number of frequency slots required for a certain amount of 
+	 * bandwidth (measured in Gbps), including guard-bands.
+	 * 
+	 * @param bandwidthInGbps Requested bandwidth (in Gbps)
+	 * @param slotGranularityInGHz Slot granularity (in GHz) 
+	 * @param guardBandInGHz Guard-band size (in GHz)
+	 * @param modulationFormat Modulation format
+	 * @return Number of slots required to allocate the bandwidth demand
+	 * @since 0.2.3
+	 */
+	public static int computeNumberOfSlots(double bandwidthInGbps, double slotGranularityInGHz, double guardBandInGHz, ModulationFormat modulationFormat)
+	{
+		if (bandwidthInGbps < 0) throw new Net2PlanException("'bandwidthInGbps' must be greater or equal than zero");
+		if (slotGranularityInGHz <= 0) throw new Net2PlanException("'slotGranularityInGHz' must be greater than zero");
+		if (guardBandInGHz < 0) throw new Net2PlanException("'guardBandInGHz' must be greater or equal than zero");
+
+		double requestedBandwidthInGHz = bandwidthInGbps / modulationFormat.spectralEfficiencyInBpsPerHz;
+		double requiredBandwidthInGHz = requestedBandwidthInGHz + guardBandInGHz;
+		int numSlots = (int) Math.ceil(requiredBandwidthInGHz / slotGranularityInGHz);
+
+		return numSlots;
+	}
+
+	/**
+	 * <p>Computes the slot availability vector of a path, represented by a sequence 
+	 * of fibers, where each position indicates whether or not its corresponding 
+	 * frequency slot is available along the path.</p>
+	 * 
+	 * <p><b>Important</b>: Loop-free paths should be employed, but it is not 
+	 * checked by the method.</p>
+	 * 
+	 * @param slotOccupancyMap Indicates per each fiber its slot occupancy, where already-occupied slots appear
+	 * @param seqFibers (Loop-free) Sequence of traversed fibers (unchecked for conitinuity or cycles)
+	 * @param totalAvailableSlotsPerFiber Number of slots per fiber
+	 * @return Slot occupancy (vector with one coordinate per slot, 1 if occupied, 0 if not)
+	 * @since 0.3.0
+	 */
+	public static TreeSet<Integer> computePathSlotOccupancy(List<Link> seqFibers, DoubleMatrix2D slotOccupancyMap_fs, int totalAvailableSlotsPerFiber)
+	{
+		final int S = slotOccupancyMap_fs.columns();
+		TreeSet<Integer> out = new TreeSet<Integer>();
+		for (int s = 0; s < S ; s ++)
+		{
+			boolean free = true;
+			for (Link fiber : seqFibers) if (slotOccupancyMap_fs.get (fiber.getIndex () , s) == 1) { free = false; break;  }
+			if (!free) out.add (s);
+		}
+		return out;
+	}
+
+	/**
+	 * Class to define modulation formats. Data for default formats were obtained 
+	 * from [1].
+	 * 
+	 * @since 0.2.3
+	 * @see <a href="http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=6353490">[1] Z. Zhu, W. Lu, L. Zhang, and N. Ansari, "Dynamic Service Provisioning in Elastic Optical Networks with Hybrid Single-/Multi-Path Routing," <i>IEEE/OSA Journal of Lightwave Technology</i>, vol. 31, no. 1, pp. 15-22, January 2013</a>
+	 */
+	public static class ModulationFormat
+	{
+		/**
+		 * BPSK format (optical reach = 9600 km, spectral efficiency = 1 bps/Hz).
+		 * 
+		 * @since 0.2.3
+		 */
+		public final static ModulationFormat BPSK = ModulationFormat.of("BPSK", 9600.0, 1.0);
+
+		/**
+		 * QPSK format (optical reach = 4800 km, spectral efficiency = 2 bps/Hz).
+		 * 
+		 * @since 0.2.3
+		 */
+		public final static ModulationFormat QPSK = ModulationFormat.of("QPSK", 4800.0, 2.0);
+
+		/**
+		 * 8-QAM format (optical reach = 2400 km, spectral efficiency = 3 bps/Hz).
+		 * 
+		 * @since 0.2.3
+		 */
+		public final static ModulationFormat QAM_8 = ModulationFormat.of("8-QAM", 2400.0, 3.0);
+
+		/**
+		 * 16-QAM format (optical reach = 1200 km, spectral efficiency = 4 bps/Hz).
+		 * 
+		 * @since 0.2.3
+		 */
+
+		public final static ModulationFormat QAM_16 = ModulationFormat.of("16-QAM", 1200.0, 4.0);
+		
+		/**
+		 * Default set of available modulations (BPSK, QPSK, 8-QAM, 16-QAM).
+		 * 
+		 * @since 0.2.3
+		 */
+		public final static Set<ModulationFormat> DEFAULT_MODULATION_SET = CollectionUtils.setOf(BPSK, QPSK, QAM_8, QAM_16);
+		
+		/**
+		 * Modulation name.
+		 * 
+		 * @since 0.2.3
+		 */
+		public String name;
+		
+		/**
+		 * Optical reach (in kilometers).
+		 * 
+		 * @since 0.2.3
+		 */
+		public double opticalReachInKm;
+		
+		/**
+		 * Spectral efficiency (in bps per Hz).
+		 * 
+		 * @since 0.2.3
+		 */
+		public double spectralEfficiencyInBpsPerHz;
+
+		/**
+		 * Default constructor.
+		 * 
+		 * @param name Modulation name
+		 * @param opticalReachInKm Optical reach (in kilometers)
+		 * @param spectralEfficiencyInBpsPerHz Spectral efficiency (in bps per Hz)
+		 * @since 0.2.3
+		 */
+		public ModulationFormat(String name, double opticalReachInKm, double spectralEfficiencyInBpsPerHz)
+		{
+			if (name == null || name.isEmpty()) throw new Net2PlanException("Modulation name cannot be null");
+			if (opticalReachInKm <= 0) throw new Net2PlanException("Optical reach must be greater than zero");
+			if (spectralEfficiencyInBpsPerHz <= 0) throw new Net2PlanException("Spectral efficiency must be greater than zero");
+
+			this.name = name;
+			this.opticalReachInKm = opticalReachInKm;
+			this.spectralEfficiencyInBpsPerHz = spectralEfficiencyInBpsPerHz;
+		}
+
+		public ModulationFormat() {
+			this.name = null;
+			this.opticalReachInKm = 0;
+			this.spectralEfficiencyInBpsPerHz = 0;
+		}
+		
+		public void setModulationFormat(String name, double opticalReachInKm, double spectralEfficiencyInBpsPerHz) {
+			if (name == null || name.isEmpty()) throw new Net2PlanException("Modulation name cannot be null");
+			if (opticalReachInKm <= 0) throw new Net2PlanException("Optical reach must be greater than zero");
+			if (spectralEfficiencyInBpsPerHz <= 0) throw new Net2PlanException("Spectral efficiency must be greater than zero");
+
+			this.name = name;
+			this.opticalReachInKm = opticalReachInKm;
+			this.spectralEfficiencyInBpsPerHz = spectralEfficiencyInBpsPerHz;
+		}
+		
+
+		/**
+		 * Factory method.
+		 * 
+		 * @param name Modulation name
+		 * @param opticalReachInKm Optical reach (in kilometers)
+		 * @param spectralEfficiencyInBpsPerHz Spectral efficiency (in bps per Hz)
+		 * @return New modulation format with the given parameters
+		 * @since 0.2.3
+		 */
+		public static ModulationFormat of(String name, double opticalReachInKm, double spectralEfficiencyInBpsPerHz)
+		{
+			return new ModulationFormat(name, opticalReachInKm, spectralEfficiencyInBpsPerHz);
+		}
+
+		@Override
+		public String toString()
+		{
+			return name + ": optical reach = " + opticalReachInKm + " km, spectral efficiency = " + spectralEfficiencyInBpsPerHz + " bps/Hz";
+		}
+	}
+
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016 Pablo Pavon Mariño.
+ * Copyright (c) 2016 Pablo Pavon MariÃ±o.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Lesser Public License v2.1
  * which accompanies this distribution, and is available at
@@ -328,7 +328,7 @@ public class Report_availability implements IReport
 				"failure states, all the traffic is lost. In the optimistic case, we assume that in such cases, all the traffic is carried. </p>");
 		
 		out.append("<p>For more information of this method:</p>");
-		out.append("<p>P. Pavón Mariño, \"Optimization of computer networks. Modeling and algorithms. A hands-on approach\", Wiley 2016</p>");
+		out.append("<p>P. Pavï¿½n MariÃ±o, \"Optimization of computer networks. Modeling and algorithms. A hands-on approach\", Wiley 2016</p>");
 		out.append("<h1>Global information</h1>");
 		out.append("<h2>Input Parameters</h2>");
 		out.append("<table border='1'>");

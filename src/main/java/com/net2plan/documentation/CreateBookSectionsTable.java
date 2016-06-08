@@ -182,7 +182,7 @@ public class CreateBookSectionsTable
 		s += "<table cellpadding=2 cellspacing=0><tr>\n";
 		s += "<p>This page is a per-chapter index of the Net2Plan resources (online and offline algorithms, reports) appearing in the book:</p>\n";
 		s += "</tr><tr>\n";
-		s += "<td><a href=\"http://www.wiley.com/WileyCDA/WileyTitle/productCd-1119013356.html\">Pablo Pavón Mariño, <cite>Optimization of computer networks. Modeling and algorithms. A hands-on approach</cite>, Wiley 2016.</a></td>\n";
+		s += "<td><a href=\"http://www.wiley.com/WileyCDA/WileyTitle/productCd-1119013356.html\">Pablo Pavï¿½n MariÃ±o, <cite>Optimization of computer networks. Modeling and algorithms. A hands-on approach</cite>, Wiley 2016.</a></td>\n";
 		s += "<td><a href=\"http://www.wiley.com/WileyCDA/WileyTitle/productCd-1119013356.html\"><img src=\"doc-files/bookCover.jpg\" alt=\"Pablo Pav&oacute;n Mari&ntilde;o, \"Optimization of computer networks. Modeling and algorithms. A hands-on approach\", Wiley 2016\" style=\"width:60px;height:87px;\"></a></td>\n";
 		s += "</tr></table>";
 		s+= "</div>\n";
