@@ -35,6 +35,9 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import cern.colt.matrix.tint.IntFactory2D;
+import cern.colt.matrix.tint.IntMatrix1D;
+import cern.colt.matrix.tint.IntMatrix2D;
 
 /**
  * <p>Provides extra functionality for String objects.</p>
@@ -72,6 +75,26 @@ public class StringUtils
 	}
 
 	/**
+	 * Generates an {@code String} from a matrix, where rows are separated by ";" and columns by spaces
+	 *
+	 * @param mat a matrix 
+	 * @return the {@code String}
+	 * 
+	 */
+	public static String writeMatrix (IntMatrix2D mat)
+	{
+		final int R = mat.rows();
+		final int C = mat.columns();
+		StringBuffer out = new StringBuffer ();
+		for (int r = 0; r < R ; r ++)
+		{
+			if (r != 0) out.append (";");
+			for (int c = 0 ; c < C ; c ++) out.append (" " + mat.get(r,c));
+		}
+		return out.toString();
+	}
+
+	/**
 	 * Generates an {@code String} from a vector of {@code DoubleMatrix1D} where elements are separated by spaces
 	 *
 	 * @param mat a vector
@@ -86,6 +109,21 @@ public class StringUtils
 		return out.toString();
 	}
 	
+	/**
+	 * Generates an {@code String} from a vector of {@code IntMatrix1D} where elements are separated by spaces
+	 *
+	 * @param mat a vector
+	 * @return the {@code String}
+	 * 
+	 */
+	public static String writeMatrix (IntMatrix1D mat)
+	{
+		final int C = (int) mat.size();
+		StringBuffer out = new StringBuffer ();
+		for (int c = 0 ; c < C ; c ++) { if (c != 0) out.append(" "); out.append (mat.get(c)); }
+		return out.toString();
+	}
+
 	/**
 	 * Reads a matrix {@code DoubleMatrix2D} from a {@code String}, where rows are separated by ";" and columns by spaces
 	 *
@@ -106,6 +144,25 @@ public class StringUtils
 		return res;
 	}
 
+	/**
+	 * Reads a matrix {@code IntMatrix2D} from a {@code String}, where rows are separated by ";" and columns by spaces
+	 *
+	 * @param s {@code String} 
+	 * @return the matrix 
+	 */
+	public static IntMatrix2D  readIntMatrix (String s)
+	{
+		String [] rows = split(s , ";");
+		if (rows.length == 0) return IntFactory2D.dense.make(0,0);
+		IntMatrix2D res = null;
+		for (int row = 0 ; row < rows.length ; row ++)
+		{
+			int [] thisRow = StringUtils.toIntArray(StringUtils.split(rows [row] , " "));
+			if (res == null) res = IntFactory2D.dense.make(rows.length , thisRow.length); else if (res.columns() != thisRow.length) throw new Net2PlanException ("Error reading the matrix. The number of columns cannot change from row to row");
+			for (int c = 0 ; c < thisRow.length ; c ++) res.set(row,c,thisRow [c]);
+		}
+		return res;
+	}
 	
 	/**
 	 * Generates an {@code String[]} from comma-separated values.
