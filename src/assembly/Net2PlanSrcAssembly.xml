@@ -18,7 +18,6 @@
                 <include>**</include>
             </includes>
             <excludes>
-                <exclude>tools/**</exclude>
                 <exclude>./**/*.bak</exclude>
             </excludes>
         </fileSet>
@@ -29,7 +28,6 @@
                 <include>**</include>
             </includes>
             <excludes>
-                <exclude>tools/**</exclude>
                 <exclude>./**/*.bak</exclude>
             </excludes>
         </fileSet>
