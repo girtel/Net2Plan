@@ -4,10 +4,10 @@
  * are made available under the terms of the GNU Lesser Public License v2.1
  * which accompanies this distribution, and is available at
  * http://www.gnu.org/licenses/lgpl.html
- * <p>
+ *
  * Contributors:
- * Pablo Pavon-Marino - Jose-Luis Izquierdo-Zaragoza, up to version 0.3.1
- * Pablo Pavon-Marino - from version 0.4.0 onwards
+ *     Pablo Pavon-Marino - Jose-Luis Izquierdo-Zaragoza, up to version 0.3.1
+ *     Pablo Pavon-Marino - from version 0.4.0 onwards
  ******************************************************************************/
 
 package com.net2plan.utils;
@@ -22,157 +22,164 @@ import java.util.List;
 import java.util.Map;
 
 //public class TimeTrace <A>
-public class TimeTrace {
-    private LinkedList<Pair<Double, Object>> list;
+public class TimeTrace 
+{
+	private LinkedList<Pair<Double,Object>> list;
+	
+	public TimeTrace()
+	{
+		this.list = new LinkedList<Pair<Double,Object>> ();
+	}
 
-    public TimeTrace() {
-        this.list = new LinkedList<Pair<Double, Object>>();
-    }
+	public void add (double t , Object a)
+	{
+		this.list.addLast(Pair.of(t, a));
+	}
 
-    public void add(double t, Object a) {
-        this.list.addLast(Pair.of(t, a));
-    }
+	public int size () { return list.size(); }
+	
+	public String toString ()
+	{
+		final String NEWLINE = String.format("%n");
+		StringBuilder pw = new StringBuilder ();
+		final boolean entriesAreMap = list.getFirst().getSecond() instanceof Map<?,?>;
+		Object [] keySet = (entriesAreMap)? ((Map<?,?>) list.getFirst().getSecond()).keySet().toArray() : null; // all keys in the same order always
+		
+		for (Pair<Double,Object> p : list)
+		{
+			final double t = p.getFirst();
+			final Object a = p.getSecond();
+			
+			if (a == null) continue;
+			
+			pw.append("" + t);
+			
+			if ((a instanceof Double) || (a instanceof Integer))
+			{
+				pw.append(" " + a);
+			}
+			else if (a instanceof Map<?,?>)
+			{
+				Map<Long,Double> b = (Map<Long,Double>) a;
+				for (Object k : keySet)
+					pw.append (" " + b.get((Long) k));
+			}
+			else if (a instanceof double [])
+			{
+				for (double x : (double []) a)
+					pw.append (" " + x);
+			}
+			else if (a instanceof DoubleMatrix1D)
+			{
+				for (double x : ((DoubleMatrix1D) a).toArray())
+					pw.append (" " + x);
+			}
+			else if (a instanceof DoubleMatrix2D)
+			{
+				double [][] val = ((DoubleMatrix2D) a).toArray();
+				for (double [] xArray : (double [][]) val) 
+					for (double x : xArray) 
+						pw.append (" " + x);
+			}
+			else if (a instanceof int [])
+			{
+				for (int x : (int []) a)
+					pw.append (" " + x);
+			}
+			else if (a instanceof int [][])
+			{
+				for (int [] xArray : (int [][]) a) 
+					for (int x : xArray) 
+						pw.append (" " + x);
+			}
+			else if (a instanceof double [][])
+			{
+				for (double [] xArray : (double [][]) a) 
+					for (double x : xArray) 
+						pw.append (" " + x);
+			}
+			else throw new RuntimeException ("Unexpected type");
+			
+			pw.append (NEWLINE);
+		}
 
-    public int size() {
-        return list.size();
-    }
+		return pw.toString();
+	}
+	
+	public void printToFile (File f)
+	{
+		try 
+		{
+			PrintWriter pw = new PrintWriter (f);
+			pw.append(this.toString());
+			pw.close ();
+		} catch (Exception e) { e.printStackTrace(); throw new RuntimeException ("Not possible to write in File " + f); } 
+	}
 
-    public String toString() {
-        final String NEWLINE = String.format("%n");
-        StringBuilder pw = new StringBuilder();
-        final boolean entriesAreMap = list.getFirst().getSecond() instanceof Map<?, ?>;
-        Object[] keySet = (entriesAreMap) ? ((Map<?, ?>) list.getFirst().getSecond()).keySet().toArray() : null; // all keys in the same order always
+	public List<Pair<Double,Object>> getList () { return list; }
+	
+	public static void printToFile (File f , int [][] a)
+	{
+		try
+		{
+			PrintWriter pw = new PrintWriter (f);
+			for (int i = 0 ; i < a.length ; i ++)
+			{
+				for (int j = 0 ; j < a[0].length ; j ++)
+					pw.append(a [i][j] + " ");
+				pw.println();
+			}
+			pw.close();
+		} catch (Exception e) { e.printStackTrace(); throw new RuntimeException ("Bad"); }
+	}
+	public static void printToFile (File f , double [][] a)
+	{
+		try
+		{
+			PrintWriter pw = new PrintWriter (f);
+			for (int i = 0 ; i < a.length ; i ++)
+			{
+				for (int j = 0 ; j < a[0].length ; j ++)
+					pw.append(a [i][j] + " ");
+				pw.println();
+			}
+			pw.close();
+		} catch (Exception e) { e.printStackTrace(); throw new RuntimeException ("Bad"); }
+	}
 
-        for (Pair<Double, Object> p : list) {
-            final double t = p.getFirst();
-            final Object a = p.getSecond();
+	public static void printToFile (File f , double [] a)
+	{
+		try
+		{
+			PrintWriter pw = new PrintWriter (f);
+			for (int i = 0 ; i < a.length ; i ++)
+				pw.print(a [i] + " ");
+			pw.println ();
+			pw.close();
+		} catch (Exception e) { e.printStackTrace(); throw new RuntimeException ("Bad"); }
+	}
 
-            if (a == null) continue;
+	public static void printToFile (File f , DoubleMatrix1D a) { printToFile (f , a.toArray()); }
 
-            pw.append("" + t);
+	public static void printToFile (File f , DoubleMatrix2D a) { printToFile (f , a.toArray()); }
 
-            if ((a instanceof Double) || (a instanceof Integer)) {
-                pw.append(" " + a);
-            } else if (a instanceof Map<?, ?>) {
-                Map<Long, Double> b = (Map<Long, Double>) a;
-                for (Object k : keySet)
-                    pw.append(" " + b.get((Long) k));
-            } else if (a instanceof double[]) {
-                for (double x : (double[]) a)
-                    pw.append(" " + x);
-            } else if (a instanceof DoubleMatrix1D) {
-                for (double x : ((DoubleMatrix1D) a).toArray())
-                    pw.append(" " + x);
-            } else if (a instanceof DoubleMatrix2D) {
-                double[][] val = ((DoubleMatrix2D) a).toArray();
-                for (double[] xArray : (double[][]) val)
-                    for (double x : xArray)
-                        pw.append(" " + x);
-            } else if (a instanceof int[]) {
-                for (int x : (int[]) a)
-                    pw.append(" " + x);
-            } else if (a instanceof int[][]) {
-                for (int[] xArray : (int[][]) a)
-                    for (int x : xArray)
-                        pw.append(" " + x);
-            } else if (a instanceof double[][]) {
-                for (double[] xArray : (double[][]) a)
-                    for (double x : xArray)
-                        pw.append(" " + x);
-            } else throw new RuntimeException("Unexpected type");
-
-            pw.append(NEWLINE);
-        }
-
-        return pw.toString();
-    }
-
-    public void printToFile(File f) {
-        try {
-            PrintWriter pw = new PrintWriter(f);
-            pw.append(this.toString());
-            pw.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Not possible to write in File " + f);
-        }
-    }
-
-    public List<Pair<Double, Object>> getList() {
-        return list;
-    }
-
-    public static void printToFile(File f, int[][] a) {
-        try {
-            PrintWriter pw = new PrintWriter(f);
-            for (int i = 0; i < a.length; i++) {
-                for (int j = 0; j < a[0].length; j++)
-                    pw.append(a[i][j] + " ");
-                pw.println();
-            }
-            pw.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Bad");
-        }
-    }
-
-    public static void printToFile(File f, double[][] a) {
-        try {
-            PrintWriter pw = new PrintWriter(f);
-            for (int i = 0; i < a.length; i++) {
-                for (int j = 0; j < a[0].length; j++)
-                    pw.append(a[i][j] + " ");
-                pw.println();
-            }
-            pw.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Bad");
-        }
-    }
-
-    public static void printToFile(File f, double[] a) {
-        try {
-            PrintWriter pw = new PrintWriter(f);
-            for (int i = 0; i < a.length; i++)
-                pw.print(a[i] + " ");
-            pw.println();
-            pw.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Bad");
-        }
-    }
-
-    public static void printToFile(File f, DoubleMatrix1D a) {
-        printToFile(f, a.toArray());
-    }
-
-    public static void printToFile(File f, DoubleMatrix2D a) {
-        printToFile(f, a.toArray());
-    }
-
-    public static void printToFile(File f, double a) {
-        try {
-            PrintWriter pw = new PrintWriter(f);
-            pw.println(a + " ");
-            pw.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Bad");
-        }
-    }
-
-    public static void printToFile(File f, Map<Long, ?> m) {
-        try {
-            PrintWriter pw = new PrintWriter(f);
-            for (long k : m.keySet())
-                pw.append(" " + m.get(k));
-            pw.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Bad");
-        }
-    }
+	public static void printToFile (File f , double a)
+	{
+		try
+		{
+			PrintWriter pw = new PrintWriter (f);
+			pw.println(a + " ");
+			pw.close();
+		} catch (Exception e) { e.printStackTrace(); throw new RuntimeException ("Bad"); }
+	}
+	public static void printToFile (File f , Map<Long,?> m)
+	{
+		try
+		{
+			PrintWriter pw = new PrintWriter (f);
+			for (long k : m.keySet ())
+				pw.append (" " + m.get(k));
+			pw.close();
+		} catch (Exception e) { e.printStackTrace(); throw new RuntimeException ("Bad"); }
+	}
 }
