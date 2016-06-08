@@ -85,12 +85,12 @@
         <file>
             <source>${project.build.directory}/${artifactId}-${version}-defaultCLI.jar</source>
             <outputDirectory>plugins</outputDirectory>
-            <destName>defaultCLI.jar</destName>
+            <destName>defaultCLITools.jar</destName>
         </file>
         <file>
             <source>${project.build.directory}/${artifactId}-${version}-defaultGUI.jar</source>
             <outputDirectory>plugins</outputDirectory>
-            <destName>defaultGUI.jar</destName>
+            <destName>defaultGUITools.jar</destName>
         </file>
         <file>
             <source>${project.build.directory}/${artifactId}-${version}-Net2Plan.jar</source>

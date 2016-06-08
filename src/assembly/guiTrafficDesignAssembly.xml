@@ -22,5 +22,17 @@
                 <exclude>GUOnlineSimulation.class</exclude>
             </excludes>
         </fileSet>
+        <!-- Sources -->
+        <fileSet>
+            <directory>${project.basedir}/src/main/java/com/net2plan/gui/tools</directory>
+            <outputDirectory>src/com/net2plan/gui/tools</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+            <excludes>
+                <exclude>GUINetworkDesign.class</exclude>
+                <exclude>GUOnlineSimulation.class</exclude>
+            </excludes>
+        </fileSet>
     </fileSets>
 </assembly>
