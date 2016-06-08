@@ -1,0 +1,2 @@
+# Net2Plan
+Net2Plan is a free and open-source Java tool devoted to the planning, optimization and evaluation of communication networks. It has been originally thought as a tool to assist the teaching of communication networks courses. Eventually it has converted into a powerful network optimization and planning tool for the academia and industry, together with a growing repository of network planning resources.
