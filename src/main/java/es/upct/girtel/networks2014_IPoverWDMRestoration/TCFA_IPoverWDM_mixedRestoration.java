@@ -82,7 +82,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
         netPlan.setRoutingType(Constants.RoutingType.HOP_BY_HOP_ROUTING, ipLayer);
         netPlan.setNetworkLayerDefault(wdmLayer);
         for (Link fiber : netPlan.getLinks(wdmLayer))
-            WDMUtils.setFiberNumWavelengths(fiber, W); /* Set the number of wavelengths per fiber */
+            WDMUtils.setFiberNumFrequencySlots(fiber, W); /* Set the number of wavelengths per fiber */
         netPlan.removeAllLinks(ipLayer);
         netPlan.removeAllDemands(wdmLayer);
 		
@@ -105,8 +105,8 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
             }
         }
 
-        final DoubleMatrix1D w_f = WDMUtils.getVectorFiberNumWavelengths(netPlan, wdmLayer);
-        final DoubleMatrix2D wavelengthFiberOccupancy = WDMUtils.getMatrixWavelength2FiberOccupancy(netPlan, true, wdmLayer);
+        final DoubleMatrix1D w_f = WDMUtils.getVectorFiberNumFrequencySlots(netPlan, wdmLayer);
+        final DoubleMatrix2D wavelengthFiberOccupancy = WDMUtils.getNetworkSlotAndRegeneratorOcupancy(netPlan, true, wdmLayer).getFirst();
 				
 		/* First stage: full mesh of enough lightpaths to carry all in one hop. HLDA strategy to create the lightpaths */
         DoubleMatrix1D pendingCarriedTraffic_d = netPlan.getVectorDemandOfferedTraffic(ipLayer).copy();
@@ -134,7 +134,9 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
 			
 			/* Add a demand and a route in the WDM layer */
             final Demand wdmLayerDemand = netPlan.addDemand(ingressNode, egressNode, lineRatePerLightpath_Gbps, null, wdmLayer);
-            final Route wdmLayerRoute = WDMUtils.addLightpathAndUpdateOccupancy(wdmLayerDemand, seqFibers, lineRatePerLightpath_Gbps, wavelengthId, wavelengthFiberOccupancy);
+            WDMUtils.RSA rsa = new WDMUtils.RSA (seqFibers, wavelengthId);
+            final Route wdmLayerRoute = WDMUtils.addLightpath(wdmLayerDemand, rsa , lineRatePerLightpath_Gbps);
+            WDMUtils.allocateResources(rsa , wavelengthFiberOccupancy , null);
 			
 			/* Add a link in the IP layer */
             final Link ipLayerLightpath = netPlan.addLink(ingressNode, egressNode, lineRatePerLightpath_Gbps, wdmLayerRoute.getLengthInKm(), wdmLayerRoute.getPropagationSpeedInKmPerSecond(), null, ipLayer);
@@ -229,7 +231,9 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
 					
 					/* Add a demand and a route in the WDM layer */
                     final Demand wdmLayerDemand = netPlan.addDemand(originNode, destinationNode, lineRatePerLightpath_Gbps, null, wdmLayer);
-                    final Route wdmLayerRoute = WDMUtils.addLightpathAndUpdateOccupancy(wdmLayerDemand, seqFibers, lineRatePerLightpath_Gbps, wavelengthId, wavelengthFiberOccupancy);
+                    final WDMUtils.RSA rsa = new WDMUtils.RSA(seqFibers, wavelengthId);
+                    final Route wdmLayerRoute = WDMUtils.addLightpath(wdmLayerDemand, rsa , lineRatePerLightpath_Gbps);
+                    WDMUtils.allocateResources(rsa , wavelengthFiberOccupancy , null);
 					
 					/* Add a link in the IP layer */
                     final Link ipLayerLightpath = netPlan.addLink(originNode, destinationNode, lineRatePerLightpath_Gbps, wdmLayerRoute.getLengthInKm(), wdmLayerRoute.getPropagationSpeedInKmPerSecond(), null, ipLayer);

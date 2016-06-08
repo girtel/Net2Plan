@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2015 Pablo Pavon Mariño.
+ * Copyright (c) 2015 Pablo Pavon Mariï¿½o.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Lesser Public License v2.1
  * which accompanies this distribution, and is available at
  * http://www.gnu.org/licenses/lgpl.html
  * 
  * Contributors:
- *     Pablo Pavon Mariño - initial API and implementation
+ *     Pablo Pavon Mariï¿½o - initial API and implementation
  ******************************************************************************/
 
 
@@ -55,12 +55,15 @@ import com.net2plan.internal.Constants;
 import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.WDMUtils;
+import com.net2plan.libraries.WDMUtils.RSA;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.IntUtils;
 import com.net2plan.utils.Triple;
 
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import cern.colt.matrix.tint.IntFactory2D;
+import cern.colt.matrix.tint.IntMatrix2D;
 
 /**
  * Importer filter for network designs from MatPlanWDM tool ({@code .xml}).
@@ -289,8 +292,9 @@ public class IOMatPlanWDM_design extends IOFilter
 							if (seqFiberLinks.isEmpty()) throw new Net2PlanException("No feasible route for lightpath " + lightpathDemand.getId ());
 							Route lightpathRoute = netPlan.addRoute(lightpathDemand, lightpathCapacity, 1.0, seqFiberLinks, null);
 							int[] seqWavelengths = IntUtils.toArray(CollectionUtils.select(fiberWavelengthMap, seqFiberLinks));
-							WDMUtils.setLightpathSeqWavelengths(lightpathRoute, seqWavelengths);
-							
+							IntMatrix2D seqFreqSlots = IntFactory2D.dense.make(new int [][] {seqWavelengths} );
+							WDMUtils.setLightpathRSAAttributes(lightpathRoute, new WDMUtils.RSA(seqFiberLinks , seqFreqSlots) , true);
+							WDMUtils.setLightpathRSAAttributes(lightpathRoute, new WDMUtils.RSA(seqFiberLinks , seqFreqSlots) , false);
 							lightpathDemand.coupleToNewLinkCreated(ipLayer);
 						}
 						

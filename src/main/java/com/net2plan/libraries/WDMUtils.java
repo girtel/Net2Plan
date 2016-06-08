@@ -1,4 +1,7 @@
 /*******************************************************************************
+
+
+
  * Copyright (c) 2016 Pablo Pavon-Marino.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Lesser Public License v2.1
@@ -10,29 +13,173 @@
  *     Pablo Pavon-Marino - from version 0.4.0 onwards
  ******************************************************************************/
 
+// PABLO: HACER QUE RSA SOLO TENGA COPIAS DE DATOS, NO ORIGINALES POR SI LA COSA CAMBIA
+// HACER UN CHECK DE RSA. EN EL CONSTRUCTOR SE HACE UN CHECK SUAVE. EL CHECK OTRO ES UN CHECK HARD (REGENERADORES SI O NO)
+
+// ojo al release resources: si hace falta tambien libear de la ruta original 
+
 package com.net2plan.libraries;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
+
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.ProtectionSegment;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.utils.Constants;
+import com.net2plan.utils.IntUtils;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.StringUtils;
 
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.colt.matrix.tint.IntFactory1D;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.utils.Constants;
-import com.net2plan.utils.IntUtils;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.StringUtils;
-import org.apache.commons.collections15.Transformer;
-
-import java.util.*;
+import cern.colt.matrix.tint.IntFactory2D;
+import cern.colt.matrix.tint.IntMatrix1D;
+import cern.colt.matrix.tint.IntMatrix2D;
 
 /**
  * Class to deal with optical topologies including wavelength assignment and regenerator placement.
  *
- * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  */
 public class WDMUtils
 {
+	private final static String ATTRIBUTE_ROWSEPARATOR = ";";
+	private final static String ATTRIBUTE_COLUMNSEPARATOR = " ";
+	
+	/**
+	 * This class represents a Routing and Spectrum Assignment, valid for a lightpath. This comprises a sequence of links, and for each link the set of frequency slots occupied.
+	 * This number of slots must be the same in all the links.
+	 */
+	public static class RSA
+	{
+		public final Node ingressNode, egressNode;
+		public final List<Link> seqLinks;
+		public final IntMatrix2D seqFrequencySlots;
+		public final int [] seqRegeneratorsOccupancy; // as many coordinates as links traversed, indicates with 1 if a regenerator is needed at origin node of the given link
+
+		public RSA (Route r , boolean initializeWithTheInitialRoute)
+		{
+			this.ingressNode = r.getIngressNode();
+			this.egressNode = r.getEgressNode();
+			this.seqLinks = new ArrayList<Link> (r.getSeqLinksRealPath());
+			try 
+			{ 
+				this.seqFrequencySlots = StringUtils.readIntMatrix(r.getAttribute(initializeWithTheInitialRoute? WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME));
+				this.seqRegeneratorsOccupancy = r.getAttribute(initializeWithTheInitialRoute? WDMUtils.SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME) == null? new int [seqLinks.size()] : StringUtils.toIntArray(StringUtils.split(r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME), " "));
+			} catch (Exception e) { throw new WDMException("RSA not correctly defined in the attributes: " + WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME + " = " + r.getAttribute(SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME) + "; SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME = " + r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME)); }
+			if (getNumSlots() != r.getOccupiedCapacityInNoFailureState()) throw new WDMException("The occupied link capacity is different to the number of slots");
+			checkValidity(false);
+		}
+		
+		public RSA (ProtectionSegment r)
+		{
+			this.ingressNode = r.getOriginNode();
+			this.egressNode = r.getDestinationNode();
+			this.seqLinks = new ArrayList<Link> (r.getSeqLinks());
+			try 
+			{ 
+				this.seqFrequencySlots = StringUtils.readIntMatrix(r.getAttribute(WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME));
+				this.seqRegeneratorsOccupancy = r.getAttribute(WDMUtils.SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME) == null? new int [seqLinks.size()] : StringUtils.toIntArray(StringUtils.split(r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME), " "));
+			} catch (Exception e) { throw new WDMException("RSA not correctly defined in the attributes: " + WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME + " = " + r.getAttribute(SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME) + "; SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME = " + r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME)); }
+			if (getNumSlots() != r.getOccupiedLinkCapacity()) throw new WDMException("The occupied link capacity is different to the number of slots");
+			checkValidity(false);
+		}
+
+		public RSA (List<Link> seqLinks , IntMatrix2D seqFrequencySlots , int [] seqRegenerators)
+		{ 
+			this.seqLinks = new ArrayList<Link> (seqLinks); this.seqFrequencySlots = seqFrequencySlots;
+			this.ingressNode = seqLinks.get(0).getOriginNode();
+			this.egressNode = seqLinks.get(seqLinks.size()-1).getDestinationNode();
+			this.seqRegeneratorsOccupancy = seqRegenerators == null? new int [seqLinks.size()] : Arrays.copyOf(seqRegenerators , seqRegenerators.length); 
+			checkValidity (false);
+		}
+
+		public RSA (List<Link> seqLinks , IntMatrix2D seqFrequencySlots)
+		{ 
+			this.seqLinks = new ArrayList<Link> (seqLinks); this.seqFrequencySlots = seqFrequencySlots;
+			this.ingressNode = seqLinks.get(0).getOriginNode();
+			this.egressNode = seqLinks.get(seqLinks.size()-1).getDestinationNode();
+			this.seqRegeneratorsOccupancy = new int [seqLinks.size()]; 
+			
+			checkValidity (false);
+		}
+		public RSA (List<Link> seqLinks , int initialSlot , int numSlots)
+		{ 
+			this.seqLinks = new ArrayList<Link>(seqLinks); 
+			this.seqFrequencySlots = IntFactory2D.dense.make(numSlots , seqLinks.size());
+			for (int e = 0; e < seqLinks.size() ; e ++)
+				for (int s = 0 ; s < numSlots ; s ++) seqFrequencySlots.set(s,e,s+initialSlot);
+			this.ingressNode = seqLinks.get(0).getOriginNode();
+			this.egressNode = seqLinks.get(seqLinks.size()-1).getDestinationNode();
+			this.seqRegeneratorsOccupancy = new int [seqLinks.size()]; 
+			checkValidity (false);
+		}
+		public RSA (List<Link> seqLinks , int initialSlot)
+		{ 
+			this (seqLinks , initialSlot , 1);
+		}
+		
+		public List<Node> getNodesWithFrequencySlotConversion ()
+		{
+			List<Node> res = new ArrayList<Node> ();
+			final int E = seqLinks.size();
+			for (int counterLink = 1; counterLink < E ; counterLink ++)
+			{
+				if (seqRegeneratorsOccupancy [counterLink] == 0)
+					if (!seqFrequencySlots.viewColumn(counterLink).equals(seqFrequencySlots.viewColumn(counterLink-1)))
+						res.add(seqLinks.get(counterLink).getOriginNode());
+			}
+			return res;
+		}
+		
+		public boolean hasFrequencySlotConversions () { return getNodesWithFrequencySlotConversion().size() > 0; }
+
+		public double getLengthInKm () { double accum = 0; for (Link e : seqLinks) accum += e.getLengthInKm(); return accum; }
+		
+		public int getNumSlots () { return seqFrequencySlots.rows(); }
+		
+		public void checkValidity (boolean checkRegenerators)
+		{
+			final int S = seqFrequencySlots.rows();
+			final int E = seqFrequencySlots.columns();
+			if (seqLinks == null) throw new WDMException ("The sequence of links is null");
+			if (seqLinks.isEmpty()) throw new WDMException ("The sequence of links is empty");
+			if (seqLinks.size() != E) throw new WDMException ("Wrong RSA");
+			if (S == 0) throw new WDMException ("Wrong RSA");
+			if (seqFrequencySlots.getMinLocation() [0] < 0) throw new WDMException ("Wrong slot identifier (cannot be negative)"); 
+			if (checkRegenerators)
+			{
+				if (seqRegeneratorsOccupancy.length != seqLinks.size()) throw new WDMException ("Wrong regenerators occupancy in the RSA");
+				seqRegeneratorsOccupancy [0] = 0;
+				for (int counterLink = 1; counterLink < E ; counterLink ++)
+				{
+					if (seqRegeneratorsOccupancy [counterLink] == 0)
+						if (!seqFrequencySlots.viewColumn(counterLink).equals(seqFrequencySlots.viewColumn(counterLink-1)))
+							throw new WDMException ("Wrong regenerators occupancy in the RSA: a regenrator is not placed in a node where the lighptath slot wavelengths change");
+				}
+			}
+		}
+		
+		
+	}
+	
 	/**
 	 * This class represents the request to add a new lightpath. It is used in online algorithms related to WDM networks, inside {@code SimEvent} objects.
 	 */
@@ -42,8 +189,7 @@ public class WDMUtils
 		public final NetworkLayer layer; 
 		public final Demand demand; 
 		public final Node ingressNode, egressNode; 
-		public final List<Link> seqLinks_primary;  public final int [] seqWavelengths_primary; 
-		public final List<Link> seqLinks_backup;  public final int [] seqWavelengths_backup; 
+		public final RSA primaryRSA , backupRSA;   
 		public final double lineRateGbps;
 
 		/**
@@ -51,16 +197,15 @@ public class WDMUtils
 		 * @param demand Demand
 		 * @param lineRateGbps Line rate in Gbps
 		 */
-		public LightpathAdd(Demand demand, double lineRateGbps) { this.demand = demand; this.seqLinks_primary = null; this.lineRateGbps = lineRateGbps; this.seqWavelengths_primary = null; this.seqLinks_backup = null; this.seqWavelengths_backup = null; this.ingressNode = demand.getIngressNode(); this.egressNode = demand.getEgressNode(); this.layer = demand.getLayer(); }
+		public LightpathAdd(Demand demand, double lineRateGbps) { this.demand = demand; this.primaryRSA = null; this.lineRateGbps = lineRateGbps; this.backupRSA = null; this.ingressNode = demand.getIngressNode(); this.egressNode = demand.getEgressNode(); this.layer = demand.getLayer(); }
 
 		/**
 		 * Constructor to generate a new {@code LightpathAdd} object.
 		 * @param demand Demand
-		 * @param seqLinks Sequence of fibers
-		 * @param seqWavelengths Sequence of wavelengths
+		 * @param rsa The lightpath RSA 
 		 * @param lineRateGbps Line rate in Gbps
 		 */
-		public LightpathAdd(Demand demand, List<Link> seqLinks , int [] seqWavelengths, double lineRateGbps) { this.demand = demand; this.seqLinks_primary = seqLinks; this.lineRateGbps = lineRateGbps; this.seqWavelengths_primary = seqWavelengths; this.seqLinks_backup = null; this.seqWavelengths_backup = null; this.ingressNode = demand.getIngressNode(); this.egressNode = demand.getEgressNode(); this.layer = demand.getLayer(); }
+		public LightpathAdd(Demand demand, RSA rsa , double lineRateGbps) { this.demand = demand; this.primaryRSA = rsa; this.lineRateGbps = lineRateGbps; this.backupRSA = null; this.ingressNode = demand.getIngressNode(); this.egressNode = demand.getEgressNode(); this.layer = demand.getLayer(); }
 
 		/**
 		 * Constructor to generate a new {@code LightpathAdd} object.
@@ -71,7 +216,7 @@ public class WDMUtils
 		 * @param seqWavelengths_backup Backup sequence of wavelengths
 		 * @param lineRateGbps Line rate in Gbps
 		 */
-		public LightpathAdd(Demand demand, List<Link> seqLinks_primary, List<Link> seqLinks_backup , int [] seqWavelengths_primary , int [] seqWavelengths_backup, double lineRateGbps) { this.demand = demand; this.seqLinks_primary = seqLinks_primary; this.lineRateGbps = lineRateGbps; this.seqWavelengths_primary = seqWavelengths_primary; this.seqLinks_backup = seqLinks_backup; this.seqWavelengths_backup = seqWavelengths_backup; this.ingressNode = demand.getIngressNode(); this.egressNode = demand.getEgressNode(); this.layer = demand.getLayer(); }
+		public LightpathAdd(Demand demand, RSA primaryRSA , RSA backupRSA , double lineRateGbps) { this.demand = demand; this.primaryRSA = primaryRSA; this.lineRateGbps = lineRateGbps; this.backupRSA = backupRSA ; this.ingressNode = demand.getIngressNode(); this.egressNode = demand.getEgressNode(); this.layer = demand.getLayer(); }
 
 		/**
 		 * Constructor to generate a new {@code LightpathAdd} object.
@@ -80,7 +225,7 @@ public class WDMUtils
 		 * @param layer Network layer
 		 * @param lineRateGbps Line rate in Gbps
 		 */
-		public LightpathAdd(Node ingressNode , Node egressNode , NetworkLayer layer , double lineRateGbps) { this.demand = null; this.seqLinks_primary = null; this.seqLinks_backup = null; this.lineRateGbps = lineRateGbps; this.seqWavelengths_primary = null; this.seqWavelengths_backup = null; this.ingressNode = ingressNode; this.egressNode = egressNode; this.layer = layer; }
+		public LightpathAdd(Node ingressNode , Node egressNode , NetworkLayer layer , double lineRateGbps) { this.demand = null; this.primaryRSA = null; this.backupRSA = null; this.lineRateGbps = lineRateGbps; this.ingressNode = ingressNode; this.egressNode = egressNode; this.layer = layer; }
 
 		/**
 		 * Constructor to generate a new {@code LightpathAdd} object.
@@ -91,7 +236,7 @@ public class WDMUtils
 		 * @param seqWavelengths Sequence of wavelengths
 		 * @param lineRateGbps Line rate in Gbps
 		 */
-		public LightpathAdd(Node ingressNode , Node egressNode , NetworkLayer layer , List<Link> seqLinks, int [] seqWavelengths , double lineRateGbps) { this.demand = null; this.seqLinks_primary = seqLinks; this.seqLinks_backup = null; this.lineRateGbps = lineRateGbps; this.seqWavelengths_primary = seqWavelengths; this.seqWavelengths_backup = null; this.ingressNode = ingressNode; this.egressNode = egressNode; this.layer = layer; }
+		public LightpathAdd(NetworkLayer layer , RSA rsa , double lineRateGbps) { this.demand = null; this.primaryRSA = rsa; this.backupRSA = null; this.lineRateGbps = lineRateGbps; this.ingressNode = rsa.ingressNode; this.egressNode = rsa.egressNode; this.layer = layer; }
 
 		/**
 		 * Constructor to generate a new {@code LightpathAdd} object.
@@ -104,8 +249,12 @@ public class WDMUtils
 		 * @param seqWavelengths_backup Backup sequence of wavelengths
 		 * @param lineRateGbps Line rate in Gbps
 		 */
-		public LightpathAdd(Node ingressNode , Node egressNode , NetworkLayer layer , List<Link> seqLinks_primary, List<Link> seqLinks_backup, int [] seqWavelengths_primary , int []
-			seqWavelengths_backup , double lineRateGbps) { this.demand = null; this.seqLinks_primary = seqLinks_primary; this.seqLinks_backup = seqLinks_backup; this.lineRateGbps = lineRateGbps; this.seqWavelengths_primary = seqWavelengths_primary; this.seqWavelengths_backup = seqWavelengths_backup; this.ingressNode = ingressNode; this.egressNode = egressNode; this.layer = layer; }
+		public LightpathAdd(NetworkLayer layer , RSA primaryRSA, RSA backupRSA , double lineRateGbps) 
+		{ 
+			this.demand = null; this.primaryRSA = primaryRSA; this.backupRSA = backupRSA; this.lineRateGbps = lineRateGbps; this.ingressNode = primaryRSA.ingressNode; this.egressNode = primaryRSA.egressNode; this.layer = layer; 
+			if (primaryRSA.ingressNode != backupRSA.ingressNode) throw new WDMException ("primary and backup RSAs must hava common end nodes"); 
+			if (primaryRSA.egressNode != backupRSA.egressNode) throw new WDMException ("primary and backup RSAs must hava common end nodes"); 
+		}
 	}; 
 
 	/**
@@ -122,8 +271,12 @@ public class WDMUtils
 	/**
 	 * This class represents the request to modify an existing lightpath. It is used in online algorithms related to WDM networks, inside {@code SimEvent} objects.
 	 */
-	public static class LightpathModify { public final Route lp; public final List<Link> seqLinks; public final int [] seqWavelengths; public final double carriedTraffic; public final double
-		occupiedLinkCapacity;
+	public static class LightpathModify 
+	{ 
+		public final Route lp; 
+		public final RSA rsa; 
+		public final double carriedTraffic; 
+//		public final double occupiedLinkCapacity;
 
 		/**
 		 * Constructor to generate a new {@code LightpathModify} object.
@@ -133,8 +286,8 @@ public class WDMUtils
 		 * @param occupiedLinkCapacity New occupied link capacity
 		 * @param seqWavelengths New sequence of wavelengths
 		 */
-		public LightpathModify (Route lp , List<Link> seqLinks, double carriedTraffic, double occupiedLinkCapacity , int [] seqWavelengths) { this.lp = lp; this.seqLinks = seqLinks; this
-				.carriedTraffic = carriedTraffic; this.occupiedLinkCapacity = occupiedLinkCapacity; this.seqWavelengths = seqWavelengths; }  };
+		public LightpathModify (Route lp , RSA rsa , double carriedTraffic) { this.lp = lp; this.rsa = rsa; this.carriedTraffic = carriedTraffic; }  
+	};
 	
 	/**
 	 * Route/protection segment attribute name for sequence of regenerators.
@@ -148,15 +301,22 @@ public class WDMUtils
 	 * 
 	 * @since 0.3.0
 	 */
-	public final static String SEQUENCE_OF_WAVELENGTHS_ATTRIBUTE_NAME = "seqWavelengths";
+	public final static String SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME = "seqFrequencySlots";
 	
 	/**
 	 * Route/protection segment attribute name for sequence of wavelengths for the initial sequence of links (when the route was created)
 	 * 
 	 * @since 0.3.0
 	 */
-	public final static String SEQUENCE_OF_WAVELENGTHS_INITIAL_ROUTE_ATTRIBUTE_NAME = "seqWavelengthsInitialRoute";
+	public final static String SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME = "seqFrequencySlotsInitialRoute";
 	
+	/**
+	 * Route/protection segment attribute name for sequence of regenerators occupied for the initial sequence of links (when the route was created)
+	 * 
+	 * @since 0.3.0
+	 */
+	public final static String SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME = "seqRegeneratorsInitialRoute";
+
 	private static class WDMException extends Net2PlanException
 	{
 		public WDMException(String message)
@@ -167,106 +327,68 @@ public class WDMUtils
 
 	private WDMUtils() { }
 
-	/**
-	 * Creates a new lightpath and updates the wavelength occupancy.
-	 * @param demand Demand
-	 * @param seqFibers Sequence of fibers
-	 * @param binaryRatePerChannel Binary rate per channel in Gbps
-	 * @param wavelengthId Wavelength identifier (the same for all traversed fibers)
-	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
-	 * @return The newly create lightpath (as a route)
-	 */
-	public static Route addLightpathAndUpdateOccupancy (Demand demand , List<Link> seqFibers, double binaryRatePerChannel , int wavelengthId, DoubleMatrix2D wavelengthFiberOccupancy)
-	{
-		return addLightpathAndUpdateOccupancy (demand , seqFibers, binaryRatePerChannel , IntUtils.constantArray(seqFibers.size() , wavelengthId), null , wavelengthFiberOccupancy, null);
-	}
+//	/**
+//	 * Creates a new lightpath and updates the wavelength occupancy.
+//	 * @param demand Demand
+//	 * @param seqFibers Sequence of fibers
+//	 * @param binaryRatePerChannel Binary rate per channel in Gbps
+//	 * @param wavelengthId Wavelength identifier (the same for all traversed fibers)
+//	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
+//	 * @return The newly create lightpath (as a route)
+//	 */
+//	public static Route addLightpathAndUpdateOccupancy (Demand demand , List<Link> seqFibers, double binaryRatePerChannel , int wavelengthId, DoubleMatrix2D wavelengthFiberOccupancy)
+//	{
+//		return addLightpathAndUpdateOccupancy (demand , seqFibers, binaryRatePerChannel , IntUtils.constantArray(seqFibers.size() , wavelengthId), null , wavelengthFiberOccupancy, null);
+//	}
+//
+//	/**
+//	 * Creates a new lightpath and updates the wavelength occupancy.
+//	 * @param demand Demand
+//	 * @param seqFibers Sequence of fibers
+//	 * @param binaryRatePerChannel Binary rate per channel in Gbps
+//	 * @param seqWavelengths Sequence of wavelengths
+//	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
+//	 * @return The newly create lightpath (as a route)
+//	 */
+//	public static Route addLightpathAndUpdateOccupancy (Demand demand , List<Link> seqFibers, double binaryRatePerChannel , int[] seqWavelengths, DoubleMatrix2D wavelengthFiberOccupancy)
+//	{
+//		return addLightpathAndUpdateOccupancy (demand , seqFibers, binaryRatePerChannel , seqWavelengths, null , wavelengthFiberOccupancy, null);
+//	}
 
 	/**
 	 * Creates a new lightpath and updates the wavelength occupancy.
 	 * @param demand Demand
 	 * @param seqFibers Sequence of fibers
 	 * @param binaryRatePerChannel Binary rate per channel in Gbps
-	 * @param seqWavelengths Sequence of wavelengths
-	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
-	 * @return The newly create lightpath (as a route)
-	 */
-	public static Route addLightpathAndUpdateOccupancy (Demand demand , List<Link> seqFibers, double binaryRatePerChannel , int[] seqWavelengths, DoubleMatrix2D wavelengthFiberOccupancy)
-	{
-		return addLightpathAndUpdateOccupancy (demand , seqFibers, binaryRatePerChannel , seqWavelengths, null , wavelengthFiberOccupancy, null);
-	}
-
-	/**
-	 * Creates a new lightpath and updates the wavelength occupancy.
-	 * @param demand Demand
-	 * @param seqFibers Sequence of fibers
-	 * @param binaryRatePerChannel Binary rate per channel in Gbps
-	 * @param seqWavelengths Sequence of wavelengths
+	 * @param seqFrequencySlots Sequence of wavelengths
 	 * @param seqRegenerators Sequence of regenerators
 	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
 	 * @param nodeRegeneratorOccupancy Number of regenerators installed per node
 	 * @return The newly create lightpath (as a route)
 	 */
-	public static Route addLightpathAndUpdateOccupancy (Demand demand , List<Link> seqFibers, double binaryRatePerChannel , int[] seqWavelengths, int[] seqRegenerators, DoubleMatrix2D
-		wavelengthFiberOccupancy, DoubleMatrix1D nodeRegeneratorOccupancy)
+	public static Route addLightpath (Demand demand , RSA rsa , double binaryRatePerChannel)
 	{
 		NetPlan np = demand.getNetPlan();
-		if (seqWavelengths == null) throw new Net2PlanException ("Specify the wavelengths");
-		if (seqWavelengths.length != seqFibers.size()) throw new Net2PlanException ("Wrong wavelength array size");
-		Route lp = np.addRoute(demand , binaryRatePerChannel , 1 , seqFibers, null);
-		allocateResources(seqFibers, seqWavelengths, wavelengthFiberOccupancy, seqRegenerators, nodeRegeneratorOccupancy);
-		setLightpathSeqWavelengths(lp , seqWavelengths);
-		setLightpathSeqWavelengthsInitialRoute (lp , seqWavelengths);
-		if (seqRegenerators != null) if (seqRegenerators.length != 0) setLightpathSeqRegenerators(lp , seqRegenerators);
+		Route lp = np.addRoute(demand , binaryRatePerChannel , rsa.getNumSlots() , rsa.seqLinks, null);
+		setLightpathRSAAttributes (lp , rsa , false);
+		setLightpathRSAAttributes (lp , rsa , true);
 		return lp;
 	}
 
 	/**
 	 * Creates a new protection lightpath and updates the wavelength occupancy.
 	 * @param seqFibers Sequence of fibers
-	 * @param wavelengthId Wavelength identifier (the same for all traversed fibers)
-	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
-	 * @return The newly created lightpath (as a protection segment)
-	 */
-	public static ProtectionSegment addLightpathAsProtectionSegmentAndUpdateOccupancy (List<Link> seqFibers, int wavelengthId, DoubleMatrix2D wavelengthFiberOccupancy)
-	{
-		return addLightpathAsProtectionSegmentAndUpdateOccupancy (seqFibers, IntUtils.constantArray(seqFibers.size() , wavelengthId), null , wavelengthFiberOccupancy, null);
-	}
-
-	/**
-	 *  Creates a new protection lightpath and updates the wavelength occupancy.
-	 * @param seqFibers Sequence of fibers
-	 * @param seqWavelengths Sequence of wavelengths
-	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
-	 * @return The newly created lightpath (as a protection segment)
-	 */
-	public static ProtectionSegment addLightpathAsProtectionSegmentAndUpdateOccupancy (List<Link> seqFibers, int[] seqWavelengths, DoubleMatrix2D wavelengthFiberOccupancy)
-	{
-		return addLightpathAsProtectionSegmentAndUpdateOccupancy (seqFibers, seqWavelengths, null , wavelengthFiberOccupancy, null);
-	}
-
-	/**
-	 * Creates a new protection lightpath and updates the wavelength occupancy.
-	 * @param seqFibers Sequence of fibers
-	 * @param seqWavelengths Sequence of wavelengths
+	 * @param seqFrequencySlots Sequence of wavelengths
 	 * @param seqRegenerators Sequence of regeneratos
 	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
 	 * @param nodeRegeneratorOccupancy Number of regenerators installed per node
 	 * @return The newly created lightpath (as a protection segment)
 	 */
-	public static ProtectionSegment addLightpathAsProtectionSegmentAndUpdateOccupancy (List<Link> seqFibers, int[] seqWavelengths, int[] seqRegenerators, DoubleMatrix2D wavelengthFiberOccupancy,
-		DoubleMatrix1D nodeRegeneratorOccupancy)
+	public static ProtectionSegment addLightpathAsProtectionSegment (RSA rsa)
 	{
-		if (seqWavelengths == null) throw new Net2PlanException ("Specify the wavelengths");
-		if (seqWavelengths.length != seqFibers.size()) throw new Net2PlanException ("Wrong wavelength array size");
-		if (seqFibers.isEmpty()) throw new Net2PlanException ("E");
-		NetPlan np = seqFibers.get(0).getNetPlan();
-		ProtectionSegment lp = np.addProtectionSegment(seqFibers , 1 , null);
-		allocateResources(seqFibers, seqWavelengths, wavelengthFiberOccupancy, seqRegenerators, nodeRegeneratorOccupancy);
-//		System.out.println ("addLightpathAsProtectionSegmentAndUpdateOccupancy: seqwavelength: " + Arrays.toString (seqWavelengths));
-		setLightpathSeqWavelengths(lp , seqWavelengths);
-//		System.out.println ("after: " + Arrays.toString (WDMUtils.getLightpathSeqWavelengths(lp)));
-		if (seqRegenerators != null) if (seqRegenerators.length != 0) setLightpathSeqRegenerators(lp , seqRegenerators);
-//		System.out.println ("afterrrrrr: " + Arrays.toString (WDMUtils.getLightpathSeqWavelengths(lp)));
+		NetPlan np = rsa.seqLinks.get(0).getNetPlan();
+		ProtectionSegment lp = np.addProtectionSegment(rsa.seqLinks, rsa.getNumSlots() , null);
+		setLightpathRSAAttributes (lp , rsa);
 		return lp;
 	}
 
@@ -282,53 +404,15 @@ public class WDMUtils
 	{
 		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		
-		getVectorFiberNumWavelengths (netPlan);
+		for (Route lpRoute : netPlan.getRoutes(layer))
+			if (!lpRoute.isDown())
+				new RSA (lpRoute , false).checkValidity(true); // makes the check
 
-		Collection<Route> lpRoutes = netPlan.getRoutes(layer);
-		for (Route lpRoute : lpRoutes)
-		{
-			int numHops_thisLp = lpRoute.getNumberOfHops();
-			int[] seqWavelengths_thisLp = getLightpathSeqWavelengths(lpRoute);
-			int[] seqRegenerators_thisLp = getLightpathSeqRegenerators(lpRoute);
+		for (ProtectionSegment protectionLp : netPlan.getProtectionSegments(layer))
+			if (!protectionLp.isDown())
+				new RSA (protectionLp).checkValidity(true); // makes the check
 
-			if (lpRoute.isDown())
-			{
-//				if (seqWavelengths_thisLp.length != 0) throw new WDMException("Failing lightpath route " + lpRoute.getId () + " must not occupy wavelength resources");
-//				if (seqRegenerators_thisLp.length != 0) throw new WDMException("Failing lightpath route " + lpRoute.getId () + " must not occupy regenerator resources");
-			}
-			else
-			{
-				double y_p_thisRoute = lpRoute.getOccupiedCapacity();
-				if (y_p_thisRoute != 1) throw new WDMException("Lightpath route " + lpRoute.getId () + " must occupy only one wavelength per fiber (current value: " + y_p_thisRoute + ")");
-				if (seqWavelengths_thisLp.length != numHops_thisLp) throw new WDMException("Length of sequence of wavelengths for lightpath " + lpRoute.getId  ()+ " does not match the number of traversed fibers");
-				if (seqRegenerators_thisLp.length > 0 && seqRegenerators_thisLp.length != numHops_thisLp) throw new WDMException("Length of sequence of regenerators/wavelength converters for lightpath " + lpRoute.getId () + " does not match the number of traversed fibers");
-			}
-		}
-
-		Collection <ProtectionSegment> protectionLps = netPlan.getProtectionSegments(layer);
-		for (ProtectionSegment protectionLp : protectionLps)
-		{
-			double u_e_thisSegment = protectionLp.getReservedCapacityForProtection();
-			if (u_e_thisSegment != 1) throw new WDMException("Protection lightpath " + protectionLp.getId () + " must occupy only one wavelength per fiber");
-
-			int numHops_thisProtectionLp = protectionLp.getNumberOfHops();
-			int[] seqWavelengths_thisProtectionLp = getProtectionLightpathSeqWavelengths(protectionLp);
-			int[] seqRegenerators_thisProtectionLp = getProtectionLightpathSeqRegenerators(protectionLp);
-			
-			if (protectionLp.isDown())
-			{
-//				if (seqWavelengths_thisProtectionLp.length != 0) throw new WDMException("Failing protection lightpath " + protectionLp.getId () + " must not occupy wavelength resources");
-//				if (seqRegenerators_thisProtectionLp.length != 0) throw new WDMException("Failing protection lightpath " + protectionLp.getId () + " must not occupy regenerator resources");
-			}
-			else
-			{
-				if (seqWavelengths_thisProtectionLp.length != numHops_thisProtectionLp) throw new WDMException("Length of sequence of wavelengths for protection lightpath " + protectionLp.getId () + " does not match the number of traversed fibers");
-				if (seqRegenerators_thisProtectionLp.length > 0 && seqRegenerators_thisProtectionLp.length != numHops_thisProtectionLp) throw new WDMException("Length of sequence of regenerators/wavelength converters for protection lightpath " + protectionLp.getId () + " does not match the number of traversed fibers");
-			}
-		}
-
-		getVectorNodeRegeneratorOccupancy (netPlan, countDownLightpathResources , layer);
-		getMatrixWavelength2FiberOccupancy(netPlan, countDownLightpathResources , layer);
+		getNetworkSlotAndRegeneratorOcupancy(netPlan , countDownLightpathResources , layer); // serves as check
 	}
 	
 	/**
@@ -378,12 +462,12 @@ public class WDMUtils
 	 * only following a distance criterium, assuming wavelength conversion is required.
 	 *
 	 * @param seqFibers Sequence of traversed fibers
-	 * @param seqWavelengths Sequence of wavelengths (as many as the number of links in the lightpath)
+	 * @param seqFrequencySlots Sequence of frequency slots occupied (one row per slot, one column per traversed fiber)
 	 * @param l_f Physical length in km per fiber
 	 * @param maxRegeneratorDistanceInKm Maximum regeneration distance
 	 * @return A vector with as many elements as traversed links in the route/segment. Each element is a 1 if an optical regenerator is used at the origin node of the corresponding link, and a 0 if not. First element is always 0.
 	 */
-	public static int[] computeRegeneratorPositions(List<Link> seqFibers, int[] seqWavelengths, DoubleMatrix1D l_f, double maxRegeneratorDistanceInKm)
+	public static int[] computeRegeneratorPositions(List<Link> seqFibers, DoubleMatrix2D seqFrequencySlots, DoubleMatrix1D l_f, double maxRegeneratorDistanceInKm)
 	{
 		int numHops = seqFibers.size();
 
@@ -404,7 +488,7 @@ public class WDMUtils
 
 			accumDistance += fiberLengthInKm;
 
-			if (accumDistance > maxRegeneratorDistanceInKm || (hopId > 0 && seqWavelengths[hopId - 1] != seqWavelengths[hopId]))
+			if (accumDistance > maxRegeneratorDistanceInKm || (hopId > 0 && (!seqFrequencySlots.viewColumn(hopId - 1).equals(seqFrequencySlots.viewColumn(hopId) ))))
 			{
 				seqRegenerators[hopId] = 1;
 				accumDistance = fiberLengthInKm;
@@ -419,15 +503,15 @@ public class WDMUtils
 	}
 	
 	/**
-	 * Returns the number of wavelengths for the given fiber. It is equivalent to 
+	 * Returns the number of frequency slots for the given fiber. It is equivalent to 
 	 * the method {@link Link#getCapacity() getCapacity()}
 	 * from the {@link com.net2plan.interfaces.networkDesign.Link Link} object,
 	 * but converting capacity value from {@code double} to {@code int}.
 	 * 
 	 * @param fiber Link fiber
-	 * @return Number of wavelengths
+	 * @return Number of frequency slots
 	 */
-	public static int getFiberNumWavelengths(Link fiber)
+	public static int getFiberNumFrequencySlots(Link fiber)
 	{
 		double u_e = fiber.getCapacity();
 		int w_f_thisFiber = (int) u_e;
@@ -437,116 +521,47 @@ public class WDMUtils
 
 
 	/**
-	 * Returns the total number of wavelengths in each fiber.
+	 * Returns the total number of frequency slots in each fiber.
 	 * 
 	 * @param netPlan A {@link com.net2plan.interfaces.networkDesign.NetPlan} representing a WDM physical topology
 	 * @param optionalLayerParameter Network layer (optional)
 	 * @return Number of wavelengths per fiber
 	 */
-	public static DoubleMatrix1D getVectorFiberNumWavelengths (NetPlan netPlan, NetworkLayer ... optionalLayerParameter)
+	public static DoubleMatrix1D getVectorFiberNumFrequencySlots (NetPlan netPlan, NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		Collection<Link> fibers = netPlan.getLinks(layer);
 		DoubleMatrix1D w_f = DoubleFactory1D.dense.make (fibers.size ());
-		for (Link fiber : fibers) w_f.set(fiber.getIndex () , getFiberNumWavelengths(fiber));
+		for (Link fiber : fibers) w_f.set(fiber.getIndex () , getFiberNumFrequencySlots(fiber));
 		return w_f;
 	}
 
 	/**
 	 * Returns {@code true} if the given sequence of wavelengths has not been allocated in the given sequence of links, {@code false} otherwise.
-	 * @param links Sequence of links
-	 * @param seqWavelengths Sequence of wavelengths
+	 * @param rsa the RSA to check
 	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
 	 * @return See description above
 	 */
-	public static boolean isNonConflictingRWA (List<Link> links , int [] seqWavelengths , DoubleMatrix2D wavelengthFiberOccupancy)
+	public static boolean isAllocatableRSASet (DoubleMatrix2D wavelengthFiberOccupancy , RSA ... rsas)
 	{
-		int counter = 0; for (Link e : links) if (wavelengthFiberOccupancy.get (seqWavelengths [counter ++] , e.getIndex ()) != 0) return false;
-		return true;
-	}
-
-	/**
-	 * Returns {@code true} if the given pair of sequences of wavelengths has not been allocated in the given pair of sequences of links, {@code false} otherwise.
-	 * @param linksPrimary Primary sequence of links
-	 * @param seqWavelengthsPrimary Primary sequence of wavelengths
-	 * @param linksBackup Backup sequence of links
-	 * @param seqWavelengthsBackup Backup sequence of wavelengths
-	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
-	 * @return See description above
-	 */
-	public static boolean isNonConflictingRWAPair (List<Link> linksPrimary , int [] seqWavelengthsPrimary , List<Link> linksBackup , int [] seqWavelengthsBackup , DoubleMatrix2D wavelengthFiberOccupancy)
-	{
-		DoubleMatrix2D checkMatrix = DoubleFactory2D.sparse.make (wavelengthFiberOccupancy.rows () , wavelengthFiberOccupancy.columns());
-		int counter = 0; for (Link e : linksPrimary) 
-		{ 
-			if (wavelengthFiberOccupancy.get (seqWavelengthsPrimary [counter] , e.getIndex ()) != 0) return false; 
-			if (checkMatrix.get (seqWavelengthsPrimary [counter] , e.getIndex ()) != 0) return false; 
-			checkMatrix.set (seqWavelengthsPrimary [counter ++] , e.getIndex () , 1.0);
-		}
-		counter = 0; for (Link e : linksBackup) 
-		{ 
-			if (wavelengthFiberOccupancy.get (seqWavelengthsBackup [counter] , e.getIndex ()) != 0) return false; 
-			if (checkMatrix.get (seqWavelengthsBackup[counter] , e.getIndex ()) != 0) return false; 
-			checkMatrix.set (seqWavelengthsBackup [counter ++] , e.getIndex () , 1.0);
+		IntMatrix2D checkMatrix = IntFactory2D.sparse.make (wavelengthFiberOccupancy.rows () , wavelengthFiberOccupancy.columns());
+		for (RSA rsa : rsas)
+		{
+			int orderTravLink = 0; 
+			for (Link e : rsa.seqLinks)
+			{
+				for (int s = 0; s < rsa.seqFrequencySlots.rows() ; s ++)
+				{
+					final int slotIndex = rsa.seqFrequencySlots.get(orderTravLink,s);
+					final int linkIndex = e.getIndex();
+					if (wavelengthFiberOccupancy.get (slotIndex , linkIndex) != 0) return false;
+					if (checkMatrix.get (slotIndex , linkIndex) != 0) return false;
+					checkMatrix.set (slotIndex , linkIndex , 1);
+				}
+				orderTravLink ++;
+			}
 		}
 		return true;
-	}
-
-	/**
-	 * Returns the sequence of regenerators/wavelength converters for the given lightpath.
-	 * 
-	 * @param route Ligthpath (as a route)
-	 * @return A 0-1 array indicating whether (1) or not (0) a regenerator/wavelength converter is required at the origin node of the corresponding fiber
-	 */
-	public static int[] getLightpathSeqRegenerators(Route route)
-	{
-		return parseSeqRegenerators(route.getAttributes());
-	}
-
-	/**
-	 * Returns the sequence of regenerators/wavelength converters for the given lightpath.
-	 * @param segment Lightpath (as a protection segment)
-	 * @return A 0-1 array indicating whether (1) or not (0) a regenerator/wavelength converter is required at the origin node of the corresponding fiber
-	 */
-	public static int[] getLightpathSeqRegenerators(ProtectionSegment segment)
-	{
-		return parseSeqRegenerators(segment.getAttributes());
-	}
-
-	/**
-	 * Returns the sequence of wavelengths for the given lightpath.
-	 * @param route Lightpath (as a route)
-	 * @return Sequence of wavelengths
-	 */
-	public static int[] getLightpathSeqWavelengths(Route route)
-	{
-		final int [] seq = parseSeqWavelengths(route.getAttributes());
-		if (seq.length != route.getSeqLinksRealPath().size()) throw new Net2PlanException ("Wrong size of the sequence of wavelengths");
-		return seq;
-	}
-
-	/**
-	 * Returns the initial sequence of wavelengths for the given lightpath (when it was created).
-	 * @param route Lightpath (as a route)
-	 * @return Sequence of wavelengths
-	 */
-	public static int[] getLightpathSeqWavelengthsInitialRoute (Route route)
-	{
-		final int [] seq = parseSeqWavelengthsInitialRoute(route.getAttributes());
-		if (seq.length != route.getInitialSequenceOfLinks().size()) throw new Net2PlanException ("Wrong size of the sequence of wavelengths");
-		return seq;
-	}
-
-	/**
-	 * Returns the sequence of wavelengths for the given lightpath.
-	 * @param segment Lightpath (as a protection sement)
-	 * @return Sequence of wavelengths
-	 */
-	public static int[] getLightpathSeqWavelengths(ProtectionSegment segment)
-	{
-		final int [] seq = parseSeqWavelengths(segment.getAttributes());
-		if (seq.length != segment.getSeqLinks().size()) throw new Net2PlanException ("Wrong size of the sequence of wavelengths");
-		return seq;
 	}
 
 	/**
@@ -556,13 +571,16 @@ public class WDMUtils
 	 * @param optionalLayerParameter Network layer (optional)
 	 * @return Fibers occupied in each wavelength
 	 */
-	public static DoubleMatrix2D getMatrixWavelength2FiberOccupancy(NetPlan netPlan, boolean countDownLightpathResources , NetworkLayer ... optionalLayerParameter)
+	public static Pair<DoubleMatrix2D,DoubleMatrix1D> getNetworkSlotAndRegeneratorOcupancy(NetPlan netPlan, boolean countDownLightpathResources , NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		final int E = netPlan.getLinks (layer).size ();
-		DoubleMatrix1D w_f = getVectorFiberNumWavelengths (netPlan, layer);
+		final int E = netPlan.getNumberOfLinks (layer);
+		final int N = netPlan.getNumberOfNodes ();
+		DoubleMatrix1D w_f = getVectorFiberNumFrequencySlots (netPlan, layer);
 		final int W = w_f.size () == 0? 0 : (int) w_f.getMaxLocation() [0];
 		DoubleMatrix2D wavelengthFiberOccupancy = DoubleFactory2D.dense.make (W,E);
+		DoubleMatrix1D nodeRegeneratorOccupancy = DoubleFactory1D.dense.make (N);
+	
 		/* The wavelengths above the maximum number of wavelengths of a fiber, are set as occupied */
 		for (int e = 0 ; e < E ; e ++) for (int w = (int) w_f.get(e) ; w < W ; w ++) wavelengthFiberOccupancy.set (e,w,1);
 		
@@ -570,240 +588,23 @@ public class WDMUtils
 		for (Route lpRoute : netPlan.getRoutes(layer))
 		{
 			if (!countDownLightpathResources && lpRoute.isDown()) continue;
-			if (lpRoute.getOccupiedCapacityInNoFailureState() == 0) continue;
-
-			List<Link> seqFibers = lpRoute.getSeqLinksRealPath();
-			int[] seqWavelengths = getLightpathSeqWavelengths(lpRoute);
-
-			for (int hopIndex = 0; hopIndex < seqFibers.size(); hopIndex++)
-			{
-				Link fiber = seqFibers.get(hopIndex);
-				int wavelengthId = seqWavelengths[hopIndex];
-
-				int numWavelengths_thisFiber = (int) w_f.get(fiber.getIndex());
-				if (numWavelengths_thisFiber <= wavelengthId)
-					throw new WDMException(String.format("Fiber %d only has %d wavelengths (lightpath %d, wavelength %d)", fiber.getId (), numWavelengths_thisFiber, lpRoute.getId (), wavelengthId));
-
-				if (wavelengthFiberOccupancy.get(wavelengthId , fiber.getIndex ()) != 0)
-					throw new WDMException(String.format("Two lightpaths/segments cannot share a wavelength (fiber %d, wavelength %d)", fiber.getId (), wavelengthId));
-
-				wavelengthFiberOccupancy.set(wavelengthId , fiber.getIndex () , 1.0);
-			}
+			if (lpRoute.getOccupiedCapacity() == 0) continue; // not been used now
+			allocateResources(new RSA (lpRoute , false) , wavelengthFiberOccupancy , nodeRegeneratorOccupancy);
 		}
 
 		/* Wavlengths occupied by the lightpaths as protection segments */
 		for (ProtectionSegment segment : netPlan.getProtectionSegments(layer))
 		{
-			if (segment.isDown()) continue;
-			if (segment.getReservedCapacityForProtection() == 0) continue;
-			if (segment.getTraversingRoutes().size() == 1) continue; // its occupancy was already updated
-			if (segment.getTraversingRoutes().size() > 1) throw new RuntimeException ("Bad");
-			
-			List<Link> seqFibers = segment.getSeqLinks();
-			int[] seqWavelengths = getProtectionLightpathSeqWavelengths(segment);
-
-			for (int hopIndex = 0; hopIndex < seqFibers.size(); hopIndex++)
-			{
-				Link fiber = seqFibers.get(hopIndex);
-				int wavelengthId = seqWavelengths[hopIndex];
-
-				int numWavelengths_thisFiber = (int) w_f.get(fiber.getIndex ());
-				if (numWavelengths_thisFiber <= wavelengthId)
-					throw new WDMException(String.format("Fiber %d only has %d wavelengths (segment %d, wavelength %d)", fiber.getId (), numWavelengths_thisFiber, segment.getId (), wavelengthId));
-
-				if (wavelengthFiberOccupancy.get(wavelengthId , fiber.getIndex ()) != 0)
-				{
-					System.out.println ("segment.getLInks(): " + segment.getSeqLinks());
-					System.out.println ("segment.getAssociatedRoutesToWhichIsBackup(): " + segment.getAssociatedRoutesToWhichIsBackup());
-					for (Route r : segment.getAssociatedRoutesToWhichIsBackup())
-					{
-						System.out.println ("r.getSeqLinksAndProtectionSegments(): " + r.getSeqLinksAndProtectionSegments());
-						System.out.println ("r.getSeqLinksRealPath(): " + r.getSeqLinksRealPath());
-						System.out.println ("r.getSeqLinksAndProtectionSegments(): " + r.getSeqLinksAndProtectionSegments());
-					}
-					throw new WDMException(String.format("Two lightpaths/segments cannot share a wavelength (fiber %d, wavelength %d)", fiber.getId (), wavelengthId));
-				}
-				wavelengthFiberOccupancy.set(wavelengthId , fiber.getIndex () , 1.0);
-			}
-		}
-
-		return wavelengthFiberOccupancy;
-	}
-	
-	/**
-	 * Returns the number of regenerators installed per node.
-	 *
-	 * @param netPlan A {@link com.net2plan.interfaces.networkDesign.NetPlan} representing a physical topology
-	 * @param countDownLightpathResources Wheter or not include lightpaths that are down
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return Number of regenerators installed per node
-	 */
-	public static DoubleMatrix1D getVectorNodeRegeneratorOccupancy (NetPlan netPlan, boolean countDownLightpathResources , NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		List<Node> nodes = netPlan.getNodes();
-		DoubleMatrix1D regeneratorOccupancy = DoubleFactory1D.dense.make (nodes.size ());
-
-		List<Route> lightpaths = netPlan.getRoutes(layer);
-		List<ProtectionSegment> segments = netPlan.getProtectionSegments(layer);
-		for (Route lightpath : lightpaths)
-		{
-			if (!countDownLightpathResources && lightpath.isDown()) continue;
-			List<Link> seqFibers = lightpath.getSeqLinksRealPath();
-			int[] seqRegenerators = getLightpathSeqRegenerators(lightpath);
-			if (seqRegenerators.length == 0)
-			{
-				continue;
-			}
-
-			for (int hopIndex = 0; hopIndex < seqFibers.size(); hopIndex++)
-			{
-				if (seqRegenerators[hopIndex] == 0)
-				{
-					continue;
-				}
-
-				Link fiber = seqFibers.get(hopIndex);
-				Node node = fiber.getOriginNode();
-				regeneratorOccupancy.set(node.getIndex (), regeneratorOccupancy.get(node.getIndex ()) + 1);
-			}
-		}
-
-		for (ProtectionSegment segment : segments)
-		{
 			if (!countDownLightpathResources && segment.isDown()) continue;
-			List<Link> seqFibers = segment.getSeqLinks();
-			int[] seqRegenerators = getProtectionLightpathSeqRegenerators(segment);
-			if (seqRegenerators.length == 0) continue;
+			if (segment.getReservedCapacityForProtection() == 0) continue; // not been used now
+			allocateResources(new RSA (segment) , wavelengthFiberOccupancy , nodeRegeneratorOccupancy);
+//			if (segment.getTraversingRoutes().size() == 1) continue; // its occupancy was already updated
+//			if (segment.getTraversingRoutes().size() > 1) throw new RuntimeException ("Bad");
+		}			
 
-			for (int hopIndex = 0; hopIndex < seqFibers.size(); hopIndex++)
-			{
-				if (seqRegenerators[hopIndex] == 0) continue;
-
-				Link fiber = seqFibers.get(hopIndex);
-				Node node = fiber.getOriginNode();
-				regeneratorOccupancy.set(node.getIndex(), regeneratorOccupancy.get(node.getIndex()) + 1);
-			}
-		}
-
-		return regeneratorOccupancy;
-	}
-
-	/**
-	 * Returns the sequence of regenerators/wavelength converters for the given lightpath.
-	 * 
-	 * @param segment Lightpath (as a protection segment)
-	 * @return A 0-1 array indicating whether (1) or not (0) a regenerator/wavelength converter is required at the origin node of the corresponding fiber
-	 */
-	public static int[] getProtectionLightpathSeqRegenerators(ProtectionSegment segment)
-	{
-		return parseSeqRegenerators(segment.getAttributes());
+		return Pair.of(wavelengthFiberOccupancy,nodeRegeneratorOccupancy);
 	}
 	
-	/**
-	 * Returns the sequence of wavelengths for a given protection lightpath.
-	 * 
-	 * @param segment Lightpath (as a protection segment)
-	 * @return Sequence of wavelengths
-	 */
-	public static int[] getProtectionLightpathSeqWavelengths(ProtectionSegment segment)
-	{
-		return parseSeqWavelengths(segment.getAttributes());
-	}
-	
-	/**
-	 * Returns the sequence of regenerators/wavelength converters from an attribute 
-	 * map, where the associated key corresponds to {@link #SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME}.
-	 * 
-	 * @param attributeMap Attribute map, where key is the attribute name and the value is the parameter value
-	 * @return Sequence of regenerators/wavelength converters
-	 */
-	public static int[] parseSeqRegenerators(Map<String, String> attributeMap)
-	{
-		String attributeValue = attributeMap.get(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME);
-		if (attributeValue == null) return new int[0];
-
-		return StringUtils.toIntArray(StringUtils.split(attributeValue, " "));
-	}
-	
-	/**
-	 * Returns the sequence of wavelengths from an attribute map, where the associated 
-	 * key corresponds to {@link #SEQUENCE_OF_WAVELENGTHS_ATTRIBUTE_NAME}.
-	 * 
-	 * @param attributeMap Attribute map, where key is the attribute name and the value is the parameter value
-	 * @return Sequence of wavelengths
-	 */
-	public static int[] parseSeqWavelengths(Map<String, String> attributeMap)
-	{
-		String attributeValue = attributeMap.get(SEQUENCE_OF_WAVELENGTHS_ATTRIBUTE_NAME);
-		if (attributeValue == null) throw new Net2PlanException("No '" + SEQUENCE_OF_WAVELENGTHS_ATTRIBUTE_NAME + "' attribute defined");
-
-		return StringUtils.toIntArray(StringUtils.split(attributeMap.get(SEQUENCE_OF_WAVELENGTHS_ATTRIBUTE_NAME), " "));
-	}
-
-	/**
-	 * Returns the initial sequence of wavelengths from an attribute map, where the associated
-	 * key corresponds to {@link #SEQUENCE_OF_WAVELENGTHS_ATTRIBUTE_NAME}.
-	 *
-	 * @param attributeMap Attribute map, where key is the attribute name and the value is the parameter value
-	 * @return Initial sequence of wavelengths
-	 */
-	public static int[] parseSeqWavelengthsInitialRoute (Map<String, String> attributeMap)
-	{
-		String attributeValue = attributeMap.get(SEQUENCE_OF_WAVELENGTHS_INITIAL_ROUTE_ATTRIBUTE_NAME);
-		if (attributeValue == null) throw new Net2PlanException("No '" + SEQUENCE_OF_WAVELENGTHS_INITIAL_ROUTE_ATTRIBUTE_NAME + "' attribute defined");
-
-		return StringUtils.toIntArray(StringUtils.split(attributeMap.get(SEQUENCE_OF_WAVELENGTHS_INITIAL_ROUTE_ATTRIBUTE_NAME), " "));
-	}
-
-	/**
-	 * Removes a lightpath and updates the occupancy.
-	 * @param lp Lightpath (as a route)
-	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
-	 * @param nodeRegeneratorOccupancy Number of regenerators installed per node
-	 * @param releaseResourcesOfOriginalRoute Wheter or not release the initial or the current resources
-	 */
-	public static void removeLightpathAndUpdateOccupancy (Route lp , DoubleMatrix2D wavelengthFiberOccupancy, DoubleMatrix1D nodeRegeneratorOccupancy , boolean releaseResourcesOfOriginalRoute)
-	{
-		releaseResources(releaseResourcesOfOriginalRoute? lp.getInitialSequenceOfLinks() : lp.getSeqLinksRealPath() , WDMUtils.getLightpathSeqWavelengths(lp) , wavelengthFiberOccupancy, WDMUtils.getLightpathSeqRegenerators(lp) , nodeRegeneratorOccupancy);
-		lp.remove ();
-	}
-
-	/**
-	 * Removes a lightpath and updates the occupancy.
-	 * @param lp Lightpath (as a route)
-	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
-	 * @param releaseResourcesOfOriginalRoute Wheter or not release the initial or the current resources
-	 */
-	public static void removeLightpathAndUpdateOccupancy (Route lp , DoubleMatrix2D wavelengthFiberOccupancy , boolean releaseResourcesOfOriginalRoute)
-	{
-		releaseResources(releaseResourcesOfOriginalRoute? lp.getInitialSequenceOfLinks() : lp.getSeqLinksRealPath() , WDMUtils.getLightpathSeqWavelengths(lp) , wavelengthFiberOccupancy, null , null);
-		lp.remove ();
-	}
-
-	/**
-	 * Removes a protection lightpath and updates the occupancy.
-	 * @param lp Protection lightpath (as a protection segment)
-	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
-	 * @param nodeRegeneratorOccupancy Number of regenerators installed per node
-	 */
-	public static void removeLightpathAndUpdateOccupancy (ProtectionSegment lp , DoubleMatrix2D wavelengthFiberOccupancy, DoubleMatrix1D nodeRegeneratorOccupancy)
-	{
-		releaseResources(lp.getSeqLinks () , WDMUtils.getLightpathSeqWavelengths(lp) , wavelengthFiberOccupancy, WDMUtils.getLightpathSeqRegenerators(lp) , nodeRegeneratorOccupancy);
-		lp.remove ();
-	}
-
-	/**
-	 * Removes a protection lightpath and updates the occupancy.
-	 * @param lp Protection lightpath (as a protection segment)
-	 * @param wavelengthFiberOccupancy Number of regenerators installed per node
-	 */
-	public static void removeLightpathAndUpdateOccupancy (ProtectionSegment lp , DoubleMatrix2D wavelengthFiberOccupancy)
-	{
-		releaseResources(lp.getSeqLinks() , WDMUtils.getLightpathSeqWavelengths(lp) , wavelengthFiberOccupancy, null , null);
-		lp.remove ();
-	}
-
 	/**
 	 * Updates {@code wavelengthFiberOccupancy} to consider that a lightpath is releasing
 	 * used wavelengths.
@@ -814,24 +615,27 @@ public class WDMUtils
 	 * @param seqRegenerators A 0-1 array indicating whether (1) or not (0) a regenerator/wavelength converter is required at the origin node of the corresponding fiber
 	 * @param nodeRegeneratorOccupancy Number of regenerators installed per node
 	 */
-	public static void releaseResources(List<Link> seqFibers, int[] seqWavelengths, DoubleMatrix2D wavelengthFiberOccupancy, int[] seqRegenerators, DoubleMatrix1D nodeRegeneratorOccupancy)
+	public static void releaseResources(RSA rsa , DoubleMatrix2D wavelengthFiberOccupancy, DoubleMatrix1D nodeRegeneratorOccupancy)
 	{
-		if (seqWavelengths.length == 0) return;
-		
-		ListIterator<Link> fiberIt = seqFibers.listIterator();
+		final int S = rsa.getNumSlots();
+		ListIterator<Link> fiberIt = rsa.seqLinks.listIterator();
 		while(fiberIt.hasNext())
 		{
-			int hopId = fiberIt.nextIndex();
-			Link fiber = fiberIt.next();
-			int wavelengthId = seqWavelengths[hopId];
-			boolean wasOccupied = wavelengthFiberOccupancy.get(wavelengthId, fiber.getIndex ()) != 0;
-			if (!wasOccupied) throw new WDMException("Wavelength " + wavelengthId + " was unused in fiber " + fiber.getId ());
-			wavelengthFiberOccupancy.set(wavelengthId, fiber.getIndex () , 0.0);
-			if ((seqRegenerators != null) && (seqRegenerators.length == seqWavelengths.length) && (seqRegenerators[hopId] == 1))
+			final int hopId = fiberIt.nextIndex();
+			final Link fiber = fiberIt.next();
+			for (int s = 0; s < S ; s ++)
 			{
-				Node node = fiber.getOriginNode();
-				nodeRegeneratorOccupancy.set(node.getIndex (), nodeRegeneratorOccupancy.get(node.getIndex()) - 1);
+				final int slotId = (int) rsa.seqFrequencySlots.get(s,hopId);
+				final boolean wasOccupied = wavelengthFiberOccupancy.get(slotId, fiber.getIndex ()) != 0;
+				if (!wasOccupied) throw new WDMException("Wavelength " + slotId + " was unused in fiber " + fiber.getId ());
+				wavelengthFiberOccupancy.set(slotId, fiber.getIndex () , 0.0);
 			}
+			if (rsa.seqRegeneratorsOccupancy != null) 
+				if (rsa.seqRegeneratorsOccupancy[hopId] == 1)
+				{
+					Node node = fiber.getOriginNode();
+					nodeRegeneratorOccupancy.set(node.getIndex (), nodeRegeneratorOccupancy.get(node.getIndex()) - 1);
+				}
 		}
 	}
 	
@@ -841,7 +645,7 @@ public class WDMUtils
 	 * @param fiber Link fiber
 	 * @param numWavelengths Number of wavelengths for the given fiber
 	 */
-	public static void setFiberNumWavelengths(Link fiber, int numWavelengths)
+	public static void setFiberNumFrequencySlots(Link fiber, int numWavelengths)
 	{
 		if (numWavelengths < 0) throw new WDMException("'numWavelengths' must be a non-negative integer");
 		fiber.setCapacity(numWavelengths);
@@ -854,7 +658,7 @@ public class WDMUtils
 	 * @param numWavelengths Number of wavelengths for all fibers
 	 * @param optionalLayerParameter Network layer (optional)
 	 */
-	public static void setFibersNumWavelengths(NetPlan netPlan, int numWavelengths , NetworkLayer ... optionalLayerParameter)
+	public static void setFibersNumFrequencySlots(NetPlan netPlan, int numWavelengths , NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		if (numWavelengths < 0) throw new WDMException("'numWavelengths' must be a non-negative integer");
@@ -862,75 +666,15 @@ public class WDMUtils
 	}
 
 	/**
-	 * Sets the number of wavelengths available in each fiber.
-	 *
-	 * @param netPlan A {@link com.net2plan.interfaces.networkDesign.NetPlan} representing a WDM physical topology
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @param w_f Number of wavelengths per fiber
-	 */
-	public static void setFibersNumWavelengths(NetPlan netPlan, int[] w_f , NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		final int E = netPlan.getNumberOfLinks(layer);
-		List<Link> fibers = netPlan.getLinks (layer);
-		if (w_f.length != E) throw new Net2PlanException ("Wrong array size");
-		for (int w : w_f) if (w < 0) throw new WDMException("'numWavelengths' must be a non-negative integer");
-		for (int e = 0 ; e < E ; e ++) fibers.get(e).setCapacity(w_f [e]);
-	}
-
-	/**
-	 * Sets the sequence of regenerators/wavelength converters for a given lightpath.
-	 *
-	 * @param lp Lightpath (as a route)
-	 * @param seqRegenerators A 0-1 array indicating whether (1) or not (0) a regenerator/wavelength converter is required at the origin node of the corresponding fiber
-	 */
-	public static void setLightpathSeqRegenerators(Route lp , int[] seqRegenerators)
-	{
-		lp.setAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME, IntUtils.join(seqRegenerators, " "));
-	}
-
-	/**
-	 * Sets the sequence of regenerators/wavelength converters for a given lightpath.
-	 *
-	 * @param lp Lightpath (as a protection segment)
-	 * @param seqRegenerators A 0-1 array indicating whether (1) or not (0) a regenerator/wavelength converter is required at the origin node of the corresponding fiber
-	 */
-	public static void setLightpathSeqRegenerators(ProtectionSegment lp , int[] seqRegenerators)
-	{
-		lp.setAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME, IntUtils.join(seqRegenerators, " "));
-	}
-
-	/**
-	 * Sets the current wavelength for the given lightpath, assuming no wavelength conversion.
-	 * 
-	 * @param lp Lightpath (as a route)
-	 * @param wavelengthId Wavelength identifier (the same for all traversed fibers)
-	 */
-	public static void setLightpathSeqWavelengths(Route lp, int wavelengthId)
-	{
-		lp.setAttribute(SEQUENCE_OF_WAVELENGTHS_ATTRIBUTE_NAME, IntUtils.join(IntUtils.constantArray(lp.getNumberOfHops(), wavelengthId), " "));
-	}
-	
-	/**
 	 * Sets the sequence of wavelengths for the given lightpath.
 	 * 
 	 * @param lp Lightpath (as a route)
-	 * @param seqWavelengths Sequence of wavelengths (as many as the number of links in the lightpath)
+	 * @param seqFrequencySlots Sequence of wavelengths (as many as the number of links in the lightpath)
 	 */
-	public static void setLightpathSeqWavelengths(Route lp , int[] seqWavelengths)
+	public static void setLightpathRSAAttributes (Route lp , RSA rsa , boolean initializeTheInitialRoute)
 	{
-		lp.setAttribute(SEQUENCE_OF_WAVELENGTHS_ATTRIBUTE_NAME, IntUtils.join(seqWavelengths, " "));
-	}
-
-	/**
-	 * Sets the initial sequence of wavelengths for the given lightpath.
-	 *
-	 * @param lp Lightpath (as a route)
-	 * @param seqWavelengths Sequence of wavelengths (as many as the number of links in the lightpath)
-	 */
-	public static void setLightpathSeqWavelengthsInitialRoute (Route lp , int[] seqWavelengths)
-	{
-		lp.setAttribute(SEQUENCE_OF_WAVELENGTHS_INITIAL_ROUTE_ATTRIBUTE_NAME, IntUtils.join(seqWavelengths, " "));
+		lp.setAttribute(initializeTheInitialRoute? SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME : SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME, StringUtils.writeMatrix(rsa.seqFrequencySlots));
+		lp.setAttribute(initializeTheInitialRoute? SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME : SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME, IntUtils.join(rsa.seqRegeneratorsOccupancy, " "));
 	}
 
 	/**
@@ -939,44 +683,12 @@ public class WDMUtils
 	 * @param lp Lightpath (as a route)
 	 * @param seqWavelengths Sequence of wavelengths
 	 */
-	public static void setLightpathSeqWavelengths(ProtectionSegment lp , int[] seqWavelengths)
+	public static void setLightpathRSAAttributes (ProtectionSegment lp , RSA rsa)
 	{
-		lp.setAttribute(SEQUENCE_OF_WAVELENGTHS_ATTRIBUTE_NAME, IntUtils.join(seqWavelengths, " "));
+		lp.setAttribute(SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME, StringUtils.writeMatrix(rsa.seqFrequencySlots));
+		lp.setAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME, IntUtils.join(rsa.seqRegeneratorsOccupancy, " "));
 	}
-	
-	/**
-	 * Sets the sequence of regenerators/wavelength converters for a given protection lightpath.
-	 *
-	 * @param segment Protection lightpath
-	 * @param seqRegenerators A 0-1 array indicating whether (1) or not (0) a regenerator/wavelength converter is required at the origin node of the corresponding fiber
-	 */
-	public static void setProtectionLightpathSeqRegenerators(ProtectionSegment segment , int[] seqRegenerators)
-	{
-		segment.setAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME, IntUtils.join(seqRegenerators, " "));
-	}
-	
-	/**
-	 * Sets the given wavelength for all fibers traversing a protection lightpath.
-	 * 
-	 * @param segment Protection lightpath
-	 * @param wavelengthId Wavelength identifier (the same for all traversed fibers)
-	 */
-	public static void setProtectionLightpathSeqWavelengths(ProtectionSegment segment, int wavelengthId)
-	{
-		segment.setAttribute(SEQUENCE_OF_WAVELENGTHS_ATTRIBUTE_NAME, IntUtils.join(IntUtils.constantArray(segment.getNumberOfHops(), wavelengthId), " "));
-	}
-	
-	/**
-	 * Sets the sequence of wavelengths for a protection lightpath.
-	 * 
-	 * @param segment Protection lightpath
-	 * @param seqWavelengths Sequence of wavelengths (as many as the number of links in the lightpath)
-	 */
-	public static void setProtectionLightpathSeqWavelengths(ProtectionSegment segment, int[] seqWavelengths)
-	{
-		segment.setAttribute(SEQUENCE_OF_WAVELENGTHS_ATTRIBUTE_NAME, IntUtils.join(seqWavelengths, " "));
-	}
-	
+
 	/**
 	 * <p>Wavelength assignment algorithm based on a first-fit fashion. Wavelengths
 	 * are indexed from 0 to <i>W<sub>f</sub></i>-1, where <i>W<sub>f</sub></i>
@@ -1186,29 +898,34 @@ public class WDMUtils
 	 * a wavelength in each fiber.
 	 * 
 	 * @param seqFibers Sequence of traversed fibers
-	 * @param seqWavelengths Sequence of wavelengths (as many as the number of links in the lightpath)
+	 * @param seqFrequencyslots Sequence of wavelengths (as many as the number of links in the lightpath)
 	 * @param wavelengthFiberOccupancy Set of occupied fibers in each wavelength
 	 * @param seqRegenerators A 0-1 array indicating whether (1) or not (0) a regenerator/wavelength converter is required at the origin node of the corresponding fiber
 	 * @param nodeRegeneratorOccupancy Number of regenerators installed per node
 	 */
-	public static void allocateResources(List<Link> seqFibers, int[] seqWavelengths, DoubleMatrix2D wavelengthFiberOccupancy, int[] seqRegenerators, DoubleMatrix1D nodeRegeneratorOccupancy)
+	public static void allocateResources(RSA rsa, DoubleMatrix2D wavelengthFiberOccupancy, DoubleMatrix1D nodeRegeneratorOccupancy)
 	{
-		if (seqWavelengths.length == 0) return;
-		
-		ListIterator<Link> fiberIt = seqFibers.listIterator();
+		final int W = wavelengthFiberOccupancy.rows();
+		ListIterator<Link> fiberIt = rsa.seqLinks.listIterator();
 		while(fiberIt.hasNext())
 		{
-			int hopId = fiberIt.nextIndex();
-			Link fiber = fiberIt.next();
-			int wavelengthId = seqWavelengths[hopId];
-			if (wavelengthFiberOccupancy.get(wavelengthId , fiber.getIndex ()) != 0) throw new Net2PlanException ("Wavelength clashing: wavelength " + wavelengthId + ", fiber: " + fiber.getId ());
-			wavelengthFiberOccupancy.set(wavelengthId , fiber.getIndex () , 1.0);
-
-			if (seqRegenerators != null && seqRegenerators[hopId] == 1)
+			final int hopId = fiberIt.nextIndex();
+			final Link fiber = fiberIt.next();
+			IntMatrix1D slotIds = rsa.seqFrequencySlots.viewColumn(hopId);
+			for (int cont = 0 ; cont < slotIds.size() ; cont ++)
 			{
-				Node node = fiber.getOriginNode();
-				nodeRegeneratorOccupancy.set (node.getIndex (), nodeRegeneratorOccupancy.get(node.getIndex ()) + 1);
+				final int slotId = (int) slotIds.get(cont);
+				if (slotId >= W) throw new WDMException ("The slot id is higher than the number of slots available");
+				if (wavelengthFiberOccupancy.get(slotId , fiber.getIndex ()) != 0) throw new WDMException ("Wavelength clashing: slot " + slotIds.get(cont) + ", fiber: " + fiber.getId ());
+				wavelengthFiberOccupancy.set(slotId , fiber.getIndex () , 1.0);
 			}
+
+			if (rsa.seqRegeneratorsOccupancy != null)
+				if (rsa.seqRegeneratorsOccupancy[hopId] == 1)
+				{
+					Node node = fiber.getOriginNode();
+					nodeRegeneratorOccupancy.set (node.getIndex (), nodeRegeneratorOccupancy.get(node.getIndex ()) + 1);
+				}
 		}
 	}
 }
