@@ -21,5 +21,16 @@
                 <exclude>IONet2Plan.class</exclude>
             </excludes>
         </fileSet>
+        <!-- Sources -->
+        <fileSet>
+            <directory>${project.basedir}/src/main/java/com/net2plan/io</directory>
+            <outputDirectory>src/com/net2plan/io</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+            <excludes>
+                <exclude>IONet2Plan.class</exclude>
+            </excludes>
+        </fileSet>
     </fileSets>
 </assembly>
