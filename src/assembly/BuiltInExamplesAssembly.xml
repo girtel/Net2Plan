@@ -12,7 +12,7 @@
 
     <fileSets>
         <fileSet>
-            <directory>${project.basedir}/src/main/java/com/net2plan/examples</directory>
+            <directory>${project.build.directory}/classes/com/net2plan/examples</directory>
             <outputDirectory>com/net2plan/examples</outputDirectory>
             <includes>
                 <include>general/onlineSim/**</include>
@@ -25,8 +25,29 @@
             </includes>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}/src/main/java/es/upct/girtel/networks2014_IPoverWDMRestoration</directory>
+            <directory>${project.build.directory}/classes/es/upct/girtel/networks2014_IPoverWDMRestoration</directory>
             <outputDirectory>es/upct/girtel/networks2014_IPoverWDMRestoration</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+        </fileSet>
+        <!-- Sources -->
+        <fileSet>
+            <directory>${project.basedir}/src/main/java/com/net2plan/examples</directory>
+            <outputDirectory>src/com/net2plan/examples</outputDirectory>
+            <includes>
+                <include>general/onlineSim/**</include>
+                <include>general/reports/**</include>
+                <include>general/reports/robustness/**</include>
+                <include>general/ocnbook/offline/**</include>
+                <include>general/ocnbook/onlinesim/**</include>
+                <include>general/ocnbook/reports/**</include>
+                <include>general/ocnbook/reports/**</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/src/main/java/es/upct/girtel/networks2014_IPoverWDMRestoration</directory>
+            <outputDirectory>src/es/upct/girtel/networks2014_IPoverWDMRestoration</outputDirectory>
             <includes>
                 <include>**</include>
             </includes>
