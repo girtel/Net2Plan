@@ -180,6 +180,7 @@
                     <name>java.vendor</name>
                     <value>Oracle Corporation</value>
                 </property>
+                <jdk>[1.8,)</jdk>
             </activation>
 
             <build>
@@ -320,8 +321,6 @@
                                 <configuration>
                                     <descriptors>
                                         <descriptor>src/assembly/TagletAssembly.xml</descriptor>
-                                        <descriptor>src/assembly/DocletHTMLAssembly.xml</descriptor>
-                                        <descriptor>src/assembly/DocletBookAssembly.xml</descriptor>
                                     </descriptors>
                                     <appendAssemblyId>true</appendAssemblyId>
                                 </configuration>
@@ -339,10 +338,34 @@
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
-                                <phase>package</phase>
                                 <configuration>
                                     <target>
-                                        <delete dir="${project.build.directory}" includes="*.jar net2plan-0.4.0-Net2Plan-src.zip"/>
+                                        <delete dir="${project.build.directory}"
+                                                includes="*.jar net2plan-0.4.0-Net2Plan-src.zip"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-dir</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <mkdir dir="${project.build.directory}/site/apidocs/examples"/>
+                                        <delete dir="${project.build.directory}/colt"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>unpack</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <unzip src="${project.basedir}/src/main/resources/lib/colt-1.2.0.jar" dest="${project.build.directory}/colt"/>
+                                        <unzip src="${project.basedir}/src/main/resources/lib/parallelcolt-0.10.1.jar" dest="${project.build.directory}/colt"/>
                                     </target>
                                 </configuration>
                             </execution>
@@ -373,17 +396,24 @@
                                     <use>true</use>
                                     <version>true</version>
                                     <linksource>true</linksource>
-                                    <additionalparam>-Xdoclint:none</additionalparam>
+                                    <additionalparam>-outputFolder ${project.build.directory}/site/apidocs
+                                    </additionalparam>
                                     <noqualifier>
                                         java.lang:java.util:java.io:java.awt:java.net:java.awt.geom:javax.swing:cern.colt.matrix.tdouble
                                     </noqualifier>
-                                    <taglets>
-                                        <taglet>
-                                            <tagletpath>
-                                                ${project.build.directory}/${project.artifactId}-${project.version}-Taglet.jar
-                                            </tagletpath>
-                                        </taglet>
-                                    </taglets>
+                                    <taglet>com.net2plan.documentation.Taglet_BookSections</taglet>
+                                    <taglet>com.net2plan.documentation.Taglet_Description</taglet>
+                                    <taglet>com.net2plan.documentation.Taglet_InputParameters</taglet>
+                                    <taglet>com.net2plan.documentation.Taglet_Keywords</taglet>
+                                    <tagletpath>
+                                        ${project.build.directory}/${project.artifactId}-${project.version}-Taglet.jar
+                                    </tagletpath>
+                                    <doclet>com.net2plan.documentation.CreateHTMLKeywords</doclet>
+                                    <doclet>com.net2plan.documentation.CreateBookSectionsTable</doclet>
+                                    <docletPath>
+                                        ${project.build.directory}/${project.artifactId}-${project.version}-Taglet.jar
+                                    </docletPath>
+                                    <useStandardDocletOptions>false</useStandardDocletOptions>
                                     <sourcepath>${project.basedir}/src/main/java</sourcepath>
                                     <sourceFileIncludes>
                                         <include>com/net2plan/examples/general/onlineSim/**</include>
@@ -403,6 +433,11 @@
                                     <goal>javadoc</goal>
                                 </goals>
                                 <configuration>
+                                    <doclet>com.net2plan.documentation.CreateHTMLKeywords</doclet>
+                                    <docletPath>
+                                        ${project.build.directory}/${project.artifactId}-${project.version}-Taglet.jar
+                                    </docletPath>
+                                    <useStandardDocletOptions>false</useStandardDocletOptions>
                                     <sourcepath>${project.basedir}/src/main/java</sourcepath>
                                     <sourceFileIncludes>
                                         <include>com/net2plan/examples/general/onlineSim/**</include>
@@ -414,13 +449,8 @@
                                     <sourceFileExcludes>
                                         <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
                                     </sourceFileExcludes>
-                                    <docletPath>
-                                        ${project.build.directory}/${project.artifactId}-${project.version}-DoclientHTMl.jar
-                                    </docletPath>
-                                    <additionalparam>-d ${project.build.directory}/site/apidocs/examples
-                                        -Xdoclint:none
+                                    <additionalparam>-outputFolder ${project.build.directory}/site/apidocs/examples
                                     </additionalparam>
-                                    <useStandardDocletOptions>true</useStandardDocletOptions>
                                 </configuration>
                             </execution>
                             <execution>
@@ -440,11 +470,12 @@
                                     <sourceFileExcludes>
                                         <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
                                     </sourceFileExcludes>
+                                    <doclet>com.net2plan.documentation.CreateBookSectionsTable</doclet>
                                     <docletPath>
-                                        ${project.build.directory}/${project.artifactId}-${project.version}-DoclientBook.jar
+                                        ${project.build.directory}/${project.artifactId}-${project.version}-Taglet.jar
                                     </docletPath>
-                                    <additionalparam>-d ${project.build.directory}/site/apidocs/examples
-                                        -Xdoclint:none
+                                    <useStandardDocletOptions>false</useStandardDocletOptions>
+                                    <additionalparam>-outputFolder ${project.build.directory}/site/apidocs/examples
                                     </additionalparam>
                                 </configuration>
                             </execution>
