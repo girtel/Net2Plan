@@ -1,0 +1,101 @@
+<assembly xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3"
+          xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3 http://maven.apache.org/xsd/assembly-1.1.3.xsd">
+
+    <id>bin</id>
+    <formats>
+        <format>zip</format>
+    </formats>
+
+    <fileSets>
+        <fileSet>
+            <directory>${project.basedir}</directory>
+            <outputDirectory></outputDirectory>
+            <includes>
+                <include>README*</include>
+                <include>LICENSE*</include>
+                <include>NOTICE*</include>
+            </includes>
+        </fileSet>
+        <!-- Copy the lib directory -->
+        <fileSet>
+            <directory>${project.basedir}/src/main/resources/lib</directory>
+            <outputDirectory>lib</outputDirectory>
+            <includes>
+                <include>*.jar</include>
+            </includes>
+        </fileSet>
+        <!-- Copy the workspace folder -->
+        <fileSet>
+            <directory>${project.basedir}/src/main/resources/data</directory>
+            <outputDirectory>workspace/data</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+        </fileSet>
+        <!-- Copy the documentation -->
+        <fileSet>
+            <directory>${project.build.directory}/site/apidocs</directory>
+            <outputDirectory>doc/javadoc</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/src/main/resources/help</directory>
+            <outputDirectory>doc/help</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+
+    <files>
+        <!-- Create the BuiltInExample.jar file and copy it into the workspace directory -->
+        <file>
+            <source>${project.build.directory}/${artifactId}-${version}-BuiltInExamples.jar</source>
+            <outputDirectory>workspace</outputDirectory>
+            <destName>BuiltInExamples.jar</destName>
+        </file>
+        <file>
+            <source>${project.build.directory}/${artifactId}-${version}-Net2Plan-lib.jar</source>
+            <outputDirectory>lib</outputDirectory>
+            <destName>Net2Plan-lib.jar</destName>
+        </file>
+        <file>
+            <source>${project.build.directory}/${artifactId}-${version}-defaultIO.jar</source>
+            <outputDirectory>plugins</outputDirectory>
+            <destName>defaultIO.jar</destName>
+        </file>
+        <file>
+            <source>${project.build.directory}/${artifactId}-${version}-guiTrafficDesign.jar</source>
+            <outputDirectory>plugins</outputDirectory>
+            <destName>guiTrafficDesign.jar</destName>
+        </file>
+        <file>
+            <source>${project.build.directory}/${artifactId}-${version}-Net2Plan-cli.jar</source>
+            <outputDirectory></outputDirectory>
+            <destName>Net2Plan-cli.jar</destName>
+        </file>
+        <file>
+            <source>${project.build.directory}/${artifactId}-${version}-Net2Plan-src.zip</source>
+            <outputDirectory>src</outputDirectory>
+            <destName>Net2Plan-src.zip</destName>
+        </file>
+        <file>
+            <source>${project.build.directory}/${artifactId}-${version}-defaultCLI.jar</source>
+            <outputDirectory>plugins</outputDirectory>
+            <destName>defaultCLITools.jar</destName>
+        </file>
+        <file>
+            <source>${project.build.directory}/${artifactId}-${version}-defaultGUI.jar</source>
+            <outputDirectory>plugins</outputDirectory>
+            <destName>defaultGUITools.jar</destName>
+        </file>
+        <file>
+            <source>${project.build.directory}/${artifactId}-${version}-Net2Plan.jar</source>
+            <outputDirectory></outputDirectory>
+            <destName>Net2Plan.jar</destName>
+        </file>
+    </files>
+</assembly>
