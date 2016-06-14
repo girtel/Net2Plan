@@ -342,6 +342,7 @@
                                     <target>
                                         <delete dir="${project.build.directory}"
                                                 includes="*.jar net2plan-0.4.0-Net2Plan-src.zip"/>
+                                        <delete dir="${project.build.directory}/colt"/>
                                     </target>
                                 </configuration>
                             </execution>
@@ -353,7 +354,6 @@
                                 <configuration>
                                     <target>
                                         <mkdir dir="${project.build.directory}/site/apidocs/examples"/>
-                                        <delete dir="${project.build.directory}/colt"/>
                                     </target>
                                 </configuration>
                             </execution>
@@ -396,7 +396,7 @@
                                     <use>true</use>
                                     <version>true</version>
                                     <linksource>true</linksource>
-                                    <additionalparam>-outputFolder ${project.build.directory}/site/apidocs
+                                    <additionalparam>-d ${project.build.directory}/site/apidocs -XdoClint:none
                                     </additionalparam>
                                     <noqualifier>
                                         java.lang:java.util:java.io:java.awt:java.net:java.awt.geom:javax.swing:cern.colt.matrix.tdouble
@@ -408,12 +408,6 @@
                                     <tagletpath>
                                         ${project.build.directory}/${project.artifactId}-${project.version}-Taglet.jar
                                     </tagletpath>
-                                    <doclet>com.net2plan.documentation.CreateHTMLKeywords</doclet>
-                                    <doclet>com.net2plan.documentation.CreateBookSectionsTable</doclet>
-                                    <docletPath>
-                                        ${project.build.directory}/${project.artifactId}-${project.version}-Taglet.jar
-                                    </docletPath>
-                                    <useStandardDocletOptions>false</useStandardDocletOptions>
                                     <sourcepath>${project.basedir}/src/main/java</sourcepath>
                                     <sourceFileIncludes>
                                         <include>com/net2plan/examples/general/onlineSim/**</include>
