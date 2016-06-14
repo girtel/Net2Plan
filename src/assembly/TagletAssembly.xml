@@ -12,10 +12,24 @@
 
     <fileSets>
         <fileSet>
-            <directory>${project.basedir}/src/main/java/com/net2plan/documentation</directory>
+            <directory>${project.build.directory}/classes/com/net2plan/documentation</directory>
             <outputDirectory>com/net2plan/documentation</outputDirectory>
             <includes>
-                <include>Taglet_**</include>
+                <include>**</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/classes/com/net2plan</directory>
+            <outputDirectory>com/net2plan</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/colt</directory>
+            <outputDirectory></outputDirectory>
+            <includes>
+                <include>**</include>
             </includes>
         </fileSet>
     </fileSets>
