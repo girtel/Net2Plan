@@ -17,10 +17,6 @@
             <includes>
                 <include>**</include>
             </includes>
-            <excludes>
-                <exclude>tools/**</exclude>
-                <exclude>./**/*.bak</exclude>
-            </excludes>
         </fileSet>
         <fileSet>
             <directory>${project.basedir}/src/main/java/com/net2plan/gui</directory>
@@ -28,10 +24,6 @@
             <includes>
                 <include>**</include>
             </includes>
-            <excludes>
-                <exclude>tools/**</exclude>
-                <exclude>./**/*.bak</exclude>
-            </excludes>
         </fileSet>
         <fileSet>
             <directory>${project.basedir}/src/main/java/com/net2plan/interfaces</directory>
@@ -39,9 +31,6 @@
             <includes>
                 <include>**</include>
             </includes>
-            <excludes>
-                <exclude>./**/*.bak</exclude>
-            </excludes>
         </fileSet>
         <fileSet>
             <directory>${project.basedir}/src/main/java/com/net2plan/internal</directory>
@@ -49,9 +38,6 @@
             <includes>
                 <include>**</include>
             </includes>
-            <excludes>
-                <exclude>./**/*.bak</exclude>
-            </excludes>
         </fileSet>
         <fileSet>
             <directory>${project.basedir}/src/main/java/com/net2plan/libraries</directory>
@@ -59,9 +45,6 @@
             <includes>
                 <include>**</include>
             </includes>
-            <excludes>
-                <exclude>./**/*.bak</exclude>
-            </excludes>
         </fileSet>
         <fileSet>
             <directory>${project.basedir}/src/main/java/com/net2plan/utils</directory>
@@ -76,9 +59,6 @@
             <includes>
                 <include>IONet2Plan.java</include>
             </includes>
-            <excludes>
-                <exclude>./**/*.bak</exclude>
-            </excludes>
         </fileSet>
         <fileSet>
             <directory>${project.basedir}/src/main/resources/resources</directory>

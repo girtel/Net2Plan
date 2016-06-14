@@ -18,5 +18,13 @@
                 <include>**</include>
             </includes>
         </fileSet>
+        <!-- Sources -->
+        <fileSet>
+            <directory>${project.basedir}/src/main/java/com/net2plan/gui/tools</directory>
+            <outputDirectory>src/com/net2plan/gui/tools</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+        </fileSet>
     </fileSets>
 </assembly>
