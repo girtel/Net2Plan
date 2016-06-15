@@ -434,9 +434,6 @@
                                     </noqualifier>
                                     <taglets>
                                         <taglet>
-                                            <tagletClass>com.net2plan.documentation.Taglet_BookSections</tagletClass>
-                                        </taglet>
-                                        <taglet>
                                             <tagletClass>com.net2plan.documentation.Taglet_Description</tagletClass>
                                         </taglet>
                                         <taglet>
@@ -444,6 +441,9 @@
                                         </taglet>
                                         <taglet>
                                             <tagletClass>com.net2plan.documentation.Taglet_InputParameters</tagletClass>
+                                        </taglet>
+                                        <taglet>
+                                            <tagletClass>com.net2plan.documentation.Taglet_BookSections</tagletClass>
                                         </taglet>
                                     </taglets>
                                     <tagletpath>
