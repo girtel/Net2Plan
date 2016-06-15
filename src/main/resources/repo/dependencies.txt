@@ -1,0 +1,5 @@
+<dependency>
+          <groupId>local</groupId>
+          <artifactId>jom-0.1.16</artifactId>
+          <version>1.0</version>
+        </dependency>

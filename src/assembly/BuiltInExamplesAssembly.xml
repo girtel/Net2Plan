@@ -1,0 +1,44 @@
+<assembly xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3"
+          xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3 http://maven.apache.org/xsd/assembly-1.1.3.xsd">
+
+    <id>BuiltInExamples</id>
+
+    <formats>
+        <format>jar</format>
+    </formats>
+
+    <baseDirectory>.</baseDirectory>
+
+    <fileSets>
+        <fileSet>
+            <directory>${project.build.directory}/classes/com/net2plan/examples</directory>
+            <outputDirectory>com/net2plan/examples</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/classes/es/upct/girtel/networks2014_IPoverWDMRestoration</directory>
+            <outputDirectory>es/upct/girtel/networks2014_IPoverWDMRestoration</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+        </fileSet>
+        <!-- Sources -->
+        <fileSet>
+            <directory>${project.basedir}/src/main/java/com/net2plan/examples</directory>
+            <outputDirectory>src/com/net2plan/examples</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/src/main/java/es/upct/girtel/networks2014_IPoverWDMRestoration</directory>
+            <outputDirectory>src/es/upct/girtel/networks2014_IPoverWDMRestoration</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+</assembly>
