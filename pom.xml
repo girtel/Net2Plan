@@ -170,10 +170,10 @@
 
     <profiles>
         <profile>
-            <id>ppm</id>
+            <id>build-with-javadoc</id>
 
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <activeByDefault>false</activeByDefault>
                 <property>
                     <!-- Necessary for correctly including tools.jar (javadoc creator) into the project-->
                     <!-- By default, Maven tries to load the 1.7 jar which does not correspond with the one in 1.8 -->
@@ -225,7 +225,7 @@
                         <executions>
                             <execution>
                                 <id>copy-dependencies</id>
-                                <phase>package</phase>
+                                <phase>generate-resources</phase>
                                 <goals>
                                     <goal>copy-dependencies</goal>
                                 </goals>
@@ -246,6 +246,7 @@
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
+                                <phase>package</phase>
                                 <configuration>
                                     <descriptors>
                                         <descriptor>src/assembly/Net2PlanLibAssembly.xml</descriptor>
@@ -268,6 +269,7 @@
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
+                                <phase>package</phase>
                                 <configuration>
                                     <descriptors>
                                         <descriptor>src/assembly/Net2PlanAssembly.xml</descriptor>
@@ -287,6 +289,7 @@
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
+                                <phase>package</phase>
                                 <configuration>
                                     <descriptors>
                                         <descriptor>src/assembly/Net2PlanCliAssembly.xml</descriptor>
@@ -306,6 +309,7 @@
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
+                                <phase>package</phase>
                                 <configuration>
                                     <descriptors>
                                         <descriptor>src/assembly/assembly.xml</descriptor>
@@ -318,6 +322,7 @@
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
+                                <phase>prepare-package</phase>
                                 <configuration>
                                     <descriptors>
                                         <descriptor>src/assembly/TagletAssembly.xml</descriptor>
@@ -351,6 +356,7 @@
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
+                                <phase>initialize</phase>
                                 <configuration>
                                     <target>
                                         <mkdir dir="${project.build.directory}/site/apidocs/examples"/>
@@ -363,6 +369,7 @@
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
+                                <phase>generate-resources</phase>
                                 <configuration>
                                     <target>
                                         <unzip src="${project.basedir}/src/main/resources/lib/colt-1.2.0.jar"
@@ -377,6 +384,7 @@
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
+                                <phase>generate-resources</phase>
                                 <configuration>
                                     <target>
                                         <copy todir="${project.build.directory}/site/apidocs/parallelcolt">
@@ -399,6 +407,7 @@
                                 <goals>
                                     <goal>javadoc</goal>
                                 </goals>
+                                <phase>prepare-package</phase>
                                 <configuration>
                                     <show>public</show>
                                     <author>true</author>
@@ -430,6 +439,7 @@
                                 <goals>
                                     <goal>javadoc</goal>
                                 </goals>
+                                <phase>prepare-package</phase>
                                 <configuration>
                                     <show>public</show>
                                     <author>false</author>
@@ -486,6 +496,7 @@
                                 <goals>
                                     <goal>javadoc</goal>
                                 </goals>
+                                <phase>prepare-package</phase>
                                 <configuration>
                                     <doclet>com.net2plan.documentation.CreateHTMLKeywords</doclet>
                                     <docletPath>
@@ -512,6 +523,7 @@
                                 <goals>
                                     <goal>javadoc</goal>
                                 </goals>
+                                <phase>prepare-package</phase>
                                 <configuration>
                                     <sourcepath>${project.basedir}/src/main/java</sourcepath>
                                     <sourceFileIncludes>
@@ -531,6 +543,180 @@
                                     <useStandardDocletOptions>false</useStandardDocletOptions>
                                     <additionalparam>-outputFolder ${project.build.directory}/site/apidocs/examples
                                     </additionalparam>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>build-without-javadoc</id>
+
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <!-- Necessary for correctly including tools.jar (javadoc creator) into the project-->
+                    <!-- By default, Maven tries to load the 1.7 jar which does not correspond with the one in 1.8 -->
+                    <name>java.vendor</name>
+                    <value>Oracle Corporation</value>
+                </property>
+                <jdk>[1.8,)</jdk>
+            </activation>
+
+            <build>
+                <plugins>
+                    <!-- Ignore default jar generation -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>2.6</version>
+                        <executions>
+                            <execution>
+                                <id>default-jar</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Modifies the compiler to jdk 1.8 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>3.5.1</version>
+                        <configuration>
+                            <compilerVersion>1.8</compilerVersion>
+                            <source>1.8</source>
+                            <target>1.8</target>
+                            <failOnError>true</failOnError>
+                        </configuration>
+                    </plugin>
+
+                    <!-- Downloads dependencies into local folder -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>2.10</version>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/src/main/resources/lib</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>copy-dependencies</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>copy-dependencies</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Assembles the final project -->
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>2.6</version>
+                        <configuration>
+                            <appendAssemblyId>true</appendAssemblyId>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>non-executables</id>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>src/assembly/Net2PlanLibAssembly.xml</descriptor>
+                                        <descriptor>src/assembly/Net2PlanSrcAssembly.xml</descriptor>
+                                        <descriptor>src/assembly/defaultCLIAssembly.xml</descriptor>
+                                        <descriptor>src/assembly/defaultGUIAssembly.xml</descriptor>
+                                        <descriptor>src/assembly/defaultIOAssembly.xml</descriptor>
+                                        <descriptor>src/assembly/guiTrafficDesignAssembly.xml</descriptor>
+                                        <descriptor>src/assembly/BuiltInExamplesAssembly.xml</descriptor>
+                                    </descriptors>
+                                    <archive>
+                                        <manifestEntries>
+                                            <!--@formatter:off--><Class-Path>lib/Net2Plan-lib.jar lib/collections-generic-4.01.jar lib/commons-cli-1.3.jar lib/commons-lang3-3.4.jar lib/guava-18.0.jar lib/jgrapht-core-0.9.1.jar lib/jna-4.1.0.jar lib/jom-0.1.16-1.0.jar lib/jsoup-1.8.3.jar lib/jung-algorithms-2.0.1.jar lib/jung-api-2.0.1.jar lib/jung-graph-impl-2.0.1.jar lib/jung-io-2.0.1.jar lib/jung-visualization-2.0.1.jar lib/miglayout-core-5.0.jar lib/miglayout-swing-5.0.jar lib/parallelcolt-0.10.1.jar lib/stax2-api-4.0.0.jar lib/woodstox-core-5.0.1.jar</Class-Path><!--@formatter:on-->
+                                        </manifestEntries>
+                                    </archive>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>net2plan</id>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>src/assembly/Net2PlanAssembly.xml</descriptor>
+                                    </descriptors>
+                                    <archive>
+                                        <manifest>
+                                            <mainClass>com.net2plan.gui.GUINet2Plan</mainClass>
+                                        </manifest>
+                                        <manifestEntries>
+                                            <!--@formatter:off--><Class-Path>lib/Net2Plan-lib.jar lib/collections-generic-4.01.jar lib/commons-cli-1.3.jar lib/commons-lang3-3.4.jar lib/guava-18.0.jar lib/jgrapht-core-0.9.1.jar lib/jna-4.1.0.jar lib/jom-0.1.16-1.0.jar lib/jsoup-1.8.3.jar lib/jung-algorithms-2.0.1.jar lib/jung-api-2.0.1.jar lib/jung-graph-impl-2.0.1.jar lib/jung-io-2.0.1.jar lib/jung-visualization-2.0.1.jar lib/miglayout-core-5.0.jar lib/miglayout-swing-5.0.jar lib/parallelcolt-0.10.1.jar lib/stax2-api-4.0.0.jar lib/woodstox-core-5.0.1.jar</Class-Path><!--@formatter:on-->
+                                        </manifestEntries>
+                                    </archive>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>net2plancli</id>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>src/assembly/Net2PlanCliAssembly.xml</descriptor>
+                                    </descriptors>
+                                    <archive>
+                                        <manifest>
+                                            <mainClass>com.net2plan.cli.CLINet2Plan</mainClass>
+                                        </manifest>
+                                        <manifestEntries>
+                                            <!--@formatter:off--><Class-Path>lib/Net2Plan-lib.jar lib/collections-generic-4.01.jar lib/commons-cli-1.3.jar lib/commons-lang3-3.4.jar lib/guava-18.0.jar lib/jgrapht-core-0.9.1.jar lib/jna-4.1.0.jar lib/jom-0.1.16-1.0.jar lib/jsoup-1.8.3.jar lib/jung-algorithms-2.0.1.jar lib/jung-api-2.0.1.jar lib/jung-graph-impl-2.0.1.jar lib/jung-io-2.0.1.jar lib/jung-visualization-2.0.1.jar lib/miglayout-core-5.0.jar lib/miglayout-swing-5.0.jar lib/parallelcolt-0.10.1.jar lib/stax2-api-4.0.0.jar lib/woodstox-core-5.0.1.jar</Class-Path><!--@formatter:on-->
+                                        </manifestEntries>
+                                    </archive>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>assembly</id>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>src/assembly/assembly.xml</descriptor>
+                                    </descriptors>
+                                    <appendAssemblyId>false</appendAssemblyId>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.8</version>
+                        <executions>
+                            <execution>
+                                <id>default-cli</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <delete dir="${project.build.directory}"
+                                                includes="*.jar net2plan-0.4.0-Net2Plan-src.zip"/>
+                                        <delete dir="${project.build.directory}/colt"/>
+                                    </target>
                                 </configuration>
                             </execution>
                         </executions>
