@@ -372,6 +372,19 @@
                                     </target>
                                 </configuration>
                             </execution>
+                            <execution>
+                                <id>copy-javadoc</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <copy todir="${project.build.directory}/site/apidocs/parallelcolt">
+                                            <fileset dir="${project.basedir}/src/main/resources/javadoc/parallelcolt"/>
+                                        </copy>
+                                    </target>
+                                </configuration>
+                            </execution>
                         </executions>
                     </plugin>
 
@@ -400,6 +413,9 @@
                                     <version>true</version>
                                     <additionalparam>-d ${project.build.directory}/site/apidocs/api -XdoClint:none
                                     </additionalparam>
+                                    <links>
+                                        <link>../parallelcolt</link>
+                                    </links>
                                     <sourcepath>${project.basedir}/src/main/java</sourcepath>
                                     <sourceFileIncludes>
                                         <include>com/net2plan/interfaces/networkDesign/**</include>
@@ -432,6 +448,9 @@
                                     <noqualifier>
                                         java.lang:java.util:java.io:java.awt:java.net:java.awt.geom:javax.swing:cern.colt.matrix.tdouble
                                     </noqualifier>
+                                    <links>
+                                        <link>../parallelcolt</link>
+                                    </links>
                                     <taglets>
                                         <taglet>
                                             <tagletClass>com.net2plan.documentation.Taglet_Description</tagletClass>
