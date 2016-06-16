@@ -376,20 +376,7 @@
                                                dest="${project.build.directory}/colt"/>
                                         <unzip src="${project.basedir}/src/main/resources/lib/parallelcolt-0.10.1.jar"
                                                dest="${project.build.directory}/colt"/>
-                                    </target>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>copy-javadoc</id>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <phase>generate-resources</phase>
-                                <configuration>
-                                    <target>
-                                        <copy todir="${project.build.directory}/site/apidocs/parallelcolt">
-                                            <fileset dir="${project.basedir}/src/main/resources/javadoc/parallelcolt"/>
-                                        </copy>
+                                        <copy file="${project.basedir}/src/main/resources/resources/documentation/bookCover.jpg" todir="${project.build.directory}/site/apidocs/examples/doc-files"/>
                                     </target>
                                 </configuration>
                             </execution>
@@ -458,6 +445,7 @@
                                     <noqualifier>
                                         java.lang:java.util:java.io:java.awt:java.net:java.awt.geom:javax.swing:cern.colt.matrix.tdouble
                                     </noqualifier>
+                                    <overview>${project.basedir}/src/main/resources/javadoc/overview-examples.html</overview>
                                     <links>
                                         <link>../parallelcolt</link>
                                     </links>

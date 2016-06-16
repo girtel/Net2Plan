@@ -48,6 +48,13 @@
                 <include>**</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/src/main/resources/javadoc</directory>
+            <outputDirectory>doc/javadoc</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+        </fileSet>
     </fileSets>
 
     <files>
