@@ -257,7 +257,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
         IPUtils.setECMPForwardingRulesFromLinkWeights(netPlan, null, ipLayer);
 		
 		/* Check consistency of WDM layer */
-        WDMUtils.checkConsistency(netPlan, true, wdmLayer);
+        WDMUtils.checkConsistency(netPlan, true, false , wdmLayer);
 
         return "Ok";
     }
@@ -317,7 +317,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
         for (Route cplRoute : cplDemand.getRoutes()) {
             List<Link> seqLinks = new LinkedList<Link>();
             for (Link cplLink : cplRoute.getSeqLinksRealPath()) seqLinks.add(netPlan.getLinkFromId(cplLink.getId()));
-            final int[] seqWavelengths = WDMUtils.WA_firstFit(seqLinks, wavelengthFiberOccupancy);
+            final int[] seqWavelengths = WDMUtils.slotAssignment_firstFit(seqLinks, wavelengthFiberOccupancy);
             if (seqWavelengths.length > 0)
                 return Pair.of(cplRoute, seqWavelengths[0]);
         }

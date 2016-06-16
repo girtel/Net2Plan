@@ -357,7 +357,7 @@ public class IOMatPlanWDM_design extends IOFilter
 				}
 				while (layerDemandId < numLayers);
 				
-				WDMUtils.checkConsistency(netPlan, false, wdmLayer);
+				WDMUtils.checkConsistency(netPlan, false, false , wdmLayer);
 			}
 			
 			return netPlan;

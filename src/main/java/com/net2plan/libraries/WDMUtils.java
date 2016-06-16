@@ -58,23 +58,76 @@ import cern.colt.matrix.tint.IntMatrix1D;
 import cern.colt.matrix.tint.IntMatrix2D;
 
 /**
- * Class to deal with optical topologies including wavelength assignment and regenerator placement.
+ * Class to deal with WDM optical topologies in fixed-grid and flexi-grid networks, including wavelength assignment and regenerator placement.
  *
+ * <p>Optical networks have been established as the enabling technology for today’s high-speed communication networks. Wavelength Division Multiplexing (WDM) enables the efficient utilization of optical fibers by dividing its tremendous bandwidth into a set of disjoint channels.</p>
+ * <p>The so-called <em>wavelength grid</em> determines the wavelengths or wavebands used by a channel:</p>
+ * <ul>
+ * <li>In <em>fixed-grid</em> networks, all the channels have the same width, typically of 100 GHz or 50 GHz. For instance, according to the 100 GHz ITU-T grid, first channel in the C-band has a central frequency of 196.1 THz, next 196.0 THz, next 195.9 THz... (until 191.2 THz, the last channel in the C-band). In this case each channel is typically called a <em>wavelength</em>.</li>
+ * <li><em>Flexi-grid</em> networks are a generalization of fixed-grid networks, where the width of a channel is an integer multiple of the width of a so-called frequency slot. Frequency slots are typically of 12.5 GHz. A channel can typically aggregate up to tens of slots. In general (but not always), these slots are constrained to be contiguous.</li>
+ * </ul>
+ * 
+ * <p>Flexi-grid networks where all the channels occupy exactly one frequency slot, and the width of the slot is e.g. 100 GHz, are equivalent to a fixed-grid network with a 100 GHz width. For this reason, after Net2Plan 0.4.1 we have put together inside <em>WDMUtils</em> the functionalities of both fixed and flexi grid WDM networks (formerly, flexi-grid networks were dealt with in <em>FlexiGridUtils</em> library).</p>
+ * 
+ * <h2>Wavelength-routed networks</h2>
+ * <p>In wavelength-routed WDM networks, all-optical channels traversing several fibers, called <b>lightpaths</b>, 
+ * can be established between pairs of nodes. A lightpath occupies one channel (a wavelength in fixed-grid networks, and a set of frequency slots in flexi-grid networks) 
+ * in each traversed link, and two lightpaths routed over the same physical link cannot use the same frequency slot in that link. 
+ * This is called the <b>wavelength or frequency slot clash constraint</b>. The <em>Routing and Spectrum Assignment</em> (RSA) problem and the <em>Routing and Wavelength Assignment</em> (RWA) problem in flexi and fixed grid WDM 
+ * networks respectively are the ones deciding for each lightpath the route and frequency slots (wavelengths) to occupy in each traversed fiber. 
+ * Typically, the wavelength/slots of a lightpath cannot change along the traversed fibers (since wavelength converters are not available). In this case we say that the problem has the <em>wavelength continuity constraint</em>.  
+ * 
+ * <p>Higher layers in the network see a lightpath as a pipe to transmit traffic, and they are not necessarily aware of the actual sequence of fiber links of the lightpath.</p>
+ * <p>The <em>line rate</em> of the lightpath is its capacity e.g. in Gbps. Typical line rates are 10, 40 and 100 Gbps. In flexi-grid networks, it is possible to have lightpaths of different line rates, that occupy the same number of frequency slots. This is because, the transponders (the ones transmitting and receiving the optical signals) can be based on different optical modulations with different <em>spectral efficiencies</em>. For instance, a transponder using BPSK modulation has a spectral efficiency of 1 bps/Hz, while a more sophisticated transponder using 16-QAM has 4 bps/Hz.</p>
+ * <p>Nodes in wavelength-routed networks are called Optical Add/Drop Multiplexers (OADMs). They are able to add new lightpaths initiated in the node, drop lightpaths terminating in the node, and optically switch (bypass) lightpaths that traverse the node. Usually, a lightpath occupies the same wavelength in all the traversed links. This is called the <b>wavelength continuity constraint</b>. However, it is possible (so far only in fixed-grid networks) to allocate optical wavelength converters at intermediate nodes of the lightpath that are able to change its wavelength. Nowadays, wavelength converters are composed of an opto-electronic receiver attached to an electro-optic transmitter. Then, the optical signal is regenerated, while its wavelength can be modified. More often, optical regenerators are used not for changing the wavelength in an intermediate node of a lightpath, but to regenerate the optical signal recovering it from its normal degradation caused by channel noise and other impairments.</p>
+ * <p>In Net2Plan, the <em>WDMUtils</em> library is provided to ease the handling of WDM networks. <em>WDMUtils</em> assumptions are:
+ * <ul>
+ * <li><em>Network layer</em>: A WDM network is represented by a network layer. Typically, the layer name is set to "WDM" (although this is not mandatory). The measure units for the traffic in this layer is assumed to be Gbps. In its turn, the capacity of the links is assumed to be measured in number of frequency slots.</li>
+ * <li><em>Links</em>: Each link in the WDM network layer is an optical fibre. The capacity of the link is measured as the (integer) number of frequency slots available in that fiber. For instance, a typical WDM network using the C-band in 50 GHz channels, has 80 available waveleneghts, and thus the link capacity is 80.  </li>
+ * <li><em>Nodes</em>: Each node in the network with input/output links in the WDM layer, represents an Optical Add/Drop Multiplexer (OADMs) capable of routing lightpaths.</li>
+ * <li><em>Demands</em>: A demand is here an intention to carry traffic between two OADMS. The offered traffic is assumed to be measured in Gbps (e.g. typically 10 Gbps, 40 Gbps, 100 Gbps).</li>
+ * <li><em>Routes</em>: A route represents a lightpath. The carried traffic of the lightpath corresponds to the lighptath line rate. The occupied link capacity of the lightpath is the total number of slots occupied (the same total number in all the traversed links). For specifying the particular frequency slots occupied by a lightpath in a link, in Net2Plan we assume that frequency slots in any link are numbered with consecutive numbers starting from zero 0,1,2,... The lowest number typically corresponds to the lower wavelength. The set of frequency slots occupied by a lightpath in each traversed link is stored by <em>WDMUtils</em> in a route attribute, in an internal format. The user using the <em>WDMUtils</em> library does not need to bother about the details of this format. Additionally, it is possible to define the set of nodes where the optical signal goes through a regenerator of the optical signal (with or without wavelength conversion). This information is also stored as Route attributes.</li>
+ * <li><em>Protection segments</em>: Zero, one or more protection segments can be associated to the route, representing (partial) backup lightpaths that protect the primary route. The occupied link capacity of the protection segment reflects the total number of frequency slots reserved in the traversed links. The actual set of slots reserved in each traversed, and the places where the signal is regenerated (if any) are also stored by <em>WDMUtils</em> in segment attributes</li>
+ * </ul>
+ * <p>For more information, we refer to the <em>WDMUtils</em> library in the Javadoc. In addition, network design algorithms and other resources for designing WDM networks can be found in the Net2Plan code repository under keyword <em>WDM</em>.</p>
  */
 public class WDMUtils
 {
 	
 	/**
-	 * This class represents a Routing and Spectrum Assignment, valid for a lightpath. This comprises a sequence of links, and for each link the set of frequency slots occupied.
+	 * This class represents a Routing and Spectrum Assignment, valid for a lightpath in both fixed and flexi-grid WDM networks. 
+	 * This comprises a sequence of links, and for each link the set of frequency slots occupied.
 	 * This number of slots must be the same in all the links.
 	 */
 	public static class RSA
 	{
-		public final Node ingressNode, egressNode;
+		
+		/**
+		 * The initial node of the lightpath 
+		 */
+		public final Node ingressNode;
+		/**
+		 * The end node of the lightpath 
+		 */
+		public final Node egressNode;
+		/**
+		 * The sequence of traversed fibers 
+		 */
 		public final List<Link> seqLinks;
+		/**
+		 * A 2D integer matrix with as many columns as traversed links (in the same order), and rows as the number of frequency slots occupied (the same in all the links).
+		 * Position (i,j) of the array is the identifier of the i-th slot used in the fiber traversed in the j-th place. Recall that an slot identifier is an integer number between zero and the number of slots in the grid minus one. 
+		 */
 		public final IntMatrix2D seqFrequencySlots;
-		public final int [] seqRegeneratorsOccupancy; // as many coordinates as links traversed, indicates with 1 if a regenerator is needed at origin node of the given link
+		/**
+		 * An integer vector with one coordinate per traversed fiber. A 1 is set in the i-th position if a regenerator is needed at origin node of the fiber traversed in the i-th place, and a 0 otherwise.
+		 */
+		public final int [] seqRegeneratorsOccupancy; // as many coordinates as links traversed
 
+		/** Creates a RSA object reading the information from the existing Route object (and its WDM-related attributes). 
+		 * @param r the route object
+		 * @param initializeWithTheInitialRoute if {@code true}, the RSA object created gets the information from the route initial sequence of links, and if not, from the route current sequence of traversed links.
+		 */
 		public RSA (Route r , boolean initializeWithTheInitialRoute)
 		{
 			this.ingressNode = r.getIngressNode();
@@ -86,9 +139,12 @@ public class WDMUtils
 				this.seqRegeneratorsOccupancy = r.getAttribute(initializeWithTheInitialRoute? WDMUtils.SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME) == null? new int [seqLinks.size()] : StringUtils.toIntArray(StringUtils.split(r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME), " "));
 			} catch (Exception e) { throw new WDMException("RSA not correctly defined in the attributes: " + WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME + " = " + r.getAttribute(SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME) + "; SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME = " + r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME)); }
 			if (getNumSlots() != r.getOccupiedCapacityInNoFailureState()) throw new WDMException("The occupied link capacity is different to the number of slots");
-			checkValidity(false);
+			checkValidity();
 		}
 		
+		/** Creates a RSA object reading the information from the existing ProtectionSegment object (and its WDM-related attributes). 
+		 * @param r the segment object
+		 */
 		public RSA (ProtectionSegment r)
 		{
 			this.ingressNode = r.getOriginNode();
@@ -100,27 +156,38 @@ public class WDMUtils
 				this.seqRegeneratorsOccupancy = r.getAttribute(WDMUtils.SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME) == null? new int [seqLinks.size()] : StringUtils.toIntArray(StringUtils.split(r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME), " "));
 			} catch (Exception e) { throw new WDMException("RSA not correctly defined in the attributes: " + WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME + " = " + r.getAttribute(SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME) + "; SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME = " + r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME)); }
 			if (getNumSlots() != r.getOccupiedLinkCapacity()) throw new WDMException("The occupied link capacity is different to the number of slots");
-			checkValidity(false);
+			checkValidity();
 		}
 
+		/** Creates a RSA object from the provided information
+		 * @param seqLinks sequence of traversed fibers (a copy is made internally)
+		 * @param seqFrequencySlots 2D array with the sequence of frequency slots information. 
+		 * @param seqRegenerators vector with the sequence of traversed regenerators information (if {@code null}, no regenerators are placed)
+		 */
 		public RSA (List<Link> seqLinks , IntMatrix2D seqFrequencySlots , int [] seqRegenerators)
 		{ 
-			this.seqLinks = new ArrayList<Link> (seqLinks); this.seqFrequencySlots = seqFrequencySlots;
+			this.seqLinks = new ArrayList<Link> (seqLinks); 
+			this.seqFrequencySlots = seqFrequencySlots;
 			this.ingressNode = seqLinks.get(0).getOriginNode();
 			this.egressNode = seqLinks.get(seqLinks.size()-1).getDestinationNode();
 			this.seqRegeneratorsOccupancy = seqRegenerators == null? new int [seqLinks.size()] : Arrays.copyOf(seqRegenerators , seqRegenerators.length); 
-			checkValidity (false);
+			checkValidity ();
 		}
 
+		/** Equivalent to {@code RSA (seqLinks , seqFrequencySlot, null)
+		 * @param seqLinks sequence of traversed fibers (a copy is made internally)
+		 * @param seqFrequencySlots 2D array with the sequence of frequency slots information. 
+		 */
 		public RSA (List<Link> seqLinks , IntMatrix2D seqFrequencySlots)
 		{ 
-			this.seqLinks = new ArrayList<Link> (seqLinks); this.seqFrequencySlots = seqFrequencySlots;
-			this.ingressNode = seqLinks.get(0).getOriginNode();
-			this.egressNode = seqLinks.get(seqLinks.size()-1).getDestinationNode();
-			this.seqRegeneratorsOccupancy = new int [seqLinks.size()]; 
-			
-			checkValidity (false);
+			this(seqLinks , seqFrequencySlots , null);
 		}
+
+		/** Creates a RSA with the same set of contigous slots occupied in all the traversed fibers
+		 * @param seqLinks Sequence of traversed fiber
+		 * @param initialSlot id of the initial frequency slot occupied
+		 * @param numSlots number of contiguous slots of the RSA
+		 */
 		public RSA (List<Link> seqLinks , int initialSlot , int numSlots)
 		{ 
 			this.seqLinks = new ArrayList<Link>(seqLinks); 
@@ -130,13 +197,23 @@ public class WDMUtils
 			this.ingressNode = seqLinks.get(0).getOriginNode();
 			this.egressNode = seqLinks.get(seqLinks.size()-1).getDestinationNode();
 			this.seqRegeneratorsOccupancy = new int [seqLinks.size()]; 
-			checkValidity (false);
+			checkValidity ();
 		}
-		public RSA (List<Link> seqLinks , int initialSlot)
+
+		/** Creates a RSA where the same one single slot is occupied in all the traversed links. 
+		 * Typically used in fixed-grid networks without wavelength conversion. Equivalent to {@code RSA (seqLinks , occupiedSlotId , 1)}
+		 * @param seqLinks sequence of traversed fibers
+		 * @param occupiedSlotId the slot occupied
+		 */
+		public RSA (List<Link> seqLinks , int occupiedSlotId)
 		{ 
-			this (seqLinks , initialSlot , 1);
+			this (seqLinks , occupiedSlotId , 1);
 		}
 		
+		/** Gets the list of nodes (in the same order as they are traversed) where frequency slot changes in the RSA. These are 
+		 * nodes where regenerators (which are assumed to make also wavelength conversion) would be needed.
+		 * @return a list of nodes where frequency slot converters are needed
+		 */
 		public List<Node> getNodesWithFrequencySlotConversion ()
 		{
 			List<Node> res = new ArrayList<Node> ();
@@ -150,13 +227,36 @@ public class WDMUtils
 			return res;
 		}
 		
+		/** Returns whether or not frequency slot conversions occur in this RSA (and thus converters would be needed)
+		 * @return {@code true} if frequency slot conversion occurs, {@code false} otherwise
+		 */
 		public boolean hasFrequencySlotConversions () { return getNodesWithFrequencySlotConversion().size() > 0; }
 
+		/** Gets the length of the RSA in km, summing the length of the traversed fibers
+		 * @return the length in km
+		 */
 		public double getLengthInKm () { double accum = 0; for (Link e : seqLinks) accum += e.getLengthInKm(); return accum; }
 		
+		/** Gets the number of slots occupied in this RSA (the same in all the traversed fibers)
+		 * @return the number of slots
+		 */
 		public int getNumSlots () { return seqFrequencySlots.rows(); }
 		
-		public void checkValidity (boolean checkRegenerators)
+		/** Checks that in every node where the frequency slots of the RSA change, a regenerator is placed (if not, an exception is raised). 
+		 * This is assuming that regenerators are the equipment needed to perform wavelength/frequency slot conversion  
+		 */
+		public void checkFrequencySlotConversionOccupiesARegenerator ()
+		{
+			final int E = seqFrequencySlots.columns();
+			for (int counterLink = 1; counterLink < E ; counterLink ++)
+			{
+				if (seqRegeneratorsOccupancy [counterLink] == 0)
+					if (!seqFrequencySlots.viewColumn(counterLink).equals(seqFrequencySlots.viewColumn(counterLink-1)))
+						throw new WDMException ("Wrong regenerators occupancy in the RSA: a regenrator is not placed in a node where the lighptath slot wavelengths change");
+			}
+		}
+
+		private void checkValidity ()
 		{
 			final int S = seqFrequencySlots.rows();
 			final int E = seqFrequencySlots.columns();
@@ -165,20 +265,10 @@ public class WDMUtils
 			if (seqLinks.size() != E) throw new WDMException ("Wrong RSA");
 			if (S == 0) throw new WDMException ("Wrong RSA");
 			if (seqFrequencySlots.getMinLocation() [0] < 0) throw new WDMException ("Wrong slot identifier (cannot be negative)"); 
-			if (checkRegenerators)
-			{
-				if (seqRegeneratorsOccupancy.length != seqLinks.size()) throw new WDMException ("Wrong regenerators occupancy in the RSA");
-				seqRegeneratorsOccupancy [0] = 0;
-				for (int counterLink = 1; counterLink < E ; counterLink ++)
-				{
-					if (seqRegeneratorsOccupancy [counterLink] == 0)
-						if (!seqFrequencySlots.viewColumn(counterLink).equals(seqFrequencySlots.viewColumn(counterLink-1)))
-							throw new WDMException ("Wrong regenerators occupancy in the RSA: a regenrator is not placed in a node where the lighptath slot wavelengths change");
-				}
-			}
+			if (seqRegeneratorsOccupancy.length != seqLinks.size()) throw new WDMException ("Wrong regenerators occupancy in the RSA");
+			seqRegeneratorsOccupancy [0] = 0;
 		}
-		
-		
+
 	}
 	
 	/**
@@ -186,11 +276,37 @@ public class WDMUtils
 	 */
 	public static class LightpathAdd 
 	{ 
+		/**
+		 * The event generator puts a null here. The processor fills it with the Route object created, if the lightpath add request is accepted 
+		 */
 		public Route lpAddedToFillByProcessor; 
+		/**
+		 * The id of the network WDM layer 
+		 */
 		public final NetworkLayer layer; 
+		/**
+		 * The WDM demand the lightpath belongs to 
+		 */
 		public final Demand demand; 
-		public final Node ingressNode, egressNode; 
-		public final RSA primaryRSA , backupRSA;   
+		/**
+		 * The ingress node of the lightpath
+		 */
+		public final Node ingressNode;
+		/**
+		 * The egress node of the lightpath
+		 */
+		public final Node egressNode; 
+		/**
+		 * The RSA of the primary route of the lightpath to add
+		 */
+		public final RSA primaryRSA;
+		/**
+		 * The RSA of the backup lightpath to add as a protection segment (or null if none) 
+		 */
+		public final RSA backupRSA;   
+		/**
+		 * The line rate of the lightpath
+		 */
 		public final double lineRateGbps;
 
 		/**
@@ -203,52 +319,43 @@ public class WDMUtils
 		/**
 		 * Constructor to generate a new {@code LightpathAdd} object.
 		 * @param demand Demand
-		 * @param rsa The lightpath RSA 
+		 * @param rsa The lightpath RSA of the primary (no backup)
 		 * @param lineRateGbps Line rate in Gbps
 		 */
 		public LightpathAdd(Demand demand, RSA rsa , double lineRateGbps) { this.demand = demand; this.primaryRSA = rsa; this.lineRateGbps = lineRateGbps; this.backupRSA = null; this.ingressNode = demand.getIngressNode(); this.egressNode = demand.getEgressNode(); this.layer = demand.getLayer(); }
 
 		/**
 		 * Constructor to generate a new {@code LightpathAdd} object.
-		 * @param demand Demand
-		 * @param seqLinks_primary Primary sequence of fibers
-		 * @param seqLinks_backup Backup sequence of fibers
-		 * @param seqWavelengths_primary Primary sequence of wavelengths
-		 * @param seqWavelengths_backup Backup sequence of wavelengths
-		 * @param lineRateGbps Line rate in Gbps
+		 * @param demand Demand the lighptath belongs to
+		 * @param primaryRSA the RSA of the primary (create as a Route)
+		 * @param backupRSA the RSA of the backup (create as a protection segment)
+		 * @param lineRateGbps line rate of the lightpath
 		 */
 		public LightpathAdd(Demand demand, RSA primaryRSA , RSA backupRSA , double lineRateGbps) { this.demand = demand; this.primaryRSA = primaryRSA; this.lineRateGbps = lineRateGbps; this.backupRSA = backupRSA ; this.ingressNode = demand.getIngressNode(); this.egressNode = demand.getEgressNode(); this.layer = demand.getLayer(); }
 
 		/**
 		 * Constructor to generate a new {@code LightpathAdd} object.
-		 * @param ingressNode Ingress node
-		 * @param egressNode Egress node
-		 * @param layer Network layer
+		 * @param ingressNode Ingress node of the lightpath to create
+		 * @param egressNode Egress node of the lightpath to create
+		 * @param layer The WDM network layer
 		 * @param lineRateGbps Line rate in Gbps
 		 */
 		public LightpathAdd(Node ingressNode , Node egressNode , NetworkLayer layer , double lineRateGbps) { this.demand = null; this.primaryRSA = null; this.backupRSA = null; this.lineRateGbps = lineRateGbps; this.ingressNode = ingressNode; this.egressNode = egressNode; this.layer = layer; }
 
 		/**
 		 * Constructor to generate a new {@code LightpathAdd} object.
-		 * @param ingressNode Ingress node
-		 * @param egressNode Egress node
-		 * @param layer Network layer
-		 * @param seqLinks Sequence of fibers
-		 * @param seqWavelengths Sequence of wavelengths
-		 * @param lineRateGbps Line rate in Gbps
+		 * @param layer The WDM network layer
+		 * @param rsa The RSA of the lightpath to create
+		 * @param lineRateGbps the line rate of the lightpath
 		 */
 		public LightpathAdd(NetworkLayer layer , RSA rsa , double lineRateGbps) { this.demand = null; this.primaryRSA = rsa; this.backupRSA = null; this.lineRateGbps = lineRateGbps; this.ingressNode = rsa.ingressNode; this.egressNode = rsa.egressNode; this.layer = layer; }
 
 		/**
 		 * Constructor to generate a new {@code LightpathAdd} object.
-		 * @param ingressNode Ingress node
-		 * @param egressNode Egress node
-		 * @param layer Network layer
-		 * @param seqLinks_primary Primary sequence of links
-		 * @param seqLinks_backup Backup sequence of links
-		 * @param seqWavelengths_primary Primary sequence of wavelengths
-		 * @param seqWavelengths_backup Backup sequence of wavelengths
-		 * @param lineRateGbps Line rate in Gbps
+		 * @param layer The WDM network layer
+		 * @param primaryRSA The RSA of the primary 
+		 * @param backupRSA The RSA of the backup (to create as a protection segment)
+		 * @param lineRateGbps the line rate of the lightpath
 		 */
 		public LightpathAdd(NetworkLayer layer , RSA primaryRSA, RSA backupRSA , double lineRateGbps) 
 		{ 
@@ -261,62 +368,66 @@ public class WDMUtils
 	/**
 	 * This class represents the request to remove an existing lightpath. It is used in online algorithms related to WDM networks, inside {@code SimEvent} objects.
 	 */
-	public static class LightpathRemove { public final Route lp;
+	public static class LightpathRemove 
+	{ 
+		/**
+		 * The Route object representing the lightpath to remove (in general, protection segments associated to this route will be also removed)
+		 */
+		public final Route lp;
 
 		/**
 		 * Constructor to generate a new {@code LightpathRemove} object.
 		 * @param lp Route
 		 */
-		public LightpathRemove (Route lp) { this.lp = lp; } };
+		public LightpathRemove (Route lp) { this.lp = lp; } 
+	};
 
 	/**
 	 * This class represents the request to modify an existing lightpath. It is used in online algorithms related to WDM networks, inside {@code SimEvent} objects.
 	 */
 	public static class LightpathModify 
 	{ 
+		/**
+		 * The route object of the lightpath to modify
+		 */
 		public final Route lp; 
+		/**
+		 * The new RSA of the lightpath
+		 */
 		public final RSA rsa; 
+		/**
+		 * The new carried traffic of the lightpath 
+		 */
 		public final double carriedTraffic; 
-//		public final double occupiedLinkCapacity;
 
 		/**
 		 * Constructor to generate a new {@code LightpathModify} object.
 		 * @param lp Route to modify
-		 * @param seqLinks New sequence of fibers
-		 * @param carriedTraffic New carried traffic
-		 * @param occupiedLinkCapacity New occupied link capacity
-		 * @param seqWavelengths New sequence of wavelengths
+		 * @param rsa the new RSA
+		 * @param carriedTraffic new carried traffic
 		 */
 		public LightpathModify (Route lp , RSA rsa , double carriedTraffic) { this.lp = lp; this.rsa = rsa; this.carriedTraffic = carriedTraffic; }  
 	};
 	
 	/**
 	 * Route/protection segment attribute name for sequence of regenerators.
-	 * 
-	 * @since 0.3.0
 	 */
-	public final static String SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME = "seqRegenerators";
+	private final static String SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME = "seqRegenerators";
 	
 	/**
 	 * Route/protection segment attribute name for sequence of wavelengths.
-	 * 
-	 * @since 0.3.0
 	 */
-	public final static String SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME = "seqFrequencySlots";
+	private final static String SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME = "seqFrequencySlots";
 	
 	/**
 	 * Route/protection segment attribute name for sequence of wavelengths for the initial sequence of links (when the route was created)
-	 * 
-	 * @since 0.3.0
 	 */
-	public final static String SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME = "seqFrequencySlotsInitialRoute";
+	private final static String SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME = "seqFrequencySlotsInitialRoute";
 	
 	/**
 	 * Route/protection segment attribute name for sequence of regenerators occupied for the initial sequence of links (when the route was created)
-	 * 
-	 * @since 0.3.0
 	 */
-	public final static String SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME = "seqRegeneratorsInitialRoute";
+	private final static String SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME = "seqRegeneratorsInitialRoute";
 
 	private static class WDMException extends Net2PlanException
 	{
@@ -328,34 +439,24 @@ public class WDMUtils
 
 	private WDMUtils() { }
 
-	/**
-	 * Creates a new lightpath and updates the wavelength occupancy.
-	 * @param demand Demand
-	 * @param seqFibers Sequence of fibers
-	 * @param binaryRatePerChannel Binary rate per channel in Gbps
-	 * @param seqFrequencySlots Sequence of wavelengths
-	 * @param seqRegenerators Sequence of regenerators
-	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
-	 * @param nodeRegeneratorOccupancy Number of regenerators installed per node
-	 * @return The newly create lightpath (as a route)
+	/** Creates a new lightpath with the given RSA, as a {@code Route} object. The attributes of the lightpath to store the WDM information are initialized appropriately
+	 * @param demand The demand the lightpath belongs to 
+	 * @param rsa the RSA 
+	 * @param lineRateGbps the line rate of the lightpath in Gbps
+	 * @return The newly created lightpath 
 	 */
-	public static Route addLightpath (Demand demand , RSA rsa , double binaryRatePerChannel)
+	public static Route addLightpath (Demand demand , RSA rsa , double lineRateGbps)
 	{
 		NetPlan np = demand.getNetPlan();
-		Route lp = np.addRoute(demand , binaryRatePerChannel , rsa.getNumSlots() , rsa.seqLinks, null);
+		Route lp = np.addRoute(demand , lineRateGbps , rsa.getNumSlots() , rsa.seqLinks, null);
 		setLightpathRSAAttributes (lp , rsa , false);
 		setLightpathRSAAttributes (lp , rsa , true);
 		return lp;
 	}
 
-	/**
-	 * Creates a new protection lightpath and updates the wavelength occupancy.
-	 * @param seqFibers Sequence of fibers
-	 * @param seqFrequencySlots Sequence of wavelengths
-	 * @param seqRegenerators Sequence of regeneratos
-	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
-	 * @param nodeRegeneratorOccupancy Number of regenerators installed per node
-	 * @return The newly created lightpath (as a protection segment)
+	/** Creates a new lightpath with the given RSA, as a {@code ProtectionSegment} object. The attributes of the lightpath to store the WDM information are initialized appropriately
+	 * @param rsa the RSA (traversed fibers, and slots to reserve in them)
+	 * @return The newly created lightpath 
 	 */
 	public static ProtectionSegment addLightpathAsProtectionSegment (RSA rsa)
 	{
@@ -365,39 +466,41 @@ public class WDMUtils
 		return lp;
 	}
 
-	/**
-	 * <p>Performs extra checks to those applicable to every network design, especially
-	 * focused on WDM networks.</p>
-	 *
-	 * @param netPlan A {@link com.net2plan.interfaces.networkDesign.NetPlan} representing a WDM physical topology
-	 * @param countDownLightpathResources Wheter or not include lightpaths that are down
-	 * @param optionalLayerParameter Network layer (optional)
+	/** Performs some checks in a WDM network. Checks that all the route and protection segment objects of the WDM layer have valid 
+	 * values in the attributes storing its RSA and regenerator occupancy. 
+	 * In addition, it checks resource clashing: no frequency slot in the same fiber can be occupied by more than one lightpath 
+	 * @param netPlan The object representing the network
+	 * @param countDownLightpathResources Whether or not include lightpaths that are down
+	 * @param checkRegeneratorsAsWavelengthConverters Whether or not to check that a lighpath occupies one regenerator in every node where the RSA checnges the frequency slots (that is, where a wavelength conversion occurs)
+	 * @param optionalLayerParameter WDM network layer. If not present, the default layer is assumed
 	 */
-	public static void checkConsistency(NetPlan netPlan, boolean countDownLightpathResources , NetworkLayer ... optionalLayerParameter)
+	public static void checkConsistency(NetPlan netPlan, boolean countDownLightpathResources , boolean checkRegeneratorsAsWavelengthConverters , NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		
 		for (Route lpRoute : netPlan.getRoutes(layer))
 			if (!lpRoute.isDown())
-				new RSA (lpRoute , false).checkValidity(true); // makes the check
-
+			{
+				final RSA rsa = new RSA (lpRoute , false); // makes the check
+				if (checkRegeneratorsAsWavelengthConverters) rsa.checkFrequencySlotConversionOccupiesARegenerator();
+			}
 		for (ProtectionSegment protectionLp : netPlan.getProtectionSegments(layer))
 			if (!protectionLp.isDown())
-				new RSA (protectionLp).checkValidity(true); // makes the check
-
+			{
+				final RSA rsa = new RSA (protectionLp); // makes the check
+				if (checkRegeneratorsAsWavelengthConverters) rsa.checkFrequencySlotConversionOccupiesARegenerator();
+			}
 		getNetworkSlotAndRegeneratorOcupancy(netPlan , countDownLightpathResources , layer); // serves as check
 	}
 	
 	/**
 	 * Returns the list of nodes within the lightpath route containing a regenerator,
 	 * only following a distance criterium, assuming no wavelength conversion is required.
-	 *
 	 * @param seqFibers Sequence of traversed fibers
-	 * @param maxRegeneratorDistanceInKm Maximum regeneration distance
-	 * @param l_f Physical length in km per fiber
+	 * @param maxRegeneratorDistanceInKm Maximum regeneration distance: after this distance from the initial node or from the last regenerator, the signal is considered not recuperable 
 	 * @return A vector with as many elements as traversed links in the route/segment. Each element is a 1 if an optical regenerator is used at the origin node of the corresponding link, and a 0 if not. First element is always 0.
 	 */
-	public static int[] computeRegeneratorPositions(List<Link> seqFibers, DoubleMatrix1D l_f, double maxRegeneratorDistanceInKm)
+	public static int[] computeRegeneratorPositions(List<Link> seqFibers, double maxRegeneratorDistanceInKm)
 	{
 		int numHops = seqFibers.size();
 
@@ -409,7 +512,7 @@ public class WDMUtils
 		{
 			int hopId = it.nextIndex();
 			Link fiber = it.next();
-			double fiberLengthInKm = l_f.get(fiber.getIndex());
+			double fiberLengthInKm = fiber.getLengthInKm();
 
 			if (fiberLengthInKm > maxRegeneratorDistanceInKm)
 				throw new WDMException(String.format("Fiber %d is longer (%f km) than the maximum distance without regenerators (%f km)", fiber.getId(), fiberLengthInKm, maxRegeneratorDistanceInKm));
@@ -432,15 +535,13 @@ public class WDMUtils
 
 	/**
 	 * Returns the list of nodes within the lightpath route containing a regenerator,
-	 * only following a distance criterium, assuming wavelength conversion is required.
-	 *
+	 * only following a distance criterium. If the frequency slots occupied changes in a link to the next, we assume that such wavelength conversion needs a regenerator, and thus one regenerator is placed in the intermediate node.
 	 * @param seqFibers Sequence of traversed fibers
 	 * @param seqFrequencySlots Sequence of frequency slots occupied (one row per slot, one column per traversed fiber)
-	 * @param l_f Physical length in km per fiber
-	 * @param maxRegeneratorDistanceInKm Maximum regeneration distance
+	 * @param maxRegeneratorDistanceInKm Maximum regeneration distance: after this distance from the initial node or from the last regenerator, the signal is considered not recuperable 
 	 * @return A vector with as many elements as traversed links in the route/segment. Each element is a 1 if an optical regenerator is used at the origin node of the corresponding link, and a 0 if not. First element is always 0.
 	 */
-	public static int[] computeRegeneratorPositions(List<Link> seqFibers, DoubleMatrix2D seqFrequencySlots, DoubleMatrix1D l_f, double maxRegeneratorDistanceInKm)
+	public static int[] computeRegeneratorPositions(List<Link> seqFibers, DoubleMatrix2D seqFrequencySlots, double maxRegeneratorDistanceInKm)
 	{
 		int numHops = seqFibers.size();
 
@@ -452,7 +553,7 @@ public class WDMUtils
 		{
 			int hopId = it.nextIndex();
 			Link fiber = it.next();
-			double fiberLengthInKm = l_f.get(fiber.getIndex ());
+			double fiberLengthInKm = fiber.getLengthInKm();
 
 			if (fiberLengthInKm > maxRegeneratorDistanceInKm)
 			{
@@ -497,27 +598,23 @@ public class WDMUtils
 	 * Returns the total number of frequency slots in each fiber.
 	 * 
 	 * @param netPlan A {@link com.net2plan.interfaces.networkDesign.NetPlan} representing a WDM physical topology
-	 * @param optionalLayerParameter Network layer (optional)
+	 * @param optionalLayerParameter WDM network layer. If not present, the default layer is assumed
 	 * @return Number of wavelengths per fiber
 	 */
 	public static DoubleMatrix1D getVectorFiberNumFrequencySlots (NetPlan netPlan, NetworkLayer ... optionalLayerParameter)
 	{
-		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		Collection<Link> fibers = netPlan.getLinks(layer);
-		DoubleMatrix1D w_f = DoubleFactory1D.dense.make (fibers.size ());
-		for (Link fiber : fibers) w_f.set(fiber.getIndex () , getFiberNumFrequencySlots(fiber));
-		return w_f;
+		return netPlan.getVectorLinkCapacity(optionalLayerParameter);
 	}
 
 	/**
-	 * Returns {@code true} if the given sequence of wavelengths has not been allocated in the given sequence of links, {@code false} otherwise.
-	 * @param rsa the RSA to check
-	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
+	 * Returns {@code true} if all the RSAs are allocatable (the needed frequency slots are free in the given sequence of links), {@code false} otherwise. 
+	 * @param frequencySlot2FiberOccupancy_se Occupied fibers in each wavelength
+	 * @param rsas one or more RSAs to check. We start allocating them in order (never releasing the resources of the previous ones). Then, {@code true} is returned if it is possible to allocate all of them simultaneously. In other words, if two RSAs in {@code rsas} require the same frequency slot in the same link, they are not allocatable. 
 	 * @return See description above
 	 */
-	public static boolean isAllocatableRSASet (DoubleMatrix2D wavelengthFiberOccupancy , RSA ... rsas)
+	public static boolean isAllocatableRSASet (DoubleMatrix2D frequencySlot2FiberOccupancy_se , RSA ... rsas)
 	{
-		IntMatrix2D checkMatrix = IntFactory2D.sparse.make (wavelengthFiberOccupancy.rows () , wavelengthFiberOccupancy.columns());
+		IntMatrix2D checkMatrix = IntFactory2D.sparse.make (frequencySlot2FiberOccupancy_se.rows () , frequencySlot2FiberOccupancy_se.columns());
 		for (RSA rsa : rsas)
 		{
 			int orderTravLink = 0; 
@@ -527,7 +624,7 @@ public class WDMUtils
 				{
 					final int slotIndex = rsa.seqFrequencySlots.get(orderTravLink,s);
 					final int linkIndex = e.getIndex();
-					if (wavelengthFiberOccupancy.get (slotIndex , linkIndex) != 0) return false;
+					if (frequencySlot2FiberOccupancy_se.get (slotIndex , linkIndex) != 0) return false;
 					if (checkMatrix.get (slotIndex , linkIndex) != 0) return false;
 					checkMatrix.set (slotIndex , linkIndex , 1);
 				}
@@ -538,11 +635,11 @@ public class WDMUtils
 	}
 
 	/**
-	 * Returns the fiber occupied (columns) in each wavelength (rows).
+	 * Returns the fiber occupied (columns) in each wavelength (rows), and an array with the number of occupied regenerators in each node.
 	 * @param netPlan Current design
 	 * @param countDownLightpathResources Include lightpaths that are down
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return Fibers occupied in each wavelength
+	 * @param optionalLayerParameter WDM network layer. If not present, the default layer is assumed
+	 * @return Frequency slot - links occupation matrix, and per node regenerator occupation vector
 	 */
 	public static Pair<DoubleMatrix2D,DoubleMatrix1D> getNetworkSlotAndRegeneratorOcupancy(NetPlan netPlan, boolean countDownLightpathResources , NetworkLayer ... optionalLayerParameter)
 	{
@@ -551,18 +648,18 @@ public class WDMUtils
 		final int N = netPlan.getNumberOfNodes ();
 		DoubleMatrix1D w_f = getVectorFiberNumFrequencySlots (netPlan, layer);
 		final int W = w_f.size () == 0? 0 : (int) w_f.getMaxLocation() [0];
-		DoubleMatrix2D wavelengthFiberOccupancy = DoubleFactory2D.dense.make (W,E);
+		DoubleMatrix2D frequencySlot2FiberOccupancy_se = DoubleFactory2D.dense.make (W,E);
 		DoubleMatrix1D nodeRegeneratorOccupancy = DoubleFactory1D.dense.make (N);
 	
 		/* The wavelengths above the maximum number of wavelengths of a fiber, are set as occupied */
-		for (int e = 0 ; e < E ; e ++) for (int w = (int) w_f.get(e) ; w < W ; w ++) wavelengthFiberOccupancy.set (e,w,1);
+		for (int e = 0 ; e < E ; e ++) for (int w = (int) w_f.get(e) ; w < W ; w ++) frequencySlot2FiberOccupancy_se.set (e,w,1);
 		
 		/* Wavlengths occupied by the lightpaths as routes */
 		for (Route lpRoute : netPlan.getRoutes(layer))
 		{
 			if (!countDownLightpathResources && lpRoute.isDown()) continue;
 			if (lpRoute.getOccupiedCapacity() == 0) continue; // not been used now
-			allocateResources(new RSA (lpRoute , false) , wavelengthFiberOccupancy , nodeRegeneratorOccupancy);
+			allocateResources(new RSA (lpRoute , false) , frequencySlot2FiberOccupancy_se , nodeRegeneratorOccupancy);
 		}
 
 		/* Wavlengths occupied by the lightpaths as protection segments */
@@ -570,25 +667,22 @@ public class WDMUtils
 		{
 			if (!countDownLightpathResources && segment.isDown()) continue;
 			if (segment.getReservedCapacityForProtection() == 0) continue; // not been used now
-			allocateResources(new RSA (segment) , wavelengthFiberOccupancy , nodeRegeneratorOccupancy);
+			allocateResources(new RSA (segment) , frequencySlot2FiberOccupancy_se , nodeRegeneratorOccupancy);
 //			if (segment.getTraversingRoutes().size() == 1) continue; // its occupancy was already updated
 //			if (segment.getTraversingRoutes().size() > 1) throw new RuntimeException ("Bad");
 		}			
 
-		return Pair.of(wavelengthFiberOccupancy,nodeRegeneratorOccupancy);
+		return Pair.of(frequencySlot2FiberOccupancy_se,nodeRegeneratorOccupancy);
 	}
 	
 	/**
-	 * Updates {@code wavelengthFiberOccupancy} to consider that a lightpath is releasing
-	 * used wavelengths.
-	 * 
-	 * @param seqFibers Sequence of traversed fibers
-	 * @param seqWavelengths Sequence of wavelengths (as many as the number of links in the lightpath)
-	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
-	 * @param seqRegenerators A 0-1 array indicating whether (1) or not (0) a regenerator/wavelength converter is required at the origin node of the corresponding fiber
-	 * @param nodeRegeneratorOccupancy Number of regenerators installed per node
+	 * Updates {@code frequencySlot2FiberOccupancy_se} to consider that a lightpath is releasing
+	 * used frequency slots, and {@code nodeRegeneratorOccupancy} to consider that the lightpath releases the occupied regenerators
+	 * @param rsa The RSA to release
+	 * @param frequencySlot2FiberOccupancy_se Current slot-fiber occupancy (updated inside the method)
+	 * @param nodeRegeneratorOccupancy Current node regenerator occupancy (updated inside the method)
 	 */
-	public static void releaseResources(RSA rsa , DoubleMatrix2D wavelengthFiberOccupancy, DoubleMatrix1D nodeRegeneratorOccupancy)
+	public static void releaseResources(RSA rsa , DoubleMatrix2D frequencySlot2FiberOccupancy_se, DoubleMatrix1D nodeRegeneratorOccupancy)
 	{
 		final int S = rsa.getNumSlots();
 		ListIterator<Link> fiberIt = rsa.seqLinks.listIterator();
@@ -599,9 +693,9 @@ public class WDMUtils
 			for (int s = 0; s < S ; s ++)
 			{
 				final int slotId = (int) rsa.seqFrequencySlots.get(s,hopId);
-				final boolean wasOccupied = wavelengthFiberOccupancy.get(slotId, fiber.getIndex ()) != 0;
+				final boolean wasOccupied = frequencySlot2FiberOccupancy_se.get(slotId, fiber.getIndex ()) != 0;
 				if (!wasOccupied) throw new WDMException("Wavelength " + slotId + " was unused in fiber " + fiber.getId ());
-				wavelengthFiberOccupancy.set(slotId, fiber.getIndex () , 0.0);
+				frequencySlot2FiberOccupancy_se.set(slotId, fiber.getIndex () , 0.0);
 			}
 			if (rsa.seqRegeneratorsOccupancy != null) 
 				if (rsa.seqRegeneratorsOccupancy[hopId] == 1)
@@ -613,7 +707,7 @@ public class WDMUtils
 	}
 	
 	/**
-	 * Sets the number of wavelengths available on the given fiber.
+	 * Sets the number of frequency slots available on the given fiber.
 	 *
 	 * @param fiber Link fiber
 	 * @param numWavelengths Number of wavelengths for the given fiber
@@ -625,24 +719,24 @@ public class WDMUtils
 	}
 
 	/**
-	 * Sets the number of wavelengths available in each fiber to the same value.
+	 * Sets the number of frequency slots available in each fiber to the same value.
 	 * 
 	 * @param netPlan A {@link com.net2plan.interfaces.networkDesign.NetPlan} representing a WDM physical topology
-	 * @param numWavelengths Number of wavelengths for all fibers
-	 * @param optionalLayerParameter Network layer (optional)
+	 * @param numFrequencySlots Number of wavelengths for all fibers
+	 * @param optionalLayerParameter WDM network layer. If not present, the default layer is assumed
 	 */
-	public static void setFibersNumFrequencySlots(NetPlan netPlan, int numWavelengths , NetworkLayer ... optionalLayerParameter)
+	public static void setFibersNumFrequencySlots(NetPlan netPlan, int numFrequencySlots , NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		if (numWavelengths < 0) throw new WDMException("'numWavelengths' must be a non-negative integer");
-		for (Link fiber : netPlan.getLinks (layer)) fiber.setCapacity(numWavelengths);
+		if (numFrequencySlots < 0) throw new WDMException("'numWavelengths' must be a non-negative integer");
+		for (Link fiber : netPlan.getLinks (layer)) fiber.setCapacity(numFrequencySlots);
 	}
 
 	/**
-	 * Sets the sequence of wavelengths for the given lightpath.
-	 * 
+	 * Sets the attributes of the given {@code Route} object to reflect the RSA occupation (in the initial route or in the current route, depending on {@code initializeTheInitialRoute}). 
 	 * @param lp Lightpath (as a route)
-	 * @param seqFrequencySlots Sequence of wavelengths (as many as the number of links in the lightpath)
+	 * @param rsa The RSA to set in the attributes
+	 * @param initializeTheInitialRoute If {@code true}, we assume that the RSA corresponds to the initial path in the {@code Route} object, if not, to the current one.
 	 */
 	public static void setLightpathRSAAttributes (Route lp , RSA rsa , boolean initializeTheInitialRoute)
 	{
@@ -651,10 +745,10 @@ public class WDMUtils
 	}
 
 	/**
-	 * Sets the current wavelength for the given lightpath, assuming no wavelength conversion.
+	 * Sets the attributes of the given {@code ProtectionSegment} object to reflect the RSA occupation 
 	 *
-	 * @param lp Lightpath (as a route)
-	 * @param seqWavelengths Sequence of wavelengths
+	 * @param lp Lightpath 
+	 * @param rsa The RSA to store
 	 */
 	public static void setLightpathRSAAttributes (ProtectionSegment lp , RSA rsa)
 	{
@@ -663,76 +757,85 @@ public class WDMUtils
 	}
 
 	/**
-	 * <p>Wavelength assignment algorithm based on a first-fit fashion. Wavelengths
-	 * are indexed from 0 to <i>W<sub>f</sub></i>-1, where <i>W<sub>f</sub></i>
-	 * is the number of wavelengths supported by fiber <i>f</i>. Then, the wavelength
-	 * assigned to each lightpath (along the whole physical route) is the minimum
-	 * index among the common free-wavelength set for all traversed fibers.</p>
-	 *
-	 * <p>In case a lightpath cannot be allocated, the output will be an empty array.</p>
-	 * 
-	 * <p><b>Important</b>: {@code wavelengthFiberOccupancy} is not updated, so 
-	 * subsequent usage of {@link #allocateResources(List, int[], DoubleMatrix2D, int[], DoubleMatrix1D) allocateResources} method is encouraged.</p>
+	 * <p>Frequency slot assignment algorithm based on a first-fit fashion. It tries to find a set of contiguous slots that are available 
+	 * in all the traversed links, and gets the one which starts in the lowest slot id (the initial slot id of the block is returned)
+	 * <p><b>Important</b>: {@code frequencySlot2FiberOccupancy_se} is not updated by this method
 	 *
 	 * @param seqFibers Sequence of traversed fibers
-	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
-	 * @return Sequence of wavelengths traversed by each lightpath
+	 * @param frequencySlot2FiberOccupancy_se Occupied fibers in each wavelength
+	 * @param numContiguousSlotsRequired Number of slots of the block (in fixed-grid WDM, this is 1)
+	 * @return The id of the initial slot of the contiguous block, or -1 if there is no such block of contigous slots with free resources in all the links
 	 */
-	public static int[] WA_firstFit(List<Link> seqFibers, DoubleMatrix2D wavelengthFiberOccupancy)
+	public static int spectrumAssignment_firstFit(List<Link> seqFibers, DoubleMatrix2D frequencySlot2FiberOccupancy_se , int numContiguousSlotsRequired)
 	{
 		GraphUtils.checkRouteContinuity(seqFibers, Constants.CheckRoutingCycleType.NO_REPEAT_LINK);
-		final int W = wavelengthFiberOccupancy.rows();
-		for(int wavelengthId = 0; wavelengthId < W; wavelengthId++)
+		final int W = frequencySlot2FiberOccupancy_se.rows();
+		for(int initialSlotId = 0; initialSlotId < W - numContiguousSlotsRequired + 1; initialSlotId++)
 		{
 			boolean freePaths = true;
-			for (Link link : seqFibers) if (wavelengthFiberOccupancy.get(wavelengthId,link.getIndex()) != 0) {freePaths = false; break; } 
+			for (Link link : seqFibers)
+			{
+				for (int cont = 0; cont < numContiguousSlotsRequired ; cont ++)
+					if (frequencySlot2FiberOccupancy_se.get(initialSlotId+cont,link.getIndex()) != 0) {freePaths = false; break; }
+				if (!freePaths) break;
+			}
 			if (!freePaths) continue;
-			return IntFactory1D.dense.make (seqFibers.size(),wavelengthId).toArray ();
+			return initialSlotId;
 		}
-		return new int[0];
+		return -1;
 	}
 
 	/**
-	 * <p>Wavelength assignment algorithm based on a first-fit fashion. Wavelengths
-	 * are indexed from 0 to <i>W<sub>f</sub></i>-1, where <i>W<sub>f</sub></i>
-	 * is the number of wavelengths supported by fiber <i>f</i>. Then, the wavelength
-	 * assigned to each lightpath (along the whole physical route) is the minimum
-	 * index among the common free-wavelength set for all traversed fibers.</p>
+	 * <p>Frequency slot assignment algorithm based on a first-fit fashion for two different paths. 
+	 * It tries to find the lowest (s1,s2) pair, so that a contiguous block of the needed slots, starting in s1, are free in the first path,
+	 * and starting in s2 are free in the second path (assuming the occupied slots in the first path are not available now). 
+	 * Among all the feasible (s1,s2) pairs, the returned is the one with lowest s1, and if more than one, with the lowest s2. 
+	 * If no (s1,s2) pair exists with the required idle frequency slots, the method returns {@code null} </p>
 	 *
-	 * <p>In case a lightpath cannot be allocated, the output will be an empty array.</p>
-	 *
-	 * <p><b>Important</b>: {@code wavelengthFiberOccupancy} is not updated, so
-	 * subsequent usage of {@link #allocateResources(List, int[], DoubleMatrix2D, int[], DoubleMatrix1D) allocateResources} method is encouraged.</p>
+	 * <p><b>Important</b>: {@code frequencySlot2FiberOccupancy_se} is not updated by this method
 	 *
 	 * @param seqFibers_1 First sequence of traversed fibers
 	 * @param seqFibers_2 Second sequence of traversed fibers
-	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
+	 * @param frequencySlot2FiberOccupancy_se Occupied fibers in each wavelength
+	 * @param numContiguousSlotsRequired Number of slots of the block (in fixed-grid WDM, this is 1)
 	 * @return Pair of sequences of wavelengths traversed by each lightpath
 	 */
-	public static Pair<int[],int[]> WA_firstFitTwoRoutes(List<Link> seqFibers_1, List<Link> seqFibers_2 , DoubleMatrix2D wavelengthFiberOccupancy)
+	public static Pair<Integer,Integer> spectrumAssignment_firstFitTwoRoutes(List<Link> seqFibers_1, List<Link> seqFibers_2 , DoubleMatrix2D frequencySlot2FiberOccupancy_se , int numContiguousSlotsRequired)
 	{
 		GraphUtils.checkRouteContinuity(seqFibers_1, Constants.CheckRoutingCycleType.NO_REPEAT_LINK);
 		GraphUtils.checkRouteContinuity(seqFibers_2, Constants.CheckRoutingCycleType.NO_REPEAT_LINK);
-		final int W = wavelengthFiberOccupancy.rows();
+		final int W = frequencySlot2FiberOccupancy_se.rows();
 		HashSet<Link> auxSet = new HashSet<Link> (seqFibers_1); auxSet.removeAll(seqFibers_2);
 		final boolean haveLinksInCommon = !auxSet.isEmpty();
-		for(int wavelengthId_1 = 0; wavelengthId_1 < W; wavelengthId_1 ++)
+		for(int initialSlot_1 = 0; initialSlot_1 < W - numContiguousSlotsRequired + 1; initialSlot_1 ++)
 		{
 			boolean freePath_1 = true;
-			for (Link link : seqFibers_1) if (wavelengthFiberOccupancy.get(wavelengthId_1,link.getIndex()) != 0) {freePath_1 = false; break; } 
-			if (!freePath_1) continue;
-			for(int wavelengthId_2 = 0; wavelengthId_2 < W; wavelengthId_2 ++)
+			for (Link link : seqFibers_1) 
 			{
-				if (haveLinksInCommon && (wavelengthId_1 == wavelengthId_2)) continue;
+				for (int cont = 0 ; cont < numContiguousSlotsRequired ; cont ++)
+					if (frequencySlot2FiberOccupancy_se.get(initialSlot_1 + cont,link.getIndex()) != 0) {freePath_1 = false; break; }
+				if (!freePath_1) break;
+			}
+			if (!freePath_1) continue;
+			for(int initialSlot_2 = 0; initialSlot_2 < W - numContiguousSlotsRequired + 1; initialSlot_2 ++)
+			{
+				if (haveLinksInCommon && (Math.abs(initialSlot_1 - initialSlot_2) < numContiguousSlotsRequired)) continue;
 				boolean freePath_2 = true;
-				for (Link link : seqFibers_2) if (wavelengthFiberOccupancy.get(wavelengthId_2,link.getIndex()) != 0) { freePath_2 = false ; break; }
+				for (Link link : seqFibers_2)
+				{ 
+					for (int cont = 0 ; cont < numContiguousSlotsRequired ; cont ++)
+						if (frequencySlot2FiberOccupancy_se.get(initialSlot_2,link.getIndex()) != 0) { freePath_2 = false ; break; }
+					if (!freePath_2) break;
+				}
 				if (!freePath_2) continue;
-				return Pair.of(IntFactory1D.dense.make (seqFibers_1.size(),wavelengthId_1).toArray () , IntFactory1D.dense.make (seqFibers_2.size(),wavelengthId_2).toArray ());
+				return Pair.of(initialSlot_1, initialSlot_2);
 			}			
 		}
 		return null;
 	}
 
+	AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+	
 	/**
 	 * <p>Wavelength assignment algorithm based on a first-fit fashion assuming
 	 * full wavelength conversion and regeneration. Each node selects the first
@@ -745,15 +848,15 @@ public class WDMUtils
 	 * wavelengths ({@code seqWavelengths} parameter) will be an empty array.</p>
 	 *
 	 * @param seqFibers Sequence of traversed fibers
-	 * @param wavelengthFiberOccupancy Occupied fibers in each wavelength
+	 * @param frequencySlot2FiberOccupancy_se Occupied fibers in each wavelength
 	 * @param l_f Physical length in km per fiber
 	 * @param nodeRegeneratorOccupancy Number of regenerators installed per node
 	 * @param maxRegeneratorDistanceInKm Maximum regeneration distance
 	 * @return Sequence of wavelengths traversed by each lightpath, and a 0-1 array indicating whether (1) or not (0) a regenerator/wavelength converter is required at the origin node of the corresponding fiber
 	 */
-	public static Pair<int[], int[]> WA_RPP_firstFit(List<Link> seqFibers, DoubleMatrix2D wavelengthFiberOccupancy, DoubleMatrix1D l_f, DoubleMatrix1D nodeRegeneratorOccupancy, double maxRegeneratorDistanceInKm)
+	public static Pair<int[], int[]> WA_RPP_firstFit(List<Link> seqFibers, DoubleMatrix2D frequencySlot2FiberOccupancy_se, DoubleMatrix1D nodeRegeneratorOccupancy, double maxRegeneratorDistanceInKm)
 	{
-		final int W = wavelengthFiberOccupancy.rows ();
+		final int W = frequencySlot2FiberOccupancy_se.rows ();
 
 		List<Integer> seqWavelengths = new LinkedList<Integer>();
 		List<Integer> seqRegenerators = new LinkedList<Integer>();
@@ -769,7 +872,7 @@ public class WDMUtils
 
 		for (Link fiber : seqFibers)
 		{
-			double fiberLengthInKm = l_f.get(fiber.getIndex ());
+			double fiberLengthInKm = fiber.getLengthInKm();
 
 			if (fiberLengthInKm > maxRegeneratorDistanceInKm)
 			{
@@ -788,7 +891,7 @@ public class WDMUtils
 
 			for (int wavelengthId = W - 1; wavelengthId >= 0; wavelengthId--)
 			{
-				if (!plusLink_occupied_w.contains(wavelengthId) && (wavelengthFiberOccupancy.get(wavelengthId , fiber.getIndex()) == 0))
+				if (!plusLink_occupied_w.contains(wavelengthId) && (frequencySlot2FiberOccupancy_se.get(wavelengthId , fiber.getIndex()) == 0))
 				{
 					plusLink_firstFitValidWavelengthForSubpath = wavelengthId;
 				}
@@ -840,7 +943,7 @@ public class WDMUtils
 			control_firstFitValidWavelengthForSubpath = -1;
 			for (int wavelengthId = 0; wavelengthId < W; wavelengthId++)
 			{
-				if (wavelengthFiberOccupancy.get(wavelengthId , fiber.getIndex()) != 0)
+				if (frequencySlot2FiberOccupancy_se.get(wavelengthId , fiber.getIndex()) != 0)
 					control_occupied_w.add(wavelengthId);
 				else if (control_firstFitValidWavelengthForSubpath == -1)
 					control_firstFitValidWavelengthForSubpath = wavelengthId;
@@ -867,18 +970,18 @@ public class WDMUtils
 	}
 	
 	/**
-	 * Updates {@code wavelengthFiberOccupancy} to consider that a new lightpath is occupying 
+	 * Updates {@code frequencySlot2FiberOccupancy_se} to consider that a new lightpath is occupying 
 	 * a wavelength in each fiber.
 	 * 
 	 * @param seqFibers Sequence of traversed fibers
 	 * @param seqFrequencyslots Sequence of wavelengths (as many as the number of links in the lightpath)
-	 * @param wavelengthFiberOccupancy Set of occupied fibers in each wavelength
+	 * @param frequencySlot2FiberOccupancy_se Set of occupied fibers in each wavelength
 	 * @param seqRegenerators A 0-1 array indicating whether (1) or not (0) a regenerator/wavelength converter is required at the origin node of the corresponding fiber
 	 * @param nodeRegeneratorOccupancy Number of regenerators installed per node
 	 */
-	public static void allocateResources(RSA rsa, DoubleMatrix2D wavelengthFiberOccupancy, DoubleMatrix1D nodeRegeneratorOccupancy)
+	public static void allocateResources(RSA rsa, DoubleMatrix2D frequencySlot2FiberOccupancy_se, DoubleMatrix1D nodeRegeneratorOccupancy)
 	{
-		final int W = wavelengthFiberOccupancy.rows();
+		final int W = frequencySlot2FiberOccupancy_se.rows();
 		ListIterator<Link> fiberIt = rsa.seqLinks.listIterator();
 		while(fiberIt.hasNext())
 		{
@@ -889,8 +992,8 @@ public class WDMUtils
 			{
 				final int slotId = (int) slotIds.get(cont);
 				if (slotId >= W) throw new WDMException ("The slot id is higher than the number of slots available");
-				if (wavelengthFiberOccupancy.get(slotId , fiber.getIndex ()) != 0) throw new WDMException ("Wavelength clashing: slot " + slotIds.get(cont) + ", fiber: " + fiber.getId ());
-				wavelengthFiberOccupancy.set(slotId , fiber.getIndex () , 1.0);
+				if (frequencySlot2FiberOccupancy_se.get(slotId , fiber.getIndex ()) != 0) throw new WDMException ("Wavelength clashing: slot " + slotIds.get(cont) + ", fiber: " + fiber.getId ());
+				frequencySlot2FiberOccupancy_se.set(slotId , fiber.getIndex () , 1.0);
 			}
 
 			if (rsa.seqRegeneratorsOccupancy != null)

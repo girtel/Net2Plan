@@ -616,9 +616,9 @@ public class Online_evProc_wdm extends IEventProcessor
 			worseCaseSpareCapacity = Math.min(worseCaseSpareCapacity, e.getCapacity() - e.getOccupiedCapacityIncludingProtectionSegments());
 			if (e.getDestinationNode().isDown() || e.isDown()) return Triple.of(false,-1,-1.0);
 		}
-		int [] seqWavelengths = WDMUtils.WA_firstFit(seqLinks, wavelengthFiberOccupancy);
-		if (seqWavelengths.length != 0) 
-			return Triple.of(true , seqWavelengths [0] , worseCaseSpareCapacity); 
+		int wavelength = WDMUtils.spectrumAssignment_firstFit(seqLinks, wavelengthFiberOccupancy , 1);
+		if (wavelength != -1) 
+			return Triple.of(true , wavelength , worseCaseSpareCapacity); 
 		else return Triple.of(false,-1,-1.0);
 	}
 	
@@ -638,9 +638,9 @@ public class Online_evProc_wdm extends IEventProcessor
 			worseCaseSpareCapacity = Math.min(worseCaseSpareCapacity, e.getCapacity() - e.getOccupiedCapacityIncludingProtectionSegments());
 			if (e.getDestinationNode().isDown() || e.isDown()) return Quadruple.of(false,-1,-1,-1.0);
 		}
-		Pair<int [],int[]> seqWavelengths = WDMUtils.WA_firstFitTwoRoutes(seqLinks_1, seqLinks_2, wavelengthFiberOccupancy);
+		Pair<Integer,Integer> seqWavelengths = WDMUtils.spectrumAssignment_firstFitTwoRoutes(seqLinks_1, seqLinks_2, wavelengthFiberOccupancy,1);
 		if (seqWavelengths != null) 
-			return Quadruple.of(true , seqWavelengths.getFirst () [0] , seqWavelengths.getSecond() [0] , worseCaseSpareCapacity); 
+			return Quadruple.of(true , seqWavelengths.getFirst () , seqWavelengths.getSecond() , worseCaseSpareCapacity); 
 		else return Quadruple.of(false,-1,-1,-1.0);
 	}
 
