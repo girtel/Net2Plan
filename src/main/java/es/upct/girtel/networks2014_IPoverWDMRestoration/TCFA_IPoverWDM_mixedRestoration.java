@@ -11,17 +11,35 @@
 package es.upct.girtel.networks2014_IPoverWDMRestoration;
 
 
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import com.net2plan.interfaces.networkDesign.*;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.IAlgorithm;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.libraries.IPUtils;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.WDMUtils;
-import com.net2plan.utils.*;
+import com.net2plan.utils.Constants;
 import com.net2plan.utils.Constants.OrderingType;
+import com.net2plan.utils.DoubleUtils;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Quadruple;
+import com.net2plan.utils.StringUtils;
+import com.net2plan.utils.Triple;
 
-import java.util.*;
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 /**
  * <p>This algorithm is used for dimensioning multilayer IP-over-WDM networks taking
@@ -317,9 +335,9 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
         for (Route cplRoute : cplDemand.getRoutes()) {
             List<Link> seqLinks = new LinkedList<Link>();
             for (Link cplLink : cplRoute.getSeqLinksRealPath()) seqLinks.add(netPlan.getLinkFromId(cplLink.getId()));
-            final int[] seqWavelengths = WDMUtils.slotAssignment_firstFit(seqLinks, wavelengthFiberOccupancy);
-            if (seqWavelengths.length > 0)
-                return Pair.of(cplRoute, seqWavelengths[0]);
+            final int wavelength = WDMUtils.spectrumAssignment_firstFit(seqLinks, wavelengthFiberOccupancy,1);
+            if (wavelength != -1)
+                return Pair.of(cplRoute, wavelength);
         }
 		
 		/* Otherwise, return null*/

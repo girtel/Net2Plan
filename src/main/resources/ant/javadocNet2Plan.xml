@@ -4,7 +4,7 @@
 
 <project default="full-javadoc">
     <property name="releaseVersion" value="0.4.0"/>
-    <property name="generalNet2PlanReleasesDir" location="c:/Dropbox/net2plan"/>
+    <property name="generalNet2PlanReleasesDir" location="c:/net2plan"/>
     <property name="releaseDestThisVersion" location="${generalNet2PlanReleasesDir}/Net2Plan-${releaseVersion}/"/>
     <property name="taglet_classpath" value="bin;lib/parallelcolt-0.10.1.jar"/>
 
