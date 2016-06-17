@@ -249,7 +249,7 @@ public class OnLine_EP_flexGrid_Javi extends IEventProcessor
 		if (distanceAdaptive.getBoolean ())
 		{
 			Set<ModulationFormat> candidateModulationFormats = ModulationFormat.DEFAULT_MODULATION_SET;
-			modulationFormatPerPath = WDMUtils.computeModulationFormatPerPath(cpl, linkLengthInKmMap, candidateModulationFormats);
+			modulationFormatPerPath = WDMUtils.computeModulationFormatPerPath(cpl, candidateModulationFormats);
 
 			numSlotsPerModulationPerService = new LinkedHashMap<ModulationFormat, int[]>();
 			for (ModulationFormat modulationFormat : candidateModulationFormats)
@@ -488,7 +488,7 @@ public class OnLine_EP_flexGrid_Javi extends IEventProcessor
 				final ModulationFormat modulationFormat = modulationFormatPerPath.get(seqFibers);
 				final int numSlots = numSlotsPerModulationPerService.get(modulationFormat)[serviceId];
 
-				final TreeSet<Integer> pathSlotOccupancy = WDMUtils.computePathSlotOccupancy(seqFibers, fiberSlotOccupancyMap_fs, totalAvailableSlotsPerFiber);
+				final TreeSet<Integer> pathSlotOccupancy = WDMUtils.computePathSlotOccupancy(seqFibers, fiberSlotOccupancyMap_fs.viewDice());
 				final List<Pair<Integer, Integer>> candidateVoids = WDMUtils.computeAvailableSpectrumVoids(pathSlotOccupancy, totalAvailableSlotsPerFiber);
 
 				int residualCapacity = 0;

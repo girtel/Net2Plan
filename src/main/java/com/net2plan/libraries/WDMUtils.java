@@ -52,7 +52,6 @@ import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import cern.colt.matrix.tint.IntFactory1D;
 import cern.colt.matrix.tint.IntFactory2D;
 import cern.colt.matrix.tint.IntMatrix1D;
 import cern.colt.matrix.tint.IntMatrix2D;
@@ -89,7 +88,7 @@ import cern.colt.matrix.tint.IntMatrix2D;
  * <li><em>Routes</em>: A route represents a lightpath. The carried traffic of the lightpath corresponds to the lighptath line rate. The occupied link capacity of the lightpath is the total number of slots occupied (the same total number in all the traversed links). For specifying the particular frequency slots occupied by a lightpath in a link, in Net2Plan we assume that frequency slots in any link are numbered with consecutive numbers starting from zero 0,1,2,... The lowest number typically corresponds to the lower wavelength. The set of frequency slots occupied by a lightpath in each traversed link is stored by <em>WDMUtils</em> in a route attribute, in an internal format. The user using the <em>WDMUtils</em> library does not need to bother about the details of this format. Additionally, it is possible to define the set of nodes where the optical signal goes through a regenerator of the optical signal (with or without wavelength conversion). This information is also stored as Route attributes.</li>
  * <li><em>Protection segments</em>: Zero, one or more protection segments can be associated to the route, representing (partial) backup lightpaths that protect the primary route. The occupied link capacity of the protection segment reflects the total number of frequency slots reserved in the traversed links. The actual set of slots reserved in each traversed, and the places where the signal is regenerated (if any) are also stored by <em>WDMUtils</em> in segment attributes</li>
  * </ul>
- * <p>For more information, we refer to the <em>WDMUtils</em> library in the Javadoc. In addition, network design algorithms and other resources for designing WDM networks can be found in the Net2Plan code repository under keyword <em>WDM</em>.</p>
+ * Network design algorithms and other resources for designing WDM networks can be found in the Net2Plan code repository under keyword <em>WDM</em>.</p>
  */
 public class WDMUtils
 {
@@ -608,7 +607,7 @@ public class WDMUtils
 
 	/**
 	 * Returns {@code true} if all the RSAs are allocatable (the needed frequency slots are free in the given sequence of links), {@code false} otherwise. 
-	 * @param frequencySlot2FiberOccupancy_se Occupied fibers in each wavelength
+	 * @param frequencySlot2FiberOccupancy_se Current slot-fiber occupancy 
 	 * @param rsas one or more RSAs to check. We start allocating them in order (never releasing the resources of the previous ones). Then, {@code true} is returned if it is possible to allocate all of them simultaneously. In other words, if two RSAs in {@code rsas} require the same frequency slot in the same link, they are not allocatable. 
 	 * @return See description above
 	 */
@@ -680,7 +679,7 @@ public class WDMUtils
 	 * used frequency slots, and {@code nodeRegeneratorOccupancy} to consider that the lightpath releases the occupied regenerators
 	 * @param rsa The RSA to release
 	 * @param frequencySlot2FiberOccupancy_se Current slot-fiber occupancy (updated inside the method)
-	 * @param nodeRegeneratorOccupancy Current node regenerator occupancy (updated inside the method)
+	 * @param nodeRegeneratorOccupancy Current node regenerator occupancy (updated inside the method). If {@code null} regenerator information is not updated
 	 */
 	public static void releaseResources(RSA rsa , DoubleMatrix2D frequencySlot2FiberOccupancy_se, DoubleMatrix1D nodeRegeneratorOccupancy)
 	{
@@ -697,7 +696,7 @@ public class WDMUtils
 				if (!wasOccupied) throw new WDMException("Wavelength " + slotId + " was unused in fiber " + fiber.getId ());
 				frequencySlot2FiberOccupancy_se.set(slotId, fiber.getIndex () , 0.0);
 			}
-			if (rsa.seqRegeneratorsOccupancy != null) 
+			if ((nodeRegeneratorOccupancy != null) && (rsa.seqRegeneratorsOccupancy != null)) 
 				if (rsa.seqRegeneratorsOccupancy[hopId] == 1)
 				{
 					Node node = fiber.getOriginNode();
@@ -710,12 +709,12 @@ public class WDMUtils
 	 * Sets the number of frequency slots available on the given fiber.
 	 *
 	 * @param fiber Link fiber
-	 * @param numWavelengths Number of wavelengths for the given fiber
+	 * @param numFrequencySlots Number of of frequency slots for the given fiber
 	 */
-	public static void setFiberNumFrequencySlots(Link fiber, int numWavelengths)
+	public static void setFiberNumFrequencySlots(Link fiber, int numFrequencySlots)
 	{
-		if (numWavelengths < 0) throw new WDMException("'numWavelengths' must be a non-negative integer");
-		fiber.setCapacity(numWavelengths);
+		if (numFrequencySlots < 0) throw new WDMException("'numWavelengths' must be a non-negative integer");
+		fiber.setCapacity(numFrequencySlots);
 	}
 
 	/**
@@ -762,7 +761,7 @@ public class WDMUtils
 	 * <p><b>Important</b>: {@code frequencySlot2FiberOccupancy_se} is not updated by this method
 	 *
 	 * @param seqFibers Sequence of traversed fibers
-	 * @param frequencySlot2FiberOccupancy_se Occupied fibers in each wavelength
+	 * @param frequencySlot2FiberOccupancy_se Current slot-fiber occupancy 
 	 * @param numContiguousSlotsRequired Number of slots of the block (in fixed-grid WDM, this is 1)
 	 * @return The id of the initial slot of the contiguous block, or -1 if there is no such block of contigous slots with free resources in all the links
 	 */
@@ -787,16 +786,16 @@ public class WDMUtils
 
 	/**
 	 * <p>Frequency slot assignment algorithm based on a first-fit fashion for two different paths. 
-	 * It tries to find the lowest (s1,s2) pair, so that a contiguous block of the needed slots, starting in s1, are free in the first path,
-	 * and starting in s2 are free in the second path (assuming the occupied slots in the first path are not available now). 
-	 * Among all the feasible (s1,s2) pairs, the returned is the one with lowest s1, and if more than one, with the lowest s2. 
-	 * If no (s1,s2) pair exists with the required idle frequency slots, the method returns {@code null} </p>
+	 * It tries to find the lowest {@code (s1,s2)} pair, so that a contiguous block of the needed slots, starting in s1, are free in the first path,
+	 * and starting in {@code s2} are free in the second path (assuming the occupied slots in the first path are not available now). 
+	 * Among all the feasible {@code (s1,s2)} pairs, the returned is the one with lowest {@code s1}, and if more than one, with the lowest {@code s2}. 
+	 * If no {@code (s1,s2)} pair exists with the required idle frequency slots, the method returns {@code null} </p>
 	 *
 	 * <p><b>Important</b>: {@code frequencySlot2FiberOccupancy_se} is not updated by this method
 	 *
 	 * @param seqFibers_1 First sequence of traversed fibers
 	 * @param seqFibers_2 Second sequence of traversed fibers
-	 * @param frequencySlot2FiberOccupancy_se Occupied fibers in each wavelength
+	 * @param frequencySlot2FiberOccupancy_se Current slot-fiber occupancy 
 	 * @param numContiguousSlotsRequired Number of slots of the block (in fixed-grid WDM, this is 1)
 	 * @return Pair of sequences of wavelengths traversed by each lightpath
 	 */
@@ -834,12 +833,12 @@ public class WDMUtils
 		return null;
 	}
 
-	//AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
-	
 	/**
 	 * <p>Wavelength assignment algorithm based on a first-fit fashion assuming
-	 * full wavelength conversion and regeneration. Each node selects the first
-	 * free wavelength for its output fiber, and next nodes in the lightpath try
+	 * full wavelength conversion and regeneration capabilities. This algorithm is targeted for fixed-frid WDM networks, where all 
+	 * lightpaths occupy just one frequency slot (we call it, the lightpath wavelength). 
+	 * In the algorithm, each node selects the first
+	 * free block for its output fiber, and next nodes in the lightpath try
 	 * to maintain it. If not possible, or regeneration is needed, then include
 	 * a regenerator (can act also as a full wavelength converter) and search
 	 * for the first free wavelength, and so on.</p>
@@ -848,13 +847,12 @@ public class WDMUtils
 	 * wavelengths ({@code seqWavelengths} parameter) will be an empty array.</p>
 	 *
 	 * @param seqFibers Sequence of traversed fibers
-	 * @param frequencySlot2FiberOccupancy_se Occupied fibers in each wavelength
-	 * @param l_f Physical length in km per fiber
+	 * @param frequencySlot2FiberOccupancy_se Current slot-fiber occupancy 
 	 * @param nodeRegeneratorOccupancy Number of regenerators installed per node
 	 * @param maxRegeneratorDistanceInKm Maximum regeneration distance
 	 * @return Sequence of wavelengths traversed by each lightpath, and a 0-1 array indicating whether (1) or not (0) a regenerator/wavelength converter is required at the origin node of the corresponding fiber
 	 */
-	public static Pair<int[], int[]> WA_RPP_firstFit(List<Link> seqFibers, DoubleMatrix2D frequencySlot2FiberOccupancy_se, DoubleMatrix1D nodeRegeneratorOccupancy, double maxRegeneratorDistanceInKm)
+	public static Pair<int[], int[]> wavelengthAssignment_RPP_firstFit(List<Link> seqFibers, DoubleMatrix2D frequencySlot2FiberOccupancy_se, DoubleMatrix1D nodeRegeneratorOccupancy, double maxRegeneratorDistanceInKm)
 	{
 		final int W = frequencySlot2FiberOccupancy_se.rows ();
 
@@ -970,14 +968,12 @@ public class WDMUtils
 	}
 	
 	/**
-	 * Updates {@code frequencySlot2FiberOccupancy_se} to consider that a new lightpath is occupying 
-	 * a wavelength in each fiber.
+	 * Updates {@code frequencySlot2FiberOccupancy_se} and {@code nodeRegeneratorOccupancy} to consider that a new lightpath is occupying 
+	 * the resources given by {@code rsa}.
 	 * 
-	 * @param seqFibers Sequence of traversed fibers
-	 * @param seqFrequencyslots Sequence of wavelengths (as many as the number of links in the lightpath)
-	 * @param frequencySlot2FiberOccupancy_se Set of occupied fibers in each wavelength
-	 * @param seqRegenerators A 0-1 array indicating whether (1) or not (0) a regenerator/wavelength converter is required at the origin node of the corresponding fiber
-	 * @param nodeRegeneratorOccupancy Number of regenerators installed per node
+	 * @param rsa The rsa
+	 * @param frequencySlot2FiberOccupancy_se Current slot-fiber occupancy (updated inside the method)
+	 * @param nodeRegeneratorOccupancy Current number of regenerators occupied per node
 	 */
 	public static void allocateResources(RSA rsa, DoubleMatrix2D frequencySlot2FiberOccupancy_se, DoubleMatrix1D nodeRegeneratorOccupancy)
 	{
@@ -1007,12 +1003,11 @@ public class WDMUtils
 
 	/**
 	 * <p>Computes the list of spectral voids (list of available contiguous slots) 
-	 * from a slot availability vector of a path.</p>
+	 * from a slot availability vector (of a fiber or of a path).</p>
 	 * 
 	 * @param slotOccupancy Set of slots that are already occupied
 	 * @param totalAvailableSlotsPerFiber Number of slots per fiber
 	 * @return List of spectrum voids, each one with a pair indicating both the initial slot id and the number of consecutive slots within the void. If no spectrum void is found, it returns an empty list
-	 * @since 0.3.0
 	 */
 	public static List<Pair<Integer, Integer>> computeAvailableSpectrumVoids(TreeSet<Integer> slotOccupancy, int totalAvailableSlotsPerFiber)
 	{
@@ -1039,13 +1034,12 @@ public class WDMUtils
 	}
 	
 	/**
-	 * Computes the maximum number of requests (each one measured in number of slots) which 
-	 * can be allocated in a set of spectrum voids.
+	 * Computes the maximum number of requests (each one of the same given number of frequency slots) which 
+	 * can be simultaneously allocated in the given set of spectrum voids.
 	 * 
-	 * @param availableSpectrumVoids List of available spectrum voids (first item of each pair is the initial slot identifier, whereas the second one is the number of consecutive slots)
-	 * @param numSlots Number of required slots for a reference connection
-	 * @return Maximum number of requests which can be allocated in a set of spectrum voids
-	 * @since 0.2.3
+	 * @param availableSpectrumVoids List of available spectrum voids (first item of each pair is the initial slot identifier, the second one is the number of consecutive slots)
+	 * @param numSlots Number of required slots of all the connections
+	 * @return Maximum number of requests of the given number of slots which can be allocated in the given set of spectrum voids
 	 */
 	public static int computeMaximumRequests(List<Pair<Integer, Integer>> availableSpectrumVoids, int numSlots)
 	{
@@ -1063,13 +1057,11 @@ public class WDMUtils
 	}
 
 	/**
-	 * Returns the modulation format with the maximum spectral efficiency, whereas 
-	 * the optical reach constraint is fulfilled, for the given path.
+	 * Returns the modulation format among the ones given, (i) with the maximum spectral efficiency, (ii) but with enough optical reach for the given path length.
 	 * 
-	 * @param pathLengthInKm Path length  (in kilometers)
+	 * @param pathLengthInKm Path length (in kilometers): the minimum reach of the returned modulation format
 	 * @param availableModulationFormats Set of candidate modulation formats
-	 * @return Best modulation format for the given path length
-	 * @since 0.3.1
+	 * @return Best modulation format for the given path length. An exception is raised if no moculation format is applicable
 	 */
 	public static ModulationFormat computeModulationFormat(double pathLengthInKm, Set<ModulationFormat> availableModulationFormats)
 	{
@@ -1089,53 +1081,43 @@ public class WDMUtils
 		return candidateModulationFormat;
 	}
 
-	/**
-	 * Returns the modulation format with the maximum spectral efficiency, whereas 
-	 * the optical reach constraint is fulfilled, for the given path.
-	 * 
-	 * @param fiberLengthInKmMap Map indicating for each link its length (in kilometers)
-	 * @param seqFibers (Loop-free) Sequence of traversed fibers (unchecked for conitinuity or cycles)
+	/** The same as {@code computeModulationFormat(lengthKm, availableModulationFormats)}, where {@code lengthKm} is the length in km of the input path. 
+	 * @param seqFibers Sequence of fibers of the path
 	 * @param availableModulationFormats Set of candidate modulation formats
-	 * @return Best modulation format for the given path
-	 * @since 0.3.0
+	 * @return Best modulation format for the given path length. An exception is raised if no moculation format is applicable
 	 */
-	public static ModulationFormat computeModulationFormat(DoubleMatrix1D fiberLengthInKmMap, List<Link> seqFibers, Set<ModulationFormat> availableModulationFormats)
+	public static ModulationFormat computeModulationFormat(List<Link> seqFibers, Set<ModulationFormat> availableModulationFormats)
 	{
-		double pathLengthInKm = GraphUtils.convertPath2PathCost(seqFibers, fiberLengthInKmMap); 
+		double pathLengthInKm = 0; for (Link e : seqFibers) pathLengthInKm += e.getLengthInKm(); 
 		return computeModulationFormat(pathLengthInKm, availableModulationFormats);
 	}
 
 	/**
 	 * Returns the modulation format with the maximum spectral efficiency, while 
-	 * the optical reach constraint is fulfilled, for each path in a {@link com.net2plan.libraries.CandidatePathList CandidatePathList} 
-	 * object.
-	 * 
-	 * @param cpl Candidate path list
-	 * @param fiberLengthInKmMap Map indicating for each link its length (in kilometers)
+	 * the optical reach constraint is fulfilled, for each path in the list of candidate paths ({@code cpl})
+	 * @param cpl The list of paths (the key of the map is the pair of end nodes, the value is the list of the paths between these nodes)
 	 * @param availableModulationFormats Set of candidate modulation formats
 	 * @return Modulation format per path
-	 * @since 0.2.3
 	 */
 	public static Map<List<Link>, ModulationFormat> computeModulationFormatPerPath(
-			Map<Pair<Node, Node>, List<List<Link>>> cpl, DoubleMatrix1D fiberLengthInKmMap,
+			Map<Pair<Node, Node>, List<List<Link>>> cpl, 
 			Set<ModulationFormat> availableModulationFormats) {
 		Map<List<Link>, ModulationFormat> out = new LinkedHashMap<List<Link>, ModulationFormat>();
 		for (Collection<List<Link>> paths : cpl.values())
 			for (List<Link> seqFibers : paths) 
-				out.put(seqFibers, computeModulationFormat(fiberLengthInKmMap, seqFibers, availableModulationFormats));
+				out.put(seqFibers, computeModulationFormat(seqFibers, availableModulationFormats));
 		return out;
 	}
 
 	/**
-	 * Computes the number of frequency slots required for a certain amount of 
-	 * bandwidth (measured in Gbps), including guard-bands.
+	 * Computes the number of frequency slots required for a lightpath that needs a given amount of Gbps, using a certain modulation (defining the Gbps/GHz spectral efficiency), 
+	 * and that requires a given minimum guard band in GHz (this guard band is assumed to be the sum of the two guard bands at upper and lower side of the band) 
 	 * 
 	 * @param bandwidthInGbps Requested bandwidth (in Gbps)
 	 * @param slotGranularityInGHz Slot granularity (in GHz) 
-	 * @param guardBandInGHz Guard-band size (in GHz)
+	 * @param guardBandInGHz Guard-band size (in GHz) (summing the one with upper and lower wavelengths)
 	 * @param modulationFormat Modulation format
 	 * @return Number of slots required to allocate the bandwidth demand
-	 * @since 0.2.3
 	 */
 	public static int computeNumberOfSlots(double bandwidthInGbps, double slotGranularityInGHz, double guardBandInGHz, ModulationFormat modulationFormat)
 	{
@@ -1162,23 +1144,22 @@ public class WDMUtils
 	 * @param seqFibers (Loop-free) Sequence of traversed fibers (unchecked for conitinuity or cycles)
 	 * @param totalAvailableSlotsPerFiber Number of slots per fiber
 	 * @return Slot occupancy (vector with one coordinate per slot, 1 if occupied, 0 if not)
-	 * @since 0.3.0
 	 */
-	public static TreeSet<Integer> computePathSlotOccupancy(List<Link> seqFibers, DoubleMatrix2D slotOccupancyMap_fs, int totalAvailableSlotsPerFiber)
+	public static TreeSet<Integer> computePathSlotOccupancy(List<Link> seqFibers, DoubleMatrix2D frequencySlot2FiberOccupancy_se)
 	{
-		final int S = slotOccupancyMap_fs.columns();
+		final int S = frequencySlot2FiberOccupancy_se.rows();
 		TreeSet<Integer> out = new TreeSet<Integer>();
 		for (int s = 0; s < S ; s ++)
 		{
 			boolean free = true;
-			for (Link fiber : seqFibers) if (slotOccupancyMap_fs.get (fiber.getIndex () , s) == 1) { free = false; break;  }
+			for (Link fiber : seqFibers) if (frequencySlot2FiberOccupancy_se.get (s , fiber.getIndex ()) == 1) { free = false; break;  }
 			if (!free) out.add (s);
 		}
 		return out;
 	}
 
 	/**
-	 * Class to define modulation formats. Data for default formats were obtained 
+	 * Class to define typical modulation formats. Data for default formats were obtained 
 	 * from [1].
 	 * 
 	 * @since 0.2.3
@@ -1191,21 +1172,21 @@ public class WDMUtils
 		 * 
 		 * @since 0.2.3
 		 */
-		public final static ModulationFormat BPSK = ModulationFormat.of("BPSK", 9600.0, 1.0);
+		public final static ModulationFormat BPSK = new ModulationFormat ("BPSK", 9600.0, 1.0);
 
 		/**
 		 * QPSK format (optical reach = 4800 km, spectral efficiency = 2 bps/Hz).
 		 * 
 		 * @since 0.2.3
 		 */
-		public final static ModulationFormat QPSK = ModulationFormat.of("QPSK", 4800.0, 2.0);
+		public final static ModulationFormat QPSK = new ModulationFormat ("QPSK", 4800.0, 2.0);
 
 		/**
 		 * 8-QAM format (optical reach = 2400 km, spectral efficiency = 3 bps/Hz).
 		 * 
 		 * @since 0.2.3
 		 */
-		public final static ModulationFormat QAM_8 = ModulationFormat.of("8-QAM", 2400.0, 3.0);
+		public final static ModulationFormat QAM_8 = new ModulationFormat ("8-QAM", 2400.0, 3.0);
 
 		/**
 		 * 16-QAM format (optical reach = 1200 km, spectral efficiency = 4 bps/Hz).
@@ -1213,7 +1194,7 @@ public class WDMUtils
 		 * @since 0.2.3
 		 */
 
-		public final static ModulationFormat QAM_16 = ModulationFormat.of("16-QAM", 1200.0, 4.0);
+		public final static ModulationFormat QAM_16 = new ModulationFormat ("16-QAM", 1200.0, 4.0);
 		
 		/**
 		 * Default set of available modulations (BPSK, QPSK, 8-QAM, 16-QAM).
@@ -1227,21 +1208,21 @@ public class WDMUtils
 		 * 
 		 * @since 0.2.3
 		 */
-		public String name;
+		public final String name;
 		
 		/**
 		 * Optical reach (in kilometers).
 		 * 
 		 * @since 0.2.3
 		 */
-		public double opticalReachInKm;
+		public final double opticalReachInKm;
 		
 		/**
 		 * Spectral efficiency (in bps per Hz).
 		 * 
 		 * @since 0.2.3
 		 */
-		public double spectralEfficiencyInBpsPerHz;
+		public final double spectralEfficiencyInBpsPerHz;
 
 		/**
 		 * Default constructor.
@@ -1262,36 +1243,36 @@ public class WDMUtils
 			this.spectralEfficiencyInBpsPerHz = spectralEfficiencyInBpsPerHz;
 		}
 
-		public ModulationFormat() {
-			this.name = null;
-			this.opticalReachInKm = 0;
-			this.spectralEfficiencyInBpsPerHz = 0;
-		}
-		
-		public void setModulationFormat(String name, double opticalReachInKm, double spectralEfficiencyInBpsPerHz) {
-			if (name == null || name.isEmpty()) throw new Net2PlanException("Modulation name cannot be null");
-			if (opticalReachInKm <= 0) throw new Net2PlanException("Optical reach must be greater than zero");
-			if (spectralEfficiencyInBpsPerHz <= 0) throw new Net2PlanException("Spectral efficiency must be greater than zero");
-
-			this.name = name;
-			this.opticalReachInKm = opticalReachInKm;
-			this.spectralEfficiencyInBpsPerHz = spectralEfficiencyInBpsPerHz;
-		}
-		
-
-		/**
-		 * Factory method.
-		 * 
-		 * @param name Modulation name
-		 * @param opticalReachInKm Optical reach (in kilometers)
-		 * @param spectralEfficiencyInBpsPerHz Spectral efficiency (in bps per Hz)
-		 * @return New modulation format with the given parameters
-		 * @since 0.2.3
-		 */
-		public static ModulationFormat of(String name, double opticalReachInKm, double spectralEfficiencyInBpsPerHz)
-		{
-			return new ModulationFormat(name, opticalReachInKm, spectralEfficiencyInBpsPerHz);
-		}
+//		public ModulationFormat() {
+//			this.name = null;
+//			this.opticalReachInKm = 0;
+//			this.spectralEfficiencyInBpsPerHz = 0;
+//		}
+//		
+//		public void setModulationFormat(String name, double opticalReachInKm, double spectralEfficiencyInBpsPerHz) {
+//			if (name == null || name.isEmpty()) throw new Net2PlanException("Modulation name cannot be null");
+//			if (opticalReachInKm <= 0) throw new Net2PlanException("Optical reach must be greater than zero");
+//			if (spectralEfficiencyInBpsPerHz <= 0) throw new Net2PlanException("Spectral efficiency must be greater than zero");
+//
+//			this.name = name;
+//			this.opticalReachInKm = opticalReachInKm;
+//			this.spectralEfficiencyInBpsPerHz = spectralEfficiencyInBpsPerHz;
+//		}
+//		
+//
+//		/**
+//		 * Factory method.
+//		 * 
+//		 * @param name Modulation name
+//		 * @param opticalReachInKm Optical reach (in kilometers)
+//		 * @param spectralEfficiencyInBpsPerHz Spectral efficiency (in bps per Hz)
+//		 * @return New modulation format with the given parameters
+//		 * @since 0.2.3
+//		 */
+//		public static ModulationFormat of(String name, double opticalReachInKm, double spectralEfficiencyInBpsPerHz)
+//		{
+//			return new ModulationFormat(name, opticalReachInKm, spectralEfficiencyInBpsPerHz);
+//		}
 
 		@Override
 		public String toString()
