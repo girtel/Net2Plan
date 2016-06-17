@@ -52,7 +52,7 @@
             <directory>${project.basedir}/src/main/resources/javadoc</directory>
             <outputDirectory>doc/javadoc</outputDirectory>
             <includes>
-                <include>**</include>
+                <include>*</include>
             </includes>
         </fileSet>
     </fileSets>

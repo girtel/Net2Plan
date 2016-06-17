@@ -378,6 +378,10 @@
                                         <unzip src="${project.basedir}/src/main/resources/lib/parallelcolt-0.10.1.jar"
                                                dest="${project.build.directory}/colt"/>
                                         <copy file="${project.basedir}/src/main/resources/resources/documentation/bookCover.jpg" todir="${project.build.directory}/site/apidocs/examples/doc-files"/>
+                                        <copy file="${project.basedir}/src/main/resources/resources/documentation/bookCover.jpg" todir="${project.build.directory}/site/apidocs/api/doc-files"/>
+                                        <copy todir="${project.build.directory}/site/apidocs/parallelcolt">
+                                            <fileset dir="${project.basedir}/src/main/resources/javadoc/parallelcolt"/>
+                                        </copy>
                                     </target>
                                 </configuration>
                             </execution>
