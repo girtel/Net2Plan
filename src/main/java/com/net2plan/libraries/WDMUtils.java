@@ -834,7 +834,7 @@ public class WDMUtils
 		return null;
 	}
 
-	AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+	//AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 	
 	/**
 	 * <p>Wavelength assignment algorithm based on a first-fit fashion assuming
