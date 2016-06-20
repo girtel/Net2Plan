@@ -32,3 +32,4 @@ build.xml
 /etc
 src/test/
 lib/
+/src/main/resources/lib/
