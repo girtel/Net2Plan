@@ -25,6 +25,7 @@ doc/gen/
 # Netbeans
 nb-configuration.xml
 nbactions.xml
+build.xml
 
 /release.properties
 /pom.xml.releaseBackup
