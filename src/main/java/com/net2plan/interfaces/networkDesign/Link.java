@@ -362,7 +362,7 @@ public class Link extends NetworkElement
 	 */
 	public double getPropagationDelayInMs()
 	{
-		return ((propagationSpeedInKmPerSecond == Double.MAX_VALUE) || (propagationSpeedInKmPerSecond <= 0))? 0 : lengthInKm / propagationSpeedInKmPerSecond;
+		return ((propagationSpeedInKmPerSecond == Double.MAX_VALUE) || (propagationSpeedInKmPerSecond <= 0))? 0 : 1000 * lengthInKm / propagationSpeedInKmPerSecond;
 	}
 
 	/** <p>Returns the link capacity that is reserved by traversing protection segments (disregarding the traffic they may or not carry).</p>
