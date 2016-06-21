@@ -162,7 +162,7 @@ public class Demand extends NetworkElement
 						if (e.isCoupled()) 
 							propTimeThisSeqLinks += e.coupledLowerLayerDemand.getWorseCasePropagationTimeInMs();
 						else
-							propTimeThisSeqLinks += e.getPropagationDelayInMs() * 1000;
+							propTimeThisSeqLinks += e.getPropagationDelayInMs();
 					maxPropTimeInMs = Math.max(propTimeThisSeqLinks , propTimeThisSeqLinks);
 				}
 			}

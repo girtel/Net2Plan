@@ -125,7 +125,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                 routeData_initialNetPlan[9] = CollectionUtils.join(NetPlan.getIndexes(route.getSeqNodesRealPath()), " => ");
                 routeData_initialNetPlan[10] = route.getNumberOfHops();
                 routeData_initialNetPlan[11] = route.getLengthInKm();
-                routeData_initialNetPlan[12] = 1000 * route.getPropagationDelayInMiliseconds();
+                routeData_initialNetPlan[12] = route.getPropagationDelayInMiliseconds();
                 routeData_initialNetPlan[13] = maxUtilization;
                 routeData_initialNetPlan[14] = CollectionUtils.join(NetPlan.getIndexes(route.getPotentialBackupProtectionSegments()), ", ");
                 routeData_initialNetPlan[15] = StringUtils.mapToString(route.getAttributes());
