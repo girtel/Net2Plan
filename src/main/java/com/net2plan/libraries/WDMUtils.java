@@ -717,6 +717,19 @@ public class WDMUtils
 		fiber.setCapacity(numFrequencySlots);
 	}
 
+
+	/** The full RSA of the lightpath (travsersed fibers, occupied slots and regenerators) is reverted to its initial state.
+	 * This means that the current sequence of fibers is changed, and the attributes storing the information of the current RSA are
+	 * updated with the information of the initial RSA (also already stored in attributes of the route by previous WDMUtils methods)  
+	 * @param r The route of the lightpath to revert
+	 */
+	public static void revertToOriginalRSA (Route r)
+	{
+		r.revertToInitialSequenceOfLinks();
+		r.setAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME , r.getAttribute(SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME));
+		r.setAttribute(SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME , r.getAttribute(SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME));
+	}
+	
 	/**
 	 * Sets the number of frequency slots available in each fiber to the same value.
 	 * 

@@ -480,6 +480,8 @@ public class Route extends NetworkElement
 	 */
 	public void setSeqLinksAndProtectionSegments(List<Link> seqLinksAndProtectionSegments)
 	{
+		if (seqLinksAndProtectionSegments.equals(this.seqLinksAndProtectionSegments)) return;
+		
 		netPlan.checkPathValidityForDemand (seqLinksAndProtectionSegments, demand);
 		for (Link lps : seqLinksAndProtectionSegments) 
 			if (lps == null) throw new Net2PlanException ("A link is the sequence is null");

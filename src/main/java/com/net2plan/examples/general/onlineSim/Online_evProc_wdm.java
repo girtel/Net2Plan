@@ -26,13 +26,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import cern.colt.matrix.tint.IntFactory1D;
-import cern.jet.math.tdouble.DoubleFunctions;
-
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -52,6 +45,12 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.Quadruple;
 import com.net2plan.utils.RandomUtils;
 import com.net2plan.utils.Triple;
+
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import cern.jet.math.tdouble.DoubleFunctions;
 
 /** 
  * Implements the reactions of a WDM network carrying lightpaths in a fixed grid of wavelengths
@@ -399,6 +398,26 @@ public class Online_evProc_wdm extends IEventProcessor
 			checkClashing (currentNetPlan);
 			d.remove();
 			checkClashing (currentNetPlan);
+		}
+		else if(event.getEventObject() instanceof WDMUtils.LightpathModify) //JJ
+		{
+			WDMUtils.LightpathModify modifyLpEvent = (WDMUtils.LightpathModify) event.getEventObject();
+			final Route lpRoute = modifyLpEvent.lp;
+			if (lpRoute != null) 
+			{
+				if (modifyLpEvent.carriedTraffic != -1)
+				{
+					if (modifyLpEvent.rsa == null) throw new Net2PlanException ("Modifying the lightpath line rate requires setting the RSA also");
+					lpRoute.setCarriedTraffic(modifyLpEvent.carriedTraffic, modifyLpEvent.rsa.getNumSlots());
+				}		
+				if (modifyLpEvent.rsa != null)
+				{
+					WDMUtils.releaseResources(new WDMUtils.RSA(lpRoute , false) , wavelengthFiberOccupancy , null);
+					WDMUtils.allocateResources(modifyLpEvent.rsa , wavelengthFiberOccupancy , null);
+					lpRoute.setSeqLinksAndProtectionSegments(modifyLpEvent.rsa.seqLinks);
+					WDMUtils.setLightpathRSAAttributes(lpRoute , modifyLpEvent.rsa , false);
+				}
+			}
 		}
 		else throw new Net2PlanException ("Unknown event type: " + event);
 	}	

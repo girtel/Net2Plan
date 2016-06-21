@@ -211,6 +211,10 @@ public class Online_evProc_ipOverWdm extends IEventProcessor
 			SimEvent.NodesAndLinksChangeFailureState evIp = new SimEvent.NodesAndLinksChangeFailureState(ev.nodesToUp , ev.nodesToDown , ipLinksUp , ipLinksDown);
 			ospfNetwork.processEvent(currentNetPlan , new SimEvent(event.getEventTime() , SimEvent.DestinationModule.EVENT_GENERATOR , -1 , evIp));
 		}
+		else if(event.getEventObject() instanceof WDMUtils.LightpathModify) 
+		{
+			wdmNetwork.processEvent(currentNetPlan, new SimEvent(event.getEventTime(), SimEvent.DestinationModule.EVENT_GENERATOR, - 1, (WDMUtils.LightpathModify)event.getEventObject()));
+		}
 		else throw new Net2PlanException ("Unknown event type: " + event);
 		
 	}	
