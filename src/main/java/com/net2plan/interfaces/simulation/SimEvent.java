@@ -315,41 +315,6 @@ public class SimEvent implements Comparable<SimEvent>
 	};
 
 	
-	
-	
-//	/** This class contains constants for the types of events used in built-in algorithms. 
-//	 * When developing other algorithms, the user is free to follow these constants in the type field or not. */
-//	public static final class EventType
-//	{
-//		/** The event generator requests to establish a set of nodes as up (all at the same time). Parameters are the nodes (Set<Node>) */
-//		public final static int NODES_UP = 100; 
-//		/** The event generator requests to establish a set of nodes as down (all at the same time). Parameters are the nodes (Set<Node>) */
-//		public final static int NODES_DOWN = 101; 
-//		/** The event generator requests to establish a set of links as up (all at the same time). Parameters are the links (Set<Link>) */
-//		public final static int LINKS_UP = 200; 
-//		/** The event generator requests to establish a set of links as down (all at the same time). Parameters are the links (Set<Link>) */
-//		public final static int LINKS_DOWN = 201; 
-//		/** The event generator requests to add a set of demands (all at the same time). Parameters are a Map<Long,Quadruple<Node,Node,NetworkLayer,Double>>, where the map key is the demand internal identifier assigned by the generator module (THIS IS NOT THE DEMAND IDENTIFIER IN THE NETPLAN OBJECT, WHICH IS NOT KNOWN UNTIL THE DEMAND OBJECT IS CREATED BY THE EVENT PROCESSOR). The Quadruple is composed of composed of the demand input node (Node), demand output node (Node), the network layer (NetworkLayer) and demand offered traffic (Double). Created demands by the event processor should have an attribute of key "EventGeneratorId" and value the internal identifier set  */
-//		public final static int DEMANDS_ADD = 300; 
-//		/** The event generator requests to remove a set of demands (all at the same time). Parameters are a Set<Long>, the demand internal identifiers passed when the event for creating a demand was produced (Long).  */
-//		public final static int DEMANDS_REMOVE = 301;
-//		/** The event generator requests to modify the offered traffic of a set of demands (all at the same time). Parameters are a Map<Long,Double>, where each entry has as key the internal identifier of the demand assigned by the generator, and the value, the new offered traffic (Double) for that demand */
-//		public final static int DEMANDS_MODIFY = 302;
-//		/** The event generator requests to add a set of multicast demands (all at the same time). Parameters are a Map<Long,Quadruple<Node,Node,NetworkLayer,Double>>, where the map key is the demand internal identifier assigned by the generator module (THIS IS NOT THE DEMAND IDENTIFIER IN THE NETPLAN OBJECT, WHICH IS NOT KNOWN UNTIL THE DEMAND OBJECT IS CREATED BY THE EVENT PROCESSOR). The Quadruple is composed of composed of the demand input node (Node), demand output node (Node), the network layer (NetworkLayer) and demand offered traffic (Double). Created demands by the event processor should have an attribute of key "EventGeneratorId" and value the internal identifier set  */
-//		public final static int MULTICASTDEMANDS_ADD = 400; 
-//		/** The event generator requests to remove a set of multicast demands (all at the same time). Parameters are a Set<Long>, the demand internal identifiers passed when the event for creating a demand was produced (Long).  */
-//		public final static int MULTICASTDEMANDS_REMOVE = 401;
-//		/** The event generator requests to modify the offered traffic of a set of multicast demands (all at the same time). Parameters are a Map<Long,Double>, where each entry has as key the internal identifier of the demand assigned by the generator, and the value, the new offered traffic (Double) for that demand */
-//		public final static int MULTICASTDEMANDS_MODIFY = 402;
-//		/** The event generator requests to add a set of routes (all at the same time). Parameters are a Map<Long,Quadruple<Demand,List<Link>,Double,Double>>, where the map key is the route internal identifier assigned by the generator module (THIS IS NOT THE ROUTE IDENTIFIER IN THE NETPLAN OBJECT, WHICH IS NOT KNOWN UNTIL THE DEMAND OBJECT IS CREATED BY THE EVENT PROCESSOR). The Quadruple is composed of composed of the route demand (Demand), the sequence of links (List<Link>), the carried traffic (Double) and the route occupied capacity in the links. Created routes by the event processor should have an attribute of key "EventGeneratorId" and value the internal identifier set  */
-//		public final static int ROUTES_ADD = 500; 
-//		/** The event generator requests to remove a set of routes (all at the same time). Parameters are a Set<Long>, the route internal identifiers passed when the event for creating a route was produced (Long).  */
-//		public final static int ROUTES_REMOVE = 501;
-//		/** The event generator requests to modify the carried traffic, occupied capacity of a set of routes (all at the same time). Parameters are a Map<Long,Triple<List<Link>,Double,Double>>, where each entry has as key the internal identifier of the route assigned by the generator, and the values of new sequence of links, carried traffic and and occupied capacity in the traversed links */
-//		public final static int ROUTES_MODIFY = 502;
-//	}
-//	
-	
 	/**
 	 * Default priority for events (higher values give higher priority).
 	 */
@@ -405,62 +370,6 @@ public class SimEvent implements Comparable<SimEvent>
 		this.destinationModule = destinationModule;
 	}
 	
-
-//	/**
-//	 * Constructor that allows to generate an event with an action notification.
-//	 *
-//	 * @param eventTime Event time
-//	 * @param action Action to be notified
-//	 * @param destinationModule Module that will receive the event
-//	 * @since 0.3.0
-//	 */
-//	public SimEvent(double eventTime, final SimAction action, DestinationModule destinationModule)
-//	{
-//		this(eventTime, new LinkedList<SimAction>() {{ add(action); }}, null, destinationModule);
-//	}
-//	
-//	/**
-//	 * Constructor that allows to generate an event with a list of action notifications.
-//	 *
-//	 * @param eventTime Event time
-//	 * @param actions List of actions to be notified
-//	 * @param destinationModule Module that will receive the event
-//	 * @since 0.3.0
-//	 */
-//	public SimEvent(double eventTime, List<SimAction> actions, DestinationModule destinationModule)
-//	{
-//		this(eventTime, actions, null, destinationModule);
-//	}
-//	
-//	/**
-//	 * Constructor that allows to generate an event with a custom object and a list of action notifications.
-//	 * 
-//	 * @param eventTime Event time
-//	 * @param actions List of actions to be notified
-//	 * @param object Custom object
-//	 * @param destinationModule Module that will receive the event
-//	 * @since 0.3.0
-//	 */
-//	public SimEvent(double eventTime, List<SimAction> actions, Object object, DestinationModule destinationModule)
-//	{
-//		this.eventTime = eventTime;
-////		this.actions = new LinkedList<SimAction>();
-////		this.actionTypes = EnumSet.noneOf(SimAction.ActionType.class);
-//		this.object = object;
-//		this.destinationModule = destinationModule;
-//		
-//		if (actions != null)
-//		{
-//			for(SimAction action : actions)
-//			{
-//				this.actions.add(action);
-//				this.actionTypes.add(action.getActionType());
-//			}
-//		}
-//		
-//		setEventPriority(DEFAULT_PRIORITY);
-//		setEventType(DEFAULT_TYPE);
-//	}
 
 	@Override
 	public final int compareTo(SimEvent e)
@@ -524,49 +433,6 @@ public class SimEvent implements Comparable<SimEvent>
 		return out.toString();
 	}
 	
-//	/**
-//	 * Returns {@code true} if the event contains an action notification of the
-//	 * given type.
-//	 *
-//	 * @param actionType Type of action notification
-//	 * @return {@code true} if the event contains an action notification of the given type. Otherwise, {@code false}
-//	 * @since 0.3.0
-//	 */
-//	public boolean contains(SimAction.ActionType actionType)
-//	{
-//		return containsAny(EnumSet.of(actionType));
-//	}
-//	
-//	/**
-//	 * Returns {@code true} if the event contains an action notification of 
-//	 * among one of the given types.
-//	 *
-//	 * @param actionTypes Types of action notification
-//	 * @return {@code true} if the event contains an action notification of any of the given type. Otherwise, {@code false}
-//	 * @since 0.3.0
-//	 */
-//	public boolean containsAny(EnumSet<SimAction.ActionType> actionTypes)
-//	{
-//		for(SimAction.ActionType actionType : actionTypes)
-//			if (this.actionTypes.contains(actionType))
-//				return true;
-//		
-//		return false;
-//	}
-//	
-//	/**
-//	 * <p>Returns the list of action notifications.</p>
-//	 *
-//	 * <p><b>Important</b>: The returned list is unmodifiable</p>
-//	 *
-//	 * @return List of action notifications
-//	 * @since 0.3.0
-//	 */
-//	public final List<SimAction> getEventActionList()
-//	{
-//		return Collections.unmodifiableList(actions);
-//	}
-//	
 	/**
 	 * <p>Returns the destination module of the event.</p>
 	 *
@@ -617,32 +483,4 @@ public class SimEvent implements Comparable<SimEvent>
 		return type;
 	}
 	
-//	/**
-//	 * Sets scheduling priority of the message. The priority value is used when 
-//	 * the simulator inserts messages into the future event list (FEL), to order 
-//	 * messages with identical arrival time values.
-//	 * 
-//	 * @param priority Event priority (the higher, the more priority)
-//	 * @return Reference to the event
-//	 * @since 0.3.0
-//	 */
-//	public final SimEvent setEventPriority(int priority)
-//	{
-//		this.priority = priority;
-//		return this;
-//	}
-//
-//	/**
-//	 * Sets the message kind. This field can be freely used by the user. No 
-//	 * processing is made by the simulation kernel.
-//	 * 
-//	 * @param type Event type
-//	 * @return Reference to the event
-//	 * @since 0.3.0
-//	 */
-//	public final SimEvent setEventType(int type)
-//	{
-//		this.type = type;
-//		return this;
-//	}
 }
