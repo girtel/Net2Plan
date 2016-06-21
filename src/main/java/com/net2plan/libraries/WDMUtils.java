@@ -154,7 +154,7 @@ public class WDMUtils
 				this.seqFrequencySlots = StringUtils.readIntMatrix(r.getAttribute(WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME));
 				this.seqRegeneratorsOccupancy = r.getAttribute(WDMUtils.SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME) == null? new int [seqLinks.size()] : StringUtils.toIntArray(StringUtils.split(r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME), " "));
 			} catch (Exception e) { throw new WDMException("RSA not correctly defined in the attributes: " + WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME + " = " + r.getAttribute(SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME) + "; SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME = " + r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME)); }
-			if (getNumSlots() != r.getOccupiedLinkCapacity()) throw new WDMException("The occupied link capacity is different to the number of slots");
+			if (getNumSlots() != r.getReservedCapacityForProtection()) throw new WDMException("The occupied link capacity is different to the number of slots");
 			checkValidity();
 		}
 
@@ -621,7 +621,7 @@ public class WDMUtils
 			{
 				for (int s = 0; s < rsa.seqFrequencySlots.rows() ; s ++)
 				{
-					final int slotIndex = rsa.seqFrequencySlots.get(orderTravLink,s);
+					final int slotIndex = rsa.seqFrequencySlots.get(s,orderTravLink);
 					final int linkIndex = e.getIndex();
 					if (frequencySlot2FiberOccupancy_se.get (slotIndex , linkIndex) != 0) return false;
 					if (checkMatrix.get (slotIndex , linkIndex) != 0) return false;

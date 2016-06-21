@@ -17,40 +17,19 @@
 
 package com.net2plan.examples.general.onlineSim;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
-import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
-import com.net2plan.interfaces.simulation.IEventProcessor;
-import com.net2plan.interfaces.simulation.SimEvent;
-import com.net2plan.libraries.WDMUtils;
-import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.InputParameter;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.Quadruple;
-import com.net2plan.utils.RandomUtils;
-import com.net2plan.utils.Triple;
-
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.jet.math.tdouble.DoubleFunctions;
+import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.interfaces.simulation.IEventProcessor;
+import com.net2plan.interfaces.simulation.SimEvent;
+import com.net2plan.libraries.WDMUtils;
+import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.*;
+
+import java.util.*;
 
 /** 
  * Implements the reactions of a WDM network carrying lightpaths in a fixed grid of wavelengths
@@ -249,7 +228,7 @@ public class Online_evProc_wdm extends IEventProcessor
 //				System.out.println ("------ ADD LP: rwa: " + rwa);
 				if (rwa != null)
 				{
-					if (!WDMUtils.isAllocatableRSASet(wavelengthFiberOccupancy , addLpEvent.primaryRSA , addLpEvent.backupRSA)) throw new RuntimeException ("Bad");
+					if (!WDMUtils.isAllocatableRSASet(wavelengthFiberOccupancy , rwa.getFirst() , rwa.getSecond())) throw new RuntimeException ("Bad");
 					for (Link e : rwa.getFirst ().seqLinks) if (e.getNetPlan() != currentNetPlan) throw new RuntimeException ("Bad");
 					for (Link e : rwa.getSecond ().seqLinks) if (e.getNetPlan() != currentNetPlan) throw new RuntimeException ("Bad");
 					
