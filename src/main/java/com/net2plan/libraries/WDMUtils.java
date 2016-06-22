@@ -131,10 +131,11 @@ public class WDMUtils
 		{
 			this.ingressNode = r.getIngressNode();
 			this.egressNode = r.getEgressNode();
-			this.seqLinks = new ArrayList<Link> (r.getSeqLinksRealPath());
+			this.seqLinks = initializeWithTheInitialRoute? r.getInitialSequenceOfLinks() : new ArrayList<Link> (r.getSeqLinksRealPath());
 			try 
 			{ 
-				this.seqFrequencySlots = StringUtils.readIntMatrix(r.getAttribute(initializeWithTheInitialRoute? WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME));
+				final IntMatrix2D candidateSeqFreqSlots = StringUtils.readIntMatrix(r.getAttribute(initializeWithTheInitialRoute? WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME));	
+				this.seqFrequencySlots = candidateSeqFreqSlots.rows() > 0? candidateSeqFreqSlots : IntFactory2D.dense.make(0,seqLinks.size());
 				this.seqRegeneratorsOccupancy = r.getAttribute(initializeWithTheInitialRoute? WDMUtils.SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME) == null? new int [seqLinks.size()] : StringUtils.toIntArray(StringUtils.split(r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME), " "));
 			} catch (Exception e) { throw new WDMException("RSA not correctly defined in the attributes: " + WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME + " = " + r.getAttribute(SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME) + "; SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME = " + r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME)); }
 			if (getNumSlots() != r.getOccupiedCapacityInNoFailureState()) throw new WDMException("The occupied link capacity is different to the number of slots");

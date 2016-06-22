@@ -1006,7 +1006,7 @@ public class NetPlan extends NetworkElement
 	 * </ul>
 	 *
 	 * @param layer Network layer
-	 * @param costs Link weight vector for the shortest path algorithm
+	 * @param costs Link weight vector for the shortest path algorithm. If null, all the links have cost one
 	 * @param paramValuePairs Parameters to be passed to the class to tune its operation. An even number of {@code String} is to be passed. For each {@code String} pair, first {@code String}
 	 *           must be the name of the parameter, second a {@code String} with its value. If no name-value pairs are set, default values are used
 	 * @return Map with all the computed paths (values) per demands (keys)
