@@ -3,9 +3,17 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.net2plan</groupId>
     <artifactId>net2plan</artifactId>
-    <version>0.4.0</version>
+    <version>0.4.1-SNAPSHOT</version>
     <name>Net2Plan</name>
     <packaging>jar</packaging>
+    <url>http://www.net2plan.com</url>
+
+    <licenses>
+        <license>
+            <name>GNU Lesser General Public License v3</name>
+            <url>http://www.gnu.org/licenses/lgpl.html</url>
+        </license>
+    </licenses>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
