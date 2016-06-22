@@ -378,24 +378,22 @@ public class Online_evProc_wdm extends IEventProcessor
 			d.remove();
 			checkClashing (currentNetPlan);
 		}
-		else if(event.getEventObject() instanceof WDMUtils.LightpathModify) //JJ
+		else if(event.getEventObject() instanceof WDMUtils.LightpathModify)
 		{
 			WDMUtils.LightpathModify modifyLpEvent = (WDMUtils.LightpathModify) event.getEventObject();
 			final Route lpRoute = modifyLpEvent.lp;
 			if (lpRoute != null) 
 			{
-				if (modifyLpEvent.carriedTraffic != -1)
-				{
-					if (modifyLpEvent.rsa == null) throw new Net2PlanException ("Modifying the lightpath line rate requires setting the RSA also");
-					lpRoute.setCarriedTraffic(modifyLpEvent.carriedTraffic, modifyLpEvent.rsa.getNumSlots());
-				}		
-				if (modifyLpEvent.rsa != null)
-				{
-					WDMUtils.releaseResources(new WDMUtils.RSA(lpRoute , false) , wavelengthFiberOccupancy , null);
-					WDMUtils.allocateResources(modifyLpEvent.rsa , wavelengthFiberOccupancy , null);
-					lpRoute.setSeqLinksAndProtectionSegments(modifyLpEvent.rsa.seqLinks);
-					WDMUtils.setLightpathRSAAttributes(lpRoute , modifyLpEvent.rsa , false);
-				}
+				WDMUtils.RSA oldRSA = new WDMUtils.RSA(lpRoute , false);
+
+				if (modifyLpEvent.rsa == null) throw new Net2PlanException ("Modifying the lightpath line rate requires setting the RSA also");
+				lpRoute.setCarriedTraffic(modifyLpEvent.carriedTraffic, modifyLpEvent.rsa.getNumSlots());
+
+				WDMUtils.releaseResources( oldRSA, wavelengthFiberOccupancy , null);
+				WDMUtils.allocateResources(modifyLpEvent.rsa , wavelengthFiberOccupancy , null);
+				lpRoute.setSeqLinksAndProtectionSegments(modifyLpEvent.rsa.seqLinks);
+				WDMUtils.setLightpathRSAAttributes(lpRoute , modifyLpEvent.rsa , false);
+
 			}
 		}
 		else throw new Net2PlanException ("Unknown event type: " + event);
@@ -591,7 +589,7 @@ public class Online_evProc_wdm extends IEventProcessor
 			List<Link> res = new LinkedList<Link> (); res.add (routeToReroute.getPotentialBackupProtectionSegments().iterator().next());
 			if (routeToReroute.getPotentialBackupProtectionSegments().iterator().next() == null)  throw new RuntimeException ("Bad");
 			if (res.contains(null)) throw new RuntimeException ("Bad");
-			return new WDMUtils.RSA (res , originalRWA.getSecond().seqFrequencySlots.get(0,0));  
+			return new WDMUtils.RSA (res , originalRWA.getSecond().seqFrequencySlots_se.get(0,0));
 		}
 		else return null;
 	}

@@ -56,6 +56,8 @@ import cern.colt.matrix.tint.IntFactory2D;
 import cern.colt.matrix.tint.IntMatrix1D;
 import cern.colt.matrix.tint.IntMatrix2D;
 
+import static javafx.scene.input.KeyCode.L;
+
 /**
  * Class to deal with WDM optical topologies in fixed-grid and flexi-grid networks, including wavelength assignment and regenerator placement.
  *
@@ -112,16 +114,16 @@ public class WDMUtils
 		/**
 		 * The sequence of traversed fibers 
 		 */
-		public final List<Link> seqLinks;
+		public final List<Link>  seqLinks;
 		/**
 		 * A 2D integer matrix with as many columns as traversed links (in the same order), and rows as the number of frequency slots occupied (the same in all the links).
 		 * Position (i,j) of the array is the identifier of the i-th slot used in the fiber traversed in the j-th place. Recall that an slot identifier is an integer number between zero and the number of slots in the grid minus one. 
 		 */
-		public final IntMatrix2D seqFrequencySlots;
+		public final IntMatrix2D seqFrequencySlots_se;
 		/**
 		 * An integer vector with one coordinate per traversed fiber. A 1 is set in the i-th position if a regenerator is needed at origin node of the fiber traversed in the i-th place, and a 0 otherwise.
 		 */
-		public final int [] seqRegeneratorsOccupancy; // as many coordinates as links traversed
+		public final int []      seqRegeneratorsOccupancy_e; // as many coordinates as links traversed
 
 		/** Creates a RSA object reading the information from the existing Route object (and its WDM-related attributes). 
 		 * @param r the route object
@@ -131,13 +133,16 @@ public class WDMUtils
 		{
 			this.ingressNode = r.getIngressNode();
 			this.egressNode = r.getEgressNode();
-			this.seqLinks = new ArrayList<Link> (r.getSeqLinksRealPath());
+			this.seqLinks = initializeWithTheInitialRoute ? new ArrayList<>(r.getInitialSequenceOfLinks()) : new ArrayList<> (r.getSeqLinksRealPath());
 			try 
-			{ 
-				this.seqFrequencySlots = StringUtils.readIntMatrix(r.getAttribute(initializeWithTheInitialRoute? WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME));
-				this.seqRegeneratorsOccupancy = r.getAttribute(initializeWithTheInitialRoute? WDMUtils.SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME) == null? new int [seqLinks.size()] : StringUtils.toIntArray(StringUtils.split(r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME), " "));
+			{
+				final IntMatrix2D candidateSeqFreqSlots = StringUtils.readIntMatrix(r.getAttribute(initializeWithTheInitialRoute? WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME));
+				this.seqFrequencySlots_se = candidateSeqFreqSlots.rows() > 0? candidateSeqFreqSlots : IntFactory2D.dense.make(0,this.seqLinks.size());
+				final int[] candidateSeqRegenerators = r.getAttribute(initializeWithTheInitialRoute? WDMUtils.SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME) == null? new int [seqLinks.size()] : StringUtils.toIntArray(StringUtils.split(initializeWithTheInitialRoute? r.getAttribute(SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME): r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME), " "));
+				this.seqRegeneratorsOccupancy_e = candidateSeqRegenerators.length == 0 ? new int[this.seqLinks.size()] : candidateSeqRegenerators;
 			} catch (Exception e) { throw new WDMException("RSA not correctly defined in the attributes: " + WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME + " = " + r.getAttribute(SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME) + "; SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME = " + r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME)); }
-			if (getNumSlots() != r.getOccupiedCapacityInNoFailureState()) throw new WDMException("The occupied link capacity is different to the number of slots");
+
+			if (!initializeWithTheInitialRoute && getNumSlots() != r.getOccupiedCapacityInNoFailureState()) throw new WDMException("The occupied link capacity is different to the number of slots");
 			checkValidity();
 		}
 		
@@ -151,8 +156,8 @@ public class WDMUtils
 			this.seqLinks = new ArrayList<Link> (r.getSeqLinks());
 			try 
 			{ 
-				this.seqFrequencySlots = StringUtils.readIntMatrix(r.getAttribute(WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME));
-				this.seqRegeneratorsOccupancy = r.getAttribute(WDMUtils.SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME) == null? new int [seqLinks.size()] : StringUtils.toIntArray(StringUtils.split(r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME), " "));
+				this.seqFrequencySlots_se = StringUtils.readIntMatrix(r.getAttribute(WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME));
+				this.seqRegeneratorsOccupancy_e = r.getAttribute(WDMUtils.SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME) == null? new int [seqLinks.size()] : StringUtils.toIntArray(StringUtils.split(r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME), " "));
 			} catch (Exception e) { throw new WDMException("RSA not correctly defined in the attributes: " + WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME + " = " + r.getAttribute(SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME) + "; SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME = " + r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME)); }
 			if (getNumSlots() != r.getReservedCapacityForProtection()) throw new WDMException("The occupied link capacity is different to the number of slots");
 			checkValidity();
@@ -160,26 +165,26 @@ public class WDMUtils
 
 		/** Creates a RSA object from the provided information
 		 * @param seqLinks sequence of traversed fibers (a copy is made internally)
-		 * @param seqFrequencySlots 2D array with the sequence of frequency slots information. 
+		 * @param seqFrequencySlots_se 2D array with the sequence of frequency slots information.
 		 * @param seqRegenerators vector with the sequence of traversed regenerators information (if {@code null}, no regenerators are placed)
 		 */
-		public RSA (List<Link> seqLinks , IntMatrix2D seqFrequencySlots , int [] seqRegenerators)
+		public RSA (List<Link> seqLinks , IntMatrix2D seqFrequencySlots_se, int [] seqRegenerators)
 		{ 
 			this.seqLinks = new ArrayList<Link> (seqLinks); 
-			this.seqFrequencySlots = seqFrequencySlots;
+			this.seqFrequencySlots_se = seqFrequencySlots_se;
 			this.ingressNode = seqLinks.get(0).getOriginNode();
 			this.egressNode = seqLinks.get(seqLinks.size()-1).getDestinationNode();
-			this.seqRegeneratorsOccupancy = seqRegenerators == null? new int [seqLinks.size()] : Arrays.copyOf(seqRegenerators , seqRegenerators.length); 
+			this.seqRegeneratorsOccupancy_e = seqRegenerators == null? new int [seqLinks.size()] : Arrays.copyOf(seqRegenerators , seqRegenerators.length);
 			checkValidity ();
 		}
 
 		/** Equivalent to {@code RSA (seqLinks , seqFrequencySlot, null)
 		 * @param seqLinks sequence of traversed fibers (a copy is made internally)
-		 * @param seqFrequencySlots 2D array with the sequence of frequency slots information. 
+		 * @param seqFrequencySlots_se 2D array with the sequence of frequency slots information.
 		 */
-		public RSA (List<Link> seqLinks , IntMatrix2D seqFrequencySlots)
+		public RSA (List<Link> seqLinks , IntMatrix2D seqFrequencySlots_se)
 		{ 
-			this(seqLinks , seqFrequencySlots , null);
+			this(seqLinks , seqFrequencySlots_se, null);
 		}
 
 		/** Creates a RSA with the same set of contigous slots occupied in all the traversed fibers
@@ -190,12 +195,12 @@ public class WDMUtils
 		public RSA (List<Link> seqLinks , int initialSlot , int numSlots)
 		{ 
 			this.seqLinks = new ArrayList<Link>(seqLinks); 
-			this.seqFrequencySlots = IntFactory2D.dense.make(numSlots , seqLinks.size());
+			this.seqFrequencySlots_se = IntFactory2D.dense.make(numSlots , seqLinks.size());
 			for (int e = 0; e < seqLinks.size() ; e ++)
-				for (int s = 0 ; s < numSlots ; s ++) seqFrequencySlots.set(s,e,s+initialSlot);
+				for (int s = 0 ; s < numSlots ; s ++) seqFrequencySlots_se.set(s,e,s+initialSlot);
 			this.ingressNode = seqLinks.get(0).getOriginNode();
 			this.egressNode = seqLinks.get(seqLinks.size()-1).getDestinationNode();
-			this.seqRegeneratorsOccupancy = new int [seqLinks.size()]; 
+			this.seqRegeneratorsOccupancy_e = new int [seqLinks.size()];
 			checkValidity ();
 		}
 
@@ -219,8 +224,8 @@ public class WDMUtils
 			final int E = seqLinks.size();
 			for (int counterLink = 1; counterLink < E ; counterLink ++)
 			{
-				if (seqRegeneratorsOccupancy [counterLink] == 0)
-					if (!seqFrequencySlots.viewColumn(counterLink).equals(seqFrequencySlots.viewColumn(counterLink-1)))
+				if (seqRegeneratorsOccupancy_e[counterLink] == 0)
+					if (! seqFrequencySlots_se.viewColumn(counterLink).equals(seqFrequencySlots_se.viewColumn(counterLink-1)))
 						res.add(seqLinks.get(counterLink).getOriginNode());
 			}
 			return res;
@@ -239,35 +244,34 @@ public class WDMUtils
 		/** Gets the number of slots occupied in this RSA (the same in all the traversed fibers)
 		 * @return the number of slots
 		 */
-		public int getNumSlots () { return seqFrequencySlots.rows(); }
+		public int getNumSlots () { return seqFrequencySlots_se.rows(); }
 		
 		/** Checks that in every node where the frequency slots of the RSA change, a regenerator is placed (if not, an exception is raised). 
 		 * This is assuming that regenerators are the equipment needed to perform wavelength/frequency slot conversion  
 		 */
 		public void checkFrequencySlotConversionOccupiesARegenerator ()
 		{
-			final int E = seqFrequencySlots.columns();
+			final int E = seqFrequencySlots_se.columns();
 			for (int counterLink = 1; counterLink < E ; counterLink ++)
 			{
-				if (seqRegeneratorsOccupancy [counterLink] == 0)
-					if (!seqFrequencySlots.viewColumn(counterLink).equals(seqFrequencySlots.viewColumn(counterLink-1)))
+				if (seqRegeneratorsOccupancy_e[counterLink] == 0)
+					if (! seqFrequencySlots_se.viewColumn(counterLink).equals(seqFrequencySlots_se.viewColumn(counterLink-1)))
 						throw new WDMException ("Wrong regenerators occupancy in the RSA: a regenrator is not placed in a node where the lighptath slot wavelengths change");
 			}
 		}
 
 		private void checkValidity ()
 		{
-			final int S = seqFrequencySlots.rows();
-			final int E = seqFrequencySlots.columns();
+			final int S = seqFrequencySlots_se.rows();
+			final int E = seqFrequencySlots_se.columns();
+
 			if (seqLinks == null) throw new WDMException ("The sequence of links is null");
 			if (seqLinks.isEmpty()) throw new WDMException ("The sequence of links is empty");
-			if (seqLinks.size() != E) throw new WDMException ("Wrong RSA");
-			if (S == 0) throw new WDMException ("Wrong RSA");
-			if (seqFrequencySlots.getMinLocation() [0] < 0) throw new WDMException ("Wrong slot identifier (cannot be negative)"); 
-			if (seqRegeneratorsOccupancy.length != seqLinks.size()) throw new WDMException ("Wrong regenerators occupancy in the RSA");
-			seqRegeneratorsOccupancy [0] = 0;
+			if (S>0 && seqLinks.size() != E) throw new WDMException ("Wrong RSA");
+			if ( (S>0) && (seqFrequencySlots_se.getMinLocation() [0] < 0)) throw new WDMException ("Wrong slot identifier (cannot be negative)");
+			if (seqRegeneratorsOccupancy_e.length != seqLinks.size()) throw new WDMException ("Wrong regenerators occupancy in the RSA");
+			seqRegeneratorsOccupancy_e[0] = 0;
 		}
-
 	}
 	
 	/**
@@ -416,7 +420,7 @@ public class WDMUtils
 	/**
 	 * Route/protection segment attribute name for sequence of wavelengths.
 	 */
-	private final static String SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME = "seqFrequencySlots";
+	private final static String SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME = "seqFrequencySlots_se";
 	
 	/**
 	 * Route/protection segment attribute name for sequence of wavelengths for the initial sequence of links (when the route was created)
@@ -619,9 +623,9 @@ public class WDMUtils
 			int orderTravLink = 0; 
 			for (Link e : rsa.seqLinks)
 			{
-				for (int s = 0; s < rsa.seqFrequencySlots.rows() ; s ++)
+				for (int s = 0; s < rsa.seqFrequencySlots_se.rows() ; s ++)
 				{
-					final int slotIndex = rsa.seqFrequencySlots.get(s,orderTravLink);
+					final int slotIndex = rsa.seqFrequencySlots_se.get(s,orderTravLink);
 					final int linkIndex = e.getIndex();
 					if (frequencySlot2FiberOccupancy_se.get (slotIndex , linkIndex) != 0) return false;
 					if (checkMatrix.get (slotIndex , linkIndex) != 0) return false;
@@ -691,13 +695,13 @@ public class WDMUtils
 			final Link fiber = fiberIt.next();
 			for (int s = 0; s < S ; s ++)
 			{
-				final int slotId = (int) rsa.seqFrequencySlots.get(s,hopId);
+				final int slotId = (int) rsa.seqFrequencySlots_se.get(s,hopId);
 				final boolean wasOccupied = frequencySlot2FiberOccupancy_se.get(slotId, fiber.getIndex ()) != 0;
 				if (!wasOccupied) throw new WDMException("Wavelength " + slotId + " was unused in fiber " + fiber.getId ());
 				frequencySlot2FiberOccupancy_se.set(slotId, fiber.getIndex () , 0.0);
 			}
-			if ((nodeRegeneratorOccupancy != null) && (rsa.seqRegeneratorsOccupancy != null)) 
-				if (rsa.seqRegeneratorsOccupancy[hopId] == 1)
+			if ((nodeRegeneratorOccupancy != null) && (rsa.seqRegeneratorsOccupancy_e != null))
+				if (rsa.seqRegeneratorsOccupancy_e[hopId] == 1)
 				{
 					Node node = fiber.getOriginNode();
 					nodeRegeneratorOccupancy.set(node.getIndex (), nodeRegeneratorOccupancy.get(node.getIndex()) - 1);
@@ -752,8 +756,8 @@ public class WDMUtils
 	 */
 	public static void setLightpathRSAAttributes (Route lp , RSA rsa , boolean initializeTheInitialRoute)
 	{
-		lp.setAttribute(initializeTheInitialRoute? SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME : SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME, StringUtils.writeMatrix(rsa.seqFrequencySlots));
-		lp.setAttribute(initializeTheInitialRoute? SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME : SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME, IntUtils.join(rsa.seqRegeneratorsOccupancy, " "));
+		lp.setAttribute(initializeTheInitialRoute? SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME : SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME, StringUtils.writeMatrix(rsa.seqFrequencySlots_se));
+		lp.setAttribute(initializeTheInitialRoute? SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME : SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME, IntUtils.join(rsa.seqRegeneratorsOccupancy_e, " "));
 	}
 
 	/**
@@ -764,8 +768,8 @@ public class WDMUtils
 	 */
 	public static void setLightpathRSAAttributes (ProtectionSegment lp , RSA rsa)
 	{
-		lp.setAttribute(SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME, StringUtils.writeMatrix(rsa.seqFrequencySlots));
-		lp.setAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME, IntUtils.join(rsa.seqRegeneratorsOccupancy, " "));
+		lp.setAttribute(SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME, StringUtils.writeMatrix(rsa.seqFrequencySlots_se));
+		lp.setAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME, IntUtils.join(rsa.seqRegeneratorsOccupancy_e, " "));
 	}
 
 	/**
@@ -996,7 +1000,7 @@ public class WDMUtils
 		{
 			final int hopId = fiberIt.nextIndex();
 			final Link fiber = fiberIt.next();
-			IntMatrix1D slotIds = rsa.seqFrequencySlots.viewColumn(hopId);
+			IntMatrix1D slotIds = rsa.seqFrequencySlots_se.viewColumn(hopId);
 			for (int cont = 0 ; cont < slotIds.size() ; cont ++)
 			{
 				final int slotId = (int) slotIds.get(cont);
@@ -1005,8 +1009,8 @@ public class WDMUtils
 				frequencySlot2FiberOccupancy_se.set(slotId , fiber.getIndex () , 1.0);
 			}
 
-			if (rsa.seqRegeneratorsOccupancy != null)
-				if (rsa.seqRegeneratorsOccupancy[hopId] == 1)
+			if (rsa.seqRegeneratorsOccupancy_e != null)
+				if (rsa.seqRegeneratorsOccupancy_e[hopId] == 1)
 				{
 					Node node = fiber.getOriginNode();
 					nodeRegeneratorOccupancy.set (node.getIndex (), nodeRegeneratorOccupancy.get(node.getIndex ()) + 1);
