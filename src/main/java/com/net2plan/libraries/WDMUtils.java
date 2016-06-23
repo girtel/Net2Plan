@@ -218,7 +218,7 @@ public class WDMUtils
 		 */
 		public List<Node> getNodesWithFrequencySlotConversion ()
 		{
-			List<Node> res = new ArrayList<Node> ();
+			List<Node> res = new ArrayList<> ();
 			final int E = seqLinks.size();
 			for (int counterLink = 1; counterLink < E ; counterLink ++)
 			{
