@@ -164,15 +164,15 @@ public class WDMUtils
 		/** Creates a RSA object from the provided information
 		 * @param seqLinks sequence of traversed fibers (a copy is made internally)
 		 * @param seqFrequencySlots_se 2D array with the sequence of frequency slots information.
-		 * @param seqRegenerators vector with the sequence of traversed regenerators information (if {@code null}, no regenerators are placed)
+		 * @param seqRegenerators_e vector with the sequence of traversed regenerators information (if {@code null}, no regenerators are placed)
 		 */
-		public RSA (List<Link> seqLinks , IntMatrix2D seqFrequencySlots_se, int [] seqRegenerators)
+		public RSA (List<Link> seqLinks , IntMatrix2D seqFrequencySlots_se, int [] seqRegenerators_e)
 		{ 
 			this.seqLinks = new ArrayList<Link> (seqLinks); 
 			this.seqFrequencySlots_se = seqFrequencySlots_se;
 			this.ingressNode = seqLinks.get(0).getOriginNode();
 			this.egressNode = seqLinks.get(seqLinks.size()-1).getDestinationNode();
-			this.seqRegeneratorsOccupancy_e = seqRegenerators == null? new int [seqLinks.size()] : Arrays.copyOf(seqRegenerators , seqRegenerators.length);
+			this.seqRegeneratorsOccupancy_e = seqRegenerators_e == null? new int [seqLinks.size()] : Arrays.copyOf(seqRegenerators_e , seqRegenerators_e.length);
 			checkValidity ();
 		}
 
@@ -199,6 +199,24 @@ public class WDMUtils
 			this.ingressNode = seqLinks.get(0).getOriginNode();
 			this.egressNode = seqLinks.get(seqLinks.size()-1).getDestinationNode();
 			this.seqRegeneratorsOccupancy_e = new int [seqLinks.size()];
+			checkValidity ();
+		}
+
+		/** Creates a RSA with the same set of contigous slots occupied in all the traversed fibers
+		 * @param seqLinks Sequence of traversed fiber
+		 * @param initialSlot id of the initial frequency slot occupied
+		 * @param numSlots number of contiguous slots of the RSA
+		 * @param seqRegenerators_e vector with the sequence of traversed regenerators information (if {@code null}, no regenerators are placed)
+		 */
+		public RSA (List<Link> seqLinks , int initialSlot , int numSlots , int [] seqRegenerators_e)
+		{ 
+			this.seqLinks = new ArrayList<Link>(seqLinks); 
+			this.seqFrequencySlots_se = IntFactory2D.dense.make(numSlots , seqLinks.size());
+			for (int e = 0; e < seqLinks.size() ; e ++)
+				for (int s = 0 ; s < numSlots ; s ++) seqFrequencySlots_se.set(s,e,s+initialSlot);
+			this.ingressNode = seqLinks.get(0).getOriginNode();
+			this.egressNode = seqLinks.get(seqLinks.size()-1).getDestinationNode();
+			this.seqRegeneratorsOccupancy_e = seqRegenerators_e == null? new int [seqLinks.size()] : Arrays.copyOf(seqRegenerators_e , seqRegenerators_e.length);
 			checkValidity ();
 		}
 
