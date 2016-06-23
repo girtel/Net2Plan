@@ -117,11 +117,11 @@ public class WDMUtils
 		 * A 2D integer matrix with as many columns as traversed links (in the same order), and rows as the number of frequency slots occupied (the same in all the links).
 		 * Position (i,j) of the array is the identifier of the i-th slot used in the fiber traversed in the j-th place. Recall that an slot identifier is an integer number between zero and the number of slots in the grid minus one. 
 		 */
-		public final IntMatrix2D seqFrequencySlots;
+		public final IntMatrix2D seqFrequencySlots_se;
 		/**
 		 * An integer vector with one coordinate per traversed fiber. A 1 is set in the i-th position if a regenerator is needed at origin node of the fiber traversed in the i-th place, and a 0 otherwise.
 		 */
-		public final int [] seqRegeneratorsOccupancy; // as many coordinates as links traversed
+		public final int [] seqRegeneratorsOccupancy_e; // as many coordinates as links traversed
 
 		/** Creates a RSA object reading the information from the existing Route object (and its WDM-related attributes). 
 		 * @param r the route object
@@ -218,7 +218,7 @@ public class WDMUtils
 		 */
 		public List<Node> getNodesWithFrequencySlotConversion ()
 		{
-			List<Node> res = new ArrayList<Node> ();
+			List<Node> res = new ArrayList<> ();
 			final int E = seqLinks.size();
 			for (int counterLink = 1; counterLink < E ; counterLink ++)
 			{
