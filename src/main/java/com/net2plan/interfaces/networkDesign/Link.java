@@ -414,7 +414,6 @@ public class Link extends NetworkElement
 		return Collections.unmodifiableSet(cache_srgs);
 	}
 
-	
 	/**
 	 * <p>Returns the {@link com.net2plan.interfaces.networkDesign.Route Routes} traversing the link. If network layer routing type is not
 	 * {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, an exception is thrown.</p>
