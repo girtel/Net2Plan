@@ -892,15 +892,14 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Computes the list of disjoint path pairs for each demand.</p>
+	 * <p>Computes a list of disjoint path pairs for each demand, using the paths in the input candidate path list given.</p>
 	 *
 	 * @param cpl Candidate path list per demand
-	 * @param costs Link cost vector
 	 * @param disjointType Type of disjointness: 0 for SRG-disjoint, 1 for link and node disjoint, other value means link disjoint
 	 * @return List of disjoint path pairs for each demand
 	 * @since 0.4.0
 	 */
-	public static Map<Demand,List<Pair<List<Link>,List<Link>>>> computeUnicastCandidate11PathList (Map<Demand,List<List<Link>>> cpl , DoubleMatrix1D costs , int disjointType)
+	public static Map<Demand,List<Pair<List<Link>,List<Link>>>> computeUnicastCandidate11PathList (Map<Demand,List<List<Link>>> cpl , int disjointType)
 	{
 		final boolean srgDisjoint = disjointType == 0;
 		final boolean linkAndNodeDisjoint = disjointType == 1;
