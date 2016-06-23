@@ -142,7 +142,7 @@ public class Online_evProc_wdm extends IEventProcessor
 //			System.out.println ("cplWdm.getLinksDownAllLayers(): " + cplWdm.getLinksDownAllLayers());
 //			System.out.println ("cplWdm.getRoutes(): " + cplWdm.getRoutes());
 //			System.out.println ("INITIALIZE WDM WITH 1+1: protectionTypeCode: " + protectionTypeCode + ", linkCostVector: " + linkCostVector);
-			final Map<Demand,List<Pair<List<Link>,List<Link>>>> pathPairs = NetPlan.computeUnicastCandidate11PathList(cplPaths, linkCostVector, protectionTypeCode);
+			final Map<Demand,List<Pair<List<Link>,List<Link>>>> pathPairs = NetPlan.computeUnicastCandidate11PathList(cplPaths, protectionTypeCode);
 //			for (Demand d : pathPairs.keySet())
 //				System.out.println ("Demand " + d + ", path pairs: " + pathPairs.get(d));
 //			System.out.println ("PathPairs: " + pathPairs);
