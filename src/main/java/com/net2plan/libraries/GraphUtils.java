@@ -58,6 +58,7 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Constants;
@@ -1395,6 +1396,18 @@ public class GraphUtils
 			Map<Demand, Double> linkCostMapMap = CollectionUtils.toMap((List<Demand>) elements, linkCostMap);
 			org.jgrapht.Graph<Node, Demand> graph = JGraphTUtils.getAsWeightedGraph(auxGraph, linkCostMapMap);
 			return JGraphTUtils.isWeightedBidirectional(graph);
+		} else if (elements.get(0) instanceof Route)
+		{
+			org.jgrapht.Graph<Node, Route> auxGraph = JGraphTUtils.getGraphFromRouteMap((List<Route>) elements);
+			Map<Route, Double> linkCostMapMap = CollectionUtils.toMap((List<Route>) elements, linkCostMap);
+			org.jgrapht.Graph<Node, Route> graph = JGraphTUtils.getAsWeightedGraph(auxGraph, linkCostMapMap);
+			return JGraphTUtils.isWeightedBidirectional(graph);
+		} else if (elements.get(0) instanceof ProtectionSegment)
+		{
+			org.jgrapht.Graph<Node, ProtectionSegment> auxGraph = JGraphTUtils.getGraphFromProtectionSegmentMap((List<ProtectionSegment>) elements);
+			Map<ProtectionSegment, Double> linkCostMapMap = CollectionUtils.toMap((List<ProtectionSegment>) elements, linkCostMap);
+			org.jgrapht.Graph<Node, ProtectionSegment> graph = JGraphTUtils.getAsWeightedGraph(auxGraph, linkCostMapMap);
+			return JGraphTUtils.isWeightedBidirectional(graph);
 		} else
 			throw new Net2PlanException("Unexpected network element type");
 	}
@@ -1654,6 +1667,54 @@ public class GraphUtils
 				}
 			}
 
+			return graph;
+		}
+
+		/** <p>Obtains a {@code JGraphT} graph from a given route map.</p>
+		 * 
+		 * @param demands List of demands
+		 * @return {@code JGraphT} graph */
+		public static org.jgrapht.Graph<Node, Route> getGraphFromRouteMap(List<Route> routes)
+		{
+			org.jgrapht.Graph<Node, Route> graph = new DirectedWeightedMultigraph<Node, Route>(Route.class);
+
+			if (routes != null)
+			{
+				for (Route route : routes)
+				{
+					Node originNode = route.getIngressNode();
+					Node destinationNode = route.getEgressNode();
+
+					if (!graph.containsVertex(originNode)) graph.addVertex(originNode);
+					if (!graph.containsVertex(destinationNode)) graph.addVertex(destinationNode);
+
+					graph.addEdge(originNode, destinationNode, route);
+				}
+			}
+			return graph;
+		}
+
+		/** <p>Obtains a {@code JGraphT} graph from a given protection segment map.</p>
+		 * 
+		 * @param demands List of demands
+		 * @return {@code JGraphT} graph */
+		public static org.jgrapht.Graph<Node, ProtectionSegment> getGraphFromProtectionSegmentMap(List<ProtectionSegment> segments)
+		{
+			org.jgrapht.Graph<Node, ProtectionSegment> graph = new DirectedWeightedMultigraph<Node, ProtectionSegment>(ProtectionSegment.class);
+
+			if (segments != null)
+			{
+				for (ProtectionSegment segment : segments)
+				{
+					Node originNode = segment.getOriginNode();
+					Node destinationNode = segment.getDestinationNode();
+
+					if (!graph.containsVertex(originNode)) graph.addVertex(originNode);
+					if (!graph.containsVertex(destinationNode)) graph.addVertex(destinationNode);
+
+					graph.addEdge(originNode, destinationNode, segment);
+				}
+			}
 			return graph;
 		}
 

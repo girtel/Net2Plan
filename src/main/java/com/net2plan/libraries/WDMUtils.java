@@ -13,10 +13,6 @@
  *     Pablo Pavon-Marino - from version 0.4.0 onwards
  ******************************************************************************/
 
-// PABLO: HACER QUE RSA SOLO TENGA COPIAS DE DATOS, NO ORIGINALES POR SI LA COSA CAMBIA
-// HACER UN CHECK DE RSA. EN EL CONSTRUCTOR SE HACE UN CHECK SUAVE. EL CHECK OTRO ES UN CHECK HARD (REGENERADORES SI O NO)
-
-// ojo al release resources: si hace falta tambien libear de la ruta original 
 
 package com.net2plan.libraries;
 
@@ -230,9 +226,8 @@ public class WDMUtils
 			this (seqLinks , occupiedSlotId , 1);
 		}
 		
-		/** Gets the list of nodes (in the same order as they are traversed) where frequency slot changes in the RSA. These are 
-		 * nodes where regenerators (which are assumed to make also wavelength conversion) would be needed.
-		 * @return a list of nodes where frequency slot converters are needed
+		/** Gets the list of nodes (in the same order as they are traversed) where frequency slot changes in the RSA. 
+		 * @return a list of nodes where frequency slot changes (it is assumed that devices making frequency slot conversion were placed there)
 		 */
 		public List<Node> getNodesWithFrequencySlotConversion ()
 		{
@@ -240,17 +235,46 @@ public class WDMUtils
 			final int E = seqLinks.size();
 			for (int counterLink = 1; counterLink < E ; counterLink ++)
 			{
-				if (seqRegeneratorsOccupancy_e[counterLink] == 0)
-					if (! seqFrequencySlots_se.viewColumn(counterLink).equals(seqFrequencySlots_se.viewColumn(counterLink-1)))
-						res.add(seqLinks.get(counterLink).getOriginNode());
+				if (! seqFrequencySlots_se.viewColumn(counterLink).equals(seqFrequencySlots_se.viewColumn(counterLink-1)))
+					res.add(seqLinks.get(counterLink).getOriginNode());
 			}
 			return res;
 		}
 		
+		/** Gets the list of nodes (in the same order as they are traversed) where a regenerator has been placed. 
+		 * @return the list of nodes where regenerators have been placed, according to seqRegeneratorsOccupancy_e
+		 */
+		public List<Node> getSignalRegenerationNodes ()
+		{
+			List<Node> res = new ArrayList<> ();
+			final int E = seqLinks.size();
+			for (int counterLink = 1; counterLink < E ; counterLink ++)
+			{
+				if (seqRegeneratorsOccupancy_e [counterLink] == 1)
+					res.add(seqLinks.get(counterLink).getOriginNode());
+			}
+			return res;
+		}
+
 		/** Returns whether or not frequency slot conversions occur in this RSA (and thus converters would be needed)
 		 * @return {@code true} if frequency slot conversion occurs, {@code false} otherwise
 		 */
 		public boolean hasFrequencySlotConversions () { return getNodesWithFrequencySlotConversion().size() > 0; }
+
+		/** Returns true if in ALL the links, the slots occupied are contigous 
+		 * (e.g. slots 12,13,14 are contiguous), or false otherwise (p.e. if in a link it occupied slots 12, 16, 17, they are not contigous and returns false).
+		 * Note that is frequency slots occupied are not the same in all the links, but inside eachlink they are contigous, the method returns true
+		 * 
+		 * @return {@code true} if frequency slots occupied are contiguous in all the links
+		 */
+		public boolean isFrequencySlotContiguous () 
+		{
+			for (int e = 0; e < seqFrequencySlots_se.columns() ; e ++) 
+				for (int s = 1 ; s < seqFrequencySlots_se.rows() ; s ++) 
+					if (seqFrequencySlots_se.get(s,e) != seqFrequencySlots_se.get(s-1,e) + 1)
+						return false;
+			return true; 
+		}
 
 		/** Gets the length of the RSA in km, summing the length of the traversed fibers
 		 * @return the length in km
