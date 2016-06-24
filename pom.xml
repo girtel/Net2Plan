@@ -484,6 +484,7 @@
                                     </tagletpath>
                                     <sourcepath>${project.basedir}/src/main/java</sourcepath>
                                     <sourceFileIncludes>
+                                        <include>com/net2plan/examples/general/offline/**</include>
                                         <include>com/net2plan/examples/general/onlineSim/**</include>
                                         <include>com/net2plan/examples/general/reports/**</include>
                                         <include>com/net2plan/examples/ocnbook/offline/**</include>
@@ -509,6 +510,7 @@
                                     <useStandardDocletOptions>false</useStandardDocletOptions>
                                     <sourcepath>${project.basedir}/src/main/java</sourcepath>
                                     <sourceFileIncludes>
+                                        <include>com/net2plan/examples/general/offline/**</include>
                                         <include>com/net2plan/examples/general/onlineSim/**</include>
                                         <include>com/net2plan/examples/general/reports/**</include>
                                         <include>com/net2plan/examples/ocnbook/offline/**</include>
@@ -531,6 +533,7 @@
                                 <configuration>
                                     <sourcepath>${project.basedir}/src/main/java</sourcepath>
                                     <sourceFileIncludes>
+                                        <include>com/net2plan/examples/general/offline/**</include>
                                         <include>com/net2plan/examples/general/onlineSim/**</include>
                                         <include>com/net2plan/examples/general/reports/**</include>
                                         <include>com/net2plan/examples/ocnbook/offline/**</include>
