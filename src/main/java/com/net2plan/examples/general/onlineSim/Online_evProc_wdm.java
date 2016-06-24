@@ -37,6 +37,7 @@ import java.util.*;
  * This algorithm implements the reactions of a WDM network carrying lightpaths in a fixed wavelength grid, to a the following events: 
  * <ul>
  * <li>WDMUtils.LightpathAdd: Adds the corresponding lightpath to the network (the Route object and potentially a ProtectionSegment object if the lightpath is asked to be 1+1 protected), if enough resources exist for it. If the event includes a Demand object, the lightpath is associated to it. If not, a new demand is created.</li>
+ * <li>WDMUtils.LightpathModify: Modifies the carried traffic and/or the RSA of a lightpath.</li>
  * <li>WDMUtils.LightpathRemove: Removes the corresponding lightpath (including the Demand and Route objects, and potentially the 1+1 segment if any), releasing the resources.</li>
  * <li>SimEvent.NodesAndLinksChangeFailureState: Fails/repairs the indicated nodes and/or links, and reacts to such failures (the particular form depends on the network recovery options selected).</li>
  * <li>SimEvent.DemandModify: Modifies the offered traffic of a demand (a lightpath).</li>
@@ -48,7 +49,6 @@ import java.util.*;
  * See the technology conventions used in Net2Plan built-in algorithms and libraries to represent WDM networks. 
  * @net2plan.keywords WDM, Network recovery: protection, Network recovery: restoration
  * @net2plan.inputParameters 
- * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  */
 public class Online_evProc_wdm extends IEventProcessor
 {
@@ -139,31 +139,20 @@ public class Online_evProc_wdm extends IEventProcessor
 		this.protectionTypeCode = wdmProtectionTypeToNewRoutes.getString ().equals("1+1-srg-disjoint") ? 0 : wdmProtectionTypeToNewRoutes.getString ().equals("1+1-node-disjoint")? 1 : 2;
 		if (newRoutesHave11Protection)
 		{
-//			System.out.println ("cplWdm.getLinksDownAllLayers(): " + cplWdm.getLinksDownAllLayers());
-//			System.out.println ("cplWdm.getRoutes(): " + cplWdm.getRoutes());
-//			System.out.println ("INITIALIZE WDM WITH 1+1: protectionTypeCode: " + protectionTypeCode + ", linkCostVector: " + linkCostVector);
 			final Map<Demand,List<Pair<List<Link>,List<Link>>>> pathPairs = NetPlan.computeUnicastCandidate11PathList(cplPaths, protectionTypeCode);
-//			for (Demand d : pathPairs.keySet())
-//				System.out.println ("Demand " + d + ", path pairs: " + pathPairs.get(d));
-//			System.out.println ("PathPairs: " + pathPairs);
 			this.cplWdm.addRoutesAndProtectionSegmentFromCandidate11PathList(pathPairs);
 			for (Route r : cplWdm.getRoutes()) 
 			{ 
-//				System.out.println ("Route: " + r + ", demand: " + r.getDemand () + ", SEQ LINKS: " + r.getSeqLinksRealPath() + ", backup: " + r.getPotentialBackupProtectionSegments().iterator().next().getSeqLinks()); 
 				checkDisjointness (r.getSeqLinksRealPath() , r.getPotentialBackupProtectionSegments().iterator().next().getSeqLinks() , protectionTypeCode); 
 			}
 		}
 		else
 		{
-//			System.out.println ("INITIALIZE WDM WITHOUT 1+1");
 			this.cplWdm.addRoutesFromCandidatePathList(cplPaths);
 		}
-//		for (Demand d : cplWdm.getDemands()) if (d.getRoutes().isEmpty()) throw new Net2PlanException ("Some demands in the candidate path list have no routes: increase 'k' (or maybe the topology is not connected)");
 		this.cplA_rs = cplWdm.getMatrixRoute2SRGAffecting();
 		this.cplA_pss = cplWdm.getMatrixProtectionSegment2SRGAffecting();
 
-//		System.out.println ("******************* cplWDM: " + cplWdm);
-		
 		this.wavelengthFiberOccupancy = WDMUtils.getNetworkSlotAndRegeneratorOcupancy(initialNetPlan, true , wdmLayer).getFirst();
 		initialNetPlan.setLinkCapacityUnitsName("Wavelengths" , wdmLayer);
 
@@ -173,9 +162,6 @@ public class Online_evProc_wdm extends IEventProcessor
 
 			WDMUtils.RSA thisRouteRWA = new WDMUtils.RSA (r , false);
 			if (thisRouteRWA.hasFrequencySlotConversions()) throw new Net2PlanException ("Initial lightpaths must have route continuity");
-//			final int [] seqWavelengths = WDMUtils.getLightpathSeqWavelengths(r);
-//			for (int cont = 1; cont < seqWavelengths.length ; cont ++) if (seqWavelengths [cont] != seqWavelengths [0]) 
-//			final RWA thisRouteRWA = new RWA (r.getSeqLinksRealPath() , seqWavelengths [0]);
 			WDMUtils.RSA segmentRWA = null;
 			if (r.getPotentialBackupProtectionSegments().size () > 1) throw new Net2PlanException ("The number of protection segments of a route cannot be higher than one");
 			if ((r.getPotentialBackupProtectionSegments().size () == 1) && (!isProtectionRecovery)) throw new Net2PlanException ("Initial routes have protection segments, which would be unused since the recovery type is not protection");
@@ -183,10 +169,7 @@ public class Online_evProc_wdm extends IEventProcessor
 			{
 				final ProtectionSegment backupPath = r.getPotentialBackupProtectionSegments().iterator().next();
 				segmentRWA = new WDMUtils.RSA (backupPath);
-//				final int [] seqWavelengths_backup = WDMUtils.getLightpathSeqWavelengths(backupPath);
-//				for (int cont = 1; cont < seqWavelengths_backup.length ; cont ++) if (seqWavelengths_backup [cont] != seqWavelengths_backup [0]) throw new Net2PlanException ("Initial lightpaths must have route continuity");
 				if (segmentRWA.hasFrequencySlotConversions()) throw new Net2PlanException ("Initial lightpaths must have route continuity");
-//				segmentRWA = new RWA (backupPath.getSeqLinks() , seqWavelengths_backup [0]);
 			}			
 			wdmRouteOriginalRwa.put (r , Pair.of (thisRouteRWA , segmentRWA));
 		}
@@ -498,7 +481,6 @@ public class Online_evProc_wdm extends IEventProcessor
 
 	private Pair<WDMUtils.RSA,WDMUtils.RSA> computeValid11PathPairNewRoute (Demand cplDemand , NetPlan currentNetPlan)
 	{
-//		final List<Pair<List<Link>,List<Link>>> pathPairs = cpl11.get(demand);
 		/* If load sharing */
 		if (isLoadSharing)
 		{
