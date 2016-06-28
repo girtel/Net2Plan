@@ -96,29 +96,51 @@ public class WDMUtils
 	
 	public static class TransponderTypesInfo
 	{
+		private int T;
+		private double [] transponderLineRateGbps;
+		private double [] transponderCosts;
+		private int [] transponderNumberSlots;
+		private double [] transponderOpticalReachKm;
+		private double [] transponderRegeneratorCost;
+		private double maxOpticalReach;
+
 		public TransponderTypesInfo(String initializationString) 
 		{
-			String [] transpoderTypes = StringUtils.split(transponderTypesInfo.getString() , ";");
-			final int T = transpoderTypes.length;
-			final double [] transponderLineRateGbps = new double [T];
-			final double [] transponderCosts = new double [T];
-			final int [] transponderNumberSlots = new int [T];
-			final double [] transponderOpticalReachKm = new double [T];
-			final double [] transponderRegeneratorCost = new double [T];
-			double maxOpticalReach = 0;
+			String [] transpoderTypes = StringUtils.split(initializationString , ";");
+			this.T = transpoderTypes.length;
+			if (T == 0) throw new WDMException ("No defined transponder types");
+			this.transponderLineRateGbps = new double [T];
+			this.transponderCosts = new double [T];
+			this.transponderNumberSlots = new int [T];
+			this.transponderOpticalReachKm = new double [T];
+			this.transponderRegeneratorCost = new double [T];
+			this.maxOpticalReach = 0;
 			for (int t = 0 ; t < T ; t ++)
 			{
 				double [] vals = StringUtils.toDoubleArray(StringUtils.split(transpoderTypes [t]));
-				transponderLineRateGbps [t] = vals [0];
-				transponderCosts [t] = vals [1];
-				transponderNumberSlots [t] = (int) vals [2];
+				transponderLineRateGbps [t] = vals [0]; if (vals [0] <= 0) throw new WDMException ("The line rate of a transponder must be positive");
+				transponderCosts [t] = vals [1]; if (vals [0] < 0) throw new WDMException ("The transponder cost cannot be negative");
+				transponderNumberSlots [t] = (int) vals [2]; if (vals [2] <= 0) throw new WDMException ("The number of slot occupied of a transponder must be one or higher");
 				transponderOpticalReachKm [t] = vals [3] > 0? vals [3] : Double.MAX_VALUE;
-				transponderRegeneratorCost [t] = vals [4];
+				transponderRegeneratorCost [t] = vals [4]; 
 				maxOpticalReach = Math.max(maxOpticalReach , (transponderRegeneratorCost [t] > 0)? Double.MAX_VALUE : transponderOpticalReachKm [t]);
 			}
-
-			// TODO Auto-generated constructor stub
 		}
+		public double getMaxOpticalReachKm () { return maxOpticalReach; }
+		public double getCost (int tpType) { return transponderCosts [tpType]; }
+		public double [] getVectorCosts () { return transponderCosts; }
+		public int getNumSlots (int tpType) { return transponderNumberSlots [tpType]; }
+		public int [] getVectorNumSlots () { return transponderNumberSlots; }
+		public double getOpticalReachKm (int tpType) { return transponderOpticalReachKm [tpType]; }
+		public double [] getVectorOpticalReachesKm () { return transponderOpticalReachKm; }
+		public double getLineRateGbps (int tpType) { return transponderLineRateGbps [tpType]; }
+		public double [] getVectorLineRates () { return transponderLineRateGbps; }
+		public double getRegeneratorCost (int tpType) { return transponderRegeneratorCost [tpType]; }
+		public double [] getVectorRegeneratorCosts () { return transponderRegeneratorCost; }
+		public int getNumTypes () { return transponderCosts.length; }
+		public boolean isFixedLineRate () { for (int t = 1; t < T ; t ++) if (transponderLineRateGbps [0] != transponderLineRateGbps [t]) return false; return true; }
+		public boolean isOpticalRegenerationPossible (int tpType) { return transponderRegeneratorCost [tpType] >= 0; }
+		public boolean isValidLineRateForAtLeastOneType (double lineRateGbps) { for (double val : transponderLineRateGbps) if (val == lineRateGbps) return true; return false; }
 	}
 	
 	/**
@@ -200,6 +222,7 @@ public class WDMUtils
 		public RSA (List<Link> seqLinks , IntMatrix2D seqFrequencySlots_se, int [] seqRegenerators_e)
 		{ 
 			this.seqLinks = new ArrayList<Link> (seqLinks); 
+			for (Link e : seqLinks) { if (e instanceof ProtectionSegment) throw new WDMException ("The sequence of links in a RSA cannot include ProtectionSegment objects"); else if (e == null) throw new WDMException ("The sequence of links cannot contain a null"); }
 			this.seqFrequencySlots_se = seqFrequencySlots_se;
 			this.ingressNode = seqLinks.get(0).getOriginNode();
 			this.egressNode = seqLinks.get(seqLinks.size()-1).getDestinationNode();
@@ -224,6 +247,7 @@ public class WDMUtils
 		public RSA (List<Link> seqLinks , int initialSlot , int numSlots)
 		{ 
 			this.seqLinks = new ArrayList<Link>(seqLinks); 
+			for (Link e : seqLinks) { if (e instanceof ProtectionSegment) throw new WDMException ("The sequence of links in a RSA cannot include ProtectionSegment objects"); else if (e == null) throw new WDMException ("The sequence of links cannot contain a null"); }
 			this.seqFrequencySlots_se = IntFactory2D.dense.make(numSlots , seqLinks.size());
 			for (int e = 0; e < seqLinks.size() ; e ++)
 				for (int s = 0 ; s < numSlots ; s ++) seqFrequencySlots_se.set(s,e,s+initialSlot);
@@ -242,6 +266,7 @@ public class WDMUtils
 		public RSA (List<Link> seqLinks , int initialSlot , int numSlots , int [] seqRegenerators_e)
 		{ 
 			this.seqLinks = new ArrayList<Link>(seqLinks); 
+			for (Link e : seqLinks) { if (e instanceof ProtectionSegment) throw new WDMException ("The sequence of links in a RSA cannot include ProtectionSegment objects"); else if (e == null) throw new WDMException ("The sequence of links cannot contain a null"); }
 			this.seqFrequencySlots_se = IntFactory2D.dense.make(numSlots , seqLinks.size());
 			for (int e = 0; e < seqLinks.size() ; e ++)
 				for (int s = 0 ; s < numSlots ; s ++) seqFrequencySlots_se.set(s,e,s+initialSlot);

@@ -12,6 +12,7 @@
 package com.net2plan.examples.general.onlineSim;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -19,10 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.jet.random.tdouble.Exponential;
 
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -36,10 +33,16 @@ import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.TrafficMatrixGenerationModels;
 import com.net2plan.libraries.WDMUtils;
+import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.RandomUtils;
+import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
+
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.jet.random.tdouble.Exponential;
 
 /** 
  * Generates events for a WDM network carrying lightpaths in a fixed grid of wavelengths
@@ -84,11 +87,11 @@ public class Online_evGen_wdm extends IEventGenerator
 	private InputParameter fail_defaultMTTFInHours = new InputParameter ("fail_defaultMTTFInHours", (double) 10 , "Default value for Mean Time To Fail (hours) (unused when failureModel=SRGfromNetPlan)" , 0 , false , Double.MAX_VALUE , true);
 	private InputParameter fail_defaultMTTRInHours = new InputParameter ("fail_defaultMTTRInHours", (double) 12 , "Default value for Mean Time To Repair (hours) (unused when failureModel=SRGfromNetPlan)" , 0 , false , Double.MAX_VALUE , true);
 	private InputParameter fail_statisticalPattern = new InputParameter ("fail_statisticalPattern", "#select# exponential-iid" , "Type of failure and repair statistical pattern");
-	private InputParameter lineRatePerLightpath_Gbps = new InputParameter ("lineRatePerLightpath_Gbps", (double) 40 , "All the IP links have this capacity" , 0 , false , Double.MAX_VALUE , true);
+	private InputParameter lineRatesPerLightpath_Gbps = new InputParameter ("lineRatesPerLightpath_Gbps", "40 0.5 ; 100 0.5" , "Pairs of the form line-rate-Gbps SPACE probability, where probability stands for the chances of requesting a lightpath of such rate. Pairs are separated among them by character \";\" ");
 
 	/* demands and links do not change the number (maybe capacity, offered traffic...) */
 	private Random rng;
-	private DoubleMatrix1D cac_avHoldingTimeHours_d , cac_connectionSize_d;
+	private DoubleMatrix1D cac_avHoldingTimeHours_d , cac_avConnectionSize_d;
 	private DoubleMatrix1D currentTheoreticalOfferedTraffic_d; 
 	private boolean cac_auxIATDeterministic , cac_auxIATExponential , cac_auxDurationDeterministic , cac_auxDurationExponential , cac_auxIncremental;
 	private boolean isCac;
@@ -99,6 +102,9 @@ public class Online_evGen_wdm extends IEventGenerator
 	private Calendar tfSlow_calendar;
 	private double tfSlow_simTimeOfLastCalendarUpdate;
 	private boolean tfSlow_auxTimeZoneBased;
+	private double [] probabilitiesLineRates_t;
+	private double [] accumProbabilitiesLineRates_t;
+	private double [] lineRatesGbps_t;
 	private Set<Pair<WDMUtils.LightpathAdd,Double>> cacIncremental_potentiallyBlockedRouteRequests;
 	
 	private Set<SharedRiskGroup> fail_currentlyFailedSRGs;
@@ -128,6 +134,27 @@ public class Online_evGen_wdm extends IEventGenerator
 		final int N = initialNetPlan.getNumberOfNodes ();
 		if (D == 0) throw new Net2PlanException("No demands were defined in the original design");
 
+		/* Initialize the transponders information: the line rates of the lightpaths that will be requested */
+		final String [] lineRateInfo_t = StringUtils.split(lineRatesPerLightpath_Gbps.getString() , ";");
+		final int T = lineRateInfo_t.length;
+		if (T == 0) throw new Net2PlanException ("The number of line rates defined cannot be zero");
+		this.accumProbabilitiesLineRates_t = new double [T];
+		this.lineRatesGbps_t = new double [T];
+		this.probabilitiesLineRates_t = new double [T];
+		double sumProbabilities = 0;
+		for (int t = 0; t < T ; t ++)
+		{
+			double [] vals = StringUtils.toDoubleArray(StringUtils.split(lineRateInfo_t [t]));
+			this.lineRatesGbps_t [t] = vals [0]; if (lineRatesGbps_t [t] <= 0) throw new Net2PlanException ("The line rate of a lightpath must be positive");
+			this.probabilitiesLineRates_t [t] = vals [1]; if (vals [1] < 0) throw new Net2PlanException ("Occurrence probablities of the line rates cannot be negative");
+			sumProbabilities += vals [1];
+		}
+		if (sumProbabilities == 0) Arrays.fill(probabilitiesLineRates_t , 1.0/T);
+		else for (int t = 0; t < T ; t ++) probabilitiesLineRates_t [t] /= sumProbabilities;
+		for (int t = 0 ; t < T ; t ++) accumProbabilitiesLineRates_t [t] = t == 0? probabilitiesLineRates_t [0] : probabilitiesLineRates_t [t] + accumProbabilitiesLineRates_t [t-1];
+		if (Math.abs(accumProbabilitiesLineRates_t [T-1] - 1) > 1e-3) throw new RuntimeException ("Bad");
+		
+		/* More initializations */
 		if (randomSeed.getLong () == -1) randomSeed.initialize((long) RandomUtils.random(0, Long.MAX_VALUE - 1));
 		this.rng = new Random(randomSeed.getLong ());
 		this.initialOfferedTraffic_d = initialNetPlan.getVectorDemandOfferedTraffic(trafficLayer);
@@ -142,17 +169,17 @@ public class Online_evGen_wdm extends IEventGenerator
 			this.cac_auxDurationExponential = cac_arrivalsPattern.getString ().equalsIgnoreCase("random-exponential-arrivals-and-duration");
 			this.cac_auxIncremental = _trafficType.getString ().equalsIgnoreCase("connection-based-incremental");
 			this.cac_avHoldingTimeHours_d = DoubleFactory1D.dense.make (D , 0); 
-			this.cac_connectionSize_d = DoubleFactory1D.dense.make (D , 0);
+			this.cac_avConnectionSize_d = DoubleFactory1D.dense.make (D , 0);
 			this.cacIncremental_potentiallyBlockedRouteRequests = cac_auxIncremental? new HashSet<Pair<WDMUtils.LightpathAdd,Double>> () : null;
 			for (Demand originalDemand : initialNetPlan.getDemands(trafficLayer))
 			{
 				final int d = originalDemand.getIndex();
-				final double connectionSize = lineRatePerLightpath_Gbps.getDouble();
+				final double averageConnectionSize = DoubleUtils.scalarProduct(lineRatesGbps_t , probabilitiesLineRates_t);
 				final double holdingTime = (originalDemand.getAttribute("holdingTime") != null)? Double.parseDouble(originalDemand.getAttribute("holdingTime")) : cac_avHoldingTimeHours.getDouble();
-				final double avIATHours = connectionSize * holdingTime / currentTheoreticalOfferedTraffic_d.get(d);
+				final double avIATHours = averageConnectionSize * holdingTime / currentTheoreticalOfferedTraffic_d.get(d);
 				final double nextInterArrivalTime = cac_auxIATDeterministic? avIATHours : cac_auxIATExponential? Exponential.staticNextDouble(1/avIATHours) : -1;
 				cac_avHoldingTimeHours_d.set (d,holdingTime);
-				cac_connectionSize_d.set (d,connectionSize);
+				cac_avConnectionSize_d.set (d,averageConnectionSize);
 				scheduleEvent(new SimEvent(nextInterArrivalTime, SimEvent.DestinationModule.EVENT_GENERATOR , -1 , new GenerateConnectionRequest(originalDemand)));
 			}
 		}
@@ -244,13 +271,14 @@ public class Online_evGen_wdm extends IEventGenerator
 			final int d = demand.getIndex ();
 			final double h_d = currentTheoreticalOfferedTraffic_d.get(d); // same traffic units as connection size
 			final double avHoldingTimeHours = cac_avHoldingTimeHours_d.get(d);
-			final double connectionSize = cac_connectionSize_d.get (d);
+			final double connectionSize = cac_avConnectionSize_d.get (d);
 			final double avIATHours = connectionSize * avHoldingTimeHours / h_d;
 			final double nextHoldingTime = cac_auxDurationDeterministic? avHoldingTimeHours : cac_auxDurationExponential? Exponential.staticNextDouble(1/avHoldingTimeHours) : -1;
 			final double nextInterArrivalTime = cac_auxIATDeterministic? avIATHours : cac_auxIATExponential? Exponential.staticNextDouble(1/avIATHours) : -1;
-
+			final double lineRateThisLpGbps = randomPick (lineRatesGbps_t , probabilitiesLineRates_t);
+			
 			/* Events to the processor. RouteAdd, and if not incremental mode, route remove */
-			WDMUtils.LightpathAdd routeInfo_add = new WDMUtils.LightpathAdd(demand , lineRatePerLightpath_Gbps.getDouble());
+			WDMUtils.LightpathAdd routeInfo_add = new WDMUtils.LightpathAdd(demand , lineRateThisLpGbps);
 			scheduleEvent(new SimEvent (simTime, SimEvent.DestinationModule.EVENT_PROCESSOR , -1 , routeInfo_add));
 			if (cac_auxIncremental)
 				this.cacIncremental_potentiallyBlockedRouteRequests.add (Pair.of(routeInfo_add,simTime)); // to check later if it was blocked
@@ -376,6 +404,13 @@ public class Online_evGen_wdm extends IEventGenerator
 		}
 	}
 
+	private double randomPick (double [] vals , double [] accumProbs)
+	{
+		final double x = rng.nextDouble();
+		for (int cont = 0 ; cont < vals.length-1 ; cont ++)
+			if (accumProbs [cont] < x) return vals [cont];
+		return vals [vals.length - 1];
+	}
 	
 	private static class GenerateConnectionRequest
 	{
