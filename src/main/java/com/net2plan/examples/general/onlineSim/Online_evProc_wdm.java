@@ -64,6 +64,7 @@ public class Online_evProc_wdm extends IEventProcessor
 	private InputParameter wdmRemovePreviousLightpaths = new InputParameter ("wdmRemovePreviousLightpaths", false  , "If true, previous lightpaths are removed from the system during initialization.");
 	private InputParameter wdmProtectionTypeToNewRoutes = new InputParameter ("wdmProtectionTypeToNewRoutes", "#select# none 1+1-link-disjoint 1+1-node-disjoint 1+1-srg-disjoint" , "New lightpaths are not protected, or are protected by a 1+1 link disjoint, or a node disjoint or a SRG disjoint lightpath");
 	private InputParameter wdmLineRatePerLightpath_Gbps = new InputParameter ("wdmLineRatePerLightpath_Gbps", (double) 40 , "All the lightpaths have this carried traffic by default, when a lightpath is added and this quantity is not specified in the add lightpath event" , 0 , false , Double.MAX_VALUE , true);
+	private InputParameter wdmTransponderTypesInfo = new InputParameter ("wdmTransponderTypesInfo", "10 1 1 9600 1" , "Transpoder types separated by \";\" . Each type is characterized by the space-separated values: (i) Line rate in Gbps, (ii) cost of the transponder, (iii) number of slots occupied in each traversed fiber, (iv) optical reach in km (a non-positive number means no reach limit), (v) cost of the optical signal regenerator (regenerators do NOT make wavelength conversion ; if negative, regeneration is not possible).");
 
 	private NetworkLayer wdmLayer;
 	private Map<Route,Pair<WDMUtils.RSA,WDMUtils.RSA>> wdmRouteOriginalRwa;
@@ -154,7 +155,7 @@ public class Online_evProc_wdm extends IEventProcessor
 		this.cplA_pss = cplWdm.getMatrixProtectionSegment2SRGAffecting();
 
 		this.wavelengthFiberOccupancy = WDMUtils.getNetworkSlotAndRegeneratorOcupancy(initialNetPlan, true , wdmLayer).getFirst();
-		initialNetPlan.setLinkCapacityUnitsName("Wavelengths" , wdmLayer);
+		initialNetPlan.setLinkCapacityUnitsName("Frequency slots" , wdmLayer);
 
 		for (Route r : initialNetPlan.getRoutes(wdmLayer))
 		{

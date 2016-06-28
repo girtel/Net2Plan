@@ -94,6 +94,33 @@ import cern.colt.matrix.tint.IntMatrix2D;
 public class WDMUtils
 {
 	
+	public static class TransponderTypesInfo
+	{
+		public TransponderTypesInfo(String initializationString) 
+		{
+			String [] transpoderTypes = StringUtils.split(transponderTypesInfo.getString() , ";");
+			final int T = transpoderTypes.length;
+			final double [] transponderLineRateGbps = new double [T];
+			final double [] transponderCosts = new double [T];
+			final int [] transponderNumberSlots = new int [T];
+			final double [] transponderOpticalReachKm = new double [T];
+			final double [] transponderRegeneratorCost = new double [T];
+			double maxOpticalReach = 0;
+			for (int t = 0 ; t < T ; t ++)
+			{
+				double [] vals = StringUtils.toDoubleArray(StringUtils.split(transpoderTypes [t]));
+				transponderLineRateGbps [t] = vals [0];
+				transponderCosts [t] = vals [1];
+				transponderNumberSlots [t] = (int) vals [2];
+				transponderOpticalReachKm [t] = vals [3] > 0? vals [3] : Double.MAX_VALUE;
+				transponderRegeneratorCost [t] = vals [4];
+				maxOpticalReach = Math.max(maxOpticalReach , (transponderRegeneratorCost [t] > 0)? Double.MAX_VALUE : transponderOpticalReachKm [t]);
+			}
+
+			// TODO Auto-generated constructor stub
+		}
+	}
+	
 	/**
 	 * This class represents a Routing and Spectrum Assignment, valid for a lightpath in both fixed and flexi-grid WDM networks. 
 	 * This comprises a sequence of links, and for each link the set of frequency slots occupied.
