@@ -697,7 +697,8 @@ public class WDMUtils
 
 	/**
 	 * Returns the fiber occupied (columns) in each wavelength (rows), and an array with the number of occupied regenerators in each node.
-	 * An exception is raised if a slot is allocated to more than one lightpath, or a slot with an id higher than the link capacity is occupied
+	 * The lightpaths with occupied capacity equal to zero (as Route objects), or reserved capacity equal to zero (as ProtectionSegment object) 
+	 * are assumed to not occupy any slot. An exception is raised if a slot is allocated to more than one lightpath, or a slot with an id higher than the link capacity is occupied
 	 * @param netPlan Current design
 	 * @param countDownLightpathResources Include lightpaths that are down
 	 * @param optionalLayerParameter WDM network layer. If not present, the default layer is assumed

@@ -18,7 +18,7 @@
 package com.net2plan.examples.general.reports;
 
 import java.text.DecimalFormat;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -49,9 +49,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 	private NetPlan netPlan;
 	private NetworkLayer originalDefaultLayer;
 	private Map<String, String> reportParameters;
-	private int maxNumberSlots;
-	private Pair<Map<Pair<Link,Integer>,List<Route>> , Map<Pair<Link,Integer>,List<ProtectionSegment>>> occupInfo;
-
+	private Statistics stat;
 	private InputParameter wdmLayerIndex = new InputParameter ("wdmLayerIndex", (int) 0 , "Index of the WDM layer (-1 means default layer)");
 
 	@Override
@@ -66,7 +64,6 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		this.originalDefaultLayer = netPlan.getNetworkLayerDefault();
 		final NetworkLayer wdmLayer = wdmLayerIndex.getInt () == -1? netPlan.getNetworkLayerDefault() : netPlan.getNetworkLayer(wdmLayerIndex.getInt ());
 		this.netPlan.setNetworkLayerDefault(wdmLayer);
-
 
 		Map<Link, LinkedList<String>> warnings_e = new LinkedHashMap<Link, LinkedList<String>>();
 
@@ -100,59 +97,28 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		DecimalFormat df_2 = new DecimalFormat("###.##");
 
 		out.append("<html><body>");
-		out.append("<head><title>WDM line engineering in multilayer (lightpath based) networks</title></head>");
-		out.append("<h1>WDM line engineering report for lighptath-based networks</h1>");
-
-		out.append("<p>This report shows line engineering information for WDM links in a multilayer optical network. The impairment calculations are inspired in the procedures described in the 2009 ITU-T WDM manual  \"Optical fibres, cabbles and systems\".</p>");
-		out.append("<p>The report assumes that the WDM network follows the scheme:</p>");
+		out.append("<head><title>WDM Lightpath Routing and Spectrum Assignment (fixed or flexi-grid networks) report</title></head>");
+		out.append("<h1>WDM Lightpath Routing and Spectrum Assignment report (fixed or flexi-grid networks)</h1>");
+		out.append("<p>This report collects information about the Routing and Spectrum assignment in the network, as well as other general information about the WDM layer.</p>");
+		out.append("<p>This report is valid for the WDM layers compatible with the WDMUtils library .This includes both fixed and flexi-grid networks, "
+				+ "with unique or mixed line rates in the lightpaths, with or without optical signal regenerators and wavelength (frequency slot) conversions.</p>");
+		out.append("<p>The report first checks that the WDM network follows the conventions described in WDMUtils library (see its Javadoc for further information on this).</p>");
+		out.append("<p>Then, the report provides a number of statistics regarding frequency slot occupation, optical signal "
+				+ "regenerators, wavelength (frequency slot) converters needed, etc. It also warns about possible frequency slot clashing "
+				+ "(two lightpaths using the same slot in the same fibers)</p>");
+		out.append("<p>Lightpaths are separated into:</p>");
 		out.append("<ul>");
-		out.append("<li>In the net2plan object, nodes are OADMs, links are fiber links, and routes are lightpaths: WDM channels optically switched at intermediate nodes. </li>");
-		out.append("<li>Nodes are connected by unidirectional fiber links. Fiber link distance is given by the link length.");
-		out.append("Other specifications are given by fiber_XXX input parameters. The fiber can be split into spans if optical amplifers (EDFAs)");
-		out.append("and/or dispersion compensating modules (DCMs) are placed along the fiber.</li>");
-		out.append("<li>Optical line amplifiers (EDFAs) can be located in none, one or more positions in the");
-		out.append("fiber link, separating them in different spans. EDFAs are supposed to operate in the ");
-		out.append("automatic gain control mode. Thus, the gain is the same, whatever the number of input");
-		out.append("WDM channels. EDFA positions (as distance in km from the link start to the EDFA location)");
-		out.append("and EDFA gains (assumed in dB) are read from the \"edfaPositions_km\" and \"edfaGains_dB\" ");
-		out.append("attributes of the links. The format of both attributes are the same: a string of numbers ");
-		out.append("separated by spaces. The <i>i</i>-th number corresponding to the position/gain of the ");
-		out.append("<i>i</i>-th EDFA. If the attributes do not exist, it is assumed that no EDFAs are placed ");
-		out.append("in this link. EDFA specifications are given by \"edfa_XXX\" parameters</li>");
-		out.append("<li>Dispersion compensating modules (DCMs) can be located in none, one or more positions");
-		out.append("in the fiber link, separating them in different spans. If a DCM and a EDFA have the same ");
-		out.append("location, it is assumed that the DCM is placed first, to reduce the non-linear effects. DCM ");
-		out.append("positions (as distance in km from the link start to the DCM location) are read from the ");
-		out.append("\"dcmPositions_km\" attribute of the link, and the same format as with \"edfaPositions_km\" ");
-		out.append("attribute is expected. If the attribute does not exist, it is assumed that no DCMs are ");
-		out.append("placed in this link. DCM specifications are given by \"dcm_XXX\" parameters</li>");
-		out.append("<li>Fiber links start and end in OADM modules, that permit adding, dropping and optically switch");
-		out.append("individual WDM channels. OADMs have a pre-amplifier (traversed by drop and express channels) and ");
-		out.append("a boost amplifier (traversed by add and express channels). They are supposed to equalize the ");
-		out.append("channel power at their outputs, to a fixed value (added and express channels will thus have the same power in the fibers).");
-		out.append("Also, OADMs attenuate appropriately the optical signal coming from the pre-amplifier, in the drop channels,");
-		out.append("so that they fall within the receiver sensitivity range. OADM noise figures for add, drop and express channels");
-		out.append("are given as input parameters. PMD values for add, drop and express channels are computed assumming that: (i) ");
-		out.append("add channel traverse a multiplexer and the booster, (ii) drop channels travese the pre-amplifier and a demultiplexer,");
-		out.append("(iii) express channels traverse the two amplifiers. The required parameters are provided in oadm_XXX parameters. </li>");
-		out.append("<li>Each channel ends in a receiver, with specifications given by \"tp_XXX\" parameters.</li>");
-		out.append("</ul></p>");
-		out.append("<p>The basic checks performed are:</p>");
-		out.append("<ul>");
-		out.append("<li>For each link, signal power levels are within operating ranges at the oadm/edfas/dcms, both when the link has one single active channel, or when all the");
-		out.append("\"channels_maxNumChannels\" are active</li>");
-		out.append("<li>For each link, chromatic dispersion is within the limits set per link</li>");
-		out.append("<li>For each route (lightpath), chromatic dispersion is within the limits of the receiver.</li>");
-		out.append("<li>For each route (lightpath), OSNR (Optical Signal to Noise Ration) is within the operating range at the receiver.");
-		out.append("A set of margins are considered to account to several not directly considered impairments. </li>");
-		out.append("<li>For each route (lightpath), PMD (Polarization mode dispersion) is within the operating range at the receiver</li>");
-		out.append("</ul></p>");
-
+		out.append("<li>Regular lightpaths: Those stored as Route objects in the design.</li>");
+		out.append("<li>Protection lightpaths: Those stored as ProtectionSegment objects in the design.</li>");
+		out.append("</ul>");
 		out.append("<h2>Click to go to...</h2>");
 		out.append("<ul>");
 		out.append("<li><a href=\"#inputParameters\">Input parameters</a></li>");
 		out.append("<li><a href=\"#generalStats\">General statistics</a></li>");
 		out.append("<li><a href=\"#linkStats\">Per fiber statistics (including slot occupation map)</a></li>");
+		out.append("<li><a href=\"#routeStats\">Per regular lightpath statistics</a></li>");
+		out.append("<li><a href=\"#protectionStats\">Per protection lightpath statistics</a></li>");
+		out.append("<li><a href=\"#nodeStats\">Per OADM statistics</a></li>");
 		out.append("</ul>");
 
 		
@@ -160,8 +126,6 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		out.append("<table border='1'>");
 		out.append("<tr><th><b>Name</b></th><th><b>Value</b></th><th><b>Description</b></th>");
 
-		
-		
 		for (Triple<String, String, String> paramDef : getParameters())
 		{
 			String name = paramDef.getFirst();
@@ -171,7 +135,21 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		}
 		out.append("</table>");
 
-		Statistics stat = new Statistics(netPlan,netPlan.getNetworkLayerDefault());
+		/* Check that the topology is well formed */
+		out.append("<h2><a name=\"malformedMessages\"></a>MALFORMED WDM LAYER WARNINGS</h2>");
+		out.append("<p>This section gets possible format errors in the WDM layer attributes of links, routes, protection segments, according to the "
+				+ "WDMUtils library conventions. Resource allocation clashings are not checked here. Any failure should be solved before this report can show any information</p>");
+		boolean correctFormat = true;
+		out.append("<table border='1'>");
+		out.append("<tr><th align=\"left\"><b>Format errors</b></th></tr>");
+		for (Link e : netPlan.getLinks()) if (!WDMUtils.isWDMFormatCorrect(e)) { correctFormat = false ; out.append("<tr><td>Fiber " + e.getIndex() + ": incorrect format</td></tr>"); }
+		for (Route r : netPlan.getRoutes()) if (!WDMUtils.isWDMFormatCorrect(r)) { correctFormat = false ; out.append("<tr><td>Route " + r.getIndex() + ": incorrect format</td></tr>"); }
+		for (ProtectionSegment r : netPlan.getProtectionSegments()) if (!WDMUtils.isWDMFormatCorrect(r)) { correctFormat = false ; out.append("<tr><td>ProtectionSegment " + r.getIndex() + ": incorrect format</td></tr>"); }
+		if (correctFormat) out.append("<tr><td bgcolor=\"PaleGreen\">No format errors!!!</td></tr>"); 
+		out.append("</table>");
+		if (!correctFormat) return out.toString();
+
+		this.stat = new Statistics(netPlan,netPlan.getNetworkLayerDefault());
 		out.append("<h2><a name=\"generalStats\"></a>GENERAL STATISTICS - Signal metrics at the input of end OADM</h2>");
 		out.append("<table border='1'>");
 		out.append("<tr><th align=\"left\"><b>OADM stats</b></th></tr>");
@@ -182,7 +160,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		out.append("<tr><th align=\"left\"><b>Fiber link stats</b></td></tr>");
 		out.append("<tr><td align=\"left\">Number of fibers</td><td>" + netPlan.getNumberOfLinks() + "</td></tr>");
 		out.append("<tr><td align=\"left\">Number of frequency slots per fiber (min/average/max)</td><td>" + stat.numberFrequencySlotsPerLink + "</td></tr>");
-		out.append("<tr><td align=\"left\">Utilization per fiber (min/average/max)</td><td>" + stat.numberFrequencySlotsPerLink.toString(df_2) + "</td></tr>");
+		out.append("<tr><td align=\"left\">Number of slots occupied per fiber (min/average/max)</td><td>" + stat.linkUtilizationIncludingProtSegments.toString(df_2) + "</td></tr>");
 		out.append("<tr><td align=\"left\">The topology of fibers is bidirectional (in fibers and number of slots)?</td><td>" + stat.bidirectionalLinks + "</td></tr>");
 		
 		out.append("<tr><th align=\"left\"><b>Traffic stats</b></td></tr>");
@@ -200,6 +178,8 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		out.append("<tr><td align=\"left\">Lightpath length in km (min/average/max)</td><td>" + stat.lpLengthKm.toString(df_2) + "</td></tr>");
 		out.append("<tr><td align=\"left\">Lightpath length in num hops (min/average/max)</td><td>" + stat.lpLengthHops.toString(df_2) + "</td></tr>");
 		out.append("<tr><td align=\"left\">Lightpath propagation delay in ms (min/average/max)</td><td>" + stat.lpLengthMs.toString(df_2) + "</td></tr>");
+		out.append("<tr><td align=\"left\">Total number of signal regenerators placed</td><td>" + stat.numberOfSignalRegenerators + "</td></tr>");
+		out.append("<tr><td align=\"left\">Total number of frequency slot converters needed</td><td>" + stat.numberOfWavelengthConversions + "</td></tr>");
 		
 		out.append("<tr><th align=\"left\"><b>Resilience stats</b></th></tr>");
 		out.append("<tr><td align=\"left\">Number of reserved protection segments</td><td>" + netPlan.getNumberOfProtectionSegments() + "</td></tr>");
@@ -212,10 +192,8 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		out.append("</table>");
 		
 		/* Per link information */
-		this.maxNumberSlots = (int) WDMUtils.getVectorFiberNumFrequencySlots(netPlan).getMaxLocation() [0];
-		this.occupInfo = getSlotOccupancy (netPlan);
 		out.append("<h2><a name=\"linkStats\"></a>PER FIBER INFORMATION SUMMARY</h2>");
-		out.append("<p>This table shows information for each fiber. In particular, the slots occupied, with a link to the lightpaths occupying it, either for regular lightpaths, or lightpaths defined as protection segments that reserve slots:</p>");
+		out.append("<p>This table shows information for each fiber. In particular, the slots occupied, with a link to the lightpaths occupying it, either for regular lightpaths (L), or lightpaths defined as protection segments (P) that reserve slots:</p>");
 		out.append("<ul>");
 		out.append("<li>Black: The slot number is higher than the capacity declared for the link, and is not assigned to any lightpath.</li>");
 		out.append("<li>White: The slot is within the fiber capacity, and is not assigned to any lightpath.</li>");
@@ -225,7 +203,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		out.append("</ul>");
 		out.append("<table border='1'>");
 		out.append("<tr><th><b>Fiber #</b></th><th><b>Origin node</b></th><th><b>Dest. node</b></th><th><b>% slots used</b></th><th><b>Ok?</b></th>");
-		for (int s = 0; s < maxNumberSlots ; s ++) out.append("<th>" + s + "</th>");
+		for (int s = 0; s < stat.maxNumberSlots ; s ++) out.append("<th>" + s + "</th>");
 		out.append("</tr>");
 		
 		for (Link e : netPlan.getLinks())
@@ -233,15 +211,16 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 			final int numSlotsThisFiber = WDMUtils.getFiberNumFrequencySlots(e);
 			out.append("<tr>");
 			out.append("<td><a name=\"fiber" + e.getIndex() + "\">" + e.getIndex() + " (id: " + e.getId() + ")"+ "</a></td>");
-			out.append("<td>" + e.getOriginNode().getIndex() + " (" + e.getOriginNode().getName() + ")"+ "</td>");
-			out.append("<td>" + e.getDestinationNode().getIndex() + " (" + e.getDestinationNode().getName() + ")"+ "</td>");
+			out.append("<td>" + printNode (e.getOriginNode()) + "</td>");
+			out.append("<td>" + printNode (e.getDestinationNode()) + "</td>");
 			int numSlotsUsedThisFiber = 0; 
 			boolean everythingOk = true;
 			StringBuffer thisLine = new StringBuffer ();
-			for (int s = 0; s < maxNumberSlots ; s ++)
+			for (int s = 0; s < stat.maxNumberSlots ; s ++)
 			{
-				List<Route> lps = occupInfo.getFirst().get(Pair.of(e,s));
-				List<ProtectionSegment> lpProts = occupInfo.getSecond().get(Pair.of(e,s));
+				Pair<List<Route> , List<ProtectionSegment>> lists = stat.slotOccupInfo.get(Pair.of(e,s)); 
+				List<Route> lps = lists == null? null : lists.getFirst();
+				List<ProtectionSegment> lpProts = lists == null? null : lists.getSecond();
 				String color = "";
 				final boolean inFiberCapacity = (s < numSlotsThisFiber); 
 				final int numLps = lps == null? 0 : lps.size();
@@ -254,8 +233,8 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 				else if (inFiberCapacity && (numLps == 0) && (numProts == 1)) color = "yellow";
 				else { color = "red"; everythingOk = false; }
 				thisLine.append("<td bgcolor=\"" + color + "\">");
-				if (lps != null) for (Route r : lps) thisLine.append("<a href=\"#lp" + r.getIndex() + "\">L </a>");
-				if (lpProts != null) for (ProtectionSegment segment : lpProts) thisLine.append("<a href=\"#lpProt" + segment.getIndex() + "\">P </a>");
+				if (lps != null) for (Route r : lps) thisLine.append("<a href=\"#lp" + r.getIndex() + "\">L" + r.getIndex() + " </a>");
+				if (lpProts != null) for (ProtectionSegment segment : lpProts) thisLine.append("<a href=\"#lpProt" + segment.getIndex() + "\">P" + segment.getIndex() + " </a>");
 				thisLine.append("</td>");
 			}
 			out.append("<td>" + ((double) numSlotsUsedThisFiber) / ((double) numSlotsThisFiber) + "</td>");
@@ -270,7 +249,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		out.append("<p>This table shows information for each regular lightpath: lightpaths defined as Route objects in the design (in opposition to lightpaths defined as ProtectionSegments that reserve a slots in the links).</p>");
 		out.append("<table border='1'>");
 		out.append("<tr><th><b>Lighpath Route #</b></th><th><b>Demand #</b></th><th><b>Origin node</b></th>"
-				+ "<th><b>Dest. node</b></th><th><b>Length (km)</b></th><th><b>Propagation delay (ms)</b></th>"
+				+ "<th><b>Dest. node</b></th><th><b>Trav. nodes</b></th><th><b>Length (km)</b></th><th><b>Propagation delay (ms)</b></th>"
 				+ "<th><b>Line rate (Gbps)</b></th><th><b>Num. slots</b></th><th><b>Occupied slots</b></th>"
 				+ "<th><b>Wavelength conversion?</b></th><th><b>Wavelength contiguity?</b></th></th>"
 				+ "<th><b>Num. regenerators (reg. nodes)</b></th><b>Protection segments assigned</b></th></tr><th><b>Ok?</b></th></tr>");
@@ -280,8 +259,9 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 			out.append("<tr>");
 			out.append("<td><a name=\"lp" + r.getIndex() + "\">" + r.getIndex() + " (id: " + r.getId() + ")"+ "</a></td>");
 			out.append("<td>" + r.getDemand().getIndex() + "</td>");
-			out.append("<td>" + r.getIngressNode().getIndex() + " (" + r.getIngressNode().getName() + ")"+ "</td>");
-			out.append("<td>" + r.getEgressNode().getIndex() + " (" + r.getEgressNode().getName() + ")"+ "</td>");
+			out.append("<td>" + printNode(r.getIngressNode())+ "</td>");
+			out.append("<td>" + printNode(r.getEgressNode())+ "</td>");
+			out.append("<td>" + seqNodesString(r.getSeqLinksRealPath()) + "</td>");
 			out.append("<td>" + df_2.format(r.getLengthInKm()) + "</td>");
 			out.append("<td>" + df_2.format(r.getPropagationDelayInMiliseconds()) + "</td>");
 			out.append("<td>" + df_2.format(r.getCarriedTraffic()) + "</td>");
@@ -290,23 +270,25 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 			out.append("<td>" + rsa.hasFrequencySlotConversions() + "</td>");
 			out.append("<td>" + rsa.isFrequencySlotContiguous () + "</td>");
 			List<Node> regPoints = rsa.getSignalRegenerationNodes (); 
-			out.append("<td>" + regPoints.size() + (regPoints.isEmpty()? "" : "(" + regPoints + ")"));
+			String regNodesString = ""; for (Node n : regPoints) regNodesString += "(n" + n.getIndex() + ", " + n.getName() + ") ";
+			out.append("<td>" + regPoints.size() + (regPoints.isEmpty()? "" : "[ " + regNodesString + "]"));
 			out.append("</td>");
 			out.append("<td>");
 			for (ProtectionSegment segment : r.getPotentialBackupProtectionSegments())
-				out.append("<a href=\"#lpProt" + segment.getIndex() + "\">" + segment.getIndex() + "</a> ");
+				out.append("<a href=\"#lpProt" + segment.getIndex() + "\">P" + segment.getIndex() + "</a> ");
 			out.append("</td>");
-			out.append("<td>" + isOk(rsa) + "</td>");
+			boolean isOk = isOk(rsa);
+			out.append("<td bgcolor=\""  +  (isOk? "PaleGreen" : "red") +"\">" + (isOk? "Yes" : "No") + "</td>");
 			out.append("</tr>");
 		}
 		out.append("</table>");
 
 		/* Per protection lightpath information */
-		out.append("<h2><a name=\"routeStats\"></a>PER PROTECTION LIGHTPATH INFORMATION SUMMARY</h2>");
+		out.append("<h2><a name=\"protectionStats\"></a>PER PROTECTION LIGHTPATH INFORMATION SUMMARY</h2>");
 		out.append("<p>This table shows information for each so-called protection lightpath: lightpaths defined as ProtectionSegment objects in the design that reserve slots in the links.</p>");
 		out.append("<table border='1'>");
 		out.append("<tr><th><b>Lighpath ProtectionSegment #</b></th><th><b>Primary routes #</b></th><th><b>Origin node</b></th>"
-				+ "<th><b>Dest. node</b></th><th><b>Length (km)</b></th><th><b>Propagation delay (ms)</b></th>"
+				+ "<th><b>Dest. node</b></th><th><b>Trav. nodes</b></th><th><b>Length (km)</b></th><th><b>Propagation delay (ms)</b></th>"
 				+ "<th><b>Num. slots</b></th><th><b>Occupied slots</b></th>"
 				+ "<th><b>Wavelength conversion?</b></th><th><b>Wavelength contiguity?</b></th></th>"
 				+ "<th><b>Num. regenerators (reg. nodes)</b></th><th><b>Ok?</b></th></tr>");
@@ -317,10 +299,11 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 			out.append("<td><a name=\"lpProt" + segment.getIndex() + "\">" + segment.getIndex() + " (id: " + segment.getId() + ")"+ "</a></td>");
 			out.append("<td>");
 			for (Route r : segment.getAssociatedRoutesToWhichIsBackup())
-				out.append("<a href=\"#lp" + r.getIndex() + "\">" + r.getIndex() + "</a> ");
+				out.append("<a href=\"#lp" + r.getIndex() + "\">L" + r.getIndex() + "</a> ");
 			out.append("</td>");
-			out.append("<td>" + segment.getOriginNode().getIndex() + " (" + segment.getOriginNode().getName() + ")"+ "</td>");
-			out.append("<td>" + segment.getDestinationNode().getIndex() + " (" + segment.getDestinationNode().getName() + ")"+ "</td>");
+			out.append("<td>" + printNode(segment.getOriginNode()) + "</td>");
+			out.append("<td>" + printNode(segment.getDestinationNode()) + "</td>");
+			out.append("<td>" + seqNodesString(segment.getSeqLinks()) + "</td>");
 			out.append("<td>" + df_2.format(segment.getLengthInKm()) + "</td>");
 			out.append("<td>" + df_2.format(segment.getPropagationDelayInMs()) + "</td>");
 			out.append("<td>" + rsa.getNumSlots() + "</td>");
@@ -331,177 +314,51 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 			
 			out.append("<td>" + regPoints.size() + (regPoints.isEmpty()? "" : "(" + regPoints + ")"));
 			out.append("</td>");
-			out.append("<td>" + isOk(rsa) + "</td>");
+			boolean isOk = isOk(rsa);
+			out.append("<td bgcolor=\""  +  (isOk? "PaleGreen" : "red") +"\">" + (isOk? "Yes" : "No") + "</td>");
 			out.append("</tr>");
 		}
 		out.append("</table>");
-		
-		
-//		out.append("<h2>PER ROUTE INFORMATION SUMMARY - Signal metrics at the transponder</h2>");
-//		out.append("<table border='1'>");
-//		out.append("<tr><th><b>Route #</b></th><th><b>Length (km)</b></th><th><b># EDFAs</b></th><th><b># DCMs</b></th><th><b>Chromatic Dispersion (ps/nm)</b></th><th><b>OSNR (dB)</b></th><th><b>Power per WDM channel (dBm)</b></th><th><b>Polarization Mode Dispersion (ps)</b></th><th><b>Warnings</b></th></tr>");
-//		for (Route r : netPlan.getRoutes())
-//		{
-//			final double d_r = r.getLengthInKm();
-//			final String st_a_r = r.getIngressNode().getName ();
-//			final String st_b_r = r.getEgressNode().getName ();
-//			LinkedList<Triple<Double, String, Double>> el = elements_r.get(r);
-//			LinkedList<Pair<double[], double[]>> imp = impairments_r.get(r);
-//			LinkedList<String> w = warnings_r.get(r);
-//
-//			int numEDFAs = 0;
-//			for (Triple<Double, String, Double> t : el)
-//				if (t.getSecond().equalsIgnoreCase("EDFA"))
-//					numEDFAs++;
-//
-//			int numDCMs = 0;
-//			for (Triple<Double, String, Double> t : el)
-//				if (t.getSecond().equalsIgnoreCase("DCM"))
-//					numDCMs++;
-//
-//			final double[] impInfoInputOADM = imp.getLast().getFirst();
-//			StringBuilder warnings = new StringBuilder();
-//			for (String s : w) warnings.append("<p>").append(s).append("</p>");
-//
-//			out.append("<tr><td>").append(r).append(" (").append(st_a_r).append(" --> ").append(st_b_r).append(") </td><td>").append(df_2.format(d_r)).append("</td><td>").append(numEDFAs).append("</td><td>").append(numDCMs).append("</td><td>").append(df_2.format(impInfoInputOADM[1])).append("</td><td>").append(df_2.format(linear2dB(impInfoInputOADM[3]))).append("</td><td>").append(df_2.format(impInfoInputOADM[0])).append("</td><td>").append(df_2.format(Math.sqrt(impInfoInputOADM[2]))).append("</td><td>").append(warnings.toString()).append("</td>" + "</tr>");
-//		}
-//		out.append("</table>");
-//
-//		out.append("<h2>PER-LINK DETAILED INFORMATION </h2>");
-//		out.append("<p>Number of links: ").append(netPlan.getNumberOfLinks()).append("</p>");
-//
-//		for (Link e : netPlan.getLinks())
-//		{
-//			final double d_e = e.getLengthInKm();
-//			final String st_a_e = e.getOriginNode().getName ();
-//			final String st_b_e = e.getDestinationNode().getName ();
-//			LinkedList<Triple<Double, String, Double>> el = elements_e.get(e);
-//			LinkedList<Pair<double[], double[]>> imp = impairments_e.get(e);
-//			LinkedList<String> w = warnings_e.get(e);
-//			final String st_edfaPositions_km = e.getAttribute("edfaPositions_km") == null ? "" : e.getAttribute("edfaPositions_km");
-//			final String st_edfaGains_dB = e.getAttribute("edfaGains_dB") == null ? "" : e.getAttribute("edfaGains_dB");
-//			final String st_dcmPositions_km = e.getAttribute("dcmPositions_km") == null ? "" : e.getAttribute("dcmPositions_km");
-//
-//			out.append("<h3>LINK # ").append(e).append(" (").append(st_a_e).append(" --> ").append(st_b_e).append(")</h3>");
-//			out.append("<table border=\"1\">");
-//			out.append("<caption>Link input information</caption>");
-//			out.append("<tr><td>Link length (km)</td><td>").append(d_e).append("</td></tr>");
-//			out.append("<tr><td>EDFA positions (km)</td><td>").append(st_edfaPositions_km).append("</td></tr>");
-//			out.append("<tr><td>EDFA gains (dB)</td><td>").append(st_edfaGains_dB).append("</td></tr>");
-//			out.append("<tr><td>DCM positions (km)</td><td>").append(st_dcmPositions_km).append("</td></tr>");
-//			out.append("</table>");
-//
-//			out.append("<table border=\"1\">");
-//			out.append("<caption>Signal metrics evolution</caption>");
-//			out.append("<tr><th><b>Position (km)</b></th><th><b>Position (description)</b></th><th><b>Chromatic Dispersion (ps/nm)</b></th><th><b>OSNR (dB)</b></th><th><b>Power per WDM channel (dBm)</b></th><th><b>Polarization Mode Dispersion (ps)</b></th><th><b>Warnings</b></th></tr>");
-//			Iterator<Triple<Double, String, Double>> it_el = el.iterator();
-//			Iterator<Pair<double[], double[]>> it_imp = imp.iterator();
-//			Iterator<String> it_w = w.iterator();
-//			while (it_el.hasNext())
-//			{
-//				final Triple<Double, String, Double> this_el = it_el.next();
-//				final Pair<double[], double[]> this_imp = it_imp.next();
-//				final String this_warnings = it_w.next();
-//
-//				final double pos_km = this_el.getFirst();
-//				String elementType = this_el.getSecond();
-//				final double elementAuxData = this_el.getThird();
-//				final double[] prevInfo = this_imp.getFirst();
-//
-//				if (elementType.equalsIgnoreCase("EDFA")) elementType += " (gain " + elementAuxData + " dB)";
-//				else if (elementType.equalsIgnoreCase("SPAN")) elementType += " (" + elementAuxData + " km)";
-//				else if (elementType.equalsIgnoreCase("DCM")) elementType += " (comp " + elementAuxData + " ps/nm)";
-//
-//				out.append("<tr><td>").append(df_2.format(pos_km)).append("</td><td>" + "Input of ").append(elementType).append("</td><td>").append(df_2.format(prevInfo[1])).append("</td><td>").append(df_2.format(linear2dB(prevInfo[3]))).append("</td><td>").append(df_2.format(prevInfo[0])).append("</td><td>").append(df_2.format(Math.sqrt(prevInfo[2]))).append("</td><td>").append(this_warnings).append("</td>" + "</tr>");
-//
-//			}
-//			out.append("</table>");
-//		}
-//
-//		out.append("<h2>PER-LIGHTPATH DETAILED INFORMATION</h2>");
-//		out.append("<p>Number of lightpaths: ").append(netPlan.getNumberOfRoutes()).append("</p>");
-//
-//		for (Route r : netPlan.getRoutes())
-//		{
-//			final double d_r = r.getLengthInKm();
-//			final String st_a_r = r.getIngressNode().getName();
-//			final String st_b_r = r.getEgressNode().getName();
-//			LinkedList<Triple<Double, String, Double>> el = elements_r.get(r);
-//			LinkedList<Pair<double[], double[]>> imp = impairments_r.get(r);
-//			LinkedList<String> w = warnings_r.get(r);
-//
-//			out.append("<h3>ROUTE # ").append(r).append(" (").append(st_a_r).append(" --> ").append(st_b_r).append("), Length: ").append(d_r).append(" km</h3>");
-//			out.append("<table border=\"1\">");
-//			out.append("<caption>Signal metrics evolution</caption>");
-//			out.append("<tr><th><b>Position (km)</b></th><th><b>Position (description)</b></th><th><b>Chromatic Dispersion (ps/nm)</b></th><th><b>OSNR (dB)</b></th><th><b>Power per WDM channel (dBm)</b></th><th><b>Polarization Mode Dispersion (ps)</b></th><th><b>Warnings</b></th></tr>");
-//			Iterator<Triple<Double, String, Double>> it_el = el.iterator();
-//			Iterator<Pair<double[], double[]>> it_imp = imp.iterator();
-//			Iterator<String> it_w = w.iterator();
-//			while (it_el.hasNext())
-//			{
-//				final Triple<Double, String, Double> this_el = it_el.next();
-//				final Pair<double[], double[]> this_imp = it_imp.next();
-//				final String this_warnings = it_w.next();
-//
-//				final double pos_km = this_el.getFirst();
-//				String elementType = this_el.getSecond();
-//				final double elementAuxData = this_el.getThird();
-//				final double[] prevInfo = this_imp.getFirst();
-//				if (elementType.equalsIgnoreCase("EDFA")) elementType += " (gain " + elementAuxData + " dB)";
-//				else if (elementType.equalsIgnoreCase("SPAN")) elementType += " (" + elementAuxData + " km)";
-//				else if (elementType.equalsIgnoreCase("DCM")) elementType += " (comp " + elementAuxData + " ps/nm)";
-//
-//				out.append("<tr><td>").append(df_2.format(pos_km)).append("</td><td>" + "Input of ").append(elementType).append("</td><td>").append(df_2.format(prevInfo[1])).append("</td><td>").append(df_2.format(linear2dB(prevInfo[3]))).append("</td><td>").append(df_2.format(prevInfo[0])).append("</td><td>").append(df_2.format(Math.sqrt(prevInfo[2]))).append("</td><td>").append(this_warnings).append("</td>" + "</tr>");
-//
-//			}
-//			final Triple<Double, String, Double> this_el = el.getLast();
-//			final Pair<double[], double[]> this_imp = imp.getLast();
-//			final String this_warnings = w.getLast();
-//			final double pos_km = this_el.getFirst();
-//			final double[] postInfo = this_imp.getSecond();
-//			out.append("<tr><td>").append(df_2.format(pos_km)).append("</td><td>" + "Receiver" + "</td><td>").append(df_2.format(postInfo[1])).append("</td><td>").append(df_2.format(linear2dB(postInfo[3]))).append("</td><td>").append(df_2.format(postInfo[0])).append("</td><td>").append(df_2.format(Math.sqrt(postInfo[2]))).append("</td><td>").append(this_warnings).append("</td>" + "</tr>");
-//
-//			out.append("</table>");
-//		}
 
+		
+		/* Per OADM information */
+		out.append("<h2><a name=\"nodeStats\"></a>PER OADM NODE INFORMATION SUMMARY</h2>");
+		out.append("<p>This table shows information for each Optical Add/Drop Multiplexer (OADM) node in the network.</p>");
+		out.append("<table border='1'>");
+		out.append("<tr><th><b>OADM # and name</b></th><th><b>Num. input fibers</b></th><th><b>Num. output fibers</b></th>"
+				+ "<th><b>Num. add lps total (reg/prot)</b></th><th><b>Num. drop lps total (reg/prot)</b></th><th><b>Num. express lps total (reg/prto)</b></th>"
+				+ "<th><b>Num. signal regenerators total (reg/prot)</b></th>"
+				+ "<th><b>Num. slot conversions total (reg/prot)</b></th></tr>");
+		for (Node n : netPlan.getNodes())
+		{
+			final int addRegLps = n.getOutgoingRoutes().size();
+			final int dropRegLps = n.getIncomingRoutes().size();
+			final int expressRegLps = n.getAssociatedRoutes().size() - addRegLps - dropRegLps;
+			int addProtLps = 0; int dropProtLps = 0; int expressProtLps = 0;
+			for (ProtectionSegment s : n.getAssociatedProtectionSegments())
+				if (s.getOriginNode() == n) addProtLps ++; else if (s.getDestinationNode() == n) dropProtLps ++; else expressProtLps ++;
+			Pair<List<Route>,List<ProtectionSegment>> lists = stat.regOccupInfo.get(n);
+			final int regenRegLp = lists == null? 0 : lists.getFirst().size();
+			final int regenProtLp = lists == null? 0 : lists.getSecond().size();
+			int wcRegLp = 0; for (Route r : n.getAssociatedRoutes()) for (Node nReg : stat.routeLpRSA.get(r.getIndex()).getNodesWithFrequencySlotConversion()) if (n == nReg) wcRegLp ++;
+			int wcProtLp = 0; for (ProtectionSegment r : n.getAssociatedProtectionSegments()) for (Node nReg : stat.protLpRSA.get(r.getIndex()).getNodesWithFrequencySlotConversion()) if (n == nReg) wcProtLp ++;
+			out.append("<tr>");
+			out.append("<td><a name=\"node" + n.getIndex() + "\">n" + n.getIndex() + " (" + n.getName() + ")" + "</a></td>");
+			out.append("<td>" + n.getIncomingLinks().size() + "</td>");
+			out.append("<td>" + n.getOutgoingLinks().size() + "</td>");
+			out.append("<td>" + (addRegLps+addProtLps) + "(" + addRegLps + " / " + addProtLps + ")" + "</td>");
+			out.append("<td>" + (dropRegLps+dropProtLps) + "(" + dropRegLps + " / " + dropProtLps + ")" + "</td>");
+			out.append("<td>" + (expressRegLps+expressProtLps) + "(" + expressRegLps + " / " + expressProtLps + ")" + "</td>");
+			out.append("<td>" + (regenProtLp+regenRegLp) + "(" + regenRegLp + " / " + regenProtLp + ")" + "</td>");
+			out.append("<td>" + (wcRegLp+wcProtLp) + "(" + wcRegLp + " / " + wcProtLp + ")" + "</td>");
+		}
+		out.append("</table>");
+
+		
 		out.append("</body></html>");
 		return out.toString();
 	}
 
-	private Pair<Map<Pair<Link,Integer>,List<Route>> , Map<Pair<Link,Integer>,List<ProtectionSegment>>> getSlotOccupancy (NetPlan netPlan)
-	{
-		Map<Pair<Link,Integer>,List<Route>> lpOccup = new HashMap<Pair<Link,Integer>,List<Route>> (); 
-		Map<Pair<Link,Integer>,List<ProtectionSegment>> protOccup = new HashMap<Pair<Link,Integer>,List<ProtectionSegment>> ();
-		for (Route r : netPlan.getRoutes())
-		{
-			WDMUtils.RSA rsa = new WDMUtils.RSA(r , false);
-			for (int contLink = 0; contLink < rsa.seqLinks.size() ; contLink ++)
-			{
-				final Link e = rsa.seqLinks.get(contLink);
-				for (int s = 0; s < rsa.getNumSlots() ; s ++)
-				{
-					Pair<Link,Integer> key = Pair.of(e , rsa.seqFrequencySlots_se.get(s,contLink));
-					List<Route> list = lpOccup.get(key); if (list == null) { list = new LinkedList<Route> (); lpOccup.put(key,list); }
-					list.add(r);
-				 }
-			}
-		}
-		for (ProtectionSegment r : netPlan.getProtectionSegments())
-		{
-			WDMUtils.RSA rsa = new WDMUtils.RSA(r);
-			for (int contLink = 0; contLink < rsa.seqLinks.size() ; contLink ++)
-			{
-				final Link e = rsa.seqLinks.get(contLink);
-				for (int s = 0; s < rsa.getNumSlots() ; s ++)
-				{
-					Pair<Link,Integer> key = Pair.of(e , rsa.seqFrequencySlots_se.get(s,contLink));
-					List<ProtectionSegment> list = protOccup.get(key); if (list == null) { list = new LinkedList<ProtectionSegment> (); protOccup.put(key,list); }
-					list.add(r);
-				 }
-			}
-		}
-		return Pair.of(lpOccup , protOccup);
-	}
 
 	private boolean isOk (WDMUtils.RSA rsa)
 	{
@@ -512,8 +369,8 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 			{
 				final int s = rsa.seqFrequencySlots_se.get(contS , counterLink);
 				if (s >= WDMUtils.getFiberNumFrequencySlots(e)) return false;
-				final int numLps = occupInfo.getFirst().get(Pair.of(e,s)) == null? 0 : occupInfo.getFirst().get(Pair.of(e,s)).size();
-				final int numLpsProt = occupInfo.getSecond().get(Pair.of(e,s)) == null? 0 : occupInfo.getSecond().get(Pair.of(e,s)).size();
+				final int numLps = stat.slotOccupInfo.containsKey(Pair.of(e,s))? stat.slotOccupInfo.get(Pair.of(e,s)).getFirst().size() : 0;
+				final int numLpsProt = stat.slotOccupInfo.containsKey(Pair.of(e,s))? stat.slotOccupInfo.get(Pair.of(e,s)).getSecond().size() : 0;
 				if (numLps+numLpsProt > 1) return false;
 			}
 			counterLink ++;
@@ -538,6 +395,9 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 	{
 		private MinMaxAvCollector nodeInDegree = new MinMaxAvCollector ();
 		private MinMaxAvCollector nodeOutDegree = new MinMaxAvCollector ();
+		private int numberOfSignalRegenerators = 0;
+		private int numberOfWavelengthConversions = 0;
+		private int maxNumberSlots;
 		private boolean bidirectionalLinks;
 		private boolean bidirectionalDemands;
 		private boolean bidirectionalRoutes;
@@ -549,6 +409,11 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		private MinMaxAvCollector lpLengthHops = new MinMaxAvCollector ();
 		private MinMaxAvCollector lpLengthMs = new MinMaxAvCollector ();
 		private MinMaxAvCollector fiberCapacityReservedForProtection = new MinMaxAvCollector ();
+		private Map<Pair<Link,Integer>,Pair<List<Route>,List<ProtectionSegment>>> slotOccupInfo = null;
+		private Map<Node,Pair<List<Route>,List<ProtectionSegment>>> regOccupInfo = null;
+		private List<WDMUtils.RSA> routeLpRSA = new ArrayList<WDMUtils.RSA> ();
+		private List<WDMUtils.RSA> protLpRSA = new ArrayList<WDMUtils.RSA> ();
+		
 		
 		private Statistics (NetPlan netPlan , NetworkLayer wdmLayer) 
 		{ 
@@ -576,16 +441,49 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 				lpLengthKm.add(r.getLengthInKm());
 				lpLengthMs.add(r.getPropagationDelayInMiliseconds());
 			}
+			this.maxNumberSlots = (int) WDMUtils.getVectorFiberNumFrequencySlots(netPlan).getMaxLocation() [0];
+			Pair<Map<Pair<Link,Integer>,Pair<List<Route>,List<ProtectionSegment>>> , Map<Node,Pair<List<Route>,List<ProtectionSegment>>>> pair = WDMUtils.getNetworkSlotOccupancyMap(netPlan , false);
+			this.slotOccupInfo = pair.getFirst();
+			this.regOccupInfo = pair.getSecond();
+			for (Node n : netPlan.getNodes())
+			{
+				Pair<List<Route>,List<ProtectionSegment>> lists = regOccupInfo.get(n); 
+				numberOfSignalRegenerators += (lists == null? 0 : lists.getFirst().size() + lists.getSecond().size());
+			}	
+					
+			for (Route lp : netPlan.getRoutes())
+			{
+				WDMUtils.RSA rsa = new WDMUtils.RSA(lp , false);
+				numberOfWavelengthConversions += rsa.getNodesWithFrequencySlotConversion().size();
+				routeLpRSA.add(rsa);
+			}
+			for (ProtectionSegment lp : netPlan.getProtectionSegments())
+			{
+				WDMUtils.RSA rsa = new WDMUtils.RSA(lp);
+				numberOfWavelengthConversions += rsa.getNodesWithFrequencySlotConversion().size();
+				protLpRSA.add(rsa);
+			}
 		}
 		
 	}
+
+	private String seqNodesString(List<Link> seqLinks)
+	{
+		if (seqLinks.isEmpty()) return "";
+		String st = "[ " + printNode(seqLinks.get(0).getOriginNode());
+		for (Link e : seqLinks)
+			st += " -> " + printNode(e.getDestinationNode());
+		return st + " ]";
+	}
+
+	private String printNode (Node n) { return "<a href=\"#node" + n.getIndex() + "\">n" + n.getIndex() + " (" + n.getName() + ")</a>"; }
 	
 	private static class MinMaxAvCollector
 	{
 		private double min, max, accum;
 		private int numSamples;
 		MinMaxAvCollector () { min = 0; max = 0; accum = 0; numSamples = 0; }
-		void add (double sample) { min = Math.min(min,sample); max = Math.max(max,sample); accum += sample; }
+		void add (double sample) { min = numSamples == 0? sample : Math.min(min,sample); max = numSamples == 0? sample : Math.max(max,sample); accum += sample; numSamples ++; }
 		double getAv () { return numSamples == 0? 0 : accum/numSamples;  }
 		public String toString () { return min + " / " + getAv() + " / " + max; } 
 		public String toString (DecimalFormat df) { return df.format(min) + " / " + df.format(getAv()) + " / " + df.format(max); } 
