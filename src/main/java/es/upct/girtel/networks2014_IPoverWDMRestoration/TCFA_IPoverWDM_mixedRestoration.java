@@ -275,7 +275,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
         IPUtils.setECMPForwardingRulesFromLinkWeights(netPlan, null, ipLayer);
 		
 		/* Check consistency of WDM layer */
-        WDMUtils.checkConsistency(netPlan, true, false , wdmLayer);
+        WDMUtils.checkResourceAllocationClashing(netPlan, true, false , wdmLayer);
 
         return "Ok";
     }

@@ -424,7 +424,7 @@ public class Offline_wdm_routingSpectrumAndModulationAssignmentILP implements IA
 			}
 		}
 		
-		WDMUtils.checkConsistency(netPlan,true,true,wdmLayer);
+		WDMUtils.checkResourceAllocationClashing(netPlan,true,true,wdmLayer);
 
 		return "Ok!";
 	}
