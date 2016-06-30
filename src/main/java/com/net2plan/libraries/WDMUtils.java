@@ -792,7 +792,8 @@ public class WDMUtils
 	 * Returns two maps, showing the frequency slots in the links and signal regenerator in the nodes occupancies. 
 	 * The slot occupancy is a map where the keys are the pairs (fiber,slot) occupied by at least one lightpath, and the 
 	 * value is a pair with the list of regular lightpaths (as {@code Route}) objects occupying the slot, and a list of 
-	 * the protection lightpaths (as {@code ProtectionSegment} objects) occupying the slot. 
+	 * the protection lightpaths (as {@code ProtectionSegment} objects) occupying the slot. If the current route traverses 
+	 * a protection segment, such slots occupied are added only once (not in the route, yes in the protection segment) 
 	 * If more than one lightpath occupies an slot an exception is NOT thrown. The second map is a map with one key for each 
 	 * {@code Node} with at least one signal regeneration placed in its RSA, and the value is the pair of two lists 
 	 * of lightpaths (regular and protection) with a regenerator in it. If a lightpath has more than one regenerator in a node, 
@@ -810,9 +811,18 @@ public class WDMUtils
 		for (Route r : netPlan.getRoutes(layer))
 		{
 			if (r.isDown() && countDownLightpathResources) continue;
-			WDMUtils.RSA rsa = new WDMUtils.RSA(r , false);
+			boolean [] isLinkOfAProtectionSegment = new boolean [r.getSeqLinksRealPath().size()];
+			int linkCounter = 0; 
+			for (Link e : r.getSeqLinksAndProtectionSegments()) 
+				if (e instanceof ProtectionSegment)
+					for (Link auxLink : ((ProtectionSegment) e).getSeqLinks()) 
+						isLinkOfAProtectionSegment [linkCounter ++] = true; 
+				else
+					isLinkOfAProtectionSegment [linkCounter ++] = false;
+ 			WDMUtils.RSA rsa = new WDMUtils.RSA(r , false);
 			for (int contLink = 0; contLink < rsa.seqLinks.size() ; contLink ++)
 			{
+				if (isLinkOfAProtectionSegment [contLink]) continue; /* links of protection in the routes, are put as protection segments  */
 				final Link e = rsa.seqLinks.get(contLink);
 				for (int s = 0; s < rsa.getNumSlots() ; s ++)
 				{
