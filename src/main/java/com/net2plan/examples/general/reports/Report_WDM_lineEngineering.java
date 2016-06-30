@@ -109,7 +109,7 @@ import com.net2plan.utils.Triple;
  * the operating range at the receiver</li>
  * </ul>
  * @net2plan.keywords WDM, Multilayer
- * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
+ * @author Pablo Pavon-Marino
  * @version 1.1, May 2015
  */
 public class Report_WDM_lineEngineering implements IReport

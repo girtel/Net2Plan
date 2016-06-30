@@ -40,9 +40,22 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
 /**
- * </ul>
+ *
+ * <p>This report collects information about the Routing and Spectrum assignment in the network, as well as other general information about the WDM layer.</p>
+ * <p>This report is valid for the WDM layers compatible with the {@link com.net2plan.libraries.WDMUtils WDMUtils} library .This includes both fixed and flexi-grid networks, 
+ *  with unique or mixed line rates in the lightpaths, with or without optical signal regenerators and wavelength (frequency slot) conversions.</p>
+ * <p>The report first checks that the WDM network follows the conventions described in {@link com.net2plan.libraries.WDMUtils WDMUtils} library (see its Javadoc for further information on this).</p>
+ * <p>Then, the report provides a number of statistics regarding frequency slot occupation, optical signal 
+ *  regenerators, wavelength (frequency slot) converters needed, etc. It also warns about possible frequency slot clashing 
+ *  two lightpaths using the same slot in the same fibers)</p>
+ *  <p>Lightpaths are separated into:</p>
+ *  <ul>
+ *  <li>Regular lightpaths: Those stored as {@code Route} objects in the design.</li>
+ *  <li>Protection lightpaths: Those stored as {@code ProtectionSegment} objects in the design.</li>
+ *  </ul>
  * @net2plan.keywords WDM
- */
+ * @author Pablo Pavon-Marino
+ */ 
 public class Report_wdm_routingSpectrumAndModulationAssignments implements IReport
 {
 	/* Input parameters */

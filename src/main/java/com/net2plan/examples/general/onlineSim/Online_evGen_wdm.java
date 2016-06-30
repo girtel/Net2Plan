@@ -42,9 +42,10 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.jet.random.tdouble.Exponential;
 
 /** 
- * Generates events for a WDM network carrying lightpaths in a fixed of flexi grid of wavelengths
+ * Generates events for a WDM network carrying lightpaths in a fixed or flexi grid of wavelengths
  * 
- * The events generated targeted to the event processor module (e.g. {@link com.net2plan.examples.general.onlineSim.Online_evProc_wdm}) are: 
+ * <p>The design follows the assumptions described in {@link com.net2plan.libraries.WDMUtils WDMUtils} Net2Plan library</p>
+ * <p>The events generated targeted to the event processor module (e.g. {@link com.net2plan.examples.general.onlineSim.Online_evProc_wdm Online_evProc_wdm}) are:</p> 
  * <ul>
  * <li>WDMUtils.LightpathAdd: Request to add a new lightpath to the network. In this case, the lightpath is associated to an existing demand, which generates lightpath requests. 
  * The line rates of the requested lightpaths are chosen among a user-defined set of possible line rates.</li>

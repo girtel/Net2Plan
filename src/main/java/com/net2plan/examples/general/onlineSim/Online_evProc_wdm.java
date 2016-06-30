@@ -45,10 +45,10 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.jet.math.tdouble.DoubleFunctions;
 
-/** 
- * Implements the reactions of a WDM network carrying lightpaths in a fixed or flexi grid of wavelengths. 
+/** Implements the reactions of a WDM network carrying lightpaths in a fixed or flexi grid of wavelengths. 
  * 
- * This algorithm implements the reactions of a WDM network carrying lightpaths, to a the following events: 
+ * <p>The design follows the assumptions described in {@link com.net2plan.libraries.WDMUtils WDMUtils} Net2Plan library</p>
+ * <p>This algorithm implements the reactions of a WDM network carrying lightpaths, to the following events:</p> 
  * <ul>
  * <li>WDMUtils.LightpathAdd: Adds the corresponding lightpath to the network (the Route object and potentially a 
  * ProtectionSegment object if the lightpath is asked to be 1+1 protected), if enough resources exist for it. 

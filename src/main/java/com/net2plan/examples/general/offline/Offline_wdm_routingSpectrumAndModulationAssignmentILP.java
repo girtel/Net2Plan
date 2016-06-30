@@ -44,7 +44,7 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
 /**
  * Algorithm based on an ILP solving the Routing, Spectrum, Modulation Assignment (RSMA) problem with regenerator placement, in flexi (elastic) or fixed grid optical WDM networks, with or without fault tolerance, latency and/or lightpath bidirectionality requisites.
  * 
- * <p>The input design is assumed to have a WDM layer compatible with {@link com.net2plan.libraries.WDMUtils} Net2Plan 
+ * <p>The input design is assumed to have a WDM layer compatible with {@link com.net2plan.libraries.WDMUtils WDMUtils} Net2Plan 
  * library usual assumptions:</p>
  * <ul>
  * <li>Each network node is assumed to be an Optical Add/Drop Multiplexer WDM node</li>

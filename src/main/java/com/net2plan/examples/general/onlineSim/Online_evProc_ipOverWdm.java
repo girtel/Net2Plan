@@ -27,14 +27,16 @@ import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
 /** 
- * Implements the reactions of an IP over WDM multilayer network, where the IP traffic is carried over lightpaths routed over 
- * a topology of fiber links with a fixed or a flexible wavelength grid
+ * <p>Implements the reactions of an IP over WDM multilayer network, where the IP traffic is carried over lightpaths routed over 
+ * a topology of fiber links with a fixed or a flexible wavelength grid.</p>
  * 
- * This algorithm implements the reactions of an IP over WDM multilayer network. Internally, the algorithm just coordinates the reactions of the WDM layer and the 
+ * <p>The design follows the assumptions described in {@link com.net2plan.libraries.WDMUtils WDMUtils} Net2Plan library</p>
+ * 
+ * <p>This algorithm implements the reactions of an IP over WDM multilayer network. Internally, the algorithm just coordinates the reactions of the WDM layer and the 
  * IP layer, each of them implemented by the {@code Online_evProv_wdm} and {@code Online_evProc_ipOspf} modules. The coordination actions are basically during the 
- * failure processes, propagating the failures and repairs at the WDM layer, as links down/up events in the IP layer. 
+ * failure processes, propagating the failures and repairs at the WDM layer, as links down/up events in the IP layer.</p> 
  * 
- * The algorithm reacts to the following events:
+ * <p>The algorithm reacts to the following events:</p>
  * <ul>
  * <li>WDMUtils.LightpathAdd: Adds the corresponding lightpath to the network, if enough resources exist for it, calling to the WDM layer module. If so, it is added also as an IP link, and the IP routing modified, by calling the IP module.</li>
  * <li>WDMUtils.LightpathRemove: Removes the corresponding lightpath, releasing the resources and updating both layers.</li>
@@ -46,9 +48,9 @@ import com.net2plan.utils.Triple;
  * demand carrying no traffic (affected by a failure for which it could not recover), is propagated to the IP layer as a failing IP link.</li>
  * </ul>
  * 
- * This module can be used in conjunction with the {@code Online_evGen_ipOverWdm} generator for simulating IP over WDM designs. 
+ * <p>This module can be used in conjunction with the {@code Online_evGen_ipOverWdm} generator for simulating IP over WDM designs.</p> 
  * 
- * See the technology conventions used in Net2Plan built-in algorithms and libraries to represent IP and WDM networks. 
+ * <p>See the technology conventions used in Net2Plan built-in algorithms and libraries to represent IP and WDM networks.</p> 
  * @net2plan.keywords IP/OSPF, WDM, Multilayer, Network recovery: protection, Network recovery: restoration
  * @net2plan.inputParameters 
  * @author Pablo Pavon-Marino
