@@ -107,7 +107,6 @@ public class Online_evGen_ipOverWdm extends Online_evGen_generalGenerator
 			}
 		}
 
-//		this.generalEventGenerator = new Online_evGen_generalGenerator();
 		Map<String,String> generalEventGeneratorParam = new HashMap<String,String> ();
 		generalEventGeneratorParam.put ("_fail_failureModel" , ipOverWdmFailureModel.getString ().equalsIgnoreCase("none")? "none" : "SRGfromNetPlan"); // I create the SRGs here
 		generalEventGeneratorParam.put ("_tfFast_fluctuationType" , ipTFFastFluctuationType.getString ()); 
