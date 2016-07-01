@@ -50,16 +50,22 @@ import cern.jet.math.tdouble.DoubleFunctions;
  * <p>The design follows the assumptions described in {@link com.net2plan.libraries.WDMUtils WDMUtils} Net2Plan library</p>
  * <p>This algorithm implements the reactions of a WDM network carrying lightpaths, to the following events:</p> 
  * <ul>
- * <li>WDMUtils.LightpathAdd: Adds the corresponding lightpath to the network (the Route object and potentially a 
- * ProtectionSegment object if the lightpath is asked to be 1+1 protected), if enough resources exist for it. 
- * If the event includes a Demand object, the lightpath is associated to it. If not, a new demand is created. 
- * The user can choose different strategies for the routing and spectrum assignment of the lightpath.</li>
- * <li>WDMUtils.LightpathModify: Modifies the carried traffic and/or the RSA of a lightpath.</li>
- * <li>WDMUtils.LightpathRemove: Removes the corresponding lightpath (including the Demand and Route objects, and potentially the 1+1 segment if any), releasing the resources.</li>
- * <li>SimEvent.NodesAndLinksChangeFailureState: Fails/repairs the indicated nodes and/or links, and reacts to such failures 
+ * <li>{@link com.net2plan.libraries.WDMUtils.LightpathAdd WDMUtils.LightpathAdd}: Adds the corresponding lightpath to the network 
+ * (the Route object and potentially a ProtectionSegment object if the lightpath is asked to be 1+1 protected), 
+ * if enough resources exist for it. If the event includes a Demand object, the lightpath is associated to it. 
+ * If not, a new demand is created. The object establishes the line rate of the lightpath to establish. If such line rate is 
+ * not present in any transponder type defined, an exception is raised (on valid transponders exist for such a lightpath).
+ * If the event includes the RSA (also of the backup, if 1+1 protection is selected), the algorithm 
+ * tries this RSA. If not, the user-selected strategy for the routing and spectrum assignment of the lightpath is applied.
+ * Such strategy is tried first with the first transponder type (in order) with the appropriate line rate. If a valid RSA is not found 
+ * it is repeated with the next. The lightpath request is blocked if under no transponder type of the appropriate line rate, a RSA 
+ * is found (note that different transponders can have e.g. different optical reaches or number of occupied slots).</li>
+ * <li>{@link com.net2plan.libraries.WDMUtils.LightpathModify WDMUtils.LightpathModify}: Modifies the carried traffic and/or the RSA of a lightpath.</li>
+ * <li>{@link com.net2plan.libraries.WDMUtils.LightpathRemove WDMUtils.LightpathRemove}: Removes the corresponding lightpath (including the Demand and Route objects, and potentially the 1+1 segment if any), releasing the resources.</li>
+ * <li>{@link com.net2plan.interfaces.simulation.SimEvent.NodesAndLinksChangeFailureState SimEvent.NodesAndLinksChangeFailureState}: Fails/repairs the indicated nodes and/or links, and reacts to such failures 
  * (the particular form depends on the network recovery options selected).</li>
- * <li>SimEvent.DemandModify: Modifies the offered traffic of a demand.</li>
- * <li>SimEvent.DemandRemove: Removes a demand, and all its associated lightpaths if any, releasing the resources.</li>
+ * <li>{@link com.net2plan.interfaces.simulation.SimEvent.DemandModify SimEvent.DemandModify}: Modifies the offered traffic of a demand.</li>
+ * <li>{@link com.net2plan.interfaces.simulation.SimEvent.DemandRemove SimEvent.DemandRemove}: Removes a demand, and all its associated lightpaths if any, releasing the resources.</li>
  * </ul>
  * 
  * This module can be used in conjunction with the {@code Online_evGen_wdm} generator for creating the events to which 
@@ -413,15 +419,18 @@ public class Online_evProc_wdm extends IEventProcessor
 				if (lpRoute != null) 
 				{
 					WDMUtils.RSA oldRSA = new WDMUtils.RSA(lpRoute , false);
-
+					final Integer tpType = transponderTypeOfNewLps.get (lpRoute);
 					if (modifyLpEvent.rsa == null) throw new Net2PlanException ("Modifying the lightpath line rate requires setting the RSA also");
+					if (tpType == null) throw new Net2PlanException ("Cannot find the transponder type of the lightpath!");
+					if ((modifyLpEvent.carriedTraffic != 0) && (modifyLpEvent.carriedTraffic != tpInfo.getLineRateGbps(tpType))) throw new Net2PlanException ("Cannot change the line rate of an existing lightpath");
+					if ((modifyLpEvent.rsa.getNumSlots() != 0) && (modifyLpEvent.rsa.getNumSlots() != tpInfo.getNumSlots(tpType))) throw new Net2PlanException ("Cannot change the number of slots of an existing lightpath");
+					if ((modifyLpEvent.rsa.getLengthInKm() > tpInfo.getOpticalReachKm(tpType)) && (!tpInfo.isOpticalRegenerationPossible(tpType))) throw new Net2PlanException ("Cannot modify the lightpath RSA in sucha way that the lightpath length exceeds the transponder maximum reach");
+					
 					lpRoute.setCarriedTraffic(modifyLpEvent.carriedTraffic, modifyLpEvent.rsa.getNumSlots());
-
 					WDMUtils.releaseResources( oldRSA, wavelengthFiberOccupancy , null);
 					WDMUtils.allocateResources(modifyLpEvent.rsa , wavelengthFiberOccupancy , null);
 					lpRoute.setSeqLinksAndProtectionSegments(modifyLpEvent.rsa.seqLinks);
 					WDMUtils.setLightpathRSAAttributes(lpRoute , modifyLpEvent.rsa , false);
-
 				}
 			}
 			else throw new Net2PlanException ("Unknown event type: " + event);
