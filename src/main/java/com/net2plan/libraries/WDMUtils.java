@@ -145,10 +145,6 @@ public class WDMUtils
 	 * (iv) optical reach in km (a non-positive number means no reach limit), (v) cost of 
 	 * the optical signal regenerator (regenerators do NOT make wavelength conversion ; if negative, regeneration is not possible).</p>
 	 */
-	/**
-	 * @author Pablo
-	 *
-	 */
 	public static class TransponderTypesInfo
 	{
 		private int T; 
