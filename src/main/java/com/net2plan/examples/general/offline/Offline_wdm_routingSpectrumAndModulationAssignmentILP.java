@@ -33,7 +33,6 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.IntUtils;
 import com.net2plan.utils.Pair;
-import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
 
 import cern.colt.list.tdouble.DoubleArrayList;
@@ -167,25 +166,9 @@ public class Offline_wdm_routingSpectrumAndModulationAssignmentILP implements IA
 		if (N == 0 || E == 0 || D == 0) throw new Net2PlanException("This algorithm requires a topology with links and a demand set");
 
 		/* Store transpoder info */
-		String [] transpoderTypes = StringUtils.split(transponderTypesInfo.getString() , ";");
-		final int T = transpoderTypes.length;
-		final double [] transponderLineRateGbps = new double [T];
-		final double [] transponderCosts = new double [T];
-		final int [] transponderNumberSlots = new int [T];
-		final double [] transponderOpticalReachKm = new double [T];
-		final double [] transponderRegeneratorCost = new double [T];
-		double maxOpticalReach = 0;
-		for (int t = 0 ; t < T ; t ++)
-		{
-			double [] vals = StringUtils.toDoubleArray(StringUtils.split(transpoderTypes [t]));
-			transponderLineRateGbps [t] = vals [0];
-			transponderCosts [t] = vals [1];
-			transponderNumberSlots [t] = (int) vals [2];
-			transponderOpticalReachKm [t] = vals [3] > 0? vals [3] : Double.MAX_VALUE;
-			transponderRegeneratorCost [t] = vals [4];
-			maxOpticalReach = Math.max(maxOpticalReach , (transponderRegeneratorCost [t] > 0)? Double.MAX_VALUE : transponderOpticalReachKm [t]);
-		}
-
+		WDMUtils.TransponderTypesInfo tpInfo = new WDMUtils.TransponderTypesInfo(transponderTypesInfo.getString());
+		final int T = tpInfo.getNumTypes();
+		
 		/* Remove all routes in current netPlan object. Initialize link capacities and attributes, and demand offered traffic */
 		netPlan.removeAllMulticastTrees(wdmLayer);
 		netPlan.removeAllUnicastRoutingInformation(wdmLayer);
@@ -193,7 +176,7 @@ public class Offline_wdm_routingSpectrumAndModulationAssignmentILP implements IA
 
 		/* Compute the candidate path list of possible paths */
 		final Map<Demand,List<List<Link>>> cpl = netPlan.computeUnicastCandidatePathList(wdmLayer , 
-				netPlan.getVectorLinkLengthInKm(wdmLayer).toArray(), "K" , "" + k.getInt() , "maxLengthInKm" , ""+maxOpticalReach , "maxPropDelayInMs" , "" + maxPropagationDelayMs.getDouble());
+				netPlan.getVectorLinkLengthInKm(wdmLayer).toArray(), "K" , "" + k.getInt() , "maxLengthInKm" , ""+tpInfo.getMaxOpticalReachKm(), "maxPropDelayInMs" , "" + maxPropagationDelayMs.getDouble());
 		final Map<Demand,List<Pair<List<Link>,List<Link>>>> cpl11 = networkRecoveryType.getString().equals("1+1-srg-disjoint-lps")? NetPlan.computeUnicastCandidate11PathList(cpl,0) : null;
 		
 		/* Compute the CPL, adding the routes */
@@ -215,24 +198,24 @@ public class Offline_wdm_routingSpectrumAndModulationAssignmentILP implements IA
 			boolean atLeastOnePathOrPathPair = false;
 			for (int t = 0 ; t < T ; t ++)
 			{
-				final double regeneratorCost = transponderRegeneratorCost [t];
+				final double regeneratorCost = tpInfo.getRegeneratorCost(t);
 				final boolean isRegenerable = regeneratorCost >= 0;
 				for (Object sp : cpl11 != null? cpl11.get(d) : cpl.get(d))
 				{
 					List<Link> firstPath = (cpl11 == null)? ((List<Link>) sp) : ((Pair<List<Link>,List<Link>>) sp).getFirst(); 
 					List<Link> secondPath = (cpl11 == null)? null : ((Pair<List<Link>,List<Link>>) sp).getSecond (); 
-					if (!isRegenerable && (getLengthInKm(firstPath) > transponderOpticalReachKm [t])) break;
-					if (secondPath != null) if (!isRegenerable && (getLengthInKm(secondPath) > transponderOpticalReachKm [t])) break;
+					if (!isRegenerable && (getLengthInKm(firstPath) > tpInfo.getOpticalReachKm(t))) break;
+					if (secondPath != null) if (!isRegenerable && (getLengthInKm(secondPath) > tpInfo.getOpticalReachKm(t))) break;
 
-					final int [] regPositions1 = isRegenerable? WDMUtils.computeRegeneratorPositions(firstPath , transponderOpticalReachKm [t]) : new int [firstPath.size()];
-					final int [] regPositions2 = cpl11 == null? null : isRegenerable? WDMUtils.computeRegeneratorPositions(secondPath , transponderOpticalReachKm [t]) : new int [secondPath.size()];
+					final int [] regPositions1 = isRegenerable? WDMUtils.computeRegeneratorPositions(firstPath , tpInfo.getOpticalReachKm(t)) : new int [firstPath.size()];
+					final int [] regPositions2 = cpl11 == null? null : isRegenerable? WDMUtils.computeRegeneratorPositions(secondPath , tpInfo.getOpticalReachKm(t)) : new int [secondPath.size()];
 					final int numRegeneratorsNeeded = !isRegenerable? 0 : (int) IntUtils.sum(regPositions1) + (secondPath == null? 0 : (int) IntUtils.sum(regPositions2)) ;
-					final double costOfLightpathOr11Pair = transponderCosts [t] * (cpl11 != null? 2 : 1) + (transponderRegeneratorCost [t] * numRegeneratorsNeeded);
+					final double costOfLightpathOr11Pair = tpInfo.getCost(t) * (cpl11 != null? 2 : 1) + (tpInfo.getRegeneratorCost(t) * numRegeneratorsNeeded);
 
 					cost_p.add (costOfLightpathOr11Pair);
 					transponderType_p.add (t);
-					lineRate_p.add(transponderLineRateGbps [t]);
-					numSlots_p.add(transponderNumberSlots[t]);
+					lineRate_p.add(tpInfo.getLineRateGbps(t));
+					numSlots_p.add(tpInfo.getNumSlots(t));
 					demand_p.add(d);
 					seqLinks_p.add(firstPath);
 					regPositions_p.add(regPositions1);
@@ -347,7 +330,7 @@ public class Offline_wdm_routingSpectrumAndModulationAssignmentILP implements IA
 				/* At_s1s2, upper triangular matrix, 1 if a transponder of type with initial slot s1, occupied slots s2 (depends on number of slots occupied) */
 				DoubleMatrix2D At_s1s2 = DoubleFactory2D.sparse.make(S,S);
 				for (int s1 = 0 ; s1 < S ; s1 ++)
-					for (int cont = 0 ; cont < transponderNumberSlots [t] ; cont ++)
+					for (int cont = 0 ; cont < tpInfo.getNumSlots(t) ; cont ++)
 						if (s1 - cont >= 0) At_s1s2.set(s1-cont,s1,1.0); 
 				op.setInputParameter(name_At_pp, At_pp);
 				op.setInputParameter(name_At_s1s2, At_s1s2);
@@ -364,7 +347,7 @@ public class Offline_wdm_routingSpectrumAndModulationAssignmentILP implements IA
 				/* At_s1s2, upper triangular matrix, 1 if a transponder of type with initial slot s1, occupied slots s2 (depends on number of slots occupied) */
 				DoubleMatrix2D A2t_s1s2 = DoubleFactory2D.sparse.make(S,S);
 				for (int s1 = 0 ; s1 < S ; s1 ++)
-					for (int cont = 0 ; cont < transponderNumberSlots [t] ; cont ++)
+					for (int cont = 0 ; cont < tpInfo.getNumSlots(t) ; cont ++)
 						if (s1 - cont >= 0) A2t_s1s2.set(s1-cont,s1,1.0); 
 				op.setInputParameter(name_A2t_pp, A2t_pp);
 				op.setInputParameter(name_A2t_s1s2, A2t_s1s2);
