@@ -357,7 +357,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
 
         for (Node node : netPlan.getNodes()) {
             final String nodeName = node.getName();
-            String nodeLabel = "Node " + node.getId();
+            String nodeLabel = "Node " + node.getIndex();
             if (!nodeName.isEmpty()) nodeLabel += " (" + nodeName + ")";
 
             originNodeSelector.addItem(StringLabeller.of(node.getId(), nodeLabel));

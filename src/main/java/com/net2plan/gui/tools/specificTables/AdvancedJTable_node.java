@@ -347,7 +347,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
 
                 try {
                     Node node = netPlan.addNode(0, 0, null, null);
-                    node.setName("Node " + node.getId());
+                    node.setName("Node " + node.getIndex());
                     networkViewer.getTopologyPanel().getCanvas().addNode(node);
                     networkViewer.getTopologyPanel().getCanvas().refresh();
                     networkViewer.updateNetPlanView();

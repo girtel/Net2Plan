@@ -19,3 +19,4 @@ public class GUILauncher
 		GUINet2Plan.refreshMenu();
 	}
 }
+
