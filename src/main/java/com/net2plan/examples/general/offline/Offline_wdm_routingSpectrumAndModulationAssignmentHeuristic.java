@@ -294,7 +294,6 @@ public class Offline_wdm_routingSpectrumAndModulationAssignmentHeuristic impleme
 				
 				/* Add the lightpath to the design */
 				atLeastOneLpAdded = true;
-				System.out.println("Lp line rate: " + lineRate_p.get(best_pathIndex) + ", Extra carried traffic (average): " + best_performanceMetric); 
 				totalCost += cost_p.get(best_pathIndex);
 				final Route lp = WDMUtils.addLightpath(d , best_rsa , lineRate_p.get(best_pathIndex));
 				WDMUtils.allocateResources(best_rsa , frequencySlot2FiberOccupancy_se , null);

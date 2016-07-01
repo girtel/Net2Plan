@@ -56,47 +56,102 @@ import cern.colt.matrix.tint.IntMatrix2D;
 /**
  * Class to deal with WDM optical topologies in fixed-grid and flexi-grid networks, including wavelength assignment and regenerator placement.
  *
- * <p>Optical networks have been established as the enabling technology for today’s high-speed communication networks. Wavelength Division Multiplexing (WDM) enables the efficient utilization of optical fibers by dividing its tremendous bandwidth into a set of disjoint channels.</p>
+ * <p>Optical networks have been established as the enabling technology for today’s high-speed communication networks. 
+ * Wavelength Division Multiplexing (WDM) enables the efficient utilization of optical fibers by dividing its tremendous bandwidth 
+ * into a set of disjoint channels.</p>
  * <p>The so-called <em>wavelength grid</em> determines the wavelengths or wavebands used by a channel:</p>
  * <ul>
- * <li>In <em>fixed-grid</em> networks, all the channels have the same width, typically of 100 GHz or 50 GHz. For instance, according to the 100 GHz ITU-T grid, first channel in the C-band has a central frequency of 196.1 THz, next 196.0 THz, next 195.9 THz... (until 191.2 THz, the last channel in the C-band). In this case each channel is typically called a <em>wavelength</em>.</li>
- * <li><em>Flexi-grid</em> networks are a generalization of fixed-grid networks, where the width of a channel is an integer multiple of the width of a so-called frequency slot. Frequency slots are typically of 12.5 GHz. A channel can typically aggregate up to tens of slots. In general (but not always), these slots are constrained to be contiguous.</li>
+ * <li>In <em>fixed-grid</em> networks, all the channels have the same width, typically of 100 GHz or 50 GHz. For instance, 
+ * according to the 100 GHz ITU-T grid, first channel in the C-band has a central frequency of 196.1 THz, next 196.0 THz, 
+ * next 195.9 THz... (until 191.2 THz, the last channel in the C-band). In this case each channel is typically called a 
+ * <em>wavelength</em>.</li>
+ * <li><em>Flexi-grid</em> networks are a generalization of fixed-grid networks, where the width of a channel is an integer multiple of 
+ * the width of a so-called frequency slot (typically 12.5 GHz). A channel can typically aggregate up to tens of slots. In general 
+ * (but not always), these slots are constrained to be contiguous.</li>
  * </ul>
  * 
- * <p>Flexi-grid networks where all the channels occupy exactly one frequency slot, and the width of the slot is e.g. 100 GHz, are equivalent to a fixed-grid network with a 100 GHz width. For this reason, after Net2Plan 0.4.1 we have put together inside <em>WDMUtils</em> the functionalities of both fixed and flexi grid WDM networks (formerly, flexi-grid networks were dealt with in <em>FlexiGridUtils</em> library).</p>
+ * <p>Flexi-grid networks where all the channels occupy exactly one frequency slot, and the width of the slot is e.g. 100 GHz, are 
+ * equivalent to a fixed-grid network with a 100 GHz width. For this reason, after Net2Plan 0.4.1 we have put together inside 
+ * <em>WDMUtils</em> the functionalities of both fixed and flexi grid WDM networks (formerly, flexi-grid networks were dealt 
+ * with in <em>FlexiGridUtils</em> library, now eliminated).</p>
  * 
  * <h2>Wavelength-routed networks</h2>
  * <p>In wavelength-routed WDM networks, all-optical channels traversing several fibers, called <b>lightpaths</b>, 
- * can be established between pairs of nodes. A lightpath occupies one channel (a wavelength in fixed-grid networks, and a set of frequency slots in flexi-grid networks) 
- * in each traversed link, and two lightpaths routed over the same physical link cannot use the same frequency slot in that link. 
- * This is called the <b>wavelength or frequency slot clash constraint</b>. The <em>Routing and Spectrum Assignment</em> (RSA) problem and the <em>Routing and Wavelength Assignment</em> (RWA) problem in flexi and fixed grid WDM 
- * networks respectively are the ones deciding for each lightpath the route and frequency slots (wavelengths) to occupy in each traversed fiber. 
- * Typically, the wavelength/slots of a lightpath cannot change along the traversed fibers (since wavelength converters are not available). In this case we say that the problem has the <em>wavelength continuity constraint</em>.  
+ * can be established between pairs of nodes. A lightpath occupies one channel (a wavelength in fixed-grid networks, and a set 
+ * of frequency slots in flexi-grid networks) in each traversed link, and two lightpaths routed over the same physical link cannot 
+ * use the same frequency slot in that link. 
+ * This is called the <b>wavelength or frequency slot clash constraint</b>. The <em>Routing and Spectrum Assignment</em> (RSA) problem 
+ * and the <em>Routing and Wavelength Assignment</em> (RWA) problem in flexi and fixed grid WDM 
+ * networks respectively are the ones deciding for each lightpath the route and frequency slots (wavelengths) to occupy in each 
+ * traversed fiber. Typically, the wavelength/slots of a lightpath cannot change along the traversed fibers (since wavelength 
+ * converters are not available). In this case we say that the problem has the <em>wavelength continuity constraint</em>.  
  * 
- * <p>Higher layers in the network see a lightpath as a pipe to transmit traffic, and they are not necessarily aware of the actual sequence of fiber links of the lightpath.</p>
- * <p>The <em>line rate</em> of the lightpath is its capacity e.g. in Gbps. Typical line rates are 10, 40 and 100 Gbps. In flexi-grid networks, it is possible to have lightpaths of different line rates, that occupy the same number of frequency slots. This is because, the transponders (the ones transmitting and receiving the optical signals) can be based on different optical modulations with different <em>spectral efficiencies</em>. For instance, a transponder using BPSK modulation has a spectral efficiency of 1 bps/Hz, while a more sophisticated transponder using 16-QAM has 4 bps/Hz.</p>
- * <p>Nodes in wavelength-routed networks are called Optical Add/Drop Multiplexers (OADMs). They are able to add new lightpaths initiated in the node, drop lightpaths terminating in the node, and optically switch (bypass) lightpaths that traverse the node. Usually, a lightpath occupies the same wavelength in all the traversed links. This is called the <b>wavelength continuity constraint</b>. However, it is possible (so far only in fixed-grid networks) to allocate optical wavelength converters at intermediate nodes of the lightpath that are able to change its wavelength. Nowadays, wavelength converters are composed of an opto-electronic receiver attached to an electro-optic transmitter. Then, the optical signal is regenerated, while its wavelength can be modified. More often, optical regenerators are used not for changing the wavelength in an intermediate node of a lightpath, but to regenerate the optical signal recovering it from its normal degradation caused by channel noise and other impairments.</p>
+ * <p>Higher layers in the network see a lightpath as a pipe to transmit traffic, and they are not necessarily aware of the actual 
+ * sequence of fiber links of the lightpath.</p>
+ * <p>The <em>line rate</em> of the lightpath is its capacity e.g. in Gbps. Typical line rates are 10, 40 and 100 Gbps. In flexi-grid 
+ * networks, it is possible to have lightpaths of different line rates, that occupy the same number of frequency slots. This 
+ * is because, the transponders (the ones transmitting and receiving the optical signals) can be based on different optical modulations 
+ * with different <em>spectral efficiencies</em>. For instance, a transponder using BPSK modulation has a spectral efficiency of 
+ * 1 bps/Hz, while a more sophisticated transponder using 16-QAM has 4 bps/Hz.</p>
+ * <p>Nodes in wavelength-routed networks are called Optical Add/Drop Multiplexers (OADMs). They are able to add new lightpaths 
+ * initiated in the node, drop lightpaths terminating in the node, and optically switch (bypass) lightpaths that traverse the node. 
+ * Usually, a lightpath occupies the same wavelength in all the traversed links. This is called the <b>wavelength continuity 
+ * constraint</b>. However, it is possible (so far only in fixed-grid networks) to allocate optical wavelength converters at 
+ * intermediate nodes of the lightpath that are able to change its wavelength. Nowadays, wavelength converters are composed 
+ * of an opto-electronic receiver attached to an electro-optic transmitter. Then, the optical signal is regenerated, while 
+ * its wavelength can be modified. More often, optical regenerators are used not for changing the wavelength in an intermediate node 
+ * of a lightpath, but to regenerate the optical signal recovering it from its normal degradation caused by channel noise and other 
+ * impairments.</p>
  * <p>In Net2Plan, the <em>WDMUtils</em> library is provided to ease the handling of WDM networks. <em>WDMUtils</em> assumptions are:
  * <ul>
- * <li><em>Network layer</em>: A WDM network is represented by a network layer. Typically, the layer name is set to "WDM" (although this is not mandatory). The measure units for the traffic in this layer is assumed to be Gbps. In its turn, the capacity of the links is assumed to be measured in number of frequency slots.</li>
- * <li><em>Links</em>: Each link in the WDM network layer is an optical fibre. The capacity of the link is measured as the (integer) number of frequency slots available in that fiber. For instance, a typical WDM network using the C-band in 50 GHz channels, has 80 available waveleneghts, and thus the link capacity is 80.  </li>
- * <li><em>Nodes</em>: Each node in the network with input/output links in the WDM layer, represents an Optical Add/Drop Multiplexer (OADMs) capable of routing lightpaths.</li>
- * <li><em>Demands</em>: A demand is here an intention to carry traffic between two OADMS. The offered traffic is assumed to be measured in Gbps (e.g. typically 10 Gbps, 40 Gbps, 100 Gbps).</li>
- * <li><em>Routes</em>: A route represents a lightpath. The carried traffic of the lightpath corresponds to the lighptath line rate. The occupied link capacity of the lightpath is the total number of slots occupied (the same total number in all the traversed links). For specifying the particular frequency slots occupied by a lightpath in a link, in Net2Plan we assume that frequency slots in any link are numbered with consecutive numbers starting from zero 0,1,2,... The lowest number typically corresponds to the lower wavelength. The set of frequency slots occupied by a lightpath in each traversed link is stored by <em>WDMUtils</em> in a route attribute, in an internal format. The user using the <em>WDMUtils</em> library does not need to bother about the details of this format. Additionally, it is possible to define the set of nodes where the optical signal goes through a regenerator of the optical signal (with or without wavelength conversion). This information is also stored as Route attributes.</li>
- * <li><em>Protection segments</em>: Zero, one or more protection segments can be associated to the route, representing (partial) backup lightpaths that protect the primary route. The occupied link capacity of the protection segment reflects the total number of frequency slots reserved in the traversed links. The actual set of slots reserved in each traversed, and the places where the signal is regenerated (if any) are also stored by <em>WDMUtils</em> in segment attributes</li>
+ * <li><em>Network layer</em>: A WDM network is represented by a network layer. Typically, the layer name is set to "WDM" 
+ * (although this is not mandatory). The measure units for the traffic in this layer is assumed to be Gbps. In its turn, the capacity 
+ * of the links is assumed to be measured in number of frequency slots.</li>
+ * <li><em>Links</em>: Each link in the WDM network layer is an optical fibre. The capacity of the link is measured as the 
+ * (integer) number of frequency slots available in that fiber. For instance, a typical WDM network using the C-band in 50 GHz 
+ * channels, has 80 available waveleneghts, and thus the link capacity is 80.  </li>
+ * <li><em>Nodes</em>: Each node in the network with input/output links in the WDM layer, represents an Optical Add/Drop 
+ * Multiplexer (OADMs) capable of routing lightpaths.</li>
+ * <li><em>Demands</em>: A demand is here an intention to carry traffic between two OADMS. The offered traffic is assumed to be measured 
+ * in Gbps (e.g. typically 10 Gbps, 40 Gbps, 100 Gbps).</li>
+ * <li><em>Routes</em>: A route represents a lightpath. The carried traffic of the lightpath corresponds to the lighptath line rate. 
+ * The occupied link capacity of the lightpath is the total number of slots occupied (the same total number in all the traversed 
+ * links). For specifying the particular frequency slots occupied by a lightpath in a link, in Net2Plan we assume that frequency 
+ * slots in any link are numbered with consecutive numbers starting from zero 0,1,2,... The lowest number typically corresponds 
+ * to the lower wavelength. The set of frequency slots occupied by a lightpath in each traversed link is stored by 
+ * <em>WDMUtils</em> in a route attribute, in an internal format. The user using the <em>WDMUtils</em> library does not need to 
+ * bother about the details of this format. Additionally, it is possible to define the set of nodes where the optical signal 
+ * goes through a regenerator of the optical signal (with or without wavelength conversion). This information is also stored 
+ * as Route attributes.</li>
+ * <li><em>Protection segments</em>: Zero, one or more protection segments can be associated to the route, representing (partial or total) 
+ * backup lightpaths that protect the primary route. The occupied link capacity of the protection segment reflects the total number of 
+ * frequency slots reserved in the traversed links. The actual set of slots reserved in each traversed, and the places where the signal 
+ * is regenerated (if any) are also stored by <em>WDMUtils</em> in segment attributes</li>
  * </ul>
- * Network design algorithms and other resources for designing WDM networks can be found in the Net2Plan code repository under keyword <em>WDM</em>.</p>
- */
-/**
- * @author Pablo
- *
+ * <p>Offline and online network design algorithms for fixed/flexi grid WDM networks, as well as reports for showing WDM physical 
+ * layer and RSA allocation information, can be found in the Net2Plan code repository under 
+ * keyword <em>WDM</em>.  </p>
+ * @author Pablo Pavon Mariño
  */
 public class WDMUtils
 {
 	
+	
+	/** This class is devoted to give easy access to the transponders information provided by the user in the 
+	 * typical user-defined parameters {@code transponderTypesInfo}.  
+	 * <p>In such parameters, the user can establish the set of available transponder types for an algorithm, as 
+	 * a {@code String}. Transpoder types separated by \";\" . Each type is characterized by the space-separated values: 
+	 * (i) Line rate in Gbps, (ii) cost of the transponder, (iii) number of slots occupied in each traversed fiber, 
+	 * (iv) optical reach in km (a non-positive number means no reach limit), (v) cost of 
+	 * the optical signal regenerator (regenerators do NOT make wavelength conversion ; if negative, regeneration is not possible).</p>
+	 */
+	/**
+	 * @author Pablo
+	 *
+	 */
 	public static class TransponderTypesInfo
 	{
-		private int T;
+		private int T; 
 		private double [] transponderLineRateGbps;
 		private double [] transponderCosts;
 		private int [] transponderNumberSlots;
@@ -104,6 +159,10 @@ public class WDMUtils
 		private double [] transponderRegeneratorCost;
 		private double maxOpticalReach;
 
+		
+		/** Constructor to initialize the available transponder types object from the user's input parameter string. 
+		 * @param initializationString The initialization string as comes from the user
+		 */
 		public TransponderTypesInfo(String initializationString) 
 		{
 			String [] transpoderTypes = StringUtils.split(initializationString , ";");
@@ -126,27 +185,92 @@ public class WDMUtils
 				maxOpticalReach = Math.max(maxOpticalReach , (transponderRegeneratorCost [t] > 0)? Double.MAX_VALUE : transponderOpticalReachKm [t]);
 			}
 		}
+		/** The maximum optical reach among all the transponders. If a transponder can be regenerated, its optical reach is Double.MAX_VALUE</p>
+		 * @return see above
+		 */
 		public double getMaxOpticalReachKm () { return maxOpticalReach; }
+		/** Returns the cost of the transponder of the given type
+		 * @param tpType the type
+		 * @return the cost
+		 */
 		public double getCost (int tpType) { return transponderCosts [tpType]; }
+		/** Returns a vector with one element per transponder type, and its cost
+		 * @return the vector (not a copy, changes in the vector can produce anomaloous operation of this class)
+		 */
 		public double [] getVectorCosts () { return transponderCosts; }
+		/** Returns the number of frequency slots occupied in all the traversed fibers by the lightpaths initiated in this transponder
+		 * @param tpType the type
+		 * @return the number of slots
+		 */
 		public int getNumSlots (int tpType) { return transponderNumberSlots [tpType]; }
+		/** Returns a vector with one elements per transponder type, with its number of occupied frequency slots
+		 * @return the vector (not a copy, changes in the vector can produce anomaloous operation of this class)
+		 */
 		public int [] getVectorNumSlots () { return transponderNumberSlots; }
+		/** Returns the maximum optical reach without signal regeneration of this transponder type. 
+		 * @param tpType the type
+		 * @return the maximum unregenerated optical reach in km
+		 */
 		public double getOpticalReachKm (int tpType) { return transponderOpticalReachKm [tpType]; }
+		/** Returns a vector with one element per transponder type, with its unregenrated optical reach
+		 * @return the vector (not a copy, changes in the vector can produce anomaloous operation of this class)
+		 */
 		public double [] getVectorOpticalReachesKm () { return transponderOpticalReachKm; }
+		/** Returns the line rate in Gbps of a transponder type
+		 * @param tpType the type
+		 * @return the line rate in Gbps
+		 */
 		public double getLineRateGbps (int tpType) { return transponderLineRateGbps [tpType]; }
+		/** Returns a vector with one element per transponder type, with its line rate and Gbps
+		 * @return the vector (not a copy, changes in the vector can produce anomaloous operation of this class)
+		 */
 		public double [] getVectorLineRates () { return transponderLineRateGbps; }
+		/** Returns the cost of a signal regenerator for the lightpaths of the transponders of the given type. If the 
+		 * user defined this cost with a negative number to reflect that no regeneratios is possible, the same number is returned here.
+		 * @param tpType the type
+		 * @return the cost
+		 */
 		public double getRegeneratorCost (int tpType) { return transponderRegeneratorCost [tpType]; }
+		/** Returns a vector with one element per transponder type, with its cost of a signal regenerator as returned by the {@code getRegeneratorCost} method.
+		 * @return the vector (not a copy, changes in the vector can produce anomaloous operation of this class)
+		 */
 		public double [] getVectorRegeneratorCosts () { return transponderRegeneratorCost; }
+		/** Returns the number of transponder types defined
+		 * @return the number
+		 */
 		public int getNumTypes () { return transponderCosts.length; }
+		/** Returns true if all the transponder types defined have the same line rate.
+		 * @return see above
+		 */
 		public boolean isFixedLineRate () { for (int t = 1; t < T ; t ++) if (transponderLineRateGbps [0] != transponderLineRateGbps [t]) return false; return true; }
+		/** Returns true if signal regeneration is allowed for the lightpaths with the given transponder type. This occurs when 
+		 * the user has defined a non-negative cost for the optical signal regenerators.
+		 * @param tpType the type
+		 * @return see above
+		 */
 		public boolean isOpticalRegenerationPossible (int tpType) { return transponderRegeneratorCost [tpType] >= 0; }
+		/** Returns true if the given line rate is the rate of at least one transponder type 
+		 * @param lineRateGbps the rate
+		 * @return see above
+		 */
 		public boolean isValidLineRateForAtLeastOneType (double lineRateGbps) { for (double val : transponderLineRateGbps) if (val == lineRateGbps) return true; return false; }
+
+		/** Returns true if all the transponders defined have a number of occupied slots equal to one, and false otherwise. 
+		 * The former case corresponds to a fixed grid network, the latter a flexi-grid case
+		 * @return see above
+		 */
+		public boolean isFixedGrid ()
+		{
+			for (int numSlots : transponderNumberSlots) if (numSlots != 1) return false;
+			return true;
+		}
 	}
 	
 	/**
 	 * This class represents a Routing and Spectrum Assignment, valid for a lightpath in both fixed and flexi-grid WDM networks. 
-	 * This comprises a sequence of links, and for each link the set of frequency slots occupied.
-	 * This number of slots must be the same in all the links.
+	 * This comprises a sequence of links, and for each link the set of frequency slots occupied, and for each traversed node 
+	 * but the first, whether or not the optical signal goes through an optical signal regeneration (and thus, a regenerator 
+	 * should be allocated there for this). The number of slots occupied is the same in all the traversed links. 
 	 */
 	public static class RSA
 	{
