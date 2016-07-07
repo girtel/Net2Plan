@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="clean">
+    <target name="clean">
+        <delete dir="../../../../bin"/>
+        <delete dir="../../../../etc"/>
+        <delete dir="../../../../docs"/>
+        <delete dir="../../../../target"/>
+        <delete dir="../../../../lib"/>
+    </target>
+</project>
+

@@ -25,10 +25,11 @@ doc/gen/
 # Netbeans
 nb-configuration.xml
 nbactions.xml
+build.xml
 
 /release.properties
 /pom.xml.releaseBackup
 /etc
 src/test/
 lib/
-src/main/resources/lib/*
+/src/main/resources/lib/

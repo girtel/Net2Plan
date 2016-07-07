@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<network description="Fictitious mesh network connecting the five most populated cities in Spain. It is composed of 5 nodes and 14 unidirectional links. It does not contain any traffic demand" name="5-node network" version="3">
+	<node id="0" xCoord="-3.6919444" yCoord="40.4188889" name="Madrid">
+		<attribute key="level" value="1"/>
+		<attribute key="population" value="3265038"/>
+	</node>
+	<node id="1" xCoord="2.1769444" yCoord="41.3825" name="Barcelona">
+		<attribute key="level" value="1"/>
+		<attribute key="population" value="1615448"/>
+	</node>
+	<node id="2" xCoord="-0.375" yCoord="39.4666667" name="Valencia">
+		<attribute key="level" value="1"/>
+		<attribute key="population" value="798033"/>
+	</node>
+	<node id="3" xCoord="-5.9833333" yCoord="37.3833333" name="Sevilla">
+		<attribute key="level" value="1"/>
+		<attribute key="population" value="703021"/>
+	</node>
+	<node id="4" xCoord="-0.8833333" yCoord="41.65" name="Zaragoza">
+		<attribute key="level" value="1"/>
+		<attribute key="population" value="674725"/>
+	</node>
+	<layer id="0" name="" description="" linkCapacityUnitsName="" demandTrafficUnitsName="">
+		<link id="0" originNodeId="0" destinationNodeId="1" capacity="25.0" lengthInKm="504.6524999683475" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="1" originNodeId="0" destinationNodeId="2" capacity="25.0" lengthInKm="301.92338042167285" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="2" originNodeId="0" destinationNodeId="3" capacity="25.0" lengthInKm="391.4336555843759" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="3" originNodeId="0" destinationNodeId="4" capacity="25.0" lengthInKm="272.4401199817485" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="4" originNodeId="1" destinationNodeId="0" capacity="25.0" lengthInKm="504.6524999683475" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="5" originNodeId="1" destinationNodeId="2" capacity="25.0" lengthInKm="303.3624240744135" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="6" originNodeId="1" destinationNodeId="4" capacity="25.0" lengthInKm="256.5125155963248" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="7" originNodeId="2" destinationNodeId="0" capacity="25.0" lengthInKm="301.92338042167285" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="8" originNodeId="2" destinationNodeId="1" capacity="25.0" lengthInKm="303.3624240744135" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="9" originNodeId="2" destinationNodeId="3" capacity="25.0" lengthInKm="540.5574448288967" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="10" originNodeId="3" destinationNodeId="0" capacity="25.0" lengthInKm="391.4336555843759" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="11" originNodeId="3" destinationNodeId="2" capacity="25.0" lengthInKm="540.5574448288967" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="12" originNodeId="4" destinationNodeId="0" capacity="25.0" lengthInKm="272.4401199817485" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="13" originNodeId="4" destinationNodeId="1" capacity="25.0" lengthInKm="256.5125155963248" propagationSpeedInKmPerSecond="200000.0"/>
+		<sourceRouting/>
+	</layer>
+</network>

@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="xs3p.xsl"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="network">
+        <xs:complexType>
+            <xs:choice maxOccurs="unbounded" minOccurs="1">
+                <xs:element maxOccurs="unbounded" ref="layer"/>
+                <xs:element maxOccurs="unbounded" minOccurs="0" ref="node"/>
+                <xs:element maxOccurs="unbounded" minOccurs="0" ref="srg"/>
+                <xs:element maxOccurs="unbounded" minOccurs="0" ref="layerCoupling"/>
+                <xs:element ref="attribute" maxOccurs="unbounded" minOccurs="0"/>
+            </xs:choice>
+            <xs:attribute name="description" type="xs:string" use="required">
+                <xs:annotation>
+                    <xs:documentation>Network description</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="name" type="xs:string" use="required">
+                <xs:annotation>
+                    <xs:documentation>Network name</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="version" type="xs:long" use="required">
+                <xs:annotation>
+                    <xs:documentation>Version of the file format</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="layer">
+        <xs:complexType>
+            <xs:choice maxOccurs="unbounded" minOccurs="0">
+                <xs:element maxOccurs="unbounded" minOccurs="0" ref="link"/>
+                <xs:element maxOccurs="unbounded" minOccurs="0" ref="demand"/>
+                <xs:choice>
+                    <xs:element ref="sourceRouting"/>
+                    <xs:element ref="hopByHopRouting"/>
+                </xs:choice>
+                <xs:element maxOccurs="unbounded" minOccurs="0" ref="attribute"/>
+            </xs:choice>
+            <xs:attribute name="description" type="xs:string" use="required"/>
+            <xs:attribute name="id" type="idType" use="required"/>
+            <xs:attribute name="name" type="xs:string" use="required"/>
+            <xs:attribute name="linkCapacityUnitsName" type="xs:string" use="required"/>
+            <xs:attribute name="demandTrafficUnitsName" type="xs:string" use="required"/>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="node">
+        <xs:annotation>
+            <xs:documentation>Nodes are the basic entity of a network design, and are either a connection point, a
+                redistribution point or a communication end-point, which are able to send, receive, or forward traffic
+                over a communication channel (or link).
+
+                Nodes are characterized by four member variables: identifier, position, name and attributes. The
+                identifier is internally defined by the kernel and determines a serial unique number of the node. The
+                node position sets the position of the node in a bidimensional Cartesian plane. The node name is a
+                general string that is assigned to the node, e.g. to be shown in the graphical interface. Finally, node
+                attributes are an arbitrary set of name-value pairs that can be used to attach any arbitrary information
+                to the node.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element maxOccurs="unbounded" minOccurs="0" ref="attribute"/>
+            </xs:sequence>
+            <xs:attribute name="id" type="idType" use="required">
+                <xs:annotation>
+                    <xs:documentation>Unique identifier of the node (starting from zero). Node identifiers are not
+                        renumbered upon removalWhen a node is created, the identifier will remain associated to it until
+                        removal, that is,
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="name" use="required">
+                <xs:annotation>
+                    <xs:documentation>Node name</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="xCoord" use="required"/>
+            <xs:attribute name="yCoord" use="required"/>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="link">
+        <xs:annotation>
+            <xs:documentation>Along with nodes, links comprise the topology of the network. They are the communication
+                channels enabling connectivity between two nodes. In Net2Plan, links are unidirectional, from a node to
+                another one. Two nodes can be connected by zero, one or more links. However, self-links (links where
+                origin node and destination node are the same one) are forbidden.
+
+                Links are characterized by six member variables: identifier, origin node, destination node, capacity,
+                length and attributes. Again, the identifier is a serial unique identifier of the link. Origin and
+                destination nodes are the identifiers of the corresponding nodes. Capacity (measured in Erlangs) is the
+                amount of traffic the link is able to carry. Link length (assumed to be in kilometers) represents the
+                physical length of the link, to be used e.g. for propagation delay calculations. Finally, link
+                attributes are an arbitrary set of name-value pairs that can be used to attach any arbitrary information
+                to the link.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element maxOccurs="unbounded" minOccurs="0" ref="attribute"/>
+            </xs:sequence>
+            <xs:attribute name="id" type="idType" use="required"/>
+            <xs:attribute name="originNodeId" type="idType" use="required">
+                <xs:annotation>
+                    <xs:documentation>Identifier of the origin node of the link</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="destinationNodeId" type="idType" use="required">
+                <xs:annotation>
+                    <xs:documentation>Identifier of the destination node of the link</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="capacity" type="nonNegativeDouble" use="required"/>
+            <xs:attribute name="lengthInKm" type="nonNegativeDouble" use="required"/>
+            <xs:attribute name="propagationSpeedInKmPerSecond" type="nonNegativeDouble"
+                          use="required"/>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="demand">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element maxOccurs="unbounded" minOccurs="0" ref="attribute"/>
+            </xs:sequence>
+            <xs:attribute name="id" type="idType" use="required"/>
+            <xs:attribute name="ingressNodeId" type="idType" use="required"/>
+            <xs:attribute name="egressNodeId" type="idType" use="required"/>
+            <xs:attribute name="offeredTraffic" type="nonNegativeDouble" use="required"/>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="sourceRouting">
+        <xs:complexType>
+            <xs:sequence maxOccurs="unbounded" minOccurs="0">
+                <xs:element ref="route"/>
+                <xs:element ref="protectionSegment"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="protectionSegment">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element minOccurs="1" name="seqLinks" type="itemList"></xs:element>
+                <xs:element maxOccurs="unbounded" minOccurs="0" ref="attribute"/>
+            </xs:sequence>
+            <xs:attribute name="id" type="idType" use="required"/>
+            <xs:attribute name="reservedCapacity" use="required" type="nonNegativeDouble"/>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="route">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element minOccurs="1" name="seqLinks" type="itemList"></xs:element>
+                <xs:element name="backupSegmentList" type="itemList"></xs:element>
+                <xs:element maxOccurs="unbounded" minOccurs="0" ref="attribute"/>
+            </xs:sequence>
+            <xs:attribute name="id" type="idType" use="required"/>
+            <xs:attribute name="demandId" type="idType" use="required"/>
+            <xs:attribute name="carriedTraffic" use="required" type="nonNegativeDouble"/>
+            <xs:attribute name="occupiedCapacity" use="required" type="nonNegativeDouble"/>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="hopByHopRouting">
+        <xs:complexType>
+            <xs:sequence maxOccurs="unbounded" minOccurs="0">
+                <xs:element ref="forwardingRule"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="forwardingRule">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element maxOccurs="unbounded" minOccurs="0" ref="attribute"/>
+            </xs:sequence>
+            <xs:attribute name="demandId" type="idType" use="required">
+                <xs:annotation>
+                    <xs:documentation>Demand identifier</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="linkid" type="idType" use="required">
+                <xs:annotation>
+                    <xs:documentation>Outgoing link identifier</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="splittingRule" use="required" type="nonNegativeDouble">
+                <xs:annotation>
+                    <xs:documentation>Splitting ratio of the forwarding rule, that is, fraction from demand 'd' entering
+                        to the origin node of link 'e' going through link 'e'. Note that the sum of the splitting ratios
+                        for each demand at the outgoing links of a node must be lower or equal than 1
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="srg">
+        <xs:complexType>
+            <xs:sequence maxOccurs="unbounded" minOccurs="0">
+                <xs:element maxOccurs="unbounded" minOccurs="0" ref="attribute"/>
+                <xs:element maxOccurs="unbounded" minOccurs="0" name="node">
+                    <xs:annotation>
+                        <xs:documentation>Node associated to the SRG</xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:attribute name="id" type="idType" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element maxOccurs="unbounded" minOccurs="0" name="link">
+                    <xs:annotation>
+                        <xs:documentation>Link associated to the SRG</xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:attribute name="linkId" type="idType" use="required"/>
+                        <xs:attribute name="layerId" type="idType" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+            <xs:attribute name="id" type="idType" use="required"/>
+            <xs:attribute name="meanTimeToFailInHours" use="required" type="nonNegativeDouble"/>
+            <xs:attribute name="meanTimeToRepairInHours" use="required" type="nonNegativeDouble"/>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="layerCoupling">
+        <xs:complexType>
+            <xs:attribute name="lowerLayerId" type="idType" use="required"/>
+            <xs:attribute name="lowerLayerDemandId" type="idType" use="required"/>
+            <xs:attribute name="upperLayerId" type="idType" use="required"/>
+            <xs:attribute name="upperLayerLinkId" type="idType" use="required"/>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="attribute" type="attributeType"></xs:element>
+    <xs:complexType name="attributeType">
+        <xs:annotation>
+            <xs:documentation>Attribute type</xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="key" use="required">
+            <xs:annotation>
+                <xs:documentation>Attribute name</xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:minLength value="1"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="value" use="required" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>Attribute value</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+    <xs:simpleType name="idType">
+        <xs:annotation>
+            <xs:documentation>Identifier type</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:long">
+            <xs:minInclusive value="0"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="nonNegativeDouble">
+        <xs:restriction base="xs:double">
+            <xs:minInclusive value="0"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="itemList">
+        <xs:list itemType="idType"/>
+    </xs:simpleType>
+</xs:schema>
