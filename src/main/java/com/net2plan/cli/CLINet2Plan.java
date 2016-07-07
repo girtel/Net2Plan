@@ -47,11 +47,7 @@ public class CLINet2Plan {
      */
     public CLINet2Plan(String args[]) {
         try {
-            System.out.println("Here 1");
-
             SystemUtils.configureEnvironment(CLINet2Plan.class, UserInterface.CLI);
-
-            System.out.println("Here 2");
 
             for (Class<? extends Plugin> plugin : PluginSystem.getPlugins(ICLIModule.class)) {
                 try {
