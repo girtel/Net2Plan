@@ -520,8 +520,8 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
             if (!reset) return;
 
             reset_internal();
-            reportSelector.reset();
-            reportContainer.removeAll();
+//            reportSelector.reset();
+//            reportContainer.removeAll();
         } catch (Throwable ex) {
             ErrorHandling.addErrorOrException(ex, IGUINetworkViewer.class);
             ErrorHandling.showErrorDialog("Unable to reset");
