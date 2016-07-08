@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.net2plan</groupId>
     <artifactId>net2plan</artifactId>
-    <version>0.4.1-SNAPSHOT</version>
+    <version>0.4.1</version>
     <name>Net2Plan</name>
     <packaging>jar</packaging>
     <url>http://www.net2plan.com</url>
