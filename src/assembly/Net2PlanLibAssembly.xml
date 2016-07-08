@@ -53,5 +53,56 @@
                 <include>IONet2Plan.class</include>
             </includes>
         </fileSet>
+        <!-- Adding resources -->
+        <fileSet>
+            <directory>${project.basedir}/src/main/java/com/net2plan/interfaces</directory>
+            <outputDirectory>com/net2plan/interfaces</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+            <excludes>
+                <exclude>**/*.java</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/src/main/java/com/net2plan/internal</directory>
+            <outputDirectory>com/net2plan/internal</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+            <excludes>
+                <exclude>**/*.java</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/src/main/java/com/net2plan/libraries</directory>
+            <outputDirectory>com/net2plan/libraries</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+            <excludes>
+                <exclude>**/*.java</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/src/main/java/com/net2plan/utils</directory>
+            <outputDirectory>com/net2plan/utils</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+            <excludes>
+                <exclude>**/*.java</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/src/main/java/com/net2plan/io</directory>
+            <outputDirectory>com/net2plan/io</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+            <excludes>
+                <exclude>**/*.java</exclude>
+            </excludes>
+        </fileSet>
     </fileSets>
 </assembly>
