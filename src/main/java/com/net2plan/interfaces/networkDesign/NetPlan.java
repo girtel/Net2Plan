@@ -1420,8 +1420,8 @@ public class NetPlan extends NetworkElement
 
 	/**
 	 * <p>Checks if an element is attached to this {@code NetPlan} object. It is checked also if the element belongs to the input layer.</p>
-	 * @param e Network element
-	 * @param layer Network layer (optional)
+	 * @param elements Network element
+	 * @param optionalLayer Network layer (optional)
 	 */
 	void checkInThisNetPlanAndLayer(Collection<? extends NetworkElement> elements, NetworkLayer ... optionalLayer)
 	{
@@ -1702,9 +1702,9 @@ public class NetPlan extends NetworkElement
 	/**
 	 * <p>Returns the values of a given attribute for all the provided network elements, as a {@code DoubleMatrix1D} vector.</p>
 	 * @param collection Collection of network elements
-	 * @param attribute Attribute name
+	 * @param attributeName Attribute name
 	 * @param defaultValue If an element has value for the attribute, or it is not a double (it fails in the {@code Double.parseDouble} conversion), then this value is set
-	 * @return array with one element per {@code NetworkElement}, in the same order as the input {@code Collection}. 
+	 * @return array with one element per {@code NetworkElement}, in the same order as the input {@code Collection}.
 	 * @see com.net2plan.interfaces.networkDesign.NetworkElement
 	 */
 	public static DoubleMatrix1D getAttributeValues (Collection<? extends NetworkElement> collection , String attributeName , double defaultValue)

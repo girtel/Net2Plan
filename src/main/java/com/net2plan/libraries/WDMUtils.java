@@ -181,7 +181,7 @@ public class WDMUtils
 				maxOpticalReach = Math.max(maxOpticalReach , (transponderRegeneratorCost [t] > 0)? Double.MAX_VALUE : transponderOpticalReachKm [t]);
 			}
 		}
-		/** The maximum optical reach among all the transponders. If a transponder can be regenerated, its optical reach is Double.MAX_VALUE</p>
+		/** The maximum optical reach among all the transponders. If a transponder can be regenerated, its optical reach is Double.MAX_VALUE
 		 * @return see above
 		 */
 		public double getMaxOpticalReachKm () { return maxOpticalReach; }
@@ -350,7 +350,7 @@ public class WDMUtils
 			checkValidity ();
 		}
 
-		/** Equivalent to {@code RSA (seqLinks , seqFrequencySlot, null)
+		/** Equivalent to {@code RSA (seqLinks , seqFrequencySlot, null)}
 		 * @param seqLinks sequence of traversed fibers (a copy is made internally)
 		 * @param seqFrequencySlots_se 2D array with the sequence of frequency slots information.
 		 */
@@ -1463,9 +1463,8 @@ public class WDMUtils
 	 * <p><b>Important</b>: Loop-free paths should be employed, but it is not 
 	 * checked by the method.</p>
 	 * 
-	 * @param slotOccupancyMap Indicates per each fiber its slot occupancy, where already-occupied slots appear
+	 * @param frequencySlot2FiberOccupancy_se Indicates per each fiber its slot occupancy, where already-occupied slots appear
 	 * @param seqFibers (Loop-free) Sequence of traversed fibers (unchecked for conitinuity or cycles)
-	 * @param totalAvailableSlotsPerFiber Number of slots per fiber
 	 * @return Slot occupancy (vector with one coordinate per slot, 1 if occupied, 0 if not)
 	 */
 	public static TreeSet<Integer> computePathSlotOccupancy(List<Link> seqFibers, DoubleMatrix2D frequencySlot2FiberOccupancy_se)
@@ -1521,8 +1520,8 @@ public class WDMUtils
 	
 	/** Returns true if the {@code Link} object representing a fiber is well formed, according to the {@code WDMUtils} requirements. 
 	 * This means that the link capacity is an integer (which reflect the maximum number of slots occupied)
-	 * @param fiber
-	 * @return
+	 * @param fiber Checks if the given link is a fiber.
+	 * @return True if it is. False if it is not.
 	 */
 	public static boolean isWDMFormatCorrect (Link fiber)
 	{

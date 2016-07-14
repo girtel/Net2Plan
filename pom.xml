@@ -422,7 +422,7 @@
                                     <version>true</version>
                                     <overview>${project.basedir}/src/main/resources/javadoc/overview-examples.html
                                     </overview>
-                                    <additionalparam>-d ${project.build.directory}/site/apidocs/api -XdoClint:none
+                                    <additionalparam>-d ${project.build.directory}/site/apidocs/api
                                     </additionalparam>
                                     <links>
                                         <link>../parallelcolt</link>
