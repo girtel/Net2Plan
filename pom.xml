@@ -422,7 +422,7 @@
                                     <version>true</version>
                                     <overview>${project.basedir}/src/main/resources/javadoc/overview-examples.html
                                     </overview>
-                                    <additionalparam>-d ${project.build.directory}/site/apidocs/api -XdoClint:none
+                                    <additionalparam>-d ${project.build.directory}/site/apidocs/api
                                     </additionalparam>
                                     <links>
                                         <link>../parallelcolt</link>
@@ -455,7 +455,7 @@
                                     <use>true</use>
                                     <version>true</version>
                                     <linksource>true</linksource>
-                                    <additionalparam>-d ${project.build.directory}/site/apidocs/examples -XdoClint:none
+                                    <additionalparam>-d ${project.build.directory}/site/apidocs/examples
                                     </additionalparam>
                                     <noqualifier>
                                         java.lang:java.util:java.io:java.awt:java.net:java.awt.geom:javax.swing:cern.colt.matrix.tdouble

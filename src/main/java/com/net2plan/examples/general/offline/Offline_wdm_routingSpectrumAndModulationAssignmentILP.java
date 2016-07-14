@@ -102,7 +102,7 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
  * as the primary (and thus the same line rate, an occupies the same number of slots), its path is SRG-disjoint, and the particular 
  * set of slots occupied can be different. </li>
  * </ul>
- * <h2>Optimization targets<h2>
+ * <h2>Optimization targets</h2>
  * <p>The user can choose between two optimization targets:</p>
  * <ul>
  * <li>Minimizing the total cost, given by the transponders and regenerators (if any).</li>

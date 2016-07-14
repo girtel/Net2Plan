@@ -511,12 +511,11 @@ public class GraphUtils
 	 * This is specified in the xdeAsFractionRespecttoDemandOfferedTraffic parameter. 
 	 * @param nodes List of nodes
 	 * @param links List of links
-	 * @param demands List of demands to which I want to remove the loops
-	 * @param x_de Demand-link routing matrix, with one row per demnad, and one column per link. Contains the traffic of demand d in link e, or the fraction of the traffic respect to the demand offered traffic
-	 * @param xdeAsFractionRespecttoDemandOfferedTraffic true is the matrix is in the fractional form, false otherwise
+	 * @param trafficMatrix List of demands to which I want to remove the loops
+	 * @param x_te Demand-link routing matrix, with one row per demand, and one column per link. Contains the traffic of demand d in link e, or the fraction of the traffic respect to the demand offered traffic
 	 * @param solverName the name of the solver to call for the internal formulation of the algorithm
 	 * @param solverLibraryName the solver library name
-	 * @param maxSolverTimeInSecondsPerDemand the maximum time the solver is allowed for each of the internal formulations (one for each demand). 
+	 * @param maxSolverTimeInSecondsPerDestination the maximum time the solver is allowed for each of the internal formulations (one for each demand).
 	 * @return The new x_de matrix ) */
 	public static DoubleMatrix2D removeCyclesFrom_xte (List<Node> nodes, List<Link> links, DoubleMatrix2D trafficMatrix , DoubleMatrix2D x_te , String solverName , String solverLibraryName , double maxSolverTimeInSecondsPerDestination)
 	{
@@ -1443,7 +1442,7 @@ public class GraphUtils
 
 	/** <p>Class to represent a path in a Graph. Note that a path is defined in terms of edges (rather than vertices) so that multiple edges between the same pair of vertices can be discriminated.</p>
 	 * 
-	 * <p>It implements the {@code {@link java.lang.Comparable Comparable} interface to impose order between different paths. First, try to order using the path weight, and if equals, using the number of hops.</p>
+	 * <p>It implements the {@code {@link java.lang.Comparable Comparable}} interface to impose order between different paths. First, try to order using the path weight, and if equals, using the number of hops.</p>
 	 * 
 	 * @param <E> Edge type
 	 * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza */
