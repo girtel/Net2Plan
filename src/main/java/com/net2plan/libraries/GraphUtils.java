@@ -1836,7 +1836,7 @@ public class GraphUtils
 	 * 
 	 * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
 	 * @since 0.2.0 */
-	static class JUNGUtils
+	public static class JUNGUtils
 	{
 		private static class DummyNode extends Node
 		{
