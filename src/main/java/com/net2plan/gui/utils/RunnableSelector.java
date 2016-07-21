@@ -157,8 +157,12 @@ public class RunnableSelector extends JPanel {
 
                     if (solverName != null && solverLibraryNameItem != null && solverLibraryNameItem.getSecond().isEmpty()) {
                         try {
-                            String solverLibraryName = Configuration.getOption(solverName + "SolverLibraryName");
-                            if (!solverLibraryName.isEmpty()) solverLibraryNameItem.setSecond(solverLibraryName);
+                            String solverLibraryName = null;
+                            if (solverName.equalsIgnoreCase("glpk")) solverLibraryName = Configuration.getOption("glpkSolverLibraryName");
+                            else if (solverName.equalsIgnoreCase("ipopt")) solverLibraryName = Configuration.getOption("ipoptSolverLibraryName");
+                            else if (solverName.equalsIgnoreCase("cplex")) solverLibraryName = Configuration.getOption("cplexSolverLibraryName");
+                            else if (solverName.equalsIgnoreCase("xpress")) solverLibraryName = Configuration.getOption("xpressSolverLicenseFileName");
+                            if (solverLibraryName != null) solverLibraryNameItem.setSecond(solverLibraryName);
                         } catch (Throwable ex) {
                         }
                     }

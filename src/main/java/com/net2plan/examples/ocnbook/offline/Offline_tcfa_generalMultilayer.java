@@ -48,7 +48,7 @@ import com.net2plan.utils.Triple;
  */
 public class Offline_tcfa_generalMultilayer implements IAlgorithm
 {
-	private InputParameter solverName = new InputParameter ("solverName", "#select# glpk cplex ipopt", "The solver name to be used by JOM. GLPK and IPOPT are free, CPLEX commercial. GLPK and CPLEX solve linear problems w/w.o integer contraints. IPOPT is can solve nonlinear problems (if convex, returns global optimum), but cannot handle integer constraints");
+	private InputParameter solverName = new InputParameter ("solverName", "#select# glpk ipopt xpress cplex", "The solver name to be used by JOM. GLPK and IPOPT are free, XPRESS and CPLEX commercial. GLPK, XPRESS and CPLEX solve linear problems w/w.o integer contraints. IPOPT is can solve nonlinear problems (if convex, returns global optimum), but cannot handle integer constraints");
 	private InputParameter solverLibraryName = new InputParameter ("solverLibraryName", "", "The solver library full or relative path, to be used by JOM. Leave blank to use JOM default.");
 	private InputParameter maxSolverTimeInSeconds = new InputParameter ("maxSolverTimeInSeconds", (double) -1 , "Maximum time granted to the solver to solve the problem. If this time expires, the solver returns the best solution found so far (if a feasible solution is found)");
 	private InputParameter ciurcuitCapacityGbps = new InputParameter ("ciurcuitCapacityGbps", (double) 1.0 , "Capacity of a circuit in Gbps, the assumed units for upper layer traffic" , 0 , false , Double.MAX_VALUE , true);

@@ -578,7 +578,7 @@ public class Online_evProc_multidomainRoutingPrimalDecomp extends IEventProcesso
 		/* Compute the optimum solution */
 		Map<String, String> m = new HashMap<String, String>();
 		m.put("optimizationTarget", "min-av-num-hops");
-		m.put("solverName", "cplex");
+		m.put("solverName", "cplex"); // use any linear solver reachable from JOM
 		m.put("solverLibraryName", "");
 		m.put("maxSolverTimeInSeconds", "-1");
 		m.put("binaryRatePerTrafficUnit_bps", "1");

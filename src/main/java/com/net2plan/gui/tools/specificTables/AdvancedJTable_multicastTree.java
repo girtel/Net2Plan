@@ -446,7 +446,11 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
                 if (minCost) {
                     DoubleMatrix1D linkCosts = isMinHops ? DoubleFactory1D.dense.make(E, 1) : netPlan.getVectorLinkLengthInKm();
                     String solverName = Configuration.getOption("defaultILPSolver");
-                    String solverLibraryName = Configuration.getOption(solverName + "SolverLibraryName");
+                    String solverLibraryName = null;
+                    if (solverName.equalsIgnoreCase("glpk")) solverLibraryName = Configuration.getOption("glpkSolverLibraryName");
+                    else if (solverName.equalsIgnoreCase("ipopt")) solverLibraryName = Configuration.getOption("ipoptSolverLibraryName");
+                    else if (solverName.equalsIgnoreCase("cplex")) solverLibraryName = Configuration.getOption("cplexSolverLibraryName");
+                    else if (solverName.equalsIgnoreCase("xpress")) solverLibraryName = Configuration.getOption("xpressSolverLicenseFileName");
                     DoubleMatrix2D Aout_ne = netPlan.getMatrixNodeLinkOutgoingIncidence();
                     DoubleMatrix2D Ain_ne = netPlan.getMatrixNodeLinkIncomingIncidence();
                     for (MulticastDemand demand : netPlan.getMulticastDemands()) {

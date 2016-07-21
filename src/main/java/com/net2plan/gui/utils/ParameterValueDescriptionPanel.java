@@ -330,7 +330,12 @@ public class ParameterValueDescriptionPanel extends JPanel {
 
                     try {
                         try {
-                            String solverLibraryName = Configuration.getOption(value + "SolverLibraryName");
+                        	String solverName = (String) getValueAt(row, 1);
+                            String solverLibraryName = null;
+                            if (solverName.equalsIgnoreCase("glpk")) solverLibraryName = Configuration.getOption("glpkSolverLibraryName");
+                            else if (solverName.equalsIgnoreCase("ipopt")) solverLibraryName = Configuration.getOption("ipoptSolverLibraryName");
+                            else if (solverName.equalsIgnoreCase("cplex")) solverLibraryName = Configuration.getOption("cplexSolverLibraryName");
+                            else if (solverName.equalsIgnoreCase("xpress")) solverLibraryName = Configuration.getOption("xpressSolverLicenseFileName");
                             setValueAt(solverLibraryName, solverLibraryNameRow, 1);
                         } catch (Throwable e) {
 

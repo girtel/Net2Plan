@@ -55,7 +55,7 @@ public class Offline_cfa_modularCapacitiesAndRoutingDualDecomposition implements
 	private int N , E;
 	
 	private InputParameter moduleCapacity = new InputParameter ("moduleCapacity", 1.0 , "Capacity of one module" , 0 , false , Double.MAX_VALUE , true);
-	private InputParameter solverName = new InputParameter ("solverName", "#select# ipopt glpk cplex", "The solver name to be used by JOM. GLPK and IPOPT are free, CPLEX commercial. GLPK and CPLEX solve linear problems w/w.o integer contraints. IPOPT is can solve nonlinear problems (if convex, returns global optimum), but cannot handle integer constraints");
+	private InputParameter solverName = new InputParameter ("solverName", "#select# glpk ipopt xpress cplex", "The solver name to be used by JOM. GLPK and IPOPT are free, XPRESS and CPLEX commercial. GLPK, XPRESS and CPLEX solve linear problems w/w.o integer contraints. IPOPT is can solve nonlinear problems (if convex, returns global optimum), but cannot handle integer constraints");
 	private InputParameter solverLibraryName = new InputParameter ("solverLibraryName", "" , "The solver library full or relative path, to be used by JOM. Leave blank to use JOM default.");
 	private InputParameter maxSolverTimeInSeconds = new InputParameter ("maxSolverTimeInSeconds", (double) -1 , "Maximum time granted to the solver to solve the problem. If this time expires, the solver returns the best solution found so far (if a feasible solution is found)");
 	private InputParameter subgrad_gammaStep = new InputParameter ("subgrad_gammaStep", (double) 0.05 , "Gamma step in the algorithm iteration" , 0 , false , Double.MAX_VALUE , true);
