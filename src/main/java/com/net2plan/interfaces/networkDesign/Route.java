@@ -163,9 +163,9 @@ public class Route extends NetworkElement
 
 	/** Equivalent to setSeqLinksAndProtectionSegments(getInitialSequenceOfLinks ()). That is, it reroutes this route to the original sequence of links when 
 	 * it was created. Recall that if the new route traverses failing link or nodes, its carried traffic and occupied link capacities drop to zero, and if not 
-	 * they will be the base values in the "no failure state"
+	 * they will be the base values in the "no failure state". Also, if the original route now traverses links that were removed, an excetion is thrown
 	 */
-	public void revertToInitialSequenceOfLinks () { this.setSeqLinksAndProtectionSegments(initialSeqLinksWhenCreated); }
+	public void revertToInitialSequenceOfLinks () { checkAttachedToNetPlanObject(); this.setSeqLinksAndProtectionSegments(initialSeqLinksWhenCreated); }
 
 	/** Returns true if the initial sequence of links when the route was created is at this moment NOT traversing failing links or nodes, and thus is not 
 	 * subject to any failure. It returns false otherwise
@@ -596,7 +596,7 @@ public class Route extends NetworkElement
 		if (seqLinksAndProtectionSegments == null) throw new RuntimeException ("Route " + this + ", seqLinksAndProtectionSegments == null");
 		if (initialSeqLinksWhenCreated == null) throw new RuntimeException ("Route " + this + ", initialSeqLinksWhenCreated == null");
 		netPlan.checkInThisNetPlanAndLayer(seqLinksAndProtectionSegments , layer);
-		netPlan.checkInThisNetPlanAndLayer(initialSeqLinksWhenCreated , layer);
+		//netPlan.checkInThisNetPlanAndLayer(initialSeqLinksWhenCreated , layer); // do not check, since initial route could have removed links now
 		netPlan.checkInThisNetPlanAndLayer(seqLinksRealPath , layer);
 		netPlan.checkInThisNetPlanAndLayer(seqNodesRealPath , layer);
 		for (Link link : seqLinksAndProtectionSegments)
