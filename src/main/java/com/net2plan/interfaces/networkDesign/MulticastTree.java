@@ -81,11 +81,12 @@ public class MulticastTree extends NetworkElement
 
 	/**
 	 * <p>Changes the set of {@link com.net2plan.interfaces.networkDesign.Link Links} of the tree to the ones when the tree was created. That is, before any tree rerouting action was made.</p>
-	 * It is equivalent to {@code setLinks(getInitialLinkSet())}
+	 * It is equivalent to {@code setLinks(getInitialLinkSet())}. Recall that if the new link set traverses failing link or nodes, its carried traffic and occupied link capacities drop to zero, and if not 
+	 * they will be the base values in the "no failure state". Also, if the original tree now traverses links that were removed, an exception is thrown
 	 * @see #setLinks(Set)
 	 * @see #getInitialLinkSet()
 	 */
-	public void revertToInitialSequenceOfLinks () { this.setLinks(initialSetLinksWhenWasCreated); }
+	public void revertToInitialSetOfLinks () { this.setLinks(initialSetLinksWhenWasCreated); }
 
 	/**
 	 * <p>Returns {@code true} if the initial set of {@link com.net2plan.interfaces.networkDesign.Link Links} of the tree when it was created is not subject to any failure: traversed links
@@ -569,6 +570,9 @@ public class MulticastTree extends NetworkElement
 	{
 		if (!layer.multicastTrees.contains(this)) throw new RuntimeException ("Bad");
 		if (!demand.cache_multicastTrees.contains(this)) throw new RuntimeException ("Bad");
+		if (linkSet == null) throw new RuntimeException ("Multicast tree " + this + ", linkSet == null");
+		if (initialSetLinksWhenWasCreated == null) throw new RuntimeException ("Multicast Tree  " + this + ", initialSetLinksWhenWasCreated == null");
+		netPlan.checkInThisNetPlanAndLayer(linkSet , layer);
 		for (Link link : linkSet) if (!link.cache_traversingTrees.contains(this)) throw new RuntimeException ("Bad");
 		for (Node node : cache_traversedNodes) if (!node.cache_nodeAssociatedulticastTrees.contains(this)) throw new RuntimeException ("Bad");
 		boolean shouldBeUp = true; for (Link e : linkSet) if (!e.isUp) { shouldBeUp = false; break; }

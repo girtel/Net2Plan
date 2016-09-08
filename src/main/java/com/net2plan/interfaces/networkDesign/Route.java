@@ -163,7 +163,7 @@ public class Route extends NetworkElement
 
 	/** Equivalent to setSeqLinksAndProtectionSegments(getInitialSequenceOfLinks ()). That is, it reroutes this route to the original sequence of links when 
 	 * it was created. Recall that if the new route traverses failing link or nodes, its carried traffic and occupied link capacities drop to zero, and if not 
-	 * they will be the base values in the "no failure state". Also, if the original route now traverses links that were removed, an excetion is thrown
+	 * they will be the base values in the "no failure state". Also, if the original route now traverses links that were removed, an exception is thrown
 	 */
 	public void revertToInitialSequenceOfLinks () { checkAttachedToNetPlanObject(); this.setSeqLinksAndProtectionSegments(initialSeqLinksWhenCreated); }
 

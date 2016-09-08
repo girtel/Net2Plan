@@ -4625,7 +4625,9 @@ public class NetPlan extends NetworkElement
 					writer.writeAttribute("occupiedLinkCapacityIfNotFailing", Double.toString(tree.occupiedLinkCapacityIfNotFailing));
 					List<Long> linkIds = new LinkedList<Long> (); for (Link e : tree.linkSet) linkIds.add (e.id);
 					writer.writeAttribute("currentSetLinks", CollectionUtils.join(linkIds , " "));
-					linkIds = new LinkedList<Long> (); for (Link e : tree.initialSetLinksWhenWasCreated) linkIds.add (e.id);
+					/* If the original link set was removed, it is replaced by the current link set */
+					boolean initialLinkSetNotRemoved = true; for (Link e : tree.initialSetLinksWhenWasCreated) if (e.netPlan == null) { initialLinkSetNotRemoved = false; break; }
+					linkIds = new LinkedList<Long> (); for (Link e : initialLinkSetNotRemoved? tree.initialSetLinksWhenWasCreated : tree.linkSet) linkIds.add (e.id);
 					writer.writeAttribute("linkIds", CollectionUtils.join(linkIds , " "));
 
 					for (Entry<String, String> entry : tree.attributes.entrySet())
@@ -4694,8 +4696,9 @@ public class NetPlan extends NetworkElement
 						writer.writeAttribute("occupiedCapacity", Double.toString(route.occupiedLinkCapacity));
 						writer.writeAttribute("carriedTrafficIfNotFailing", Double.toString(route.carriedTrafficIfNotFailing));
 						writer.writeAttribute("occupiedLinkCapacityIfNotFailing", Double.toString(route.occupiedLinkCapacityIfNotFailing));
-
-						List<Long> initialSeqLinksWhenCreated = new LinkedList<Long> (); for (Link e : route.initialSeqLinksWhenCreated) initialSeqLinksWhenCreated.add (e.id);
+						/* If the initial seq links (when the route was created) contains removed links: we use the current sequence */
+						boolean initialSeqLinksNotRemoved = true; for (Link e : route.initialSeqLinksWhenCreated) if (e.netPlan == null) { initialSeqLinksNotRemoved = false; break; }
+						List<Long> initialSeqLinksWhenCreated = new LinkedList<Long> (); for (Link e : initialSeqLinksNotRemoved? route.initialSeqLinksWhenCreated : route.getSeqLinksRealPath()) initialSeqLinksWhenCreated.add (e.id);
 						List<Long> seqLinksAndProtectionSegments = new LinkedList<Long> (); for (Link e : route.seqLinksAndProtectionSegments) seqLinksAndProtectionSegments.add (e.id);
 						List<Long> backupSegmentList = new LinkedList<Long> (); for (ProtectionSegment e : route.potentialBackupSegments) backupSegmentList.add (e.id);
 						writer.writeAttribute("seqLinks", CollectionUtils.join(initialSeqLinksWhenCreated, " "));
