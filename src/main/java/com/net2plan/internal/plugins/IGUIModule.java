@@ -55,7 +55,7 @@ public abstract class IGUIModule extends JPanel implements Plugin
 	 * 
 	 * @since 0.2.0
 	 */
-	protected final static File CURRENT_DIR;
+	public final static File CURRENT_DIR;
 
 	static { CURRENT_DIR = SystemUtils.getCurrentDir(); }
 	
@@ -78,7 +78,7 @@ public abstract class IGUIModule extends JPanel implements Plugin
 	 * @param action Action to be triggered by {@code keyCombination}
 	 * @since 0.3.0
 	 */
-	protected final void addKeyCombinationAction(String description, Action action, KeyStroke... keyCombination)
+	public final void addKeyCombinationAction(String description, Action action, KeyStroke... keyCombination)
 	{
 		InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
 		KeyStroke[] currentKeyCombinationArray = inputMap.keys();

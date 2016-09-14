@@ -1363,7 +1363,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
      *
      * @since 0.3.0
      */
-    protected final void showNetPlanView() {
+    public final void showNetPlanView() {
         netPlanView.setSelectedIndex(0);
         showTab(viewNetPlanTabIndex);
     }
@@ -1374,7 +1374,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
      * @param tabIndex Tab index
      * @since 0.3.0
      */
-    protected final void showTab(int tabIndex) {
+    public final void showTab(int tabIndex) {
         if (tabIndex < rightPane.getTabCount() && rightPane.getSelectedIndex() != tabIndex) {
             rightPane.setSelectedIndex(tabIndex);
             rightPane.requestFocusInWindow();
