@@ -13,10 +13,9 @@
 package com.net2plan.gui.tools.specificTables;
 
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import com.net2plan.gui.tools.IGUINetworkViewer;
+import com.net2plan.gui.tools.INetworkCallback;
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
-import com.net2plan.gui.utils.topology.INetworkCallback;
 import com.net2plan.gui.utils.topology.TopologyPanel;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -49,7 +48,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
     private static final int COLUMN_SPLITTINGRATIO = 3;
     private static final int COLUMN_CARRIEDTRAFFIC = 4;
 
-    public AdvancedJTable_forwardingRule(final IGUINetworkViewer networkViewer) {
+    public AdvancedJTable_forwardingRule(final INetworkCallback networkViewer) {
         super(createTableModel(networkViewer), networkViewer, NetworkElementType.FORWARDING_RULE);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
@@ -125,7 +124,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
         return new int[]{0, 1, 2};
     }
 
-    private static TableModel createTableModel(final IGUINetworkViewer networkViewer) {
+    private static TableModel createTableModel(final INetworkCallback networkViewer) {
         TableModel forwardingRuleTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
@@ -173,7 +172,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
         return forwardingRuleTableModel;
     }
 
-    private void setDefaultCellRenderers(final IGUINetworkViewer networkViewer) {
+    private void setDefaultCellRenderers(final INetworkCallback networkViewer) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
@@ -197,9 +196,9 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
     public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
         if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
         else setAutoCreateRowSorter(true);
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NODE, new IGUINetworkViewer.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_DEMAND, new IGUINetworkViewer.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_OUTGOINGLINK, new IGUINetworkViewer.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NODE, new AdvancedJTableNetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_DEMAND, new AdvancedJTableNetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_OUTGOINGLINK, new AdvancedJTableNetworkElement.ColumnComparator());
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

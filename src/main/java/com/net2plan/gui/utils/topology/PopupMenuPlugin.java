@@ -12,6 +12,7 @@
 
 package com.net2plan.gui.utils.topology;
 
+import com.net2plan.gui.tools.INetworkCallback;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
 import javax.swing.*;

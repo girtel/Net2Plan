@@ -12,39 +12,70 @@
 
 package com.net2plan.gui.tools;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.Closeable;
-import java.io.File;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
+import javax.swing.Box;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
+import javax.swing.table.TableModel;
 
 import com.net2plan.gui.tools.offlineExecPane.OfflineExecutionPanel;
-import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
-import com.net2plan.gui.utils.RunnableSelector;
-import com.net2plan.gui.utils.ThreadExecutionController;
+import com.net2plan.gui.tools.specificTables.AdvancedJTable_node;
+import com.net2plan.gui.tools.viewEditTopolTables.ViewEditTopologyTablesPane;
+import com.net2plan.gui.tools.viewReportsPane.ViewReportPane;
+import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
+import com.net2plan.gui.utils.topology.TopologyPanel;
+import com.net2plan.gui.utils.topology.jung.JUNGCanvas;
 import com.net2plan.interfaces.networkDesign.Configuration;
-import com.net2plan.interfaces.networkDesign.IAlgorithm;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.ProtectionSegment;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
-import com.net2plan.internal.SystemUtils;
-import com.net2plan.utils.ClassLoaderUtils;
+import com.net2plan.internal.plugins.IGUIModule;
+import com.net2plan.libraries.NetworkPerformanceMetrics;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
 
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -54,18 +85,30 @@ import net.miginfocom.swing.MigLayout;
  * based on constrained optimization formulations (i.e. ILPs) can be fast-prototyped
  * using the open-source Java Optimization Modeler library, to interface
  * to a number of external solvers such as GPLK, CPLEX or IPOPT.
- *
- * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
- * @since 0.2.0
  */
-public class GUINetworkDesign extends IGUINetworkViewer  {
+public class GUINetworkDesign extends IGUIModule implements INetworkCallback  
+{
+	public static Color COLOR_INITIALNODE = new Color(0, 153, 51);
+    public static Color COLOR_ENDNODE = new Color(0, 162, 215);
+
     private final static String TITLE = "Offline network design";
 
     private OfflineExecutionPanel executionPane;
     private JTextArea txt_netPlanLog;
-//    private ThreadExecutionController algorithmController;
-//    private RunnableSelector algorithmSelector;
-//    private long start;
+    protected TopologyPanel topologyPanel;
+
+    /**
+     * Reference to the popup menu in the topology panel.
+     *
+     * @since 0.3.0
+     */
+    private JPanel leftPane;
+    private ViewReportPane reportPane;
+    private JTabbedPane rightPane;
+    private ViewEditTopologyTablesPane viewEditTopTables;
+    private int viewNetPlanTabIndex;
+    public boolean allowDocumentUpdate;
+    private NetPlan currentNetPlan, initialNetPlan;
 
     /**
      * Default constructor.
@@ -86,7 +129,6 @@ public class GUINetworkDesign extends IGUINetworkViewer  {
         super(title);
     }
 
-    @Override
     public boolean allowLoadTrafficDemands() {
         return true;
     }
@@ -94,12 +136,50 @@ public class GUINetworkDesign extends IGUINetworkViewer  {
     @Override
     public void configure(JPanel contentPane) 
     {
-        super.configure(contentPane);
+        topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
+
+        leftPane = new JPanel(new BorderLayout());
+        JPanel logSection = configureLeftBottomPanel();
+        if (logSection == null) {
+            leftPane.add(topologyPanel, BorderLayout.CENTER);
+        } else {
+            JSplitPane splitPaneTopology = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+            splitPaneTopology.setTopComponent(topologyPanel);
+            splitPaneTopology.setBottomComponent(logSection);
+            splitPaneTopology.setResizeWeight(0.8);
+            splitPaneTopology.addPropertyChangeListener(new ProportionalResizeJSplitPaneListener());
+            splitPaneTopology.setBorder(new LineBorder(contentPane.getBackground()));
+            leftPane.add(splitPaneTopology, BorderLayout.CENTER);
+        }
+
+        rightPane = new JTabbedPane();
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitPane.setLeftComponent(leftPane);
+        splitPane.setRightComponent(rightPane);
+        splitPane.setResizeWeight(0.5);
+        splitPane.addPropertyChangeListener(new ProportionalResizeJSplitPaneListener());
+
+        splitPane.setBorder(BorderFactory.createEmptyBorder());
+        contentPane.add(splitPane, "grow");
+
+
+        viewEditTopTables = new ViewEditTopologyTablesPane((GUINetworkDesign) this , new BorderLayout());
+        addTab(isEditable() ? "View/edit network state" : "View network state", viewEditTopTables);
+        viewNetPlanTabIndex = 0;
+        
+        reportPane = new ViewReportPane((GUINetworkDesign) this , JSplitPane.VERTICAL_SPLIT);
+        addTab("View reports", reportPane);
+        
+        loadDesign(new NetPlan());
+
         executionPane = new OfflineExecutionPanel (this);
         addTab("Algorithm execution", executionPane, 1);
+        
+        addAllKeyCombinationActions ();
     }
 
-    @Override
+    
     protected JPanel configureLeftBottomPanel() {
         txt_netPlanLog = new JTextArea();
         txt_netPlanLog.setFont(new JLabel().getFont());
@@ -190,22 +270,801 @@ public class GUINetworkDesign extends IGUINetworkViewer  {
         return Integer.MAX_VALUE;
     }
 
-    @Override
-    public boolean isEditable() {
-        return true;
-    }
-
-    @Override
-    protected void reset_internal() {
-        super.reset_internal();
+    private void reset_internal() {
+        loadDesign(new NetPlan());
         //algorithmSelector.reset();
         executionPane.reset();
     }
 
-    @Override
     protected void updateLog(String text) {
         txt_netPlanLog.setText(null);
         txt_netPlanLog.setText(text);
         txt_netPlanLog.setCaretPosition(0);
     }
+
+    /**
+     * Adds a new tab in the right panel at the last position.
+     *
+     * @param name Tab name
+     * @param tab  Tab component
+     * @return Tab position
+     * @since 0.3.0
+     */
+    protected final int addTab(String name, JComponent tab) {
+        return addTab(name, tab, -1);
+    }
+
+    /**
+     * Adds a new tab in the right panel at the given position.
+     *
+     * @param name     Tab name
+     * @param tab      Tab component
+     * @param tabIndex Tab position (-1 means last position)
+     * @return Tab position
+     * @since 0.3.0
+     */
+    protected final int addTab(String name, JComponent tab, int tabIndex) {
+        int numTabs = rightPane.getTabCount();
+        if (numTabs == 9) throw new RuntimeException("A maximum of 9 tabs are allowed");
+
+        if (tabIndex == -1) tabIndex = numTabs;
+        rightPane.insertTab(name, null, tab, null, tabIndex);
+
+        if (tabIndex <= viewNetPlanTabIndex) viewNetPlanTabIndex++;
+        return tabIndex;
+    }
+
+    private class SwitchTabAction extends AbstractAction {
+        private final int tabId;
+
+        public SwitchTabAction(int tabId) {
+            this.tabId = tabId;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            showTab(tabId);
+        }
+    }
+
+    /**
+     * Shows the desired tab in {@code NetPlan} view.
+     *
+     * @param tabIndex Tab index
+     * @since 0.3.0
+     */
+    public final void showTab(int tabIndex) {
+        if (tabIndex < rightPane.getTabCount() && rightPane.getSelectedIndex() != tabIndex) {
+            rightPane.setSelectedIndex(tabIndex);
+            rightPane.requestFocusInWindow();
+        }
+    }
+
+    @Override
+    public long addLink(long originNode, long destinationNode) {
+        long layer = getDesign().getNetworkLayerDefault().getId();
+        return addLink(layer, originNode, destinationNode);
+    }
+
+    @Override
+    public long addLink(long layer, long originNode, long destinationNode) {
+        if (!isEditable()) throw new UnsupportedOperationException("Not supported");
+
+        NetPlan netPlan = getDesign();
+        Link link = netPlan.addLink(netPlan.getNodeFromId(originNode), netPlan.getNodeFromId(destinationNode), 0, 0, 200000, null, netPlan.getNetworkLayerFromId(layer));
+
+        if (layer == netPlan.getNetworkLayerDefault().getId()) {
+            topologyPanel.getCanvas().addLink(link);
+            topologyPanel.getCanvas().refresh();
+        }
+
+        updateNetPlanView();
+        return link.getId();
+    }
+
+    @Override
+    public Pair<Long, Long> addLinkBidirectional(long originNode, long destinationNode) {
+        return addLinkBidirectional(getDesign().getNetworkLayerDefault().getId(), originNode, destinationNode);
+    }
+
+    @Override
+    public Pair<Long, Long> addLinkBidirectional(long layer, long originNode, long destinationNode) {
+        if (!isEditable()) throw new UnsupportedOperationException("Not supported");
+
+        NetPlan netPlan = getDesign();
+        Pair<Link, Link> links = netPlan.addLinkBidirectional(netPlan.getNodeFromId(originNode), netPlan.getNodeFromId(destinationNode), 0, 0, 200000, null, netPlan.getNetworkLayerFromId(layer));
+        if (layer == netPlan.getNetworkLayerDefault().getId()) {
+        	topologyPanel.getCanvas().addLink(links.getFirst());
+        	topologyPanel.getCanvas().addLink(links.getSecond());
+        	topologyPanel.getCanvas().refresh();
+        }
+
+        updateNetPlanView();
+        return Pair.of(links.getFirst().getId(), links.getSecond().getId());
+    }
+
+    @Override
+    public void addNode(Point2D pos) {
+        if (!isEditable()) throw new UnsupportedOperationException("Not supported");
+
+        NetPlan netPlan = getDesign();
+        long nodeId = netPlan.getNetworkElementNextId();
+        Node node = netPlan.addNode(pos.getX(), pos.getY(), "Node " + nodeId, null);
+        topologyPanel.getCanvas().addNode(node);
+        topologyPanel.getCanvas().refresh();
+        updateNetPlanView();
+    }
+    @Override
+    public NetPlan getDesign() {
+        return currentNetPlan;
+    }
+
+    @Override
+    public NetPlan getInitialDesign() {
+        return initialNetPlan;
+    }
+
+    @Override
+    public List<JComponent> getCanvasActions(Point2D pos) {
+        List<JComponent> actions = new LinkedList<JComponent>();
+
+        if (isEditable())
+            actions.add(new JMenuItem(new AddNodeAction("Add node here", pos)));
+
+        return actions;
+    }
+
+    @Override
+    public List<JComponent> getLinkActions(long link, Point2D pos) {
+        List<JComponent> actions = new LinkedList<JComponent>();
+
+        if (isEditable())
+            actions.add(new JMenuItem(new RemoveLinkAction("Remove link", link)));
+
+        return actions;
+    }
+
+    @Override
+    public List<JComponent> getNodeActions(long nodeId, Point2D pos) {
+        List<JComponent> actions = new LinkedList<JComponent>();
+
+        if (isEditable()) {
+            actions.add(new JMenuItem(new RemoveNodeAction("Remove node", nodeId)));
+
+            NetPlan netPlan = getDesign();
+            Node node = netPlan.getNodeFromId(nodeId);
+            if (netPlan.getNumberOfNodes() > 1) {
+                actions.add(new JPopupMenu.Separator());
+                JMenu unidirectionalMenu = new JMenu("Create unidirectional link");
+                JMenu bidirectionalMenu = new JMenu("Create bidirectional link");
+
+                String nodeName = node.getName() == null ? "" : node.getName();
+                String nodeString = Long.toString(nodeId) + (nodeName.isEmpty() ? "" : " (" + nodeName + ")");
+
+                long layer = netPlan.getNetworkLayerDefault().getId();
+                for (Node auxNode : netPlan.getNodes()) {
+                    if (auxNode.equals(nodeId)) continue;
+
+                    String auxNodeName = auxNode.getName() == null ? "" : auxNode.getName();
+                    String auxNodeString = Long.toString(auxNode.getId()) + (auxNodeName.isEmpty() ? "" : " (" + auxNodeName + ")");
+
+                    AbstractAction unidirectionalAction = new AddLinkAction(nodeString + " => " + auxNodeString, layer, nodeId, auxNode.getId());
+                    unidirectionalMenu.add(unidirectionalAction);
+
+                    AbstractAction bidirectionalAction = new AddLinkBidirectionalAction(nodeString + " <=> " + auxNodeString, layer, nodeId, auxNode.getId());
+                    bidirectionalMenu.add(bidirectionalAction);
+                }
+
+                actions.add(unidirectionalMenu);
+                actions.add(bidirectionalMenu);
+            }
+        }
+
+        return actions;
+    }
+
+    @Override
+    public boolean isEditable() {
+        return false;
+    }
+
+    @Override
+    public void layerChanged(long layer) {
+    }
+
+    @Override
+    public void loadDesign(NetPlan netPlan) {
+        netPlan.checkCachesConsistency();
+        setNetPlan(netPlan);
+        netPlan.checkCachesConsistency();
+        topologyPanel.updateLayerChooser();
+        topologyPanel.getCanvas().zoomAll();
+        resetView();
+    }
+
+    @Override
+    public void loadTrafficDemands(NetPlan demands) {
+        if (!demands.hasDemands() && !demands.hasMulticastDemands())
+            throw new Net2PlanException("Selected file doesn't contain a demand set");
+
+        NetPlan netPlan = getDesign();
+        if (netPlan.hasDemands() || netPlan.hasMulticastDemands()) {
+            int result = JOptionPane.showConfirmDialog(null, "Current network structure contains a demand set. Overwrite?", "Loading demand set", JOptionPane.YES_NO_OPTION);
+            if (result != JOptionPane.YES_OPTION) return;
+        }
+
+        NetPlan aux_netPlan = netPlan.copy();
+        try {
+            netPlan.removeAllDemands();
+            for (Demand demand : demands.getDemands())
+                netPlan.addDemand(netPlan.getNode(demand.getIngressNode().getIndex()), netPlan.getNode(demand.getEgressNode().getIndex()), demand.getOfferedTraffic(), demand.getAttributes());
+
+            netPlan.removeAllMulticastDemands();
+            for (MulticastDemand demand : demands.getMulticastDemands()) {
+                Set<Node> egressNodesThisNetPlan = new HashSet<Node>();
+                for (Node n : demand.getEgressNodes()) egressNodesThisNetPlan.add(netPlan.getNode(n.getIndex()));
+                netPlan.addMulticastDemand(netPlan.getNode(demand.getIngressNode().getIndex()), egressNodesThisNetPlan, demand.getOfferedTraffic(), demand.getAttributes());
+            }
+
+            updateNetPlanView();
+        } catch (Throwable ex) {
+            getDesign().assignFrom(aux_netPlan);
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Override
+    public void moveNode(long node, Point2D pos) {
+        if (!isEditable()) throw new UnsupportedOperationException("Not supported");
+
+        TableModel nodeTableModel = viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.NODE).getModel();
+        int numRows = nodeTableModel.getRowCount();
+        for (int row = 0; row < numRows; row++) {
+            if ((long) nodeTableModel.getValueAt(row, 0) == node) {
+                nodeTableModel.setValueAt(pos.getX(), row, AdvancedJTable_node.COLUMN_XCOORD);
+                nodeTableModel.setValueAt(pos.getY(), row, AdvancedJTable_node.COLUMN_YCOORD);
+            }
+        }
+    }
+
+    @Override
+    public void removeLink(long link) {
+        if (!isEditable()) throw new UnsupportedOperationException("Not supported");
+
+        NetPlan netPlan = getDesign();
+        if (netPlan.getLinkFromId(link).getLayer().equals(getDesign().getNetworkLayerDefault())) {
+            topologyPanel.getCanvas().removeLink(netPlan.getLinkFromId(link));
+            topologyPanel.getCanvas().refresh();
+        }
+        netPlan.getLinkFromId(link).remove();
+
+        updateNetPlanView();
+    }
+
+    @Override
+    public void removeNode(long node) {
+        if (!isEditable()) throw new UnsupportedOperationException("Not supported");
+
+        NetPlan netPlan = getDesign();
+        topologyPanel.getCanvas().removeNode(netPlan.getNodeFromId(node));
+        topologyPanel.getCanvas().refresh();
+        netPlan.getNodeFromId(node).remove();
+        updateNetPlanView();
+    }
+
+    @Override
+    public void reset() {
+        try {
+            boolean reset = askForReset();
+            if (!reset) return;
+
+            reset_internal();
+//            reportSelector.reset();
+//            reportContainer.removeAll();
+        } catch (Throwable ex) {
+            ErrorHandling.addErrorOrException(ex, GUINetworkDesign.class);
+            ErrorHandling.showErrorDialog("Unable to reset");
+        }
+    }
+
+    @Override
+    public void resetView() 
+    {
+        topologyPanel.getCanvas().resetPickedAndUserDefinedColorState();
+        viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.DEMAND).clearSelection();
+        viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.MULTICAST_DEMAND).clearSelection();
+        viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.FORWARDING_RULE).clearSelection();
+        viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.LINK).clearSelection();
+        viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.NODE).clearSelection();
+        viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.PROTECTION_SEGMENT).clearSelection();
+        viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.MULTICAST_TREE).clearSelection();
+        viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.SRG).clearSelection();
+    }
+
+    public void showDemand(long demandId) {
+        NetPlan netPlan = getDesign();
+        NetworkLayer layer = netPlan.getDemandFromId(demandId).getLayer();
+        selectNetPlanViewItem(layer.getId(), NetworkElementType.DEMAND, demandId);
+        Demand demand = netPlan.getDemandFromId(demandId);
+
+        Map<Node, Color> nodes = new HashMap<Node, Color>();
+        nodes.put(demand.getIngressNode(), COLOR_INITIALNODE);
+        nodes.put(demand.getEgressNode(), COLOR_ENDNODE);
+        Map<Link, Pair<Color, Boolean>> links = new HashMap<Link, Pair<Color, Boolean>>();
+
+        DoubleMatrix1D x_e = netPlan.getMatrixDemand2LinkTrafficCarried(layer).viewRow(demand.getIndex()).copy();
+        for (int e = 0; e < x_e.size(); e++)
+            if (x_e.get(e) > 0) {
+                links.put(netPlan.getLink(e, layer), Pair.of(Color.BLUE, false));
+            }
+        topologyPanel.getCanvas().showAndPickNodesAndLinks(nodes, links);
+        topologyPanel.getCanvas().refresh();
+    }
+
+    @Override
+    public void showMulticastDemand(long demandId) {
+        NetPlan netPlan = getDesign();
+        MulticastDemand demand = netPlan.getMulticastDemandFromId(demandId);
+        NetworkLayer layer = demand.getLayer();
+        selectNetPlanViewItem(layer.getId(), NetworkElementType.MULTICAST_DEMAND, demandId);
+
+        Map<Node, Color> nodes = new HashMap<Node, Color>();
+        nodes.put(demand.getIngressNode(), COLOR_INITIALNODE);
+        for (Node n : demand.getEgressNodes()) nodes.put(n, COLOR_ENDNODE);
+        Map<Link, Pair<Color, Boolean>> links = new HashMap<Link, Pair<Color, Boolean>>();
+
+        DoubleMatrix1D x_e = netPlan.getMatrixMulticastDemand2LinkTrafficCarried(layer).viewRow(demand.getIndex()).copy();
+        for (int e = 0; e < x_e.size(); e++)
+            if (x_e.get(e) > 0) links.put(netPlan.getLinkFromId(e), Pair.of(Color.BLUE, false));
+        topologyPanel.getCanvas().showAndPickNodesAndLinks(nodes, links);
+        topologyPanel.getCanvas().refresh();
+    }
+
+    @Override
+    public void showForwardingRule(Pair<Integer, Integer> demandLink) {
+        NetPlan netPlan = getDesign();
+        Demand demand = netPlan.getDemand(demandLink.getFirst());
+        Link link = netPlan.getLink(demandLink.getSecond());
+        NetworkLayer layer = demand.getLayer();
+        selectNetPlanViewItem(layer.getId(), NetworkElementType.FORWARDING_RULE, Pair.of(demand.getIndex(), link.getIndex()));
+
+        Map<Node, Color> nodes = new HashMap<Node, Color>();
+        nodes.put(demand.getIngressNode(), COLOR_INITIALNODE);
+        nodes.put(demand.getEgressNode(), COLOR_ENDNODE);
+        Map<Link, Pair<Color, Boolean>> links = new HashMap<Link, Pair<Color, Boolean>>();
+        links.put(link, Pair.of(Color.BLUE, false));
+        topologyPanel.getCanvas().showAndPickNodesAndLinks(nodes, links);
+        topologyPanel.getCanvas().refresh();
+    }
+
+    @Override
+    public void showLink(long linkId) {
+        NetPlan netPlan = getDesign();
+        Link link = netPlan.getLinkFromId(linkId);
+        selectNetPlanViewItem(link.getLayer().getId(), NetworkElementType.LINK, linkId);
+
+        topologyPanel.getCanvas().showNode(link.getOriginNode(), COLOR_INITIALNODE);
+        topologyPanel.getCanvas().showNode(link.getDestinationNode(), COLOR_ENDNODE);
+
+        topologyPanel.getCanvas().showLink(link, link.isUp() ? Color.BLUE : Color.RED, false);
+        topologyPanel.getCanvas().refresh();
+    }
+
+    @Override
+    public void showNode(long nodeId) {
+        selectNetPlanViewItem(getDesign().getNetworkLayerDefault().getId(), NetworkElementType.NODE, nodeId);
+
+        topologyPanel.getCanvas().showNode(getDesign().getNodeFromId(nodeId), Color.BLUE);
+        topologyPanel.getCanvas().refresh();
+    }
+
+    @Override
+    public void showProtectionSegment(long segmentId) {
+        NetPlan netPlan = getDesign();
+        ProtectionSegment segment = netPlan.getProtectionSegmentFromId(segmentId);
+        selectNetPlanViewItem(segment.getLayer().getId(), NetworkElementType.PROTECTION_SEGMENT, segmentId);
+        Map<Link, Pair<Color, Boolean>> res = new HashMap<Link, Pair<Color, Boolean>>();
+        for (Link e : segment.getSeqLinks()) res.put(e, Pair.of(Color.YELLOW, false));
+        topologyPanel.getCanvas().showAndPickNodesAndLinks(null, res);
+        topologyPanel.getCanvas().refresh();
+    }
+
+    @Override
+    public void showRoute(long routeId) // yellow segment link not used, orange segment link used, blue not segment link used. The same for initial state, in dashed
+    {
+        NetPlan netPlan = getDesign();
+        Route route = netPlan.getRouteFromId(routeId);
+        NetworkLayer layer = route.getLayer();
+        selectNetPlanViewItem(layer.getId(), NetworkElementType.ROUTE, routeId);
+
+        NetPlan initialState = getInitialDesign();
+        Map<Link, Pair<Color, Boolean>> coloredLinks = new HashMap<Link, Pair<Color, Boolean>>();
+        if (inOnlineSimulationMode() && viewEditTopTables.isInitialNetPlanShown ()) {
+            Route initialRoute = initialState.getRouteFromId(route.getId());
+            if (initialRoute != null) {
+                for (ProtectionSegment s : initialRoute.getPotentialBackupProtectionSegments())
+                    for (Link e : s.getSeqLinks())
+                        if (netPlan.getLinkFromId(e.getId()) != null)
+                            coloredLinks.put(netPlan.getLinkFromId(e.getId()), Pair.of(Color.YELLOW, true));
+                for (Link linkOrSegment : initialRoute.getSeqLinksAndProtectionSegments())
+                    if (linkOrSegment instanceof ProtectionSegment) {
+                        for (Link e : ((ProtectionSegment) linkOrSegment).getSeqLinks())
+                            if (netPlan.getLinkFromId(e.getId()) != null)
+                                coloredLinks.put(netPlan.getLinkFromId(e.getId()), Pair.of(Color.ORANGE, true));
+                    } else if (netPlan.getLinkFromId(linkOrSegment.getId()) != null)
+                        coloredLinks.put(netPlan.getLinkFromId(linkOrSegment.getId()), Pair.of(Color.BLUE, true));
+            }
+        }
+        for (ProtectionSegment s : route.getPotentialBackupProtectionSegments())
+            for (Link e : s.getSeqLinks())
+                coloredLinks.put(e, Pair.of(Color.YELLOW, false));
+        for (Link linkOrSegment : route.getSeqLinksAndProtectionSegments())
+            if (linkOrSegment instanceof ProtectionSegment) {
+                for (Link e : ((ProtectionSegment) linkOrSegment).getSeqLinks())
+                    coloredLinks.put(netPlan.getLinkFromId(e.getId()), Pair.of(Color.ORANGE, false));
+            } else coloredLinks.put(linkOrSegment, Pair.of(Color.BLUE, false));
+        topologyPanel.getCanvas().showAndPickNodesAndLinks(null, coloredLinks);
+        topologyPanel.getCanvas().refresh();
+    }
+
+    @Override
+    public void showMulticastTree(long treeId) {
+        NetPlan netPlan = getDesign();
+        MulticastTree tree = netPlan.getMulticastTreeFromId(treeId);
+        NetworkLayer layer = tree.getLayer();
+        selectNetPlanViewItem(layer.getId(), NetworkElementType.MULTICAST_TREE, treeId);
+
+        NetPlan currentState = getDesign();
+        NetPlan initialState = getInitialDesign();
+        Map<Node, Color> coloredNodes = new HashMap<Node, Color>();
+        Map<Link, Pair<Color, Boolean>> coloredLinks = new HashMap<Link, Pair<Color, Boolean>>();
+        if (inOnlineSimulationMode() && viewEditTopTables.isInitialNetPlanShown ()) {
+            MulticastTree initialTree = initialState.getMulticastTreeFromId(treeId);
+            if (initialTree != null)
+                for (Link e : initialTree.getLinkSet())
+                    if (currentState.getLinkFromId(e.getId()) != null)
+                        coloredLinks.put(currentState.getLinkFromId(e.getId()), Pair.of(Color.BLUE, true));
+        }
+        for (Link e : tree.getLinkSet()) coloredLinks.put(e, Pair.of(Color.BLUE, false));
+        coloredNodes.put(tree.getIngressNode(), COLOR_INITIALNODE);
+        for (Node n : tree.getEgressNodes()) coloredNodes.put(n, COLOR_ENDNODE);
+        topologyPanel.getCanvas().showAndPickNodesAndLinks(coloredNodes, coloredLinks);
+        topologyPanel.getCanvas().refresh();
+    }
+
+    @Override
+    public void showSRG(long srg) {
+        showSRG(getDesign().getNetworkLayerDefault().getId(), srg);
+    }
+
+    @Override
+    public void showSRG(long layer, long srg) {
+        NetPlan netPlan = getDesign();
+        selectNetPlanViewItem(layer, NetworkElementType.SRG, srg);
+
+        Set<Node> nodeIds_thisSRG = netPlan.getSRGFromId(srg).getNodes();
+        Set<Link> linkIds_thisSRG_thisLayer = netPlan.getSRGFromId(srg).getLinks(netPlan.getNetworkLayerFromId(layer));
+        Map<Node, Color> nodeColors = new HashMap<Node, Color>();
+        Map<Link, Pair<Color, Boolean>> linkColors = new HashMap<Link, Pair<Color, Boolean>>();
+        for (Node n : nodeIds_thisSRG) nodeColors.put(n, Color.ORANGE);
+        for (Link e : linkIds_thisSRG_thisLayer) linkColors.put(e, Pair.of(Color.ORANGE, false));
+
+        topologyPanel.getCanvas().showAndPickNodesAndLinks(nodeColors, linkColors);
+        topologyPanel.getCanvas().refresh();
+    }
+
+    private class RemoveLinkAction extends AbstractAction {
+        private final long link;
+
+        public RemoveLinkAction(String name, long link) {
+            super(name);
+            this.link = link;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            removeLink(link);
+        }
+    }
+
+    private class RemoveNodeAction extends AbstractAction {
+        private final long node;
+
+        public RemoveNodeAction(String name, long node) {
+            super(name);
+            this.node = node;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            removeNode(node);
+        }
+    }
+
+
+    private class AddNodeAction extends AbstractAction {
+        private final Point2D pos;
+
+        public AddNodeAction(String name, Point2D pos) {
+            super(name);
+            this.pos = pos;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            addNode(pos);
+        }
+    }
+
+
+    private class AddLinkAction extends AbstractAction {
+        private final long layer;
+        private final long originNode;
+        private final long destinationNode;
+
+        public AddLinkAction(String name, long layer, long originNode, long destinationNode) {
+            super(name);
+            this.layer = layer;
+            this.originNode = originNode;
+            this.destinationNode = destinationNode;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            addLink(layer, originNode, destinationNode);
+        }
+    }
+
+    private class AddLinkBidirectionalAction extends AbstractAction {
+        private final long layer;
+        private final long originNode;
+        private final long destinationNode;
+
+        public AddLinkBidirectionalAction(String name, long layer, long originNode, long destinationNode) {
+            super(name);
+            this.layer = layer;
+            this.originNode = originNode;
+            this.destinationNode = destinationNode;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            addLinkBidirectional(layer, originNode, destinationNode);
+        }
+    }
+
+    /**
+     * Allows to include actions when a {@code NetPlan} object is loaded.
+     *
+     * @param netPlan {@code NetPlan} object
+     * @since 0.3.0
+     */
+    protected void setNetPlan(NetPlan netPlan) {
+        currentNetPlan = netPlan;
+        if (inOnlineSimulationMode()) initialNetPlan = currentNetPlan.copy();
+    }
+
+    /**
+     * Asks user to confirm plugin reset.
+     *
+     * @return {@code true} if user confirms to reset the plugin, or {@code false} otherwise
+     * @since 0.2.3
+     */
+    protected static boolean askForReset() {
+        int result = JOptionPane.showConfirmDialog(null, "Are you sure you want to reset? This will remove all unsaved data", "Reset", JOptionPane.YES_NO_OPTION);
+
+        return result == JOptionPane.YES_OPTION;
+    }
+
+    /**
+     * Shows the tab corresponding associated to a network element.
+     *
+     * @param type   Network element type
+     * @param itemId Item identifier (if null, it will just show the tab)
+     * @since 0.3.0
+     */
+    private void selectNetPlanViewItem(NetworkElementType type, Object itemId) {
+        selectNetPlanViewItem(getDesign().getNetworkLayerDefault().getId(), type, itemId);
+    }
+
+    /**
+     * Shows the tab corresponding associated to a network element.
+     *
+     * @param layerId Layer identifier
+     * @param type    Network element type
+     * @param itemId  Item identifier (if null, it will just show the tab)
+     * @since 0.3.0
+     */
+    private void selectNetPlanViewItem(long layer, NetworkElementType type, Object itemId) {
+        topologyPanel.selectLayer(layer);
+        showTab(viewNetPlanTabIndex);
+        viewEditTopTables.selectViewItem (type, itemId);
+    }
+
+    /**
+     * Indicates whether or not the initial {@code NetPlan} object is stored to be
+     * compared with the current one (i.e. after some simulation steps).
+     *
+     * @return {@code true} if the initial {@code NetPlan} object is stored. Otherwise, {@code false}.
+     * @since 0.3.0
+     */
+    public boolean inOnlineSimulationMode() {
+        return false;
+    }
+
+    @Override
+    public synchronized void updateNetPlanView() {
+        updateWarnings();
+        viewEditTopTables.updateView();
+    }
+
+    @Override
+    public void updateWarnings() {
+        Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
+        List<String> warnings = NetworkPerformanceMetrics.checkNetworkState(getDesign(), net2planParameters);
+        String warningMsg = warnings.isEmpty() ? "Design is successfully completed!" : StringUtils.join(warnings, StringUtils.getLineSeparator());
+        updateLog(warningMsg);
+    }
+
+    /**
+     * Shows the {@code NetPlan} view, moving to the corresponding tab.
+     *
+     * @since 0.3.0
+     */
+	@Override
+    public final void showNetPlanView() {
+    	viewEditTopTables.getNetPlanView ().setSelectedIndex(0);
+        showTab(viewNetPlanTabIndex);
+    }
+
+	@Override
+	public boolean allowDocumentUpdate() { return allowDocumentUpdate; }
+
+	@Override
+	public TopologyPanel getTopologyPanel() { return topologyPanel; }
+
+	private void addAllKeyCombinationActions ()
+	{
+        addKeyCombinationAction("Resets the tool", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                reset();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK));
+
+        addKeyCombinationAction("Outputs current design to console", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println(getDesign().toString());
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_F11, InputEvent.CTRL_DOWN_MASK));
+
+        for (int tabId = 0; tabId <= 8; tabId++) {
+            final int key;
+            switch (tabId) {
+                case 0:
+                    key = KeyEvent.VK_1;
+                    break;
+
+                case 1:
+                    key = KeyEvent.VK_2;
+                    break;
+
+                case 2:
+                    key = KeyEvent.VK_3;
+                    break;
+
+                case 3:
+                    key = KeyEvent.VK_4;
+                    break;
+
+                case 4:
+                    key = KeyEvent.VK_5;
+                    break;
+
+                case 5:
+                    key = KeyEvent.VK_6;
+                    break;
+
+                case 6:
+                    key = KeyEvent.VK_7;
+                    break;
+
+                case 7:
+                    key = KeyEvent.VK_8;
+                    break;
+
+                case 8:
+                    key = KeyEvent.VK_9;
+                    break;
+
+                default:
+                    throw new RuntimeException("Bad");
+            }
+
+            addKeyCombinationAction("Open right tab " + tabId, new SwitchTabAction(tabId), KeyStroke.getKeyStroke(key, InputEvent.CTRL_DOWN_MASK));
+        }
+        
+        /* FROM THE OFFLINE ALGORITHM EXECUTION */
+
+        addKeyCombinationAction("Execute algorithm", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	showTab(1);
+            	executionPane.doClickInExecutionButton ();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.CTRL_DOWN_MASK));
+
+        /* From the TOPOLOGY PANEL */
+        addKeyCombinationAction("Load design", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                topologyPanel.loadDesign();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
+
+        addKeyCombinationAction("Save design", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	topologyPanel.saveDesign();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
+
+        addKeyCombinationAction("Zoom in", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	topologyPanel.zoomIn();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK));
+
+        addKeyCombinationAction("Zoom out", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	topologyPanel.zoomOut();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK));
+
+        addKeyCombinationAction("Zoom all", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	topologyPanel.zoomAll();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_MULTIPLY, InputEvent.CTRL_DOWN_MASK));
+
+        addKeyCombinationAction("Take snapshot", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	topologyPanel.takeSnapshot();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_F12, InputEvent.CTRL_DOWN_MASK));
+
+        if (allowLoadTrafficDemands()) {
+        	addKeyCombinationAction("Load traffic demands", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                	topologyPanel.loadTrafficDemands();
+                }
+            }, KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
+        }
+        
+        /* FROM REPORT */
+        addKeyCombinationAction("Close selected report", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int tab = reportPane.getReportContainer().getSelectedIndex();
+                if (tab == -1) return;
+                reportPane.getReportContainer().remove(tab);
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK));
+
+        addKeyCombinationAction("Close all reports", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	reportPane.getReportContainer().removeAll();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+
+        
+	}
+	
 }

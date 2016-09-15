@@ -12,9 +12,9 @@
 
 package com.net2plan.gui.utils.topology.jung;
 
+import com.net2plan.gui.tools.INetworkCallback;
 import com.net2plan.gui.utils.topology.GUILink;
 import com.net2plan.gui.utils.topology.GUINode;
-import com.net2plan.gui.utils.topology.INetworkCallback;
 import com.net2plan.gui.utils.topology.ITopologyCanvasPlugin;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import edu.uci.ics.jung.visualization.VisualizationServer.Paintable;

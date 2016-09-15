@@ -12,7 +12,18 @@
 
 package com.net2plan.gui.tools.specificTables;
 
-import com.net2plan.gui.tools.IGUINetworkViewer;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.util.LinkedList;
+import java.util.List;
+
+import javax.swing.JComponent;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.table.TableModel;
+
+import com.net2plan.gui.tools.INetworkCallback;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.topology.TopologyPanel;
@@ -22,14 +33,6 @@ import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.StringUtils;
-
-import javax.swing.*;
-import javax.swing.table.TableModel;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  */
@@ -55,7 +58,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
     public static final int COLUMN_DEMANDTRAFUNITS = 13;
     public static final int COLUMN_ATTRIBUTES = 14;
 
-    public AdvancedJTable_layer(final IGUINetworkViewer networkViewer) {
+    public AdvancedJTable_layer(final INetworkCallback networkViewer) {
         super(createTableModel(networkViewer), networkViewer, NetworkElementType.LAYER);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
@@ -132,7 +135,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
         return new int[]{};
     }
 
-    private static TableModel createTableModel(final IGUINetworkViewer networkViewer) {
+    private static TableModel createTableModel(final INetworkCallback networkViewer) {
         TableModel layerTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
@@ -154,7 +157,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
         return layerTableModel;
     }
 
-    private void setDefaultCellRenderers(final IGUINetworkViewer networkViewer) {
+    private void setDefaultCellRenderers(final INetworkCallback networkViewer) {
     }
 
     private void setSpecificCellRenderers() {

@@ -12,7 +12,27 @@
 
 package com.net2plan.gui.tools.specificTables;
 
-import com.net2plan.gui.tools.IGUINetworkViewer;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+import javax.swing.DefaultRowSorter;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.table.TableModel;
+
+import com.net2plan.gui.tools.INetworkCallback;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.ClassAwareTableModel;
@@ -27,15 +47,8 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.IntUtils;
 import com.net2plan.utils.StringUtils;
-import net.miginfocom.swing.MigLayout;
 
-import javax.swing.*;
-import javax.swing.table.TableModel;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
-import java.util.*;
+import net.miginfocom.swing.MigLayout;
 
 /**
  */
@@ -65,7 +78,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
      *
      * @since 0.2.0
      */
-    public AdvancedJTable_node(final IGUINetworkViewer networkViewer) {
+    public AdvancedJTable_node(final INetworkCallback networkViewer) {
         super(createTableModel(networkViewer), networkViewer, NetworkElementType.NODE);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
@@ -145,7 +158,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
         return new int[]{7, 8};
     }
 
-    private static TableModel createTableModel(final IGUINetworkViewer networkViewer) {
+    private static TableModel createTableModel(final INetworkCallback networkViewer) {
     	final TopologyPanel topologyPanel = networkViewer.getTopologyPanel();
         TableModel nodeTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
@@ -220,7 +233,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
         return nodeTableModel;
     }
 
-    private void setDefaultCellRenderers(final IGUINetworkViewer networkViewer) {
+    private void setDefaultCellRenderers(final INetworkCallback networkViewer) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
@@ -244,8 +257,8 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
     public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
         if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
         else setAutoCreateRowSorter(true);
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_OUTLINKS, new IGUINetworkViewer.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INLINKS, new IGUINetworkViewer.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_OUTLINKS, new AdvancedJTableNetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INLINKS, new AdvancedJTableNetworkElement.ColumnComparator());
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

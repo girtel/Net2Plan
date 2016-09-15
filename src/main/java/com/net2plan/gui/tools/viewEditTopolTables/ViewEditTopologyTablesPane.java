@@ -14,11 +14,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.RowFilter;
-import javax.swing.ScrollPaneLayout;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import com.net2plan.gui.tools.GUINetworkDesign;
+import com.net2plan.gui.tools.INetworkCallback;
 import com.net2plan.gui.tools.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.tools.rightPanelTabs.NetPlanViewTableComponent_network;
 import com.net2plan.gui.tools.specificTables.AdvancedJTableNetworkElement;
@@ -32,26 +32,26 @@ import com.net2plan.gui.tools.specificTables.AdvancedJTable_node;
 import com.net2plan.gui.tools.specificTables.AdvancedJTable_route;
 import com.net2plan.gui.tools.specificTables.AdvancedJTable_segment;
 import com.net2plan.gui.tools.specificTables.AdvancedJTable_srg;
+import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter.CurrentAndPlannedStateTableCellValue;
 import com.net2plan.gui.utils.FixedColumnDecorator;
 import com.net2plan.gui.utils.FullScrollPaneLayout;
-import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter.CurrentAndPlannedStateTableCellValue;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.utils.Pair;
 import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Pair;
 
 public class ViewEditTopologyTablesPane extends JPanel 
 {
-	private final GUINetworkDesign mainWindow;
+	private final INetworkCallback mainWindow;
     private JTabbedPane netPlanView;
     private Map<NetworkElementType, AdvancedJTableNetworkElement> netPlanViewTable;
     private Map<NetworkElementType, FixedColumnDecorator> netPlanViewTableDecorator;
     private Map<NetworkElementType, JComponent> netPlanViewTableComponent;
     private JCheckBox showInitialPlan;
 
-	public ViewEditTopologyTablesPane (GUINetworkDesign mainWindow , LayoutManager layout)
+	public ViewEditTopologyTablesPane (INetworkCallback mainWindow , LayoutManager layout)
 	{
 		super (layout);
 		
@@ -62,7 +62,7 @@ public class ViewEditTopologyTablesPane extends JPanel
         netPlanViewTableComponent = new EnumMap<NetworkElementType, JComponent>(NetworkElementType.class);
 
 
-        mainWindow.allowDocumentUpdate = mainWindow.isEditable();
+//        mainWindow.allowDocumentUpdate = mainWindow.isEditable();
         netPlanViewTable.put(NetworkElementType.NODE, new AdvancedJTable_node(mainWindow));
         netPlanViewTable.put(NetworkElementType.LINK, new AdvancedJTable_link(mainWindow));
         netPlanViewTable.put(NetworkElementType.DEMAND, new AdvancedJTable_demand(mainWindow));

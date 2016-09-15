@@ -10,8 +10,9 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.utils.topology;
+package com.net2plan.gui.tools;
 
+import com.net2plan.gui.utils.topology.TopologyPanel;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.utils.Pair;
 
@@ -288,5 +289,14 @@ public interface INetworkCallback {
      * @since 0.3.0
      */
     public void updateWarnings();
+
+    // added by Pablo
+    public boolean allowDocumentUpdate ();
+    // added by Pablo
+    public TopologyPanel getTopologyPanel ();
+    // added by Pablo
+    public boolean inOnlineSimulationMode();
+    // added by Pablo
+    public void showNetPlanView();
 
 }

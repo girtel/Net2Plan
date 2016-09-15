@@ -13,7 +13,7 @@ public class GUILauncher
 	{
 		GUINet2Plan.main(args);
 		PluginSystem.addPlugin(IGUIModule.class, GUINetworkDesign.class);
-		PluginSystem.addPlugin(IGUIModule.class, GUIOnlineSimulation.class);
+		//PluginSystem.addPlugin(IGUIModule.class, GUIOnlineSimulation.class);
 		PluginSystem.addPlugin(IGUIModule.class, GUITrafficDesign.class);
 		PluginSystem.loadExternalPlugins();
 		GUINet2Plan.refreshMenu();

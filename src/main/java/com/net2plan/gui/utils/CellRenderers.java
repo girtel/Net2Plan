@@ -12,9 +12,9 @@
 
 package com.net2plan.gui.utils;
 
+import com.net2plan.gui.tools.INetworkCallback;
 import com.net2plan.gui.tools.specificTables.AdvancedJTable_link;
 import com.net2plan.gui.tools.specificTables.AdvancedJTable_route;
-import com.net2plan.gui.utils.topology.INetworkCallback;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.DoubleUtils;

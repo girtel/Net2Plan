@@ -12,23 +12,46 @@
 
 package com.net2plan.gui.tools.specificTables;
 
-import com.net2plan.gui.tools.IGUINetworkViewer;
-import com.net2plan.gui.utils.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+
+import javax.swing.Box;
+import javax.swing.DefaultRowSorter;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JTextField;
+import javax.swing.table.TableModel;
+
+import com.net2plan.gui.tools.INetworkCallback;
+import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
-import com.net2plan.gui.utils.topology.INetworkCallback;
+import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
+import com.net2plan.gui.utils.StringLabeller;
+import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topology.TopologyPanel;
-import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.StringUtils;
-
-import javax.swing.*;
-import javax.swing.table.TableModel;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.util.*;
 
 /**
  */
@@ -51,7 +74,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
             "Offered traffic", "Carried traffic", "% Lost traffic", "Routing cycles", "Bifurcated", "# Multicast trees", "Max e2e latency (ms)", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Ingress node", "Egress nodes", "Indicates the coupled upper layer links, if any, or empty", "Offered traffic by the multicast demand", "Carried traffic by multicast trees carrying demand traffic", "Percentage of lost traffic from the offered", "Indicates whether there are routing cycles: always loopless since we always deal with multicast trees", "Indicates whether the demand has more than one associated multicast tree carrying traffic", "Number of associated multicast trees", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", "Multicast demand-specific attributes");
 
-    public AdvancedJTable_multicastDemand(final IGUINetworkViewer networkViewer) {
+    public AdvancedJTable_multicastDemand(final INetworkCallback networkViewer) {
         super(createTableModel(networkViewer), networkViewer, NetworkElementType.MULTICAST_DEMAND);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
@@ -142,7 +165,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
         return new int[]{3, 4, 5, 9, 10};
     }
 
-    private static TableModel createTableModel(final IGUINetworkViewer networkViewer) {
+    private static TableModel createTableModel(final INetworkCallback networkViewer) {
         TableModel multicastDemandTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
@@ -190,7 +213,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
         return multicastDemandTableModel;
     }
 
-    private void setDefaultCellRenderers(final IGUINetworkViewer networkViewer) {
+    private void setDefaultCellRenderers(final INetworkCallback networkViewer) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
@@ -207,9 +230,9 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
     public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
         if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
         else setAutoCreateRowSorter(true);
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INGRESSNODE, new IGUINetworkViewer.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_EGRESSNODES, new IGUINetworkViewer.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMTREES, new IGUINetworkViewer.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INGRESSNODE, new AdvancedJTableNetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_EGRESSNODES, new AdvancedJTableNetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMTREES, new AdvancedJTableNetworkElement.ColumnComparator());
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

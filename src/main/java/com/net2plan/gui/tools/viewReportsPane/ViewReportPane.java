@@ -23,6 +23,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 
 import com.net2plan.gui.tools.GUINetworkDesign;
+import com.net2plan.gui.tools.INetworkCallback;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.ReportBrowser;
@@ -41,13 +42,13 @@ import com.net2plan.utils.Triple;
 
 public class ViewReportPane extends JSplitPane implements ThreadExecutionController.IThreadExecutionHandler
 {
-	private final GUINetworkDesign mainWindow;
+	private final INetworkCallback mainWindow;
     private RunnableSelector reportSelector;
     private ThreadExecutionController reportController;
     private JTabbedPane reportContainer;
     private JButton closeAllReports;
 
-	public ViewReportPane (GUINetworkDesign mainWindow , int newOrientation)
+	public ViewReportPane (INetworkCallback mainWindow , int newOrientation)
 	{
 		super (newOrientation);
 
@@ -64,23 +65,6 @@ public class ViewReportPane extends JSplitPane implements ThreadExecutionControl
         final JPanel pnl_buttons = new JPanel(new WrapLayout());
 
         reportContainer.setVisible(false);
-
-        mainWindow.addKeyCombinationAction("Close selected report", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int tab = reportContainer.getSelectedIndex();
-                if (tab == -1) return;
-
-                reportContainer.remove(tab);
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK));
-
-        mainWindow.addKeyCombinationAction("Close all reports", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                reportContainer.removeAll();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
 
         reportContainer.addContainerListener(new ContainerListener() {
             @Override
@@ -184,4 +168,5 @@ public class ViewReportPane extends JSplitPane implements ThreadExecutionControl
         ErrorHandling.showErrorDialog("Error executing report");
 	}
 
+	public JTabbedPane getReportContainer () { return reportContainer; }
 }

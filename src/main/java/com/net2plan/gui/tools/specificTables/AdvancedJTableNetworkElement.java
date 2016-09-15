@@ -12,31 +12,53 @@
 
 package com.net2plan.gui.tools.specificTables;
 
-import com.net2plan.gui.tools.IGUINetworkViewer;
-import com.net2plan.gui.tools.IGUINetworkViewer.ColumnComparator;
-import com.net2plan.gui.utils.AdvancedJTable;
-import com.net2plan.gui.utils.AttributeEditor;
-import com.net2plan.gui.utils.ColumnHeaderToolTips;
-import com.net2plan.gui.utils.topology.TopologyPanel;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.internal.ErrorHandling;
-import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.StringUtils;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.swing.Box;
+import javax.swing.DefaultRowSorter;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
+
+import com.net2plan.gui.tools.IGUINetworkViewer;
+import com.net2plan.gui.tools.INetworkCallback;
+import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.AttributeEditor;
+import com.net2plan.gui.utils.ColumnHeaderToolTips;
+import com.net2plan.gui.utils.topology.TopologyPanel;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.ProtectionSegment;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.internal.ErrorHandling;
+import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.StringUtils;
 
 
 /**
@@ -65,7 +87,7 @@ import java.util.Set;
  */
 public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     protected final TableModel model;
-    protected final IGUINetworkViewer networkViewer;
+    protected final INetworkCallback networkViewer;
     protected final NetworkElementType networkElementType;
     //	/**
 //	 * Default constructor.
@@ -83,7 +105,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      * @param model Table model
      * @since 0.2.0
      */
-    public AdvancedJTableNetworkElement(TableModel model, final IGUINetworkViewer networkViewer, NetworkElementType networkElementType) {
+    public AdvancedJTableNetworkElement(TableModel model, final INetworkCallback networkViewer, NetworkElementType networkElementType) {
         super(model);
         this.model = model;
         this.networkViewer = networkViewer;
@@ -746,6 +768,39 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             });
 
             popup.add(removeAttributes);
+        }
+    }
+
+    static class ColumnComparator implements Comparator<String> {
+        @Override
+        public int compare(String o1, String o2) {
+            String oo1 = o1;
+            String oo2 = o2;
+
+            int pos1 = oo1.indexOf(" (");
+            if (pos1 != -1) oo1 = oo1.substring(0, pos1);
+
+            int pos2 = oo2.indexOf(" (");
+            if (pos2 != -1) oo2 = oo2.substring(0, pos2);
+
+            double d1 = Double.MAX_VALUE;
+            try {
+                d1 = Double.parseDouble(oo1);
+            } catch (Throwable e) {
+            }
+
+            double d2 = Double.MAX_VALUE;
+            try {
+                d2 = Double.parseDouble(oo2);
+            } catch (Throwable e) {
+            }
+
+            if (d1 != Double.MAX_VALUE && d2 != Double.MAX_VALUE) {
+                int out = Double.compare(d1, d2);
+                if (out != 0) return out;
+            }
+
+            return o1.compareTo(o2);
         }
     }
 

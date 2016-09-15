@@ -2,6 +2,7 @@ package com.net2plan.gui.tools.rightPanelTabs;
 
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import com.net2plan.gui.tools.IGUINetworkViewer;
+import com.net2plan.gui.tools.INetworkCallback;
 import com.net2plan.gui.tools.specificTables.AdvancedJTable_layer;
 import com.net2plan.gui.utils.*;
 import com.net2plan.interfaces.networkDesign.*;
@@ -42,9 +43,9 @@ public class NetPlanViewTableComponent_layer extends JPanel {
     private JButton forceUpdate;
     private final AdvancedJTable_layer layerTable;
 
-    private final IGUINetworkViewer networkViewer;
+    private final INetworkCallback networkViewer;
 
-    public NetPlanViewTableComponent_layer(final IGUINetworkViewer networkViewer, final AdvancedJTable_layer layerTable) {
+    public NetPlanViewTableComponent_layer(final INetworkCallback networkViewer, final AdvancedJTable_layer layerTable) {
         super(new MigLayout("", "[grow]", "[][][][][][grow]"));
         this.layerTable = layerTable;
         this.networkViewer = networkViewer;
@@ -97,7 +98,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         txt_layerDemandTrafficUnits.setEditable(networkViewer.isEditable());
         txt_layerLinkCapacityUnits.setEditable(networkViewer.isEditable());
         if (networkViewer.isEditable()) {
-            txt_layerName.getDocument().addDocumentListener(networkViewer.new DocumentAdapter() {
+            txt_layerName.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) {
                 @Override
                 protected void updateInfo(String text) {
 //					allowDocumentUpdate = false;
@@ -116,7 +117,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                 }
             });
 
-            txt_layerLinkCapacityUnits.getDocument().addDocumentListener(networkViewer.new DocumentAdapter() {
+            txt_layerLinkCapacityUnits.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) {
                 @Override
                 protected void updateInfo(String text) {
 //					allowDocumentUpdate = false;
@@ -148,7 +149,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                 }
             });
 
-            txt_layerDemandTrafficUnits.getDocument().addDocumentListener(networkViewer.new DocumentAdapter() {
+            txt_layerDemandTrafficUnits.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) {
                 @Override
                 protected void updateInfo(String text) {
 //					allowDocumentUpdate = false;
@@ -180,7 +181,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                 }
             });
 
-            txt_layerDescription.getDocument().addDocumentListener(networkViewer.new DocumentAdapter() {
+            txt_layerDescription.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) {
                 @Override
                 protected void updateInfo(String text) {
 //					allowDocumentUpdate = false;
@@ -200,7 +201,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
 
         layerAttributeTable = new AdvancedJTable(new ClassAwareTableModel(new Object[1][attributeTableHeader.length], attributeTableHeader));
         if (networkViewer.isEditable())
-            layerAttributeTable.addMouseListener(new IGUINetworkViewer.SingleElementAttributeEditor(networkViewer, NetworkElementType.LAYER));
+            layerAttributeTable.addMouseListener(new SingleElementAttributeEditor(networkViewer, NetworkElementType.LAYER));
 
         JTable table = layerAttributeTable;
         String[] columnTips = attributeTableTips;

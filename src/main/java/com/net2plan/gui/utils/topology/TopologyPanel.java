@@ -43,7 +43,7 @@ import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 import javax.swing.border.LineBorder;
 
-import com.net2plan.gui.tools.IGUINetworkViewer;
+import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.utils.FileChooserNetworkDesign;
 import com.net2plan.gui.utils.FileDrop;
 import com.net2plan.gui.utils.StringLabeller;
@@ -57,7 +57,6 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants.DialogType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
-import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
 /**
@@ -70,7 +69,7 @@ import com.net2plan.internal.plugins.ITopologyCanvas;
  */
 public class TopologyPanel extends JPanel implements ActionListener//FrequentisBackgroundPanel implements ActionListener//JPanel implements ActionListener
 {
-    private final IGUINetworkViewer callback;
+    private final GUINetworkDesign callback;
     private ITopologyCanvas canvas;
     private ITopologyCanvasPlugin popupPlugin;
     private JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
@@ -89,7 +88,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param canvasType Canvas type (i.e. JUNG)
      * @since 0.2.3
      */
-    public TopologyPanel(IGUINetworkViewer callback, Class<? extends ITopologyCanvas> canvasType) {
+    public TopologyPanel(GUINetworkDesign callback, Class<? extends ITopologyCanvas> canvasType) {
         this(callback, canvasType, null);
     }
 
@@ -102,7 +101,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param plugins    List of plugins to be included (it may be null)
      * @since 0.2.3
      */
-    public TopologyPanel(IGUINetworkViewer callback, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins) {
+    public TopologyPanel(GUINetworkDesign callback, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins) {
         this(callback, null, null, canvasType, plugins);
     }
 
@@ -116,7 +115,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param plugins                List of plugins to be included (it may be null)
      * @since 0.2.0
      */
-    public TopologyPanel(final IGUINetworkViewer callback, File defaultDesignDirectory, File defaultDemandDirectory, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins) {
+    public TopologyPanel(final GUINetworkDesign callback, File defaultDesignDirectory, File defaultDemandDirectory, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins) {
 //		super (null, FrequentisBackgroundPanel.ACTUAL, 1.0f, 0.5f);
 
         File currentDir = SystemUtils.getCurrentDir();
@@ -336,56 +335,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Network topology"));
         setAllowLoadTrafficDemand(callback.allowLoadTrafficDemands());
 
-        callback.addKeyCombinationAction("Load design", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                loadDesign();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
-
-        callback.addKeyCombinationAction("Save design", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                saveDesign();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
-
-        callback.addKeyCombinationAction("Zoom in", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                zoomIn();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK));
-
-        callback.addKeyCombinationAction("Zoom out", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            	zoomOut();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK));
-
-        callback.addKeyCombinationAction("Zoom all", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            	zoomAll();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_MULTIPLY, InputEvent.CTRL_DOWN_MASK));
-
-        callback.addKeyCombinationAction("Take snapshot", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                takeSnapshot();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_F12, InputEvent.CTRL_DOWN_MASK));
-
-        if (callback.allowLoadTrafficDemands()) {
-        	callback.addKeyCombinationAction("Load traffic demands", new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    loadTrafficDemands();
-                }
-            }, KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
-        }
 
         
     }

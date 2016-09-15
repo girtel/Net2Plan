@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
 import com.net2plan.gui.tools.GUINetworkDesign;
+import com.net2plan.gui.tools.INetworkCallback;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.RunnableSelector;
 import com.net2plan.gui.utils.ThreadExecutionController;
@@ -30,12 +31,13 @@ import net.miginfocom.swing.MigLayout;
 
 public class OfflineExecutionPanel extends JPanel implements ThreadExecutionController.IThreadExecutionHandler
 {
-	private final GUINetworkDesign mainWindow;
+	private final INetworkCallback mainWindow;
     private ThreadExecutionController algorithmController;
     private RunnableSelector algorithmSelector;
     private long start;
+    final JButton btn_solve;
 	
-	public OfflineExecutionPanel (GUINetworkDesign mainWindow)
+	public OfflineExecutionPanel (INetworkCallback mainWindow)
 	{
 		super ();
 
@@ -51,7 +53,7 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
         algorithmController = new ThreadExecutionController(this);
         JPanel pnl_buttons = new JPanel(new MigLayout("", "[center, grow]", "[]"));
 
-        final JButton btn_solve = new JButton("Execute");
+        btn_solve = new JButton("Execute");
         pnl_buttons.add(btn_solve);
         btn_solve.addActionListener(new ActionListener() {
             @Override
@@ -59,14 +61,6 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
                 algorithmController.execute();
             }
         });
-		
-        mainWindow.addKeyCombinationAction("Execute algorithm", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            	mainWindow.showTab(1);
-                btn_solve.doClick();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.CTRL_DOWN_MASK));
 		
 		add(algorithmSelector, "grow");
         add(pnl_buttons, "dock south");
@@ -122,5 +116,6 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
 	{
 		ErrorHandling.showErrorDialog("Error executing algorithm");
 	}
-	
+
+	public void doClickInExecutionButton () { btn_solve.doClick();}
 }
