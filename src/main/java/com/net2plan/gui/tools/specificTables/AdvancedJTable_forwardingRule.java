@@ -49,8 +49,8 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
     private static final int COLUMN_SPLITTINGRATIO = 3;
     private static final int COLUMN_CARRIEDTRAFFIC = 4;
 
-    public AdvancedJTable_forwardingRule(final IGUINetworkViewer networkViewer, final TopologyPanel topologyPanel) {
-        super(createTableModel(networkViewer, topologyPanel), networkViewer, NetworkElementType.FORWARDING_RULE);
+    public AdvancedJTable_forwardingRule(final IGUINetworkViewer networkViewer) {
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.FORWARDING_RULE);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
@@ -125,7 +125,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
         return new int[]{0, 1, 2};
     }
 
-    private static TableModel createTableModel(final IGUINetworkViewer networkViewer, final TopologyPanel topologyPanel) {
+    private static TableModel createTableModel(final IGUINetworkViewer networkViewer) {
         TableModel forwardingRuleTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 

@@ -1,4 +1,4 @@
-package com.net2plan.gui.mainPanes.offlineExec;
+package com.net2plan.gui.tools.offlineExecPane;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

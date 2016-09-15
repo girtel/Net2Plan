@@ -60,8 +60,8 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
     private static final int COLUMN_ATTRIBUTES = 11;
     private static int MAXNUMDECIMALSINAVAILABILITY = 7;
 
-    public AdvancedJTable_srg(final IGUINetworkViewer networkViewer, final TopologyPanel topologyPanel) {
-        super(createTableModel(networkViewer, topologyPanel), networkViewer, NetworkElementType.SRG);
+    public AdvancedJTable_srg(final IGUINetworkViewer networkViewer) {
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.SRG);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
@@ -149,7 +149,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
         return new int[]{8, 9};
     }
 
-    private static TableModel createTableModel(final IGUINetworkViewer networkViewer, final TopologyPanel topologyPanel) {
+    private static TableModel createTableModel(final IGUINetworkViewer networkViewer) {
         TableModel srgTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 

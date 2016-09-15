@@ -66,8 +66,8 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Show/Hide", "Origin node", "Destination node", "State", "Capacity", "Carried traffic", "Reserved for protection", "Utilization", "Utilization (w.o. protection)", "Is bottleneck?", "Length (km)", "Propagation speed (km/s)", "Propagation delay (ms)", "# Routes", "# Segments", "# Forwarding rules", "# Multicast trees", "SRGs", "Coupled to demand", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Indicates whether or not the link is visible in the topology canvas (if some of the end-nodes is hidden, this link will become hidden, even though the link is set as visible)", "Origin node", "Destination node", "Indicates whether the link is in up/down state", "Capacity", "Carried traffic (summing unicast and multicast)", "Reserved for protection", "Utilization (carried traffic plus reserved bandwidth, divided by link capacity)", "Utilization excluding reserved capacity for protection (link carried traffic divided by link capacity)", "Indicates whether this link has the highest utilization in the network", "Length (km)", "Propagation speed (km/s)", "Propagation delay (ms)", "Number of routes traversing the link", "Number of protection segments traversing the link", "Number of forwarding rules for this link", "Number of multicast trees traversing the link", "SRGs including this link", "Indicates the coupled lower layer demand, if any, or empty", "Link-specific attributes");
 
-    public AdvancedJTable_link(final IGUINetworkViewer networkViewer, final TopologyPanel topologyPanel) {
-        super(createTableModel(networkViewer, topologyPanel), networkViewer, NetworkElementType.LINK);
+    public AdvancedJTable_link(final IGUINetworkViewer networkViewer) {
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.LINK);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
@@ -210,7 +210,8 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
         return new int[]{3, 4, 16, 17, 18, 19};
     } //{ return new int [] { 3,4,6,16,17,18,19 }; }
 
-    private static TableModel createTableModel(final IGUINetworkViewer networkViewer, final TopologyPanel topologyPanel) {
+    private static TableModel createTableModel(final IGUINetworkViewer networkViewer) {
+    	final TopologyPanel topologyPanel = networkViewer.getTopologyPanel();
         TableModel linkTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 

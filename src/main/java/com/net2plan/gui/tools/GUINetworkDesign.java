@@ -33,7 +33,7 @@ import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.border.LineBorder;
 
-import com.net2plan.gui.mainPanes.offlineExec.OfflineExecutionPanel;
+import com.net2plan.gui.tools.offlineExecPane.OfflineExecutionPanel;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.RunnableSelector;
 import com.net2plan.gui.utils.ThreadExecutionController;
@@ -87,7 +87,7 @@ public class GUINetworkDesign extends IGUINetworkViewer  {
     }
 
     @Override
-    protected boolean allowLoadTrafficDemands() {
+    public boolean allowLoadTrafficDemands() {
         return true;
     }
 
@@ -95,38 +95,7 @@ public class GUINetworkDesign extends IGUINetworkViewer  {
     public void configure(JPanel contentPane) 
     {
         super.configure(contentPane);
-
-//        File ALGORITHMS_DIRECTORY = new File(CURRENT_DIR + SystemUtils.getDirectorySeparator() + "workspace");
-//        ALGORITHMS_DIRECTORY = ALGORITHMS_DIRECTORY.isDirectory() ? ALGORITHMS_DIRECTORY : CURRENT_DIR;
-//
-//        ParameterValueDescriptionPanel algorithmParameters = new ParameterValueDescriptionPanel();
-//        algorithmSelector = new RunnableSelector("Algorithm", null, IAlgorithm.class, ALGORITHMS_DIRECTORY, algorithmParameters);
-//        algorithmController = new ThreadExecutionController(this);
-//        JPanel pnl_buttons = new JPanel(new MigLayout("", "[center, grow]", "[]"));
-//
-//        final JButton btn_solve = new JButton("Execute");
-//        pnl_buttons.add(btn_solve);
-//        btn_solve.addActionListener(new ActionListener() {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                algorithmController.execute();
-//            }
-//        });
-
-//        addKeyCombinationAction("Execute algorithm", new AbstractAction() {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                showTab(1);
-//                btn_solve.doClick();
-//            }
-//        }, KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.CTRL_DOWN_MASK));
-
-
         executionPane = new OfflineExecutionPanel (this);
-//        executionPane.setLayout(new MigLayout("insets 0 0 0 0", "[grow]", "[grow]"));
-//        executionPane.add(algorithmSelector, "grow");
-//        executionPane.add(pnl_buttons, "dock south");
-
         addTab("Algorithm execution", executionPane, 1);
     }
 
@@ -140,8 +109,8 @@ public class GUINetworkDesign extends IGUINetworkViewer  {
         return pane;
     }
 
-    @Override
-    public Object execute(ThreadExecutionController controller) {
+//    @Override
+//    public Object execute(ThreadExecutionController controller) {
 //        if (controller == algorithmController) {
 //            start = System.nanoTime();
 //            final Triple<File, String, Class> algorithm = algorithmSelector.getRunnable();
@@ -160,36 +129,36 @@ public class GUINetworkDesign extends IGUINetworkViewer  {
 //            getDesign().assignFrom(netPlan);
 //            return out;
 //        } else {
-            return super.execute(controller);
+//            return super.execute(controller);
 //        }
-    }
+//    }
 
-    @Override
-    public void executionFailed(ThreadExecutionController controller) {
-//        if (controller == algorithmController) //ErrorHandling.showErrorDialog("Error executing algorithm");
-//        else 
-        	super.executionFailed(controller);
-    }
-
-    @Override
-    public void executionFinished(ThreadExecutionController controller, Object out) {
-//        if (controller == algorithmController) {
-////            try {
-////                double execTime = (System.nanoTime() - start) / 1e9;
-////                topologyPanel.updateLayerChooser();
-////                getTopologyPanel().getCanvas().zoomAll();
-////
-////                String outMessage = String.format("Algorithm executed successfully%nExecution time: %.3g s%nExit message: %s", execTime, out);
-////                JOptionPane.showMessageDialog(null, outMessage, "Solve design", JOptionPane.PLAIN_MESSAGE);
-////                showNetPlanView();
-////            } catch (Throwable ex) {
-////                ErrorHandling.addErrorOrException(ex, GUINetworkDesign.class);
-////                ErrorHandling.showErrorDialog("Error executing algorithm");
-////            }
-//        } else {
-            super.executionFinished(controller, out);
-//        }
-    }
+//    @Override
+//    public void executionFailed(ThreadExecutionController controller) {
+////        if (controller == algorithmController) //ErrorHandling.showErrorDialog("Error executing algorithm");
+////        else 
+//        	super.executionFailed(controller);
+//    }
+//
+//    @Override
+//    public void executionFinished(ThreadExecutionController controller, Object out) {
+////        if (controller == algorithmController) {
+//////            try {
+//////                double execTime = (System.nanoTime() - start) / 1e9;
+//////                topologyPanel.updateLayerChooser();
+//////                getTopologyPanel().getCanvas().zoomAll();
+//////
+//////                String outMessage = String.format("Algorithm executed successfully%nExecution time: %.3g s%nExit message: %s", execTime, out);
+//////                JOptionPane.showMessageDialog(null, outMessage, "Solve design", JOptionPane.PLAIN_MESSAGE);
+//////                showNetPlanView();
+//////            } catch (Throwable ex) {
+//////                ErrorHandling.addErrorOrException(ex, GUINetworkDesign.class);
+//////                ErrorHandling.showErrorDialog("Error executing algorithm");
+//////            }
+////        } else {
+//            super.executionFinished(controller, out);
+////        }
+//    }
 
     @Override
     public String getDescription() {

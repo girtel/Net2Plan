@@ -58,8 +58,8 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
      *
      * @since 0.2.0
      */
-    public AdvancedJTable_demand(final IGUINetworkViewer networkViewer, final TopologyPanel topologyPanel) {
-        super(createTableModel(networkViewer, topologyPanel), networkViewer, NetworkElementType.DEMAND);
+    public AdvancedJTable_demand(final IGUINetworkViewer networkViewer) {
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.DEMAND);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
@@ -138,7 +138,8 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
         return new int[]{COLUMN_INGRESSNODE, COLUMN_EGRESSNODE, COLUMN_COUPLEDTOLINK, COLUMN_BIFURCATED, COLUMN_NUMROUTES};
     } //{ return new int [] { 3,4,5,9,10 }; }
 
-    private static TableModel createTableModel(final IGUINetworkViewer networkViewer, final TopologyPanel topologyPanel) {
+    private static TableModel createTableModel(final IGUINetworkViewer networkViewer) {
+    	final TopologyPanel topologyPanel = networkViewer.getTopologyPanel();
         TableModel demandTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 

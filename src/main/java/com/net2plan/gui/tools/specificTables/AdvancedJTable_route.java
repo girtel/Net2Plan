@@ -61,8 +61,8 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
             "Propagation delay (ms)", "Bottleneck utilization", "Backup segments", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Demand", "Ingress node", "Egress node", "Demand offered traffic", "Carried traffic", "Occupied capacity", "Sequence of links", "Sequence of nodes", "Number of hops", "Total route length", "Propagation delay (ms)", "Highest utilization among all traversed links", "Candidate protection segments for this route", "Route-specific attributes");
 
-    public AdvancedJTable_route(final IGUINetworkViewer networkViewer, final TopologyPanel topologyPanel) {
-        super(createTableModel(networkViewer, topologyPanel), networkViewer, NetworkElementType.ROUTE);
+    public AdvancedJTable_route(final IGUINetworkViewer networkViewer) {
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.ROUTE);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
@@ -156,7 +156,8 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         return new int[]{};
     }
 
-    private static TableModel createTableModel(final IGUINetworkViewer networkViewer, final TopologyPanel topologyPanel) {
+    private static TableModel createTableModel(final IGUINetworkViewer networkViewer) {
+    	final TopologyPanel topologyPanel = networkViewer.getTopologyPanel();
         TableModel routeTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 

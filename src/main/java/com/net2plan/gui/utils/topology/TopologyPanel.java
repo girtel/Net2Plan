@@ -12,26 +12,53 @@
 
 package com.net2plan.gui.utils.topology;
 
-import com.net2plan.gui.utils.*;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.internal.Constants.DialogType;
-import com.net2plan.internal.ErrorHandling;
-import com.net2plan.internal.SystemUtils;
-import com.net2plan.internal.plugins.ITopologyCanvas;
-
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+
+import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JToggleButton;
+import javax.swing.JToolBar;
+import javax.swing.KeyStroke;
+import javax.swing.border.LineBorder;
+
+import com.net2plan.gui.tools.IGUINetworkViewer;
+import com.net2plan.gui.utils.FileChooserNetworkDesign;
+import com.net2plan.gui.utils.FileDrop;
+import com.net2plan.gui.utils.StringLabeller;
+import com.net2plan.gui.utils.SwingUtils;
+import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.gui.utils.topology.jung.AddLinkGraphPlugin;
+import com.net2plan.gui.utils.topology.jung.JUNGCanvas;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.internal.Constants.DialogType;
+import com.net2plan.internal.ErrorHandling;
+import com.net2plan.internal.SystemUtils;
+import com.net2plan.internal.plugins.IGUIModule;
+import com.net2plan.internal.plugins.ITopologyCanvas;
 
 /**
  * <p>Wrapper class for the graph canvas.</p>
@@ -43,8 +70,9 @@ import java.util.Locale;
  */
 public class TopologyPanel extends JPanel implements ActionListener//FrequentisBackgroundPanel implements ActionListener//JPanel implements ActionListener
 {
-    private final INetworkCallback callback;
+    private final IGUINetworkViewer callback;
     private ITopologyCanvas canvas;
+    private ITopologyCanvasPlugin popupPlugin;
     private JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private FileChooserNetworkDesign fc_netPlan, fc_demands;
@@ -61,7 +89,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param canvasType Canvas type (i.e. JUNG)
      * @since 0.2.3
      */
-    public TopologyPanel(INetworkCallback callback, Class<? extends ITopologyCanvas> canvasType) {
+    public TopologyPanel(IGUINetworkViewer callback, Class<? extends ITopologyCanvas> canvasType) {
         this(callback, canvasType, null);
     }
 
@@ -74,7 +102,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param plugins    List of plugins to be included (it may be null)
      * @since 0.2.3
      */
-    public TopologyPanel(INetworkCallback callback, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins) {
+    public TopologyPanel(IGUINetworkViewer callback, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins) {
         this(callback, null, null, canvasType, plugins);
     }
 
@@ -88,7 +116,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param plugins                List of plugins to be included (it may be null)
      * @since 0.2.0
      */
-    public TopologyPanel(final INetworkCallback callback, File defaultDesignDirectory, File defaultDemandDirectory, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins) {
+    public TopologyPanel(final IGUINetworkViewer callback, File defaultDesignDirectory, File defaultDemandDirectory, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins) {
 //		super (null, FrequentisBackgroundPanel.ACTUAL, 1.0f, 0.5f);
 
         File currentDir = SystemUtils.getCurrentDir();
@@ -296,6 +324,70 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showNodeNames.setSelected(false);
         btn_showLinkIds.setSelected(false);
         btn_showNonConnectedNodes.setSelected(true);
+        
+        popupPlugin = new PopupMenuPlugin(callback);
+        addPlugin(new PanGraphPlugin(callback, MouseEvent.BUTTON1_MASK));
+        if (callback.isEditable() && getCanvas() instanceof JUNGCanvas)
+            addPlugin(new AddLinkGraphPlugin(callback, MouseEvent.BUTTON1_MASK, MouseEvent.BUTTON1_MASK | MouseEvent.SHIFT_MASK));
+        addPlugin(popupPlugin);
+        if (callback.isEditable())
+            addPlugin(new MoveNodePlugin(callback, MouseEvent.BUTTON1_MASK | MouseEvent.CTRL_MASK));
+
+        setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Network topology"));
+        setAllowLoadTrafficDemand(callback.allowLoadTrafficDemands());
+
+        callback.addKeyCombinationAction("Load design", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                loadDesign();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Save design", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                saveDesign();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Zoom in", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                zoomIn();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Zoom out", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	zoomOut();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Zoom all", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	zoomAll();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_MULTIPLY, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Take snapshot", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                takeSnapshot();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_F12, InputEvent.CTRL_DOWN_MASK));
+
+        if (callback.allowLoadTrafficDemands()) {
+        	callback.addKeyCombinationAction("Load traffic demands", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    loadTrafficDemands();
+                }
+            }, KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
+        }
+
+        
     }
 
     @Override

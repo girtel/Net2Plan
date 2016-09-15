@@ -65,8 +65,8 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
      *
      * @since 0.2.0
      */
-    public AdvancedJTable_node(final IGUINetworkViewer networkViewer, final TopologyPanel topologyPanel) {
-        super(createTableModel(networkViewer, topologyPanel), networkViewer, NetworkElementType.NODE);
+    public AdvancedJTable_node(final IGUINetworkViewer networkViewer) {
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.NODE);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
@@ -145,7 +145,8 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
         return new int[]{7, 8};
     }
 
-    private static TableModel createTableModel(final IGUINetworkViewer networkViewer, final TopologyPanel topologyPanel) {
+    private static TableModel createTableModel(final IGUINetworkViewer networkViewer) {
+    	final TopologyPanel topologyPanel = networkViewer.getTopologyPanel();
         TableModel nodeTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 

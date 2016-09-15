@@ -12,44 +12,75 @@
 
 package com.net2plan.gui.tools;
 
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import com.net2plan.gui.tools.rightPanelTabs.NetPlanViewTableComponent_layer;
-import com.net2plan.gui.tools.rightPanelTabs.NetPlanViewTableComponent_network;
-import com.net2plan.gui.tools.specificTables.*;
-import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter.CurrentAndPlannedStateTableCellValue;
-import com.net2plan.gui.utils.*;
-import com.net2plan.gui.utils.topology.*;
-import com.net2plan.gui.utils.topology.jung.AddLinkGraphPlugin;
-import com.net2plan.gui.utils.topology.jung.JUNGCanvas;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.internal.Constants;
-import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.internal.ErrorHandling;
-import com.net2plan.internal.SystemUtils;
-import com.net2plan.internal.plugins.IGUIModule;
-import com.net2plan.libraries.NetworkPerformanceMetrics;
-import com.net2plan.utils.ClassLoaderUtils;
-import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.Triple;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.Point2D;
-import java.io.Closeable;
-import java.io.File;
-import java.util.*;
-import java.util.List;
-import java.util.Map.Entry;
+
+import com.net2plan.gui.tools.specificTables.AdvancedJTableNetworkElement;
+import com.net2plan.gui.tools.specificTables.AdvancedJTable_node;
+import com.net2plan.gui.tools.viewEditTopolTables.ViewEditTopologyTablesPane;
+import com.net2plan.gui.tools.viewReportsPane.ViewReportPane;
+import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
+import com.net2plan.gui.utils.topology.INetworkCallback;
+import com.net2plan.gui.utils.topology.TopologyPanel;
+import com.net2plan.gui.utils.topology.jung.JUNGCanvas;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.ProtectionSegment;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.internal.ErrorHandling;
+import com.net2plan.internal.plugins.IGUIModule;
+import com.net2plan.libraries.NetworkPerformanceMetrics;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.StringUtils;
+
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 
 /**
  * Template for any tool requiring network visualization.
@@ -57,8 +88,9 @@ import java.util.Map.Entry;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.3.0
  */
-public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCallback, ThreadExecutionController.IThreadExecutionHandler {
-    public static Color COLOR_INITIALNODE = new Color(0, 153, 51);
+public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCallback //, ThreadExecutionController.IThreadExecutionHandler 
+{
+	public static Color COLOR_INITIALNODE = new Color(0, 153, 51);
     public static Color COLOR_ENDNODE = new Color(0, 162, 215);
 
     /**
@@ -78,22 +110,25 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
      *
      * @since 0.3.0
      */
-    protected ITopologyCanvasPlugin popupPlugin;
+//    protected ITopologyCanvasPlugin popupPlugin;
 
     private JPanel leftPane;
-    private JSplitPane reportPane;
-    private JTabbedPane rightPane, netPlanView, reportContainer;
-    private RunnableSelector reportSelector;
-    private ThreadExecutionController reportController;
+    private ViewReportPane reportPane;
+    private JTabbedPane rightPane;
+    private ViewEditTopologyTablesPane viewEditTopTables;
+//    private JTabbedPane netPlanView;
+//    private JTabbedPane reportContainer;
+//    private RunnableSelector reportSelector;
+//    private ThreadExecutionController reportController;
     private int viewNetPlanTabIndex;
-    private JButton closeAllReports;
+//    private JButton closeAllReports;
 
-    private Map<NetworkElementType, AdvancedJTableNetworkElement> netPlanViewTable;
-    private Map<NetworkElementType, FixedColumnDecorator> netPlanViewTableDecorator;
-    private Map<NetworkElementType, JComponent> netPlanViewTableComponent;
+//    private Map<NetworkElementType, AdvancedJTableNetworkElement> netPlanViewTable;
+//    private Map<NetworkElementType, FixedColumnDecorator> netPlanViewTableDecorator;
+//    private Map<NetworkElementType, JComponent> netPlanViewTableComponent;
+//    private JCheckBox showInitialPlan;
 
-    protected JCheckBox showInitialPlan;
-    private boolean allowDocumentUpdate;
+    public boolean allowDocumentUpdate;
     private NetPlan currentNetPlan, initialNetPlan;
 
     /**
@@ -164,60 +199,6 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
     @Override
     public void configure(JPanel contentPane) {
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
-        configureTopologyPanel();
-        topologyPanel.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Network topology"));
-        topologyPanel.setAllowLoadTrafficDemand(allowLoadTrafficDemands());
-
-        addKeyCombinationAction("Load design", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                getTopologyPanel().loadDesign();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Save design", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                getTopologyPanel().saveDesign();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Zoom in", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                getTopologyPanel().zoomIn();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Zoom out", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                getTopologyPanel().zoomOut();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Zoom all", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                getTopologyPanel().zoomAll();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_MULTIPLY, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Take snapshot", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                getTopologyPanel().takeSnapshot();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_F12, InputEvent.CTRL_DOWN_MASK));
-
-        if (allowLoadTrafficDemands()) {
-            addKeyCombinationAction("Load traffic demands", new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    getTopologyPanel().loadTrafficDemands();
-                }
-            }, KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
-        }
 
         leftPane = new JPanel(new BorderLayout());
         JPanel logSection = configureLeftBottomPanel();
@@ -244,8 +225,14 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
         splitPane.setBorder(BorderFactory.createEmptyBorder());
         contentPane.add(splitPane, "grow");
 
-        configureNetPlanView();
-        configureReportPane();
+
+        viewEditTopTables = new ViewEditTopologyTablesPane((GUINetworkDesign) this , new BorderLayout());
+        addTab(isEditable() ? "View/edit network state" : "View network state", viewEditTopTables);
+        viewNetPlanTabIndex = 0;
+        
+        reportPane = new ViewReportPane((GUINetworkDesign) this , JSplitPane.VERTICAL_SPLIT);
+        addTab("View reports", reportPane);
+        
         loadDesign(new NetPlan());
 
         addKeyCombinationAction("Resets the tool", new AbstractAction() {
@@ -309,51 +296,51 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
         }
     }
 
-    @Override
-    public Object execute(ThreadExecutionController controller) {
-        if (controller == reportController) {
-            Triple<File, String, Class> report = reportSelector.getRunnable();
-            Map<String, String> reportParameters = reportSelector.getRunnableParameters();
-            Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
-            IReport instance = ClassLoaderUtils.getInstance(report.getFirst(), report.getSecond(), IReport.class);
-            String title = null;
-            try {
-                title = instance.getTitle();
-            } catch (UnsupportedOperationException ex) {
-            }
-            if (title == null) title = "Untitled";
+//    @Override
+//    public Object execute(ThreadExecutionController controller) {
+////        if (controller == reportController) {
+////            Triple<File, String, Class> report = reportSelector.getRunnable();
+////            Map<String, String> reportParameters = reportSelector.getRunnableParameters();
+////            Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
+////            IReport instance = ClassLoaderUtils.getInstance(report.getFirst(), report.getSecond(), IReport.class);
+////            String title = null;
+////            try {
+////                title = instance.getTitle();
+////            } catch (UnsupportedOperationException ex) {
+////            }
+////            if (title == null) title = "Untitled";
+////
+////            Pair<String, ? extends JPanel> aux = Pair.of(title, new ReportBrowser(instance.executeReport(getDesign().copy(), reportParameters, net2planParameters)));
+////            try {
+////                ((Closeable) instance.getClass().getClassLoader()).close();
+////            } catch (Throwable e) {
+////            }
+////
+////            return aux;
+////        } else {
+//            throw new RuntimeException("Bad");
+////        }
+//    }
 
-            Pair<String, ? extends JPanel> aux = Pair.of(title, new ReportBrowser(instance.executeReport(getDesign().copy(), reportParameters, net2planParameters)));
-            try {
-                ((Closeable) instance.getClass().getClassLoader()).close();
-            } catch (Throwable e) {
-            }
+//    @Override
+//    public void executionFailed(ThreadExecutionController controller) {
+////        if (controller == reportController) {
+////            ErrorHandling.showErrorDialog("Error executing report");
+////        } else {
+//            ErrorHandling.showErrorDialog("Bad");
+////        }
+//    }
 
-            return aux;
-        } else {
-            throw new RuntimeException("Bad");
-        }
-    }
-
-    @Override
-    public void executionFailed(ThreadExecutionController controller) {
-        if (controller == reportController) {
-            ErrorHandling.showErrorDialog("Error executing report");
-        } else {
-            ErrorHandling.showErrorDialog("Bad");
-        }
-    }
-
-    @Override
-    public void executionFinished(ThreadExecutionController controller, Object out) {
-        if (controller == reportController) {
-            Pair<String, ? extends JPanel> aux = (Pair<String, ? extends JPanel>) out;
-            reportContainer.addTab(aux.getFirst(), new TabIcon(TabIcon.IconType.TIMES_SIGN), aux.getSecond());
-            reportContainer.setSelectedIndex(reportContainer.getTabCount() - 1);
-        } else {
-            ErrorHandling.showErrorDialog("Bad");
-        }
-    }
+//    @Override
+//    public void executionFinished(ThreadExecutionController controller, Object out) {
+////        if (controller == reportController) {
+////            Pair<String, ? extends JPanel> aux = (Pair<String, ? extends JPanel>) out;
+////            reportContainer.addTab(aux.getFirst(), new TabIcon(TabIcon.IconType.TIMES_SIGN), aux.getSecond());
+////            reportContainer.setSelectedIndex(reportContainer.getTabCount() - 1);
+////        } else {
+//            ErrorHandling.showErrorDialog("Bad");
+////        }
+//    }
 
     @Override
     public NetPlan getDesign() {
@@ -478,7 +465,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
     public void moveNode(long node, Point2D pos) {
         if (!isEditable()) throw new UnsupportedOperationException("Not supported");
 
-        TableModel nodeTableModel = netPlanViewTable.get(NetworkElementType.NODE).getModel();
+        TableModel nodeTableModel = viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.NODE).getModel();
         int numRows = nodeTableModel.getRowCount();
         for (int row = 0; row < numRows; row++) {
             if ((long) nodeTableModel.getValueAt(row, 0) == node) {
@@ -531,7 +518,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
     @Override
     public void resetView() {
         topologyPanel.getCanvas().resetPickedAndUserDefinedColorState();
-        for (Entry<NetworkElementType, AdvancedJTableNetworkElement> entry : netPlanViewTable.entrySet()) {
+        for (Entry<NetworkElementType, AdvancedJTableNetworkElement> entry : viewEditTopTables.getNetPlanViewTable().entrySet()) {
             switch (entry.getKey()) {
                 case DEMAND:
                     clearDemandSelection();
@@ -673,7 +660,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
 
         NetPlan initialState = getInitialDesign();
         Map<Link, Pair<Color, Boolean>> coloredLinks = new HashMap<Link, Pair<Color, Boolean>>();
-        if (inOnlineSimulationMode() && (showInitialPlan != null) && showInitialPlan.isSelected()) {
+        if (inOnlineSimulationMode() && viewEditTopTables.isInitialNetPlanShown ()) {
             Route initialRoute = initialState.getRouteFromId(route.getId());
             if (initialRoute != null) {
                 for (ProtectionSegment s : initialRoute.getPotentialBackupProtectionSegments())
@@ -712,7 +699,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
         NetPlan initialState = getInitialDesign();
         Map<Node, Color> coloredNodes = new HashMap<Node, Color>();
         Map<Link, Pair<Color, Boolean>> coloredLinks = new HashMap<Link, Pair<Color, Boolean>>();
-        if (inOnlineSimulationMode() && (showInitialPlan != null) && showInitialPlan.isSelected()) {
+        if (inOnlineSimulationMode() && viewEditTopTables.isInitialNetPlanShown ()) {
             MulticastTree initialTree = initialState.getMulticastTreeFromId(treeId);
             if (initialTree != null)
                 for (Link e : initialTree.getLinkSet())
@@ -750,41 +737,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
     @Override
     public synchronized void updateNetPlanView() {
         updateWarnings();
-
-		/* Load current network state */
-        NetPlan currentState = getDesign();
-        NetworkLayer layer = currentState.getNetworkLayerDefault();
-        currentState.checkCachesConsistency();
-
-        final RoutingType routingType = currentState.getRoutingType();
-        Component selectedTab = netPlanView.getSelectedComponent();
-        netPlanView.removeAll();
-        for (NetworkElementType elementType : Constants.NetworkElementType.values()) {
-            if (routingType == RoutingType.SOURCE_ROUTING && elementType == NetworkElementType.FORWARDING_RULE)
-                continue;
-            if (routingType == RoutingType.HOP_BY_HOP_ROUTING && (elementType == NetworkElementType.PROTECTION_SEGMENT || elementType == NetworkElementType.ROUTE))
-                continue;
-            netPlanView.addTab(elementType == NetworkElementType.NETWORK ? "Network" : netPlanViewTable.get(elementType).getTabName(), netPlanViewTableComponent.get(elementType));
-        }
-
-        for (int tabId = 0; tabId < netPlanView.getTabCount(); tabId++) {
-            if (netPlanView.getComponentAt(tabId).equals(selectedTab)) {
-                netPlanView.setSelectedIndex(tabId);
-                break;
-            }
-        }
-
-        NetPlan initialState = null;
-        if (showInitialPlan != null && getInitialDesign().getNetworkLayerFromId(layer.getId()) != null)
-            initialState = getInitialDesign();
-
-        currentState.checkCachesConsistency();
-
-        for (AdvancedJTableNetworkElement table : netPlanViewTable.values())
-            table.updateView(currentState, initialState);
-
-        ((NetPlanViewTableComponent_layer) netPlanViewTableComponent.get(NetworkElementType.LAYER)).updateNetPlanView(currentState);
-        ((NetPlanViewTableComponent_network) netPlanViewTableComponent.get(NetworkElementType.NETWORK)).updateNetPlanView(currentState);
+        viewEditTopTables.updateView();
     }
 
     @Override
@@ -834,7 +787,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
      * @return {@code true} if it is allowed to load traffic demands. Otherwise, {@code false}.
      * @since 0.3.0
      */
-    protected boolean allowLoadTrafficDemands() {
+    public boolean allowLoadTrafficDemands() {
         return false;
     }
 
@@ -869,7 +822,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
      * @since 0.3.1
      */
     protected void clearDemandSelection() {
-        JTable table = netPlanViewTable.get(NetworkElementType.DEMAND);
+        JTable table = viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.DEMAND);
         table.clearSelection();
     }
 
@@ -881,7 +834,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
      * @since 0.3.1
      */
     protected void clearMulticastDemandSelection() {
-        JTable table = netPlanViewTable.get(NetworkElementType.MULTICAST_DEMAND);
+        JTable table = viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.MULTICAST_DEMAND);
         table.clearSelection();
     }
 
@@ -893,7 +846,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
      * @since 0.3.1
      */
     protected void clearForwardingRuleSelection() {
-        JTable table = netPlanViewTable.get(NetworkElementType.FORWARDING_RULE);
+        JTable table = viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.FORWARDING_RULE);
         table.clearSelection();
     }
 
@@ -905,7 +858,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
      * @since 0.3.1
      */
     protected void clearLinkSelection() {
-        JTable table = netPlanViewTable.get(NetworkElementType.LINK);
+        JTable table = viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.LINK);
         table.clearSelection();
     }
 
@@ -917,7 +870,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
      * @since 0.3.1
      */
     protected void clearNodeSelection() {
-        JTable table = netPlanViewTable.get(NetworkElementType.NODE);
+        JTable table = viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.NODE);
         table.clearSelection();
     }
 
@@ -929,7 +882,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
      * @since 0.3.1
      */
     protected void clearProtectionSegmentSelection() {
-        JTable table = netPlanViewTable.get(NetworkElementType.PROTECTION_SEGMENT);
+        JTable table = viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.PROTECTION_SEGMENT);
         table.clearSelection();
     }
 
@@ -941,7 +894,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
      * @since 0.3.1
      */
     protected void clearRouteSelection() {
-        JTable table = netPlanViewTable.get(NetworkElementType.ROUTE);
+        JTable table = viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.ROUTE);
         table.clearSelection();
     }
 
@@ -953,7 +906,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
      * @since 0.3.1
      */
     protected void clearMulticastTreeSelection() {
-        JTable table = netPlanViewTable.get(NetworkElementType.MULTICAST_TREE);
+        JTable table = viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.MULTICAST_TREE);
         table.clearSelection();
     }
 
@@ -965,7 +918,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
      * @since 0.3.1
      */
     protected void clearSRGSelection() {
-        JTable table = netPlanViewTable.get(NetworkElementType.SRG);
+        JTable table = viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.SRG);
         table.clearSelection();
     }
 
@@ -1024,80 +977,6 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
         return linkTableView;
     }
 
-    private void configureNetPlanView() {
-        netPlanViewTable = new EnumMap<NetworkElementType, AdvancedJTableNetworkElement>(NetworkElementType.class);
-        netPlanViewTableDecorator = new EnumMap<NetworkElementType, FixedColumnDecorator>(NetworkElementType.class);
-        netPlanViewTableComponent = new EnumMap<NetworkElementType, JComponent>(NetworkElementType.class);
-
-
-        allowDocumentUpdate = isEditable();
-        netPlanViewTable.put(NetworkElementType.NODE, new AdvancedJTable_node(this, topologyPanel));
-        netPlanViewTable.put(NetworkElementType.LINK, new AdvancedJTable_link(this, topologyPanel));
-        netPlanViewTable.put(NetworkElementType.DEMAND, new AdvancedJTable_demand(this, topologyPanel));
-        netPlanViewTable.put(NetworkElementType.ROUTE, new AdvancedJTable_route(this, topologyPanel));
-        netPlanViewTable.put(NetworkElementType.PROTECTION_SEGMENT, new AdvancedJTable_segment(this, topologyPanel));
-        netPlanViewTable.put(NetworkElementType.FORWARDING_RULE, new AdvancedJTable_forwardingRule(this, topologyPanel));
-        netPlanViewTable.put(NetworkElementType.MULTICAST_DEMAND, new AdvancedJTable_multicastDemand(this, topologyPanel));
-        netPlanViewTable.put(NetworkElementType.MULTICAST_TREE, new AdvancedJTable_multicastTree(this, topologyPanel));
-        netPlanViewTable.put(NetworkElementType.SRG, new AdvancedJTable_srg(this, topologyPanel));
-        netPlanViewTable.put(NetworkElementType.LAYER, new AdvancedJTable_layer(this, topologyPanel));
-
-        netPlanView = new JTabbedPane();
-
-        for (NetworkElementType elementType : Constants.NetworkElementType.values()) {
-            if (elementType == NetworkElementType.NETWORK) {
-                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_network(this, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
-            } else if (elementType == NetworkElementType.LAYER) {
-                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_layer(this, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
-            } else {
-                JScrollPane scrollPane = new JScrollPane(netPlanViewTable.get(elementType));
-                ScrollPaneLayout layout = new FullScrollPaneLayout();
-                scrollPane.setLayout(layout);
-                scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-                FixedColumnDecorator decorator = new FixedColumnDecorator(scrollPane, ((AdvancedJTableNetworkElement) netPlanViewTable.get(elementType)).getNumFixedLeftColumnsInDecoration());
-                decorator.getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
-                netPlanViewTableDecorator.put(elementType, decorator);
-                netPlanViewTableComponent.put(elementType, scrollPane);
-            }
-        }
-
-        JPanel pane = new JPanel(new BorderLayout());
-        pane.add(netPlanView, BorderLayout.CENTER);
-
-        if (inOnlineSimulationMode()) {
-            showInitialPlan = new JCheckBox("Toggle show/hide planning information", true);
-            showInitialPlan.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    RowFilter<TableModel, Integer> rowFilter = e.getStateChange() == ItemEvent.SELECTED ? null : new RowFilter<TableModel, Integer>() {
-                        @Override
-                        public boolean include(RowFilter.Entry<? extends TableModel, ? extends Integer> entry) {
-                            if (entry.getIdentifier() == 0) return true;
-
-                            if (entry.getValue(0) instanceof CurrentAndPlannedStateTableCellValue)
-                                return ((CurrentAndPlannedStateTableCellValue) entry.getValue(0)).value != null;
-                            else
-                                return entry.getValue(0) != null;
-                        }
-                    };
-
-                    for (NetworkElementType elementType : Constants.NetworkElementType.values()) {
-                        if (elementType == NetworkElementType.NETWORK) continue;
-
-                        ((TableRowSorter) netPlanViewTable.get(elementType).getRowSorter()).setRowFilter(rowFilter);
-                    }
-                    getTopologyPanel().getCanvas().refresh();
-                }
-            });
-
-            showInitialPlan.setSelected(false);
-            pane.add(showInitialPlan, BorderLayout.NORTH);
-        }
-
-        addTab(isEditable() ? "View/edit network state" : "View network state", pane);
-        viewNetPlanTabIndex = 0;
-    }
-
     /**
      * Allows customizing the 'node' tab in the network state viewer.
      *
@@ -1118,106 +997,6 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
      */
     protected JComponent configureProtectionSegmentTabView(JScrollPane segmentTableView) {
         return segmentTableView;
-    }
-
-    private void configureReportPane() {
-        reportController = new ThreadExecutionController(this);
-
-        File REPORTS_DIRECTORY = new File(CURRENT_DIR + SystemUtils.getDirectorySeparator() + "workspace");
-        REPORTS_DIRECTORY = REPORTS_DIRECTORY.isDirectory() ? REPORTS_DIRECTORY : CURRENT_DIR;
-        ParameterValueDescriptionPanel reportParameters = new ParameterValueDescriptionPanel();
-        reportSelector = new RunnableSelector("Report", null, IReport.class, REPORTS_DIRECTORY, reportParameters);
-        reportPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        reportContainer = new JTabbedPane();
-
-        final JPanel pnl_buttons = new JPanel(new WrapLayout());
-
-        reportContainer.setVisible(false);
-
-        addKeyCombinationAction("Close selected report", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int tab = reportContainer.getSelectedIndex();
-                if (tab == -1) return;
-
-                reportContainer.remove(tab);
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Close all reports", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                reportContainer.removeAll();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
-
-        reportContainer.addContainerListener(new ContainerListener() {
-            @Override
-            public void componentAdded(ContainerEvent e) {
-                reportContainer.setVisible(true);
-                reportPane.setDividerLocation(0.5);
-
-                for (Component component : pnl_buttons.getComponents())
-                    if (component == closeAllReports)
-                        return;
-
-                pnl_buttons.add(closeAllReports);
-            }
-
-            @Override
-            public void componentRemoved(ContainerEvent e) {
-                if (reportContainer.getTabCount() == 0) {
-                    reportContainer.setVisible(false);
-
-                    for (Component component : pnl_buttons.getComponents())
-                        if (component == closeAllReports)
-                            pnl_buttons.remove(closeAllReports);
-                }
-            }
-        });
-
-        JButton btn_show = new JButton("Show");
-        btn_show.setToolTipText("Show the report");
-        btn_show.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                reportController.execute();
-            }
-        });
-
-        closeAllReports = new JButton("Close all");
-        closeAllReports.setToolTipText("Close all reports");
-        closeAllReports.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                reportContainer.removeAll();
-            }
-        });
-
-        reportContainer.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int tabNumber = reportContainer.getUI().tabForCoordinate(reportContainer, e.getX(), e.getY());
-
-                if (tabNumber >= 0) {
-                    Rectangle rect = ((TabIcon) reportContainer.getIconAt(tabNumber)).getBounds();
-                    if (rect.contains(e.getX(), e.getY())) reportContainer.removeTabAt(tabNumber);
-                }
-            }
-        });
-
-        pnl_buttons.add(btn_show);
-
-        JPanel pane = new JPanel(new BorderLayout());
-        pane.add(reportSelector, BorderLayout.CENTER);
-        pane.add(pnl_buttons, BorderLayout.SOUTH);
-        reportPane.setTopComponent(pane);
-
-        reportPane.setBottomComponent(reportContainer);
-        reportPane.addPropertyChangeListener(new ProportionalResizeJSplitPaneListener());
-        reportPane.setResizeWeight(0.5);
-
-        addTab("View reports", reportPane);
     }
 
     /**
@@ -1253,21 +1032,21 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
         return srgTableView;
     }
 
-    /**
-     * Allows to include custom code after initializing the topologyPanel panel (i.e. add new plugins).
-     *
-     * @since 0.3.0
-     */
-    protected void configureTopologyPanel() {
-        popupPlugin = new PopupMenuPlugin(this);
-
-        getTopologyPanel().addPlugin(new PanGraphPlugin(this, MouseEvent.BUTTON1_MASK));
-        if (isEditable() && getTopologyPanel().getCanvas() instanceof JUNGCanvas)
-            getTopologyPanel().addPlugin(new AddLinkGraphPlugin(this, MouseEvent.BUTTON1_MASK, MouseEvent.BUTTON1_MASK | MouseEvent.SHIFT_MASK));
-        getTopologyPanel().addPlugin(popupPlugin);
-        if (isEditable())
-            getTopologyPanel().addPlugin(new MoveNodePlugin(this, MouseEvent.BUTTON1_MASK | MouseEvent.CTRL_MASK));
-    }
+//    /**
+//     * Allows to include custom code after initializing the topologyPanel panel (i.e. add new plugins).
+//     *
+//     * @since 0.3.0
+//     */
+//    private void configureTopologyPanel() {
+//        popupPlugin = new PopupMenuPlugin(this);
+//
+//        getTopologyPanel().addPlugin(new PanGraphPlugin(this, MouseEvent.BUTTON1_MASK));
+//        if (isEditable() && getTopologyPanel().getCanvas() instanceof JUNGCanvas)
+//            getTopologyPanel().addPlugin(new AddLinkGraphPlugin(this, MouseEvent.BUTTON1_MASK, MouseEvent.BUTTON1_MASK | MouseEvent.SHIFT_MASK));
+//        getTopologyPanel().addPlugin(popupPlugin);
+//        if (isEditable())
+//            getTopologyPanel().addPlugin(new MoveNodePlugin(this, MouseEvent.BUTTON1_MASK | MouseEvent.CTRL_MASK));
+//    }
 
     /**
      * Returns a reference to the topologyPanel panel.
@@ -1307,44 +1086,10 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
      * @param itemId  Item identifier (if null, it will just show the tab)
      * @since 0.3.0
      */
-    protected void selectNetPlanViewItem(long layer, NetworkElementType type, Object itemId) {
+    private void selectNetPlanViewItem(long layer, NetworkElementType type, Object itemId) {
         topologyPanel.selectLayer(layer);
         showTab(viewNetPlanTabIndex);
-
-        AdvancedJTableNetworkElement table = netPlanViewTable.get(type);
-        int tabIndex = netPlanView.getSelectedIndex();
-        int col = 0;
-        if (netPlanView.getTitleAt(tabIndex).equals(type == NetworkElementType.NETWORK ? "Network" : table.getTabName())) {
-            col = table.getSelectedColumn();
-            if (col == -1) col = 0;
-        } else {
-            netPlanView.setSelectedComponent(netPlanViewTableComponent.get(type));
-        }
-
-        if (itemId == null) {
-            table.clearSelection();
-            return;
-        }
-
-        TableModel model = table.getModel();
-        int numRows = model.getRowCount();
-        for (int row = 0; row < numRows; row++) {
-            Object obj = model.getValueAt(row, 0);
-            if (obj == null) continue;
-
-            if (type == NetworkElementType.FORWARDING_RULE) {
-                obj = Pair.of(Integer.parseInt(model.getValueAt(row, 1).toString().split(" ")[0]), Integer.parseInt(model.getValueAt(row, 2).toString().split(" ")[0]));
-                if (!obj.equals(itemId)) continue;
-            } else if ((long) obj != (long) itemId) {
-                continue;
-            }
-
-            row = table.convertRowIndexToView(row);
-            table.changeSelection(row, col, false, true);
-            return;
-        }
-
-        throw new RuntimeException(type + " " + itemId + " does not exist");
+        viewEditTopTables.selectViewItem (type, itemId);
     }
 
     /**
@@ -1364,7 +1109,7 @@ public abstract class IGUINetworkViewer extends IGUIModule implements INetworkCa
      * @since 0.3.0
      */
     public final void showNetPlanView() {
-        netPlanView.setSelectedIndex(0);
+    	viewEditTopTables.getNetPlanView ().setSelectedIndex(0);
         showTab(viewNetPlanTabIndex);
     }
 

@@ -55,8 +55,8 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
     public static final int COLUMN_DEMANDTRAFUNITS = 13;
     public static final int COLUMN_ATTRIBUTES = 14;
 
-    public AdvancedJTable_layer(final IGUINetworkViewer networkViewer, final TopologyPanel topologyPanel) {
-        super(createTableModel(networkViewer, topologyPanel), networkViewer, NetworkElementType.LAYER);
+    public AdvancedJTable_layer(final IGUINetworkViewer networkViewer) {
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.LAYER);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
 
@@ -132,7 +132,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
         return new int[]{};
     }
 
-    private static TableModel createTableModel(final IGUINetworkViewer networkViewer, final TopologyPanel topologyPanel) {
+    private static TableModel createTableModel(final IGUINetworkViewer networkViewer) {
         TableModel layerTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
