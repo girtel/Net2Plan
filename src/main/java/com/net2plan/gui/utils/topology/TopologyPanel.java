@@ -18,8 +18,6 @@ import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.io.File;
@@ -27,7 +25,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
-import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -40,10 +37,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
-import javax.swing.KeyStroke;
 import javax.swing.border.LineBorder;
 
-import com.net2plan.gui.tools.GUINetworkDesign;
+import com.net2plan.gui.tools.INetworkCallback;
 import com.net2plan.gui.utils.FileChooserNetworkDesign;
 import com.net2plan.gui.utils.FileDrop;
 import com.net2plan.gui.utils.StringLabeller;
@@ -69,7 +65,7 @@ import com.net2plan.internal.plugins.ITopologyCanvas;
  */
 public class TopologyPanel extends JPanel implements ActionListener//FrequentisBackgroundPanel implements ActionListener//JPanel implements ActionListener
 {
-    private final GUINetworkDesign callback;
+    private final INetworkCallback callback;
     private ITopologyCanvas canvas;
     private ITopologyCanvasPlugin popupPlugin;
     private JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
@@ -88,7 +84,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param canvasType Canvas type (i.e. JUNG)
      * @since 0.2.3
      */
-    public TopologyPanel(GUINetworkDesign callback, Class<? extends ITopologyCanvas> canvasType) {
+    public TopologyPanel(INetworkCallback callback, Class<? extends ITopologyCanvas> canvasType) {
         this(callback, canvasType, null);
     }
 
@@ -101,7 +97,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param plugins    List of plugins to be included (it may be null)
      * @since 0.2.3
      */
-    public TopologyPanel(GUINetworkDesign callback, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins) {
+    public TopologyPanel(INetworkCallback callback, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins) {
         this(callback, null, null, canvasType, plugins);
     }
 
@@ -115,7 +111,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param plugins                List of plugins to be included (it may be null)
      * @since 0.2.0
      */
-    public TopologyPanel(final GUINetworkDesign callback, File defaultDesignDirectory, File defaultDemandDirectory, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins) {
+    public TopologyPanel(final INetworkCallback callback, File defaultDesignDirectory, File defaultDemandDirectory, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins) {
 //		super (null, FrequentisBackgroundPanel.ACTUAL, 1.0f, 0.5f);
 
         File currentDir = SystemUtils.getCurrentDir();
@@ -333,7 +329,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             addPlugin(new MoveNodePlugin(callback, MouseEvent.BUTTON1_MASK | MouseEvent.CTRL_MASK));
 
         setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Network topology"));
-        setAllowLoadTrafficDemand(callback.allowLoadTrafficDemands());
+//        setAllowLoadTrafficDemand(callback.allowLoadTrafficDemands());
 
 
         
@@ -538,15 +534,15 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         layerChooser.setSelectedItem(getLayerItem(layer));
     }
 
-    /**
-     * Configures the topology panel to allow (or not) loading of external traffic demand files.
-     *
-     * @param isAllowed Indicates whether or not it is allowed to load traffic demand files.
-     * @since 0.3.0
-     */
-    public void setAllowLoadTrafficDemand(boolean isAllowed) {
-        btn_loadDemand.setVisible(isAllowed);
-    }
+//    /**
+//     * Configures the topology panel to allow (or not) loading of external traffic demand files.
+//     *
+//     * @param isAllowed Indicates whether or not it is allowed to load traffic demand files.
+//     * @since 0.3.0
+//     */
+//    public void setAllowLoadTrafficDemand(boolean isAllowed) {
+//        btn_loadDemand.setVisible(isAllowed);
+//    }
 
     /**
      * Take a snapshot of the canvas.

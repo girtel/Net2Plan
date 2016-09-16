@@ -17,7 +17,6 @@ import javax.swing.RowFilter;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
-import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.tools.INetworkCallback;
 import com.net2plan.gui.tools.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.tools.rightPanelTabs.NetPlanViewTableComponent_network;

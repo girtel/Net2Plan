@@ -291,12 +291,13 @@ public interface INetworkCallback {
     public void updateWarnings();
 
     // added by Pablo
-    public boolean allowDocumentUpdate ();
+//    public boolean allowDocumentUpdate ();
     // added by Pablo
     public TopologyPanel getTopologyPanel ();
     // added by Pablo
     public boolean inOnlineSimulationMode();
     // added by Pablo
     public void showNetPlanView();
-
+    // added by Pablo
+    //public boolean allowLoadTrafficDemands();
 }

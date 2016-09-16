@@ -2,18 +2,14 @@ package com.net2plan.gui.tools.offlineExecPane;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.io.Closeable;
 import java.io.File;
 import java.util.Map;
 
-import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.KeyStroke;
 
-import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.tools.INetworkCallback;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.RunnableSelector;
@@ -106,7 +102,7 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
             JOptionPane.showMessageDialog(null, outMessage, "Solve design", JOptionPane.PLAIN_MESSAGE);
             mainWindow.showNetPlanView();
         } catch (Throwable ex) {
-            ErrorHandling.addErrorOrException(ex, GUINetworkDesign.class);
+            ErrorHandling.addErrorOrException(ex, OfflineExecutionPanel.class);
             ErrorHandling.showErrorDialog("Error executing algorithm");
         }
 	}

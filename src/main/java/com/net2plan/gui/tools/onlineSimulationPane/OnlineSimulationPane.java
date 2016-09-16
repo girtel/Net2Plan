@@ -10,34 +10,14 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.tools;
+package com.net2plan.gui.tools.onlineSimulationPane;
 
-import com.jom.JOMException;
-import com.net2plan.gui.utils.*;
-import com.net2plan.interfaces.networkDesign.Configuration;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.simulation.SimEvent;
-import com.net2plan.internal.ErrorHandling;
-import com.net2plan.internal.IExternal;
-import com.net2plan.internal.SystemUtils;
-import com.net2plan.internal.sim.EndSimulationException;
-import com.net2plan.internal.sim.IGUISimulationListener;
-import com.net2plan.internal.sim.SimCore;
-import com.net2plan.internal.sim.SimCore.SimState;
-import com.net2plan.internal.sim.SimKernel;
-import com.net2plan.utils.ClassLoaderUtils;
-import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.Triple;
-import net.miginfocom.swing.MigLayout;
+import static com.net2plan.internal.sim.SimCore.SimState.NOT_STARTED;
 
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
-import javax.swing.text.DefaultCaret;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dialog;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -48,7 +28,61 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
-import static com.net2plan.internal.sim.SimCore.SimState.NOT_STARTED;
+import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JToolBar;
+import javax.swing.KeyStroke;
+import javax.swing.RowSorter;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
+import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+import javax.swing.text.DefaultCaret;
+
+import com.jom.JOMException;
+import com.net2plan.gui.tools.INetworkCallback;
+import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.CellRenderers;
+import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.ColumnFitAdapter;
+import com.net2plan.gui.utils.FixedColumnDecorator;
+import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
+import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
+import com.net2plan.gui.utils.ReportBrowser;
+import com.net2plan.gui.utils.RunnableSelector;
+import com.net2plan.gui.utils.SwingUtils;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.simulation.SimEvent;
+import com.net2plan.internal.ErrorHandling;
+import com.net2plan.internal.IExternal;
+import com.net2plan.internal.SystemUtils;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.internal.plugins.IGUIModule;
+import com.net2plan.internal.sim.EndSimulationException;
+import com.net2plan.internal.sim.IGUISimulationListener;
+import com.net2plan.internal.sim.SimCore;
+import com.net2plan.internal.sim.SimCore.SimState;
+import com.net2plan.internal.sim.SimKernel;
+import com.net2plan.utils.ClassLoaderUtils;
+import com.net2plan.utils.StringUtils;
+import com.net2plan.utils.Triple;
+
+import net.miginfocom.swing.MigLayout;
 
 /**
  * Targeted to evaluate network designs from the offline tool simulating the
@@ -59,10 +93,11 @@ import static com.net2plan.internal.sim.SimCore.SimState.NOT_STARTED;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.3.0
  */
-public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionListener, IGUISimulationListener {
-    private final static String TITLE = "Online simulation";
+public class OnlineSimulationPane extends JTabbedPane implements ActionListener, IGUISimulationListener {
 
-    private JButton btn_run, btn_step, btn_pause, btn_stop;
+	private final INetworkCallback mainWindow;
+    private final int simReportTab;
+    private JButton btn_run, btn_step, btn_pause, btn_stop , btn_reset;
     private JButton btn_viewEventList, btn_updateReport;
     private JPanel simReport;
     private JCheckBox chk_refresh;
@@ -74,60 +109,18 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
     private ParameterValueDescriptionPanel simulationConfigurationPanel;
     private RunnableSelector eventGeneratorPanel, eventProcessorPanel;
     private SimKernel simKernel;
-    private int simReportTab;
+    private JPanel simulationControlPanel;
+    
+    public OnlineSimulationPane(INetworkCallback mainWindow) 
+    {
+		super ();
+		this.mainWindow = mainWindow;
 
-    /**
-     * Default constructor.
-     *
-     * @since 0.3.0
-     */
-    public GUIOnlineSimulation() {
-        super(TITLE);
-    }
-
-    @Override
-    public void actionPerformed(final ActionEvent e) {
-        try {
-            Object src = e.getSource();
-
-            if (src == btn_run) {
-                runSimulation(false);
-            } else if (src == btn_step) {
-                runSimulation(true);
-            } else if (src == btn_pause) {
-                simKernel.getSimCore().setSimulationState(simKernel.getSimCore().getSimulationState() == SimState.PAUSED ? SimState.RUNNING : SimState.PAUSED);
-            } else if (src == btn_stop) {
-                simKernel.getSimCore().setSimulationState(SimState.STOPPED);
-            } else if (src == btn_viewEventList) {
-                viewFutureEventList();
-            } else if (src == btn_updateReport) {
-                updateSimReport();
-            } else {
-                throw new Net2PlanException("Bad");
-            }
-        } catch (Net2PlanException ex) {
-            if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, GUIOnlineSimulation.class);
-            ErrorHandling.showErrorDialog(ex.getMessage(), "Error executing simulation");
-        } catch (Throwable ex) {
-            ErrorHandling.addErrorOrException(ex, GUIOnlineSimulation.class);
-            ErrorHandling.showErrorDialog("An error happened");
-        }
-    }
-
-    @Override
-    public boolean inOnlineSimulationMode() {
-        return true;
-    }
-
-    @Override
-    public void configure(JPanel contentPane) {
-        simKernel = new SimKernel();
+		simKernel = new SimKernel();
         simKernel.setGUIListener(this);
 
-        super.configure(contentPane);
-
-        File ALGORITHMS_DIRECTORY = new File(CURRENT_DIR + SystemUtils.getDirectorySeparator() + "workspace");
-        ALGORITHMS_DIRECTORY = ALGORITHMS_DIRECTORY.isDirectory() ? ALGORITHMS_DIRECTORY : CURRENT_DIR;
+        File ALGORITHMS_DIRECTORY = new File(IGUIModule.CURRENT_DIR + SystemUtils.getDirectorySeparator() + "workspace");
+        ALGORITHMS_DIRECTORY = ALGORITHMS_DIRECTORY.isDirectory() ? ALGORITHMS_DIRECTORY : IGUIModule.CURRENT_DIR;
 
         eventGeneratorPanel = new RunnableSelector(SimKernel.getEventGeneratorLabel(), "File", simKernel.getEventGeneratorClass(), ALGORITHMS_DIRECTORY, new ParameterValueDescriptionPanel());
         eventProcessorPanel = new RunnableSelector(SimKernel.getEventProcessorLabel(), "File", simKernel.getEventProcessorClass(), ALGORITHMS_DIRECTORY, new ParameterValueDescriptionPanel());
@@ -162,14 +155,50 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
         simReport.setLayout(new BorderLayout());
         simReport.add(btn_updateReport, BorderLayout.NORTH);
 
-        addTab("Execution controller", pan_execution, 1);
-        simReportTab = addTab("Simulation report", simReport, 2);
+        addTab("Simulation input parameters", pan_execution);
+        simulationControlPanel = configureSimulationControlPanel ();
+        addTab ("Simulation control" , simulationControlPanel);
+        addTab("Simulation report", simReport);
+        simReportTab = 2;
 
         simKernel.reset();
+		
+	}
+    
+    @Override
+    public void actionPerformed(final ActionEvent e) {
+        try {
+            Object src = e.getSource();
+
+            if (src == btn_run) {
+                runSimulation(false);
+            } else if (src == btn_step) {
+                runSimulation(true);
+            } else if (src == btn_pause) {
+                simKernel.getSimCore().setSimulationState(simKernel.getSimCore().getSimulationState() == SimState.PAUSED ? SimState.RUNNING : SimState.PAUSED);
+            } else if (src == btn_stop) {
+                simKernel.getSimCore().setSimulationState(SimState.STOPPED);
+            }else if (src == btn_reset) {
+                simKernel.getSimCore().setSimulationState(SimState.STOPPED);
+                simKernel.reset();
+                mainWindow.loadDesign(simKernel.getCurrentNetPlan());
+            } else if (src == btn_viewEventList) {
+                viewFutureEventList();
+            } else if (src == btn_updateReport) {
+                updateSimReport();
+            } else {
+                throw new Net2PlanException("Bad");
+            }
+        } catch (Net2PlanException ex) {
+            if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, OnlineSimulationPane.class);
+            ErrorHandling.showErrorDialog(ex.getMessage(), "Error executing simulation");
+        } catch (Throwable ex) {
+            ErrorHandling.addErrorOrException(ex, OnlineSimulationPane.class);
+            ErrorHandling.showErrorDialog("An error happened");
+        }
     }
 
-    @Override
-    protected JPanel configureLeftBottomPanel() {
+    private JPanel configureSimulationControlPanel() {
         pan_simulationController = new JPanel(new MigLayout("fill, insets 0 0 0 0"));
         pan_simulationController.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Simulation controller"));
 
@@ -182,23 +211,6 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
 
         btn_run = new JButton("Run");
         btn_run.addActionListener(this);
-        addKeyCombinationAction("Run simulation", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    if (btn_run.isEnabled()) runSimulation(false);
-                } catch (Net2PlanException ex) {
-                    if (ErrorHandling.isDebugEnabled())
-                        ErrorHandling.addErrorOrException(ex, GUIOnlineSimulation.class);
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error executing simulation");
-                } catch (Throwable ex) {
-                    ErrorHandling.addErrorOrException(ex, GUIOnlineSimulation.class);
-                    ErrorHandling.showErrorDialog("An error happened");
-                }
-
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK));
-
         btn_run.setToolTipText("Execute the simulation [CTRL + U]");
         btn_step = new JButton("Step");
         btn_step.addActionListener(this);
@@ -209,6 +221,9 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
         btn_stop = new JButton("Stop");
         btn_stop.addActionListener(this);
         btn_stop.setToolTipText("Stop the simulation (it cannot be resumed later)");
+        btn_reset = new JButton("Reset");
+        btn_reset.addActionListener(this);
+        btn_reset.setToolTipText("After stopping the simulation, resets the design to the initial simulation design");
         chk_refresh = new JCheckBox("Refresh");
         chk_refresh.setSelected(true);
 
@@ -222,6 +237,7 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
         toolbar.add(btn_step);
         toolbar.add(btn_pause);
         toolbar.add(btn_stop);
+        toolbar.add(btn_reset);
         toolbar.addSeparator();
         toolbar.add(chk_refresh);
         toolbar.add(Box.createHorizontalGlue());
@@ -234,45 +250,45 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
     }
 
 
-    @Override
-    public String getDescription() {
-        return getName();
-    }
+//    @Override
+//    public String getDescription() {
+//        return getName();
+//    }
+//
+//    @Override
+//    public NetPlan getDesign() {
+//        return simKernel.getCurrentNetPlan();
+//    }
+//
+//    @Override
+//    public NetPlan getInitialDesign() {
+//        return simKernel.getInitialNetPlan();
+//    }
 
-    @Override
-    public NetPlan getDesign() {
-        return simKernel.getCurrentNetPlan();
-    }
-
-    @Override
-    public NetPlan getInitialDesign() {
-        return simKernel.getInitialNetPlan();
-    }
-
-    @Override
-    public KeyStroke getKeyStroke() {
-        return KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.ALT_DOWN_MASK);
-    }
-
-    @Override
-    public String getMenu() {
-        return "Tools|" + TITLE;
-    }
-
-    @Override
-    public String getName() {
-        return "Online simulation (GUI)";
-    }
-
-    @Override
-    public List<Triple<String, String, String>> getParameters() {
-        return null;
-    }
-
-    @Override
-    public int getPriority() {
-        return Integer.MAX_VALUE - 2;
-    }
+//    @Override
+//    public KeyStroke getKeyStroke() {
+//        return KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.ALT_DOWN_MASK);
+//    }
+//
+//    @Override
+//    public String getMenu() {
+//        return "Tools|" + TITLE;
+//    }
+//
+//    @Override
+//    public String getName() {
+//        return "Online simulation (GUI)";
+//    }
+//
+//    @Override
+//    public List<Triple<String, String, String>> getParameters() {
+//        return null;
+//    }
+//
+//    @Override
+//    public int getPriority() {
+//        return Integer.MAX_VALUE - 2;
+//    }
 
     @Override
     public void refresh(boolean forceRefresh) {
@@ -280,26 +296,26 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
             updateSimulationInfo();
     }
 
-    @Override
-    protected void reset_internal() {
-        switch (simKernel.getSimCore().getSimulationState()) {
-            case NOT_STARTED:
-            case STOPPED:
-                break;
+//    @Override
+//    protected void reset_internal() {
+//        switch (simKernel.getSimCore().getSimulationState()) {
+//            case NOT_STARTED:
+//            case STOPPED:
+//                break;
+//
+//            default:
+//                simKernel.getSimCore().setSimulationState(SimState.STOPPED);
+//                break;
+//        }
+//
+//        simKernel.reset();
+//        loadDesign(simKernel.getCurrentNetPlan());
+//    }
 
-            default:
-                simKernel.getSimCore().setSimulationState(SimState.STOPPED);
-                break;
-        }
-
-        simKernel.reset();
-        loadDesign(simKernel.getCurrentNetPlan());
-    }
-
-    @Override
-    protected void setNetPlan(NetPlan netPlan) {
-        simKernel.setNetPlan(netPlan);
-    }
+//    @Override
+//    protected void setNetPlan(NetPlan netPlan) {
+//        simKernel.setNetPlan(netPlan);
+//    }
 
     @Override
     public void simulationStateChanged(SimCore.SimState simulationState, Throwable reason) {
@@ -313,6 +329,7 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
                 btn_step.setEnabled(true);
                 btn_pause.setEnabled(false);
                 btn_stop.setEnabled(false);
+                btn_reset.setEnabled(false);
 
                 simulationConfigurationPanel.setEnabled(true);
                 eventGeneratorPanel.setEnabled(true);
@@ -333,6 +350,7 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
                 btn_step.setEnabled(false);
                 btn_pause.setEnabled(true);
                 btn_stop.setEnabled(true);
+                btn_reset.setEnabled(false);
                 break;
 
             case PAUSED:
@@ -340,6 +358,7 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
                 btn_step.setEnabled(true);
                 btn_pause.setEnabled(true);
                 btn_stop.setEnabled(true);
+                btn_reset.setEnabled(false);
                 break;
 
             case STOPPED:
@@ -347,6 +366,7 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
                 btn_step.setEnabled(false);
                 btn_pause.setEnabled(false);
                 btn_stop.setEnabled(false);
+                btn_reset.setEnabled(true);
                 break;
 
             default:
@@ -355,28 +375,30 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
 
         if (simulationState == SimState.NOT_STARTED || simulationState == SimState.PAUSED || simulationState == SimState.STOPPED) {
             updateSimulationInfo();
-            topologyPanel.updateLayerChooser();
-            resetView();
+            mainWindow.getTopologyPanel().updateLayerChooser();
+            mainWindow.resetView();
         }
 
         if (reason == null) return;
 
-        if (reason instanceof EndSimulationException) {
+        if (reason instanceof EndSimulationException) 
+        {
             ErrorHandling.showInformationDialog("Simulation finished", "Information");
             updateSimReport();
-            showTab(simReportTab);
+            if (getSelectedIndex() != simReportTab) setSelectedIndex(simReportTab);
+            requestFocusInWindow();
         } else if (reason instanceof Net2PlanException || reason instanceof JOMException) {
-            if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(reason, GUIOnlineSimulation.class);
+            if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(reason, OnlineSimulationPane.class);
             ErrorHandling.showErrorDialog(reason.getMessage(), "Error executing simulation");
         } else {
-            ErrorHandling.addErrorOrException(reason, GUIOnlineSimulation.class);
+            ErrorHandling.addErrorOrException(reason, OnlineSimulationPane.class);
             ErrorHandling.showErrorDialog("Fatal error");
         }
     }
 
-    @Override
-    protected void updateLog(String text) {
-    }
+//    @Override
+//    protected void updateLog(String text) {
+//    }
 
     private void updateSimulationLog(String text) {
         simInfo.setText(null);
@@ -384,7 +406,7 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
         simInfo.setCaretPosition(0);
     }
 
-    private void runSimulation(final boolean stepByStep) {
+    public void runSimulation(final boolean stepByStep) {
         try {
             if (simKernel.getSimCore().getSimulationState() == NOT_STARTED) {
                 Map<String, String> simulationParameters = simulationConfigurationPanel.getParameters();
@@ -399,7 +421,6 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
                 aux = eventProcessorPanel.getRunnable();
                 IExternal eventProcessor = ClassLoaderUtils.getInstance(aux.getFirst(), aux.getSecond(), simKernel.getEventProcessorClass());
                 Map<String, String> eventProcessorParameters = eventProcessorPanel.getRunnableParameters();
-
                 simKernel.configureSimulation(simulationParameters, net2planParameters, eventGenerator, eventGeneratorParameters, eventProcessor, eventProcessorParameters);
                 simKernel.initialize();
                 simKernel.getSimCore().setSimulationState(stepByStep ? SimCore.SimState.STEP : SimCore.SimState.RUNNING);
@@ -413,11 +434,11 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
             }
         } catch (Net2PlanException ex) {
             simKernel.reset();
-            if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, GUIOnlineSimulation.class);
+            if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, OnlineSimulationPane.class);
             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to execute simulation");
         } catch (Throwable ex) {
             simKernel.reset();
-            ErrorHandling.addErrorOrException(ex, GUIOnlineSimulation.class);
+            ErrorHandling.addErrorOrException(ex, OnlineSimulationPane.class);
             ErrorHandling.showErrorDialog("Error execution simulation");
         }
     }
@@ -454,10 +475,10 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
             simReport.add(pane, BorderLayout.CENTER);
             simReport.revalidate();
         } catch (Net2PlanException ex) {
-            if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, GUIOnlineSimulation.class);
+            if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, OnlineSimulationPane.class);
             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to show simulation report");
         } catch (Throwable ex) {
-            ErrorHandling.addErrorOrException(ex, GUIOnlineSimulation.class);
+            ErrorHandling.addErrorOrException(ex, OnlineSimulationPane.class);
             ErrorHandling.showErrorDialog("Error updating simulation report");
         }
     }
@@ -515,4 +536,8 @@ public class GUIOnlineSimulation extends IGUINetworkViewer implements ActionList
 
         dialog.setVisible(true);
     }
+
+    public SimKernel getSimKernel () { return simKernel; }
+    
+    public boolean isRunButtonEnabled () { return btn_run.isEnabled(); }
 }

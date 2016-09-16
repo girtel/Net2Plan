@@ -37,7 +37,6 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
-import com.net2plan.gui.tools.IGUINetworkViewer;
 import com.net2plan.gui.tools.INetworkCallback;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.AttributeEditor;

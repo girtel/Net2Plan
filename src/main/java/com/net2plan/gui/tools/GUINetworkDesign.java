@@ -15,11 +15,8 @@ package com.net2plan.gui.tools;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,7 +27,6 @@ import java.util.Set;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -41,15 +37,13 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JTable;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableModel;
 
 import com.net2plan.gui.tools.offlineExecPane.OfflineExecutionPanel;
+import com.net2plan.gui.tools.onlineSimulationPane.OnlineSimulationPane;
 import com.net2plan.gui.tools.specificTables.AdvancedJTable_node;
 import com.net2plan.gui.tools.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.tools.viewReportsPane.ViewReportPane;
@@ -70,6 +64,7 @@ import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
+import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.libraries.NetworkPerformanceMetrics;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
@@ -94,6 +89,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     private final static String TITLE = "Offline network design";
 
     private OfflineExecutionPanel executionPane;
+    private OnlineSimulationPane onlineSimulationPane;
     private JTextArea txt_netPlanLog;
     protected TopologyPanel topologyPanel;
 
@@ -107,7 +103,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     private JTabbedPane rightPane;
     private ViewEditTopologyTablesPane viewEditTopTables;
     private int viewNetPlanTabIndex;
-    public boolean allowDocumentUpdate;
+//    private boolean allowDocumentUpdate;
     private NetPlan currentNetPlan, initialNetPlan;
 
     /**
@@ -129,9 +125,10 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         super(title);
     }
 
-    public boolean allowLoadTrafficDemands() {
-        return true;
-    }
+//    public boolean allowLoadTrafficDemands() 
+//    {
+//        return true;
+//    }
 
     @Override
     public void configure(JPanel contentPane) 
@@ -165,7 +162,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
 
         viewEditTopTables = new ViewEditTopologyTablesPane((GUINetworkDesign) this , new BorderLayout());
-        addTab(isEditable() ? "View/edit network state" : "View network state", viewEditTopTables);
+        addTab("View/edit network state" , viewEditTopTables);
         viewNetPlanTabIndex = 0;
         
         reportPane = new ViewReportPane((GUINetworkDesign) this , JSplitPane.VERTICAL_SPLIT);
@@ -174,7 +171,10 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         loadDesign(new NetPlan());
 
         executionPane = new OfflineExecutionPanel (this);
-        addTab("Algorithm execution", executionPane, 1);
+        addTab("Offline design", executionPane);
+        
+        onlineSimulationPane = new OnlineSimulationPane (this);
+        addTab("Online simulation", onlineSimulationPane);
         
         addAllKeyCombinationActions ();
     }
@@ -189,56 +189,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         return pane;
     }
 
-//    @Override
-//    public Object execute(ThreadExecutionController controller) {
-//        if (controller == algorithmController) {
-//            start = System.nanoTime();
-//            final Triple<File, String, Class> algorithm = algorithmSelector.getRunnable();
-//            final Map<String, String> algorithmParameters = algorithmSelector.getRunnableParameters();
-//            final Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
-//            NetPlan netPlan = getDesign().copy();
-//            IAlgorithm instance = ClassLoaderUtils.getInstance(algorithm.getFirst(), algorithm.getSecond(), IAlgorithm.class);
-////			System.out.println ("BEFORE EXECUTING");
-//            String out = instance.executeAlgorithm(netPlan, algorithmParameters, net2planParameters);
-////			System.out.println ("AFTER EXECUTING");
-//            try {
-//                ((Closeable) instance.getClass().getClassLoader()).close();
-//            } catch (Throwable e) {
-//            }
-//            netPlan.setNetworkLayerDefault(netPlan.getNetworkLayer((int) 0));
-//            getDesign().assignFrom(netPlan);
-//            return out;
-//        } else {
-//            return super.execute(controller);
-//        }
-//    }
-
-//    @Override
-//    public void executionFailed(ThreadExecutionController controller) {
-////        if (controller == algorithmController) //ErrorHandling.showErrorDialog("Error executing algorithm");
-////        else 
-//        	super.executionFailed(controller);
-//    }
-//
-//    @Override
-//    public void executionFinished(ThreadExecutionController controller, Object out) {
-////        if (controller == algorithmController) {
-//////            try {
-//////                double execTime = (System.nanoTime() - start) / 1e9;
-//////                topologyPanel.updateLayerChooser();
-//////                getTopologyPanel().getCanvas().zoomAll();
-//////
-//////                String outMessage = String.format("Algorithm executed successfully%nExecution time: %.3g s%nExit message: %s", execTime, out);
-//////                JOptionPane.showMessageDialog(null, outMessage, "Solve design", JOptionPane.PLAIN_MESSAGE);
-//////                showNetPlanView();
-//////            } catch (Throwable ex) {
-//////                ErrorHandling.addErrorOrException(ex, GUINetworkDesign.class);
-//////                ErrorHandling.showErrorDialog("Error executing algorithm");
-//////            }
-////        } else {
-//            super.executionFinished(controller, out);
-////        }
-//    }
 
     @Override
     public String getDescription() {
@@ -270,10 +220,29 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         return Integer.MAX_VALUE;
     }
 
-    private void reset_internal() {
-        loadDesign(new NetPlan());
-        //algorithmSelector.reset();
-        executionPane.reset();
+    private void reset_internal() 
+    {
+    	if (inOnlineSimulationMode())
+    	{
+            switch (onlineSimulationPane.getSimKernel().getSimCore().getSimulationState()) 
+            {
+            case NOT_STARTED:
+            case STOPPED:
+                break;
+            default:
+            	onlineSimulationPane.getSimKernel().getSimCore().setSimulationState(SimState.STOPPED);
+                break;
+            }
+            onlineSimulationPane.getSimKernel().reset();
+            loadDesign(onlineSimulationPane.getSimKernel().getCurrentNetPlan());
+    	}
+    	else
+    	{
+            loadDesign(new NetPlan());
+            //algorithmSelector.reset();
+            executionPane.reset();
+    	}
+            	
     }
 
     protected void updateLog(String text) {
@@ -395,13 +364,17 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         updateNetPlanView();
     }
     @Override
-    public NetPlan getDesign() {
-        return currentNetPlan;
+    public NetPlan getDesign() 
+    {
+    	if (inOnlineSimulationMode()) return onlineSimulationPane.getSimKernel().getCurrentNetPlan();
+    	else return currentNetPlan;
     }
 
     @Override
-    public NetPlan getInitialDesign() {
-        return initialNetPlan;
+    public NetPlan getInitialDesign() 
+    {
+    	if (inOnlineSimulationMode()) return onlineSimulationPane.getSimKernel().getInitialNetPlan();
+    	else return initialNetPlan;
     }
 
     @Override
@@ -464,8 +437,12 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     }
 
     @Override
-    public boolean isEditable() {
-        return false;
+    public boolean isEditable() 
+    {
+    	final SimState simState = onlineSimulationPane.getSimKernel().getSimCore().getSimulationState();
+    	if (simState == SimState.PAUSED || simState == SimState.RUNNING || simState == SimState.STEP) 
+    		return false;
+    	else return true;
     }
 
     @Override
@@ -554,7 +531,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
     @Override
     public void reset() {
-        try {
+        try 
+        {
             boolean reset = askForReset();
             if (!reset) return;
 
@@ -839,8 +817,16 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
      * @param netPlan {@code NetPlan} object
      * @since 0.3.0
      */
-    protected void setNetPlan(NetPlan netPlan) {
-        currentNetPlan = netPlan;
+    protected void setNetPlan(NetPlan netPlan) 
+    {
+    	if (inOnlineSimulationMode())
+    	{
+    		onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
+    	}
+    	else
+    	{
+    		currentNetPlan = netPlan;
+    	}
         if (inOnlineSimulationMode()) initialNetPlan = currentNetPlan.copy();
     }
 
@@ -917,8 +903,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         showTab(viewNetPlanTabIndex);
     }
 
-	@Override
-	public boolean allowDocumentUpdate() { return allowDocumentUpdate; }
+//	@Override
+//	public boolean allowDocumentUpdate() { return allowDocumentUpdate; }
 
 	@Override
 	public TopologyPanel getTopologyPanel() { return topologyPanel; }
@@ -1038,14 +1024,12 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_F12, InputEvent.CTRL_DOWN_MASK));
 
-        if (allowLoadTrafficDemands()) {
-        	addKeyCombinationAction("Load traffic demands", new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                	topologyPanel.loadTrafficDemands();
-                }
-            }, KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
-        }
+    	addKeyCombinationAction("Load traffic demands", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	topologyPanel.loadTrafficDemands();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
         
         /* FROM REPORT */
         addKeyCombinationAction("Close selected report", new AbstractAction() {
@@ -1063,6 +1047,25 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
             	reportPane.getReportContainer().removeAll();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+
+
+        /* Online simulation */
+        addKeyCombinationAction("Run simulation", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    if (onlineSimulationPane.isRunButtonEnabled ()) onlineSimulationPane.runSimulation(false);
+                } catch (Net2PlanException ex) {
+                    if (ErrorHandling.isDebugEnabled())
+                        ErrorHandling.addErrorOrException(ex, OnlineSimulationPane.class);
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error executing simulation");
+                } catch (Throwable ex) {
+                    ErrorHandling.addErrorOrException(ex, OnlineSimulationPane.class);
+                    ErrorHandling.showErrorDialog("An error happened");
+                }
+
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK));
 
         
 	}
