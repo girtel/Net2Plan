@@ -60,7 +60,7 @@ import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ClassPathEditor;
 import com.net2plan.gui.utils.ColumnFitAdapter;
 import com.net2plan.gui.utils.SwingUtils;
-import com.net2plan.gui.utils.topology.jung.JUNGCanvas;
+import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants.UserInterface;
 import com.net2plan.internal.ErrorHandling;

@@ -42,14 +42,15 @@ import javax.swing.KeyStroke;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableModel;
 
-import com.net2plan.gui.tools.offlineExecPane.OfflineExecutionPanel;
-import com.net2plan.gui.tools.onlineSimulationPane.OnlineSimulationPane;
-import com.net2plan.gui.tools.specificTables.AdvancedJTable_node;
-import com.net2plan.gui.tools.viewEditTopolTables.ViewEditTopologyTablesPane;
-import com.net2plan.gui.tools.viewReportsPane.ViewReportPane;
+import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
-import com.net2plan.gui.utils.topology.TopologyPanel;
-import com.net2plan.gui.utils.topology.jung.JUNGCanvas;
+import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
+import com.net2plan.gui.utils.onlineSimulationPane.OnlineSimulationPane;
+import com.net2plan.gui.utils.topologyPane.TopologyPanel;
+import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
+import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -91,7 +92,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     private OfflineExecutionPanel executionPane;
     private OnlineSimulationPane onlineSimulationPane;
     private JTextArea txt_netPlanLog;
-    protected TopologyPanel topologyPanel;
+    private TopologyPanel topologyPanel;
 
     /**
      * Reference to the popup menu in the topology panel.
@@ -104,7 +105,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     private ViewEditTopologyTablesPane viewEditTopTables;
     private int viewNetPlanTabIndex;
 //    private boolean allowDocumentUpdate;
-    private NetPlan currentNetPlan, initialNetPlan;
+    private NetPlan currentNetPlan; //, initialNetPlan;
 
     /**
      * Default constructor.
@@ -170,17 +171,17 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         
         loadDesign(new NetPlan());
 
-        executionPane = new OfflineExecutionPanel (this);
-        addTab("Offline design", executionPane);
-        
         onlineSimulationPane = new OnlineSimulationPane (this);
+        executionPane = new OfflineExecutionPanel (this);
+
+        addTab("Offline design", executionPane);
         addTab("Online simulation", onlineSimulationPane);
         
         addAllKeyCombinationActions ();
     }
 
     
-    protected JPanel configureLeftBottomPanel() {
+    private JPanel configureLeftBottomPanel() {
         txt_netPlanLog = new JTextArea();
         txt_netPlanLog.setFont(new JLabel().getFont());
         JPanel pane = new JPanel(new MigLayout("fill, insets 0 0 0 0"));
@@ -220,32 +221,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         return Integer.MAX_VALUE;
     }
 
-    private void reset_internal() 
-    {
-    	if (inOnlineSimulationMode())
-    	{
-            switch (onlineSimulationPane.getSimKernel().getSimCore().getSimulationState()) 
-            {
-            case NOT_STARTED:
-            case STOPPED:
-                break;
-            default:
-            	onlineSimulationPane.getSimKernel().getSimCore().setSimulationState(SimState.STOPPED);
-                break;
-            }
-            onlineSimulationPane.getSimKernel().reset();
-            loadDesign(onlineSimulationPane.getSimKernel().getCurrentNetPlan());
-    	}
-    	else
-    	{
-            loadDesign(new NetPlan());
-            //algorithmSelector.reset();
-            executionPane.reset();
-    	}
-            	
-    }
 
-    protected void updateLog(String text) {
+    private void updateLog(String text) {
         txt_netPlanLog.setText(null);
         txt_netPlanLog.setText(text);
         txt_netPlanLog.setCaretPosition(0);
@@ -259,7 +236,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
      * @return Tab position
      * @since 0.3.0
      */
-    protected final int addTab(String name, JComponent tab) {
+    private final int addTab(String name, JComponent tab) {
         return addTab(name, tab, -1);
     }
 
@@ -272,7 +249,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
      * @return Tab position
      * @since 0.3.0
      */
-    protected final int addTab(String name, JComponent tab, int tabIndex) {
+    private final int addTab(String name, JComponent tab, int tabIndex) {
         int numTabs = rightPane.getTabCount();
         if (numTabs == 9) throw new RuntimeException("A maximum of 9 tabs are allowed");
 
@@ -374,7 +351,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     public NetPlan getInitialDesign() 
     {
     	if (inOnlineSimulationMode()) return onlineSimulationPane.getSimKernel().getInitialNetPlan();
-    	else return initialNetPlan;
+    	else return null;
     }
 
     @Override
@@ -439,6 +416,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     @Override
     public boolean isEditable() 
     {
+    	if (onlineSimulationPane == null) return true;
     	final SimState simState = onlineSimulationPane.getSimKernel().getSimCore().getSimulationState();
     	if (simState == SimState.PAUSED || simState == SimState.RUNNING || simState == SimState.STEP) 
     		return false;
@@ -452,7 +430,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     @Override
     public void loadDesign(NetPlan netPlan) {
         netPlan.checkCachesConsistency();
-        setNetPlan(netPlan);
+   		onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
+   		currentNetPlan = netPlan;
         netPlan.checkCachesConsistency();
         topologyPanel.updateLayerChooser();
         topologyPanel.getCanvas().zoomAll();
@@ -533,10 +512,28 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     public void reset() {
         try 
         {
-            boolean reset = askForReset();
-            if (!reset) return;
+            if (!askForReset()) return;
 
-            reset_internal();
+        	if (inOnlineSimulationMode())
+        	{
+                switch (onlineSimulationPane.getSimKernel().getSimCore().getSimulationState()) 
+                {
+                case NOT_STARTED:
+                case STOPPED:
+                    break;
+                default:
+                	onlineSimulationPane.getSimKernel().getSimCore().setSimulationState(SimState.STOPPED);
+                    break;
+                }
+                onlineSimulationPane.getSimKernel().reset();
+                loadDesign(onlineSimulationPane.getSimKernel().getCurrentNetPlan());
+        	}
+        	else
+        	{
+                loadDesign(new NetPlan());
+                //algorithmSelector.reset();
+                executionPane.reset();
+        	}
 //            reportSelector.reset();
 //            reportContainer.removeAll();
         } catch (Throwable ex) {
@@ -812,31 +809,12 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     }
 
     /**
-     * Allows to include actions when a {@code NetPlan} object is loaded.
-     *
-     * @param netPlan {@code NetPlan} object
-     * @since 0.3.0
-     */
-    protected void setNetPlan(NetPlan netPlan) 
-    {
-    	if (inOnlineSimulationMode())
-    	{
-    		onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
-    	}
-    	else
-    	{
-    		currentNetPlan = netPlan;
-    	}
-        if (inOnlineSimulationMode()) initialNetPlan = currentNetPlan.copy();
-    }
-
-    /**
      * Asks user to confirm plugin reset.
      *
      * @return {@code true} if user confirms to reset the plugin, or {@code false} otherwise
      * @since 0.2.3
      */
-    protected static boolean askForReset() {
+    private static boolean askForReset() {
         int result = JOptionPane.showConfirmDialog(null, "Are you sure you want to reset? This will remove all unsaved data", "Reset", JOptionPane.YES_NO_OPTION);
 
         return result == JOptionPane.YES_OPTION;
@@ -874,8 +852,13 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
      * @return {@code true} if the initial {@code NetPlan} object is stored. Otherwise, {@code false}.
      * @since 0.3.0
      */
-    public boolean inOnlineSimulationMode() {
-        return false;
+    public boolean inOnlineSimulationMode() 
+    {
+    	if (onlineSimulationPane == null) return false;
+    	final SimState simState = onlineSimulationPane.getSimKernel().getSimCore().getSimulationState();
+    	if (simState == SimState.PAUSED || simState == SimState.RUNNING || simState == SimState.STEP) 
+    		return true;
+    	else return false;
     }
 
     @Override

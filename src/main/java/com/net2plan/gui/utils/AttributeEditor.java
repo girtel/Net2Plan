@@ -35,7 +35,6 @@ import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
-import com.net2plan.gui.tools.INetworkCallback;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;

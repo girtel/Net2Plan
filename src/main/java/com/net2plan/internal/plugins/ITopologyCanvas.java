@@ -35,7 +35,7 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
-import com.net2plan.gui.utils.topology.ITopologyCanvasPlugin;
+import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
