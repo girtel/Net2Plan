@@ -496,7 +496,7 @@ public class GraphUtils
 			op.setObjectiveFunction("minimize" , "sum(x_e)");
 			op.addConstraint("A_ne * x_e == div");
 			if (solverLibraryName == null)
-				op.solve(solverName, "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerDemand);
+				op.solve(solverName, "solverLibraryName" , Configuration.getDefaultSolverLibraryName(solverName) , "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerDemand);
 			else
 				op.solve(solverName, "solverLibraryName", solverLibraryName, "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerDemand);
 			if (!op.solutionIsFeasible()) throw new Net2PlanException ("A feasible solution was not found");
@@ -534,7 +534,7 @@ public class GraphUtils
 			op.setObjectiveFunction("minimize" , "sum(x_e)");
 			op.addConstraint("A_ne * x_e == div");
 			if (solverLibraryName == null)
-				op.solve(solverName, "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerDestination);
+				op.solve(solverName, "solverLibraryName" , Configuration.getDefaultSolverLibraryName(solverName), "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerDestination);
 			else
 				op.solve(solverName, "solverLibraryName", solverLibraryName, "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerDestination);
 			if (!op.solutionIsFeasible()) throw new Net2PlanException ("A feasible solution was not found");
@@ -1229,7 +1229,7 @@ public class GraphUtils
 			}
 
 			if (solverLibraryName == null)
-				op.solve(solverName, "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerTree);
+				op.solve(solverName, "solverLibraryName" , Configuration.getDefaultSolverLibraryName(solverName) , "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerTree);
 			else
 				op.solve(solverName, "solverLibraryName", solverLibraryName, "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerTree);
 
@@ -1325,7 +1325,7 @@ public class GraphUtils
 		}
 
 		if (solverLibraryName == null)
-			op.solve(solverName, "maxSolverTimeInSeconds", maxSolverTimeInSeconds);
+			op.solve(solverName, "solverLibraryName" , Configuration.getDefaultSolverLibraryName(solverName)  , "maxSolverTimeInSeconds", maxSolverTimeInSeconds);
 		else
 			op.solve(solverName, "solverLibraryName", solverLibraryName, "maxSolverTimeInSeconds", maxSolverTimeInSeconds);
 

@@ -117,6 +117,7 @@ public class CLINetworkDesign extends ICLIModule {
         }
 
         Map<String, String> algorithmParameters = CommandLineParser.getParameters(defaultAlgorithmParameters, cli.getOptionProperties("alg-param"));
+        Configuration.updateSolverLibraryNameParameter(algorithmParameters); // put default path to libraries if solverLibraryName is ""
         Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
 
         System.out.println("Net2Plan parameters");

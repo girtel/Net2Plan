@@ -1779,12 +1779,7 @@ public final class GUITrafficDesign extends IGUIModule {
 
                             case 1:
                                 String solverName = Configuration.getOption("defaultILPSolver");
-                                String solverLibraryName = null;
-                                if (solverName.equalsIgnoreCase("glpk")) solverLibraryName = Configuration.getOption("glpkSolverLibraryName");
-                                else if (solverName.equalsIgnoreCase("ipopt")) solverLibraryName = Configuration.getOption("ipoptSolverLibraryName");
-                                else if (solverName.equalsIgnoreCase("cplex")) solverLibraryName = Configuration.getOption("cplexSolverLibraryName");
-                                else if (solverName.equalsIgnoreCase("xpress")) solverLibraryName = Configuration.getOption("xpressSolverLicenseFileName");
-
+                                String solverLibraryName = Configuration.getDefaultSolverLibraryName(solverName);
                                 h_d = TrafficMatrixGenerationModels.normalizeTraffic_linkCapacity_xde(aux, solverName, solverLibraryName);
                                 break;
 

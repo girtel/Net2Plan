@@ -139,33 +139,38 @@ public class RunnableSelector extends JPanel {
 
                     ((Closeable) instance.getClass().getClassLoader()).close();
 
-                    String solverName = null;
-                    Triple<String, String, String> solverLibraryNameItem = null;
-
-                    Iterator<Triple<String, String, String>> it = aux_parameters.iterator();
-                    while (it.hasNext()) {
-                        Triple<String, String, String> aux = it.next();
-                        String paramName = aux.getFirst();
-                        if (paramName.equals("solverName")) {
-                            solverName = aux.getSecond();
-                        }
-
-                        if (paramName.equals("solverLibraryName")) {
-                            solverLibraryNameItem = aux;
-                        }
-                    }
-
-                    if (solverName != null && solverLibraryNameItem != null && solverLibraryNameItem.getSecond().isEmpty()) {
-                        try {
-                            String solverLibraryName = null;
-                            if (solverName.equalsIgnoreCase("glpk")) solverLibraryName = Configuration.getOption("glpkSolverLibraryName");
-                            else if (solverName.equalsIgnoreCase("ipopt")) solverLibraryName = Configuration.getOption("ipoptSolverLibraryName");
-                            else if (solverName.equalsIgnoreCase("cplex")) solverLibraryName = Configuration.getOption("cplexSolverLibraryName");
-                            else if (solverName.equalsIgnoreCase("xpress")) solverLibraryName = Configuration.getOption("xpressSolverLicenseFileName");
-                            if (solverLibraryName != null) solverLibraryNameItem.setSecond(solverLibraryName);
-                        } catch (Throwable ex) {
-                        }
-                    }
+//                    String solverName = null;
+//                    Triple<String, String, String> solverLibraryNameItem = null;
+//
+//                    Iterator<Triple<String, String, String>> it = aux_parameters.iterator();
+//                    while (it.hasNext()) {
+//                        Triple<String, String, String> aux = it.next();
+//                        String paramName = aux.getFirst();
+//                        if (paramName.equals("solverName")) {
+//                            solverName = aux.getSecond();
+//                        }
+//
+//                        if (paramName.equals("solverLibraryName")) {
+//                            solverLibraryNameItem = aux;
+//                        }
+//                    }
+//
+//                    if (solverName != null && solverLibraryNameItem != null && solverLibraryNameItem.getSecond().isEmpty()) 
+//                    {
+//                    	try { solverLibraryNameItem.setSecond(Configuration.getDefaultSolverLibraryName(solverName)); } catch (Exception ex) {} // in case the default name is not one solver
+//                    }
+//                   } 
+//                    {
+//                        try {
+//                            String solverLibraryName = null;
+//                            if (solverName.equalsIgnoreCase("glpk")) solverLibraryName = Configuration.getOption("glpkSolverLibraryName");
+//                            else if (solverName.equalsIgnoreCase("ipopt")) solverLibraryName = Configuration.getOption("ipoptSolverLibraryName");
+//                            else if (solverName.equalsIgnoreCase("cplex")) solverLibraryName = Configuration.getOption("cplexSolverLibraryName");
+//                            else if (solverName.equalsIgnoreCase("xpress")) solverLibraryName = Configuration.getOption("xpressSolverLicenseFileName");
+//                            if (solverLibraryName != null) solverLibraryNameItem.setSecond(solverLibraryName);
+//                        } catch (Throwable ex) {
+//                        }
+//                    }
 
                     txt_description.setText(aux_description);
                     if (!txt_description.getText().isEmpty()) txt_description.setCaretPosition(0);

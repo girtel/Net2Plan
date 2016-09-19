@@ -383,12 +383,12 @@ public class CLITrafficDesign extends ICLIModule {
 
                     case "max-traffic-exact":
                         String solverName = Configuration.getOption("defaultILPSolver");
-                        String solverLibraryName = null;
-                        if (solverName.equalsIgnoreCase("glpk")) solverLibraryName = Configuration.getOption("glpkSolverLibraryName");
-                        else if (solverName.equalsIgnoreCase("ipopt")) solverLibraryName = Configuration.getOption("ipoptSolverLibraryName");
-                        else if (solverName.equalsIgnoreCase("cplex")) solverLibraryName = Configuration.getOption("cplexSolverLibraryName");
-                        else if (solverName.equalsIgnoreCase("xpress")) solverLibraryName = Configuration.getOption("xpressSolverLicenseFileName");
-
+                        String solverLibraryName = Configuration.getDefaultSolverLibraryName(solverName);
+//                        if (solverName.equalsIgnoreCase("glpk")) solverLibraryName = Configuration.getOption("glpkSolverLibraryName");
+//                        else if (solverName.equalsIgnoreCase("ipopt")) solverLibraryName = Configuration.getOption("ipoptSolverLibraryName");
+//                        else if (solverName.equalsIgnoreCase("cplex")) solverLibraryName = Configuration.getOption("cplexSolverLibraryName");
+//                        else if (solverName.equalsIgnoreCase("xpress")) solverLibraryName = Configuration.getOption("xpressSolverLicenseFileName");
+//
                         for (int tmId = 0; tmId < numMatrices; tmId++) {
                             netPlan.setTrafficMatrix(trafficMatrices[tmId]);
                             netPlan.setVectorDemandOfferedTraffic(TrafficMatrixGenerationModels.normalizeTraffic_linkCapacity_xde(netPlan, solverName, solverLibraryName));

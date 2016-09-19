@@ -19,6 +19,7 @@ import java.util.Map;
 
 import com.jom.DoubleMatrixND;
 import com.jom.OptimizationProblem;
+import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Link;

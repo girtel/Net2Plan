@@ -75,6 +75,7 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
         start = System.nanoTime();
         final Triple<File, String, Class> algorithm = algorithmSelector.getRunnable();
         final Map<String, String> algorithmParameters = algorithmSelector.getRunnableParameters();
+        Configuration.updateSolverLibraryNameParameter(algorithmParameters); // put default path to libraries if solverLibraryName is ""
         final Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
         NetPlan netPlan = mainWindow.getDesign().copy();
         IAlgorithm instance = ClassLoaderUtils.getInstance(algorithm.getFirst(), algorithm.getSecond(), IAlgorithm.class);

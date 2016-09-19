@@ -5277,7 +5277,7 @@ public class NetPlan extends NetworkElement
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		checkMatrixDestinationLinkCarriedTrafficFlowConservationConstraints(x_te , layer);
 
-		if (removeCycles) x_te = GraphUtils.removeCyclesFrom_xte(nodes, layer.links, getMatrixNode2NodeOfferedTraffic(layer), x_te, Configuration.getOption("defaultILPSolver") , null, -1);
+		if (removeCycles) x_te = GraphUtils.removeCyclesFrom_xte(nodes, layer.links, getMatrixNode2NodeOfferedTraffic(layer), x_te, Configuration.getOption("defaultILPSolver") , null , -1);
 		
 		if (layer.routingType == RoutingType.SOURCE_ROUTING)
 		{
