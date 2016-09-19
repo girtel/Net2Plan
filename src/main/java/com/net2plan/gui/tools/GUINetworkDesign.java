@@ -87,7 +87,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 	public static Color COLOR_INITIALNODE = new Color(0, 153, 51);
     public static Color COLOR_ENDNODE = new Color(0, 162, 215);
 
-    private final static String TITLE = "Offline network design";
+    private final static String TITLE = "Offline network design & Online network simulation";
 
     private OfflineExecutionPanel executionPane;
     private OnlineSimulationPane onlineSimulationPane;
@@ -430,7 +430,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     @Override
     public void loadDesign(NetPlan netPlan) {
         netPlan.checkCachesConsistency();
-   		onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
+        if (onlineSimulationPane != null) onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
    		currentNetPlan = netPlan;
         netPlan.checkCachesConsistency();
         topologyPanel.updateLayerChooser();

@@ -162,7 +162,8 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
         simReportTab = 2;
 
         simKernel.reset();
-		
+        
+        if (mainWindow.getDesign() != null) simKernel.setNetPlan(mainWindow.getDesign());
 	}
     
     @Override
@@ -170,7 +171,9 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
         try {
             Object src = e.getSource();
 
-            if (src == btn_run) {
+            if (src == btn_run) 
+            {
+            	simKernel.setNetPlan(mainWindow.getDesign());
                 runSimulation(false);
             } else if (src == btn_step) {
                 runSimulation(true);
@@ -249,73 +252,11 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
         return pan_simulationController;
     }
 
-
-//    @Override
-//    public String getDescription() {
-//        return getName();
-//    }
-//
-//    @Override
-//    public NetPlan getDesign() {
-//        return simKernel.getCurrentNetPlan();
-//    }
-//
-//    @Override
-//    public NetPlan getInitialDesign() {
-//        return simKernel.getInitialNetPlan();
-//    }
-
-//    @Override
-//    public KeyStroke getKeyStroke() {
-//        return KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.ALT_DOWN_MASK);
-//    }
-//
-//    @Override
-//    public String getMenu() {
-//        return "Tools|" + TITLE;
-//    }
-//
-//    @Override
-//    public String getName() {
-//        return "Online simulation (GUI)";
-//    }
-//
-//    @Override
-//    public List<Triple<String, String, String>> getParameters() {
-//        return null;
-//    }
-//
-//    @Override
-//    public int getPriority() {
-//        return Integer.MAX_VALUE - 2;
-//    }
-
     @Override
     public void refresh(boolean forceRefresh) {
         if (chk_refresh.isSelected() || forceRefresh)
             updateSimulationInfo();
     }
-
-//    @Override
-//    protected void reset_internal() {
-//        switch (simKernel.getSimCore().getSimulationState()) {
-//            case NOT_STARTED:
-//            case STOPPED:
-//                break;
-//
-//            default:
-//                simKernel.getSimCore().setSimulationState(SimState.STOPPED);
-//                break;
-//        }
-//
-//        simKernel.reset();
-//        loadDesign(simKernel.getCurrentNetPlan());
-//    }
-
-//    @Override
-//    protected void setNetPlan(NetPlan netPlan) {
-//        simKernel.setNetPlan(netPlan);
-//    }
 
     @Override
     public void simulationStateChanged(SimCore.SimState simulationState, Throwable reason) {
@@ -373,7 +314,8 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
                 throw new RuntimeException("Bad - Unknown simulation state");
         }
 
-        if (simulationState == SimState.NOT_STARTED || simulationState == SimState.PAUSED || simulationState == SimState.STEP || simulationState == SimState.STOPPED) {
+        if (simulationState == SimState.NOT_STARTED || simulationState == SimState.PAUSED || simulationState == SimState.STEP || simulationState == SimState.STOPPED) 
+        {
             updateSimulationInfo();
             mainWindow.getTopologyPanel().updateLayerChooser();
             mainWindow.resetView();
@@ -395,10 +337,6 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
             ErrorHandling.showErrorDialog("Fatal error");
         }
     }
-
-//    @Override
-//    protected void updateLog(String text) {
-//    }
 
     private void updateSimulationLog(String text) {
         simInfo.setText(null);
