@@ -32,10 +32,7 @@ import javax.xml.stream.events.XMLEvent;
 
 import org.codehaus.stax2.XMLStreamReader2;
 
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-
 import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.LongUtils;
 
 class ReaderNetPlan_v4 implements IReaderNetPlan //extends NetPlanFormat_v3
@@ -246,6 +243,7 @@ class ReaderNetPlan_v4 implements IReaderNetPlan //extends NetPlanFormat_v3
 						case "attribute":
 							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
 							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
+							if (key.equals(NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE)) name = "" + mapOldId2Demand.get(Long.parseLong(name)).getId();
 							newDemand.setAttribute(key, name);
 							break;
 
@@ -426,6 +424,7 @@ class ReaderNetPlan_v4 implements IReaderNetPlan //extends NetPlanFormat_v3
 						case "attribute":
 							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
 							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
+							if (key.equals(NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE)) name = "" + mapOldId2Link.get(Long.parseLong(name)).getId();
 							newLink.setAttribute(key, name);
 							break;
 

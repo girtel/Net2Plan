@@ -28,7 +28,7 @@ package com.net2plan.internal;
  */
 public class Version
 {
-	private final static String VERSION = "0.4.0";
+	private final static String VERSION = "0.4.2";
 	private final static String FILE_FORMAT_VERSION = "4";
 	
 	/**
