@@ -82,7 +82,7 @@ import net.miginfocom.swing.MigLayout;
  * using the open-source Java Optimization Modeler library, to interface
  * to a number of external solvers such as GPLK, CPLEX or IPOPT.
  */
-public class GUINetworkDesign extends IGUIModule implements INetworkCallback  
+public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 {
 	public static Color COLOR_INITIALNODE = new Color(0, 153, 51);
     public static Color COLOR_ENDNODE = new Color(0, 162, 215);
@@ -132,7 +132,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 //    }
 
     @Override
-    public void configure(JPanel contentPane) 
+    public void configure(JPanel contentPane)
     {
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
 
@@ -165,10 +165,10 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         viewEditTopTables = new ViewEditTopologyTablesPane((GUINetworkDesign) this , new BorderLayout());
         addTab("View/edit network state" , viewEditTopTables);
         viewNetPlanTabIndex = 0;
-        
+
         reportPane = new ViewReportPane((GUINetworkDesign) this , JSplitPane.VERTICAL_SPLIT);
         addTab("View reports", reportPane);
-        
+
         loadDesign(new NetPlan());
 
         onlineSimulationPane = new OnlineSimulationPane (this);
@@ -176,11 +176,11 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
         addTab("Offline design", executionPane);
         addTab("Online simulation", onlineSimulationPane);
-        
+
         addAllKeyCombinationActions ();
     }
 
-    
+
     private JPanel configureLeftBottomPanel() {
         txt_netPlanLog = new JTextArea();
         txt_netPlanLog.setFont(new JLabel().getFont());
@@ -341,14 +341,14 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         updateNetPlanView();
     }
     @Override
-    public NetPlan getDesign() 
+    public NetPlan getDesign()
     {
     	if (inOnlineSimulationMode()) return onlineSimulationPane.getSimKernel().getCurrentNetPlan();
     	else return currentNetPlan;
     }
 
     @Override
-    public NetPlan getInitialDesign() 
+    public NetPlan getInitialDesign()
     {
     	if (inOnlineSimulationMode()) return onlineSimulationPane.getSimKernel().getInitialNetPlan();
     	else return null;
@@ -414,11 +414,11 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     }
 
     @Override
-    public boolean isEditable() 
+    public boolean isEditable()
     {
     	if (onlineSimulationPane == null) return true;
     	final SimState simState = onlineSimulationPane.getSimKernel().getSimCore().getSimulationState();
-    	if (simState == SimState.PAUSED || simState == SimState.RUNNING || simState == SimState.STEP) 
+    	if (simState == SimState.PAUSED || simState == SimState.RUNNING || simState == SimState.STEP)
     		return false;
     	else return true;
     }
@@ -510,13 +510,13 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
     @Override
     public void reset() {
-        try 
+        try
         {
             if (!askForReset()) return;
 
         	if (inOnlineSimulationMode())
         	{
-                switch (onlineSimulationPane.getSimKernel().getSimCore().getSimulationState()) 
+                switch (onlineSimulationPane.getSimKernel().getSimCore().getSimulationState())
                 {
                 case NOT_STARTED:
                 case STOPPED:
@@ -543,7 +543,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     }
 
     @Override
-    public void resetView() 
+    public void resetView()
     {
         topologyPanel.getCanvas().resetPickedAndUserDefinedColorState();
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.DEMAND).clearSelection();
@@ -653,6 +653,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         selectNetPlanViewItem(layer.getId(), NetworkElementType.ROUTE, routeId);
 
         NetPlan initialState = getInitialDesign();
+
+        Map<Node, Color> selectedNodes = new HashMap<>();
         Map<Link, Pair<Color, Boolean>> coloredLinks = new HashMap<Link, Pair<Color, Boolean>>();
         if (inOnlineSimulationMode() && viewEditTopTables.isInitialNetPlanShown ()) {
             Route initialRoute = initialState.getRouteFromId(route.getId());
@@ -660,25 +662,54 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
                 for (ProtectionSegment s : initialRoute.getPotentialBackupProtectionSegments())
                     for (Link e : s.getSeqLinks())
                         if (netPlan.getLinkFromId(e.getId()) != null)
-                            coloredLinks.put(netPlan.getLinkFromId(e.getId()), Pair.of(Color.YELLOW, true));
+                        {
+                            Link selectedLink = netPlan.getLinkFromId(e.getId());
+                            selectedNodes.put(selectedLink.getOriginNode(), Color.YELLOW);
+                            selectedNodes.put(selectedLink.getDestinationNode(), Color.YELLOW);
+                            coloredLinks.put(selectedLink, Pair.of(Color.YELLOW, true));
+                        }
                 for (Link linkOrSegment : initialRoute.getSeqLinksAndProtectionSegments())
                     if (linkOrSegment instanceof ProtectionSegment) {
                         for (Link e : ((ProtectionSegment) linkOrSegment).getSeqLinks())
                             if (netPlan.getLinkFromId(e.getId()) != null)
-                                coloredLinks.put(netPlan.getLinkFromId(e.getId()), Pair.of(Color.ORANGE, true));
+                            {
+                                Link selectedLink = netPlan.getLinkFromId(e.getId());
+                                selectedNodes.put(selectedLink.getOriginNode(), Color.ORANGE);
+                                selectedNodes.put(selectedLink.getDestinationNode(), Color.ORANGE);
+                                coloredLinks.put(selectedLink, Pair.of(Color.ORANGE, true));
+                            }
                     } else if (netPlan.getLinkFromId(linkOrSegment.getId()) != null)
-                        coloredLinks.put(netPlan.getLinkFromId(linkOrSegment.getId()), Pair.of(Color.BLUE, true));
+                    {
+                        Link selectedLink =netPlan.getLinkFromId(linkOrSegment.getId());
+                        selectedNodes.put(selectedLink.getOriginNode(), Color.BLUE);
+                        selectedNodes.put(selectedLink.getDestinationNode(), Color.BLUE);
+                        coloredLinks.put(selectedLink, Pair.of(Color.BLUE, true));
+                    }
             }
         }
         for (ProtectionSegment s : route.getPotentialBackupProtectionSegments())
             for (Link e : s.getSeqLinks())
+            {
+                selectedNodes.put(e.getOriginNode(), Color.YELLOW);
+                selectedNodes.put(e.getDestinationNode(), Color.YELLOW);
                 coloredLinks.put(e, Pair.of(Color.YELLOW, false));
+            }
         for (Link linkOrSegment : route.getSeqLinksAndProtectionSegments())
             if (linkOrSegment instanceof ProtectionSegment) {
                 for (Link e : ((ProtectionSegment) linkOrSegment).getSeqLinks())
+                {
+                    selectedNodes.put(e.getOriginNode(), Color.ORANGE);
+                    selectedNodes.put(e.getDestinationNode(), Color.ORANGE);
                     coloredLinks.put(netPlan.getLinkFromId(e.getId()), Pair.of(Color.ORANGE, false));
-            } else coloredLinks.put(linkOrSegment, Pair.of(Color.BLUE, false));
-        topologyPanel.getCanvas().showAndPickNodesAndLinks(null, coloredLinks);
+                }
+            } else
+            {
+                selectedNodes.put(linkOrSegment.getOriginNode(), Color.BLUE);
+                selectedNodes.put(linkOrSegment.getDestinationNode(), Color.BLUE);
+                coloredLinks.put(linkOrSegment, Pair.of(Color.BLUE, false));
+            }
+
+        topologyPanel.getCanvas().showAndPickNodesAndLinks(selectedNodes, coloredLinks);
         topologyPanel.getCanvas().refresh();
     }
 
@@ -834,7 +865,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     /**
      * Shows the tab corresponding associated to a network element.
      *
-     * @param layerId Layer identifier
+     * @param layer Layer identifier
      * @param type    Network element type
      * @param itemId  Item identifier (if null, it will just show the tab)
      * @since 0.3.0
@@ -852,11 +883,11 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
      * @return {@code true} if the initial {@code NetPlan} object is stored. Otherwise, {@code false}.
      * @since 0.3.0
      */
-    public boolean inOnlineSimulationMode() 
+    public boolean inOnlineSimulationMode()
     {
     	if (onlineSimulationPane == null) return false;
     	final SimState simState = onlineSimulationPane.getSimKernel().getSimCore().getSimulationState();
-    	if (simState == SimState.PAUSED || simState == SimState.RUNNING || simState == SimState.STEP) 
+    	if (simState == SimState.PAUSED || simState == SimState.RUNNING || simState == SimState.STEP)
     		return true;
     	else return false;
     }
@@ -1050,7 +1081,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK));
 
-        
+
 	}
-	
+
 }
