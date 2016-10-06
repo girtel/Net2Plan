@@ -16,27 +16,13 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
-import javax.swing.AbstractButton;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JToggleButton;
-import javax.swing.JToolBar;
+import javax.swing.*;
 import javax.swing.border.LineBorder;
 
 import com.net2plan.gui.utils.FileChooserNetworkDesign;
@@ -47,6 +33,8 @@ import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.topologyPane.utils.MenuButton;
+import com.net2plan.gui.utils.windows.TopologyWindow;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -66,15 +54,21 @@ import com.net2plan.internal.plugins.ITopologyCanvas;
 public class TopologyPanel extends JPanel implements ActionListener//FrequentisBackgroundPanel implements ActionListener//JPanel implements ActionListener
 {
     private final INetworkCallback callback;
-    private ITopologyCanvas canvas;
-    private ITopologyCanvasPlugin popupPlugin;
-    private JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
-    private JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
-    private FileChooserNetworkDesign fc_netPlan, fc_demands;
-    private final File defaultDesignDirectory, defaultDemandDirectory;
-    private JComboBox layerChooser;
-    private JPanel layerChooserPane;
+    private final ITopologyCanvas canvas;
+    private final ITopologyCanvasPlugin popupPlugin;
+
+    private final JPanel layerChooserPane;
+    private final JComboBox layerChooser;
+    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
+    private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
+    private final MenuButton btn_view;
+    private final JPopupMenu viewPopUp;
+    private final JMenuItem it_topology;
     private final JLabel position;
+
+    private final File defaultDesignDirectory, defaultDemandDirectory;
+
+    private FileChooserNetworkDesign fc_netPlan, fc_demands;
 
     /**
      * Simplified constructor that does not require to indicate default locations
@@ -200,6 +194,18 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         JButton decreaseFontSize = new JButton();
         decreaseFontSize.setToolTipText("Decrease font size");
 
+        viewPopUp = new JPopupMenu();
+
+        it_topology = new JMenuItem("View topology window");
+        it_topology.addActionListener(e ->
+        {
+            TopologyWindow.showWindow();
+        });
+
+        viewPopUp.add(it_topology);
+
+        btn_view = new MenuButton("View", viewPopUp);
+
         btn_reset = new JButton("Reset");
         btn_reset.setToolTipText("Reset the user interface");
 
@@ -247,7 +253,20 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(increaseFontSize);
         toolbar.add(decreaseFontSize);
         toolbar.add(Box.createHorizontalGlue());
+        toolbar.add(btn_view);
         toolbar.add(btn_reset);
+
+        this.addComponentListener(new ComponentAdapter()
+        {
+            @Override
+            public void componentResized(ComponentEvent e)
+            {
+                if (getSize().getHeight() != 0)
+                {
+                    canvas.zoomAll();
+                }
+            }
+        });
 
         increaseNodeSize.addActionListener(new ActionListener() {
             @Override
@@ -524,7 +543,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     /**
      * Allows setting the current layer.
      *
-     * @param layerId Layer identifier
+     * @param layer Layer identifier
      * @since 0.3.1
      */
     public void selectLayer(long layer) {

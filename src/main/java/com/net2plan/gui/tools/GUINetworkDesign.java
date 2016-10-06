@@ -51,6 +51,8 @@ import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
 import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
+import com.net2plan.gui.utils.windows.TopologyWindow;
+import com.net2plan.gui.utils.windows.utils.WindowUtils;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -152,15 +154,12 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
         rightPane = new JTabbedPane();
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setLeftComponent(leftPane);
-        splitPane.setRightComponent(rightPane);
-        splitPane.setResizeWeight(0.5);
-        splitPane.addPropertyChangeListener(new ProportionalResizeJSplitPaneListener());
+        contentPane.add(leftPane, "grow");
 
-        splitPane.setBorder(BorderFactory.createEmptyBorder());
-        contentPane.add(splitPane, "grow");
+        WindowUtils.clearFloatingWindows();
 
+        // Building topology window
+        TopologyWindow.buildWindow(rightPane);
 
         viewEditTopTables = new ViewEditTopologyTablesPane(GUINetworkDesign.this , new BorderLayout());
         addTab("View/edit network state" , viewEditTopTables);
