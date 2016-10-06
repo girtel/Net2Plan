@@ -98,6 +98,7 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
                 fixedTable.getTableHeader().addMouseMotionListener(listener);
             }
         }
+        fixedTable.getTableHeader().setReorderingAllowed(false);
 
         fixedTable.setDefaultRenderer(Boolean.class, mainTable.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, mainTable.getDefaultRenderer(Double.class));

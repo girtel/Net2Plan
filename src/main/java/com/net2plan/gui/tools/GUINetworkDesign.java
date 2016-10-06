@@ -162,11 +162,11 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         contentPane.add(splitPane, "grow");
 
 
-        viewEditTopTables = new ViewEditTopologyTablesPane((GUINetworkDesign) this , new BorderLayout());
+        viewEditTopTables = new ViewEditTopologyTablesPane(GUINetworkDesign.this , new BorderLayout());
         addTab("View/edit network state" , viewEditTopTables);
         viewNetPlanTabIndex = 0;
 
-        reportPane = new ViewReportPane((GUINetworkDesign) this , JSplitPane.VERTICAL_SPLIT);
+        reportPane = new ViewReportPane(GUINetworkDesign.this , JSplitPane.VERTICAL_SPLIT);
         addTab("View reports", reportPane);
 
         loadDesign(new NetPlan());
