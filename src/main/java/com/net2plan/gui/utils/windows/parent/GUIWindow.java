@@ -14,17 +14,12 @@ public abstract class GUIWindow
 {
     private static JFrame window = new JFrame();
 
-    public GUIWindow(final JComponent component)
-    {
-        buildWindow(component);
-    }
-
-    public static void buildWindow(final JComponent topologyComponent)
+    public static void buildWindow(final JComponent topologyComponent, final String title)
     {
         window = new JFrame();
 
+        window.setTitle(title);
         window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        window.setTitle("Net2Plan-ATC extension - Frequentis - Topology");
         window.setSize(600, 600);
         window.setLayout(new BorderLayout());
         window.setVisible(false);
@@ -44,5 +39,8 @@ public abstract class GUIWindow
         window.requestFocusInWindow();
     }
 
-    public abstract String getTitle();
+    public static JFrame getWindow()
+    {
+        return window;
+    }
 }

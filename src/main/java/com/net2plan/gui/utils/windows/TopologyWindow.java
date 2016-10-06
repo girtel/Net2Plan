@@ -9,14 +9,10 @@ import javax.swing.*;
  */
 public class TopologyWindow extends GUIWindow
 {
-    public TopologyWindow(final JComponent component)
-    {
-        super(component);
-    }
+    private static final String title = "Net2Plan - Topology window";
 
-    @Override
-    public String getTitle()
+    public static void buildWindow(JComponent component)
     {
-        return "Net2Plan - Topology window";
+        buildWindow(component, title);
     }
 }
