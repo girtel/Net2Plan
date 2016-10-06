@@ -147,8 +147,10 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
             splitPaneTopology.setTopComponent(topologyPanel);
             splitPaneTopology.setBottomComponent(logSection);
             splitPaneTopology.setResizeWeight(0.8);
+            splitPaneTopology.setOneTouchExpandable(true);
             splitPaneTopology.addPropertyChangeListener(new ProportionalResizeJSplitPaneListener());
             splitPaneTopology.setBorder(new LineBorder(contentPane.getBackground()));
+            splitPaneTopology.setDividerSize(7);
             leftPane.add(splitPaneTopology, BorderLayout.CENTER);
         }
 
