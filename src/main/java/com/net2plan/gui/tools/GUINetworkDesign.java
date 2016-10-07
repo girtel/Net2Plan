@@ -15,6 +15,7 @@ package com.net2plan.gui.tools;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
@@ -68,6 +69,7 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.libraries.NetworkPerformanceMetrics;
+import com.net2plan.utils.TopologyCoordController;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
@@ -107,6 +109,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     private JPanel leftPane;
     private NetPlan currentNetPlan;
 
+    private TopologyCoordController initialTopologySetting;
+
     /**
      * Default constructor.
      *
@@ -136,6 +140,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     @Override
     public void configure(JPanel contentPane)
     {
+        initialTopologySetting = new TopologyCoordController();
+
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
 
         leftPane = new JPanel(new BorderLayout());
@@ -315,7 +321,23 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         List<JComponent> actions = new LinkedList<JComponent>();
 
         if (isEditable())
+        {
             actions.add(new JMenuItem(new AddNodeAction("Add node here", pos)));
+
+            actions.add(new JPopupMenu.Separator());
+
+            JMenuItem restoreTopology = new JMenuItem("Restore topology to original layout");
+            restoreTopology.setToolTipText("Restores all nodes to their original position when the topology was loaded, leaves them in place if they were not in the original topology.");
+            restoreTopology.addActionListener(e ->
+            {
+                for (Node node : currentNetPlan.getNodes())
+                {
+                    moveNode(node.getId(), initialTopologySetting.getNodeLocation(node));
+                }
+            });
+
+            actions.add(restoreTopology);
+        }
 
         return actions;
     }
@@ -396,6 +418,10 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         if (onlineSimulationPane != null) onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
         currentNetPlan = netPlan;
         netPlan.checkCachesConsistency();
+
+        // Saving original topology structure
+        currentNetPlan.getNodes().stream().forEach(node -> initialTopologySetting.addNodeLocation(node));
+
         topologyPanel.updateLayerChooser();
         topologyPanel.getCanvas().zoomAll();
         resetView();

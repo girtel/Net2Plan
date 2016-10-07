@@ -196,7 +196,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         viewPopUp = new JPopupMenu();
 
-        it_topology = new JMenuItem("View topology window");
+        it_topology = new JMenuItem("View network state window");
         it_topology.addActionListener(e ->
         {
             WindowController.showTopologyWindow();
