@@ -12,13 +12,13 @@ import java.net.URL;
  */
 public abstract class GUIWindow
 {
-    private static JFrame window = new JFrame();
+    private JFrame window = null;
 
-    public static void buildWindow(final JComponent topologyComponent, final String title)
+    public void buildWindow(final JComponent topologyComponent)
     {
         window = new JFrame();
 
-        window.setTitle(title);
+        window.setTitle(this.getTitle());
         window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         window.setSize(600, 600);
         window.setLayout(new BorderLayout());
@@ -31,16 +31,16 @@ public abstract class GUIWindow
         window.setIconImage(icon.getImage());
     }
 
-    public static void showWindow()
+    public void showWindow()
     {
-        WindowUtils.setWindowRightSide(window);
+        if (window != null)
+        {
+            WindowUtils.setWindowRightSide(window);
 
-        window.setVisible(true);
-        window.requestFocusInWindow();
+            window.setVisible(true);
+            window.requestFocusInWindow();
+        }
     }
 
-    public static JFrame getWindow()
-    {
-        return window;
-    }
+    public abstract String getTitle();
 }
