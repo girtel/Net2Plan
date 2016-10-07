@@ -12,19 +12,13 @@
 
 package com.net2plan.gui.tools;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
+import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -69,7 +63,7 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.libraries.NetworkPerformanceMetrics;
-import com.net2plan.utils.TopologyCoordController;
+import com.net2plan.utils.TopologyMap;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
@@ -109,7 +103,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     private JPanel leftPane;
     private NetPlan currentNetPlan;
 
-    private TopologyCoordController initialTopologySetting;
+    private TopologyMap initialTopologySetting, circleTopologySetting;
 
     /**
      * Default constructor.
@@ -140,9 +134,10 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     @Override
     public void configure(JPanel contentPane)
     {
-        initialTopologySetting = new TopologyCoordController();
-
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
+
+        initialTopologySetting = new TopologyMap();
+        circleTopologySetting = new TopologyMap();
 
         leftPane = new JPanel(new BorderLayout());
         JPanel logSection = configureLeftBottomPanel();
@@ -318,11 +313,12 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     @Override
     public List<JComponent> getCanvasActions(Point2D pos)
     {
-        List<JComponent> actions = new LinkedList<JComponent>();
+        List<JComponent> actions = new LinkedList<>();
 
         if (isEditable())
         {
-            actions.add(new JMenuItem(new AddNodeAction("Add node here", pos)));
+            JMenuItem addNode = new JMenuItem(new AddNodeAction("Add node here", pos));
+            actions.add(addNode);
 
             actions.add(new JPopupMenu.Separator());
 
@@ -334,9 +330,28 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
                 {
                     moveNode(node.getId(), initialTopologySetting.getNodeLocation(node));
                 }
+
+                topologyPanel.zoomAll();
             });
 
             actions.add(restoreTopology);
+
+            JMenu topologySettingMenu = new JMenu("Change topology layout");
+
+            JMenuItem circularSetting = new JMenuItem("Circular");
+            circularSetting.addActionListener(e ->
+            {
+                for (Node node : currentNetPlan.getNodes())
+                {
+                    moveNode(node.getId(), circleTopologySetting.getNodeLocation(node));
+                }
+
+                topologyPanel.zoomAll();
+            });
+
+            topologySettingMenu.add(circularSetting);
+
+            actions.add(topologySettingMenu);
         }
 
         return actions;
@@ -421,6 +436,9 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
         // Saving original topology structure
         currentNetPlan.getNodes().stream().forEach(node -> initialTopologySetting.addNodeLocation(node));
+
+        // Creating topology layouts
+        createCircularSetting();
 
         topologyPanel.updateLayerChooser();
         topologyPanel.getCanvas().zoomAll();
@@ -823,6 +841,9 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         public void actionPerformed(ActionEvent e)
         {
             addNode(pos);
+
+            // Updating layouts
+            createCircularSetting();
         }
     }
 
@@ -1083,5 +1104,35 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK));
+    }
+
+    private void createCircularSetting()
+    {
+        // Node list
+        final List<Node> nodeList = currentNetPlan.getNodes();
+
+        final int maxAng = 360;
+
+        final int minWidth = 320;
+        final int minHeight = 320;
+
+        final int width = 30 * nodeList.size();
+        final int height = 30 * nodeList.size();
+
+        final int finalWidth = width < minWidth ? minWidth : width;
+        final int finalHeight = height < minHeight ? minHeight : height;
+
+        // Distribute nodes along a circle
+        for (int i = 0; i < nodeList.size(); i++)
+        {
+            final Node node = nodeList.get(i);
+
+            final int ang = (i + 1) * (maxAng / nodeList.size());
+
+            final int x = (int) (finalWidth * Math.cos(Math.toRadians(ang)));
+            final int y = (int) (finalHeight * Math.sin(Math.toRadians(ang)));
+
+            circleTopologySetting.addNodeLocation(node.getId(), new Point(x, y));
+        }
     }
 }
