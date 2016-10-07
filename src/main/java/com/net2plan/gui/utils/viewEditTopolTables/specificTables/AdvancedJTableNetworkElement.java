@@ -122,6 +122,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
 		/* add the popup menu listener (this) */
         addMouseListener(new PopupMenuAdapter());
+
     }
 
 

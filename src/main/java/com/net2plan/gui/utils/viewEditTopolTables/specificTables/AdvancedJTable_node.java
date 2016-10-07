@@ -15,12 +15,9 @@ package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.swing.DefaultRowSorter;
 import javax.swing.JComboBox;
@@ -30,6 +27,9 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.event.*;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
 import com.net2plan.gui.utils.CellRenderers;
@@ -83,9 +83,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
-
     }
-
     public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState) {
         List<Object[]> allNodeData = new LinkedList<Object[]>();
 
