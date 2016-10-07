@@ -59,15 +59,15 @@ public class AdvancedJTable extends JTable {
     private boolean isSelectAllForKeyEvent = true;
 
     int numberOfColumns = 0;
-    JPopupMenu headerMenu, showHideMenu;
-    JMenuItem showItem, hideItem;
+    JPopupMenu showHideMenu;
+    JMenu showMenu, hideMenu;
     TableModel model;
     TableColumnModel currentColumnModel;
     ArrayList<TableColumn> hiddenColumns, shownColumns;
     ArrayList<String> shownHeaderNames, hiddenHeaderNames;
     Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn;
-    boolean[] isVisibleEachColumn;
     int columnIndexToHide;
+    JMenuItem [] hiddenHeaderItems, shownHeaderItems;
 
     /**
      * Default constructor.
@@ -106,26 +106,20 @@ public class AdvancedJTable extends JTable {
         shownHeaderNames = new ArrayList<>();
         indexForEachColumn = new HashMap<>();
         indexForEachHiddenColumn = new HashMap<>();
-        isVisibleEachColumn = new boolean[numberOfColumns - 2];
 
         for (int i = 0; i < numberOfColumns - 2; i++) {
             shownHeaderNames.add(model.getColumnName(i + 2));
             shownColumns.add(currentColumnModel.getColumn(i));
             indexForEachColumn.put(model.getColumnName(i + 2), i);
-            isVisibleEachColumn[i] = true;
         }
+
+        showHideMenu = new JPopupMenu();
+        showMenu = new JMenu("Show");
+        hideMenu = new JMenu("Hide");
+        showHideMenu.add(showMenu);
+        showHideMenu.add(hideMenu);
         getTableHeader().setReorderingAllowed(true);
-        getTableHeader().addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-
-
-            }
+        getTableHeader().addMouseListener(new MouseAdapter() {
 
             @Override
             public void mouseReleased(MouseEvent e) {
@@ -133,94 +127,42 @@ public class AdvancedJTable extends JTable {
 
                 //Checking if right button is clicked
                 if (e.isPopupTrigger()) {
-                    showHideMenu = new JPopupMenu();
-                    showItem = new JMenuItem("Show");
-                    hideItem = new JMenuItem("Hide");
-                    showHideMenu.add(showItem);
-                    showHideMenu.add(hideItem);
-                    showHideMenu.setLocation(e.getLocationOnScreen());
-                    showHideMenu.setVisible(true);
-                    showItem.addActionListener(new ActionListener() {
+                    updateShowMenu();
+                    updateHideMenu();
+                    showHideMenu.show(e.getComponent(),e.getX(),e.getY());
 
+                    for (int j = 0; j < hiddenHeaderNames.size(); j++) {
+                        JMenuItem currentItem = hiddenHeaderItems[j];
+                        String currentColumnName = hiddenHeaderNames.get(j);
+                        currentItem.addActionListener(new ActionListener() {
 
-                        @Override
-                        public void actionPerformed(ActionEvent event) {
-                            headerMenu = new JPopupMenu();
-                            JMenuItem[] headerItems = new JMenuItem[hiddenHeaderNames.size()];
-                            for (int i = 0; i < hiddenHeaderNames.size(); i++) {
-                                headerItems[i] = new JMenuItem(hiddenHeaderNames.get(i));
-                                headerMenu.add(headerItems[i]);
-
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                TableColumn columnToShow = showColumn(currentColumnName, hiddenColumns, indexForEachHiddenColumn.get(currentColumnName));
+                                hiddenColumns.remove(columnToShow);
+                                checkNewIndexes();
                             }
-                            headerMenu.setLocation(600, 400);
-                            headerMenu.setVisible(true);
+                        });
+                    }
 
-                            for (int j = 0; j < hiddenHeaderNames.size(); j++) {
-                                JMenuItem currentItem = headerItems[j];
-                                String currentColumnName = hiddenHeaderNames.get(j);
-                                currentItem.addActionListener(new ActionListener() {
 
-                                    @Override
-                                    public void actionPerformed(ActionEvent e) {
-                                        TableColumn columnToShow = showColumn(currentColumnName, hiddenColumns, indexForEachHiddenColumn.get(currentColumnName));
-                                        hiddenColumns.remove(columnToShow);
-                                        headerMenu.setVisible(false);
-                                        showHideMenu.setVisible(false);
-                                        checkNewIndexes();
-                                    }
-                                });
+                    for (int j = 0; j < indexForEachColumn.size(); j++) {
+                        JMenuItem currentItem = shownHeaderItems[j];
+                        int position = j;
+                        currentItem.addActionListener(new ActionListener() {
+
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                columnIndexToHide = indexForEachColumn.get(shownHeaderNames.get(position));
+                                String hiddenColumnHeader = hideColumn(columnIndexToHide, shownHeaderNames);
+                                shownHeaderNames.remove(hiddenColumnHeader);
+                                checkNewIndexes();
                             }
-
-                        }
-                    });
-                    hideItem.addActionListener(new ActionListener() {
-
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            headerMenu = new JPopupMenu();
-                            JMenuItem[] headerItems = new JMenuItem[shownHeaderNames.size()];
-                            for (int i = 0; i < shownHeaderNames.size(); i++) {
-                                headerItems[i] = new JMenuItem(shownHeaderNames.get(i));
-                                headerMenu.add(headerItems[i]);
-
-                            }
-                            headerMenu.setLocation(600, 400);
-                            headerMenu.setVisible(true);
-
-                            for (int j = 0; j < indexForEachColumn.size(); j++) {
-                                JMenuItem currentItem = headerItems[j];
-                                int position = j;
-                                currentItem.addActionListener(new ActionListener() {
-
-                                    @Override
-                                    public void actionPerformed(ActionEvent e) {
-                                        columnIndexToHide = indexForEachColumn.get(shownHeaderNames.get(position));
-                                        String hiddenColumnHeader = hideColumn(columnIndexToHide, shownHeaderNames);
-                                        shownHeaderNames.remove(hiddenColumnHeader);
-                                        headerMenu.setVisible(false);
-                                        showHideMenu.setVisible(false);
-                                        checkNewIndexes();
-                                    }
-                                });
-                            }
-
-                        }
-                    });
-
-
+                        });
+                    }
                 }
             }
 
-            @Override
-            public void mouseEntered(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-
-            }
         });
         currentColumnModel.addColumnModelListener(new TableColumnModelListener() {
 
@@ -249,6 +191,30 @@ public class AdvancedJTable extends JTable {
 
             }
         });
+
+
+    }
+
+
+    public void updateShowMenu(){
+        showMenu.removeAll();
+        hiddenHeaderItems = new JMenuItem[hiddenHeaderNames.size()];
+        for (int i = 0; i < hiddenHeaderNames.size(); i++) {
+            hiddenHeaderItems[i] = new JMenuItem(hiddenHeaderNames.get(i));
+            showMenu.add(hiddenHeaderItems[i]);
+
+        }
+
+    }
+
+    public void updateHideMenu(){
+        hideMenu.removeAll();
+        shownHeaderItems = new JMenuItem[shownHeaderNames.size()];
+        for (int i = 0; i < shownHeaderNames.size(); i++) {
+            shownHeaderItems[i] = new JMenuItem(shownHeaderNames.get(i));
+            hideMenu.add(shownHeaderItems[i]);
+
+        }
 
     }
 
