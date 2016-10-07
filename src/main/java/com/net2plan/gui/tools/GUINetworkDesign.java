@@ -36,7 +36,6 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.border.LineBorder;
@@ -91,10 +90,14 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
     private final static String TITLE = "Offline network design & Online network simulation";
 
+    private TopologyPanel topologyPanel;
+
+    private JTextArea txt_netPlanLog;
+
+    private ViewEditTopologyTablesPane viewEditTopTables;
+    private ViewReportPane reportPane;
     private OfflineExecutionPanel executionPane;
     private OnlineSimulationPane onlineSimulationPane;
-    private JTextArea txt_netPlanLog;
-    private TopologyPanel topologyPanel;
 
     /**
      * Reference to the popup menu in the topology panel.
@@ -102,11 +105,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
      * @since 0.3.0
      */
     private JPanel leftPane;
-    private ViewReportPane reportPane;
-    private ViewEditTopologyTablesPane viewEditTopTables;
-    private int viewNetPlanTabIndex;
-    //    private boolean allowDocumentUpdate;
-    private NetPlan currentNetPlan; //, initialNetPlan;
+    private NetPlan currentNetPlan;
 
     /**
      * Default constructor.
@@ -150,23 +149,23 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
             splitPaneTopology.setTopComponent(topologyPanel);
             splitPaneTopology.setBottomComponent(logSection);
             splitPaneTopology.setResizeWeight(0.8);
-            splitPaneTopology.setOneTouchExpandable(true);
             splitPaneTopology.addPropertyChangeListener(new ProportionalResizeJSplitPaneListener());
             splitPaneTopology.setBorder(new LineBorder(contentPane.getBackground()));
+            splitPaneTopology.setOneTouchExpandable(true);
             splitPaneTopology.setDividerSize(7);
             leftPane.add(splitPaneTopology, BorderLayout.CENTER);
         }
         contentPane.add(leftPane, "grow");
 
         viewEditTopTables = new ViewEditTopologyTablesPane(GUINetworkDesign.this, new BorderLayout());
-        viewNetPlanTabIndex = 0;
+        reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
 
         loadDesign(new NetPlan());
 
-        reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
         onlineSimulationPane = new OnlineSimulationPane(this);
         executionPane = new OfflineExecutionPanel(this);
 
+        // Closing windows
         WindowUtils.clearFloatingWindows();
 
         // Building windows
@@ -232,21 +231,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         txt_netPlanLog.setText(null);
         txt_netPlanLog.setText(text);
         txt_netPlanLog.setCaretPosition(0);
-    }
-
-    private class SwitchTabAction extends AbstractAction
-    {
-        private final int tabId;
-
-        public SwitchTabAction(int tabId)
-        {
-            this.tabId = tabId;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e)
-        {
-        }
     }
 
     @Override
@@ -799,7 +783,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         }
     }
 
-
     private class AddNodeAction extends AbstractAction
     {
         private final Point2D pos;
@@ -816,7 +799,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
             addNode(pos);
         }
     }
-
 
     private class AddLinkAction extends AbstractAction
     {
@@ -876,18 +858,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     /**
      * Shows the tab corresponding associated to a network element.
      *
-     * @param type   Network element type
-     * @param itemId Item identifier (if null, it will just show the tab)
-     * @since 0.3.0
-     */
-    private void selectNetPlanViewItem(NetworkElementType type, Object itemId)
-    {
-        selectNetPlanViewItem(getDesign().getNetworkLayerDefault().getId(), type, itemId);
-    }
-
-    /**
-     * Shows the tab corresponding associated to a network element.
-     *
      * @param layer  Layer identifier
      * @param type   Network element type
      * @param itemId Item identifier (if null, it will just show the tab)
@@ -942,9 +912,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         viewEditTopTables.getNetPlanView().setSelectedIndex(0);
     }
 
-//	@Override
-//	public boolean allowDocumentUpdate() { return allowDocumentUpdate; }
-
     @Override
     public TopologyPanel getTopologyPanel()
     {
@@ -971,54 +938,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_F11, InputEvent.CTRL_DOWN_MASK));
 
-        for (int tabId = 0; tabId <= 8; tabId++)
-        {
-            final int key;
-            switch (tabId)
-            {
-                case 0:
-                    key = KeyEvent.VK_1;
-                    break;
-
-                case 1:
-                    key = KeyEvent.VK_2;
-                    break;
-
-                case 2:
-                    key = KeyEvent.VK_3;
-                    break;
-
-                case 3:
-                    key = KeyEvent.VK_4;
-                    break;
-
-                case 4:
-                    key = KeyEvent.VK_5;
-                    break;
-
-                case 5:
-                    key = KeyEvent.VK_6;
-                    break;
-
-                case 6:
-                    key = KeyEvent.VK_7;
-                    break;
-
-                case 7:
-                    key = KeyEvent.VK_8;
-                    break;
-
-                case 8:
-                    key = KeyEvent.VK_9;
-                    break;
-
-                default:
-                    throw new RuntimeException("Bad");
-            }
-
-            addKeyCombinationAction("Open right tab " + tabId, new SwitchTabAction(tabId), KeyStroke.getKeyStroke(key, InputEvent.CTRL_DOWN_MASK));
-        }
-        
         /* FROM THE OFFLINE ALGORITHM EXECUTION */
 
         addKeyCombinationAction("Execute algorithm", new AbstractAction()
@@ -1138,8 +1057,5 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK));
-
-
     }
-
 }
