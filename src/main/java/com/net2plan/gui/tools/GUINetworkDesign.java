@@ -51,9 +51,6 @@ import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
 import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
-import com.net2plan.gui.utils.windows.OfflineWindow;
-import com.net2plan.gui.utils.windows.OnlineWindow;
-import com.net2plan.gui.utils.windows.ReportWindow;
 import com.net2plan.gui.utils.windows.WindowController;
 import com.net2plan.gui.utils.windows.utils.WindowUtils;
 import com.net2plan.interfaces.networkDesign.Configuration;
@@ -106,7 +103,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
      */
     private JPanel leftPane;
     private ViewReportPane reportPane;
-    private JTabbedPane rightPane;
     private ViewEditTopologyTablesPane viewEditTopTables;
     private int viewNetPlanTabIndex;
     //    private boolean allowDocumentUpdate;
@@ -160,16 +156,13 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
             splitPaneTopology.setDividerSize(7);
             leftPane.add(splitPaneTopology, BorderLayout.CENTER);
         }
-
         contentPane.add(leftPane, "grow");
+
+        viewEditTopTables = new ViewEditTopologyTablesPane(GUINetworkDesign.this, new BorderLayout());
+        viewNetPlanTabIndex = 0;
 
         loadDesign(new NetPlan());
 
-        rightPane = new JTabbedPane();
-
-        viewNetPlanTabIndex = 0;
-
-        viewEditTopTables = new ViewEditTopologyTablesPane(GUINetworkDesign.this, new BorderLayout());
         reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
         onlineSimulationPane = new OnlineSimulationPane(this);
         executionPane = new OfflineExecutionPanel(this);
@@ -241,40 +234,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         txt_netPlanLog.setCaretPosition(0);
     }
 
-    /**
-     * Adds a new tab in the right panel at the last position.
-     *
-     * @param name Tab name
-     * @param tab  Tab component
-     * @return Tab position
-     * @since 0.3.0
-     */
-    private final int addTab(String name, JComponent tab)
-    {
-        return addTab(name, tab, -1);
-    }
-
-    /**
-     * Adds a new tab in the right panel at the given position.
-     *
-     * @param name     Tab name
-     * @param tab      Tab component
-     * @param tabIndex Tab position (-1 means last position)
-     * @return Tab position
-     * @since 0.3.0
-     */
-    private final int addTab(String name, JComponent tab, int tabIndex)
-    {
-        int numTabs = rightPane.getTabCount();
-        if (numTabs == 9) throw new RuntimeException("A maximum of 9 tabs are allowed");
-
-        if (tabIndex == -1) tabIndex = numTabs;
-        rightPane.insertTab(name, null, tab, null, tabIndex);
-
-        if (tabIndex <= viewNetPlanTabIndex) viewNetPlanTabIndex++;
-        return tabIndex;
-    }
-
     private class SwitchTabAction extends AbstractAction
     {
         private final int tabId;
@@ -287,22 +246,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            showTab(tabId);
-        }
-    }
-
-    /**
-     * Shows the desired tab in {@code NetPlan} view.
-     *
-     * @param tabIndex Tab index
-     * @since 0.3.0
-     */
-    public final void showTab(int tabIndex)
-    {
-        if (tabIndex < rightPane.getTabCount() && rightPane.getSelectedIndex() != tabIndex)
-        {
-            rightPane.setSelectedIndex(tabIndex);
-            rightPane.requestFocusInWindow();
         }
     }
 
@@ -953,7 +896,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     private void selectNetPlanViewItem(long layer, NetworkElementType type, Object itemId)
     {
         topologyPanel.selectLayer(layer);
-        showTab(viewNetPlanTabIndex);
         viewEditTopTables.selectViewItem(type, itemId);
     }
 
@@ -998,7 +940,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     public final void showNetPlanView()
     {
         viewEditTopTables.getNetPlanView().setSelectedIndex(0);
-        showTab(viewNetPlanTabIndex);
     }
 
 //	@Override
@@ -1085,7 +1026,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                showTab(1);
                 executionPane.doClickInExecutionButton();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.CTRL_DOWN_MASK));
