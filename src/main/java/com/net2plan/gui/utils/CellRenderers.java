@@ -174,13 +174,28 @@ public class CellRenderers {
                 return;
             }
 
-//			if (columnIndexModel == 9 || columnIndexModel == 10)
-            if (columnIndexModel == AdvancedJTable_link.COLUMN_UTILIZATION || columnIndexModel == AdvancedJTable_link.COLUMN_UTILIZATIONWOPROTECTION) {
-                double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
+            double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
+
+            // In case both of them are not in red, paint only the correspondent column.
+            if (columnIndexModel == AdvancedJTable_link.COLUMN_UTILIZATION || columnIndexModel == AdvancedJTable_link.COLUMN_UTILIZATIONWOPROTECTION)
+            {
                 double doubleValue = (Double) table.getModel().getValueAt(rowIndexModel, columnIndexModel);
                 if (DoubleUtils.isEqualWithinAbsoluteTolerance(doubleValue, 1, PRECISION_FACTOR))
                     c.setBackground(Color.ORANGE);
                 else if (doubleValue > 1) c.setBackground(Color.RED);
+            } else
+            {
+                double utilizationValue = (Double) table.getModel().getValueAt(rowIndexModel, AdvancedJTable_link.COLUMN_UTILIZATION);
+                double protectionValue = (Double) table.getModel().getValueAt(rowIndexModel, AdvancedJTable_link.COLUMN_UTILIZATIONWOPROTECTION);
+
+                if (DoubleUtils.isEqualWithinAbsoluteTolerance(utilizationValue, 1, PRECISION_FACTOR) &&
+                        DoubleUtils.isEqualWithinAbsoluteTolerance(protectionValue, 1, PRECISION_FACTOR))
+                {
+                    c.setBackground(Color.ORANGE);
+                } else if (utilizationValue > 1 && protectionValue > 1)
+                {
+                    c.setBackground(Color.RED);
+                }
             }
         }
     }
