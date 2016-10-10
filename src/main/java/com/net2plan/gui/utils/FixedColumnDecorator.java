@@ -14,6 +14,7 @@ package com.net2plan.gui.utils;
 
 import javax.swing.*;
 import javax.swing.event.*;
+import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
@@ -55,13 +56,14 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
      * @since 0.2.0
      */
     public FixedColumnDecorator(JScrollPane scrollPaneOfMainTable, int frozenColumns) {
+
+
         this.scrollPane = scrollPaneOfMainTable;
         this.frozenColumns = frozenColumns;
 
         mainTable = ((JTable) scrollPaneOfMainTable.getViewport().getView());
         mainTable.setAutoCreateColumnsFromModel(false);
         mainTable.addPropertyChangeListener(this);
-
         fixedTable = new JTableImpl();
 
         fixedTable.setAutoCreateColumnsFromModel(false);
@@ -91,7 +93,11 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         fixedTable.setUpdateSelectionOnSort(false);
 
         for (MouseMotionListener listener : mainTable.getTableHeader().getMouseMotionListeners())
-            fixedTable.getTableHeader().addMouseMotionListener(listener);
+        {
+            if(!(listener instanceof BasicTableHeaderUI.MouseInputHandler)){
+                fixedTable.getTableHeader().addMouseMotionListener(listener);
+            }
+        }
 
         fixedTable.setDefaultRenderer(Boolean.class, mainTable.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, mainTable.getDefaultRenderer(Double.class));

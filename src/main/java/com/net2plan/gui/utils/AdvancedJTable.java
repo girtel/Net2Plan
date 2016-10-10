@@ -61,6 +61,7 @@ public class AdvancedJTable extends JTable {
     int numberOfColumns = 0;
     JPopupMenu showHideMenu;
     JMenu showMenu, hideMenu;
+    JMenuItem showAllItem,hideAllItem;
     TableModel model;
     TableColumnModel currentColumnModel;
     ArrayList<TableColumn> hiddenColumns, shownColumns;
@@ -107,19 +108,23 @@ public class AdvancedJTable extends JTable {
         indexForEachColumn = new HashMap<>();
         indexForEachHiddenColumn = new HashMap<>();
 
-        for (int i = 0; i < numberOfColumns - 2; i++) {
-            shownHeaderNames.add(model.getColumnName(i + 2));
+        for (int i = 0; i < numberOfColumns-2; i++) {
+            shownHeaderNames.add(model.getColumnName(i+2));
             shownColumns.add(currentColumnModel.getColumn(i));
-            indexForEachColumn.put(model.getColumnName(i + 2), i);
+            indexForEachColumn.put(model.getColumnName(i+2), i);
         }
 
         showHideMenu = new JPopupMenu();
-        showMenu = new JMenu("Show");
-        hideMenu = new JMenu("Hide");
+        showMenu = new JMenu("Show column");
+        hideMenu = new JMenu("Hide column");
+        showAllItem = new JMenuItem("Show all columns");
+        hideAllItem = new JMenuItem("Hide all columns");
         showHideMenu.add(showMenu);
         showHideMenu.add(hideMenu);
+        showHideMenu.add(showAllItem);
+        showHideMenu.add(hideAllItem);
         getTableHeader().setReorderingAllowed(true);
-        getTableHeader().addMouseListener(new MouseAdapter() {
+        this.getTableHeader().addMouseListener(new MouseAdapter() {
 
             @Override
             public void mouseReleased(MouseEvent e) {
@@ -163,6 +168,20 @@ public class AdvancedJTable extends JTable {
                 }
             }
 
+        });
+        showAllItem.addActionListener(new ActionListener(){
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showAllColumns();
+            }
+        });
+        hideAllItem.addActionListener(new ActionListener(){
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                hideAllColumns();
+            }
         });
         currentColumnModel.addColumnModelListener(new TableColumnModelListener() {
 
@@ -226,6 +245,47 @@ public class AdvancedJTable extends JTable {
             indexForEachColumn.put(this.getColumnName(i), i);
         }
 
+    }
+
+    public void showAllColumns(){
+        int columnIndex = 0;
+        while(currentColumnModel.getColumnCount() < numberOfColumns + hiddenHeaderNames.size()) {
+            String currentColumnName = hiddenHeaderNames.get(0);
+            String hiddenColumnName;
+            columnIndex = indexForEachHiddenColumn.get(currentColumnName);
+            for (TableColumn tc : hiddenColumns) {
+                hiddenColumnName = tc.getHeaderValue().toString();
+                if (currentColumnName.equals(hiddenColumnName)) {
+                    this.addColumn(tc);
+                    this.moveColumn(this.getColumnCount() - 1, columnIndex);
+                    shownColumns.add(tc);
+                    shownHeaderNames.add(columnIndex, hiddenColumnName);
+                    hiddenHeaderNames.remove(hiddenColumnName);
+                    indexForEachHiddenColumn.remove(currentColumnName, columnIndex);
+                }
+            }
+
+        }
+
+        hiddenColumns.clear();
+    }
+
+    public void hideAllColumns(){
+        int counter = 0;
+        while(currentColumnModel.getColumnCount() > 0){
+            TableColumn columnToHide = currentColumnModel.getColumn(0);
+            columnIndexToHide = indexForEachColumn.get(shownHeaderNames.get(counter));
+            String hiddenColumnHeader = columnToHide.getHeaderValue().toString();
+            System.out.println(hiddenColumnHeader);
+            hiddenColumns.add(columnToHide);
+            hiddenHeaderNames.add(hiddenColumnHeader);
+            indexForEachHiddenColumn.put(hiddenColumnHeader, counter);
+            this.removeColumn(columnToHide);
+            counter++;
+        }
+        checkNewIndexes();
+        shownHeaderNames.clear();
+        shownColumns.clear();
     }
 
 
