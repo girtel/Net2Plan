@@ -235,8 +235,16 @@ public class CellRenderers {
                 int demandId = table.convertRowIndexToModel(row);
                 double lostTraffic = (Double) value;
                 double h_d = (Double) table.getModel().getValueAt(demandId, offeredTrafficColumnModelIndex);
-                if (h_d > 0) {
-                    c.setBackground(lostTraffic > 1E-10 ? Color.RED : Color.GREEN);
+                if (h_d > 0)
+                {
+                    if (lostTraffic > 1E-10)
+                    {
+                        c.setBackground(Color.RED);
+                        c.setForeground(Color.WHITE);
+                    } else
+                    {
+                        c.setBackground(Color.GREEN);
+                    }
                 }
             }
 
