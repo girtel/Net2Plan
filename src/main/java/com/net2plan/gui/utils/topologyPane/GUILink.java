@@ -41,7 +41,7 @@ public class GUILink {
     /**
      * Default constructor.
      *
-     * @param id              Link identifier
+     * @param npLink              Link identifier
      * @param originNode      Origin node identifier
      * @param destinationNode Destination node identifier
      * @since 0.3.0

@@ -45,7 +45,6 @@ import com.net2plan.internal.plugins.ITopologyCanvas;
 
 /**
  * <p>Wrapper class for the graph canvas.</p>
- * <p>
  * <p>Icons were taken from http://www.iconarchive.com/</p>
  *
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza

@@ -37,9 +37,7 @@ public class GUINode {
     /**
      * Constructor that allows to set a node label.
      *
-     * @param id    Node identifier
-     * @param pos   Node position
-     * @param label Node label (may be null, default: "Node " + node identifier)
+     * @param npNode    Node identifier
      * @since 0.3.0
      */
     public GUINode(Node npNode) {

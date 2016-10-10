@@ -19,7 +19,6 @@ import java.awt.*;
  * <p>This class allows to see the full data when accessing to the popup of a
  * {@code JComboBox}, in case the {@code JComboBox} object is narrower
  * than its preferred width.</p>
- * <p>
  * <p>Credits to Santhosh Kumar for his workaround to narrow {@code JComboBox}
  * issues (<a href='http://www.jroller.com/santhosh/entry/make_jcombobox_popup_wide_enough'>Make JComboBox popup wide enough</a>)</p>
  *

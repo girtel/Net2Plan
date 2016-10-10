@@ -30,8 +30,8 @@ public interface INetworkCallback {
     /**
      * Adds a new link.
      *
-     * @param originNodeId      Origin node identifier
-     * @param destinationNodeId Destination node identifier
+     * @param originNode      Origin node identifier
+     * @param destinationNode Destination node identifier
      * @return Link identifier
      * @since 0.3.1
      */
@@ -40,9 +40,9 @@ public interface INetworkCallback {
     /**
      * Adds a new link.
      *
-     * @param layerId           Layer identifier
-     * @param originNodeId      Origin node identifier
-     * @param destinationNodeId Destination node identifier
+     * @param layer           Layer identifier
+     * @param originNode      Origin node identifier
+     * @param destinationNode Destination node identifier
      * @return Link identifier
      * @since 0.3.1
      */
@@ -51,8 +51,8 @@ public interface INetworkCallback {
     /**
      * Adds a new bidirectional link (one on each direction).
      *
-     * @param originNodeId      Origin node identifier
-     * @param destinationNodeId Destination node identifier
+     * @param originNode      Origin node identifier
+     * @param destinationNode Destination node identifier
      * @return Link identifiers
      * @since 0.3.1
      */
@@ -61,9 +61,9 @@ public interface INetworkCallback {
     /**
      * Adds a new bidirectional link (one on each direction).
      *
-     * @param layerId           Layer identifier
-     * @param originNodeId      Origin node identifier
-     * @param destinationNodeId Destination node identifier
+     * @param layer           Layer identifier
+     * @param originNode      Origin node identifier
+     * @param destinationNode Destination node identifier
      * @return Link identifiers
      * @since 0.3.1
      */
@@ -106,7 +106,7 @@ public interface INetworkCallback {
     /**
      * Returns the set of actions to be added to the popup menu for links.
      *
-     * @param linkId Link identifier
+     * @param link Link identifier
      * @param pos    Network coordinates where the popup action was triggered
      * @return List of actions to be shown for the given link
      * @since 0.3.1
@@ -116,7 +116,7 @@ public interface INetworkCallback {
     /**
      * Returns the set of actions to be added to the popup menu for nodes.
      *
-     * @param nodeId Node identifier
+     * @param node Node identifier
      * @param pos    Network coordinates where the popup action was triggered
      * @return List of actions to be shown for the given node
      * @since 0.3.1
@@ -134,7 +134,7 @@ public interface INetworkCallback {
     /**
      * Allows to execute some action whenever a layer is selected in the GUI.
      *
-     * @param layerId Layer identifier
+     * @param layer Layer identifier
      * @since 0.3.1
      */
     public void layerChanged(long layer);
@@ -158,7 +158,7 @@ public interface INetworkCallback {
     /**
      * Moves the node to the given position.
      *
-     * @param nodeId Node identifier
+     * @param node Node identifier
      * @param pos    2D position
      * @since 0.3.1
      */
@@ -167,7 +167,7 @@ public interface INetworkCallback {
     /**
      * Removes the given link.
      *
-     * @param linkId Link identifier
+     * @param link Link identifier
      * @since 0.3.1
      */
     public void removeLink(long link);
@@ -176,7 +176,7 @@ public interface INetworkCallback {
     /**
      * Removes the given node.
      *
-     * @param nodeId Node identifier
+     * @param node Node identifier
      * @since 0.3.1
      */
     public void removeNode(long node);
@@ -198,7 +198,7 @@ public interface INetworkCallback {
     /**
      * Shows the given link.
      *
-     * @param linkId Link identifier
+     * @param link Link identifier
      * @since 0.3.1
      */
     public void showLink(long link);
@@ -206,7 +206,7 @@ public interface INetworkCallback {
     /**
      * Shows the given node.
      *
-     * @param nodeId Node identifier
+     * @param node Node identifier
      * @since 0.3.1
      */
     public void showNode(long node);
@@ -214,7 +214,7 @@ public interface INetworkCallback {
     /**
      * Shows the given demand.
      *
-     * @param demandId Demand identifier
+     * @param demand Demand identifier
      * @since 0.3.0
      */
     public void showDemand(long demand);
@@ -222,7 +222,7 @@ public interface INetworkCallback {
     /**
      * Shows the given multicast demand.
      *
-     * @param demandId Demand identifier
+     * @param demand Demand identifier
      * @since 0.3.1
      */
     public void showMulticastDemand(long demand);
@@ -230,7 +230,7 @@ public interface INetworkCallback {
     /**
      * Shows the given forwarding rule.
      *
-     * @param forwardingRule Forwarding rule identifier (first: demand identifier, second: link identifier)
+     * @param demandLink Forwarding rule identifier (first: demand identifier, second: link identifier)
      * @since 0.3.0
      */
     public void showForwardingRule(Pair<Integer, Integer> demandLink);
@@ -238,7 +238,7 @@ public interface INetworkCallback {
     /**
      * Shows the given protection segment.
      *
-     * @param segmentId Protection segment identifier
+     * @param segment Protection segment identifier
      * @since 0.3.0
      */
     public void showProtectionSegment(long segment);
@@ -246,7 +246,7 @@ public interface INetworkCallback {
     /**
      * Shows the given route.
      *
-     * @param routeId Route identifier
+     * @param route Route identifier
      * @since 0.3.0
      */
     public void showRoute(long route);
@@ -254,7 +254,7 @@ public interface INetworkCallback {
     /**
      * Shows the given multicast tree.
      *
-     * @param treeId Route identifier
+     * @param tree Route identifier
      * @since 0.3.1
      */
     public void showMulticastTree(long tree);
@@ -262,7 +262,7 @@ public interface INetworkCallback {
     /**
      * Shows the given SRG.
      *
-     * @param srgId SRG identifier
+     * @param srg SRG identifier
      * @since 0.3.0
      */
     public void showSRG(long srg);
@@ -270,8 +270,8 @@ public interface INetworkCallback {
     /**
      * Shows the given SRG.
      *
-     * @param layerId Layer identifier
-     * @param srgId   SRG identifier
+     * @param layer Layer identifier
+     * @param srg   SRG identifier
      * @since 0.3.0
      */
     public void showSRG(long layer, long srg);

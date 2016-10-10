@@ -24,7 +24,6 @@ import java.util.EventObject;
 
 /**
  * <p>Cell editor that allows to trigger some action when clicked on the "..." button.</p>
- * <p>
  * <p>Credits to Santhosh Kumar for his <a href='http://jroller.com/santhosh/entry/add_button_to_any_tablecelleditor'>Add [...] button to any TableCellEditor</a>.</p>
  *
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza

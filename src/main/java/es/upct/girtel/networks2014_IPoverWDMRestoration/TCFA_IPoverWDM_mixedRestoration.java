@@ -50,14 +50,12 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
  * any delay constraint either in the IP layer or in the WDM layer. In addition,
  * we assume that ROADMs do not allow wavelength conversion, and signal regeneration
  * is not required.</p>
- * <p>
  * <p>The algorithm is divided into two stages. First, we use a heuristic, inspired
  * in the well-known heuristic logical topology design algorithm (HLDA), to solve
  * the VTD problem allocating enough lightpaths to carry all the offered traffic
  * to the network without grooming. Then, an optional second stage is able to
  * set up new lightpaths in such a way that the traffic can still be routed
  * across the network under different possible failure states.</p>
- * <p>
  * <p>When the second stage is disabled, we are considering the case that the optical
  * layer is able to reroute affected lightpaths over the surviving physical topology,
  * before triggering restoration mechanisms at the IP layer. Otherwise, we are

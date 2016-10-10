@@ -27,7 +27,6 @@ import java.util.Set;
 
 /**
  * <p>This class allows to hack a {@code JTable} with frozen columns.</p>
- * <p>
  * <p>Credits to "Meihta Dwiguna Saputra" and "Kurt Riede" for their codes about
  * frozen column in JTable (<a href='http://mdsaputra.wordpress.com/2011/02/08/fixed-column-jtable/'>Java
  * Swing Hack – Fixed Column Java Table</a> and

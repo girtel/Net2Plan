@@ -85,6 +85,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
     /**
      * Default constructor.
      *
+     * @param networkViewer The network callback
      * @since 0.2.0
      */
     public AdvancedJTable_demand(final INetworkCallback networkViewer) {
