@@ -370,13 +370,11 @@ public class CellRenderers {
             NetPlan initialNetPlan = callback.getInitialDesign();
 
             long routeId = (long) itemId;
-            if (columnIndexModel == AdvancedJTable_route.COLUMN_BOTTLENECKUTILIZATION) {
-                double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-                double doubleValue = (Double) table.getModel().getValueAt(rowIndexModel, columnIndexModel);
-                if (DoubleUtils.isEqualWithinAbsoluteTolerance(doubleValue, 1, PRECISION_FACTOR))
-                    c.setBackground(Color.ORANGE);
-                else if (doubleValue > 1) c.setBackground(Color.RED);
-            }
+            double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
+            double bottleneckValue = (Double) table.getModel().getValueAt(rowIndexModel, AdvancedJTable_route.COLUMN_BOTTLENECKUTILIZATION);
+            if (DoubleUtils.isEqualWithinAbsoluteTolerance(bottleneckValue, 1, PRECISION_FACTOR))
+                c.setBackground(Color.ORANGE);
+            else if (bottleneckValue > 1) c.setBackground(Color.RED);
 
             if (initialNetPlan != null && initialNetPlan.getRouteFromId(routeId) != null) {
                 Route initialRoute = initialNetPlan.getRouteFromId(routeId);
