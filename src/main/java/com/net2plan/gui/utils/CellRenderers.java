@@ -12,6 +12,7 @@
 
 package com.net2plan.gui.utils;
 
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_demand;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_link;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_route;
 import com.net2plan.interfaces.networkDesign.*;
@@ -214,6 +215,7 @@ public class CellRenderers {
     public static class LostTrafficCellRenderer extends NumberCellRenderer {
         private static final long serialVersionUID = 1L;
         private final int offeredTrafficColumnModelIndex;
+        private final int lostTrafficColumnModelIndex;
 
         /**
          * Default constructor.
@@ -221,10 +223,11 @@ public class CellRenderers {
          * @param offeredTrafficColumnModelIndex Column index (in model order) in which is found the offered traffic
          * @since 0.2.0
          */
-        public LostTrafficCellRenderer(int offeredTrafficColumnModelIndex) {
+        public LostTrafficCellRenderer(int offeredTrafficColumnModelIndex, int lostTrafficColumnModelIndex) {
             super();
 
             this.offeredTrafficColumnModelIndex = offeredTrafficColumnModelIndex;
+            this.lostTrafficColumnModelIndex = lostTrafficColumnModelIndex;
         }
 
         @Override
@@ -233,17 +236,23 @@ public class CellRenderers {
 
             if (!isSelected && value != null) {
                 int demandId = table.convertRowIndexToModel(row);
-                double lostTraffic = (Double) value;
+                double lostTraffic = (Double) table.getModel().getValueAt(demandId, lostTrafficColumnModelIndex);
                 double h_d = (Double) table.getModel().getValueAt(demandId, offeredTrafficColumnModelIndex);
                 if (h_d > 0)
                 {
                     if (lostTraffic > 1E-10)
                     {
                         c.setBackground(Color.RED);
-                        c.setForeground(Color.WHITE);
+                        if (column == (lostTrafficColumnModelIndex - (table.getModel().getColumnCount() - table.getColumnCount())))
+                        {
+                            c.setForeground(Color.WHITE);
+                        }
                     } else
                     {
-                        c.setBackground(Color.GREEN);
+                        if (column == (lostTrafficColumnModelIndex - (table.getModel().getColumnCount() - table.getColumnCount())))
+                        {
+                            c.setBackground(Color.GREEN);
+                        }
                     }
                 }
             }
