@@ -64,8 +64,20 @@ public class Link extends NetworkElement
 	MulticastDemand coupledLowerLayerMulticastDemand;
 	
 	
-	/** Default constructor, when the link is a link (and not a protection segment)
-	 * */
+	/**
+	 * Default constructor, when the link is a link (and not a protection segment)
+	 *
+	 * @param netPlan Network topology
+	 * @param id Link ID
+	 * @param index Link index
+	 * @param layer Network layer
+	 * @param originNode Origin node
+	 * @param destinationNode Destination node
+	 * @param lengthInKm Link's length
+	 * @param propagationSpeedInKmPerSecond Link's propagation speed
+	 * @param capacity Link's capacity
+	 * @param attributes Link's attributes
+	 */
 	protected Link (NetPlan netPlan , long id , int index , NetworkLayer layer , Node originNode , Node destinationNode , double lengthInKm , double propagationSpeedInKmPerSecond , double capacity , AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);

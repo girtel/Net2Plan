@@ -59,7 +59,7 @@ public interface ITopologyCanvasPlugin {
     /**
      * Sets the mouse event modifiers that will activate this plugin.
      *
-     * @param modifiers
+     * @param modifiers Modifiers
      * @since 0.2.3
      */
     public void setModifiers(int modifiers);

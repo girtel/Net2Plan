@@ -31,7 +31,6 @@ import java.util.List;
  * a Java program. Any <tt>Component</tt> can be dropped onto, but only
  * <tt>javax.swing.JComponent</tt>s will indicate the drop event with a changed
  * border.</p>
- * <p>
  * <p>To use this class, construct a new <tt>FileDrop</tt> by passing it the target
  * component and a <tt>Listener</tt> to receive notification when file(s) have
  * been dropped. Here is an example:</p>
@@ -46,21 +45,16 @@ import java.util.List;
  *          }   // end filesDropped
  *      }); // end FileDrop.Listener
  * </pre>}
- * <p>
+ * </p>
  * <p>You can specify the border that will appear when files are being dragged by
  * calling the constructor with a <tt>Border</tt>. Only
  * <tt>JComponent</tt>s will show any indication with a border.</p>
- * <p>
  * <p>You can turn on some debugging features by passing a <tt>PrintStream</tt>
  * object (such as <tt>System.out</tt>) into the full constructor. A
  * <tt>null</tt> value will result in no extra debugging information being output.</p>
- * <p>
  * <p>I'm releasing this code into the Public Domain. Enjoy.</p>
- * <p>
  * <p><em>Original author: Robert Harder, rharder@usa.net</em></p>
- * <p>
  * <p>2007-09-12 Nathan Blomquist -- Linux (KDE/Gnome) support added.</p>
- * <p>
  * <p>2015-02-15 Jose-Luis Izquierdo-Zaragoza -- setActive() method added to
  * enable/disable DnD.</p>
  *
@@ -592,7 +586,6 @@ public class FileDrop {
      * {@link FileDropListener} when files are dropped onto a registered drop
      * target.
      * <p>
-     * <p>
      * I'm releasing this code into the Public Domain. Enjoy.</p>
      *
      * @author Robert Harder
@@ -661,8 +654,7 @@ public class FileDrop {
      * <tt>net.iharder.dnd.TransferableObject.class</tt> and MIME type
      * <tt>application/x-net.iharder.dnd.TransferableObject</tt>. This data
      * flavor is accessible via the static {@link #DATA_FLAVOR} property.
-     * <p>
-     * <p>
+     * </p>
      * <p>
      * I'm releasing this code into the Public Domain. Enjoy.</p>
      *
@@ -783,7 +775,7 @@ public class FileDrop {
          *
          * @param flavor The data flavor for the data to return
          * @return The dropped data
-         * @throws java.awt.datatransfer.UnsupportedFlavorException
+         * @throws java.awt.datatransfer.UnsupportedFlavorException Not accepted flavor exception
          * @since 1.1
          */
         @Override

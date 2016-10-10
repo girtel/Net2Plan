@@ -78,7 +78,7 @@ public class PluginSystem
 	/**
 	 * Returns the set of available plugins for a certain plugin type.
 	 * 
-	 * @param pluginType
+	 * @param pluginType Type of plugin
 	 * @return Set of available plugins of a given type
 	 * @since 0.3.0
 	 */

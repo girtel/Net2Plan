@@ -29,7 +29,6 @@ import java.awt.event.MouseListener;
  * {@code JButton}. The renderer and editor will then be used for a specified
  * column in the table. The TableModel will contain the String to be displayed on
  * the button.</p>
- * <p>
  * <p>The button can be invoked by a mouse click or by pressing the space bar
  * when the cell has focus. Optionally a mnemonic can be set to invoke the
  * button. When the button is invoked the provided Action is invoked. The
@@ -37,7 +36,8 @@ import java.awt.event.MouseListener;
  * the model row number of the button that was clicked.</p>
  *
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
- * @see http://tips4java.wordpress.com/2009/07/12/table-button-column/
+ *
+ * @see <a href="http://tips4java.wordpress.com/2009/07/12/table-button-column/"></a>
  * @since 0.2.3
  */
 public class ButtonColumn extends AbstractCellEditor implements TableCellRenderer, TableCellEditor, ActionListener, MouseListener {

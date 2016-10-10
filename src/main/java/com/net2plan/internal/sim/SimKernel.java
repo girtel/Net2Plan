@@ -528,7 +528,7 @@ public class SimKernel implements IEventCallback
 	
 	/**
 	 *
-	 * @param stateListener
+	 * @param stateListener State listener
 	 * @since 0.2.2
 	 */
 	public void setGUIListener(IGUISimulationListener stateListener)

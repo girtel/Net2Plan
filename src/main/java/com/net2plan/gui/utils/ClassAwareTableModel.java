@@ -17,7 +17,6 @@ import javax.swing.table.DefaultTableModel;
 /**
  * <p>This class extends {@code DefaultTableModel} so that computes the
  * classes of its columns from the values that they contain.</p>
- * <p>
  * <p>Credits to Simon White for his <a href='http://www.catalysoft.com/articles/ClassAwareTableModel.html'>A TableModel with Class</a></p>
  *
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza

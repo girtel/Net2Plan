@@ -155,7 +155,7 @@ public class Configuration
 	}
 
 	/** Goes through this map of parameters and, if both the parameters solverName and solverLibraryName exist, and solverLibraryName 
-	 * equals "", then sets the value of such parameter to the default library file set by the user (in user->options) for such solver.
+	 * equals "", then sets the value of such parameter to the default library file set by the user (in user-&gt;options) for such solver.
 	 * @param parameters The map of parameters, that may be modified in the solverLibraryName key 
 	 */
 	public static void updateSolverLibraryNameParameter (Map<String,String> parameters)

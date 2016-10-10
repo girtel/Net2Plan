@@ -16,27 +16,13 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
-import javax.swing.AbstractButton;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JToggleButton;
-import javax.swing.JToolBar;
+import javax.swing.*;
 import javax.swing.border.LineBorder;
 
 import com.net2plan.gui.utils.FileChooserNetworkDesign;
@@ -47,6 +33,8 @@ import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.topologyPane.utils.MenuButton;
+import com.net2plan.gui.utils.windows.WindowController;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -57,7 +45,6 @@ import com.net2plan.internal.plugins.ITopologyCanvas;
 
 /**
  * <p>Wrapper class for the graph canvas.</p>
- * <p>
  * <p>Icons were taken from http://www.iconarchive.com/</p>
  *
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
@@ -66,15 +53,21 @@ import com.net2plan.internal.plugins.ITopologyCanvas;
 public class TopologyPanel extends JPanel implements ActionListener//FrequentisBackgroundPanel implements ActionListener//JPanel implements ActionListener
 {
     private final INetworkCallback callback;
-    private ITopologyCanvas canvas;
-    private ITopologyCanvasPlugin popupPlugin;
-    private JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
-    private JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
-    private FileChooserNetworkDesign fc_netPlan, fc_demands;
-    private final File defaultDesignDirectory, defaultDemandDirectory;
-    private JComboBox layerChooser;
-    private JPanel layerChooserPane;
+    private final ITopologyCanvas canvas;
+    private final ITopologyCanvasPlugin popupPlugin;
+
+    private final JPanel layerChooserPane;
+    private final JComboBox layerChooser;
+    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
+    private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
+    private final MenuButton btn_view;
+    private final JPopupMenu viewPopUp;
+    private final JMenuItem it_topology, it_report, it_online, it_offline;
     private final JLabel position;
+
+    private final File defaultDesignDirectory, defaultDemandDirectory;
+
+    private FileChooserNetworkDesign fc_netPlan, fc_demands;
 
     /**
      * Simplified constructor that does not require to indicate default locations
@@ -84,7 +77,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param canvasType Canvas type (i.e. JUNG)
      * @since 0.2.3
      */
-    public TopologyPanel(INetworkCallback callback, Class<? extends ITopologyCanvas> canvasType) {
+    public TopologyPanel(INetworkCallback callback, Class<? extends ITopologyCanvas> canvasType)
+    {
         this(callback, canvasType, null);
     }
 
@@ -97,7 +91,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param plugins    List of plugins to be included (it may be null)
      * @since 0.2.3
      */
-    public TopologyPanel(INetworkCallback callback, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins) {
+    public TopologyPanel(INetworkCallback callback, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins)
+    {
         this(callback, null, null, canvasType, plugins);
     }
 
@@ -111,7 +106,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param plugins                List of plugins to be included (it may be null)
      * @since 0.2.0
      */
-    public TopologyPanel(final INetworkCallback callback, File defaultDesignDirectory, File defaultDemandDirectory, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins) {
+    public TopologyPanel(final INetworkCallback callback, File defaultDesignDirectory, File defaultDemandDirectory, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins)
+    {
 //		super (null, FrequentisBackgroundPanel.ACTUAL, 1.0f, 0.5f);
 
         File currentDir = SystemUtils.getCurrentDir();
@@ -120,9 +116,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         this.defaultDesignDirectory = defaultDesignDirectory == null ? new File(currentDir + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "data" + SystemUtils.getDirectorySeparator() + "networkTopologies") : defaultDesignDirectory;
         this.defaultDemandDirectory = defaultDemandDirectory == null ? new File(currentDir + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "data" + SystemUtils.getDirectorySeparator() + "trafficMatrices") : defaultDemandDirectory;
 
-        try {
+        try
+        {
             canvas = canvasType.newInstance();
-        } catch (InstantiationException | IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException e)
+        {
             throw new RuntimeException(e);
         }
 
@@ -142,9 +140,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         layerChooserPane = new JPanel(new BorderLayout());
         layerChooserPane.add(new JLabel("Select layer: "), BorderLayout.WEST);
         layerChooserPane.add(layerChooser, BorderLayout.CENTER);
-        layerChooser.addActionListener(new ActionListener() {
+        layerChooser.addActionListener(new ActionListener()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 Object selectedItem = layerChooser.getSelectedItem();
                 if (!(selectedItem instanceof StringLabeller))
                     ErrorHandling.showErrorDialog("Bad object", "Error selecting layer");
@@ -200,8 +200,43 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         JButton decreaseFontSize = new JButton();
         decreaseFontSize.setToolTipText("Decrease font size");
 
+        viewPopUp = new JPopupMenu();
+
+        it_topology = new JMenuItem("View network state window");
+        it_topology.addActionListener(e ->
+        {
+            WindowController.showTopologyWindow();
+        });
+
+        it_report = new JMenuItem("View report window");
+        it_report.addActionListener(e ->
+        {
+            WindowController.showReportWindow();
+        });
+
+        it_offline = new JMenuItem("View offline design window");
+        it_offline.addActionListener(e ->
+        {
+            WindowController.showOfflineWindow();
+        });
+
+        it_online = new JMenuItem("View online simulation window");
+        it_online.addActionListener(e ->
+        {
+            WindowController.showOnlineWindow();
+        });
+
+        viewPopUp.add(it_topology);
+        viewPopUp.add(it_report);
+        viewPopUp.add(it_offline);
+        viewPopUp.add(it_online);
+
+        btn_view = new MenuButton("View", viewPopUp);
+        btn_view.setMnemonic(KeyEvent.VK_V);
+
         btn_reset = new JButton("Reset");
         btn_reset.setToolTipText("Reset the user interface");
+        btn_reset.setMnemonic(KeyEvent.VK_R);
 
         btn_load.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDesign.png")));
         btn_loadDemand.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDemand.png")));
@@ -247,32 +282,53 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(increaseFontSize);
         toolbar.add(decreaseFontSize);
         toolbar.add(Box.createHorizontalGlue());
+        toolbar.add(btn_view);
         toolbar.add(btn_reset);
 
-        increaseNodeSize.addActionListener(new ActionListener() {
+        this.addComponentListener(new ComponentAdapter()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void componentResized(ComponentEvent e)
+            {
+                if (getSize().getHeight() != 0)
+                {
+                    canvas.zoomAll();
+                }
+            }
+        });
+
+        increaseNodeSize.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
                 getCanvas().increaseNodeSize();
             }
         });
 
-        decreaseNodeSize.addActionListener(new ActionListener() {
+        decreaseNodeSize.addActionListener(new ActionListener()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 getCanvas().decreaseNodeSize();
             }
         });
 
-        increaseFontSize.addActionListener(new ActionListener() {
+        increaseFontSize.addActionListener(new ActionListener()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 getCanvas().increaseFontSize();
             }
         });
 
-        decreaseFontSize.addActionListener(new ActionListener() {
+        decreaseFontSize.addActionListener(new ActionListener()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 getCanvas().decreaseFontSize();
             }
         });
@@ -282,14 +338,18 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             if (component instanceof AbstractButton)
                 component.setFocusable(false);
 
-        if (ErrorHandling.isDebugEnabled()) {
-            canvas.getInternalComponent().addMouseMotionListener(new MouseMotionListener() {
+        if (ErrorHandling.isDebugEnabled())
+        {
+            canvas.getInternalComponent().addMouseMotionListener(new MouseMotionListener()
+            {
                 @Override
-                public void mouseDragged(MouseEvent e) {
+                public void mouseDragged(MouseEvent e)
+                {
                 }
 
                 @Override
-                public void mouseMoved(MouseEvent e) {
+                public void mouseMoved(MouseEvent e)
+                {
                     Point point = e.getPoint();
                     position.setText("view = " + point + ", layout = " + canvas.convertViewCoordinatesToRealCoordinates(point));
                 }
@@ -297,19 +357,25 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             position = new JLabel();
             add(position, BorderLayout.SOUTH);
-        } else {
+        } else
+        {
             position = null;
         }
 
-        new FileDrop(canvasComponent, new LineBorder(Color.BLACK), new FileDrop.Listener() {
+        new FileDrop(canvasComponent, new LineBorder(Color.BLACK), new FileDrop.Listener()
+        {
             @Override
-            public void filesDropped(File[] files) {
-                for (File file : files) {
-                    try {
+            public void filesDropped(File[] files)
+            {
+                for (File file : files)
+                {
+                    try
+                    {
                         if (!file.getName().toLowerCase(Locale.getDefault()).endsWith(".n2p")) return;
                         loadDesignFromFile(file);
                         break;
-                    } catch (Throwable e) {
+                    } catch (Throwable e)
+                    {
                         break;
                     }
                 }
@@ -319,7 +385,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showNodeNames.setSelected(false);
         btn_showLinkIds.setSelected(false);
         btn_showNonConnectedNodes.setSelected(true);
-        
+
         popupPlugin = new PopupMenuPlugin(callback);
         addPlugin(new PanGraphPlugin(callback, MouseEvent.BUTTON1_MASK));
         if (callback.isEditable() && getCanvas() instanceof JUNGCanvas)
@@ -332,34 +398,45 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 //        setAllowLoadTrafficDemand(callback.allowLoadTrafficDemands());
 
 
-        
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent e)
+    {
         Object src = e.getSource();
 
-        if (src == btn_load) {
+        if (src == btn_load)
+        {
             loadDesign();
-        } else if (src == btn_loadDemand) {
+        } else if (src == btn_loadDemand)
+        {
             loadTrafficDemands();
-        } else if (src == btn_save) {
+        } else if (src == btn_save)
+        {
             saveDesign();
-        } else if (src == btn_showNodeNames) {
+        } else if (src == btn_showNodeNames)
+        {
             canvas.showNodeNames(btn_showNodeNames.isSelected());
-        } else if (src == btn_showLinkIds) {
+        } else if (src == btn_showLinkIds)
+        {
             canvas.showLinkLabels(btn_showLinkIds.isSelected());
-        } else if (src == btn_showNonConnectedNodes) {
+        } else if (src == btn_showNonConnectedNodes)
+        {
             canvas.showNonConnectedNodes(btn_showNonConnectedNodes.isSelected());
-        } else if (src == btn_takeSnapshot) {
+        } else if (src == btn_takeSnapshot)
+        {
             takeSnapshot();
-        } else if (src == btn_zoomIn) {
+        } else if (src == btn_zoomIn)
+        {
             zoomIn();
-        } else if (src == btn_zoomOut) {
+        } else if (src == btn_zoomOut)
+        {
             zoomOut();
-        } else if (src == btn_zoomAll) {
+        } else if (src == btn_zoomAll)
+        {
             zoomAll();
-        } else if (src == btn_reset) {
+        } else if (src == btn_reset)
+        {
             callback.reset();
         }
     }
@@ -370,23 +447,29 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param plugin Plugin to be added
      * @since 0.3.0
      */
-    public void addPlugin(ITopologyCanvasPlugin plugin) {
+    public void addPlugin(ITopologyCanvasPlugin plugin)
+    {
         canvas.addPlugin(plugin);
     }
 
-    private void checkNetPlanFileChooser() {
-        if (fc_netPlan == null) {
+    private void checkNetPlanFileChooser()
+    {
+        if (fc_netPlan == null)
+        {
             fc_netPlan = new FileChooserNetworkDesign(defaultDesignDirectory, DialogType.NETWORK_DESIGN);
         }
     }
 
-    private void checkDemandFileChooser() {
-        if (fc_demands == null) {
+    private void checkDemandFileChooser()
+    {
+        if (fc_demands == null)
+        {
             fc_demands = new FileChooserNetworkDesign(defaultDemandDirectory, DialogType.DEMANDS);
         }
     }
 
-    private String createLayerName(long layerId) {
+    private String createLayerName(long layerId)
+    {
         final NetworkLayer layer = callback.getDesign().getNetworkLayerFromId(layerId);
         return "Layer " + layer.getIndex() + (layer.getName().isEmpty() ? "" : ": " + layer.getName());
     }
@@ -397,13 +480,16 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @return Reference to the topology canvas
      * @since 0.2.3
      */
-    public ITopologyCanvas getCanvas() {
+    public ITopologyCanvas getCanvas()
+    {
         return canvas;
     }
 
-    private StringLabeller getLayerItem(long layerId) {
+    private StringLabeller getLayerItem(long layerId)
+    {
         int numLayers = layerChooser.getItemCount();
-        for (int l = 0; l < numLayers; l++) {
+        for (int l = 0; l < numLayers; l++)
+        {
             StringLabeller item = (StringLabeller) layerChooser.getItemAt(l);
             if (layerId == (Long) item.getObject()) return item;
         }
@@ -416,8 +502,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      *
      * @since 0.3.0
      */
-    public void loadDesign() {
-        try {
+    public void loadDesign()
+    {
+        try
+        {
             checkNetPlanFileChooser();
 
             int rc = fc_netPlan.showOpenDialog(null);
@@ -431,17 +519,21 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             callback.loadDesign(aux);
 
 
-        } catch (Net2PlanException ex) {
+        } catch (Net2PlanException ex)
+        {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
             ErrorHandling.showErrorDialog(ex.getMessage(), "Error loading network design");
-        } catch (Throwable ex) {
+        } catch (Throwable ex)
+        {
             ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
             ErrorHandling.showErrorDialog("Error loading network design");
         }
     }
 
-    private void loadDesignFromFile(File file) {
-        try {
+    private void loadDesignFromFile(File file)
+    {
+        try
+        {
             NetPlan netPlan = new NetPlan(file);
             checkNetPlanFileChooser();
             fc_netPlan.setCurrentDirectory(file.getParentFile());
@@ -449,10 +541,12 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             callback.loadDesign(netPlan);
 
 
-        } catch (Net2PlanException ex) {
+        } catch (Net2PlanException ex)
+        {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
             ErrorHandling.showErrorDialog(ex.getMessage(), "Error loading network design");
-        } catch (Throwable ex) {
+        } catch (Throwable ex)
+        {
             ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
             ErrorHandling.showErrorDialog("Error loading network design");
         }
@@ -463,8 +557,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      *
      * @since 0.3.0
      */
-    public void loadTrafficDemands() {
-        try {
+    public void loadTrafficDemands()
+    {
+        try
+        {
             checkDemandFileChooser();
 
             int rc = fc_demands.showOpenDialog(null);
@@ -472,10 +568,12 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             NetPlan aux = fc_demands.readDemands();
             callback.loadTrafficDemands(aux);
-        } catch (Net2PlanException ex) {
+        } catch (Net2PlanException ex)
+        {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
             ErrorHandling.showErrorDialog(ex.getMessage(), "Error loading traffic demands");
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
             ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
             ErrorHandling.showErrorDialog("Error loading traffic demands");
         }
@@ -487,7 +585,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param layerId Layer identifier
      * @since 0.3.1
      */
-    public void refreshLayerName(long layerId) {
+    public void refreshLayerName(long layerId)
+    {
         StringLabeller item = getLayerItem(layerId);
         item.setLabel(createLayerName(layerId));
 
@@ -500,8 +599,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      *
      * @since 0.3.0
      */
-    public void saveDesign() {
-        try {
+    public void saveDesign()
+    {
+        try
+        {
             checkNetPlanFileChooser();
 
             int rc = fc_netPlan.showSaveDialog(null);
@@ -512,10 +613,12 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             fc_netPlan.saveNetPlan(netPlan);
             ErrorHandling.showInformationDialog("Design saved successfully", "Save design");
-        } catch (Net2PlanException ex) {
+        } catch (Net2PlanException ex)
+        {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
             ErrorHandling.showErrorDialog(ex.getMessage(), "Error saving network design");
-        } catch (Throwable ex) {
+        } catch (Throwable ex)
+        {
             ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
             ErrorHandling.showErrorDialog("Error saving network design");
         }
@@ -524,10 +627,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     /**
      * Allows setting the current layer.
      *
-     * @param layerId Layer identifier
+     * @param layer Layer identifier
      * @since 0.3.1
      */
-    public void selectLayer(long layer) {
+    public void selectLayer(long layer)
+    {
         long currentLayerId = (Long) ((StringLabeller) layerChooser.getSelectedItem()).getObject();
         if (layer == currentLayerId) return;
 
@@ -549,7 +653,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      *
      * @since 0.3.0
      */
-    public void takeSnapshot() {
+    public void takeSnapshot()
+    {
         canvas.takeSnapshot();
     }
 
@@ -558,7 +663,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      *
      * @since 0.3.1
      */
-    public final void updateLayerChooser() {
+    public final void updateLayerChooser()
+    {
         ActionListener[] al = layerChooser.getActionListeners();
         for (ActionListener a : al) layerChooser.removeActionListener(a);
 
@@ -587,7 +693,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      *
      * @since 0.3.0
      */
-    public void zoomAll() {
+    public void zoomAll()
+    {
         canvas.zoomAll();
     }
 
@@ -596,7 +703,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      *
      * @since 0.3.0
      */
-    public void zoomIn() {
+    public void zoomIn()
+    {
         canvas.zoomIn();
     }
 
@@ -605,7 +713,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      *
      * @since 0.3.0
      */
-    public void zoomOut() {
+    public void zoomOut()
+    {
         canvas.zoomOut();
     }
 }

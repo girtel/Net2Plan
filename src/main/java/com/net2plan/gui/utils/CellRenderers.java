@@ -12,6 +12,7 @@
 
 package com.net2plan.gui.utils;
 
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_demand;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_link;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_route;
 import com.net2plan.interfaces.networkDesign.*;
@@ -174,13 +175,34 @@ public class CellRenderers {
                 return;
             }
 
-//			if (columnIndexModel == 9 || columnIndexModel == 10)
-            if (columnIndexModel == AdvancedJTable_link.COLUMN_UTILIZATION || columnIndexModel == AdvancedJTable_link.COLUMN_UTILIZATIONWOPROTECTION) {
-                double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
+            double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
+
+            // In case both of them are not in red, paint only the correspondent column.
+            if (columnIndexModel == AdvancedJTable_link.COLUMN_UTILIZATION || columnIndexModel == AdvancedJTable_link.COLUMN_UTILIZATIONWOPROTECTION)
+            {
                 double doubleValue = (Double) table.getModel().getValueAt(rowIndexModel, columnIndexModel);
                 if (DoubleUtils.isEqualWithinAbsoluteTolerance(doubleValue, 1, PRECISION_FACTOR))
+                {
                     c.setBackground(Color.ORANGE);
-                else if (doubleValue > 1) c.setBackground(Color.RED);
+                }
+                else if (doubleValue > 1)
+                {
+                    c.setBackground(Color.RED);
+                    c.setForeground(Color.WHITE);
+                }
+            } else
+            {
+                double utilizationValue = (Double) table.getModel().getValueAt(rowIndexModel, AdvancedJTable_link.COLUMN_UTILIZATION);
+                double protectionValue = (Double) table.getModel().getValueAt(rowIndexModel, AdvancedJTable_link.COLUMN_UTILIZATIONWOPROTECTION);
+
+                if (DoubleUtils.isEqualWithinAbsoluteTolerance(utilizationValue, 1, PRECISION_FACTOR) &&
+                        DoubleUtils.isEqualWithinAbsoluteTolerance(protectionValue, 1, PRECISION_FACTOR))
+                {
+                    c.setBackground(Color.ORANGE);
+                } else if (utilizationValue > 1 && protectionValue > 1)
+                {
+                    c.setBackground(Color.RED);
+                }
             }
         }
     }
@@ -193,6 +215,7 @@ public class CellRenderers {
     public static class LostTrafficCellRenderer extends NumberCellRenderer {
         private static final long serialVersionUID = 1L;
         private final int offeredTrafficColumnModelIndex;
+        private final int lostTrafficColumnModelIndex;
 
         /**
          * Default constructor.
@@ -200,10 +223,11 @@ public class CellRenderers {
          * @param offeredTrafficColumnModelIndex Column index (in model order) in which is found the offered traffic
          * @since 0.2.0
          */
-        public LostTrafficCellRenderer(int offeredTrafficColumnModelIndex) {
+        public LostTrafficCellRenderer(int offeredTrafficColumnModelIndex, int lostTrafficColumnModelIndex) {
             super();
 
             this.offeredTrafficColumnModelIndex = offeredTrafficColumnModelIndex;
+            this.lostTrafficColumnModelIndex = lostTrafficColumnModelIndex;
         }
 
         @Override
@@ -212,10 +236,24 @@ public class CellRenderers {
 
             if (!isSelected && value != null) {
                 int demandId = table.convertRowIndexToModel(row);
-                double lostTraffic = (Double) value;
+                double lostTraffic = (Double) table.getModel().getValueAt(demandId, lostTrafficColumnModelIndex);
                 double h_d = (Double) table.getModel().getValueAt(demandId, offeredTrafficColumnModelIndex);
-                if (h_d > 0) {
-                    c.setBackground(lostTraffic > 1E-10 ? Color.RED : Color.GREEN);
+                if (h_d > 0)
+                {
+                    if (lostTraffic > 1E-10)
+                    {
+                        c.setBackground(Color.RED);
+                        if (column == (lostTrafficColumnModelIndex - (table.getModel().getColumnCount() - table.getColumnCount())))
+                        {
+                            c.setForeground(Color.WHITE);
+                        }
+                    } else
+                    {
+                        if (column == (lostTrafficColumnModelIndex - (table.getModel().getColumnCount() - table.getColumnCount())))
+                        {
+                            c.setBackground(Color.GREEN);
+                        }
+                    }
                 }
             }
 
@@ -355,12 +393,17 @@ public class CellRenderers {
             NetPlan initialNetPlan = callback.getInitialDesign();
 
             long routeId = (long) itemId;
-            if (columnIndexModel == AdvancedJTable_route.COLUMN_BOTTLENECKUTILIZATION) {
-                double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-                double doubleValue = (Double) table.getModel().getValueAt(rowIndexModel, columnIndexModel);
-                if (DoubleUtils.isEqualWithinAbsoluteTolerance(doubleValue, 1, PRECISION_FACTOR))
-                    c.setBackground(Color.ORANGE);
-                else if (doubleValue > 1) c.setBackground(Color.RED);
+            double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
+            double bottleneckValue = (Double) table.getModel().getValueAt(rowIndexModel, AdvancedJTable_route.COLUMN_BOTTLENECKUTILIZATION);
+            if (DoubleUtils.isEqualWithinAbsoluteTolerance(bottleneckValue, 1, PRECISION_FACTOR))
+                c.setBackground(Color.ORANGE);
+            else if (bottleneckValue > 1)
+            {
+                c.setBackground(Color.RED);
+                if (columnIndexModel == AdvancedJTable_route.COLUMN_BOTTLENECKUTILIZATION)
+                {
+                    c.setForeground(Color.WHITE);
+                }
             }
 
             if (initialNetPlan != null && initialNetPlan.getRouteFromId(routeId) != null) {

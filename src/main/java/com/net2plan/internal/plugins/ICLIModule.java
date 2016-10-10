@@ -40,7 +40,7 @@ public abstract class ICLIModule implements Plugin
 	 * Executes the module according to the specified command-line call.
 	 * 
 	 * @param args Command line parameters
-	 * @throws ParseException
+	 * @throws ParseException Command line parsing exception.
 	 * @since 0.2.2
 	 */
 	public abstract void executeFromCommandLine(String[] args) throws ParseException;

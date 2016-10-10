@@ -56,6 +56,13 @@ public class Node extends NetworkElement
 	/**
 	 * Default constructor.
 	 *
+	 * @param netPlan Network topology
+	 * @param id Node ID
+	 * @param index Node index
+	 * @param xCoord Node X Coord
+	 * @param yCoord Node Y Coord
+	 * @param name Node name
+	 * @param attributes Node attributes
 	 * @since 0.2.0
 	 */
 	protected Node (NetPlan netPlan , long id , int index , double xCoord, double yCoord, String name, AttributeMap attributes)

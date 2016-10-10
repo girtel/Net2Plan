@@ -71,9 +71,7 @@ public abstract class ITopologyCanvas implements Plugin
 	/**
 	 * Adds a new unidirectional link between two nodes.
 	 * 
-	 * @param linkId Link identifier
-	 * @param originNodeId Origin node identifier
-	 * @param destinationNodeId Destinatin node identifier
+	 * @param npLink Link identifier
 	 * @since 0.3.0
 	 */
 	public abstract void addLink(Link npLink);
@@ -81,9 +79,7 @@ public abstract class ITopologyCanvas implements Plugin
 	/**
 	 * Adds a new node.
 	 * 
-	 * @param nodeId Node identifier
-	 * @param pos Node position
-	 * @param label Node label (it can be null)
+	 * @param npNode Node identifier
 	 * @since 0.3.0
 	 */
 	public abstract void addNode(Node npNode);
@@ -170,7 +166,7 @@ public abstract class ITopologyCanvas implements Plugin
 	/**
 	 * Indicates whether a link is visible or not.
 	 * 
-	 * @param linkId Link identifier
+	 * @param associatedNpLink Link identifier
 	 * @return {@code true} if the link is visible. Otherwise, {@code false}
 	 * @since 0.3.0
 	 */
@@ -179,7 +175,7 @@ public abstract class ITopologyCanvas implements Plugin
 	/**
 	 * Indicates whether a node is visible or not.
 	 * 
-	 * @param nodeId Node identifier
+	 * @param associatedNpNode Node identifier
 	 * @return {@code true} if the node is visible. Otherwise, {@code false}
 	 * @since 0.3.0
 	 */
@@ -205,7 +201,7 @@ public abstract class ITopologyCanvas implements Plugin
 	/**
 	 * Forces the canvas to update the position of a node
 	 * 
-	 * @param linkId Link identifier
+	 * @param npNode Link identifier
 	 * @since 0.3.0
 	 */
 	public abstract void updateNodeXYPosition(Node npNode);
@@ -213,7 +209,7 @@ public abstract class ITopologyCanvas implements Plugin
 	/**
 	 * Removes a link from the canvas.
 	 * 
-	 * @param linkId Link identifier
+	 * @param associatedNpLink Link identifier
 	 * @since 0.3.0
 	 */
 	public abstract void removeLink(Link associatedNpLink);
@@ -221,7 +217,7 @@ public abstract class ITopologyCanvas implements Plugin
 	/**
 	 * Removes a node from the canvas, and all its associated incoming/outgoing links.
 	 * 
-	 * @param nodeId Node identifier
+	 * @param associatedNpNode Node identifier
 	 * @since 0.3.0
 	 */
 	public abstract void removeNode(Node associatedNpNode);
@@ -267,7 +263,7 @@ public abstract class ITopologyCanvas implements Plugin
 	/**
 	 * Sets a link as visible/hidden.
 	 * 
-	 * @param linkId Link identifier
+	 * @param link Link identifier
 	 * @param visible Indicates whether the link is visible ({@code true}) or hidden ({@code false})
 	 * @since 0.3.0
 	 */
@@ -276,7 +272,7 @@ public abstract class ITopologyCanvas implements Plugin
 	/**
 	 * Sets some links as visible/hidden.
 	 * 
-	 * @param linkIds Link identifiers
+	 * @param link Link identifiers
 	 * @param visible Indicates whether the links are visible ({@code true}) or hidden ({@code false})
 	 * @since 0.3.0
 	 */
@@ -285,7 +281,7 @@ public abstract class ITopologyCanvas implements Plugin
 	/**
 	 * Sets a node as visible/hidden.
 	 * 
-	 * @param nodeId Node identifier
+	 * @param node Node identifier
 	 * @param visible Indicates whether the node is visible ({@code true}) or hidden ({@code false})
 	 * @since 0.3.0
 	 */
@@ -311,7 +307,9 @@ public abstract class ITopologyCanvas implements Plugin
 	/**
 	 * Emphasizes a link.
 	 * 
-	 * @param linkId Link identifier
+	 * @param link Link identifier
+	 * @param color Link color
+	 * @param dashed Dashed
 	 * @since 0.3.0
 	 */
 	public final void showLink(Link link , Color color , boolean dashed)
@@ -331,7 +329,8 @@ public abstract class ITopologyCanvas implements Plugin
 	/**
 	 * Emphasizes a node.
 	 * 
-	 * @param nodeId Node identifier
+	 * @param node Node identifier
+	 * @param color Node color
 	 * @since 0.3.0
 	 */
 	public final void showNode(Node node , Color color)
@@ -351,7 +350,7 @@ public abstract class ITopologyCanvas implements Plugin
 	/**
 	 * Emphasizes a set of nodes.
 	 * 
-	 * @param nodeIds Node identifiers
+	 * @param nodes Node identifiers
 	 * @since 0.3.0
 	 */
 	public final void showNodes(Map<Node,Color> nodes)
@@ -380,11 +379,9 @@ public abstract class ITopologyCanvas implements Plugin
 //	}
 
 	/**
-	 * Emphasizes two sets of links. The first one will show a heavy line, while
-	 * the second one will show a heavy dashed line.
-	 * 
-	 * @param primaryRouteLinks Link identifiers for the first set of links
-	 * @param secondaryRouteLinks Link identifiers for the second set of links
+	 * Emphasizes the nodes and links given in the parameters.
+	 * @param npNodes To emphasize nodes
+	 * @param npLinks To emphasize links
 	 * @since 0.3.0
 	 */
 	public abstract void showAndPickNodesAndLinks(Map<Node,Color> npNodes, Map<Link,Pair<Color,Boolean>> npLinks);
@@ -451,7 +448,7 @@ public abstract class ITopologyCanvas implements Plugin
 	 * design in the given layer.
 	 * 
 	 * @param netPlan Network design
-	 * @param layerId Layer identifier
+	 * @param layer Layer identifier
 	 * @since 0.3.0
 	 */
 	public abstract void updateTopology(NetPlan netPlan, long layer);

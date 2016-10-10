@@ -63,7 +63,6 @@ import com.net2plan.utils.StringUtils;
 /**
  * <p>Extended version of the {@code JTable} class. It presents the following
  * additional features:</p>
- * <p>
  * <ul>
  * <li>Reordering of table columns is not allowed</li>
  * <li>Auto-resize of columns is disabled</li>
@@ -71,15 +70,14 @@ import com.net2plan.utils.StringUtils;
  * <li>It allows to navigate the table with the cursor</li>
  * <li>It allows to configure if all cell contents are selected when editing or typing ('true' by default, using 'setSelectAllXXX()' methods to customize)</li>
  * </ul>
- * <p>
  * <p>Credits to Santhosh Kumar for his methods to solve partially visible cell
  * issues (<a href='http://www.jroller.com/santhosh/entry/partially_visible_tablecells'>Partially Visible TableCells</a>)</p>
- * <p>
  * <p>Credits to "Kah - The Developer" for his static method to set column widths
  * in proportion to each other (<a href='http://kahdev.wordpress.com/2011/10/30/java-specifying-the-column-widths-of-a-jtable-as-percentages/'>Specifying the column widths of a JTable as percentages</a>)
- * <p>
+ * </p>
  * <p>Credits to Rob Camick for his 'select all' editing feature for {@code JTable}
  * (<a href='https://tips4java.wordpress.com/2008/10/20/table-select-all-editor/'>Table Select All Editor</a>)
+ * </p>
  *
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
@@ -102,6 +100,8 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      * Constructor that allows to set the table model.
      *
      * @param model Table model
+     * @param networkViewer Network callback
+     * @param networkElementType Network element type
      * @since 0.2.0
      */
     public AdvancedJTableNetworkElement(TableModel model, final INetworkCallback networkViewer, NetworkElementType networkElementType) {
