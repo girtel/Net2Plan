@@ -181,8 +181,14 @@ public class CellRenderers {
             {
                 double doubleValue = (Double) table.getModel().getValueAt(rowIndexModel, columnIndexModel);
                 if (DoubleUtils.isEqualWithinAbsoluteTolerance(doubleValue, 1, PRECISION_FACTOR))
+                {
                     c.setBackground(Color.ORANGE);
-                else if (doubleValue > 1) c.setBackground(Color.RED);
+                }
+                else if (doubleValue > 1)
+                {
+                    c.setBackground(Color.RED);
+                    c.setForeground(Color.WHITE);
+                }
             } else
             {
                 double utilizationValue = (Double) table.getModel().getValueAt(rowIndexModel, AdvancedJTable_link.COLUMN_UTILIZATION);
@@ -374,7 +380,14 @@ public class CellRenderers {
             double bottleneckValue = (Double) table.getModel().getValueAt(rowIndexModel, AdvancedJTable_route.COLUMN_BOTTLENECKUTILIZATION);
             if (DoubleUtils.isEqualWithinAbsoluteTolerance(bottleneckValue, 1, PRECISION_FACTOR))
                 c.setBackground(Color.ORANGE);
-            else if (bottleneckValue > 1) c.setBackground(Color.RED);
+            else if (bottleneckValue > 1)
+            {
+                c.setBackground(Color.RED);
+                if (columnIndexModel == AdvancedJTable_route.COLUMN_BOTTLENECKUTILIZATION)
+                {
+                    c.setForeground(Color.WHITE);
+                }
+            }
 
             if (initialNetPlan != null && initialNetPlan.getRouteFromId(routeId) != null) {
                 Route initialRoute = initialNetPlan.getRouteFromId(routeId);
