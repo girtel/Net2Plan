@@ -42,6 +42,12 @@ import com.net2plan.internal.Constants.DialogType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.ITopologyCanvas;
+import edu.uci.ics.jung.visualization.VisualizationViewer;
+import org.jxmapviewer.JXMapViewer;
+import org.jxmapviewer.OSMTileFactoryInfo;
+import org.jxmapviewer.viewer.DefaultTileFactory;
+import org.jxmapviewer.viewer.GeoPosition;
+import org.jxmapviewer.viewer.TileFactoryInfo;
 
 /**
  * <p>Wrapper class for the graph canvas.</p>
@@ -169,7 +175,31 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         JComponent canvasComponent = canvas.getComponent();
         canvasComponent.setBorder(LineBorder.createBlackLineBorder());
-        add(canvasComponent, BorderLayout.CENTER);
+
+        // Background image
+        JXMapViewer mapViewer = new JXMapViewer();
+
+        // Create a TileFactoryInfo for OpenStreetMap
+        TileFactoryInfo info = new OSMTileFactoryInfo();
+        DefaultTileFactory tileFactory = new DefaultTileFactory(info);
+        mapViewer.setTileFactory(tileFactory);
+
+        // Use 8 threads in parallel to load the tiles
+        tileFactory.setThreadPoolSize(8);
+
+        // Set the focus
+        GeoPosition frankfurt = new GeoPosition(50.11, 8.68);
+
+        mapViewer.setZoom(5);
+        mapViewer.setAddressLocation(frankfurt);
+
+        mapViewer.setLayout(new BorderLayout());
+        mapViewer.add(canvasComponent, BorderLayout.CENTER);
+
+        canvasComponent.setOpaque(false);
+        canvasComponent.setBackground(new Color(0,0,0,0));
+
+        add(mapViewer, BorderLayout.CENTER);
 
         btn_load = new JButton();
         btn_load.setToolTipText("Load a network design");
