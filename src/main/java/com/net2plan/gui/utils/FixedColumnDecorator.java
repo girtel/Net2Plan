@@ -18,12 +18,12 @@ import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * <p>This class allows to hack a {@code JTable} with frozen columns.</p>
@@ -43,6 +43,18 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
     private final JTable fixedTable;
     private final JScrollPane scrollPane;
     private int frozenColumns;
+
+    int numberOfColumns = 0;
+    JPopupMenu showHideMenu;
+    JMenu showMenu, hideMenu;
+    JMenuItem showAllItem,hideAllItem;
+    TableModel model;
+    TableColumnModel currentColumnModel;
+    ArrayList<TableColumn> hiddenColumns, shownColumns;
+    ArrayList<String> shownHeaderNames, hiddenHeaderNames;
+    Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn;
+    int columnIndexToHide;
+    JMenuItem [] hiddenHeaderItems, shownHeaderItems;
 
     static {
         FIXED_COLUMN_ADAPTER = new FixedColumnMouseAdapter();
@@ -69,6 +81,7 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         fixedTable.setAutoCreateColumnsFromModel(false);
         fixedTable.setModel(mainTable.getModel());
 
+
         TableColumnModel columnModel = mainTable.getColumnModel();
         for (int i = 0; i < frozenColumns; i++) {
             TableColumn column = columnModel.getColumn(0);
@@ -91,6 +104,118 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         fixedTable.setRowSorter(mainTable.getRowSorter());
         mainTable.setUpdateSelectionOnSort(true);
         fixedTable.setUpdateSelectionOnSort(false);
+
+        model = mainTable.getModel();
+        currentColumnModel = mainTable.getColumnModel();
+        hiddenColumns = new ArrayList<>();
+        shownColumns = new ArrayList<>();
+        numberOfColumns = currentColumnModel.getColumnCount();
+        hiddenHeaderNames = new ArrayList<>();
+        shownHeaderNames = new ArrayList<>();
+        indexForEachColumn = new HashMap<>();
+        indexForEachHiddenColumn = new HashMap<>();
+
+        for (int i = 0; i < numberOfColumns; i++) {
+            shownHeaderNames.add(model.getColumnName(i+frozenColumns));
+            shownColumns.add(currentColumnModel.getColumn(i));
+            indexForEachColumn.put(model.getColumnName(i+frozenColumns), i);
+        }
+
+        showHideMenu = new JPopupMenu();
+        showMenu = new JMenu("Show column");
+        hideMenu = new JMenu("Hide column");
+        showAllItem = new JMenuItem("Show all columns");
+        hideAllItem = new JMenuItem("Hide all columns");
+        showHideMenu.add(showMenu);
+        showHideMenu.add(hideMenu);
+        showHideMenu.add(showAllItem);
+        showHideMenu.add(hideAllItem);
+        fixedTable.getTableHeader().addMouseListener(new MouseAdapter(){
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+
+                //Checking if right button is clicked
+                if (e.isPopupTrigger()) {
+                    updateShowMenu();
+                    updateHideMenu();
+                    showHideMenu.show(e.getComponent(),e.getX(),e.getY());
+
+                    for (int j = 0; j < hiddenHeaderNames.size(); j++) {
+                        JMenuItem currentItem = hiddenHeaderItems[j];
+                        String currentColumnName = hiddenHeaderNames.get(j);
+                        currentItem.addActionListener(new ActionListener() {
+
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                TableColumn columnToShow = showColumn(currentColumnName, hiddenColumns, indexForEachHiddenColumn.get(currentColumnName));
+                                hiddenColumns.remove(columnToShow);
+                                checkNewIndexes();
+                            }
+                        });
+                    }
+
+
+                    for (int j = 0; j < indexForEachColumn.size(); j++) {
+                        JMenuItem currentItem = shownHeaderItems[j];
+                        int position = j;
+                        currentItem.addActionListener(new ActionListener() {
+
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                columnIndexToHide = indexForEachColumn.get(shownHeaderNames.get(position));
+                                String hiddenColumnHeader = hideColumn(columnIndexToHide, shownHeaderNames);
+                                shownHeaderNames.remove(hiddenColumnHeader);
+                                checkNewIndexes();
+                            }
+                        });
+                    }
+                }
+            }
+
+        });
+        showAllItem.addActionListener(new ActionListener(){
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showAllColumns();
+            }
+        });
+        hideAllItem.addActionListener(new ActionListener(){
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                hideAllColumns();
+            }
+        });
+        currentColumnModel.addColumnModelListener(new TableColumnModelListener() {
+
+            @Override
+            public void columnAdded(TableColumnModelEvent e) {
+
+            }
+
+            @Override
+            public void columnRemoved(TableColumnModelEvent e) {
+
+            }
+
+            @Override
+            public void columnMoved(TableColumnModelEvent e) {
+                checkNewIndexes();
+            }
+
+            @Override
+            public void columnMarginChanged(ChangeEvent e) {
+
+            }
+
+            @Override
+            public void columnSelectionChanged(ListSelectionEvent e) {
+
+            }
+        });
+
 
         for (MouseMotionListener listener : mainTable.getTableHeader().getMouseMotionListeners())
         {
@@ -148,6 +273,112 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
 
         setAction(mainTable, "selectFirstColumn", new ScrollTableSelectFirstColumnCellAction());
         setAction(fixedTable, "selectLastColumn", new LockedTableSelectLastColumnCellAction());
+    }
+
+    public void updateShowMenu(){
+        showMenu.removeAll();
+        hiddenHeaderItems = new JMenuItem[hiddenHeaderNames.size()];
+        for (int i = 0; i < hiddenHeaderNames.size(); i++) {
+            hiddenHeaderItems[i] = new JMenuItem(hiddenHeaderNames.get(i));
+            showMenu.add(hiddenHeaderItems[i]);
+
+        }
+
+    }
+
+    public void updateHideMenu(){
+        hideMenu.removeAll();
+        shownHeaderItems = new JMenuItem[shownHeaderNames.size()];
+        for (int i = 0; i < shownHeaderNames.size(); i++) {
+            shownHeaderItems[i] = new JMenuItem(shownHeaderNames.get(i));
+            hideMenu.add(shownHeaderItems[i]);
+
+        }
+
+    }
+
+    public void checkNewIndexes() {
+        //When a column is moved, we have to know which are the new indexes and update indexForEachColumn
+        indexForEachColumn.clear();
+        numberOfColumns = mainTable.getColumnCount();
+        for (int i = 0; i < numberOfColumns; i++) {
+            indexForEachColumn.put(mainTable.getColumnName(i), i);
+        }
+
+    }
+
+    public void showAllColumns(){
+        int columnIndex = 0;
+        while(currentColumnModel.getColumnCount() < numberOfColumns + hiddenHeaderNames.size()) {
+            String currentColumnName = hiddenHeaderNames.get(0);
+            String hiddenColumnName;
+            columnIndex = indexForEachHiddenColumn.get(currentColumnName);
+            for (TableColumn tc : hiddenColumns) {
+                hiddenColumnName = tc.getHeaderValue().toString();
+                if (currentColumnName.equals(hiddenColumnName)) {
+                    mainTable.addColumn(tc);
+                    mainTable.moveColumn(mainTable.getColumnCount() - 1, columnIndex);
+                    shownColumns.add(tc);
+                    shownHeaderNames.add(columnIndex, hiddenColumnName);
+                    hiddenHeaderNames.remove(hiddenColumnName);
+                    indexForEachHiddenColumn.remove(currentColumnName, columnIndex);
+                }
+            }
+
+        }
+
+        hiddenColumns.clear();
+    }
+
+    public void hideAllColumns(){
+        int counter = 0;
+        while(currentColumnModel.getColumnCount() > 0){
+            TableColumn columnToHide = currentColumnModel.getColumn(0);
+            columnIndexToHide = indexForEachColumn.get(shownHeaderNames.get(counter));
+            String hiddenColumnHeader = columnToHide.getHeaderValue().toString();
+            hiddenColumns.add(columnToHide);
+            hiddenHeaderNames.add(hiddenColumnHeader);
+            indexForEachHiddenColumn.put(hiddenColumnHeader, counter);
+            mainTable.removeColumn(columnToHide);
+            counter++;
+        }
+        checkNewIndexes();
+        shownHeaderNames.clear();
+        shownColumns.clear();
+    }
+
+
+    public TableColumn showColumn(String columnName, ArrayList<TableColumn> hiddenColumns, int columnIndex) {
+
+        String hiddenColumnName;
+        TableColumn columnToShow = null;
+        for (TableColumn tc : hiddenColumns) {
+            hiddenColumnName = tc.getHeaderValue().toString();
+            if (columnName.equals(hiddenColumnName)) {
+                mainTable.addColumn(tc);
+                mainTable.moveColumn(mainTable.getColumnCount() - 1, columnIndex);
+                shownColumns.add(tc);
+                hiddenHeaderNames.remove(hiddenColumnName);
+                shownHeaderNames.add(columnIndex, hiddenColumnName);
+                indexForEachHiddenColumn.remove(columnName, columnIndex);
+                columnToShow = tc;
+            }
+        }
+        return columnToShow;
+    }
+
+    public String hideColumn(int columnIndex, ArrayList<String> shownHeaderNames) {
+
+        TableColumn columnToHide = currentColumnModel.getColumn(columnIndex);
+        String hiddenColumnHeader = columnToHide.getHeaderValue().toString();
+        hiddenColumns.add(columnToHide);
+        shownColumns.remove(columnToHide);
+        hiddenHeaderNames.add(hiddenColumnHeader);
+        indexForEachHiddenColumn.put(hiddenColumnHeader, columnIndex);
+        mainTable.removeColumn(columnToHide);
+        return hiddenColumnHeader;
+
+
     }
 
     @Override
