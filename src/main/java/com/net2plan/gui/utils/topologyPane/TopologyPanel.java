@@ -176,29 +176,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         JComponent canvasComponent = canvas.getComponent();
         canvasComponent.setBorder(LineBorder.createBlackLineBorder());
 
-        // Background image
-        JXMapViewer mapViewer = new JXMapViewer();
-
-        // Create a TileFactoryInfo for OpenStreetMap
-        TileFactoryInfo info = new OSMTileFactoryInfo();
-        DefaultTileFactory tileFactory = new DefaultTileFactory(info);
-        mapViewer.setTileFactory(tileFactory);
-
-        // Use 8 threads in parallel to load the tiles
-        tileFactory.setThreadPoolSize(8);
-
-        // Set the focus
-        GeoPosition frankfurt = new GeoPosition(50.11, 8.68);
-
-        mapViewer.setZoom(5);
-        mapViewer.setAddressLocation(frankfurt);
-
-        mapViewer.setLayout(new BorderLayout());
-        mapViewer.add(canvasComponent, BorderLayout.CENTER);
-
-        canvasComponent.setOpaque(false);
-        canvasComponent.setBackground(new Color(0,0,0,0));
-
+        final JComponent mapViewer = ((JUNGCanvas) canvas).getMapComponent();
         add(mapViewer, BorderLayout.CENTER);
 
         btn_load = new JButton();

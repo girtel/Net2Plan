@@ -15,6 +15,7 @@ package com.net2plan.gui.utils.topologyPane.jung;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
+import com.net2plan.gui.utils.topologyPane.jung.map.MapPanel;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -48,6 +49,7 @@ import edu.uci.ics.jung.visualization.util.ArrowFactory;
 import org.apache.commons.collections15.Predicate;
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.collections15.functors.ConstantTransformer;
+import org.jxmapviewer.JXMapViewer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -82,6 +84,8 @@ public final class JUNGCanvas extends ITopologyCanvas
     private final PluggableGraphMouse gm;
     private final ScalingControl scalingControl;
     private final Transformer<Context<Graph<GUINode, GUILink>, GUILink>, Shape> originalEdgeShapeTransformer;
+
+    private final MapPanel mapViewer;
 
     private boolean showNodeNames, showLinkIds, showHideNonConnectedNodes;
 
@@ -179,7 +183,15 @@ public final class JUNGCanvas extends ITopologyCanvas
         ITopologyCanvasPlugin scalingPlugin = new ScalingCanvasPlugin(scalingControl, MouseEvent.NOBUTTON);
         addPlugin(scalingPlugin);
 
-        vv.setBackground(CANVAS_BGCOLOR);
+        vv.setOpaque(false);
+        vv.setBackground(new Color(0,0,0,0));
+
+        mapViewer = new MapPanel();
+
+        final JComponent mapComponent = this.mapViewer.getMapController();
+
+        mapComponent.setLayout(new BorderLayout());
+        mapComponent.add(vv, BorderLayout.CENTER);
 
         reset();
     }
@@ -674,7 +686,12 @@ public final class JUNGCanvas extends ITopologyCanvas
 //			return !hiddenLinks.contains(e);
 //        }
 //    }
-//	
+//
+    public JComponent getMapComponent()
+    {
+        return mapViewer.getMapController();
+    }
+
     private class LinkIdRenderer extends BasicEdgeLabelRenderer<GUINode, GUILink>
     {
         @Override
