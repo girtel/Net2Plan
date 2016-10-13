@@ -1,5 +1,6 @@
 package com.net2plan.gui.utils.topologyPane.jung.map;
 
+import com.net2plan.utils.Pair;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.viewer.DefaultTileFactory;
@@ -43,7 +44,14 @@ public class MapPanel
         return mapViewer;
     }
 
-    public void setMapCoords(final int lat, final int lon)
+    public Pair<Double, Double> getMapCoords()
+    {
+        final GeoPosition centerPosition = mapViewer.getCenterPosition();
+
+        return Pair.of(centerPosition.getLatitude(), centerPosition.getLongitude());
+    }
+
+    public void setMapCoords(final double lat, final double lon)
     {
         final GeoPosition newLoc = new GeoPosition(lat, lon);
 

@@ -333,6 +333,9 @@ public final class JUNGCanvas extends ITopologyCanvas
         final double dx = (lvc.getX() - q.getX());
         final double dy = (lvc.getY() - q.getY());
         layoutTransformer.translate(dx, dy);
+
+        final Pair<Double, Double> mapCoords = mapViewer.getMapCoords();
+        mapViewer.setMapCoords(mapCoords.getFirst() - dy, mapCoords.getSecond() - dx);
     }
 
     @Override
