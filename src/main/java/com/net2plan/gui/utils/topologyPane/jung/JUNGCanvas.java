@@ -188,7 +188,7 @@ public final class JUNGCanvas extends ITopologyCanvas
 
         mapViewer = new MapPanel();
 
-        final JComponent mapComponent = this.mapViewer.getMapController();
+        final JComponent mapComponent = this.mapViewer.getMapComponent();
 
         mapComponent.setLayout(new BorderLayout());
         mapComponent.add(vv, BorderLayout.CENTER);
@@ -333,9 +333,6 @@ public final class JUNGCanvas extends ITopologyCanvas
         final double dx = (lvc.getX() - q.getX());
         final double dy = (lvc.getY() - q.getY());
         layoutTransformer.translate(dx, dy);
-
-        final Pair<Double, Double> mapCoords = mapViewer.getMapCoords();
-        mapViewer.setMapCoords(mapCoords.getFirst() - dy, mapCoords.getSecond() - dx);
     }
 
     @Override
@@ -690,9 +687,9 @@ public final class JUNGCanvas extends ITopologyCanvas
 //        }
 //    }
 //
-    public JComponent getMapComponent()
+    public MapPanel getMapViewer()
     {
-        return mapViewer.getMapController();
+        return mapViewer;
     }
 
     private class LinkIdRenderer extends BasicEdgeLabelRenderer<GUINode, GUILink>

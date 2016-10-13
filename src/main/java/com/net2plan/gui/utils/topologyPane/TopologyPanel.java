@@ -33,6 +33,7 @@ import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.topologyPane.jung.map.MapPanel;
 import com.net2plan.gui.utils.topologyPane.utils.MenuButton;
 import com.net2plan.gui.utils.windows.WindowController;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -42,12 +43,6 @@ import com.net2plan.internal.Constants.DialogType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.ITopologyCanvas;
-import edu.uci.ics.jung.visualization.VisualizationViewer;
-import org.jxmapviewer.JXMapViewer;
-import org.jxmapviewer.OSMTileFactoryInfo;
-import org.jxmapviewer.viewer.DefaultTileFactory;
-import org.jxmapviewer.viewer.GeoPosition;
-import org.jxmapviewer.viewer.TileFactoryInfo;
 
 /**
  * <p>Wrapper class for the graph canvas.</p>
@@ -176,8 +171,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         JComponent canvasComponent = canvas.getComponent();
         canvasComponent.setBorder(LineBorder.createBlackLineBorder());
 
-        final JComponent mapViewer = ((JUNGCanvas) canvas).getMapComponent();
-        add(mapViewer, BorderLayout.CENTER);
+        final JComponent mapComponent = ((JUNGCanvas) canvas).getMapViewer().getMapComponent();
+        add(mapComponent, BorderLayout.CENTER);
 
         btn_load = new JButton();
         btn_load.setToolTipText("Load a network design");
@@ -522,7 +517,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             NetPlan aux = fc_netPlan.readNetPlan();
 
             aux.checkCachesConsistency();
-
 
             callback.loadDesign(aux);
 
