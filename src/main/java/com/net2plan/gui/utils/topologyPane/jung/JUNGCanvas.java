@@ -15,7 +15,7 @@ package com.net2plan.gui.utils.topologyPane.jung;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
-import com.net2plan.gui.utils.topologyPane.jung.map.MapPanel;
+import com.net2plan.gui.utils.topologyPane.jung.map.MapController;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -49,7 +49,6 @@ import edu.uci.ics.jung.visualization.util.ArrowFactory;
 import org.apache.commons.collections15.Predicate;
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.collections15.functors.ConstantTransformer;
-import org.jxmapviewer.JXMapViewer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -85,7 +84,7 @@ public final class JUNGCanvas extends ITopologyCanvas
     private final ScalingControl scalingControl;
     private final Transformer<Context<Graph<GUINode, GUILink>, GUILink>, Shape> originalEdgeShapeTransformer;
 
-    private final MapPanel mapViewer;
+    private final MapController mapViewer;
 
     private boolean showNodeNames, showLinkIds, showHideNonConnectedNodes;
 
@@ -186,7 +185,7 @@ public final class JUNGCanvas extends ITopologyCanvas
         vv.setOpaque(false);
         vv.setBackground(new Color(0,0,0,0));
 
-        mapViewer = new MapPanel();
+        mapViewer = new MapController();
 
         final JComponent mapComponent = this.mapViewer.getMapComponent();
 
@@ -332,6 +331,7 @@ public final class JUNGCanvas extends ITopologyCanvas
         final Point2D lvc = layoutTransformer.inverseTransform(currentPoint);
         final double dx = (lvc.getX() - q.getX());
         final double dy = (lvc.getY() - q.getY());
+
         layoutTransformer.translate(dx, dy);
     }
 
@@ -687,7 +687,7 @@ public final class JUNGCanvas extends ITopologyCanvas
 //        }
 //    }
 //
-    public MapPanel getMapViewer()
+    public MapController getMapViewer()
     {
         return mapViewer;
     }

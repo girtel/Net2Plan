@@ -2,30 +2,33 @@ package com.net2plan.gui.utils.topologyPane.jung.map;
 
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.utils.Pair;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.viewer.DefaultTileFactory;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactoryInfo;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
-import java.util.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * Created by Jorge San Emeterio on 13/10/2016.
  */
-public class MapPanel
+public class MapController
 {
     private final JXMapViewer mapViewer;
     private final TileFactoryInfo info;
     private final DefaultTileFactory tileFactory;
 
-    public MapPanel()
+    public MapController()
     {
         // Background image
         mapViewer = new JXMapViewer();
@@ -37,12 +40,11 @@ public class MapPanel
 
         // Use 8 threads in parallel to load the tiles
         tileFactory.setThreadPoolSize(8);
-
         // Set the focus
-        final GeoPosition USA = new GeoPosition(39.50, -98.35);
+        final GeoPosition europe = new GeoPosition(47.20, 25.2);
 
         mapViewer.setZoom(15);
-        mapViewer.setAddressLocation(USA);
+        mapViewer.setAddressLocation(europe);
     }
 
     public JComponent getMapComponent()
@@ -50,18 +52,15 @@ public class MapPanel
         return mapViewer;
     }
 
-    public Point2D.Double getMapCoords()
+    public Point2D getMapCoords()
     {
-        final GeoPosition centerPosition = mapViewer.getCenterPosition();
-
-        return new Point2D.Double(centerPosition.getLatitude(), centerPosition.getLongitude());
+        return mapViewer.getCenter();
     }
 
     public void setMapZoom(final int zoom)
     {
         mapViewer.setZoom(zoom);
     }
-
 
     public void centerMap(final NetPlan netPlan)
     {
@@ -70,27 +69,46 @@ public class MapPanel
 
     public void centerMap(final List<Node> nodes)
     {
-        final Point2D.Double topologyCenter = getTopologyCenter(nodes);
+        final Point2D topologyCenter = getTopologyCenter(nodes);
 
-        setMapCoords(topologyCenter.getY(), topologyCenter.getX());
+        mapViewer.setCenter(topologyCenter);
+        mapViewer.repaint();
     }
 
-    public void setMapCoords(final double lat, final double lon)
+    public Point2D getTopologyCenter(final List<Node> nodes)
     {
-        final GeoPosition newLoc = new GeoPosition(lat, lon);
-
-        mapViewer.setAddressLocation(newLoc);
-    }
-
-    public Point2D.Double getTopologyCenter(final List<Node> nodes)  {
         final List<Point2D> knots = nodes.stream().map(node -> node.getXYPositionMap()).collect(Collectors.toList());
 
         double centroidX = 0, centroidY = 0;
 
-        for(Point2D knot : knots) {
+        for (Point2D knot : knots)
+        {
             centroidX += knot.getX();
             centroidY += knot.getY();
         }
         return new Point2D.Double(centroidX / knots.size(), centroidY / knots.size());
+    }
+
+    public File getMap()
+    {
+        File f = new File("shot.png");
+
+        // Hiding everything on screen
+        Arrays.stream(mapViewer.getComponents()).forEach(component -> component.setVisible(false));
+
+        try
+        {
+            BufferedImage im = new BufferedImage(mapViewer.getWidth(), mapViewer.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            mapViewer.paint(im.getGraphics());
+            ImageIO.write(im, "PNG", f);
+        } catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+
+        // Showing them up again
+        Arrays.stream(mapViewer.getComponents()).forEach(component -> component.setVisible(true));
+
+        return f;
     }
 }
