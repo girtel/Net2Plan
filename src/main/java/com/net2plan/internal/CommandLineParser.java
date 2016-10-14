@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import org.apache.commons.cli.PosixParser;
+import org.apache.commons.cli.DefaultParser;
 
 /**
  * Extends the {@code PosixParser} to modify the {@code processOption}
@@ -40,7 +40,7 @@ import org.apache.commons.cli.PosixParser;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.2
  */
-public class CommandLineParser extends PosixParser
+public class CommandLineParser extends DefaultParser
 {
 	/**
 	 * Modifies the original method to bypass (for convenience) options not
@@ -50,13 +50,13 @@ public class CommandLineParser extends PosixParser
 	 * @param iter The iterator over the flattened command line arguments
 	 * @since 0.2.2
 	 */
-	@Override
+
 	protected void processOption(String arg, ListIterator iter)
 	{
-		boolean hasOption = getOptions().hasOption(arg);
+		boolean hasOption = this.options.hasOption(arg);
 		if (!hasOption) return;
 
-		try { super.processOption(arg, iter); }
+		try { processOption(arg, iter); }
 		catch(Throwable e) { throw new RuntimeException(e); }
 	}
 

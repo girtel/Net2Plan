@@ -278,7 +278,7 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
 
                 if (simThread != null) {
                     try {
-                        simThread.stop();
+                        simThread.join();
                     } catch (Throwable e) {
                     }
                 }
