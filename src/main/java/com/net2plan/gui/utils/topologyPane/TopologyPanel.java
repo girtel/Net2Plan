@@ -461,7 +461,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                         if (mapFile != null)
                         {
                             ((JUNGCanvas) canvas).setBackgroundImage(mapFile);
-                            updateUI();
+                            callback.resetView();
                         }
                     }
                 });

@@ -19,7 +19,6 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,6 +30,8 @@ public class MapPanel
     private final JXMapViewer mapViewer;
     private final TileFactoryInfo info;
     private final DefaultTileFactory tileFactory;
+
+    private static int mapID = 0;
 
     public MapPanel()
     {
@@ -106,7 +107,14 @@ public class MapPanel
 
     public File saveMap()
     {
-        File f = new File("background_map.png");
+        final File parent = new File("data/bg_maps");
+
+        if (!parent.exists())
+        {
+            parent.mkdirs();
+        }
+
+        final File f = new File(parent, "background_map_" + (mapID++) + ".png");
         f.deleteOnExit();
 
         try
@@ -118,9 +126,6 @@ public class MapPanel
         {
             e.printStackTrace();
         }
-
-        // Showing them up again
-        Arrays.stream(mapViewer.getComponents()).forEach(component -> component.setVisible(true));
 
         return f;
     }
