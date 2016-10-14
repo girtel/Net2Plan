@@ -1,13 +1,3 @@
-// PABLO: ForwardingRules table, appearing in hop-by-hop routing: does not have index/id columns.
-// PABLO: Add option for a column "Always visible", which can have a tic (active option) or not
-// These columns are moved to the right part of the fixed table, and cannot be hidden, cannot exchange order with non-fixed columns, but CAN exchange order with fixed columns
-// Also, non-fixed columns can exchange order among them, but not with fixed columns
-// Initially, two left most columns are set as always vissible, and all columns are shown
-// PABLO: Index and id table are not special in any form, being special is just being the first columns (but in forwarding table, first columns are not index/id)
-// PABLO: Hide all -> hide all the columns not fixed. If no column is fixed, then
-// keep the one that is visible now at the leftmost column
-//
-
 /*******************************************************************************
  * Copyright (c) 2015 Pablo Pavon Mariño.
  * All rights reserved. This program and the accompanying materials
@@ -259,8 +249,6 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                rescuingFixedColumnHeaders();
-                rebuildFixedTable();
                 hideAllColumns();
 
 
@@ -437,16 +425,16 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
     }
 
     /**
-     * Hide all columns which are shown
+     * Hide all columns unless the first one of mainTable which are shown
      *
      * @param
      *
      */
 
     public void hideAllColumns(){
-        int counter = 0;
-        while(mainTable.getColumnModel().getColumnCount() > 0){
-            TableColumn columnToHide = mainTable.getColumnModel().getColumn(0);
+        int counter = 1;
+        while(mainTable.getColumnModel().getColumnCount() > 1){
+            TableColumn columnToHide = mainTable.getColumnModel().getColumn(1);
             columnIndexToHide = indexForEachColumn.get(shownColumns.get(counter).getHeaderValue().toString());
             String hiddenColumnHeader = columnToHide.getHeaderValue().toString();
             hiddenColumns.add(columnToHide);
@@ -532,23 +520,6 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         mainTable.getColumnModel().addColumn(columnToUnfix);
         mainTable.getColumnModel().moveColumn(mainTable.getColumnModel().getColumnCount() - 1,0);
 
-    }
-
-    public void rescuingFixedColumnHeaders(){
-        fixedTableColumns.clear();
-        fixedTable.setVisible(false);
-        for(int i = 0;i<fixedTable.getColumnModel().getColumnCount();i++){
-            fixedTableColumns.add(fixedTable.getColumnModel().getColumn(i));
-            fixedTable.getColumnModel().removeColumn(fixedTableColumns.get(i));
-        }
-    }
-
-    public void rebuildFixedTable(){
-        fixedTable.removeAll();
-        fixedTable.setVisible(true);
-        for(int i = 0;i<fixedTableColumns.size();i++){
-            fixedTable.getColumnModel().addColumn(fixedTableColumns.get(i));
-        }
     }
 
     @Override
