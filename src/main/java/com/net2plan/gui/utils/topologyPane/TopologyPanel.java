@@ -460,7 +460,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
                     if (newValue)
                     {
-                        final File mapFile = dialog.getMapFile(canvas.getInternalComponent().getWidth(), canvas.getInternalComponent().getHeight());
+                        final File mapFile = dialog.getMapFileAndClose(canvas.getInternalComponent().getWidth(), canvas.getInternalComponent().getHeight());
 
                         if (mapFile != null)
                         {

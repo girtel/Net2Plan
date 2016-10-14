@@ -33,9 +33,6 @@ public class MapDialog extends JDialog
         btn_enter.addActionListener(e ->
         {
             MapDialog.this.firePropertyChange("takeMap", false, true);
-
-            this.setVisible(false);
-            this.dispose();
         });
 
         final JComponent mapComponent = mapViewer.getMapComponent();
@@ -57,7 +54,33 @@ public class MapDialog extends JDialog
 
     public File getMapFile(final int width, final int height)
     {
+        final int oldWidth = this.getWidth();
+        final int oldHeight = this.getHeight();
+
+        this.setSize(width, height);
+        this.revalidate();
+        this.repaint();
+
         mapFile = mapViewer.saveMap(width, height);
+
+        this.setSize(oldWidth, oldHeight);
+        this.revalidate();
+        this.repaint();
+
+        return mapFile;
+    }
+
+    public File getMapFileAndClose(final int width, final int height)
+    {
+        this.setSize(width, height);
+        this.revalidate();
+        this.repaint();
+
+        mapFile = mapViewer.saveMap(width, height);
+
+        this.setVisible(false);
+        this.dispose();
+
         return mapFile;
     }
 }

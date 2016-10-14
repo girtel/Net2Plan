@@ -115,17 +115,6 @@ public class MapPanel
 
     public File saveMap(final int width, final int height)
     {
-        // Creating a new frame to give the map the size we want.
-        // The map needs to be visible in order to be drawn.
-        final JFrame frame = new JFrame();
-        frame.setTitle("Loading...");
-        frame.setLayout(new BorderLayout());
-        frame.setSize(width, height);
-
-        frame.getContentPane().add(mapViewer, BorderLayout.CENTER);
-
-        frame.setVisible(true);
-
         // Creating data folder
         final File parent = new File("data/bg_maps");
 
@@ -157,9 +146,6 @@ public class MapPanel
         {
             e.printStackTrace();
         }
-
-        frame.setVisible(false);
-        frame.dispose();
 
         return f;
     }
