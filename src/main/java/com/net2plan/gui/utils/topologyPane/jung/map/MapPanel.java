@@ -58,13 +58,16 @@ public class MapPanel
 
         // Use 8 threads in parallel to load the tiles
         tileFactory.setThreadPoolSize(8);
-        // Set the focus
+
+        // Default position
         final GeoPosition europe = new GeoPosition(47.20, 25.2);
 
         mapViewer.setZoom(15);
         mapViewer.setCenterPosition(europe);
 
+        // Removing markers
         mapViewer.setAddressLocationShown(false);
+
         mapViewer.setDataProviderCreditShown(true);
     }
 
@@ -147,8 +150,8 @@ public class MapPanel
             mapViewer.getZoomInButton().setVisible(false);
             mapViewer.getZoomOutButton().setVisible(false);
 
-
             mapViewer.paint(im.getGraphics());
+
             ImageIO.write(im, "PNG", f);
         } catch (IOException e)
         {

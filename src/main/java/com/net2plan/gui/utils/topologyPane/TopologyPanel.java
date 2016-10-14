@@ -17,6 +17,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
@@ -288,8 +290,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(decreaseNodeSize);
         toolbar.add(increaseFontSize);
         toolbar.add(decreaseFontSize);
-        toolbar.add(btn_insertMap);
         toolbar.add(Box.createHorizontalGlue());
+        toolbar.add(btn_insertMap);
         toolbar.add(btn_view);
         toolbar.add(btn_reset);
 
@@ -445,32 +447,31 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             if (src == btn_zoomAll)
             {
                 zoomAll();
-            } else
+            } else if (src == btn_insertMap)
             {
-                if (src == btn_insertMap)
+                final MapDialog dialog = new MapDialog();
+
+                dialog.setVisible(true);
+
+                // Activated when the "Enter" button is pressed.
+                dialog.addPropertyChangeListener("takeMap", evt ->
                 {
-                    final MapDialog dialog = new MapDialog();
+                    final boolean newValue = (boolean) evt.getNewValue();
 
-                    dialog.setVisible(true);
-
-                    dialog.addWindowListener(new WindowAdapter()
+                    if (newValue)
                     {
-                        @Override
-                        public void windowClosed(WindowEvent e)
-                        {
-                            final File mapFile = dialog.getMapFile(canvas.getInternalComponent().getWidth(), canvas.getInternalComponent().getHeight());
+                        final File mapFile = dialog.getMapFile(canvas.getInternalComponent().getWidth(), canvas.getInternalComponent().getHeight());
 
-                            if (mapFile != null)
-                            {
-                                ((JUNGCanvas) canvas).setBackgroundImage(mapFile);
-                                callback.resetView();
-                            }
+                        if (mapFile != null)
+                        {
+                            ((JUNGCanvas) canvas).setBackgroundImage(mapFile);
+                            callback.resetView();
                         }
-                    });
-                } else if (src == btn_reset)
-                {
-                    callback.reset();
-                }
+                    }
+                });
+            } else if (src == btn_reset)
+            {
+                callback.reset();
             }
         }
     }

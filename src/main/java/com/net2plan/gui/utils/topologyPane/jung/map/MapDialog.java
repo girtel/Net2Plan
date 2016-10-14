@@ -19,16 +19,21 @@ public class MapDialog extends JDialog
     {
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setSize(new Dimension(800, 600));
+        this.setMinimumSize(new Dimension(800, 600));
         this.setLayout(new GridBagLayout());
-        this.setTitle("Map");
+        this.setTitle("Topology map selector");
 
         panel = new JPanel(new BorderLayout());
 
         this.mapViewer = new MapPanel();
         this.mapFile = null;
         this.btn_enter = new JButton("Enter");
+
+        // Take photo trigger
         btn_enter.addActionListener(e ->
         {
+            MapDialog.this.firePropertyChange("takeMap", false, true);
+
             this.setVisible(false);
             this.dispose();
         });
