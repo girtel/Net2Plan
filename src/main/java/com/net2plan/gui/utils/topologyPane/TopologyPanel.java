@@ -451,6 +451,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             {
                 final MapDialog dialog = new MapDialog();
 
+                dialog.addNodes(callback.getDesign().getNodes());
+
                 dialog.setVisible(true);
 
                 // Activated when the "Enter" button is pressed.

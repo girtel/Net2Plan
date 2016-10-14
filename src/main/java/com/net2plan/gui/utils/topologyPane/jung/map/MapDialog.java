@@ -1,8 +1,13 @@
 package com.net2plan.gui.utils.topologyPane.jung.map;
 
+
+import com.net2plan.gui.utils.topologyPane.jung.map.utils.PixelComponent;
+import com.net2plan.interfaces.networkDesign.Node;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.List;
 
 /**
  * Created by Jorge San Emeterio on 14/10/2016.
@@ -82,5 +87,30 @@ public class MapDialog extends JDialog
         this.dispose();
 
         return mapFile;
+    }
+
+    public void addNodes(final List<Node> nodes)
+    {
+        final JPanel nodePanel = new JPanel();
+        nodePanel.setLayout(null);
+        nodePanel.setOpaque(false);
+        nodePanel.setBackground(new Color(0,0,0,0));
+
+        for (Node node : nodes)
+        {
+            final PixelComponent mapNode = new PixelComponent();
+
+            final Double x = node.getXYPositionMap().getX();
+            final Double y = node.getXYPositionMap().getY();
+
+            mapNode.setBounds(new Rectangle(x.intValue(), y.intValue(), 20, 20));
+
+            nodePanel.add(mapNode);
+        }
+
+        mapViewer.getMapComponent().add(nodePanel);
+
+        this.revalidate();
+        this.repaint();
     }
 }
