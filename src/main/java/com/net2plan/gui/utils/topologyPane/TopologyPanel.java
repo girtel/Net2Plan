@@ -33,6 +33,7 @@ import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.topologyPane.jung.map.MapDialog;
 import com.net2plan.gui.utils.topologyPane.utils.MenuButton;
 import com.net2plan.gui.utils.windows.WindowController;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -58,7 +59,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
     private final JPanel layerChooserPane;
     private final JComboBox layerChooser;
-    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
+    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset, btn_insertMap;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final MenuButton btn_view;
     private final JPopupMenu viewPopUp;
@@ -170,8 +171,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         JComponent canvasComponent = canvas.getComponent();
         canvasComponent.setBorder(LineBorder.createBlackLineBorder());
 
-        final JComponent mapComponent = ((JUNGCanvas) canvas).getMapViewer().getMapComponent();
-        add(mapComponent, BorderLayout.CENTER);
+        add(canvasComponent, BorderLayout.CENTER);
 
         btn_load = new JButton();
         btn_load.setToolTipText("Load a network design");
@@ -240,6 +240,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_reset.setToolTipText("Reset the user interface");
         btn_reset.setMnemonic(KeyEvent.VK_R);
 
+        btn_insertMap = new JButton("Insert Map");
+        btn_insertMap.setToolTipText("Pick and place a map from a database as the background image of the topology");
+        btn_insertMap.setMnemonic(KeyEvent.VK_I);
+
         btn_load.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDesign.png")));
         btn_loadDemand.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDemand.png")));
         btn_save.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/saveDesign.png")));
@@ -265,6 +269,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_zoomOut.addActionListener(this);
         btn_zoomAll.addActionListener(this);
         btn_takeSnapshot.addActionListener(this);
+        btn_insertMap.addActionListener(this);
         btn_reset.addActionListener(this);
 
         toolbar.add(btn_load);
@@ -283,6 +288,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(decreaseNodeSize);
         toolbar.add(increaseFontSize);
         toolbar.add(decreaseFontSize);
+        toolbar.add(btn_insertMap);
         toolbar.add(Box.createHorizontalGlue());
         toolbar.add(btn_view);
         toolbar.add(btn_reset);
@@ -437,9 +443,32 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         } else if (src == btn_zoomAll)
         {
             zoomAll();
-        } else if (src == btn_reset)
+        } else
         {
-            callback.reset();
+            if (src == btn_insertMap)
+            {
+                final MapDialog dialog = new MapDialog();
+
+                dialog.setVisible(true);
+
+                dialog.addWindowListener(new WindowAdapter()
+                {
+                    @Override
+                    public void windowClosed(WindowEvent e)
+                    {
+                        final File mapFile = dialog.getMapFile();
+
+                        if (mapFile != null)
+                        {
+                            ((JUNGCanvas) canvas).setBackgroundImage(mapFile);
+                            updateUI();
+                        }
+                    }
+                });
+            } else if (src == btn_reset)
+            {
+                callback.reset();
+            }
         }
     }
 

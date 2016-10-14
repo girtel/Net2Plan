@@ -4,13 +4,17 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
+import org.jxmapviewer.input.CenterMapListener;
+import org.jxmapviewer.input.PanKeyListener;
+import org.jxmapviewer.input.PanMouseInputListener;
+import org.jxmapviewer.input.ZoomMouseWheelListenerCursor;
 import org.jxmapviewer.viewer.DefaultTileFactory;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactoryInfo;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import java.awt.*;
+import javax.swing.event.MouseInputListener;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -22,13 +26,13 @@ import java.util.stream.Collectors;
 /**
  * Created by Jorge San Emeterio on 13/10/2016.
  */
-public class MapController
+public class MapPanel
 {
     private final JXMapViewer mapViewer;
     private final TileFactoryInfo info;
     private final DefaultTileFactory tileFactory;
 
-    public MapController()
+    public MapPanel()
     {
         // Background image
         mapViewer = new JXMapViewer();
@@ -37,6 +41,17 @@ public class MapController
         info = new OSMTileFactoryInfo();
         tileFactory = new DefaultTileFactory(info);
         mapViewer.setTileFactory(tileFactory);
+
+        // Add interactions
+        MouseInputListener mia = new PanMouseInputListener(mapViewer);
+        mapViewer.addMouseListener(mia);
+        mapViewer.addMouseMotionListener(mia);
+
+        mapViewer.addMouseListener(new CenterMapListener(mapViewer));
+
+        mapViewer.addMouseWheelListener(new ZoomMouseWheelListenerCursor(mapViewer));
+
+        mapViewer.addKeyListener(new PanKeyListener(mapViewer));
 
         // Use 8 threads in parallel to load the tiles
         tileFactory.setThreadPoolSize(8);
@@ -89,12 +104,10 @@ public class MapController
         return new Point2D.Double(centroidX / knots.size(), centroidY / knots.size());
     }
 
-    public File getMap()
+    public File saveMap()
     {
-        File f = new File("shot.png");
-
-        // Hiding everything on screen
-        Arrays.stream(mapViewer.getComponents()).forEach(component -> component.setVisible(false));
+        File f = new File("background_map.png");
+        f.deleteOnExit();
 
         try
         {

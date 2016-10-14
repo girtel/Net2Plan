@@ -15,7 +15,6 @@ package com.net2plan.gui.utils.topologyPane.jung;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
-import com.net2plan.gui.utils.topologyPane.jung.map.MapController;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -32,6 +31,7 @@ import edu.uci.ics.jung.graph.util.Context;
 import edu.uci.ics.jung.graph.util.DefaultParallelEdgeIndexFunction;
 import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.RenderContext;
+import edu.uci.ics.jung.visualization.VisualizationServer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.*;
 import edu.uci.ics.jung.visualization.decorators.ConstantDirectionalEdgeValueTransformer;
@@ -57,6 +57,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
@@ -84,7 +85,7 @@ public final class JUNGCanvas extends ITopologyCanvas
     private final ScalingControl scalingControl;
     private final Transformer<Context<Graph<GUINode, GUILink>, GUILink>, Shape> originalEdgeShapeTransformer;
 
-    private final MapController mapViewer;
+    private VisualizationServer.Paintable paintableAssociatedToBackgroundImage;
 
     private boolean showNodeNames, showLinkIds, showHideNonConnectedNodes;
 
@@ -170,6 +171,8 @@ public final class JUNGCanvas extends ITopologyCanvas
                 }
         );
 
+        // Background controller
+        this.paintableAssociatedToBackgroundImage = null;
 
         showNodeNames(false);
         showNonConnectedNodes(true);
@@ -184,13 +187,6 @@ public final class JUNGCanvas extends ITopologyCanvas
 
         vv.setOpaque(false);
         vv.setBackground(new Color(0,0,0,0));
-
-        mapViewer = new MapController();
-
-        final JComponent mapComponent = this.mapViewer.getMapComponent();
-
-        mapComponent.setLayout(new BorderLayout());
-        mapComponent.add(vv, BorderLayout.CENTER);
 
         reset();
     }
@@ -391,7 +387,6 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void resetPickedAndUserDefinedColorState()
     {
-//		backupPath.clear();
         vv.getPickedVertexState().clear();
         vv.getPickedEdgeState().clear();
         for (GUINode n : nodeTable.values()) n.setUserDefinedColorOverridesTheRest(null);
@@ -485,8 +480,6 @@ public final class JUNGCanvas extends ITopologyCanvas
     {
         resetPickedAndUserDefinedColorState();
 
-//		System.out.println ("showNodesAndLinks : nodeIds; " + nodeIds + ", linkIds: " + linkIds);
-
         if (npNodes != null)
         {
             for (Entry<Node, Color> npNode : npNodes.entrySet())
@@ -522,32 +515,6 @@ public final class JUNGCanvas extends ITopologyCanvas
             refresh();
         }
     }
-
-//	@Override
-//	public void showRoutes(Collection<Pair<Link,Color>> primaryRouteLinks, Collection<Pair<Link,Color>> secondaryRouteLinks)
-//	{
-//		resetPickedAndUserDefinedColorState();
-//		
-//		if (secondaryRouteLinks != null) 
-//			for (Pair<Link,Color> linkId : secondaryRouteLinks)
-//			{
-//				GUILink e = linkTable.get (linkId.getFirst ()); 
-//				if (e == null) {System.out.println ("showRoutes: link " + linkId.getFirst () + " not found"); continue; }
-//				vv.getPickedEdgeState().pick(e, true);
-//				e.setUserDefinedColorOverridesTheRest(linkId.getSecond ());
-//				e.setUserDefinedStrokeOverridesTheRest(new BasicStroke(vv.getPickedEdgeState().isPicked(e) ? 2 : 1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f));
-//			}
-//		if (primaryRouteLinks != null) 
-//			for (Pair<Link,Color> linkId : primaryRouteLinks)
-//			{
-//				GUILink e = linkTable.get (linkId.getFirst ()); 
-//				if (e == null) {System.out.println ("showRoutes: link " + linkId.getFirst () + " not found"); continue; }
-//				vv.getPickedEdgeState().pick(e, true);
-//				e.setUserDefinedColorOverridesTheRest(linkId.getSecond ());
-//				e.setUserDefinedStrokeOverridesTheRest(null);
-//			}
-//		refresh ();
-//	}
 
     @Override
     public void takeSnapshot_preConfigure()
@@ -677,19 +644,43 @@ public final class JUNGCanvas extends ITopologyCanvas
         scalingControl.scale(vv, SCALE_OUT, point);
     }
 
-    //    private final class LinkDisplayPredicate<Node, Link> implements Predicate<Context<Graph<Node, Link>, Link>>
-//    {
-//		@Override
-//        public boolean evaluate(Context<Graph<Node, Link>, Link> context)
-//        {
-//        	com.net2plan.gui.utils.topology.GUILink e = (com.net2plan.gui.utils.topology.GUILink) context.element;
-//			return !hiddenLinks.contains(e);
-//        }
-//    }
-//
-    public MapController getMapViewer()
+    public void updateBackgroundImage(final ImageIcon icon)
     {
-        return mapViewer;
+        if (paintableAssociatedToBackgroundImage != null)
+            vv.removePreRenderPaintable(paintableAssociatedToBackgroundImage);
+        paintableAssociatedToBackgroundImage = null;
+        if (icon != null)
+        {
+            this.paintableAssociatedToBackgroundImage = new VisualizationViewer.Paintable()
+            {
+                public void paint(Graphics g)
+                {
+                    Graphics2D g2d = (Graphics2D) g;
+                    AffineTransform oldXform = g2d.getTransform();
+                    AffineTransform lat = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT).getTransform();
+                    AffineTransform vat = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.VIEW).getTransform();
+                    AffineTransform at = new AffineTransform();
+                    at.concatenate(g2d.getTransform());
+                    at.concatenate(vat);
+                    at.concatenate(lat);
+                    g2d.setTransform(at);
+                    g.drawImage(icon.getImage(), 0, 0, icon.getIconWidth(), icon.getIconHeight(), vv);
+                    g2d.setTransform(oldXform);
+                }
+
+                public boolean useTransform()
+                {
+                    return false;
+                }
+            };
+            vv.addPreRenderPaintable(paintableAssociatedToBackgroundImage);
+        }
+    }
+
+    public void setBackgroundImage(final File bgFile)
+    {
+        final ImageIcon background = new ImageIcon(bgFile.getAbsolutePath());
+        updateBackgroundImage(background);
     }
 
     private class LinkIdRenderer extends BasicEdgeLabelRenderer<GUINode, GUILink>
@@ -831,35 +822,4 @@ public final class JUNGCanvas extends ITopologyCanvas
             this.canvas = canvas;
         }
     }
-
-//	private class StateAwareTransformer<Object, Paint> implements Transformer<Object, Paint>
-//	{
-//		private final Transformer<Object, Paint> transformer;
-//
-//		public StateAwareTransformer(Transformer<Object, Paint> transformer)
-//		{
-//			this.transformer = transformer;
-//		}
-//
-//		@Override
-//		public Paint transform(Object o)
-//		{
-//			if ((o instanceof GUINode && nodesDown.contains((GUINode) o)) || (o instanceof GUILink && linksDown.contains((GUILink) o)))
-//			{
-//				return (Paint) Color.RED;
-//			}
-//
-//			return transformer.transform(o);
-//		}
-//	}
-
-//	private static class TransformerImpl implements Transformer<GUINode, Point2D>
-//	{
-//		@Override
-//		public Point2D transform(GUINode vertex)
-//		{
-//			Point2D pos = vertex.getPosition();
-//			return new Point2D.Double(pos.getX(), -pos.getY());
-//		}
-//	}
 }
