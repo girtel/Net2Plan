@@ -440,34 +440,37 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         } else if (src == btn_zoomOut)
         {
             zoomOut();
-        } else if (src == btn_zoomAll)
-        {
-            zoomAll();
         } else
         {
-            if (src == btn_insertMap)
+            if (src == btn_zoomAll)
             {
-                final MapDialog dialog = new MapDialog();
-
-                dialog.setVisible(true);
-
-                dialog.addWindowListener(new WindowAdapter()
+                zoomAll();
+            } else
+            {
+                if (src == btn_insertMap)
                 {
-                    @Override
-                    public void windowClosed(WindowEvent e)
-                    {
-                        final File mapFile = dialog.getMapFile();
+                    final MapDialog dialog = new MapDialog();
 
-                        if (mapFile != null)
+                    dialog.setVisible(true);
+
+                    dialog.addWindowListener(new WindowAdapter()
+                    {
+                        @Override
+                        public void windowClosed(WindowEvent e)
                         {
-                            ((JUNGCanvas) canvas).setBackgroundImage(mapFile);
-                            callback.resetView();
+                            final File mapFile = dialog.getMapFile(canvas.getInternalComponent().getWidth(), canvas.getInternalComponent().getHeight());
+
+                            if (mapFile != null)
+                            {
+                                ((JUNGCanvas) canvas).setBackgroundImage(mapFile);
+                                callback.resetView();
+                            }
                         }
-                    }
-                });
-            } else if (src == btn_reset)
-            {
-                callback.reset();
+                    });
+                } else if (src == btn_reset)
+                {
+                    callback.reset();
+                }
             }
         }
     }

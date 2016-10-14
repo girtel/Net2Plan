@@ -2,6 +2,7 @@ package com.net2plan.gui.utils.topologyPane.jung.map;
 
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
+import org.jxmapviewer.JXMapKit;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.input.CenterMapListener;
@@ -15,6 +16,7 @@ import org.jxmapviewer.viewer.TileFactoryInfo;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.MouseInputListener;
+import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -27,7 +29,7 @@ import java.util.stream.Collectors;
  */
 public class MapPanel
 {
-    private final JXMapViewer mapViewer;
+    private final JXMapKit mapViewer;
     private final TileFactoryInfo info;
     private final DefaultTileFactory tileFactory;
 
@@ -36,7 +38,7 @@ public class MapPanel
     public MapPanel()
     {
         // Background image
-        mapViewer = new JXMapViewer();
+        mapViewer = new JXMapKit();
 
         // Create a TileFactoryInfo for OpenStreetMap
         info = new OSMTileFactoryInfo();
@@ -44,15 +46,15 @@ public class MapPanel
         mapViewer.setTileFactory(tileFactory);
 
         // Add interactions
-        MouseInputListener mia = new PanMouseInputListener(mapViewer);
+        MouseInputListener mia = new PanMouseInputListener(mapViewer.getMainMap());
         mapViewer.addMouseListener(mia);
         mapViewer.addMouseMotionListener(mia);
 
-        mapViewer.addMouseListener(new CenterMapListener(mapViewer));
+        mapViewer.addMouseListener(new CenterMapListener(mapViewer.getMainMap()));
 
-        mapViewer.addMouseWheelListener(new ZoomMouseWheelListenerCursor(mapViewer));
+        mapViewer.addMouseWheelListener(new ZoomMouseWheelListenerCursor(mapViewer.getMainMap()));
 
-        mapViewer.addKeyListener(new PanKeyListener(mapViewer));
+        mapViewer.addKeyListener(new PanKeyListener(mapViewer.getMainMap()));
 
         // Use 8 threads in parallel to load the tiles
         tileFactory.setThreadPoolSize(8);
@@ -60,7 +62,10 @@ public class MapPanel
         final GeoPosition europe = new GeoPosition(47.20, 25.2);
 
         mapViewer.setZoom(15);
-        mapViewer.setAddressLocation(europe);
+        mapViewer.setCenterPosition(europe);
+
+        mapViewer.setAddressLocationShown(false);
+        mapViewer.setDataProviderCreditShown(true);
     }
 
     public JComponent getMapComponent()
@@ -70,7 +75,7 @@ public class MapPanel
 
     public Point2D getMapCoords()
     {
-        return mapViewer.getCenter();
+        return mapViewer.getMainMap().getCenter();
     }
 
     public void setMapZoom(final int zoom)
@@ -87,7 +92,7 @@ public class MapPanel
     {
         final Point2D topologyCenter = getTopologyCenter(nodes);
 
-        mapViewer.setCenter(topologyCenter);
+        mapViewer.getMainMap().setCenter(topologyCenter);
         mapViewer.repaint();
     }
 
@@ -105,8 +110,20 @@ public class MapPanel
         return new Point2D.Double(centroidX / knots.size(), centroidY / knots.size());
     }
 
-    public File saveMap()
+    public File saveMap(final int width, final int height)
     {
+        // Creating a new frame to give the map the size we want.
+        // The map needs to be visible in order to be drawn.
+        final JFrame frame = new JFrame();
+        frame.setTitle("Loading...");
+        frame.setLayout(new BorderLayout());
+        frame.setSize(width, height);
+
+        frame.getContentPane().add(mapViewer, BorderLayout.CENTER);
+
+        frame.setVisible(true);
+
+        // Creating data folder
         final File parent = new File("data/bg_maps");
 
         if (!parent.exists())
@@ -114,18 +131,32 @@ public class MapPanel
             parent.mkdirs();
         }
 
+        // It is necessary to save each map on their own file.
+        // If we only use one, the map is never updated.
         final File f = new File(parent, "background_map_" + (mapID++) + ".png");
         f.deleteOnExit();
 
+        // Saving map
         try
         {
-            BufferedImage im = new BufferedImage(mapViewer.getWidth(), mapViewer.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            BufferedImage im = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+
+            // Removing overlay
+            mapViewer.getMiniMap().setVisible(false);
+            mapViewer.getZoomSlider().setVisible(false);
+            mapViewer.getZoomInButton().setVisible(false);
+            mapViewer.getZoomOutButton().setVisible(false);
+
+
             mapViewer.paint(im.getGraphics());
             ImageIO.write(im, "PNG", f);
         } catch (IOException e)
         {
             e.printStackTrace();
         }
+
+        frame.setVisible(false);
+        frame.dispose();
 
         return f;
     }

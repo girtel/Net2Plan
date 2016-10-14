@@ -1,8 +1,5 @@
 package com.net2plan.gui.utils.topologyPane.jung.map;
 
-
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
@@ -22,7 +19,6 @@ public class MapDialog extends JDialog
     {
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setSize(new Dimension(800, 600));
-        this.setPreferredSize(new Dimension(800, 600));
         this.setLayout(new GridBagLayout());
         this.setTitle("Map");
 
@@ -33,7 +29,6 @@ public class MapDialog extends JDialog
         this.btn_enter = new JButton("Enter");
         btn_enter.addActionListener(e ->
         {
-            mapFile = mapViewer.saveMap();
             this.setVisible(false);
             this.dispose();
         });
@@ -55,8 +50,9 @@ public class MapDialog extends JDialog
         this.getContentPane().add(panel, gbc);
     }
 
-    public File getMapFile()
+    public File getMapFile(final int width, final int height)
     {
+        mapFile = mapViewer.saveMap(width, height);
         return mapFile;
     }
 }
