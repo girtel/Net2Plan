@@ -27,34 +27,30 @@ import java.util.stream.Collectors;
 /**
  * Created by Jorge San Emeterio on 13/10/2016.
  */
-public class MapPanel
+public class MapPanel extends JXMapKit
 {
-    private final JXMapKit mapViewer;
-    private final TileFactoryInfo info;
-    private final DefaultTileFactory tileFactory;
-
     private static int mapID = 0;
+
+    protected final TileFactoryInfo info;
+    protected final DefaultTileFactory tileFactory;
 
     public MapPanel()
     {
-        // Background image
-        mapViewer = new JXMapKit();
-
         // Create a TileFactoryInfo for OpenStreetMap
         info = new OSMTileFactoryInfo();
         tileFactory = new DefaultTileFactory(info);
-        mapViewer.setTileFactory(tileFactory);
+        this.setTileFactory(tileFactory);
 
         // Add interactions
-        MouseInputListener mia = new PanMouseInputListener(mapViewer.getMainMap());
-        mapViewer.addMouseListener(mia);
-        mapViewer.addMouseMotionListener(mia);
+        MouseInputListener mia = new PanMouseInputListener(this.getMainMap());
+        this.addMouseListener(mia);
+        this.addMouseMotionListener(mia);
 
-        mapViewer.addMouseListener(new CenterMapListener(mapViewer.getMainMap()));
+        this.addMouseListener(new CenterMapListener(this.getMainMap()));
 
-        mapViewer.addMouseWheelListener(new ZoomMouseWheelListenerCursor(mapViewer.getMainMap()));
+        this.addMouseWheelListener(new ZoomMouseWheelListenerCursor(this.getMainMap()));
 
-        mapViewer.addKeyListener(new PanKeyListener(mapViewer.getMainMap()));
+        this.addKeyListener(new PanKeyListener(this.getMainMap()));
 
         // Use 8 threads in parallel to load the tiles
         tileFactory.setThreadPoolSize(8);
@@ -62,28 +58,28 @@ public class MapPanel
         // Default position
         final GeoPosition europe = new GeoPosition(47.20, 25.2);
 
-        mapViewer.setZoom(15);
-        mapViewer.setCenterPosition(europe);
+        this.setZoom(15);
+        this.setCenterPosition(europe);
 
         // Removing markers
-        mapViewer.setAddressLocationShown(false);
+        this.setAddressLocationShown(false);
 
-        mapViewer.setDataProviderCreditShown(true);
+        this.setDataProviderCreditShown(true);
     }
 
     public JComponent getMapComponent()
     {
-        return mapViewer;
+        return this;
     }
 
     public Point2D getMapCoords()
     {
-        return mapViewer.getMainMap().getCenter();
+        return this.getMainMap().getCenter();
     }
 
     public void setMapZoom(final int zoom)
     {
-        mapViewer.setZoom(zoom);
+        this.setZoom(zoom);
     }
 
     public void centerMap(final NetPlan netPlan)
@@ -95,8 +91,8 @@ public class MapPanel
     {
         final Point2D topologyCenter = getTopologyCenter(nodes);
 
-        mapViewer.getMainMap().setCenter(topologyCenter);
-        mapViewer.repaint();
+        this.getMainMap().setCenter(topologyCenter);
+        this.repaint();
     }
 
     public Point2D getTopologyCenter(final List<Node> nodes)
@@ -134,12 +130,12 @@ public class MapPanel
             BufferedImage im = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
             // Removing overlay
-            mapViewer.getMiniMap().setVisible(false);
-            mapViewer.getZoomSlider().setVisible(false);
-            mapViewer.getZoomInButton().setVisible(false);
-            mapViewer.getZoomOutButton().setVisible(false);
+            this.getMiniMap().setVisible(false);
+            this.getZoomSlider().setVisible(false);
+            this.getZoomInButton().setVisible(false);
+            this.getZoomOutButton().setVisible(false);
 
-            mapViewer.paint(im.getGraphics());
+            this.paint(im.getGraphics());
 
             ImageIO.write(im, "PNG", f);
         } catch (IOException e)

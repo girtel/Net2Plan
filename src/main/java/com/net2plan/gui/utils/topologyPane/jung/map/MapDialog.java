@@ -93,13 +93,9 @@ public class MapDialog extends JDialog
     {
         final NodeOverlayPanel nodePanel = new NodeOverlayPanel(nodes);
 
-        //mapViewer.getMapComponent().add(nodePanel);
+        panel.add(nodePanel, BorderLayout.CENTER);
 
-        this.getContentPane().removeAll();
         this.validate();
         this.repaint();
-
-        this.setLayout(new BorderLayout());
-        this.getContentPane().add(nodePanel, BorderLayout.CENTER);
     }
 }
