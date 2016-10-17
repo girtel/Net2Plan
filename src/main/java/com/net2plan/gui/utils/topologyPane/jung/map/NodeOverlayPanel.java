@@ -1,6 +1,5 @@
-package com.net2plan.gui.utils.topologyPane.jung.map.utils;
+package com.net2plan.gui.utils.topologyPane.jung.map;
 
-import com.net2plan.gui.utils.topologyPane.jung.map.MapPanel;
 import com.net2plan.interfaces.networkDesign.Node;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.viewer.DefaultWaypoint;
@@ -8,11 +7,10 @@ import org.jxmapviewer.viewer.WaypointPainter;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.geom.Point2D;
+import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,6 +48,14 @@ public class NodeOverlayPanel extends MapPanel
 
         mainMap.add(btn_overlay);
         btn_overlay.doClick();
+    }
+
+    @Override
+    public File saveMap(final int width, final int height)
+    {
+        btn_overlay.setVisible(false);
+        this.getMainMap().setOverlayPainter(null);
+        return super.saveMap(width, height);
     }
 
     public class OverlayPainter extends WaypointPainter<DefaultWaypoint>

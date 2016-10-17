@@ -1,8 +1,9 @@
 package com.net2plan.gui.utils.topologyPane.jung.map;
 
 
-import com.net2plan.gui.utils.topologyPane.jung.map.utils.NodeOverlayPanel;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.Node;
+import org.jxmapviewer.JXMapKit;
 
 import javax.swing.*;
 import java.awt.*;
@@ -81,18 +82,29 @@ public class MapDialog extends JDialog
         this.revalidate();
         this.repaint();
 
-        mapFile = mapViewer.saveMap(width, height);
+        for (Component component : panel.getComponents())
+        {
+            if (component instanceof MapPanel)
+            {
+                final MapPanel map = (MapPanel) component;
 
-        this.setVisible(false);
-        this.dispose();
+                mapFile = map.saveMap(width, height);
 
-        return mapFile;
+                this.setVisible(false);
+                this.dispose();
+
+                return mapFile;
+            }
+        }
+
+        throw new Net2PlanException("Map component could not be found.");
     }
 
     public void addNodes(final List<Node> nodes)
     {
         final NodeOverlayPanel nodePanel = new NodeOverlayPanel(nodes);
 
+        panel.remove(mapViewer);
         panel.add(nodePanel, BorderLayout.CENTER);
 
         this.validate();
