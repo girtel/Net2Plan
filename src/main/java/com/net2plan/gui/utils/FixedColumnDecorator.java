@@ -92,6 +92,8 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         scrollPaneOfMainTable.setRowHeaderView(fixedTable);
         scrollPaneOfMainTable.setCorner(JScrollPane.UPPER_LEFT_CORNER, fixedTable.getTableHeader());
 
+        /* Synchronize scrolling of fixed table header row table with the main table */
+        scrollPaneOfMainTable.getRowHeader().addChangeListener(this);
 
         mainTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         fixedTable.setSelectionModel(mainTable.getSelectionModel());
