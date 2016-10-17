@@ -92,8 +92,6 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         scrollPaneOfMainTable.setRowHeaderView(fixedTable);
         scrollPaneOfMainTable.setCorner(JScrollPane.UPPER_LEFT_CORNER, fixedTable.getTableHeader());
 
-		/* Synchronize scrolling of fixed table header row table with the main table */
-        scrollPaneOfMainTable.getRowHeader().addChangeListener(this);
 
         mainTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         fixedTable.setSelectionModel(mainTable.getSelectionModel());
@@ -241,7 +239,7 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
             public void actionPerformed(ActionEvent e) {
 
 
-                checkNewIndexes();
+
                 showAllColumns();
                 checkNewIndexes();
             }
@@ -251,7 +249,6 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                checkNewIndexes();
                 hideAllColumns();
                 checkNewIndexes();
 
@@ -407,7 +404,6 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
 
     public void showAllColumns(){
         int columnIndex = 0;
-        int counter = 0;
         String hiddenColumnName;
         for (TableColumn tc : hiddenColumns) {
             hiddenColumnName = tc.getHeaderValue().toString();
@@ -431,16 +427,17 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
      */
 
     public void hideAllColumns(){
-        int counter = 1;
         while(mainTable.getColumnModel().getColumnCount() > 1){
             TableColumn columnToHide = mainTable.getColumnModel().getColumn(1);
-            columnIndexToHide = indexForEachColumn.get(shownColumns.get(counter).getHeaderValue().toString());
+            columnIndexToHide = indexForEachColumn.get(shownColumns.get(1).getHeaderValue().toString());
             String hiddenColumnHeader = columnToHide.getHeaderValue().toString();
             hiddenColumns.add(columnToHide);
-            indexForEachHiddenColumn.put(hiddenColumnHeader, counter);
+            indexForEachHiddenColumn.put(hiddenColumnHeader,1);
             mainTable.getColumnModel().removeColumn(columnToHide);
             shownColumns.remove(columnToHide);
         }
+        fromFixedTableToMainTable(fixedTable.getColumnModel().getColumnCount() - 1);
+        hideColumn(1);
         checkNewIndexes();
 
     }
@@ -520,6 +517,7 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         mainTable.getColumnModel().moveColumn(mainTable.getColumnModel().getColumnCount() - 1,0);
 
     }
+
 
     @Override
     public void propertyChange(PropertyChangeEvent e) {

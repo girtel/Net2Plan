@@ -220,7 +220,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
     }
 
     public int getNumFixedLeftColumnsInDecoration() {
-        return 3;
+        return 2;
     }
 
 
