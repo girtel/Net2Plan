@@ -10,6 +10,7 @@ import org.jxmapviewer.input.PanKeyListener;
 import org.jxmapviewer.input.PanMouseInputListener;
 import org.jxmapviewer.input.ZoomMouseWheelListenerCursor;
 import org.jxmapviewer.viewer.DefaultTileFactory;
+import org.jxmapviewer.viewer.GeoBounds;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactoryInfo;
 
@@ -27,7 +28,7 @@ import java.util.stream.Collectors;
 /**
  * Created by Jorge San Emeterio on 13/10/2016.
  */
-public class MapPanel extends JXMapKit
+public class MapPanel extends JXMapViewer
 {
     private static int mapID = 0;
 
@@ -39,18 +40,8 @@ public class MapPanel extends JXMapKit
         // Create a TileFactoryInfo for OpenStreetMap
         info = new OSMTileFactoryInfo();
         tileFactory = new DefaultTileFactory(info);
+
         this.setTileFactory(tileFactory);
-
-        // Add interactions
-        MouseInputListener mia = new PanMouseInputListener(this.getMainMap());
-        this.addMouseListener(mia);
-        this.addMouseMotionListener(mia);
-
-        this.addMouseListener(new CenterMapListener(this.getMainMap()));
-
-        this.addMouseWheelListener(new ZoomMouseWheelListenerCursor(this.getMainMap()));
-
-        this.addKeyListener(new PanKeyListener(this.getMainMap()));
 
         // Use 8 threads in parallel to load the tiles
         tileFactory.setThreadPoolSize(8);
@@ -58,28 +49,8 @@ public class MapPanel extends JXMapKit
         // Default position
         final GeoPosition europe = new GeoPosition(47.20, 25.2);
 
-        this.setZoom(15);
+        this.setZoom(16);
         this.setCenterPosition(europe);
-
-        // Removing markers
-        this.setAddressLocationShown(false);
-
-        this.setDataProviderCreditShown(true);
-    }
-
-    public JComponent getMapComponent()
-    {
-        return this;
-    }
-
-    public Point2D getMapCoords()
-    {
-        return this.getMainMap().getCenter();
-    }
-
-    public void setMapZoom(final int zoom)
-    {
-        this.setZoom(zoom);
     }
 
     public void centerMap(final NetPlan netPlan)
@@ -91,7 +62,9 @@ public class MapPanel extends JXMapKit
     {
         final Point2D topologyCenter = getTopologyCenter(nodes);
 
-        this.getMainMap().setCenter(topologyCenter);
+        GeoPosition position = new GeoPosition(topologyCenter.getY(), topologyCenter.getX());
+
+        this.setCenterPosition(position);
         this.repaint();
     }
 
@@ -128,12 +101,6 @@ public class MapPanel extends JXMapKit
         try
         {
             BufferedImage im = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-
-            // Removing overlay
-            this.getMiniMap().setVisible(false);
-            this.getZoomSlider().setVisible(false);
-            this.getZoomInButton().setVisible(false);
-            this.getZoomOutButton().setVisible(false);
 
             this.paint(im.getGraphics());
 

@@ -12,13 +12,9 @@
 
 package com.net2plan.gui.utils.topologyPane;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Point;
+import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
@@ -35,15 +31,22 @@ import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.topologyPane.jung.map.MapPanel;
 import com.net2plan.gui.utils.topologyPane.utils.MenuButton;
 import com.net2plan.gui.utils.windows.WindowController;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.DialogType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
+import com.net2plan.internal.UnmodifiablePoint2D;
 import com.net2plan.internal.plugins.ITopologyCanvas;
+import com.sun.codemodel.internal.JOp;
+import edu.uci.ics.jung.visualization.VisualizationServer;
+import edu.uci.ics.jung.visualization.VisualizationViewer;
+import org.jxmapviewer.viewer.GeoPosition;
 
 /**
  * <p>Wrapper class for the graph canvas.</p>
@@ -60,7 +63,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
     private final JPanel layerChooserPane;
     private final JComboBox layerChooser;
-    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
+    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset, btn_runMap;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final MenuButton btn_view;
     private final JPopupMenu viewPopUp;
@@ -241,6 +244,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_reset.setToolTipText("Reset the user interface");
         btn_reset.setMnemonic(KeyEvent.VK_R);
 
+        btn_runMap = new JButton("Run map");
+        btn_runMap.setToolTipText("");
+        btn_runMap.setMnemonic(KeyEvent.VK_M);
+
         btn_load.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDesign.png")));
         btn_loadDemand.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDemand.png")));
         btn_save.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/saveDesign.png")));
@@ -267,6 +274,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_zoomAll.addActionListener(this);
         btn_takeSnapshot.addActionListener(this);
         btn_reset.addActionListener(this);
+        btn_runMap.addActionListener(this);
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
@@ -285,6 +293,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(increaseFontSize);
         toolbar.add(decreaseFontSize);
         toolbar.add(Box.createHorizontalGlue());
+        toolbar.add(btn_runMap);
         toolbar.add(btn_view);
         toolbar.add(btn_reset);
 
@@ -438,6 +447,46 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         } else if (src == btn_zoomAll)
         {
             zoomAll();
+        } else if (src == btn_runMap)
+        {
+            final NetPlan netPlan = callback.getDesign();
+
+            boolean isValid = true;
+            for (Node node : netPlan.getNodes())
+            {
+                final Point2D position = node.getXYPositionMap();
+
+                final Double longitude = position.getX();
+                final Double latitude = position.getY();
+
+                if ((longitude > 180 || longitude < -180) || (latitude > 90 || latitude < -90))
+                {
+                    JOptionPane.showMessageDialog(null, "TODO: Invalid nodes", "Invalid coords", JOptionPane.ERROR_MESSAGE);
+                    isValid = false;
+                    break;
+                }
+            }
+
+            if (isValid)
+            {
+
+                final MapPanel mapViewer = new MapPanel();
+                //mapViewer.centerMap(netPlan);
+
+                this.zoomAll();
+
+
+                VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
+
+                this.remove(vv);
+
+                mapViewer.setLayout(new BorderLayout());
+                mapViewer.add(vv, BorderLayout.CENTER);
+                add(mapViewer, BorderLayout.CENTER);
+
+                this.validate();
+                this.repaint();
+            }
         } else if (src == btn_reset)
 
         {

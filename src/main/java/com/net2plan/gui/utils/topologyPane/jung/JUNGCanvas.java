@@ -15,6 +15,7 @@ package com.net2plan.gui.utils.topologyPane.jung;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
+import com.net2plan.gui.utils.topologyPane.jung.map.MapPanel;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -49,6 +50,7 @@ import edu.uci.ics.jung.visualization.util.ArrowFactory;
 import org.apache.commons.collections15.Predicate;
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.collections15.functors.ConstantTransformer;
+import org.jxmapviewer.JXMapViewer;
 
 import javax.swing.*;
 import java.awt.*;
