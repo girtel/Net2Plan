@@ -684,6 +684,11 @@ public final class JUNGCanvas extends ITopologyCanvas
         }
     }
 
+    public void setBackgroundImage(final ImageIcon image, final int x, final int y)
+    {
+        updateBackgroundImage(image, x, y);
+    }
+
     public void setBackgroundImage(final File bgFile, final int x, final int y)
     {
         final ImageIcon background = new ImageIcon(bgFile.getAbsolutePath());

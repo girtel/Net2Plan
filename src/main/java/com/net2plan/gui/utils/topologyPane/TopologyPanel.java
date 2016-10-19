@@ -15,11 +15,14 @@ package com.net2plan.gui.utils.topologyPane;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
@@ -500,23 +503,55 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             }
         } else if (src == btn_mapPhoto)
         {
+            // JUNG Canvas
             VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
+
+            // JUNG window size
             final Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
+            final Double viewPortW = viewInLayoutUnits.getWidth();
+            final Double viewPortH = viewInLayoutUnits.getHeight();
 
+            // JUNG window center point
             final Point2D centerPoint = new Point.Double(viewInLayoutUnits.getCenterX(), viewInLayoutUnits.getCenterY());
-
             final int w = canvas.getComponent().getWidth();
             final int h = canvas.getComponent().getHeight();
 
+            // Removing previous map
             mapViewer.remove(canvas.getComponent());
+
+            // Getting snapshot
             final File file = mapViewer.saveMap(w, h);
 
-            final Point2D mapCorner = new Point.Double(centerPoint.getX() - (w/2), centerPoint.getY() - (h/2));
+            // Aligning the snapshot with the previous map
+
+            // Complete map
+            // final Point2D mapCorner = new Point.Double(centerPoint.getX() - (w / 2), centerPoint.getY() - (h / 2));
+
+            // Resized map
+            final Point2D mapCorner = new Point.Double(centerPoint.getX() - (viewPortW / 2), centerPoint.getY() - (viewPortH / 2));
+
             final Double x = mapCorner.getX();
             final Double y = mapCorner.getY();
 
-            ((JUNGCanvas) canvas).setBackgroundImage(file, x.intValue(), y.intValue());
+            // Resized background
+            try
+            {
+                final BufferedImage bg = ImageIO.read(file);
 
+                final Image scaledInstance = bg.getScaledInstance(viewPortW.intValue(), viewPortH.intValue(), Image.SCALE_DEFAULT);
+
+                ((JUNGCanvas) canvas).setBackgroundImage(new ImageIcon(scaledInstance), x.intValue(), y.intValue());
+
+            } catch (IOException e1)
+            {
+                e1.printStackTrace();
+            }
+
+            // Complete background
+            //((JUNGCanvas) canvas).setBackgroundImage(file, x.intValue(), y.intValue());
+
+
+            // Setting the photo as background
             this.remove(mapViewer);
             this.add(canvas.getComponent(), BorderLayout.CENTER);
 
