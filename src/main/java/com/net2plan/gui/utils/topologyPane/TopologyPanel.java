@@ -63,12 +63,14 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
     private final JPanel layerChooserPane;
     private final JComboBox layerChooser;
-    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset, btn_runMap;
+    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset, btn_runMap, btn_mapPhoto;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final MenuButton btn_view;
     private final JPopupMenu viewPopUp;
     private final JMenuItem it_topology, it_report, it_online, it_offline;
     private final JLabel position;
+
+    private final MapPanel mapViewer;
 
     private final File defaultDesignDirectory, defaultDemandDirectory;
 
@@ -244,9 +246,13 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_reset.setToolTipText("Reset the user interface");
         btn_reset.setMnemonic(KeyEvent.VK_R);
 
+        mapViewer = new MapPanel();
+
         btn_runMap = new JButton("Run map");
         btn_runMap.setToolTipText("");
         btn_runMap.setMnemonic(KeyEvent.VK_M);
+
+        btn_mapPhoto = new JButton("Photo");
 
         btn_load.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDesign.png")));
         btn_loadDemand.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDemand.png")));
@@ -275,6 +281,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_takeSnapshot.addActionListener(this);
         btn_reset.addActionListener(this);
         btn_runMap.addActionListener(this);
+        btn_mapPhoto.addActionListener(this);
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
@@ -293,6 +300,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(increaseFontSize);
         toolbar.add(decreaseFontSize);
         toolbar.add(Box.createHorizontalGlue());
+        toolbar.add(btn_mapPhoto);
         toolbar.add(btn_runMap);
         toolbar.add(btn_view);
         toolbar.add(btn_reset);
@@ -469,8 +477,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             if (isValid)
             {
-                final MapPanel mapViewer = new MapPanel();
-
                 VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
 
                 // Getting viewport rectangle
@@ -492,8 +498,27 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                 this.validate();
                 this.repaint();
             }
-        } else if (src == btn_reset)
+        } else if (src == btn_mapPhoto)
+        {
+            VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
+            final Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
 
+            final Double w = viewInLayoutUnits.getWidth();
+            final Double h = viewInLayoutUnits.getHeight();
+            final Double x = viewInLayoutUnits.getX();
+            final Double y = viewInLayoutUnits.getY();
+
+            mapViewer.remove(canvas.getComponent());
+            final File file = mapViewer.saveMap(canvas.getComponent().getWidth(), canvas.getComponent().getHeight());
+
+            ((JUNGCanvas) canvas).setBackgroundImage(file, x.intValue(), y.intValue());
+
+            this.remove(mapViewer);
+            this.add(canvas.getComponent(), BorderLayout.CENTER);
+
+            this.validate();
+            this.repaint();
+        } else if (src == btn_reset)
         {
             callback.reset();
         }

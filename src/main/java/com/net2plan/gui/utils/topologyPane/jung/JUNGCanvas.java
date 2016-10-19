@@ -648,6 +648,11 @@ public final class JUNGCanvas extends ITopologyCanvas
 
     public void updateBackgroundImage(final ImageIcon icon)
     {
+        updateBackgroundImage(icon, 0, 0);
+    }
+
+    public void updateBackgroundImage(final ImageIcon icon, final int x, final int y)
+    {
         if (paintableAssociatedToBackgroundImage != null)
             vv.removePreRenderPaintable(paintableAssociatedToBackgroundImage);
         paintableAssociatedToBackgroundImage = null;
@@ -666,7 +671,7 @@ public final class JUNGCanvas extends ITopologyCanvas
                     at.concatenate(vat);
                     at.concatenate(lat);
                     g2d.setTransform(at);
-                    g.drawImage(icon.getImage(), 0, 0, icon.getIconWidth(), icon.getIconHeight(), vv);
+                    g.drawImage(icon.getImage(), x, y, icon.getIconWidth(), icon.getIconHeight(), vv);
                     g2d.setTransform(oldXform);
                 }
 
@@ -679,10 +684,10 @@ public final class JUNGCanvas extends ITopologyCanvas
         }
     }
 
-    public void setBackgroundImage(final File bgFile)
+    public void setBackgroundImage(final File bgFile, final int x, final int y)
     {
         final ImageIcon background = new ImageIcon(bgFile.getAbsolutePath());
-        updateBackgroundImage(background);
+        updateBackgroundImage(background, x, y);
     }
 
     private class LinkIdRenderer extends BasicEdgeLabelRenderer<GUINode, GUILink>
