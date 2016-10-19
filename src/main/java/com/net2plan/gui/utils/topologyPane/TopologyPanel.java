@@ -469,14 +469,19 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             if (isValid)
             {
-
                 final MapPanel mapViewer = new MapPanel();
-                //mapViewer.centerMap(netPlan);
-
-                this.zoomAll();
-
 
                 VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
+
+                // Getting viewport rectangle
+                final Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
+
+                // Viewport center point.
+                final Point2D centerPoint = new Point.Double(viewInLayoutUnits.getCenterX(), viewInLayoutUnits.getCenterY());
+                final GeoPosition position = new GeoPosition(-centerPoint.getY(), centerPoint.getX());
+
+                mapViewer.setCenterPosition(position);
+                mapViewer.setZoom(17);
 
                 this.remove(vv);
 
