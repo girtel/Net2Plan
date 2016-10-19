@@ -503,13 +503,17 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
             final Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
 
-            final Double w = viewInLayoutUnits.getWidth();
-            final Double h = viewInLayoutUnits.getHeight();
-            final Double x = viewInLayoutUnits.getX();
-            final Double y = viewInLayoutUnits.getY();
+            final Point2D centerPoint = new Point.Double(viewInLayoutUnits.getCenterX(), viewInLayoutUnits.getCenterY());
+
+            final int w = canvas.getComponent().getWidth();
+            final int h = canvas.getComponent().getHeight();
 
             mapViewer.remove(canvas.getComponent());
-            final File file = mapViewer.saveMap(canvas.getComponent().getWidth(), canvas.getComponent().getHeight());
+            final File file = mapViewer.saveMap(w, h);
+
+            final Point2D mapCorner = new Point.Double(centerPoint.getX() - (w/2), centerPoint.getY() - (h/2));
+            final Double x = mapCorner.getX();
+            final Double y = mapCorner.getY();
 
             ((JUNGCanvas) canvas).setBackgroundImage(file, x.intValue(), y.intValue());
 
