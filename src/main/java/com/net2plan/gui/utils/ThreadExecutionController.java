@@ -225,7 +225,7 @@ public class ThreadExecutionController {
             }
 
             try {
-                thread.join();
+                thread.stop();
             } catch (Throwable ex) {
             }
         }

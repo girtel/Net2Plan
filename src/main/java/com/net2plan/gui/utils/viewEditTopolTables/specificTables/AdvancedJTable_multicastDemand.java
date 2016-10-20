@@ -15,11 +15,7 @@ package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 import javax.swing.Box;
 import javax.swing.DefaultRowSorter;
@@ -151,6 +147,10 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
 
     public String[] getTableHeaders() {
         return netPlanViewTableHeader;
+    }
+
+    public ArrayList<String> getNewTableHeaders(){
+        return new ArrayList<>();
     }
 
     public String[] getTableTips() {

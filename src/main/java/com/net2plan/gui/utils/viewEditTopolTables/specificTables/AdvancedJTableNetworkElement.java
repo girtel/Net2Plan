@@ -16,11 +16,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.swing.Box;
 import javax.swing.DefaultRowSorter;
@@ -132,6 +128,8 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
     public abstract String[] getTableHeaders();
 
+    public abstract ArrayList<String> getNewTableHeaders();
+
     public abstract String[] getTableTips();
 
     public abstract boolean hasElements(NetPlan np);
@@ -148,15 +146,23 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
     public void updateView(NetPlan currentState, NetPlan initialState) {
         setEnabled(false);
-        String[] header = getTableHeaders();
-        ((DefaultTableModel) getModel()).setDataVector(new Object[1][getTableHeaders().length], header);
+        ArrayList<String> headerList = getNewTableHeaders();
+        String[] header = new String[headerList.size()];
+        for(int i = 0;i<headerList.size();i++){
+            header[i] = headerList.get(i);
+        }
+        ((DefaultTableModel) getModel()).setDataVector(new Object[1][header.length], header);
 
         if (currentState.getRoutingType() == RoutingType.SOURCE_ROUTING && networkElementType.equals(NetworkElementType.FORWARDING_RULE))
             return;
         if (currentState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING && (networkElementType.equals(NetworkElementType.ROUTE) || networkElementType.equals(NetworkElementType.PROTECTION_SEGMENT)))
             return;
         if (hasElements(currentState)) {
-            String[] tableHeaders = getTableHeaders();
+            ArrayList<String> tableHeadersList = getNewTableHeaders();
+            String[] tableHeaders = new String[tableHeadersList.size()];
+            for(int j = 0;j<tableHeadersList.size();j++){
+                tableHeaders[j] = tableHeadersList.get(j);
+            }
             List<Object[]> allData = getAllData(currentState, networkViewer.getTopologyPanel(), initialState);
             setEnabled(true);
             ((DefaultTableModel) getModel()).setDataVector(allData.toArray(new Object[allData.size()][tableHeaders.length]), tableHeaders);

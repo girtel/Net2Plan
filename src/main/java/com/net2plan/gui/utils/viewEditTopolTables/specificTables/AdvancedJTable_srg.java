@@ -19,14 +19,7 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.swing.DefaultRowSorter;
 import javax.swing.JCheckBox;
@@ -169,6 +162,15 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
 
     public String[] getTableHeaders() {
         return netPlanViewTableHeader;
+    }
+
+    public ArrayList<String> getNewTableHeaders(){
+        TableModel tm = this.getModel();
+        ArrayList<String> headers = new ArrayList<>();
+        for(int i = 0; i < tm.getColumnCount();i++){
+            headers.add(tm.getColumnName(i));
+        }
+        return headers;
     }
 
     public String[] getTableTips() {
@@ -700,8 +702,8 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
         JScrollPane nodeScrollPane = new JScrollPane(nodeTable);
         JScrollPane linkScrollPane = new JScrollPane(linkTable);
 
-        FixedColumnDecorator nodeDecorator = new FixedColumnDecorator(nodeScrollPane, 1);
-        FixedColumnDecorator linkDecorator = new FixedColumnDecorator(linkScrollPane, 1);
+        FixedColumnDecorator nodeDecorator = new FixedColumnDecorator(nodeScrollPane, 1, false);
+        FixedColumnDecorator linkDecorator = new FixedColumnDecorator(linkScrollPane, 1, false);
         nodeDecorator.getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
         linkDecorator.getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
 

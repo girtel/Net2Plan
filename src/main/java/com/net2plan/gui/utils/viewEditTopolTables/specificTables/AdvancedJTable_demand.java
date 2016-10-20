@@ -18,14 +18,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.swing.Box;
 import javax.swing.DefaultRowSorter;
@@ -155,6 +148,15 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
         return netPlanViewTableHeader;
     }
 
+    public ArrayList<String> getNewTableHeaders(){
+        TableModel tm = this.getModel();
+        ArrayList<String> headers = new ArrayList<>();
+        for(int i = 0; i < tm.getColumnCount();i++){
+            headers.add(tm.getColumnName(i));
+        }
+        return headers;
+    }
+
     public String[] getTableTips() {
         return netPlanViewTableTips;
     }
@@ -176,7 +178,19 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 if (getValueAt(rowIndex, columnIndex) == null) return false;
                 if (!networkViewer.isEditable()) return false;
-                return columnIndex == COLUMN_OFFEREDTRAFFIC;
+                if (columnIndex == COLUMN_ID) return false;
+                if (columnIndex == COLUMN_INDEX) return false;
+                if (columnIndex == COLUMN_INGRESSNODE) return false;
+                if (columnIndex == COLUMN_EGRESSNODE) return false;
+                if (columnIndex == COLUMN_COUPLEDTOLINK) return false;
+                if (columnIndex == COLUMN_CARRIEDTRAFFIC) return false;
+                if (columnIndex == COLUMN_LOSTTRAFFIC) return false;
+                if (columnIndex == COLUMN_ROUTINGCYCLES) return false;
+                if (columnIndex == COLUMN_BIFURCATED) return false;
+                if (columnIndex == COLUMN_NUMROUTES) return false;
+                if (columnIndex == COLUMN_MAXE2ELATENCY) return false;
+                if (columnIndex == COLUMN_ATTRIBUTES) return false;
+                return true;
             }
 
             @Override

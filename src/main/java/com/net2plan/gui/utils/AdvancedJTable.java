@@ -94,6 +94,10 @@ public class AdvancedJTable extends JTable {
 
     }
 
+    @Override
+    public void setModel(TableModel model){
+        super.setModel(model);
+    }
 
 
 

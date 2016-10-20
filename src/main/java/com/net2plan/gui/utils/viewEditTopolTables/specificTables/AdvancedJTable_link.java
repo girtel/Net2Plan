@@ -19,11 +19,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.DefaultRowSorter;
@@ -230,6 +226,15 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
 
     public String[] getTableHeaders() {
         return netPlanViewTableHeader;
+    }
+
+    public ArrayList<String> getNewTableHeaders(){
+        TableModel tm = this.getModel();
+        ArrayList<String> headers = new ArrayList<>();
+        for(int i = 0; i < tm.getColumnCount();i++){
+            headers.add(tm.getColumnName(i));
+        }
+        return headers;
     }
 
     public String[] getTableTips() {

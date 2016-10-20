@@ -653,7 +653,7 @@ public final class GUITrafficDesign extends IGUIModule {
 
         final JScrollPane pane = new JScrollPane(table);
         aux3.add(pane, "grow, wrap");
-        FixedColumnDecorator decorator = new FixedColumnDecorator(pane, 1);
+        FixedColumnDecorator decorator = new FixedColumnDecorator(pane, 1, true);
         decorator.getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
 
         new FileDrop(pane, new LineBorder(Color.BLACK), new FileDrop.Listener() {
@@ -935,7 +935,7 @@ public final class GUITrafficDesign extends IGUIModule {
             }
         });
 
-        FixedColumnDecorator decorator = new FixedColumnDecorator(pane, 1);
+        FixedColumnDecorator decorator = new FixedColumnDecorator(pane, 1, true);
         decorator.getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
 
         return pane;

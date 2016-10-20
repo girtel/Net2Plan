@@ -84,7 +84,7 @@ public class ViewEditTopologyTablesPane extends JPanel
                 JScrollPane scrollPane = new JScrollPane(netPlanViewTable.get(elementType));
                 scrollPane.setLayout(new FullScrollPaneLayout());
                 scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-                FixedColumnDecorator decorator = new FixedColumnDecorator(scrollPane, ((AdvancedJTableNetworkElement) netPlanViewTable.get(elementType)).getNumFixedLeftColumnsInDecoration());
+                FixedColumnDecorator decorator = new FixedColumnDecorator(scrollPane, ((AdvancedJTableNetworkElement) netPlanViewTable.get(elementType)).getNumFixedLeftColumnsInDecoration(), false);
                 decorator.getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
                 netPlanViewTableDecorator.put(elementType, decorator);
                 netPlanViewTableComponent.put(elementType, scrollPane);
@@ -166,6 +166,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         for (AdvancedJTableNetworkElement table : netPlanViewTable.values())
             table.updateView(currentState, initialState);
+
 
         ((NetPlanViewTableComponent_layer) netPlanViewTableComponent.get(NetworkElementType.LAYER)).updateNetPlanView(currentState);
         ((NetPlanViewTableComponent_network) netPlanViewTableComponent.get(NetworkElementType.NETWORK)).updateNetPlanView(currentState);

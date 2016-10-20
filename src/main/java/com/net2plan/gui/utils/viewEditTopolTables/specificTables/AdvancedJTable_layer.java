@@ -15,6 +15,7 @@ package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -121,6 +122,15 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
 
     public String[] getTableHeaders() {
         return netPlanViewTableHeader;
+    }
+
+    public ArrayList<String> getNewTableHeaders(){
+        TableModel tm = this.getModel();
+        ArrayList<String> headers = new ArrayList<>();
+        for(int i = 0; i < tm.getColumnCount();i++){
+            headers.add(tm.getColumnName(i));
+        }
+        return headers;
     }
 
     public String[] getTableTips() {
