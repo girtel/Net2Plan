@@ -46,6 +46,7 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.UnmodifiablePoint2D;
 import com.net2plan.internal.plugins.ITopologyCanvas;
+import com.net2plan.utils.TopologyMap;
 import com.sun.codemodel.internal.JOp;
 import edu.uci.ics.jung.visualization.VisualizationServer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
@@ -74,6 +75,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JLabel position;
 
     private final MapPanel mapViewer;
+    private final TopologyMap nodeMapPosition;
 
     private final File defaultDesignDirectory, defaultDemandDirectory;
 
@@ -250,6 +252,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_reset.setMnemonic(KeyEvent.VK_R);
 
         mapViewer = new MapPanel();
+        nodeMapPosition = new TopologyMap();
 
         btn_runMap = new JButton("Run map");
         btn_runMap.setToolTipText("");
@@ -480,7 +483,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             if (isValid)
             {
-                // HACK
                 for (int i = 0; i < 2; i++)
                 {
                     this.zoomAll();
@@ -489,6 +491,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
                     // Getting viewport rectangle
                     final Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
+                    final Double viewPortW = viewInLayoutUnits.getWidth();
+                    final Double viewPortH = viewInLayoutUnits.getHeight();
 
                     // Viewport center point.
                     final Point2D centerPoint = new Point.Double(viewInLayoutUnits.getCenterX(), viewInLayoutUnits.getCenterY());
@@ -503,19 +507,39 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     mapViewer.add(vv, BorderLayout.CENTER);
                     add(mapViewer, BorderLayout.CENTER);
 
+                    // Save node ubication
+                    final Dimension canvasSize = canvas.getInternalComponent().getSize();
+                    final Double ratioW = canvasSize.getWidth() / viewPortW;
+                    final Double ratioH = canvasSize.getHeight() / viewPortH;
+                    for (Node node : callback.getDesign().getNodes())
+                    {
+                        final Point2D xyPositionMap = node.getXYPositionMap();
+
+                        final Double x = xyPositionMap.getX() * Math.round(ratioW);
+                        final Double y = xyPositionMap.getY() * Math.round(ratioH);
+
+                        nodeMapPosition.addNodeLocation(node.getId(), new Point(x.intValue(), y.intValue()));
+                    }
+
                     this.validate();
                     this.repaint();
                 }
             }
         } else if (src == btn_mapPhoto)
         {
+            // Ubicating nodes
+            for (Node node : callback.getDesign().getNodes())
+            {
+                callback.moveNode(node.getId(), nodeMapPosition.getNodeLocation(node.getId()));
+            }
+
+            this.zoomAll();
+
             // JUNG Canvas
             VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
 
             // JUNG window size
             final Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
-            final Double viewPortW = viewInLayoutUnits.getWidth();
-            final Double viewPortH = viewInLayoutUnits.getHeight();
 
             // JUNG window center point
             final Point2D centerPoint = new Point.Double(viewInLayoutUnits.getCenterX(), viewInLayoutUnits.getCenterY());
