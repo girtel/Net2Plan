@@ -480,26 +480,32 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             if (isValid)
             {
-                VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
+                // HACK
+                for (int i = 0; i < 2; i++)
+                {
+                    this.zoomAll();
 
-                // Getting viewport rectangle
-                final Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
+                    VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
 
-                // Viewport center point.
-                final Point2D centerPoint = new Point.Double(viewInLayoutUnits.getCenterX(), viewInLayoutUnits.getCenterY());
-                final GeoPosition position = new GeoPosition(-centerPoint.getY(), centerPoint.getX());
+                    // Getting viewport rectangle
+                    final Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
 
-                mapViewer.setCenterPosition(position);
-                mapViewer.setZoom(17);
+                    // Viewport center point.
+                    final Point2D centerPoint = new Point.Double(viewInLayoutUnits.getCenterX(), viewInLayoutUnits.getCenterY());
+                    final GeoPosition position = new GeoPosition(-centerPoint.getY(), centerPoint.getX());
 
-                this.remove(vv);
+                    mapViewer.setCenterPosition(position);
+                    mapViewer.setZoom(17);
 
-                mapViewer.setLayout(new BorderLayout());
-                mapViewer.add(vv, BorderLayout.CENTER);
-                add(mapViewer, BorderLayout.CENTER);
+                    this.remove(vv);
 
-                this.validate();
-                this.repaint();
+                    mapViewer.setLayout(new BorderLayout());
+                    mapViewer.add(vv, BorderLayout.CENTER);
+                    add(mapViewer, BorderLayout.CENTER);
+
+                    this.validate();
+                    this.repaint();
+                }
             }
         } else if (src == btn_mapPhoto)
         {
@@ -525,31 +531,30 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             // Aligning the snapshot with the previous map
 
             // Complete map
-            // final Point2D mapCorner = new Point.Double(centerPoint.getX() - (w / 2), centerPoint.getY() - (h / 2));
+            final Point2D mapCorner = new Point.Double(centerPoint.getX() - (w / 2), centerPoint.getY() - (h / 2));
 
             // Resized map
-            final Point2D mapCorner = new Point.Double(centerPoint.getX() - (viewPortW / 2), centerPoint.getY() - (viewPortH / 2));
+//            final Point2D mapCorner = new Point.Double(centerPoint.getX() - (viewPortW / 2), centerPoint.getY() - (viewPortH / 2));
 
             final Double x = mapCorner.getX();
             final Double y = mapCorner.getY();
 
             // Resized background
-            try
-            {
-                final BufferedImage bg = ImageIO.read(file);
-
-                final Image scaledInstance = bg.getScaledInstance(viewPortW.intValue(), viewPortH.intValue(), Image.SCALE_DEFAULT);
-
-                ((JUNGCanvas) canvas).setBackgroundImage(new ImageIcon(scaledInstance), x.intValue(), y.intValue());
-
-            } catch (IOException e1)
-            {
-                e1.printStackTrace();
-            }
+//            try
+//            {
+//                final BufferedImage bg = ImageIO.read(file);
+//
+//                final Image scaledInstance = bg.getScaledInstance(viewPortW.intValue(), viewPortH.intValue(), Image.SCALE_DEFAULT);
+//
+//                ((JUNGCanvas) canvas).setBackgroundImage(new ImageIcon(scaledInstance), x.intValue(), y.intValue());
+//
+//            } catch (IOException e1)
+//            {
+//                e1.printStackTrace();
+//            }
 
             // Complete background
-            //((JUNGCanvas) canvas).setBackgroundImage(file, x.intValue(), y.intValue());
-
+            ((JUNGCanvas) canvas).setBackgroundImage(file, x.intValue(), y.intValue());
 
             // Setting the photo as background
             this.remove(mapViewer);
