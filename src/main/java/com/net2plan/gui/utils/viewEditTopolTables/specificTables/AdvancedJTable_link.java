@@ -256,24 +256,44 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
 
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                if (getValueAt(rowIndex, columnIndex) == null) return false;
-                if (columnIndex == COLUMN_SHOWHIDE) return true;
+                if (getValueAt(rowIndex,columnIndex) == null) return false;
                 if (!networkViewer.isEditable()) return false;
                 switch (columnIndex) {
+                    case COLUMN_ID:
+                    case COLUMN_INDEX:
+                    case COLUMN_ORIGINNODE:
+                    case COLUMN_DESTNODE:
+                    case COLUMN_CARRIEDTRAFFIC:
+                    case COLUMN_TRAFFICRESERVEDFORPROTECTION:
+                    case COLUMN_UTILIZATION:
+                    case COLUMN_UTILIZATIONWOPROTECTION:
+                    case COLUMN_ISBOTTLENECK:
+                    case COLUMN_PROPDELAYMS:
+                    case COLUMN_NUMROUTES:
+                    case COLUMN_NUMSEGMENTS:
+                    case COLUMN_NUMFORWRULES:
+                    case COLUMN_NUMTREES:
+                    case COLUMN_SRGS:
+                    case COLUMN_COUPLEDTODEMAND:
+                    case COLUMN_ATTRIBUTES:
+                        return false;
                     case COLUMN_STATE:
                     case COLUMN_LENGTH:
                     case COLUMN_PROPSPEED:
                         return true;
 
                     case COLUMN_CAPACITY:
-                        NetPlan netPlan = networkViewer.getDesign();
-                        if (getValueAt(rowIndex, 0) == null) rowIndex = rowIndex - 1;
-                        final long linkId = (Long) getValueAt(rowIndex, 0);
-                        final Link link = netPlan.getLinkFromId(linkId);
-                        if (link.isCoupled()) return false;
-                        else return true;
+                            NetPlan netPlan = networkViewer.getDesign();
+                            if (getValueAt(rowIndex, 0) == null)
+                                rowIndex = rowIndex - 1;
+                            final long linkId = (Long) getValueAt(rowIndex, 0);
+                            final Link link = netPlan.getLinkFromId(linkId);
+                            if (link.isCoupled()) return false;
+                            else return true;
+
+
                     default:
-                        return false;
+                        return true;
                 }
             }
 

@@ -210,9 +210,23 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
 
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                if (getValueAt(rowIndex, columnIndex) == null) return false;
                 if (!networkViewer.isEditable()) return false;
-                return columnIndex == COLUMN_CARRIEDTRAFFIC || columnIndex == COLUMN_OCCUPIEDCAPACITY;
+                if (getValueAt(rowIndex,columnIndex) == null) return false;
+                if (columnIndex == COLUMN_ID) return false;
+                if (columnIndex == COLUMN_INDEX) return false;
+                if (columnIndex == COLUMN_DEMAND) return false;
+                if (columnIndex == COLUMN_INGRESSNODE) return false;
+                if (columnIndex == COLUMN_EGRESSNODE) return false;
+                if (columnIndex == COLUMN_DEMANDOFFEREDTRAFFIC) return false;
+                if (columnIndex == COLUMN_SEQUENCEOFLINKS) return false;
+                if (columnIndex == COLUMN_SEQUENCEOFNODES) return false;
+                if (columnIndex == COLUMN_NUMHOPS) return false;
+                if (columnIndex == COLUMN_LENGTH) return false;
+                if (columnIndex == COLUMN_PROPDELAY) return false;
+                if (columnIndex == COLUMN_BOTTLENECKUTILIZATION) return false;
+                if (columnIndex == COLUMN_BACKUPSEGMENTS) return false;
+                if (columnIndex == COLUMN_ATTRIBUTES) return false;
+                return true;
             }
 
             @Override

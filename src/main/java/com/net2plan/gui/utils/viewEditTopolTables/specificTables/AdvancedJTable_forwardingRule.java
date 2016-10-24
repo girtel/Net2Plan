@@ -154,10 +154,10 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
 
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                if (getValueAt(rowIndex, columnIndex) == null) return false;
                 if (!networkViewer.isEditable()) return false;
+                if (getValueAt(rowIndex,columnIndex) == null) return false;
 
-                return columnIndex == COLUMN_SPLITTINGRATIO;
+                return columnIndex == COLUMN_SPLITTINGRATIO || columnIndex >= netPlanViewTableHeader.length;
             }
 
             @Override

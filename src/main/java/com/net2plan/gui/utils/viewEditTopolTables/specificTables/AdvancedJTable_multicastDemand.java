@@ -150,7 +150,12 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
     }
 
     public ArrayList<String> getNewTableHeaders(){
-        return new ArrayList<>();
+        TableModel tm = this.getModel();
+        ArrayList<String> headers = new ArrayList<>();
+        for(int i = 0; i < tm.getColumnCount();i++){
+            headers.add(tm.getColumnName(i));
+        }
+        return headers;
     }
 
     public String[] getTableTips() {
@@ -174,7 +179,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
                 if (getValueAt(rowIndex, columnIndex) == null) return false;
                 if (!networkViewer.isEditable()) return false;
 
-                return columnIndex == COLUMN_OFFEREDTRAFFIC;
+                return columnIndex == COLUMN_OFFEREDTRAFFIC || columnIndex >= netPlanViewTableHeader.length;
             }
 
             @Override

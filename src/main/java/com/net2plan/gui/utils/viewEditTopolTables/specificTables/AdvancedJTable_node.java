@@ -173,8 +173,8 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
 
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                if (getValueAt(rowIndex, columnIndex) == null) return false;
                 if (!networkViewer.isEditable()) return false;
+                if (getValueAt(rowIndex,columnIndex) == null) return false;
                 if (columnIndex == COLUMN_ID) return false;
                 if (columnIndex == COLUMN_INDEX) return false;
                 if (columnIndex == COLUMN_OUTLINKS) return false;

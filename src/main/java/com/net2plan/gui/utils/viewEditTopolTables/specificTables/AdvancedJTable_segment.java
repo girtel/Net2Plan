@@ -193,10 +193,10 @@ public class AdvancedJTable_segment extends AdvancedJTableNetworkElement {
 
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                if (getValueAt(rowIndex, columnIndex) == null) return false;
                 if (!networkViewer.isEditable()) return false;
+                if (getValueAt(rowIndex,columnIndex) == null) return false;
 
-                return columnIndex == COLUMN_RESERVEDCAPACITY;
+                return columnIndex == COLUMN_RESERVEDCAPACITY || columnIndex >= netPlanViewTableHeader.length;
             }
 
             @Override

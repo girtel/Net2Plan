@@ -191,10 +191,10 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
 
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                if (getValueAt(rowIndex, columnIndex) == null) return false;
                 if (!networkViewer.isEditable()) return false;
+                if (getValueAt(rowIndex,columnIndex) == null) return false;
 
-                return columnIndex == COLUMN_MTTF || columnIndex == COLUMN_MTTR;
+                return columnIndex == COLUMN_MTTF || columnIndex == COLUMN_MTTR || columnIndex >= netPlanViewTableHeader.length;
             }
 
             @Override

@@ -151,7 +151,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
 
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return false;
+                return columnIndex >= netPlanViewTableHeader.length;
             }
 
             @Override
