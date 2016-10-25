@@ -436,7 +436,8 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                                 String latAttribute = latSelector.getSelectedItem().toString();
                                 String lonAttribute = lonSelector.getSelectedItem().toString();
 
-                                netPlan.getNodeFromId(nodeId).setXYPositionMap(new Point2D.Double(Double.parseDouble(netPlan.getNodeFromId(nodeId).getAttribute(lonAttribute)), Double.parseDouble(netPlan.getNodeFromId(nodeId).getAttribute(latAttribute))));
+                                networkViewer.moveNode(nodeId, new Point2D.Double(Double.parseDouble(netPlan.getNodeFromId(nodeId).getAttribute(lonAttribute)), Double.parseDouble(netPlan.getNodeFromId(nodeId).getAttribute(latAttribute))));
+
                                 networkViewer.getTopologyPanel().getCanvas().refresh();
                                 networkViewer.updateNetPlanView();
                                 break;
