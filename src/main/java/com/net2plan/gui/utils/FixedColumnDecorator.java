@@ -49,16 +49,17 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
     private final JScrollPane scrollPane;
     private final JPopupMenu showHideMenu, fixMenu;
     private final JPanel setNewColumnNamePane;
-    private final JMenu showMenu, hideMenu, checkBoxMenu, checkBoxMenu2;
+    private final JMenu showMenu, hideMenu;
     private final JMenuItem showAllItem, hideAllItem, addNewColumnItem, removeColumnItem;
     private final ArrayList<String> removedColumnsNames;
     private final ArrayList<TableColumn> hiddenColumns, shownColumns, fixedTableColumns;
     private final Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn;
     private final Map<String, Boolean> isErasableEachColumn;
     private int frozenColumns;
-    private JCheckBox fixCheckBox, unfixCheckBox;
+    private JCheckBoxMenuItem fixCheckBox, unfixCheckBox;
     private int columnIndexToHide;
     private ArrayList<JMenuItem> hiddenHeaderItems, shownHeaderItems;
+    private boolean recoverHiddenColumns;
 
     /**
      * Default constructor.
@@ -129,10 +130,8 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         fixMenu = new JPopupMenu();
         showMenu = new JMenu("Show column");
         hideMenu = new JMenu("Hide column");
-        checkBoxMenu = new JMenu("Always Visible");
-        checkBoxMenu2 = new JMenu("Always Visible");
-        fixCheckBox = new JCheckBox("", false);
-        unfixCheckBox = new JCheckBox("", true);
+        fixCheckBox = new JCheckBoxMenuItem("Lock column", false);
+        unfixCheckBox = new JCheckBoxMenuItem("Unlock column", true);
         showAllItem = new JMenuItem("Show all columns");
         hideAllItem = new JMenuItem("Hide all columns");
         addNewColumnItem = new JMenuItem("Add new column");
@@ -141,13 +140,17 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         if (forceAllColumnsVisible == false)
         {
 
-            checkBoxMenu2.add(fixCheckBox);
-            fixMenu.add(checkBoxMenu2);
+            showHideMenu.add(unfixCheckBox);
+            showHideMenu.add(new JPopupMenu.Separator());
+            fixMenu.add(fixCheckBox);
+            fixMenu.add(removeColumnItem);
+            showHideMenu.add(addNewColumnItem);
+            showHideMenu.add(new JPopupMenu.Separator());
             showHideMenu.add(showMenu);
             showHideMenu.add(hideMenu);
             showHideMenu.add(showAllItem);
-            showHideMenu.add(hideAllItem);
-            showHideMenu.add(addNewColumnItem);
+
+
 
 
             mainTable.getTableHeader().addMouseListener(new MouseAdapter()
@@ -161,10 +164,10 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
                         TableColumn clickedColumn = mainTable.getColumnModel().getColumn(mainTable.columnAtPoint(ev.getPoint()));
                         String clickedColumnName = clickedColumn.getHeaderValue().toString();
                         int clickedColumnIndex = indexForEachColumn.get(clickedColumnName);
-                        System.out.println(clickedColumnName);
+                        removeColumnItem.setEnabled(false);
                         if (isErasableEachColumn.get(clickedColumnName) == true)
                         {
-                            fixMenu.add(removeColumnItem);
+                            removeColumnItem.setEnabled(true);
                         }
                         fixMenu.show(ev.getComponent(), ev.getX(), ev.getY());
                         fixCheckBox.addItemListener(new ItemListener()
@@ -186,9 +189,8 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
 
                             }
                         });
-                        if (isErasableEachColumn.get(clickedColumnName) == true)
-                        {
-                            removeColumnItem.addActionListener(new ActionListener()
+
+                        removeColumnItem.addActionListener(new ActionListener()
                             {
 
                                 @Override
@@ -200,9 +202,9 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
                                     fixMenu.setVisible(false);
                                 }
                             });
-                        }
+                            }
 
-                    }
+
 
 
                 }
@@ -222,14 +224,15 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
                         updateHideMenu();
                         TableColumn clickedColumn = fixedTable.getColumnModel().getColumn(fixedTable.columnAtPoint(e.getPoint()));
                         int clickedColumnIndex = fixedTable.getColumnModel().getColumnIndex(clickedColumn.getIdentifier());
-                        if (fixedTable.getColumnModel().getColumnCount() > 1)
+                        hideMenu.setEnabled(true);
+                        unfixCheckBox.setEnabled(true);
+                        if(mainTable.getColumnModel().getColumnCount() <= 1)
                         {
-                            checkBoxMenu.add(unfixCheckBox);
-                            checkBoxMenu.setVisible(true);
-                            showHideMenu.add(checkBoxMenu);
-                        } else
+                           hideMenu.setEnabled(false);
+                        }
+                        if(fixedTable.getColumnModel().getColumnCount() <= 1)
                         {
-                            checkBoxMenu.setVisible(false);
+                            unfixCheckBox.setEnabled(false);
                         }
                         showHideMenu.show(e.getComponent(), e.getX(), e.getY());
                         unfixCheckBox.addItemListener(new ItemListener()
@@ -245,8 +248,6 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
                                     updateShowMenu();
                                     updateHideMenu();
                                     checkNewIndexes();
-                                    checkBoxMenu.removeAll();
-                                    checkBoxMenu.setVisible(false);
                                     showHideMenu.setVisible(false);
                                     unfixCheckBox.setSelected(true);
                                 }
@@ -275,17 +276,20 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
                         {
                             JMenuItem currentItem = shownHeaderItems.get(j);
                             int position = j;
-                            currentItem.addActionListener(new ActionListener()
+                            if (mainTable.getColumnModel().getColumnCount() > 1)
                             {
-
-                                @Override
-                                public void actionPerformed(ActionEvent e)
+                                currentItem.addActionListener(new ActionListener()
                                 {
-                                    columnIndexToHide = indexForEachColumn.get(shownColumns.get(position).getHeaderValue().toString());
-                                    String hiddenColumnHeader = hideColumn(columnIndexToHide);
-                                    checkNewIndexes();
-                                }
-                            });
+
+                                    @Override
+                                    public void actionPerformed(ActionEvent e)
+                                    {
+                                        columnIndexToHide = indexForEachColumn.get(shownColumns.get(position).getHeaderValue().toString());
+                                        String hiddenColumnHeader = hideColumn(columnIndexToHide);
+                                        checkNewIndexes();
+                                    }
+                                });
+                            }
                         }
                     }
                 }
@@ -500,20 +504,15 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
 
     public void showAllColumns()
     {
-        int columnIndex = 0;
-        String hiddenColumnName;
-        for (TableColumn tc : hiddenColumns)
-        {
-            hiddenColumnName = tc.getHeaderValue().toString();
-            columnIndex = indexForEachHiddenColumn.get(hiddenColumnName);
-            mainTable.getColumnModel().addColumn(tc);
-            shownColumns.add(tc);
-            indexForEachHiddenColumn.remove(hiddenColumnName, columnIndex);
-
-        }
-
-
+        mainTable.createDefaultColumnsFromModel();
+        recoverHiddenColumns = true;
+        updateTables();
+        checkNewIndexes();
         hiddenColumns.clear();
+        shownColumns.clear();
+        for(int i = 0;i<mainTable.getColumnModel().getColumnCount();i++){
+            shownColumns.add(mainTable.getColumnModel().getColumn(i));
+        }
     }
 
     /**
@@ -652,6 +651,7 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
             shownColumns.add(mainTable.getColumnModel().getColumn(mainTable.getColumnModel().getColumnCount() - 1));
             indexForEachColumn.put(newColumnName, mainTable.getColumnModel().getColumnCount() - 1);
             isErasableEachColumn.put(newColumnName, true);
+            recoverHiddenColumns = false;
             updateTables();
             checkNewIndexes();
         }
@@ -737,23 +737,26 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         }
         if(hiddenColumns.size() > 0)
         {
-            String hiddenColumnName = null;
-            String mainTableColumnName = null;
-            for(TableColumn tc : hiddenColumns)
+            if (recoverHiddenColumns == false)
             {
-                hiddenColumnName = tc.getHeaderValue().toString();
-                System.out.println("Columna a borrar: "+hiddenColumnName);
-                for(int k = 0;k<mainTable.getColumnModel().getColumnCount();k++)
+
+
+                String hiddenColumnName = null;
+                String mainTableColumnName = null;
+                for (TableColumn tc : hiddenColumns)
                 {
-                    mainTableColumnName = mainTable.getColumnModel().getColumn(k).getHeaderValue().toString();
-                    System.out.println("Columna de la main Table: "+mainTableColumnName);
-                    if(hiddenColumnName.equals(mainTableColumnName))
+                    hiddenColumnName = tc.getHeaderValue().toString();
+                    for (int k = 0; k < mainTable.getColumnModel().getColumnCount(); k++)
                     {
-                        mainTable.getColumnModel().removeColumn(mainTable.getColumnModel().getColumn(k));
-                        System.out.println("Borrada la columna: "+mainTableColumnName);
+                        mainTableColumnName = mainTable.getColumnModel().getColumn(k).getHeaderValue().toString();
+                        if (hiddenColumnName.equals(mainTableColumnName))
+                        {
+                            mainTable.getColumnModel().removeColumn(mainTable.getColumnModel().getColumn(k));
+                        }
                     }
                 }
             }
+
         }
     }
 
