@@ -517,10 +517,11 @@
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
+                                <phase>package</phase>
                                 <configuration>
                                     <target>
                                         <delete dir="${project.build.directory}"
-                                                includes="*.jar net2plan-0.4.0-Net2Plan-src.zip"/>
+                                                includes="*.jar net2plan-${project.version}-Net2Plan-src.zip"/>
                                         <delete dir="${project.build.directory}/colt"/>
                                         <delete dir="${project.basedir}/src/main/resources/lib"/>
                                     </target>

@@ -33,3 +33,5 @@ build.xml
 src/test/
 lib/
 /src/main/resources/lib/
+/net2plan.iml
+/data/
