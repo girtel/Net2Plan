@@ -148,11 +148,11 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
         return netPlanViewTableHeader;
     }
 
-    public ArrayList<String> getNewTableHeaders(){
+    public String[] getCurrentTableHeaders(){
         TableModel tm = this.getModel();
-        ArrayList<String> headers = new ArrayList<>();
+        String[] headers = new String[tm.getColumnCount()];
         for(int i = 0; i < tm.getColumnCount();i++){
-            headers.add(tm.getColumnName(i));
+            headers[i] = tm.getColumnName(i);
         }
         return headers;
     }
@@ -178,19 +178,8 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 if (!networkViewer.isEditable()) return false;
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
-                if (columnIndex == COLUMN_ID) return false;
-                if (columnIndex == COLUMN_INDEX) return false;
-                if (columnIndex == COLUMN_INGRESSNODE) return false;
-                if (columnIndex == COLUMN_EGRESSNODE) return false;
-                if (columnIndex == COLUMN_COUPLEDTOLINK) return false;
-                if (columnIndex == COLUMN_CARRIEDTRAFFIC) return false;
-                if (columnIndex == COLUMN_LOSTTRAFFIC) return false;
-                if (columnIndex == COLUMN_ROUTINGCYCLES) return false;
-                if (columnIndex == COLUMN_BIFURCATED) return false;
-                if (columnIndex == COLUMN_NUMROUTES) return false;
-                if (columnIndex == COLUMN_MAXE2ELATENCY) return false;
-                if (columnIndex == COLUMN_ATTRIBUTES) return false;
-                return true;
+
+                return columnIndex == COLUMN_OFFEREDTRAFFIC || columnIndex >= netPlanViewTableHeader.length;
             }
 
             @Override

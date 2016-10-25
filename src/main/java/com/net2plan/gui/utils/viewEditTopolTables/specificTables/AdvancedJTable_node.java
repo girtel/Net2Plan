@@ -137,11 +137,11 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
         return allNodeData;
     }
 
-    public ArrayList<String> getNewTableHeaders(){
+    public String[] getCurrentTableHeaders(){
         TableModel tm = this.getModel();
-        ArrayList<String> headers = new ArrayList<>();
+        String[] headers = new String[tm.getColumnCount()];
         for(int i = 0; i < tm.getColumnCount();i++){
-            headers.add(tm.getColumnName(i));
+            headers[i] = tm.getColumnName(i);
         }
         return headers;
     }
@@ -175,19 +175,9 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 if (!networkViewer.isEditable()) return false;
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
-                if (columnIndex == COLUMN_ID) return false;
-                if (columnIndex == COLUMN_INDEX) return false;
-                if (columnIndex == COLUMN_OUTLINKS) return false;
-                if (columnIndex == COLUMN_INLINKS) return false;
-                if (columnIndex == COLUMN_INGRESSTRAFFIC) return false;
-                if (columnIndex == COLUMN_EGRESSTRAFFIC) return false;
-                if (columnIndex == COLUMN_TRAVERSINGTRAFFIC) return false;
-                if (columnIndex == COLUMN_INGRESSMULTICASTTRAFFIC) return false;
-                if (columnIndex == COLUMN_EGRESSMULTICASTTRAFFIC) return false;
-                if (columnIndex == COLUMN_SRGS) return false;
-                if (columnIndex == COLUMN_ATTRIBUTES) return false;
 
-                return true;
+                return columnIndex == COLUMN_SHOWHIDE || columnIndex == COLUMN_NAME || columnIndex == COLUMN_STATE || columnIndex == COLUMN_XCOORD
+                        || columnIndex == COLUMN_YCOORD || columnIndex >= netPlanViewTableHeader.length;
             }
 
             @Override

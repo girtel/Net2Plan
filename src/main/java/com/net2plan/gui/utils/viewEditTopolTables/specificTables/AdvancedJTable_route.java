@@ -182,11 +182,11 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         return netPlanViewTableHeader;
     }
 
-    public ArrayList<String> getNewTableHeaders(){
+    public String[] getCurrentTableHeaders(){
         TableModel tm = this.getModel();
-        ArrayList<String> headers = new ArrayList<>();
+        String[] headers = new String[tm.getColumnCount()];
         for(int i = 0; i < tm.getColumnCount();i++){
-            headers.add(tm.getColumnName(i));
+            headers[i] = tm.getColumnName(i);
         }
         return headers;
     }
@@ -212,21 +212,9 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 if (!networkViewer.isEditable()) return false;
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
-                if (columnIndex == COLUMN_ID) return false;
-                if (columnIndex == COLUMN_INDEX) return false;
-                if (columnIndex == COLUMN_DEMAND) return false;
-                if (columnIndex == COLUMN_INGRESSNODE) return false;
-                if (columnIndex == COLUMN_EGRESSNODE) return false;
-                if (columnIndex == COLUMN_DEMANDOFFEREDTRAFFIC) return false;
-                if (columnIndex == COLUMN_SEQUENCEOFLINKS) return false;
-                if (columnIndex == COLUMN_SEQUENCEOFNODES) return false;
-                if (columnIndex == COLUMN_NUMHOPS) return false;
-                if (columnIndex == COLUMN_LENGTH) return false;
-                if (columnIndex == COLUMN_PROPDELAY) return false;
-                if (columnIndex == COLUMN_BOTTLENECKUTILIZATION) return false;
-                if (columnIndex == COLUMN_BACKUPSEGMENTS) return false;
-                if (columnIndex == COLUMN_ATTRIBUTES) return false;
-                return true;
+
+                return columnIndex == COLUMN_CARRIEDTRAFFIC || columnIndex == COLUMN_OCCUPIEDCAPACITY
+                        || columnIndex >= netPlanViewTableHeader.length;
             }
 
             @Override

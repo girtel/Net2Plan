@@ -735,6 +735,26 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
 
 
         }
+        if(hiddenColumns.size() > 0)
+        {
+            String hiddenColumnName = null;
+            String mainTableColumnName = null;
+            for(TableColumn tc : hiddenColumns)
+            {
+                hiddenColumnName = tc.getHeaderValue().toString();
+                System.out.println("Columna a borrar: "+hiddenColumnName);
+                for(int k = 0;k<mainTable.getColumnModel().getColumnCount();k++)
+                {
+                    mainTableColumnName = mainTable.getColumnModel().getColumn(k).getHeaderValue().toString();
+                    System.out.println("Columna de la main Table: "+mainTableColumnName);
+                    if(hiddenColumnName.equals(mainTableColumnName))
+                    {
+                        mainTable.getColumnModel().removeColumn(mainTable.getColumnModel().getColumn(k));
+                        System.out.println("Borrada la columna: "+mainTableColumnName);
+                    }
+                }
+            }
+        }
     }
 
     @Override

@@ -228,11 +228,11 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
         return netPlanViewTableHeader;
     }
 
-    public ArrayList<String> getNewTableHeaders(){
+    public String[] getCurrentTableHeaders(){
         TableModel tm = this.getModel();
-        ArrayList<String> headers = new ArrayList<>();
+        String[] headers = new String[tm.getColumnCount()];
         for(int i = 0; i < tm.getColumnCount();i++){
-            headers.add(tm.getColumnName(i));
+            headers[i] = tm.getColumnName(i);
         }
         return headers;
     }
