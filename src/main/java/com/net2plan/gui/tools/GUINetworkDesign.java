@@ -391,7 +391,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
                 long layer = netPlan.getNetworkLayerDefault().getId();
                 for (Node auxNode : netPlan.getNodes())
                 {
-                    if (auxNode.equals(nodeId)) continue;
+                    if (auxNode.getId() == nodeId) continue;
 
                     String auxNodeName = auxNode.getName() == null ? "" : auxNode.getName();
                     String auxNodeString = Long.toString(auxNode.getId()) + (auxNodeName.isEmpty() ? "" : " (" + auxNodeName + ")");
