@@ -17,6 +17,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.*;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
@@ -42,6 +43,7 @@ import com.net2plan.internal.Constants.DialogType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.ITopologyCanvas;
+import javafx.event.*;
 
 /**
  * <p>Wrapper class for the graph canvas.</p>
@@ -203,24 +205,28 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         viewPopUp = new JPopupMenu();
 
         it_topology = new JMenuItem("View network state window");
+        it_topology.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
         it_topology.addActionListener(e ->
         {
             WindowController.showTopologyWindow();
         });
 
         it_report = new JMenuItem("View report window");
+        it_report.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_2, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
         it_report.addActionListener(e ->
         {
             WindowController.showReportWindow();
         });
 
         it_offline = new JMenuItem("View offline design window");
+        it_offline.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_3, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
         it_offline.addActionListener(e ->
         {
             WindowController.showOfflineWindow();
         });
 
         it_online = new JMenuItem("View online simulation window");
+        it_online.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_4, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
         it_online.addActionListener(e ->
         {
             WindowController.showOnlineWindow();
