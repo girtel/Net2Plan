@@ -48,19 +48,16 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
     private final JTable fixedTable;
     private final JScrollPane scrollPane;
     private final JPopupMenu showHideMenu, fixMenu;
-    private final JPanel errorPane;
     private final JMenu showMenu, hideMenu;
-    private final JMenuItem showAllItem, hideAllItem, addNewColumnItem, removeColumnItem;
+    private final JMenuItem showAllItem, hideAllItem;
     private final ArrayList<String> removedColumnsNames;
     private final ArrayList<TableColumn> hiddenColumns, shownColumns;
     private final Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn;
-    private final Map<String, Boolean> isErasableEachColumn;
     private int frozenColumns;
-    private JCheckBoxMenuItem fixCheckBox, unfixCheckBox;
+    private JCheckBoxMenuItem fixCheckBox, unfixCheckBox, addAttributeColumn;
     private int columnIndexToHide;
     private ArrayList<JMenuItem> hiddenHeaderItems, shownHeaderItems;
     private boolean recoverHiddenColumns;
-    private DialogOption dOption;
 
 
     /**
@@ -114,19 +111,12 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         removedColumnsNames = new ArrayList<>();
         indexForEachColumn = new HashMap<>();
         indexForEachHiddenColumn = new HashMap<>();
-        isErasableEachColumn = new HashMap<>();
-
-        for (int i = 0; i < mainTable.getModel().getColumnCount(); i++)
-        {
-            isErasableEachColumn.put(mainTable.getModel().getColumnName(i), false);
-        }
 
         for (int j = 0; j < mainTable.getColumnModel().getColumnCount(); j++)
         {
             shownColumns.add(mainTable.getColumnModel().getColumn(j));
         }
 
-        errorPane = new JPanel();
         showHideMenu = new JPopupMenu();
         fixMenu = new JPopupMenu();
         showMenu = new JMenu("Show column");
@@ -135,8 +125,7 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         unfixCheckBox = new JCheckBoxMenuItem("Unlock column", true);
         showAllItem = new JMenuItem("Show all columns");
         hideAllItem = new JMenuItem("Hide all columns");
-        addNewColumnItem = new JMenuItem("Add new column");
-        removeColumnItem = new JMenuItem("Remove column");
+        addAttributeColumn = new JCheckBoxMenuItem("Show attributes as columns",false);
 
 
         if (forceAllColumnsVisible == false)
@@ -144,16 +133,15 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
 
             showHideMenu.add(unfixCheckBox);
             showHideMenu.add(new JPopupMenu.Separator());
-            fixMenu.add(fixCheckBox);
-            fixMenu.add(removeColumnItem);
-            showHideMenu.add(addNewColumnItem);
+            showHideMenu.add(addAttributeColumn);
             showHideMenu.add(new JPopupMenu.Separator());
             showHideMenu.add(showMenu);
             showHideMenu.add(hideMenu);
             showHideMenu.add(new JPopupMenu.Separator());
             showHideMenu.add(showAllItem);
+            showHideMenu.add(hideAllItem);
 
-
+            fixMenu.add(fixCheckBox);
 
 
             mainTable.getTableHeader().addMouseListener(new MouseAdapter()
@@ -167,10 +155,10 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
                         TableColumn clickedColumn = mainTable.getColumnModel().getColumn(mainTable.columnAtPoint(ev.getPoint()));
                         String clickedColumnName = clickedColumn.getHeaderValue().toString();
                         int clickedColumnIndex = indexForEachColumn.get(clickedColumnName);
-                        removeColumnItem.setEnabled(false);
-                        if (isErasableEachColumn.get(clickedColumnName) == true)
+                        fixCheckBox.setEnabled(true);
+                        if(mainTable.getColumnModel().getColumnCount() <= 1)
                         {
-                            removeColumnItem.setEnabled(true);
+                            fixCheckBox.setEnabled(false);
                         }
                         fixMenu.show(ev.getComponent(), ev.getX(), ev.getY());
                         fixCheckBox.addItemListener(new ItemListener()
@@ -193,22 +181,7 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
                             }
                         });
 
-                        removeColumnItem.addActionListener(new ActionListener()
-                            {
-
-                                @Override
-                                public void actionPerformed(ActionEvent e)
-                                {
-                                    removeColumn(clickedColumn);
-                                    checkNewIndexes();
-                                    fixMenu.setVisible(false);
-                                }
-                            });
                             }
-
-
-
-
                 }
             });
             fixedTable.getTableHeader().addMouseListener(new MouseAdapter()
@@ -321,13 +294,13 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
 
                 }
             });
-            addNewColumnItem.addActionListener(new ActionListener()
+            addAttributeColumn.addActionListener(new ActionListener()
             {
 
                 @Override
                 public void actionPerformed(ActionEvent e)
                 {
-                    addNewColumn();
+                    addAttributeColumn();
                     checkNewIndexes();
                 }
             });
@@ -527,13 +500,13 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
     {
         TableColumn columnToHide = null;
         String hiddenColumnHeader = null;
-        while (mainTable.getColumnModel().getColumnCount() > 0)
+        while (mainTable.getColumnModel().getColumnCount() > 1)
         {
-            columnToHide = mainTable.getColumnModel().getColumn(0);
-            columnIndexToHide = indexForEachColumn.get(shownColumns.get(0).getHeaderValue().toString());
+            columnToHide = mainTable.getColumnModel().getColumn(1);
+            columnIndexToHide = indexForEachColumn.get(shownColumns.get(1).getHeaderValue().toString());
             hiddenColumnHeader = columnToHide.getHeaderValue().toString();
             hiddenColumns.add(columnToHide);
-            indexForEachHiddenColumn.put(hiddenColumnHeader, 0);
+            indexForEachHiddenColumn.put(hiddenColumnHeader, 1);
             mainTable.getColumnModel().removeColumn(columnToHide);
             shownColumns.remove(columnToHide);
         }
@@ -623,29 +596,13 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
      * @param
      */
 
-    public void addNewColumn()
+    public void addAttributeColumn()
     {
 
-        dOption = new DialogOption();
+        //HABRÁ QUE IMPLEMENTARLO PARA AÑADIR LAS COLUMNAS DE ATTRIBUTES
+        JOptionPane.showMessageDialog(new JPanel(),"This will be available in Net2Plan 0.5.0");
 
 
-    }
-
-    /**
-     * Remove one column from mainTable
-     *
-     * @param columnToRemove Column to remove in mainTable
-     */
-
-    public void removeColumn(TableColumn columnToRemove)
-    {
-
-        mainTable.getColumnModel().removeColumn(columnToRemove);
-        shownColumns.remove(columnToRemove);
-        boolean flagToRemove = isErasableEachColumn.get(columnToRemove.getHeaderValue().toString());
-        removedColumnsNames.add(columnToRemove.getHeaderValue().toString());
-        isErasableEachColumn.remove(columnToRemove.getHeaderValue().toString(), flagToRemove);
-        checkNewIndexes();
     }
 
     /**
@@ -1055,113 +1012,4 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         }
     }
 
-    private class DialogOption extends JDialog{
-        private final JPanel panelDialog = new JPanel();
-        private final JButton addColumnButton = new JButton("Add column");
-        private final JLabel addColumnLabelName = new JLabel("Column name: ");
-        private final JLabel addColumnLabelType = new JLabel("Column type: ");
-        private final JTextField setNewColumnName = new JTextField();
-        private final JRadioButton chooseTextOption = new JRadioButton("Text");
-        private final JRadioButton chooseBooleanOption = new JRadioButton("Boolean");
-        private String columnName;
-        private String columnType = "Text";
-        public DialogOption(){
-            super();
-            this.setTitle("Add Column");
-            this.setLayout(new BorderLayout());
-            panelDialog.setLayout(new GridLayout(8,8));
-            panelDialog.add(addColumnLabelName);
-            panelDialog.add(setNewColumnName);
-            panelDialog.add(addColumnLabelType);
-            panelDialog.add(chooseTextOption);
-            panelDialog.add(chooseBooleanOption);
-            this.add(addColumnButton,BorderLayout.SOUTH);
-            this.add(panelDialog,BorderLayout.CENTER);
-            chooseTextOption.setSelected(true);
-            chooseTextOption.addItemListener(new ItemListener(){
-
-                @Override
-                public void itemStateChanged(ItemEvent e)
-                {
-                    if(chooseTextOption.isSelected())
-                    {
-                        columnType = "Text";
-                        chooseBooleanOption.setSelected(false);
-                    }
-
-                }
-            });
-            chooseBooleanOption.addItemListener(new ItemListener(){
-
-                @Override
-                public void itemStateChanged(ItemEvent e)
-                {
-                    if(chooseBooleanOption.isSelected())
-                    {
-                        columnType = "Boolean";
-                        chooseTextOption.setSelected(false);
-                    }
-
-                }
-            });
-            addColumnButton.addActionListener(new ActionListener(){
-
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    columnName = setNewColumnName.getText();
-                    DefaultTableModel dtm = (DefaultTableModel) mainTable.getModel();
-                    boolean equalityBoolean = false;
-                    for(int i = 0;i<mainTable.getColumnModel().getColumnCount();i++)
-                    {
-                        if(mainTable.getColumnModel().getColumn(i).getHeaderValue().toString().equals(columnName))
-                        {
-                            equalityBoolean = true;
-                        }
-                    }
-                    if(equalityBoolean == false)
-                    {
-                        Object[] newColumnDefaultData = new Object[mainTable.getModel().getRowCount()];
-                        if (columnType.equals("Text"))
-                        {
-                            for (int j = 0; j < newColumnDefaultData.length; j++)
-                            {
-                                newColumnDefaultData[j] = "-";
-                            }
-                        } else
-                        {
-                            for (int j = 0; j < newColumnDefaultData.length; j++)
-                            {
-                                newColumnDefaultData[j] = false;
-                            }
-                        }
-                        dtm.addColumn(columnName, newColumnDefaultData);
-                        mainTable.setModel(dtm);
-                        mainTable.createDefaultColumnsFromModel();
-                        shownColumns.add(mainTable.getColumnModel().getColumn(mainTable.getColumnModel().getColumnCount() - 1));
-                        indexForEachColumn.put(columnName, mainTable.getColumnModel().getColumnCount() - 1);
-                        isErasableEachColumn.put(columnName, true);
-                        recoverHiddenColumns = false;
-                        updateTables();
-                        checkNewIndexes();
-                    }
-                    else{
-                        JOptionPane.showMessageDialog(errorPane,"Error, a column with this name has been already added");
-                    }
-                    dispose();
-                }
-            });
-            this.setSize(400,300);
-            this.setLocationRelativeTo(null);
-            this.setResizable(false);
-            this.setVisible(true);
-
-        }
-        public String getNewColumnName(){
-            return columnName;
-        }
-        public String getNewColumnType(){
-            return columnType;
-        }
-    }
 }
