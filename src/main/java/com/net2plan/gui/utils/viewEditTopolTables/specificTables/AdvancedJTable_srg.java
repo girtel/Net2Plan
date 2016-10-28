@@ -702,10 +702,6 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
         JScrollPane nodeScrollPane = new JScrollPane(nodeTable);
         JScrollPane linkScrollPane = new JScrollPane(linkTable);
 
-        FixedColumnDecorator nodeDecorator = new FixedColumnDecorator(nodeScrollPane, 1, false);
-        FixedColumnDecorator linkDecorator = new FixedColumnDecorator(linkScrollPane, 1, false);
-        nodeDecorator.getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
-        linkDecorator.getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
 
         final JDialog dialog = new JDialog();
         dialog.setLayout(new MigLayout("", "[grow]", "[][grow][][grow]"));

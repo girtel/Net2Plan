@@ -5,19 +5,20 @@ import java.awt.Component;
 import java.awt.LayoutManager;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseEvent;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.RowFilter;
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter.CurrentAndPlannedStateTableCellValue;
+import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
@@ -84,9 +85,20 @@ public class ViewEditTopologyTablesPane extends JPanel
                 JScrollPane scrollPane = new JScrollPane(netPlanViewTable.get(elementType));
                 scrollPane.setLayout(new FullScrollPaneLayout());
                 scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-                FixedColumnDecorator decorator = new FixedColumnDecorator(scrollPane, ((AdvancedJTableNetworkElement) netPlanViewTable.get(elementType)).getNumFixedLeftColumnsInDecoration(), false);
-                decorator.getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
-                netPlanViewTableDecorator.put(elementType, decorator);
+                if(netPlanViewTable.get(elementType) instanceof AdvancedJTableNetworkElement)
+                {
+                    scrollPane.setRowHeaderView(((AdvancedJTableNetworkElement) netPlanViewTable.get(elementType)).getFixedTable());
+                    scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER, ((AdvancedJTableNetworkElement) netPlanViewTable.get(elementType)).getFixedTable().getTableHeader());
+                    scrollPane.getRowHeader().addChangeListener(new ChangeListener(){
+
+                        @Override
+                        public void stateChanged(ChangeEvent e)
+                        {
+                            JViewport viewport = (JViewport) e.getSource();
+                            scrollPane.getVerticalScrollBar().setValue(viewport.getViewPosition().y);
+                        }
+                    });
+                }
                 netPlanViewTableComponent.put(elementType, scrollPane);
             }
         }

@@ -68,7 +68,7 @@ public class AdvancedJTable extends JTable {
     public AdvancedJTable() {
         super();
 
-        getTableHeader().setReorderingAllowed(true);
+
         setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         addKeyListener(new TableCursorNavigation());
         cellEditorMap = new LinkedHashMap<Pair<Integer, Integer>, TableCellEditor>();
@@ -76,6 +76,7 @@ public class AdvancedJTable extends JTable {
         tooltipMap = new LinkedHashMap<Pair<Integer, Integer>, String>();
 
         disableSetAutoResizeMode = true;
+        this.getTableHeader().setReorderingAllowed(false);
     }
 
     /**
@@ -88,7 +89,7 @@ public class AdvancedJTable extends JTable {
         this();
 
         setModel(model);
-        getTableHeader().setReorderingAllowed(true);
+        this.getTableHeader().setReorderingAllowed(false);
 
 
 

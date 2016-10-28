@@ -16,6 +16,7 @@ import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import com.net2plan.gui.utils.*;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -33,6 +34,8 @@ import net.miginfocom.swing.MigLayout;
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -652,9 +655,9 @@ public final class GUITrafficDesign extends IGUIModule {
         aux3.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Topology information"));
 
         final JScrollPane pane = new JScrollPane(table);
+
+
         aux3.add(pane, "grow, wrap");
-        FixedColumnDecorator decorator = new FixedColumnDecorator(pane, 1, true);
-        decorator.getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
 
         new FileDrop(pane, new LineBorder(Color.BLACK), new FileDrop.Listener() {
             @Override
@@ -732,6 +735,7 @@ public final class GUITrafficDesign extends IGUIModule {
         aux4.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Level matrix"));
 
         JScrollPane levelMatrixPane = new JScrollPane(levelMatrixTable);
+
         aux4.add(levelMatrixPane, "grow");
 
         pnl_popDistBasedTrafficModelPattern.add(aux1, "align left, spanx 2, wrap");
@@ -935,8 +939,6 @@ public final class GUITrafficDesign extends IGUIModule {
             }
         });
 
-        FixedColumnDecorator decorator = new FixedColumnDecorator(pane, 1, true);
-        decorator.getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
 
         return pane;
     }
@@ -948,8 +950,9 @@ public final class GUITrafficDesign extends IGUIModule {
         table.setDefaultRenderer(Number.class, new TotalRowColumnRenderer());
         table.setDefaultRenderer(Integer.class, new TotalRowColumnRenderer());
         table.setDefaultRenderer(String.class, new TotalRowColumnRenderer());
-
         return table;
+
+
     }
 
     private int getNumberOfTrafficMatrices() {
@@ -1468,7 +1471,8 @@ public final class GUITrafficDesign extends IGUIModule {
                         JTable gravityModelTable = new AdvancedJTable(gravityModelTableModel);
 
                         JPanel gravityModelPanel = new JPanel();
-                        gravityModelPanel.add(new JScrollPane(gravityModelTable));
+                        JScrollPane gPane = new JScrollPane(gravityModelTable);
+                        gravityModelPanel.add(gPane);
 
                         double[] ingressTrafficPerNode = new double[N];
                         double[] egressTrafficPerNode = new double[N];
@@ -1717,9 +1721,9 @@ public final class GUITrafficDesign extends IGUIModule {
                     model.setDataVector(data, header);
 
                     JTable table = new AdvancedJTable(model);
-
+                    JScrollPane sPane = new JScrollPane(table);
                     JPanel pane = new JPanel();
-                    pane.add(new JScrollPane(table));
+                    pane.add(sPane);
 
                     int result = JOptionPane.showConfirmDialog(null, pane, option == 2 ? "Please enter total ingress traffic per node (one value per row)" : "Please enter total egress traffic per node (one value per row)", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                     if (result != JOptionPane.OK_OPTION) return;

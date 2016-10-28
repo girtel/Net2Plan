@@ -446,7 +446,6 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
         RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
         table.setRowSorter(sorter);
         JScrollPane scrollPane = new JScrollPane(table);
-        new FixedColumnDecorator(scrollPane, 1, true);
         dialog.add(scrollPane, "grow");
 
         PriorityQueue<SimEvent> futureEventList = simKernel.getSimCore().getFutureEventList().getPendingEvents();

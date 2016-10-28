@@ -108,8 +108,7 @@ public class NetPlanViewTableComponent_network extends JPanel {
 
 //		layerTable.addMouseListener(new PopupMenuNetPlan(networkViewer, networkViewer.getTopologyPanel(), layerTable.getModel(), NetworkElementType.LAYER, networkViewer.isEditable()));
 //
-        FixedColumnDecorator decorator = new FixedColumnDecorator(scrollPane1, layerTable.getNumFixedLeftColumnsInDecoration(), false);
-        decorator.getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
+
 
 //		netPlanViewTableComponent.put(NetworkElementType.LAYER, scrollPane1);
 

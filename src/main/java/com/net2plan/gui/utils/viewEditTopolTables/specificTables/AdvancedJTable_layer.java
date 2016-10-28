@@ -63,6 +63,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
         super(createTableModel(networkViewer), networkViewer, NetworkElementType.LAYER);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
+        this.getTableHeader().setReorderingAllowed(false);
 
         if (networkViewer.inOnlineSimulationMode()) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
         else setAutoCreateRowSorter(true);
