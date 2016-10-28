@@ -317,14 +317,12 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                 }
             });
-            addAttributeColumn.addActionListener(new ActionListener()
-            {
+            addAttributeColumn.addItemListener(new ItemListener(){
 
                 @Override
-                public void actionPerformed(ActionEvent e)
+                public void itemStateChanged(ItemEvent e)
                 {
-                    addAttributeColumn();
-                    checkNewIndexes();
+                    //A realizar
                 }
             });
             mainTable.getColumnModel().addColumnModelListener(new TableColumnModelListener()
@@ -404,22 +402,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
     }
 
-    /**
-     * When a column is moved into mainTable,
-     * we have to know which are the new indexes and update indexForEachColumn
-     *
-     * @param
-     */
 
-    private void checkNewIndexes()
-    {
-        indexForEachColumn.clear();
-        for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
-        {
-            indexForEachColumn.put(mainTable.getColumnModel().getColumn(i).getHeaderValue().toString(), i);
-        }
-
-    }
 
     /**
      * Show all columns which are hidden
@@ -542,15 +525,34 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     /**
      * Add a new column at the end of mainTable
      *
-     * @param
+     * @param newColumnName Name of the new column
+     * @param isBooleanColumn true if column will have checkboxes, false if column will have text cells
      */
 
-    public void addAttributeColumn()
+    public void addNewColumn(String newColumnName, boolean isBooleanColumn)
     {
 
-        //HABRÁ QUE IMPLEMENTARLO PARA AÑADIR LAS COLUMNAS DE ATTRIBUTES
-        JOptionPane.showMessageDialog(new JPanel(),"This will be available in Net2Plan 0.5.0");
-
+        DefaultTableModel dtm = (DefaultTableModel) mainTable.getModel();
+        Object [] DefaultData = new Object[mainTable.getModel().getRowCount()];
+        if(isBooleanColumn)
+        {
+            for(int i = 0;i<DefaultData.length;i++)
+            {
+                DefaultData[i] = false;
+            }
+        }
+        else
+            {
+                for(int i = 0;i<DefaultData.length;i++)
+                {
+                    DefaultData[i] = ".";
+                }
+            }
+        dtm.addColumn(newColumnName,DefaultData);
+        mainTable.setModel(dtm);
+        mainTable.createDefaultColumnsFromModel();
+        updateTables();
+        checkNewIndexes();
 
     }
 
@@ -637,6 +639,23 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 }
             }
 
+        }
+
+    }
+
+    /**
+     * When a column is moved into mainTable,
+     * we have to know which are the new indexes and update indexForEachColumn
+     *
+     * @param
+     */
+
+    private void checkNewIndexes()
+    {
+        indexForEachColumn.clear();
+        for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
+        {
+            indexForEachColumn.put(mainTable.getColumnModel().getColumn(i).getHeaderValue().toString(), i);
         }
 
     }
