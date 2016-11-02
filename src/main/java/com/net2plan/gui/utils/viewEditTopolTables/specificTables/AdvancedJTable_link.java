@@ -103,7 +103,32 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
     }
 
-    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState) {
+    @Override
+    public void attributesInDifferentColumns()
+    {
+
+    }
+
+    @Override
+    public void attributesInOneColumn()
+    {
+
+    }
+
+    @Override
+    public boolean areAttributesInDifferentColums()
+    {
+        return false;
+    }
+
+    @Override
+    public ArrayList<String> getAttributesColumnsHeaders()
+    {
+        return null;
+    }
+
+
+    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
         double max_rho_e = 0;
         for (Link link : currentState.getLinks())
             max_rho_e = Math.max(max_rho_e, link.getOccupiedCapacityIncludingProtectionSegments() / link.getCapacity());

@@ -92,7 +92,32 @@ public class AdvancedJTable_segment extends AdvancedJTableNetworkElement {
 
     }
 
-    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState) {
+    @Override
+    public void attributesInDifferentColumns()
+    {
+
+    }
+
+    @Override
+    public void attributesInOneColumn()
+    {
+
+    }
+
+    @Override
+    public boolean areAttributesInDifferentColums()
+    {
+        return false;
+    }
+
+    @Override
+    public ArrayList<String> getAttributesColumnsHeaders()
+    {
+        return null;
+    }
+
+
+    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
         final boolean sameRoutingType = initialState != null && initialState.getRoutingType() == currentState.getRoutingType();
         List<Object[]> allSegmentData = new LinkedList<Object[]>();
         for (ProtectionSegment segment : currentState.getProtectionSegments()) {

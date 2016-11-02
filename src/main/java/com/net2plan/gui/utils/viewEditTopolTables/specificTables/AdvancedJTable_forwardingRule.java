@@ -70,7 +70,31 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
     }
 
-    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState) {
+    @Override
+    public void attributesInDifferentColumns()
+    {
+
+    }
+
+    @Override
+    public void attributesInOneColumn()
+    {
+
+    }
+
+    @Override
+    public boolean areAttributesInDifferentColums()
+    {
+        return false;
+    }
+
+    @Override
+    public ArrayList<String> getAttributesColumnsHeaders()
+    {
+        return null;
+    }
+
+    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
         final boolean sameRoutingType = initialState != null && initialState.getRoutingType() == currentState.getRoutingType();
         Map<Pair<Demand, Link>, Double> forwardingRules = currentState.getForwardingRules();
         Set<Pair<Demand, Link>> demandLinkPairs = forwardingRules.keySet();

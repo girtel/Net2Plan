@@ -122,11 +122,12 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
      * @param title Title of the tool (null or empty means no title)
      * @since 0.2.0
      */
-    public GUINetworkDesign(String title) {
+    public GUINetworkDesign(String title)
+    {
         super(title);
     }
 
-//    public boolean allowLoadTrafficDemands() 
+//    public boolean allowLoadTrafficDemands()
 //    {
 //        return true;
 //    }
@@ -429,6 +430,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
     @Override
     public void loadDesign(NetPlan netPlan) {
+        viewEditTopTables.resetTables();
         netPlan.checkCachesConsistency();
         if (onlineSimulationPane != null) onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
    		currentNetPlan = netPlan;

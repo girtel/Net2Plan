@@ -95,7 +95,32 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
     }
 
-    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState) {
+
+    @Override
+    public void attributesInDifferentColumns()
+    {
+
+    }
+
+    @Override
+    public void attributesInOneColumn()
+    {
+
+    }
+
+    @Override
+    public boolean areAttributesInDifferentColums()
+    {
+        return false;
+    }
+
+    @Override
+    public ArrayList<String> getAttributesColumnsHeaders()
+    {
+        return null;
+    }
+
+    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
         NetworkLayer layer = currentState.getNetworkLayerDefault();
         List<Object[]> allSRGData = new LinkedList<Object[]>();
         for (SharedRiskGroup srg : currentState.getSRGs()) {
@@ -172,6 +197,9 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
         }
         return headers;
     }
+
+
+
 
     public String[] getTableTips() {
         return netPlanViewTableTips;

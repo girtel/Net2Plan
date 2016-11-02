@@ -83,7 +83,32 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
 
     }
 
-    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState) {
+    @Override
+    public void attributesInDifferentColumns()
+    {
+
+    }
+
+    @Override
+    public void attributesInOneColumn()
+    {
+
+    }
+
+    @Override
+    public boolean areAttributesInDifferentColums()
+    {
+        return false;
+    }
+
+    @Override
+    public ArrayList<String> getAttributesColumnsHeaders()
+    {
+        return null;
+    }
+
+
+    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
         List<Object[]> allTreeData = new LinkedList<Object[]>();
         for (MulticastTree tree : currentState.getMulticastTrees()) {
             MulticastDemand demand = tree.getMulticastDemand();

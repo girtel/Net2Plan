@@ -28,6 +28,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.event.*;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
@@ -73,7 +74,12 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Show/Hide", "Name", "State", "xCoord", "yCoord", "Outgoing links", "Incoming links", "Ingress traffic", "Egress traffic", "Traversing traffic","Ingress traffic (multicast)", "Egress traffic (multicast)", "SRGs", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Indicates whether or not the node is visible in the topology canvas", "Node name", "Indicates whether the node is in up/down state", "Coordinate along x-axis (i.e. longitude)", "Coordinate along y-axis (i.e. latitude)", "Outgoing links", "Incoming links", "Total UNICAST traffic entering to the network from this node", "Total UNICAST traffic leaving the network from this node", "UNICAST traffic entering the node, but not targeted to it", "Total MULTICAST traffic entering to the network from this node", "Total MULTICAST traffic leaving the network from this node", "SRGs including this node", "Node-specific attributes");
 
-
+    private final ArrayList<String> attributesColumnsNames;
+    private TableColumn attributesColumn = null;
+    private boolean expandAttributes = false;
+    private List<Node> currentNodes = new LinkedList<>();
+    private NetPlan currentTopology = null;
+    private ArrayList<String> everyAttributesColumnsName = new ArrayList<>();
     /**
      * Default constructor.
      *
@@ -84,14 +90,149 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
+        attributesColumnsNames = new ArrayList<String>();
+
+        this.getModel().addTableModelListener(new TableModelListener(){
+
+            @Override
+            public void tableChanged(TableModelEvent e)
+            {
+                int changedColumn = e.getColumn();
+                if(changedColumn >= COLUMN_ATTRIBUTES)
+                {
+
+                    for(String title : attributesColumnsNames)
+                    {
+                        if(getModel().getColumnName(changedColumn).equals("Att: "+title))
+                        {
+                            for(Node node : currentNodes)
+                            {
+                                node.setAttribute(title,(String)getModel().getValueAt(node.getIndex(),changedColumn));
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
-    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState) {
+
+    @Override
+    public void attributesInDifferentColumns()
+    {
+        expandAttributes = true;
+        attributesColumn = this.getColumnModel().getColumn(getColumnIndexByName("Attributes"));
+        this.removeNewColumn(attributesColumn);
+        currentTopology = networkViewer.getDesign();
+        currentNodes = currentTopology.getNodes();
+        Map<String,String>  nodeAttributes = new HashMap<>();
+        String columnAttHeader = null;
+        attributesColumnsNames.clear();
+
+        for(Node node : currentNodes)
+        {
+            nodeAttributes = node.getAttributes();
+            for (Map.Entry<String, String> entry : nodeAttributes.entrySet())
+            {
+                columnAttHeader = entry.getKey();
+                if(attributesColumnsNames.contains(columnAttHeader) == false)
+                {
+                    attributesColumnsNames.add(columnAttHeader);
+                }
+
+            }
+
+        }
+        if(attributesColumnsNames.size() > 0)
+        {
+            Object[] attColumnsData =  new Object[currentNodes.size()];;
+            for(String title : attributesColumnsNames)
+            {
+                for(Node node : currentNodes)
+                {
+                    nodeAttributes = node.getAttributes();
+                    if(nodeAttributes.containsKey(title))
+                    {
+                        attColumnsData[node.getIndex()] = nodeAttributes.get(title);
+                    }
+                    else{
+                        attColumnsData[node.getIndex()] = "null";
+                    }
+                }
+                if(!everyAttributesColumnsName.contains(title))
+                {
+                    addNewColumn("Att: "+title, attColumnsData);
+                }
+                else{
+                    recoverRemovedColumn("Att: "+title);
+                    for(int j = 0;j<attColumnsData.length;j++)
+                    {
+                        int columnToModify = 0;
+                        for(int k = 0;k< getModel().getColumnCount();k++)
+                        {
+                            if(getModel().getColumnName(k).equals("Att: "+title))
+                            {
+                                columnToModify = k;
+                            }
+                        }
+                        getModel().setValueAt(attColumnsData[j],j,columnToModify);
+                    }
+
+                }
+
+            }
+
+            for (Map.Entry<String, String> entry : nodeAttributes.entrySet())
+            {
+                columnAttHeader = entry.getKey();
+                if(everyAttributesColumnsName.contains(columnAttHeader) == false)
+                {
+                    everyAttributesColumnsName.add(columnAttHeader);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void attributesInOneColumn()
+    {
+        expandAttributes = false;
+        currentTopology = networkViewer.getDesign();
+        currentNodes = currentTopology.getNodes();
+
+        for(String title : attributesColumnsNames)
+        {
+            removeNewColumn(getColumnModel().getColumn(getColumnIndexByName("Att: "+title)));
+
+        }
+        recoverRemovedColumn("Attributes");
+        for(Node node : currentNodes){
+
+            getModel().setValueAt(StringUtils.mapToString(node.getAttributes()),node.getIndex(),COLUMN_ATTRIBUTES);
+        }
+
+
+    }
+
+    @Override
+    public boolean areAttributesInDifferentColums()
+    {
+        return expandAttributes;
+    }
+
+
+    @Override
+    public ArrayList<String> getAttributesColumnsHeaders()
+    {
+        return attributesColumnsNames;
+    }
+
+    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesTitles) {
         List<Object[]> allNodeData = new LinkedList<Object[]>();
         for (Node node : currentState.getNodes()) {
             Set<Link> outgoingLinks = node.getOutgoingLinks();
             Set<Link> incomingLinks = node.getIncomingLinks();
 
-            Object[] nodeData = new Object[netPlanViewTableHeader.length];
+            Object[] nodeData = new Object[netPlanViewTableHeader.length + attributesTitles.size()];
             nodeData[0] = node.getId();
             nodeData[1] = node.getIndex();
             nodeData[2] = topologyPanel.getCanvas().isNodeVisible(node);
@@ -108,6 +249,18 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
             nodeData[13] = node.getEgressOfferedMulticastTraffic();
             nodeData[14] = node.getSRGs().isEmpty() ? "none" : node.getSRGs().size() + " (" + CollectionUtils.join(currentState.getIndexes(node.getSRGs()), ", ") + ")";
             nodeData[15] = StringUtils.mapToString(node.getAttributes());
+
+            for(int i = 16; i < 16 + attributesTitles.size();i++)
+            {
+                if(node.getAttributes().containsKey(attributesTitles.get(i-16)))
+                {
+                    nodeData[i] = node.getAttribute(attributesTitles.get(i-16));
+                }
+                else{
+                    nodeData[i] = "null";
+                }
+
+            }
             allNodeData.add(nodeData);
 
             if (initialState != null && initialState.getNodeFromId(node.getId()) != null) {
@@ -115,7 +268,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                 outgoingLinks = node.getOutgoingLinks();
                 incomingLinks = node.getIncomingLinks();
 
-                Object[] nodeData_initialNetPlan = new Object[netPlanViewTableHeader.length];
+                Object[] nodeData_initialNetPlan = new Object[netPlanViewTableHeader.length + attributesTitles.size()];
                 nodeData_initialNetPlan[0] = null;
                 nodeData_initialNetPlan[1] = null;
                 nodeData_initialNetPlan[2] = null;
@@ -127,10 +280,23 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                 nodeData_initialNetPlan[8] = incomingLinks.isEmpty() ? "none" : incomingLinks.size() + " (" + CollectionUtils.join(incomingLinks, ", ") + ")";
                 nodeData_initialNetPlan[9] = node.getIngressOfferedTraffic();
                 nodeData_initialNetPlan[10] = node.getEgressOfferedTraffic();
-                nodeData_initialNetPlan[11] = node.getIngressOfferedMulticastTraffic();
-                nodeData_initialNetPlan[12] = node.getEgressOfferedMulticastTraffic();
-                nodeData_initialNetPlan[13] = node.getSRGs().isEmpty() ? "none" : node.getSRGs().size() + " (" + CollectionUtils.join(currentState.getIndexes(node.getSRGs()), ", ") + ")";
-                nodeData_initialNetPlan[14] = StringUtils.mapToString(node.getAttributes());
+                nodeData_initialNetPlan[11] = node.getEgressOfferedTraffic() - node.getIngressOfferedTraffic();
+                nodeData_initialNetPlan[12] = node.getIngressOfferedMulticastTraffic();
+                nodeData_initialNetPlan[13] = node.getEgressOfferedMulticastTraffic();
+                nodeData_initialNetPlan[14] = node.getSRGs().isEmpty() ? "none" : node.getSRGs().size() + " (" + CollectionUtils.join(currentState.getIndexes(node.getSRGs()), ", ") + ")";
+                nodeData_initialNetPlan[15] = StringUtils.mapToString(node.getAttributes());
+
+                for(int i = 16; i < 16 + attributesTitles.size();i++)
+                {
+                    if(node.getAttributes().containsKey(attributesTitles.get(i-16)))
+                    {
+                        nodeData_initialNetPlan[i] = node.getAttribute(attributesTitles.get(i-16));
+                    }
+                    else{
+                        nodeData_initialNetPlan[i] = "null";
+                    }
+
+                }
                 allNodeData.add(nodeData_initialNetPlan);
             }
         }
@@ -166,11 +332,24 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
         return new int[]{7, 8};
     }
 
+
     private static TableModel createTableModel(final INetworkCallback networkViewer) {
     	final TopologyPanel topologyPanel = networkViewer.getTopologyPanel();
         TableModel nodeTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
+            public int getColumnIndexByNameFromTableModel(String columnName)
+            {
+                int indexToReturn = 0;
+                for(int i = 0;i<this.getColumnCount();i++)
+                {
+                    if(this.getColumnName(i).equals(columnName))
+                    {
+                        indexToReturn = i;
+                    }
+                }
+                return indexToReturn;
+            }
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 if (!networkViewer.isEditable()) return false;
@@ -273,6 +452,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
     public int getNumFixedLeftColumnsInDecoration() {
         return 2;
     }
+
 
     @Override
     public void doPopup(final MouseEvent e, final int row, final Object itemId) {

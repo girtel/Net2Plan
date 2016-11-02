@@ -69,7 +69,32 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
         else setAutoCreateRowSorter(true);
     }
 
-    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState) {
+    @Override
+    public void attributesInDifferentColumns()
+    {
+
+    }
+
+    @Override
+    public void attributesInOneColumn()
+    {
+
+    }
+
+    @Override
+    public boolean areAttributesInDifferentColums()
+    {
+        return false;
+    }
+
+    @Override
+    public ArrayList<String> getAttributesColumnsHeaders()
+    {
+        return null;
+    }
+
+
+    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
         NetworkLayer layer = currentState.getNetworkLayerDefault();
         List<Object[]> allLayerData = new LinkedList<Object[]>();
         for (NetworkLayer auxLayer : currentState.getNetworkLayers()) {

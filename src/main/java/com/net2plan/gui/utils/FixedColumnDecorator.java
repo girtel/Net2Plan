@@ -77,6 +77,7 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         }
 
         fixedTable.setPreferredScrollableViewportSize(fixedTable.getPreferredSize());
+        fixedTable.setPreferredScrollableViewportSize(fixedTable.getPreferredSize());
         mainTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         fixedTable.setSelectionModel(mainTable.getSelectionModel());
         fixedTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
@@ -341,6 +342,9 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         {
             return getPreferredSize().height < getParent().getHeight();
         }
+
+
+
     }
 
     private class LockedTableSelectLastColumnCellAction extends AbstractAction

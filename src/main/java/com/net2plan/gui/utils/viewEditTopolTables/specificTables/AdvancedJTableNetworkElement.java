@@ -16,27 +16,14 @@ import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.TableColumnModelEvent;
-import javax.swing.event.TableColumnModelListener;
+import javax.swing.event.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.MulticastDemand;
-import com.net2plan.interfaces.networkDesign.MulticastTree;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
-import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
@@ -78,10 +65,9 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     private final JPopupMenu showHideMenu, fixMenu;
     private final JMenu showMenu, hideMenu;
     private final JMenuItem showAllItem, hideAllItem;
-    private final ArrayList<String> removedColumnsNames;
-    private final ArrayList<TableColumn> hiddenColumns, shownColumns;
+    private final ArrayList<TableColumn> hiddenColumns, shownColumns, removedColumns;
     private final Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn;
-    private JCheckBoxMenuItem fixCheckBox, unfixCheckBox, addAttributeColumn;
+    private JCheckBoxMenuItem fixCheckBox, unfixCheckBox, attributesItem;
     private int columnIndexToHide;
     private ArrayList<JMenuItem> hiddenHeaderItems, shownHeaderItems;
     private boolean recoverHiddenColumns;
@@ -133,7 +119,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
         hiddenColumns = new ArrayList<>();
         shownColumns = new ArrayList<>();
-        removedColumnsNames = new ArrayList<>();
+        removedColumns = new ArrayList<>();
         indexForEachColumn = new HashMap<>();
         indexForEachHiddenColumn = new HashMap<>();
 
@@ -150,14 +136,14 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         unfixCheckBox = new JCheckBoxMenuItem("Unlock column", true);
         showAllItem = new JMenuItem("Show all columns");
         hideAllItem = new JMenuItem("Hide all columns");
-        addAttributeColumn = new JCheckBoxMenuItem("Show attributes as columns", false);
+        attributesItem = new JCheckBoxMenuItem("Expand attributes as columns", false);
 
         if (!(this instanceof AdvancedJTable_layer))
         {
 
             showHideMenu.add(unfixCheckBox);
             showHideMenu.add(new JPopupMenu.Separator());
-            showHideMenu.add(addAttributeColumn);
+            showHideMenu.add(attributesItem);
             showHideMenu.add(new JPopupMenu.Separator());
             showHideMenu.add(showMenu);
             showHideMenu.add(hideMenu);
@@ -270,7 +256,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         }
 
 
-                        for (int j = 0; j < indexForEachColumn.size(); j++)
+                        for (int j = 0; j < shownColumns.size(); j++)
                         {
                             JMenuItem currentItem = shownHeaderItems.get(j);
                             int position = j;
@@ -317,12 +303,19 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                 }
             });
-            addAttributeColumn.addItemListener(new ItemListener(){
+            attributesItem.addItemListener(new ItemListener(){
 
                 @Override
                 public void itemStateChanged(ItemEvent e)
                 {
-                    //A realizar
+                    if(attributesItem.isSelected() ==  true)
+                    {
+                        attributesInDifferentColumns();
+                    }
+                    else
+                    {
+                        attributesInOneColumn();
+                    }
                 }
             });
             mainTable.getColumnModel().addColumnModelListener(new TableColumnModelListener()
@@ -350,13 +343,13 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 @Override
                 public void columnMarginChanged(ChangeEvent e)
                 {
-
+                    checkNewIndexes();
                 }
 
                 @Override
                 public void columnSelectionChanged(ListSelectionEvent e)
                 {
-
+                    checkNewIndexes();
                 }
             });
 
@@ -437,7 +430,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         while (mainTable.getColumnModel().getColumnCount() > 1)
         {
             columnToHide = mainTable.getColumnModel().getColumn(1);
-            columnIndexToHide = indexForEachColumn.get(shownColumns.get(1).getHeaderValue().toString());
             hiddenColumnHeader = columnToHide.getHeaderValue().toString();
             hiddenColumns.add(columnToHide);
             indexForEachHiddenColumn.put(hiddenColumnHeader, 1);
@@ -486,7 +478,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
         TableColumn columnToHide = mainTable.getColumnModel().getColumn(columnIndex);
         String hiddenColumnHeader = columnToHide.getHeaderValue().toString();
-        System.out.println(hiddenColumnHeader);
         hiddenColumns.add(columnToHide);
         shownColumns.remove(columnToHide);
         indexForEachHiddenColumn.put(hiddenColumnHeader, columnIndex);
@@ -526,33 +517,20 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      * Add a new column at the end of mainTable
      *
      * @param newColumnName Name of the new column
-     * @param isBooleanColumn true if column will have checkboxes, false if column will have text cells
+     * @param columnData data to insert in the column
      */
 
-    public void addNewColumn(String newColumnName, boolean isBooleanColumn)
+    public void addNewColumn(String newColumnName, Object[] columnData)
     {
 
         DefaultTableModel dtm = (DefaultTableModel) mainTable.getModel();
-        Object [] DefaultData = new Object[mainTable.getModel().getRowCount()];
-        if(isBooleanColumn)
-        {
-            for(int i = 0;i<DefaultData.length;i++)
-            {
-                DefaultData[i] = false;
-            }
-        }
-        else
-            {
-                for(int i = 0;i<DefaultData.length;i++)
-                {
-                    DefaultData[i] = ".";
-                }
-            }
-        dtm.addColumn(newColumnName,DefaultData);
+        dtm.addColumn(newColumnName,columnData);
         mainTable.setModel(dtm);
         mainTable.createDefaultColumnsFromModel();
         updateTables();
         checkNewIndexes();
+        shownColumns.add(mainTable.getColumnModel().getColumn(getColumnIndexByName(newColumnName)));
+
 
     }
 
@@ -598,17 +576,17 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             mainTable.getColumnModel().removeColumn(mainTable.getColumnModel().getColumn(columnIndexesToRemove.get(i) - counter));
             counter = 0;
         }
-        if (removedColumnsNames.size() > 0)
+        if (removedColumns.size() > 0)
         {
-            String columnRemoved = null;
+            TableColumn columnRemoved = null;
             String mainTableColumnToCheck = null;
-            for (int j = 0; j < removedColumnsNames.size(); j++)
+            for (int j = 0; j < removedColumns.size(); j++)
             {
-                columnRemoved = removedColumnsNames.get(j);
+                columnRemoved = removedColumns.get(j);
                 for (int k = 0; k < mainTable.getColumnModel().getColumnCount(); k++)
                 {
                     mainTableColumnToCheck = mainTable.getColumnModel().getColumn(k).getHeaderValue().toString();
-                    if (mainTableColumnToCheck.equals(columnRemoved))
+                    if (mainTableColumnToCheck.equals(columnRemoved.getHeaderValue().toString()))
                     {
                         mainTable.getColumnModel().removeColumn(mainTable.getColumnModel().getColumn(k));
                     }
@@ -659,12 +637,65 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         }
 
     }
+    /**
+     * Remove a column from mainTable
+     *
+     * @param columnToRemove column which is going to be removed
+     */
+
+    public void removeNewColumn(TableColumn columnToRemove)
+    {
+
+            removedColumns.add(columnToRemove);
+            shownColumns.remove(columnToRemove);
+            mainTable.getColumnModel().removeColumn(columnToRemove);
+
+
+    }
+    /**
+     * Recover a removed column and adds it in mainTable
+     *
+     * @param columnToRecoverName column of the column which is going to be recovered
+     */
+
+    public void recoverRemovedColumn(String columnToRecoverName)
+    {
+        TableColumn columnToRecover = null;
+        for(TableColumn tc : removedColumns)
+        {
+            if(tc.getHeaderValue().toString().equals(columnToRecoverName))
+            {
+                columnToRecover = tc;
+            }
+        }
+        removedColumns.remove(columnToRecover);
+        shownColumns.add(columnToRecover);
+        mainTable.getColumnModel().addColumn(columnToRecover);
+    }
+
+    /**
+     * Gets the index of a column
+     *
+     * @param columnName name of the column whose index we want to know
+     */
+    public int getColumnIndexByName(String columnName)
+    {
+
+        return indexForEachColumn.get(columnName);
+    }
+
+
+    public abstract void attributesInDifferentColumns();
+
+    public abstract void attributesInOneColumn();
 
     public JTable getMainTable(){ return mainTable;}
 
     public JTable getFixedTable(){ return fixedTable;}
 
-    public abstract List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState);
+    public abstract boolean areAttributesInDifferentColums();
+
+    public abstract List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesTitles);
 
     public abstract String getTabName();
 
@@ -682,6 +713,8 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
     public abstract int getNumFixedLeftColumnsInDecoration();
 
+    public abstract ArrayList<String> getAttributesColumnsHeaders();
+
     public abstract void doPopup(final MouseEvent e, final int row, final Object itemId);
 
     public abstract void showInCanvas(MouseEvent e, Object itemId);
@@ -697,7 +730,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             return;
         if (hasElements(currentState)) {
             String[] tableHeaders = getCurrentTableHeaders();
-            List<Object[]> allData = getAllData(currentState, networkViewer.getTopologyPanel(), initialState);
+            List<Object[]> allData = getAllData(currentState, networkViewer.getTopologyPanel(), initialState, getAttributesColumnsHeaders());
             setEnabled(true);
             ((DefaultTableModel) getModel()).setDataVector(allData.toArray(new Object[allData.size()][tableHeaders.length]), tableHeaders);
 
@@ -789,6 +822,11 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         String value = txt_value.getText();
                         NetworkElement element = netPlan.getNetworkElement((long) itemId);
                         element.setAttribute(attribute, value);
+                        if(areAttributesInDifferentColums())
+                        {
+                            attributesInOneColumn();
+                            attributesInDifferentColumns();
+                        }
                         break;
                     } catch (Throwable ex) {
                         ErrorHandling.addErrorOrException(ex, getClass());
@@ -964,6 +1002,11 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                     NetworkElement element = netPlan.getNetworkElement((long) itemId);
                     if (element == null) throw new RuntimeException("Bad");
                     element.removeAttribute(attributeToRemove);
+                    if(areAttributesInDifferentColums())
+                    {
+                        attributesInOneColumn();
+                        attributesInDifferentColumns();
+                    }
 
                     networkViewer.updateNetPlanView();
                 } catch (Throwable ex) {
@@ -1009,42 +1052,87 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 case LAYER:
                                     for (NetworkLayer element : netPlan.getNetworkLayers())
                                         element.setAttribute(attribute, value);
-                                    break;
+                                        if(areAttributesInDifferentColums())
+                                         {
+                                        attributesInOneColumn();
+                                        attributesInDifferentColumns();
+                                        }
+                                        break;
 
                                 case NODE:
                                     for (Node element : netPlan.getNodes()) element.setAttribute(attribute, value);
+                                    if(areAttributesInDifferentColums())
+                                    {
+                                        attributesInOneColumn();
+                                        attributesInDifferentColumns();
+                                    }
                                     break;
 
                                 case LINK:
                                     for (Link element : netPlan.getLinks()) element.setAttribute(attribute, value);
+                                    if(areAttributesInDifferentColums())
+                                    {
+                                        attributesInOneColumn();
+                                        attributesInDifferentColumns();
+                                    }
                                     break;
 
                                 case DEMAND:
                                     for (Demand element : netPlan.getDemands()) element.setAttribute(attribute, value);
+                                    if(areAttributesInDifferentColums())
+                                    {
+                                        attributesInOneColumn();
+                                        attributesInDifferentColumns();
+                                    }
                                     break;
 
                                 case MULTICAST_DEMAND:
                                     for (MulticastDemand element : netPlan.getMulticastDemands())
                                         element.setAttribute(attribute, value);
+                                    if(areAttributesInDifferentColums())
+                                    {
+                                        attributesInOneColumn();
+                                        attributesInDifferentColumns();
+                                    }
                                     break;
 
                                 case ROUTE:
                                     for (Route element : netPlan.getRoutes()) element.setAttribute(attribute, value);
+                                    if(areAttributesInDifferentColums())
+                                    {
+                                        attributesInOneColumn();
+                                        attributesInDifferentColumns();
+                                    }
                                     break;
 
                                 case MULTICAST_TREE:
                                     for (MulticastTree element : netPlan.getMulticastTrees())
                                         element.setAttribute(attribute, value);
+                                    if(areAttributesInDifferentColums())
+                                    {
+                                        attributesInOneColumn();
+                                        attributesInDifferentColumns();
+                                    }
                                     break;
 
                                 case PROTECTION_SEGMENT:
                                     for (ProtectionSegment element : netPlan.getProtectionSegments())
                                         element.setAttribute(attribute, value);
+                                    if(areAttributesInDifferentColums())
+                                    {
+                                        attributesInOneColumn();
+                                        attributesInDifferentColumns();
+                                    }
                                     break;
 
                                 case SRG:
                                     for (SharedRiskGroup element : netPlan.getSRGs())
                                         element.setAttribute(attribute, value);
+                                    if(areAttributesInDifferentColums())
+                                    {
+                                        attributesInOneColumn();
+                                        attributesInDifferentColumns();
+                                    }
                                     break;
 
                                 default:
@@ -1174,46 +1262,91 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             case LAYER:
                                 for (long layerId : itemIds)
                                     netPlan.getNetworkLayerFromId(layerId).removeAttribute(attributeToRemove);
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
                                 break;
 
                             case NODE:
                                 for (long nodeId : itemIds)
                                     netPlan.getNodeFromId(nodeId).removeAttribute(attributeToRemove);
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
                                 break;
 
                             case LINK:
                                 for (long linkId : itemIds)
                                     netPlan.getLinkFromId(linkId).removeAttribute(attributeToRemove);
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
                                 break;
 
                             case DEMAND:
                                 for (long demandId : itemIds)
                                     netPlan.getDemandFromId(demandId).removeAttribute(attributeToRemove);
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
                                 break;
 
                             case MULTICAST_DEMAND:
                                 for (long demandId : itemIds)
                                     netPlan.getMulticastDemandFromId(demandId).removeAttribute(attributeToRemove);
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
                                 break;
 
                             case ROUTE:
                                 for (long routeId : itemIds)
                                     netPlan.getRouteFromId(routeId).removeAttribute(attributeToRemove);
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
                                 break;
 
                             case MULTICAST_TREE:
                                 for (long treeId : itemIds)
                                     netPlan.getMulticastTreeFromId(treeId).removeAttribute(attributeToRemove);
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
                                 break;
 
                             case PROTECTION_SEGMENT:
                                 for (long segmentId : itemIds)
                                     netPlan.getProtectionSegmentFromId(segmentId).removeAttribute(attributeToRemove);
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
                                 break;
 
                             case SRG:
                                 for (long srgId : itemIds)
                                     netPlan.getSRGFromId(srgId).removeAttribute(attributeToRemove);
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
                                 break;
 
                             default:
@@ -1242,24 +1375,44 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 Collection<Long> layerIds = netPlan.getNetworkLayerIds();
                                 for (long layerId : layerIds)
                                     netPlan.getNetworkLayerFromId(layerId).removeAllAttributes();
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
 
                                 break;
 
                             case NODE:
                                 Collection<Long> nodeIds = netPlan.getNodeIds();
                                 for (long nodeId : nodeIds) netPlan.getNodeFromId(nodeId).removeAllAttributes();
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
 
                                 break;
 
                             case LINK:
                                 Collection<Long> linkIds = netPlan.getLinkIds();
                                 for (long linkId : linkIds) netPlan.getLinkFromId(linkId).removeAllAttributes();
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
 
                                 break;
 
                             case DEMAND:
                                 Collection<Long> demandIds = netPlan.getDemandIds();
                                 for (long demandId : demandIds) netPlan.getDemandFromId(demandId).removeAllAttributes();
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
 
                                 break;
 
@@ -1267,12 +1420,22 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 Collection<Long> multicastDemandIds = netPlan.getMulticastDemandIds();
                                 for (long demandId : multicastDemandIds)
                                     netPlan.getMulticastDemandFromId(demandId).removeAllAttributes();
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
 
                                 break;
 
                             case ROUTE:
                                 Collection<Long> routeIds = netPlan.getRouteIds();
                                 for (long routeId : routeIds) netPlan.getRouteFromId(routeId).removeAllAttributes();
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
 
                                 break;
 
@@ -1280,6 +1443,11 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 Collection<Long> treeIds = netPlan.getMulticastTreeIds();
                                 for (long treeId : treeIds)
                                     netPlan.getMulticastTreeFromId(treeId).removeAllAttributes();
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
 
                                 break;
 
@@ -1287,12 +1455,22 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 Collection<Long> segmentIds = netPlan.getProtectionSegmentIds();
                                 for (long segmentId : segmentIds)
                                     netPlan.getProtectionSegmentFromId(segmentId).removeAllAttributes();
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
 
                                 break;
 
                             case SRG:
                                 Collection<Long> srgIds = netPlan.getSRGIds();
                                 for (long srgId : srgIds) netPlan.getSRGFromId(srgId).removeAllAttributes();
+                                if(areAttributesInDifferentColums())
+                                {
+                                    attributesInOneColumn();
+                                    attributesInDifferentColumns();
+                                }
 
                                 break;
 
