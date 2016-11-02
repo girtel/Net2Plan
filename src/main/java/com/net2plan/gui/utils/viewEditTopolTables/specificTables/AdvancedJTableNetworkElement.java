@@ -162,6 +162,9 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 {
                     if (ev.isPopupTrigger())
                     {
+                        updateShowMenu();
+                        updateHideMenu();
+                        checkNewIndexes();
                         TableColumn clickedColumn = mainTable.getColumnModel().getColumn(mainTable.columnAtPoint(ev.getPoint()));
                         String clickedColumnName = clickedColumn.getHeaderValue().toString();
                         int clickedColumnIndex = indexForEachColumn.get(clickedColumnName);
@@ -324,13 +327,16 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 @Override
                 public void columnAdded(TableColumnModelEvent e)
                 {
+
                     checkNewIndexes();
                 }
 
                 @Override
                 public void columnRemoved(TableColumnModelEvent e)
                 {
+
                     checkNewIndexes();
+
                 }
 
                 @Override
@@ -338,18 +344,21 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 {
 
                     checkNewIndexes();
+
                 }
 
                 @Override
                 public void columnMarginChanged(ChangeEvent e)
                 {
                     checkNewIndexes();
+
                 }
 
                 @Override
                 public void columnSelectionChanged(ListSelectionEvent e)
                 {
                     checkNewIndexes();
+
                 }
             });
 
@@ -522,7 +531,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
     public void addNewColumn(String newColumnName, Object[] columnData)
     {
-
         DefaultTableModel dtm = (DefaultTableModel) mainTable.getModel();
         dtm.addColumn(newColumnName,columnData);
         mainTable.setModel(dtm);
@@ -530,7 +538,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         updateTables();
         checkNewIndexes();
         shownColumns.add(mainTable.getColumnModel().getColumn(getColumnIndexByName(newColumnName)));
-
 
     }
 
@@ -640,16 +647,30 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     /**
      * Remove a column from mainTable
      *
-     * @param columnToRemove column which is going to be removed
+     * @param columnToRemoveName name of the column which is going to be removed
      */
 
-    public void removeNewColumn(TableColumn columnToRemove)
+    public void removeNewColumn(String columnToRemoveName)
     {
-
+            TableColumn columnToRemove = null;
+            for(int j = 0;j<getColumnModel().getColumnCount();j++)
+            {
+                if(columnToRemoveName.equals(getColumnModel().getColumn(j).getHeaderValue().toString()))
+                {
+                    columnToRemove = getColumnModel().getColumn(j);
+                    mainTable.getColumnModel().removeColumn(getColumnModel().getColumn(j));
+                    break;
+                }
+            }
             removedColumns.add(columnToRemove);
-            shownColumns.remove(columnToRemove);
-            mainTable.getColumnModel().removeColumn(columnToRemove);
-
+            TableColumn columnToRemoveFromShownColumns = null;
+            for(TableColumn tc : shownColumns)
+            {
+                if(columnToRemoveName.equals(tc.getHeaderValue().toString())){
+                    columnToRemoveFromShownColumns = tc;
+                }
+            }
+            shownColumns.remove(columnToRemoveFromShownColumns);
 
     }
     /**

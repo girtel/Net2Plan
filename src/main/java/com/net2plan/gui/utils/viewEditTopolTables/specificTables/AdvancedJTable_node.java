@@ -120,8 +120,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
     public void attributesInDifferentColumns()
     {
         expandAttributes = true;
-        attributesColumn = this.getColumnModel().getColumn(getColumnIndexByName("Attributes"));
-        this.removeNewColumn(attributesColumn);
+        this.removeNewColumn("Attributes");
         currentTopology = networkViewer.getDesign();
         currentNodes = currentTopology.getNodes();
         Map<String,String>  nodeAttributes = new HashMap<>();
@@ -201,7 +200,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
 
         for(String title : attributesColumnsNames)
         {
-            removeNewColumn(getColumnModel().getColumn(getColumnIndexByName("Att: "+title)));
+            removeNewColumn("Att: "+title);
 
         }
         recoverRemovedColumn("Attributes");
