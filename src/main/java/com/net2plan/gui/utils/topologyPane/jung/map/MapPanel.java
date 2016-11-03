@@ -9,10 +9,7 @@ import org.jxmapviewer.input.CenterMapListener;
 import org.jxmapviewer.input.PanKeyListener;
 import org.jxmapviewer.input.PanMouseInputListener;
 import org.jxmapviewer.input.ZoomMouseWheelListenerCursor;
-import org.jxmapviewer.viewer.DefaultTileFactory;
-import org.jxmapviewer.viewer.GeoBounds;
-import org.jxmapviewer.viewer.GeoPosition;
-import org.jxmapviewer.viewer.TileFactoryInfo;
+import org.jxmapviewer.viewer.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -23,6 +20,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -53,35 +52,6 @@ public class MapPanel extends JXMapViewer
         this.setCenterPosition(europe);
     }
 
-    public void centerMap(final NetPlan netPlan)
-    {
-        centerMap(netPlan.getNodes());
-    }
-
-    public void centerMap(final List<Node> nodes)
-    {
-        final Point2D topologyCenter = getTopologyCenter(nodes);
-
-        GeoPosition position = new GeoPosition(topologyCenter.getY(), topologyCenter.getX());
-
-        this.setCenterPosition(position);
-        this.repaint();
-    }
-
-    public Point2D getTopologyCenter(final List<Node> nodes)
-    {
-        final List<Point2D> knots = nodes.stream().map(node -> node.getXYPositionMap()).collect(Collectors.toList());
-
-        double centroidX = 0, centroidY = 0;
-
-        for (Point2D knot : knots)
-        {
-            centroidX += knot.getX();
-            centroidY += knot.getY();
-        }
-        return new Point2D.Double(centroidX / knots.size(), centroidY / knots.size());
-    }
-
     public File saveMap(final int width, final int height)
     {
         // Creating data folder
@@ -100,7 +70,7 @@ public class MapPanel extends JXMapViewer
         // Saving map
         try
         {
-            BufferedImage im = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            final BufferedImage im = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
             this.paint(im.getGraphics());
 

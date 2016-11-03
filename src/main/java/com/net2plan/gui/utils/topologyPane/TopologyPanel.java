@@ -33,6 +33,7 @@ import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.topologyPane.jung.map.MapController;
 import com.net2plan.gui.utils.topologyPane.jung.map.MapPanel;
 import com.net2plan.gui.utils.topologyPane.utils.MenuButton;
 import com.net2plan.gui.utils.windows.WindowController;
@@ -71,14 +72,13 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
     private final JPanel layerChooserPane;
     private final JComboBox layerChooser;
-    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset, btn_runMap, btn_mapPhoto;
+    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset, btn_runMap;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final MenuButton btn_view;
     private final JPopupMenu viewPopUp;
     private final JMenuItem it_topology, it_report, it_online, it_offline;
     private final JLabel position;
 
-    private final MapPanel mapViewer;
     private final TopologyMap nodeMapPosition;
 
     private final File defaultDesignDirectory, defaultDemandDirectory;
@@ -255,14 +255,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_reset.setToolTipText("Reset the user interface");
         btn_reset.setMnemonic(KeyEvent.VK_R);
 
-        mapViewer = new MapPanel();
         nodeMapPosition = new TopologyMap();
 
         btn_runMap = new JButton("Run map");
         btn_runMap.setToolTipText("");
         btn_runMap.setMnemonic(KeyEvent.VK_M);
-
-        btn_mapPhoto = new JButton("Photo");
 
         btn_load.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDesign.png")));
         btn_loadDemand.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDemand.png")));
@@ -291,7 +288,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_takeSnapshot.addActionListener(this);
         btn_reset.addActionListener(this);
         btn_runMap.addActionListener(this);
-        btn_mapPhoto.addActionListener(this);
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
@@ -310,7 +306,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(increaseFontSize);
         toolbar.add(decreaseFontSize);
         toolbar.add(Box.createHorizontalGlue());
-        toolbar.add(btn_mapPhoto);
         toolbar.add(btn_runMap);
         toolbar.add(btn_view);
         toolbar.add(btn_reset);
@@ -467,141 +462,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             zoomAll();
         } else if (src == btn_runMap)
         {
-            final NetPlan netPlan = callback.getDesign();
-
-            boolean isValid = true;
-            for (Node node : netPlan.getNodes())
-            {
-                final Point2D position = node.getXYPositionMap();
-
-                final Double longitude = position.getX();
-                final Double latitude = position.getY();
-
-                if ((longitude > 180 || longitude < -180) || (latitude > 90 || latitude < -90))
-                {
-                    JOptionPane.showMessageDialog(null, "TODO: Invalid nodes", "Invalid coords", JOptionPane.ERROR_MESSAGE);
-                    isValid = false;
-                    break;
-                }
-            }
-
-            if (isValid)
-            {
-                for (int i = 0; i < 2; i++)
-                {
-                    this.zoomAll();
-
-                    VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
-
-                    // Getting viewport rectangle
-                    final Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
-                    final Double viewPortW = viewInLayoutUnits.getWidth();
-                    final Double viewPortH = viewInLayoutUnits.getHeight();
-
-                    // Viewport center point.
-                    final Point2D centerPoint = new Point.Double(viewInLayoutUnits.getCenterX(), viewInLayoutUnits.getCenterY());
-                    final GeoPosition position = new GeoPosition(-centerPoint.getY(), centerPoint.getX());
-
-                    mapViewer.setCenterPosition(position);
-
-                    Set<GeoPosition> positionSet = new HashSet<>();
-                    Set<Waypoint> waypoints = new HashSet<>();
-
-                    for (Node node : callback.getDesign().getNodes())
-                    {
-                        final Point2D xyPositionMap = node.getXYPositionMap();
-
-                        final Double x = xyPositionMap.getX();
-                        final Double y = xyPositionMap.getY();
-
-                        final GeoPosition geoPosition = new GeoPosition(node.getXYPositionMap().getY(), node.getXYPositionMap().getX());
-                        positionSet.add(geoPosition);
-                        waypoints.add(new DefaultWaypoint(geoPosition));
-
-                        final Point2D point2D = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
-
-                        nodeMapPosition.addNodeLocation(node.getId(), new Point2D.Double(point2D.getX(), -point2D.getY()));
-                    }
-
-                    WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<Waypoint>();
-                    waypointPainter.setWaypoints(waypoints);
-
-                    CompoundPainter<JXMapViewer> painter = new CompoundPainter<JXMapViewer>(waypointPainter);
-                    mapViewer.setOverlayPainter(painter);
-
-                    mapViewer.zoomToBestFit(positionSet, 0.7);
-
-                    this.remove(vv);
-
-                    mapViewer.setLayout(new BorderLayout());
-                    mapViewer.add(vv, BorderLayout.CENTER);
-                    add(mapViewer, BorderLayout.CENTER);
-
-                    this.validate();
-                    this.repaint();
-                }
-            }
-        } else if (src == btn_mapPhoto)
-        {
-            // Ubicating nodes
-            for (Node node : callback.getDesign().getNodes())
-            {
-                callback.moveNode(node.getId(), nodeMapPosition.getNodeLocation(node.getId()));
-            }
-
-            this.zoomAll();
-
-            // JUNG Canvas
-            VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
-
-            // JUNG window size
-            final Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
-
-            // JUNG window center point
-            final Point2D centerPoint = new Point.Double(viewInLayoutUnits.getCenterX(), viewInLayoutUnits.getCenterY());
-            final int w = canvas.getComponent().getWidth();
-            final int h = canvas.getComponent().getHeight();
-
-            // Removing previous map
-            mapViewer.remove(canvas.getComponent());
-
-            // Getting snapshot
-            final File file = mapViewer.saveMap(w, h);
-
-            // Aligning the snapshot with the previous map
-
-            // Complete map
-            final Point2D mapCorner = new Point.Double(centerPoint.getX() - (w / 2), centerPoint.getY() - (h / 2));
-
-            // Resized map
-//            final Point2D mapCorner = new Point.Double(centerPoint.getX() - (viewPortW / 2), centerPoint.getY() - (viewPortH / 2));
-
-            final Double x = mapCorner.getX();
-            final Double y = mapCorner.getY();
-
-            // Resized background
-//            try
-//            {
-//                final BufferedImage bg = ImageIO.read(file);
-//
-//                final Image scaledInstance = bg.getScaledInstance(viewPortW.intValue(), viewPortH.intValue(), Image.SCALE_DEFAULT);
-//
-//                ((JUNGCanvas) canvas).setBackgroundImage(new ImageIcon(scaledInstance), x.intValue(), y.intValue());
-//
-//            } catch (IOException e1)
-//            {
-//                e1.printStackTrace();
-//            }
-
-            // Complete background
-            ((JUNGCanvas) canvas).setBackgroundImage(file, x.intValue(), y.intValue());
-
-            // Setting the photo as background
-            this.remove(mapViewer);
-            this.add(canvas.getComponent(), BorderLayout.CENTER);
-
-            this.validate();
-            this.repaint();
+            MapController.runMap(this, canvas, callback);
         } else if (src == btn_reset)
         {
             callback.reset();
