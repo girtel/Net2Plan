@@ -18,9 +18,8 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -50,7 +49,12 @@ import com.net2plan.utils.TopologyMap;
 import com.sun.codemodel.internal.JOp;
 import edu.uci.ics.jung.visualization.VisualizationServer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
+import org.jxmapviewer.JXMapViewer;
+import org.jxmapviewer.painter.CompoundPainter;
+import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.GeoPosition;
+import org.jxmapviewer.viewer.Waypoint;
+import org.jxmapviewer.viewer.WaypointPainter;
 
 /**
  * <p>Wrapper class for the graph canvas.</p>
@@ -499,27 +503,39 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     final GeoPosition position = new GeoPosition(-centerPoint.getY(), centerPoint.getX());
 
                     mapViewer.setCenterPosition(position);
-                    mapViewer.setZoom(17);
+
+                    Set<GeoPosition> positionSet = new HashSet<>();
+                    Set<Waypoint> waypoints = new HashSet<>();
+
+                    for (Node node : callback.getDesign().getNodes())
+                    {
+                        final Point2D xyPositionMap = node.getXYPositionMap();
+
+                        final Double x = xyPositionMap.getX();
+                        final Double y = xyPositionMap.getY();
+
+                        final GeoPosition geoPosition = new GeoPosition(node.getXYPositionMap().getY(), node.getXYPositionMap().getX());
+                        positionSet.add(geoPosition);
+                        waypoints.add(new DefaultWaypoint(geoPosition));
+
+                        final Point2D point2D = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
+
+                        nodeMapPosition.addNodeLocation(node.getId(), new Point2D.Double(point2D.getX(), -point2D.getY()));
+                    }
+
+                    WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<Waypoint>();
+                    waypointPainter.setWaypoints(waypoints);
+
+                    CompoundPainter<JXMapViewer> painter = new CompoundPainter<JXMapViewer>(waypointPainter);
+                    mapViewer.setOverlayPainter(painter);
+
+                    mapViewer.zoomToBestFit(positionSet, 0.7);
 
                     this.remove(vv);
 
                     mapViewer.setLayout(new BorderLayout());
                     mapViewer.add(vv, BorderLayout.CENTER);
                     add(mapViewer, BorderLayout.CENTER);
-
-                    // Save node ubication
-                    final Dimension canvasSize = canvas.getInternalComponent().getSize();
-                    final Double ratioW = canvasSize.getWidth() / viewPortW;
-                    final Double ratioH = canvasSize.getHeight() / viewPortH;
-                    for (Node node : callback.getDesign().getNodes())
-                    {
-                        final Point2D xyPositionMap = node.getXYPositionMap();
-
-                        final Double x = xyPositionMap.getX() * Math.round(ratioW);
-                        final Double y = xyPositionMap.getY() * Math.round(ratioH);
-
-                        nodeMapPosition.addNodeLocation(node.getId(), new Point(x.intValue(), y.intValue()));
-                    }
 
                     this.validate();
                     this.repaint();
