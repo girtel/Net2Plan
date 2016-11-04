@@ -9,12 +9,11 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import org.jxmapviewer.viewer.GeoPosition;
+import org.jxmapviewer.viewer.Tile;
 import org.jxmapviewer.viewer.TileFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.HashSet;
@@ -28,7 +27,7 @@ public class MapController
     private static final MapPanel mapViewer;
 
     private static final Thread renderThread;
-    private static final LoadFrame loadFrame;
+    private static final LoadThread loadFrame;
 
     private static TopologyPanel topologyPanel;
     private static ITopologyCanvas canvas;
@@ -37,7 +36,7 @@ public class MapController
     static
     {
         mapViewer = new MapPanel();
-        loadFrame = new LoadFrame();
+        loadFrame = new LoadThread();
         renderThread = new Thread(loadFrame);
     }
 
@@ -54,18 +53,6 @@ public class MapController
 
         // 1st step: Loading the map
         loadMap();
-
-        // Waiting for the map to render
-        synchronized (this)
-        {
-            try
-            {
-                renderThread.wait();
-            } catch (InterruptedException e)
-            {
-                e.printStackTrace();
-            }
-        }
 
         // 2nd step: Loading the snapshot
         loadSnapshot();
@@ -103,7 +90,16 @@ public class MapController
         mapViewer.zoomToBestFit(positionSet, 0.7);
 
         // Running the render thread
-        renderThread.start();
+        try
+        {
+            renderThread.start();
+
+            // Wait until finished loading.
+            renderThread.join();
+        } catch (InterruptedException e)
+        {
+            e.printStackTrace();
+        }
     }
 
     private static void loadSnapshot()
@@ -127,34 +123,17 @@ public class MapController
         ((JUNGCanvas) canvas).setBackgroundImage(file, mapCornerX.intValue(), mapCornerY.intValue());
     }
 
-    private static class LoadFrame implements Runnable
+    private static class LoadThread implements Runnable
     {
         private final JFrame loadFrame;
 
-        public LoadFrame()
+        public LoadThread()
         {
             loadFrame = new JFrame();
             loadFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             loadFrame.setLayout(new BorderLayout());
             loadFrame.setResizable(false);
             loadFrame.setTitle("Loading map...");
-
-            loadFrame.addWindowListener(new WindowAdapter()
-            {
-                @Override
-                public void windowClosing(WindowEvent e)
-                {
-                    super.windowClosing(e);
-
-                    try
-                    {
-                        renderThread.join();
-                    } catch (InterruptedException ex)
-                    {
-                        ex.printStackTrace();
-                    }
-                }
-            });
         }
 
         @Override
@@ -164,33 +143,7 @@ public class MapController
             loadFrame.getContentPane().add(mapViewer, BorderLayout.CENTER);
             loadFrame.setVisible(true);
 
-            synchronized (this)
-            {
-                final int width = mapViewer.getWidth();
-                final int height = mapViewer.getHeight();
-                final int zoom = mapViewer.getZoom();
-
-                final TileFactory tileFactory = mapViewer.getTileFactory();
-
-                // Wait for load
-                while (true)
-                {
-                    for (int i = 0; i < width; i++)
-                    {
-                        for (int j = 0; j < height; j++)
-                        {
-                            if (!tileFactory.getTile(i, j, zoom).isLoaded())
-                            {
-                                continue;
-                            }
-                        }
-                    }
-
-                    break;
-                }
-
-                this.notify();
-            }
+            // TODO: Stop condition
         }
     }
 }
