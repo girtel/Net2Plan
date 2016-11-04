@@ -1,4 +1,4 @@
-package com.net2plan.gui.utils.topologyPane.jung.map;
+package com.net2plan.gui.utils.topologyPane.jung.map.osm;
 
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;

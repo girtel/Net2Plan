@@ -1,4 +1,4 @@
-package com.net2plan.gui.utils.topologyPane.jung.map;
+package com.net2plan.gui.utils.topologyPane.jung.map.osm;
 
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.topologyPane.GUILink;
@@ -9,8 +9,6 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import org.jxmapviewer.viewer.GeoPosition;
-import org.jxmapviewer.viewer.Tile;
-import org.jxmapviewer.viewer.TileFactory;
 
 import javax.swing.*;
 import java.awt.*;

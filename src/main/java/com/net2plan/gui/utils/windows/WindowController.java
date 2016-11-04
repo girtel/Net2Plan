@@ -14,6 +14,8 @@ public class WindowController
     private static GUIWindow offlineWindow;
     private static GUIWindow onlineWindow;
 
+    private WindowController() {}
+
     public static void buildTopologyWindow(final JComponent component)
     {
         topologyWindow = new GUIWindow()

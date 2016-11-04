@@ -14,14 +14,10 @@ package com.net2plan.gui.utils.topologyPane;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
@@ -33,29 +29,18 @@ import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.utils.topologyPane.jung.map.MapController;
-import com.net2plan.gui.utils.topologyPane.jung.map.MapPanel;
+import com.net2plan.gui.utils.topologyPane.jung.map.google.GoogleMapController;
+import com.net2plan.gui.utils.topologyPane.jung.map.osm.MapController;
 import com.net2plan.gui.utils.topologyPane.utils.MenuButton;
 import com.net2plan.gui.utils.windows.WindowController;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.DialogType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
-import com.net2plan.internal.UnmodifiablePoint2D;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.TopologyMap;
-import com.sun.codemodel.internal.JOp;
-import edu.uci.ics.jung.visualization.VisualizationServer;
-import edu.uci.ics.jung.visualization.VisualizationViewer;
-import org.jxmapviewer.JXMapViewer;
-import org.jxmapviewer.painter.CompoundPainter;
-import org.jxmapviewer.viewer.DefaultWaypoint;
-import org.jxmapviewer.viewer.GeoPosition;
-import org.jxmapviewer.viewer.Waypoint;
-import org.jxmapviewer.viewer.WaypointPainter;
 
 /**
  * <p>Wrapper class for the graph canvas.</p>
@@ -72,7 +57,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
     private final JPanel layerChooserPane;
     private final JComboBox layerChooser;
-    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset, btn_runMap;
+    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset, btn_runMap, btn_googleMap;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final MenuButton btn_view;
     private final JPopupMenu viewPopUp;
@@ -257,9 +242,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         nodeMapPosition = new TopologyMap();
 
-        btn_runMap = new JButton("Run map");
+        btn_runMap = new JButton("OSM Map");
         btn_runMap.setToolTipText("");
         btn_runMap.setMnemonic(KeyEvent.VK_M);
+
+        btn_googleMap = new JButton("Google Map");
 
         btn_load.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDesign.png")));
         btn_loadDemand.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDemand.png")));
@@ -288,6 +275,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_takeSnapshot.addActionListener(this);
         btn_reset.addActionListener(this);
         btn_runMap.addActionListener(this);
+        btn_googleMap.addActionListener(this);
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
@@ -306,6 +294,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(increaseFontSize);
         toolbar.add(decreaseFontSize);
         toolbar.add(Box.createHorizontalGlue());
+        toolbar.add(btn_googleMap);
         toolbar.add(btn_runMap);
         toolbar.add(btn_view);
         toolbar.add(btn_reset);
@@ -460,6 +449,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         } else if (src == btn_zoomAll)
         {
             zoomAll();
+        } else if (src == btn_googleMap)
+        {
+            GoogleMapController.runMap(this, canvas, callback);
         } else if (src == btn_runMap)
         {
             MapController.runMap(this, canvas, callback);
