@@ -14,7 +14,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.io.File;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -24,18 +26,16 @@ public class MapController
 {
     private static final MapPanel mapViewer;
 
-    private static final Thread renderThread;
-    private static final LoadThread loadFrame;
-
     private static TopologyPanel topologyPanel;
     private static ITopologyCanvas canvas;
     private static INetworkCallback callback;
 
+    private static Map<Long, Point2D> nodeMap;
+
     static
     {
         mapViewer = new MapPanel();
-        loadFrame = new LoadThread();
-        renderThread = new Thread(loadFrame);
+        nodeMap = new HashMap<>();
     }
 
     // Non-instanciable
@@ -50,7 +50,13 @@ public class MapController
         MapController.callback = callback;
 
         // 1st step: Loading the map
-        loadMap();
+        // HACK: Why the hell does it need to do the same thing multiple times in order to work?
+        for (int i = 0; i < 4; i++)
+        {
+            loadMap();
+        }
+
+        JOptionPane.showMessageDialog(null, "TODO: Click");
 
         // 2nd step: Loading the snapshot
         loadSnapshot();
@@ -82,35 +88,40 @@ public class MapController
 
             // The position that the node really takes on the map. This is the point where the map and the nodes align.
             final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
-            callback.moveNode(node.getId(), new Point2D.Double(realPosition.getX(), -realPosition.getY()));
+            nodeMap.put(node.getId(), new Point2D.Double(realPosition.getX(), -realPosition.getY()));
+            //callback.moveNode(node.getId(), realPosition);
         }
 
         mapViewer.zoomToBestFit(positionSet, 0.7);
 
-        // Running the render thread
-        try
-        {
-            renderThread.start();
+        topologyPanel.remove(vv);
+        mapViewer.setLayout(new BorderLayout());
+        mapViewer.add(vv, BorderLayout.CENTER);
+        topologyPanel.add(mapViewer, BorderLayout.CENTER);
 
-            // Wait until finished loading.
-            renderThread.join();
-        } catch (InterruptedException e)
-        {
-            e.printStackTrace();
-        }
+        topologyPanel.validate();
+        topologyPanel.repaint();
     }
 
     private static void loadSnapshot()
     {
+        for (Node node : callback.getDesign().getNodes())
+        {
+            callback.moveNode(node.getId(), nodeMap.get(node.getId()));
+        }
+
         topologyPanel.zoomAll();
+
         final int w = canvas.getComponent().getWidth();
         final int h = canvas.getComponent().getHeight();
+
+        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
+        mapViewer.remove(vv);
 
         // Getting snapshot
         final File file = mapViewer.saveMap(w, h);
 
         // Aligning the snapshot with the previous map
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
         final Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
 
         final Point2D mapCorner = new Point.Double(viewInLayoutUnits.getCenterX() - (w / 2), viewInLayoutUnits.getCenterY() - (h / 2));
@@ -119,29 +130,11 @@ public class MapController
 
         // Setting the photo as background
         ((JUNGCanvas) canvas).setBackgroundImage(file, mapCornerX.intValue(), mapCornerY.intValue());
-    }
 
-    private static class LoadThread implements Runnable
-    {
-        private final JFrame loadFrame;
+        topologyPanel.remove(mapViewer);
+        topologyPanel.add(vv, BorderLayout.CENTER);
 
-        public LoadThread()
-        {
-            loadFrame = new JFrame();
-            loadFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            loadFrame.setLayout(new BorderLayout());
-            loadFrame.setResizable(false);
-            loadFrame.setTitle("Loading map...");
-        }
-
-        @Override
-        public void run()
-        {
-            loadFrame.setSize(new Dimension(topologyPanel.getWidth(), topologyPanel.getHeight()));
-            loadFrame.getContentPane().add(mapViewer, BorderLayout.CENTER);
-            loadFrame.setVisible(true);
-
-            // TODO: Stop condition
-        }
+        topologyPanel.validate();
+        topologyPanel.repaint();
     }
 }
