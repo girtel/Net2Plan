@@ -32,6 +32,9 @@ public class MapController
 
     private static Map<Long, Point2D> nodeMap;
 
+    private static final String ATTRIB_LATITUDE = "lat";
+    private static final String ATTRIB_LONGITUDE = "lon";
+
     static
     {
         mapViewer = new MapPanel();
@@ -83,7 +86,14 @@ public class MapController
         for (Node node : callback.getDesign().getNodes())
         {
             // Transforming N2P coords to geo position.
-            final GeoPosition geoPosition = new GeoPosition(node.getXYPositionMap().getY(), node.getXYPositionMap().getX());
+            // final GeoPosition geoPosition = new GeoPosition(node.getXYPositionMap().getY(), node.getXYPositionMap().getX());
+
+            // Getting coords from nodes attributes 
+            final double latitude = Double.parseDouble(node.getAttribute(ATTRIB_LATITUDE));
+            final double longitude = Double.parseDouble(node.getAttribute(ATTRIB_LONGITUDE));
+
+            final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
+
             positionSet.add(geoPosition);
 
             // The position that the node really takes on the map. This is the point where the map and the nodes align.
