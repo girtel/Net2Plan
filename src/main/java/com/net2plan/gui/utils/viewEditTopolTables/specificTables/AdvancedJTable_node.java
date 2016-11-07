@@ -74,12 +74,11 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Show/Hide", "Name", "State", "xCoord", "yCoord", "Outgoing links", "Incoming links", "Ingress traffic", "Egress traffic", "Traversing traffic","Ingress traffic (multicast)", "Egress traffic (multicast)", "SRGs", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Indicates whether or not the node is visible in the topology canvas", "Node name", "Indicates whether the node is in up/down state", "Coordinate along x-axis (i.e. longitude)", "Coordinate along y-axis (i.e. latitude)", "Outgoing links", "Incoming links", "Total UNICAST traffic entering to the network from this node", "Total UNICAST traffic leaving the network from this node", "UNICAST traffic entering the node, but not targeted to it", "Total MULTICAST traffic entering to the network from this node", "Total MULTICAST traffic leaving the network from this node", "SRGs including this node", "Node-specific attributes");
 
-    private final ArrayList<String> attributesColumnsNames;
-    private TableColumn attributesColumn = null;
+    private ArrayList<String> attributesColumnsNames;
     private boolean expandAttributes = false;
     private List<Node> currentNodes = new LinkedList<>();
     private NetPlan currentTopology = null;
-    private ArrayList<String> everyAttributesColumnsName = new ArrayList<>();
+    private Map<String,Boolean> hasBeenAddedEachAttColumn = new HashMap<>();
     /**
      * Default constructor.
      *
@@ -91,23 +90,30 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
         attributesColumnsNames = new ArrayList<String>();
-
         this.getModel().addTableModelListener(new TableModelListener(){
 
             @Override
             public void tableChanged(TableModelEvent e)
             {
                 int changedColumn = e.getColumn();
-                if(changedColumn >= COLUMN_ATTRIBUTES)
+                String value = null;
+                if(changedColumn > COLUMN_ATTRIBUTES)
                 {
-
+                    attributesColumnsNames = getAttributesColumnsHeaders();
                     for(String title : attributesColumnsNames)
                     {
                         if(getModel().getColumnName(changedColumn).equals("Att: "+title))
                         {
+                            System.out.println("Att: "+title);
+                            System.out.println(changedColumn);
                             for(Node node : currentNodes)
                             {
-                                node.setAttribute(title,(String)getModel().getValueAt(node.getIndex(),changedColumn));
+                                value = (String)getModel().getValueAt(node.getIndex(),changedColumn);
+                                if(!value.equals("null"))
+                                {
+                                    node.setAttribute(title,value);
+                                }
+
                             }
                         }
                     }
@@ -120,29 +126,13 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
     public void attributesInDifferentColumns()
     {
         expandAttributes = true;
-        this.removeNewColumn("Attributes");
         currentTopology = networkViewer.getDesign();
         currentNodes = currentTopology.getNodes();
         Map<String,String>  nodeAttributes = new HashMap<>();
-        String columnAttHeader = null;
-        attributesColumnsNames.clear();
-
-        for(Node node : currentNodes)
-        {
-            nodeAttributes = node.getAttributes();
-            for (Map.Entry<String, String> entry : nodeAttributes.entrySet())
-            {
-                columnAttHeader = entry.getKey();
-                if(attributesColumnsNames.contains(columnAttHeader) == false)
-                {
-                    attributesColumnsNames.add(columnAttHeader);
-                }
-
-            }
-
-        }
+        attributesColumnsNames = getAttributesColumnsHeaders();
         if(attributesColumnsNames.size() > 0)
         {
+            removeNewColumn("Attributes");
             Object[] attColumnsData =  new Object[currentNodes.size()];;
             for(String title : attributesColumnsNames)
             {
@@ -157,9 +147,10 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                         attColumnsData[node.getIndex()] = "null";
                     }
                 }
-                if(!everyAttributesColumnsName.contains(title))
+                if(hasBeenAddedEachAttColumn.get(title) == null)
                 {
                     addNewColumn("Att: "+title, attColumnsData);
+                    hasBeenAddedEachAttColumn.put(title,true);
                 }
                 else{
                     recoverRemovedColumn("Att: "+title);
@@ -179,16 +170,8 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                 }
 
             }
-
-            for (Map.Entry<String, String> entry : nodeAttributes.entrySet())
-            {
-                columnAttHeader = entry.getKey();
-                if(everyAttributesColumnsName.contains(columnAttHeader) == false)
-                {
-                    everyAttributesColumnsName.add(columnAttHeader);
-                }
-            }
         }
+
     }
 
     @Override
@@ -197,18 +180,20 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
         expandAttributes = false;
         currentTopology = networkViewer.getDesign();
         currentNodes = currentTopology.getNodes();
-
-        for(String title : attributesColumnsNames)
+        if(attributesColumnsNames.size() > 0)
         {
-            removeNewColumn("Att: "+title);
+            for(String title : attributesColumnsNames)
+            {
+                removeNewColumn("Att: "+title);
+
+            }
+            recoverRemovedColumn("Attributes");
+            for(Node node : currentNodes){
+
+                getModel().setValueAt(StringUtils.mapToString(node.getAttributes()),node.getIndex(),COLUMN_ATTRIBUTES);
+            }
 
         }
-        recoverRemovedColumn("Attributes");
-        for(Node node : currentNodes){
-
-            getModel().setValueAt(StringUtils.mapToString(node.getAttributes()),node.getIndex(),COLUMN_ATTRIBUTES);
-        }
-
 
     }
 
@@ -218,11 +203,54 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
         return expandAttributes;
     }
 
+    @Override
+    public boolean hasBeenAddedEachColumn(String columnName)
+    {
+        if(!hasBeenAddedEachAttColumn.containsKey(columnName))
+        {
+            return false;
+        }
+        return hasBeenAddedEachAttColumn.get(columnName);
+    }
+
+    @Override
+    public void updateHasBeenAddedEachColumn(String columnName, boolean flag)
+    {
+        hasBeenAddedEachAttColumn.put(columnName,flag);
+    }
+
+    @Override
+    public void updateAttributeColumnsNames(String attributeName, boolean addAtt)
+    {
+        if(addAtt)
+            attributesColumnsNames.add(attributeName);
+        else{
+            attributesColumnsNames.remove(attributeName);
+        }
+    }
+
 
     @Override
     public ArrayList<String> getAttributesColumnsHeaders()
     {
-        return attributesColumnsNames;
+        ArrayList<String> attColumnsHeaders = new ArrayList<>();
+        currentTopology = networkViewer.getDesign();
+        currentNodes = currentTopology.getNodes();
+        for(Node node : currentNodes)
+        {
+
+            for (Map.Entry<String, String> entry : node.getAttributes().entrySet())
+            {
+                if(attColumnsHeaders.contains(entry.getKey()) == false)
+                {
+                    attColumnsHeaders.add(entry.getKey());
+                }
+
+            }
+
+        }
+
+        return attColumnsHeaders;
     }
 
     public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesTitles) {
@@ -303,11 +331,23 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
     }
 
     public String[] getCurrentTableHeaders(){
-        TableModel tm = this.getModel();
+
+        TableModel tm = getModel();
         String[] headers = new String[tm.getColumnCount()];
-        for(int i = 0; i < tm.getColumnCount();i++){
+        for(int i = 0; i < tm.getColumnCount();i++)
+        {
             headers[i] = tm.getColumnName(i);
         }
+        /*String[] headers = new String[getTableHeaders().length + getAttributesColumnsHeaders().size()];
+        for(int i = 0; i < headers.length;i++){
+            if(i<getTableHeaders().length){
+                headers[i] = getTableHeaders()[i];
+            }
+            else{
+                headers[i] = "Att: "+getAttributesColumnsHeaders().get(i-getTableHeaders().length);
+            }
+
+        }*/
         return headers;
     }
 
@@ -337,18 +377,6 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
         TableModel nodeTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
-            public int getColumnIndexByNameFromTableModel(String columnName)
-            {
-                int indexToReturn = 0;
-                for(int i = 0;i<this.getColumnCount();i++)
-                {
-                    if(this.getColumnName(i).equals(columnName))
-                    {
-                        indexToReturn = i;
-                    }
-                }
-                return indexToReturn;
-            }
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 if (!networkViewer.isEditable()) return false;

@@ -115,6 +115,24 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
     }
 
     @Override
+    public boolean hasBeenAddedEachColumn(String columnName)
+    {
+        return false;
+    }
+
+    @Override
+    public void updateHasBeenAddedEachColumn(String columnName, boolean flag)
+    {
+
+    }
+
+    @Override
+    public void updateAttributeColumnsNames(String attributeName, boolean addAtt)
+    {
+
+    }
+
+    @Override
     public ArrayList<String> getAttributesColumnsHeaders()
     {
         return null;
