@@ -30,15 +30,12 @@ public class MapController
     private static ITopologyCanvas canvas;
     private static INetworkCallback callback;
 
-    private static Map<Long, Point2D> nodeMap;
-
     private static final String ATTRIB_LATITUDE = "lat";
     private static final String ATTRIB_LONGITUDE = "lon";
 
     static
     {
         mapViewer = new MapPanel();
-        nodeMap = new HashMap<>();
     }
 
     // Non-instanciable
@@ -55,26 +52,15 @@ public class MapController
         // 1st step: Loading the map
         loadMap();
 
-        JOptionPane.showMessageDialog(null, "TODO: Click");
-
-        // 2nd step: Loading the snapshot
-        loadSnapshot();
+//        JOptionPane.showMessageDialog(null, "TODO: Click");
+//
+//        // 2nd step: Loading the snapshot
+//        loadSnapshot();
     }
 
     private static void loadMap()
     {
-        // JUNG Canvas
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
-
-        // Getting viewport rectangle
-        final Rectangle viewport = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
-
-        // Viewport center point.
-        final Point2D viewportCenterPoint = new Point.Double(viewport.getCenterX(), viewport.getCenterY());
-        final GeoPosition viewPortCenterPosition = new GeoPosition(-viewportCenterPoint.getY(), viewportCenterPoint.getX());
-
-        mapViewer.setCenterPosition(viewPortCenterPosition);
-
+        // Moving the nodes
         for (Node node : callback.getDesign().getNodes())
         {
             // Getting coords from nodes attributes
@@ -83,23 +69,30 @@ public class MapController
 
             final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
 
+            System.out.println(geoPosition);
+
             // The position that the node really takes on the map. This is the point where the map and the nodes align.
             final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
-            nodeMap.put(node.getId(), new Point2D.Double(realPosition.getX(), -realPosition.getY()));
-            //callback.moveNode(node.getId(), realPosition);
+            callback.moveNode(node.getId(), realPosition);
         }
 
-        // The map is framed along the corner points of the viewport.
-        // Meaning that the map position does not depend on the nodes, but on the viewport.
-        final Set<GeoPosition> positionSet = new HashSet<>();
+        // JUNG Canvas
+        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
+        vv.setLocation(0, 0);
 
-        final GeoPosition NWCorner = new GeoPosition(-viewport.getY(), viewport.getX());
-        final GeoPosition SECorner = new GeoPosition(-(viewport.getY() + viewport.getHeight()), viewport.getX() + viewport.getWidth());
+        // Getting viewport rectangle
+        final Rectangle viewport = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
 
-        positionSet.add(NWCorner);
-        positionSet.add(SECorner);
+        // Center map along the center of the viewport, the map position does not depend on the nodes' position.
+        final Point2D centerPoint = new Point2D.Double(viewport.getCenterX(), viewport.getCenterY());
+        final GeoPosition centerPosition = new GeoPosition(-centerPoint.getY(), centerPoint.getX());
 
-        mapViewer.zoomToBestFit(positionSet, 0.7);
+        System.out.println(centerPosition);
+
+        mapViewer.zoomToBestFit(new HashSet<GeoPosition>()
+        {{
+            add(centerPosition);
+        }}, 0.7);
 
         // Making some swing adjustments.
         topologyPanel.remove(vv);
@@ -113,11 +106,6 @@ public class MapController
 
     private static void loadSnapshot()
     {
-        for (Node node : callback.getDesign().getNodes())
-        {
-            callback.moveNode(node.getId(), nodeMap.get(node.getId()));
-        }
-
         final int w = canvas.getComponent().getWidth();
         final int h = canvas.getComponent().getHeight();
 

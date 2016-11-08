@@ -29,7 +29,6 @@ import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.utils.topologyPane.jung.map.google.GoogleMapController;
 import com.net2plan.gui.utils.topologyPane.jung.map.osm.MapController;
 import com.net2plan.gui.utils.topologyPane.utils.MenuButton;
 import com.net2plan.gui.utils.windows.WindowController;
@@ -57,7 +56,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
     private final JPanel layerChooserPane;
     private final JComboBox layerChooser;
-    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset, btn_runMap, btn_googleMap;
+    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset, btn_runMap, btn_debug;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final MenuButton btn_view;
     private final JPopupMenu viewPopUp;
@@ -246,7 +245,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_runMap.setToolTipText("");
         btn_runMap.setMnemonic(KeyEvent.VK_M);
 
-        btn_googleMap = new JButton("Google Map");
+        btn_debug = new JButton("Quick load");
+        btn_debug.setMnemonic(KeyEvent.VK_D);
 
         btn_load.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDesign.png")));
         btn_loadDemand.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDemand.png")));
@@ -275,7 +275,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_takeSnapshot.addActionListener(this);
         btn_reset.addActionListener(this);
         btn_runMap.addActionListener(this);
-        btn_googleMap.addActionListener(this);
+        btn_debug.addActionListener(this);
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
@@ -294,7 +294,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(increaseFontSize);
         toolbar.add(decreaseFontSize);
         toolbar.add(Box.createHorizontalGlue());
-        toolbar.add(btn_googleMap);
+        toolbar.add(btn_debug);
         toolbar.add(btn_runMap);
         toolbar.add(btn_view);
         toolbar.add(btn_reset);
@@ -449,9 +449,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         } else if (src == btn_zoomAll)
         {
             zoomAll();
-        } else if (src == btn_googleMap)
+        } else if (src == btn_debug)
         {
-            GoogleMapController.runMap(this, canvas, callback);
+            loadDesignFromFile(new File("C:\\Users\\Jorge\\Desktop\\Maps\\Barcelona_attrib.n2p"));
         } else if (src == btn_runMap)
         {
             MapController.runMap(this, canvas, callback);
