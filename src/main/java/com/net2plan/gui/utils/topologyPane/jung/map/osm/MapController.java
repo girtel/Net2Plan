@@ -53,11 +53,7 @@ public class MapController
         MapController.callback = callback;
 
         // 1st step: Loading the map
-        // HACK: Why the hell does it need to do the same thing multiple times in order to work?
-        for (int i = 0; i < 4; i++)
-        {
-            loadMap();
-        }
+        loadMap();
 
         JOptionPane.showMessageDialog(null, "TODO: Click");
 
@@ -67,34 +63,25 @@ public class MapController
 
     private static void loadMap()
     {
-        topologyPanel.zoomAll();
-
         // JUNG Canvas
         final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
 
         // Getting viewport rectangle
-        final Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
+        final Rectangle viewport = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
 
         // Viewport center point.
-        final Point2D centerPoint = new Point.Double(viewInLayoutUnits.getCenterX(), viewInLayoutUnits.getCenterY());
-        final GeoPosition position = new GeoPosition(-centerPoint.getY(), centerPoint.getX());
+        final Point2D viewportCenterPoint = new Point.Double(viewport.getCenterX(), viewport.getCenterY());
+        final GeoPosition viewPortCenterPosition = new GeoPosition(-viewportCenterPoint.getY(), viewportCenterPoint.getX());
 
-        mapViewer.setCenterPosition(position);
-
-        final Set<GeoPosition> positionSet = new HashSet<>();
+        mapViewer.setCenterPosition(viewPortCenterPosition);
 
         for (Node node : callback.getDesign().getNodes())
         {
-            // Transforming N2P coords to geo position.
-            // final GeoPosition geoPosition = new GeoPosition(node.getXYPositionMap().getY(), node.getXYPositionMap().getX());
-
-            // Getting coords from nodes attributes 
+            // Getting coords from nodes attributes
             final double latitude = Double.parseDouble(node.getAttribute(ATTRIB_LATITUDE));
             final double longitude = Double.parseDouble(node.getAttribute(ATTRIB_LONGITUDE));
 
             final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
-
-            positionSet.add(geoPosition);
 
             // The position that the node really takes on the map. This is the point where the map and the nodes align.
             final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
@@ -102,8 +89,19 @@ public class MapController
             //callback.moveNode(node.getId(), realPosition);
         }
 
+        // The map is framed along the corner points of the viewport.
+        // Meaning that the map position does not depend on the nodes, but on the viewport.
+        final Set<GeoPosition> positionSet = new HashSet<>();
+
+        final GeoPosition NWCorner = new GeoPosition(-viewport.getY(), viewport.getX());
+        final GeoPosition SECorner = new GeoPosition(-(viewport.getY() + viewport.getHeight()), viewport.getX() + viewport.getWidth());
+
+        positionSet.add(NWCorner);
+        positionSet.add(SECorner);
+
         mapViewer.zoomToBestFit(positionSet, 0.7);
 
+        // Making some swing adjustments.
         topologyPanel.remove(vv);
         mapViewer.setLayout(new BorderLayout());
         mapViewer.add(vv, BorderLayout.CENTER);
@@ -119,8 +117,6 @@ public class MapController
         {
             callback.moveNode(node.getId(), nodeMap.get(node.getId()));
         }
-
-        topologyPanel.zoomAll();
 
         final int w = canvas.getComponent().getWidth();
         final int h = canvas.getComponent().getHeight();

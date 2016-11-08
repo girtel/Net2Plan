@@ -1,38 +1,25 @@
 package com.net2plan.gui.utils.topologyPane.jung.map.osm;
 
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
-import org.jxmapviewer.JXMapKit;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
-import org.jxmapviewer.input.CenterMapListener;
-import org.jxmapviewer.input.PanKeyListener;
-import org.jxmapviewer.input.PanMouseInputListener;
-import org.jxmapviewer.input.ZoomMouseWheelListenerCursor;
 import org.jxmapviewer.viewer.*;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
-import javax.swing.event.MouseInputListener;
-import java.awt.*;
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * Created by Jorge San Emeterio on 13/10/2016.
  */
 public class MapPanel extends JXMapViewer
 {
-    private static int mapID = 0;
+    private static int imageID = 0;
 
     protected final TileFactoryInfo info;
     protected final DefaultTileFactory tileFactory;
+
+    private final int NUMBER_OF_THREADS = 8;
 
     public MapPanel()
     {
@@ -43,8 +30,13 @@ public class MapPanel extends JXMapViewer
         this.setTileFactory(tileFactory);
 
         // Use 8 threads in parallel to load the tiles
-        tileFactory.setThreadPoolSize(8);
+        tileFactory.setThreadPoolSize(NUMBER_OF_THREADS);
 
+        this.setDefaultPosition();
+    }
+
+    private void setDefaultPosition()
+    {
         // Default position
         final GeoPosition europe = new GeoPosition(47.20, 25.2);
 
@@ -64,7 +56,7 @@ public class MapPanel extends JXMapViewer
 
         // It is necessary to save each map on their own file.
         // If we only use one, the map is never updated.
-        final File f = new File(parent, "background_map_" + (mapID++) + ".png");
+        final File f = new File(parent, "background_map_" + (imageID++) + ".png");
         f.deleteOnExit();
 
         // Saving map
