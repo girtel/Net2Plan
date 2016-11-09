@@ -360,40 +360,18 @@ public final class JUNGCanvas extends ITopologyCanvas
                 }
 
                 final Point2D newNodeXY = new Point2D.Double(nodeXY.getX() + dx, nodeXY.getY() + dy);
-                final GeoPosition geoPosition = new GeoPosition(-newNodeXY.getY(), newNodeXY.getX());
+                final GeoPosition geoPosition = mapViewer.getTileFactory().pixelToGeo(new Point2D.Double(newNodeXY.getX(), -newNodeXY.getY()), mapViewer.getZoom());
 
-                System.out.println(geoPosition);
+                nodeLastPosition.put(node, newNodeXY);
+
+                if (!(geoPosition.getLatitude() > 90 || geoPosition.getLatitude() < -90 || geoPosition.getLongitude() > 180 || geoPosition.getLongitude() < -180))
+                {
+                    layoutTransformer.translate(dx, dy);
+
+                    //TODO: Check if each border for the limiting nodes.
+                    break;
+                }
             }
-
-//            if (geoPosition.getLatitude() > 90)
-//            {
-//                final GeoPosition downPosition = new GeoPosition(-90, geoPosition.getLongitude());
-//                final Point2D downPoint = mapViewer.getTileFactory().geoToPixel(downPosition, mapViewer.getZoom());
-//            } else if (geoPosition.getLatitude() < -90)
-//            {
-//                final GeoPosition upPosition = new GeoPosition(90, geoPosition.getLongitude());
-//                final Point2D upPoint = mapViewer.getTileFactory().geoToPixel(upPosition, mapViewer.getZoom());
-//            } else if (geoPosition.getLongitude() > 180)
-//            {
-//                final GeoPosition leftPosition = new GeoPosition(geoPosition.getLatitude(), -180);
-//                final Point2D leftPoint = mapViewer.getTileFactory().geoToPixel(leftPosition, mapViewer.getZoom());
-//            } else if (geoPosition.getLongitude() < -180)
-//            {
-//                final GeoPosition rightPosition = new GeoPosition(geoPosition.getLatitude(), 180);
-//                final Point2D rightPoint = mapViewer.getTileFactory().geoToPixel(rightPosition, mapViewer.getZoom());
-//            } else
-//            {
-//                layoutTransformer.translate(dx, dy);
-//            }
-
-//            if (geoPosition.getLatitude() > 90 || geoPosition.getLatitude() < -90 || geoPosition.getLongitude() > 180 || geoPosition.getLongitude() < -180)
-//            {
-//
-//            } else
-//            {
-//                layoutTransformer.translate(dx, dy);
-//            }
-
         }
     }
 
