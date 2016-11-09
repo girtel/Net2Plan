@@ -57,19 +57,10 @@ public class OSMMapController
 
     private static void loadMap()
     {
-        // JUNG Canvas
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
-
-        // Making some swing adjustments.
-        // Canvas on top of the map panel.
-        final LayoutManager layout = new OverlayLayout(mapViewer);
-        mapViewer.setLayout(layout);
-
-        mapViewer.add(vv);
-
-        topologyPanel.add(mapViewer, BorderLayout.CENTER);
-        topologyPanel.validate();
-        topologyPanel.repaint();
+        // Restart map original configuration
+        stopMap();
+        // Activating maps on the canvas
+        activateMap();
 
         // Calculating map position
         final HashSet<GeoPosition> positionSet = new HashSet<>();
@@ -89,9 +80,6 @@ public class OSMMapController
         }
 
         mapViewer.zoomToBestFit(positionSet, 0.6);
-
-        // Activating maps on the canvas
-        ((JUNGCanvas) canvas).activateMap(mapViewer);
     }
 
     private static void loadSnapshot()
@@ -118,6 +106,39 @@ public class OSMMapController
         topologyPanel.remove(mapViewer);
         topologyPanel.add(vv, BorderLayout.CENTER);
 
+        topologyPanel.validate();
+        topologyPanel.repaint();
+    }
+
+    private static void activateMap()
+    {
+        ((JUNGCanvas) canvas).activateMap(mapViewer);
+
+        // JUNG Canvas
+        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
+
+        // Making some swing adjustments.
+        // Canvas on top of the map panel.
+        final LayoutManager layout = new OverlayLayout(mapViewer);
+        mapViewer.setLayout(layout);
+
+        mapViewer.add(vv);
+
+        topologyPanel.add(mapViewer, BorderLayout.CENTER);
+        topologyPanel.validate();
+        topologyPanel.repaint();
+    }
+
+    private static void stopMap()
+    {
+        if (((JUNGCanvas) canvas).isMapActivated())
+        {
+            ((JUNGCanvas) canvas).deactivateMap();
+            mapViewer.removeAll();
+            topologyPanel.remove(mapViewer);
+        }
+
+        topologyPanel.add(canvas.getComponent(), BorderLayout.CENTER);
         topologyPanel.validate();
         topologyPanel.repaint();
     }

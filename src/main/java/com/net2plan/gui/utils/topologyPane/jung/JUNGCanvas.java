@@ -94,8 +94,9 @@ public final class JUNGCanvas extends ITopologyCanvas
 
     // Map section
     private OSMMapPanel mapViewer;
-    private boolean isMapActivated;
     private Map<Node, Point2D> nodeLastPosition;
+
+    private boolean isMapActivated = false;
 
     static
     {
@@ -698,6 +699,11 @@ public final class JUNGCanvas extends ITopologyCanvas
     {
         isMapActivated = true;
         this.mapViewer = mapController;
+    }
+
+    public void deactivateMap()
+    {
+        isMapActivated = false;
     }
 
     public void setBackgroundImage(final File bgFile, final double x, final double y)
