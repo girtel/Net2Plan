@@ -37,13 +37,7 @@ import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.MulticastDemand;
-import com.net2plan.interfaces.networkDesign.MulticastTree;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.CollectionUtils;
@@ -70,56 +64,16 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
             "Offered traffic", "Carried traffic", "% Lost traffic", "Routing cycles", "Bifurcated", "# Multicast trees", "Max e2e latency (ms)", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Ingress node", "Egress nodes", "Indicates the coupled upper layer links, if any, or empty", "Offered traffic by the multicast demand", "Carried traffic by multicast trees carrying demand traffic", "Percentage of lost traffic from the offered", "Indicates whether there are routing cycles: always loopless since we always deal with multicast trees", "Indicates whether the demand has more than one associated multicast tree carrying traffic", "Number of associated multicast trees", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", "Multicast demand-specific attributes");
 
+    private NetPlan currentTopology = null;
+    private List<MulticastDemand> currentMulticastDemands = new LinkedList<>();
+
     public AdvancedJTable_multicastDemand(final INetworkCallback networkViewer) {
-        super(createTableModel(networkViewer), networkViewer, NetworkElementType.MULTICAST_DEMAND);
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.MULTICAST_DEMAND, true);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
 
     }
-
-    @Override
-    public void attributesInDifferentColumns()
-    {
-
-    }
-
-    @Override
-    public void attributesInOneColumn()
-    {
-
-    }
-
-    @Override
-    public boolean areAttributesInDifferentColums()
-    {
-        return false;
-    }
-
-    @Override
-    public boolean hasBeenAddedEachColumn(String columnName)
-    {
-        return false;
-    }
-
-    @Override
-    public void updateHasBeenAddedEachColumn(String columnName, boolean flag)
-    {
-
-    }
-
-    @Override
-    public void updateAttributeColumnsNames(String attributeName, boolean addAtt)
-    {
-
-    }
-
-    @Override
-    public ArrayList<String> getAttributesColumnsHeaders()
-    {
-        return null;
-    }
-
 
     public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
         List<Object[]> allDemandData = new LinkedList<Object[]>();
@@ -148,6 +102,14 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
             demandData[10] = multicastTreeIds_thisDemand.isEmpty() ? "none" : multicastTreeIds_thisDemand.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(multicastTreeIds_thisDemand), ",") + ")";
             demandData[11] = demand.getWorseCasePropagationTimeInMs();
             demandData[12] = StringUtils.mapToString(demand.getAttributes());
+
+            for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
+            {
+                if(demand.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
+                {
+                    demandData[i] = demand.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
+                }
+            }
             allDemandData.add(demandData);
 
             if (initialState != null && initialState.getMulticastDemandFromId(demand.getId()) != null) {
@@ -163,7 +125,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
                 h_d = demand.getOfferedTraffic();
                 lostTraffic_d = demand.getBlockedTraffic();
 
-                Object[] demandData_initialNetPlan = new Object[netPlanViewTableHeader.length];
+                Object[] demandData_initialNetPlan = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
                 demandData_initialNetPlan[0] = null;
                 demandData_initialNetPlan[1] = null;
                 demandData_initialNetPlan[2] = null;
@@ -177,6 +139,13 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
                 demandData_initialNetPlan[10] = multicastTreeIds_thisDemand.isEmpty() ? "none" : multicastTreeIds_thisDemand.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(multicastTreeIds_thisDemand), ",") + ")";
                 demandData_initialNetPlan[11] = demand.getWorseCasePropagationTimeInMs();
                 demandData_initialNetPlan[12] = StringUtils.mapToString(demand.getAttributes());
+                for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
+                {
+                    if(demand.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
+                    {
+                        demandData_initialNetPlan[i] = demand.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
+                    }
+                }
                 allDemandData.add(demandData_initialNetPlan);
             }
         }
@@ -209,6 +178,12 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
         return np.hasMulticastDemands();
     }
 
+    @Override
+    public int getAttributesColumnIndex()
+    {
+        return COLUMN_ATTRIBUTES;
+    }
+
     public int[] getColumnsOfSpecialComparatorForSorting() {
         return new int[]{3, 4, 5, 9, 10};
     }
@@ -219,8 +194,9 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
 
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
+                if(!networkViewer.isEditable()) return false;
+                if(columnIndex >= netPlanViewTableHeader.length) return true;
                 if (getValueAt(rowIndex, columnIndex) == null) return false;
-                if (!networkViewer.isEditable()) return false;
 
                 return columnIndex == COLUMN_OFFEREDTRAFFIC || columnIndex >= netPlanViewTableHeader.length;
             }
@@ -285,6 +261,29 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
 
     public int getNumFixedLeftColumnsInDecoration() {
         return 2;
+    }
+
+    @Override
+    public ArrayList<String> getAttributesColumnsHeaders()
+    {
+        ArrayList<String> attColumnsHeaders = new ArrayList<>();
+        currentTopology = networkViewer.getDesign();
+        currentMulticastDemands = currentTopology.getMulticastDemands();
+        for(MulticastDemand mDemand : currentMulticastDemands)
+        {
+
+            for (Map.Entry<String, String> entry : mDemand.getAttributes().entrySet())
+            {
+                if(attColumnsHeaders.contains(entry.getKey()) == false)
+                {
+                    attColumnsHeaders.add(entry.getKey());
+                }
+
+            }
+
+        }
+
+        return attColumnsHeaders;
     }
 
     @Override

@@ -64,52 +64,10 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
     private static final int COLUMN_CARRIEDTRAFFIC = 4;
 
     public AdvancedJTable_forwardingRule(final INetworkCallback networkViewer) {
-        super(createTableModel(networkViewer), networkViewer, NetworkElementType.FORWARDING_RULE);
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.FORWARDING_RULE, false);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
-    }
-
-    @Override
-    public void attributesInDifferentColumns()
-    {
-
-    }
-
-    @Override
-    public void attributesInOneColumn()
-    {
-
-    }
-
-    @Override
-    public boolean areAttributesInDifferentColums()
-    {
-        return false;
-    }
-
-    @Override
-    public boolean hasBeenAddedEachColumn(String columnName)
-    {
-        return false;
-    }
-
-    @Override
-    public void updateHasBeenAddedEachColumn(String columnName, boolean flag)
-    {
-
-    }
-
-    @Override
-    public void updateAttributeColumnsNames(String attributeName, boolean addAtt)
-    {
-
-    }
-
-    @Override
-    public ArrayList<String> getAttributesColumnsHeaders()
-    {
-        return null;
     }
 
     public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
@@ -185,6 +143,12 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
     public boolean hasElements(NetPlan np) {
         return true;
     } //if (np.getRoutingType() != RoutingType.HOP_BY_HOP_ROUTING) return false; return (np.getMatrixDemandBasedForwardingRules().getMaxLocation() [0] > 0); }
+
+    @Override
+    public int getAttributesColumnIndex()
+    {
+        return 0;
+    }
 
     public int[] getColumnsOfSpecialComparatorForSorting() {
         return new int[]{0, 1, 2};
@@ -269,6 +233,12 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
 
     public int getNumFixedLeftColumnsInDecoration() {
         return 2;
+    }
+
+    @Override
+    public ArrayList<String> getAttributesColumnsHeaders()
+    {
+        return null;
     }
 
 

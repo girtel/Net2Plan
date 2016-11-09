@@ -88,54 +88,14 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
     private static final int COLUMN_ATTRIBUTES = 11;
     private static int MAXNUMDECIMALSINAVAILABILITY = 7;
 
+    private List<SharedRiskGroup> currentSRGs = new LinkedList<>();
+    private NetPlan currentTopology = null;
+
     public AdvancedJTable_srg(final INetworkCallback networkViewer) {
-        super(createTableModel(networkViewer), networkViewer, NetworkElementType.SRG);
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.SRG, true);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
-    }
-
-
-    @Override
-    public void attributesInDifferentColumns()
-    {
-
-    }
-
-    @Override
-    public void attributesInOneColumn()
-    {
-
-    }
-
-    @Override
-    public boolean areAttributesInDifferentColums()
-    {
-        return false;
-    }
-
-    @Override
-    public boolean hasBeenAddedEachColumn(String columnName)
-    {
-        return false;
-    }
-
-    @Override
-    public void updateHasBeenAddedEachColumn(String columnName, boolean flag)
-    {
-
-    }
-
-    @Override
-    public void updateAttributeColumnsNames(String attributeName, boolean addAtt)
-    {
-
-    }
-
-    @Override
-    public ArrayList<String> getAttributesColumnsHeaders()
-    {
-        return null;
     }
 
     public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
@@ -164,6 +124,14 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
             srgData[9] = numSegments == 0 ? "none" : numSegments + " (" + CollectionUtils.join(NetPlan.getIndexes(segmentIds_thisSRG), ", ") + ")";
             srgData[10] = numMulticastTrees == 0 ? "none" : numMulticastTrees + " (" + CollectionUtils.join(NetPlan.getIndexes(treeIds_thisSRG), ", ") + ")";
             srgData[11] = StringUtils.mapToString(srg.getAttributes());
+
+            for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
+            {
+                if(srg.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
+                {
+                    srgData[i] = srg.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
+                }
+            }
             allSRGData.add(srgData);
 
             if (initialState != null && initialState.getSRGFromId(srg.getId()) != null) {
@@ -179,7 +147,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
                 linkIds_thisSRG = srg.getLinks(layer);
 
 
-                Object[] srgData_initialNetPlan = new Object[netPlanViewTableHeader.length];
+                Object[] srgData_initialNetPlan = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
                 srgData_initialNetPlan[0] = null;
                 srgData_initialNetPlan[1] = null;
                 srgData_initialNetPlan[2] = srg.getMeanTimeToFailInHours();
@@ -192,6 +160,14 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
                 srgData_initialNetPlan[9] = numSegments == 0 ? "none" : numSegments + " (" + CollectionUtils.join(NetPlan.getIndexes(segmentIds_thisSRG), ", ") + ")";
                 srgData_initialNetPlan[10] = numMulticastTrees == 0 ? "none" : numMulticastTrees + " (" + CollectionUtils.join(NetPlan.getIndexes(treeIds_thisSRG), ", ") + ")";
                 srgData_initialNetPlan[11] = StringUtils.mapToString(srg.getAttributes());
+
+                for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
+                {
+                    if(srg.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
+                    {
+                        srgData_initialNetPlan[i] = srg.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
+                    }
+                }
                 allSRGData.add(srgData_initialNetPlan);
             }
         }
@@ -227,6 +203,12 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
         return np.hasSRGs();
     }
 
+    @Override
+    public int getAttributesColumnIndex()
+    {
+        return COLUMN_ATTRIBUTES;
+    }
+
     public int[] getColumnsOfSpecialComparatorForSorting() {
         return new int[]{8, 9};
     }
@@ -238,6 +220,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 if (!networkViewer.isEditable()) return false;
+                if (columnIndex >= netPlanViewTableHeader.length) return true;
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
 
                 return columnIndex == COLUMN_MTTF || columnIndex == COLUMN_MTTR || columnIndex >= netPlanViewTableHeader.length;
@@ -309,6 +292,29 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
 
     public int getNumFixedLeftColumnsInDecoration() {
         return 2;
+    }
+
+    @Override
+    public ArrayList<String> getAttributesColumnsHeaders()
+    {
+        ArrayList<String> attColumnsHeaders = new ArrayList<>();
+        currentTopology = networkViewer.getDesign();
+        currentSRGs = currentTopology.getSRGs();
+        for(SharedRiskGroup srg : currentSRGs)
+        {
+
+            for (Map.Entry<String, String> entry : srg.getAttributes().entrySet())
+            {
+                if(attColumnsHeaders.contains(entry.getKey()) == false)
+                {
+                    attColumnsHeaders.add(entry.getKey());
+                }
+
+            }
+
+        }
+
+        return attColumnsHeaders;
     }
 
     @Override

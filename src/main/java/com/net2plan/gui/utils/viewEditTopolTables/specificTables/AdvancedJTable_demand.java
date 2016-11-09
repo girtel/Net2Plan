@@ -75,13 +75,15 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
             "Offered traffic", "Carried traffic", "% Lost traffic", "Routing cycles", "Bifurcated", "# Routes", "Max e2e latency (ms)", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Ingress node", "Egress node", "Indicates the coupled upper layer link, if any, or empty", "Offered traffic by the demand", "Carried traffic by routes carrying traffic from the demand", "Percentage of lost traffic from the offered", "Indicates whether there are routing cycles: loopless (no cycle in some route), open cycles (traffic reaches egress node after some cycles in some route), closed cycles (traffic does not reach the egress node in some route)", "Indicates whether the demand has more than one associated route carrying traffic", "Number of associated routes", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", "Demand-specific attributes");
 
+    private NetPlan currentTopology = null;
+    private List<Demand> currentDemands = new LinkedList<>();
     /**
      * Default constructor.
      *
      * @since 0.2.0
      */
     public AdvancedJTable_demand(final INetworkCallback networkViewer) {
-        super(createTableModel(networkViewer), networkViewer, NetworkElementType.DEMAND);
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.DEMAND, true);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
@@ -91,47 +93,6 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
         return netPlanViewTabName;
     }
 
-    @Override
-    public void attributesInDifferentColumns()
-    {
-
-    }
-
-    @Override
-    public void attributesInOneColumn()
-    {
-
-    }
-
-    @Override
-    public boolean areAttributesInDifferentColums()
-    {
-        return false;
-    }
-
-    @Override
-    public boolean hasBeenAddedEachColumn(String columnName)
-    {
-        return false;
-    }
-
-    @Override
-    public void updateHasBeenAddedEachColumn(String columnName, boolean flag)
-    {
-
-    }
-
-    @Override
-    public void updateAttributeColumnsNames(String attributeName, boolean addAtt)
-    {
-
-    }
-
-    @Override
-    public ArrayList<String> getAttributesColumnsHeaders()
-    {
-        return null;
-    }
 
     public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
         List<Object[]> allDemandData = new LinkedList<Object[]>();
@@ -142,7 +103,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
             Node egressNode = demand.getEgressNode();
             double h_d = demand.getOfferedTraffic();
             double lostTraffic_d = demand.getBlockedTraffic();
-            Object[] demandData = new Object[netPlanViewTableHeader.length];
+            Object[] demandData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
             demandData[0] = demand.getId();
             demandData[1] = demand.getIndex();
             demandData[2] = ingressNode.getIndex() + (ingressNode.getName().isEmpty() ? "" : " (" + ingressNode.getName() + ")");
@@ -156,6 +117,14 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
             demandData[10] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(routes_thisDemand), ",") + ")";
             demandData[11] = demand.getWorseCasePropagationTimeInMs();
             demandData[12] = StringUtils.mapToString(demand.getAttributes());
+
+            for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
+            {
+                if(demand.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
+                {
+                    demandData[i] = demand.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
+                }
+            }
             allDemandData.add(demandData);
 
             if (initialState != null && initialState.getDemandFromId(demand.getId()) != null) {
@@ -166,7 +135,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                 egressNode = demand.getEgressNode();
                 h_d = demand.getOfferedTraffic();
 
-                Object[] demandData_initialNetPlan = new Object[netPlanViewTableHeader.length];
+                Object[] demandData_initialNetPlan = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
                 demandData_initialNetPlan[0] = null;
                 demandData_initialNetPlan[1] = null;
                 demandData_initialNetPlan[2] = null;
@@ -179,11 +148,25 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                 demandData_initialNetPlan[10] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(routes_thisDemand), ",") + ")";
                 demandData_initialNetPlan[11] = demand.getWorseCasePropagationTimeInMs();
                 demandData_initialNetPlan[12] = StringUtils.mapToString(demand.getAttributes());
+
+                for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
+                {
+                    if(demand.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
+                    {
+                        demandData_initialNetPlan[i] = demand.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
+                    }
+                }
                 allDemandData.add(demandData_initialNetPlan);
             }
         }
 
         return allDemandData;
+    }
+
+    @Override
+    public int getAttributesColumnIndex()
+    {
+        return COLUMN_ATTRIBUTES;
     }
 
     public String[] getTableHeaders() {
@@ -219,9 +202,10 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 if (!networkViewer.isEditable()) return false;
+                if (columnIndex >= netPlanViewTableHeader.length) return true;
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
 
-                return columnIndex == COLUMN_OFFEREDTRAFFIC || columnIndex >= netPlanViewTableHeader.length;
+                return columnIndex == COLUMN_OFFEREDTRAFFIC;
             }
 
             @Override
@@ -284,6 +268,29 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
 
     public int getNumFixedLeftColumnsInDecoration() {
         return 2;
+    }
+
+    @Override
+    public ArrayList<String> getAttributesColumnsHeaders()
+    {
+        ArrayList<String> attColumnsHeaders = new ArrayList<>();
+        currentTopology = networkViewer.getDesign();
+        currentDemands = currentTopology.getDemands();
+        for(Demand demand : currentDemands)
+        {
+
+            for (Map.Entry<String, String> entry : demand.getAttributes().entrySet())
+            {
+                if(attColumnsHeaders.contains(entry.getKey()) == false)
+                {
+                    attColumnsHeaders.add(entry.getKey());
+                }
+
+            }
+
+        }
+
+        return attColumnsHeaders;
     }
 
     public void doPopup(final MouseEvent e, final int row, final Object itemId) {

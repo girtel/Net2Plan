@@ -33,13 +33,7 @@ import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
-import com.net2plan.interfaces.networkDesign.Configuration;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.MulticastDemand;
-import com.net2plan.interfaces.networkDesign.MulticastTree;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.libraries.GraphUtils;
@@ -75,54 +69,15 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
             "Worse case length (km)", "Worse case propagation delay (ms)", "Bottleneck utilization", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Multicast demand", "Ingress node", "Egress nodes", "Multicast demand offered traffic", "This multicast tree carried traffic", "Capacity occupied in the links (typically same as the carried traffic)", "Set of links in the tree", "Number of links in the tree (equal to the number of traversed nodes minus one)", "Set of traversed nodes (including ingress and egress ndoes)", "Number of hops of the longest path (in number of hops) to any egress node", "Length (km) of the longest path (in km) to any egress node", "Propagation demay (ms) of the longest path (in ms) to any egress node", "Highest utilization among all traversed links", "Multicast tree specific attributes");
 
+    private NetPlan currentTopology = null;
+    private List<MulticastTree> currentMulticastTrees = new LinkedList<>();
+
     public AdvancedJTable_multicastTree(final INetworkCallback networkViewer) {
-        super(createTableModel(networkViewer), networkViewer, NetworkElementType.MULTICAST_TREE);
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.MULTICAST_TREE, true);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
 
-    }
-
-    @Override
-    public void attributesInDifferentColumns()
-    {
-
-    }
-
-    @Override
-    public void attributesInOneColumn()
-    {
-
-    }
-
-    @Override
-    public boolean areAttributesInDifferentColums()
-    {
-        return false;
-    }
-
-    @Override
-    public boolean hasBeenAddedEachColumn(String columnName)
-    {
-        return false;
-    }
-
-    @Override
-    public void updateHasBeenAddedEachColumn(String columnName, boolean flag)
-    {
-
-    }
-
-    @Override
-    public void updateAttributeColumnsNames(String attributeName, boolean addAtt)
-    {
-
-    }
-
-    @Override
-    public ArrayList<String> getAttributesColumnsHeaders()
-    {
-        return null;
     }
 
 
@@ -156,6 +111,14 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
             treeData[13] = tree.getTreeMaximumPropagationDelayInMs();
             treeData[14] = maxUtilization;
             treeData[15] = StringUtils.mapToString(tree.getAttributes());
+
+            for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
+            {
+                if(demand.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
+                {
+                    treeData[i] = tree.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
+                }
+            }
             allTreeData.add(treeData);
 
             if (initialState != null && initialState.getMulticastTreeFromId(tree.getId()) != null) {
@@ -171,7 +134,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
                 for (Node n : egressNodes)
                     egressNodesString += n + "(" + (n.getName().isEmpty() ? "" : n.getName()) + ") ";
 
-                Object[] treeData_initialNetPlan = new Object[netPlanViewTableHeader.length];
+                Object[] treeData_initialNetPlan = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
                 treeData_initialNetPlan[0] = null;
                 treeData_initialNetPlan[1] = null;
                 treeData_initialNetPlan[2] = null;
@@ -187,6 +150,14 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
                 treeData_initialNetPlan[13] = tree.getTreeMaximumPropagationDelayInMs();
                 treeData_initialNetPlan[14] = maxUtilization;
                 treeData_initialNetPlan[15] = StringUtils.mapToString(tree.getAttributes());
+
+                for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
+                {
+                    if(demand.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
+                    {
+                        treeData_initialNetPlan[i] = tree.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
+                    }
+                }
                 allTreeData.add(treeData_initialNetPlan);
             }
         }
@@ -218,6 +189,12 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
         return np.hasMulticastTrees();
     }
 
+    @Override
+    public int getAttributesColumnIndex()
+    {
+        return COLUMN_ATTRIBUTES;
+    }
+
     public int[] getColumnsOfSpecialComparatorForSorting() {
         return new int[]{};
     }
@@ -229,6 +206,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 if (!networkViewer.isEditable()) return false;
+                if (columnIndex >= netPlanViewTableHeader.length) return true;
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
 
                 return columnIndex == COLUMN_CARRIEDTRAFFIC || columnIndex == COLUMN_OCCUPIEDCAPACITY || columnIndex >= netPlanViewTableHeader.length;
@@ -302,6 +280,29 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
 
     public int getNumFixedLeftColumnsInDecoration() {
         return 2;
+    }
+
+    @Override
+    public ArrayList<String> getAttributesColumnsHeaders()
+    {
+        ArrayList<String> attColumnsHeaders = new ArrayList<>();
+        currentTopology = networkViewer.getDesign();
+        currentMulticastTrees = currentTopology.getMulticastTrees();
+        for(MulticastTree mTree : currentMulticastTrees)
+        {
+
+            for (Map.Entry<String, String> entry : mTree.getAttributes().entrySet())
+            {
+                if(attColumnsHeaders.contains(entry.getKey()) == false)
+                {
+                    attColumnsHeaders.add(entry.getKey());
+                }
+
+            }
+
+        }
+
+        return attColumnsHeaders;
     }
 
     @Override

@@ -84,56 +84,16 @@ public class AdvancedJTable_segment extends AdvancedJTableNetworkElement {
             "# Routes", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Origin node", "Destination node", "Reserved capacity for the segment", "Carried traffic by this segment", "Sequence of links", "Sequence of nodes", "Number of hops", "Length (km)", "Propagation delay (ms)", "Dedicated/Shared", "# Routes", "Attributes");
 
+    private List<ProtectionSegment> currentSegments = new LinkedList<>();
+    private NetPlan currentTopology = null;
+
     public AdvancedJTable_segment(final INetworkCallback networkViewer) {
-        super(createTableModel(networkViewer), networkViewer, NetworkElementType.PROTECTION_SEGMENT);
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.PROTECTION_SEGMENT, true);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
 
     }
-
-    @Override
-    public void attributesInDifferentColumns()
-    {
-
-    }
-
-    @Override
-    public void attributesInOneColumn()
-    {
-
-    }
-
-    @Override
-    public boolean areAttributesInDifferentColums()
-    {
-        return false;
-    }
-
-    @Override
-    public boolean hasBeenAddedEachColumn(String columnName)
-    {
-        return false;
-    }
-
-    @Override
-    public void updateHasBeenAddedEachColumn(String columnName, boolean flag)
-    {
-
-    }
-
-    @Override
-    public void updateAttributeColumnsNames(String attributeName, boolean addAtt)
-    {
-
-    }
-
-    @Override
-    public ArrayList<String> getAttributesColumnsHeaders()
-    {
-        return null;
-    }
-
 
     public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
         final boolean sameRoutingType = initialState != null && initialState.getRoutingType() == currentState.getRoutingType();
@@ -164,6 +124,14 @@ public class AdvancedJTable_segment extends AdvancedJTableNetworkElement {
             segmentData[11] = numRoutes > 1 ? "Shared" : (numRoutes == 0 ? "Not used" : "Dedicated");
             segmentData[12] = numRoutes == 0 ? "none" : numRoutes + " (" + CollectionUtils.join(routeIds_thisSegment, ", ") + ")";
             segmentData[13] = StringUtils.mapToString(segment.getAttributes());
+
+            for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
+            {
+                if(segment.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
+                {
+                    segmentData[i] = segment.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
+                }
+            }
             allSegmentData.add(segmentData);
 
             if (initialState != null && sameRoutingType && initialState.getProtectionSegmentFromId(segment.getId()) != null) {
@@ -178,7 +146,7 @@ public class AdvancedJTable_segment extends AdvancedJTableNetworkElement {
                 originNodeName = originNode.getName();
                 destinationNodeName = destinationNode.getName();
 
-                Object[] segmentData_initialNetPlan = new Object[netPlanViewTableHeader.length];
+                Object[] segmentData_initialNetPlan = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
                 segmentData_initialNetPlan[0] = null;
                 segmentData_initialNetPlan[1] = null;
                 segmentData_initialNetPlan[2] = null;
@@ -193,6 +161,14 @@ public class AdvancedJTable_segment extends AdvancedJTableNetworkElement {
                 segmentData_initialNetPlan[11] = numRoutes > 1 ? "Shared" : (numRoutes == 0 ? "Not used" : "Dedicated");
                 segmentData_initialNetPlan[12] = numRoutes == 0 ? "none" : numRoutes + " (" + CollectionUtils.join(routeIds_thisSegment, ", ") + ")";
                 segmentData_initialNetPlan[13] = StringUtils.mapToString(segment.getAttributes());
+
+                for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
+                {
+                    if(segment.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
+                    {
+                        segmentData_initialNetPlan[i] = segment.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
+                    }
+                }
                 allSegmentData.add(segmentData_initialNetPlan);
             }
 
@@ -227,6 +203,12 @@ public class AdvancedJTable_segment extends AdvancedJTableNetworkElement {
         return np.hasProtectionSegments();
     }
 
+    @Override
+    public int getAttributesColumnIndex()
+    {
+        return COLUMN_ATTRIBUTES;
+    }
+
     public int[] getColumnsOfSpecialComparatorForSorting() {
         return new int[]{12};
     }
@@ -238,6 +220,7 @@ public class AdvancedJTable_segment extends AdvancedJTableNetworkElement {
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 if (!networkViewer.isEditable()) return false;
+                if (columnIndex >= netPlanViewTableHeader.length) return true;
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
 
                 return columnIndex == COLUMN_RESERVEDCAPACITY || columnIndex >= netPlanViewTableHeader.length;
@@ -306,6 +289,29 @@ public class AdvancedJTable_segment extends AdvancedJTableNetworkElement {
 
     public int getNumFixedLeftColumnsInDecoration() {
         return 2;
+    }
+
+    @Override
+    public ArrayList<String> getAttributesColumnsHeaders()
+    {
+        ArrayList<String> attColumnsHeaders = new ArrayList<>();
+        currentTopology = networkViewer.getDesign();
+        currentSegments = currentTopology.getProtectionSegments();
+        for(ProtectionSegment pSegment : currentSegments)
+        {
+
+            for (Map.Entry<String, String> entry : pSegment.getAttributes().entrySet())
+            {
+                if(attColumnsHeaders.contains(entry.getKey()) == false)
+                {
+                    attColumnsHeaders.add(entry.getKey());
+                }
+
+            }
+
+        }
+
+        return attColumnsHeaders;
     }
 
     @Override

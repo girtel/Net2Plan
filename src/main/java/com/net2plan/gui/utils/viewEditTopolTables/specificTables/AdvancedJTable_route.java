@@ -99,55 +99,17 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
             "Propagation delay (ms)", "Bottleneck utilization", "Backup segments", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Demand", "Ingress node", "Egress node", "Demand offered traffic", "Carried traffic", "Occupied capacity", "Sequence of links", "Sequence of nodes", "Number of hops", "Total route length", "Propagation delay (ms)", "Highest utilization among all traversed links", "Candidate protection segments for this route", "Route-specific attributes");
 
+    private List<Route> currentRoutes = new LinkedList<>();
+    private NetPlan currentTopology = null;
+
     public AdvancedJTable_route(final INetworkCallback networkViewer) {
-        super(createTableModel(networkViewer), networkViewer, NetworkElementType.ROUTE);
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.ROUTE, true);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
 
     }
 
-    @Override
-    public void attributesInDifferentColumns()
-    {
-
-    }
-
-    @Override
-    public void attributesInOneColumn()
-    {
-
-    }
-
-    @Override
-    public boolean areAttributesInDifferentColums()
-    {
-        return false;
-    }
-
-    @Override
-    public boolean hasBeenAddedEachColumn(String columnName)
-    {
-        return false;
-    }
-
-    @Override
-    public void updateHasBeenAddedEachColumn(String columnName, boolean flag)
-    {
-
-    }
-
-    @Override
-    public void updateAttributeColumnsNames(String attributeName, boolean addAtt)
-    {
-
-    }
-
-    @Override
-    public ArrayList<String> getAttributesColumnsHeaders()
-    {
-        return null;
-    }
 
     public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
         final boolean sameRoutingType = initialState != null && initialState.getRoutingType() == currentState.getRoutingType();
@@ -179,6 +141,14 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
             routeData[13] = maxUtilization;
             routeData[14] = CollectionUtils.join(NetPlan.getIndexes(route.getPotentialBackupProtectionSegments()), ", ");
             routeData[15] = StringUtils.mapToString(route.getAttributes());
+
+            for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
+            {
+                if(route.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
+                {
+                    routeData[i] = route.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
+                }
+            }
             allRouteData.add(routeData);
 
             if (initialState != null && sameRoutingType && initialState.getRouteFromId(route.getId()) != null) {
@@ -192,7 +162,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                 ingressNodeName = ingressNode.getName();
                 egressNodeName = egressNode.getName();
 
-                Object[] routeData_initialNetPlan = new Object[netPlanViewTableHeader.length];
+                Object[] routeData_initialNetPlan = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
                 routeData_initialNetPlan[0] = null;
                 routeData_initialNetPlan[1] = null;
                 routeData_initialNetPlan[2] = null;
@@ -209,6 +179,14 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                 routeData_initialNetPlan[13] = maxUtilization;
                 routeData_initialNetPlan[14] = CollectionUtils.join(NetPlan.getIndexes(route.getPotentialBackupProtectionSegments()), ", ");
                 routeData_initialNetPlan[15] = StringUtils.mapToString(route.getAttributes());
+
+                for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
+                {
+                    if(route.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
+                    {
+                        routeData_initialNetPlan[i] = route.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
+                    }
+                }
                 allRouteData.add(routeData_initialNetPlan);
             }
         }
@@ -241,6 +219,12 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         return np.hasRoutes();
     }
 
+    @Override
+    public int getAttributesColumnIndex()
+    {
+        return COLUMN_ATTRIBUTES;
+    }
+
     public int[] getColumnsOfSpecialComparatorForSorting() {
         return new int[]{};
     }
@@ -253,6 +237,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 if (!networkViewer.isEditable()) return false;
+                if (columnIndex >= netPlanViewTableHeader.length) return true;
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
 
                 return columnIndex == COLUMN_CARRIEDTRAFFIC || columnIndex == COLUMN_OCCUPIEDCAPACITY
@@ -326,6 +311,29 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
 
     public int getNumFixedLeftColumnsInDecoration() {
         return 2;
+    }
+
+    @Override
+    public ArrayList<String> getAttributesColumnsHeaders()
+    {
+        ArrayList<String> attColumnsHeaders = new ArrayList<>();
+        currentTopology = networkViewer.getDesign();
+        currentRoutes = currentTopology.getRoutes();
+        for(Route route : currentRoutes)
+        {
+
+            for (Map.Entry<String, String> entry : route.getAttributes().entrySet())
+            {
+                if(attColumnsHeaders.contains(entry.getKey()) == false)
+                {
+                    attColumnsHeaders.add(entry.getKey());
+                }
+
+            }
+
+        }
+
+        return attColumnsHeaders;
     }
 
     @Override
