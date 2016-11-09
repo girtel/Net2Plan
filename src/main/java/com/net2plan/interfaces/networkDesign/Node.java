@@ -694,5 +694,5 @@ public class Node extends NetworkElement
 		for (ProtectionSegment segment : cache_nodeAssociatedSegments) if (!segment.seqNodes.contains(this)) throw new RuntimeException ("Bad");
 		for (MulticastTree tree : cache_nodeAssociatedulticastTrees) if (!tree.cache_traversedNodes.contains(this)) throw new RuntimeException ("Bad");
 	}
-	
+
 }

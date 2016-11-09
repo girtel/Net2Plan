@@ -15,6 +15,8 @@ package com.net2plan.gui.utils.topologyPane.jung;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
+import com.net2plan.gui.utils.topologyPane.jung.map.osm.OSMMapController;
+import com.net2plan.gui.utils.topologyPane.jung.map.osm.OSMMapPanel;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -49,6 +51,7 @@ import edu.uci.ics.jung.visualization.util.ArrowFactory;
 import org.apache.commons.collections15.Predicate;
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.collections15.functors.ConstantTransformer;
+import org.jxmapviewer.viewer.GeoPosition;
 
 import javax.swing.*;
 import java.awt.*;
@@ -89,6 +92,11 @@ public final class JUNGCanvas extends ITopologyCanvas
 
     private boolean showNodeNames, showLinkIds, showHideNonConnectedNodes;
 
+    // Map section
+    private OSMMapPanel mapViewer;
+    private boolean isMapActivated;
+    private Map<Node, Point2D> nodeLastPosition;
+
     static
     {
         FLIP_VERTICAL_COORDINATES = vertex ->
@@ -107,6 +115,7 @@ public final class JUNGCanvas extends ITopologyCanvas
     {
         nodeTable = new LinkedHashMap<>();
         linkTable = new LinkedHashMap<>();
+        nodeLastPosition = new HashMap<>();
 
         g = new DirectedOrderedSparseMultigraph<>();
         l = new StaticLayout<>(g, FLIP_VERTICAL_COORDINATES);
@@ -186,7 +195,7 @@ public final class JUNGCanvas extends ITopologyCanvas
         addPlugin(scalingPlugin);
 
         vv.setOpaque(false);
-        vv.setBackground(new Color(0,0,0,0));
+        vv.setBackground(new Color(0, 0, 0, 0));
 
         reset();
     }
@@ -322,13 +331,70 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void panTo(Point initialPoint, Point currentPoint)
     {
-        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
-        final Point2D q = layoutTransformer.inverseTransform(initialPoint);
-        final Point2D lvc = layoutTransformer.inverseTransform(currentPoint);
-        final double dx = (lvc.getX() - q.getX());
-        final double dy = (lvc.getY() - q.getY());
+        if (!isMapActivated)
+        {
+            final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+            final Point2D q = layoutTransformer.inverseTransform(initialPoint);
+            final Point2D lvc = layoutTransformer.inverseTransform(currentPoint);
+            final double dx = (lvc.getX() - q.getX());
+            final double dy = (lvc.getY() - q.getY());
 
-        layoutTransformer.translate(dx, dy);
+            layoutTransformer.translate(dx, dy);
+        } else
+        {
+            final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+            final Point2D q = layoutTransformer.inverseTransform(initialPoint);
+            final Point2D lvc = layoutTransformer.inverseTransform(currentPoint);
+            final double dx = (lvc.getX() - q.getX());
+            final double dy = (lvc.getY() - q.getY());
+
+            for (Node node : nodeTable.keySet())
+            {
+                final Point2D nodeXY;
+                if (nodeLastPosition.get(node) == null)
+                {
+                    nodeXY = node.getXYPositionMap();
+                } else
+                {
+                    nodeXY = nodeLastPosition.get(node);
+                }
+
+                final Point2D newNodeXY = new Point2D.Double(nodeXY.getX() + dx, nodeXY.getY() + dy);
+                final GeoPosition geoPosition = new GeoPosition(-newNodeXY.getY(), newNodeXY.getX());
+
+                System.out.println(geoPosition);
+            }
+
+//            if (geoPosition.getLatitude() > 90)
+//            {
+//                final GeoPosition downPosition = new GeoPosition(-90, geoPosition.getLongitude());
+//                final Point2D downPoint = mapViewer.getTileFactory().geoToPixel(downPosition, mapViewer.getZoom());
+//            } else if (geoPosition.getLatitude() < -90)
+//            {
+//                final GeoPosition upPosition = new GeoPosition(90, geoPosition.getLongitude());
+//                final Point2D upPoint = mapViewer.getTileFactory().geoToPixel(upPosition, mapViewer.getZoom());
+//            } else if (geoPosition.getLongitude() > 180)
+//            {
+//                final GeoPosition leftPosition = new GeoPosition(geoPosition.getLatitude(), -180);
+//                final Point2D leftPoint = mapViewer.getTileFactory().geoToPixel(leftPosition, mapViewer.getZoom());
+//            } else if (geoPosition.getLongitude() < -180)
+//            {
+//                final GeoPosition rightPosition = new GeoPosition(geoPosition.getLatitude(), 180);
+//                final Point2D rightPoint = mapViewer.getTileFactory().geoToPixel(rightPosition, mapViewer.getZoom());
+//            } else
+//            {
+//                layoutTransformer.translate(dx, dy);
+//            }
+
+//            if (geoPosition.getLatitude() > 90 || geoPosition.getLatitude() < -90 || geoPosition.getLongitude() > 180 || geoPosition.getLongitude() < -180)
+//            {
+//
+//            } else
+//            {
+//                layoutTransformer.translate(dx, dy);
+//            }
+
+        }
     }
 
     @Override
@@ -644,6 +710,45 @@ public final class JUNGCanvas extends ITopologyCanvas
         scalingControl.scale(vv, SCALE_OUT, point);
     }
 
+
+    public boolean isMapActivated()
+    {
+        return isMapActivated;
+    }
+
+    public void activateMap(final OSMMapPanel mapController)
+    {
+        isMapActivated = true;
+        this.mapViewer = mapController;
+    }
+
+    public void setBackgroundImage(final File bgFile, final double x, final double y)
+    {
+        final Double x1 = x;
+        final Double y1 = y;
+
+        setBackgroundImage(bgFile, x1.intValue(), y1.intValue());
+    }
+
+    public void setBackgroundImage(final ImageIcon image, final double x, final double y)
+    {
+        final Double x1 = x;
+        final Double y1 = y;
+
+        setBackgroundImage(image, x1.intValue(), y1.intValue());
+    }
+
+    public void setBackgroundImage(final ImageIcon image, final int x, final int y)
+    {
+        updateBackgroundImage(image, x, y);
+    }
+
+    public void setBackgroundImage(final File bgFile, final int x, final int y)
+    {
+        final ImageIcon background = new ImageIcon(bgFile.getAbsolutePath());
+        updateBackgroundImage(background, x, y);
+    }
+
     public void updateBackgroundImage(final ImageIcon icon)
     {
         updateBackgroundImage(icon, 0, 0);
@@ -680,33 +785,6 @@ public final class JUNGCanvas extends ITopologyCanvas
             };
             vv.addPreRenderPaintable(paintableAssociatedToBackgroundImage);
         }
-    }
-
-    public void setBackgroundImage(final File bgFile, final double x, final double y)
-    {
-        final Double x1 = x;
-        final Double y1 = y;
-
-        setBackgroundImage(bgFile, x1.intValue(), y1.intValue());
-    }
-
-    public void setBackgroundImage(final ImageIcon image, final double x, final double y)
-    {
-        final Double x1 = x;
-        final Double y1 = y;
-
-        setBackgroundImage(image, x1.intValue(), y1.intValue());
-    }
-
-    public void setBackgroundImage(final ImageIcon image, final int x, final int y)
-    {
-        updateBackgroundImage(image, x, y);
-    }
-
-    public void setBackgroundImage(final File bgFile, final int x, final int y)
-    {
-        final ImageIcon background = new ImageIcon(bgFile.getAbsolutePath());
-        updateBackgroundImage(background, x, y);
     }
 
     private class LinkIdRenderer extends BasicEdgeLabelRenderer<GUINode, GUILink>

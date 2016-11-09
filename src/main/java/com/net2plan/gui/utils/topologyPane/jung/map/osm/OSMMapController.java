@@ -14,17 +14,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.io.File;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by Jorge San Emeterio on 03/11/2016.
  */
-public class MapController
+public class OSMMapController
 {
-    private static final MapPanel mapViewer;
+    private static final OSMMapPanel mapViewer;
 
     private static TopologyPanel topologyPanel;
     private static ITopologyCanvas canvas;
@@ -35,19 +32,19 @@ public class MapController
 
     static
     {
-        mapViewer = new MapPanel();
+        mapViewer = new OSMMapPanel();
     }
 
     // Non-instanciable
-    private MapController()
+    private OSMMapController()
     {
     }
 
     public static void runMap(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final INetworkCallback callback)
     {
-        MapController.topologyPanel = topologyPanel;
-        MapController.canvas = canvas;
-        MapController.callback = callback;
+        OSMMapController.topologyPanel = topologyPanel;
+        OSMMapController.canvas = canvas;
+        OSMMapController.callback = callback;
 
         // 1st step: Loading the map
         loadMap();
@@ -61,22 +58,22 @@ public class MapController
     private static void loadMap()
     {
         // JUNG Canvas
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
+        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
 
         // Making some swing adjustments.
+        // Canvas on top of the map panel.
         final LayoutManager layout = new OverlayLayout(mapViewer);
         mapViewer.setLayout(layout);
 
         mapViewer.add(vv);
 
         topologyPanel.add(mapViewer, BorderLayout.CENTER);
-
         topologyPanel.validate();
         topologyPanel.repaint();
 
+        // Calculating map position
         final HashSet<GeoPosition> positionSet = new HashSet<>();
 
-        // Moving the nodes
         for (Node node : callback.getDesign().getNodes())
         {
             // Getting coords from nodes attributes
@@ -92,6 +89,9 @@ public class MapController
         }
 
         mapViewer.zoomToBestFit(positionSet, 0.6);
+
+        // Activating maps on the canvas
+        ((JUNGCanvas) canvas).activateMap(mapViewer);
     }
 
     private static void loadSnapshot()

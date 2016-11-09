@@ -29,7 +29,7 @@ import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.utils.topologyPane.jung.map.osm.MapController;
+import com.net2plan.gui.utils.topologyPane.jung.map.osm.OSMMapController;
 import com.net2plan.gui.utils.topologyPane.utils.MenuButton;
 import com.net2plan.gui.utils.windows.WindowController;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -454,7 +454,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             loadDesignFromFile(new File("C:\\Users\\Jorge\\Desktop\\Maps\\Barcelona_attrib.n2p"));
         } else if (src == btn_runMap)
         {
-            MapController.runMap(this, canvas, callback);
+            OSMMapController.runMap(this, canvas, callback);
         } else if (src == btn_reset)
         {
             callback.reset();

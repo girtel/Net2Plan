@@ -12,7 +12,7 @@ import java.io.IOException;
 /**
  * Created by Jorge San Emeterio on 13/10/2016.
  */
-public class MapPanel extends JXMapViewer
+public class OSMMapPanel extends JXMapViewer
 {
     private static int imageID = 0;
 
@@ -21,7 +21,7 @@ public class MapPanel extends JXMapViewer
 
     private final int NUMBER_OF_THREADS = 8;
 
-    public MapPanel()
+    public OSMMapPanel()
     {
         // Create a TileFactoryInfo for OpenStreetMap
         info = new OSMTileFactoryInfo();
