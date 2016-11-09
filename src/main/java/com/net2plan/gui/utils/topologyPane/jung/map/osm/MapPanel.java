@@ -31,8 +31,6 @@ public class MapPanel extends JXMapViewer
 
         // Use 8 threads in parallel to load the tiles
         tileFactory.setThreadPoolSize(NUMBER_OF_THREADS);
-
-        this.setDefaultPosition();
     }
 
     private void setDefaultPosition()

@@ -60,6 +60,22 @@ public class MapController
 
     private static void loadMap()
     {
+        // JUNG Canvas
+        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
+
+        // Making some swing adjustments.
+        final LayoutManager layout = new OverlayLayout(mapViewer);
+        mapViewer.setLayout(layout);
+
+        mapViewer.add(vv);
+
+        topologyPanel.add(mapViewer, BorderLayout.CENTER);
+
+        topologyPanel.validate();
+        topologyPanel.repaint();
+
+        final HashSet<GeoPosition> positionSet = new HashSet<>();
+
         // Moving the nodes
         for (Node node : callback.getDesign().getNodes())
         {
@@ -68,40 +84,14 @@ public class MapController
             final double longitude = Double.parseDouble(node.getAttribute(ATTRIB_LONGITUDE));
 
             final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
-
-            System.out.println(geoPosition);
+            positionSet.add(geoPosition);
 
             // The position that the node really takes on the map. This is the point where the map and the nodes align.
             final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
-            callback.moveNode(node.getId(), realPosition);
+            callback.moveNode(node.getId(), new Point2D.Double(realPosition.getX(), -realPosition.getY()));
         }
 
-        // JUNG Canvas
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
-        vv.setLocation(0, 0);
-
-        // Getting viewport rectangle
-        final Rectangle viewport = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
-
-        // Center map along the center of the viewport, the map position does not depend on the nodes' position.
-        final Point2D centerPoint = new Point2D.Double(viewport.getCenterX(), viewport.getCenterY());
-        final GeoPosition centerPosition = new GeoPosition(-centerPoint.getY(), centerPoint.getX());
-
-        System.out.println(centerPosition);
-
-        mapViewer.zoomToBestFit(new HashSet<GeoPosition>()
-        {{
-            add(centerPosition);
-        }}, 0.7);
-
-        // Making some swing adjustments.
-        topologyPanel.remove(vv);
-        mapViewer.setLayout(new BorderLayout());
-        mapViewer.add(vv, BorderLayout.CENTER);
-        topologyPanel.add(mapViewer, BorderLayout.CENTER);
-
-        topologyPanel.validate();
-        topologyPanel.repaint();
+        mapViewer.zoomToBestFit(positionSet, 0.6);
     }
 
     private static void loadSnapshot()
