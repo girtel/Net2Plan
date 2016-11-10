@@ -51,6 +51,7 @@ import edu.uci.ics.jung.visualization.util.ArrowFactory;
 import org.apache.commons.collections15.Predicate;
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.collections15.functors.ConstantTransformer;
+import org.jxmapviewer.input.PanMouseInputListener;
 import org.jxmapviewer.viewer.GeoPosition;
 
 import javax.swing.*;
@@ -93,9 +94,6 @@ public final class JUNGCanvas extends ITopologyCanvas
     private boolean showNodeNames, showLinkIds, showHideNonConnectedNodes;
 
     // Map section
-    private OSMMapPanel mapViewer;
-    private Map<Node, Point2D> nodeLastPosition;
-
     private boolean isMapActivated = false;
 
     static
@@ -116,7 +114,6 @@ public final class JUNGCanvas extends ITopologyCanvas
     {
         nodeTable = new LinkedHashMap<>();
         linkTable = new LinkedHashMap<>();
-        nodeLastPosition = new HashMap<>();
 
         g = new DirectedOrderedSparseMultigraph<>();
         l = new StaticLayout<>(g, FLIP_VERTICAL_COORDINATES);
@@ -332,47 +329,18 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void panTo(Point initialPoint, Point currentPoint)
     {
+        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+        final Point2D q = layoutTransformer.inverseTransform(initialPoint);
+        final Point2D lvc = layoutTransformer.inverseTransform(currentPoint);
+        final double dx = (lvc.getX() - q.getX());
+        final double dy = (lvc.getY() - q.getY());
+
         if (!isMapActivated)
         {
-            final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
-            final Point2D q = layoutTransformer.inverseTransform(initialPoint);
-            final Point2D lvc = layoutTransformer.inverseTransform(currentPoint);
-            final double dx = (lvc.getX() - q.getX());
-            final double dy = (lvc.getY() - q.getY());
-
             layoutTransformer.translate(dx, dy);
         } else
         {
-            final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
-            final Point2D q = layoutTransformer.inverseTransform(initialPoint);
-            final Point2D lvc = layoutTransformer.inverseTransform(currentPoint);
-            final double dx = (lvc.getX() - q.getX());
-            final double dy = (lvc.getY() - q.getY());
-
-            for (Node node : nodeTable.keySet())
-            {
-                final Point2D nodeXY;
-                if (nodeLastPosition.get(node) == null)
-                {
-                    nodeXY = node.getXYPositionMap();
-                } else
-                {
-                    nodeXY = nodeLastPosition.get(node);
-                }
-
-                final Point2D newNodeXY = new Point2D.Double(nodeXY.getX() + dx, nodeXY.getY() + dy);
-                final GeoPosition geoPosition = mapViewer.getTileFactory().pixelToGeo(new Point2D.Double(newNodeXY.getX(), -newNodeXY.getY()), mapViewer.getZoom());
-
-                nodeLastPosition.put(node, newNodeXY);
-
-                if (!(geoPosition.getLatitude() > 90 || geoPosition.getLatitude() < -90 || geoPosition.getLongitude() > 180 || geoPosition.getLongitude() < -180))
-                {
-                    layoutTransformer.translate(dx, dy);
-
-                    //TODO: Check if each border for the limiting nodes.
-                    break;
-                }
-            }
+            OSMMapController.moveMap(dx, dy);
         }
     }
 
@@ -689,21 +657,14 @@ public final class JUNGCanvas extends ITopologyCanvas
         scalingControl.scale(vv, SCALE_OUT, point);
     }
 
-
     public boolean isMapActivated()
     {
         return isMapActivated;
     }
 
-    public void activateMap(final OSMMapPanel mapController)
+    public void setMapActivated(final boolean isMapActivated)
     {
-        isMapActivated = true;
-        this.mapViewer = mapController;
-    }
-
-    public void deactivateMap()
-    {
-        isMapActivated = false;
+        this.isMapActivated = isMapActivated;
     }
 
     public void setBackgroundImage(final File bgFile, final double x, final double y)
