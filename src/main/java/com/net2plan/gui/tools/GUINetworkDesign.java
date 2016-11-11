@@ -391,7 +391,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
                 long layer = netPlan.getNetworkLayerDefault().getId();
                 for (Node auxNode : netPlan.getNodes())
                 {
-                    if (auxNode.equals(nodeId)) continue;
+                    if (auxNode.getId() == nodeId) continue;
 
                     String auxNodeName = auxNode.getName() == null ? "" : auxNode.getName();
                     String auxNodeString = Long.toString(auxNode.getId()) + (auxNodeName.isEmpty() ? "" : " (" + auxNodeName + ")");
@@ -1104,6 +1104,35 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK));
+
+        // Windows
+        addKeyCombinationAction("Show network state window", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                WindowController.showTopologyWindow();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
+
+        addKeyCombinationAction("Show report window", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                WindowController.showReportWindow();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_2, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
+
+        addKeyCombinationAction("Show offline design window", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                WindowController.showOfflineWindow();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_3, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
+
+        addKeyCombinationAction("Show online design window", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                WindowController.showOnlineWindow();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_4, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
     }
 
     private void createCircularSetting()

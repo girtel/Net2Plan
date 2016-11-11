@@ -17,6 +17,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.*;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
@@ -42,6 +43,7 @@ import com.net2plan.internal.Constants.DialogType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.ITopologyCanvas;
+import javafx.event.*;
 
 /**
  * <p>Wrapper class for the graph canvas.</p>
@@ -185,11 +187,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_zoomAll.setToolTipText("Zoom all");
         btn_takeSnapshot = new JButton();
         btn_takeSnapshot.setToolTipText("Take a snapshot of the canvas");
-        btn_showNodeNames = new JToggleButton("Node names");
+        btn_showNodeNames = new JToggleButton();
         btn_showNodeNames.setToolTipText("Show/hide node names");
-        btn_showLinkIds = new JToggleButton("Link utilizations");
+        btn_showLinkIds = new JToggleButton();
         btn_showLinkIds.setToolTipText("Show/hide link utilization, measured as the ratio between the total traffic in the link (including that in protection segments) and total link capacity (including that reserved by protection segments)");
-        btn_showNonConnectedNodes = new JToggleButton("Non-connected nodes");
+        btn_showNonConnectedNodes = new JToggleButton();
         btn_showNonConnectedNodes.setToolTipText("Show/hide non-connected nodes");
         JButton increaseNodeSize = new JButton();
         increaseNodeSize.setToolTipText("Increase node size");
@@ -203,24 +205,28 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         viewPopUp = new JPopupMenu();
 
         it_topology = new JMenuItem("View network state window");
+        it_topology.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
         it_topology.addActionListener(e ->
         {
             WindowController.showTopologyWindow();
         });
 
         it_report = new JMenuItem("View report window");
+        it_report.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_2, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
         it_report.addActionListener(e ->
         {
             WindowController.showReportWindow();
         });
 
         it_offline = new JMenuItem("View offline design window");
+        it_offline.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_3, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
         it_offline.addActionListener(e ->
         {
             WindowController.showOfflineWindow();
         });
 
         it_online = new JMenuItem("View online simulation window");
+        it_online.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_4, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
         it_online.addActionListener(e ->
         {
             WindowController.showOnlineWindow();
@@ -241,9 +247,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_load.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDesign.png")));
         btn_loadDemand.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDemand.png")));
         btn_save.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/saveDesign.png")));
-        btn_showNodeNames.setBorderPainted(true);
-        btn_showLinkIds.setBorderPainted(true);
-        btn_showNonConnectedNodes.setBorderPainted(true);
+        btn_showNodeNames.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showNodeName.png")));
+        btn_showLinkIds.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLinkUtilization.png")));
+        btn_showNonConnectedNodes.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showNonConnectedNodes.png")));
         btn_zoomIn.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/zoomIn.png")));
         btn_zoomOut.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/zoomOut.png")));
         btn_zoomAll.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/zoomAll.png")));
@@ -277,6 +283,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(btn_showNodeNames);
         toolbar.add(btn_showLinkIds);
         toolbar.add(btn_showNonConnectedNodes);
+        toolbar.add(new JToolBar.Separator());
         toolbar.add(increaseNodeSize);
         toolbar.add(decreaseNodeSize);
         toolbar.add(increaseFontSize);

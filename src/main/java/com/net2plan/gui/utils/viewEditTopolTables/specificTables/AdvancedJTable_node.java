@@ -361,11 +361,12 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                 NetPlan netPlan = networkViewer.getDesign();
 
                 try {
-                    Node node = netPlan.addNode(0, 0, null, null);
+                    Node node = netPlan.addNode(networkViewer.getTopologyPanel().getWidth() / 2, -networkViewer.getTopologyPanel().getHeight() / 2, null, null);
                     node.setName("Node " + node.getIndex());
                     networkViewer.getTopologyPanel().getCanvas().addNode(node);
                     networkViewer.getTopologyPanel().getCanvas().refresh();
                     networkViewer.updateNetPlanView();
+                    networkViewer.showNode(node.getId());
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
@@ -393,7 +394,10 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                     NetPlan netPlan = networkViewer.getDesign();
                     long nodeId = (long) itemId;
                     Point2D currentPosition = netPlan.getNodeFromId(nodeId).getXYPositionMap();
-                    netPlan.getNodeFromId(nodeId).setXYPositionMap(new Point2D.Double(currentPosition.getY(), currentPosition.getX()));
+                    double newX = currentPosition.getY();
+                    double newY = currentPosition.getX();
+                    Point2D newPosition = new Point2D.Double(newX,newY);
+                    networkViewer.moveNode(nodeId,newPosition);
                     networkViewer.getTopologyPanel().getCanvas().refresh();
                     networkViewer.updateNetPlanView();
                 }
@@ -436,7 +440,8 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                                 String latAttribute = latSelector.getSelectedItem().toString();
                                 String lonAttribute = lonSelector.getSelectedItem().toString();
 
-                                netPlan.getNodeFromId(nodeId).setXYPositionMap(new Point2D.Double(Double.parseDouble(netPlan.getNodeFromId(nodeId).getAttribute(lonAttribute)), Double.parseDouble(netPlan.getNodeFromId(nodeId).getAttribute(latAttribute))));
+                                networkViewer.moveNode(nodeId, new Point2D.Double(Double.parseDouble(netPlan.getNodeFromId(nodeId).getAttribute(lonAttribute)), Double.parseDouble(netPlan.getNodeFromId(nodeId).getAttribute(latAttribute))));
+
                                 networkViewer.getTopologyPanel().getCanvas().refresh();
                                 networkViewer.updateNetPlanView();
                                 break;
@@ -511,7 +516,10 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                     Collection<Long> nodeIds = netPlan.getNodeIds();
                     for (long nodeId : nodeIds) {
                         Point2D currentPosition = netPlan.getNodeFromId(nodeId).getXYPositionMap();
-                        netPlan.getNodeFromId(nodeId).setXYPositionMap(new Point2D.Double(currentPosition.getY(), currentPosition.getX()));
+                        double newX = currentPosition.getY();
+                        double newY = currentPosition.getX();
+                        Point2D newPosition = new Point2D.Double(newX,newY);
+                        networkViewer.moveNode(nodeId,newPosition);
                         networkViewer.getTopologyPanel().getCanvas().refresh();
                     }
 
@@ -560,7 +568,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
 
                                 for (long nodeId : nodeIds) {
                                     try {
-                                        netPlan.getNodeFromId(nodeId).setXYPositionMap(new Point2D.Double(Double.parseDouble(netPlan.getNodeFromId(nodeId).getAttribute(lonAttribute)), Double.parseDouble(netPlan.getNodeFromId(nodeId).getAttribute(latAttribute))));
+                                        networkViewer.moveNode(nodeId, new Point2D.Double(Double.parseDouble(netPlan.getNodeFromId(nodeId).getAttribute(lonAttribute)), Double.parseDouble(netPlan.getNodeFromId(nodeId).getAttribute(latAttribute))));
                                     } catch (Throwable e1) {
                                     }
                                 }
