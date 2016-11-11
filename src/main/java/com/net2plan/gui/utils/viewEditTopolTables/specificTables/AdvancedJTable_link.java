@@ -103,7 +103,6 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
-        System.out.println("La Tabla Link tiene "+netPlanViewTableHeader.length+" columnas");
     }
 
 

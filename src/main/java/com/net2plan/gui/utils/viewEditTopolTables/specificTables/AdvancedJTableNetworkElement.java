@@ -154,22 +154,22 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 public void tableChanged(TableModelEvent e)
                 {
                     int changedColumn = e.getColumn();
-                    String value = null;
+                    Object value = null;
+                    System.out.println("COLUMNA CLICADA "+changedColumn);
                     if (changedColumn > getAttributesColumnIndex())
                     {
-                        attributesColumnsNames = getAttributesColumnsHeaders();
                         for (String title : attributesColumnsNames)
                         {
-                            if (getModel().getColumnName(changedColumn).equals("Att: " + title))
+                            if (getModel().getColumnName(changedColumn).equals("Att: "+ title))
                             {
-                                System.out.println("Att: " + title);
-                                System.out.println(changedColumn);
                                 for (NetworkElement elem : currentNetworkElements)
                                 {
-                                    value = (String) getModel().getValueAt(elem.getIndex(), changedColumn);
-                                    if (!value.isEmpty() || value != null)
+                                    value = getModel().getValueAt(elem.getIndex(), changedColumn);
+                                    System.out.println("Valor: "+value);
+                                    System.out.println("Es null? "+(value == null));
+                                    if (value != null)
                                     {
-                                        elem.setAttribute(title, value);
+                                        elem.setAttribute(title, (String) value);
                                     }
 
                                 }
@@ -258,10 +258,15 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         TableColumn clickedColumn = fixedTable.getColumnModel().getColumn(fixedTable.columnAtPoint(e.getPoint()));
                         int clickedColumnIndex = fixedTable.getColumnModel().getColumnIndex(clickedColumn.getIdentifier());
                         hideMenu.setEnabled(true);
+                        showMenu.setEnabled(true);
                         unfixCheckBox.setEnabled(true);
                         if (mainTable.getColumnModel().getColumnCount() <= 1)
                         {
                             hideMenu.setEnabled(false);
+                        }
+                        if(shownColumns.isEmpty())
+                        {
+                            showMenu.setEnabled(true);
                         }
                         if (fixedTable.getColumnModel().getColumnCount() <= 1)
                         {
@@ -358,16 +363,17 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 {
                     if(attributesItem.isSelected() ==  true)
                     {
-                        attributesInDifferentColumns();
+                        if(!areAttributesInDifferentColums())
+                        {
+                            attributesInDifferentColumns();
+                        }
+
                     }
                     else
                     {
                         if(areAttributesInDifferentColums())
                         {
                             attributesInOneColumn();
-                        }
-                        else{
-                            //Hacer método para actualizar el valor de la checkBox de Expand Attributes Into Columns
                         }
 
                     }
@@ -552,7 +558,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      *
      * @param columnIndex Index which the column has in mainTable
      */
-    public void fromMainTableToFixedTable(int columnIndex)
+    private void fromMainTableToFixedTable(int columnIndex)
     {
         TableColumn columnToFix = mainTable.getColumnModel().getColumn(columnIndex);
         mainTable.getColumnModel().removeColumn(columnToFix);
@@ -565,7 +571,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      * @param columnIndex Index which the column has in fixedTable
      */
 
-    public void fromFixedTableToMainTable(int columnIndex)
+    private void fromFixedTableToMainTable(int columnIndex)
     {
         TableColumn columnToUnfix = fixedTable.getColumnModel().getColumn(columnIndex);
         fixedTable.getColumnModel().removeColumn(columnToUnfix);
@@ -583,7 +589,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
     public void addNewColumn(String newColumnName, Object[] columnData)
     {
-        System.out.println("COLUMNA AÑADIDA: "+newColumnName);
+        recoverHiddenColumns = false;
         DefaultTableModel dtm = (DefaultTableModel) mainTable.getModel();
         dtm.addColumn(newColumnName,columnData);
         mainTable.setModel(dtm);
@@ -705,7 +711,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
     public void removeNewColumn(String columnToRemoveName)
     {
-            System.out.println("COLUMA BORRADA: "+columnToRemoveName);
             TableColumn columnToRemove = null;
             for(int j = 0;j<getColumnModel().getColumnCount();j++)
             {
@@ -733,9 +738,8 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      * @param columnToRecoverName column of the column which is going to be recovered
      */
 
-    public void recoverRemovedColumn(String columnToRecoverName)
+    private void recoverRemovedColumn(String columnToRecoverName)
     {
-        System.out.println("COLUMNA RECUPERADA: "+columnToRecoverName);
         TableColumn columnToRecover = null;
         for(TableColumn tc : removedColumns)
         {
@@ -754,15 +758,18 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      *
      * @param columnName name of the column whose index we want to know
      */
-    public int getColumnIndexByName(String columnName)
+    private int getColumnIndexByName(String columnName)
     {
 
         return indexForEachColumn.get(columnName);
     }
 
+    /**
+     * Expands attributes in different columns, one for each attribute
+     *
+     */
 
-
-    public void attributesInDifferentColumns()
+    private void attributesInDifferentColumns()
     {
         currentTopology = networkViewer.getDesign();
         Map<String,String>  networkElementAttributes = new HashMap<>();
@@ -800,6 +807,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
         if(attributesColumnsNames.size() > 0)
         {
+            checkAttributesColumns();
             removeNewColumn("Attributes");
             Object[] attColumnsData =  new Object[currentNetworkElements.size()];;
             for(String title : attributesColumnsNames)
@@ -810,9 +818,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                     if(networkElementAttributes.containsKey(title))
                     {
                         attColumnsData[elem.getIndex()] = networkElementAttributes.get(title);
-                    }
-                    else{
-                        attColumnsData[elem.getIndex()] = "";
                     }
                 }
                 if(hasBeenAddedEachAttColumn.get(title) == null)
@@ -832,8 +837,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 columnToModify = k;
                             }
                         }
-                        System.out.println("Valor "+attColumnsData[j]+" puesto en la fila "+j+" y columna "+columnToModify);
-                        if(!((String)attColumnsData[j]).isEmpty())
+                        if(attColumnsData[j] != null)
                         getModel().setValueAt(attColumnsData[j],j,columnToModify);
                     }
 
@@ -842,30 +846,55 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             }
             expandAttributes = true;
         }
+        else{
+            attributesItem.setSelected(false);
+        }
 
     }
+    /**
+     * Contracts attributes in different columns, one for each attribute
+     *
+     */
 
-
-    public void attributesInOneColumn()
+    private void attributesInOneColumn()
     {
         currentTopology = networkViewer.getDesign();
         if(attributesColumnsNames.size() > 0)
         {
+            checkAttributesColumns();
             for(String title : attributesColumnsNames)
             {
                 removeNewColumn("Att: "+title);
 
             }
             recoverRemovedColumn("Attributes");
-            for(NetworkElement elem : currentNetworkElements){
+            for(NetworkElement elem : currentNetworkElements)
+            {
                 getModel().setValueAt(StringUtils.mapToString(elem.getAttributes()),elem.getIndex(), getAttributesColumnIndex());
             }
             expandAttributes = false;
-
+        }
+        else{
+            attributesItem.setSelected(true);
         }
 
     }
+    private void checkAttributesColumns(){
 
+            while(fixedTable.getColumnModel().getColumnCount() > 0)
+            {
+                fixedTable.getColumnModel().removeColumn(fixedTable.getColumnModel().getColumn(0));
+            }
+            showAllColumns();
+            TableColumn tc = null;
+            for(int i = 0;i<getNumFixedLeftColumnsInDecoration();i++)
+            {
+                tc = mainTable.getColumnModel().getColumn(0);
+                mainTable.getColumnModel().removeColumn(tc);
+                fixedTable.getColumnModel().addColumn(tc);
+            }
+
+    }
 
     private boolean areAttributesInDifferentColums()
     {
@@ -1038,7 +1067,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         element.setAttribute(attribute, value);
                         if(areAttributesInDifferentColums())
                         {
-                            if(!attributesColumnsNames.contains("Att: "+attribute))
+                            if(!attributesColumnsNames.contains(attribute))
                             {
                                 if(hasBeenAddedEachColumn(attribute) == false)
                                 {
@@ -1053,10 +1082,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                     addNewColumn("Att: "+attribute,data);
                                     updateHasBeenAddedEachColumn(attribute,true);
                                     updateAttributeColumnsNames(attribute, true);
-                                    System.out.println("ATRIBUTOS");
-                                    for(String s : attributesColumnsNames){
-                                        System.out.println(s);
-                                    }
                                 }
                                 else{
                                     if(!attributesColumnsNames.contains("Att: "+attribute))
@@ -1064,17 +1089,12 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                         recoverRemovedColumn("Att: " + attribute);
                                         updateAttributeColumnsNames(attribute, true);
                                     }
-                                    System.out.println("ATRIBUTOS");
-                                    for(String s : attributesColumnsNames){
-                                        System.out.println(s);
-                                    }
                                     for(int i = 0;i<getModel().getColumnCount();i++)
                                     {
                                         if(getModel().getColumnName(i).equals("Att: "+attribute))
                                         {
-                                            if(!value.isEmpty())
+                                            if(!value.isEmpty() || value != null)
                                             {
-                                                System.out.println("Valor "+value+" añadido en la columna: "+getModel().getColumnName(i));
                                                 getModel().setValueAt(value,row,i);
                                             }
 
@@ -1088,8 +1108,10 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 {
                                     if(getModel().getColumnName(i).equals("Att: "+attribute))
                                     {
-                                        System.out.println("Valor :"+value+" puesto en la columna "+getModel().getColumnName(i));
-                                        getModel().setValueAt(value,row,i);
+                                        if(!value.isEmpty() || value != null)
+                                        {
+                                            getModel().setValueAt(value, row, i);
+                                        }
                                     }
                                 }
                             }
@@ -1278,15 +1300,16 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         {
                             if(getModel().getColumnName(i).equals("Att: "+attributeToRemove))
                             {
-                                getModel().setValueAt("",row,i);
+                                getModel().setValueAt(null,row,i);
                                 selColumn = i;
                             }
                         }
                         boolean deleteColumn = false;
                         for(int i = 0;i<getModel().getRowCount();i++)
                         {
-                            if(getModel().getValueAt(row,selColumn) != null)
+                            if(getModel().getValueAt(i,selColumn) != null)
                             {
+                                System.out.println("BUCLE ROTO");
                                 break;
                             }
                             if(i == getModel().getRowCount() - 1)
@@ -1294,36 +1317,33 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 deleteColumn = true;
                             }
                         }
+                        System.out.println("Columna borrada: "+deleteColumn);
                         if(deleteColumn)
                         {
                             removeNewColumn("Att: "+attributeToRemove);
                             updateAttributeColumnsNames(attributeToRemove,false);
                         }
-                        System.out.println("ATRIBUTOS");
-                        for(String s : attributesColumnsNames){
-                            System.out.println(s);
-                        }
 
 
                     }
                     else{
-                        boolean deleteColumn = false;
-                        int selColumn = 0;
-                        for(int i = 0;i<getModel().getRowCount();i++)
+                        boolean deleteAtt = false;
+                        int counter = 0;
+                        for(NetworkElement elem : currentNetworkElements)
                         {
-                            if(getModel().getValueAt(row,selColumn) != null)
+                            if(elem.getAttributes().containsKey(attributeToRemove))
                             {
                                 break;
                             }
-                            if(i == getModel().getRowCount() - 1)
+                            counter++;
+                            if(counter == currentNetworkElements.size() - 1)
                             {
-                                deleteColumn = true;
+                                deleteAtt = true;
                             }
                         }
-                        if(deleteColumn)
-                        {
+                        if(deleteAtt)
                             updateAttributeColumnsNames(attributeToRemove,false);
-                        }
+
                         networkViewer.updateNetPlanView();
                     }
                 } catch (Throwable ex) {
@@ -1418,7 +1438,8 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             }
                             if(areAttributesInDifferentColums())
                             {
-                                if(!getAttributesColumnsHeaders().contains("Att: "+attribute))
+
+                                if(!attributesColumnsNames.contains(attribute))
                                 {
                                     if(hasBeenAddedEachColumn(attribute) == false)
                                     {
@@ -1430,16 +1451,30 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                         addNewColumn("Att: "+attribute,data);
                                         updateHasBeenAddedEachColumn(attribute,true);
                                         updateAttributeColumnsNames(attribute, true);
-                                        System.out.println("ATRIBUTOS");
-                                        for(String s : attributesColumnsNames){
-                                            System.out.println(s);
+                                    }
+                                    else{
+                                        recoverRemovedColumn("Att: "+attribute);
+                                        updateAttributeColumnsNames(attribute,true);
+                                    }
+                                }
+                                else{
+                                    int selColumn = 0;
+                                    for(int j = 0;j<getModel().getColumnCount();j++){
+                                        if(getModel().getColumnName(j).equals("Att: "+attribute))
+                                        {
+                                            selColumn = j;
                                         }
+                                    }
+
+                                    for(int i = 0;i<getModel().getRowCount();i++)
+                                    {
+                                        if(value != null || !value.isEmpty())
+                                        getModel().setValueAt(value,i,selColumn);
                                     }
                                 }
                             }
                             else{
                                 try {
-                                    updateAttributeColumnsNames(attribute,true);
                                     networkViewer.updateNetPlanView();
                                 } catch (Throwable ex) {
                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add attribute to all nodes");
@@ -1613,10 +1648,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         {
                             removeNewColumn("Att: "+attributeToRemove);
                             updateAttributeColumnsNames(attributeToRemove,false);
-                            System.out.println("ATRIBUTOS");
-                            for(String s : attributesColumnsNames){
-                                System.out.println(s);
-                            }
                         }
                         else{
                             updateAttributeColumnsNames(attributeToRemove,false);
@@ -1705,7 +1736,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                         for (String att : attColumnsHeaders)
                         {
-                            System.out.println("Borrar atributo: " + att);
                             removeNewColumn("Att: " + att);
                             updateAttributeColumnsNames(att, false);
                         }

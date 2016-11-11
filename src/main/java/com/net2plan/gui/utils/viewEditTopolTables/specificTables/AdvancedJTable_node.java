@@ -464,7 +464,10 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                     NetPlan netPlan = networkViewer.getDesign();
                     long nodeId = (long) itemId;
                     Point2D currentPosition = netPlan.getNodeFromId(nodeId).getXYPositionMap();
-                    netPlan.getNodeFromId(nodeId).setXYPositionMap(new Point2D.Double(currentPosition.getY(), currentPosition.getX()));
+                    double newX = currentPosition.getY();
+                    double newY = currentPosition.getX();
+                    Point2D newPosition = new Point2D.Double(newX,newY);
+                    networkViewer.moveNode(nodeId,newPosition);
                     networkViewer.getTopologyPanel().getCanvas().refresh();
                     networkViewer.updateNetPlanView();
                 }
@@ -582,7 +585,10 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                     Collection<Long> nodeIds = netPlan.getNodeIds();
                     for (long nodeId : nodeIds) {
                         Point2D currentPosition = netPlan.getNodeFromId(nodeId).getXYPositionMap();
-                        netPlan.getNodeFromId(nodeId).setXYPositionMap(new Point2D.Double(currentPosition.getY(), currentPosition.getX()));
+                        double newX = currentPosition.getY();
+                        double newY = currentPosition.getX();
+                        Point2D newPosition = new Point2D.Double(newX,newY);
+                        networkViewer.moveNode(nodeId,newPosition);
                         networkViewer.getTopologyPanel().getCanvas().refresh();
                     }
 
