@@ -10,10 +10,7 @@ import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.Pair;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import org.jxmapviewer.input.PanMouseInputListener;
-import org.jxmapviewer.viewer.DefaultWaypoint;
-import org.jxmapviewer.viewer.GeoPosition;
-import org.jxmapviewer.viewer.Waypoint;
-import org.jxmapviewer.viewer.WaypointPainter;
+import org.jxmapviewer.viewer.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,14 +32,9 @@ public class OSMMapController
     private static final String ATTRIB_LATITUDE = "lat";
     private static final String ATTRIB_LONGITUDE = "lon";
 
-    private static final Map<Node, Point2D> nodeLastPosition;
-
-    private static double intX = 0, intY = 0;
-
     static
     {
         mapViewer = new OSMMapPanel();
-        nodeLastPosition = new HashMap<>();
     }
 
     // Non-instanciable
@@ -66,7 +58,7 @@ public class OSMMapController
     private static void loadMap()
     {
         // Restart map original configuration
-        stopMap();
+        // stopMap();
         // Activating maps on the canvas
         activateMap();
 
@@ -164,33 +156,20 @@ public class OSMMapController
 
     public static void moveMap(final double dx, final double dy)
     {
-        final HashSet<GeoPosition> geoPositionSet = new HashSet<>();
+        final TileFactory tileFactory = mapViewer.getTileFactory();
 
-        intX += dx;
-        intY += dy;
+        final Point2D mapCenter = mapViewer.getCenter();
+        final Point2D newMapCenter = new Point2D.Double(mapCenter.getX() + dx, mapCenter.getY() + dy);
+
+        final GeoPosition newMapGeo = tileFactory.pixelToGeo(newMapCenter, mapViewer.getZoom());
 
         for (Node node : callback.getDesign().getNodes())
         {
-            final Point2D nodeXY;
-            if (nodeLastPosition.get(node) == null)
-            {
-                nodeXY = node.getXYPositionMap();
-            } else
-            {
-                nodeXY = nodeLastPosition.get(node);
-            }
-
-            final Point2D newNodeXY = new Point2D.Double(nodeXY.getX() + dx, nodeXY.getY() + dy);
-            nodeLastPosition.put(node, newNodeXY);
-
-            final GeoPosition geoPosition = mapViewer.getTileFactory().pixelToGeo(new Point2D.Double(newNodeXY.getX(), -newNodeXY.getY()), mapViewer.getZoom());
-            geoPositionSet.add(geoPosition);
-
-            final Point2D originalPoint = new Point2D.Double(newNodeXY.getX() - intX, newNodeXY.getY() - intY);
-
-            mapViewer.setCenter(new Point2D.Double(newNodeXY.getX(), -(newNodeXY.getY())));
+            final Point2D nodeXY = node.getXYPositionMap();
+            final Point2D newNodeXY = new Point2D.Double(nodeXY.getX() - dx, nodeXY.getY() - dy);
         }
-        //mapViewer.zoomToBestFit(geoPositionSet, 0.7);
+        mapViewer.setCenterPosition(newMapGeo);
+
         mapViewer.repaint();
     }
 }
