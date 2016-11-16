@@ -154,22 +154,16 @@ public class OSMMapController
         topologyPanel.repaint();
     }
 
-    public static void moveMap(final double dx, final double dy)
+    public static void moveMap(final double dxPanelPixel, final double dyPanelPixel)
     {
         final TileFactory tileFactory = mapViewer.getTileFactory();
 
-        final Point2D mapCenter = mapViewer.getCenter();
-        final Point2D newMapCenter = new Point2D.Double(mapCenter.getX() + dx, mapCenter.getY() + dy);
+        final Point2D mapCenterOSMPixel = mapViewer.getCenter();
+        final Point2D newMapCenterOSMPixel = new Point2D.Double(mapCenterOSMPixel.getX() + dxPanelPixel, mapCenterOSMPixel.getY() + dyPanelPixel);
 
-        final GeoPosition newMapGeo = tileFactory.pixelToGeo(newMapCenter, mapViewer.getZoom());
+        mapViewer.setCenterPosition(tileFactory.pixelToGeo(newMapCenterOSMPixel, mapViewer.getZoom()));
 
-        for (Node node : callback.getDesign().getNodes())
-        {
-            final Point2D nodeXY = node.getXYPositionMap();
-            final Point2D newNodeXY = new Point2D.Double(nodeXY.getX() - dx, nodeXY.getY() - dy);
-        }
-        mapViewer.setCenterPosition(newMapGeo);
-
+        canvas.refresh();
         mapViewer.repaint();
     }
 }

@@ -43,6 +43,7 @@ import edu.uci.ics.jung.visualization.renderers.BasicVertexLabelRenderer;
 import edu.uci.ics.jung.visualization.renderers.DefaultEdgeLabelRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.transform.BidirectionalTransformer;
+import edu.uci.ics.jung.visualization.transform.MutableAffineTransformer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
 import edu.uci.ics.jung.visualization.transform.shape.ShapeTransformer;
@@ -332,15 +333,17 @@ public final class JUNGCanvas extends ITopologyCanvas
         final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
         final Point2D q = layoutTransformer.inverseTransform(initialPoint);
         final Point2D lvc = layoutTransformer.inverseTransform(currentPoint);
-        final double dx = (lvc.getX() - q.getX());
-        final double dy = (lvc.getY() - q.getY());
+        final double dxJungCoord = (lvc.getX() - q.getX());
+        final double dyJungCoord = (lvc.getY() - q.getY());
 
-        if (!isMapActivated)
+        final double dxPanelPixelCoord = (currentPoint.getX() - initialPoint.getX());
+        final double dyPanelPixelCoord = (currentPoint.getY() - initialPoint.getY());
+
+        layoutTransformer.translate(dxJungCoord, dyJungCoord);
+
+        if (isMapActivated)
         {
-            layoutTransformer.translate(dx, dy);
-        } else
-        {
-            OSMMapController.moveMap(dx, dy);
+            OSMMapController.moveMap(-dxPanelPixelCoord, -dyPanelPixelCoord);
         }
     }
 
