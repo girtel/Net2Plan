@@ -94,9 +94,6 @@ public final class JUNGCanvas extends ITopologyCanvas
 
     private boolean showNodeNames, showLinkIds, showHideNonConnectedNodes;
 
-    // Map section
-    private boolean isMapActivated = false;
-
     static
     {
         FLIP_VERTICAL_COORDINATES = vertex ->
@@ -341,7 +338,7 @@ public final class JUNGCanvas extends ITopologyCanvas
 
         layoutTransformer.translate(dxJungCoord, dyJungCoord);
 
-        if (isMapActivated)
+        if (OSMMapController.isMapActivated())
         {
             OSMMapController.moveMap(-dxPanelPixelCoord, -dyPanelPixelCoord);
         }
@@ -658,16 +655,6 @@ public final class JUNGCanvas extends ITopologyCanvas
     private void zoomOut(Point2D point)
     {
         scalingControl.scale(vv, SCALE_OUT, point);
-    }
-
-    public boolean isMapActivated()
-    {
-        return isMapActivated;
-    }
-
-    public void setMapActivated(final boolean isMapActivated)
-    {
-        this.isMapActivated = isMapActivated;
     }
 
     public void setBackgroundImage(final File bgFile, final double x, final double y)
