@@ -37,6 +37,8 @@ import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.IVisualizationFilter;
+import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -72,6 +74,14 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
+        fixedTable.setRowSorter(this.getRowSorter());
+        fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
+        fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
+        fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
+        fixedTable.setDefaultRenderer(Float.class, this.getDefaultRenderer(Float.class));
+        fixedTable.setDefaultRenderer(Long.class, this.getDefaultRenderer(Long.class));
+        fixedTable.setDefaultRenderer(Integer.class, this.getDefaultRenderer(Integer.class));
+        fixedTable.setDefaultRenderer(String.class, this.getDefaultRenderer(String.class));
 
     }
 
@@ -110,7 +120,9 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
                     demandData[i] = demand.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                 }
             }
-            allDemandData.add(demandData);
+            boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(demand);
+            if(visibleNetworkElement)
+                allDemandData.add(demandData);
 
             if (initialState != null && initialState.getMulticastDemandFromId(demand.getId()) != null) {
                 demand = initialState.getMulticastDemandFromId(demand.getId());
@@ -146,7 +158,8 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
                         demandData_initialNetPlan[i] = demand.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                     }
                 }
-                allDemandData.add(demandData_initialNetPlan);
+                if(visibleNetworkElement)
+                    allDemandData.add(demandData_initialNetPlan);
             }
         }
 

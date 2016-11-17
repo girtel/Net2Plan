@@ -58,6 +58,7 @@ import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -107,6 +108,14 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
+        fixedTable.setRowSorter(this.getRowSorter());
+        fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
+        fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
+        fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
+        fixedTable.setDefaultRenderer(Float.class, this.getDefaultRenderer(Float.class));
+        fixedTable.setDefaultRenderer(Long.class, this.getDefaultRenderer(Long.class));
+        fixedTable.setDefaultRenderer(Integer.class, this.getDefaultRenderer(Integer.class));
+        fixedTable.setDefaultRenderer(String.class, this.getDefaultRenderer(String.class));
 
     }
 
@@ -149,7 +158,9 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                     routeData[i] = route.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                 }
             }
-            allRouteData.add(routeData);
+            boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(route);
+            if(visibleNetworkElement)
+                allRouteData.add(routeData);
 
             if (initialState != null && sameRoutingType && initialState.getRouteFromId(route.getId()) != null) {
                 route = initialState.getRouteFromId(route.getId());
@@ -187,7 +198,8 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                         routeData_initialNetPlan[i] = route.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                     }
                 }
-                allRouteData.add(routeData_initialNetPlan);
+                if(visibleNetworkElement)
+                    allRouteData.add(routeData_initialNetPlan);
             }
         }
 

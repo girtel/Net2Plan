@@ -48,6 +48,7 @@ import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.FixedColumnDecorator;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.SwingUtils;
+import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastTree;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -96,6 +97,14 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
+        fixedTable.setRowSorter(this.getRowSorter());
+        fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
+        fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
+        fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
+        fixedTable.setDefaultRenderer(Float.class, this.getDefaultRenderer(Float.class));
+        fixedTable.setDefaultRenderer(Long.class, this.getDefaultRenderer(Long.class));
+        fixedTable.setDefaultRenderer(Integer.class, this.getDefaultRenderer(Integer.class));
+        fixedTable.setDefaultRenderer(String.class, this.getDefaultRenderer(String.class));
     }
 
     public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
@@ -132,6 +141,8 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
                     srgData[i] = srg.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                 }
             }
+            boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(srg);
+            if(visibleNetworkElement)
             allSRGData.add(srgData);
 
             if (initialState != null && initialState.getSRGFromId(srg.getId()) != null) {
@@ -168,7 +179,8 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
                         srgData_initialNetPlan[i] = srg.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                     }
                 }
-                allSRGData.add(srgData_initialNetPlan);
+                if(visibleNetworkElement)
+                    allSRGData.add(srgData_initialNetPlan);
             }
         }
 

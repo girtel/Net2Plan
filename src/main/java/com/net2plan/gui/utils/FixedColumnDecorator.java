@@ -19,6 +19,7 @@ import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Arc2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -47,20 +48,22 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
     private int frozenColumns;
     private final JTable mainTable;
     private final JTable fixedTable;
+    private final JScrollPane scroll;
 
     /**
      * Default constructor.
      *
-     * @param currentTable Reference to the main table
+     * @param scroll Reference to the main table ScrollPane
      * @param frozenColumns         Number of columns to be fixed
      * @since 0.2.0
      */
-    public FixedColumnDecorator(AdvancedJTable currentTable, int frozenColumns)
+    public FixedColumnDecorator(JScrollPane scroll, int frozenColumns)
     {
 
 
+        this.scroll = scroll;
         this.frozenColumns = frozenColumns;
-        mainTable = currentTable;
+        mainTable = (JTable) scroll.getViewport().getView();
         mainTable.setAutoCreateColumnsFromModel(false);
         mainTable.addPropertyChangeListener(this);
         fixedTable = new JTableImpl();
@@ -77,7 +80,11 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         }
 
         fixedTable.setPreferredScrollableViewportSize(fixedTable.getPreferredSize());
-        fixedTable.setPreferredScrollableViewportSize(fixedTable.getPreferredSize());
+        scroll.setRowHeaderView(fixedTable);
+        scroll.setCorner(JScrollPane.UPPER_LEFT_CORNER, fixedTable.getTableHeader());
+
+        scroll.getRowHeader().addChangeListener(this);
+
         mainTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         fixedTable.setSelectionModel(mainTable.getSelectionModel());
         fixedTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
@@ -187,9 +194,10 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
     }
 
     @Override
-    public void stateChanged(ChangeEvent e)
-    {
-
+    public void stateChanged(ChangeEvent e) {
+        /* keeping fixed table stays in sync with the main table when stateChanged */
+        JViewport viewport = (JViewport) e.getSource();
+        scroll.getVerticalScrollBar().setValue(viewport.getViewPosition().y);
     }
 
     private Action getAction(JComponent component, int keyCode, int modifiers)

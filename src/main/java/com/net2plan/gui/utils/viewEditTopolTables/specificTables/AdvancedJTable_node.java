@@ -40,6 +40,8 @@ import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.IVisualizationFilter;
+import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -89,6 +91,14 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
+        fixedTable.setRowSorter(this.getRowSorter());
+        fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
+        fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
+        fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
+        fixedTable.setDefaultRenderer(Float.class, this.getDefaultRenderer(Float.class));
+        fixedTable.setDefaultRenderer(Long.class, this.getDefaultRenderer(Long.class));
+        fixedTable.setDefaultRenderer(Integer.class, this.getDefaultRenderer(Integer.class));
+        fixedTable.setDefaultRenderer(String.class, this.getDefaultRenderer(String.class));
 
     }
 
@@ -125,7 +135,9 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                     nodeData[i] = node.getAttribute(attributesTitles.get(i-netPlanViewTableHeader.length));
                 }
             }
-            allNodeData.add(nodeData);
+            boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(node);
+            if(visibleNetworkElement)
+                allNodeData.add(nodeData);
 
             if (initialState != null && initialState.getNodeFromId(node.getId()) != null) {
                 node = initialState.getNodeFromId(node.getId());
@@ -158,7 +170,8 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                     }
 
                 }
-                allNodeData.add(nodeData_initialNetPlan);
+                if(visibleNetworkElement)
+                    allNodeData.add(nodeData_initialNetPlan);
             }
         }
         return allNodeData;

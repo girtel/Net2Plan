@@ -23,6 +23,9 @@ import javax.swing.table.TableModel;
 
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
+import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.IVisualizationFilter;
+import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.ProofFilter;
+import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -60,8 +63,8 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     protected final INetworkCallback networkViewer;
     protected final NetworkElementType networkElementType;
 
-    private final JTable mainTable;
-    private final JTable fixedTable;
+    protected final JTable mainTable;
+    protected final JTable fixedTable;
     private final JPopupMenu showHideMenu, fixMenu;
     private final JMenu showMenu, hideMenu;
     private final JMenuItem showAllItem, hideAllItem;
@@ -73,13 +76,14 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     private boolean recoverHiddenColumns;
 
     private final FixedColumnDecorator decorator;
+    private final JScrollPane scroll;
 
     private ArrayList<String> attributesColumnsNames;
     private boolean expandAttributes = false;
     private List<NetworkElement> currentNetworkElements = new LinkedList<>();
     private NetPlan currentTopology = null;
     private Map<String,Boolean> hasBeenAddedEachAttColumn = new HashMap<>();
-
+    protected ArrayList<IVisualizationFilter> currentVisFilters;
 
     //	/**
 //	 * Default constructor.
@@ -118,10 +122,12 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 		/* add the popup menu listener (this) */
         addMouseListener(new PopupMenuAdapter());
 
-        this.decorator = new FixedColumnDecorator(this, getNumFixedLeftColumnsInDecoration());
         this.getTableHeader().setReorderingAllowed(true);
+        scroll = new JScrollPane(this);
+        this.decorator = new FixedColumnDecorator(scroll, getNumFixedLeftColumnsInDecoration());
         mainTable = decorator.getMainTable();
         fixedTable = decorator.getFixedTable();
+
 
         hiddenColumns = new ArrayList<>();
         shownColumns = new ArrayList<>();
@@ -264,9 +270,9 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         {
                             hideMenu.setEnabled(false);
                         }
-                        if(shownColumns.isEmpty())
+                        if(shownColumns.size() == 0)
                         {
-                            showMenu.setEnabled(true);
+                            showMenu.setEnabled(false);
                         }
                         if (fixedTable.getColumnModel().getColumnCount() <= 1)
                         {
@@ -422,6 +428,8 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
 
         }
+
+        addVisualizationFilter(new ProofFilter());
     }
 
     /**
@@ -926,6 +934,9 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             attributesColumnsNames.remove(attributeName);
         }
     }
+    public JScrollPane getScroll(){
+        return scroll;
+    }
 
     public FixedColumnDecorator getDecorator()
     {
@@ -961,6 +972,26 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     public abstract void doPopup(final MouseEvent e, final int row, final Object itemId);
 
     public abstract void showInCanvas(MouseEvent e, Object itemId);
+
+    protected Set<IVisualizationFilter> getVisualizationFilters(){
+
+        return VisualizationFiltersController.getCurrentVisualizationFilters();
+    }
+
+    protected void addVisualizationFilter(IVisualizationFilter vf){
+
+        VisualizationFiltersController.addVisualizationFilter(vf);
+    }
+
+    protected void removeVisualizationFilter(IVisualizationFilter vf){
+
+        VisualizationFiltersController.removeVisualizationFilter(vf.getName());
+    }
+
+    protected void removeAllVisualizationFilters(){
+
+        VisualizationFiltersController.removeAllVisualizationFilters();
+    }
 
     public void updateView(NetPlan currentState, NetPlan initialState) {
         setEnabled(false);
@@ -1093,7 +1124,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                     {
                                         if(getModel().getColumnName(i).equals("Att: "+attribute))
                                         {
-                                            if(!value.isEmpty() || value != null)
+                                            if(value != null)
                                             {
                                                 getModel().setValueAt(value,row,i);
                                             }
@@ -1108,7 +1139,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 {
                                     if(getModel().getColumnName(i).equals("Att: "+attribute))
                                     {
-                                        if(!value.isEmpty() || value != null)
+                                        if(value != null)
                                         {
                                             getModel().setValueAt(value, row, i);
                                         }
@@ -1194,6 +1225,14 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                     JDialog dialog = new AttributeEditor(networkViewer, networkElementType, itemId);
                     dialog.setVisible(true);
                     networkViewer.updateNetPlanView();
+                    if(areAttributesInDifferentColums()){
+                        attributesInOneColumn();
+                        attributesInDifferentColumns();
+                    }
+                    else{
+                        attributesInDifferentColumns();
+                        attributesInOneColumn();
+                    }
                 } catch (Throwable ex) {
                     ex.printStackTrace();
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying attributes");
@@ -1201,7 +1240,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             }
         });
 
-        //popup.add(viewAttributes);
+        popup.add(viewAttributes);
 
         JMenuItem removeAttribute = new JMenuItem("Remove attribute");
 
@@ -1475,6 +1514,9 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             }
                             else{
                                 try {
+                                    if(!attributesColumnsNames.contains(attribute)){
+                                        updateAttributeColumnsNames(attribute,true);
+                                    }
                                     networkViewer.updateNetPlanView();
                                 } catch (Throwable ex) {
                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add attribute to all nodes");
@@ -1499,6 +1541,14 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         JDialog dialog = new AttributeEditor(networkViewer, networkElementType);
                         dialog.setVisible(true);
                         networkViewer.updateNetPlanView();
+                        if(areAttributesInDifferentColums()){
+                            attributesInOneColumn();
+                            attributesInDifferentColumns();
+                        }
+                        else{
+                            attributesInDifferentColumns();
+                            attributesInOneColumn();
+                        }
                     } catch (Throwable ex) {
                         ex.printStackTrace();
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying attributes");
@@ -1506,7 +1556,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 }
             });
 
-            //popup.add(viewAttributesAll);
+            popup.add(viewAttributesAll);
 
             JMenuItem removeAttributeAll = new JMenuItem("Remove attribute from all " + networkElementType + "s");
 

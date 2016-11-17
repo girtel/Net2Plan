@@ -44,6 +44,8 @@ import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.IVisualizationFilter;
+import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -103,6 +105,14 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
+        fixedTable.setRowSorter(this.getRowSorter());
+        fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
+        fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
+        fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
+        fixedTable.setDefaultRenderer(Float.class, this.getDefaultRenderer(Float.class));
+        fixedTable.setDefaultRenderer(Long.class, this.getDefaultRenderer(Long.class));
+        fixedTable.setDefaultRenderer(Integer.class, this.getDefaultRenderer(Integer.class));
+        fixedTable.setDefaultRenderer(String.class, this.getDefaultRenderer(String.class));
     }
 
 
@@ -172,7 +182,9 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                     linkData[i] = link.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                 }
             }
-            allLinkData.add(linkData);
+            boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(link);
+            if(visibleNetworkElement)
+                allLinkData.add(linkData);
 
             if (initialState != null && initialState.getLinkFromId(link.getId()) != null) {
                 link = initialState.getLinkFromId(link.getId());
@@ -233,7 +245,8 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                         linkData_initialNetPlan[i] = link.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                     }
                 }
-                allLinkData.add(linkData_initialNetPlan);
+                if(visibleNetworkElement)
+                    allLinkData.add(linkData_initialNetPlan);
             }
         }
 

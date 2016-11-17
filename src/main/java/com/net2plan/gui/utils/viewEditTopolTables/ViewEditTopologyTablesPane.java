@@ -80,23 +80,10 @@ public class ViewEditTopologyTablesPane extends JPanel
             } else if (elementType == NetworkElementType.LAYER) {
                 netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_layer(mainWindow, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
             } else {
-                JScrollPane scrollPane = new JScrollPane(netPlanViewTable.get(elementType));
+                JScrollPane scrollPane = netPlanViewTable.get(elementType).getScroll();
                 scrollPane.setLayout(new FullScrollPaneLayout());
                 scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-                if(netPlanViewTable.get(elementType) instanceof AdvancedJTableNetworkElement)
-                {
-                    scrollPane.setRowHeaderView(((AdvancedJTableNetworkElement) netPlanViewTable.get(elementType)).getFixedTable());
-                    scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER, ((AdvancedJTableNetworkElement) netPlanViewTable.get(elementType)).getFixedTable().getTableHeader());
-                    scrollPane.getRowHeader().addChangeListener(new ChangeListener(){
-
-                        @Override
-                        public void stateChanged(ChangeEvent e)
-                        {
-                            JViewport viewport = (JViewport) e.getSource();
-                            scrollPane.getVerticalScrollBar().setValue(viewport.getViewPosition().y);
-                        }
-                    });
-                }
+                netPlanViewTable.get(elementType).getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
                 netPlanViewTableComponent.put(elementType, scrollPane);
             }
         }
