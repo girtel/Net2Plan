@@ -128,7 +128,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         mainTable = decorator.getMainTable();
         fixedTable = decorator.getFixedTable();
 
-
         hiddenColumns = new ArrayList<>();
         shownColumns = new ArrayList<>();
         removedColumns = new ArrayList<>();
@@ -150,7 +149,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         hideAllItem = new JMenuItem("Hide all columns");
         attributesItem = new JCheckBoxMenuItem("Expand attributes as columns", false);
 
-        attributesColumnsNames = new ArrayList<String>();
+
         if(canExpandAttributes)
         {
             this.getModel().addTableModelListener(new TableModelListener()
@@ -160,27 +159,26 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 public void tableChanged(TableModelEvent e)
                 {
                     int changedColumn = e.getColumn();
+                    int selectedRow = mainTable.getSelectedRow();
                     Object value = null;
-                    System.out.println("COLUMNA CLICADA "+changedColumn);
                     if (changedColumn > getAttributesColumnIndex())
                     {
+                        attributesColumnsNames = getAttributesColumnsHeaders();
                         for (String title : attributesColumnsNames)
                         {
                             if (getModel().getColumnName(changedColumn).equals("Att: "+ title))
                             {
-                                for (NetworkElement elem : currentNetworkElements)
-                                {
-                                    value = getModel().getValueAt(elem.getIndex(), changedColumn);
-                                    System.out.println("Valor: "+value);
-                                    System.out.println("Es null? "+(value == null));
+                                    value = getModel().getValueAt(selectedRow, changedColumn);
                                     if (value != null)
                                     {
-                                        elem.setAttribute(title, (String) value);
+                                        currentTopology.getNetworkElement((Long) getModel().
+                                                getValueAt(selectedRow,0)).setAttribute(title,(String) value);
                                     }
 
                                 }
-                            }
+
                         }
+                        networkViewer.updateNetPlanView();
                     }
                 }
             });
@@ -315,7 +313,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         }
 
 
-                        for (int j = 0; j < shownColumns.size(); j++)
+                        for (int j = 0; j < shownHeaderItems.size();j++)
                         {
                             JMenuItem currentItem = shownHeaderItems.get(j);
                             int position = j;
@@ -460,12 +458,13 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     private void updateHideMenu()
     {
         hideMenu.removeAll();
+        shownColumns.clear();
         shownHeaderItems = new ArrayList<>();
-        for (int i = 0; i < shownColumns.size(); i++)
+        for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
         {
-            shownHeaderItems.add(new JMenuItem(shownColumns.get(i).getHeaderValue().toString()));
+            shownHeaderItems.add(new JMenuItem(mainTable.getColumnModel().getColumn(i).getHeaderValue().toString()));
             hideMenu.add(shownHeaderItems.get(i));
-
+            shownColumns.add(mainTable.getColumnModel().getColumn(i));
         }
 
     }
@@ -815,44 +814,13 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
         if(attributesColumnsNames.size() > 0)
         {
-            checkAttributesColumns();
+            networkViewer.updateNetPlanView();
+            createDefaultColumnsFromModel();
+            removedColumns.clear();
             removeNewColumn("Attributes");
-            Object[] attColumnsData =  new Object[currentNetworkElements.size()];;
-            for(String title : attributesColumnsNames)
-            {
-                for(NetworkElement elem : currentNetworkElements)
-                {
-                    networkElementAttributes = elem.getAttributes();
-                    if(networkElementAttributes.containsKey(title))
-                    {
-                        attColumnsData[elem.getIndex()] = networkElementAttributes.get(title);
-                    }
-                }
-                if(hasBeenAddedEachAttColumn.get(title) == null)
-                {
-                    addNewColumn("Att: "+title, attColumnsData);
-                    hasBeenAddedEachAttColumn.put(title,true);
-                }
-                else{
-                    recoverRemovedColumn("Att: "+title);
-                    for(int j = 0;j<attColumnsData.length;j++)
-                    {
-                        int columnToModify = 0;
-                        for(int k = 0;k< getModel().getColumnCount();k++)
-                        {
-                            if(getModel().getColumnName(k).equals("Att: "+title))
-                            {
-                                columnToModify = k;
-                            }
-                        }
-                        if(attColumnsData[j] != null)
-                        getModel().setValueAt(attColumnsData[j],j,columnToModify);
-                    }
-
-                }
-
-            }
+            updateTables();
             expandAttributes = true;
+            checkNewIndexes();
         }
         else{
             attributesItem.setSelected(false);
@@ -867,20 +835,21 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     private void attributesInOneColumn()
     {
         currentTopology = networkViewer.getDesign();
+        checkAttributesColumns();
+        attributesColumnsNames = getAttributesColumnsHeaders();
         if(attributesColumnsNames.size() > 0)
         {
-            checkAttributesColumns();
-            for(String title : attributesColumnsNames)
-            {
-                removeNewColumn("Att: "+title);
 
-            }
-            recoverRemovedColumn("Attributes");
-            for(NetworkElement elem : currentNetworkElements)
+            networkViewer.updateNetPlanView();
+            createDefaultColumnsFromModel();
+            removedColumns.clear();
+            for(String att : attributesColumnsNames)
             {
-                getModel().setValueAt(StringUtils.mapToString(elem.getAttributes()),elem.getIndex(), getAttributesColumnIndex());
+                removeNewColumn("Att: "+att);
             }
+            updateTables();
             expandAttributes = false;
+            checkNewIndexes();
         }
         else{
             attributesItem.setSelected(true);
@@ -925,15 +894,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         hasBeenAddedEachAttColumn.put(columnName,flag);
     }
 
-
-    private void updateAttributeColumnsNames(String attributeName, boolean addAtt)
-    {
-        if(addAtt)
-            attributesColumnsNames.add(attributeName);
-        else{
-            attributesColumnsNames.remove(attributeName);
-        }
-    }
     public JScrollPane getScroll(){
         return scroll;
     }
@@ -1004,10 +964,29 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             return;
         if (hasElements(currentState)) {
             String[] tableHeaders = getCurrentTableHeaders();
-            List<Object[]> allData = getAllData(currentState, networkViewer.getTopologyPanel(), initialState, getAttributesColumnsHeaders());
+            ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
+            List<Object[]> allData = getAllData(currentState, networkViewer.getTopologyPanel(), initialState, attColumnsHeaders);
             setEnabled(true);
             ((DefaultTableModel) getModel()).setDataVector(allData.toArray(new Object[allData.size()][tableHeaders.length]), tableHeaders);
+            if(attColumnsHeaders != null && networkElementType != NetworkElementType.FORWARDING_RULE)
+            {
+                createDefaultColumnsFromModel();
+                if (areAttributesInDifferentColums())
+                {
+                    removeNewColumn("Attributes");
+                } else
+                {
+                    if (attColumnsHeaders.size() > 0)
+                    {
+                        for (String att : attColumnsHeaders)
+                        {
 
+                            removeNewColumn("Att: " + att);
+                        }
+                    }
+                }
+                updateTables();
+            }
             for (int columnId : getColumnsOfSpecialComparatorForSorting())
                 ((DefaultRowSorter) getRowSorter()).setComparator(columnId, new ColumnComparator());
         }
@@ -1096,71 +1075,20 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         value = txt_value.getText();
                         NetworkElement element = netPlan.getNetworkElement((long) itemId);
                         element.setAttribute(attribute, value);
-                        if(areAttributesInDifferentColums())
-                        {
-                            if(!attributesColumnsNames.contains(attribute))
-                            {
-                                if(hasBeenAddedEachColumn(attribute) == false)
-                                {
-                                    Object [] data = new Object[getModel().getRowCount()];
-                                    for(int j = 0;j<data.length;j++)
-                                    {
-                                        if(j == row)
-                                        {
-                                            data[j] = value;
-                                        }
-                                    }
-                                    addNewColumn("Att: "+attribute,data);
-                                    updateHasBeenAddedEachColumn(attribute,true);
-                                    updateAttributeColumnsNames(attribute, true);
-                                }
-                                else{
-                                    if(!attributesColumnsNames.contains("Att: "+attribute))
-                                    {
-                                        recoverRemovedColumn("Att: " + attribute);
-                                        updateAttributeColumnsNames(attribute, true);
-                                    }
-                                    for(int i = 0;i<getModel().getColumnCount();i++)
-                                    {
-                                        if(getModel().getColumnName(i).equals("Att: "+attribute))
-                                        {
-                                            if(value != null)
-                                            {
-                                                getModel().setValueAt(value,row,i);
-                                            }
 
-                                        }
-                                    }
-
-                                }
-                            }
-                            else{
-                                for(int i = 0;i<getModel().getColumnCount();i++)
-                                {
-                                    if(getModel().getColumnName(i).equals("Att: "+attribute))
-                                    {
-                                        if(value != null)
-                                        {
-                                            getModel().setValueAt(value, row, i);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        else{
-                            try {
-                                updateAttributeColumnsNames(attribute,true);
+                        try {
                                 networkViewer.updateNetPlanView();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to add attribute to " + networkElementType);
-                            }
+
                         }
-                        break;
+
                     } catch (Throwable ex) {
                         ErrorHandling.addErrorOrException(ex, getClass());
                         ErrorHandling.showErrorDialog("Error adding/editing attribute");
                     }
+                    break;
                 }
             }
         });
@@ -1225,14 +1153,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                     JDialog dialog = new AttributeEditor(networkViewer, networkElementType, itemId);
                     dialog.setVisible(true);
                     networkViewer.updateNetPlanView();
-                    if(areAttributesInDifferentColums()){
-                        attributesInOneColumn();
-                        attributesInDifferentColumns();
-                    }
-                    else{
-                        attributesInDifferentColumns();
-                        attributesInOneColumn();
-                    }
+
                 } catch (Throwable ex) {
                     ex.printStackTrace();
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying attributes");
@@ -1332,59 +1253,8 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                     NetworkElement element = netPlan.getNetworkElement((long) itemId);
                     if (element == null) throw new RuntimeException("Bad");
                     element.removeAttribute(attributeToRemove);
-                    if(areAttributesInDifferentColums())
-                    {
-                        int selColumn = 0;
-                        for(int i = 0;i<getModel().getColumnCount();i++)
-                        {
-                            if(getModel().getColumnName(i).equals("Att: "+attributeToRemove))
-                            {
-                                getModel().setValueAt(null,row,i);
-                                selColumn = i;
-                            }
-                        }
-                        boolean deleteColumn = false;
-                        for(int i = 0;i<getModel().getRowCount();i++)
-                        {
-                            if(getModel().getValueAt(i,selColumn) != null)
-                            {
-                                System.out.println("BUCLE ROTO");
-                                break;
-                            }
-                            if(i == getModel().getRowCount() - 1)
-                            {
-                                deleteColumn = true;
-                            }
-                        }
-                        System.out.println("Columna borrada: "+deleteColumn);
-                        if(deleteColumn)
-                        {
-                            removeNewColumn("Att: "+attributeToRemove);
-                            updateAttributeColumnsNames(attributeToRemove,false);
-                        }
+                    networkViewer.updateNetPlanView();
 
-
-                    }
-                    else{
-                        boolean deleteAtt = false;
-                        int counter = 0;
-                        for(NetworkElement elem : currentNetworkElements)
-                        {
-                            if(elem.getAttributes().containsKey(attributeToRemove))
-                            {
-                                break;
-                            }
-                            counter++;
-                            if(counter == currentNetworkElements.size() - 1)
-                            {
-                                deleteAtt = true;
-                            }
-                        }
-                        if(deleteAtt)
-                            updateAttributeColumnsNames(attributeToRemove,false);
-
-                        networkViewer.updateNetPlanView();
-                    }
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attribute");
                 }
@@ -1475,53 +1345,13 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 default:
                                     throw new RuntimeException("Bad");
                             }
-                            if(areAttributesInDifferentColums())
-                            {
 
-                                if(!attributesColumnsNames.contains(attribute))
-                                {
-                                    if(hasBeenAddedEachColumn(attribute) == false)
-                                    {
-                                        Object [] data = new Object[getModel().getRowCount()];
-                                        for(int j = 0;j<data.length;j++)
-                                        {
-                                            data[j] = value;
-                                        }
-                                        addNewColumn("Att: "+attribute,data);
-                                        updateHasBeenAddedEachColumn(attribute,true);
-                                        updateAttributeColumnsNames(attribute, true);
-                                    }
-                                    else{
-                                        recoverRemovedColumn("Att: "+attribute);
-                                        updateAttributeColumnsNames(attribute,true);
-                                    }
-                                }
-                                else{
-                                    int selColumn = 0;
-                                    for(int j = 0;j<getModel().getColumnCount();j++){
-                                        if(getModel().getColumnName(j).equals("Att: "+attribute))
-                                        {
-                                            selColumn = j;
-                                        }
-                                    }
+                            try {
 
-                                    for(int i = 0;i<getModel().getRowCount();i++)
-                                    {
-                                        if(value != null || !value.isEmpty())
-                                        getModel().setValueAt(value,i,selColumn);
-                                    }
-                                }
-                            }
-                            else{
-                                try {
-                                    if(!attributesColumnsNames.contains(attribute)){
-                                        updateAttributeColumnsNames(attribute,true);
-                                    }
                                     networkViewer.updateNetPlanView();
                                 } catch (Throwable ex) {
                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add attribute to all nodes");
                                 }
-                            }
                             break;
                         } catch (Throwable ex) {
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Error adding/editing attribute to all " + networkElementType + "s");
@@ -1541,14 +1371,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         JDialog dialog = new AttributeEditor(networkViewer, networkElementType);
                         dialog.setVisible(true);
                         networkViewer.updateNetPlanView();
-                        if(areAttributesInDifferentColums()){
-                            attributesInOneColumn();
-                            attributesInDifferentColumns();
-                        }
-                        else{
-                            attributesInDifferentColumns();
-                            attributesInOneColumn();
-                        }
+
                     } catch (Throwable ex) {
                         ex.printStackTrace();
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying attributes");
@@ -1694,15 +1517,8 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 throw new RuntimeException("Bad");
                         }
 
-                        if(areAttributesInDifferentColums())
-                        {
-                            removeNewColumn("Att: "+attributeToRemove);
-                            updateAttributeColumnsNames(attributeToRemove,false);
-                        }
-                        else{
-                            updateAttributeColumnsNames(attributeToRemove,false);
-                            networkViewer.updateNetPlanView();
-                        }
+                        networkViewer.updateNetPlanView();
+
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attribute from all " + networkElementType + "s");
                     }
@@ -1783,15 +1599,9 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 throw new RuntimeException("Bad");
                         }
 
-
-                        for (String att : attColumnsHeaders)
-                        {
-                            removeNewColumn("Att: " + att);
-                            updateAttributeColumnsNames(att, false);
-                        }
-                        if (areAttributesInDifferentColums())
-                        {
+                        if(areAttributesInDifferentColums()){
                             recoverRemovedColumn("Attributes");
+                            expandAttributes = false;
                             attributesItem.setSelected(false);
                         }
                         networkViewer.updateNetPlanView();

@@ -138,6 +138,10 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
             boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(node);
             if(visibleNetworkElement)
                 allNodeData.add(nodeData);
+            else{
+                networkViewer.getTopologyPanel().getCanvas().setNodeVisible(node, false);
+                topologyPanel.getCanvas().refresh();
+            }
 
             if (initialState != null && initialState.getNodeFromId(node.getId()) != null) {
                 node = initialState.getNodeFromId(node.getId());
@@ -170,8 +174,15 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                     }
 
                 }
-                if(visibleNetworkElement)
+                if(visibleNetworkElement){
                     allNodeData.add(nodeData_initialNetPlan);
+                    networkViewer.getTopologyPanel().getCanvas().setNodeVisible(node, true);
+                    topologyPanel.getCanvas().refresh();
+                }
+                else{
+                    networkViewer.getTopologyPanel().getCanvas().setNodeVisible(node, false);
+                    topologyPanel.getCanvas().refresh();
+                }
             }
         }
         return allNodeData;
@@ -179,12 +190,19 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
 
     public String[] getCurrentTableHeaders(){
 
-        TableModel tm = getModel();
-        String[] headers = new String[tm.getColumnCount()];
-        for(int i = 0; i < tm.getColumnCount();i++)
+        ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
+        String[] headers = new String[netPlanViewTableHeader.length + attColumnsHeaders.size()];
+        for(int i = 0; i < headers.length ;i++)
         {
-            headers[i] = tm.getColumnName(i);
+            if(i<netPlanViewTableHeader.length)
+            {
+                headers[i] = netPlanViewTableHeader[i];
+            }
+            else{
+                headers[i] = "Att: "+attColumnsHeaders.get(i - netPlanViewTableHeader.length);
+            }
         }
+
 
         return headers;
     }

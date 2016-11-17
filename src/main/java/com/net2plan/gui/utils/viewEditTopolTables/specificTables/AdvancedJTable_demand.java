@@ -187,11 +187,20 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
     }
 
     public String[] getCurrentTableHeaders(){
-        TableModel tm = this.getModel();
-        String[] headers = new String[tm.getColumnCount()];
-        for(int i = 0; i < tm.getColumnCount();i++){
-            headers[i] = tm.getColumnName(i);
+        ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
+        String[] headers = new String[netPlanViewTableHeader.length + attColumnsHeaders.size()];
+        for(int i = 0; i < headers.length ;i++)
+        {
+            if(i<netPlanViewTableHeader.length)
+            {
+                headers[i] = netPlanViewTableHeader[i];
+            }
+            else{
+                headers[i] = "Att: "+attColumnsHeaders.get(i - netPlanViewTableHeader.length);
+            }
         }
+
+
         return headers;
     }
 

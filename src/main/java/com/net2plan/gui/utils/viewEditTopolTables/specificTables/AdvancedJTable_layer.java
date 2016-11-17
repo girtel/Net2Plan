@@ -18,6 +18,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
@@ -30,6 +31,7 @@ import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
@@ -58,6 +60,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
     public static final int COLUMN_LINKCAPUNITS = 12;
     public static final int COLUMN_DEMANDTRAFUNITS = 13;
     public static final int COLUMN_ATTRIBUTES = 14;
+
 
     public AdvancedJTable_layer(final INetworkCallback networkViewer) {
         super(createTableModel(networkViewer), networkViewer, NetworkElementType.LAYER, false);
@@ -127,11 +130,20 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
     }
 
     public String[] getCurrentTableHeaders(){
-        TableModel tm = this.getModel();
-        String[] headers = new String[tm.getColumnCount()];
-        for(int i = 0; i < tm.getColumnCount();i++){
-            headers[i] = tm.getColumnName(i);
+        ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
+        String[] headers = new String[netPlanViewTableHeader.length + attColumnsHeaders.size()];
+        for(int i = 0; i < headers.length ;i++)
+        {
+            if(i<netPlanViewTableHeader.length)
+            {
+                headers[i] = netPlanViewTableHeader[i];
+            }
+            else{
+                headers[i] = "Att: "+attColumnsHeaders.get(i - netPlanViewTableHeader.length);
+            }
         }
+
+
         return headers;
     }
     public String[] getTableTips() {
@@ -190,7 +202,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
     @Override
     public ArrayList<String> getAttributesColumnsHeaders()
     {
-        return null;
+        return new ArrayList<String>();
     }
 
 

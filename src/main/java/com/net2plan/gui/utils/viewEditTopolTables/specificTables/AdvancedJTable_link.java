@@ -183,8 +183,15 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                 }
             }
             boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(link);
-            if(visibleNetworkElement)
+            if(visibleNetworkElement){
                 allLinkData.add(linkData);
+                networkViewer.getTopologyPanel().getCanvas().setLinkVisible(link, true);
+                topologyPanel.getCanvas().refresh();
+            }
+            else{
+                networkViewer.getTopologyPanel().getCanvas().setLinkVisible(link, false);
+                topologyPanel.getCanvas().refresh();
+            }
 
             if (initialState != null && initialState.getLinkFromId(link.getId()) != null) {
                 link = initialState.getLinkFromId(link.getId());
@@ -245,8 +252,16 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                         linkData_initialNetPlan[i] = link.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                     }
                 }
-                if(visibleNetworkElement)
+                if(visibleNetworkElement){
                     allLinkData.add(linkData_initialNetPlan);
+                    networkViewer.getTopologyPanel().getCanvas().setLinkVisible(link, true);
+                    topologyPanel.getCanvas().refresh();
+                }
+                else{
+                    networkViewer.getTopologyPanel().getCanvas().setLinkVisible(link, false);
+                    topologyPanel.getCanvas().refresh();
+                }
+
             }
         }
 
@@ -262,11 +277,20 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
     }
 
     public String[] getCurrentTableHeaders(){
-        TableModel tm = this.getModel();
-        String[] headers = new String[tm.getColumnCount()];
-        for(int i = 0; i < tm.getColumnCount();i++){
-            headers[i] = tm.getColumnName(i);
+        ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
+        String[] headers = new String[netPlanViewTableHeader.length + attColumnsHeaders.size()];
+        for(int i = 0; i < headers.length ;i++)
+        {
+            if(i<netPlanViewTableHeader.length)
+            {
+                headers[i] = netPlanViewTableHeader[i];
+            }
+            else{
+                headers[i] = "Att: "+attColumnsHeaders.get(i - netPlanViewTableHeader.length);
+            }
         }
+
+
         return headers;
     }
 
