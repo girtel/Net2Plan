@@ -466,7 +466,7 @@ public class StringUtils
 	 */
 	public static Map<String, String> stringToMap(String string)
 	{
-		return stringToMap(string, "=", ", ");
+		return stringToMap(string, "=", ",");
 	}
 	
 	/**
@@ -489,7 +489,7 @@ public class StringUtils
 			String[] paramValue = StringUtils.split(parameter, keyValueSeparator);
 			if (paramValue.length < 2) throw new Net2PlanException("Bad - Parameter " + paramValue[0] + " has no associated value");
 			if (paramValue.length > 2) throw new Net2PlanException("Bad - Parameter " + paramValue[0] + " has more than one associated value");
-			map.put(paramValue[0], paramValue[1]);
+			map.put(paramValue[0].trim(), paramValue[1].trim());
 		}
 		
 		return map;

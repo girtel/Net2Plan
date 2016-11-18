@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants.RunnableCodeType;
@@ -363,7 +364,7 @@ public class InputParameter
 			else if (isBoolean) initialize (Boolean.parseBoolean(map.get (memberName)));
 			else if (isRunnableCode) initialize (map.get (memberName + "_file") , map.get (memberName + "_classname") , map.get (memberName + "_parameters")); 
 			else throw new RuntimeException ("Bad");
-		} catch (Exception e) { e.printStackTrace(); System.out.println (map); throw new Net2PlanException ("Failing to convert the parameter " + memberName + " = " + map.get (memberName)); }
+		} catch (Exception e) { e.printStackTrace(); System.out.println (map); for (Entry<String,String> ent : map.entrySet()) System.out.println("**" + ent.getKey() + "** = **" + ent.getValue() + "**"); throw new Net2PlanException ("Failing to convert the parameter **" + memberName + "** = " + map.get (memberName)); }
 	}
 
 	public boolean isWithinAcceptableRange () 
