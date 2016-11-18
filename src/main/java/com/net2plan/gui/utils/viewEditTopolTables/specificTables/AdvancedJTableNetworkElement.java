@@ -427,7 +427,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
         }
 
-        addVisualizationFilter(new ProofFilter());
+        //addVisualizationFilter(new ProofFilter());
     }
 
     /**
@@ -945,7 +945,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
     protected void removeVisualizationFilter(IVisualizationFilter vf){
 
-        VisualizationFiltersController.removeVisualizationFilter(vf.getName());
+        VisualizationFiltersController.removeVisualizationFilter(vf.getUniqueName());
     }
 
     protected void removeAllVisualizationFilters(){

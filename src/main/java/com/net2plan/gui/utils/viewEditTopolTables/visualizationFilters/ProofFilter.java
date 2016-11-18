@@ -11,7 +11,7 @@ import com.net2plan.utils.Pair;
  */
 public class ProofFilter implements IVisualizationFilter
 {
-    String name;
+    String uniqueName;
     @Override
     public boolean isVisibleNetworkElement(NetworkElement element)
     {
@@ -35,14 +35,8 @@ public class ProofFilter implements IVisualizationFilter
     }
 
     @Override
-    public void setName(String name)
+    public String getUniqueName()
     {
-        this.name = name;
-    }
-
-    @Override
-    public String getName()
-    {
-        return name;
+        return uniqueName;
     }
 }

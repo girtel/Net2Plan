@@ -17,6 +17,5 @@ public interface IVisualizationFilter
     public boolean isVisibleNetworkElement(NetworkElement element);
     public boolean isVisibleForwardingRules(Pair<Demand,Link> fRuleKey, Double fRuleValue);
     public String getDescription();
-    public void setName(String name);
-    public String getName();
+    public String getUniqueName();
 }

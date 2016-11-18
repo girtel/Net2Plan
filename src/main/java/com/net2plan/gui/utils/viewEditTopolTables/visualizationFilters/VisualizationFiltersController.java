@@ -39,7 +39,7 @@ public final class VisualizationFiltersController
     public static void removeVisualizationFilter(String visFilterName){
 
         for(IVisualizationFilter vf : currentVisualizationFilters){
-            if(visFilterName.equals(vf.getName())){
+            if(visFilterName.equals(vf.getUniqueName())){
                 currentVisualizationFilters.remove(vf);
             }
         }
@@ -81,7 +81,7 @@ public final class VisualizationFiltersController
     public static boolean isVisibleForwardingRules(Pair<Demand,Link> fRuleKey, Double fRuleValue)
     {
         boolean isVisible = true;
-        if(currentVisualizationFilters.size() == 0)
+        if(currentVisualizationFilters.isEmpty())
             return true;
         else{
             for(IVisualizationFilter vf : currentVisualizationFilters)
