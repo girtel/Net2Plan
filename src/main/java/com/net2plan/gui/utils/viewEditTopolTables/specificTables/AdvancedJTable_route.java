@@ -22,14 +22,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -65,6 +58,7 @@ import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -106,15 +100,27 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
             "Propagation delay (ms)", "Bottleneck utilization", "Backup segments", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Demand", "Ingress node", "Egress node", "Demand offered traffic", "Carried traffic", "Occupied capacity", "Sequence of links", "Sequence of nodes", "Number of hops", "Total route length", "Propagation delay (ms)", "Highest utilization among all traversed links", "Candidate protection segments for this route", "Route-specific attributes");
 
+    private List<Route> currentRoutes = new LinkedList<>();
+    private NetPlan currentTopology = null;
+
     public AdvancedJTable_route(final INetworkCallback networkViewer) {
-        super(createTableModel(networkViewer), networkViewer, NetworkElementType.ROUTE);
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.ROUTE, true);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         setColumnRowSorting(networkViewer.inOnlineSimulationMode());
+        fixedTable.setRowSorter(this.getRowSorter());
+        fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
+        fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
+        fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
+        fixedTable.setDefaultRenderer(Float.class, this.getDefaultRenderer(Float.class));
+        fixedTable.setDefaultRenderer(Long.class, this.getDefaultRenderer(Long.class));
+        fixedTable.setDefaultRenderer(Integer.class, this.getDefaultRenderer(Integer.class));
+        fixedTable.setDefaultRenderer(String.class, this.getDefaultRenderer(String.class));
 
     }
 
-    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState) {
+
+    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
         final boolean sameRoutingType = initialState != null && initialState.getRoutingType() == currentState.getRoutingType();
         List<Object[]> allRouteData = new LinkedList<Object[]>();
         for (Route route : currentState.getRoutes()) {
@@ -144,7 +150,17 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
             routeData[13] = maxUtilization;
             routeData[14] = CollectionUtils.join(NetPlan.getIndexes(route.getPotentialBackupProtectionSegments()), ", ");
             routeData[15] = StringUtils.mapToString(route.getAttributes());
-            allRouteData.add(routeData);
+
+            for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
+            {
+                if(route.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
+                {
+                    routeData[i] = route.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
+                }
+            }
+            boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(route);
+            if(visibleNetworkElement)
+                allRouteData.add(routeData);
 
             if (initialState != null && sameRoutingType && initialState.getRouteFromId(route.getId()) != null) {
                 route = initialState.getRouteFromId(route.getId());
@@ -157,7 +173,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                 ingressNodeName = ingressNode.getName();
                 egressNodeName = egressNode.getName();
 
-                Object[] routeData_initialNetPlan = new Object[netPlanViewTableHeader.length];
+                Object[] routeData_initialNetPlan = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
                 routeData_initialNetPlan[0] = null;
                 routeData_initialNetPlan[1] = null;
                 routeData_initialNetPlan[2] = null;
@@ -174,7 +190,16 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                 routeData_initialNetPlan[13] = maxUtilization;
                 routeData_initialNetPlan[14] = CollectionUtils.join(NetPlan.getIndexes(route.getPotentialBackupProtectionSegments()), ", ");
                 routeData_initialNetPlan[15] = StringUtils.mapToString(route.getAttributes());
-                allRouteData.add(routeData_initialNetPlan);
+
+                for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
+                {
+                    if(route.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
+                    {
+                        routeData_initialNetPlan[i] = route.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
+                    }
+                }
+                if(visibleNetworkElement)
+                    allRouteData.add(routeData_initialNetPlan);
             }
         }
 
@@ -189,12 +214,36 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         return netPlanViewTableHeader;
     }
 
+    public String[] getCurrentTableHeaders(){
+        ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
+        String[] headers = new String[netPlanViewTableHeader.length + attColumnsHeaders.size()];
+        for(int i = 0; i < headers.length ;i++)
+        {
+            if(i<netPlanViewTableHeader.length)
+            {
+                headers[i] = netPlanViewTableHeader[i];
+            }
+            else{
+                headers[i] = "Att: "+attColumnsHeaders.get(i - netPlanViewTableHeader.length);
+            }
+        }
+
+
+        return headers;
+    }
+
     public String[] getTableTips() {
         return netPlanViewTableTips;
     }
 
     public boolean hasElements(NetPlan np) {
         return np.hasRoutes();
+    }
+
+    @Override
+    public int getAttributesColumnIndex()
+    {
+        return COLUMN_ATTRIBUTES;
     }
 
     public int[] getColumnsOfSpecialComparatorForSorting() {
@@ -208,9 +257,12 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
 
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                if (getValueAt(rowIndex, columnIndex) == null) return false;
                 if (!networkViewer.isEditable()) return false;
-                return columnIndex == COLUMN_CARRIEDTRAFFIC || columnIndex == COLUMN_OCCUPIEDCAPACITY;
+                if (columnIndex >= netPlanViewTableHeader.length) return true;
+                if (getValueAt(rowIndex,columnIndex) == null) return false;
+
+                return columnIndex == COLUMN_CARRIEDTRAFFIC || columnIndex == COLUMN_OCCUPIEDCAPACITY
+                        || columnIndex >= netPlanViewTableHeader.length;
             }
 
             @Override
@@ -280,6 +332,29 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
 
     public int getNumFixedLeftColumnsInDecoration() {
         return 2;
+    }
+
+    @Override
+    public ArrayList<String> getAttributesColumnsHeaders()
+    {
+        ArrayList<String> attColumnsHeaders = new ArrayList<>();
+        currentTopology = networkViewer.getDesign();
+        currentRoutes = currentTopology.getRoutes();
+        for(Route route : currentRoutes)
+        {
+
+            for (Map.Entry<String, String> entry : route.getAttributes().entrySet())
+            {
+                if(attColumnsHeaders.contains(entry.getKey()) == false)
+                {
+                    attColumnsHeaders.add(entry.getKey());
+                }
+
+            }
+
+        }
+
+        return attColumnsHeaders;
     }
 
     @Override

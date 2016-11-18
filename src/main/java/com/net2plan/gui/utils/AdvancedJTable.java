@@ -13,19 +13,16 @@
 package com.net2plan.gui.utils;
 
 import com.net2plan.utils.Pair;
+import com.net2plan.utils.Triple;
 
 import javax.swing.*;
-import javax.swing.event.TableModelEvent;
+import javax.swing.event.*;
 import javax.swing.table.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.util.EventObject;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.awt.event.*;
+import java.util.*;
+import java.util.List;
 
 /**
  * <p>Extended version of the {@code JTable} class. It presents the following
@@ -60,6 +57,8 @@ public class AdvancedJTable extends JTable {
     private boolean isSelectAllForActionEvent = true;
     private boolean isSelectAllForKeyEvent = true;
 
+
+
     /**
      * Default constructor.
      *
@@ -68,7 +67,7 @@ public class AdvancedJTable extends JTable {
     public AdvancedJTable() {
         super();
 
-        getTableHeader().setReorderingAllowed(false);
+
         setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         addKeyListener(new TableCursorNavigation());
         cellEditorMap = new LinkedHashMap<Pair<Integer, Integer>, TableCellEditor>();
@@ -76,6 +75,7 @@ public class AdvancedJTable extends JTable {
         tooltipMap = new LinkedHashMap<Pair<Integer, Integer>, String>();
 
         disableSetAutoResizeMode = true;
+        this.getTableHeader().setReorderingAllowed(false);
     }
 
     /**
@@ -88,7 +88,18 @@ public class AdvancedJTable extends JTable {
         this();
 
         setModel(model);
+        this.getTableHeader().setReorderingAllowed(false);
+
+
+
     }
+
+    @Override
+    public void setModel(TableModel model){
+        super.setModel(model);
+    }
+
+
 
     @Override
     public void doLayout() {
@@ -431,6 +442,7 @@ public class AdvancedJTable extends JTable {
         this.isSelectAllForMouseEvent = isSelectAllForMouseEvent;
     }
 
+
     private static class SelectAllRunnable implements Runnable {
         private final Component editor;
 
@@ -444,3 +456,4 @@ public class AdvancedJTable extends JTable {
         }
     }
 }
+

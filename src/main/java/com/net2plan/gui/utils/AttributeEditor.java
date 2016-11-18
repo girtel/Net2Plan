@@ -447,7 +447,6 @@ public class AttributeEditor extends JDialog implements ActionListener {
         if (attributes.isEmpty()) table.setEnabled(false);
 
         JScrollPane pane = new JScrollPane(table);
-        new FixedColumnDecorator(pane, 1);
 
         SwingUtils.configureCloseDialogOnEscape(this);
         setTitle(dialogHeader);

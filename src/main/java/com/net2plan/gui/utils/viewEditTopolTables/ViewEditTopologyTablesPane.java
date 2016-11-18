@@ -5,19 +5,20 @@ import java.awt.Component;
 import java.awt.LayoutManager;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseEvent;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.RowFilter;
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter.CurrentAndPlannedStateTableCellValue;
+import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
@@ -46,7 +47,6 @@ public class ViewEditTopologyTablesPane extends JPanel
 	private final INetworkCallback mainWindow;
     private JTabbedPane netPlanView;
     private Map<NetworkElementType, AdvancedJTableNetworkElement> netPlanViewTable;
-    private Map<NetworkElementType, FixedColumnDecorator> netPlanViewTableDecorator;
     private Map<NetworkElementType, JComponent> netPlanViewTableComponent;
     private JCheckBox showInitialPlan;
 
@@ -57,7 +57,6 @@ public class ViewEditTopologyTablesPane extends JPanel
 		this.mainWindow = mainWindow;
 
         netPlanViewTable = new EnumMap<NetworkElementType, AdvancedJTableNetworkElement>(NetworkElementType.class);
-        netPlanViewTableDecorator = new EnumMap<NetworkElementType, FixedColumnDecorator>(NetworkElementType.class);
         netPlanViewTableComponent = new EnumMap<NetworkElementType, JComponent>(NetworkElementType.class);
 
 
@@ -81,12 +80,10 @@ public class ViewEditTopologyTablesPane extends JPanel
             } else if (elementType == NetworkElementType.LAYER) {
                 netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_layer(mainWindow, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
             } else {
-                JScrollPane scrollPane = new JScrollPane(netPlanViewTable.get(elementType));
+                JScrollPane scrollPane = netPlanViewTable.get(elementType).getScroll();
                 scrollPane.setLayout(new FullScrollPaneLayout());
                 scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-                FixedColumnDecorator decorator = new FixedColumnDecorator(scrollPane, ((AdvancedJTableNetworkElement) netPlanViewTable.get(elementType)).getNumFixedLeftColumnsInDecoration());
-                decorator.getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
-                netPlanViewTableDecorator.put(elementType, decorator);
+                netPlanViewTable.get(elementType).getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
                 netPlanViewTableComponent.put(elementType, scrollPane);
             }
         }
@@ -126,6 +123,77 @@ public class ViewEditTopologyTablesPane extends JPanel
         
 	}
 
+	public void resetTables()
+    {
+        netPlanViewTable.clear();
+        netPlanViewTableComponent.clear();
+
+        netPlanViewTable.put(NetworkElementType.NODE, new AdvancedJTable_node(mainWindow));
+        netPlanViewTable.put(NetworkElementType.LINK, new AdvancedJTable_link(mainWindow));
+        netPlanViewTable.put(NetworkElementType.DEMAND, new AdvancedJTable_demand(mainWindow));
+        netPlanViewTable.put(NetworkElementType.ROUTE, new AdvancedJTable_route(mainWindow));
+        netPlanViewTable.put(NetworkElementType.PROTECTION_SEGMENT, new AdvancedJTable_segment(mainWindow));
+        netPlanViewTable.put(NetworkElementType.FORWARDING_RULE, new AdvancedJTable_forwardingRule(mainWindow));
+        netPlanViewTable.put(NetworkElementType.MULTICAST_DEMAND, new AdvancedJTable_multicastDemand(mainWindow));
+        netPlanViewTable.put(NetworkElementType.MULTICAST_TREE, new AdvancedJTable_multicastTree(mainWindow));
+        netPlanViewTable.put(NetworkElementType.SRG, new AdvancedJTable_srg(mainWindow));
+        netPlanViewTable.put(NetworkElementType.LAYER, new AdvancedJTable_layer(mainWindow));
+
+        for (NetworkElementType elementType : Constants.NetworkElementType.values()) {
+            if (elementType == NetworkElementType.NETWORK) {
+                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_network(mainWindow, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
+            } else if (elementType == NetworkElementType.LAYER) {
+                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_layer(mainWindow, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
+            } else {
+                JScrollPane scrollPane = new JScrollPane(netPlanViewTable.get(elementType));
+                scrollPane.setLayout(new FullScrollPaneLayout());
+                scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+                if(netPlanViewTable.get(elementType) instanceof AdvancedJTableNetworkElement)
+                {
+                    scrollPane.setRowHeaderView(((AdvancedJTableNetworkElement) netPlanViewTable.get(elementType)).getFixedTable());
+                    scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER, ((AdvancedJTableNetworkElement) netPlanViewTable.get(elementType)).getFixedTable().getTableHeader());
+                    scrollPane.getRowHeader().addChangeListener(new ChangeListener(){
+
+                        @Override
+                        public void stateChanged(ChangeEvent e)
+                        {
+                            JViewport viewport = (JViewport) e.getSource();
+                            scrollPane.getVerticalScrollBar().setValue(viewport.getViewPosition().y);
+                        }
+                    });
+                }
+                netPlanViewTableComponent.put(elementType, scrollPane);
+            }
+        }
+
+        if (mainWindow.inOnlineSimulationMode()) {
+            showInitialPlan = new JCheckBox("Toggle show/hide planning information", true);
+            showInitialPlan.addItemListener(new ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent e) {
+                    RowFilter<TableModel, Integer> rowFilter = e.getStateChange() == ItemEvent.SELECTED ? null : new RowFilter<TableModel, Integer>() {
+                        @Override
+                        public boolean include(RowFilter.Entry<? extends TableModel, ? extends Integer> entry) {
+                            if (entry.getIdentifier() == 0) return true;
+
+                            if (entry.getValue(0) instanceof CurrentAndPlannedStateTableCellValue)
+                                return ((CurrentAndPlannedStateTableCellValue) entry.getValue(0)).value != null;
+                            else
+                                return entry.getValue(0) != null;
+                        }
+                    };
+
+                    for (NetworkElementType elementType : Constants.NetworkElementType.values()) {
+                        if (elementType == NetworkElementType.NETWORK) continue;
+
+                        ((TableRowSorter) netPlanViewTable.get(elementType).getRowSorter()).setRowFilter(rowFilter);
+                    }
+                    mainWindow.getTopologyPanel().getCanvas().refresh();
+                }
+            });
+
+    }
+    }
 
 	public JTabbedPane getNetPlanView () { return netPlanView; }
 	
@@ -166,6 +234,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         for (AdvancedJTableNetworkElement table : netPlanViewTable.values())
             table.updateView(currentState, initialState);
+
 
         ((NetPlanViewTableComponent_layer) netPlanViewTableComponent.get(NetworkElementType.LAYER)).updateNetPlanView(currentState);
         ((NetPlanViewTableComponent_network) netPlanViewTableComponent.get(NetworkElementType.NETWORK)).updateNetPlanView(currentState);

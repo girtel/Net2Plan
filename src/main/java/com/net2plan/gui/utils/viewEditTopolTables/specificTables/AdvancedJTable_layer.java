@@ -15,8 +15,10 @@ package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
@@ -29,6 +31,7 @@ import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
@@ -58,16 +61,19 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
     public static final int COLUMN_DEMANDTRAFUNITS = 13;
     public static final int COLUMN_ATTRIBUTES = 14;
 
+
     public AdvancedJTable_layer(final INetworkCallback networkViewer) {
-        super(createTableModel(networkViewer), networkViewer, NetworkElementType.LAYER);
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.LAYER, false);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
+        this.getTableHeader().setReorderingAllowed(false);
 
         if (networkViewer.inOnlineSimulationMode()) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
         else setAutoCreateRowSorter(true);
     }
 
-    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState) {
+
+    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
         NetworkLayer layer = currentState.getNetworkLayerDefault();
         List<Object[]> allLayerData = new LinkedList<Object[]>();
         for (NetworkLayer auxLayer : currentState.getNetworkLayers()) {
@@ -123,12 +129,35 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
         return netPlanViewTableHeader;
     }
 
+    public String[] getCurrentTableHeaders(){
+        ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
+        String[] headers = new String[netPlanViewTableHeader.length + attColumnsHeaders.size()];
+        for(int i = 0; i < headers.length ;i++)
+        {
+            if(i<netPlanViewTableHeader.length)
+            {
+                headers[i] = netPlanViewTableHeader[i];
+            }
+            else{
+                headers[i] = "Att: "+attColumnsHeaders.get(i - netPlanViewTableHeader.length);
+            }
+        }
+
+
+        return headers;
+    }
     public String[] getTableTips() {
         return netPlanViewTableTips;
     }
 
     public boolean hasElements(NetPlan np) {
         return true;
+    }
+
+    @Override
+    public int getAttributesColumnIndex()
+    {
+        return COLUMN_ATTRIBUTES;
     }
 
     public int[] getColumnsOfSpecialComparatorForSorting() {
@@ -141,7 +170,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
 
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return false;
+                return columnIndex >= netPlanViewTableHeader.length;
             }
 
             @Override
@@ -168,6 +197,12 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
 
     public int getNumFixedLeftColumnsInDecoration() {
         return 2;
+    }
+
+    @Override
+    public ArrayList<String> getAttributesColumnsHeaders()
+    {
+        return new ArrayList<String>();
     }
 
 

@@ -126,7 +126,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         super(title);
     }
 
-//    public boolean allowLoadTrafficDemands() 
+//    public boolean allowLoadTrafficDemands()
 //    {
 //        return true;
 //    }
@@ -427,8 +427,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     }
 
     @Override
-    public void loadDesign(NetPlan netPlan)
-    {
+    public void loadDesign(NetPlan netPlan) {
+        viewEditTopTables.resetTables();
         netPlan.checkCachesConsistency();
         if (onlineSimulationPane != null) onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
         currentNetPlan = netPlan;

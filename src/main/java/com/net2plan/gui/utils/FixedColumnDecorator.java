@@ -9,21 +9,20 @@
  * Pablo Pavon Mariño - initial API and implementation
  ******************************************************************************/
 
-
 package com.net2plan.gui.utils;
+
+import com.net2plan.interfaces.networkDesign.NetPlan;
 
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.plaf.basic.BasicTableHeaderUI;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Arc2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * <p>This class allows to hack a {@code JTable} with frozen columns.</p>
@@ -36,50 +35,54 @@ import java.util.Set;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
-public class FixedColumnDecorator implements ChangeListener, PropertyChangeListener {
+public class FixedColumnDecorator implements ChangeListener, PropertyChangeListener
+{
     private final static MouseAdapter FIXED_COLUMN_ADAPTER;
-    private final JTable mainTable;
-    private final JTable fixedTable;
-    private final JScrollPane scrollPane;
-    private int frozenColumns;
 
-    static {
+    static
+    {
         FIXED_COLUMN_ADAPTER = new FixedColumnMouseAdapter();
     }
+
+    private int frozenColumns;
+    private final JTable mainTable;
+    private final JTable fixedTable;
+    private final JScrollPane scroll;
 
     /**
      * Default constructor.
      *
-     * @param scrollPaneOfMainTable Reference to the scrollpane containing the main table
+     * @param scroll Reference to the main table ScrollPane
      * @param frozenColumns         Number of columns to be fixed
      * @since 0.2.0
      */
-    public FixedColumnDecorator(JScrollPane scrollPaneOfMainTable, int frozenColumns) {
-        this.scrollPane = scrollPaneOfMainTable;
-        this.frozenColumns = frozenColumns;
+    public FixedColumnDecorator(JScrollPane scroll, int frozenColumns)
+    {
 
-        mainTable = ((JTable) scrollPaneOfMainTable.getViewport().getView());
+
+        this.scroll = scroll;
+        this.frozenColumns = frozenColumns;
+        mainTable = (JTable) scroll.getViewport().getView();
         mainTable.setAutoCreateColumnsFromModel(false);
         mainTable.addPropertyChangeListener(this);
-
         fixedTable = new JTableImpl();
 
         fixedTable.setAutoCreateColumnsFromModel(false);
         fixedTable.setModel(mainTable.getModel());
 
         TableColumnModel columnModel = mainTable.getColumnModel();
-        for (int i = 0; i < frozenColumns; i++) {
+        for (int i = 0; i < frozenColumns; i++)
+        {
             TableColumn column = columnModel.getColumn(0);
             fixedTable.getColumnModel().addColumn(column);
             columnModel.removeColumn(column);
         }
 
         fixedTable.setPreferredScrollableViewportSize(fixedTable.getPreferredSize());
-        scrollPaneOfMainTable.setRowHeaderView(fixedTable);
-        scrollPaneOfMainTable.setCorner(JScrollPane.UPPER_LEFT_CORNER, fixedTable.getTableHeader());
+        scroll.setRowHeaderView(fixedTable);
+        scroll.setCorner(JScrollPane.UPPER_LEFT_CORNER, fixedTable.getTableHeader());
 
-		/* Synchronize scrolling of fixed table header row table with the main table */
-        scrollPaneOfMainTable.getRowHeader().addChangeListener(this);
+        scroll.getRowHeader().addChangeListener(this);
 
         mainTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         fixedTable.setSelectionModel(mainTable.getSelectionModel());
@@ -90,6 +93,10 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         mainTable.setUpdateSelectionOnSort(true);
         fixedTable.setUpdateSelectionOnSort(false);
 
+
+
+
+
         for (MouseMotionListener listener : mainTable.getTableHeader().getMouseMotionListeners())
         {
             if (!(listener instanceof BasicTableHeaderUI.MouseInputHandler))
@@ -97,7 +104,6 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
                 fixedTable.getTableHeader().addMouseMotionListener(listener);
             }
         }
-        fixedTable.getTableHeader().setReorderingAllowed(false);
 
         fixedTable.setDefaultRenderer(Boolean.class, mainTable.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, mainTable.getDefaultRenderer(Double.class));
@@ -150,9 +156,29 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         setAction(fixedTable, "selectLastColumn", new LockedTableSelectLastColumnCellAction());
     }
 
+    private static int nextRow(JTable table)
+    {
+        int row = table.getSelectedRow() + 1;
+        if (row == table.getRowCount()) row = 0;
+
+        return row;
+    }
+
+    private static int previousRow(JTable table)
+    {
+        int row = table.getSelectedRow() - 1;
+        if (row == -1) row = table.getRowCount() - 1;
+
+        return row;
+    }
+
+
+
     @Override
-    public void propertyChange(PropertyChangeEvent e) {
-        switch (e.getPropertyName()) {
+    public void propertyChange(PropertyChangeEvent e)
+    {
+        switch (e.getPropertyName())
+        {
             case "model":
                 fixedTable.setModel(mainTable.getModel());
                 break;
@@ -170,17 +196,20 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
     public void stateChanged(ChangeEvent e) {
         /* keeping fixed table stays in sync with the main table when stateChanged */
         JViewport viewport = (JViewport) e.getSource();
-        scrollPane.getVerticalScrollBar().setValue(viewport.getViewPosition().y);
+        scroll.getVerticalScrollBar().setValue(viewport.getViewPosition().y);
     }
 
-    private Action getAction(JComponent component, int keyCode, int modifiers) {
+    private Action getAction(JComponent component, int keyCode, int modifiers)
+    {
         final int condition = JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT;
         final KeyStroke keyStroke = KeyStroke.getKeyStroke(keyCode, modifiers);
         Object object = component.getInputMap(condition).get(keyStroke);
-        if (object == null) {
+        if (object == null)
+        {
             Container parent = component.getParent();
             return (parent instanceof JComponent) ? getAction((JComponent) parent, keyCode, modifiers) : null;
-        } else {
+        } else
+        {
             return mainTable.getActionMap().get(object);
         }
     }
@@ -191,7 +220,8 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
      * @return Reference to the fixed table of the decorator
      * @since 0.2.0
      */
-    public JTable getFixedTable() {
+    public JTable getFixedTable()
+    {
         return fixedTable;
     }
 
@@ -201,8 +231,21 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
      * @return Number of frozen columns
      * @since 0.3.0
      */
-    public final int getFrozenColumns() {
-        return frozenColumns;
+    public final int getFrozenColumns()
+    {
+        return fixedTable.getColumnCount();
+    }
+
+    /**
+     * Re-configures the number of fixed columns.
+     *
+     * @param frozenColumns Number of columns to be fixed
+     * @since 0.3.0
+     */
+    public final void setFrozenColumns(final int frozenColumns)
+    {
+        rearrangeColumns(frozenColumns);
+        this.frozenColumns = frozenColumns;
     }
 
     /**
@@ -211,39 +254,31 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
      * @return Reference to the main table of the decorator
      * @since 0.2.0
      */
-    public JTable getMainTable() {
+    public JTable getMainTable()
+    {
         return mainTable;
     }
 
-    private static int nextRow(JTable table) {
-        int row = table.getSelectedRow() + 1;
-        if (row == table.getRowCount()) row = 0;
-
-        return row;
-    }
-
-    private static int previousRow(JTable table) {
-        int row = table.getSelectedRow() - 1;
-        if (row == -1) row = table.getRowCount() - 1;
-
-        return row;
-    }
-
-    private void rearrangeColumns(final int frozenColumns) {
+    private void rearrangeColumns(final int frozenColumns)
+    {
         TableColumnModel scrollColumnModel = mainTable.getColumnModel();
         TableColumnModel lockedColumnModel = fixedTable.getColumnModel();
-        if (this.frozenColumns < frozenColumns) {
-			/* move columns from scrollable to fixed table */
-            for (int i = this.frozenColumns; i < frozenColumns; i++) {
+        if (this.frozenColumns < frozenColumns)
+        {
+            /* move columns from scrollable to fixed table */
+            for (int i = this.frozenColumns; i < frozenColumns; i++)
+            {
                 TableColumn column = scrollColumnModel.getColumn(0);
                 lockedColumnModel.addColumn(column);
                 scrollColumnModel.removeColumn(column);
             }
 
             fixedTable.setPreferredScrollableViewportSize(fixedTable.getPreferredSize());
-        } else if (this.frozenColumns > frozenColumns) {
-			/* move columns from fixed to scrollable table */
-            for (int i = frozenColumns; i < this.frozenColumns; i++) {
+        } else if (this.frozenColumns > frozenColumns)
+        {
+            /* move columns from fixed to scrollable table */
+            for (int i = frozenColumns; i < this.frozenColumns; i++)
+            {
                 TableColumn column = lockedColumnModel.getColumn(lockedColumnModel.getColumnCount() - 1);
                 scrollColumnModel.addColumn(column);
                 scrollColumnModel.moveColumn(scrollColumnModel.getColumnCount() - 1, 0);
@@ -254,34 +289,27 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         }
     }
 
-    private void setAction(JComponent component, String name, Action action) {
+    private void setAction(JComponent component, String name, Action action)
+    {
         component.getActionMap().put(name, action);
     }
 
-    /**
-     * Re-configures the number of fixed columns.
-     *
-     * @param frozenColumns Number of columns to be fixed
-     * @since 0.3.0
-     */
-    public final void setFrozenColumns(final int frozenColumns) {
-        rearrangeColumns(frozenColumns);
-        this.frozenColumns = frozenColumns;
-    }
-
-    private static class FixedColumnMouseAdapter extends MouseAdapter {
+    private static class FixedColumnMouseAdapter extends MouseAdapter
+    {
         private TableColumn column = null;
         private int columnWidth;
         private int pressedX;
 
         @Override
-        public void mousePressed(MouseEvent e) {
+        public void mousePressed(MouseEvent e)
+        {
             JTableHeader header = (JTableHeader) e.getComponent();
             TableColumnModel tcm = header.getColumnModel();
             int columnIndex = tcm.getColumnIndexAtX(e.getX());
             Cursor cursor = header.getCursor();
 
-            if (columnIndex == tcm.getColumnCount() - 1 && cursor == Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR)) {
+            if (columnIndex == tcm.getColumnCount() - 1 && cursor == Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR))
+            {
                 column = tcm.getColumn(columnIndex);
                 columnWidth = column.getWidth();
                 pressedX = e.getX();
@@ -290,7 +318,8 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         }
 
         @Override
-        public void mouseReleased(MouseEvent e) {
+        public void mouseReleased(MouseEvent e)
+        {
             column = null;
 
             JTableHeader header = (JTableHeader) e.getComponent();
@@ -298,7 +327,8 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         }
 
         @Override
-        public void mouseDragged(MouseEvent e) {
+        public void mouseDragged(MouseEvent e)
+        {
             if (column == null) return;
 
             int width = columnWidth - pressedX + e.getX();
@@ -312,122 +342,158 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         }
     }
 
-    private static class JTableImpl extends JTable {
+    private static class JTableImpl extends JTable
+    {
         @Override
-        public boolean getScrollableTracksViewportHeight() {
+        public boolean getScrollableTracksViewportHeight()
+        {
             return getPreferredSize().height < getParent().getHeight();
         }
+
+
+
     }
 
-    private class LockedTableSelectLastColumnCellAction extends AbstractAction {
+    private class LockedTableSelectLastColumnCellAction extends AbstractAction
+    {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(ActionEvent e)
+        {
             if (e.getSource() == fixedTable) fixedTable.transferFocus();
             mainTable.changeSelection(mainTable.getSelectedRow(), mainTable.getColumnCount() - 1, false, false);
         }
     }
 
-    private class LockedTableSelectNextColumnCellAction extends AbstractAction {
+    private class LockedTableSelectNextColumnCellAction extends AbstractAction
+    {
         private final Action fixedTableNextColumnCellAction;
 
-        private LockedTableSelectNextColumnCellAction(Action fixedTableNextColumnCellAction) {
+        private LockedTableSelectNextColumnCellAction(Action fixedTableNextColumnCellAction)
+        {
             this.fixedTableNextColumnCellAction = fixedTableNextColumnCellAction;
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
-            if (fixedTable.getSelectedColumn() == fixedTable.getColumnCount() - 1) {
+        public void actionPerformed(ActionEvent e)
+        {
+            if (fixedTable.getSelectedColumn() == fixedTable.getColumnCount() - 1)
+            {
                 fixedTable.transferFocus();
                 mainTable.changeSelection(fixedTable.getSelectedRow(), 0, false, false);
-            } else {
+            } else
+            {
                 fixedTableNextColumnCellAction.actionPerformed(e);
             }
         }
     }
 
-    private class LockedTableSelectPreviousColumnCellAction extends AbstractAction {
+    private class LockedTableSelectPreviousColumnCellAction extends AbstractAction
+    {
         private final Action fixedTablePrevColumnCellAction;
 
-        private LockedTableSelectPreviousColumnCellAction(Action fixedTablePrevColumnCellAction) {
+        private LockedTableSelectPreviousColumnCellAction(Action fixedTablePrevColumnCellAction)
+        {
             this.fixedTablePrevColumnCellAction = fixedTablePrevColumnCellAction;
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
-            if (fixedTable.getSelectedColumn() == 0) {
+        public void actionPerformed(ActionEvent e)
+        {
+            if (fixedTable.getSelectedColumn() == 0)
+            {
                 fixedTable.transferFocus();
                 mainTable.changeSelection(previousRow(mainTable), mainTable.getColumnCount() - 1, false, false);
-            } else {
+            } else
+            {
                 fixedTablePrevColumnCellAction.actionPerformed(e);
             }
         }
     }
 
-    private class ScrollTableSelectFirstColumnCellAction extends AbstractAction {
+    private class ScrollTableSelectFirstColumnCellAction extends AbstractAction
+    {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(ActionEvent e)
+        {
             if (e.getSource() == mainTable) mainTable.transferFocusBackward();
             fixedTable.changeSelection(fixedTable.getSelectedRow(), 0, false, false);
         }
     }
 
-    private final class ScrollTableSelectNextColumnCellAction extends AbstractAction {
+    private final class ScrollTableSelectNextColumnCellAction extends AbstractAction
+    {
         private final Action mainTableNextColumnCellAction;
 
-        private ScrollTableSelectNextColumnCellAction(Action mainTableNextColumnCellAction) {
+        private ScrollTableSelectNextColumnCellAction(Action mainTableNextColumnCellAction)
+        {
             this.mainTableNextColumnCellAction = mainTableNextColumnCellAction;
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
-            if (mainTable.getSelectedColumn() == mainTable.getColumnCount() - 1) {
+        public void actionPerformed(ActionEvent e)
+        {
+            if (mainTable.getSelectedColumn() == mainTable.getColumnCount() - 1)
+            {
                 mainTable.transferFocusBackward();
                 fixedTable.changeSelection(nextRow(mainTable), 0, false, false);
-            } else {
+            } else
+            {
                 mainTableNextColumnCellAction.actionPerformed(e);
             }
         }
     }
 
-    private class ScrollTableSelectPreviousColumnCellAction extends AbstractAction {
+    private class ScrollTableSelectPreviousColumnCellAction extends AbstractAction
+    {
         private final Action mainTablePrevColumnCellAction;
 
-        private ScrollTableSelectPreviousColumnCellAction(Action mainTablePrevColumnCellAction) {
+        private ScrollTableSelectPreviousColumnCellAction(Action mainTablePrevColumnCellAction)
+        {
             this.mainTablePrevColumnCellAction = mainTablePrevColumnCellAction;
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
-            if (mainTable.getSelectedColumn() == 0) {
+        public void actionPerformed(ActionEvent e)
+        {
+            if (mainTable.getSelectedColumn() == 0)
+            {
                 mainTable.transferFocusBackward();
                 fixedTable.changeSelection(mainTable.getSelectedRow(), fixedTable.getColumnCount() - 1, false, false);
-            } else {
+            } else
+            {
                 mainTablePrevColumnCellAction.actionPerformed(e);
             }
         }
     }
 
-    private class TableColumnWidthListener implements TableColumnModelListener {
+    private class TableColumnWidthListener implements TableColumnModelListener
+    {
         @Override
-        public void columnMarginChanged(ChangeEvent e) {
+        public void columnMarginChanged(ChangeEvent e)
+        {
             TableColumnModel tcm = (TableColumnModel) e.getSource();
             fixedTable.setPreferredScrollableViewportSize(new Dimension(tcm.getTotalColumnWidth(), fixedTable.getSize().height));
         }
 
         @Override
-        public void columnMoved(TableColumnModelEvent e) {
+        public void columnMoved(TableColumnModelEvent e)
+        {
         }
 
         @Override
-        public void columnAdded(TableColumnModelEvent e) {
+        public void columnAdded(TableColumnModelEvent e)
+        {
         }
 
         @Override
-        public void columnRemoved(TableColumnModelEvent e) {
+        public void columnRemoved(TableColumnModelEvent e)
+        {
         }
 
         @Override
-        public void columnSelectionChanged(ListSelectionEvent e) {
+        public void columnSelectionChanged(ListSelectionEvent e)
+        {
         }
     }
+
 }

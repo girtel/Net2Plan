@@ -50,13 +50,13 @@ public class CommandLineParser extends PosixParser
 	 * @param iter The iterator over the flattened command line arguments
 	 * @since 0.2.2
 	 */
-	@Override
+
 	protected void processOption(String arg, ListIterator iter)
 	{
-		boolean hasOption = getOptions().hasOption(arg);
+		boolean hasOption = this.getOptions().hasOption(arg);
 		if (!hasOption) return;
 
-		try { super.processOption(arg, iter); }
+		try { processOption(arg, iter); }
 		catch(Throwable e) { throw new RuntimeException(e); }
 	}
 
