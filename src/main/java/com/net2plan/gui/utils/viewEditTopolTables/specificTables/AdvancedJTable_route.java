@@ -58,7 +58,7 @@ import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.VisualizationFiltersController;
+import com.net2plan.gui.utils.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;

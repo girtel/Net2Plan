@@ -13,6 +13,7 @@ public class WindowController
     private static GUIWindow reportWindow;
     private static GUIWindow offlineWindow;
     private static GUIWindow onlineWindow;
+    private static GUIWindow filtersWindow;
 
     public static void buildTopologyWindow(final JComponent component)
     {
@@ -99,6 +100,28 @@ public class WindowController
         if (onlineWindow != null)
         {
             onlineWindow.showWindow();
+        }
+    }
+
+    public static void buildFiltersWindow(final JComponent component)
+    {
+        filtersWindow = new GUIWindow()
+        {
+            @Override
+            public String getTitle()
+            {
+                return "Net2Plan - Visualization filters window";
+            }
+        };
+
+        filtersWindow.buildWindow(component);
+    }
+
+    public static void showFiltersWindow()
+    {
+        if (filtersWindow != null)
+        {
+            filtersWindow.showWindow();
         }
     }
 

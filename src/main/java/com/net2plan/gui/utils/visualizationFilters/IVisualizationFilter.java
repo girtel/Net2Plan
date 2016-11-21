@@ -1,4 +1,4 @@
-package com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters;
+package com.net2plan.gui.utils.visualizationFilters;
 
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -12,10 +12,12 @@ import com.net2plan.utils.Pair;
    /*Forwarding Rules are defined in a Map
     //Key: Pair<Demand,Link>
     //Value: Double*/
-public interface IVisualizationFilter
+public interface IVisualizationFilter extends IExternal
 {
     public boolean isVisibleNetworkElement(NetworkElement element);
     public boolean isVisibleForwardingRules(Pair<Demand,Link> fRuleKey, Double fRuleValue);
     public String getDescription();
     public String getUniqueName();
+    public boolean isActive();
+    public void setActive(boolean flag);
 }

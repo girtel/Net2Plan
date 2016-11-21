@@ -44,6 +44,7 @@ import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
+import com.net2plan.gui.utils.visualizationFilters.VisualizationFiltersPane;
 import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
 import com.net2plan.gui.utils.windows.WindowController;
 import com.net2plan.gui.utils.windows.utils.WindowUtils;
@@ -94,6 +95,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     private ViewReportPane reportPane;
     private OfflineExecutionPanel executionPane;
     private OnlineSimulationPane onlineSimulationPane;
+    private VisualizationFiltersPane visualizationFiltersPane;
 
     /**
      * Reference to the popup menu in the topology panel.
@@ -165,6 +167,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
         onlineSimulationPane = new OnlineSimulationPane(this);
         executionPane = new OfflineExecutionPanel(this);
+        visualizationFiltersPane = new VisualizationFiltersPane(this);
 
         // Closing windows
         WindowUtils.clearFloatingWindows();
@@ -174,6 +177,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         WindowController.buildReportWindow(reportPane);
         WindowController.buildOfflineWindow(executionPane);
         WindowController.buildOnlineWindow(onlineSimulationPane);
+        WindowController.buildFiltersWindow(visualizationFiltersPane);
 
         addAllKeyCombinationActions();
     }
@@ -1133,6 +1137,12 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
                 WindowController.showOnlineWindow();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_4, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
+
+        addKeyCombinationAction("Show visualization filters window", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e) {WindowController.showFiltersWindow();}
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_5, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
     }
 
     private void createCircularSetting()

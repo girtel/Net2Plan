@@ -23,9 +23,8 @@ import javax.swing.table.TableModel;
 
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
-import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.IVisualizationFilter;
-import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.ProofFilter;
-import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.VisualizationFiltersController;
+import com.net2plan.gui.utils.visualizationFilters.IVisualizationFilter;
+import com.net2plan.gui.utils.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -817,6 +816,30 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             networkViewer.updateNetPlanView();
             createDefaultColumnsFromModel();
             removedColumns.clear();
+            String tcName = null;
+            if(!hiddenColumns.isEmpty())
+            {
+                for (TableColumn tc : hiddenColumns)
+                {
+                    if (tc.getHeaderValue().toString().equals("Attributes"))
+                    {
+                        showColumn("Attributes", 0);
+                        break;
+                    }
+                }
+            }
+            for(int i = 0;i<fixedTable.getColumnModel().getColumnCount();i++)
+            {
+                tcName = fixedTable.getColumnModel().getColumn(i).getHeaderValue().toString();
+                if(tcName.equals("Attributes"))
+                {
+                    fromFixedTableToMainTable(i);
+                    break;
+                }
+            }
+            if(fixedTable.getColumnModel().getColumnCount() == 0){
+                fromMainTableToFixedTable(1);
+            }
             removeNewColumn("Attributes");
             updateTables();
             expandAttributes = true;
@@ -858,18 +881,20 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     }
     private void checkAttributesColumns(){
 
-            while(fixedTable.getColumnModel().getColumnCount() > 0)
-            {
+        recoverHiddenColumns = false;
+        while(fixedTable.getColumnModel().getColumnCount() > 0)
+        {
                 fixedTable.getColumnModel().removeColumn(fixedTable.getColumnModel().getColumn(0));
-            }
-            showAllColumns();
-            TableColumn tc = null;
-            for(int i = 0;i<getNumFixedLeftColumnsInDecoration();i++)
-            {
-                tc = mainTable.getColumnModel().getColumn(0);
-                mainTable.getColumnModel().removeColumn(tc);
-                fixedTable.getColumnModel().addColumn(tc);
-            }
+        }
+        createDefaultColumnsFromModel();
+        updateTables();
+        TableColumn tc = null;
+        for(int i = 0;i<getNumFixedLeftColumnsInDecoration();i++)
+        {
+            tc = mainTable.getColumnModel().getColumn(0);
+            mainTable.getColumnModel().removeColumn(tc);
+            fixedTable.getColumnModel().addColumn(tc);
+        }
 
     }
 
@@ -933,25 +958,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
     public abstract void showInCanvas(MouseEvent e, Object itemId);
 
-    protected Set<IVisualizationFilter> getVisualizationFilters(){
-
-        return VisualizationFiltersController.getCurrentVisualizationFilters();
-    }
-
-    protected void addVisualizationFilter(IVisualizationFilter vf){
-
-        VisualizationFiltersController.addVisualizationFilter(vf);
-    }
-
-    protected void removeVisualizationFilter(IVisualizationFilter vf){
-
-        VisualizationFiltersController.removeVisualizationFilter(vf.getUniqueName());
-    }
-
-    protected void removeAllVisualizationFilters(){
-
-        VisualizationFiltersController.removeAllVisualizationFilters();
-    }
 
     public void updateView(NetPlan currentState, NetPlan initialState) {
         setEnabled(false);
