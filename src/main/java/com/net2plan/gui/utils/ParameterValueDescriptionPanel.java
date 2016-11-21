@@ -485,7 +485,7 @@ public class ParameterValueDescriptionPanel extends JPanel
 
     private class FileMultiChooserEditor extends FileChooserEditor
     {
-        private static final String fileSeparator = "||";
+        private static final String fileSeparator = "<>";
 
         public FileMultiChooserEditor()
         {
