@@ -14,7 +14,7 @@ Net2Plan is built on top of an abstract network representation, so-called networ
 Net2Plan is implemented as a Java library along with both command-line and graphical user interfaces (CLI and GUI, respectively). The GUI is specially useful for laboratory sessions as an educational resource, or for a visual inspection of the network. In its turn, the command-line interface is specifically devoted to in-depth research studies, making use of batch processing or large-scale simulation features. Therefore, Net2Plan is a tool intended for a broad spectrum of users: industry, research, and academia.
 
 #Building instructions
-Since Net2Plan 0.4.1, the project is being built through the use of Maven. For this, two different Maven profiles are provided:
+Since Net2Plan 0.4.1, the project is being built through the use of Maven. For this task, two different Maven profiles are provided:
 * _build-without-javadoc_: Quick build where the Javadoc build step is ignored. Useful for checking that everything in the program is right before creating a final release. 
 * _build-with-javadoc_: The main profile of the project. The Javadoc and the documentation will be added alongside the result that the former profile produced.
 
