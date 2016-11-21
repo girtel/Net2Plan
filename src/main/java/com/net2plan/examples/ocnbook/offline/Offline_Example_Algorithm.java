@@ -37,7 +37,7 @@ public class Offline_Example_Algorithm implements IAlgorithm
             System.out.println(multipleFilePath);
         }
 
-        return "DONE!";
+        return "Check the console for the result.";
     }
 
     @Override
