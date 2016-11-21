@@ -22,9 +22,9 @@ For both profiles, the Maven command-line to execute is the one as follows:
 
 `clean package -P PROFILE_NAME`
 
-The result of this command is a _net2plan-VERSION.zip_ file containing the resulting program.
+The result of this command is a _net2plan-VERSION.zip_ file containing the resulting program. The default location for this file is the "target" folder inside the project's structure.
 
-Final releases of Net2Plan can be also found at the project's [website](http://net2plan.com/download.php).
+Final releases of Net2Plan can be also be found at the project's [website](http://net2plan.com/download.php).
 
 #Running instructions
 Net2Plan offers an alternative way of compiling the program in order to avoid the use of Maven during development. This is achieved by running the main class found in:
