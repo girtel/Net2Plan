@@ -25,16 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.swing.BorderFactory;
-import javax.swing.DefaultCellEditor;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -156,6 +147,10 @@ public class ParameterValueDescriptionPanel extends JPanel {
         table.setCellEditor(rowIndex, columnIndex, new DefaultCellEditor(comboBox));
     }
 
+    private void addFileChooserCellEditor(int rowIndex, int columnIndex)
+    {
+    }
+
     /**
      * Returns the parameter-value map.
      *
@@ -243,6 +238,9 @@ public class ParameterValueDescriptionPanel extends JPanel {
                         boolean isSelected = Boolean.parseBoolean(defaultValue.replaceFirst("#boolean#", "").trim());
                         model.addRow(StringUtils.arrayOf(aux.getFirst(), Boolean.toString(isSelected), aux.getThird()));
                         addCheckboxCellEditor(isSelected, model.getRowCount() - 1, 1);
+                        continue;
+                    } else if (defaultValue.startsWith("#file#"))
+                    {
                         continue;
                     }
 
