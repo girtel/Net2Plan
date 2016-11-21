@@ -164,6 +164,13 @@ public class ParameterValueDescriptionPanel extends JPanel
         table.setCellEditor(rowIndex, columnIndex, new FileChooserEditor());
     }
 
+    private void addFileMultiChooserCellEditor(int rowIndex, int columnIndex)
+    {
+        table.setCellEditor(rowIndex, columnIndex, new FileMultiChooserEditor());
+    }
+
+
+
     /**
      * Returns the parameter-value map.
      *
@@ -272,6 +279,8 @@ public class ParameterValueDescriptionPanel extends JPanel
                     } else if (defaultValue.startsWith("#files#"))
                     {
                         model.addRow(StringUtils.arrayOf(aux.getFirst(), "", aux.getThird()));
+                        addFileMultiChooserCellEditor(model.getRowCount() - 1, 1);
+                        continue;
                     }
 
                     model.addRow(StringUtils.arrayOf(aux.getFirst(), aux.getSecond(), aux.getThird()));
@@ -432,9 +441,9 @@ public class ParameterValueDescriptionPanel extends JPanel
 
     private class FileChooserEditor extends DefaultCellEditor implements TableCellEditor
     {
-        private String currentText;
-        private JFileChooser fileChooser;
-        private JButton editorButton;
+        protected String currentText;
+        protected JFileChooser fileChooser;
+        protected JButton editorButton;
 
         public FileChooserEditor()
         {
@@ -448,15 +457,14 @@ public class ParameterValueDescriptionPanel extends JPanel
             editorButton.setContentAreaFilled(false);
 
             fileChooser = new JFileChooser();
+            fileChooser.setMultiSelectionEnabled(false);
         }
 
-        //Implement the one CellEditor method that AbstractCellEditor doesn't.
         public Object getCellEditorValue()
         {
             return currentText;
         }
 
-        //Implement the one method defined by TableCellEditor.
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column)
         {
             final int returnVal = fileChooser.showOpenDialog(null);
@@ -464,6 +472,50 @@ public class ParameterValueDescriptionPanel extends JPanel
             if (returnVal == JFileChooser.APPROVE_OPTION)
             {
                 currentText = fileChooser.getSelectedFile().getAbsolutePath();
+            } else
+            {
+                currentText = "";
+            }
+
+            fireEditingStopped();
+            editorButton.setText(currentText);
+            return editorButton;
+        }
+    }
+
+    private class FileMultiChooserEditor extends FileChooserEditor
+    {
+        private static final String fileSeparator = "||";
+
+        public FileMultiChooserEditor()
+        {
+            super();
+
+            fileChooser.setMultiSelectionEnabled(true);
+        }
+
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column)
+        {
+            final int returnVal = fileChooser.showOpenDialog(null);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION)
+            {
+                final File[] selectedFiles = fileChooser.getSelectedFiles();
+                final StringBuilder builder = new StringBuilder();
+
+                for (int i = 0; i < selectedFiles.length; i++)
+                {
+                    final File file = selectedFiles[i];
+
+                    builder.append(file.getAbsolutePath());
+
+                    if (i != selectedFiles.length - 1)
+                    {
+                        builder.append(fileSeparator);
+                    }
+                }
+
+                currentText = builder.toString();
             } else
             {
                 currentText = "";

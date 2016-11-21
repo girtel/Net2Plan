@@ -12,7 +12,7 @@ import java.util.Map;
  * @author Jorge San Emeterio
  * @date 21-Nov-16
  */
-public class Offline_dummy implements IAlgorithm
+public class Offline_Example_Algorithm implements IAlgorithm
 {
     @Override
     public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters)
@@ -32,6 +32,7 @@ public class Offline_dummy implements IAlgorithm
         List<Triple<String, String, String>> algorithm = new ArrayList<>();
 
         algorithm.add(Triple.of("Hola", "#file#", "mundo"));
+        algorithm.add(Triple.of("Hola", "#files#", "mundo"));
 
         return algorithm;
     }
