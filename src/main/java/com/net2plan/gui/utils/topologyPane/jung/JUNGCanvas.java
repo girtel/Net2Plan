@@ -212,14 +212,44 @@ public final class JUNGCanvas extends ITopologyCanvas
         gm.add(new GraphMousePluginAdapter(plugin));
     }
 
-    @Override
-    public Point2D convertViewCoordinatesToRealCoordinates(Point screenPoint)
+    public Point2D convertViewCoordinatesToRealCoordinates(Point2D screenPoint)
     {
         Point2D layoutCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, screenPoint);
         layoutCoordinates.setLocation(layoutCoordinates.getX(), -layoutCoordinates.getY());
 
         return layoutCoordinates;
     }
+
+    /**
+     * Converts a point from the SWING coordinates system into a point from the JUNG coordinates system.
+     * @param screenPoint (@code Point) on the SWING canvas.
+     * @return (@code Point) on the JUNG canvas.
+     */
+    @Override
+    public Point2D convertViewCoordinatesToRealCoordinates(Point screenPoint)
+    {
+        return convertViewCoordinatesToRealCoordinates((Point2D) screenPoint);
+    }
+
+    public Point2D convertRealCoordinatesToViewCoordinates(Point2D screenPoint)
+    {
+        screenPoint.setLocation(screenPoint.getX(), -screenPoint.getY());
+        Point2D layoutCoordinates = vv.getRenderContext().getMultiLayerTransformer().transform(Layer.LAYOUT, screenPoint);
+
+        return layoutCoordinates;
+    }
+
+    /**
+     * Converts a point from the JUNG coordinates system to the SWING coordinates system.
+     * The conversion adds some variable error.
+     * @param screenPoint (@code Point) on the JUNG canvas.
+     * @return (@code Point) on the SWING canvas.
+     */
+    public Point2D convertRealCoordinatesToViewCoordinates(Point screenPoint)
+    {
+        return convertRealCoordinatesToViewCoordinates((Point2D) screenPoint);
+    }
+
 
     @Override
     public void decreaseFontSize()
@@ -559,6 +589,11 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void zoomAll()
     {
+        if (OSMMapController.isMapActivated())
+        {
+            OSMMapController.centerMapToNodes();
+        }
+
         Set<GUINode> nodes = new LinkedHashSet<>();
         for (GUINode n : g.getVertices()) if (n.isVisible()) nodes.add(n);
 
@@ -613,12 +648,22 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void zoomIn()
     {
+        if (OSMMapController.isMapActivated())
+        {
+            OSMMapController.zoomIn();
+            OSMMapController.fitTopologyToMap();
+        }
         zoomIn(vv.getCenter());
     }
 
     @Override
     public void zoomOut()
     {
+        if (OSMMapController.isMapActivated())
+        {
+            OSMMapController.zoomOut();
+            OSMMapController.fitTopologyToMap();
+        }
         zoomOut(vv.getCenter());
     }
 
@@ -645,6 +690,16 @@ public final class JUNGCanvas extends ITopologyCanvas
             g.removeEdge(link);
             refresh();
         }
+    }
+
+    public void zoom(float scale)
+    {
+        zoom(vv.getCenter(), scale);
+    }
+
+    private void zoom(Point2D point, float scale)
+    {
+        scalingControl.scale(vv, scale, point);
     }
 
     private void zoomIn(Point2D point)

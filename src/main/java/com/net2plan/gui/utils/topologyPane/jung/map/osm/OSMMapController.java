@@ -1,6 +1,7 @@
 package com.net2plan.gui.utils.topologyPane.jung.map.osm;
 
 import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
@@ -14,6 +15,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.util.*;
+import java.util.List;
 
 /**
  * Created by Jorge San Emeterio on 03/11/2016.
@@ -62,6 +64,8 @@ public class OSMMapController
         // Calculating map position
         final HashSet<GeoPosition> positionSet = new HashSet<>();
 
+        final HashSet<Waypoint> waypoints = new HashSet<>();
+
         for (Node node : callback.getDesign().getNodes())
         {
             // Getting coords from nodes attributes
@@ -71,13 +75,90 @@ public class OSMMapController
             final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
             positionSet.add(geoPosition);
 
+            final DefaultWaypoint waypoint = new DefaultWaypoint(geoPosition);
+            waypoints.add(waypoint);
+
             // The position that the node really takes on the map. This is the point where the map and the nodes align.
             final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
             callback.moveNode(node.getId(), new Point2D.Double(realPosition.getX(), -realPosition.getY()));
         }
+
+        WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
+        waypointPainter.setWaypoints(waypoints);
+
+        mapViewer.setOverlayPainter(waypointPainter);
         mapViewer.zoomToBestFit(positionSet, 0.6);
 
         topologyPanel.zoomAll();
+        fitTopologyToMap();
+
+        isMapActivated = true;
+
+        canvas.refresh();
+        mapViewer.repaint();
+    }
+
+    public static void centerMapToNodes()
+    {
+        final HashSet<GeoPosition> positionSet = new HashSet<>();
+
+        for (Node node : callback.getDesign().getNodes())
+        {
+            final double latitude = Double.parseDouble(node.getAttribute(ATTRIB_LATITUDE));
+            final double longitude = Double.parseDouble(node.getAttribute(ATTRIB_LONGITUDE));
+
+            final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
+            positionSet.add(geoPosition);
+        }
+
+        mapViewer.zoomToBestFit(positionSet, 0.6);
+
+        canvas.refresh();
+        mapViewer.repaint();
+    }
+
+    public static void fitTopologyToMap()
+    {
+        final List<Node> topologyNodes = callback.getDesign().getNodes();
+
+        if (topologyNodes.size() > 1)
+        {
+            final Node firstNode = topologyNodes.get(0);
+            final Node secondNode = topologyNodes.get(1);
+
+            final Point2D firstNodeXYPositionMap = firstNode.getXYPositionMap();
+            final Point2D secondNodeXYPositionMap = secondNode.getXYPositionMap();
+
+            final double rOSM = Math.sqrt(Math.pow((secondNodeXYPositionMap.getX() - firstNodeXYPositionMap.getX()), 2) + Math.pow(secondNodeXYPositionMap.getY() + firstNodeXYPositionMap.getY(), 2));
+
+//            System.out.println(swingXScaleRatio);
+//            System.out.println(swingYScaleRatio);
+//
+//            System.out.println("....");
+
+            final Point2D firstNodeXYPositionMapOnJUNG = ((JUNGCanvas) canvas).convertViewCoordinatesToRealCoordinates(firstNodeXYPositionMap);
+            final Point2D secondNodeXYPositionMapOnJUNG = ((JUNGCanvas) canvas).convertViewCoordinatesToRealCoordinates(secondNodeXYPositionMap);
+
+            final double rJUNG = Math.sqrt(Math.pow((secondNodeXYPositionMapOnJUNG.getX() - firstNodeXYPositionMapOnJUNG.getX()), 2) + Math.pow(secondNodeXYPositionMapOnJUNG.getY() + firstNodeXYPositionMapOnJUNG.getY(), 2));
+
+            System.out.println(firstNodeXYPositionMapOnJUNG.getX() / secondNodeXYPositionMapOnJUNG.getX());
+            System.out.println(firstNodeXYPositionMapOnJUNG.getY() / secondNodeXYPositionMapOnJUNG.getY());
+
+            System.out.println("---");
+
+            for (int i = 0; i < 15; i++)
+            {
+//                canvas.zoomOut();
+
+                final Point2D firstNodeXYPositionMapOnJUNG2 = ((JUNGCanvas) canvas).convertViewCoordinatesToRealCoordinates(firstNodeXYPositionMap);
+                final Point2D secondNodeXYPositionMapOnJUNG2 = ((JUNGCanvas) canvas).convertViewCoordinatesToRealCoordinates(secondNodeXYPositionMap);
+//
+//                System.out.println(firstNodeXYPositionMapOnJUNG2.getX() / secondNodeXYPositionMapOnJUNG2.getX());
+//                System.out.println(firstNodeXYPositionMapOnJUNG2.getY() / secondNodeXYPositionMapOnJUNG2.getY());
+//                System.out.println("---");
+
+            }
+        }
     }
 
     private static void loadMapOntoTopologyPanel()
@@ -95,8 +176,6 @@ public class OSMMapController
         topologyPanel.add(mapViewer, BorderLayout.CENTER);
         topologyPanel.validate();
         topologyPanel.repaint();
-
-        isMapActivated = true;
     }
 
     private static void stopMap()
@@ -129,5 +208,17 @@ public class OSMMapController
     public static boolean isMapActivated()
     {
         return isMapActivated;
+    }
+
+    public static void zoomIn()
+    {
+        final int zoom = mapViewer.getZoom();
+        mapViewer.setZoom(zoom - 1);
+    }
+
+    public static void zoomOut()
+    {
+        final int zoom = mapViewer.getZoom();
+        mapViewer.setZoom(zoom + 1);
     }
 }
