@@ -34,7 +34,7 @@ public class ProofFilter implements IVisualizationFilter
     @Override
     public String getDescription()
     {
-        return "Basic Filter";
+        return "Visible if index is even";
     }
 
     @Override
@@ -46,7 +46,7 @@ public class ProofFilter implements IVisualizationFilter
     @Override
     public String getUniqueName()
     {
-        return "Filter namber 1";
+        return "Filter namber uan";
     }
 
     @Override

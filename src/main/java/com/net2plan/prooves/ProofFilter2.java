@@ -15,6 +15,7 @@ import java.util.List;
  */
 public class ProofFilter2 implements IVisualizationFilter
 {
+    boolean active = false;
     @Override
     public boolean isVisibleNetworkElement(NetworkElement element)
     {
@@ -49,12 +50,12 @@ public class ProofFilter2 implements IVisualizationFilter
     @Override
     public boolean isActive()
     {
-        return true;
+        return active;
     }
 
     @Override
     public void setActive(boolean flag)
     {
-
+        active = flag;
     }
 }

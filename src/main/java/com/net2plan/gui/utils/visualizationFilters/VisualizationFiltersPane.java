@@ -16,6 +16,8 @@ import com.net2plan.utils.Triple;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -43,7 +45,7 @@ public class VisualizationFiltersPane extends JPanel
     private File selectedFile;
     private final AdvancedJTable table;
     private final static TableCellRenderer CHECKBOX_RENDERER;
-    private final static String[] HEADER;
+    private final static Object[] HEADER;
 
     static
     {
@@ -98,21 +100,26 @@ public class VisualizationFiltersPane extends JPanel
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                Set<String> filtersSet = new LinkedHashSet<String>();
-                for(IVisualizationFilter vf : VisualizationFiltersController.getCurrentVisualizationFilters())
+                if (VisualizationFiltersController.getCurrentVisualizationFilters().size() == 0)
+                    JOptionPane.showMessageDialog(null, "No filters to remove");
+                else
                 {
-                    filtersSet.add(vf.getUniqueName());
+                    Set<String> filtersSet = new LinkedHashSet<String>();
+                    for (IVisualizationFilter vf : VisualizationFiltersController.getCurrentVisualizationFilters())
+                    {
+                        filtersSet.add(vf.getUniqueName());
+                    }
+                    Object out = JOptionPane.showInputDialog(null, "Please, select a filter to remove",
+                            "Remove visualization filter",
+                            JOptionPane.QUESTION_MESSAGE, null, filtersSet.toArray(new String[filtersSet.size()]),
+                            filtersSet.iterator().next());
+
+                    String filterNameToRemove = (String) out;
+                    VisualizationFiltersController.removeVisualizationFilter(filterNameToRemove);
+                    updateFiltersTable();
+                    mainWindow.updateNetPlanView();
+
                 }
-                Object out = JOptionPane.showInputDialog(null, "Please, select a filter to remove",
-                        "Remove visualization filter",
-                        JOptionPane.QUESTION_MESSAGE, null, filtersSet.toArray(new String[filtersSet.size()]),
-                        filtersSet.iterator().next());
-
-                String filterNameToRemove = (String) out;
-                VisualizationFiltersController.removeVisualizationFilter(filterNameToRemove);
-                updateFiltersTable();
-                mainWindow.updateNetPlanView();
-
             }
         });
         deleteAll = new JButton("Delete All Visualization Filters");
@@ -174,7 +181,6 @@ public class VisualizationFiltersPane extends JPanel
     {
         IVisualizationFilter newFilter = ClassLoaderUtils.getInstance(selectedFile,"", IVisualizationFilter.class);
         VisualizationFiltersController.addVisualizationFilter(newFilter);
-        JOptionPane.showMessageDialog(null, "Filter loaded successfully");
         updateFiltersTable();
         mainWindow.updateNetPlanView();
         ((Closeable) newFilter.getClass().getClassLoader()).close();
@@ -192,10 +198,11 @@ public class VisualizationFiltersPane extends JPanel
         for(int i = 0;i<length;i++)
         {
             vf = currentVisFilters.get(i);
-            newData[i][0] = vf.getUniqueName();
-            newData[i][1] = vf.getDescription();
-            newData[i][2] = vf.isActive();
+            newData[i][0] = (Object)vf.getUniqueName();
+            newData[i][1] = (Object)vf.getDescription();
+            newData[i][2] = (Object)vf.isActive();
         }
+
 
         ((DefaultTableModel) tm).setDataVector(newData,HEADER);
         for(int j = 0;j<length;j++){
@@ -241,43 +248,32 @@ public class VisualizationFiltersPane extends JPanel
             @Override
             public Class getColumnClass(int col)
             {
+                if(col == 2) return Boolean.class;
+
                 return String.class;
             }
 
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex)
             {
-                if (columnIndex == 1)
-                {
-                    int rowView = table.convertRowIndexToModel(rowIndex);
-                    int columnView = table.convertColumnIndexToView(columnIndex);
-                    TableCellEditor tce = table.getCellEditor(rowView, columnView);
-
-                    if (tce instanceof ActionTableCellEditor)
-                    {
-                        return true;
-                    } else if (tce instanceof DefaultCellEditor)
-                    {
-                        Component cellComponent = ((DefaultCellEditor) tce).getComponent();
-                        if (cellComponent instanceof JComboBox || cellComponent instanceof JCheckBox)
-                        {
-                            return true;
-                        } else
-                        {
-                            Constants.RunnableCodeType runnableCodeType = Constants.RunnableCodeType.find(getValueAt(rowIndex, 1).toString());
-                            if (runnableCodeType == null) return true;
-                        }
-                    }
-                }
-
+                if(columnIndex == 2) return true;
                 return false;
             }
 
             @Override
             public void setValueAt(Object value, int row, int column)
             {
-                super.setValueAt(value, row, column);
-
+                if(column == 2)
+                {
+                    if(value == null) return;
+                    boolean visible = (Boolean) value;
+                    String filterToChange = (String)table.getModel().getValueAt(row,0);
+                    IVisualizationFilter vf = VisualizationFiltersController.getVisualizationFilterByName(filterToChange);
+                    vf.setActive(visible);
+                    super.setValueAt(value, row, column);
+                    updateFiltersTable();
+                    mainWindow.updateNetPlanView();
+                }
             }
         }
 
