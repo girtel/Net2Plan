@@ -3,6 +3,7 @@ package com.net2plan.examples.ocnbook.offline;
 import com.google.common.base.Splitter;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Triple;
 
 import java.util.ArrayList;
@@ -37,7 +38,9 @@ public class Offline_Example_Algorithm implements IAlgorithm
             System.out.println(multipleFilePath);
         }
 
-        return "Check the console for the result.";
+        ErrorHandling.showConsole();
+
+        return "Done!";
     }
 
     @Override
@@ -55,7 +58,7 @@ public class Offline_Example_Algorithm implements IAlgorithm
         algorithm.add(Triple.of("Choice parameter", "#select# First Second Third", "Allows the user to choose from a given array of choices."));
         algorithm.add(Triple.of("Boolean parameter", "#boolean#", "Represents a true/false parameter through the use of a checkbox."));
         algorithm.add(Triple.of("File parameter", "#file#", "Brings up a file selector to choose one single file."));
-        algorithm.add(Triple.of("Multiple file parameter", "#files#", "Brings up a file selector to choose multiple files. The files' paths are separated with the string '||'."));
+        algorithm.add(Triple.of("Multiple file parameter", "#files#", "Brings up a file selector to choose multiple files. The files' paths are separated with the string '<>'."));
         return algorithm;
     }
 }
