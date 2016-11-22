@@ -8,8 +8,11 @@ import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.ITopologyCanvas;
+import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
+import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import org.jxmapviewer.viewer.*;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
@@ -121,44 +124,47 @@ public class OSMMapController
     {
         final List<Node> topologyNodes = callback.getDesign().getNodes();
 
-        if (topologyNodes.size() > 1)
+        final MutableTransformer layoutTransformer = ((VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent()).getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+
+        double topologyCenterX = 0;
+        double topologyCenterY = 0;
+        double topologyCenterXJUNG = 0;
+        double topologyCenterYJUNG = 0;
+        for (Node node : topologyNodes)
         {
-            final Node firstNode = topologyNodes.get(0);
-            final Node secondNode = topologyNodes.get(1);
+            final Point2D nodeXY = node.getXYPositionMap();
+            final Point2D nodeXYJUNG = ((JUNGCanvas) canvas).convertViewCoordinatesToRealCoordinates(nodeXY);
 
-            final Point2D firstNodeXYPositionMap = firstNode.getXYPositionMap();
-            final Point2D secondNodeXYPositionMap = secondNode.getXYPositionMap();
+            System.out.println(nodeXY);
+            System.out.println(nodeXYJUNG);
 
-            final double rOSM = Math.sqrt(Math.pow((secondNodeXYPositionMap.getX() - firstNodeXYPositionMap.getX()), 2) + Math.pow(secondNodeXYPositionMap.getY() + firstNodeXYPositionMap.getY(), 2));
+            topologyCenterX += nodeXY.getX();
+            topologyCenterY += nodeXY.getY();
 
-//            System.out.println(swingXScaleRatio);
-//            System.out.println(swingYScaleRatio);
-//
-//            System.out.println("....");
-
-            final Point2D firstNodeXYPositionMapOnJUNG = ((JUNGCanvas) canvas).convertViewCoordinatesToRealCoordinates(firstNodeXYPositionMap);
-            final Point2D secondNodeXYPositionMapOnJUNG = ((JUNGCanvas) canvas).convertViewCoordinatesToRealCoordinates(secondNodeXYPositionMap);
-
-            final double rJUNG = Math.sqrt(Math.pow((secondNodeXYPositionMapOnJUNG.getX() - firstNodeXYPositionMapOnJUNG.getX()), 2) + Math.pow(secondNodeXYPositionMapOnJUNG.getY() + firstNodeXYPositionMapOnJUNG.getY(), 2));
-
-            System.out.println(firstNodeXYPositionMapOnJUNG.getX() / secondNodeXYPositionMapOnJUNG.getX());
-            System.out.println(firstNodeXYPositionMapOnJUNG.getY() / secondNodeXYPositionMapOnJUNG.getY());
-
-            System.out.println("---");
-
-            for (int i = 0; i < 15; i++)
-            {
-//                canvas.zoomOut();
-
-                final Point2D firstNodeXYPositionMapOnJUNG2 = ((JUNGCanvas) canvas).convertViewCoordinatesToRealCoordinates(firstNodeXYPositionMap);
-                final Point2D secondNodeXYPositionMapOnJUNG2 = ((JUNGCanvas) canvas).convertViewCoordinatesToRealCoordinates(secondNodeXYPositionMap);
-//
-//                System.out.println(firstNodeXYPositionMapOnJUNG2.getX() / secondNodeXYPositionMapOnJUNG2.getX());
-//                System.out.println(firstNodeXYPositionMapOnJUNG2.getY() / secondNodeXYPositionMapOnJUNG2.getY());
-//                System.out.println("---");
-
-            }
+            topologyCenterXJUNG += nodeXYJUNG.getX();
+            topologyCenterYJUNG += nodeXYJUNG.getY();
         }
+
+        final Point2D topologyCenterPoint = new Point2D.Double(topologyCenterX / topologyNodes.size(), topologyCenterY / topologyNodes.size());
+         Point2D topologyCenterPointJUNG = new Point2D.Double(topologyCenterXJUNG / topologyNodes.size(), topologyCenterYJUNG / topologyNodes.size());
+
+        final Node node = topologyNodes.get(0);
+
+        Point2D pointJUNG = ((JUNGCanvas) canvas).convertViewCoordinatesToRealCoordinates(node.getXYPositionMap());
+
+        double r = Math.sqrt(Math.pow(node.getXYPositionMap().getX() - topologyCenterPoint.getX(), 2) + Math.pow(node.getXYPositionMap().getY() - topologyCenterPoint.getY(), 2));
+        double rJUNG = Math.sqrt(Math.pow(pointJUNG.getX() - topologyCenterPointJUNG.getX(), 2) + Math.pow(pointJUNG.getY() - topologyCenterPointJUNG.getY(), 2));
+
+        double alpha = r / rJUNG;
+
+        System.out.println("Topology center: " + topologyCenterPoint);
+        System.out.println("Topology center JUNG: " + topologyCenterPointJUNG);
+        System.out.println("R swing: " + r);
+        System.out.println("R JUNG: " + rJUNG);
+        System.out.println("r / rswing: " + alpha);
+        System.out.println("Map zoom: " + mapViewer.getZoom());
+
+        layoutTransformer.setToIdentity();
     }
 
     private static void loadMapOntoTopologyPanel()

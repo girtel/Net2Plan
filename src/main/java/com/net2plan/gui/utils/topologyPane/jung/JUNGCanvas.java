@@ -650,7 +650,7 @@ public final class JUNGCanvas extends ITopologyCanvas
     {
         if (OSMMapController.isMapActivated())
         {
-            OSMMapController.zoomIn();
+            //OSMMapController.zoomIn();
             OSMMapController.fitTopologyToMap();
         }
         zoomIn(vv.getCenter());
@@ -661,10 +661,15 @@ public final class JUNGCanvas extends ITopologyCanvas
     {
         if (OSMMapController.isMapActivated())
         {
-            OSMMapController.zoomOut();
+            //OSMMapController.zoomOut();
             OSMMapController.fitTopologyToMap();
         }
-        zoomOut(vv.getCenter());
+        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+
+        System.out.println("Before scale: " + layoutTransformer.getScale());
+        // zoomOut(vv.getCenter());
+        System.out.println("After scale: " + layoutTransformer.getScale());
+        System.out.println("..........");
     }
 
     public void addLink(Link npLink)
