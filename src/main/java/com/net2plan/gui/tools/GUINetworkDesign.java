@@ -20,19 +20,7 @@ import java.awt.geom.Point2D;
 import java.util.*;
 import java.util.List;
 
-import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTextArea;
-import javax.swing.KeyStroke;
+import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableModel;
 
@@ -169,11 +157,14 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         // Closing windows
         WindowUtils.clearFloatingWindows();
 
+        final JTabbedPane tabPane = new JTabbedPane();
+        tabPane.add("View/Edit network state", viewEditTopTables);
+        tabPane.add("Algorithm execution", executionPane);
+        tabPane.add("Online simulation", onlineSimulationPane);
+        tabPane.add("View reports", reportPane);
+
         // Building windows
-        WindowController.buildTopologyWindow(viewEditTopTables);
-        WindowController.buildReportWindow(reportPane);
-        WindowController.buildOfflineWindow(executionPane);
-        WindowController.buildOnlineWindow(onlineSimulationPane);
+        WindowController.buildControlWindow(tabPane);
 
         addAllKeyCombinationActions();
     }
@@ -1106,33 +1097,12 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         }, KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK));
 
         // Windows
-        addKeyCombinationAction("Show network state window", new AbstractAction() {
+        addKeyCombinationAction("Show control window", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                WindowController.showTopologyWindow();
+                WindowController.showControlWindow();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
-
-        addKeyCombinationAction("Show report window", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                WindowController.showReportWindow();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_2, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
-
-        addKeyCombinationAction("Show offline design window", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                WindowController.showOfflineWindow();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_3, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
-
-        addKeyCombinationAction("Show online design window", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                WindowController.showOnlineWindow();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_4, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
     }
 
     private void createCircularSetting()

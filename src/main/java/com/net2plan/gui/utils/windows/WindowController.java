@@ -9,97 +9,27 @@ import javax.swing.*;
  */
 public class WindowController
 {
-    private static GUIWindow topologyWindow;
-    private static GUIWindow reportWindow;
-    private static GUIWindow offlineWindow;
-    private static GUIWindow onlineWindow;
+    private static GUIWindow controlWindow;
 
-    public static void buildTopologyWindow(final JComponent component)
+    public static void buildControlWindow(final JComponent component)
     {
-        topologyWindow = new GUIWindow()
+        controlWindow = new GUIWindow()
         {
             @Override
             public String getTitle()
             {
-                return "Net2Plan - Network state window";
+                return "Net2Plan - Control window";
             }
         };
 
-        topologyWindow.buildWindow(component);
+        controlWindow.buildWindow(component);
     }
 
-    public static void showTopologyWindow()
+    public static void showControlWindow()
     {
-        if (topologyWindow != null)
+        if (controlWindow != null)
         {
-            topologyWindow.showWindow();
+            controlWindow.showWindow();
         }
     }
-
-    public static void buildReportWindow(final JComponent component)
-    {
-        reportWindow = new GUIWindow()
-        {
-            @Override
-            public String getTitle()
-            {
-                return "Net2Plan - Report window";
-            }
-        };
-
-        reportWindow.buildWindow(component);
-    }
-
-    public static void showReportWindow()
-    {
-        if (reportWindow != null)
-        {
-            reportWindow.showWindow();
-        }
-    }
-
-    public static void buildOfflineWindow(final JComponent component)
-    {
-        offlineWindow = new GUIWindow()
-        {
-            @Override
-            public String getTitle()
-            {
-                return "Net2Plan - Offline design window";
-            }
-        };
-
-        offlineWindow.buildWindow(component);
-    }
-
-    public static void showOfflineWindow()
-    {
-        if (offlineWindow != null)
-        {
-            offlineWindow.showWindow();
-        }
-    }
-
-    public static void buildOnlineWindow(final JComponent component)
-    {
-        onlineWindow = new GUIWindow()
-        {
-            @Override
-            public String getTitle()
-            {
-                return "Net2Plan - Online simulation window";
-            }
-        };
-
-        onlineWindow.buildWindow(component);
-    }
-
-    public static void showOnlineWindow()
-    {
-        if (onlineWindow != null)
-        {
-            onlineWindow.showWindow();
-        }
-    }
-
 }
