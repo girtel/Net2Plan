@@ -159,14 +159,84 @@ public class ParameterValueDescriptionPanel extends JPanel
         table.setCellEditor(rowIndex, columnIndex, new DefaultCellEditor(comboBox));
     }
 
-    private void addFileChooserCellEditor(int rowIndex, int columnIndex)
+    private void addFileChooserCellEditor(int rowIndex, int columnIndex, String defaultValue)
     {
-        table.setCellEditor(rowIndex, columnIndex, new FileChooserEditor());
+        final JTextField textField = new JTextField();
+        textField.setEnabled(false);
+        textField.setBorder(BorderFactory.createEmptyBorder());
+
+        final DefaultCellEditor editor = new DefaultCellEditor(textField);
+        editor.setClickCountToStart(1);
+
+        table.getModel().setValueAt(defaultValue, rowIndex, columnIndex);
+
+        table.setCellEditor(rowIndex, columnIndex, new ActionTableCellEditor(editor)
+        {
+            @Override
+            protected void editCell(JTable table, int row, int column)
+            {
+                final int rowModel = table.convertRowIndexToModel(row);
+                final TableModel model = table.getModel();
+
+                final JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setMultiSelectionEnabled(false);
+
+                final int returnVal = fileChooser.showOpenDialog(null);
+
+                if (returnVal == JFileChooser.APPROVE_OPTION)
+                {
+                    model.setValueAt(fileChooser.getSelectedFile().getAbsolutePath(), rowModel, 1);
+                }
+            }
+        });
     }
 
-    private void addFileMultiChooserCellEditor(int rowIndex, int columnIndex)
+    private void addFileMultiChooserCellEditor(int rowIndex, int columnIndex, String defaultValue)
     {
-        table.setCellEditor(rowIndex, columnIndex, new FileMultiChooserEditor());
+        final JTextField textField = new JTextField();
+        textField.setEnabled(false);
+        textField.setBorder(BorderFactory.createEmptyBorder());
+
+        final DefaultCellEditor editor = new DefaultCellEditor(textField);
+        editor.setClickCountToStart(1);
+
+        table.getModel().setValueAt(defaultValue, rowIndex, columnIndex);
+
+        table.setCellEditor(rowIndex, columnIndex, new ActionTableCellEditor(editor)
+        {
+            @Override
+            protected void editCell(JTable table, int row, int column)
+            {
+                final int rowModel = table.convertRowIndexToModel(row);
+                final TableModel model = table.getModel();
+
+                final String fileSeparator = "<>";
+                final JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setMultiSelectionEnabled(true);
+
+                final int returnVal = fileChooser.showOpenDialog(null);
+
+                if (returnVal == JFileChooser.APPROVE_OPTION)
+                {
+                    final File[] selectedFiles = fileChooser.getSelectedFiles();
+                    final StringBuilder builder = new StringBuilder();
+
+                    for (int i = 0; i < selectedFiles.length; i++)
+                    {
+                        final File file = selectedFiles[i];
+
+                        builder.append(file.getAbsolutePath());
+
+                        if (i != selectedFiles.length - 1)
+                        {
+                            builder.append(fileSeparator);
+                        }
+                    }
+
+                    model.setValueAt(builder.toString(), rowModel, 1);
+                }
+            }
+        });
     }
 
 
@@ -273,13 +343,17 @@ public class ParameterValueDescriptionPanel extends JPanel
                         continue;
                     } else if (defaultValue.startsWith("#file#"))
                     {
+                        final String fileDefaultValue = aux.getSecond().replaceFirst("#file#", "").trim();
+
                         model.addRow(StringUtils.arrayOf(aux.getFirst(), "", aux.getThird()));
-                        addFileChooserCellEditor(model.getRowCount() - 1, 1);
+                        addFileChooserCellEditor(model.getRowCount() - 1, 1, fileDefaultValue);
                         continue;
                     } else if (defaultValue.startsWith("#files#"))
                     {
+                        final String fileDefaultValue = aux.getSecond().replaceFirst("#files#", "").trim();
+
                         model.addRow(StringUtils.arrayOf(aux.getFirst(), "", aux.getThird()));
-                        addFileMultiChooserCellEditor(model.getRowCount() - 1, 1);
+                        addFileMultiChooserCellEditor(model.getRowCount() - 1, 1, fileDefaultValue);
                         continue;
                     }
 
@@ -437,93 +511,5 @@ public class ParameterValueDescriptionPanel extends JPanel
     private void refreshAfterParameterEdition()
     {
         /* sets the visualization according to the current parameter values */
-    }
-
-    private class FileChooserEditor extends DefaultCellEditor implements TableCellEditor
-    {
-        protected String currentText;
-        protected JFileChooser fileChooser;
-        protected JButton editorButton;
-
-        public FileChooserEditor()
-        {
-            super(new JTextField());
-
-            setClickCountToStart(2);
-
-            editorButton = new JButton();
-            editorButton.setBackground(Color.white);
-            editorButton.setBorderPainted(false);
-            editorButton.setContentAreaFilled(false);
-
-            fileChooser = new JFileChooser();
-            fileChooser.setMultiSelectionEnabled(false);
-        }
-
-        public Object getCellEditorValue()
-        {
-            return currentText;
-        }
-
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column)
-        {
-            final int returnVal = fileChooser.showOpenDialog(null);
-
-            if (returnVal == JFileChooser.APPROVE_OPTION)
-            {
-                currentText = fileChooser.getSelectedFile().getAbsolutePath();
-            } else
-            {
-                currentText = "";
-            }
-
-            fireEditingStopped();
-            editorButton.setText(currentText);
-            return editorButton;
-        }
-    }
-
-    private class FileMultiChooserEditor extends FileChooserEditor
-    {
-        private static final String fileSeparator = "<>";
-
-        public FileMultiChooserEditor()
-        {
-            super();
-
-            fileChooser.setMultiSelectionEnabled(true);
-        }
-
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column)
-        {
-            final int returnVal = fileChooser.showOpenDialog(null);
-
-            if (returnVal == JFileChooser.APPROVE_OPTION)
-            {
-                final File[] selectedFiles = fileChooser.getSelectedFiles();
-                final StringBuilder builder = new StringBuilder();
-
-                for (int i = 0; i < selectedFiles.length; i++)
-                {
-                    final File file = selectedFiles[i];
-
-                    builder.append(file.getAbsolutePath());
-
-                    if (i != selectedFiles.length - 1)
-                    {
-                        builder.append(fileSeparator);
-                    }
-                }
-
-                currentText = builder.toString();
-            } else
-            {
-                currentText = "";
-            }
-
-            fireEditingStopped();
-            editorButton.setText(currentText);
-            return editorButton;
-        }
     }
 }

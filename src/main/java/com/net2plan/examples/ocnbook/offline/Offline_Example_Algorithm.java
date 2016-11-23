@@ -1,64 +1,47 @@
 package com.net2plan.examples.ocnbook.offline;
 
-import com.google.common.base.Splitter;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.internal.ErrorHandling;
+import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Jorge San Emeterio
- * @date 21-Nov-16
- */
 public class Offline_Example_Algorithm implements IAlgorithm
 {
-    @Override
-    public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters)
-    {
-        final String simpleParameter = algorithmParameters.get("Simple parameter");
-        final String choiceParameter = algorithmParameters.get("Choice parameter");
-        final boolean booleanParameter = Boolean.parseBoolean(algorithmParameters.get("Boolean parameter"));
-        final String fileParameter = algorithmParameters.get("File parameter");
-        final String multipleFileParameter = algorithmParameters.get("Multiple file parameter");
+	InputParameter simpleParameter               = new InputParameter("simpleParameter", "Default value", "The user may enter the desired value in a string format.");
+	InputParameter booleanParameter              = new InputParameter("booleanParameter", "#boolean# true", "Represents a true/false parameter through the use of a checkbox.");
+	InputParameter selectParameter               = new InputParameter("selectParameter", "#select# First Second Third", "Allows the user to choose from a given array of choices.");
+	InputParameter fileChooserParameter          = new InputParameter("fileChooserParameter", "#file# Sample text", "Brings up a file selector to choose one single file.");
+	InputParameter multipleFilesChooserParameter = new InputParameter("multipleFilesParameter", "#files# Sample text", "Brings up a file selector to choose multiple files. The files' paths are separated with "
+			+ "the string '<>'.");
 
-        System.out.println("Simple parameter: " + simpleParameter);
-        System.out.println("Choice parameter: " + choiceParameter);
-        System.out.println("Boolean parameter: " + booleanParameter);
-        System.out.println("File parameter: " + fileParameter);
+	@Override
+	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters)
+	{
+		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
 
-        System.out.println("Multiple file parameter: ");
-        final Iterable<String> multipleFilePaths = Splitter.on("<>").split(multipleFileParameter);
+		System.out.printf("Simple parameter: " + simpleParameter.getString());
+		System.out.println("Boolean parameter: " + Boolean.parseBoolean(booleanParameter.getString()));
+		System.out.println("Select parameter: " + selectParameter.getString());
+		System.out.println("File chooser parameter: " + fileChooserParameter.getString());
 
-        for (String multipleFilePath : multipleFilePaths)
-        {
-            System.out.println(multipleFilePath);
-        }
+		final String[] multipleFilesPath = multipleFilesChooserParameter.getString().split("<>");
+		for(String path : multipleFilesPath) System.out.println("Multiple file chooser parameter: " + path);
 
-        ErrorHandling.showConsole();
+		return "Ok";
+	}
 
-        return "Done!";
-    }
+	@Override
+	public String getDescription()
+	{
+		return "Example of different parameter types.";
+	}
 
-    @Override
-    public String getDescription()
-    {
-        return "Example algorithm showing the use of the algorithm interface and its components.";
-    }
-
-    @Override
-    public List<Triple<String, String, String>> getParameters()
-    {
-        List<Triple<String, String, String>> algorithm = new ArrayList<>();
-
-        algorithm.add(Triple.of("Simple parameter", "", "The user may enter the desired value in a string format."));
-        algorithm.add(Triple.of("Choice parameter", "#select# First Second Third", "Allows the user to choose from a given array of choices."));
-        algorithm.add(Triple.of("Boolean parameter", "#boolean#", "Represents a true/false parameter through the use of a checkbox."));
-        algorithm.add(Triple.of("File parameter", "#file#", "Brings up a file selector to choose one single file."));
-        algorithm.add(Triple.of("Multiple file parameter", "#files#", "Brings up a file selector to choose multiple files. The files' paths are separated with the string '<>'."));
-        return algorithm;
-    }
+	@Override
+	public List<Triple<String, String, String>> getParameters()
+	{
+		return InputParameter.getInformationAllInputParameterFieldsOfObject(this);
+	}
 }
