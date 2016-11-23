@@ -14,7 +14,7 @@ Net2Plan is built on top of an abstract network representation, so-called networ
 Net2Plan is implemented as a Java library along with both command-line and graphical user interfaces (CLI and GUI, respectively). The GUI is specially useful for laboratory sessions as an educational resource, or for a visual inspection of the network. In its turn, the command-line interface is specifically devoted to in-depth research studies, making use of batch processing or large-scale simulation features. Therefore, Net2Plan is a tool intended for a broad spectrum of users: industry, research, and academia.
 
 #Building instructions
-Since Net2Plan 0.4.1, the project is being built through the use of Maven. For this, two different Maven profiles are provided:
+Since Net2Plan 0.4.1, the project is being built through the use of Maven. For this task, two different Maven profiles are provided:
 * _build-without-javadoc_: Quick build where the Javadoc build step is ignored. Useful for checking that everything in the program is right before creating a final release. 
 * _build-with-javadoc_: The main profile of the project. The Javadoc and the documentation will be added alongside the result that the former profile produced.
 
@@ -22,9 +22,9 @@ For both profiles, the Maven command-line to execute is the one as follows:
 
 `clean package -P PROFILE_NAME`
 
-The result of this command is a _net2plan-VERSION.zip_ file containing the resulting program.
+The result of this command is a _net2plan-VERSION.zip_ file containing the resulting program. The default location for this file is the "target" folder inside the project's structure.
 
-Final releases of Net2Plan can be also found at the project's [website](http://net2plan.com/download.php).
+Final releases of Net2Plan can be also be found at the project's [website](http://net2plan.com/download.php).
 
 #Running instructions
 Net2Plan offers an alternative way of compiling the program in order to avoid the use of Maven during development. This is achieved by running the main class found in:

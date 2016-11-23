@@ -35,3 +35,4 @@ lib/
 /src/main/resources/lib/
 /net2plan.iml
 /data/
+*.stackdump
