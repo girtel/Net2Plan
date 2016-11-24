@@ -34,6 +34,7 @@ import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
 import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
 import com.net2plan.gui.utils.windows.WindowController;
+import com.net2plan.gui.utils.windows.utils.BasicTabbedPaneUIWrapper;
 import com.net2plan.gui.utils.windows.utils.WindowUtils;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -162,6 +163,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         tabPane.add("Algorithm execution", executionPane);
         tabPane.add("Online simulation", onlineSimulationPane);
         tabPane.add("View reports", reportPane);
+
+        tabPane.setUI(new BasicTabbedPaneUIWrapper());
 
         // Building windows
         WindowController.buildControlWindow(tabPane);
