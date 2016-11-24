@@ -67,8 +67,6 @@ public class OSMMapController
         // Calculating map position
         final HashSet<GeoPosition> positionSet = new HashSet<>();
 
-        final HashSet<Waypoint> waypoints = new HashSet<>();
-
         for (Node node : callback.getDesign().getNodes())
         {
             // Getting coords from nodes attributes
@@ -78,18 +76,10 @@ public class OSMMapController
             final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
             positionSet.add(geoPosition);
 
-            final DefaultWaypoint waypoint = new DefaultWaypoint(geoPosition);
-            waypoints.add(waypoint);
-
             // The position that the node really takes on the map. This is the point where the map and the nodes align.
             final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
             callback.moveNode(node.getId(), new Point2D.Double(realPosition.getX(), -realPosition.getY()));
         }
-
-        WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
-        waypointPainter.setWaypoints(waypoints);
-
-        mapViewer.setOverlayPainter(waypointPainter);
         mapViewer.zoomToBestFit(positionSet, 0.6);
 
         topologyPanel.zoomAll();
@@ -125,6 +115,7 @@ public class OSMMapController
         final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
         final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
 
+        // Removing zoom for a 1:1 scale.
         ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
     }
 
