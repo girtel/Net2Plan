@@ -182,6 +182,7 @@ public class NetworkElement
 		if (this instanceof MulticastDemand) return "Multicast demand id=" + id;
 		if (this instanceof MulticastTree) return "Multicast tree id=" + id;
 		if (this instanceof Route) return "Route id=" + id;
+		if (this instanceof Resource) return "Resource id=" + id;
 		if (this instanceof NetPlan) return "NetPlan id=" + id + ", hashcode: " + hashCode();
 		throw new RuntimeException ("Bad");
 	}
