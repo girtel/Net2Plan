@@ -82,7 +82,6 @@ public class OSMMapController
         }
         mapViewer.zoomToBestFit(positionSet, 0.6);
 
-        topologyPanel.zoomAll();
         fitTopologyToMap();
 
         isMapActivated = true;
@@ -112,11 +111,36 @@ public class OSMMapController
 
     public static void fitTopologyToMap()
     {
+        loadMapOntoTopologyPanel();
+
+        // Calculating map position
+        final HashSet<GeoPosition> positionSet = new HashSet<>();
+
+        for (Node node : callback.getDesign().getNodes())
+        {
+            // Getting coords from nodes attributes
+            final double latitude = Double.parseDouble(node.getAttribute(ATTRIB_LATITUDE));
+            final double longitude = Double.parseDouble(node.getAttribute(ATTRIB_LONGITUDE));
+
+            final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
+            positionSet.add(geoPosition);
+
+            // The position that the node really takes on the map. This is the point where the map and the nodes align.
+            final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
+            callback.moveNode(node.getId(), new Point2D.Double(realPosition.getX(), -realPosition.getY()));
+        }
+        mapViewer.zoomToBestFit(positionSet, 0.6);
+
+        topologyPanel.zoomAll();
+
         final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
         final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
 
         // Removing zoom for a 1:1 scale.
         ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
+
+        canvas.refresh();
+        mapViewer.repaint();
     }
 
     private static void loadMapOntoTopologyPanel()

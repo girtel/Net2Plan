@@ -667,7 +667,7 @@ public final class JUNGCanvas extends ITopologyCanvas
             //OSMMapController.zoomOut();
             OSMMapController.fitTopologyToMap();
         }
-        zoomOut(vv.getCenter());
+        //zoomOut(vv.getCenter());
     }
 
     public void addLink(Link npLink)
