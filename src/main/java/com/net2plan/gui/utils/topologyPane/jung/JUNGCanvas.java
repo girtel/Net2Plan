@@ -667,9 +667,7 @@ public final class JUNGCanvas extends ITopologyCanvas
             //OSMMapController.zoomOut();
             OSMMapController.fitTopologyToMap();
         }
-        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
         zoomOut(vv.getCenter());
-        System.out.println(layoutTransformer.getScale());
     }
 
     public void addLink(Link npLink)
