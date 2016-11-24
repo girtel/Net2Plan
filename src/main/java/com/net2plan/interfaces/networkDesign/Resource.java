@@ -1,4 +1,18 @@
+//1) Repasar esto
+//2) Que todos los cambios impliquen update: anadir cambios de factores, completar todos
+//3) las rutas no se pueden anadir aqui: aqui solo tenemos una cache, es en las rutas donde se fija esto.
+//Ojo que al cambiar la secuencia de enlaces, hay que cambiar tambien los recursos ocupados. SI una demanda es de una
+//service chain, todas sus rutas deben atravesar recursos en cualquier estado, y no pueden tener protection segments
+
+// demand: setServiceChainSequence: le pasas List<String> con types. Solo se puede ejecutar cuando no tiene rutas.
+// rutas: al hacer addroute, se chequea si hay service chain. En ese caso, hay que pasarle en constructor info de
+//recursos ocupados (lista, y cuanto?? o solo lista???). La ruta comprueba que van en orden con demanda, y con lista enlaces
+//// OJO: SI OCUPACION ESTA EN RUTA (AL HACER SETCARRIED Y AL CREAR) ENTONCES NO A LUGAR EL FIXED Y PROPORTIONAL!!!
+
 /*******************************************************************************
+
+
+ * 
  * Copyright (c) 2016 Pablo Pavon-Marino.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Lesser Public License v2.1
@@ -14,12 +28,14 @@ package com.net2plan.interfaces.networkDesign;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.net2plan.internal.AttributeMap;
-import com.net2plan.internal.ErrorHandling;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
 /** <p>.</p> 
@@ -27,33 +43,52 @@ import com.net2plan.utils.Triple;
  */
 public class Resource extends NetworkElement
 {
-	boolean isUp;
-	Node hostNode;
-	String capacityMeasurementUnits;
+	/* this information never changes after creation */
+	Node hostNode; // never changes after created, but with copyFrom
+	String capacityMeasurementUnits; // never changes after created, but with copyFrom
+	String type; // never changes after created, but with copyFrom
+	double fixedOccupiedResourceCapacityPerTraversingRoute; // never changes after created, but with copyFrom
+	double occupiedResourceCapacityPerTraversingTrafficUnits; // never changes after created, but with copyFrom
+	Map<Resource , Pair<Double,Double>> baseResourcesConsumptionPolicy; // resource, fixed factor amount, proportional-to-this-resource-occupiedCapacity amount
+
+	/* this information can change after creation */
+	String name; // descriptive name of the resource. Can change.
+	Map<Resource,Double> upperResourcesConsumptionInformation;
 	double capacity;
-	List<Triple<Resource,Double,Double>> resourcesConsumedInformation; // resource, fixed amount, proportional-to-in-traffic amount
+	double totalOccupiedCapacity;
 	List<Route> traversingRoutes;
 	
-	Resource (NetPlan netPlan , long id , int index , Node hostNode , double capacity , String capacityMeasurementUnits, List<Triple<Resource,Double,Double>> resourcesConsumedInformation , AttributeMap attributes)
+	Resource (NetPlan netPlan , long id , int index , String type , String name , Node hostNode , 
+			double capacity , String capacityMeasurementUnits,
+			double fixedOccupiedResourceCapacityPerTraversingRoute,
+			double occupiedResourceCapacityPerTraversingTrafficUnits,
+			Map<Resource,Pair<Double,Double>> baseResourcesConsumptionPolicy , AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);
 
 		if (!netPlan.equals(hostNode.netPlan)) throw new Net2PlanException ("The Resource host node is in a different NetPlan object (or removed)"); 
 		if (capacity < 0) throw new Net2PlanException ("The capacity of a resource cannot be negative"); 
-		if (resourcesConsumedInformation == null) resourcesConsumedInformation = new ArrayList<Triple<Resource,Double,Double>> (); 
-		for (Triple<Resource,Double,Double> resInfo : resourcesConsumedInformation)
+		if (fixedOccupiedResourceCapacityPerTraversingRoute < 0) throw new Net2PlanException ("The occupation fixed factor of the resource cannot be negative");
+		if (occupiedResourceCapacityPerTraversingTrafficUnits < 0) throw new Net2PlanException ("The occupation proportional factor of the resource cannot be negative");
+		if (baseResourcesConsumptionPolicy == null) baseResourcesConsumptionPolicy = new HashMap<Resource,Pair<Double,Double>> (); 
+		for (Entry<Resource,Pair<Double,Double>> resPolicyInfo : baseResourcesConsumptionPolicy.entrySet())
 		{
-			final Resource r = resInfo.getFirst();
+			final Resource r = resPolicyInfo.getKey();
 			if (!netPlan.equals(r.netPlan)) throw new Net2PlanException ("The consumed resources of a resource must be in the same NetPlan object");
 			if (r.hostNode != hostNode) throw new Net2PlanException ("All the resources consumed by a resource must be in the same node resource");
-			if (resInfo.getSecond() < 0) throw new Net2PlanException ("The fixed par of the consumed resources cannot be negative");
-			if (resInfo.getThird() < 0) throw new Net2PlanException ("The proportional par of the consumed resources cannot be negative");
+			if (resPolicyInfo.getValue().getFirst() < 0) throw new Net2PlanException ("The fixed par of the consumed resources cannot be negative");
+			if (resPolicyInfo.getValue().getSecond()  < 0) throw new Net2PlanException ("The proportional par of the consumed resources cannot be negative");
 		}
-		this.isUp = true;
+		this.type = type;
+		this.name = name;
 		this.hostNode = hostNode;
 		this.capacityMeasurementUnits = capacityMeasurementUnits;
+		this.fixedOccupiedResourceCapacityPerTraversingRoute = fixedOccupiedResourceCapacityPerTraversingRoute;
+		this.occupiedResourceCapacityPerTraversingTrafficUnits = occupiedResourceCapacityPerTraversingTrafficUnits;
 		this.capacity = capacity;
-		this.resourcesConsumedInformation = new ArrayList<Triple<Resource,Double,Double>> (resourcesConsumedInformation); 
+		this.totalOccupiedCapacity = 0;
+		this.upperResourcesConsumptionInformation = new HashMap<Resource,Double> ();
+		this.baseResourcesConsumptionPolicy = new HashMap<Resource,Pair<Double,Double>> (baseResourcesConsumptionPolicy);
 		this.traversingRoutes = new ArrayList<Route> ();
 	}
 
@@ -61,298 +96,274 @@ public class Resource extends NetworkElement
 	{
 		if ((this.id != origin.id) || (this.index != origin.index)) throw new RuntimeException ("Bad");
 		if ((this.netPlan == null) || (origin.netPlan == null) || (this.netPlan == origin.netPlan)) throw new RuntimeException ("Bad");
-		this.isUp = origin.isUp;
+		this.type = origin.type;
+		this.name = origin.name;
 		this.hostNode = this.netPlan.getNodeFromId (origin.hostNode.id);
 		this.capacityMeasurementUnits = origin.capacityMeasurementUnits;
+		this.fixedOccupiedResourceCapacityPerTraversingRoute = origin.fixedOccupiedResourceCapacityPerTraversingRoute;
+		this.occupiedResourceCapacityPerTraversingTrafficUnits = origin.occupiedResourceCapacityPerTraversingTrafficUnits;
 		this.capacity = origin.capacity;
-		this.resourcesConsumedInformation = new ArrayList<Triple<Resource,Double,Double>> ();
-		for (Triple<Resource,Double,Double> originResInfo : origin.resourcesConsumedInformation)
-			this.resourcesConsumedInformation.add(Triple.of(resI))
-		
-		resourcesConsumedInformation); 
-		this.traversingRoutes = new ArrayList<Route> ();
-
-		this.meanTimeToFailInHours = origin.meanTimeToFailInHours;
-		this.meanTimeToRepairInHours = origin.meanTimeToRepairInHours;
-		this.links.clear (); for (Link e : origin.links) this.links.add(this.netPlan.getLinkFromId (e.id));
-		this.nodes.clear (); for (Node n : origin.nodes) this.nodes.add(this.netPlan.getNodeFromId (n.id));
-	}
-
-	/**
-	 * <p>Returns the set of nodes associated to the SRG (fail, when the SRG is in failure state)</p>
-	 * @return The set of failing nodes, as an unmodifiable set
-	 */
-	public Set<Node> getNodes()
-	{
-		return Collections.unmodifiableSet(nodes);
-	}
-
-	/**
-	 * <p>Returns all the links affected by the SRG at all the layers: the links affected, and the input and output links of the affected nodes</p>
-	 * @return All the affected links
-	 */
-	public Set<Link> getAffectedLinks ()
-	{
-		Set<Link> res = new HashSet<Link> ();
-		res.addAll (links);
-		for (Node n : nodes) { res.addAll (n.cache_nodeIncomingLinks); res.addAll (n.cache_nodeOutgoingLinks); }
-		return res;
-	}
-
-	/**
-	 * <p>Returns all the links affected by this SRG, but only those at a particular layer. This includes the links involved, and the input and output links of the affected nodes</p>
-	 * @param layer Network layer
-	 * @return All the affected links at a given layer
-	 */
-	public Set<Link> getAffectedLinks (NetworkLayer layer)
-	{
-		Set<Link> res = new HashSet<Link> ();
-		for (Link e : links) if (e.layer == layer) res.add (e);
-		for (Node n : nodes) 
+		this.totalOccupiedCapacity = origin.totalOccupiedCapacity;
+		this.upperResourcesConsumptionInformation = new HashMap<Resource,Double> ();
+		for (Entry<Resource,Double> entry : origin.upperResourcesConsumptionInformation.entrySet())
 		{
-			for (Link e : n.cache_nodeIncomingLinks) if (e.layer == layer) res.add (e);
-			for (Link e : n.cache_nodeOutgoingLinks) if (e.layer == layer) res.add (e);
+			final Resource resourceThisNp = this.netPlan.getResourceFromId(entry.getKey().id);
+			if (resourceThisNp == null) throw new RuntimeException ("Bad");
+			this.upperResourcesConsumptionInformation.put(resourceThisNp , entry.getValue());
 		}
-		return res;
+		this.baseResourcesConsumptionPolicy = new HashMap<Resource,Pair<Double,Double>> ();
+		for (Entry<Resource,Pair<Double,Double>> entry : origin.baseResourcesConsumptionPolicy.entrySet())
+		{
+			final Resource resourceThisNp = this.netPlan.getResourceFromId(entry.getKey().id);
+			if (resourceThisNp == null) throw new RuntimeException ("Bad");
+			this.baseResourcesConsumptionPolicy.put(resourceThisNp , entry.getValue());
+		}
+		this.traversingRoutes = new ArrayList<Route> ();
+		for (Route originRoute : origin.traversingRoutes)
+		{
+			final Route routeThisNp = this.netPlan.getRouteFromId(originRoute.id);
+			if (routeThisNp == null) throw new RuntimeException ("Bad");
+			this.traversingRoutes.add(this.netPlan.getRouteFromId(originRoute.id));
+		}
 	}
 
-	/**
-	 * <p>Returns the set of routes affected by the SRG (fail, when the SRG is in failure state). </p>
-	 * @return The set of failing routes
+
+	
+	/** Returns the String describing the type of the node
+	 * @return the type
 	 */
-	public Set<Route> getAffectedRoutes ()
+	public String getType() 
 	{
-		Set<Route> res = new HashSet<Route> ();
-		for (Link e : links) res.addAll (e.cache_traversingRoutes.keySet());
-		for (Node n : nodes) res.addAll (n.cache_nodeAssociatedRoutes);
-		return res;
+		return type;
 	}
 
-	/**
-	 * <p>Returns the set of routes in the given layer affected by the SRG (fail, when the SRG is in failure state)</p>
-	 * @param layer Network layer
-	 * @return The failing routes belonging to that layer
+	/** Returns the name of the resource
+	 * @return the name
 	 */
-	public Set<Route> getAffectedRoutes (NetworkLayer layer)
+	public String getName() 
 	{
-		Set<Route> res = new HashSet<Route> ();
-		for (Link e : links) for (Route r : e.cache_traversingRoutes.keySet()) if (r.layer.equals(layer)) res.add (r);
-		for (Node n : nodes) for (Route r : n.cache_nodeAssociatedRoutes) if (r.layer.equals(layer)) res.add (r);
-		return res;
+		return name;
 	}
 
-	/**
-	 * <p>Returns the set of multicast trees affected by the SRG (fail, when the SRG is in failure state). </p>
-	 * @return The set of failing multicast trees
+	/** Returns the host node of this resource
+	 * @return the hostNode
 	 */
-	public Set<MulticastTree> getAffectedMulticastTrees ()
+	public Node getHostNode() 
 	{
-		Set<MulticastTree> res = new HashSet<MulticastTree> ();
-		for (Link e : links) res.addAll (e.cache_traversingTrees);
-		for (Node n : nodes) res.addAll (n.cache_nodeAssociatedulticastTrees);
-		return res;
+		return hostNode;
 	}
 
-	/**
-	 * <p>Returns the set of multicast trees in the given layer affected by the SRG (fail, when the SRG is in failure state)</p>
-	 * @param layer Network layer
-	 * @return The failing multicast trees belonging to the given layer
+	/** Gets the units in which the capacity of this resource is measured
+	 * @return the capacityMeasurementUnits
 	 */
-	public Set<MulticastTree> getAffectedMulticastTrees (NetworkLayer layer)
+	public String getCapacityMeasurementUnits() 
 	{
-		Set<MulticastTree> res = new HashSet<MulticastTree> ();
-		for (Link e : links) for (MulticastTree t : e.cache_traversingTrees) if (t.layer.equals(layer)) res.add (t);
-		for (Node n : nodes) for (MulticastTree t : n.cache_nodeAssociatedulticastTrees) if (t.layer.equals(layer)) res.add (t);
-		return res;
-	}
-
-	/**
-	 * <p>Returns the set of protection segments affected by the SRG (fail, when the SRG is in failure state). </p>
-	 * @return The set of failing protection segments
-	 */
-	public Set<ProtectionSegment> getAffectedProtectionSegments ()
-	{
-		Set<ProtectionSegment> res = new HashSet<ProtectionSegment> ();
-		for (Link e : links) res.addAll (e.cache_traversingSegments);
-		for (Node n : nodes) res.addAll (n.cache_nodeAssociatedSegments);
-		return res;
-	}
-
-	/**
-	 * <p>Returns the set of protection segments in the given layer affected by the SRG (fail, when the SRG is in failure state)</p>
-	 * @param layer Network layer
-	 * @return The failing protection segments belonging to the given layer
-	 */
-	public Set<ProtectionSegment> getAffectedProtectionSegments (NetworkLayer layer)
-	{
-		Set<ProtectionSegment> res = new HashSet<ProtectionSegment> ();
-		for (Link e : links) for (ProtectionSegment s : e.cache_traversingSegments) if (s.layer.equals(layer)) res.add (s);
-		for (Node n : nodes) for (ProtectionSegment s : n.cache_nodeAssociatedSegments) if (s.layer.equals(layer)) res.add (s);
-		return res;
-	}
-
-	/**
-	 * <p>Returns the set of links associated to the SRG (fail, when the SRG is in failure state).</p>
-	 * @return The set of failing links, as an unmodifiable set
-	 */
-	public Set<Link> getLinks()
-	{
-		return Collections.unmodifiableSet(links);
-	}
-
-	/**
-	 * <p>Returns the set of links associated to the SRG (fail, when the SRG is in failure state), but only those belonging to the given layer. </p>
-	 * @param layer the layer
-	 * @return The set of failing links
-	 */
-	public Set<Link> getLinks(NetworkLayer layer)
-	{
-		Set<Link> res = new HashSet<Link> ();
-		for (Link e : links) if (e.layer.equals(layer)) res.add (e);
-		return res;
-	}
-
-	/**
-	 * <p>Returns the mean time to fail (MTTF) in hours of the SRG, that is, the average time between when it is repaired, and its next failure.</p>
-	 * @return The MTTF in hours
-	 */
-	public double getMeanTimeToFailInHours()
-	{
-		return meanTimeToFailInHours;
-	}
-
-	/**
-	 * <p>Sets the mean time to fail (MTTF) in hours of the SRG, that is, the average time between it is repaired, and the next failure.</p>
-	 * @param value The new MTTF (it must be greater than zero)
-	 */
-	public void setMeanTimeToFailInHours(double value)
-	{
-		if (value <= 0) throw new Net2PlanException ("A positive value is expected");
-		this.meanTimeToFailInHours = value;
-	}
-
-	/**
-	 * <p>Returns the mean time to repair (MTTR) of the SRG, that is, the average time between a failure occurs, and it is repaired.</p>
-	 * @return the MTTR in hours
-	 */
-	public double getMeanTimeToRepairInHours()
-	{
-		return meanTimeToRepairInHours;
-	}
-
-	/**
-	 * <p>Sets the mean time to repair (MTTR) in hours of the SRG, that is, the average time  between a failure occurs, and it is repaired.</p>
-	 * @param value the nnew MTTR (negative values are not accepted)
-	 */
-	public void setMeanTimeToRepairInHours(double value)
-	{
-		if (value < 0) throw new Net2PlanException ("A positive value is expected");
-		this.meanTimeToRepairInHours = value;
-	}
-
-	/**
-	 * <p>Returns the availability (between 0 and 1) of the SRG. That is, the fraction of time that the SRG is in non failure state. </p>
-	 * <p>Availability is computed as: MTTF/ (MTTF + MTTR)</p>
-	 * @return MTTF/ (MTTF + MTTR)
-	 */
-	public double getAvailability()
-	{
-		return meanTimeToFailInHours / (meanTimeToFailInHours + meanTimeToRepairInHours);
-	}
-
-	/**
-	 * <p>Sets nodes and links associated to the  SRG as down (in case they are not yet). The network state is updated with the affected routes,
-	 * segments, trees and hop-by-hop routing associated to the new nodes/links down </p>
-	 */
-	public void setAsDown ()
-	{
-		checkAttachedToNetPlanObject();
-		netPlan.setLinksAndNodesFailureState (null , links , null , nodes);
+		return capacityMeasurementUnits;
 	}
 	
-	/**
-	 * <p>Removes a link from the set of links of the SRG. If the link is not in the SRG, no action is taken</p>
-	 * @param e Link to be removed
+	
+
+	/** Returns the fixed amount of resource capacity occupied per each traversing route to this resource.
+	 * The total capacity occupied in this resource is the fixed amount, plus the proportional factor multiplied by 
+	 * the carried traffic of this resource traversing routes. 
+	 * @return the fixed factor
 	 */
-	public void removeLink (Link e)
+	public double getFixedOccupiedResourceCapacityPerTraversingRoute() {
+		return fixedOccupiedResourceCapacityPerTraversingRoute;
+	}
+
+	/** Returns the proportional factor of resource capacity occupied per each traversing route traffic units.
+	 * The total capacity occupied in this resource is the fixed amount, plus the proportional factor multiplied by 
+	 * the carried traffic of this resource traversing routes. 
+	 * @return the proportional factor
+	 */
+	public double getOccupiedResourceCapacityPerTraversingTrafficUnits() {
+		return occupiedResourceCapacityPerTraversingTrafficUnits;
+	}
+
+	/** Gets the capacity in resource units of this resource
+	 * @return the capacity
+	 */
+	public double getCapacity() 
 	{
+		return capacity;
+	}
+
+	/** Gets the occupied capacity in resource units of this resource
+	 * @return the capacity
+	 */
+	public double getOccupiedCapacity() 
+	{
+		return totalOccupiedCapacity;
+	}
+
+	/** Sets the name of the resource
+	 */
+	public void setName(String name) 
+	{
+		this.name = name;
+	}
+
+	/**
+	 * @param capacity the capacity to set
+	 */
+	public void setCapacity(double capacity) 
+	{
+		if (capacity < 0) throw new Net2PlanException ("The capacity of a resource cannot be negative"); 
+		this.capacity = capacity;
+	}
+
+	
+	/** Returns the set of base resources of this resource
+	 * @return the set of base resources (an unmodificable set)
+	 */
+	public Set<Resource> getBaseResources ()
+	{
+		return Collections.unmodifiableSet(baseResourcesConsumptionPolicy.keySet());
+	}
+
+	/** Returns the set of resources that are above of this resource, so this resource is a base resource for them
+	 * @return the set of upper resources (an unmodificable set)
+	 */
+	public Set<Resource> getUpperResources ()
+	{
+		return Collections.unmodifiableSet(upperResourcesConsumptionInformation.keySet());
+	}
+
+	/** Returns the fixed factor in the amount of capacity that this resource occupies in the base resource 
+	 * provided. The total capacity occupied in the base resource is the fixed factor, plus the proportional factor multipled by 
+	 * the occupied capacity in this resource. If baseResource is not a base resource of this resource, a zero is returned
+	 * @param baseResource
+	 * @return the fixed factor
+	 */
+	public double getBaseResourceFixedOccupationFactor (Resource baseResource)
+	{
+		Pair<Double,Double> info = baseResourcesConsumptionPolicy.get(baseResource);
+		if (info == null) return 0; else return info.getFirst();
+	}
+
+	/** Returns the proportional factor in the amount of capacity that this resource occupies in the base resource 
+	 * provided. The total capacity occupied in the base resource is the fixed factor, plus the proportional factor multipled by 
+	 * the occupied capacity in this resource. If baseResource is not a base resource of this resource, a zero is returned
+	 * @param baseResource
+	 * @return the proportional factor
+	 */
+	public double getBaseResourceProportionalOccupationFactor (Resource baseResource)
+	{
+		Pair<Double,Double> info = baseResourcesConsumptionPolicy.get(baseResource);
+		if (info == null) return 0; else return info.getSecond();
+	}
+
+	/** Returns the total amount of capacity occupied in the base resource, because of the existence of this resource. 
+	 * The total capacity occupied in the base resource is the fixed factor, plus the proportional factor multiplied by 
+	 * the occupied capacity in this resource. If baseResource is not a base resource of this resource, a zero is returned
+	 * @param baseResource
+	 * @return the total occupied capacity in such base resource
+	 */
+	public double getBaseResourceOccupiedCapacity (Resource baseResource)
+	{
+		Pair<Double,Double> info = baseResourcesConsumptionPolicy.get(baseResource);
+		if (info == null) return 0; else return info.getFirst() + this.totalOccupiedCapacity * info.getSecond();
+	}
+
+	/** Returns the total amount of capacity occupied in this resource, caused by the given upper resource
+	 * If upperResource is not an upper resource of this resource, a zero is returned
+	 * @param upperResource the resource for which this resource is a base resource
+	 * @return the occupied capacity in this resource, caused by the given upper reource 
+	 */
+	public double getUpperResourceOccupiedCapacity (Resource upperResource)
+	{
+		Double info = upperResourcesConsumptionInformation.get(upperResource);
+		if (info == null) return 0; else return info;
+	}
+
+	/** Sets (or updates) the amount of capacity occupied in this resource caused by an upper resource.
+	 * If the occupied capacity is zero, the resource is still listed as an upper resource
+	 * @param upperResource the resource for which this resource is a base resource
+	 * @param occupiedCapacity value of occupied capacity
+	 */
+	public void setUpperResourceOccupiedCapacity (Resource upperResource , double occupiedCapacity)
+	{		
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
-		e.cache_srgs.remove (this);
-		links.remove (e);
-		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+		netPlan.checkInThisNetPlan(upperResource);
+		if (occupiedCapacity < 0) throw new Net2PlanException ("The occupied capacity cannot be negative");
+		upperResourcesConsumptionInformation.put(upperResource , occupiedCapacity);
+		updateOccupationAndTrafficInfoHereAndInBaseResources();
 	}
 	
-	/**
-	 * <p>Removes a node from the set of nodes of the SRG. If the node is not in the SRG, no action is taken</p>
-	 * @param n Node to be removed
+	
+	/** Returns the map with the policy of how the occupation in this resource is propagated to the occupation 
+	 * in its base resources. This is given in a map. The key is the base resource. The two values associated are 
+	 * (i) the fixed factor of capacity in the base resource occupied, (ii) the proportional factor.
+	 * The total occupied capacity in the base resource by this resource, is given by the fixed factor, 
+	 * plus the current occupied capacity in this resource multiplied by the proportional factor.
+	 * @return the baseResourcesConsumptionPolicy
 	 */
-	public void removeNode (Node n)
+	public Map<Resource, Pair<Double, Double>> getBaseResourcesConsumptionPolicy() 
 	{
-		checkAttachedToNetPlanObject();
-		netPlan.checkIsModifiable();
-		n.cache_nodeSRGs.remove (this);
-		nodes.remove (n);
-		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+		return Collections.unmodifiableMap(baseResourcesConsumptionPolicy);
+	}
+
+	/** Returns the map with the information on the upper resources (the resources for which this resource is a base 
+	 * resource), and the amount of occupied capacity they are incurring in me
+	 * @return the map
+	 */
+	public Map<Resource, Double> getUpperResourcesOccupationInformation() 
+	{
+		return Collections.unmodifiableMap(upperResourcesConsumptionInformation);
 	}
 
 	/**
-	 * <p>Removes this SRG.</p>
+	 * @return the traversingRoutes
 	 */
-	public void remove()
+	public List<Route> getTraversingRoutes() 
 	{
-		checkAttachedToNetPlanObject();
-		netPlan.checkIsModifiable();
-
-		for (Node node : nodes) node.cache_nodeSRGs.remove (this);
-		for (Link link : links) link.cache_srgs.remove (this);
-		netPlan.cache_id2srgMap.remove (id);
-		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.srgs , index);
-		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId ();
+		return Collections.unmodifiableList(traversingRoutes);
 	}
 
-	/**
-	 * <p>Adds a link to the SRG. The object cannot be a protection segment (recall that segments are subclasses of Link). </p>
-	 * @param link Link to add
-	 */
-	public void addLink(Link link)
-	{
-		checkAttachedToNetPlanObject();
-		netPlan.checkIsModifiable();
-		link.checkAttachedToNetPlanObject(this.netPlan);
-		if (link instanceof ProtectionSegment) throw new Net2PlanException ("Protections segments cannot be added as links of a SRG");
 
-		link.cache_srgs.add(this);
-		this.links.add(link);
-		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+	public void addTraversingRoute (Route r)
+	{
+		r.checkAttachedToNetPlanObject();
+		checkAttachedToNetPlanObject(r.netPlan);
+		if (!r.getSeqNodesRealPath().contains(this.hostNode)) throw new Net2PlanException ("The route does not traverse the host node of this resource");
+		this.traversingRoutes.add(r);
+		updateOccupationAndTrafficInfoHereAndInBaseResources();
 	}
 
-	/**
-	 * <p>Adds a node to the SRG.</p>
-	 * @param node Node to add
-	 */
-	public void addNode(Node node)
+
+	
+	/* Reflects here any update in upper resources occupation, fixed and proportional occupation factors of this or any base resources, 
+	 * and of traversing routes. Updates occupation of this resource and of all base resources */
+	private void updateOccupationAndTrafficInfoHereAndInBaseResources ()
 	{
-		checkAttachedToNetPlanObject();
-		netPlan.checkIsModifiable();
-		node.checkAttachedToNetPlanObject(this.netPlan);
-
-		node.cache_nodeSRGs.add(this);
-		this.nodes.add(node);
-		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+		double currentTotalOccupiedCapacity = 0;
+		for (Entry<Resource,Double> entryUpperResource : upperResourcesConsumptionInformation.entrySet())
+			currentTotalOccupiedCapacity += entryUpperResource.getValue();
+		for (Route travRoute : traversingRoutes)
+			currentTotalOccupiedCapacity += fixedOccupiedResourceCapacityPerTraversingRoute + occupiedResourceCapacityPerTraversingTrafficUnits * travRoute.getCarriedTraffic();
+		for (Entry<Resource , Pair<Double,Double>> baseInfo : baseResourcesConsumptionPolicy.entrySet())
+		{
+			final Resource baseResource = baseInfo.getKey();
+			final double fixedFactor = baseInfo.getValue().getFirst();
+			final double propFactor = baseInfo.getValue().getSecond();
+			final double newOccupiedCapacityInBaseResource = fixedFactor + currentTotalOccupiedCapacity * propFactor;
+			baseResource.setUpperResourceOccupiedCapacity(this , newOccupiedCapacityInBaseResource);
+		}
 	}
-
+	
+	
 	/**
 	 * <p>Returns a {@code String} representation of the Shared Risk Group.</p>
 	 * @return {@code String} representation of the SRG
 	 */
-	public String toString () { return "srg" + index + " (id " + id + ")"; }
+	public String toString () { return "resource " + index + " (id " + id + ")"; }
 
 	void checkCachesConsistency ()
 	{
-		for (Link link : links) if (!link.cache_srgs.contains(this)) throw new RuntimeException ("Bad");
-		for (Node node : nodes) if (!node.cache_nodeSRGs.contains(this)) throw new RuntimeException ("Bad");
+//		for (Link link : links) if (!link.cache_srgs.contains(this)) throw new RuntimeException ("Bad");
+//		for (Node node : nodes) if (!node.cache_nodeSRGs.contains(this)) throw new RuntimeException ("Bad");
 	}
 
 

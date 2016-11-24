@@ -1,6 +1,3 @@
-linea 1608. 
-anadir resources, al lado de nodes, y continuar con el cache_id2nodes
-
 /*******************************************************************************
  * Copyright (c) 2016 Pablo Pavon-Marino.
  * All rights reserved. This program and the accompanying materials
@@ -155,6 +152,7 @@ public class NetPlan extends NetworkElement
 	
 	ArrayList<NetworkLayer> layers;
 	ArrayList<Node> nodes;
+	ArrayList<Resource> resources;
 	ArrayList<SharedRiskGroup> srgs;
 
 	HashSet<Node> cache_nodesDown;
@@ -1603,20 +1601,13 @@ public class NetPlan extends NetworkElement
 			nodes.add (newElement);
 			if (!originNode.isUp) cache_nodesDown.add (newElement);
 		}
-		/* Create the new network elements, not all the fields filled */
 		for (Resource originResource : originNetPlan.resources) 
 		{
 			Resource newElement = new Resource (this , originResource.id , originResource.index , this.cache_id2NodeMap.get(originResource.hostNode.id) , 
 					originResource.capacity , originResource.capacityMeasurementUnits , null , originResource.attributes);
-
-			
-			cache_id2NodeMap.put(originNode.id, newElement);
-			nodes.add (newElement);
-			if (!originNode.isUp) cache_nodesDown.add (newElement);
+			cache_id2ResourceMap.put(originResource.id, newElement);
+			resources.add (newElement);
 		}
-		
-		
-		
 		for (SharedRiskGroup originSrg : originNetPlan.srgs) 
 		{
 			SharedRiskGroup newElement = new SharedRiskGroup (this , originSrg.id , originSrg.index , null , null, originSrg.meanTimeToFailInHours , originSrg.meanTimeToRepairInHours , originSrg.attributes); 
@@ -1690,6 +1681,7 @@ public class NetPlan extends NetworkElement
 
 		/* Copy the rest of the fields  */
 		for (Node newNode : this.nodes) newNode.copyFrom (originNetPlan.nodes.get(newNode.index));
+		for (Resource newResource : this.resources) newResource.copyFrom (originNetPlan.resources.get(newResource.index));
 		for (SharedRiskGroup newSrg : this.srgs) newSrg.copyFrom (originNetPlan.srgs.get(newSrg.index));
 		for (NetworkLayer newLayer : this.layers) newLayer.copyFrom (originNetPlan.layers.get(newLayer.index));
 
@@ -2993,7 +2985,7 @@ public class NetPlan extends NetworkElement
  	 * @param uid Resource unique id
 	 * @return The Resource object with the given id ({@code null} if it does not exist)
 	 */
-	public Node getResourceFromId (long uid) { return cache_id2NodeMap.get(uid); }
+	public Resource getResourceFromId (long uid) { return cache_id2ResourceMap.get(uid); }
 
 	/**
 	 * <p>Returns the first node with the given name.</p>
