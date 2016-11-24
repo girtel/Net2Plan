@@ -116,6 +116,7 @@ public final class JUNGCanvas extends ITopologyCanvas
         g = new DirectedOrderedSparseMultigraph<>();
         l = new StaticLayout<>(g, FLIP_VERTICAL_COORDINATES);
         vv = new VisualizationViewer<>(l);
+
         originalEdgeShapeTransformer = new EdgeShape.QuadCurve<>();
         ((EdgeShape.QuadCurve<GUINode, GUILink>) originalEdgeShapeTransformer).setControlOffsetIncrement(10); // how much they separate from the direct line (default is 20)
         ((EdgeShape.QuadCurve<GUINode, GUILink>) originalEdgeShapeTransformer).setEdgeIndexFunction(DefaultParallelEdgeIndexFunction.<GUINode, GUILink>getInstance()); // how much they separate from the direct line (default is 20)
@@ -222,6 +223,7 @@ public final class JUNGCanvas extends ITopologyCanvas
 
     /**
      * Converts a point from the SWING coordinates system into a point from the JUNG coordinates system.
+     *
      * @param screenPoint (@code Point) on the SWING canvas.
      * @return (@code Point) on the JUNG canvas.
      */
@@ -242,6 +244,7 @@ public final class JUNGCanvas extends ITopologyCanvas
     /**
      * Converts a point from the JUNG coordinates system to the SWING coordinates system.
      * The conversion adds some variable error.
+     *
      * @param screenPoint (@code Point) on the JUNG canvas.
      * @return (@code Point) on the SWING canvas.
      */
@@ -665,11 +668,8 @@ public final class JUNGCanvas extends ITopologyCanvas
             OSMMapController.fitTopologyToMap();
         }
         final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
-
-        System.out.println("Before scale: " + layoutTransformer.getScale());
-        // zoomOut(vv.getCenter());
-        System.out.println("After scale: " + layoutTransformer.getScale());
-        System.out.println("..........");
+        zoomOut(vv.getCenter());
+        System.out.println(layoutTransformer.getScale());
     }
 
     public void addLink(Link npLink)
