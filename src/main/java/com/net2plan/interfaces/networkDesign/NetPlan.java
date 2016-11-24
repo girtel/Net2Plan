@@ -1,3 +1,6 @@
+linea 1608. 
+anadir resources, al lado de nodes, y continuar con el cache_id2nodes
+
 /*******************************************************************************
  * Copyright (c) 2016 Pablo Pavon-Marino.
  * All rights reserved. This program and the accompanying materials
@@ -58,6 +61,7 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
+import com.net2plan.utils.Triple;
 
 import cern.colt.function.tdouble.DoubleFunction;
 import cern.colt.list.tdouble.DoubleArrayList;
@@ -155,6 +159,7 @@ public class NetPlan extends NetworkElement
 
 	HashSet<Node> cache_nodesDown;
 	Map<Long,Node> cache_id2NodeMap;
+	Map<Long,Resource> cache_id2ResourceMap;
 	Map<Long,NetworkLayer> cache_id2LayerMap;
 	Map<Long,Link> cache_id2LinkMap;
 	Map<Long,Demand> cache_id2DemandMap;
@@ -191,6 +196,7 @@ public class NetPlan extends NetworkElement
 		
 		cache_nodesDown = new HashSet<Node> ();
 		this.cache_id2NodeMap = new HashMap <Long,Node> ();
+		this.cache_id2ResourceMap = new HashMap <Long,Resource> ();
 		this.cache_id2LayerMap = new HashMap <Long,NetworkLayer> ();
 		this.cache_id2srgMap= new HashMap<Long,SharedRiskGroup> ();
 		this.cache_id2LinkMap = new HashMap<Long,Link> ();
@@ -1297,6 +1303,7 @@ public class NetPlan extends NetworkElement
 		this.cache_nodesDown = netPlan.cache_nodesDown;
 		this.cache_id2LayerMap = netPlan.cache_id2LayerMap;
 		this.cache_id2NodeMap = netPlan.cache_id2NodeMap;
+		this.cache_id2ResourceMap = netPlan.cache_id2ResourceMap;
 		this.cache_id2LinkMap = netPlan.cache_id2LinkMap;
 		this.cache_id2DemandMap = netPlan.cache_id2DemandMap;
 		this.cache_id2MulticastDemandMap = netPlan.cache_id2MulticastDemandMap;
@@ -1387,6 +1394,12 @@ public class NetPlan extends NetworkElement
 	 * @param id Node id
 	 */
 	void checkExistsNode (long id) { if (cache_id2NodeMap.get(id) == null) throw new Net2PlanException ("Node of id: " + id + " does not exist"); }
+
+	/**
+	 * <p>Checks if a resource exists in this {@code NetPlan} object. Throws an exception if nonexistent.</p>
+	 * @param id Node id
+	 */
+	void checkExistsResource (long id) { if (cache_id2ResourceMap.get(id) == null) throw new Net2PlanException ("Node of id: " + id + " does not exist"); }
 
 	/**
 	 * <p>Checks if a protection segment exists in this {@code NetPlan} object. Throws an exception if nonexistent.</p>
@@ -1566,6 +1579,7 @@ public class NetPlan extends NetworkElement
 		this.srgs = new ArrayList<SharedRiskGroup> ();
 		this.cache_nodesDown = new HashSet<Node> ();
 		this.cache_id2NodeMap = new HashMap <Long,Node> ();
+		this.cache_id2ResourceMap = new HashMap <Long,Resource> ();
 		this.cache_id2LayerMap = new HashMap <Long,NetworkLayer> ();
 		this.cache_id2srgMap= new HashMap<Long,SharedRiskGroup> ();
 		this.cache_id2LinkMap = new HashMap<Long,Link> ();
@@ -1589,6 +1603,20 @@ public class NetPlan extends NetworkElement
 			nodes.add (newElement);
 			if (!originNode.isUp) cache_nodesDown.add (newElement);
 		}
+		/* Create the new network elements, not all the fields filled */
+		for (Resource originResource : originNetPlan.resources) 
+		{
+			Resource newElement = new Resource (this , originResource.id , originResource.index , this.cache_id2NodeMap.get(originResource.hostNode.id) , 
+					originResource.capacity , originResource.capacityMeasurementUnits , null , originResource.attributes);
+
+			
+			cache_id2NodeMap.put(originNode.id, newElement);
+			nodes.add (newElement);
+			if (!originNode.isUp) cache_nodesDown.add (newElement);
+		}
+		
+		
+		
 		for (SharedRiskGroup originSrg : originNetPlan.srgs) 
 		{
 			SharedRiskGroup newElement = new SharedRiskGroup (this , originSrg.id , originSrg.index , null , null, originSrg.meanTimeToFailInHours , originSrg.meanTimeToRepairInHours , originSrg.attributes); 
@@ -2959,6 +2987,13 @@ public class NetPlan extends NetworkElement
 	 * @return The node with the given id ({@code null} if it does not exist)
 	 */
 	public Node getNodeFromId (long uid) { return cache_id2NodeMap.get(uid); }
+
+	/**
+	 * <p>Returns the resource with the given unique identifier.</p>
+ 	 * @param uid Resource unique id
+	 * @return The Resource object with the given id ({@code null} if it does not exist)
+	 */
+	public Node getResourceFromId (long uid) { return cache_id2NodeMap.get(uid); }
 
 	/**
 	 * <p>Returns the first node with the given name.</p>

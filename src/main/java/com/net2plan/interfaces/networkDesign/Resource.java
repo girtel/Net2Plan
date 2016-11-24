@@ -31,17 +31,16 @@ public class Resource extends NetworkElement
 	Node hostNode;
 	String capacityMeasurementUnits;
 	double capacity;
-	double ratioOutputVsInputTrafficTraversingRoutes; // 0 means no output whatever input, 1 means same, 0.5 means half output respect to input
 	List<Triple<Resource,Double,Double>> resourcesConsumedInformation; // resource, fixed amount, proportional-to-in-traffic amount
 	List<Route> traversingRoutes;
 	
-	Resource (NetPlan netPlan , long id , int index , Node hostNode , double capacity , String capacityMeasurementUnits, double ratioOutputVsInputTrafficTraversingRoutes , List<Triple<Resource,Double,Double>> resourcesConsumedInformation , AttributeMap attributes)
+	Resource (NetPlan netPlan , long id , int index , Node hostNode , double capacity , String capacityMeasurementUnits, List<Triple<Resource,Double,Double>> resourcesConsumedInformation , AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);
 
 		if (!netPlan.equals(hostNode.netPlan)) throw new Net2PlanException ("The Resource host node is in a different NetPlan object (or removed)"); 
 		if (capacity < 0) throw new Net2PlanException ("The capacity of a resource cannot be negative"); 
-		if (ratioOutputVsInputTrafficTraversingRoutes < 0) throw new Net2PlanException ("The output vs input consumption ratio of a resource cannot be negative");
+		if (resourcesConsumedInformation == null) resourcesConsumedInformation = new ArrayList<Triple<Resource,Double,Double>> (); 
 		for (Triple<Resource,Double,Double> resInfo : resourcesConsumedInformation)
 		{
 			final Resource r = resInfo.getFirst();
@@ -54,7 +53,6 @@ public class Resource extends NetworkElement
 		this.hostNode = hostNode;
 		this.capacityMeasurementUnits = capacityMeasurementUnits;
 		this.capacity = capacity;
-		this.ratioOutputVsInputTrafficTraversingRoutes = ratioOutputVsInputTrafficTraversingRoutes; 
 		this.resourcesConsumedInformation = new ArrayList<Triple<Resource,Double,Double>> (resourcesConsumedInformation); 
 		this.traversingRoutes = new ArrayList<Route> ();
 	}
@@ -63,6 +61,17 @@ public class Resource extends NetworkElement
 	{
 		if ((this.id != origin.id) || (this.index != origin.index)) throw new RuntimeException ("Bad");
 		if ((this.netPlan == null) || (origin.netPlan == null) || (this.netPlan == origin.netPlan)) throw new RuntimeException ("Bad");
+		this.isUp = origin.isUp;
+		this.hostNode = this.netPlan.getNodeFromId (origin.hostNode.id);
+		this.capacityMeasurementUnits = origin.capacityMeasurementUnits;
+		this.capacity = origin.capacity;
+		this.resourcesConsumedInformation = new ArrayList<Triple<Resource,Double,Double>> ();
+		for (Triple<Resource,Double,Double> originResInfo : origin.resourcesConsumedInformation)
+			this.resourcesConsumedInformation.add(Triple.of(resI))
+		
+		resourcesConsumedInformation); 
+		this.traversingRoutes = new ArrayList<Route> ();
+
 		this.meanTimeToFailInHours = origin.meanTimeToFailInHours;
 		this.meanTimeToRepairInHours = origin.meanTimeToRepairInHours;
 		this.links.clear (); for (Link e : origin.links) this.links.add(this.netPlan.getLinkFromId (e.id));
