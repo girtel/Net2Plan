@@ -56,6 +56,7 @@ public class Demand extends NetworkElement
 	
 	Set<Route> cache_routes;
 	Link coupledUpperLayerLink;
+	List<String> mandatorySequenceOfTraversedResourceTypes;
 
 	/**
 	 * Generates a new Demand.
@@ -83,6 +84,7 @@ public class Demand extends NetworkElement
 		this.routingCycleType = RoutingCycleType.LOOPLESS;
 		this.cache_routes = new LinkedHashSet<Route> ();
 		this.coupledUpperLayerLink = null;
+		this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> ();
 	}
 
 	/**
@@ -99,6 +101,7 @@ public class Demand extends NetworkElement
 		this.coupledUpperLayerLink = origin.coupledUpperLayerLink == null? null : this.netPlan.getLinkFromId (origin.coupledUpperLayerLink.id);
 		this.cache_routes = new LinkedHashSet<Route> ();
 		for (Route r : origin.cache_routes) this.cache_routes.add(this.netPlan.getRouteFromId(r.id));
+		this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> (origin.mandatorySequenceOfTraversedResourceTypes);
 	}
 
 
@@ -191,6 +194,33 @@ public class Demand extends NetworkElement
 					if (e.isOversubscribed()) return true;
 		}
 		return false;
+	}
+	
+	/**
+	 * <p>Returns {@code true} if the traffic of the demand is traversing an oversubscribed resource, {@code false} otherwise. If the 
+	 * layer is not in a SOURCE ROUTING mode, an Exception is thrown</p>
+	 * @return {@code true} if the traffic is traversing an oversubscribed resource, {@code false} otherwise
+	 */
+	public boolean isTraversingOversubscribedResources ()
+	{
+		if (layer.routingType != RoutingType.SOURCE_ROUTING) throw new Net2PlanException ("The routing type must be SOURCE ROUTING");
+		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
+		for (Route r : this.cache_routes)
+			for (Resource res : r.seqResourcesRealPath) 
+				if (res.isOversubscribed()) return true;
+		return false;
+	}
+
+	/** Sets the sequence of types of resources that the routes of this demand have to follow. This method is to make the demand become 
+	 * a request of service chains. This method can only be called if the routing type is SOURCE ROUTING, and the demand has no routes 
+	 * at the moment.
+	 * @param resourceTypesSequence the sequence of types of the resources that has to be traversed by all the routes of this demand
+	 */
+	public void setMandatorySequenceOfTraversedResourceTypes (List<String> resourceTypesSequence)
+	{
+		if (layer.routingType != RoutingType.SOURCE_ROUTING) throw new Net2PlanException ("The routing type must be SOURCE ROUTING");
+		if (!cache_routes.isEmpty()) throw new Net2PlanException ("The demand must not have routes to execute this method");
+		this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> (resourceTypesSequence);
 	}
 	
 	/**

@@ -6,8 +6,7 @@
 
 // demand: setServiceChainSequence: le pasas List<String> con types. Solo se puede ejecutar cuando no tiene rutas.
 // rutas: al hacer addroute, se chequea si hay service chain. En ese caso, hay que pasarle en constructor info de
-//recursos ocupados (lista, y cuanto?? o solo lista???). La ruta comprueba que van en orden con demanda, y con lista enlaces
-//// OJO: SI OCUPACION ESTA EN RUTA (AL HACER SETCARRIED Y AL CREAR) ENTONCES NO A LUGAR EL FIXED Y PROPORTIONAL!!!
+//recursos ocupados (lista pares recurso-ocupacion). La ruta comprueba que van en orden con demanda, y con lista enlaces
 
 /*******************************************************************************
 
@@ -26,17 +25,13 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import com.net2plan.internal.AttributeMap;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.Triple;
 
 /** <p>.</p> 
  * @author Pablo Pavon-Marino
@@ -47,49 +42,45 @@ public class Resource extends NetworkElement
 	Node hostNode; // never changes after created, but with copyFrom
 	String capacityMeasurementUnits; // never changes after created, but with copyFrom
 	String type; // never changes after created, but with copyFrom
-	double fixedOccupiedResourceCapacityPerTraversingRoute; // never changes after created, but with copyFrom
-	double occupiedResourceCapacityPerTraversingTrafficUnits; // never changes after created, but with copyFrom
-	Map<Resource , Pair<Double,Double>> baseResourcesConsumptionPolicy; // resource, fixed factor amount, proportional-to-this-resource-occupiedCapacity amount
+	double processingTimeToTraversingTrafficInMs;
 
 	/* this information can change after creation */
 	String name; // descriptive name of the resource. Can change.
-	Map<Resource,Double> upperResourcesConsumptionInformation;
+	Map<Resource,Double> capacityUpperResourcesOccupyInMe;
+	Map<Resource , Double> capacityIOccupyInBaseResource; // capacity can change, but no new resources can be put (if not, there is danger of loops!!) 
 	double capacity;
-	double totalOccupiedCapacity;
-	List<Route> traversingRoutes;
+	double cache_totalOccupiedCapacity;
+	Map<Route,Double> cache_traversingRoutesAndOccupiedCapacities;
 	
 	Resource (NetPlan netPlan , long id , int index , String type , String name , Node hostNode , 
 			double capacity , String capacityMeasurementUnits,
-			double fixedOccupiedResourceCapacityPerTraversingRoute,
-			double occupiedResourceCapacityPerTraversingTrafficUnits,
-			Map<Resource,Pair<Double,Double>> baseResourcesConsumptionPolicy , AttributeMap attributes)
+			Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTraffic , AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);
 
 		if (!netPlan.equals(hostNode.netPlan)) throw new Net2PlanException ("The Resource host node is in a different NetPlan object (or removed)"); 
-		if (capacity < 0) throw new Net2PlanException ("The capacity of a resource cannot be negative"); 
-		if (fixedOccupiedResourceCapacityPerTraversingRoute < 0) throw new Net2PlanException ("The occupation fixed factor of the resource cannot be negative");
-		if (occupiedResourceCapacityPerTraversingTrafficUnits < 0) throw new Net2PlanException ("The occupation proportional factor of the resource cannot be negative");
-		if (baseResourcesConsumptionPolicy == null) baseResourcesConsumptionPolicy = new HashMap<Resource,Pair<Double,Double>> (); 
-		for (Entry<Resource,Pair<Double,Double>> resPolicyInfo : baseResourcesConsumptionPolicy.entrySet())
+		if (capacity < 0) throw new Net2PlanException ("The capacity of a resource cannot be negative");
+		if (processingTimeToTraversingTraffic < 0)throw new Net2PlanException ("The processing time for the traversing traffic cannot be negative");
+		if (capacityIOccupyInBaseResource == null) capacityIOccupyInBaseResource = new HashMap<Resource,Double> (); 
+		for (Entry<Resource,Double> resPolicyInfo : capacityIOccupyInBaseResource.entrySet())
 		{
 			final Resource r = resPolicyInfo.getKey();
 			if (!netPlan.equals(r.netPlan)) throw new Net2PlanException ("The consumed resources of a resource must be in the same NetPlan object");
 			if (r.hostNode != hostNode) throw new Net2PlanException ("All the resources consumed by a resource must be in the same node resource");
-			if (resPolicyInfo.getValue().getFirst() < 0) throw new Net2PlanException ("The fixed par of the consumed resources cannot be negative");
-			if (resPolicyInfo.getValue().getSecond()  < 0) throw new Net2PlanException ("The proportional par of the consumed resources cannot be negative");
+			if (resPolicyInfo.getValue() < 0) throw new Net2PlanException ("The consumed capacity in base resource cannot be negative");
 		}
 		this.type = type;
 		this.name = name;
 		this.hostNode = hostNode;
 		this.capacityMeasurementUnits = capacityMeasurementUnits;
-		this.fixedOccupiedResourceCapacityPerTraversingRoute = fixedOccupiedResourceCapacityPerTraversingRoute;
-		this.occupiedResourceCapacityPerTraversingTrafficUnits = occupiedResourceCapacityPerTraversingTrafficUnits;
 		this.capacity = capacity;
-		this.totalOccupiedCapacity = 0;
-		this.upperResourcesConsumptionInformation = new HashMap<Resource,Double> ();
-		this.baseResourcesConsumptionPolicy = new HashMap<Resource,Pair<Double,Double>> (baseResourcesConsumptionPolicy);
-		this.traversingRoutes = new ArrayList<Route> ();
+		this.cache_totalOccupiedCapacity = 0;
+		this.processingTimeToTraversingTrafficInMs = processingTimeToTraversingTraffic;
+		this.capacityUpperResourcesOccupyInMe = new HashMap<Resource,Double> ();
+		this.capacityIOccupyInBaseResource = new HashMap<Resource,Double> (capacityIOccupyInBaseResource);
+		for (Entry<Resource,Double> entry : this.capacityIOccupyInBaseResource.entrySet())
+			entry.getKey().setUpperResourceOccupiedCapacity(this , entry.getValue());
+		this.cache_traversingRoutesAndOccupiedCapacities = new HashMap<Route,Double> ();
 	}
 
 	void copyFrom (Resource origin)
@@ -100,33 +91,58 @@ public class Resource extends NetworkElement
 		this.name = origin.name;
 		this.hostNode = this.netPlan.getNodeFromId (origin.hostNode.id);
 		this.capacityMeasurementUnits = origin.capacityMeasurementUnits;
-		this.fixedOccupiedResourceCapacityPerTraversingRoute = origin.fixedOccupiedResourceCapacityPerTraversingRoute;
-		this.occupiedResourceCapacityPerTraversingTrafficUnits = origin.occupiedResourceCapacityPerTraversingTrafficUnits;
 		this.capacity = origin.capacity;
-		this.totalOccupiedCapacity = origin.totalOccupiedCapacity;
-		this.upperResourcesConsumptionInformation = new HashMap<Resource,Double> ();
-		for (Entry<Resource,Double> entry : origin.upperResourcesConsumptionInformation.entrySet())
+		this.cache_totalOccupiedCapacity = origin.cache_totalOccupiedCapacity;
+		this.processingTimeToTraversingTrafficInMs = origin.processingTimeToTraversingTrafficInMs;
+		this.capacityUpperResourcesOccupyInMe = new HashMap<Resource,Double> ();
+		for (Entry<Resource,Double> entry : origin.capacityUpperResourcesOccupyInMe.entrySet())
 		{
 			final Resource resourceThisNp = this.netPlan.getResourceFromId(entry.getKey().id);
 			if (resourceThisNp == null) throw new RuntimeException ("Bad");
-			this.upperResourcesConsumptionInformation.put(resourceThisNp , entry.getValue());
+			this.capacityUpperResourcesOccupyInMe.put(resourceThisNp , entry.getValue());
 		}
-		this.baseResourcesConsumptionPolicy = new HashMap<Resource,Pair<Double,Double>> ();
-		for (Entry<Resource,Pair<Double,Double>> entry : origin.baseResourcesConsumptionPolicy.entrySet())
+		this.capacityIOccupyInBaseResource = new HashMap<Resource,Double> ();
+		for (Entry<Resource,Double> entry : origin.capacityIOccupyInBaseResource.entrySet())
 		{
 			final Resource resourceThisNp = this.netPlan.getResourceFromId(entry.getKey().id);
 			if (resourceThisNp == null) throw new RuntimeException ("Bad");
-			this.baseResourcesConsumptionPolicy.put(resourceThisNp , entry.getValue());
+			this.capacityIOccupyInBaseResource.put(resourceThisNp , entry.getValue());
 		}
-		this.traversingRoutes = new ArrayList<Route> ();
-		for (Route originRoute : origin.traversingRoutes)
+		this.cache_traversingRoutesAndOccupiedCapacities = new HashMap<Route,Double> ();
+		for (Entry<Route,Double> originRoute : origin.cache_traversingRoutesAndOccupiedCapacities.entrySet())
 		{
-			final Route routeThisNp = this.netPlan.getRouteFromId(originRoute.id);
+			final Route routeThisNp = this.netPlan.getRouteFromId(originRoute.getKey().id);
 			if (routeThisNp == null) throw new RuntimeException ("Bad");
-			this.traversingRoutes.add(this.netPlan.getRouteFromId(originRoute.id));
+			this.cache_traversingRoutesAndOccupiedCapacities.put(this.netPlan.getRouteFromId(originRoute.getKey().id) , originRoute.getValue());
 		}
 	}
 
+	
+	/** Returns true if the occupied capacity of the resource exceeds its capacity
+	 * @return
+	 */
+	public boolean isOversubscribed ()
+	{
+		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
+		return capacity + PRECISION_FACTOR < cache_totalOccupiedCapacity;
+	}
+	
+	/** Gets the processing time added to every traversing traffic
+	 * @return the time
+	 */
+	public double getProcessingTimeToTraversingTrafficInMs ()
+	{
+		return processingTimeToTraversingTrafficInMs;
+	}
+
+	/** Sets the processing time added to every traversing traffic
+	 * @param time the new processing time (cannot be negative)
+	 */
+	public void getProcessingTimeToTraversingTrafficInMs (double time)
+	{
+		if (time < 0) throw new Net2PlanException ("The processing time cannot be negative");
+		this.processingTimeToTraversingTrafficInMs = time;
+	}
 
 	
 	/** Returns the String describing the type of the node
@@ -162,25 +178,6 @@ public class Resource extends NetworkElement
 	}
 	
 	
-
-	/** Returns the fixed amount of resource capacity occupied per each traversing route to this resource.
-	 * The total capacity occupied in this resource is the fixed amount, plus the proportional factor multiplied by 
-	 * the carried traffic of this resource traversing routes. 
-	 * @return the fixed factor
-	 */
-	public double getFixedOccupiedResourceCapacityPerTraversingRoute() {
-		return fixedOccupiedResourceCapacityPerTraversingRoute;
-	}
-
-	/** Returns the proportional factor of resource capacity occupied per each traversing route traffic units.
-	 * The total capacity occupied in this resource is the fixed amount, plus the proportional factor multiplied by 
-	 * the carried traffic of this resource traversing routes. 
-	 * @return the proportional factor
-	 */
-	public double getOccupiedResourceCapacityPerTraversingTrafficUnits() {
-		return occupiedResourceCapacityPerTraversingTrafficUnits;
-	}
-
 	/** Gets the capacity in resource units of this resource
 	 * @return the capacity
 	 */
@@ -194,7 +191,7 @@ public class Resource extends NetworkElement
 	 */
 	public double getOccupiedCapacity() 
 	{
-		return totalOccupiedCapacity;
+		return cache_totalOccupiedCapacity;
 	}
 
 	/** Sets the name of the resource
@@ -204,22 +201,12 @@ public class Resource extends NetworkElement
 		this.name = name;
 	}
 
-	/**
-	 * @param capacity the capacity to set
-	 */
-	public void setCapacity(double capacity) 
-	{
-		if (capacity < 0) throw new Net2PlanException ("The capacity of a resource cannot be negative"); 
-		this.capacity = capacity;
-	}
-
-	
 	/** Returns the set of base resources of this resource
 	 * @return the set of base resources (an unmodificable set)
 	 */
 	public Set<Resource> getBaseResources ()
 	{
-		return Collections.unmodifiableSet(baseResourcesConsumptionPolicy.keySet());
+		return Collections.unmodifiableSet(capacityIOccupyInBaseResource.keySet());
 	}
 
 	/** Returns the set of resources that are above of this resource, so this resource is a base resource for them
@@ -227,132 +214,139 @@ public class Resource extends NetworkElement
 	 */
 	public Set<Resource> getUpperResources ()
 	{
-		return Collections.unmodifiableSet(upperResourcesConsumptionInformation.keySet());
+		return Collections.unmodifiableSet(capacityUpperResourcesOccupyInMe.keySet());
 	}
 
-	/** Returns the fixed factor in the amount of capacity that this resource occupies in the base resource 
-	 * provided. The total capacity occupied in the base resource is the fixed factor, plus the proportional factor multipled by 
-	 * the occupied capacity in this resource. If baseResource is not a base resource of this resource, a zero is returned
+
+	/** Returns the capacity that this resource is occupying in the base resource. If bsaeResource is not a base resource for this resource,
+	 *  the method returns zero
 	 * @param baseResource
-	 * @return the fixed factor
+	 * @return the occupied capacity
 	 */
-	public double getBaseResourceFixedOccupationFactor (Resource baseResource)
+	public double getCapacityOccupiedInBaseResource (Resource baseResource)
 	{
-		Pair<Double,Double> info = baseResourcesConsumptionPolicy.get(baseResource);
-		if (info == null) return 0; else return info.getFirst();
-	}
-
-	/** Returns the proportional factor in the amount of capacity that this resource occupies in the base resource 
-	 * provided. The total capacity occupied in the base resource is the fixed factor, plus the proportional factor multipled by 
-	 * the occupied capacity in this resource. If baseResource is not a base resource of this resource, a zero is returned
-	 * @param baseResource
-	 * @return the proportional factor
-	 */
-	public double getBaseResourceProportionalOccupationFactor (Resource baseResource)
-	{
-		Pair<Double,Double> info = baseResourcesConsumptionPolicy.get(baseResource);
-		if (info == null) return 0; else return info.getSecond();
-	}
-
-	/** Returns the total amount of capacity occupied in the base resource, because of the existence of this resource. 
-	 * The total capacity occupied in the base resource is the fixed factor, plus the proportional factor multiplied by 
-	 * the occupied capacity in this resource. If baseResource is not a base resource of this resource, a zero is returned
-	 * @param baseResource
-	 * @return the total occupied capacity in such base resource
-	 */
-	public double getBaseResourceOccupiedCapacity (Resource baseResource)
-	{
-		Pair<Double,Double> info = baseResourcesConsumptionPolicy.get(baseResource);
-		if (info == null) return 0; else return info.getFirst() + this.totalOccupiedCapacity * info.getSecond();
-	}
-
-	/** Returns the total amount of capacity occupied in this resource, caused by the given upper resource
-	 * If upperResource is not an upper resource of this resource, a zero is returned
-	 * @param upperResource the resource for which this resource is a base resource
-	 * @return the occupied capacity in this resource, caused by the given upper reource 
-	 */
-	public double getUpperResourceOccupiedCapacity (Resource upperResource)
-	{
-		Double info = upperResourcesConsumptionInformation.get(upperResource);
+		Double info = capacityIOccupyInBaseResource.get(baseResource);
 		if (info == null) return 0; else return info;
 	}
 
-	/** Sets (or updates) the amount of capacity occupied in this resource caused by an upper resource.
-	 * If the occupied capacity is zero, the resource is still listed as an upper resource
+	/** Returns the capacity that upperResource occupied in this resource. If thi resource is not a base for upperResource, 0 is returned
 	 * @param upperResource the resource for which this resource is a base resource
-	 * @param occupiedCapacity value of occupied capacity
+	 * @return the occupied capacity in this resource by the given upper resource 
 	 */
-	public void setUpperResourceOccupiedCapacity (Resource upperResource , double occupiedCapacity)
-	{		
-		checkAttachedToNetPlanObject();
-		netPlan.checkIsModifiable();
-		netPlan.checkInThisNetPlan(upperResource);
-		if (occupiedCapacity < 0) throw new Net2PlanException ("The occupied capacity cannot be negative");
-		upperResourcesConsumptionInformation.put(upperResource , occupiedCapacity);
-		updateOccupationAndTrafficInfoHereAndInBaseResources();
-	}
-	
-	
-	/** Returns the map with the policy of how the occupation in this resource is propagated to the occupation 
-	 * in its base resources. This is given in a map. The key is the base resource. The two values associated are 
-	 * (i) the fixed factor of capacity in the base resource occupied, (ii) the proportional factor.
-	 * The total occupied capacity in the base resource by this resource, is given by the fixed factor, 
-	 * plus the current occupied capacity in this resource multiplied by the proportional factor.
-	 * @return the baseResourcesConsumptionPolicy
-	 */
-	public Map<Resource, Pair<Double, Double>> getBaseResourcesConsumptionPolicy() 
+	public double getCapacityOccupiedByUpperResource (Resource upperResource)
 	{
-		return Collections.unmodifiableMap(baseResourcesConsumptionPolicy);
+		Double info = capacityUpperResourcesOccupyInMe.get(upperResource);
+		if (info == null) return 0; else return info;
+	}
+
+	/** Returns the map with an element for each base resource, and the key the amount of capacity occupied in it
+	 * @return the map
+	 */
+	public Map<Resource, Double> getCapacityOccupiedInBaseResourcesMap() 
+	{
+		return Collections.unmodifiableMap(capacityIOccupyInBaseResource);
 	}
 
 	/** Returns the map with the information on the upper resources (the resources for which this resource is a base 
 	 * resource), and the amount of occupied capacity they are incurring in me
 	 * @return the map
 	 */
-	public Map<Resource, Double> getUpperResourcesOccupationInformation() 
+	public Map<Resource, Double> getCapacityOccupiedByUpperResourcesMap() 
 	{
-		return Collections.unmodifiableMap(upperResourcesConsumptionInformation);
+		return Collections.unmodifiableMap(capacityUpperResourcesOccupyInMe);
 	}
 
-	/**
+	/** Returns a set with the routes that are traversing this resource
 	 * @return the traversingRoutes
 	 */
-	public List<Route> getTraversingRoutes() 
+	public Set<Route> getTraversingRoutes() 
 	{
-		return Collections.unmodifiableList(traversingRoutes);
+		return cache_traversingRoutesAndOccupiedCapacities.keySet();
 	}
 
-
-	public void addTraversingRoute (Route r)
+	/** Returns the capacity that is occupied in this resource, because of a traversing route. If the route is not traversing 
+	 * the resource, zero is returned.
+	 * @return the occupied capacity
+	 */
+	public double getTraversingRouteOccupiedCapacity(Route route) 
 	{
-		r.checkAttachedToNetPlanObject();
-		checkAttachedToNetPlanObject(r.netPlan);
-		if (!r.getSeqNodesRealPath().contains(this.hostNode)) throw new Net2PlanException ("The route does not traverse the host node of this resource");
-		this.traversingRoutes.add(r);
-		updateOccupationAndTrafficInfoHereAndInBaseResources();
+		Double info = cache_traversingRoutesAndOccupiedCapacities.get(route);
+		return (info == null)? 0.0 : info;
 	}
 
-
+	/** Returns a map with one key per each traversing route, and associated to it the amount of capacity occupied in this resource 
+	 * because of it 
+	 * @return the map
+	 */
+	public Map<Route,Double> getTraversingRouteOccupiedCapacityMap() 
+	{
+		return Collections.unmodifiableMap(cache_traversingRoutesAndOccupiedCapacities);
+	}
 	
-	/* Reflects here any update in upper resources occupation, fixed and proportional occupation factors of this or any base resources, 
-	 * and of traversing routes. Updates occupation of this resource and of all base resources */
-	private void updateOccupationAndTrafficInfoHereAndInBaseResources ()
+	/** Resets the capacity of a resource, as well as the occupied capacity in the base resources. The set of base resources cannot have 
+	 * new elements respect to the ones already established in the constructor. This limit is set to avoid loops in resources occupations.
+	 *  Any base resource that is in the current map, that is not in newCapacityIOccupyInBaseResourcesMap, is assumed to maintain the same occupation.
+	 * @param newCapacity the new capacity value to set in this resource
+	 * @param newCapacityIOccupyInBaseResourcesMap a map with the update of the capacities to occupy in the base resources. If null, an empty map is assumed.
+	 */
+	public void setCapacity(double newCapacity , Map<Resource,Double> newCapacityIOccupyInBaseResourcesMap) 
 	{
-		double currentTotalOccupiedCapacity = 0;
-		for (Entry<Resource,Double> entryUpperResource : upperResourcesConsumptionInformation.entrySet())
-			currentTotalOccupiedCapacity += entryUpperResource.getValue();
-		for (Route travRoute : traversingRoutes)
-			currentTotalOccupiedCapacity += fixedOccupiedResourceCapacityPerTraversingRoute + occupiedResourceCapacityPerTraversingTrafficUnits * travRoute.getCarriedTraffic();
-		for (Entry<Resource , Pair<Double,Double>> baseInfo : baseResourcesConsumptionPolicy.entrySet())
+		checkAttachedToNetPlanObject();
+		netPlan.checkIsModifiable();
+		if (newCapacityIOccupyInBaseResourcesMap == null) newCapacityIOccupyInBaseResourcesMap = new HashMap<Resource,Double> ();
+		for (Entry<Resource,Double> entry : newCapacityIOccupyInBaseResourcesMap.entrySet())
 		{
-			final Resource baseResource = baseInfo.getKey();
-			final double fixedFactor = baseInfo.getValue().getFirst();
-			final double propFactor = baseInfo.getValue().getSecond();
-			final double newOccupiedCapacityInBaseResource = fixedFactor + currentTotalOccupiedCapacity * propFactor;
-			baseResource.setUpperResourceOccupiedCapacity(this , newOccupiedCapacityInBaseResource);
+			netPlan.checkInThisNetPlan(entry.getKey());
+			if (!this.capacityIOccupyInBaseResource.values().contains(entry.getKey())) throw new Net2PlanException ("When resizing a resource capacity, we cannot increase its set of base resources");
+			if (entry.getValue() < 0) throw new Net2PlanException ("The capacity occupied in a base resource cannot be negative");
 		}
+		if (newCapacity < 0) throw new Net2PlanException ("The capacity of a resource cannot be negative");
+		this.capacity = newCapacity;
+		this.capacityIOccupyInBaseResource.putAll (newCapacityIOccupyInBaseResourcesMap);
+		for (Entry<Resource,Double> entry : newCapacityIOccupyInBaseResourcesMap.entrySet())
+			entry.getKey().setUpperResourceOccupiedCapacity(this , entry.getValue());
+		updateTotalOccupiedCapacity();
+	}
+
+	/** Sets (or updates) the amount of capacity occupied in this resource caused by an upper resource.
+	 * If the occupied capacity is zero, the resource is still listed as an upper resource (not removed from the map)
+	 * @param upperResource the resource for which this resource is a base resource
+	 * @param occupiedCapacity value of occupied capacity
+	 */
+	void setUpperResourceOccupiedCapacity (Resource upperResource , double occupiedCapacity)
+	{		
+		checkAttachedToNetPlanObject();
+		netPlan.checkIsModifiable();
+		netPlan.checkInThisNetPlan(upperResource);
+		if (occupiedCapacity < 0) throw new Net2PlanException ("The occupied capacity cannot be negative");
+		capacityUpperResourcesOccupyInMe.put(upperResource , occupiedCapacity);
+		updateTotalOccupiedCapacity();
 	}
 	
+	void addTraversingRoute (Route r , double resourceOccupiedCapacityByThisRoute)
+	{
+		if (!r.getSeqNodesRealPath().contains(this.hostNode)) throw new Net2PlanException ("The route does not traverse the host node of this resource");
+		this.cache_traversingRoutesAndOccupiedCapacities.put(r , resourceOccupiedCapacityByThisRoute);
+		updateTotalOccupiedCapacity();
+	}
+
+	void removeTraversingRoute (Route r)
+	{
+		this.cache_traversingRoutesAndOccupiedCapacities.remove(r);
+		updateTotalOccupiedCapacity();
+	}
+
+	
+	/* Updates the value of total occupied capacity, summing the occupation by 1) upper resources, 2) traversing routes
+	 */
+	private void updateTotalOccupiedCapacity ()
+	{
+		this.cache_totalOccupiedCapacity = 0;
+		for (Entry<Resource,Double> entryUpperResource : capacityUpperResourcesOccupyInMe.entrySet())
+			cache_totalOccupiedCapacity += entryUpperResource.getValue();
+		for (Double occupiedCapacityThisRoute : cache_traversingRoutesAndOccupiedCapacities.values())
+			cache_totalOccupiedCapacity += occupiedCapacityThisRoute;
+	}
 	
 	/**
 	 * <p>Returns a {@code String} representation of the Shared Risk Group.</p>
