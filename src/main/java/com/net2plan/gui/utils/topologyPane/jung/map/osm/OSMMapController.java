@@ -6,6 +6,7 @@ import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import edu.uci.ics.jung.visualization.Layer;
@@ -34,12 +35,11 @@ public class OSMMapController
     private static final String ATTRIB_LATITUDE = "lat";
     private static final String ATTRIB_LONGITUDE = "lon";
 
-    private static boolean isMapActivated;
+    private static boolean isMapActivated = false;
 
     static
     {
         mapViewer = new OSMMapPanel();
-        isMapActivated = false;
     }
 
     // Non-instanciable
@@ -53,90 +53,42 @@ public class OSMMapController
         OSMMapController.canvas = canvas;
         OSMMapController.callback = callback;
 
-        loadMap();
-
-        isMapActivated = true;
-    }
-
-    private static void loadMap()
-    {
-        // Restart map original configuration
-        stopMap();
+        // If the map is already running, stop it before reloading it.
+        if (isMapActivated())
+        {
+            stopMap();
+        }
 
         // Activating maps on the canvas
         loadMapOntoTopologyPanel();
 
         // Making a relation between the map and the topology
         fitTopologyToMap();
+
+        setMapState(true);
     }
 
-    public static void centerMapToNodes()
+    public static void reloadMap()
     {
-        final HashSet<GeoPosition> positionSet = new HashSet<>();
-
-        for (Node node : callback.getDesign().getNodes())
+        if (isMapActivated())
         {
-            final double latitude = Double.parseDouble(node.getAttribute(ATTRIB_LATITUDE));
-            final double longitude = Double.parseDouble(node.getAttribute(ATTRIB_LONGITUDE));
-
-            final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
-            positionSet.add(geoPosition);
-        }
-
-        mapViewer.zoomToBestFit(positionSet, 0.6);
-
-        canvas.refresh();
-        mapViewer.repaint();
-    }
-
-    public static void fitTopologyToMap()
-    {
-        loadMapOntoTopologyPanel();
-
-        // Calculating map position
-        final HashSet<GeoPosition> positionSet = new HashSet<>();
-
-        for (Node node : callback.getDesign().getNodes())
+        } else
         {
-            // Getting coords from nodes attributes
-            final double latitude = Double.parseDouble(node.getAttribute(ATTRIB_LATITUDE));
-            final double longitude = Double.parseDouble(node.getAttribute(ATTRIB_LONGITUDE));
-
-            final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
-            positionSet.add(geoPosition);
-
-            // The position that the node really takes on the map. This is the point where the map and the nodes align.
-            final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
-            callback.moveNode(node.getId(), new Point2D.Double(realPosition.getX(), -realPosition.getY()));
+            throw new OSMMapException("Map is currently deactivated");
         }
-        mapViewer.zoomToBestFit(positionSet, 0.6);
-
-        topologyPanel.zoomAll();
-
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
-        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
-
-        // Removing zoom for a 1:1 scale.
-        ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
-
-        canvas.refresh();
-        mapViewer.repaint();
     }
 
     private static void loadMapOntoTopologyPanel()
     {
-        // JUNG Canvas
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
-
         // Making some swing adjustments.
         // Canvas on top of the map panel.
         final LayoutManager layout = new OverlayLayout(mapViewer);
         mapViewer.setLayout(layout);
 
-        topologyPanel.remove(vv);
+        topologyPanel.remove(canvas.getComponent());
 
         mapViewer.removeAll();
-        mapViewer.add(vv);
+        mapViewer.add(canvas.getComponent());
 
         topologyPanel.add(mapViewer, BorderLayout.CENTER);
 
@@ -149,24 +101,128 @@ public class OSMMapController
 
     private static void stopMap()
     {
-        isMapActivated = false;
+        // First, remove any canvas from the top of the map viewer.
+        mapViewer.removeAll();
+        mapViewer.validate();
+        mapViewer.repaint();
+
+        // Then remove the map from the topology panel.
         topologyPanel.remove(mapViewer);
+
+        // Repaint canvas on the topology panel
         topologyPanel.add(canvas.getComponent(), BorderLayout.CENTER);
+
         topologyPanel.validate();
         topologyPanel.repaint();
+
+        // Deactivate map
+        setMapState(false);
+    }
+
+    private static void fitTopologyToMap()
+    {
+        if (isMapActivated())
+        {
+            // Calculating map position
+            final HashSet<GeoPosition> positionSet = new HashSet<>();
+
+            for (Node node : callback.getDesign().getNodes())
+            {
+                // Getting coords from nodes attributes
+                final double latitude = Double.parseDouble(node.getAttribute(ATTRIB_LATITUDE));
+                final double longitude = Double.parseDouble(node.getAttribute(ATTRIB_LONGITUDE));
+
+                final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
+                positionSet.add(geoPosition);
+
+                // The position that the node really takes on the map. This is the point where the map and the nodes align.
+                final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
+                callback.moveNode(node.getId(), new Point2D.Double(realPosition.getX(), -realPosition.getY()));
+            }
+            mapViewer.zoomToBestFit(positionSet, 0.6);
+
+            topologyPanel.zoomAll();
+
+            final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
+            final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+
+            // Removing zoom for a 1:1 scale.
+            ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
+
+            canvas.refresh();
+            mapViewer.repaint();
+        } else
+        {
+            throw new OSMMapException("Map is currently deactivated");
+        }
+    }
+
+    public static void centerMapToNodes()
+    {
+        if (isMapActivated())
+        {
+            final HashSet<GeoPosition> positionSet = new HashSet<>();
+
+            for (Node node : callback.getDesign().getNodes())
+            {
+                final double latitude = Double.parseDouble(node.getAttribute(ATTRIB_LATITUDE));
+                final double longitude = Double.parseDouble(node.getAttribute(ATTRIB_LONGITUDE));
+
+                final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
+                positionSet.add(geoPosition);
+            }
+
+            mapViewer.zoomToBestFit(positionSet, 0.6);
+
+            canvas.refresh();
+            mapViewer.repaint();
+        } else
+        {
+            throw new OSMMapException("Map is currently deactivated");
+        }
     }
 
     public static void moveMap(final double dx, final double dy)
     {
-        final TileFactory tileFactory = mapViewer.getTileFactory();
+        if (isMapActivated())
+        {
+            final TileFactory tileFactory = mapViewer.getTileFactory();
 
-        final Point2D mapCenter = mapViewer.getCenter();
-        final Point2D newMapCenter = new Point2D.Double(mapCenter.getX() + dx, mapCenter.getY() + dy);
+            final Point2D mapCenter = mapViewer.getCenter();
+            final Point2D newMapCenter = new Point2D.Double(mapCenter.getX() + dx, mapCenter.getY() + dy);
 
-        mapViewer.setCenterPosition(tileFactory.pixelToGeo(newMapCenter, mapViewer.getZoom()));
+            mapViewer.setCenterPosition(tileFactory.pixelToGeo(newMapCenter, mapViewer.getZoom()));
 
-        canvas.refresh();
-        mapViewer.repaint();
+            canvas.refresh();
+            mapViewer.repaint();
+        } else
+        {
+            throw new OSMMapException("Map is currently deactivated");
+        }
+    }
+
+    public static void zoomIn()
+    {
+        if (isMapActivated())
+        {
+            final int zoom = mapViewer.getZoom();
+            mapViewer.setZoom(zoom - 1);
+        } else
+        {
+            throw new OSMMapException("Map is currently deactivated");
+        }
+    }
+
+    public static void zoomOut()
+    {
+        if (isMapActivated())
+        {
+            final int zoom = mapViewer.getZoom();
+            mapViewer.setZoom(zoom + 1);
+        } else
+        {
+            throw new OSMMapException("Map is currently deactivated");
+        }
     }
 
     public static boolean isMapActivated()
@@ -174,15 +230,21 @@ public class OSMMapController
         return isMapActivated;
     }
 
-    public static void zoomIn()
+    public static void setMapState(final boolean state)
     {
-        final int zoom = mapViewer.getZoom();
-        mapViewer.setZoom(zoom - 1);
+        isMapActivated = state;
+
+        if (!isMapActivated())
+        {
+            stopMap();
+        }
     }
 
-    public static void zoomOut()
+    private static class OSMMapException extends Net2PlanException
     {
-        final int zoom = mapViewer.getZoom();
-        mapViewer.setZoom(zoom + 1);
+        public OSMMapException(final String message)
+        {
+            super(message);
+        }
     }
 }
