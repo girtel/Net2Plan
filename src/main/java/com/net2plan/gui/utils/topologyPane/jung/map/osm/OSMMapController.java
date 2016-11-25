@@ -1,7 +1,6 @@
 package com.net2plan.gui.utils.topologyPane.jung.map.osm;
 
 import com.net2plan.gui.utils.INetworkCallback;
-import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
@@ -13,13 +12,11 @@ import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import org.jxmapviewer.viewer.*;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.util.*;
-import java.util.List;
 
 /**
  * Created by Jorge San Emeterio on 03/11/2016.
@@ -56,14 +53,14 @@ public class OSMMapController
         // If the map is already running, stop it before reloading it.
         if (isMapActivated())
         {
-            stopMap();
+            setMapState(false);
         }
 
         // Activating maps on the canvas
         loadMapOntoTopologyPanel();
 
         // Making a relation between the map and the topology
-        fitTopologyToMap();
+        loadMapOntoTopology();
 
         setMapState(true);
     }
@@ -114,47 +111,39 @@ public class OSMMapController
 
         topologyPanel.validate();
         topologyPanel.repaint();
-
-        // Deactivate map
-        setMapState(false);
     }
 
-    private static void fitTopologyToMap()
+    private static void loadMapOntoTopology()
     {
-        if (isMapActivated())
+        // Calculating map position
+        final HashSet<GeoPosition> positionSet = new HashSet<>();
+
+        for (Node node : callback.getDesign().getNodes())
         {
-            // Calculating map position
-            final HashSet<GeoPosition> positionSet = new HashSet<>();
+            // Getting coordinates from nodes' attributes
+            final double latitude = Double.parseDouble(node.getAttribute(ATTRIB_LATITUDE));
+            final double longitude = Double.parseDouble(node.getAttribute(ATTRIB_LONGITUDE));
 
-            for (Node node : callback.getDesign().getNodes())
-            {
-                // Getting coords from nodes attributes
-                final double latitude = Double.parseDouble(node.getAttribute(ATTRIB_LATITUDE));
-                final double longitude = Double.parseDouble(node.getAttribute(ATTRIB_LONGITUDE));
+            final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
+            positionSet.add(geoPosition);
 
-                final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
-                positionSet.add(geoPosition);
-
-                // The position that the node really takes on the map. This is the point where the map and the nodes align.
-                final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
-                callback.moveNode(node.getId(), new Point2D.Double(realPosition.getX(), -realPosition.getY()));
-            }
-            mapViewer.zoomToBestFit(positionSet, 0.6);
-
-            topologyPanel.zoomAll();
-
-            final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
-            final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
-
-            // Removing zoom for a 1:1 scale.
-            ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
-
-            canvas.refresh();
-            mapViewer.repaint();
-        } else
-        {
-            throw new OSMMapException("Map is currently deactivated");
+            // The position that the node really takes on the map.
+            final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
+            callback.moveNode(node.getId(), new Point2D.Double(realPosition.getX(), -realPosition.getY()));
         }
+        mapViewer.zoomToBestFit(positionSet, 0.6);
+
+        // The map is now centered to the topology, we now center the topology to the map.
+        topologyPanel.zoomAll();
+
+        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
+        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+
+        // Removing zoom for a 1:1 scale.
+        ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
+
+        canvas.refresh();
+        mapViewer.repaint();
     }
 
     public static void centerMapToNodes()

@@ -656,7 +656,6 @@ public final class JUNGCanvas extends ITopologyCanvas
         if (OSMMapController.isMapActivated())
         {
             OSMMapController.zoomIn();
-            OSMMapController.fitTopologyToMap();
         }
     }
 
@@ -668,7 +667,6 @@ public final class JUNGCanvas extends ITopologyCanvas
         if (OSMMapController.isMapActivated())
         {
             OSMMapController.zoomOut();
-            OSMMapController.fitTopologyToMap();
         }
     }
 
