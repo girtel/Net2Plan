@@ -37,12 +37,12 @@ public class OSMMapController
 
     private static boolean isMapActivated = false;
 
-    private static Map<Node, GeoPosition> nodeToGeoPositioMap;
+    private static Map<Node, GeoPosition> nodeToGeoPositionMap;
 
     static
     {
         mapViewer = new OSMMapPanel();
-        nodeToGeoPositioMap = new HashMap<>();
+        nodeToGeoPositionMap = new HashMap<>();
     }
 
     // Non-instanciable
@@ -77,7 +77,7 @@ public class OSMMapController
         buildNodeGeoPositionMap();
 
         // Moving nodes
-        for (Map.Entry<Node, GeoPosition> entry : nodeToGeoPositioMap.entrySet())
+        for (Map.Entry<Node, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
         {
             final Node node = entry.getKey();
             final GeoPosition geoPosition = entry.getValue();
@@ -88,7 +88,7 @@ public class OSMMapController
         }
 
         // The map is now centered to the topology, we now center the topology to the map.
-        ((JUNGCanvas) canvas).zoomAllCanvas();
+        ((JUNGCanvas) canvas).zoomCanvas();
 
         removeTopologyZoom();
 
@@ -123,10 +123,10 @@ public class OSMMapController
         buildNodeGeoPositionMap();
 
         // Calculating map center and zoom.
-        mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositioMap.values()), zoomRatio);
+        mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
 
         // Moving nodes
-        for (Map.Entry<Node, GeoPosition> entry : nodeToGeoPositioMap.entrySet())
+        for (Map.Entry<Node, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
         {
             final Node node = entry.getKey();
             final GeoPosition geoPosition = entry.getValue();
@@ -166,12 +166,9 @@ public class OSMMapController
     {
         if (isMapActivated())
         {
-            mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositioMap.values()), zoomRatio);
+            mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
 
-            removeTopologyZoom();
-
-            canvas.refresh();
-            mapViewer.repaint();
+            reloadMap();
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
@@ -233,7 +230,7 @@ public class OSMMapController
             final double longitude = Double.parseDouble(node.getAttribute(ATTRIBUTE_LONGITUDE));
 
             final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
-            nodeToGeoPositioMap.put(node, geoPosition);
+            nodeToGeoPositionMap.put(node, geoPosition);
         }
     }
 
