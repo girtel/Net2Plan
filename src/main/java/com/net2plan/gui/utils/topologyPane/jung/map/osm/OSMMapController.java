@@ -114,11 +114,7 @@ public class OSMMapController
         // The map is now centered to the topology, we now center the topology to the map.
         topologyPanel.zoomAll();
 
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
-        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
-
-        // Removing zoom for a 1:1 scale.
-        ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
+        removeTopologyZoom();
 
         canvas.refresh();
         mapViewer.repaint();
@@ -145,9 +141,9 @@ public class OSMMapController
     {
         if (isMapActivated())
         {
-            buildNodeGeoPositionMap();
-
             mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositioMap.values()), zoomRatio);
+
+            removeTopologyZoom();
 
             canvas.refresh();
             mapViewer.repaint();
@@ -214,6 +210,15 @@ public class OSMMapController
             final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
             nodeToGeoPositioMap.put(node, geoPosition);
         }
+    }
+
+    private static void removeTopologyZoom()
+    {
+        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
+        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+
+        // Removing zoom for a 1:1 scale.
+        ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
     }
 
     public static boolean isMapActivated()

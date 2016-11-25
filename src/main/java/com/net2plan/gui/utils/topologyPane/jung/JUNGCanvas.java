@@ -592,11 +592,6 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void zoomAll()
     {
-        if (OSMMapController.isMapActivated())
-        {
-            OSMMapController.centerMapToNodes();
-        }
-
         Set<GUINode> nodes = new LinkedHashSet<>();
         for (GUINode n : g.getVertices()) if (n.isVisible()) nodes.add(n);
 
@@ -639,6 +634,11 @@ public final class JUNGCanvas extends ITopologyCanvas
         double dx = (lvc.getX() - q.getX());
         double dy = (lvc.getY() - q.getY());
         vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT).translate(dx, dy);
+
+        if (OSMMapController.isMapActivated())
+        {
+            OSMMapController.centerMapToNodes();
+        }
     }
 
     @Override
