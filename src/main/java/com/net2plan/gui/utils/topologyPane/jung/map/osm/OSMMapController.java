@@ -71,6 +71,31 @@ public class OSMMapController
         setMapState(true);
     }
 
+    public static void reloadMap()
+    {
+        // Calculating each node geoposition.
+        buildNodeGeoPositionMap();
+
+        // Moving nodes
+        for (Map.Entry<Node, GeoPosition> entry : nodeToGeoPositioMap.entrySet())
+        {
+            final Node node = entry.getKey();
+            final GeoPosition geoPosition = entry.getValue();
+
+            // The position that the node really takes on the map.
+            final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
+            callback.moveNode(node.getId(), new Point2D.Double(realPosition.getX(), -realPosition.getY()));
+        }
+
+        // The map is now centered to the topology, we now center the topology to the map.
+        ((JUNGCanvas) canvas).zoomAllCanvas();
+
+        removeTopologyZoom();
+
+        canvas.refresh();
+        mapViewer.repaint();
+    }
+
     private static void loadMapOntoTopologyPanel()
     {
         // Making some swing adjustments.
@@ -179,7 +204,7 @@ public class OSMMapController
             final int zoom = mapViewer.getZoom();
             mapViewer.setZoom(zoom - 1);
 
-            //reloadMap();
+            reloadMap();
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
@@ -193,7 +218,7 @@ public class OSMMapController
             final int zoom = mapViewer.getZoom();
             mapViewer.setZoom(zoom + 1);
 
-            //reloadMap();
+            reloadMap();
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
