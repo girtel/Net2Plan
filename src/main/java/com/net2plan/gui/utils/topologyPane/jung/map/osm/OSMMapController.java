@@ -29,14 +29,20 @@ public class OSMMapController
     private static ITopologyCanvas canvas;
     private static INetworkCallback callback;
 
-    private static final String ATTRIB_LATITUDE = "lat";
-    private static final String ATTRIB_LONGITUDE = "lon";
+    // TODO: We will not be using attributes later on.
+    private static final String ATTRIBUTE_LATITUDE = "lat";
+    private static final String ATTRIBUTE_LONGITUDE = "lon";
+
+    private static final double zoomRatio = 0.6;
 
     private static boolean isMapActivated = false;
+
+    private static Map<Node, GeoPosition> nodeToGeoPositioMap;
 
     static
     {
         mapViewer = new OSMMapPanel();
+        nodeToGeoPositioMap = new HashMap<>();
     }
 
     // Non-instanciable
@@ -115,23 +121,22 @@ public class OSMMapController
 
     private static void loadMapOntoTopology()
     {
-        // Calculating map position
-        final HashSet<GeoPosition> positionSet = new HashSet<>();
+        // Calculating each node geoposition.
+        buildNodeGeoPositionMap();
 
-        for (Node node : callback.getDesign().getNodes())
+        // Calculating map center and zoom.
+        mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositioMap.values()), zoomRatio);
+
+        // Moving nodes
+        for (Map.Entry<Node, GeoPosition> entry : nodeToGeoPositioMap.entrySet())
         {
-            // Getting coordinates from nodes' attributes
-            final double latitude = Double.parseDouble(node.getAttribute(ATTRIB_LATITUDE));
-            final double longitude = Double.parseDouble(node.getAttribute(ATTRIB_LONGITUDE));
-
-            final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
-            positionSet.add(geoPosition);
+            final Node node = entry.getKey();
+            final GeoPosition geoPosition = entry.getValue();
 
             // The position that the node really takes on the map.
             final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
             callback.moveNode(node.getId(), new Point2D.Double(realPosition.getX(), -realPosition.getY()));
         }
-        mapViewer.zoomToBestFit(positionSet, 0.6);
 
         // The map is now centered to the topology, we now center the topology to the map.
         topologyPanel.zoomAll();
@@ -146,22 +151,25 @@ public class OSMMapController
         mapViewer.repaint();
     }
 
+    private static void buildNodeGeoPositionMap()
+    {
+        for (Node node : callback.getDesign().getNodes())
+        {
+            final double latitude = Double.parseDouble(node.getAttribute(ATTRIBUTE_LATITUDE));
+            final double longitude = Double.parseDouble(node.getAttribute(ATTRIBUTE_LONGITUDE));
+
+            final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
+            nodeToGeoPositioMap.put(node, geoPosition);
+        }
+    }
+
     public static void centerMapToNodes()
     {
         if (isMapActivated())
         {
-            final HashSet<GeoPosition> positionSet = new HashSet<>();
+            buildNodeGeoPositionMap();
 
-            for (Node node : callback.getDesign().getNodes())
-            {
-                final double latitude = Double.parseDouble(node.getAttribute(ATTRIB_LATITUDE));
-                final double longitude = Double.parseDouble(node.getAttribute(ATTRIB_LONGITUDE));
-
-                final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
-                positionSet.add(geoPosition);
-            }
-
-            mapViewer.zoomToBestFit(positionSet, 0.6);
+            mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositioMap.values()), zoomRatio);
 
             canvas.refresh();
             mapViewer.repaint();
