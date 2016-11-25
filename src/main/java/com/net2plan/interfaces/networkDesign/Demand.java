@@ -211,6 +211,16 @@ public class Demand extends NetworkElement
 		return false;
 	}
 
+	/** Gets the sequence of types of resources defined (the ones that the routes of this demand have to follow). An empty list is 
+	 * returned if the method setMandatorySequenceOfTraversedResourceTypes was not called never before for this demand.
+	 * @return the list
+	 */
+	public List<String> getMandatorySequenceOfTraversedResourceTypes ()
+	{
+		if (layer.routingType != RoutingType.SOURCE_ROUTING) throw new Net2PlanException ("The routing type must be SOURCE ROUTING");
+		return Collections.unmodifiableList(this.mandatorySequenceOfTraversedResourceTypes);
+	}
+
 	/** Sets the sequence of types of resources that the routes of this demand have to follow. This method is to make the demand become 
 	 * a request of service chains. This method can only be called if the routing type is SOURCE ROUTING, and the demand has no routes 
 	 * at the moment.

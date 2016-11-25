@@ -12,24 +12,22 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
+
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
-import com.net2plan.utils.Pair;
 import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Pair;
 
-import java.util.*;
 
-
-/**
- * <p>This class contains a representation of a multicast tree, an structure used to carry multicast demands.
- * Multicast trees are characterized by the input node, the set of output nodes, and a path from the 
- * input node to each of the output nodes. The paths are such that the structure must 
- * be a unidirectional tree, without loops (all nodes in the tree have one input link but the first that has none).
- * .</p>
- * 
- * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
- * @since 0.2.0
- */
 /**
  * <p>This class contains a representation of a unidirectional route, an structure used to carry traffic of unicast demands at a layer,
  *  when the layer routing type is source routing. Routes are characterized by the unicast demand they carry traffic of, the traversed links which should 
@@ -53,14 +51,17 @@ public class Route extends NetworkElement
 	final Node ingressNode;
 	final Node egressNode;
 	final List<Link> initialSeqLinksWhenCreated;
+	final Pair<Resource,Double> initialResourcesTraversed [];
 	List<Link> seqLinksAndProtectionSegments;
 	List<Link> seqLinksRealPath;
 	List<Node> seqNodesRealPath;
 	double carriedTraffic , carriedTrafficIfNotFailing;
 	double occupiedLinkCapacity , occupiedLinkCapacityIfNotFailing;
 	Set<ProtectionSegment> potentialBackupSegments;
+	Pair<Resource,Double> resourcesTraversedPerNodeSequenceOrder [];  // An array with as many elements as nodes in the path (number of links plus one). The i-th position is null, if no resource is occupied at that time. If not, contains the resource and the amount of capacity occupied there in that pass 
+	Map<Resource,List<Integer>> cache_resourcesNodeOrderTimeTraversed;  // for each resource, the list of node order (0 means first node of a path) when it is traversed. The list has as many elements, as the number of times that a route traverses it
 	
-	Route (NetPlan netPlan , long id , int index , Demand demand , List<Link> seqLinksRealPath , AttributeMap attributes)
+	Route (NetPlan netPlan , long id , int index , Demand demand , List<Link> seqLinksRealPath , Pair<Resource,Double> resourcesTraversedPerNodeSequenceOrder [] , AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);
 
@@ -68,7 +69,6 @@ public class Route extends NetworkElement
 		for (Link e : seqLinksRealPath) { if (!netPlan.equals(e.netPlan)) throw new RuntimeException ("Bad"); if (e instanceof ProtectionSegment) throw new RuntimeException ("Bad"); }
 
 		netPlan.checkPathValidityForDemand (seqLinksRealPath, demand);
-		
 		this.layer = demand.getLayer ();
 		this.demand = demand;
 		this.ingressNode = demand.ingressNode;
@@ -82,6 +82,20 @@ public class Route extends NetworkElement
 		this.occupiedLinkCapacity = 0;
 		this.potentialBackupSegments = new HashSet <ProtectionSegment> ();
 		this.seqNodesRealPath = new LinkedList<Node> (); seqNodesRealPath.add (demand.getIngressNode()); for (Link e : seqLinksRealPath) seqNodesRealPath.add (e.getDestinationNode());
+		this.resourcesTraversedPerNodeSequenceOrder = resourcesTraversedPerNodeSequenceOrder == null? (Pair<Resource,Double> []) new Object [seqNodesRealPath.size()] : Arrays.copyOf(resourcesTraversedPerNodeSequenceOrder , seqNodesRealPath.size()); 
+		this.initialResourcesTraversed = Arrays.copyOf(this.resourcesTraversedPerNodeSequenceOrder , seqNodesRealPath.size());
+		this.cache_resourcesNodeOrderTimeTraversed = new HashMap<Resource,List<Integer>> ();
+		for (int nodeOrder = 0; nodeOrder < seqNodesRealPath.size() ; nodeOrder ++)
+		{
+			final Pair<Resource,Double> pair = this.resourcesTraversedPerNodeSequenceOrder [nodeOrder];
+			if (pair != null)
+			{
+				final Resource res = pair.getFirst();
+				List<Integer> currentList = cache_resourcesNodeOrderTimeTraversed.get(res);
+				if (currentList == null) { currentList = new LinkedList<Integer> (); cache_resourcesNodeOrderTimeTraversed.put (res , currentList); }
+				currentList.add (nodeOrder);
+			}
+		}		
 	}
 
 	/** Return the sequence of links of the route when it was created (before any rerouting operation could be made). It can be used to revert the route 
@@ -90,6 +104,54 @@ public class Route extends NetworkElement
 	 */
 	public List<Link> getInitialSequenceOfLinks () { return Collections.unmodifiableList(this.initialSeqLinksWhenCreated); }
 	
+	/** Return an array, with as many elements as traversed nodes (number of links plus one), 
+	 * and in the i-th position, the resource occupied in that case (in the initial setting when the route was created) 
+	 * together with the amount of capacity consumed, or null if none resource is traversed there.
+	 * @return The occupation info
+	 */
+	public Pair<Resource,Double>  [] getInitialResourcesTraversedPerNodeSequenceOrder () { return Arrays.copyOf(this.initialResourcesTraversed , this.initialResourcesTraversed.length); }
+
+	/** Return an array, with as many elements as traversed nodes (number of links plus one), 
+	 * and in the i-th position, the resource occupied in that case (in the initial setting when the route was created) 
+	 * together with the amount of capacity consumed, or null if none resource is traversed there.
+	 * @return The occupation info
+	 */
+	public Pair<Resource,Double>  [] getCurrentResourcesTraversedPerNodeSequenceOrder () { return Arrays.copyOf(this.resourcesTraversedPerNodeSequenceOrder , this.resourcesTraversedPerNodeSequenceOrder.length); }
+	
+	/** Return the set of resources this route is traversing 
+	 * @return the info
+	 */
+	public Set<Resource>  getCurrentResourcesTraversed () { return cache_resourcesNodeOrderTimeTraversed.keySet(); }
+	
+	/** Return the list of pairs (node order position, occupied capacity) with the passings of this route through the given resource
+	 * @param resource the resource
+	 * @return the info (empty list if the resource is not traversed)
+	 */
+	public List<Pair<Integer,Double>> getResourceCurrentOccupationInformation (Resource resource) 
+	{
+		List<Pair<Integer,Double>> res = new LinkedList<Pair<Integer,Double>> ();
+		List<Integer> nodeOrdersOfResourceTraversed = cache_resourcesNodeOrderTimeTraversed.get (resource);
+		if (nodeOrdersOfResourceTraversed == null) return res;
+		for (int nodeOrder : nodeOrdersOfResourceTraversed)
+			res.add(Pair.of(nodeOrder , resourcesTraversedPerNodeSequenceOrder[nodeOrder].getSecond()));
+		return res; 
+	}
+	
+	/** Return the total amount of capacity occupied by this route in the given resource (0 if not traversed). Total means that 
+	 * if a route passes the resource more than once, the occupations are summed up
+	 * @param resource the resource
+	 * @return the total occupation
+	 */
+	public double getResourceCurrentTotalOccupation (Resource resource) 
+	{
+		double res = 0;
+		List<Integer> nodeOrdersOfResourceTraversed = cache_resourcesNodeOrderTimeTraversed.get (resource);
+		if (nodeOrdersOfResourceTraversed == null) return res;
+		for (int nodeOrder : nodeOrdersOfResourceTraversed)
+			res += resourcesTraversedPerNodeSequenceOrder[nodeOrder].getSecond();
+		return res; 
+	}
+
 	/**
 	 * <p>Adds a protection segment to the list of backup protection segments (both must belong to the same layer).</p>
 	 * @param segment The protection segment (must be in the same layer as this route)
@@ -308,7 +370,8 @@ public class Route extends NetworkElement
 		return 1000 * accum;
 	}
 
-	/** Returns the route average propagation speed in km per second, as the ratio between the tota route length and the total route delay
+	/** Returns the route average propagation speed in km per second, as the ratio between the total route length and the total route delay 
+	 * (not including the processing time in the traversed resources)
 	 * @return see description above
 	 * */
 	public double getPropagationSpeedInKmPerSecond ()
@@ -397,6 +460,14 @@ public class Route extends NetworkElement
 		netPlan.cache_id2RouteMap.remove(id);
 		layer.cache_routesDown.remove (this);
 		NetPlan.removeNetworkElementAndShiftIndexes(layer.routes , index);
+		
+		/* remove the resources info */
+		for (Resource resource : cache_resourcesNodeOrderTimeTraversed.keySet())
+		{
+			resource.updateTotalOccupiedCapacity();
+			resource.cache_traversingRoutesAndOccupiedCapacities.remove(resource);
+		}
+		
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		removeId();
 	}
@@ -471,6 +542,19 @@ public class Route extends NetworkElement
 		demand.carriedTraffic += this.carriedTraffic - oldCarriedTraffic;
 		if (demand.coupledUpperLayerLink != null) demand.coupledUpperLayerLink.capacity = demand.carriedTraffic;
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+	}
+
+
+	--> ESTO DEBE ESTAR ASOCIADO A LA RUTA => SI SE CAMBIA LA RUTA ESTO DEBE CAMBIAR!!
+	public void setResourcesOccupationInformation (Pair<Resource,Double> resourcesTraversedPerNodeSequenceOrder [])
+	{
+		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		netPlan.checkIsModifiable();
+		Resource.checkInNetPlanObject(resourcesTraversedPerNodeSequenceOrder , this.netPlan);
+		Resource.checkResourceTraversingSequence(seqNodesRealPath , resourcesTraversedPerNodeSequenceOrder);
+		Resource.checkResourceTraversingSequenceOfTypes(demand.mandatorySequenceOfTraversedResourceTypes , resourcesTraversedPerNodeSequenceOrder);
+		/* release previous occupations */
+		
 	}
 	
 	
@@ -629,4 +713,6 @@ public class Route extends NetworkElement
 		}
 	}
 
+	
+	
 }

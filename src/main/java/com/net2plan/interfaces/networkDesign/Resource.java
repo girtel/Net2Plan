@@ -25,13 +25,18 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.collections15.BidiMap;
+
 import com.net2plan.internal.AttributeMap;
+import com.net2plan.utils.Pair;
 
 /** <p>.</p> 
  * @author Pablo Pavon-Marino
@@ -339,7 +344,7 @@ public class Resource extends NetworkElement
 	
 	/* Updates the value of total occupied capacity, summing the occupation by 1) upper resources, 2) traversing routes
 	 */
-	private void updateTotalOccupiedCapacity ()
+	void updateTotalOccupiedCapacity ()
 	{
 		this.cache_totalOccupiedCapacity = 0;
 		for (Entry<Resource,Double> entryUpperResource : capacityUpperResourcesOccupyInMe.entrySet())
@@ -360,5 +365,41 @@ public class Resource extends NetworkElement
 //		for (Node node : nodes) if (!node.cache_nodeSRGs.contains(this)) throw new RuntimeException ("Bad");
 	}
 
+	static void checkInNetPlanObject (Pair<Resource,Double> resourcesTraversedPerNodeSequenceOrder [] , NetPlan np)
+	{
+		for (Pair<Resource,Double> pair : resourcesTraversedPerNodeSequenceOrder)
+		{
+			if (pair == null) continue;
+			np.checkAttachedToNetPlanObject(pair.getFirst().netPlan);
+		}
+	}
+	
+	
+	/* Check that positions with resources, the resource node is the end node of the corresponding link */
+	static void checkResourceTraversingSequence (List<Node> seqNodes , Pair<Resource,Double> resourcesTraversedPerNodeSequenceOrder [])
+	{
+		if (seqNodes.size() != resourcesTraversedPerNodeSequenceOrder.length) throw new Net2PlanException ("Wrong format of the resources traversed info");
+		for (int nodeOrder = 0; nodeOrder < seqNodes.size() ; nodeOrder ++)
+		{
+			if (resourcesTraversedPerNodeSequenceOrder[nodeOrder] == null) continue;
+			if (seqNodes.get(nodeOrder) != resourcesTraversedPerNodeSequenceOrder[nodeOrder].getFirst().hostNode)
+				throw new Net2PlanException ("Wrong values in the resources traversed info");
+			if (resourcesTraversedPerNodeSequenceOrder[nodeOrder].getSecond () < 0) throw new Net2PlanException ("Wrong format of the resources traversed info");
+		}
+	}
+
+	/* Check that positions with resources, the resource node is the end node of the corresponding link */
+	static void checkResourceTraversingSequenceOfTypes (List<String> types , Pair<Resource,Double> resourcesTraversedPerNodeSequenceOrder [])
+	{
+		int alreadyValidatedTypes = 0;
+		for (int nodeOrder = 0; nodeOrder < resourcesTraversedPerNodeSequenceOrder.length ; nodeOrder ++)
+		{
+			if (resourcesTraversedPerNodeSequenceOrder[nodeOrder] == null) continue;
+			String resourceType = resourcesTraversedPerNodeSequenceOrder[nodeOrder].getFirst ().type;
+			if (!resourceType.equals(types.get(alreadyValidatedTypes))) throw new Net2PlanException ("Wrong order of resources and types");
+			alreadyValidatedTypes ++;
+		}
+		if (alreadyValidatedTypes != types.size()) throw new Net2PlanException ("Wrong order of resources and types");
+	}
 
 }
