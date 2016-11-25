@@ -54,40 +54,20 @@ public class OSMMapController
         OSMMapController.callback = callback;
 
         loadMap();
+
+        isMapActivated = true;
     }
 
     private static void loadMap()
     {
         // Restart map original configuration
-        // stopMap();
+        stopMap();
 
         // Activating maps on the canvas
         loadMapOntoTopologyPanel();
 
-        // Calculating map position
-        final HashSet<GeoPosition> positionSet = new HashSet<>();
-
-        for (Node node : callback.getDesign().getNodes())
-        {
-            // Getting coords from nodes attributes
-            final double latitude = Double.parseDouble(node.getAttribute(ATTRIB_LATITUDE));
-            final double longitude = Double.parseDouble(node.getAttribute(ATTRIB_LONGITUDE));
-
-            final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
-            positionSet.add(geoPosition);
-
-            // The position that the node really takes on the map. This is the point where the map and the nodes align.
-            final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
-            callback.moveNode(node.getId(), new Point2D.Double(realPosition.getX(), -realPosition.getY()));
-        }
-        mapViewer.zoomToBestFit(positionSet, 0.6);
-
+        // Making a relation between the map and the topology
         fitTopologyToMap();
-
-        isMapActivated = true;
-
-        canvas.refresh();
-        mapViewer.repaint();
     }
 
     public static void centerMapToNodes()
@@ -153,22 +133,24 @@ public class OSMMapController
         final LayoutManager layout = new OverlayLayout(mapViewer);
         mapViewer.setLayout(layout);
 
+        topologyPanel.remove(vv);
+
+        mapViewer.removeAll();
         mapViewer.add(vv);
 
         topologyPanel.add(mapViewer, BorderLayout.CENTER);
+
+        mapViewer.validate();
+        mapViewer.repaint();
+
         topologyPanel.validate();
         topologyPanel.repaint();
     }
 
     private static void stopMap()
     {
-        if (isMapActivated)
-        {
-            isMapActivated = false;
-            mapViewer.removeAll();
-            topologyPanel.remove(mapViewer);
-        }
-
+        isMapActivated = false;
+        topologyPanel.remove(mapViewer);
         topologyPanel.add(canvas.getComponent(), BorderLayout.CENTER);
         topologyPanel.validate();
         topologyPanel.repaint();
