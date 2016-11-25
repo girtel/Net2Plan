@@ -199,6 +199,9 @@ public class OSMMapController
         if (isMapActivated())
         {
             final int zoom = mapViewer.getZoom();
+
+            centerMapToNodes();
+
             mapViewer.setZoom(zoom - 1);
 
             reloadMap();
@@ -212,7 +215,11 @@ public class OSMMapController
     {
         if (isMapActivated())
         {
+            final GeoPosition mapCenter = mapViewer.getCenterPosition();
             final int zoom = mapViewer.getZoom();
+
+            centerMapToNodes();
+
             mapViewer.setZoom(zoom + 1);
 
             reloadMap();
