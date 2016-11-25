@@ -66,19 +66,9 @@ public class OSMMapController
         loadMapOntoTopologyPanel();
 
         // Making a relation between the map and the topology
-        loadMapOntoTopology();
+        fitTopologyAndMap();
 
         setMapState(true);
-    }
-
-    public static void reloadMap()
-    {
-        if (isMapActivated())
-        {
-        } else
-        {
-            throw new OSMMapException("Map is currently deactivated");
-        }
     }
 
     private static void loadMapOntoTopologyPanel()
@@ -102,24 +92,7 @@ public class OSMMapController
         topologyPanel.repaint();
     }
 
-    private static void stopMap()
-    {
-        // First, remove any canvas from the top of the map viewer.
-        mapViewer.removeAll();
-        mapViewer.validate();
-        mapViewer.repaint();
-
-        // Then remove the map from the topology panel.
-        topologyPanel.remove(mapViewer);
-
-        // Repaint canvas on the topology panel
-        topologyPanel.add(canvas.getComponent(), BorderLayout.CENTER);
-
-        topologyPanel.validate();
-        topologyPanel.repaint();
-    }
-
-    private static void loadMapOntoTopology()
+    private static void fitTopologyAndMap()
     {
         // Calculating each node geoposition.
         buildNodeGeoPositionMap();
@@ -151,16 +124,21 @@ public class OSMMapController
         mapViewer.repaint();
     }
 
-    private static void buildNodeGeoPositionMap()
+    private static void stopMap()
     {
-        for (Node node : callback.getDesign().getNodes())
-        {
-            final double latitude = Double.parseDouble(node.getAttribute(ATTRIBUTE_LATITUDE));
-            final double longitude = Double.parseDouble(node.getAttribute(ATTRIBUTE_LONGITUDE));
+        // First, remove any canvas from the top of the map viewer.
+        mapViewer.removeAll();
+        mapViewer.validate();
+        mapViewer.repaint();
 
-            final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
-            nodeToGeoPositioMap.put(node, geoPosition);
-        }
+        // Then remove the map from the topology panel.
+        topologyPanel.remove(mapViewer);
+
+        // Repaint canvas on the topology panel
+        topologyPanel.add(canvas.getComponent(), BorderLayout.CENTER);
+
+        topologyPanel.validate();
+        topologyPanel.repaint();
     }
 
     public static void centerMapToNodes()
@@ -204,6 +182,8 @@ public class OSMMapController
         {
             final int zoom = mapViewer.getZoom();
             mapViewer.setZoom(zoom - 1);
+
+            //reloadMap();
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
@@ -216,9 +196,23 @@ public class OSMMapController
         {
             final int zoom = mapViewer.getZoom();
             mapViewer.setZoom(zoom + 1);
+
+            //reloadMap();
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
+        }
+    }
+
+    private static void buildNodeGeoPositionMap()
+    {
+        for (Node node : callback.getDesign().getNodes())
+        {
+            final double latitude = Double.parseDouble(node.getAttribute(ATTRIBUTE_LATITUDE));
+            final double longitude = Double.parseDouble(node.getAttribute(ATTRIBUTE_LONGITUDE));
+
+            final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
+            nodeToGeoPositioMap.put(node, geoPosition);
         }
     }
 
