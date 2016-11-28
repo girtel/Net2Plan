@@ -13,9 +13,9 @@ import java.util.List;
  * @author César
  * @date 20/11/2016
  */
-public class ProofFilter implements IVisualizationFilter
+public class EvenIndexFilter implements IVisualizationFilter
 {
-    boolean active = true;
+    boolean active = false;
 
     @Override
     public boolean isVisibleNetworkElement(NetworkElement element)
@@ -34,7 +34,7 @@ public class ProofFilter implements IVisualizationFilter
     @Override
     public String getDescription()
     {
-        return "Visible if index is even";
+        return "A network element is visible if its index is even";
     }
 
     @Override
@@ -46,7 +46,7 @@ public class ProofFilter implements IVisualizationFilter
     @Override
     public String getUniqueName()
     {
-        return "Filter namber uan";
+        return "Filter nº 1";
     }
 
     @Override

@@ -13,7 +13,7 @@ import java.util.List;
  * @author César
  * @date 21/11/2016
  */
-public class ProofFilter2 implements IVisualizationFilter
+public class HigherThanFiveIndexFilter implements IVisualizationFilter
 {
     boolean active = false;
     @Override
@@ -32,7 +32,7 @@ public class ProofFilter2 implements IVisualizationFilter
     @Override
     public String getDescription()
     {
-        return "Visible if index > 5";
+        return "A network element is visible if its index is higher than 5";
     }
 
     @Override
@@ -44,7 +44,7 @@ public class ProofFilter2 implements IVisualizationFilter
     @Override
     public String getUniqueName()
     {
-        return "Filter namber chu";
+        return "Filter nº 2";
     }
 
     @Override

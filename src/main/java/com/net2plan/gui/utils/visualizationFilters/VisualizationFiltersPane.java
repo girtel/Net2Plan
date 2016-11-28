@@ -8,9 +8,11 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.ErrorHandling;
+import com.net2plan.internal.IExternal;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.utils.ClassLoaderUtils;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
 import net.miginfocom.swing.MigLayout;
@@ -26,6 +28,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author César
@@ -42,7 +45,9 @@ public class VisualizationFiltersPane extends JPanel
     private final static TableCellRenderer CHECKBOX_RENDERER;
     private final static Object[] HEADER;
     private final JTextArea descriptionArea;
+    private final JTextField txt_file;
     private final Class [] columnClass;
+    private Map<String, Class> implementations;
 
     static
     {
@@ -79,6 +84,11 @@ public class VisualizationFiltersPane extends JPanel
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
         descriptionArea.setEditable(false);
+        descriptionArea.setColumns(80);
+        descriptionArea.setRows(15);
+
+        txt_file = new JTextField();
+        txt_file.setEditable(false);
 
         columnClass = new Class[3];
         columnClass[0] = TableButton.class;
@@ -99,7 +109,7 @@ public class VisualizationFiltersPane extends JPanel
                     int rc = fileChooser.showOpenDialog(null);
                     if (rc != JFileChooser.APPROVE_OPTION) return;
                     selectedFile = fileChooser.getSelectedFile();
-                    loadFilter();
+                    loadImplementations(selectedFile);
                 } catch (NoRunnableCodeFound ex)
                 {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to load");
@@ -153,6 +163,8 @@ public class VisualizationFiltersPane extends JPanel
 
         andButton.setSelected(true);
         setLayout(new MigLayout("", "[][grow][]", "[][][][][grow]"));
+        add(txt_file, "growx");
+        add(load, "wrap");
         add(new JLabel("Filtering Options"), "top, growx, spanx 2, wrap, wmin 100");
         add(andButton, "wrap");
         add(orButton, "wrap");
@@ -168,14 +180,21 @@ public class VisualizationFiltersPane extends JPanel
             @Override
             public void mouseClicked(MouseEvent e)
             {
+                int clickedRow = table.rowAtPoint(e.getPoint());
                 int clickedColumn = table.columnAtPoint(e.getPoint());
+                String selectedFilter = (String)table.getModel().getValueAt(clickedRow,1);
+
                 if(clickedColumn == 0)
                 {
-                    int clickedRow = table.rowAtPoint(e.getPoint());
-                    String filterToRemove = (String)table.getModel().getValueAt(clickedRow,1);
-                    VisualizationFiltersController.removeVisualizationFilter(filterToRemove);
+                    VisualizationFiltersController.removeVisualizationFilter(selectedFilter);
                     updateFiltersTable();
                     mainWindow.updateNetPlanView();
+                }
+                else{
+
+                    IVisualizationFilter vf = VisualizationFiltersController.getVisualizationFilterByName(selectedFilter);
+                    descriptionArea.setText(vf.getDescription());
+
                 }
 
             }
@@ -207,18 +226,49 @@ public class VisualizationFiltersPane extends JPanel
 
     }
 
+    private void loadImplementations(File f) {
+        try {
+            if (!f.isAbsolute()) f = new File(SystemUtils.getCurrentDir(), f.getPath());
+
+            Map<String, Class> aux_implementations = new TreeMap<String, Class>();
+            List<Class<IVisualizationFilter>> aux = ClassLoaderUtils.getClassesFromFile(f, IVisualizationFilter.class);
+            for (Class<IVisualizationFilter> implementation : aux) {
+
+                if (IVisualizationFilter.class.isAssignableFrom(implementation)) {
+
+                    aux_implementations.put(implementation.getName(), IVisualizationFilter.class);
+                    }
+                }
 
 
-    public void loadFilter() throws IOException
-    {
-        IVisualizationFilter newFilter = ClassLoaderUtils.getInstance(selectedFile,"", IVisualizationFilter.class);
-        VisualizationFiltersController.addVisualizationFilter(newFilter);
-        updateFiltersTable();
-        mainWindow.updateNetPlanView();
-        ((Closeable) newFilter.getClass().getClassLoader()).close();
+            if (aux_implementations.isEmpty())
+                throw new NoRunnableCodeFound(f, new LinkedHashSet<Class<? extends IExternal>>() {
+                {
+                    add(IVisualizationFilter.class);
+                }
+                });
 
+            implementations = aux_implementations;
 
+            txt_file.setText(f.getCanonicalPath());
+
+            for(Map.Entry<String,Class> implValue : implementations.entrySet())
+            {
+                IVisualizationFilter instance = ClassLoaderUtils.getInstance(f,implValue.getKey(),IVisualizationFilter.class);
+                VisualizationFiltersController.addVisualizationFilter(instance);
+                instance.setActive(false);
+                ((Closeable) instance.getClass().getClassLoader()).close();
+            }
+            updateFiltersTable();
+            mainWindow.updateNetPlanView();
+
+        } catch (NoRunnableCodeFound e) {
+            throw (e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
+
 
     public void updateFiltersTable(){
 

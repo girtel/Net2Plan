@@ -149,7 +149,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         attributesItem = new JCheckBoxMenuItem("Expand attributes as columns", false);
 
 
-        if(canExpandAttributes)
+        if (canExpandAttributes)
         {
             this.getModel().addTableModelListener(new TableModelListener()
             {
@@ -165,16 +165,16 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         attributesColumnsNames = getAttributesColumnsHeaders();
                         for (String title : attributesColumnsNames)
                         {
-                            if (getModel().getColumnName(changedColumn).equals("Att: "+ title))
+                            if (getModel().getColumnName(changedColumn).equals("Att: " + title))
                             {
-                                    value = getModel().getValueAt(selectedRow, changedColumn);
-                                    if (value != null)
-                                    {
-                                        currentTopology.getNetworkElement((Long) getModel().
-                                                getValueAt(selectedRow,0)).setAttribute(title,(String) value);
-                                    }
-
+                                value = getModel().getValueAt(selectedRow, changedColumn);
+                                if (value != null)
+                                {
+                                    currentTopology.getNetworkElement((Long) getModel().
+                                            getValueAt(selectedRow, 0)).setAttribute(title, (String) value);
                                 }
+
+                            }
 
                         }
                         networkViewer.updateNetPlanView();
@@ -188,7 +188,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
             showHideMenu.add(unfixCheckBox);
             showHideMenu.add(new JPopupMenu.Separator());
-            if(canExpandAttributes)
+            if (canExpandAttributes)
             {
                 showHideMenu.add(attributesItem);
                 showHideMenu.add(new JPopupMenu.Separator());
@@ -267,7 +267,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         {
                             hideMenu.setEnabled(false);
                         }
-                        if(shownColumns.size() == 0)
+                        if (shownColumns.size() == 0)
                         {
                             showMenu.setEnabled(false);
                         }
@@ -312,7 +312,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         }
 
 
-                        for (int j = 0; j < shownHeaderItems.size();j++)
+                        for (int j = 0; j < shownHeaderItems.size(); j++)
                         {
                             JMenuItem currentItem = shownHeaderItems.get(j);
                             int position = j;
@@ -359,22 +359,22 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                 }
             });
-            attributesItem.addItemListener(new ItemListener(){
+            attributesItem.addItemListener(new ItemListener()
+            {
 
                 @Override
                 public void itemStateChanged(ItemEvent e)
                 {
-                    if(attributesItem.isSelected() ==  true)
+                    if (attributesItem.isSelected() == true)
                     {
-                        if(!areAttributesInDifferentColums())
+                        if (!areAttributesInDifferentColums())
                         {
                             attributesInDifferentColumns();
                         }
 
-                    }
-                    else
+                    } else
                     {
-                        if(areAttributesInDifferentColums())
+                        if (areAttributesInDifferentColums())
                         {
                             attributesInOneColumn();
                         }
@@ -425,8 +425,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
 
         }
-
-        //addVisualizationFilter(new ProofFilter());
     }
 
     /**
