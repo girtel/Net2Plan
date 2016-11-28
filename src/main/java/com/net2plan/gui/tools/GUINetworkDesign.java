@@ -13,9 +13,7 @@
 package com.net2plan.gui.tools;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.util.*;
 import java.util.List;
@@ -34,7 +32,6 @@ import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
 import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
 import com.net2plan.gui.utils.windows.WindowController;
-import com.net2plan.gui.utils.windows.utils.BasicTabbedPaneUIWrapper;
 import com.net2plan.gui.utils.windows.utils.WindowUtils;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -159,12 +156,83 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         WindowUtils.clearFloatingWindows();
 
         final JTabbedPane tabPane = new JTabbedPane();
-        tabPane.add("View/Edit network state", viewEditTopTables);
-        tabPane.add("Algorithm execution", executionPane);
-        tabPane.add("Online simulation", onlineSimulationPane);
-        tabPane.add("View reports", reportPane);
+        tabPane.add(WindowController.WindowTab.getTabName(WindowController.WindowTab.control), viewEditTopTables);
+        tabPane.add(WindowController.WindowTab.getTabName(WindowController.WindowTab.offline), executionPane);
+        tabPane.add(WindowController.WindowTab.getTabName(WindowController.WindowTab.online), onlineSimulationPane);
+        tabPane.add(WindowController.WindowTab.getTabName(WindowController.WindowTab.report), reportPane);
 
-        tabPane.setUI(new BasicTabbedPaneUIWrapper());
+        // Installing customized mouse listener
+        MouseListener[] ml = tabPane.getListeners(MouseListener.class);
+
+        for (int i = 0; i < ml.length; i++)
+        {
+            tabPane.removeMouseListener(ml[i]);
+        }
+
+        tabPane.addMouseListener(new MouseAdapter()
+        {
+            public void mousePressed(MouseEvent e)
+            {
+                JTabbedPane tabPane = (JTabbedPane) e.getSource();
+
+                int tabIndex = tabPane.getUI().tabForCoordinate(tabPane, e.getX(), e.getY());
+
+                if (tabIndex >= 0 && tabPane.isEnabledAt(tabIndex))
+                {
+                    if (tabIndex == tabPane.getSelectedIndex())
+                    {
+                        if (tabPane.isRequestFocusEnabled())
+                        {
+                            tabPane.requestFocus();
+
+                            tabPane.repaint(tabPane.getUI().getTabBounds(tabPane, tabIndex));
+                        }
+                    } else
+                    {
+                        tabPane.setSelectedIndex(tabIndex);
+                    }
+
+                    if (!tabPane.isEnabled() || SwingUtilities.isRightMouseButton(e))
+                    {
+                        final JPopupMenu popupMenu = new JPopupMenu();
+
+                        final JMenuItem popWindow = new JMenuItem("Pop window out");
+                        popWindow.addActionListener(e1 ->
+                        {
+                            final int selectedIndex = tabPane.getSelectedIndex();
+                            final String tabName = tabPane.getTitleAt(selectedIndex);
+                            final JComponent selectedComponent = (JComponent) tabPane.getSelectedComponent();
+
+                            final WindowController.WindowTab windowTab = WindowController.WindowTab.parseString(tabName);
+
+                            switch (windowTab)
+                            {
+                                case offline:
+                                    WindowController.buildOfflineWindow(selectedComponent);
+                                    WindowController.showOfflineWindow();
+                                    break;
+                                case online:
+                                    WindowController.buildOnlineWindow(selectedComponent);
+                                    WindowController.showOnlineWindow();
+                                    break;
+                                case report:
+                                    WindowController.buildReportWindow(selectedComponent);
+                                    WindowController.showReportWindow();
+                                    break;
+                                default:
+                                    return;
+                            }
+
+                            tabPane.setSelectedIndex(0);
+                        });
+
+                        popupMenu.add(popWindow);
+
+                        popupMenu.show(e.getComponent(), e.getX(), e.getY());
+                    }
+                }
+            }
+        });
 
         // Building windows
         WindowController.buildControlWindow(tabPane);
@@ -421,7 +489,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     }
 
     @Override
-    public void loadDesign(NetPlan netPlan) {
+    public void loadDesign(NetPlan netPlan)
+    {
         viewEditTopTables.resetTables();
         netPlan.checkCachesConsistency();
         if (onlineSimulationPane != null) onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
@@ -881,6 +950,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         {
             addLinkBidirectional(layer, originNode, destinationNode);
         }
+
     }
 
     /**
@@ -1100,9 +1170,11 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         }, KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK));
 
         // Windows
-        addKeyCombinationAction("Show control window", new AbstractAction() {
+        addKeyCombinationAction("Show control window", new AbstractAction()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 WindowController.showControlWindow();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
