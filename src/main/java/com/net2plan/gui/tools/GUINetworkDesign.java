@@ -156,10 +156,10 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         WindowUtils.clearFloatingWindows();
 
         final JTabbedPane tabPane = new JTabbedPane();
-        tabPane.add(WindowController.WindowTab.getTabName(WindowController.WindowTab.control), viewEditTopTables);
-        tabPane.add(WindowController.WindowTab.getTabName(WindowController.WindowTab.offline), executionPane);
-        tabPane.add(WindowController.WindowTab.getTabName(WindowController.WindowTab.online), onlineSimulationPane);
-        tabPane.add(WindowController.WindowTab.getTabName(WindowController.WindowTab.report), reportPane);
+        tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.control), viewEditTopTables);
+        tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.offline), executionPane);
+        tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.online), onlineSimulationPane);
+        tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.report), reportPane);
 
         // Installing customized mouse listener
         MouseListener[] ml = tabPane.getListeners(MouseListener.class);
@@ -169,6 +169,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
             tabPane.removeMouseListener(ml[i]);
         }
 
+        // Left click works as usual, right click brings up a pop-up menu.
         tabPane.addMouseListener(new MouseAdapter()
         {
             public void mousePressed(MouseEvent e)
@@ -203,9 +204,10 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
                             final String tabName = tabPane.getTitleAt(selectedIndex);
                             final JComponent selectedComponent = (JComponent) tabPane.getSelectedComponent();
 
-                            final WindowController.WindowTab windowTab = WindowController.WindowTab.parseString(tabName);
+                            // Pops up the selected tab.
+                            final WindowController.WindowToTab windowToTab = WindowController.WindowToTab.parseString(tabName);
 
-                            switch (windowTab)
+                            switch (windowToTab)
                             {
                                 case offline:
                                     WindowController.buildOfflineWindow(selectedComponent);
@@ -225,6 +227,12 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
                             tabPane.setSelectedIndex(0);
                         });
+
+                        // Disabling the pop up button for the network state tab.
+                        if (WindowController.WindowToTab.parseString(tabPane.getTitleAt(tabPane.getSelectedIndex())) == WindowController.WindowToTab.control)
+                        {
+                            popWindow.setEnabled(false);
+                        }
 
                         popupMenu.add(popWindow);
 

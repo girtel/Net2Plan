@@ -3,7 +3,6 @@ package com.net2plan.gui.utils.windows;
 import com.net2plan.gui.utils.windows.parent.GUIWindow;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -57,7 +56,7 @@ public class WindowController
             }
         };
 
-        reportWindow.addWindowListener(new CloseWindowAdapter(WindowTab.getTabName(WindowTab.report), component));
+        reportWindow.addWindowListener(new CloseWindowAdapter(WindowToTab.getTabName(WindowToTab.report), component));
 
         reportWindow.buildWindow(component);
     }
@@ -81,7 +80,7 @@ public class WindowController
             }
         };
 
-        offlineWindow.addWindowListener(new CloseWindowAdapter(WindowTab.getTabName(WindowTab.offline), component));
+        offlineWindow.addWindowListener(new CloseWindowAdapter(WindowToTab.getTabName(WindowToTab.offline), component));
 
         offlineWindow.buildWindow(component);
     }
@@ -105,7 +104,7 @@ public class WindowController
             }
         };
 
-        onlineWindow.addWindowListener(new CloseWindowAdapter(WindowTab.getTabName(WindowTab.online), component));
+        onlineWindow.addWindowListener(new CloseWindowAdapter(WindowToTab.getTabName(WindowToTab.online), component));
 
         onlineWindow.buildWindow(component);
     }
@@ -136,7 +135,7 @@ public class WindowController
         }
     }
 
-    public enum WindowTab
+    public enum WindowToTab
     {
         control ("View/Edit network state"),
         offline ("Algorithm execution"),
@@ -145,12 +144,12 @@ public class WindowController
 
         private final String text;
 
-        private WindowTab(final String text)
+        private WindowToTab(final String text)
         {
             this.text = text;
         }
 
-        public static WindowTab parseString(final String text)
+        public static WindowToTab parseString(final String text)
         {
             switch (text)
             {
@@ -167,7 +166,7 @@ public class WindowController
             return null;
         }
 
-        public static String getTabName(final WindowTab tab)
+        public static String getTabName(final WindowToTab tab)
         {
             switch (tab)
             {
