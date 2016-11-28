@@ -4,7 +4,6 @@
 //Ojo que al cambiar la secuencia de enlaces, hay que cambiar tambien los recursos ocupados. SI una demanda es de una
 //service chain, todas sus rutas deben atravesar recursos en cualquier estado, y no pueden tener protection segments
 
-// demand: setServiceChainSequence: le pasas List<String> con types. Solo se puede ejecutar cuando no tiene rutas.
 // rutas: al hacer addroute, se chequea si hay service chain. En ese caso, hay que pasarle en constructor info de
 //recursos ocupados (lista pares recurso-ocupacion). La ruta comprueba que van en orden con demanda, y con lista enlaces
 

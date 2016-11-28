@@ -269,6 +269,14 @@ public class Demand extends NetworkElement
 		return this.carriedTraffic + Configuration.precisionFactor < offeredTraffic;
 	}
 
+	/** Returns if the current demand reflects a service chain request, that is, if the routes are constrained 
+	 * to traverse a given sequence of resources of given types.
+	 * @return true if the demand defines a service chain request, false otherwise
+	 */
+	public boolean isServiceChainRequest ()
+	{
+		return !mandatorySequenceOfTraversedResourceTypes.isEmpty();
+	}
 	/**
 	 * <p>Returns {@code true} if the demand is coupled to a link of an upper layer.</p>
 	 * @return {@code true} is coupled, false otherwise
