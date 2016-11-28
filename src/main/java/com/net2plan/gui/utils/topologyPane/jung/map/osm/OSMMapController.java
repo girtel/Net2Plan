@@ -84,7 +84,7 @@ public class OSMMapController
 
             // The position that the node really takes on the map.
             final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
-            callback.moveNode(node.getId(), new Point2D.Double(realPosition.getX(), -realPosition.getY()));
+            ((JUNGCanvas) canvas).moveNode(node, new Point2D.Double(realPosition.getX(), realPosition.getY()));
         }
 
         // The map is now centered to the topology, we now center the topology to the map.
@@ -133,7 +133,7 @@ public class OSMMapController
 
             // The position that the node really takes on the map.
             final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
-            callback.moveNode(node.getId(), new Point2D.Double(realPosition.getX(), -realPosition.getY()));
+            ((JUNGCanvas) canvas).moveNode(node, new Point2D.Double(realPosition.getX(), realPosition.getY()));
         }
 
         // The map is now centered to the topology, we now center the topology to the map.

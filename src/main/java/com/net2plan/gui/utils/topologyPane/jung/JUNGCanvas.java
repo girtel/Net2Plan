@@ -209,6 +209,14 @@ public final class JUNGCanvas extends ITopologyCanvas
         gm.add(new GraphMousePluginAdapter(plugin));
     }
 
+
+
+    /**
+     * Converts a point from the SWING coordinates system into a point from the JUNG coordinates system.
+     *
+     * @param screenPoint (@code Point2D) on the SWING canvas.
+     * @return (@code Point2D) on the JUNG canvas.
+     */
     public Point2D convertViewCoordinatesToRealCoordinates(Point2D screenPoint)
     {
         Point2D layoutCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, screenPoint);
@@ -218,10 +226,7 @@ public final class JUNGCanvas extends ITopologyCanvas
     }
 
     /**
-     * Converts a point from the SWING coordinates system into a point from the JUNG coordinates system.
-     *
-     * @param screenPoint (@code Point) on the SWING canvas.
-     * @return (@code Point) on the JUNG canvas.
+     * {@link #convertViewCoordinatesToRealCoordinates(Point2D)}
      */
     @Override
     public Point2D convertViewCoordinatesToRealCoordinates(Point screenPoint)
@@ -229,6 +234,12 @@ public final class JUNGCanvas extends ITopologyCanvas
         return convertViewCoordinatesToRealCoordinates((Point2D) screenPoint);
     }
 
+    /**
+     * Converts a point from the JUNG coordinates system to the SWING coordinates system.
+     *
+     * @param screenPoint (@code Point2D) on the JUNG canvas.
+     * @return (@code Point2D) on the SWING canvas.
+     */
     public Point2D convertRealCoordinatesToViewCoordinates(Point2D screenPoint)
     {
         screenPoint.setLocation(screenPoint.getX(), -screenPoint.getY());
@@ -238,17 +249,13 @@ public final class JUNGCanvas extends ITopologyCanvas
     }
 
     /**
-     * Converts a point from the JUNG coordinates system to the SWING coordinates system.
+     * {@link #convertRealCoordinatesToViewCoordinates(Point2D)}
      * The conversion adds some variable error.
-     *
-     * @param screenPoint (@code Point) on the JUNG canvas.
-     * @return (@code Point) on the SWING canvas.
      */
     public Point2D convertRealCoordinatesToViewCoordinates(Point screenPoint)
     {
         return convertRealCoordinatesToViewCoordinates((Point2D) screenPoint);
     }
-
 
     @Override
     public void decreaseFontSize()
@@ -645,8 +652,22 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void updateNodeXYPosition(Node npNode)
     {
+        // Moves a node to its xy coordinates.
         GUINode node = nodeTable.get(npNode);
         l.setLocation(node, FLIP_VERTICAL_COORDINATES.transform(node));
+    }
+
+    /**
+     * Moves a node to the desired point.
+     * This method does not change the node's xy coordinates.
+     * Have in mind that by using this methos, the xy coordinates from the table do not equal the coordinates from the topology.
+     * @param npNode Node to move.
+     * @param point Point to which the node will be moved.
+     */
+    public void moveNode(Node npNode, Point2D point)
+    {
+        GUINode node = nodeTable.get(npNode);
+        l.setLocation(node, point);
     }
 
     @Override
