@@ -6,6 +6,9 @@ import javax.swing.event.PopupMenuListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+/**
+ * Credits to user luca from stack overflow for his <a href="http://stackoverflow.com/questions/1692677/how-to-create-a-jbutton-with-a-menu">MenuButton</a>.
+ */
 public class MenuButton extends JToggleButton
 {
     final JPopupMenu popup;

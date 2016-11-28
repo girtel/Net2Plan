@@ -43,7 +43,6 @@ import com.net2plan.internal.Constants.DialogType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.ITopologyCanvas;
-import javafx.event.*;
 
 /**
  * <p>Wrapper class for the graph canvas.</p>
@@ -64,7 +63,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final MenuButton btn_view;
     private final JPopupMenu viewPopUp;
-    private final JMenuItem it_topology, it_report, it_online, it_offline;
+    private final JMenuItem it_control;
     private final JLabel position;
 
     private final File defaultDesignDirectory, defaultDemandDirectory;
@@ -204,38 +203,14 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         viewPopUp = new JPopupMenu();
 
-        it_topology = new JMenuItem("View network state window");
-        it_topology.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
-        it_topology.addActionListener(e ->
+        it_control = new JMenuItem("View control window");
+        it_control.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
+        it_control.addActionListener(e ->
         {
-            WindowController.showTopologyWindow();
+            WindowController.showControlWindow();
         });
 
-        it_report = new JMenuItem("View report window");
-        it_report.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_2, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
-        it_report.addActionListener(e ->
-        {
-            WindowController.showReportWindow();
-        });
-
-        it_offline = new JMenuItem("View offline design window");
-        it_offline.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_3, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
-        it_offline.addActionListener(e ->
-        {
-            WindowController.showOfflineWindow();
-        });
-
-        it_online = new JMenuItem("View online simulation window");
-        it_online.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_4, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
-        it_online.addActionListener(e ->
-        {
-            WindowController.showOnlineWindow();
-        });
-
-        viewPopUp.add(it_topology);
-        viewPopUp.add(it_report);
-        viewPopUp.add(it_offline);
-        viewPopUp.add(it_online);
+        viewPopUp.add(it_control);
 
         btn_view = new MenuButton("View", viewPopUp);
         btn_view.setMnemonic(KeyEvent.VK_V);
