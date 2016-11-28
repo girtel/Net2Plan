@@ -447,7 +447,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             zoomAll();
         } else if (src == btn_debug)
         {
-            loadDesignFromFile(new File("C:\\Users\\Jorge\\Desktop\\Maps\\Barcelona-Madrid-Sevilla_attrib.n2p"));
+            loadDesignFromFile(new File("C:\\Users\\Jorge\\Desktop\\Maps\\Barcelona-Madrid-Sevilla_attrib_2.n2p"));
         } else if (src == btn_runMap)
         {
             OSMMapController.runMap(this, canvas, callback);

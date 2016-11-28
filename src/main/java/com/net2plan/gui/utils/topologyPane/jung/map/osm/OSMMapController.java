@@ -7,6 +7,7 @@ import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
@@ -29,14 +30,9 @@ public class OSMMapController
     private static ITopologyCanvas canvas;
     private static INetworkCallback callback;
 
-    // TODO: We will not be using attributes later on.
-    private static final String ATTRIBUTE_LATITUDE = "lat";
-    private static final String ATTRIBUTE_LONGITUDE = "lon";
-
     private static final double zoomRatio = 0.6;
 
     private static boolean isMapActivated = false;
-
     private static Map<Node, GeoPosition> nodeToGeoPositionMap;
 
     static
@@ -52,6 +48,27 @@ public class OSMMapController
 
     public static void runMap(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final INetworkCallback callback)
     {
+        // Checking if the nodes are valid for this operation.
+        // They may not go outside the bounds: -180, 180: -90, 90
+        for (Node node : callback.getDesign().getNodes())
+        {
+            final Point2D nodeXY = node.getXYPositionMap();
+
+            final double x = nodeXY.getX();
+            final double y = nodeXY.getY();
+
+            if ((x > 180 || x < -180) || (y > 90 || y < -90))
+            {
+                final StringBuilder builder = new StringBuilder();
+                builder.append("Node: " + node.getName() + " is out of the accepted bounds.\n");
+                builder.append("All nodes must have their coordinates between the ranges: \n");
+                builder.append("x = [-180, 180]\n");
+                builder.append("y = [-90, 90]\n");
+
+                throw new OSMMapException(builder.toString());
+            }
+        }
+
         OSMMapController.topologyPanel = topologyPanel;
         OSMMapController.canvas = canvas;
         OSMMapController.callback = callback;
@@ -233,8 +250,10 @@ public class OSMMapController
     {
         for (Node node : callback.getDesign().getNodes())
         {
-            final double latitude = Double.parseDouble(node.getAttribute(ATTRIBUTE_LATITUDE));
-            final double longitude = Double.parseDouble(node.getAttribute(ATTRIBUTE_LONGITUDE));
+            final Point2D nodeXY = node.getXYPositionMap();
+
+            final double latitude = nodeXY.getY();
+            final double longitude = nodeXY.getX();
 
             final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
             nodeToGeoPositionMap.put(node, geoPosition);
@@ -269,7 +288,7 @@ public class OSMMapController
     {
         public OSMMapException(final String message)
         {
-            super(message);
+            ErrorHandling.showErrorDialog(message, "Could not display map");
         }
     }
 }
