@@ -26,7 +26,7 @@ public final class VisualizationFiltersController
     public static void addVisualizationFilter(IVisualizationFilter vf){
 
         if(containsVisualizationFilter(vf)){
-            throw new Net2PlanException("This visualization filter has already been added");
+            throw new Net2PlanException("A visualization filter with the same name has been already added");
         }
         if(vf == null){
             throw new Net2PlanException("A null visualization filter cannot be added");
@@ -54,7 +54,15 @@ public final class VisualizationFiltersController
 
     public static boolean containsVisualizationFilter(IVisualizationFilter vf){
 
-        return currentVisualizationFilters.contains(vf);
+        boolean flag = false;
+        for(IVisualizationFilter vfg : currentVisualizationFilters)
+        {
+            if(vfg.getUniqueName().equals(vf.getUniqueName())){
+                flag = true;
+                break;
+            }
+        }
+        return flag;
     }
 
     public static void removeAllVisualizationFilters(){

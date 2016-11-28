@@ -16,17 +16,12 @@ import com.net2plan.utils.Triple;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
+import javax.swing.event.CellEditorListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableModel;
+import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -39,18 +34,20 @@ import java.util.*;
 public class VisualizationFiltersPane extends JPanel
 {
     private final INetworkCallback mainWindow;
-    private JButton load, delete, deleteAll;
+    private JButton load, deleteAll;
     private JRadioButton andButton, orButton;
     private static JFileChooser fileChooser;
     private File selectedFile;
     private final AdvancedJTable table;
     private final static TableCellRenderer CHECKBOX_RENDERER;
     private final static Object[] HEADER;
+    private final JTextArea descriptionArea;
+    private final Class [] columnClass;
 
     static
     {
         CHECKBOX_RENDERER = new CheckBoxRenderer();
-        HEADER = StringUtils.arrayOf("Filter","Description","Active");
+        HEADER = StringUtils.arrayOf("Remove","Filter","Active");
     }
 
     public VisualizationFiltersPane(INetworkCallback mainWindow)
@@ -60,14 +57,36 @@ public class VisualizationFiltersPane extends JPanel
         this.mainWindow = mainWindow;
 
         Object[][] data = {{null, null, null}};
-        fileChooser = new JFileChooser();
+        //HAY QUE CAMBIARLO
+        File FILTERS_DIRECTORY = new File("C:/Users/cesar_000/Desktop/N2P Work/target/classes/com/net2plan/prooves");
+        FILTERS_DIRECTORY = FILTERS_DIRECTORY.isDirectory() ? FILTERS_DIRECTORY : IGUIModule.CURRENT_DIR;
+
+        fileChooser = new JFileChooser(FILTERS_DIRECTORY);
         TableModel model = new ClassAwareTableModelImpl(data, HEADER);
 
         table = new AdvancedJTable(model);
+        TableColumn removeColumn = table.getColumn("Remove");
+        TableColumn activeColumn = table.getColumn("Active");
+        removeColumn.setResizable(false);
+        removeColumn.setMinWidth(90);
+        removeColumn.setMaxWidth(90);
+        activeColumn.setResizable(false);
+        activeColumn.setMinWidth(60);
+        activeColumn.setMaxWidth(60);
+
+        descriptionArea = new JTextArea();
+        descriptionArea.setFont(new JLabel().getFont());
+        descriptionArea.setLineWrap(true);
+        descriptionArea.setWrapStyleWord(true);
+        descriptionArea.setEditable(false);
+
+        columnClass = new Class[3];
+        columnClass[0] = TableButton.class;
+        columnClass[1] = String.class;
+        columnClass[2] = Boolean.class;
+
         setLayout(new MigLayout("insets 0 0 0 0", "[grow]", "[grow]"));
 
-        File FILTERS_DIRECTORY = new File(IGUIModule.CURRENT_DIR + SystemUtils.getDirectorySeparator() + "workspace");
-        FILTERS_DIRECTORY = FILTERS_DIRECTORY.isDirectory() ? FILTERS_DIRECTORY : IGUIModule.CURRENT_DIR;
 
         load = new JButton("Load Visualization Filter");
         load.addActionListener(new ActionListener()
@@ -77,9 +96,6 @@ public class VisualizationFiltersPane extends JPanel
             {
                 try
                 {
-                    if(!mainWindow.getDesign().hasNodes()){
-                        throw new Net2PlanException("A topology is necessary to add filters");
-                    }
                     int rc = fileChooser.showOpenDialog(null);
                     if (rc != JFileChooser.APPROVE_OPTION) return;
                     selectedFile = fileChooser.getSelectedFile();
@@ -94,34 +110,7 @@ public class VisualizationFiltersPane extends JPanel
                 }
             }
         });
-        delete = new JButton("Delete Visualization Filter");
-        delete.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                if (VisualizationFiltersController.getCurrentVisualizationFilters().size() == 0)
-                    JOptionPane.showMessageDialog(null, "No filters to remove");
-                else
-                {
-                    Set<String> filtersSet = new LinkedHashSet<String>();
-                    for (IVisualizationFilter vf : VisualizationFiltersController.getCurrentVisualizationFilters())
-                    {
-                        filtersSet.add(vf.getUniqueName());
-                    }
-                    Object out = JOptionPane.showInputDialog(null, "Please, select a filter to remove",
-                            "Remove visualization filter",
-                            JOptionPane.QUESTION_MESSAGE, null, filtersSet.toArray(new String[filtersSet.size()]),
-                            filtersSet.iterator().next());
 
-                    String filterNameToRemove = (String) out;
-                    VisualizationFiltersController.removeVisualizationFilter(filterNameToRemove);
-                    updateFiltersTable();
-                    mainWindow.updateNetPlanView();
-
-                }
-            }
-        });
         deleteAll = new JButton("Delete All Visualization Filters");
         deleteAll.addActionListener(new ActionListener()
         {
@@ -161,6 +150,7 @@ public class VisualizationFiltersPane extends JPanel
                 }
             }
         });
+
         andButton.setSelected(true);
         setLayout(new MigLayout("", "[][grow][]", "[][][][][grow]"));
         add(new JLabel("Filtering Options"), "top, growx, spanx 2, wrap, wmin 100");
@@ -168,10 +158,52 @@ public class VisualizationFiltersPane extends JPanel
         add(orButton, "wrap");
         add(new JLabel("Filters"), "spanx 3, wrap");
         add(new JScrollPane(table), "spanx 3, grow, wrap");
+        add(new JLabel("Description"), "spanx 3, wrap");
+        add(descriptionArea,"spanx 3, grow, wrap");
         add(load, "spanx 3, wrap");
-        add(delete, " spanx 3, wrap");
         add(deleteAll, " spanx, wrap");
 
+        table.addMouseListener(new MouseListener()
+        {
+            @Override
+            public void mouseClicked(MouseEvent e)
+            {
+                int clickedColumn = table.columnAtPoint(e.getPoint());
+                if(clickedColumn == 0)
+                {
+                    int clickedRow = table.rowAtPoint(e.getPoint());
+                    String filterToRemove = (String)table.getModel().getValueAt(clickedRow,1);
+                    VisualizationFiltersController.removeVisualizationFilter(filterToRemove);
+                    updateFiltersTable();
+                    mainWindow.updateNetPlanView();
+                }
+
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e)
+            {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e)
+            {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e)
+            {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e)
+            {
+
+            }
+        });
 
     }
 
@@ -198,17 +230,27 @@ public class VisualizationFiltersPane extends JPanel
         for(int i = 0;i<length;i++)
         {
             vf = currentVisFilters.get(i);
-            newData[i][0] = (Object)vf.getUniqueName();
-            newData[i][1] = (Object)vf.getDescription();
-            newData[i][2] = (Object)vf.isActive();
+            newData[i][0] = new TableButton("Remove");
+            newData[i][1] = vf.getUniqueName();
+            newData[i][2] = vf.isActive();
         }
 
 
         ((DefaultTableModel) tm).setDataVector(newData,HEADER);
         for(int j = 0;j<length;j++){
-
+            table.setCellRenderer(j,0,new TableButton("Remove"));
             table.setCellRenderer(j,2,new CheckBoxRenderer());
         }
+
+        TableColumn removeColumn = table.getColumn("Remove");
+        TableColumn activeColumn = table.getColumn("Active");
+        removeColumn.setResizable(false);
+        removeColumn.setMinWidth(90);
+        removeColumn.setMaxWidth(90);
+        activeColumn.setResizable(false);
+        activeColumn.setMinWidth(60);
+        activeColumn.setMaxWidth(60);
+
 
     }
 
@@ -248,15 +290,14 @@ public class VisualizationFiltersPane extends JPanel
             @Override
             public Class getColumnClass(int col)
             {
-                if(col == 2) return Boolean.class;
-
-                return String.class;
+                return columnClass[col];
             }
 
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex)
             {
-                if(columnIndex == 2) return true;
+                if(VisualizationFiltersController.getCurrentVisualizationFilters().size() == 0) return false;
+                if(columnIndex == 2 || columnIndex == 0) return true;
                 return false;
             }
 
@@ -267,7 +308,7 @@ public class VisualizationFiltersPane extends JPanel
                 {
                     if(value == null) return;
                     boolean visible = (Boolean) value;
-                    String filterToChange = (String)table.getModel().getValueAt(row,0);
+                    String filterToChange = (String)table.getModel().getValueAt(row,1);
                     IVisualizationFilter vf = VisualizationFiltersController.getVisualizationFilterByName(filterToChange);
                     vf.setActive(visible);
                     super.setValueAt(value, row, column);
@@ -285,6 +326,61 @@ public class VisualizationFiltersPane extends JPanel
                     return o1.getFirst().compareTo(o2.getFirst());
                 }
             }
+
+    private static class TableButton extends JButton implements TableCellRenderer, TableCellEditor {
+        private int selectedRow;
+        private int selectedColumn;
+
+        public TableButton(String text) {
+            super(text);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table,
+                                                       Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            return this;
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table,
+                                                     Object value, boolean isSelected, int row, int col) {
+            selectedRow = row;
+            selectedColumn = col;
+            return this;
+        }
+
+        @Override
+        public void addCellEditorListener(CellEditorListener arg0) {
+        }
+
+        @Override
+        public void cancelCellEditing() {
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return "";
+        }
+
+        @Override
+        public boolean isCellEditable(EventObject arg0) {
+            return true;
+        }
+
+        @Override
+        public void removeCellEditorListener(CellEditorListener arg0) {
+        }
+
+        @Override
+        public boolean shouldSelectCell(EventObject arg0) {
+            return true;
+        }
+
+        @Override
+        public boolean stopCellEditing() {
+            return true;
+        }
+    }
     }
 
 
