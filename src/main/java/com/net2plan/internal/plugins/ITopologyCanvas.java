@@ -188,7 +188,7 @@ public abstract class ITopologyCanvas implements Plugin
 	 * @param currentPoint Current point where the mouse is
 	 * @since 0.3.1
 	 */
-	public abstract void panTo(Point initialPoint, Point currentPoint);
+	public abstract void panTo(Point2D initialPoint, Point2D currentPoint);
 
 	/**
 	 * Refreshes the canvas.

@@ -360,41 +360,24 @@ public final class JUNGCanvas extends ITopologyCanvas
     }
 
     @Override
-    public void panTo(Point initialPoint, Point currentPoint)
-    {
-        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
-        final Point2D q = layoutTransformer.inverseTransform(initialPoint);
-        final Point2D lvc = layoutTransformer.inverseTransform(currentPoint);
-        final double dxJungCoord = (lvc.getX() - q.getX());
-        final double dyJungCoord = (lvc.getY() - q.getY());
-
-        final double dxPanelPixelCoord = (currentPoint.getX() - initialPoint.getX());
-        final double dyPanelPixelCoord = (currentPoint.getY() - initialPoint.getY());
-
-        layoutTransformer.translate(dxJungCoord, dyJungCoord);
-
-        if (OSMMapController.isMapActivated())
-        {
-            OSMMapController.moveMap(-dxPanelPixelCoord, -dyPanelPixelCoord);
-        }
-    }
-
     public void panTo(Point2D initialPoint, Point2D currentPoint)
     {
-        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
-        final Point2D q = layoutTransformer.inverseTransform(initialPoint);
-        final Point2D lvc = layoutTransformer.inverseTransform(currentPoint);
-        final double dxJungCoord = (lvc.getX() - q.getX());
-        final double dyJungCoord = (lvc.getY() - q.getY());
-
-        final double dxPanelPixelCoord = (currentPoint.getX() - initialPoint.getX());
-        final double dyPanelPixelCoord = (currentPoint.getY() - initialPoint.getY());
-
-        layoutTransformer.translate(dxJungCoord, dyJungCoord);
-
         if (OSMMapController.isMapActivated())
         {
+            final double dxPanelPixelCoord = (currentPoint.getX() - initialPoint.getX());
+            final double dyPanelPixelCoord = (currentPoint.getY() - initialPoint.getY());
+
             OSMMapController.moveMap(-dxPanelPixelCoord, -dyPanelPixelCoord);
+            OSMMapController.alignPanJUNGToOSMMap();
+        } else
+        {
+            final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+            final Point2D q = layoutTransformer.inverseTransform(initialPoint);
+            final Point2D lvc = layoutTransformer.inverseTransform(currentPoint);
+            final double dxJungCoord = (lvc.getX() - q.getX());
+            final double dyJungCoord = (lvc.getY() - q.getY());
+
+            layoutTransformer.translate(dxJungCoord, dyJungCoord);
         }
     }
 
@@ -695,6 +678,7 @@ public final class JUNGCanvas extends ITopologyCanvas
         if (OSMMapController.isMapActivated())
         {
             OSMMapController.zoomIn();
+            OSMMapController.alignZoomJUNGToOSMMap();
         } else
         {
             zoomIn(vv.getCenter());
@@ -707,6 +691,7 @@ public final class JUNGCanvas extends ITopologyCanvas
         if (OSMMapController.isMapActivated())
         {
             OSMMapController.zoomOut();
+            OSMMapController.alignZoomJUNGToOSMMap();
         } else
         {
             zoomOut(vv.getCenter());
