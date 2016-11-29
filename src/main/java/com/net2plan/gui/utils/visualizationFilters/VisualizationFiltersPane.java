@@ -33,11 +33,13 @@ import java.util.List;
 /**
  * @author César
  * @date 19/11/2016
+ * Class TableButton seen in
+ * http://stackoverflow.com/questions/1475543/how-to-add-button-in-a-row-of-jtable-in-swing-java/1475625#1475625?newreg=e3d8c64a54b44aa6980ff4b0c6a5a123
  */
 public class VisualizationFiltersPane extends JPanel
 {
     private final INetworkCallback mainWindow;
-    private JButton load, deleteAll;
+    private JButton load, deleteAll, activeAll, deactiveAll;
     private JRadioButton andButton, orButton;
     private static JFileChooser fileChooser;
     private File selectedFile;
@@ -78,6 +80,7 @@ public class VisualizationFiltersPane extends JPanel
         activeColumn.setResizable(false);
         activeColumn.setMinWidth(60);
         activeColumn.setMaxWidth(60);
+        updateFiltersTable();
 
         descriptionArea = new JTextArea();
         descriptionArea.setFont(new JLabel().getFont());
@@ -98,7 +101,7 @@ public class VisualizationFiltersPane extends JPanel
         setLayout(new MigLayout("insets 0 0 0 0", "[grow]", "[grow]"));
 
 
-        load = new JButton("Load Visualization Filter");
+        load = new JButton("Load");
         load.addActionListener(new ActionListener()
         {
             @Override
@@ -121,7 +124,7 @@ public class VisualizationFiltersPane extends JPanel
             }
         });
 
-        deleteAll = new JButton("Delete All Visualization Filters");
+        deleteAll = new JButton("Remove All");
         deleteAll.addActionListener(new ActionListener()
         {
             @Override
@@ -160,20 +163,49 @@ public class VisualizationFiltersPane extends JPanel
                 }
             }
         });
-
+        activeAll = new JButton("Active All");
+        activeAll.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                for(IVisualizationFilter vf : VisualizationFiltersController.getCurrentVisualizationFilters())
+                {
+                    vf.setActive(true);
+                }
+                updateFiltersTable();
+                mainWindow.updateNetPlanView();
+            }
+        });
+        deactiveAll = new JButton("Deactive All");
+        deactiveAll.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                for(IVisualizationFilter vf : VisualizationFiltersController.getCurrentVisualizationFilters())
+                {
+                    vf.setActive(false);
+                }
+                updateFiltersTable();
+                mainWindow.updateNetPlanView();
+            }
+        });
         andButton.setSelected(true);
         setLayout(new MigLayout("", "[][grow][]", "[][][][][grow]"));
-        add(txt_file, "growx");
-        add(load, "wrap");
+        add(new JLabel("Filters File"));
+        add(txt_file, "grow");
+        add(load, "spanx");
         add(new JLabel("Filtering Options"), "top, growx, spanx 2, wrap, wmin 100");
-        add(andButton, "wrap");
+        add(andButton);
         add(orButton, "wrap");
         add(new JLabel("Filters"), "spanx 3, wrap");
+        add(deleteAll);
+        add(activeAll);
+        add(deactiveAll, "wrap");
         add(new JScrollPane(table), "spanx 3, grow, wrap");
         add(new JLabel("Description"), "spanx 3, wrap");
-        add(descriptionArea,"spanx 3, grow, wrap");
-        add(load, "spanx 3, wrap");
-        add(deleteAll, " spanx, wrap");
+        add(new JScrollPane(descriptionArea),"spanx 3, grow, wrap");
 
         table.addMouseListener(new MouseListener()
         {
@@ -187,6 +219,7 @@ public class VisualizationFiltersPane extends JPanel
                 if(clickedColumn == 0)
                 {
                     VisualizationFiltersController.removeVisualizationFilter(selectedFilter);
+                    descriptionArea.setText("");
                     updateFiltersTable();
                     mainWindow.updateNetPlanView();
                 }
@@ -289,7 +322,7 @@ public class VisualizationFiltersPane extends JPanel
         ((DefaultTableModel) tm).setDataVector(newData,HEADER);
         for(int j = 0;j<length;j++){
             table.setCellRenderer(j,0,new TableButton("Remove"));
-            table.setCellRenderer(j,2,new CheckBoxRenderer());
+            table.setCellRenderer(j,2,CHECKBOX_RENDERER);
         }
 
         TableColumn removeColumn = table.getColumn("Remove");

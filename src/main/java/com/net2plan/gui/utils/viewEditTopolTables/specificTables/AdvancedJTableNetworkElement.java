@@ -63,8 +63,8 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     protected final JTable mainTable;
     protected final JTable fixedTable;
     private final JPopupMenu showHideMenu, fixMenu;
-    private final JMenu showMenu, hideMenu;
-    private final JMenuItem showAllItem, hideAllItem;
+    private final JMenu showMenu;
+    private final JMenuItem showAllItem, hideAllItem, hideColumn;
     private final ArrayList<TableColumn> hiddenColumns, shownColumns, removedColumns;
     private final Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn;
     private JCheckBoxMenuItem fixCheckBox, unfixCheckBox, attributesItem;
@@ -141,10 +141,10 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         showHideMenu = new JPopupMenu();
         fixMenu = new JPopupMenu();
         showMenu = new JMenu("Show column");
-        hideMenu = new JMenu("Hide column");
         fixCheckBox = new JCheckBoxMenuItem("Lock column", false);
         unfixCheckBox = new JCheckBoxMenuItem("Unlock column", true);
         showAllItem = new JMenuItem("Show all columns");
+        hideColumn = new JMenuItem("Hide column");
         hideAllItem = new JMenuItem("Hide all columns");
         attributesItem = new JCheckBoxMenuItem("Expand attributes as columns", false);
 
@@ -194,12 +194,12 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 showHideMenu.add(new JPopupMenu.Separator());
             }
             showHideMenu.add(showMenu);
-            showHideMenu.add(hideMenu);
             showHideMenu.add(new JPopupMenu.Separator());
             showHideMenu.add(showAllItem);
             showHideMenu.add(hideAllItem);
 
             fixMenu.add(fixCheckBox);
+            fixMenu.add(hideColumn);
 
 
             mainTable.getTableHeader().addMouseListener(new MouseAdapter()
@@ -211,15 +211,16 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                     if (ev.isPopupTrigger())
                     {
                         updateShowMenu();
-                        updateHideMenu();
                         checkNewIndexes();
                         TableColumn clickedColumn = mainTable.getColumnModel().getColumn(mainTable.columnAtPoint(ev.getPoint()));
                         String clickedColumnName = clickedColumn.getHeaderValue().toString();
                         int clickedColumnIndex = indexForEachColumn.get(clickedColumnName);
                         fixCheckBox.setEnabled(true);
+                        hideColumn.setEnabled(true);
                         if (mainTable.getColumnModel().getColumnCount() <= 1)
                         {
                             fixCheckBox.setEnabled(false);
+                            hideColumn.setEnabled(false);
                         }
                         fixMenu.show(ev.getComponent(), ev.getX(), ev.getY());
                         fixCheckBox.addItemListener(new ItemListener()
@@ -233,12 +234,19 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                     shownColumns.remove(mainTable.getColumnModel().getColumn(clickedColumnIndex));
                                     fromMainTableToFixedTable(clickedColumnIndex);
                                     updateShowMenu();
-                                    updateHideMenu();
                                     checkNewIndexes();
                                     fixMenu.setVisible(false);
                                     fixCheckBox.setSelected(false);
                                 }
 
+                            }
+                        });
+                        hideColumn.addActionListener(new ActionListener()
+                        {
+                            @Override
+                            public void actionPerformed(ActionEvent e)
+                            {
+                                System.out.println("SE HA PULSADO LA COLUMNA "+clickedColumnName+" EN LA POSICION "+clickedColumnIndex);
                             }
                         });
 
@@ -257,16 +265,10 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                     {
                         checkNewIndexes();
                         updateShowMenu();
-                        updateHideMenu();
                         TableColumn clickedColumn = fixedTable.getColumnModel().getColumn(fixedTable.columnAtPoint(e.getPoint()));
                         int clickedColumnIndex = fixedTable.getColumnModel().getColumnIndex(clickedColumn.getIdentifier());
-                        hideMenu.setEnabled(true);
                         showMenu.setEnabled(true);
                         unfixCheckBox.setEnabled(true);
-                        if (mainTable.getColumnModel().getColumnCount() <= 1)
-                        {
-                            hideMenu.setEnabled(false);
-                        }
                         if (shownColumns.size() == 0)
                         {
                             showMenu.setEnabled(false);
@@ -287,7 +289,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                     shownColumns.add(fixedTable.getColumnModel().getColumn(clickedColumnIndex));
                                     fromFixedTableToMainTable(clickedColumnIndex);
                                     updateShowMenu();
-                                    updateHideMenu();
                                     checkNewIndexes();
                                     showHideMenu.setVisible(false);
                                     unfixCheckBox.setSelected(true);
@@ -311,26 +312,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             });
                         }
 
-
-                        for (int j = 0; j < shownHeaderItems.size(); j++)
-                        {
-                            JMenuItem currentItem = shownHeaderItems.get(j);
-                            int position = j;
-                            if (mainTable.getColumnModel().getColumnCount() > 1)
-                            {
-                                currentItem.addActionListener(new ActionListener()
-                                {
-
-                                    @Override
-                                    public void actionPerformed(ActionEvent e)
-                                    {
-                                        columnIndexToHide = indexForEachColumn.get(shownColumns.get(position).getHeaderValue().toString());
-                                        hideColumn(columnIndexToHide);
-                                        checkNewIndexes();
-                                    }
-                                });
-                            }
-                        }
                     }
                 }
 
@@ -445,27 +426,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         }
 
     }
-
-    /**
-     * Re-configures the menu to hide shown columns
-     *
-     * @param
-     */
-
-    private void updateHideMenu()
-    {
-        hideMenu.removeAll();
-        shownColumns.clear();
-        shownHeaderItems = new ArrayList<>();
-        for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
-        {
-            shownHeaderItems.add(new JMenuItem(mainTable.getColumnModel().getColumn(i).getHeaderValue().toString()));
-            hideMenu.add(shownHeaderItems.get(i));
-            shownColumns.add(mainTable.getColumnModel().getColumn(i));
-        }
-
-    }
-
 
 
     /**
