@@ -228,7 +228,7 @@ public class OSMMapController
 
             final int newZoom = mapViewer.getZoom();
 
-            ((JUNGCanvas) canvas).panTo(new Point2D.Double(currentMapCenter.getX() / ((newZoom - currentZoom) + 1), currentMapCenter.getY() / ((newZoom - currentZoom) + 1)), mapViewer.getCenter());
+            ((JUNGCanvas) canvas).panTo(new Point2D.Double(currentMapCenter.getX() * ((currentZoom - newZoom) + 1), currentMapCenter.getY() * ((currentZoom - newZoom) + 1)), mapViewer.getCenter());
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
