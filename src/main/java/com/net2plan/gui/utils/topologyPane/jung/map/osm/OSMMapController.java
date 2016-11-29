@@ -196,7 +196,7 @@ public class OSMMapController
 
         System.out.println(zoomChange);
 
-        if (zoomChange != 1)
+        if (zoomChange != 0)
         {
             ((JUNGCanvas) canvas).zoom((float) Math.pow(2, -zoomChange));
         }
