@@ -210,7 +210,6 @@ public final class JUNGCanvas extends ITopologyCanvas
     }
 
 
-
     /**
      * Converts a point from the SWING coordinates system into a point from the JUNG coordinates system.
      *
@@ -680,8 +679,9 @@ public final class JUNGCanvas extends ITopologyCanvas
      * Moves a node to the desired point.
      * This method does not change the node's xy coordinates.
      * Have in mind that by using this methos, the xy coordinates from the table do not equal the coordinates from the topology.
+     *
      * @param npNode Node to move.
-     * @param point Point to which the node will be moved.
+     * @param point  Point to which the node will be moved.
      */
     public void moveNode(Node npNode, Point2D point)
     {

@@ -217,17 +217,18 @@ public class OSMMapController
     {
         if (isMapActivated())
         {
-            System.out.println(mapViewer.getCenter());
+            final Point2D currentMapCenter = mapViewer.getCenter();
+            final int currentZoom = mapViewer.getZoom();
+
             centerMapToNodes();
 
-            final int zoom = mapViewer.getZoom();
-            mapViewer.setZoom(zoom - 1);
+            mapViewer.setZoom(currentZoom - 1);
 
             reloadMap();
 
-            System.out.println(mapViewer.getCenter());
+            final int newZoom = mapViewer.getZoom();
 
-            //((JUNGCanvas) canvas).panTo();
+            ((JUNGCanvas) canvas).panTo(new Point2D.Double(currentMapCenter.getX() / ((newZoom - currentZoom) + 1), currentMapCenter.getY() / ((newZoom - currentZoom) + 1)), mapViewer.getCenter());
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
@@ -238,17 +239,18 @@ public class OSMMapController
     {
         if (isMapActivated())
         {
-            final Point2D mapCenter = mapViewer.getCenter();
+            final Point2D currentMapCenter = mapViewer.getCenter();
+            final int currentZoom = mapViewer.getZoom();
+
             centerMapToNodes();
 
-            final int zoom = mapViewer.getZoom();
-            mapViewer.setZoom(zoom + 1);
+            mapViewer.setZoom(currentZoom + 1);
 
             reloadMap();
 
-            System.out.println(mapViewer.getCenter());
+            final int newZoom = mapViewer.getZoom();
 
-            ((JUNGCanvas) canvas).panTo(new Point2D.Double(mapCenter.getX() / 2, mapCenter.getY() / 2), mapViewer.getCenter());
+            ((JUNGCanvas) canvas).panTo(new Point2D.Double(currentMapCenter.getX() / ((newZoom - currentZoom) + 1), currentMapCenter.getY() / ((newZoom - currentZoom) + 1)), mapViewer.getCenter());
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
