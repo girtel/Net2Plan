@@ -380,6 +380,25 @@ public final class JUNGCanvas extends ITopologyCanvas
         }
     }
 
+    public void panTo(Point2D initialPoint, Point2D currentPoint)
+    {
+        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+        final Point2D q = layoutTransformer.inverseTransform(initialPoint);
+        final Point2D lvc = layoutTransformer.inverseTransform(currentPoint);
+        final double dxJungCoord = (lvc.getX() - q.getX());
+        final double dyJungCoord = (lvc.getY() - q.getY());
+
+        final double dxPanelPixelCoord = (currentPoint.getX() - initialPoint.getX());
+        final double dyPanelPixelCoord = (currentPoint.getY() - initialPoint.getY());
+
+        layoutTransformer.translate(dxJungCoord, dyJungCoord);
+
+        if (OSMMapController.isMapActivated())
+        {
+            OSMMapController.moveMap(-dxPanelPixelCoord, -dyPanelPixelCoord);
+        }
+    }
+
     @Override
     public void refresh()
     {

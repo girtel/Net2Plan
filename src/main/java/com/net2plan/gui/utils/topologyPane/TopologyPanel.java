@@ -295,18 +295,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(btn_view);
         toolbar.add(btn_reset);
 
-        this.addComponentListener(new ComponentAdapter()
-        {
-            @Override
-            public void componentResized(ComponentEvent e)
-            {
-                if (getSize().getHeight() != 0)
-                {
-                    canvas.zoomAll();
-                }
-            }
-        });
-
         increaseNodeSize.addActionListener(new ActionListener()
         {
             @Override

@@ -93,6 +93,8 @@ public class OSMMapController
         // Calculating each node geoposition.
         buildNodeGeoPositionMap();
 
+        final Point2D mapCenter = mapViewer.getCenter();
+
         // Moving nodes
         for (Map.Entry<Node, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
         {
@@ -215,13 +217,17 @@ public class OSMMapController
     {
         if (isMapActivated())
         {
-            final int zoom = mapViewer.getZoom();
-
+            System.out.println(mapViewer.getCenter());
             centerMapToNodes();
 
+            final int zoom = mapViewer.getZoom();
             mapViewer.setZoom(zoom - 1);
 
             reloadMap();
+
+            System.out.println(mapViewer.getCenter());
+
+            //((JUNGCanvas) canvas).panTo();
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
@@ -232,14 +238,17 @@ public class OSMMapController
     {
         if (isMapActivated())
         {
-            final GeoPosition mapCenter = mapViewer.getCenterPosition();
-            final int zoom = mapViewer.getZoom();
-
+            final Point2D mapCenter = mapViewer.getCenter();
             centerMapToNodes();
 
+            final int zoom = mapViewer.getZoom();
             mapViewer.setZoom(zoom + 1);
 
             reloadMap();
+
+            System.out.println(mapViewer.getCenter());
+
+            ((JUNGCanvas) canvas).panTo(new Point2D.Double(mapCenter.getX() / 2, mapCenter.getY() / 2), mapViewer.getCenter());
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
