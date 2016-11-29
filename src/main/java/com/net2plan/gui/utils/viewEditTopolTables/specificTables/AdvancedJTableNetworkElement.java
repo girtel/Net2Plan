@@ -64,10 +64,10 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     protected final JTable fixedTable;
     private final JPopupMenu showHideMenu, fixMenu;
     private final JMenu showMenu;
-    private final JMenuItem showAllItem, hideAllItem, hideColumn;
+    private final JMenuItem showAllItem, hideAllItem;
     private final ArrayList<TableColumn> hiddenColumns, shownColumns, removedColumns;
     private final Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn;
-    private JCheckBoxMenuItem fixCheckBox, unfixCheckBox, attributesItem;
+    private JCheckBoxMenuItem fixCheckBox, unfixCheckBox, attributesItem, hideColumn;
     private int columnIndexToHide;
     private ArrayList<JMenuItem> hiddenHeaderItems, shownHeaderItems;
     private boolean recoverHiddenColumns;
@@ -144,7 +144,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         fixCheckBox = new JCheckBoxMenuItem("Lock column", false);
         unfixCheckBox = new JCheckBoxMenuItem("Unlock column", true);
         showAllItem = new JMenuItem("Show all columns");
-        hideColumn = new JMenuItem("Hide column");
+        hideColumn = new JCheckBoxMenuItem("Hide column",false);
         hideAllItem = new JMenuItem("Hide all columns");
         attributesItem = new JCheckBoxMenuItem("Expand attributes as columns", false);
 
@@ -241,12 +241,18 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                             }
                         });
-                        hideColumn.addActionListener(new ActionListener()
+                        hideColumn.addItemListener(new ItemListener()
                         {
                             @Override
-                            public void actionPerformed(ActionEvent e)
+                            public void itemStateChanged(ItemEvent e)
                             {
-                                System.out.println("SE HA PULSADO LA COLUMNA "+clickedColumnName+" EN LA POSICION "+clickedColumnIndex);
+                                if(hideColumn.isSelected())
+                                {
+                                    hideColumn(clickedColumnIndex);
+                                    checkNewIndexes();
+                                    hideColumn.setSelected(false);
+                                }
+
                             }
                         });
 
