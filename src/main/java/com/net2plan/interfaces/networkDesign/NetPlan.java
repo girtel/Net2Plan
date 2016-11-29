@@ -775,6 +775,33 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
+	 * <p>Adds a new Resource to the network. Resources are associated to a node, and have no layer associated to it.</p>
+	 * @param xCoord Node position in x-axis
+	 * @param yCoord Node position in y-axis
+	 * @param name Node name ({@code null} will be converted to "Node " + node identifier)
+	 * @param attributes Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
+	 * @return The newly created node object
+	 * @see com.net2plan.interfaces.networkDesign.Node
+	 */
+	public Resource addResource (String type , String name , Node hostNode , double capacity , String capacityMeasurementUnits,
+				Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTraffic , AttributeMap attributes)
+	{
+		checkIsModifiable();
+
+		final long resourceId = nextElementId.longValue();
+		nextElementId.increment();
+		
+		Resource resource = new Resource (this , resourceId , resources.size () , type , name , hostNode , capacity , 
+				capacityMeasurementUnits, capacityIOccupyInBaseResource , processingTimeToTraversingTraffic , attributes);
+
+		resources.add (resource);
+		cache_id2ResourceMap.put (resourceId , resource);
+		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
+		return resource;
+	}
+
+	
+	/**
 	 * <p>Adds a new protection segment. All the links must belong to the same layer</p>
 	 *
 	 * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}.</p>
@@ -825,17 +852,36 @@ public class NetPlan extends NetworkElement
 	 * @see com.net2plan.interfaces.networkDesign.Demand
 	 * @see com.net2plan.interfaces.networkDesign.Link
 	 */
-	public Route addRoute(Demand demand , double carriedTraffic, double occupiedLinkCapacity, List<Link> sequenceOfLinks, Map<String, String> attributes)
+	public Route addRoute (Demand demand , double carriedTraffic, double occupiedLinkCapacity, List<Link> sequenceOfLinks, Map<String, String> attributes)
+	{ 
+		return addServiceChain(demand , carriedTraffic, occupiedLinkCapacity, sequenceOfLinks, null , attributes);
+	}
+	
+	/**
+	 * <p>Adds a new traffic service chain, which is a route which also traverses and occupied resources.  </p>
+	 *
+	 * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}.</p>
+	 * @param demand Demand associated to the route
+	 * @param carriedTraffic Carried traffic. It must be greater or equal than zero
+	 * @param occupiedLinkCapacity Occupied link capacity, it must be greater or equal than zero.
+	 * @param sequenceOfLinksAndResources Sequence of Link and Resource objects defining the sequence traversed by the route
+	 * @param occupationInformationInTraversedResources a map with one entry per different resource traversed, and associated to it the total amount of capacity utilized in that resource by this service chain 
+	 * @param attributes Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
+	 * @return The newly created route object
+	 */
+	public Route addServiceChain(Demand demand , double carriedTraffic, double occupiedLinkCapacity, List<? extends NetworkElement> sequenceOfLinksAndResources, Map <Resource,Double> occupationInformationInTraversedResources , Map<String, String> attributes)
 	{
 		carriedTraffic = NetPlan.adjustToTolerance(carriedTraffic);
 		occupiedLinkCapacity = NetPlan.adjustToTolerance(occupiedLinkCapacity);
 
 		checkIsModifiable();
 		checkInThisNetPlan(demand);
-		checkPathValidityForDemand(sequenceOfLinks, demand);
+		Pair<List<Link>,List<Resource>> listLinksAndListResources = checkPathValidityForDemand(sequenceOfLinksAndResources, demand);
 		demand.layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		
-		
+		if (occupationInformationInTraversedResources == null) occupationInformationInTraversedResources = new HashMap<Resource,Double> ();
+		for (double val : occupationInformationInTraversedResources.values()) if (val < 0) throw new Net2PlanException ("The occupation of a resource cannot be negative");
+		if (!occupationInformationInTraversedResources.keySet().equals(new HashSet<Resource> (listLinksAndListResources.getSecond())))
+			throw new Net2PlanException ("The set of traversed resources does not match with the resources occupation information");
 		if (carriedTraffic < 0) throw new Net2PlanException ("Carried traffic must be non-negative");
 		if (occupiedLinkCapacity < 0) occupiedLinkCapacity = carriedTraffic;
 		NetworkLayer layer = demand.layer;
@@ -843,7 +889,7 @@ public class NetPlan extends NetworkElement
 		final long routeId = nextElementId.longValue();
 		nextElementId.increment();
 		
-		Route route = new Route(this, routeId, layer.routes.size(), demand , sequenceOfLinks , new AttributeMap(attributes));
+		Route route = new Route(this, routeId, layer.routes.size(), demand , sequenceOfLinksAndResources , new AttributeMap(attributes));
 		
 		layer.routes.add(route);
 		cache_id2RouteMap.put (routeId,route);
@@ -857,7 +903,7 @@ public class NetPlan extends NetworkElement
 		}
 		demand.cache_routes.add (route);
 		if (!isUpThisRoute) layer.cache_routesDown.add (route);
-		route.setCarriedTraffic(carriedTraffic , occupiedLinkCapacity);
+		route.setCarriedTrafficAndResourcesOccupationInformation(carriedTraffic , occupiedLinkCapacity , occupationInformationInTraversedResources);
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 		return route;
 	}
@@ -1465,6 +1511,7 @@ public class NetPlan extends NetworkElement
 		if (e == null) throw new Net2PlanException ("Network element is null");
 		if (e.netPlan != this) throw new Net2PlanException ("Element " + e + " is not attached to this NetPlan object.");
 		if (e instanceof Node) { if (e != nodes.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
+		else if (e instanceof Resource) { if (e != resources.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
 		else if (e instanceof SharedRiskGroup) { if (e != srgs.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
 		else if (e instanceof NetworkLayer) { if (e != layers.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
 		if (layer != null) 
@@ -1528,20 +1575,38 @@ public class NetPlan extends NetworkElement
 	}
 	
 	/**
-	 * <p>Checks if a sequence of links is valid, that is all the links follow a contiguous path from the demand ingress node to the egress node. If the sequence
+	 * <p>Checks if a sequence of links and resources traversed is valid, that is all the links follow a contiguous path from the demand ingress node to the egress node, and the resources are traversed in the appropriate order. If the sequence
 	 * is not valid, an exception is thrown.</p>
 	 * @param path Sequence of links
 	 * @param d Demand
 	 * @see com.net2plan.interfaces.networkDesign.Demand
 	 * @see com.net2plan.interfaces.networkDesign.Link
 	 */
-	void checkPathValidityForDemand(List<Link> path, Demand d)
+	Pair<List<Link>,List<Resource>> checkPathValidityForDemand(List<? extends NetworkElement> path, Demand d)
 	{
 		checkInThisNetPlan(d);
 		checkInThisNetPlanAndLayer(path , d.layer);
-		checkContiguousPath (path , d.layer , d.ingressNode, d.egressNode);
+		LinkedList<Link> links = new LinkedList<Link> ();
+		List<Resource> resources = new ArrayList<Resource> ();
+		for (NetworkElement e : path)
+		{
+			if (e == null)throw new Net2PlanException ("A link/resource in the sequence is null");
+			if (e instanceof Link) links.add((Link)e);  
+			else if (e instanceof Resource) 
+			{ 
+				resources.add((Resource)e); 
+				if (links.isEmpty() && !((Resource) e).hostNode.equals(d.ingressNode)) throw new Net2PlanException ("Wrong resource node in the service chain");
+				if (!links.isEmpty() && !((Resource) e).hostNode.equals(links.getLast().destinationNode)) throw new Net2PlanException ("Wrong resource node in the service chain");
+			}
+			else throw new RuntimeException ("Bad");
+		}
+		checkContiguousPath (links , d.layer , d.ingressNode, d.egressNode);
+		if (resources.size() != d.mandatorySequenceOfTraversedResourceTypes.size()) throw new Net2PlanException ("The path does not follow the sequence of resources of the service chain request");
+		for (int cont = 0; cont < resources.size() ; cont ++) if (!resources.get(cont).type.equals(d.mandatorySequenceOfTraversedResourceTypes.get(cont))) throw new Net2PlanException ("The path does not follow the sequence of resources of the service chain request");
+		return Pair.of(links , resources);
 	}
 
+	
 	/**
 	 * <p>Returns a deep copy of the current design.</p>
 	 * 
@@ -1604,7 +1669,7 @@ public class NetPlan extends NetworkElement
 		for (Resource originResource : originNetPlan.resources) 
 		{
 			Resource newElement = new Resource (this , originResource.id , originResource.index , this.cache_id2NodeMap.get(originResource.hostNode.id) , 
-					originResource.capacity , originResource.capacityMeasurementUnits , null , originResource.attributes);
+					originResource.capacity , originResource.capacityMeasurementUnits , null , originResource.processingTimeToTraversingTrafficInMs , originResource.attributes);
 			cache_id2ResourceMap.put(originResource.id, newElement);
 			resources.add (newElement);
 		}
@@ -6075,6 +6140,7 @@ public class NetPlan extends NetworkElement
 		this.checkInThisNetPlan (defaultLayer);
 
 		for (Node node : nodes) node.checkCachesConsistency(); 
+		for (Resource res : resources) res.checkCachesConsistency(); 
 		for (SharedRiskGroup srg : srgs) srg.checkCachesConsistency();
 		for (NetworkLayer layer : layers)
 		{

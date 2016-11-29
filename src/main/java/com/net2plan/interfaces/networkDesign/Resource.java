@@ -1,3 +1,4 @@
+
 //1) Repasar esto
 //2) Que todos los cambios impliquen update: anadir cambios de factores, completar todos
 //3) las rutas no se pueden anadir aqui: aqui solo tenemos una cache, es en las rutas donde se fija esto.
@@ -360,45 +361,28 @@ public class Resource extends NetworkElement
 
 	void checkCachesConsistency ()
 	{
-//		for (Link link : links) if (!link.cache_srgs.contains(this)) throw new RuntimeException ("Bad");
-//		for (Node node : nodes) if (!node.cache_nodeSRGs.contains(this)) throw new RuntimeException ("Bad");
-	}
-
-	static void checkInNetPlanObject (Pair<Resource,Double> resourcesTraversedPerNodeSequenceOrder [] , NetPlan np)
-	{
-		for (Pair<Resource,Double> pair : resourcesTraversedPerNodeSequenceOrder)
+		double accumOccupCap = 0;
+		for (Entry<Resource,Double> upperEntry : capacityUpperResourcesOccupyInMe.entrySet())
 		{
-			if (pair == null) continue;
-			np.checkAttachedToNetPlanObject(pair.getFirst().netPlan);
+			final Resource upperResource = upperEntry.getKey();
+			final double val = upperEntry.getValue();
+			if (upperResource.capacityIOccupyInBaseResource.get(this) != val) throw new RuntimeException ("Bad");
+			accumOccupCap += val;
 		}
-	}
-	
-	
-	/* Check that positions with resources, the resource node is the end node of the corresponding link */
-	static void checkResourceTraversingSequence (List<Node> seqNodes , Pair<Resource,Double> resourcesTraversedPerNodeSequenceOrder [])
-	{
-		if (seqNodes.size() != resourcesTraversedPerNodeSequenceOrder.length) throw new Net2PlanException ("Wrong format of the resources traversed info");
-		for (int nodeOrder = 0; nodeOrder < seqNodes.size() ; nodeOrder ++)
+		for (Entry<Resource,Double> lowerEntry : capacityIOccupyInBaseResource.entrySet())
 		{
-			if (resourcesTraversedPerNodeSequenceOrder[nodeOrder] == null) continue;
-			if (seqNodes.get(nodeOrder) != resourcesTraversedPerNodeSequenceOrder[nodeOrder].getFirst().hostNode)
-				throw new Net2PlanException ("Wrong values in the resources traversed info");
-			if (resourcesTraversedPerNodeSequenceOrder[nodeOrder].getSecond () < 0) throw new Net2PlanException ("Wrong format of the resources traversed info");
+			final Resource lowerResource = lowerEntry.getKey();
+			final double val = lowerEntry.getValue();
+			if (lowerResource.capacityUpperResourcesOccupyInMe.get(this) != val) throw new RuntimeException ("Bad");
 		}
-	}
-
-	/* Check that positions with resources, the resource node is the end node of the corresponding link */
-	static void checkResourceTraversingSequenceOfTypes (List<String> types , Pair<Resource,Double> resourcesTraversedPerNodeSequenceOrder [])
-	{
-		int alreadyValidatedTypes = 0;
-		for (int nodeOrder = 0; nodeOrder < resourcesTraversedPerNodeSequenceOrder.length ; nodeOrder ++)
+		for (Entry<Route,Double> travRoute : cache_traversingRoutesAndOccupiedCapacities.entrySet())
 		{
-			if (resourcesTraversedPerNodeSequenceOrder[nodeOrder] == null) continue;
-			String resourceType = resourcesTraversedPerNodeSequenceOrder[nodeOrder].getFirst ().type;
-			if (!resourceType.equals(types.get(alreadyValidatedTypes))) throw new Net2PlanException ("Wrong order of resources and types");
-			alreadyValidatedTypes ++;
+			final Route r = travRoute.getKey();
+			final double val = travRoute.getValue();
+			if (r.resourcesOccupationMap.get(this) != val) throw new RuntimeException ("Bad");
+			accumOccupCap += val;
 		}
-		if (alreadyValidatedTypes != types.size()) throw new Net2PlanException ("Wrong order of resources and types");
+		if (Math.abs(accumOccupCap - cache_totalOccupiedCapacity) > 1e-3) throw new RuntimeException ("Bad");
 	}
 
 }
