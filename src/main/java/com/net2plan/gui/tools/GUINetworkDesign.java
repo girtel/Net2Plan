@@ -156,7 +156,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         WindowUtils.clearFloatingWindows();
 
         final JTabbedPane tabPane = new JTabbedPane();
-        tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.control), viewEditTopTables);
+        tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.network), viewEditTopTables);
         tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.offline), executionPane);
         tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.online), onlineSimulationPane);
         tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.report), reportPane);
@@ -229,7 +229,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
                         });
 
                         // Disabling the pop up button for the network state tab.
-                        if (WindowController.WindowToTab.parseString(tabPane.getTitleAt(tabPane.getSelectedIndex())) == WindowController.WindowToTab.control)
+                        if (WindowController.WindowToTab.parseString(tabPane.getTitleAt(tabPane.getSelectedIndex())) == WindowController.WindowToTab.network)
                         {
                             popWindow.setEnabled(false);
                         }
