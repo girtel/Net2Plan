@@ -330,12 +330,20 @@ public class OSMMapController
         return isMapActivated;
     }
 
+    public static void disableMapSupport()
+    {
+        if (isMapActivated())
+        {
+            setMapState(false);
+        }
+    }
+
     /**
      * Activates or deactivates the map component.
      *
      * @param state Map activation state.
      */
-    public static void setMapState(final boolean state)
+    private static void setMapState(final boolean state)
     {
         // Activates the map so that the JUNG Canvas changes its behaviour.
         isMapActivated = state;
