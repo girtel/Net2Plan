@@ -39,7 +39,6 @@ import com.net2plan.internal.Constants.DialogType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.ITopologyCanvas;
-import com.net2plan.utils.TopologyMap;
 
 /**
  * <p>Wrapper class for the graph canvas.</p>
@@ -438,7 +437,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             loadDesignFromFile(new File("C:\\Users\\Jorge\\Desktop\\Maps\\Barcelona-Madrid-Sevilla_attrib_2.n2p"));
         } else if (src == btn_runMap)
         {
-            OSMMapController.runMap(this, canvas, callback);
+            OSMMapController.startMap(this, canvas, callback);
         } else if (src == btn_reset)
         {
             callback.reset();

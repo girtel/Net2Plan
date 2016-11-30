@@ -99,7 +99,16 @@ public abstract class ITopologyCanvas implements Plugin
 	 * @return Coordinates in the topology system for the screen point
 	 * @since 0.3.0
 	 */
-	public abstract Point2D convertViewCoordinatesToRealCoordinates(Point screenPoint);
+	public abstract Point2D convertViewCoordinatesToRealCoordinates(Point2D screenPoint);
+
+	/**
+	 * Returns the view coordinates in the panel for a given screen point.
+	 *
+	 * @param screenPoint Screen location
+	 * @return Coordinates in the view system for the screen point
+	 * @since 0.4.2
+	 */
+	public abstract Point2D convertRealCoordinatesToViewCoordinates(Point2D screenPoint);
 	
 	/**
 	 * Decrease the font size.
@@ -205,6 +214,16 @@ public abstract class ITopologyCanvas implements Plugin
 	 * @since 0.3.0
 	 */
 	public abstract void updateNodeXYPosition(Node npNode);
+
+	/**
+	 * Moves a node to the desired point.
+	 * This method does not change the node's xy coordinates.
+	 * Have in mind that by using this methos, the xy coordinates from the table do not equal the coordinates from the topology.
+	 *
+	 * @param npNode Node to move.
+	 * @param point  Point to which the node will be moved.
+	 */
+	public abstract void moveNodeToXYPosition(Node npNode, Point2D point);
 
 	/**
 	 * Removes a link from the canvas.

@@ -216,6 +216,7 @@ public final class JUNGCanvas extends ITopologyCanvas
      * @param screenPoint (@code Point2D) on the SWING canvas.
      * @return (@code Point2D) on the JUNG canvas.
      */
+    @Override
     public Point2D convertViewCoordinatesToRealCoordinates(Point2D screenPoint)
     {
         Point2D layoutCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, screenPoint);
@@ -225,35 +226,18 @@ public final class JUNGCanvas extends ITopologyCanvas
     }
 
     /**
-     * {@link #convertViewCoordinatesToRealCoordinates(Point2D)}
-     */
-    @Override
-    public Point2D convertViewCoordinatesToRealCoordinates(Point screenPoint)
-    {
-        return convertViewCoordinatesToRealCoordinates((Point2D) screenPoint);
-    }
-
-    /**
      * Converts a point from the JUNG coordinates system to the SWING coordinates system.
      *
      * @param screenPoint (@code Point2D) on the JUNG canvas.
      * @return (@code Point2D) on the SWING canvas.
      */
+    @Override
     public Point2D convertRealCoordinatesToViewCoordinates(Point2D screenPoint)
     {
         screenPoint.setLocation(screenPoint.getX(), -screenPoint.getY());
         Point2D layoutCoordinates = vv.getRenderContext().getMultiLayerTransformer().transform(Layer.LAYOUT, screenPoint);
 
         return layoutCoordinates;
-    }
-
-    /**
-     * {@link #convertRealCoordinatesToViewCoordinates(Point2D)}
-     * The conversion adds some variable error.
-     */
-    public Point2D convertRealCoordinatesToViewCoordinates(Point screenPoint)
-    {
-        return convertRealCoordinatesToViewCoordinates((Point2D) screenPoint);
     }
 
     @Override
@@ -368,7 +352,6 @@ public final class JUNGCanvas extends ITopologyCanvas
             final double dyPanelPixelCoord = (currentPoint.getY() - initialPoint.getY());
 
             OSMMapController.moveMap(-dxPanelPixelCoord, -dyPanelPixelCoord);
-            OSMMapController.alignPanJUNGToOSMMap();
         } else
         {
             final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
@@ -596,11 +579,12 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void zoomAll()
     {
-        zoomCanvas();
-
         if (OSMMapController.isMapActivated())
         {
             OSMMapController.centerMapToNodes();
+        } else
+        {
+            zoomCanvas();
         }
     }
 
@@ -658,15 +642,8 @@ public final class JUNGCanvas extends ITopologyCanvas
         l.setLocation(node, FLIP_VERTICAL_COORDINATES.transform(node));
     }
 
-    /**
-     * Moves a node to the desired point.
-     * This method does not change the node's xy coordinates.
-     * Have in mind that by using this methos, the xy coordinates from the table do not equal the coordinates from the topology.
-     *
-     * @param npNode Node to move.
-     * @param point  Point to which the node will be moved.
-     */
-    public void moveNode(Node npNode, Point2D point)
+    @Override
+    public void moveNodeToXYPosition(Node npNode, Point2D point)
     {
         GUINode node = nodeTable.get(npNode);
         l.setLocation(node, point);
@@ -678,7 +655,6 @@ public final class JUNGCanvas extends ITopologyCanvas
         if (OSMMapController.isMapActivated())
         {
             OSMMapController.zoomIn();
-            OSMMapController.alignZoomJUNGToOSMMap();
         } else
         {
             zoomIn(vv.getCenter());
@@ -691,7 +667,6 @@ public final class JUNGCanvas extends ITopologyCanvas
         if (OSMMapController.isMapActivated())
         {
             OSMMapController.zoomOut();
-            OSMMapController.alignZoomJUNGToOSMMap();
         } else
         {
             zoomOut(vv.getCenter());
@@ -725,12 +700,7 @@ public final class JUNGCanvas extends ITopologyCanvas
 
     public void zoom(float scale)
     {
-        zoom(vv.getCenter(), scale);
-    }
-
-    private void zoom(Point2D point, float scale)
-    {
-        scalingControl.scale(vv, scale, point);
+        scalingControl.scale(vv, scale, vv.getCenter());
     }
 
     private void zoomIn(Point2D point)

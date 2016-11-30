@@ -32,16 +32,15 @@ public class OSMMapController
 
     private static final double zoomRatio = 0.6;
 
+    // Previous map state
     private static Rectangle previousOSMViewportBounds;
     private static int previousZoomLevel;
 
     private static boolean isMapActivated = false;
-    private static Map<Node, GeoPosition> nodeToGeoPositionMap;
 
     static
     {
         mapViewer = new OSMMapPanel();
-        nodeToGeoPositionMap = new HashMap<>();
     }
 
     // Non-instanciable
@@ -57,7 +56,7 @@ public class OSMMapController
      * @param canvas        The JUNG canvas.
      * @param callback      The interface to the NetPlan.
      */
-    public static void runMap(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final INetworkCallback callback)
+    public static void startMap(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final INetworkCallback callback)
     {
         // Checking if the nodes are valid for this operation.
         // They may not go outside the bounds: x: -180, 180: y: -90, 90
@@ -94,7 +93,7 @@ public class OSMMapController
         loadMapOntoTopologyPanel();
 
         // Making the relation between the map and the topology
-        fitTopologyAndMap();
+        restartMapState();
 
         setMapState(true);
     }
@@ -128,10 +127,24 @@ public class OSMMapController
      * This state is the one where all nodes are seen and they all fit their corresponding position on the map.
      * This method should only be executed when the map is first run. From then on use {@link #centerMapToNodes()}
      */
-    private static void fitTopologyAndMap()
+    private static void restartMapState()
     {
-        // Calculating each node geoposition.
-        buildNodeGeoPositionMap();
+        // Canvas components.
+        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
+        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+
+        final Map<Node, GeoPosition> nodeToGeoPositionMap = new HashMap<>();
+        // Read xy coordinates of each node as latitude and longitude coordinates.
+        for (Node node : callback.getDesign().getNodes())
+        {
+            final Point2D nodeXY = node.getXYPositionMap();
+
+            final double latitude = nodeXY.getY();
+            final double longitude = nodeXY.getX();
+
+            final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
+            nodeToGeoPositionMap.put(node, geoPosition);
+        }
 
         // Calculating map center and zoom.
         mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
@@ -144,15 +157,15 @@ public class OSMMapController
 
             // The nodes' xy coordinates are not modified.
             final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
-            ((JUNGCanvas) canvas).moveNode(node, realPosition);
+            ((JUNGCanvas) canvas).moveNodeToXYPosition(node, realPosition);
         }
 
         // The map is now centered, now is time to fit the topology to the map.
         // Center the topology.
-        topologyPanel.zoomAll();
+        ((JUNGCanvas) canvas).zoomCanvas();
 
         // Removing the zoom all scale, so that the relation between the JUNG Canvas and the SWING Canvas is 1:1.
-        removeTopologyZoom();
+        ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
 
         // As the topology is centered at the same point as the map, and the relation is 1:1 between their coordinates.
         // The nodes will be placed at the exact place as they are supposed to.
@@ -165,36 +178,9 @@ public class OSMMapController
         mapViewer.repaint();
     }
 
-    /**
-     * Similar to {@link #fitTopologyAndMap()} but only acts on the topology itself. This one does not change the map at all.
-     */
-    private static void refitMap()
-    {
-        // Moving the nodes to the positions given by their GeoPositions.
-        for (Map.Entry<Node, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
-        {
-            final Node node = entry.getKey();
-            final GeoPosition geoPosition = entry.getValue();
-
-            // The position that the node really takes on the map. This position depends on the zoom that the map currently has.
-            final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
-            ((JUNGCanvas) canvas).moveNode(node, realPosition);
-        }
-
-        // The map is now centered to the topology, we now center the topology to the map.
-        ((JUNGCanvas) canvas).zoomCanvas();
-        removeTopologyZoom();
-
-        canvas.refresh();
-        mapViewer.repaint();
-    }
-
-
-    public static void alignZoomJUNGToOSMMap()
+    private static void alignZoomJUNGToOSMMap()
     {
         final double zoomChange = mapViewer.getZoom() - previousZoomLevel;
-
-        System.out.println(zoomChange);
 
         if (zoomChange != 0)
         {
@@ -208,7 +194,7 @@ public class OSMMapController
         mapViewer.repaint();
     }
 
-    public static void alignPanJUNGToOSMMap()
+    private static void alignPanJUNGToOSMMap()
     {
         final Rectangle currentOSMViewportBounds = mapViewer.getViewportBounds();
 
@@ -259,17 +245,13 @@ public class OSMMapController
     }
 
     /**
-     * Restores the topology to its original state having in mind the current state of the map.
+     * Restores the topology to its original state.
      */
     public static void centerMapToNodes()
     {
         if (isMapActivated())
         {
-            // Restore the map to its original state.
-            mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
-
-            // Now that the map has been restored, lets do the same with the topology.
-            refitMap();
+            restartMapState();
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
@@ -293,6 +275,9 @@ public class OSMMapController
 
             mapViewer.setCenterPosition(tileFactory.pixelToGeo(newMapCenter, mapViewer.getZoom()));
 
+            // Align the topology to the newly change map.
+            alignPanJUNGToOSMMap();
+
             canvas.refresh();
             mapViewer.repaint();
         } else
@@ -309,6 +294,9 @@ public class OSMMapController
         if (isMapActivated())
         {
             mapViewer.setZoom(mapViewer.getZoom() - 1);
+
+            // Align the topology to the newly change map.
+            alignZoomJUNGToOSMMap();
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
@@ -323,40 +311,13 @@ public class OSMMapController
         if (isMapActivated())
         {
             mapViewer.setZoom(mapViewer.getZoom() + 1);
+
+            // Align the topology to the newly change map.
+            alignZoomJUNGToOSMMap();
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
         }
-    }
-
-    /**
-     * Reads each node xy coordinates and creates the geoposition map.
-     */
-    private static void buildNodeGeoPositionMap()
-    {
-        // Read xy coordinates of each node as latitude and longitude coordinates.
-        for (Node node : callback.getDesign().getNodes())
-        {
-            final Point2D nodeXY = node.getXYPositionMap();
-
-            final double latitude = nodeXY.getY();
-            final double longitude = nodeXY.getX();
-
-            final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
-            nodeToGeoPositionMap.put(node, geoPosition);
-        }
-    }
-
-    /**
-     * Removes the canvas scale value so that the relation between the JUNG canvas and the map is 1:1
-     */
-    private static void removeTopologyZoom()
-    {
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
-        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
-
-        // Removing zoom for a 1:1 scale.
-        ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
     }
 
     /**
@@ -385,16 +346,16 @@ public class OSMMapController
         }
     }
 
+    public static GeoPosition convertPointToGeo(final Point2D point)
+    {
+        return mapViewer.getTileFactory().pixelToGeo(point, mapViewer.getZoom());
+    }
+
     private static class OSMMapException extends Net2PlanException
     {
         public OSMMapException(final String message)
         {
             ErrorHandling.showErrorDialog(message, "Could not display map");
         }
-    }
-
-    public static GeoPosition convertPointToGeo(final Point2D point)
-    {
-        return mapViewer.getTileFactory().pixelToGeo(point, mapViewer.getZoom());
     }
 }
