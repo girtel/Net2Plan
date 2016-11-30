@@ -131,6 +131,8 @@ public class VisualizationFiltersPane extends JPanel
             public void actionPerformed(ActionEvent e)
             {
                 VisualizationFiltersController.removeAllVisualizationFilters();
+                descriptionArea.setText("");
+                txt_file.setText("");
                 updateFiltersTable();
                 mainWindow.updateNetPlanView();
             }
