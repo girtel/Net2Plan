@@ -12,20 +12,16 @@
 
 package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.util.*;
+import java.util.List;
 
-import javax.swing.DefaultRowSorter;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 
 import com.net2plan.gui.utils.CellRenderers;
@@ -45,6 +41,7 @@ import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.StringUtils;
 
 import net.miginfocom.swing.MigLayout;
+import sun.swing.table.DefaultTableCellHeaderRenderer;
 
 /**
  */
@@ -93,6 +90,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
         fixedTable.setDefaultRenderer(Long.class, this.getDefaultRenderer(Long.class));
         fixedTable.setDefaultRenderer(Integer.class, this.getDefaultRenderer(Integer.class));
         fixedTable.setDefaultRenderer(String.class, this.getDefaultRenderer(String.class));
+        fixedTable.getTableHeader().setDefaultRenderer(new CellRenderers.FixedTableHeaderRenderer());
 
     }
 

@@ -19,6 +19,7 @@ import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
+import sun.swing.table.DefaultTableCellHeaderRenderer;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -300,6 +301,25 @@ public class CellRenderers {
                     }
                 }
             }
+
+            return c;
+        }
+    }
+
+    public static class FixedTableHeaderRenderer extends DefaultTableCellHeaderRenderer {
+        /**
+         * Background color for Fixed Table Columns.
+         *
+         * @since 0.2.0
+         */
+        protected final static Color bgColorFixedTable = new Color(245, 245, 245);
+
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+			c.setBackground(bgColorFixedTable);
 
             return c;
         }
