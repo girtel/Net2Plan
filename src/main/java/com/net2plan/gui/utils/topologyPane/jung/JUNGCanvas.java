@@ -15,6 +15,7 @@ package com.net2plan.gui.utils.topologyPane.jung;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
+import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMStateManager;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -346,7 +347,7 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void panTo(Point2D initialPoint, Point2D currentPoint)
     {
-        OSMStateManager.panTo(initialPoint, currentPoint);
+        TopologyPanel.getOsmStateManager().panTo(initialPoint, currentPoint);
     }
 
     @Override
@@ -564,7 +565,7 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void zoomAll()
     {
-        OSMStateManager.zoomAll();
+        TopologyPanel.getOsmStateManager().zoomAll();
     }
 
     public void frameTopology()
@@ -631,13 +632,13 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void zoomIn()
     {
-        OSMStateManager.zoomIn();
+        TopologyPanel.getOsmStateManager().zoomIn();
     }
 
     @Override
     public void zoomOut()
     {
-        OSMStateManager.zoomOut();
+        TopologyPanel.getOsmStateManager().zoomOut();
     }
 
     public void addLink(Link npLink)

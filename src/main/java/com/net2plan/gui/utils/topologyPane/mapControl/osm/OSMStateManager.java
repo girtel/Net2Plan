@@ -13,53 +13,55 @@ import java.awt.geom.Point2D;
  * @author Jorge San Emeterio
  * @date 01-Dec-16
  */
-public final class OSMStateManager
+public class OSMStateManager
 {
-    private static OSMState currentState;
-    private static OSMRunningState runningState;
-    private static OSMStoppedState stoppedState;
+    private OSMState currentState;
+    private OSMRunningState runningState;
+    private OSMStoppedState stoppedState;
 
-    private OSMStateManager()
+    final TopologyPanel topologyPanel;
+    final ITopologyCanvas canvas;
+    final INetworkCallback callback;
+
+    public OSMStateManager(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final INetworkCallback callback)
     {
-    }
+        this.topologyPanel = topologyPanel;
+        this.canvas = canvas;
+        this.callback = callback;
 
-    public static void setRunningState(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final INetworkCallback callback)
-    {
-        if (runningState == null)
-        {
-            runningState = new OSMRunningState();
-            OSMMapController.startMap(topologyPanel, canvas, callback);
-        }
-
-        currentState = runningState;
-    }
-
-    public static void setStoppedState(final ITopologyCanvas canvas)
-    {
-        if (stoppedState == null)
-        {
-            stoppedState = new OSMStoppedState(canvas);
-        }
-
+        runningState = new OSMRunningState();
+        stoppedState = new OSMStoppedState(canvas);
         currentState = stoppedState;
     }
 
-    public static void panTo(Point2D initialPoint, Point2D currentPoint)
+    public void setRunningState()
+    {
+        currentState = runningState;
+        OSMMapController.startMap(topologyPanel, canvas, callback);
+    }
+
+    public void setStoppedState()
+    {
+        currentState = stoppedState;
+        OSMMapController.disableMapSupport();
+    }
+
+    public void panTo(Point2D initialPoint, Point2D currentPoint)
     {
         currentState.panTo(initialPoint, currentPoint);
     }
 
-    public static void zoomIn()
+    public void zoomIn()
     {
         currentState.zoomIn();
     }
 
-    public static void zoomOut()
+    public void zoomOut()
     {
         currentState.zoomOut();
     }
 
-    public static void zoomAll()
+    public void zoomAll()
     {
         currentState.zoomAll();
     }
