@@ -1,4 +1,4 @@
-package com.net2plan.gui.utils.topologyPane.jung.map.osm;
+package com.net2plan.gui.utils.topologyPane.components.mapPanel;
 
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
@@ -52,12 +52,12 @@ public class OSMMapPanel extends JXMapViewer
             parent.mkdirs();
         }
 
-        // It is necessary to save each map on their own file.
-        // If we only use one, the map is never updated.
+        // It is necessary to save each osmMap on their own file.
+        // If we only use one, the osmMap is never updated.
         final File f = new File(parent, "background_map_" + (imageID++) + ".png");
         f.deleteOnExit();
 
-        // Saving map
+        // Saving osmMap
         try
         {
             final BufferedImage im = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);

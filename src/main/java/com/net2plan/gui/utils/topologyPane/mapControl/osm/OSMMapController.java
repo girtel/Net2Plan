@@ -1,9 +1,10 @@
-package com.net2plan.gui.utils.topologyPane.jung.map.osm;
+package com.net2plan.gui.utils.topologyPane.mapControl.osm;
 
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
+import com.net2plan.gui.utils.topologyPane.components.mapPanel.OSMMapPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -32,7 +33,7 @@ public class OSMMapController
 
     private static final double zoomRatio = 0.6;
 
-    // Previous map state
+    // Previous osmMap state
     private static Rectangle previousOSMViewportBounds;
     private static int previousZoomLevel;
 
@@ -49,8 +50,8 @@ public class OSMMapController
     }
 
     /**
-     * Starts and runs the map to its original state.
-     * This method should be executed when the map is not yet loaded.
+     * Starts and runs the osmMap to its original state.
+     * This method should be executed when the osmMap is not yet loaded.
      *
      * @param topologyPanel The topology panel.
      * @param canvas        The JUNG canvas.
@@ -83,7 +84,7 @@ public class OSMMapController
         OSMMapController.canvas = canvas;
         OSMMapController.callback = callback;
 
-        // If the map is already running, stop it before reloading it.
+        // If the osmMap is already running, stop it before reloading it.
         if (isMapActivated())
         {
             setMapState(false);
@@ -92,7 +93,7 @@ public class OSMMapController
         // Activating maps on the canvas
         loadMapOntoTopologyPanel();
 
-        // Making the relation between the map and the topology
+        // Making the relation between the osmMap and the topology
         restartMapState();
 
         setMapState(true);
@@ -104,7 +105,7 @@ public class OSMMapController
     private static void loadMapOntoTopologyPanel()
     {
         // Making some swing adjustments.
-        // Canvas on top of the map panel.
+        // Canvas on top of the osmMap panel.
         final LayoutManager layout = new OverlayLayout(mapViewer);
         mapViewer.setLayout(layout);
 
@@ -123,9 +124,9 @@ public class OSMMapController
     }
 
     /**
-     * Creates the starting state of the map.
-     * This state is the one where all nodes are seen and they all fit their corresponding position on the map.
-     * This method should only be executed when the map is first run. From then on use {@link #centerMapToNodes()}
+     * Creates the starting state of the osmMap.
+     * This state is the one where all nodes are seen and they all fit their corresponding position on the osmMap.
+     * This method should only be executed when the osmMap is first run. From then on use {@link #centerMapToNodes()}
      */
     private static void restartMapState()
     {
@@ -146,7 +147,7 @@ public class OSMMapController
             nodeToGeoPositionMap.put(node, geoPosition);
         }
 
-        // Calculating map center and zoom.
+        // Calculating osmMap center and zoom.
         mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
 
         // Moving the nodes to the position dictated by their geoposition.
@@ -160,14 +161,14 @@ public class OSMMapController
             ((JUNGCanvas) canvas).moveNodeToXYPosition(node, realPosition);
         }
 
-        // The map is now centered, now is time to fit the topology to the map.
+        // The osmMap is now centered, now is time to fit the topology to the osmMap.
         // Center the topology.
         ((JUNGCanvas) canvas).zoomCanvas();
 
         // Removing the zoom all scale, so that the relation between the JUNG Canvas and the SWING Canvas is 1:1.
         ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
 
-        // As the topology is centered at the same point as the map, and the relation is 1:1 between their coordinates.
+        // As the topology is centered at the same point as the osmMap, and the relation is 1:1 between their coordinates.
         // The nodes will be placed at the exact place as they are supposed to.
 
         previousOSMViewportBounds = mapViewer.getViewportBounds();
@@ -225,16 +226,16 @@ public class OSMMapController
     }
 
     /**
-     * Deactivates the map and males it dissapear from the topology.
+     * Returns the swing component to the state they were before activating the osmMap.
      */
-    private static void stopMap()
+    private static void cleanMap()
     {
-        // First, remove any canvas from the top of the map viewer.
+        // First, remove any canvas from the top of the osmMap viewer.
         mapViewer.removeAll();
         mapViewer.validate();
         mapViewer.repaint();
 
-        // Then remove the map from the topology panel.
+        // Then remove the osmMap from the topology panel.
         topologyPanel.remove(mapViewer);
 
         // Repaint canvas on the topology panel
@@ -259,10 +260,10 @@ public class OSMMapController
     }
 
     /**
-     * Moves the map center a given amount of pixels.
+     * Moves the osmMap center a given amount of pixels.
      *
-     * @param dx Moves map dx pixels over the X axis.
-     * @param dy Moves map dy pixels over the Y axis.
+     * @param dx Moves osmMap dx pixels over the X axis.
+     * @param dy Moves osmMap dy pixels over the Y axis.
      */
     public static void moveMap(final double dx, final double dy)
     {
@@ -275,7 +276,7 @@ public class OSMMapController
 
             mapViewer.setCenterPosition(tileFactory.pixelToGeo(newMapCenter, mapViewer.getZoom()));
 
-            // Align the topology to the newly change map.
+            // Align the topology to the newly change osmMap.
             alignPanJUNGToOSMMap();
 
             canvas.refresh();
@@ -287,7 +288,7 @@ public class OSMMapController
     }
 
     /**
-     * Zooms the map in and adapts the topology to its new state.
+     * Zooms the osmMap in and adapts the topology to its new state.
      */
     public static void zoomIn()
     {
@@ -295,7 +296,7 @@ public class OSMMapController
         {
             mapViewer.setZoom(mapViewer.getZoom() - 1);
 
-            // Align the topology to the newly change map.
+            // Align the topology to the newly change osmMap.
             alignZoomJUNGToOSMMap();
         } else
         {
@@ -304,7 +305,7 @@ public class OSMMapController
     }
 
     /**
-     * Zooms the map out and adapts the topology to the new state.
+     * Zooms the osmMap out and adapts the topology to the new state.
      */
     public static void zoomOut()
     {
@@ -312,7 +313,7 @@ public class OSMMapController
         {
             mapViewer.setZoom(mapViewer.getZoom() + 1);
 
-            // Align the topology to the newly change map.
+            // Align the topology to the newly change osmMap.
             alignZoomJUNGToOSMMap();
         } else
         {
@@ -321,7 +322,7 @@ public class OSMMapController
     }
 
     /**
-     * Gets wether the map component is activated or not.
+     * Gets wether the osmMap component is activated or not.
      *
      * @return Map activation state.
      */
@@ -335,22 +336,25 @@ public class OSMMapController
         if (isMapActivated())
         {
             setMapState(false);
+        } else
+        {
+            throw new OSMMapException("Map is currently deactivated");
         }
     }
 
     /**
-     * Activates or deactivates the map component.
+     * Activates or deactivates the osmMap component.
      *
      * @param state Map activation state.
      */
     private static void setMapState(final boolean state)
     {
-        // Activates the map so that the JUNG Canvas changes its behaviour.
+        // Activates the osmMap so that the JUNG Canvas changes its behaviour.
         isMapActivated = state;
 
         if (!isMapActivated())
         {
-            stopMap();
+            cleanMap();
         }
     }
 
@@ -363,7 +367,7 @@ public class OSMMapController
     {
         public OSMMapException(final String message)
         {
-            ErrorHandling.showErrorDialog(message, "Could not display map");
+            ErrorHandling.showErrorDialog(message, "Could not display osmMap");
         }
     }
 }

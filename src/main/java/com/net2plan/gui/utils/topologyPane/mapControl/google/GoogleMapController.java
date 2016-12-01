@@ -1,14 +1,10 @@
-package com.net2plan.gui.utils.topologyPane.jung.map.google;
+package com.net2plan.gui.utils.topologyPane.mapControl.google;
 
 import com.net2plan.gui.utils.INetworkCallback;
-import com.net2plan.gui.utils.topologyPane.GUILink;
-import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.ITopologyCanvas;
-import edu.uci.ics.jung.visualization.VisualizationViewer;
-import org.jxmapviewer.viewer.GeoPosition;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -18,7 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
 import java.util.List;
 
 /**
@@ -47,7 +42,7 @@ public class GoogleMapController
         GoogleMapController.canvas = canvas;
         GoogleMapController.callback = callback;
 
-        // Proceed to load map
+        // Proceed to load osmMap
         loadMap();
     }
 
@@ -86,7 +81,7 @@ public class GoogleMapController
             parentFile.mkdirs();
         }
 
-        File file = new File(parentFile, "map.png");
+        File file = new File(parentFile, "osmMap.png");
         Image image = null;
         try
         {
