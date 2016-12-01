@@ -3,6 +3,8 @@ package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
 import java.awt.geom.Point2D;
@@ -41,7 +43,7 @@ public class OSMStateManager
     public void setStoppedState()
     {
         currentState = stoppedState;
-        OSMMapController.disableMapSupport();
+        OSMMapController.cleanMap();
     }
 
     public void panTo(Point2D initialPoint, Point2D currentPoint)
@@ -62,5 +64,15 @@ public class OSMStateManager
     public void zoomAll()
     {
         currentState.zoomAll();
+    }
+
+    public void addNode(final NetPlan netPlan, final String name, final Point2D pos)
+    {
+        currentState.addNode(topologyPanel, netPlan, name, pos);
+    }
+
+    public OSMState getCurrentState()
+    {
+        return currentState;
     }
 }

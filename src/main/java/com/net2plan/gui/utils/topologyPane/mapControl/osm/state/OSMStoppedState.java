@@ -2,7 +2,10 @@ package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
+import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
@@ -53,6 +56,15 @@ public class OSMStoppedState extends OSMState
     public void zoomAll()
     {
         canvas.frameTopology();
+    }
+
+    @Override
+    public void addNode(TopologyPanel topologyPanel, NetPlan netPlan, String name, Point2D pos)
+    {
+        final Node node = netPlan.addNode(pos.getX(), pos.getY(), name, null);
+
+        topologyPanel.getCanvas().addNode(node);
+        topologyPanel.getCanvas().refresh();
     }
 }
 

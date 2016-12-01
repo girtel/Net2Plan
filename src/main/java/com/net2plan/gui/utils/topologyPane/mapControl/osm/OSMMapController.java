@@ -1,11 +1,13 @@
 package com.net2plan.gui.utils.topologyPane.mapControl.osm;
 
+import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.components.mapPanel.OSMMapPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMRunningState;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.ErrorHandling;
@@ -76,6 +78,8 @@ public class OSMMapController
                 builder.append("x = [-180, 180]\n");
                 builder.append("y = [-90, 90]\n");
 
+                GUINetworkDesign.getStateManager().setStoppedState();
+
                 throw new OSMMapException(builder.toString());
             }
         }
@@ -84,19 +88,11 @@ public class OSMMapController
         OSMMapController.canvas = canvas;
         OSMMapController.callback = callback;
 
-        // If the osmMap is already running, stop it before reloading it.
-        if (isMapActivated())
-        {
-            setMapState(false);
-        }
-
         // Activating maps on the canvas
         loadMapOntoTopologyPanel();
 
         // Making the relation between the osmMap and the topology
         restartMapState();
-
-        setMapState(true);
     }
 
     /**
@@ -126,7 +122,7 @@ public class OSMMapController
     /**
      * Creates the starting state of the osmMap.
      * This state is the one where all nodes are seen and they all fit their corresponding position on the osmMap.
-     * This method should only be executed when the osmMap is first run. From then on use {@link #centerMapToNodes()}
+     * This method should only be executed when the osmMap is first run. From then on use {@link #restoreMap()}
      */
     private static void restartMapState()
     {
@@ -134,7 +130,7 @@ public class OSMMapController
         final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
         final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
 
-        final Map<Node, GeoPosition> nodeToGeoPositionMap = new HashMap<>();
+        final Map<Long, GeoPosition> nodeToGeoPositionMap = new HashMap<>();
         // Read xy coordinates of each node as latitude and longitude coordinates.
         for (Node node : callback.getDesign().getNodes())
         {
@@ -144,16 +140,16 @@ public class OSMMapController
             final double longitude = nodeXY.getX();
 
             final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
-            nodeToGeoPositionMap.put(node, geoPosition);
+            nodeToGeoPositionMap.put(node.getId(), geoPosition);
         }
 
         // Calculating osmMap center and zoom.
         mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
 
         // Moving the nodes to the position dictated by their geoposition.
-        for (Map.Entry<Node, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
+        for (Map.Entry<Long, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
         {
-            final Node node = entry.getKey();
+            final Node node = callback.getDesign().getNodeFromId(entry.getKey());
             final GeoPosition geoPosition = entry.getValue();
 
             // The nodes' xy coordinates are not modified.
@@ -228,7 +224,7 @@ public class OSMMapController
     /**
      * Returns the swing component to the state they were before activating the osmMap.
      */
-    private static void cleanMap()
+    public static void cleanMap()
     {
         // First, remove any canvas from the top of the osmMap viewer.
         mapViewer.removeAll();
@@ -248,7 +244,7 @@ public class OSMMapController
     /**
      * Restores the topology to its original state.
      */
-    public static void centerMapToNodes()
+    public static void restoreMap()
     {
         if (isMapActivated())
         {
@@ -328,34 +324,7 @@ public class OSMMapController
      */
     public static boolean isMapActivated()
     {
-        return isMapActivated;
-    }
-
-    public static void disableMapSupport()
-    {
-        if (isMapActivated())
-        {
-            setMapState(false);
-        } else
-        {
-            throw new OSMMapException("Map is currently deactivated");
-        }
-    }
-
-    /**
-     * Activates or deactivates the osmMap component.
-     *
-     * @param state Map activation state.
-     */
-    private static void setMapState(final boolean state)
-    {
-        // Activates the osmMap so that the JUNG Canvas changes its behaviour.
-        isMapActivated = state;
-
-        if (!isMapActivated())
-        {
-            cleanMap();
-        }
+        return GUINetworkDesign.getStateManager().getCurrentState() instanceof OSMRunningState;
     }
 
     public static GeoPosition convertPointToGeo(final Point2D point)

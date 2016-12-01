@@ -1,6 +1,10 @@
 package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
+import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.Node;
+import org.jxmapviewer.viewer.GeoPosition;
 
 import java.awt.geom.Point2D;
 
@@ -34,6 +38,18 @@ public class OSMRunningState extends OSMState
     @Override
     public void zoomAll()
     {
-        OSMMapController.centerMapToNodes();
+        OSMMapController.restoreMap();
+    }
+
+    @Override
+    public void addNode(TopologyPanel topologyPanel, NetPlan netPlan, String name, Point2D pos)
+    {
+        final GeoPosition geoPosition = OSMMapController.convertPointToGeo(new Point2D.Double(pos.getX(), -pos.getY()));
+        final Node node = netPlan.addNode(geoPosition.getLongitude(), geoPosition.getLatitude(), name, null);
+
+        topologyPanel.getCanvas().addNode(node);
+        topologyPanel.getCanvas().refresh();
+
+        OSMMapController.restoreMap();
     }
 }
