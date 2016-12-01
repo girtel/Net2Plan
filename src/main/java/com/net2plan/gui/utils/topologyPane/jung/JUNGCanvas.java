@@ -88,6 +88,8 @@ public final class JUNGCanvas extends ITopologyCanvas
 
     private VisualizationServer.Paintable paintableAssociatedToBackgroundImage;
 
+    private GraphMousePluginAdapter scalingMouseAdapter;
+
     private boolean showNodeNames, showLinkIds, showHideNonConnectedNodes;
 
     static
@@ -184,8 +186,6 @@ public final class JUNGCanvas extends ITopologyCanvas
         vv.setGraphMouse(gm);
 
         scalingControl = new LayoutScalingControl();
-        ITopologyCanvasPlugin scalingPlugin = new ScalingCanvasPlugin(scalingControl, MouseEvent.NOBUTTON);
-        addPlugin(scalingPlugin);
 
         vv.setOpaque(false);
         vv.setBackground(new Color(0, 0, 0, 0));
@@ -209,6 +209,19 @@ public final class JUNGCanvas extends ITopologyCanvas
         gm.add(new GraphMousePluginAdapter(plugin));
     }
 
+    public void addScalingPlugin()
+    {
+        ITopologyCanvasPlugin scalingPlugin = new ScalingCanvasPlugin(scalingControl, MouseEvent.NOBUTTON);
+
+        scalingPlugin.setCanvas(this);
+        scalingMouseAdapter = new GraphMousePluginAdapter(scalingPlugin);
+        gm.add(scalingMouseAdapter);
+    }
+
+    public void removeScalingPlugin()
+    {
+        gm.remove(scalingMouseAdapter);
+    }
 
     /**
      * Converts a point from the SWING coordinates system into a point from the JUNG coordinates system.
