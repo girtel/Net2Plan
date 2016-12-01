@@ -15,7 +15,7 @@ package com.net2plan.gui.utils.topologyPane.jung;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
-import com.net2plan.gui.utils.topologyPane.jung.map.osm.OSMMapController;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMStateManager;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -86,6 +86,8 @@ public final class JUNGCanvas extends ITopologyCanvas
     private final ScalingControl scalingControl;
     private final Transformer<Context<Graph<GUINode, GUILink>, GUILink>, Shape> originalEdgeShapeTransformer;
 
+    private final OSMStateManager osmStateManager;
+
     private VisualizationServer.Paintable paintableAssociatedToBackgroundImage;
 
     private boolean showNodeNames, showLinkIds, showHideNonConnectedNodes;
@@ -108,6 +110,8 @@ public final class JUNGCanvas extends ITopologyCanvas
     {
         nodeTable = new LinkedHashMap<>();
         linkTable = new LinkedHashMap<>();
+
+        osmStateManager = new OSMStateManager(this);
 
         g = new DirectedOrderedSparseMultigraph<>();
         l = new StaticLayout<>(g, FLIP_VERTICAL_COORDINATES);
@@ -346,22 +350,7 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void panTo(Point2D initialPoint, Point2D currentPoint)
     {
-        if (OSMMapController.isMapActivated())
-        {
-            final double dxPanelPixelCoord = (currentPoint.getX() - initialPoint.getX());
-            final double dyPanelPixelCoord = (currentPoint.getY() - initialPoint.getY());
-
-            OSMMapController.moveMap(-dxPanelPixelCoord, -dyPanelPixelCoord);
-        } else
-        {
-            final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
-            final Point2D q = layoutTransformer.inverseTransform(initialPoint);
-            final Point2D lvc = layoutTransformer.inverseTransform(currentPoint);
-            final double dxJungCoord = (lvc.getX() - q.getX());
-            final double dyJungCoord = (lvc.getY() - q.getY());
-
-            layoutTransformer.translate(dxJungCoord, dyJungCoord);
-        }
+        osmStateManager.panTo(initialPoint, currentPoint);
     }
 
     @Override
@@ -579,16 +568,10 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void zoomAll()
     {
-        if (OSMMapController.isMapActivated())
-        {
-            OSMMapController.centerMapToNodes();
-        } else
-        {
-            zoomCanvas();
-        }
+        osmStateManager.zoomAll();
     }
 
-    public void zoomCanvas()
+    public void frameTopology()
     {
         Set<GUINode> nodes = new LinkedHashSet<>();
         for (GUINode n : g.getVertices()) if (n.isVisible()) nodes.add(n);
@@ -652,25 +635,13 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void zoomIn()
     {
-        if (OSMMapController.isMapActivated())
-        {
-            OSMMapController.zoomIn();
-        } else
-        {
-            zoomIn(vv.getCenter());
-        }
+        osmStateManager.zoomIn();
     }
 
     @Override
     public void zoomOut()
     {
-        if (OSMMapController.isMapActivated())
-        {
-            OSMMapController.zoomOut();
-        } else
-        {
-            zoomOut(vv.getCenter());
-        }
+        osmStateManager.zoomOut();
     }
 
     public void addLink(Link npLink)
@@ -703,14 +674,24 @@ public final class JUNGCanvas extends ITopologyCanvas
         scalingControl.scale(vv, scale, vv.getCenter());
     }
 
-    private void zoomIn(Point2D point)
+    public void zoomIn(Point2D point)
     {
         scalingControl.scale(vv, SCALE_IN, point);
     }
 
-    private void zoomOut(Point2D point)
+    public void zoomOut(Point2D point)
     {
         scalingControl.scale(vv, SCALE_OUT, point);
+    }
+
+    public void setRunningMap()
+    {
+        osmStateManager.setRunningState();
+    }
+
+    public void setStoppedMap()
+    {
+        osmStateManager.setStoppedState();
     }
 
     public void setBackgroundImage(final File bgFile, final double x, final double y)

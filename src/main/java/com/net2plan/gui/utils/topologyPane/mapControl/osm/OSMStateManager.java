@@ -3,6 +3,7 @@ package com.net2plan.gui.utils.topologyPane.mapControl.osm;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMRunningState;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMState;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMStoppedState;
+import com.net2plan.internal.plugins.ITopologyCanvas;
 
 import java.awt.geom.Point2D;
 
@@ -16,10 +17,10 @@ public class OSMStateManager
     private OSMRunningState runningState;
     private OSMStoppedState stoppedState;
 
-    public OSMStateManager()
+    public OSMStateManager(final ITopologyCanvas canvas)
     {
         runningState = new OSMRunningState();
-        stoppedState = new OSMStoppedState();
+        stoppedState = new OSMStoppedState(canvas);
         currentState = stoppedState;
     }
 

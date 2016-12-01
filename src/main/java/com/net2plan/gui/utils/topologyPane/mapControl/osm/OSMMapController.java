@@ -163,7 +163,7 @@ public class OSMMapController
 
         // The osmMap is now centered, now is time to fit the topology to the osmMap.
         // Center the topology.
-        ((JUNGCanvas) canvas).zoomCanvas();
+        ((JUNGCanvas) canvas).frameTopology();
 
         // Removing the zoom all scale, so that the relation between the JUNG Canvas and the SWING Canvas is 1:1.
         ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
@@ -355,6 +355,10 @@ public class OSMMapController
         if (!isMapActivated())
         {
             cleanMap();
+            ((JUNGCanvas) canvas).setStoppedMap();
+        } else
+        {
+            ((JUNGCanvas) canvas).setRunningMap();
         }
     }
 
