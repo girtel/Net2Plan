@@ -355,10 +355,6 @@ public class OSMMapController
         if (!isMapActivated())
         {
             cleanMap();
-            ((JUNGCanvas) canvas).setStoppedMap();
-        } else
-        {
-            ((JUNGCanvas) canvas).setRunningMap();
         }
     }
 

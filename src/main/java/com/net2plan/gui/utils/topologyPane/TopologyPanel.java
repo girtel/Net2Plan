@@ -31,6 +31,8 @@ import com.net2plan.gui.utils.topologyPane.components.MenuButton;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMStateManager;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMState;
 import com.net2plan.gui.utils.windows.WindowController;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -116,6 +118,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         try
         {
             canvas = canvasType.newInstance();
+            OSMStateManager.setStoppedState(canvas);
         } catch (InstantiationException | IllegalAccessException e)
         {
             throw new RuntimeException(e);
@@ -437,7 +440,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             loadDesignFromFile(new File("C:\\Users\\Jorge\\Desktop\\Maps\\NSFNet_N14_E42_complete.n2p"));
         } else if (src == btn_runMap)
         {
-            OSMMapController.startMap(this, canvas, callback);
+            OSMStateManager.setRunningState(this, canvas, callback);
         } else if (src == btn_reset)
         {
             callback.reset();

@@ -86,8 +86,6 @@ public final class JUNGCanvas extends ITopologyCanvas
     private final ScalingControl scalingControl;
     private final Transformer<Context<Graph<GUINode, GUILink>, GUILink>, Shape> originalEdgeShapeTransformer;
 
-    private final OSMStateManager osmStateManager;
-
     private VisualizationServer.Paintable paintableAssociatedToBackgroundImage;
 
     private boolean showNodeNames, showLinkIds, showHideNonConnectedNodes;
@@ -110,8 +108,6 @@ public final class JUNGCanvas extends ITopologyCanvas
     {
         nodeTable = new LinkedHashMap<>();
         linkTable = new LinkedHashMap<>();
-
-        osmStateManager = new OSMStateManager(this);
 
         g = new DirectedOrderedSparseMultigraph<>();
         l = new StaticLayout<>(g, FLIP_VERTICAL_COORDINATES);
@@ -350,7 +346,7 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void panTo(Point2D initialPoint, Point2D currentPoint)
     {
-        osmStateManager.panTo(initialPoint, currentPoint);
+        OSMStateManager.panTo(initialPoint, currentPoint);
     }
 
     @Override
@@ -568,7 +564,7 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void zoomAll()
     {
-        osmStateManager.zoomAll();
+        OSMStateManager.zoomAll();
     }
 
     public void frameTopology()
@@ -635,13 +631,13 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void zoomIn()
     {
-        osmStateManager.zoomIn();
+        OSMStateManager.zoomIn();
     }
 
     @Override
     public void zoomOut()
     {
-        osmStateManager.zoomOut();
+        OSMStateManager.zoomOut();
     }
 
     public void addLink(Link npLink)
@@ -682,16 +678,6 @@ public final class JUNGCanvas extends ITopologyCanvas
     public void zoomOut(Point2D point)
     {
         scalingControl.scale(vv, SCALE_OUT, point);
-    }
-
-    public void setRunningMap()
-    {
-        osmStateManager.setRunningState();
-    }
-
-    public void setStoppedMap()
-    {
-        osmStateManager.setStoppedState();
     }
 
     public void setBackgroundImage(final File bgFile, final double x, final double y)
