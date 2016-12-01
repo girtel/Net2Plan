@@ -39,8 +39,6 @@ public class OSMMapController
     private static Rectangle previousOSMViewportBounds;
     private static int previousZoomLevel;
 
-    private static boolean isMapActivated = false;
-
     static
     {
         mapViewer = new OSMMapPanel();
@@ -126,6 +124,12 @@ public class OSMMapController
      */
     private static void restartMapState()
     {
+        if (callback.getDesign().getNodes().isEmpty())
+        {
+            mapViewer.setDefaultPosition();
+            return;
+        }
+
         // Canvas components.
         final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
         final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);

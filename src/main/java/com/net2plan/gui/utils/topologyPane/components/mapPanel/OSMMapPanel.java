@@ -33,7 +33,7 @@ public class OSMMapPanel extends JXMapViewer
         tileFactory.setThreadPoolSize(NUMBER_OF_THREADS);
     }
 
-    private void setDefaultPosition()
+    public void setDefaultPosition()
     {
         // Default position
         final GeoPosition europe = new GeoPosition(47.20, 25.2);
