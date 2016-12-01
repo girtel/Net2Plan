@@ -2,6 +2,7 @@ package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
+import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
@@ -35,12 +36,14 @@ public class OSMStateManager
     public void setRunningState()
     {
         currentState = runningState;
+        ((JUNGCanvas) canvas).removeScalingPlugin();
         OSMMapController.startMap(topologyPanel, canvas, callback);
     }
 
     public void setStoppedState()
     {
         currentState = stoppedState;
+        ((JUNGCanvas) canvas).addScalingPlugin();
         OSMMapController.disableMapSupport();
     }
 

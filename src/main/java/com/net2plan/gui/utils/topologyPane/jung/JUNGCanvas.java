@@ -186,6 +186,7 @@ public final class JUNGCanvas extends ITopologyCanvas
         vv.setGraphMouse(gm);
 
         scalingControl = new LayoutScalingControl();
+        addScalingPlugin();
 
         vv.setOpaque(false);
         vv.setBackground(new Color(0, 0, 0, 0));
