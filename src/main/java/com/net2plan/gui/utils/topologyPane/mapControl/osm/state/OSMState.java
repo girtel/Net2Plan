@@ -1,8 +1,10 @@
 package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
+import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.internal.plugins.ITopologyCanvas;
 
 import java.awt.geom.Point2D;
 
@@ -13,8 +15,14 @@ import java.awt.geom.Point2D;
 public abstract class OSMState
 {
     public abstract void panTo(Point2D initialPoint, Point2D currentPoint);
+
     public abstract void zoomIn();
+
     public abstract void zoomOut();
+
     public abstract void zoomAll();
+
     public abstract void addNode(TopologyPanel topologyPanel, NetPlan netPlan, String name, Point2D pos);
+
+    public abstract void moveNode(INetworkCallback callback, ITopologyCanvas canvas, Node node, Point2D pos);
 }

@@ -1,5 +1,6 @@
 package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
+import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
@@ -65,6 +66,12 @@ public class OSMStoppedState extends OSMState
 
         topologyPanel.getCanvas().addNode(node);
         topologyPanel.getCanvas().refresh();
+    }
+
+    @Override
+    public void moveNode(INetworkCallback callback, ITopologyCanvas canvas,  Node node, Point2D pos)
+    {
+        callback.moveNode(node.getId(), canvas.convertViewCoordinatesToRealCoordinates(pos));
     }
 }
 

@@ -46,7 +46,7 @@ public class OSMStateManager
         OSMMapController.cleanMap();
     }
 
-    public void panTo(Point2D initialPoint, Point2D currentPoint)
+    public void panTo(final Point2D initialPoint, final Point2D currentPoint)
     {
         currentState.panTo(initialPoint, currentPoint);
     }
@@ -69,6 +69,11 @@ public class OSMStateManager
     public void addNode(final NetPlan netPlan, final String name, final Point2D pos)
     {
         currentState.addNode(topologyPanel, netPlan, name, pos);
+    }
+
+    public void modeNode(final Node node, final Point2D pos)
+    {
+        currentState.moveNode(callback, canvas, node, pos);
     }
 
     public OSMState getCurrentState()

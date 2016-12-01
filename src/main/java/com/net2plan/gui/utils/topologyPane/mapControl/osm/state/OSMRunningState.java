@@ -1,9 +1,11 @@
 package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
+import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.internal.plugins.ITopologyCanvas;
 import org.jxmapviewer.viewer.GeoPosition;
 
 import java.awt.geom.Point2D;
@@ -51,5 +53,15 @@ public class OSMRunningState extends OSMState
         topologyPanel.getCanvas().refresh();
 
         OSMMapController.restoreMap();
+    }
+
+    @Override
+    public void moveNode(INetworkCallback callback, ITopologyCanvas canvas, Node node, Point2D pos)
+    {
+//        final Point2D jungPoint = canvas.convertViewCoordinatesToRealCoordinates(pos);
+//        final GeoPosition geoPosition = OSMMapController.convertPointToGeo(pos);
+//
+//        callback.moveNode(node.getId(), new Point2D.Double(geoPosition.getLongitude(), geoPosition.getLatitude()));
+//        canvas.moveNodeToXYPosition(node, new Point2D.Double(jungPoint.getX(), -jungPoint.getY()));
     }
 }
