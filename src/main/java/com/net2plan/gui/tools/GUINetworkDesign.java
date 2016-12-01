@@ -43,6 +43,7 @@ import com.net2plan.gui.utils.onlineSimulationPane.OnlineSimulationPane;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMStateManager;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
 import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
@@ -107,6 +108,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
     private TopologyMap initialTopologySetting, circleTopologySetting;
 
+    private static OSMStateManager osmStateManager;
+
     /**
      * Default constructor.
      *
@@ -137,6 +140,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     public void configure(JPanel contentPane)
     {
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
+
+        osmStateManager = new OSMStateManager(topologyPanel, topologyPanel.getCanvas(), this);
 
         initialTopologySetting = new TopologyMap();
         circleTopologySetting = new TopologyMap();
@@ -1146,5 +1151,10 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
             circleTopologySetting.addNodeLocation(node.getId(), new Point(x, y));
         }
+    }
+
+    public static OSMStateManager getStateManager()
+    {
+        return osmStateManager;
     }
 }

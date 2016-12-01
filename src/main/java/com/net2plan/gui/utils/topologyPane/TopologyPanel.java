@@ -21,6 +21,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
+import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.utils.FileChooserNetworkDesign;
 import com.net2plan.gui.utils.FileDrop;
 import com.net2plan.gui.utils.INetworkCallback;
@@ -30,7 +31,7 @@ import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.components.MenuButton;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMStateManager;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMStateManager;
 import com.net2plan.gui.utils.windows.WindowController;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -65,8 +66,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final File defaultDesignDirectory, defaultDemandDirectory;
 
     private FileChooserNetworkDesign fc_netPlan, fc_demands;
-
-    private static OSMStateManager osmStateManager;
 
     /**
      * Simplified constructor that does not require to indicate default locations
@@ -395,8 +394,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Network topology"));
 //        setAllowLoadTrafficDemand(callback.allowLoadTrafficDemands());
-
-        osmStateManager = new OSMStateManager(this, canvas, callback);
     }
 
     @Override
@@ -439,7 +436,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             loadDesignFromFile(new File("C:\\Users\\Jorge\\Desktop\\Maps\\NSFNet_N14_E42_complete.n2p"));
         } else if (src == btn_runMap)
         {
-            osmStateManager.setRunningState();
+            GUINetworkDesign.getStateManager().setRunningState();
         } else if (src == btn_reset)
         {
             callback.reset();
@@ -720,10 +717,5 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     public void zoomOut()
     {
         canvas.zoomOut();
-    }
-
-    public static OSMStateManager getOsmStateManager()
-    {
-        return osmStateManager;
     }
 }

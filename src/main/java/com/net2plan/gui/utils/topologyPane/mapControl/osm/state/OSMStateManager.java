@@ -1,10 +1,8 @@
-package com.net2plan.gui.utils.topologyPane.mapControl.osm;
+package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMRunningState;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMState;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMStoppedState;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
 import java.awt.geom.Point2D;

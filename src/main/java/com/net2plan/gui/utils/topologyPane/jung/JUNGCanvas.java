@@ -12,11 +12,11 @@
 
 package com.net2plan.gui.utils.topologyPane.jung;
 
+import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMStateManager;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -43,7 +43,6 @@ import edu.uci.ics.jung.visualization.renderers.BasicVertexLabelRenderer;
 import edu.uci.ics.jung.visualization.renderers.DefaultEdgeLabelRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.transform.BidirectionalTransformer;
-import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
 import edu.uci.ics.jung.visualization.transform.shape.ShapeTransformer;
 import edu.uci.ics.jung.visualization.transform.shape.TransformingGraphics;
@@ -347,7 +346,7 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void panTo(Point2D initialPoint, Point2D currentPoint)
     {
-        TopologyPanel.getOsmStateManager().panTo(initialPoint, currentPoint);
+        GUINetworkDesign.getStateManager().panTo(initialPoint, currentPoint);
     }
 
     @Override
@@ -565,7 +564,7 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void zoomAll()
     {
-        TopologyPanel.getOsmStateManager().zoomAll();
+        GUINetworkDesign.getStateManager().zoomAll();
     }
 
     public void frameTopology()
@@ -632,13 +631,13 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void zoomIn()
     {
-        TopologyPanel.getOsmStateManager().zoomIn();
+        GUINetworkDesign.getStateManager().zoomIn();
     }
 
     @Override
     public void zoomOut()
     {
-        TopologyPanel.getOsmStateManager().zoomOut();
+        GUINetworkDesign.getStateManager().zoomOut();
     }
 
     public void addLink(Link npLink)
