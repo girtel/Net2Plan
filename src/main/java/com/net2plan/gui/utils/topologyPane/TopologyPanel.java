@@ -31,6 +31,7 @@ import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.components.MenuButton;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMStateManager;
 import com.net2plan.gui.utils.windows.WindowController;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -294,6 +295,15 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(btn_runMap);
         toolbar.add(btn_view);
         toolbar.add(btn_reset);
+
+        this.addComponentListener(new ComponentAdapter()
+        {
+            @Override
+            public void componentResized(ComponentEvent e)
+            {
+                GUINetworkDesign.getStateManager().zoomAll();
+            }
+        });
 
         increaseNodeSize.addActionListener(new ActionListener()
         {
