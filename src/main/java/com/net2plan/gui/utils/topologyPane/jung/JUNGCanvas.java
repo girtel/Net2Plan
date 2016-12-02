@@ -43,6 +43,7 @@ import edu.uci.ics.jung.visualization.renderers.BasicVertexLabelRenderer;
 import edu.uci.ics.jung.visualization.renderers.DefaultEdgeLabelRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.transform.BidirectionalTransformer;
+import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
 import edu.uci.ics.jung.visualization.transform.shape.ShapeTransformer;
 import edu.uci.ics.jung.visualization.transform.shape.TransformingGraphics;
@@ -639,6 +640,13 @@ public final class JUNGCanvas extends ITopologyCanvas
     {
         GUINode node = nodeTable.get(npNode);
         l.setLocation(node, point);
+    }
+
+    public double getCurrentScale()
+    {
+        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+
+        return layoutTransformer.getScale();
     }
 
     @Override
