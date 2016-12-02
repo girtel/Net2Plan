@@ -15,7 +15,7 @@ import java.awt.geom.Point2D;
  * @author Jorge San Emeterio
  * @date 01-Dec-16
  */
-public class OSMRunningState extends OSMState
+public class OSMRunningState implements OSMState
 {
     @Override
     public void panTo(Point2D initialPoint, Point2D currentPoint)

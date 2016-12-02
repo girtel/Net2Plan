@@ -12,17 +12,17 @@ import java.awt.geom.Point2D;
  * @author Jorge San Emeterio
  * @date 01-Dec-16
  */
-public abstract class OSMState
+public interface OSMState
 {
-    public abstract void panTo(Point2D initialPoint, Point2D currentPoint);
+    void panTo(Point2D initialPoint, Point2D currentPoint);
 
-    public abstract void zoomIn();
+    void zoomIn();
 
-    public abstract void zoomOut();
+    void zoomOut();
 
-    public abstract void zoomAll();
+    void zoomAll();
 
-    public abstract void addNode(TopologyPanel topologyPanel, NetPlan netPlan, String name, Point2D pos);
+    void addNode(TopologyPanel topologyPanel, NetPlan netPlan, String name, Point2D pos);
 
-    public abstract void moveNode(INetworkCallback callback, ITopologyCanvas canvas, Node node, Point2D pos);
+    void moveNode(INetworkCallback callback, ITopologyCanvas canvas, Node node, Point2D pos);
 }

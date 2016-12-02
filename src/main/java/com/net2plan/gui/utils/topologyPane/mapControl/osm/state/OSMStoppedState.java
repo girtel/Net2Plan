@@ -18,7 +18,7 @@ import java.awt.geom.Point2D;
  * @author Jorge San Emeterio
  * @date 01-Dec-16
  */
-public class OSMStoppedState extends OSMState
+public class OSMStoppedState implements OSMState
 {
     private final JUNGCanvas canvas;
     private final VisualizationViewer<GUINode, GUILink> vv;
