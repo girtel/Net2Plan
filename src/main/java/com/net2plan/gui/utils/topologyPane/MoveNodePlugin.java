@@ -73,7 +73,7 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        System.out.println("mouseDragged: " + e + ", startVertex: " + startVertex);
+        //System.out.println("mouseDragged: " + e + ", startVertex: " + startVertex);
         if (startVertex != -1) {
             Point p = e.getPoint();
 

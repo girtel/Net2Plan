@@ -124,6 +124,7 @@ public class OSMMapController
      */
     private static void restartMapState()
     {
+        // If no topology is loaded.
         if (callback.getDesign().getNodes().isEmpty())
         {
             mapViewer.setDefaultPosition();
