@@ -50,7 +50,13 @@ public class OSMRunningState extends OSMState
         // Changing the original state zoom seems to break the point to geoposition conversion. For the time being, it is necessary to add the new nodes at the original state.
         OSMMapController.restoreMap();
 
-        final GeoPosition geoPosition = OSMMapController.convertPointToGeo(new Point2D.Double(pos.getX(), -pos.getY()));
+        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(new Point2D.Double(pos.getX(), -pos.getY()));
+
+        if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
+        {
+            throw new OSMMapController.OSMMapException("The node is out of the map's bounds", "Problem while adding node");
+        }
+
         final Node node = netPlan.addNode(geoPosition.getLongitude(), geoPosition.getLatitude(), name, null);
 
         topologyPanel.getCanvas().addNode(node);
@@ -68,7 +74,12 @@ public class OSMRunningState extends OSMState
         // Compensating zoom, all movements must be done over a 1:1 ratio.
         final double scale = ((JUNGCanvas) canvas).getCurrentScale();
 
-        final GeoPosition geoPosition = OSMMapController.convertPointToGeo(new Point2D.Double(jungPoint.getX() * scale, -jungPoint.getY() * scale));
+        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(new Point2D.Double(jungPoint.getX() * scale, -jungPoint.getY() * scale));
+
+        if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
+        {
+            return;
+        }
 
         callback.moveNode(node.getId(), new Point2D.Double(geoPosition.getLongitude(), geoPosition.getLatitude()));
         canvas.moveNodeToXYPosition(node, new Point2D.Double(jungPoint.getX(), -jungPoint.getY()));

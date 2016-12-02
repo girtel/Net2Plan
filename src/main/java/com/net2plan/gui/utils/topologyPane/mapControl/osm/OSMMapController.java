@@ -68,7 +68,7 @@ public class OSMMapController
             final double x = nodeXY.getX();
             final double y = nodeXY.getY();
 
-            if ((x > 180 || x < -180) || (y > 90 || y < -90))
+            if (!OSMMapUtils.isInsideBounds(x, y))
             {
                 final StringBuilder builder = new StringBuilder();
                 builder.append("Node: " + node.getName() + " is out of the accepted bounds.\n");
@@ -329,16 +329,39 @@ public class OSMMapController
         return GUINetworkDesign.getStateManager().getCurrentState() instanceof OSMRunningState;
     }
 
-    public static GeoPosition convertPointToGeo(final Point2D point)
-    {
-        return mapViewer.getTileFactory().pixelToGeo(point, mapViewer.getZoom());
-    }
-
-    private static class OSMMapException extends Net2PlanException
+    public static class OSMMapException extends Net2PlanException
     {
         public OSMMapException(final String message)
         {
-            ErrorHandling.showErrorDialog(message, "Could not display osmMap");
+            ErrorHandling.showErrorDialog(message, "Could not display OSM Map");
+        }
+
+        public OSMMapException(final String message, final String title)
+        {
+            ErrorHandling.showErrorDialog(message, title);
+        }
+    }
+
+    public static class OSMMapUtils
+    {
+        public static GeoPosition convertPointToGeo(final Point2D point)
+        {
+            return mapViewer.getTileFactory().pixelToGeo(point, mapViewer.getZoom());
+        }
+
+        public static boolean isInsideBounds(final Point2D point)
+        {
+            return isInsideBounds(point.getX(), point.getY());
+        }
+
+        public static boolean isInsideBounds(final double x, final double y)
+        {
+            if ((x > 180 || x < -180) || (y > 90 || y < -90))
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }
