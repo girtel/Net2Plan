@@ -279,9 +279,6 @@ public class OSMMapController
 
             // Align the topology to the newly change osmMap.
             alignPanJUNGToOSMMap();
-
-            canvas.refresh();
-            mapViewer.repaint();
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
