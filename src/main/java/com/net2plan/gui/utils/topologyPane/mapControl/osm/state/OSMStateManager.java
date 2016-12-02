@@ -36,14 +36,12 @@ public class OSMStateManager
     public void setRunningState()
     {
         currentState = runningState;
-        ((JUNGCanvas) canvas).removeScalingPlugin();
         OSMMapController.startMap(topologyPanel, canvas, callback);
     }
 
     public void setStoppedState()
     {
         currentState = stoppedState;
-        ((JUNGCanvas) canvas).addScalingPlugin();
         OSMMapController.disableMapSupport();
     }
 
