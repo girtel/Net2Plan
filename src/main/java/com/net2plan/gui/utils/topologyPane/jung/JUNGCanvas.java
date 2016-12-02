@@ -55,6 +55,7 @@ import org.apache.commons.collections15.functors.ConstantTransformer;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
@@ -88,8 +89,6 @@ public final class JUNGCanvas extends ITopologyCanvas
     private final Transformer<Context<Graph<GUINode, GUILink>, GUILink>, Shape> originalEdgeShapeTransformer;
 
     private VisualizationServer.Paintable paintableAssociatedToBackgroundImage;
-
-    private GraphMousePluginAdapter scalingMouseAdapter;
 
     private boolean showNodeNames, showLinkIds, showHideNonConnectedNodes;
 
@@ -187,6 +186,8 @@ public final class JUNGCanvas extends ITopologyCanvas
         vv.setGraphMouse(gm);
 
         scalingControl = new LayoutScalingControl();
+        ITopologyCanvasPlugin scalingPlugin = new ScalingCanvasPlugin(scalingControl, MouseEvent.NOBUTTON);
+        addPlugin(scalingPlugin);
 
         vv.setOpaque(false);
         vv.setBackground(new Color(0, 0, 0, 0));
@@ -208,20 +209,6 @@ public final class JUNGCanvas extends ITopologyCanvas
     {
         plugin.setCanvas(this);
         gm.add(new GraphMousePluginAdapter(plugin));
-    }
-
-    public void addScalingPlugin()
-    {
-        ITopologyCanvasPlugin scalingPlugin = new ScalingCanvasPlugin(scalingControl, MouseEvent.NOBUTTON);
-
-        scalingPlugin.setCanvas(this);
-        scalingMouseAdapter = new GraphMousePluginAdapter(scalingPlugin);
-        gm.add(scalingMouseAdapter);
-    }
-
-    public void removeScalingPlugin()
-    {
-        gm.remove(scalingMouseAdapter);
     }
 
     /**
@@ -903,6 +890,37 @@ public final class JUNGCanvas extends ITopologyCanvas
         public void setCanvas(ITopologyCanvas canvas)
         {
             this.canvas = canvas;
+        }
+
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent e)
+        {
+            boolean accepted = this.checkModifiers(e);
+            if (accepted)
+            {
+                VisualizationViewer vv = (VisualizationViewer) e.getSource();
+                int amount = e.getWheelRotation();
+                if (this.zoomAtMouse)
+                {
+                    if (amount > 0)
+                    {
+                        GUINetworkDesign.getStateManager().zoomOut();
+                    } else if (amount < 0)
+                    {
+                        GUINetworkDesign.getStateManager().zoomIn();
+                    }
+                } else if (amount > 0)
+                {
+                    GUINetworkDesign.getStateManager().zoomOut();
+                } else if (amount < 0)
+                {
+                    GUINetworkDesign.getStateManager().zoomIn();
+                }
+
+                e.consume();
+                vv.repaint();
+            }
+
         }
     }
 }
