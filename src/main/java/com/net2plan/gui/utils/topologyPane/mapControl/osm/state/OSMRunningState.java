@@ -61,10 +61,10 @@ public class OSMRunningState extends OSMState
     @Override
     public void moveNode(INetworkCallback callback, ITopologyCanvas canvas, Node node, Point2D pos)
     {
-//        final Point2D jungPoint = canvas.convertViewCoordinatesToRealCoordinates(pos);
-//        final GeoPosition geoPosition = OSMMapController.convertPointToGeo(new Point2D.Double(pos.getX(), -pos.getY()));
-//
-//        callback.moveNode(node.getId(), new Point2D.Double(geoPosition.getLongitude(), geoPosition.getLatitude()));
-//        canvas.moveNodeToXYPosition(node, new Point2D.Double(jungPoint.getX(), -jungPoint.getY()));
+        final Point2D jungPoint = canvas.convertViewCoordinatesToRealCoordinates(pos);
+        final GeoPosition geoPosition = OSMMapController.convertPointToGeo(new Point2D.Double(jungPoint.getX(), -jungPoint.getY()));
+
+        callback.moveNode(node.getId(), new Point2D.Double(geoPosition.getLongitude(), geoPosition.getLatitude()));
+        canvas.moveNodeToXYPosition(node, new Point2D.Double(jungPoint.getX(), -jungPoint.getY()));
     }
 }
