@@ -154,6 +154,11 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <version>2.4.7</version>
+        </dependency>
+        <dependency>
             <groupId>com.github.girtel</groupId>
             <artifactId>JOM</artifactId>
             <version>0.2.0.1</version>
@@ -165,6 +170,16 @@
             <version>1.4.2</version>
             <scope>system</scope>
             <systemPath>${java.home}/../lib/tools.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-eclipse-compiler</artifactId>
+            <version>2.9.2-01</version>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-eclipse-batch</artifactId>
+            <version>2.3.7-01</version>
         </dependency>
     </dependencies>
 
@@ -206,11 +221,24 @@
                         <artifactId>maven-compiler-plugin</artifactId>
                         <version>3.5.1</version>
                         <configuration>
+                            <compilerId>groovy-eclipse-compiler</compilerId>
                             <compilerVersion>1.8</compilerVersion>
                             <source>1.8</source>
                             <target>1.8</target>
                             <failOnError>true</failOnError>
                         </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.codehaus.groovy</groupId>
+                                <artifactId>groovy-eclipse-compiler</artifactId>
+                                <version>2.9.2-01</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.codehaus.groovy</groupId>
+                                <artifactId>groovy-eclipse-batch</artifactId>
+                                <version>2.3.7-01</version>
+                            </dependency>
+                        </dependencies>
                     </plugin>
 
                     <!-- Downloads dependencies into local folder -->
