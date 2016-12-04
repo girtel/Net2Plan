@@ -433,7 +433,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         for(int i = 0; i< hiddenColumnsNames.size();i++)
         {
             String s = hiddenColumnsNames.get(hiddenColumnsNames.size() - 1 - i);
-            System.out.println(s);
             showColumn(s,indexForEachHiddenColumn.get(s));
         }
         checkNewIndexes();
@@ -544,25 +543,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     }
 
     /**
-     * Add a new column at the end of mainTable
-     *
-     * @param newColumnName Name of the new column
-     * @param columnData data to insert in the column
-     */
-
-    public void addNewColumn(String newColumnName, Object[] columnData)
-    {
-        DefaultTableModel dtm = (DefaultTableModel) mainTable.getModel();
-        dtm.addColumn(newColumnName,columnData);
-        mainTable.setModel(dtm);
-        mainTable.createDefaultColumnsFromModel();
-        updateTables();
-        checkNewIndexes();
-        shownColumns.add(mainTable.getColumnModel().getColumn(getColumnIndexByName(newColumnName)));
-
-    }
-
-    /**
      * When a new column is added, update the tables
      *
      * @param
@@ -653,6 +633,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      *
      * @param
      */
+
 
     private void checkNewIndexes()
     {
