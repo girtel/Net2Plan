@@ -62,19 +62,18 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     protected final JTable fixedTable;
     private final JPopupMenu showHideMenu, fixMenu;
     private final JMenu showMenu;
-    private final JMenuItem showAllItem, hideAllItem;
+    private final JMenuItem showAllItem, hideAllItem, resetItem;
     private final ArrayList<TableColumn> hiddenColumns, shownColumns, removedColumns;
     private final ArrayList<String> hiddenColumnsNames;
-    private final Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn;
+    private final Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn, mapToSaveState;
     private JCheckBoxMenuItem fixCheckBox, unfixCheckBox, attributesItem, hideColumn;
-    private ArrayList<JMenuItem> hiddenHeaderItems, shownHeaderItems;
+    private ArrayList<JMenuItem> hiddenHeaderItems;
 
     private final FixedColumnDecorator decorator;
     private final JScrollPane scroll;
 
     private ArrayList<String> attributesColumnsNames;
     private boolean expandAttributes = false;
-    private List<NetworkElement> currentNetworkElements = new LinkedList<>();
     private NetPlan currentTopology = null;
     private Map<String,Boolean> hasBeenAddedEachAttColumn = new HashMap<>();
 
@@ -119,6 +118,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         removedColumns = new ArrayList<>();
         indexForEachColumn = new HashMap<>();
         indexForEachHiddenColumn = new HashMap<>();
+        mapToSaveState = new HashMap<>();
 
         for (int j = 0; j < mainTable.getColumnModel().getColumnCount(); j++)
         {
@@ -133,7 +133,9 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         showAllItem = new JMenuItem("Show all columns");
         hideColumn = new JCheckBoxMenuItem("Hide column",false);
         hideAllItem = new JMenuItem("Hide all columns");
+        hideAllItem.setToolTipText("It will hide all unlocked columns unless the first of them");
         attributesItem = new JCheckBoxMenuItem("Expand attributes as columns", false);
+        resetItem = new JMenuItem("Reset columns positions");
 
 
         if (canExpandAttributes)
@@ -174,6 +176,8 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         {
 
             showHideMenu.add(unfixCheckBox);
+            showHideMenu.add(new JPopupMenu.Separator());
+            showHideMenu.add(resetItem);
             showHideMenu.add(new JPopupMenu.Separator());
             if (canExpandAttributes)
             {
@@ -333,6 +337,15 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                 }
             });
+            resetItem.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    resetColumnsPositions();
+                    checkNewIndexes();
+                }
+            });
             attributesItem.addItemListener(new ItemListener()
             {
 
@@ -362,16 +375,11 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 @Override
                 public void columnAdded(TableColumnModelEvent e)
                 {
-
-                    checkNewIndexes();
                 }
 
                 @Override
                 public void columnRemoved(TableColumnModelEvent e)
                 {
-
-                    checkNewIndexes();
-
                 }
 
                 @Override
@@ -385,15 +393,11 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 @Override
                 public void columnMarginChanged(ChangeEvent e)
                 {
-                    checkNewIndexes();
-
                 }
 
                 @Override
                 public void columnSelectionChanged(ListSelectionEvent e)
                 {
-                    checkNewIndexes();
-
                 }
             });
 
@@ -625,8 +629,74 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
     }
 
+    /**
+     * Saves the current positions of the columns
+     *
+     * @param
+     */
 
+    protected void saveColumnsPositions()
+    {
+        mapToSaveState.clear();
+        String currentColumnName = "";
+        for(int i = 0; i < mainTable.getColumnModel().getColumnCount();i++)
+        {
+            currentColumnName = mainTable.getColumnModel().getColumn(i).getHeaderValue().toString();
+            mapToSaveState.put(currentColumnName,i);
+        }
+    }
 
+    /**
+     * Restore for each column its previous position
+     *
+     * @param
+     */
+
+    protected void restoreColumnsPositions()
+    {
+        String currentColumnName = "";
+        for(int j = 0; j < mainTable.getColumnModel().getColumnCount();j++)
+        {
+            currentColumnName = mainTable.getColumnModel().getColumn(j).getHeaderValue().toString();
+            if(mapToSaveState.get(currentColumnName) != null)
+                mainTable.getColumnModel().moveColumn(j,mapToSaveState.get(currentColumnName));
+        }
+    }
+
+    /**
+     * Reset the column positions
+     *
+     * @param
+     */
+
+    private void resetColumnsPositions()
+    {
+        hiddenColumns.clear();
+        removedColumns.clear();
+        hiddenColumnsNames.clear();
+        indexForEachHiddenColumn.clear();
+        TableColumn tc = null;
+        while(fixedTable.getColumnModel().getColumnCount() > 0)
+        {
+            tc = fixedTable.getColumnModel().getColumn(0);
+            fixedTable.getColumnModel().removeColumn(tc);
+        }
+        mainTable.createDefaultColumnsFromModel();
+        for(int i = 0; i < getNumFixedLeftColumnsInDecoration();i++)
+        {
+            tc = mainTable.getColumnModel().getColumn(0);
+            mainTable.getColumnModel().removeColumn(tc);
+            fixedTable.getColumnModel().addColumn(tc);
+        }
+        for(String s : getAttributesColumnsHeaders())
+        {
+            removeNewColumn("Att: "+s);
+        }
+        expandAttributes = false;
+        attributesItem.setSelected(false);
+        updateTables();
+        checkNewIndexes();
+    }
     /**
      * When a column is moved into mainTable,
      * we have to know which are the new indexes and update indexForEachColumn
@@ -713,37 +783,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     private void attributesInDifferentColumns()
     {
         currentTopology = networkViewer.getDesign();
-        Map<String,String>  networkElementAttributes = new HashMap<>();
-
-        switch(networkElementType){
-            case NODE:
-                currentNetworkElements = new LinkedList<>(currentTopology.getNodes());
-                break;
-            case LINK:
-                currentNetworkElements = new LinkedList<>(currentTopology.getLinks());
-                break;
-            case DEMAND:
-                currentNetworkElements = new LinkedList<>(currentTopology.getDemands());
-                break;
-            case MULTICAST_DEMAND:
-                currentNetworkElements = new LinkedList<>(currentTopology.getMulticastDemands());
-                break;
-            case ROUTE:
-                currentNetworkElements = new LinkedList<>(currentTopology.getRoutes());
-                break;
-            case MULTICAST_TREE:
-                currentNetworkElements = new LinkedList<>(currentTopology.getMulticastTrees());
-                break;
-            case PROTECTION_SEGMENT:
-                currentNetworkElements = new LinkedList<>(currentTopology.getProtectionSegments());
-                break;
-            case SRG:
-                currentNetworkElements = new LinkedList<>(currentTopology.getSRGs());
-                break;
-            default:
-                throw new RuntimeException("Bad");
-
-        }
+        saveColumnsPositions();
         attributesColumnsNames = getAttributesColumnsHeaders();
         boolean attributesColumnInMainTable = false;
         String currentColumnName = null;
@@ -768,22 +808,10 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 networkViewer.updateNetPlanView();
                 createDefaultColumnsFromModel();
                 removedColumns.clear();
-                String tcName = null;
-                if (!hiddenColumns.isEmpty())
-                {
-                    for (TableColumn tc : hiddenColumns)
-                    {
-                        if (tc.getHeaderValue().toString().equals("Attributes"))
-                        {
-                            showColumn("Attributes", 0);
-                            break;
-                        }
-                    }
-                }
-
                 removeNewColumn("Attributes");
                 updateTables();
                 expandAttributes = true;
+                restoreColumnsPositions();
                 checkNewIndexes();
             } else
             {
@@ -799,6 +827,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     private void attributesInOneColumn()
     {
         currentTopology = networkViewer.getDesign();
+        saveColumnsPositions();
         attributesColumnsNames = getAttributesColumnsHeaders();
         int attributesCounter = 0;
         String columnToCheck = null;
@@ -833,6 +862,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 }
                 updateTables();
                 expandAttributes = false;
+                restoreColumnsPositions();
                 checkNewIndexes();
             } else
             {
@@ -903,6 +933,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
 
     public void updateView(NetPlan currentState, NetPlan initialState) {
+        saveColumnsPositions();
         setEnabled(false);
         String[] header = getCurrentTableHeaders();
         ((DefaultTableModel) getModel()).setDataVector(new Object[1][header.length], header);
@@ -935,6 +966,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                     }
                 }
                 updateTables();
+                restoreColumnsPositions();
             }
             for (int columnId : getColumnsOfSpecialComparatorForSorting())
                 ((DefaultRowSorter) getRowSorter()).setComparator(columnId, new ColumnComparator());
@@ -997,6 +1029,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     final protected void addPopupMenuAttributeOptions(final MouseEvent e, final int row, final Object itemId, JPopupMenu popup) {
         if (networkElementType == NetworkElementType.FORWARDING_RULE)
             throw new RuntimeException("Bad. Forwarding rules have no attributes");
+        saveColumnsPositions();
         JMenuItem addAttribute = new JMenuItem("Add/edit attribute");
         addAttribute.addActionListener(new ActionListener() {
             @Override
@@ -1027,6 +1060,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                         try {
                                 networkViewer.updateNetPlanView();
+                                restoreColumnsPositions();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to add attribute to " + networkElementType);
@@ -1102,6 +1136,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                     JDialog dialog = new AttributeEditor(networkViewer, networkElementType, itemId);
                     dialog.setVisible(true);
                     networkViewer.updateNetPlanView();
+                    restoreColumnsPositions();
 
                 } catch (Throwable ex) {
                     ex.printStackTrace();
@@ -1203,6 +1238,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                     if (element == null) throw new RuntimeException("Bad");
                     element.removeAttribute(attributeToRemove);
                     networkViewer.updateNetPlanView();
+                    restoreColumnsPositions();
 
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attribute");
@@ -1298,6 +1334,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             try {
 
                                     networkViewer.updateNetPlanView();
+                                    restoreColumnsPositions();
                                 } catch (Throwable ex) {
                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add attribute to all nodes");
                                 }
@@ -1320,6 +1357,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         JDialog dialog = new AttributeEditor(networkViewer, networkElementType);
                         dialog.setVisible(true);
                         networkViewer.updateNetPlanView();
+                        restoreColumnsPositions();
 
                     } catch (Throwable ex) {
                         ex.printStackTrace();
@@ -1467,6 +1505,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         }
 
                         networkViewer.updateNetPlanView();
+                        restoreColumnsPositions();
 
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attribute from all " + networkElementType + "s");
@@ -1554,6 +1593,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             attributesItem.setSelected(false);
                         }
                         networkViewer.updateNetPlanView();
+                        restoreColumnsPositions();
                     } catch (Throwable ex)
                     {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attributes");
