@@ -12,7 +12,9 @@
 
 package com.net2plan.gui.utils;
 
+import com.net2plan.algorithms.GroovyAlgorithmUtils;
 import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.IExternal;
@@ -337,6 +339,19 @@ public class RunnableSelector extends JPanel {
                 String packageName = aux1.getFirst();
                 if (!packageName.isEmpty()) implementationLabel += " (" + packageName + ")";
                 algorithmSelector.addItem(StringLabeller.unmodifiableOf(implementation, implementationLabel));
+
+            }
+
+            // Groovy algorithms
+            final Set<String> scriptAlgorithms = GroovyAlgorithmUtils.getScriptAlgorithms();
+            for (String scriptAlgorithm : scriptAlgorithms)
+            {
+                Pair<String, String> aux1 = ClassLoaderUtils.getPackageAndClassName(scriptAlgorithm);
+
+                String implementationLabel = aux1.getSecond();
+                String packageName = aux1.getFirst();
+                if (!packageName.isEmpty()) implementationLabel += " (" + packageName + ")";
+                algorithmSelector.addItem(StringLabeller.unmodifiableOf(scriptAlgorithm, implementationLabel));
             }
 
             if (algorithmSelector.getItemCount() > 1) algorithmSelector.setSelectedIndex(-1);

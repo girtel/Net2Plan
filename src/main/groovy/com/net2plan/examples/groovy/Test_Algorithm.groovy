@@ -1,4 +1,4 @@
-package com.net2plan.examples
+package com.net2plan.examples.groovy
 
 import com.net2plan.interfaces.networkDesign.IAlgorithm
 import com.net2plan.interfaces.networkDesign.NetPlan
@@ -11,17 +11,20 @@ class Test_Algorithm implements IAlgorithm
 {
 
     @Override
-    String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters) {
+    String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters)
+    {
         return "OK!"
     }
 
     @Override
-    String getDescription() {
+    String getDescription()
+    {
         return "Groovy test algorithm..."
     }
 
     @Override
-    List<Triple<String, String, String>> getParameters() {
-        return new ArrayList<Triple<String,String,String>>()
+    List<Triple<String, String, String>> getParameters()
+    {
+        return new ArrayList<Triple<String, String, String>>()
     }
 }

@@ -53,6 +53,13 @@
                 <include>IONet2Plan.class</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/classes/com/net2plan/algorithms</directory>
+            <outputDirectory>com/net2plan/algorithms</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+        </fileSet>
         <!-- Adding resources -->
         <fileSet>
             <directory>${project.basedir}/src/main/java/com/net2plan/interfaces</directory>
