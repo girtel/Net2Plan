@@ -27,7 +27,7 @@ import java.util.*;
  */
 public class OSMMapController
 {
-    private static final OSMMapPanel mapViewer;
+    private static OSMMapPanel mapViewer;
 
     private static TopologyPanel topologyPanel;
     private static ITopologyCanvas canvas;
@@ -38,11 +38,6 @@ public class OSMMapController
     // Previous osmMap state
     private static Rectangle previousOSMViewportBounds;
     private static int previousZoomLevel;
-
-    static
-    {
-        mapViewer = new OSMMapPanel();
-    }
 
     // Non-instanciable
     private OSMMapController()
@@ -85,6 +80,7 @@ public class OSMMapController
         OSMMapController.topologyPanel = topologyPanel;
         OSMMapController.canvas = canvas;
         OSMMapController.callback = callback;
+        OSMMapController.mapViewer = new OSMMapPanel();
 
         // Activating maps on the canvas
         loadMapOntoTopologyPanel();
@@ -238,6 +234,11 @@ public class OSMMapController
      */
     public static void cleanMap()
     {
+        if (mapViewer == null)
+        {
+            return;
+        }
+
         // First, remove any canvas from the top of the osmMap viewer.
         mapViewer.removeAll();
         mapViewer.validate();
@@ -251,6 +252,8 @@ public class OSMMapController
 
         topologyPanel.validate();
         topologyPanel.repaint();
+
+        mapViewer = null;
     }
 
     /**
