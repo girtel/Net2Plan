@@ -149,7 +149,14 @@ public class OSMMapController
         }
 
         // Calculating osmMap center and zoom.
+        // zoomToBestFit fails to deliver the correct center when the map is too big.
+        // To solve this, we will be always calculating the center over a 720p.
+        // Resolution at which the map is correctly centered.
+        // FIXME: Change this solution?
+        final Dimension size = mapViewer.getSize();
+        mapViewer.setSize(1280, 720);
         mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
+        mapViewer.setSize(size);
 
         // Moving the nodes to the position dictated by their geoposition.
         for (Map.Entry<Long, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
