@@ -3,8 +3,10 @@ package com.net2plan.gui.utils.windows;
 import com.net2plan.gui.utils.windows.parent.GUIWindow;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.*;
 
 /**
  * Created by Jorge San Emeterio on 07/10/2016.
@@ -16,8 +18,12 @@ public class WindowController
     private static GUIWindow offlineWindow;
     private static GUIWindow onlineWindow;
 
+    // WindowToTab.network must always be the first one.
+    private static WindowToTab[] tabCorrectOrder = {WindowToTab.network, WindowToTab.offline, WindowToTab.online, WindowToTab.report};
+
     public static void buildControlWindow(final JComponent component)
     {
+        // Control window != Network state tab.
         controlWindow = new GUIWindow()
         {
             @Override
@@ -38,49 +44,46 @@ public class WindowController
         }
     }
 
-    public static void addTabToControlWindow(final String tabName, final JComponent component)
+    public static void addTabToControlWindow(final String newTabName, final JComponent newTabComponent)
     {
-        final JTabbedPane pane = (JTabbedPane) controlWindow.getComponent();
+        final JTabbedPane tabPane = (JTabbedPane) controlWindow.getComponent();
 
-        pane.addTab(tabName, component);
-    }
+        final Map<String, Component> toSortTabs = new HashMap<>();
+        toSortTabs.put(newTabName, newTabComponent);
 
-    public static void buildReportWindow(final JComponent component)
-    {
-        reportWindow = new GUIWindow()
+        for (int i = 0; i < tabPane.getTabCount(); i = 0)
         {
-            @Override
-            public String getTitle()
+            toSortTabs.put(tabPane.getTitleAt(i), tabPane.getComponentAt(i));
+            tabPane.remove(i);
+        }
+
+        for (int i = 0; i < tabCorrectOrder.length; i++)
+        {
+            final String tabName = WindowToTab.getTabName(tabCorrectOrder[i]);
+
+            if (toSortTabs.containsKey(tabName))
             {
-                return "Net2Plan - Report window";
+                final Component tabComponent = toSortTabs.get(tabName);
+
+                tabPane.addTab(tabName, tabComponent);
             }
-        };
-
-        reportWindow.addWindowListener(new CloseWindowAdapter(WindowToTab.getTabName(WindowToTab.report), component));
-
-        reportWindow.buildWindow(component);
-    }
-
-    public static void showReportWindow()
-    {
-        if (reportWindow != null)
-        {
-            reportWindow.showWindow();
         }
     }
 
     public static void buildOfflineWindow(final JComponent component)
     {
+        final String tabName = WindowToTab.getTabName(WindowToTab.offline);
+
         offlineWindow = new GUIWindow()
         {
             @Override
             public String getTitle()
             {
-                return "Net2Plan - Offline design window";
+                return "Net2Plan - " + tabName;
             }
         };
 
-        offlineWindow.addWindowListener(new CloseWindowAdapter(WindowToTab.getTabName(WindowToTab.offline), component));
+        offlineWindow.addWindowListener(new CloseWindowAdapter(tabName, component));
 
         offlineWindow.buildWindow(component);
     }
@@ -95,16 +98,18 @@ public class WindowController
 
     public static void buildOnlineWindow(final JComponent component)
     {
+        final String tabName = WindowToTab.getTabName(WindowToTab.online);
+
         onlineWindow = new GUIWindow()
         {
             @Override
             public String getTitle()
             {
-                return "Net2Plan - Online simulation window";
+                return "Net2Plan - " + tabName;
             }
         };
 
-        onlineWindow.addWindowListener(new CloseWindowAdapter(WindowToTab.getTabName(WindowToTab.online), component));
+        onlineWindow.addWindowListener(new CloseWindowAdapter(tabName, component));
 
         onlineWindow.buildWindow(component);
     }
@@ -114,6 +119,32 @@ public class WindowController
         if (onlineWindow != null)
         {
             onlineWindow.showWindow();
+        }
+    }
+
+    public static void buildReportWindow(final JComponent component)
+    {
+        final String tabName = WindowToTab.getTabName(WindowToTab.report);
+
+        reportWindow = new GUIWindow()
+        {
+            @Override
+            public String getTitle()
+            {
+                return "Net2Plan - " + tabName;
+            }
+        };
+
+        reportWindow.addWindowListener(new CloseWindowAdapter(tabName, component));
+
+        reportWindow.buildWindow(component);
+    }
+
+    public static void showReportWindow()
+    {
+        if (reportWindow != null)
+        {
+            reportWindow.showWindow();
         }
     }
 
@@ -137,14 +168,20 @@ public class WindowController
 
     public enum WindowToTab
     {
-        control ("View/Edit network state"),
-        offline ("Algorithm execution"),
-        online ("Online simulation"),
-        report ("View reports");
+        network(WindowToTab.networkWindowName),
+        offline(WindowToTab.offlineWindowName),
+        online(WindowToTab.onlineWindowName),
+        report(WindowToTab.reportWindowName);
+
+        private final static String networkWindowName = "View/Edit network state";
+        private final static String offlineWindowName = "Offline algorithms";
+        private final static String onlineWindowName = "Online simulation";
+        private final static String reportWindowName = "View reports";
+
 
         private final String text;
 
-        private WindowToTab(final String text)
+        WindowToTab(final String text)
         {
             this.text = text;
         }
@@ -153,13 +190,13 @@ public class WindowController
         {
             switch (text)
             {
-                case "View/Edit network state":
-                    return control;
-                case "Algorithm execution":
+                case WindowToTab.networkWindowName:
+                    return network;
+                case WindowToTab.offlineWindowName:
                     return offline;
-                case "Online simulation":
+                case WindowToTab.onlineWindowName:
                     return online;
-                case "View reports":
+                case WindowToTab.reportWindowName:
                     return report;
             }
 
@@ -170,14 +207,14 @@ public class WindowController
         {
             switch (tab)
             {
-                case control:
-                    return "View/Edit network state";
+                case network:
+                    return WindowToTab.networkWindowName;
                 case offline:
-                    return "Algorithm execution";
+                    return WindowToTab.offlineWindowName;
                 case online:
-                    return "Online simulation";
+                    return WindowToTab.onlineWindowName;
                 case report:
-                    return "View reports";
+                    return WindowToTab.reportWindowName;
             }
 
             return null;
