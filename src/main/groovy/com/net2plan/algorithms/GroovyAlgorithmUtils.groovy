@@ -1,5 +1,6 @@
 package com.net2plan.algorithms
 
+import com.net2plan.internal.IExternal
 import org.reflections.Reflections
 import com.net2plan.interfaces.networkDesign.IAlgorithm
 
@@ -9,12 +10,8 @@ import com.net2plan.interfaces.networkDesign.IAlgorithm
  */
 class GroovyAlgorithmUtils
 {
-    static Set<String> getScriptAlgorithms()
+    static Set<Class<IExternal>> getScriptAlgorithms()
     {
-        Set<String> algorithmList = new HashSet<>()
-
-        new Reflections('com.net2plan.examples.groovy').getSubTypesOf(IAlgorithm).each {it -> algorithmList.add(it.name)}
-
-        return algorithmList
+        return new Reflections('com.net2plan.examples.groovy').getSubTypesOf(IAlgorithm)
     }
 }

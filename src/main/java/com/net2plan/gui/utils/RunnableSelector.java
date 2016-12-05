@@ -12,10 +12,8 @@
 
 package com.net2plan.gui.utils;
 
-import com.net2plan.algorithms.AlgorithmUtils;
 import com.net2plan.algorithms.GroovyAlgorithmUtils;
 import com.net2plan.interfaces.networkDesign.Configuration;
-import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.IExternal;
@@ -304,7 +302,7 @@ public class RunnableSelector extends JPanel {
 
             Map<String, Class> aux_implementations = new TreeMap<String, Class>();
             List<Class<IExternal>> aux = ClassLoaderUtils.getClassesFromFile(f, IExternal.class);
-            aux.addAll(AlgorithmUtils.getScriptAlgorithms());
+            aux.addAll(GroovyAlgorithmUtils.getScriptAlgorithms());
             for (Class<IExternal> implementation : aux) {
                 Iterator<Class<? extends IExternal>> it = _classes.iterator();
 
