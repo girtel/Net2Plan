@@ -28,5 +28,12 @@
                 <include>**</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/classes/com/net2plan/algorithms</directory>
+            <outputDirectory>com/net2plan/algorithms</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+        </fileSet>
     </fileSets>
 </assembly>
