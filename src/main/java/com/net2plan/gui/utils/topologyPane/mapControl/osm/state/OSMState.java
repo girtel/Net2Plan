@@ -25,4 +25,6 @@ public interface OSMState
     void addNode(TopologyPanel topologyPanel, NetPlan netPlan, String name, Point2D pos);
 
     void moveNode(INetworkCallback callback, ITopologyCanvas canvas, Node node, Point2D pos);
+
+    void takeSnapshot(ITopologyCanvas canvas);
 }

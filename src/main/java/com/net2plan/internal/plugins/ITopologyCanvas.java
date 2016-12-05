@@ -4,7 +4,7 @@
  * are made available under the terms of the GNU Lesser Public License v2.1
  * which accompanies this distribution, and is available at
  * http://www.gnu.org/licenses/lgpl.html
- * 
+ *
  * Contributors:
  *     Pablo Pavon Mariño - initial API and implementation
  ******************************************************************************/
@@ -12,7 +12,7 @@
 
 
 
- 
+
 
 
 
@@ -34,6 +34,7 @@ import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
 import com.net2plan.interfaces.networkDesign.Configuration;
@@ -48,29 +49,29 @@ import com.net2plan.utils.Triple;
 
 /**
  * Base class for topology canvas.
- * 
+ *
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.3
  */
 public abstract class ITopologyCanvas implements Plugin
 {
 	private JFileChooser fc;
-	
+
 	@Override
 	public final Map<String, String> getCurrentOptions()
 	{
 		return CommandLineParser.getParameters(getParameters(), Configuration.getOptions());
 	}
-	
+
 	@Override
 	public int getPriority()
 	{
 		return 0;
 	}
-	
+
 	/**
 	 * Adds a new unidirectional link between two nodes.
-	 * 
+	 *
 	 * @param npLink Link identifier
 	 * @since 0.3.0
 	 */
@@ -78,7 +79,7 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Adds a new node.
-	 * 
+	 *
 	 * @param npNode Node identifier
 	 * @since 0.3.0
 	 */
@@ -86,7 +87,7 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Adds a new plugin to the canvas.
-	 * 
+	 *
 	 * @param plugin Plugin
 	 * @since 0.3.0
 	 */
@@ -94,7 +95,7 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Returns the real coordinates in the topology for a given screen point.
-	 * 
+	 *
 	 * @param screenPoint Screen location
 	 * @return Coordinates in the topology system for the screen point
 	 * @since 0.3.0
@@ -109,29 +110,29 @@ public abstract class ITopologyCanvas implements Plugin
 	 * @since 0.4.2
 	 */
 	public abstract Point2D convertRealCoordinatesToViewCoordinates(Point2D screenPoint);
-	
+
 	/**
 	 * Decrease the font size.
-	 * 
+	 *
 	 * @since 0.3.0
 	 */
 	public abstract void decreaseFontSize();
-	
+
 	/**
 	 * Decrease the node size.
-	 * 
+	 *
 	 * @since 0.3.0
 	 */
 	public abstract void decreaseNodeSize();
-	
+
 	/**
 	 * Returns the top-level component of the canvas.
-	 * 
+	 *
 	 * @return Top-level component of the canvas
 	 * @since 0.3.0
 	 */
 	public abstract JComponent getComponent();
-	
+
 	/**
 	 * Returns a reference to the internal component containing the canvas.
 	 *
@@ -139,7 +140,7 @@ public abstract class ITopologyCanvas implements Plugin
 	 * @since 0.3.0
 	 */
 	public abstract JComponent getInternalComponent();
-	
+
 	/**
 	 * Returns the identifier of a link associated to a mouse event, or -1 otherwise.
 	 *
@@ -148,7 +149,7 @@ public abstract class ITopologyCanvas implements Plugin
 	 * @since 0.3.1
 	 */
 	public abstract long getLink(MouseEvent e);
-	
+
 	/**
 	 * Returns the identifier of a link associated to a mouse event, or -1 otherwise.
 	 *
@@ -157,24 +158,24 @@ public abstract class ITopologyCanvas implements Plugin
 	 * @since 0.3.1
 	 */
 	public abstract long getNode(MouseEvent e);
-	
+
 	/**
 	 * Increase the font size.
-	 * 
+	 *
 	 * @since 0.3.0
 	 */
 	public abstract void increaseFontSize();
-	
+
 	/**
 	 * Increase the node size.
-	 * 
+	 *
 	 * @since 0.3.0
 	 */
 	public abstract void increaseNodeSize();
-	
+
 	/**
 	 * Indicates whether a link is visible or not.
-	 * 
+	 *
 	 * @param associatedNpLink Link identifier
 	 * @return {@code true} if the link is visible. Otherwise, {@code false}
 	 * @since 0.3.0
@@ -183,13 +184,13 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Indicates whether a node is visible or not.
-	 * 
+	 *
 	 * @param associatedNpNode Node identifier
 	 * @return {@code true} if the node is visible. Otherwise, {@code false}
 	 * @since 0.3.0
 	 */
 	public abstract boolean isNodeVisible(Node associatedNpNode);
-	
+
 	/**
 	 * Pans the graph to the .
 	 *
@@ -201,15 +202,15 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Refreshes the canvas.
-	 * 
+	 *
 	 * @since 0.3.0
 	 */
 	public abstract void refresh();
 
-	
+
 	/**
 	 * Forces the canvas to update the position of a node
-	 * 
+	 *
 	 * @param npNode Link identifier
 	 * @since 0.3.0
 	 */
@@ -227,7 +228,7 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Removes a link from the canvas.
-	 * 
+	 *
 	 * @param associatedNpLink Link identifier
 	 * @since 0.3.0
 	 */
@@ -235,7 +236,7 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Removes a node from the canvas, and all its associated incoming/outgoing links.
-	 * 
+	 *
 	 * @param associatedNpNode Node identifier
 	 * @since 0.3.0
 	 */
@@ -243,7 +244,7 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Removes a plugin from the canvas.
-	 * 
+	 *
 	 * @param plugin Plugin
 	 * @since 0.3.0
 	 */
@@ -251,37 +252,37 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Resets the graph.
-	 * 
+	 *
 	 * @since 0.3.0
 	 */
 	public abstract void reset();
 
 	/**
 	 * Resets the emphasized elements.
-	 * 
+	 *
 	 * @since 0.3.0
 	 */
 	public abstract void resetPickedAndUserDefinedColorState();
 
 	/**
 	 * Sets all links are visible/hidden.
-	 * 
+	 *
 	 * @param visible Indicates whether all links are visible ({@code true}) or hidden ({@code false})
 	 * @since 0.3.0
 	 */
 	public abstract void setAllLinksVisible(boolean visible);
-	
+
 	/**
 	 * Sets all nodes are visible/hidden.
-	 * 
+	 *
 	 * @param visible Indicates whether all nodes are visible ({@code true}) or hidden ({@code false})
 	 * @since 0.3.0
 	 */
 	public abstract void setAllNodesVisible(boolean visible);
-	
+
 	/**
 	 * Sets a link as visible/hidden.
-	 * 
+	 *
 	 * @param link Link identifier
 	 * @param visible Indicates whether the link is visible ({@code true}) or hidden ({@code false})
 	 * @since 0.3.0
@@ -290,34 +291,34 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Sets some links as visible/hidden.
-	 * 
+	 *
 	 * @param link Link identifiers
 	 * @param visible Indicates whether the links are visible ({@code true}) or hidden ({@code false})
 	 * @since 0.3.0
 	 */
 	public abstract void setLinksVisible(Collection<Link> link , boolean visible);
-	
+
 	/**
 	 * Sets a node as visible/hidden.
-	 * 
+	 *
 	 * @param node Node identifier
 	 * @param visible Indicates whether the node is visible ({@code true}) or hidden ({@code false})
 	 * @since 0.3.0
 	 */
 	public abstract void setNodeVisible(Node node, boolean visible);
-	
+
 	/**
 	 * Sets some nodes as visible/hidden.
-	 * 
+	 *
 	 * @param nodeIds Node identifiers
 	 * @param visible Indicates whether the nodes are visible ({@code true}) or hidden ({@code false})
 	 * @since 0.3.0
 	 */
 	public abstract void setNodesVisible(Collection<Node> nodeIds, boolean visible);
-	
+
 	/**
 	 * Indicates whether or not non-connected nodes should be shown.
-	 * 
+	 *
 	 * @param show Indicates whether or not non-connected nodes should be shown
 	 * @since 0.3.0
 	 */
@@ -325,7 +326,7 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Emphasizes a link.
-	 * 
+	 *
 	 * @param link Link identifier
 	 * @param color Link color
 	 * @param dashed Dashed
@@ -339,15 +340,15 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Indicates whether or not link identifiers should be shown.
-	 * 
+	 *
 	 * @param show Indicates whether or not link identifiers should be shown
 	 * @since 0.3.0
 	 */
 	public abstract void showLinkLabels(boolean show);
-	
+
 	/**
 	 * Emphasizes a node.
-	 * 
+	 *
 	 * @param node Node identifier
 	 * @param color Node color
 	 * @since 0.3.0
@@ -360,7 +361,7 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Indicates whether or not node names should be shown.
-	 * 
+	 *
 	 * @param show Indicates whether or not node names should be shown
 	 * @since 0.3.0
 	 */
@@ -368,7 +369,7 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Emphasizes a set of nodes.
-	 * 
+	 *
 	 * @param nodes Node identifiers
 	 * @since 0.3.0
 	 */
@@ -407,34 +408,17 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Takes a snapshot of the canvas.
-	 * 
+	 *
 	 * @since 0.3.0
 	 */
 	public final void takeSnapshot()
 	{
-		if (fc == null)
-		{
-			fc = new FileChooserConfirmOverwrite();
-			FileNameExtensionFilter pngFilter = new FileNameExtensionFilter("PNG files", "png");
-			fc.setFileFilter(pngFilter);
-		}
-
-		takeSnapshot_preConfigure();
-		JComponent component = getInternalComponent();
-		BufferedImage bi = ImageUtils.trim(ImageUtils.takeSnapshot(component));
-		takeSnapshot_postConfigure();
-		
-		int s = fc.showSaveDialog(null);
-		if (s == JFileChooser.APPROVE_OPTION)
-		{
-			File f = fc.getSelectedFile();
-			ImageUtils.writeImageToFile(f, bi, ImageUtils.ImageType.PNG);
-		}
+		GUINetworkDesign.getStateManager().takeSnapshot(this);
 	}
-	
+
 	/**
 	 * Configures the canvas before taking an snapshot (i.e. hiding elements).
-	 * 
+	 *
 	 * @since 0.3.0
 	 */
 	public void takeSnapshot_preConfigure()
@@ -443,16 +427,16 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Restores the canvas to its original state after taking an snapshot.
-	 * 
+	 *
 	 * @since 0.3.0
 	 */
 	public void takeSnapshot_postConfigure()
 	{
 	}
-	
+
 	/**
 	 * Refresh the canvas with the physical topology from the given network design.
-	 * 
+	 *
 	 * @param netPlan Network design
 	 * @since 0.3.0
 	 */
@@ -463,9 +447,9 @@ public abstract class ITopologyCanvas implements Plugin
 	}
 
 	/**
-	 * Refresh the canvas with the physical topology from the given network 
+	 * Refresh the canvas with the physical topology from the given network
 	 * design in the given layer.
-	 * 
+	 *
 	 * @param netPlan Network design
 	 * @param layer Layer identifier
 	 * @since 0.3.0
@@ -479,10 +463,10 @@ public abstract class ITopologyCanvas implements Plugin
 //		
 //		updateTopology(nodeXYPositionMap, nodeNameMap, linkMap);
 //	}
-	
+
 	/**
 	 * Refresh the canvas with the given physical topology.
-	 * 
+	 *
 	 * @param nodeXYPositionMap Map of node XY position
 	 * @param nodeNameMap Map of node names
 	 * @param linkMap Map of links
@@ -492,21 +476,21 @@ public abstract class ITopologyCanvas implements Plugin
 
 	/**
 	 * Makes zoom-all from the center of the view.
-	 * 
+	 *
 	 * @since 0.3.0
 	 */
 	public abstract void zoomAll();
 
 	/**
 	 * Makes zoom-in from the center of the view.
-	 * 
+	 *
 	 * @since 0.3.0
 	 */
 	public abstract void zoomIn();
 
 	/**
 	 * Makes zoom-out from the center of the view.
-	 * 
+	 *
 	 * @since 0.3.0
 	 */
 	public abstract void zoomOut();

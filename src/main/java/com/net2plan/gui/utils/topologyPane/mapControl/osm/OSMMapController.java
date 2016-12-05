@@ -329,6 +329,11 @@ public class OSMMapController
         return GUINetworkDesign.getStateManager().getCurrentState() instanceof OSMRunningState;
     }
 
+    public static JComponent getMapComponent()
+    {
+        return mapViewer;
+    }
+
     public static class OSMMapException extends Net2PlanException
     {
         public OSMMapException(final String message)

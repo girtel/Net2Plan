@@ -81,4 +81,9 @@ public class OSMStateManager
     {
         return currentState;
     }
+
+    public void takeSnapshot(final ITopologyCanvas canvas)
+    {
+        currentState.takeSnapshot(canvas);
+    }
 }

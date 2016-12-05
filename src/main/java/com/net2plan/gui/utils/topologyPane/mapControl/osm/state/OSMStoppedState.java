@@ -1,5 +1,6 @@
 package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
+import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
@@ -8,11 +9,16 @@ import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.ITopologyCanvas;
+import com.net2plan.utils.ImageUtils;
 import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 
+import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
 
 /**
  * @author Jorge San Emeterio
@@ -69,9 +75,29 @@ public class OSMStoppedState implements OSMState
     }
 
     @Override
-    public void moveNode(INetworkCallback callback, ITopologyCanvas canvas,  Node node, Point2D pos)
+    public void moveNode(INetworkCallback callback, ITopologyCanvas canvas, Node node, Point2D pos)
     {
         callback.moveNode(node.getId(), canvas.convertViewCoordinatesToRealCoordinates(pos));
+    }
+
+    @Override
+    public void takeSnapshot(ITopologyCanvas canvas)
+    {
+        final JFileChooser fc = new FileChooserConfirmOverwrite();
+        FileNameExtensionFilter pngFilter = new FileNameExtensionFilter("PNG files", "png");
+        fc.setFileFilter(pngFilter);
+
+        canvas.takeSnapshot_preConfigure();
+        JComponent component = canvas.getInternalComponent();
+        BufferedImage bi = ImageUtils.trim(ImageUtils.takeSnapshot(component));
+        canvas.takeSnapshot_postConfigure();
+
+        int s = fc.showSaveDialog(null);
+        if (s == JFileChooser.APPROVE_OPTION)
+        {
+            File f = fc.getSelectedFile();
+            ImageUtils.writeImageToFile(f, bi, ImageUtils.ImageType.PNG);
+        }
     }
 }
 

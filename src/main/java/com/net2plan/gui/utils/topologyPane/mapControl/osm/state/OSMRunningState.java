@@ -1,5 +1,6 @@
 package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
+import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
@@ -7,9 +8,14 @@ import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.ITopologyCanvas;
+import com.net2plan.utils.ImageUtils;
 import org.jxmapviewer.viewer.GeoPosition;
 
+import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
 
 /**
  * @author Jorge San Emeterio
@@ -83,5 +89,23 @@ public class OSMRunningState implements OSMState
 
         callback.moveNode(node.getId(), new Point2D.Double(geoPosition.getLongitude(), geoPosition.getLatitude()));
         canvas.moveNodeToXYPosition(node, new Point2D.Double(jungPoint.getX(), -jungPoint.getY()));
+    }
+
+    @Override
+    public void takeSnapshot(ITopologyCanvas canvas)
+    {
+        final JFileChooser fc = new FileChooserConfirmOverwrite();
+        FileNameExtensionFilter pngFilter = new FileNameExtensionFilter("PNG files", "png");
+        fc.setFileFilter(pngFilter);
+
+        JComponent component = OSMMapController.getMapComponent();
+        BufferedImage bi = ImageUtils.trim(ImageUtils.takeSnapshot(component));
+
+        int s = fc.showSaveDialog(null);
+        if (s == JFileChooser.APPROVE_OPTION)
+        {
+            File f = fc.getSelectedFile();
+            ImageUtils.writeImageToFile(f, bi, ImageUtils.ImageType.PNG);
+        }
     }
 }
