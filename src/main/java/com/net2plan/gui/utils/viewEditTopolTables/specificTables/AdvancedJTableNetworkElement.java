@@ -23,6 +23,7 @@ import javax.swing.table.TableModel;
 
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
+import com.net2plan.gui.utils.viewEditTopolTables.tableStateFiles.TableStateController;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -60,9 +61,9 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
     protected final JTable mainTable;
     protected final JTable fixedTable;
-    private final JPopupMenu showHideMenu, fixMenu;
+    private final JPopupMenu fixedTableMenu, mainTableMenu;
     private final JMenu showMenu;
-    private final JMenuItem showAllItem, hideAllItem, resetItem;
+    private final JMenuItem showAllItem, hideAllItem, resetItem, saveStateItem, loadStateItem;
     private final ArrayList<TableColumn> hiddenColumns, shownColumns, removedColumns;
     private final ArrayList<String> hiddenColumnsNames;
     private final Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn, mapToSaveState;
@@ -125,17 +126,19 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             shownColumns.add(mainTable.getColumnModel().getColumn(j));
         }
 
-        showHideMenu = new JPopupMenu();
-        fixMenu = new JPopupMenu();
+        fixedTableMenu = new JPopupMenu();
+        mainTableMenu = new JPopupMenu();
         showMenu = new JMenu("Show column");
         fixCheckBox = new JCheckBoxMenuItem("Lock column", false);
         unfixCheckBox = new JCheckBoxMenuItem("Unlock column", true);
-        showAllItem = new JMenuItem("Show all columns");
+        showAllItem = new JMenuItem("Show all unlocked columns");
         hideColumn = new JCheckBoxMenuItem("Hide column",false);
-        hideAllItem = new JMenuItem("Hide all columns");
+        hideAllItem = new JMenuItem("Hide all unlocked columns");
         hideAllItem.setToolTipText("It will hide all unlocked columns unless the first of them");
         attributesItem = new JCheckBoxMenuItem("Expand attributes as columns", false);
         resetItem = new JMenuItem("Reset columns positions");
+        loadStateItem = new JMenuItem("Load table state");
+        saveStateItem = new JMenuItem("Save table state");
 
 
         if (canExpandAttributes)
@@ -175,22 +178,25 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         if (!(this instanceof AdvancedJTable_layer))
         {
 
-            showHideMenu.add(unfixCheckBox);
-            showHideMenu.add(new JPopupMenu.Separator());
-            showHideMenu.add(resetItem);
-            showHideMenu.add(new JPopupMenu.Separator());
+            fixedTableMenu.add(unfixCheckBox);
+            fixedTableMenu.add(new JPopupMenu.Separator());
+            fixedTableMenu.add(loadStateItem);
+            fixedTableMenu.add(saveStateItem);
+            fixedTableMenu.add(new JPopupMenu.Separator());
+            fixedTableMenu.add(resetItem);
+            fixedTableMenu.add(new JPopupMenu.Separator());
             if (canExpandAttributes)
             {
-                showHideMenu.add(attributesItem);
-                showHideMenu.add(new JPopupMenu.Separator());
+                fixedTableMenu.add(attributesItem);
+                fixedTableMenu.add(new JPopupMenu.Separator());
             }
-            showHideMenu.add(showMenu);
-            showHideMenu.add(new JPopupMenu.Separator());
-            showHideMenu.add(showAllItem);
-            showHideMenu.add(hideAllItem);
+            fixedTableMenu.add(showMenu);
+            fixedTableMenu.add(new JPopupMenu.Separator());
+            fixedTableMenu.add(showAllItem);
+            fixedTableMenu.add(hideAllItem);
 
-            fixMenu.add(fixCheckBox);
-            fixMenu.add(hideColumn);
+            mainTableMenu.add(fixCheckBox);
+            mainTableMenu.add(hideColumn);
 
 
             mainTable.getTableHeader().addMouseListener(new MouseAdapter()
@@ -213,7 +219,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             fixCheckBox.setEnabled(false);
                             hideColumn.setEnabled(false);
                         }
-                        fixMenu.show(ev.getComponent(), ev.getX(), ev.getY());
+                        mainTableMenu.show(ev.getComponent(), ev.getX(), ev.getY());
                         fixCheckBox.addItemListener(new ItemListener()
                         {
 
@@ -226,7 +232,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                     fromMainTableToFixedTable(clickedColumnIndex);
                                     updateShowMenu();
                                     checkNewIndexes();
-                                    fixMenu.setVisible(false);
+                                    mainTableMenu.setVisible(false);
                                     fixCheckBox.setSelected(false);
                                 }
 
@@ -274,7 +280,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         {
                             unfixCheckBox.setEnabled(false);
                         }
-                        showHideMenu.show(e.getComponent(), e.getX(), e.getY());
+                        fixedTableMenu.show(e.getComponent(), e.getX(), e.getY());
                         unfixCheckBox.addItemListener(new ItemListener()
                         {
 
@@ -287,7 +293,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                     fromFixedTableToMainTable(clickedColumnIndex);
                                     updateShowMenu();
                                     checkNewIndexes();
-                                    showHideMenu.setVisible(false);
+                                    fixedTableMenu.setVisible(false);
                                     unfixCheckBox.setSelected(true);
                                 }
                             }
@@ -344,6 +350,22 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 {
                     resetColumnsPositions();
                     checkNewIndexes();
+                }
+            });
+            loadStateItem.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    loadTableState();
+                }
+            });
+            saveStateItem.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    saveTableState();
                 }
             });
             attributesItem.addItemListener(new ItemListener()
@@ -664,11 +686,31 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     }
 
     /**
+     * Loads a table state from a external file
+     *
+     * @param
+     */
+    private void loadTableState()
+    {
+        TableStateController.loadTableState(this);
+    }
+
+    /**
+     * Saves the current table state on a external file
+     *
+     * @param
+     */
+    private void saveTableState()
+    {
+        TableStateController.saveTableState(this);
+    }
+
+
+    /**
      * Reset the column positions
      *
      * @param
      */
-
     private void resetColumnsPositions()
     {
         hiddenColumns.clear();

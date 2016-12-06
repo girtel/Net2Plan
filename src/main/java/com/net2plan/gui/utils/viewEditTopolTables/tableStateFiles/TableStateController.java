@@ -7,10 +7,14 @@ import com.net2plan.internal.plugins.IOFilter;
 import org.codehaus.stax2.XMLInputFactory2;
 import org.codehaus.stax2.XMLStreamReader2;
 
+import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 /**
@@ -19,6 +23,14 @@ import java.io.InputStream;
  */
 public final class TableStateController
 {
+    private static JFileChooser chooser;
+    private static File selectedFile;
+    private static InputStream inputStream;
+
+    static{
+        chooser = new JFileChooser();
+        selectedFile = new File("");
+    }
     private TableStateController(){
 
     }
@@ -27,17 +39,30 @@ public final class TableStateController
 
      */
 
-    public static void loadTableState(AdvancedJTableNetworkElement table){
-
+    public static void loadTableState(AdvancedJTableNetworkElement table)
+    {
+        JOptionPane.showMessageDialog(null,"This will be available soon...");
+        /*int rc = chooser.showOpenDialog(null);
+        if (rc != JFileChooser.APPROVE_OPTION) return;
+        selectedFile = chooser.getSelectedFile();
+        try
+        {
+            inputStream = new FileInputStream(selectedFile);
+        }
+        catch(FileNotFoundException ex){
+            ex.printStackTrace();
+        }
         XMLInputFactory2 xmlInputFactory = (XMLInputFactory2) XMLInputFactory2.newInstance();
-        //XMLStreamReader2 xmlStreamReader = (XMLStreamReader2) xmlInputFactory.createXMLStreamReader(inputStream);
+        XMLStreamReader2 xmlStreamReader = (XMLStreamReader2) xmlInputFactory.createXMLStreamReader(inputStream);*/
     }
 
     /*Takes the current State from table and saves in a external file .n2pst
 
      */
-    public static void saveTableState(AdvancedJTableNetworkElement table){
+    public static void saveTableState(AdvancedJTableNetworkElement table)
+    {
 
+        JOptionPane.showMessageDialog(null,"This will be available soon...");
         /*Hay que usar un JFileChooser y en el código de abajo pone como exportar algo a un archivo*/
 
     }
