@@ -13,6 +13,7 @@ class Test_Algorithm implements IAlgorithm
     @Override
     String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters)
     {
+        netPlan.getNodes().each {node -> print(node.getName())}
         return "OK!"
     }
 
