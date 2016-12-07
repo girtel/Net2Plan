@@ -77,6 +77,15 @@ public class OSMMapController
             }
         }
 
+        // Check screen resolution
+        final GraphicsDevice graphicsDevice = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        final Dimension screenSize = new Dimension(graphicsDevice.getDisplayMode().getWidth(), graphicsDevice.getDisplayMode().getHeight());
+
+        if (screenSize.getWidth() > 1920 ||screenSize.getHeight() > 1080)
+        {
+            throw new OSMMapException("Screen resolutions above 1080p are currently not supported.");
+        }
+
         OSMMapController.topologyPanel = topologyPanel;
         OSMMapController.canvas = canvas;
         OSMMapController.callback = callback;
