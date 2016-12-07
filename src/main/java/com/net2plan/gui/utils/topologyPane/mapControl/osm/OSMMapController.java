@@ -18,6 +18,7 @@ import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import org.jxmapviewer.viewer.*;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.util.*;
@@ -81,7 +82,7 @@ public class OSMMapController
         final GraphicsDevice graphicsDevice = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
         final Dimension screenSize = new Dimension(graphicsDevice.getDisplayMode().getWidth(), graphicsDevice.getDisplayMode().getHeight());
 
-        if (screenSize.getWidth() > 1920 ||screenSize.getHeight() > 1080)
+        if (screenSize.getWidth() > 1920 || screenSize.getHeight() > 1080)
         {
             throw new OSMMapException("Screen resolutions above 1080p are currently not supported.");
         }
@@ -243,26 +244,30 @@ public class OSMMapController
      */
     public static void cleanMap()
     {
-        if (mapViewer == null)
+        if (mapViewer != null)
         {
-            return;
+            // First, remove any canvas from the top of the osmMap viewer.
+            mapViewer.removeAll();
+
+            // Then remove the OSM map from the topology panel.
+            topologyPanel.remove(mapViewer);
+
+            // Deleting the map component
+            mapViewer = null;
+
+            // Repaint canvas on the topology panel
+            topologyPanel.add(canvas.getComponent(), BorderLayout.CENTER);
+
+            // Reset nodes' original position
+            for (Node node : callback.getDesign().getNodes())
+            {
+                canvas.updateNodeXYPosition(node);
+                canvas.zoomAll();
+            }
+
+            topologyPanel.validate();
+            topologyPanel.repaint();
         }
-
-        // First, remove any canvas from the top of the osmMap viewer.
-        mapViewer.removeAll();
-        mapViewer.validate();
-        mapViewer.repaint();
-
-        // Then remove the osmMap from the topology panel.
-        topologyPanel.remove(mapViewer);
-
-        // Repaint canvas on the topology panel
-        topologyPanel.add(canvas.getComponent(), BorderLayout.CENTER);
-
-        topologyPanel.validate();
-        topologyPanel.repaint();
-
-        mapViewer = null;
     }
 
     /**
