@@ -1,6 +1,6 @@
-package com.net2plan.gui.utils.windows;
+package com.net2plan.gui.utils.viewEditWindows;
 
-import com.net2plan.gui.utils.windows.parent.GUIWindow;
+import com.net2plan.gui.utils.viewEditWindows.parent.GUIWindow;
 
 import javax.swing.*;
 import java.awt.*;
