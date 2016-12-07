@@ -789,6 +789,7 @@ public class NetPlan extends NetworkElement
 		checkIsModifiable();
 		if (capacity < 0) throw new Net2PlanException ("Resource capacity cannot be negative");
 		if (processingTimeToTraversingTraffic < 0) throw new Net2PlanException ("Resource processing time cannot be negative");
+		if (capacityIOccupyInBaseResource == null) capacityIOccupyInBaseResource = new HashMap<Resource,Double> ();
 		for (Double val : capacityIOccupyInBaseResource.values()) if (val < 0) throw new Net2PlanException ("Resource capacity cannot be negative");
 
 		final long resourceId = nextElementId.longValue();
@@ -3336,7 +3337,7 @@ public class NetPlan extends NetworkElement
 	 * <p>Returns the number of resources (Resource) defined</p>
 	 * @return The number of defined resources
 	 */
-	public int getNumberOfResourcess () { return resources.size(); }
+	public int getNumberOfResources () { return resources.size(); }
 
 	/**
 	 * <p>Returns the protection segment with the given index in the given layer. if no layer is provided, default layer is assumed.</p>

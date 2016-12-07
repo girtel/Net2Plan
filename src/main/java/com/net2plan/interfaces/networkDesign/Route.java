@@ -616,7 +616,7 @@ public class Route extends NetworkElement
 		{
 			Double newOccupation = occupationInformationInTraversedResources.get(res);
 			this.resourcesOccupationMap.put(res , newOccupation == null? 0.0 : newOccupation);
-			res.addTraversingRoute(this , newOccupiedLinkCapacity);
+			res.addTraversingRoute(this , newOccupation);
 		}
 
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();

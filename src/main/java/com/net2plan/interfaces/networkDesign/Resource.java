@@ -81,7 +81,10 @@ public class Resource extends NetworkElement
 		this.capacityUpperResourcesOccupyInMe = new HashMap<Resource,Double> ();
 		this.capacityIOccupyInBaseResource = new HashMap<Resource,Double> (capacityIOccupyInBaseResource);
 		for (Entry<Resource,Double> entry : this.capacityIOccupyInBaseResource.entrySet())
-			entry.getKey().setUpperResourceOccupiedCapacity(this , entry.getValue());
+		{		
+			entry.getKey().capacityUpperResourcesOccupyInMe.put(this , entry.getValue());
+			entry.getKey().updateTotalOccupiedCapacity();
+		}
 		this.cache_traversingRoutesAndOccupiedCapacities = new HashMap<Route,Double> ();
 	}
 
@@ -140,7 +143,7 @@ public class Resource extends NetworkElement
 	/** Sets the processing time added to every traversing traffic
 	 * @param time the new processing time (cannot be negative)
 	 */
-	public void getProcessingTimeToTraversingTrafficInMs (double time)
+	public void setProcessingTimeToTraversingTrafficInMs (double time)
 	{
 		if (time < 0) throw new Net2PlanException ("The processing time cannot be negative");
 		this.processingTimeToTraversingTrafficInMs = time;
