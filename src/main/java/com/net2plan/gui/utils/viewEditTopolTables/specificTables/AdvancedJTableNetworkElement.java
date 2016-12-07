@@ -66,7 +66,8 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     private final JMenuItem showAllItem, hideAllItem, resetItem, saveStateItem, loadStateItem;
     private final ArrayList<TableColumn> hiddenColumns, shownColumns, removedColumns;
     private final ArrayList<String> hiddenColumnsNames;
-    private final Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn, mapToSaveState;
+    private final Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn;
+    private final Map<Integer, String> mapToSaveState;
     private JCheckBoxMenuItem fixCheckBox, unfixCheckBox, attributesItem, hideColumn;
     private ArrayList<JMenuItem> hiddenHeaderItems;
 
@@ -456,9 +457,9 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
     public void showAllColumns()
     {
-        for(int i = 0; i< hiddenColumnsNames.size();i++)
+        while(hiddenColumnsNames.size() > 0)
         {
-            String s = hiddenColumnsNames.get(hiddenColumnsNames.size() - 1 - i);
+            String s = hiddenColumnsNames.get(hiddenColumnsNames.size() - 1);
             showColumn(s,indexForEachHiddenColumn.get(s));
         }
         checkNewIndexes();
@@ -512,13 +513,15 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             if (columnName.equals(hiddenColumnName))
             {
                 mainTable.getColumnModel().addColumn(tc);
-                mainTable.getColumnModel().moveColumn(mainTable.getColumnCount() - 1, columnIndex);
+                if(columnIndex != 66)
+                    mainTable.getColumnModel().moveColumn(mainTable.getColumnCount() - 1, columnIndex);
                 shownColumns.add(tc);
                 indexForEachHiddenColumn.remove(columnName, columnIndex);
                 columnToShow = tc;
             }
         }
         hiddenColumns.remove(columnToShow);
+        hiddenColumnsNames.remove(columnToShow.getHeaderValue().toString());
     }
 
     /**
@@ -664,7 +667,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         for(int i = 0; i < mainTable.getColumnModel().getColumnCount();i++)
         {
             currentColumnName = mainTable.getColumnModel().getColumn(i).getHeaderValue().toString();
-            mapToSaveState.put(currentColumnName,i);
+            mapToSaveState.put(i,currentColumnName);
         }
     }
 
@@ -676,12 +679,26 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
     protected void restoreColumnsPositions()
     {
-        String currentColumnName = "";
-        for(int j = 0; j < mainTable.getColumnModel().getColumnCount();j++)
+        TableColumn columnToHide = null;
+        String hiddenColumnHeader = null;
+        while (mainTable.getColumnModel().getColumnCount() > 0)
         {
-            currentColumnName = mainTable.getColumnModel().getColumn(j).getHeaderValue().toString();
-            if(mapToSaveState.get(currentColumnName) != null)
-                mainTable.getColumnModel().moveColumn(j,mapToSaveState.get(currentColumnName));
+            columnToHide = mainTable.getColumnModel().getColumn(0);
+            hiddenColumnHeader = columnToHide.getHeaderValue().toString();
+            hiddenColumns.add(columnToHide);
+            hiddenColumnsNames.add(columnToHide.getHeaderValue().toString());
+            indexForEachHiddenColumn.put(hiddenColumnHeader, 0);
+            mainTable.getColumnModel().removeColumn(columnToHide);
+            shownColumns.remove(columnToHide);
+        }
+        checkNewIndexes();
+        String currentColumnName = "";
+        for(int j = 0; j < mapToSaveState.size();j++)
+        {
+            currentColumnName = mapToSaveState.get(j);
+            showColumn(currentColumnName,j);
+
+
         }
     }
 
