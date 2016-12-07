@@ -12,10 +12,10 @@
 
 package com.net2plan.gui.utils;
 
-import com.net2plan.algorithms.GroovyAlgorithmUtils;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.ErrorHandling;
+import com.net2plan.internal.GroovyAlgorithmUtils;
 import com.net2plan.internal.IExternal;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.utils.ClassLoaderUtils;
