@@ -17,12 +17,12 @@ import java.awt.geom.Point2D;
 public class OSMStateManager
 {
     private OSMState currentState;
-    private OSMRunningState runningState;
-    private OSMStoppedState stoppedState;
+    private final OSMRunningState runningState;
+    private final OSMStoppedState stoppedState;
 
-    final TopologyPanel topologyPanel;
-    final ITopologyCanvas canvas;
-    final INetworkCallback callback;
+    private final TopologyPanel topologyPanel;
+    private final ITopologyCanvas canvas;
+    private final INetworkCallback callback;
 
     public OSMStateManager(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final INetworkCallback callback)
     {

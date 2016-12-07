@@ -348,7 +348,7 @@ public class OSMMapController
      *
      * @return Map activation state.
      */
-    public static boolean isMapActivated()
+    private static boolean isMapActivated()
     {
         return GUINetworkDesign.getStateManager().getCurrentState() instanceof OSMRunningState;
     }
