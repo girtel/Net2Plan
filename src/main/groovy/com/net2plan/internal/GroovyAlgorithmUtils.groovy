@@ -1,6 +1,5 @@
-package com.net2plan.algorithms
+package com.net2plan.internal
 
-import com.net2plan.internal.IExternal
 import org.reflections.Reflections
 import com.net2plan.interfaces.networkDesign.IAlgorithm
 

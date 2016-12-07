@@ -1,4 +1,4 @@
-package com.net2plan.examples.groovy
+package com.net2plan.examples.general.offline
 
 import com.net2plan.interfaces.networkDesign.IAlgorithm
 import com.net2plan.interfaces.networkDesign.NetPlan
