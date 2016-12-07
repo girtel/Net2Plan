@@ -39,7 +39,6 @@ import com.net2plan.utils.StringUtils;
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import sun.swing.table.DefaultTableCellHeaderRenderer;
 
 /**
  */

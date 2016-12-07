@@ -19,7 +19,7 @@ import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
-import sun.swing.table.DefaultTableCellHeaderRenderer;
+
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;

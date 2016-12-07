@@ -67,7 +67,6 @@ import com.net2plan.utils.StringUtils;
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import net.miginfocom.swing.MigLayout;
-import sun.swing.table.DefaultTableCellHeaderRenderer;
 
 /**
  */

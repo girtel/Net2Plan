@@ -71,7 +71,6 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
 import net.miginfocom.swing.MigLayout;
-import sun.swing.table.DefaultTableCellHeaderRenderer;
 
 /**
  */

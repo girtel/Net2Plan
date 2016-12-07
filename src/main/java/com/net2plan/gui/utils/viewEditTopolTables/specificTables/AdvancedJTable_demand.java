@@ -47,7 +47,6 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.StringUtils;
 
 import net.miginfocom.swing.MigLayout;
-import sun.swing.table.DefaultTableCellHeaderRenderer;
 
 /**
  */

@@ -36,7 +36,6 @@ import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.StringUtils;
-import sun.swing.table.DefaultTableCellHeaderRenderer;
 
 /**
  */
