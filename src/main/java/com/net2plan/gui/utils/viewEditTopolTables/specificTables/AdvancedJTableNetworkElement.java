@@ -518,10 +518,15 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 shownColumns.add(tc);
                 indexForEachHiddenColumn.remove(columnName, columnIndex);
                 columnToShow = tc;
+                break;
             }
         }
         hiddenColumns.remove(columnToShow);
-        hiddenColumnsNames.remove(columnToShow.getHeaderValue().toString());
+        hiddenColumnsNames.clear();
+        for(TableColumn tc : hiddenColumns)
+        {
+            hiddenColumnsNames.add(tc.getHeaderValue().toString());
+        }
     }
 
     /**
@@ -697,8 +702,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         {
             currentColumnName = mapToSaveState.get(j);
             showColumn(currentColumnName,j);
-
-
         }
     }
 
@@ -871,6 +874,10 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 updateTables();
                 expandAttributes = true;
                 restoreColumnsPositions();
+                for(String att : getAttributesColumnsHeaders())
+                {
+                    showColumn("Att: "+att,66);
+                }
                 checkNewIndexes();
             } else
             {
@@ -922,6 +929,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 updateTables();
                 expandAttributes = false;
                 restoreColumnsPositions();
+                showColumn("Attributes",66);
                 checkNewIndexes();
             } else
             {
