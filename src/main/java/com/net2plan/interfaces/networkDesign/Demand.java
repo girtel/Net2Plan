@@ -133,7 +133,7 @@ public class Demand extends NetworkElement
 			for (Route r : this.cache_routes)
 			{
 				double timeInMs = 0; 
-				for (Link e : r.seqLinksRealPath) 
+				for (Link e : r.cache_seqLinksRealPath) 
 					if (e.isCoupled()) 
 						timeInMs += e.coupledLowerLayerDemand.getWorseCasePropagationTimeInMs();
 					else
@@ -183,7 +183,7 @@ public class Demand extends NetworkElement
 		if (layer.routingType == RoutingType.SOURCE_ROUTING)
 		{
 			for (Route r : this.cache_routes)
-				for (Link e : r.seqLinksRealPath) 
+				for (Link e : r.cache_seqLinksRealPath) 
 					if (e.isOversubscribed()) return true;
 		}
 		else
@@ -215,7 +215,7 @@ public class Demand extends NetworkElement
 	 * returned if the method setMandatorySequenceOfTraversedResourceTypes was not called never before for this demand.
 	 * @return the list
 	 */
-	public List<String> getMandatorySequenceOfTraversedResourceTypes ()
+	public List<String> getServiceChainSequenceOfTraversedResourceTypes ()
 	{
 		if (layer.routingType != RoutingType.SOURCE_ROUTING) throw new Net2PlanException ("The routing type must be SOURCE ROUTING");
 		return Collections.unmodifiableList(this.mandatorySequenceOfTraversedResourceTypes);
@@ -226,7 +226,7 @@ public class Demand extends NetworkElement
 	 * at the moment.
 	 * @param resourceTypesSequence the sequence of types of the resources that has to be traversed by all the routes of this demand
 	 */
-	public void setMandatorySequenceOfTraversedResourceTypes (List<String> resourceTypesSequence)
+	public void setServiceChainSequenceOfTraversedResourceTypes (List<String> resourceTypesSequence)
 	{
 		if (layer.routingType != RoutingType.SOURCE_ROUTING) throw new Net2PlanException ("The routing type must be SOURCE ROUTING");
 		if (!cache_routes.isEmpty()) throw new Net2PlanException ("The demand must not have routes to execute this method");
@@ -511,7 +511,7 @@ public class Demand extends NetworkElement
 		double shortestPathCost = Double.MAX_VALUE;
 		for (Route r : cache_routes)
 		{
-			double cost = 0; for (Link link : r.seqLinksRealPath) cost += costs [link.index];
+			double cost = 0; for (Link link : r.cache_seqLinksRealPath) cost += costs [link.index];
 			if (cost < shortestPathCost) { shortestPathCost = cost; shortestRoutes.clear(); shortestRoutes.add (r); }
 		}
 		return Pair.of(shortestRoutes , shortestPathCost);

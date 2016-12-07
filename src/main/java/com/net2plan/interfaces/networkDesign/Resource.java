@@ -25,18 +25,15 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.commons.collections15.BidiMap;
-
 import com.net2plan.internal.AttributeMap;
-import com.net2plan.utils.Pair;
+import com.net2plan.internal.ErrorHandling;
 
 /** <p>.</p> 
  * @author Pablo Pavon-Marino
@@ -261,6 +258,15 @@ public class Resource extends NetworkElement
 		return Collections.unmodifiableMap(capacityUpperResourcesOccupyInMe);
 	}
 
+	/** Returns a set with the demands that have at least one route traversing this resource
+	 * @return the traversing demands
+	 */
+	public Set<Demand> getTraversingDemands() 
+	{
+		Set<Demand> res = new HashSet<Demand> (); for (Route r : cache_traversingRoutesAndOccupiedCapacities.keySet()) res.add(r.demand);
+		return res;
+	}
+
 	/** Returns a set with the routes that are traversing this resource
 	 * @return the traversingRoutes
 	 */
@@ -327,7 +333,16 @@ public class Resource extends NetworkElement
 		capacityUpperResourcesOccupyInMe.put(upperResource , occupiedCapacity);
 		updateTotalOccupiedCapacity();
 	}
-	
+
+	/** Removes the occupation of this resource (releasing any capacity allocated to it) in this resource.
+	 * @param upperResource the resource for which this resource is a base resource
+	 */
+	void removeUpperResourceOccupation (Resource upperResource)
+	{		
+		setUpperResourceOccupiedCapacity (upperResource , 0);
+		capacityUpperResourcesOccupyInMe.remove(upperResource);
+	}
+
 	void addTraversingRoute (Route r , double resourceOccupiedCapacityByThisRoute)
 	{
 		if (!r.getSeqNodesRealPath().contains(this.hostNode)) throw new Net2PlanException ("The route does not traverse the host node of this resource");
@@ -352,6 +367,24 @@ public class Resource extends NetworkElement
 		for (Double occupiedCapacityThisRoute : cache_traversingRoutesAndOccupiedCapacities.values())
 			cache_totalOccupiedCapacity += occupiedCapacityThisRoute;
 	}
+	
+	/**
+	 * <p>Removes this Resource. Before that, it removes all the traversing routes (if any), and removes all the resources that are based on this (if any).</p>
+	 */
+	public void remove()
+	{
+		checkAttachedToNetPlanObject();
+		netPlan.checkIsModifiable();
+		for (Route r : cache_traversingRoutesAndOccupiedCapacities.keySet()) r.remove();
+		for (Resource upperResource : capacityUpperResourcesOccupyInMe.keySet()) upperResource.remove();
+		for (Resource baseResource : capacityIOccupyInBaseResource.keySet()) baseResource.removeUpperResourceOccupation(this);
+		netPlan.cache_id2ResourceMap.remove (id);
+		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.resources , index);
+		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+		removeId ();
+	}
+
+	
 	
 	/**
 	 * <p>Returns a {@code String} representation of the Shared Risk Group.</p>
@@ -385,4 +418,5 @@ public class Resource extends NetworkElement
 		if (Math.abs(accumOccupCap - cache_totalOccupiedCapacity) > 1e-3) throw new RuntimeException ("Bad");
 	}
 
+	
 }

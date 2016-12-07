@@ -191,6 +191,7 @@ public class NetPlan extends NetworkElement
 		layers = new ArrayList<NetworkLayer> ();
 		nodes = new ArrayList<Node> ();
 		srgs= new ArrayList<SharedRiskGroup> ();
+		resources = new ArrayList<Resource> ();
 		
 		cache_nodesDown = new HashSet<Node> ();
 		this.cache_id2NodeMap = new HashMap <Long,Node> ();
@@ -539,10 +540,10 @@ public class NetPlan extends NetworkElement
 		}
 		for (Route originRoute : origin.routes)
 		{
-			List<Link> newSeqLinksRealPath = new LinkedList<Link> (); for (Link originLink : originRoute.seqLinksRealPath) newSeqLinksRealPath.add (newLayer.links.get (originLink.index));
+			List<Link> newSeqLinksRealPath = new LinkedList<Link> (); for (Link originLink : originRoute.cache_seqLinksRealPath) newSeqLinksRealPath.add (newLayer.links.get (originLink.index));
 			Route newRoute = this.addRoute(newLayer.demands.get(originRoute.demand.index) , originRoute.carriedTraffic , originRoute.occupiedLinkCapacity , newSeqLinksRealPath , originRoute.attributes);
 			List<Link> newSeqLinksAndProtectionSegment = new LinkedList<Link> (); 
-			for (Link originLink : originRoute.seqLinksAndProtectionSegments) 
+			for (Link originLink : originRoute.cache_seqLinksAndProtectionSegments) 
 				if (originLink instanceof ProtectionSegment)
 					newSeqLinksAndProtectionSegment.add (newLayer.protectionSegments.get (originLink.index));
 				else
@@ -787,6 +788,9 @@ public class NetPlan extends NetworkElement
 				Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTraffic , AttributeMap attributes)
 	{
 		checkIsModifiable();
+		if (capacity < 0) throw new Net2PlanException ("Resource capacity cannot be negative");
+		if (processingTimeToTraversingTraffic < 0) throw new Net2PlanException ("Resource processing time cannot be negative");
+		for (Double val : capacityIOccupyInBaseResource.values()) if (val < 0) throw new Net2PlanException ("Resource capacity cannot be negative");
 
 		final long resourceId = nextElementId.longValue();
 		nextElementId.increment();
@@ -889,13 +893,13 @@ public class NetPlan extends NetworkElement
 		final long routeId = nextElementId.longValue();
 		nextElementId.increment();
 		
-		Route route = new Route(this, routeId, layer.routes.size(), demand , sequenceOfLinksAndResources , new AttributeMap(attributes));
+		Route route = new Route(this, routeId, layer.routes.size(), demand , sequenceOfLinksAndResources , occupationInformationInTraversedResources , new AttributeMap(attributes));
 		
 		layer.routes.add(route);
 		cache_id2RouteMap.put (routeId,route);
 		boolean isUpThisRoute = true;
-		for (Node node : route.seqNodesRealPath) { node.cache_nodeAssociatedRoutes.add (route); if (!node.isUp) isUpThisRoute = false; } 
-		for (Link link : route.seqLinksRealPath) 
+		for (Node node : route.cache_seqNodesRealPath) { node.cache_nodeAssociatedRoutes.add (route); if (!node.isUp) isUpThisRoute = false; } 
+		for (Link link : route.cache_seqLinksRealPath) 
 		{ 
 			Integer numPassingTimes = link.cache_traversingRoutes.get (route); if (numPassingTimes == null) numPassingTimes = 1; else numPassingTimes ++; 
 			link.cache_traversingRoutes.put (route , numPassingTimes);
@@ -1344,6 +1348,7 @@ public class NetPlan extends NetworkElement
 		this.layers = netPlan.layers;
 		this.nodes = netPlan.nodes;
 		this.srgs = netPlan.srgs;
+		this.resources = netPlan.resources;
 		this.cache_nodesDown = netPlan.cache_nodesDown;
 		this.cache_id2LayerMap = netPlan.cache_id2LayerMap;
 		this.cache_id2NodeMap = netPlan.cache_id2NodeMap;
@@ -1359,6 +1364,7 @@ public class NetPlan extends NetworkElement
 		this.attributes.clear (); this.attributes.putAll(netPlan.attributes);
 		for (Node node : netPlan.nodes) node.netPlan = this;
 		for (SharedRiskGroup srg : netPlan.srgs) srg.netPlan = this;
+		for (Resource resource : netPlan.resources) resource.netPlan = this;
 		for (NetworkLayer layer : netPlan.layers)
 		{
 			layer.netPlan = this;
@@ -1440,12 +1446,6 @@ public class NetPlan extends NetworkElement
 	void checkExistsNode (long id) { if (cache_id2NodeMap.get(id) == null) throw new Net2PlanException ("Node of id: " + id + " does not exist"); }
 
 	/**
-	 * <p>Checks if a resource exists in this {@code NetPlan} object. Throws an exception if nonexistent.</p>
-	 * @param id Node id
-	 */
-	void checkExistsResource (long id) { if (cache_id2ResourceMap.get(id) == null) throw new Net2PlanException ("Node of id: " + id + " does not exist"); }
-
-	/**
 	 * <p>Checks if a protection segment exists in this {@code NetPlan} object. Throws an exception if nonexistent.</p>
 	 * @param id Protection segment id
 	 */
@@ -1462,6 +1462,12 @@ public class NetPlan extends NetworkElement
 	 * @param id the SRG identifier
 	 */
 	void checkExistsSRG (long id) { if (cache_id2srgMap.get(id) == null) throw new Net2PlanException ("Shared risk group of id: " + id + " does not exist"); }
+
+	/**
+	 * <p>Checks if a resource exists in this {@code NetPlan} object. Throws an exception if nonexistent.</p>
+	 * @param id the resource identifier
+	 */
+	void checkExistsResource (long id) { if (cache_id2ResourceMap.get(id) == null) throw new Net2PlanException ("Resource of id: " + id + " does not exist"); }
 
 	/**
 	 * <p>Checks if all the elements are attached to this {@code NetPlan} object. 
@@ -1498,6 +1504,7 @@ public class NetPlan extends NetworkElement
 		if (e.netPlan != this) throw new Net2PlanException ("Element " + e + " is not attached to this NetPlan object.");
 		if (e instanceof Node) { if (e != nodes.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
 		else if (e instanceof SharedRiskGroup) { if (e != srgs.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
+		else if (e instanceof Resource) { if (e != resources.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
 		else if (e instanceof NetworkLayer) { if (e != layers.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
 	}
 
@@ -1513,6 +1520,7 @@ public class NetPlan extends NetworkElement
 		if (e instanceof Node) { if (e != nodes.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
 		else if (e instanceof Resource) { if (e != resources.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
 		else if (e instanceof SharedRiskGroup) { if (e != srgs.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
+		else if (e instanceof Resource) { if (e != resources.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
 		else if (e instanceof NetworkLayer) { if (e != layers.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
 		if (layer != null) 
 		{
@@ -1640,6 +1648,7 @@ public class NetPlan extends NetworkElement
 		this.layers = new ArrayList<NetworkLayer> ();
 		this.nodes = new ArrayList<Node> ();
 		this.srgs = new ArrayList<SharedRiskGroup> ();
+		this.resources = new ArrayList<Resource> ();
 		this.cache_nodesDown = new HashSet<Node> ();
 		this.cache_id2NodeMap = new HashMap <Long,Node> ();
 		this.cache_id2ResourceMap = new HashMap <Long,Resource> ();
@@ -1668,7 +1677,8 @@ public class NetPlan extends NetworkElement
 		}
 		for (Resource originResource : originNetPlan.resources) 
 		{
-			Resource newElement = new Resource (this , originResource.id , originResource.index , this.cache_id2NodeMap.get(originResource.hostNode.id) , 
+			Resource newElement = new Resource (this , originResource.id , originResource.index , originResource.type , 
+					originResource.name , this.cache_id2NodeMap.get(originResource.hostNode.id) , 
 					originResource.capacity , originResource.capacityMeasurementUnits , null , originResource.processingTimeToTraversingTrafficInMs , originResource.attributes);
 			cache_id2ResourceMap.put(originResource.id, newElement);
 			resources.add (newElement);
@@ -1709,7 +1719,7 @@ public class NetPlan extends NetworkElement
 			for (Route originRoute : originLayer.routes) 
 			{
 				List<Link> newSeqLinksRealPath = new LinkedList<Link> ();
-				for (Link oldLink : originRoute.seqLinksRealPath)
+				for (Link oldLink : originRoute.cache_seqLinksRealPath)
 				{
 					Link newLink = this.cache_id2LinkMap.get(oldLink.id);
 					newSeqLinksRealPath.add (newLink);
@@ -2224,7 +2234,7 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix2D A_rs = DoubleFactory2D.sparse.make (layer.routes.size () , srgs.size ());
-		for (Route r : layer.routes) for (Link e : r.seqLinksRealPath) for (SharedRiskGroup srg : e.cache_srgs) A_rs.set (r.index , srg.index , 1.0);
+		for (Route r : layer.routes) for (Link e : r.cache_seqLinksRealPath) for (SharedRiskGroup srg : e.cache_srgs) A_rs.set (r.index , srg.index , 1.0);
 		return A_rs;
 	}
 
@@ -2286,7 +2296,7 @@ public class NetPlan extends NetworkElement
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) return layer.forwardingRules_x_de.copy();
 		DoubleMatrix2D x_de = DoubleFactory2D.sparse.make (layer.demands.size () , layer.links.size ());
-		for (Route r : layer.routes) for (Link e : r.seqLinksRealPath) x_de.set (r.demand.index , e.index , x_de.get(r.demand.index , e.index) + r.carriedTraffic);
+		for (Route r : layer.routes) for (Link e : r.cache_seqLinksRealPath) x_de.set (r.demand.index , e.index , x_de.get(r.demand.index , e.index) + r.carriedTraffic);
 		return x_de;
 	}
 
@@ -2396,7 +2406,7 @@ public class NetPlan extends NetworkElement
 		int E = layer.links.size();
 		int R = layer.routes.size ();
 		DoubleMatrix2D delta_er = DoubleFactory2D.sparse.make(E, R);
-		for (Route r : layer.routes) for (Link e : r.seqLinksRealPath) delta_er.set (e.index , r.index , delta_er.get (e.index , r.index) + 1);
+		for (Route r : layer.routes) for (Link e : r.cache_seqLinksRealPath) delta_er.set (e.index , r.index , delta_er.get (e.index , r.index) + 1);
 		return delta_er;
 	}
 
@@ -2930,6 +2940,7 @@ public class NetPlan extends NetworkElement
 		e = cache_id2ProtectionSegmentMap.get(id); if (e != null) return e;
 		e = cache_id2RouteMap.get(id); if (e != null) return e;
 		e = cache_id2srgMap.get(id); if (e != null) return e;
+		e = cache_id2ResourceMap.get(id); if (e != null) return e;
 		return null;
 	}
 
@@ -3044,13 +3055,6 @@ public class NetPlan extends NetworkElement
 	 * @return The node with the given id ({@code null} if it does not exist)
 	 */
 	public Node getNodeFromId (long uid) { return cache_id2NodeMap.get(uid); }
-
-	/**
-	 * <p>Returns the resource with the given unique identifier.</p>
- 	 * @param uid Resource unique id
-	 * @return The Resource object with the given id ({@code null} if it does not exist)
-	 */
-	public Resource getResourceFromId (long uid) { return cache_id2ResourceMap.get(uid); }
 
 	/**
 	 * <p>Returns the first node with the given name.</p>
@@ -3329,6 +3333,12 @@ public class NetPlan extends NetworkElement
 	public int getNumberOfSRGs () { return srgs.size(); }
 
 	/**
+	 * <p>Returns the number of resources (Resource) defined</p>
+	 * @return The number of defined resources
+	 */
+	public int getNumberOfResourcess () { return resources.size(); }
+
+	/**
 	 * <p>Returns the protection segment with the given index in the given layer. if no layer is provided, default layer is assumed.</p>
 	 * @param index Protection segment index
 	 * @param optionalLayerParameter network layer (optional)
@@ -3456,12 +3466,25 @@ public class NetPlan extends NetworkElement
 	public SharedRiskGroup getSRGFromId (long uid) { return cache_id2srgMap.get(uid); }
 
 	/**
+	 * <p>Returns the resource with the given unique identifier.</p>
+	 * @param uid Resource unique id
+	 * @return The resource with the given unique id (@code null if it does not exist)
+	 */
+	public Resource getResourceFromId (long uid) { return cache_id2ResourceMap.get(uid); }
+
+	/**
 	 * <p>Returns the shared risk group with the given index</p>
 	 * @param index SRG index
 	 * @return The shared risk group with the given index ({@code null} if it does not exist, index is lesser than zero or greater than the number of elements minus one)
 	 */
 	public SharedRiskGroup getSRG (int index) { if ((index < 0) || (index > srgs.size () -1)) return null; else return srgs.get(index);  }
 	
+	/**
+	 * <p>Returns the resource with the given index</p>
+	 * @param index Resource index
+	 * @return The Resource with the given index ({@code null} if it does not exist, index is lesser than zero or greater than the number of elements minus one)
+	 */
+	public Resource getResource (int index) { if ((index < 0) || (index > resources.size () -1)) return null; else return resources.get(index);  }
 
 	/**
 	 * <p>Returns the array of shared risk group ids (i-th position, corresponds to index i)</p>
@@ -3470,10 +3493,22 @@ public class NetPlan extends NetworkElement
 	public ArrayList<Long> getSRGIds () { ArrayList<Long> res = new ArrayList<Long> (); for (SharedRiskGroup n : srgs) res.add (n.id); return res; }
 
 	/**
+	 * <p>Returns the array of resource ids (i-th position, corresponds to index i)</p>
+	 * @return The {@code ArrayList} of Resource unique ids
+	 */
+	public ArrayList<Long> getResourceIds () { ArrayList<Long> res = new ArrayList<Long> (); for (Resource n : resources) res.add (n.id); return res; }
+
+	/**
 	 * <p>Returns the array of shared risk groups (i-th position, corresponds to index i).</p>
 	 * @return The {@code List} of Shared Risk Groups
 	 */
 	public List<SharedRiskGroup> getSRGs () { return (List<SharedRiskGroup>) Collections.unmodifiableList(srgs); }
+
+	/**
+	 * <p>Returns the array of resources (i-th position, corresponds to index i).</p>
+	 * @return The {@code List} of Resource obejects 
+	 */
+	public List<Resource> getResources () { return (List<Resource>) Collections.unmodifiableList(resources); }
 
 	/**
 	 * <p>Returns a vector with the carried traffic per demand, at the given layer. i-th vector corresponds to i-th index of the element. If no layer is provided, the defaulf layer is assumed.</p>
@@ -4034,7 +4069,7 @@ public class NetPlan extends NetworkElement
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
-		for (Route e : layer.routes) res.set(e.index, e.seqLinksRealPath.size());
+		for (Route e : layer.routes) res.set(e.index, e.cache_seqLinksRealPath.size());
 		return res;
 	}
 
@@ -4054,7 +4089,7 @@ public class NetPlan extends NetworkElement
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		if (costs == null) costs = DoubleUtils.ones(layer.links.size ()); else if (costs.length != layer.links.size()) throw new Net2PlanException ("The array of costs must have the same length as the number of links in the layer");
 		DoubleMatrix1D res = DoubleFactory1D.dense.make (layer.routes.size());
-		for (Route r : layer.routes) for (Link link : r.seqLinksRealPath) res.set (r.index , res.get(r.index) + costs [link.index]);
+		for (Route r : layer.routes) for (Link link : r.cache_seqLinksRealPath) res.set (r.index , res.get(r.index) + costs [link.index]);
 		return res;
 	}
 
@@ -4183,6 +4218,12 @@ public class NetPlan extends NetworkElement
 	 * @return {@code True} if the network has SRGs defined, {@code false} otherwise
 	 */
 	public boolean hasSRGs () { return srgs.size() > 0; }
+
+	/**
+	 * <p>Returns {@code true} if the network has one or more resources (Resource) defined.</p>
+	 * @return {@code True} if the network has resources defined, {@code false} otherwise
+	 */
+	public boolean hasResources () { return resources.size() > 0; }
 
 	/**
 	 * <p>Returns {@code true} if the network has at least one routing cycle at the given layer. If no layer is provided, default layer is assumed.</p>
@@ -4514,6 +4555,16 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
+	 * <p>Removes all the resources.</p>
+	 */
+	public void removeAllResources ()
+	{
+		checkIsModifiable();
+		for (Resource r : new ArrayList<Resource> (resources)) r.remove ();
+		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
+	}
+
+	/**
 	 * <p>Resets the state of the network to an empty {@code NetPlan}.</p>
 	 */
 	public void reset()
@@ -4602,6 +4653,45 @@ public class NetPlan extends NetworkElement
 				}
 			}
 			
+			for (Resource res : resources)
+			{
+				boolean emptyResource = res.attributes.isEmpty() && res.capacityIOccupyInBaseResource.isEmpty();
+				
+				XMLUtils.indent(writer, 1);
+				if (emptyResource) writer.writeEmptyElement("resource");
+				else writer.writeStartElement("resource");
+
+				writer.writeAttribute("id", Long.toString(res.id));
+				writer.writeAttribute("hostNodeId", Long.toString(res.hostNode.id));
+				writer.writeAttribute("type", res.type);
+				writer.writeAttribute("name", res.name);
+				writer.writeAttribute("capacityMeasurementUnits", res.capacityMeasurementUnits);
+				writer.writeAttribute("processingTimeToTraversingTrafficInMs", Double.toString(res.processingTimeToTraversingTrafficInMs));
+				writer.writeAttribute("capacity", Double.toString(res.capacity));
+
+				for (Entry<Resource,Double> baseResource : res.capacityIOccupyInBaseResource.entrySet())
+				{
+					XMLUtils.indent(writer, 3);
+					writer.writeEmptyElement("baseResource");
+					writer.writeAttribute("id", Long.toString(baseResource.getKey().id));
+					writer.writeAttribute("occupiedCapacity", Double.toString(baseResource.getValue()));
+				}
+
+				for (Entry<String, String> entry : res.attributes.entrySet())
+				{
+					XMLUtils.indent(writer, 2);
+					writer.writeEmptyElement("attribute");
+					writer.writeAttribute("key", entry.getKey());
+					writer.writeAttribute("value", entry.getValue());
+				}
+
+				if (!emptyResource)
+				{
+					XMLUtils.indent(writer, 1);
+					writer.writeEndElement();
+				}
+			}
+
 			for(NetworkLayer layer : layers)
 			{
 				XMLUtils.indent(writer, 1);
@@ -4646,7 +4736,7 @@ public class NetPlan extends NetworkElement
 
 				for(Demand demand : layer.demands)
 				{
-					boolean emptyDemand = demand.attributes.isEmpty();
+					boolean emptyDemand = demand.attributes.isEmpty() && demand.mandatorySequenceOfTraversedResourceTypes.isEmpty();
 					
 					XMLUtils.indent(writer, 2);
 					if (emptyDemand) writer.writeEmptyElement("demand");
@@ -4656,6 +4746,13 @@ public class NetPlan extends NetworkElement
 					writer.writeAttribute("ingressNodeId", Long.toString(demand.ingressNode.id));
 					writer.writeAttribute("egressNodeId", Long.toString(demand.egressNode.id));
 					writer.writeAttribute("offeredTraffic", Double.toString(demand.offeredTraffic));
+
+					for (String type : demand.mandatorySequenceOfTraversedResourceTypes)
+					{
+						XMLUtils.indent(writer, 2);
+						writer.writeEmptyElement("serviceChainResourceTypeOfSequence");
+						writer.writeAttribute("type", type);
+					}
 
 					for (Entry<String, String> entry : demand.attributes.entrySet())
 					{
@@ -4789,9 +4886,13 @@ public class NetPlan extends NetworkElement
 						writer.writeAttribute("carriedTrafficIfNotFailing", Double.toString(route.carriedTrafficIfNotFailing));
 						writer.writeAttribute("occupiedLinkCapacityIfNotFailing", Double.toString(route.occupiedLinkCapacityIfNotFailing));
 						/* If the initial seq links (when the route was created) contains removed links: we use the current sequence */
-						boolean initialSeqLinksNotRemoved = true; for (Link e : route.initialSeqLinksWhenCreated) if (e.netPlan == null) { initialSeqLinksNotRemoved = false; break; }
-						List<Long> initialSeqLinksWhenCreated = new LinkedList<Long> (); for (Link e : initialSeqLinksNotRemoved? route.initialSeqLinksWhenCreated : route.getSeqLinksRealPath()) initialSeqLinksWhenCreated.add (e.id);
-						List<Long> seqLinksAndProtectionSegments = new LinkedList<Long> (); for (Link e : route.seqLinksAndProtectionSegments) seqLinksAndProtectionSegments.add (e.id);
+						boolean initialSeqLinksAndResourcesNotRemoved = true; 
+						for (NetworkElement e : route.initialSeqLinksAndResourcesTraversedWhenCreated) if (e.netPlan == null) { initialSeqLinksAndResourcesNotRemoved = false; break; }
+						List<Long> initialSeqLinksAndResourcesWhenCreated = new LinkedList<Long> (); 
+						for (NetworkElement e : initialSeqLinksAndResourcesNotRemoved? route.initialSeqLinksAndResourcesTraversedWhenCreated : route.getCurrentSeqLinksAndResourcesTraversed()) 
+							initialSeqLinksAndResourcesWhenCreated.add (e.id);
+						List<Long> seqLinksAndProtectionSegmentsAndResources = new LinkedList<Long> (); 
+						for (NetworkElement e : route.cache_seqLinksAndProtectionSegments) seqLinksAndProtectionSegments.add (e.id);
 						List<Long> backupSegmentList = new LinkedList<Long> (); for (ProtectionSegment e : route.potentialBackupSegments) backupSegmentList.add (e.id);
 						writer.writeAttribute("seqLinks", CollectionUtils.join(initialSeqLinksWhenCreated, " "));
 						writer.writeAttribute("currentSeqLinksAndProtectionSegments", CollectionUtils.join(seqLinksAndProtectionSegments, " "));
@@ -5755,6 +5856,14 @@ public class NetPlan extends NetworkElement
 			netPlanInformation.append(NEWLINE);
 		}
 
+		for (Resource res : resources)
+		{
+			String resInformation = String.format("n%d (id %d), type: %s, name: %s, capacity %f (units: %s), attributes: %s", res.index , res.id , 
+					res.type, res.name , res.capacity , res.capacityMeasurementUnits, res.attributes.isEmpty() ? "none" : res.attributes);
+			netPlanInformation.append(resInformation);
+			netPlanInformation.append(NEWLINE);
+		}
+
 		for (NetworkLayer layer : layers)
 		{
 			netPlanInformation.append(NEWLINE);
@@ -5865,8 +5974,8 @@ public class NetPlan extends NetworkElement
 
 					for (Route route : layer.routes)
 					{
-						String str_seqNodes = CollectionUtils.join(route.seqNodesRealPath , " => ");
-						String str_seqLinks = CollectionUtils.join(route.seqLinksRealPath , " => ");
+						String str_seqNodes = CollectionUtils.join(route.cache_seqNodesRealPath , " => ");
+						String str_seqLinks = CollectionUtils.join(route.cache_seqLinksRealPath , " => ");
 						String backupSegments = route.potentialBackupSegments.isEmpty() ? "none" : CollectionUtils.join(route.potentialBackupSegments, ", ");
 
 						String routeInformation = String.format("r%d (id %d), demand: d%d (id %d), carried traffic: %.3g, occupied capacity: %.3g, seq. links: %s, seq. nodes: %s, backup segments: %s, attributes: %s", route.index , route.id , route.demand.index , route.demand.id, route.carriedTraffic, route.occupiedLinkCapacity, str_seqLinks, str_seqNodes, backupSegments, route.attributes.isEmpty() ? "none" : route.attributes);
@@ -6004,6 +6113,7 @@ public class NetPlan extends NetworkElement
 		else if (e instanceof Node) res = this.cache_id2NodeMap.get (e.id);
 		else if (e instanceof Route) res = this.cache_id2RouteMap.get (e.id);
 		else if (e instanceof SharedRiskGroup) res = this.cache_id2srgMap.get (e.id);
+		else if (e instanceof Resource) res = this.cache_id2ResourceMap.get (e.id);
 		else  throw new RuntimeException ("Bad");
 		if (res.index != e.index) throw new RuntimeException ("Bad");
 		return res;
@@ -6022,8 +6132,8 @@ public class NetPlan extends NetworkElement
 			Route route = (Route) thisElement;
 			boolean previouslyUp = !route.layer.cache_routesDown.contains (route);
 			boolean isUp = true;
-			for (Link e : route.seqLinksRealPath) if (!e.isUp) { isUp = false; break; }
-			if (isUp) for (Node e : route.seqNodesRealPath) if (!e.isUp) { isUp = false; break; }
+			for (Link e : route.cache_seqLinksRealPath) if (!e.isUp) { isUp = false; break; }
+			if (isUp) for (Node e : route.cache_seqNodesRealPath) if (!e.isUp) { isUp = false; break; }
 //			System.out.println ("Route :" + route + ", previously up:" + previouslyUp + ", isUp: " + isUp);
 //			for (Link e : route.seqLinksRealPath)
 //				System.out.println ("Link " + e + ", isUp: " + e.isUp);
@@ -6114,7 +6224,7 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>For debug purposes: Checks the consistency of the internal cache (nodes, srgs, layers, links, demands, multicast demands, multicast trees, routes, protection segments). If any
+	 * <p>For debug purposes: Checks the consistency of the internal cache (nodes, srgs, resources, layers, links, demands, multicast demands, multicast trees, routes, protection segments). If any
 	 * inconsistency is found an exception is thrown.</p>
 	 */
 	public void checkCachesConsistency ()
@@ -6122,6 +6232,7 @@ public class NetPlan extends NetworkElement
 //		System.out.println ("Check caches consistency of object: " + hashCode());
 		checkCachesConsistency (nodes , cache_id2NodeMap , true);
 		checkCachesConsistency (srgs , cache_id2srgMap , true);
+		checkCachesConsistency (resources , cache_id2ResourceMap , true);
 		checkCachesConsistency (layers , cache_id2LayerMap , true);
 		for (NetworkLayer layer : layers)
 		{
@@ -6135,6 +6246,7 @@ public class NetPlan extends NetworkElement
 
 		
 		this.checkInThisNetPlan (nodes);
+		this.checkInThisNetPlan (resources);
 		this.checkInThisNetPlan (srgs);
 		this.checkInThisNetPlan (layers);
 		this.checkInThisNetPlan (defaultLayer);

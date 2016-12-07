@@ -617,10 +617,10 @@ public class Link extends NetworkElement
 //			for (Route r : cache_traversingRoutes.keySet()) System.out.println ("-- route: " + r + ", seq links real path: " + r.seqLinksRealPath);
 			for (Route route : layer.routes)
 			{
-				if (this.cache_traversingRoutes.containsKey(route) != route.seqLinksRealPath.contains(this)) throw new RuntimeException ("Bad. link: " + this + ", route: " + route + ", this.cache_traversingRoutes: " + this.cache_traversingRoutes + ", route.seqLinksRealPath: "+  route.seqLinksRealPath + ", route.seqLinksAndProtectionSegments: " + route.seqLinksAndProtectionSegments);
+				if (this.cache_traversingRoutes.containsKey(route) != route.cache_seqLinksRealPath.contains(this)) throw new RuntimeException ("Bad. link: " + this + ", route: " + route + ", this.cache_traversingRoutes: " + this.cache_traversingRoutes + ", route.seqLinksRealPath: "+  route.cache_seqLinksRealPath + ", route.seqLinksAndProtectionSegments: " + route.cache_seqLinksAndProtectionSegments);
 				if (this.cache_traversingRoutes.containsKey(route))
 				{
-					int numPasses = 0; for (Link linkRoute : route.seqLinksRealPath) if (linkRoute == this) numPasses ++; if (numPasses != this.cache_traversingRoutes.get(route)) throw new RuntimeException ("Bad");
+					int numPasses = 0; for (Link linkRoute : route.cache_seqLinksRealPath) if (linkRoute == this) numPasses ++; if (numPasses != this.cache_traversingRoutes.get(route)) throw new RuntimeException ("Bad");
 					check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += route.carriedTraffic * this.cache_traversingRoutes.get(route);
 					check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += route.occupiedLinkCapacity * this.cache_traversingRoutes.get(route);
 //					System.out.println ("Route " + route + ", traverses this link (" + this + "), numPasses: " + this.cache_traversingRoutes.get(route) + ", its carried traffic is: " + route.carriedTraffic + " and thus accumlates a carried traffic of: " + (route.carriedTraffic * this.cache_traversingRoutes.get(route)));
@@ -651,7 +651,7 @@ public class Link extends NetworkElement
 		if (Math.abs(carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments - check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) 
 		{
 			System.out.println ("Link "+ this + ", is Up: " + isUp + ", trav routes: " + cache_traversingRoutes + ", trav segments: " + cache_traversingSegments);
-			for (Route r : cache_traversingRoutes.keySet()) System.out.println ("-- trav route: " + r + ", is down: " + r.isDown() + ", carried: " + r.carriedTraffic + ", carried all ok: " + r.carriedTrafficIfNotFailing + ", seq links and ps: " + r.seqLinksAndProtectionSegments + ", seqlinks real: " + r.seqLinksRealPath);
+			for (Route r : cache_traversingRoutes.keySet()) System.out.println ("-- trav route: " + r + ", is down: " + r.isDown() + ", carried: " + r.carriedTraffic + ", carried all ok: " + r.carriedTrafficIfNotFailing + ", seq links and ps: " + r.cache_seqLinksAndProtectionSegments + ", seqlinks real: " + r.cache_seqLinksRealPath);
 			for (ProtectionSegment r : cache_traversingSegments) System.out.println ("-- trav segment: " + r + ", is down: " + r.isDown() + ", carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + r.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments + ", sea links: " + r.seqLinks);
 			throw new RuntimeException ("Bad: carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments + ", check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
 		}
