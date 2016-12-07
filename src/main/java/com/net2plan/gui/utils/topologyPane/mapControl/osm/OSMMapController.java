@@ -131,7 +131,7 @@ public class OSMMapController
     private static void restartMapState()
     {
         // If no topology is loaded.
-        if (callback.getDesign().getNodes().isEmpty())
+        if (!callback.getDesign().hasNodes())
         {
             mapViewer.setDefaultPosition();
             return;
@@ -302,7 +302,10 @@ public class OSMMapController
             mapViewer.setCenterPosition(tileFactory.pixelToGeo(newMapCenter, mapViewer.getZoom()));
 
             // Align the topology to the newly change osmMap.
-            alignPanJUNGToOSMMap();
+            if (callback.getDesign().hasNodes())
+            {
+                alignPanJUNGToOSMMap();
+            }
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
