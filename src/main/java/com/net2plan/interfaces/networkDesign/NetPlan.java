@@ -50,7 +50,6 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.Version;
 import com.net2plan.internal.XMLUtils;
 import com.net2plan.libraries.GraphUtils;
-import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Constants.RoutingCycleType;
@@ -58,7 +57,6 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.Triple;
 
 import cern.colt.function.tdouble.DoubleFunction;
 import cern.colt.list.tdouble.DoubleArrayList;
@@ -67,6 +65,7 @@ import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import junit.framework.Assert;
 
 /**
  * <p>Class defining a complete multi-layer network structure. Layers may 
@@ -1699,7 +1698,8 @@ public class NetPlan extends NetworkElement
 			
 			for (Demand originDemand : originLayer.demands) 
 			{
-				Demand newElement = new Demand (this , originDemand.id , originDemand.index , newLayer , this.cache_id2NodeMap.get(originDemand.ingressNode.id) , this.cache_id2NodeMap.get(originDemand.egressNode.id) , originDemand.offeredTraffic , originDemand.attributes); 
+				Demand newElement = new Demand (this , originDemand.id , originDemand.index , newLayer , this.cache_id2NodeMap.get(originDemand.ingressNode.id) , this.cache_id2NodeMap.get(originDemand.egressNode.id) , originDemand.offeredTraffic , originDemand.attributes);
+				newElement.mandatorySequenceOfTraversedResourceTypes = new LinkedList<String> (originDemand.mandatorySequenceOfTraversedResourceTypes);
 				cache_id2DemandMap.put(originDemand.id, newElement);
 				newLayer.demands.add (newElement);
 			}
@@ -1718,13 +1718,12 @@ public class NetPlan extends NetworkElement
 			}
 			for (Route originRoute : originLayer.routes) 
 			{
-				List<Link> newSeqLinksRealPath = new LinkedList<Link> ();
-				for (Link oldLink : originRoute.cache_seqLinksRealPath)
-				{
-					Link newLink = this.cache_id2LinkMap.get(oldLink.id);
-					newSeqLinksRealPath.add (newLink);
-				}
-				Route newElement = new Route (this , originRoute.id , originRoute.index , cache_id2DemandMap.get(originRoute.demand.id) , newSeqLinksRealPath , originRoute.attributes); 
+				Route newElement = new Route (this , originRoute.id , originRoute.index , cache_id2DemandMap.get(originRoute.demand.id) ,
+						(List<NetworkElement>) translateCollectionToThisNetPlan(originRoute.initialSeqLinksAndResourcesTraversedWhenCreated) , 
+						(Map<Resource,Double>) translateCollectionToThisNetPlan(originRoute.initialResourcesOccupationMap) , 
+						originRoute.attributes); 
+				//Route (NetPlan netPlan , long id , int index , Demand demand , List<? extends NetworkElement> seqLinksRealPathAndResourcesTraversedWhenCreated , Map <Resource,Double> occupationInformationInTraversedResources , AttributeMap attributes)
+
 				newElement.carriedTraffic = originRoute.carriedTraffic;
 				newElement.carriedTrafficIfNotFailing = originRoute.carriedTrafficIfNotFailing;
 				newElement.occupiedLinkCapacity = originRoute.occupiedLinkCapacity;
@@ -3175,6 +3174,7 @@ public class NetPlan extends NetworkElement
 		Set<ProtectionSegment> res = new HashSet<ProtectionSegment> ();
 		for (ProtectionSegment s : originNode.cache_nodeAssociatedSegments)
 		{
+			if (s.layer != layer) continue;
 			if ((s.originNode == originNode) && (s.destinationNode == destinationNode)) res.add (s);
 			if (returnSegmentsInBothDirections) if ((s.originNode == destinationNode) && (s.destinationNode == originNode)) res.add (s);
 		}
@@ -4888,14 +4888,27 @@ public class NetPlan extends NetworkElement
 						/* If the initial seq links (when the route was created) contains removed links: we use the current sequence */
 						boolean initialSeqLinksAndResourcesNotRemoved = true; 
 						for (NetworkElement e : route.initialSeqLinksAndResourcesTraversedWhenCreated) if (e.netPlan == null) { initialSeqLinksAndResourcesNotRemoved = false; break; }
+						/* Initial sequence, but if link/resources where removed, then use the current sequence */
 						List<Long> initialSeqLinksAndResourcesWhenCreated = new LinkedList<Long> (); 
-						for (NetworkElement e : initialSeqLinksAndResourcesNotRemoved? route.initialSeqLinksAndResourcesTraversedWhenCreated : route.getCurrentSeqLinksAndResourcesTraversed()) 
+						for (NetworkElement e : initialSeqLinksAndResourcesNotRemoved? route.initialSeqLinksAndResourcesTraversedWhenCreated : route.getSeqLinksRealPathAndResources()) 
 							initialSeqLinksAndResourcesWhenCreated.add (e.id);
+						/* Initial resource occupation map, but if link/resources where removed, then use the current resource occupation map */
+						List<Double> initialResourceOccupationMapIdCap = new LinkedList<Double> (); 
+						for (Entry<Resource,Double> e : initialSeqLinksAndResourcesNotRemoved? route.initialResourcesOccupationMap.entrySet(): route.resourcesOccupationMap.entrySet()) 
+							{ initialResourceOccupationMapIdCap.add ((double) e.getKey().id); initialResourceOccupationMapIdCap.add (e.getValue()); }
+						/* Current sequence */
 						List<Long> seqLinksAndProtectionSegmentsAndResources = new LinkedList<Long> (); 
-						for (NetworkElement e : route.cache_seqLinksAndProtectionSegments) seqLinksAndProtectionSegments.add (e.id);
+						for (NetworkElement e : route.seqLinksSegmentsAndResourcesTraversed) seqLinksAndProtectionSegmentsAndResources.add (e.id);
+						/* Current resource occupation map */
+						List<Double> currentResourceOccupationMapIdCap = new LinkedList<Double> (); 
+						for (Entry<Resource,Double> e : route.resourcesOccupationMap.entrySet()) 
+							{ currentResourceOccupationMapIdCap.add ((double) e.getKey().id); currentResourceOccupationMapIdCap.add (e.getValue()); }
+						/* Backup segment list */
 						List<Long> backupSegmentList = new LinkedList<Long> (); for (ProtectionSegment e : route.potentialBackupSegments) backupSegmentList.add (e.id);
-						writer.writeAttribute("seqLinks", CollectionUtils.join(initialSeqLinksWhenCreated, " "));
-						writer.writeAttribute("currentSeqLinksAndProtectionSegments", CollectionUtils.join(seqLinksAndProtectionSegments, " "));
+						writer.writeAttribute("initialSeqLinksAndResources", CollectionUtils.join(initialSeqLinksAndResourcesWhenCreated, " "));
+						writer.writeAttribute("initialResourceOccupationMap", CollectionUtils.join(initialResourceOccupationMapIdCap, " "));
+						writer.writeAttribute("currentSeqLinksSegmentsAndResources", CollectionUtils.join(seqLinksAndProtectionSegmentsAndResources, " "));
+						writer.writeAttribute("currentResourceOccupationMap", CollectionUtils.join(currentResourceOccupationMapIdCap, " "));
 						writer.writeAttribute("backupSegmentList", CollectionUtils.join(backupSegmentList, " "));
 
 						for (Entry<String, String> entry : route.attributes.entrySet())
@@ -5819,7 +5832,8 @@ public class NetPlan extends NetworkElement
 		StringBuilder netPlanInformation = new StringBuilder();
 		String NEWLINE = StringUtils.getLineSeparator();
 		
-		int N = nodes.size ();
+		final int N = nodes.size ();
+		final int RS = resources.size();
 		if (N == 0)
 		{
 			netPlanInformation.append("Empty network");
@@ -5841,10 +5855,11 @@ public class NetPlan extends NetworkElement
 		netPlanInformation.append("Number of layers: ").append(L).append(NEWLINE);
 		netPlanInformation.append("Default layer: ").append(defaultLayer.id).append(NEWLINE);
 		netPlanInformation.append("Number of nodes: ").append(N).append(NEWLINE);
+		netPlanInformation.append("Number of resources: ").append(RS).append(NEWLINE);
 		netPlanInformation.append("Number of SRGs: ").append(numSRGs).append(NEWLINE);
 		
 		netPlanInformation.append(NEWLINE);
-		netPlanInformation.append("Node information");
+		netPlanInformation.append("Nodes information");
 		netPlanInformation.append(NEWLINE);
 		netPlanInformation.append("--------------------------------");
 		netPlanInformation.append(NEWLINE).append(NEWLINE);
@@ -5856,6 +5871,11 @@ public class NetPlan extends NetworkElement
 			netPlanInformation.append(NEWLINE);
 		}
 
+		netPlanInformation.append(NEWLINE);
+		netPlanInformation.append("Resources information");
+		netPlanInformation.append(NEWLINE);
+		netPlanInformation.append("--------------------------------");
+		netPlanInformation.append(NEWLINE).append(NEWLINE);
 		for (Resource res : resources)
 		{
 			String resInformation = String.format("n%d (id %d), type: %s, name: %s, capacity %f (units: %s), attributes: %s", res.index , res.id , 
@@ -6244,7 +6264,6 @@ public class NetPlan extends NetworkElement
 			checkCachesConsistency (layer.routes , cache_id2RouteMap , false);
 		}
 
-		
 		this.checkInThisNetPlan (nodes);
 		this.checkInThisNetPlan (resources);
 		this.checkInThisNetPlan (srgs);
@@ -6334,6 +6353,58 @@ public class NetPlan extends NetworkElement
 		return vals.copy ().assign (new DoubleFunction () { public double apply (double x) { return Math.abs(x) < PRECISION_FACTOR ? 0 : x; } }); 
 	}
 
+	Collection<NetworkElement> translateCollectionToThisNetPlan (Collection<? extends NetworkElement> collection)
+	{
+		Collection<NetworkElement> res = null;
+		if (collection instanceof Set<?>) res = new HashSet<NetworkElement> ();
+		else if (collection instanceof ArrayList<?>) res = new ArrayList<NetworkElement> ();
+		else if (collection instanceof List<?>) res = new LinkedList<NetworkElement> ();
+		else throw new RuntimeException ("Unknown list type");
+		for (NetworkElement e : collection)
+		{
+			NetworkElement myElement = null;
+			if (e instanceof Link) myElement = cache_id2LinkMap.get(e.id);
+			else if (e instanceof Demand) myElement = cache_id2DemandMap.get(e.id);
+			else if (e instanceof Link) myElement = cache_id2LinkMap.get(e.id);
+			else if (e instanceof MulticastDemand) myElement = cache_id2MulticastDemandMap.get(e.id);
+			else if (e instanceof MulticastTree) myElement = cache_id2MulticastTreeMap.get(e.id);
+			else if (e instanceof NetworkLayer) myElement = cache_id2LayerMap.get(e.id);
+			else if (e instanceof Node) myElement = cache_id2NodeMap.get(e.id);
+			else if (e instanceof ProtectionSegment) myElement = cache_id2ProtectionSegmentMap.get(e.id);
+			else if (e instanceof Resource) myElement = cache_id2ResourceMap.get(e.id);
+			else if (e instanceof Route) myElement = cache_id2RouteMap.get(e.id);
+			else if (e instanceof SharedRiskGroup) myElement = cache_id2srgMap.get(e.id);
+			else throw new RuntimeException ("Bad");
+			if (myElement == null) throw new RuntimeException ("Could not translate element " + e + " to this NetPlan: unkonw id: " + e.id);
+			res.add(myElement);
+		}
+		return res;
+	}
+
+	Map<? extends NetworkElement,?> translateCollectionToThisNetPlan (Map<? extends NetworkElement,?> map)
+	{
+		Map<NetworkElement,Object> res = new HashMap<NetworkElement,Object> ();
+		for (Entry<? extends NetworkElement,?> entry : map.entrySet())
+		{
+			final NetworkElement e = entry.getKey();
+			NetworkElement myElement = null;
+			if (e instanceof Link) myElement = cache_id2LinkMap.get(e.id);
+			else if (e instanceof Demand) myElement = cache_id2DemandMap.get(e.id);
+			else if (e instanceof Link) myElement = cache_id2LinkMap.get(e.id);
+			else if (e instanceof MulticastDemand) myElement = cache_id2MulticastDemandMap.get(e.id);
+			else if (e instanceof MulticastTree) myElement = cache_id2MulticastTreeMap.get(e.id);
+			else if (e instanceof NetworkLayer) myElement = cache_id2LayerMap.get(e.id);
+			else if (e instanceof Node) myElement = cache_id2NodeMap.get(e.id);
+			else if (e instanceof ProtectionSegment) myElement = cache_id2ProtectionSegmentMap.get(e.id);
+			else if (e instanceof Resource) myElement = cache_id2ResourceMap.get(e.id);
+			else if (e instanceof Route) myElement = cache_id2RouteMap.get(e.id);
+			else if (e instanceof SharedRiskGroup) myElement = cache_id2srgMap.get(e.id);
+			else throw new RuntimeException ("Bad");
+			if (myElement == null) throw new RuntimeException ("Could not translate element " + e + " to this NetPlan: unkonw id: " + e.id);
+			res.put(myElement , entry.getValue());
+		}
+		return res;
+	}
 
 }
 

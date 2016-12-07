@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import static org.junit.Assert.*;
+
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
@@ -428,6 +430,14 @@ public class Route extends NetworkElement
 		return Collections.unmodifiableList(cache_seqLinksRealPath);
 	}
 
+	/** Returns the route sequence of traversed links (so protection segments are expanded), including traversed resources. 
+	 * @return see description above
+	 */
+	public List<NetworkElement> getSeqLinksRealPathAndResources()
+	{
+		return Route.listLinksRealPathAndResources (seqLinksSegmentsAndResourcesTraversed);
+	}
+
 	/** Returns the route sequence of traversed nodes (the sequence corresponds to the real, so traversed protection segments are converted into their links before computing the traversed nodes)
 	 * @return see description above
 	 * */
@@ -717,27 +727,48 @@ public class Route extends NetworkElement
 	
 	public String toString () { return "r" + index + " (id " + id + ")"; }
 
+//	final List<NetworkElement> initialSeqLinksAndResourcesTraversedWhenCreated; // each object is a Link, or a Resource 
+//	final Map<Resource,Double> initialResourcesOccupationMap;  // for each resource, the total occupation in it (if more than one pass, the total effect
+//	List<NetworkElement> seqLinksSegmentsAndResourcesTraversed; // each object is a Link, or a Resource
+//	Map<Resource,Double> resourcesOccupationMap;  // for each resource, the total occupation in it (if more than one pass, the total effect
+//	Set<ProtectionSegment> potentialBackupSegments;
+//	List<Link> cache_seqLinksAndProtectionSegments;
+//	List<Link> cache_seqLinksRealPath;
+//	List<Node> cache_seqNodesRealPath;
+//	double carriedTraffic , carriedTrafficIfNotFailing;
+//	double occupiedLinkCapacity , occupiedLinkCapacityIfNotFailing;
 	void checkCachesConsistency ()
 	{
 		if (!layer.routes.contains(this)) throw new RuntimeException ("Bad");
 		if (!demand.cache_routes.contains(this)) throw new RuntimeException ("Bad");
-		if (cache_seqLinksAndProtectionSegments == null) throw new RuntimeException ("Route " + this + ", seqLinksAndProtectionSegments == null");
 		if (initialSeqLinksAndResourcesTraversedWhenCreated == null) throw new RuntimeException ("Route " + this + ", initialSeqLinksAndResourcesTraversedWhenCreated == null");
-		if (seqLinksSegmentsAndResourcesTraversed == null) throw new RuntimeException ("Route " + this + ", seqLinksRealPathAndResourcesTraversed == null");
+		if (initialResourcesOccupationMap == null) throw new RuntimeException ("Route " + this + ", initialResourcesOccupationMap == null");
+		if (seqLinksSegmentsAndResourcesTraversed == null) throw new RuntimeException ("Route " + this + ", seqLinksSegmentsAndResourcesTraversed == null");
+		if (resourcesOccupationMap == null) throw new RuntimeException ("Route " + this + ", resourcesOccupationMap == null");
+		if (potentialBackupSegments == null) throw new RuntimeException ("Route " + this + ", potentialBackupSegments == null");
+		if (cache_seqLinksAndProtectionSegments == null) throw new RuntimeException ("Route " + this + ", cache_seqLinksAndProtectionSegments == null");
+		if (cache_seqLinksRealPath == null) throw new RuntimeException ("Route " + this + ", cache_seqLinksRealPath == null");
+		if (cache_seqNodesRealPath == null) throw new RuntimeException ("Route " + this + ", cache_seqNodesRealPath == null");
 
+		netPlan.checkInThisNetPlanAndLayer(seqLinksSegmentsAndResourcesTraversed , layer);
+		netPlan.checkInThisNetPlanAndLayer(resourcesOccupationMap.keySet() , layer);
+		netPlan.checkInThisNetPlanAndLayer(potentialBackupSegments , layer);
 		netPlan.checkInThisNetPlanAndLayer(cache_seqLinksAndProtectionSegments , layer);
-		//netPlan.checkInThisNetPlanAndLayer(initialSeqLinksWhenCreated , layer); // do not check, since initial route could have removed links now
 		netPlan.checkInThisNetPlanAndLayer(cache_seqLinksRealPath , layer);
 		netPlan.checkInThisNetPlanAndLayer(cache_seqNodesRealPath , layer);
-		netPlan.checkInThisNetPlanAndLayer(seqLinksSegmentsAndResourcesTraversed , layer);
-		netPlan.checkPathValidityForDemand(cache_seqLinksRealPath,demand);
-		netPlan.checkPathValidityForDemand(cache_seqLinksAndProtectionSegments,demand);
-		netPlan.checkPathValidityForDemand(seqLinksSegmentsAndResourcesTraversed,demand);
-		for (Link link : cache_seqLinksAndProtectionSegments)
+		//netPlan.checkInThisNetPlanAndLayer(initialSeqLinksAndResourcesTraversedWhenCreated , layer); // do not check, since initial route could have removed links now
+		//netPlan.checkInThisNetPlanAndLayer(initialResourcesOccupationMap.keySet () , layer); // do not check, since initial route could have removed links now
+		for (NetworkElement e : seqLinksSegmentsAndResourcesTraversed)
 		{
-			if (link == null) throw new RuntimeException ("Route " + this + ", seqLinksAndProtectionSegments: " + cache_seqLinksAndProtectionSegments + ", link: " + link);
-			if (link.cache_traversingRoutes == null) throw new RuntimeException ("Route " + this + ", link: " + link + ", is segment: " + (link instanceof ProtectionSegment) + ", link.cache_traversingRoutes == null");
-			if (!link.cache_traversingRoutes.containsKey(this)) throw new RuntimeException ("Bad. Route of seqLinksAndProtectionSegments: " + cache_seqLinksAndProtectionSegments + ", seqLinksRealPath: " + cache_seqLinksRealPath + ", in link " + link + ", it does not belong to link.cache_traversingRoutes: " + link.cache_traversingRoutes);
+			assertNotNull(e);
+			if (e instanceof Link) { final Link ee = (Link) e; assertTrue (ee.cache_traversingRoutes.containsKey(this)); }
+			if (e instanceof Resource) { final Resource ee = (Resource) e; assertTrue (ee.cache_traversingRoutesAndOccupiedCapacities.containsKey(this)); }
+		}
+		for (Entry<Resource,Double> entry : resourcesOccupationMap.entrySet())
+		{
+			assertNotNull(entry.getKey());
+			assertNotNull(entry.getValue());
+			assertTrue(entry.getKey().cache_traversingRoutesAndOccupiedCapacities.get(this) == entry.getValue());
 		}
 		List<Resource> travResources = new LinkedList<Resource> ();
 		for (NetworkElement el : seqLinksSegmentsAndResourcesTraversed) if (el instanceof Resource) travResources.add((Resource) el);
@@ -745,8 +776,8 @@ public class Route extends NetworkElement
 		{
 			if (netPlan.cache_id2ResourceMap.get(res.id) != res) throw new RuntimeException ("Bad");
 			if (!netPlan.resources.get(res.index).equals(res)) throw new RuntimeException ("Bad");
-			if (!res.cache_traversingRoutesAndOccupiedCapacities.containsKey(res)) throw new RuntimeException ("Bad");
-			if (res.cache_traversingRoutesAndOccupiedCapacities.get(res) != resourcesOccupationMap.get(res)) throw new RuntimeException ("Bad");
+			if (!res.cache_traversingRoutesAndOccupiedCapacities.containsKey(this)) throw new RuntimeException ("Bad");
+			if (res.cache_traversingRoutesAndOccupiedCapacities.get(this) != resourcesOccupationMap.get(res)) throw new RuntimeException ("Bad");
 		}
 
 		for (Link link : cache_seqLinksRealPath) if (!link.cache_traversingRoutes.containsKey(this)) throw new RuntimeException ("Bad");
@@ -778,6 +809,13 @@ public class Route extends NetworkElement
 		List<Link> links = new LinkedList<Link> ();
 		for (NetworkElement e : listLinksResourcesAndSegments) if (e instanceof Link) links.add((Link) e); else if (e instanceof ProtectionSegment) for (Link ee : ((ProtectionSegment) e).seqLinks) links.add(ee);
 		return links;
+	}
+
+	private static List<NetworkElement> listLinksRealPathAndResources (List<? extends NetworkElement> listLinksResourcesAndSegments)
+	{
+		List<NetworkElement> linksAndResources = new LinkedList<NetworkElement> ();
+		for (NetworkElement e : listLinksResourcesAndSegments) if (e instanceof Link || e instanceof Resource) linksAndResources.add(e); else if (e instanceof ProtectionSegment) for (Link ee : ((ProtectionSegment) e).seqLinks) linksAndResources.add(ee);
+		return linksAndResources;
 	}
 
 	private static List<Link> listLinksAndSegmentsWithoutResources (List<? extends NetworkElement> listLinksResourcesAndSegments)

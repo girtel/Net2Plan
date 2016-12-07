@@ -22,6 +22,7 @@ package com.net2plan.interfaces.networkDesign;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import org.codehaus.stax2.XMLStreamReader2;
 
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.LongUtils;
 
 class ReaderNetPlan_v5 implements IReaderNetPlan //extends NetPlanFormat_v3
@@ -286,21 +288,59 @@ class ReaderNetPlan_v5 implements IReaderNetPlan //extends NetPlanFormat_v3
 		double carriedTrafficIfNotFailing = carriedTraffic; try { carriedTrafficIfNotFailing = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "carriedTrafficIfNotFailing")); } catch (Exception e) {} 
 		double occupiedLinkCapacityIfNotFailing = occupiedCapacity; try { occupiedLinkCapacityIfNotFailing = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "occupiedLinkCapacityIfNotFailing")); } catch (Exception e) {} 
 		if (occupiedLinkCapacityIfNotFailing < 0) occupiedLinkCapacityIfNotFailing = carriedTrafficIfNotFailing;
-		List<Long> initialSeqLinksWhenCreated = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "seqLinks")));
-		List<Long> currentSeqLinksAndProtectionSegments = new LinkedList<Long> (initialSeqLinksWhenCreated);
-		try { currentSeqLinksAndProtectionSegments = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "currentSeqLinksAndProtectionSegments"))); } catch (Exception e) { }
+		
+		List<Long> initialSeqLinksAndResources = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "initialSeqLinksAndResources")));
+		List<Double> initialResourceOccupationMap = DoubleUtils.toList(xmlStreamReader.getAttributeAsDoubleArray(xmlStreamReader.getAttributeIndex(null, "initialResourceOccupationMap")));
+		List<Long> currentSeqLinksSegmentsAndResources = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "currentSeqLinksSegmentsAndResources")));
+		List<Double> currentResourceOccupationMap = DoubleUtils.toList(xmlStreamReader.getAttributeAsDoubleArray(xmlStreamReader.getAttributeIndex(null, "currentResourceOccupationMap")));
+//		List<Long> currentSeqLinksAndProtectionSegments = new LinkedList<Long> (initialSeqLinksWhenCreated);
+//		try { currentSeqLinksAndProtectionSegments = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "currentSeqLinksAndProtectionSegments"))); } catch (Exception e) { }
 		List<Long> backupSegmentList = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "backupSegmentList")));
-//		netPlan.nextRouteId.put(layerId, routeId);
-		List<Link> initialSeqLinksWhenCreated_link = new LinkedList<Link> (); for (long linkId : initialSeqLinksWhenCreated) initialSeqLinksWhenCreated_link.add (mapOldId2Link.get(linkId));
-		List<Link> seqLinksAndProtectionSegments_link = new LinkedList<Link> (); 
-		for (long linkId : currentSeqLinksAndProtectionSegments) 
-			if (mapOldId2Link.get(linkId) != null) seqLinksAndProtectionSegments_link.add (mapOldId2Link.get(linkId));
-			else if (mapOldId2ProtectionSegment.get(linkId) != null) seqLinksAndProtectionSegments_link.add (mapOldId2ProtectionSegment.get(linkId));
-			else throw new Net2PlanException ("Error parsing route information (current sequence of links and protection segments)");
-		Route newRoute = netPlan.addRoute(mapOldId2Demand.get(demandId) , carriedTrafficIfNotFailing, occupiedLinkCapacityIfNotFailing, initialSeqLinksWhenCreated_link, null);
+		List<NetworkElement> initialSeqLinksAndResources_obj = new LinkedList<NetworkElement> (); 
+		for (long linkOrResourceId : initialSeqLinksAndResources)
+			if (mapOldId2Link.get(linkOrResourceId) != null) initialSeqLinksAndResources_obj.add (mapOldId2Link.get(linkOrResourceId));
+			else if (mapOldId2Resource.get(linkOrResourceId) != null) initialSeqLinksAndResources_obj.add (mapOldId2Resource.get(linkOrResourceId));
+			else throw new Net2PlanException ("Error parsing route information. Unknown element of id: " + linkOrResourceId);
+		List<NetworkElement> currentSeqLinksSegmentsAndResources_obj = new LinkedList<NetworkElement> (); 
+		for (long linkOrSegmentOrResourceId : currentSeqLinksSegmentsAndResources)
+			if (mapOldId2Link.get(linkOrSegmentOrResourceId) != null) currentSeqLinksSegmentsAndResources_obj.add (mapOldId2Link.get(linkOrSegmentOrResourceId));
+			else if (mapOldId2ProtectionSegment.get(linkOrSegmentOrResourceId) != null) currentSeqLinksSegmentsAndResources_obj.add (mapOldId2ProtectionSegment.get(linkOrSegmentOrResourceId));
+			else if (mapOldId2Resource.get(linkOrSegmentOrResourceId) != null) currentSeqLinksSegmentsAndResources_obj.add (mapOldId2Resource.get(linkOrSegmentOrResourceId));
+			else throw new Net2PlanException ("Error parsing route information. Unknown element of id: " + linkOrSegmentOrResourceId);
+		Map<Resource,Double> initialResourceOccupationMap_obj = new HashMap<Resource,Double> ();
+		{
+			Iterator<Double> it = initialResourceOccupationMap.iterator();
+			while (it.hasNext())
+			{
+				final long id = (long) (double) it.next();
+				final double cap = it.next();
+				if (mapOldId2Resource.get(id) == null) throw new Net2PlanException ("Error parsing route information. Unknown element of id: " + id);
+				initialResourceOccupationMap_obj.put(mapOldId2Resource.get(id) , cap);
+			}
+		}
+		Map<Resource,Double> currentResourceOccupationMap_obj = new HashMap<Resource,Double> ();
+		{
+			Iterator<Double> it = currentResourceOccupationMap.iterator();
+			while (it.hasNext())
+			{
+				final long id = (long) (double) it.next();
+				final double cap = it.next();
+				if (mapOldId2Resource.get(id) == null) throw new Net2PlanException ("Error parsing route information. Unknown element of id: " + id);
+				currentResourceOccupationMap_obj.put(mapOldId2Resource.get(id) , cap);
+			}
+		}
+		
+//		List<Link> initialSeqLinksAndResources_obj = new LinkedList<Link> (); for (long linkId : initialSeqLinksAndResources) initialSeqLinksAndResources_obj.add (mapOldId2Link.get(linkId));
+//		List<Link> seqLinksAndProtectionSegments_link = new LinkedList<Link> (); 
+//		for (long linkId : currentSeqLinksAndProtectionSegments) 
+//			if (mapOldId2Link.get(linkId) != null) seqLinksAndProtectionSegments_link.add (mapOldId2Link.get(linkId));
+//			else if (mapOldId2ProtectionSegment.get(linkId) != null) seqLinksAndProtectionSegments_link.add (mapOldId2ProtectionSegment.get(linkId));
+//			else throw new Net2PlanException ("Error parsing route information (current sequence of links and protection segments)");
+//		Route newRoute = netPlan.addRoute(mapOldId2Demand.get(demandId) , carriedTrafficIfNotFailing, occupiedLinkCapacityIfNotFailing, initialSeqLinksWhenCreated_link, null);
+		Route newRoute = netPlan.addServiceChain(mapOldId2Demand.get(demandId) , carriedTrafficIfNotFailing, occupiedLinkCapacityIfNotFailing, initialSeqLinksAndResources_obj, initialResourceOccupationMap_obj , null);
 		mapOldId2Route.put (routeId,newRoute);
 		for(long segmentId : backupSegmentList) newRoute.addProtectionSegment(mapOldId2ProtectionSegment.get(segmentId));
-		newRoute.setSeqLinksAndProtectionSegments(seqLinksAndProtectionSegments_link);
+		newRoute.setSeqLinksSegmentsAndResourcesOccupation(currentSeqLinksSegmentsAndResources_obj , currentResourceOccupationMap_obj);
 		if (Math.abs (newRoute.getCarriedTraffic() - carriedTraffic) > 1e-3) throw new RuntimeException ("Bad");
 		if (Math.abs (newRoute.getOccupiedCapacity() - occupiedCapacity) > 1e-3) throw new RuntimeException ("Bad");
 		
