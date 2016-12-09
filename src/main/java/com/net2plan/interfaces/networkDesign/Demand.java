@@ -204,9 +204,8 @@ public class Demand extends NetworkElement
 	public boolean isTraversingOversubscribedResources ()
 	{
 		if (layer.routingType != RoutingType.SOURCE_ROUTING) throw new Net2PlanException ("The routing type must be SOURCE ROUTING");
-		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
 		for (Route r : this.cache_routes)
-			for (Resource res : r.seqResourcesRealPath) 
+			for (Resource res : r.resourcesTraversedAndOccupiedCapIfnotFailMap.keySet()) 
 				if (res.isOversubscribed()) return true;
 		return false;
 	}

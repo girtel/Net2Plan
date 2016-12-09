@@ -52,7 +52,7 @@ public class Resource extends NetworkElement
 	Map<Resource , Double> capacityIOccupyInBaseResource; // capacity can change, but no new resources can be put (if not, there is danger of loops!!) 
 	double capacity;
 	double cache_totalOccupiedCapacity;
-	Map<Route,Double> cache_traversingRoutesAndOccupiedCapacities;
+	Map<Route,Double> cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute;
 	
 	Resource (NetPlan netPlan , long id , int index , String type , String name , Node hostNode , 
 			double capacity , String capacityMeasurementUnits,
@@ -85,7 +85,7 @@ public class Resource extends NetworkElement
 			entry.getKey().capacityUpperResourcesOccupyInMe.put(this , entry.getValue());
 			entry.getKey().updateTotalOccupiedCapacity();
 		}
-		this.cache_traversingRoutesAndOccupiedCapacities = new HashMap<Route,Double> ();
+		this.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute = new HashMap<Route,Double> ();
 	}
 
 	void copyFrom (Resource origin)
@@ -113,12 +113,12 @@ public class Resource extends NetworkElement
 			if (resourceThisNp == null) throw new RuntimeException ("Bad");
 			this.capacityIOccupyInBaseResource.put(resourceThisNp , entry.getValue());
 		}
-		this.cache_traversingRoutesAndOccupiedCapacities = new HashMap<Route,Double> ();
-		for (Entry<Route,Double> originRoute : origin.cache_traversingRoutesAndOccupiedCapacities.entrySet())
+		this.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute = new HashMap<Route,Double> ();
+		for (Entry<Route,Double> originRoute : origin.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.entrySet())
 		{
 			final Route routeThisNp = this.netPlan.getRouteFromId(originRoute.getKey().id);
 			if (routeThisNp == null) throw new RuntimeException ("Bad");
-			this.cache_traversingRoutesAndOccupiedCapacities.put(this.netPlan.getRouteFromId(originRoute.getKey().id) , originRoute.getValue());
+			this.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.put(this.netPlan.getRouteFromId(originRoute.getKey().id) , originRoute.getValue());
 		}
 	}
 
@@ -266,7 +266,7 @@ public class Resource extends NetworkElement
 	 */
 	public Set<Demand> getTraversingDemands() 
 	{
-		Set<Demand> res = new HashSet<Demand> (); for (Route r : cache_traversingRoutesAndOccupiedCapacities.keySet()) res.add(r.demand);
+		Set<Demand> res = new HashSet<Demand> (); for (Route r : cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet()) res.add(r.demand);
 		return res;
 	}
 
@@ -275,26 +275,29 @@ public class Resource extends NetworkElement
 	 */
 	public Set<Route> getTraversingRoutes() 
 	{
-		return cache_traversingRoutesAndOccupiedCapacities.keySet();
+		return cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet();
 	}
 
 	/** Returns the capacity that is occupied in this resource, because of a traversing route. If the route is not traversing 
-	 * the resource, zero is returned.
+	 * the resource, zero is returned. If the route is down, the occupied capacity is zero
 	 * @return the occupied capacity
 	 */
 	public double getTraversingRouteOccupiedCapacity(Route route) 
 	{
-		Double info = cache_traversingRoutesAndOccupiedCapacities.get(route);
-		return (info == null)? 0.0 : info;
+		Double info = cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(route);
+		return (info == null) || (route.isDown())? 0.0 : info;
 	}
 
 	/** Returns a map with one key per each traversing route, and associated to it the amount of capacity occupied in this resource 
-	 * because of it 
+	 * because of it. Recall that if a route is down, its occupied capacity in the traversed resources drops to zero, and 
+	 * come backs to its previous value when the route becomes up again
 	 * @return the map
 	 */
 	public Map<Route,Double> getTraversingRouteOccupiedCapacityMap() 
 	{
-		return Collections.unmodifiableMap(cache_traversingRoutesAndOccupiedCapacities);
+		Map<Route,Double> res = new HashMap<Route,Double> (cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute);
+		for (Route r : res.keySet()) if (r.isDown()) res.put(r , 0.0);
+		return res;
 	}
 	
 	/** Resets the capacity of a resource, as well as the occupied capacity in the base resources. The set of base resources cannot have 
@@ -311,7 +314,7 @@ public class Resource extends NetworkElement
 		for (Entry<Resource,Double> entry : newCapacityIOccupyInBaseResourcesMap.entrySet())
 		{
 			netPlan.checkInThisNetPlan(entry.getKey());
-			if (!this.capacityIOccupyInBaseResource.values().contains(entry.getKey())) throw new Net2PlanException ("When resizing a resource capacity, we cannot increase its set of base resources");
+			if (!this.capacityIOccupyInBaseResource.keySet().contains(entry.getKey())) throw new Net2PlanException ("When resizing a resource capacity, we cannot increase its set of base resources");
 			if (entry.getValue() < 0) throw new Net2PlanException ("The capacity occupied in a base resource cannot be negative");
 		}
 		if (newCapacity < 0) throw new Net2PlanException ("The capacity of a resource cannot be negative");
@@ -346,16 +349,16 @@ public class Resource extends NetworkElement
 		capacityUpperResourcesOccupyInMe.remove(upperResource);
 	}
 
-	void addTraversingRoute (Route r , double resourceOccupiedCapacityByThisRoute)
+	void addTraversingRoute (Route r , double resourceOccupiedCapacityByThisRouteIfNotFailing)
 	{
 		if (!r.getSeqNodesRealPath().contains(this.hostNode)) throw new Net2PlanException ("The route does not traverse the host node of this resource");
-		this.cache_traversingRoutesAndOccupiedCapacities.put(r , resourceOccupiedCapacityByThisRoute);
+		this.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.put(r , resourceOccupiedCapacityByThisRouteIfNotFailing);
 		updateTotalOccupiedCapacity();
 	}
 
 	void removeTraversingRoute (Route r)
 	{
-		this.cache_traversingRoutesAndOccupiedCapacities.remove(r);
+		this.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.remove(r);
 		updateTotalOccupiedCapacity();
 	}
 
@@ -367,8 +370,9 @@ public class Resource extends NetworkElement
 		this.cache_totalOccupiedCapacity = 0;
 		for (Entry<Resource,Double> entryUpperResource : capacityUpperResourcesOccupyInMe.entrySet())
 			cache_totalOccupiedCapacity += entryUpperResource.getValue();
-		for (Double occupiedCapacityThisRoute : cache_traversingRoutesAndOccupiedCapacities.values())
-			cache_totalOccupiedCapacity += occupiedCapacityThisRoute;
+		for (Entry<Route,Double> entry : cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.entrySet())
+			if (!entry.getKey().isDown())
+				cache_totalOccupiedCapacity += entry.getValue();
 	}
 	
 	/**
@@ -378,7 +382,7 @@ public class Resource extends NetworkElement
 	{
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
-		for (Route r : cache_traversingRoutesAndOccupiedCapacities.keySet()) r.remove();
+		for (Route r : cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet()) r.remove();
 		for (Resource upperResource : capacityUpperResourcesOccupyInMe.keySet()) upperResource.remove();
 		for (Resource baseResource : capacityIOccupyInBaseResource.keySet()) baseResource.removeUpperResourceOccupation(this);
 		netPlan.cache_id2ResourceMap.remove (id);
@@ -411,11 +415,11 @@ public class Resource extends NetworkElement
 			final double val = lowerEntry.getValue();
 			if (lowerResource.capacityUpperResourcesOccupyInMe.get(this) != val) throw new RuntimeException ("Bad");
 		}
-		for (Entry<Route,Double> travRoute : cache_traversingRoutesAndOccupiedCapacities.entrySet())
+		for (Entry<Route,Double> travRoute : cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.entrySet())
 		{
 			final Route r = travRoute.getKey();
 			final double val = travRoute.getValue();
-			if (r.resourcesOccupationMap.get(this) != val) throw new RuntimeException ("Bad");
+			if (r.resourcesTraversedAndOccupiedCapIfnotFailMap.get(this) != val) throw new RuntimeException ("Bad");
 			accumOccupCap += val;
 		}
 		if (Math.abs(accumOccupCap - cache_totalOccupiedCapacity) > 1e-3) throw new RuntimeException ("Bad");

@@ -1721,7 +1721,7 @@ public class NetPlan extends NetworkElement
 			{
 				Route newElement = new Route (this , originRoute.id , originRoute.index , cache_id2DemandMap.get(originRoute.demand.id) ,
 						(List<NetworkElement>) translateCollectionToThisNetPlan(originRoute.initialSeqLinksAndResourcesTraversedWhenCreated) , 
-						(Map<Resource,Double>) translateCollectionToThisNetPlan(originRoute.initialResourcesOccupationMap) , 
+						(Map<Resource,Double>) translateCollectionToThisNetPlan(originRoute.initialResourcesTraversedMap) , 
 						originRoute.attributes); 
 				//Route (NetPlan netPlan , long id , int index , Demand demand , List<? extends NetworkElement> seqLinksRealPathAndResourcesTraversedWhenCreated , Map <Resource,Double> occupationInformationInTraversedResources , AttributeMap attributes)
 
@@ -4895,14 +4895,14 @@ public class NetPlan extends NetworkElement
 							initialSeqLinksAndResourcesWhenCreated.add (e.id);
 						/* Initial resource occupation map, but if link/resources where removed, then use the current resource occupation map */
 						List<Double> initialResourceOccupationMapIdCap = new LinkedList<Double> (); 
-						for (Entry<Resource,Double> e : initialSeqLinksAndResourcesNotRemoved? route.initialResourcesOccupationMap.entrySet(): route.resourcesOccupationMap.entrySet()) 
+						for (Entry<Resource,Double> e : initialSeqLinksAndResourcesNotRemoved? route.initialResourcesTraversedMap.entrySet(): route.resourcesTraversedAndOccupiedCapIfnotFailMap.entrySet()) 
 							{ initialResourceOccupationMapIdCap.add ((double) e.getKey().id); initialResourceOccupationMapIdCap.add (e.getValue()); }
 						/* Current sequence */
 						List<Long> seqLinksAndProtectionSegmentsAndResources = new LinkedList<Long> (); 
 						for (NetworkElement e : route.seqLinksSegmentsAndResourcesTraversed) seqLinksAndProtectionSegmentsAndResources.add (e.id);
 						/* Current resource occupation map */
 						List<Double> currentResourceOccupationMapIdCap = new LinkedList<Double> (); 
-						for (Entry<Resource,Double> e : route.resourcesOccupationMap.entrySet()) 
+						for (Entry<Resource,Double> e : route.resourcesTraversedAndOccupiedCapIfnotFailMap.entrySet()) 
 							{ currentResourceOccupationMapIdCap.add ((double) e.getKey().id); currentResourceOccupationMapIdCap.add (e.getValue()); }
 						/* Backup segment list */
 						List<Long> backupSegmentList = new LinkedList<Long> (); for (ProtectionSegment e : route.potentialBackupSegments) backupSegmentList.add (e.id);
@@ -6166,6 +6166,9 @@ public class NetPlan extends NetworkElement
 				if (route.occupiedLinkCapacity != 0) throw new RuntimeException ("Bad");
 				if (route.carriedTraffic != 0) throw new RuntimeException ("Bad");
 				route.layer.cache_routesDown.remove (route); 
+				final boolean previousDebug = ErrorHandling.isDebugEnabled(); ErrorHandling.setDebug(false);
+	 			route.setCarriedTrafficAndResourcesOccupationInformation(route.carriedTrafficIfNotFailing , route.occupiedLinkCapacityIfNotFailing , route.resourcesTraversedAndOccupiedCapIfnotFailMap);
+				ErrorHandling.setDebug(previousDebug);
 //				System.out.println ("down to up: route.layer.cache_routesDown: " + route.layer.cache_routesDown);
 			}
 			else 
@@ -6174,10 +6177,10 @@ public class NetPlan extends NetworkElement
 				if (route.carriedTraffic != route.carriedTrafficIfNotFailing) throw new RuntimeException ("Bad");
 				route.layer.cache_routesDown.add (route); 
 //				System.out.println ("up to down : route.layer.cache_routesDown: " + route.layer.cache_routesDown);
+				final boolean previousDebug = ErrorHandling.isDebugEnabled(); ErrorHandling.setDebug(false);
+	 			route.setCarriedTrafficAndResourcesOccupationInformation(route.carriedTrafficIfNotFailing , route.occupiedLinkCapacityIfNotFailing , null);
+				ErrorHandling.setDebug(previousDebug);
 			}
-			final boolean previousDebug = ErrorHandling.isDebugEnabled(); ErrorHandling.setDebug(false);
- 			route.setCarriedTraffic(route.carriedTrafficIfNotFailing , route.occupiedLinkCapacityIfNotFailing);
-			ErrorHandling.setDebug(previousDebug);
 		} 
 		else if (thisElement instanceof MulticastTree)
 		{

@@ -57,9 +57,9 @@ public class Route extends NetworkElement
 	final Node ingressNode;
 	final Node egressNode;
 	final List<NetworkElement> initialSeqLinksAndResourcesTraversedWhenCreated; // each object is a Link, or a Resource 
-	final Map<Resource,Double> initialResourcesOccupationMap;  // for each resource, the total occupation in it (if more than one pass, the total effect
+	final Map<Resource,Double> initialResourcesTraversedMap;  // for each resource, the total occupation in it (if more than one pass, the total effect
 	List<NetworkElement> seqLinksSegmentsAndResourcesTraversed; // each object is a Link, or a Resource
-	Map<Resource,Double> resourcesOccupationMap;  // for each resource, the total occupation in it (if more than one pass, the total effect
+	Map<Resource,Double> resourcesTraversedAndOccupiedCapIfnotFailMap;  // for each resource, the total occupation in it (if more than one pass, the total effect
 	Set<ProtectionSegment> potentialBackupSegments;
 	List<Link> cache_seqLinksAndProtectionSegments;
 	List<Link> cache_seqLinksRealPath;
@@ -86,8 +86,8 @@ public class Route extends NetworkElement
 		
 		this.initialSeqLinksAndResourcesTraversedWhenCreated = new LinkedList<NetworkElement> (seqLinksRealPathAndResourcesTraversedWhenCreated);
 		this.seqLinksSegmentsAndResourcesTraversed = new LinkedList<NetworkElement> (seqLinksRealPathAndResourcesTraversedWhenCreated);
-		this.initialResourcesOccupationMap = new HashMap<Resource,Double> (occupationInformationInTraversedResources);
-		this.resourcesOccupationMap = new HashMap<Resource,Double> (occupationInformationInTraversedResources);
+		this.initialResourcesTraversedMap = new HashMap<Resource,Double> (occupationInformationInTraversedResources);
+		this.resourcesTraversedAndOccupiedCapIfnotFailMap = new HashMap<Resource,Double> (occupationInformationInTraversedResources);
 		this.potentialBackupSegments = new HashSet <ProtectionSegment> ();
 
 		this.cache_seqLinksRealPath = Route.listLinksRealPath(seqLinksRealPathAndResourcesTraversedWhenCreated); 
@@ -117,14 +117,14 @@ public class Route extends NetworkElement
 		this.initialSeqLinksAndResourcesTraversedWhenCreated.clear();
 		for (NetworkElement e : origin.initialSeqLinksAndResourcesTraversedWhenCreated) this.initialSeqLinksAndResourcesTraversedWhenCreated.add(getInThisNetPlan (e));
 
-		this.initialResourcesOccupationMap.clear();
-		for (Entry<Resource,Double> e : origin.initialResourcesOccupationMap.entrySet()) this.initialResourcesOccupationMap.put((Resource) getInThisNetPlan (e.getKey()) , e.getValue());
+		this.initialResourcesTraversedMap.clear();
+		for (Entry<Resource,Double> e : origin.initialResourcesTraversedMap.entrySet()) this.initialResourcesTraversedMap.put((Resource) getInThisNetPlan (e.getKey()) , e.getValue());
 
 		this.seqLinksSegmentsAndResourcesTraversed.clear();
 		for (NetworkElement e : origin.seqLinksSegmentsAndResourcesTraversed) this.seqLinksSegmentsAndResourcesTraversed.add(getInThisNetPlan (e));
 		
-		this.resourcesOccupationMap.clear();
-		for (Entry<Resource,Double> e : origin.resourcesOccupationMap.entrySet()) this.resourcesOccupationMap.put((Resource) getInThisNetPlan (e.getKey()) , e.getValue());
+		this.resourcesTraversedAndOccupiedCapIfnotFailMap.clear();
+		for (Entry<Resource,Double> e : origin.resourcesTraversedAndOccupiedCapIfnotFailMap.entrySet()) this.resourcesTraversedAndOccupiedCapIfnotFailMap.put((Resource) getInThisNetPlan (e.getKey()) , e.getValue());
 
 		this.potentialBackupSegments.clear();
 		for (NetworkElement e : origin.potentialBackupSegments) this.potentialBackupSegments.add((ProtectionSegment) getInThisNetPlan (e));
@@ -161,17 +161,22 @@ public class Route extends NetworkElement
 	/** Return the set of resources this route is traversing 
 	 * @return the info
 	 */
-	public Set<Resource>  getCurrentResourcesTraversed () { return resourcesOccupationMap.keySet(); }
+	public Set<Resource>  getCurrentResourcesTraversed () { return resourcesTraversedAndOccupiedCapIfnotFailMap.keySet(); }
 	
-	/** Return the total amount of capacity occupied by this route in the given resource (0 if not traversed). Total means that 
+	/** Return the set of resources this route traversed when it was first created (note that come of these resources may have been removed)
+	 * @return the info
+	 */
+	public Set<Resource>  getInitialResourcesTraversed () { return initialResourcesTraversedMap.keySet(); }
+
+	/** Return the total amount of capacity occupied by this route in the given resource (0 if not traversed, or route is down). Total means that 
 	 * if a route passes the resource more than once, the occupations are summed up
 	 * @param resource the resource
 	 * @return the total occupation
 	 */
 	public double getResourceCurrentTotalOccupation (Resource resource) 
 	{
-		Double res = resourcesOccupationMap.get(resource);
-		if (res == null) return 0; else return res;
+		Double res = resourcesTraversedAndOccupiedCapIfnotFailMap.get(resource);
+		if ((res == null) || isDown()) return 0; else return res;
 	}
 
 	/**
@@ -251,7 +256,7 @@ public class Route extends NetworkElement
 	 * it was created. Recall that if the new route traverses failing link or nodes, its carried traffic and occupied link capacities drop to zero, and if not 
 	 * they will be the base values in the "no failure state". Also, if the original route now traverses links or resources that were removed, an exception is thrown
 	 */
-	public void revertToInitialSequenceOfLinks () { checkAttachedToNetPlanObject(); this.setSeqLinksSegmentsAndResourcesOccupation(this.initialSeqLinksAndResourcesTraversedWhenCreated , initialResourcesOccupationMap); }
+	public void revertToInitialSequenceOfLinks () { checkAttachedToNetPlanObject(); this.setSeqLinksSegmentsAndResourcesOccupation(this.initialSeqLinksAndResourcesTraversedWhenCreated , initialResourcesTraversedMap); }
 
 	/** Returns true if the initial sequence of links and resources traversed when the route was created is at this moment NOT traversing failing links or nodes, and thus is not 
 	 * subject to any failure. It returns false otherwise
@@ -421,6 +426,27 @@ public class Route extends NetworkElement
 		return Collections.unmodifiableList(cache_seqLinksAndProtectionSegments);
 	}
 
+	/** Returns the route current sequence of traversed resources, in the order they are traversed (and thus, a resource will
+	 * appear as many times as it is traversed.  
+	 * @return the list 
+	 * */
+	public List<Resource> getSeqResourcesTraversed()
+	{
+		List<Resource> res = new LinkedList<Resource> ();
+		for (NetworkElement e : seqLinksSegmentsAndResourcesTraversed) if (e instanceof Resource) res.add ((Resource) e );
+		return res;
+	}
+
+	/** Returns the route initial sequence of traversed resources, in the order they were traversed (and thus, a resource will
+	 * appear as many times as it is traversed.  Note that some resources may have been removed
+	 * @return the list 
+	 * */
+	public List<Resource> getInitialSeqResourcesTraversed()
+	{
+		List<Resource> res = new LinkedList<Resource> ();
+		for (NetworkElement e : initialSeqLinksAndResourcesTraversedWhenCreated) if (e instanceof Resource) res.add ((Resource) e );
+		return res;
+	}
 
 	/** Returns the route sequence of traversed links. Traversed protection segments are converted into their sequence of links
 	 * @return see description above
@@ -525,7 +551,7 @@ public class Route extends NetworkElement
 		NetPlan.removeNetworkElementAndShiftIndexes(layer.routes , index);
 		
 		/* remove the resources info */
-		for (Resource resource : resourcesOccupationMap.keySet())
+		for (Resource resource : resourcesTraversedAndOccupiedCapIfnotFailMap.keySet())
 			resource.removeTraversingRoute(this);
 		
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
@@ -546,7 +572,8 @@ public class Route extends NetworkElement
 	
 	/** Sets the route carried traffic and occupied capacity in the traversed links (typically the same amount). If the route is traversing a failing 
 	 * link or node, its current carried traffic and occupied link capacity will be still zero, but if the route becomes up later, its carried traffic and 
-	 * occupied link capacities will be the ones stated here
+	 * occupied link capacities will be the ones stated here. This method cannot be used with service chains, use the method 
+	 * setCarriedTrafficAndResourcesOccupationInformation instead
 	 * @param newCarriedTraffic the new carried traffic 
 	 * @param newOccupiedLinkCapacity the new occuppied link capacity
 	 */
@@ -565,7 +592,7 @@ public class Route extends NetworkElement
 	 * occupied link capacities will be the ones stated here. Regarding the resource occupation map, if a traversed resource is not included, 
 	 * its occupied capacity is set to zero  
 	 * @param newCarriedTraffic the new carried traffic 
-	 * @param newOccupiedLinkCapacity the new occuppied link capacity
+	 * @param newOccupiedLinkCapacity the new occupied link capacity
 	 * @param occupationInformationInTraversedResources if null, all resources are released 
 	 */
 	public void setCarriedTrafficAndResourcesOccupationInformation (double newCarriedTraffic , double newOccupiedLinkCapacity , Map <Resource,Double> occupationInformationInTraversedResources)
@@ -576,7 +603,7 @@ public class Route extends NetworkElement
 		for (double val : occupationInformationInTraversedResources.values()) if (val < 0) throw new Net2PlanException ("The occupation of a resource cannot be negative");
 		for (Entry<Resource,Double> entry : occupationInformationInTraversedResources.entrySet())
 		{
-			if (!this.resourcesOccupationMap.containsKey(entry.getKey())) throw new Net2PlanException ("Cannot change the occupation of a non-traversed resource");
+			if (!this.resourcesTraversedAndOccupiedCapIfnotFailMap.containsKey(entry.getKey())) throw new Net2PlanException ("Cannot change the occupation of a non-traversed resource");
 			if (entry.getValue() < 0) throw new Net2PlanException ("Resource occupation cannot be negative");
 		}
 
@@ -612,10 +639,11 @@ public class Route extends NetworkElement
 		if (demand.coupledUpperLayerLink != null) demand.coupledUpperLayerLink.capacity = demand.carriedTraffic;
 		
 		/* Now the update of the resources */
-		for (Resource res : new HashSet<Resource> (this.resourcesOccupationMap.keySet()))
+		for (Resource res : new HashSet<Resource> (this.resourcesTraversedAndOccupiedCapIfnotFailMap.keySet()))
 		{
 			Double newOccupation = occupationInformationInTraversedResources.get(res);
-			this.resourcesOccupationMap.put(res , newOccupation == null? 0.0 : newOccupation);
+			if (newOccupation == null) newOccupation = 0.0;
+			this.resourcesTraversedAndOccupiedCapIfnotFailMap.put(res , newOccupation);
 			res.addTraversingRoute(this , newOccupation);
 		}
 
@@ -655,7 +683,7 @@ public class Route extends NetworkElement
 		final double currentCarriedTrafficIfNotFail = this.carriedTrafficIfNotFailing;
 		final double currentOccupiedCapacityIfNotFail = this.occupiedLinkCapacityIfNotFailing;
 		this.setCarriedTrafficAndResourcesOccupationInformation(0 , 0 , null); // releases all resources
-		for (Resource resource : resourcesOccupationMap.keySet()) resource.removeTraversingRoute(this); // removes the current route
+		for (Resource resource : resourcesTraversedAndOccupiedCapIfnotFailMap.keySet()) resource.removeTraversingRoute(this); // removes the current route
 		for (Link lps : this.cache_seqLinksAndProtectionSegments) 
 		{
 			lps.cache_traversingRoutes.remove (this);
@@ -701,9 +729,9 @@ public class Route extends NetworkElement
 			node.cache_nodeAssociatedRoutes.add (this);
 
 		/* Update the resources occupation map, add the resources as traversed ones, with zero occupation */
-		resourcesOccupationMap.clear();
+		resourcesTraversedAndOccupiedCapIfnotFailMap.clear();
 		for (Entry<Resource,Double> entry : newResourceOccupation.entrySet())
-			resourcesOccupationMap.put(entry.getKey() , 0.0);
+			resourcesTraversedAndOccupiedCapIfnotFailMap.put(entry.getKey() , 0.0);
 		
 		setCarriedTrafficAndResourcesOccupationInformation(currentCarriedTrafficIfNotFail , currentOccupiedCapacityIfNotFail , newResourceOccupation);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
@@ -739,19 +767,19 @@ public class Route extends NetworkElement
 //	double occupiedLinkCapacity , occupiedLinkCapacityIfNotFailing;
 	void checkCachesConsistency ()
 	{
-		if (!layer.routes.contains(this)) throw new RuntimeException ("Bad");
-		if (!demand.cache_routes.contains(this)) throw new RuntimeException ("Bad");
-		if (initialSeqLinksAndResourcesTraversedWhenCreated == null) throw new RuntimeException ("Route " + this + ", initialSeqLinksAndResourcesTraversedWhenCreated == null");
-		if (initialResourcesOccupationMap == null) throw new RuntimeException ("Route " + this + ", initialResourcesOccupationMap == null");
-		if (seqLinksSegmentsAndResourcesTraversed == null) throw new RuntimeException ("Route " + this + ", seqLinksSegmentsAndResourcesTraversed == null");
-		if (resourcesOccupationMap == null) throw new RuntimeException ("Route " + this + ", resourcesOccupationMap == null");
-		if (potentialBackupSegments == null) throw new RuntimeException ("Route " + this + ", potentialBackupSegments == null");
-		if (cache_seqLinksAndProtectionSegments == null) throw new RuntimeException ("Route " + this + ", cache_seqLinksAndProtectionSegments == null");
-		if (cache_seqLinksRealPath == null) throw new RuntimeException ("Route " + this + ", cache_seqLinksRealPath == null");
-		if (cache_seqNodesRealPath == null) throw new RuntimeException ("Route " + this + ", cache_seqNodesRealPath == null");
+		assertTrue (layer.routes.contains(this));
+		assertTrue (demand.cache_routes.contains(this));
+		assertNotNull (initialSeqLinksAndResourcesTraversedWhenCreated);
+		assertNotNull (initialResourcesTraversedMap);
+		assertNotNull (seqLinksSegmentsAndResourcesTraversed);
+		assertNotNull (resourcesTraversedAndOccupiedCapIfnotFailMap);
+		assertNotNull (potentialBackupSegments);
+		assertNotNull (cache_seqLinksAndProtectionSegments);
+		assertNotNull (cache_seqLinksRealPath);
+		assertNotNull (cache_seqNodesRealPath);
 
 		netPlan.checkInThisNetPlanAndLayer(seqLinksSegmentsAndResourcesTraversed , layer);
-		netPlan.checkInThisNetPlanAndLayer(resourcesOccupationMap.keySet() , layer);
+		netPlan.checkInThisNetPlanAndLayer(resourcesTraversedAndOccupiedCapIfnotFailMap.keySet() , layer);
 		netPlan.checkInThisNetPlanAndLayer(potentialBackupSegments , layer);
 		netPlan.checkInThisNetPlanAndLayer(cache_seqLinksAndProtectionSegments , layer);
 		netPlan.checkInThisNetPlanAndLayer(cache_seqLinksRealPath , layer);
@@ -762,27 +790,29 @@ public class Route extends NetworkElement
 		{
 			assertNotNull(e);
 			if (e instanceof Link) { final Link ee = (Link) e; assertTrue (ee.cache_traversingRoutes.containsKey(this)); }
-			if (e instanceof Resource) { final Resource ee = (Resource) e; assertTrue (ee.cache_traversingRoutesAndOccupiedCapacities.containsKey(this)); }
+			if (e instanceof Resource) { final Resource ee = (Resource) e; assertTrue (ee.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.containsKey(this)); }
 		}
-		for (Entry<Resource,Double> entry : resourcesOccupationMap.entrySet())
+		for (Entry<Resource,Double> entry : resourcesTraversedAndOccupiedCapIfnotFailMap.entrySet())
 		{
 			assertNotNull(entry.getKey());
 			assertNotNull(entry.getValue());
-			assertTrue(entry.getKey().cache_traversingRoutesAndOccupiedCapacities.get(this) == entry.getValue());
+			assertNotNull(entry.getKey().cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute);
+			assertEquals(entry.getKey().cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(this) , entry.getValue() , 0);
 		}
 		List<Resource> travResources = new LinkedList<Resource> ();
 		for (NetworkElement el : seqLinksSegmentsAndResourcesTraversed) if (el instanceof Resource) travResources.add((Resource) el);
 		for (Resource res : travResources)
 		{
-			if (netPlan.cache_id2ResourceMap.get(res.id) != res) throw new RuntimeException ("Bad");
-			if (!netPlan.resources.get(res.index).equals(res)) throw new RuntimeException ("Bad");
-			if (!res.cache_traversingRoutesAndOccupiedCapacities.containsKey(this)) throw new RuntimeException ("Bad");
-			if (res.cache_traversingRoutesAndOccupiedCapacities.get(this) != resourcesOccupationMap.get(res)) throw new RuntimeException ("Bad");
+			assertEquals (netPlan.cache_id2ResourceMap.get(res.id) , res);
+			assertEquals (netPlan.resources.get(res.index) , res);
+			assertNotNull(res.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(this));
+			assertNotNull(resourcesTraversedAndOccupiedCapIfnotFailMap.get(res));
+			assertEquals (res.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(this) , resourcesTraversedAndOccupiedCapIfnotFailMap.get(res) , 0);
 		}
 
-		for (Link link : cache_seqLinksRealPath) if (!link.cache_traversingRoutes.containsKey(this)) throw new RuntimeException ("Bad");
-		for (Node node : cache_seqNodesRealPath) if (!node.cache_nodeAssociatedRoutes.contains(this)) throw new RuntimeException ("Bad");
-		for (ProtectionSegment segment : potentialBackupSegments) if (!segment.associatedRoutesToWhichIAmPotentialBackup.contains(this)) throw new RuntimeException ("Bad");
+		for (Link link : cache_seqLinksRealPath) assertTrue (link.cache_traversingRoutes.containsKey(this));
+		for (Node node : cache_seqNodesRealPath) assertTrue (node.cache_nodeAssociatedRoutes.contains(this));
+		for (ProtectionSegment segment : potentialBackupSegments) assertTrue (segment.associatedRoutesToWhichIAmPotentialBackup.contains(this));
 		boolean shouldBeUp = true; for (Link e : cache_seqLinksRealPath) if (!e.isUp) { shouldBeUp = false; break; }
 		if (shouldBeUp) for (Node n : cache_seqNodesRealPath) if (!n.isUp) { shouldBeUp = false; break; }
 		if (!shouldBeUp != this.isDown())
@@ -796,11 +826,11 @@ public class Route extends NetworkElement
 		}
 		if (shouldBeUp)
 		{
-			if (carriedTraffic != carriedTrafficIfNotFailing) throw new RuntimeException ("Bad");
+			assertEquals(carriedTraffic , carriedTrafficIfNotFailing , 0.001);
 		}
 		else
 		{
-			if (carriedTraffic != 0) throw new RuntimeException ("Bad");
+			assertEquals(carriedTraffic , 0 , 0.001);
 		}
 	}
 

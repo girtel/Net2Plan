@@ -3,16 +3,18 @@
  */
 package com.net2plan.interfaces.networkDesign;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,10 +29,14 @@ public class ResourceTest
 	private Node hostNode , endDemandNode;
 	private Link interLink;
 	private Demand demandUpper ,demandBase;
-	private Route route;
+	private Route serviceChainUpper, serviceChainBase;
 	private Resource upperResource = null;
 	private Resource baseResource = null;
 
+	// upper resource: capacity 10, occupied 5 in base
+	// base resource: capacity 10: occupied 1+5
+	// serviceChainUpper (carries 100, occupies 200, occupies 1.0 in upper)
+	// serviceChainBase (carries 100, occupies 300, occupies 1.0 in base)
 	
 	/**
 	 * @throws java.lang.Exception
@@ -67,17 +73,15 @@ public class ResourceTest
 		assertTrue (baseResource.getIndex() == 0);
 		assertTrue (np.getNumberOfResources() == 1);
 		
-		Map<Resource,Double> occupationInBaseResource = new HashMap<Resource,Double> ();
-		occupationInBaseResource.put(baseResource , 5.0);
-		this.upperResource = np.addResource("upperType", "upperName" , hostNode , 10 , "Mbps", occupationInBaseResource , 1 , null);
+		this.upperResource = np.addResource("upperType", "upperName" , hostNode , 10 , "Mbps", Collections.singletonMap(baseResource , 5.0) , 1 , null);
 		assertTrue (upperResource.getIndex() == 1);
 		assertTrue (np.getNumberOfResources() == 2);
 		
 		/* create service chain */
 		List<NetworkElement> pathUpper = new LinkedList<NetworkElement> (); pathUpper.add(upperResource); pathUpper.add(interLink);
-		np.addServiceChain(demandUpper , 100 , 200 , pathUpper , Collections.singletonMap(upperResource , 1.0) , null);
+		this.serviceChainUpper = np.addServiceChain(demandUpper , 100 , 200 , pathUpper , Collections.singletonMap(upperResource , 1.0) , null);
 		List<NetworkElement> pathBase = new LinkedList<NetworkElement> (); pathBase.add(baseResource); pathBase.add(interLink);
-		np.addServiceChain(demandBase , 100 , 300 , pathBase , Collections.singletonMap(baseResource , 1.0) , null);
+		this.serviceChainBase = np.addServiceChain(demandBase , 100 , 300 , pathBase , Collections.singletonMap(baseResource , 1.0) , null);
 	}
 
 	/**
@@ -152,54 +156,127 @@ public class ResourceTest
 	{
 		assertEquals(upperResource.getTraversingRouteOccupiedCapacity(demandUpper.getRoutes().iterator().next()) , 1.0 , 0);
 		assertEquals(baseResource.getTraversingRouteOccupiedCapacity(demandBase.getRoutes().iterator().next()) , 1.0 , 0);
+		interLink.setFailureState(false);
+		assertEquals(upperResource.getTraversingRouteOccupiedCapacity(demandUpper.getRoutes().iterator().next()) , 0.0 , 0);
+		assertEquals(baseResource.getTraversingRouteOccupiedCapacity(demandBase.getRoutes().iterator().next()) , 0.0 , 0);
 	}
 
 	@Test
 	public void testGetTraversingRoutes ()
 	{
+		assertEquals (baseResource.getTraversingRoutes() , Collections.singleton(serviceChainBase));
+		assertEquals (upperResource.getTraversingRoutes() , Collections.singleton(serviceChainUpper));
 	}
 
+	@Test
+	public void testGetUpperResources ()
+	{
+		assertEquals (baseResource.getUpperResources() , Collections.singleton(upperResource));
+		assertEquals (upperResource.getUpperResources() , new HashSet<Resource> ());
+	}
 	
-	//	/**
-//	 * Test method for {@link com.net2plan.interfaces.networkDesign.Resource#setUpperResourceOccupiedCapacity(com.net2plan.interfaces.networkDesign.Resource, double)}.
-//	 */
-//	@Test
-//	public void testSetUpperResourceOccupiedCapacity() 
-//	{
-//		
-//		fail("Not yet implemented");
-//	}
-//
-//	/**
-//	 * Test method for {@link com.net2plan.interfaces.networkDesign.Resource#removeUpperResourceOccupation(com.net2plan.interfaces.networkDesign.Resource)}.
-//	 */
-//	@Test
-//	public void testRemoveUpperResourceOccupation() {
-//		fail("Not yet implemented");
-//	}
-//
-//	/**
-//	 * Test method for {@link com.net2plan.interfaces.networkDesign.Resource#addTraversingRoute(com.net2plan.interfaces.networkDesign.Route, double)}.
-//	 */
-//	@Test
-//	public void testAddTraversingRoute() {
-//		fail("Not yet implemented");
-//	}
-//
-//	/**
-//	 * Test method for {@link com.net2plan.interfaces.networkDesign.Resource#removeTraversingRoute(com.net2plan.interfaces.networkDesign.Route)}.
-//	 */
-//	@Test
-//	public void testRemoveTraversingRoute() {
-//		fail("Not yet implemented");
-//	}
-//
-//	/**
-//	 * Test method for {@link com.net2plan.interfaces.networkDesign.Resource#remove()}.
-//	 */
-//	@Test
-//	public void testRemove() {
-//		fail("Not yet implemented");
-//	}
+	@Test
+	public void testIsOverSubscribed ()
+	{
+		assertTrue (!baseResource.isOversubscribed());
+		assertTrue (!upperResource.isOversubscribed());
+		serviceChainBase.setCarriedTrafficAndResourcesOccupationInformation(20,20,null);
+		assertTrue (!baseResource.isOversubscribed());
+		assertTrue (!upperResource.isOversubscribed());
+		serviceChainBase.setCarriedTrafficAndResourcesOccupationInformation(20,20,Collections.singletonMap(baseResource , 100.0));
+		assertTrue (baseResource.isOversubscribed());
+		serviceChainUpper.setCarriedTrafficAndResourcesOccupationInformation(20,20,Collections.singletonMap(upperResource , 100.0));
+		assertTrue (upperResource.isOversubscribed());
+		np.checkCachesConsistency();
+	}
 
+	@Test
+	public void testRemove1 ()
+	{
+		baseResource.remove();
+		np.checkCachesConsistency();
+		assertEquals(upperResource.getNetPlan() , null);
+		assertEquals(baseResource.getNetPlan() , null);
+		assertEquals(serviceChainBase.getNetPlan() , null);
+		assertEquals(serviceChainUpper.getNetPlan() , null);
+	}
+
+	@Test
+	public void testRemove2 ()
+	{
+		upperResource.remove();
+		np.checkCachesConsistency();
+		assertEquals(upperResource.getNetPlan() , null);
+		assertEquals(serviceChainUpper.getNetPlan() , null);
+		assertTrue(baseResource.getNetPlan() != null);
+		assertTrue(serviceChainBase.getNetPlan() != null);
+	}
+
+
+	@Test
+	public void testSetCapacity ()
+	{
+		assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
+		assertEquals(baseResource.getOccupiedCapacity() , 6.0 , 0.0);
+		upperResource.setCapacity(10 , Collections.singletonMap(baseResource , 3.0));
+		np.checkCachesConsistency();
+		assertEquals(upperResource.getCapacity() , 10.0 , 0.0);
+		assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
+		assertEquals(baseResource.getCapacity() , 10.0 , 0.0);
+		assertEquals(baseResource.getOccupiedCapacity() , 4.0 , 0.0);
+	}
+
+	@Test
+	public void testCopy ()
+	{
+		NetPlan np2 = np.copy();
+		np2.checkCachesConsistency();
+		assertEquals(np2.getResource(0).getId() , np.getResource(0).getId());
+		assertEquals(np2.getResource(1).getId() , np.getResource(1).getId());
+		assertEquals(np2.getRoute(0).getId() , np.getRoute(0).getId());
+		assertEquals(np2.getRoute(1).getId() , np.getRoute(1).getId());
+	}
+
+	@Test
+	public void testCopyFrom ()
+	{
+		NetPlan np2 = new NetPlan ();
+		np2.copyFrom(np.copy());
+		np2.checkCachesConsistency();
+		assertEquals(np2.getResource(0).getId() , np.getResource(0).getId());
+		assertEquals(np2.getResource(1).getId() , np.getResource(1).getId());
+		assertEquals(np2.getRoute(0).getId() , np.getRoute(0).getId());
+		assertEquals(np2.getRoute(1).getId() , np.getRoute(1).getId());
+	}
+
+	@Test
+	public void testFailureRoute ()
+	{
+		assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
+		assertEquals(baseResource.getOccupiedCapacity() , 6.0 , 0.0);
+		interLink.setFailureState(false);
+		assertEquals(serviceChainBase.getCarriedTraffic() , 0 , 0.0);
+		assertEquals(serviceChainUpper.getCarriedTraffic() , 0 , 0.0);
+		assertEquals(serviceChainBase.getOccupiedCapacity() , 0 , 0.0);
+		assertEquals(serviceChainUpper.getOccupiedCapacity() , 0 , 0.0);
+		assertEquals(serviceChainBase.getOccupiedCapacityInNoFailureState() , 300.0 , 0.0);
+		assertEquals(serviceChainUpper.getOccupiedCapacityInNoFailureState() , 200.0 , 0.0);
+		assertEquals(upperResource.getOccupiedCapacity() , 0.0 , 0.0);
+		assertEquals(baseResource.getOccupiedCapacity() , 5.0 , 0.0);
+	}
+	
+	@Test
+	public void testReadSave ()
+	{
+		File file = null;
+		try
+		{
+			file = File.createTempFile("testN2p" , "n2p");
+		} catch (Exception e) { Assert.fail ("could not make the test: no temprary file creation possible"); }
+		assertTrue (file != null);
+		np.saveToFile(file);
+		NetPlan np2 = new NetPlan (file);
+		np2.checkCachesConsistency();
+	}
+	
 }
