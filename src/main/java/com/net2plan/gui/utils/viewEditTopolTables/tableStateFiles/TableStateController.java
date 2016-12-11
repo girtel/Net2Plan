@@ -41,8 +41,7 @@ public final class TableStateController
 
     public static void loadTableState(AdvancedJTableNetworkElement table)
     {
-        JOptionPane.showMessageDialog(null,"This will be available soon...");
-        /*int rc = chooser.showOpenDialog(null);
+        int rc = chooser.showOpenDialog(null);
         if (rc != JFileChooser.APPROVE_OPTION) return;
         selectedFile = chooser.getSelectedFile();
         try
@@ -53,7 +52,13 @@ public final class TableStateController
             ex.printStackTrace();
         }
         XMLInputFactory2 xmlInputFactory = (XMLInputFactory2) XMLInputFactory2.newInstance();
-        XMLStreamReader2 xmlStreamReader = (XMLStreamReader2) xmlInputFactory.createXMLStreamReader(inputStream);*/
+        XMLStreamReader2 xmlStreamReader = null;
+        try {
+            xmlStreamReader = (XMLStreamReader2) xmlInputFactory.createXMLStreamReader(inputStream);
+        } catch (XMLStreamException e) {
+            e.printStackTrace();
+        }
+
     }
 
     /*Takes the current State from table and saves in a external file .n2pst

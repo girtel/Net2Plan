@@ -65,7 +65,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     private final JMenu showMenu;
     private final JMenuItem showAllItem, hideAllItem, resetItem, saveStateItem, loadStateItem;
     private final ArrayList<TableColumn> hiddenColumns, shownColumns, removedColumns;
-    private final ArrayList<String> hiddenColumnsNames;
+    private ArrayList<String> hiddenColumnsNames, hiddenColumnsAux;
     private final Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn;
     private final Map<Integer, String> mapToSaveState;
     private JCheckBoxMenuItem fixCheckBox, unfixCheckBox, attributesItem, hideColumn;
@@ -310,7 +310,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 @Override
                                 public void actionPerformed(ActionEvent e)
                                 {
-                                    showColumn(currentColumnName, indexForEachHiddenColumn.get(currentColumnName));
+                                    showColumn(currentColumnName, indexForEachHiddenColumn.get(currentColumnName), true);
                                     checkNewIndexes();
                                 }
                             });
@@ -460,7 +460,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         while(hiddenColumnsNames.size() > 0)
         {
             String s = hiddenColumnsNames.get(hiddenColumnsNames.size() - 1);
-            showColumn(s,indexForEachHiddenColumn.get(s));
+            showColumn(s,indexForEachHiddenColumn.get(s),true);
         }
         checkNewIndexes();
         hiddenColumns.clear();
@@ -499,10 +499,12 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      *
      * @param columnName    Name of the column which we want to show
      * @param columnIndex   Index which the column had when it was shown
+     * @param move true if column will be moved, false if column will be shown at the end
+     *
      * @return The column to be shown
      */
 
-    public void showColumn(String columnName, int columnIndex)
+    public void showColumn(String columnName, int columnIndex, boolean move)
     {
 
         String hiddenColumnName;
@@ -513,7 +515,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             if (columnName.equals(hiddenColumnName))
             {
                 mainTable.getColumnModel().addColumn(tc);
-                if(columnIndex != 66)
+                if(move)
                     mainTable.getColumnModel().moveColumn(mainTable.getColumnCount() - 1, columnIndex);
                 shownColumns.add(tc);
                 indexForEachHiddenColumn.remove(columnName, columnIndex);
@@ -701,7 +703,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         for(int j = 0; j < mapToSaveState.size();j++)
         {
             currentColumnName = mapToSaveState.get(j);
-            showColumn(currentColumnName,j);
+            showColumn(currentColumnName,j,false);
         }
     }
 
@@ -876,7 +878,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 restoreColumnsPositions();
                 for(String att : getAttributesColumnsHeaders())
                 {
-                    showColumn("Att: "+att,66);
+                    showColumn("Att: "+att,0,false);
                 }
                 checkNewIndexes();
             } else
@@ -929,7 +931,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 updateTables();
                 expandAttributes = false;
                 restoreColumnsPositions();
-                showColumn("Attributes",66);
+                showColumn("Attributes",0,false);
                 checkNewIndexes();
             } else
             {
