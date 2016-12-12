@@ -148,6 +148,28 @@ public class Link extends NetworkElement
 		this.coupledLowerLayerMulticastDemand = origin.coupledLowerLayerMulticastDemand == null? null : this.netPlan.getMulticastDemandFromId(origin.coupledLowerLayerMulticastDemand.id);
 	}
 
+	boolean isDeepCopy (Link e2)
+	{
+		if (!super.isDeepCopy(e2)) return false;
+		if (layer.id != e2.layer.id) return false;
+		if (originNode.id != e2.originNode.id) return false;
+		if (destinationNode.id != e2.destinationNode.id) return false;
+		if (this.capacity != e2.capacity) return false;
+		if (this.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments != e2.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) return false;
+		if (this.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments != e2.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) return false;
+		if (this.lengthInKm != e2.lengthInKm) return false;
+		if (this.propagationSpeedInKmPerSecond != e2.propagationSpeedInKmPerSecond) return false;
+		if (this.isUp != e2.isUp) return false;
+		if ((this.coupledLowerLayerDemand == null) != (e2.coupledLowerLayerDemand == null)) return false; 
+		if ((this.coupledLowerLayerDemand != null) && (coupledLowerLayerDemand.id != e2.coupledLowerLayerDemand.id)) return false;
+		if ((this.coupledLowerLayerMulticastDemand == null) != (e2.coupledLowerLayerMulticastDemand == null)) return false; 
+		if ((this.coupledLowerLayerMulticastDemand != null) && (coupledLowerLayerMulticastDemand.id != e2.coupledLowerLayerMulticastDemand.id)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_srgs , e2.cache_srgs)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_traversingRoutes , e2.cache_traversingRoutes)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_traversingTrees , e2.cache_traversingTrees)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_traversingSegments , e2.cache_traversingSegments)) return false;
+		return true;
+	}
 	
 	/**
 	 * <p>Returns the link origin node.</p>
@@ -617,10 +639,10 @@ public class Link extends NetworkElement
 //			for (Route r : cache_traversingRoutes.keySet()) System.out.println ("-- route: " + r + ", seq links real path: " + r.seqLinksRealPath);
 			for (Route route : layer.routes)
 			{
-				if (this.cache_traversingRoutes.containsKey(route) != route.seqLinksRealPath.contains(this)) throw new RuntimeException ("Bad. link: " + this + ", route: " + route + ", this.cache_traversingRoutes: " + this.cache_traversingRoutes + ", route.seqLinksRealPath: "+  route.seqLinksRealPath + ", route.seqLinksAndProtectionSegments: " + route.seqLinksAndProtectionSegments);
+				if (this.cache_traversingRoutes.containsKey(route) != route.cache_seqLinksRealPath.contains(this)) throw new RuntimeException ("Bad. link: " + this + ", route: " + route + ", this.cache_traversingRoutes: " + this.cache_traversingRoutes + ", route.seqLinksRealPath: "+  route.cache_seqLinksRealPath + ", route.seqLinksAndProtectionSegments: " + route.cache_seqLinksAndProtectionSegments);
 				if (this.cache_traversingRoutes.containsKey(route))
 				{
-					int numPasses = 0; for (Link linkRoute : route.seqLinksRealPath) if (linkRoute == this) numPasses ++; if (numPasses != this.cache_traversingRoutes.get(route)) throw new RuntimeException ("Bad");
+					int numPasses = 0; for (Link linkRoute : route.cache_seqLinksRealPath) if (linkRoute == this) numPasses ++; if (numPasses != this.cache_traversingRoutes.get(route)) throw new RuntimeException ("Bad");
 					check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += route.carriedTraffic * this.cache_traversingRoutes.get(route);
 					check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += route.occupiedLinkCapacity * this.cache_traversingRoutes.get(route);
 //					System.out.println ("Route " + route + ", traverses this link (" + this + "), numPasses: " + this.cache_traversingRoutes.get(route) + ", its carried traffic is: " + route.carriedTraffic + " and thus accumlates a carried traffic of: " + (route.carriedTraffic * this.cache_traversingRoutes.get(route)));
@@ -651,7 +673,7 @@ public class Link extends NetworkElement
 		if (Math.abs(carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments - check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) 
 		{
 			System.out.println ("Link "+ this + ", is Up: " + isUp + ", trav routes: " + cache_traversingRoutes + ", trav segments: " + cache_traversingSegments);
-			for (Route r : cache_traversingRoutes.keySet()) System.out.println ("-- trav route: " + r + ", is down: " + r.isDown() + ", carried: " + r.carriedTraffic + ", carried all ok: " + r.carriedTrafficIfNotFailing + ", seq links and ps: " + r.seqLinksAndProtectionSegments + ", seqlinks real: " + r.seqLinksRealPath);
+			for (Route r : cache_traversingRoutes.keySet()) System.out.println ("-- trav route: " + r + ", is down: " + r.isDown() + ", carried: " + r.carriedTraffic + ", carried all ok: " + r.carriedTrafficIfNotFailing + ", seq links and ps: " + r.cache_seqLinksAndProtectionSegments + ", seqlinks real: " + r.cache_seqLinksRealPath);
 			for (ProtectionSegment r : cache_traversingSegments) System.out.println ("-- trav segment: " + r + ", is down: " + r.isDown() + ", carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + r.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments + ", sea links: " + r.seqLinks);
 			throw new RuntimeException ("Bad: carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments + ", check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
 		}

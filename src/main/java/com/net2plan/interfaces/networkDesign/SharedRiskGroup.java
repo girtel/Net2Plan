@@ -61,6 +61,16 @@ public class SharedRiskGroup extends NetworkElement
 		this.nodes.clear (); for (Node n : origin.nodes) this.nodes.add(this.netPlan.getNodeFromId (n.id));
 	}
 
+	boolean isDeepCopy (SharedRiskGroup e2)
+	{
+		if (!super.isDeepCopy(e2)) return false;
+		if (this.meanTimeToFailInHours != e2.meanTimeToFailInHours) return false;
+		if (this.meanTimeToRepairInHours != e2.meanTimeToRepairInHours) return false;
+		if (!NetPlan.isDeepCopy(this.nodes , e2.nodes)) return false;
+		if (!NetPlan.isDeepCopy(this.links, e2.links)) return false;
+		return true;
+	}
+
 	/**
 	 * <p>Returns the set of nodes associated to the SRG (fail, when the SRG is in failure state)</p>
 	 * @return The set of failing nodes, as an unmodifiable set

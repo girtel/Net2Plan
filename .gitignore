@@ -30,7 +30,7 @@ build.xml
 /release.properties
 /pom.xml.releaseBackup
 /etc
-src/test/
+#src/test/
 lib/
 /src/main/resources/lib/
 /net2plan.iml

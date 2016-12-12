@@ -27,7 +27,7 @@ import java.util.Map;
 public class NetworkElement 
 {
 	protected NetPlan netPlan;
-	protected final long id;
+	final protected long id;
 	protected int index;
 	protected final AttributeMap attributes;
 	
@@ -72,6 +72,14 @@ public class NetworkElement
 //			return (o instanceof NetworkElement) && (((NetworkElement)o).id == this.id) && (((NetworkElement)o).netPlan == this.netPlan); 
 	}
 	
+	final boolean isDeepCopy (NetworkElement e2) 
+	{
+		if (this.id != e2.id) return false;
+		if (this.index != e2.index) return false;
+		if (!this.attributes.equals(e2.attributes)) return false;
+		return true;
+	}
+
 	/**
 	 * <p>Returns the value of a given attribute for this network element. If not defined, the attribute is searched in the netPlan object this element is attached to.
 	 * Then, it returns null if the attribute is not found also there</p>
@@ -182,6 +190,7 @@ public class NetworkElement
 		if (this instanceof MulticastDemand) return "Multicast demand id=" + id;
 		if (this instanceof MulticastTree) return "Multicast tree id=" + id;
 		if (this instanceof Route) return "Route id=" + id;
+		if (this instanceof Resource) return "Resource id=" + id;
 		if (this instanceof NetPlan) return "NetPlan id=" + id + ", hashcode: " + hashCode();
 		throw new RuntimeException ("Bad");
 	}

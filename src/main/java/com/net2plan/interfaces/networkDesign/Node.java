@@ -106,6 +106,25 @@ public class Node extends NetworkElement
 		this.cache_nodeAssociatedulticastTrees.clear (); for (MulticastTree t : origin.cache_nodeAssociatedulticastTrees) this.cache_nodeAssociatedulticastTrees.add(this.netPlan.getMulticastTreeFromId(t.id));
 	}
 	
+	boolean isDeepCopy (Node e2)
+	{
+		if (!super.isDeepCopy(e2)) throw new RuntimeException ("Bad"); //return false;return false;
+		if (!this.name.equals(e2.name)) throw new RuntimeException ("Bad"); //return false;return false;
+		if (!this.nodeXYPositionMap.equals(e2.nodeXYPositionMap)) throw new RuntimeException ("Bad"); //return false;return false;
+		if (this.isUp != e2.isUp) throw new RuntimeException ("Bad"); //return false;return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeIncomingLinks , e2.cache_nodeIncomingLinks)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeOutgoingLinks , e2.cache_nodeOutgoingLinks)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeIncomingDemands , e2.cache_nodeIncomingDemands)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeOutgoingDemands , e2.cache_nodeOutgoingDemands)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeIncomingMulticastDemands , e2.cache_nodeIncomingMulticastDemands)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeOutgoingMulticastDemands , e2.cache_nodeOutgoingMulticastDemands)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeSRGs , e2.cache_nodeSRGs)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeAssociatedRoutes , e2.cache_nodeAssociatedRoutes)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeAssociatedSegments , e2.cache_nodeAssociatedSegments)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeAssociatedulticastTrees , e2.cache_nodeAssociatedulticastTrees)) return false;
+		return true;
+	}
+
 	/**
 	 * <p>Returns the node name</p>
 	 * @return The node name
@@ -690,7 +709,7 @@ public class Node extends NetworkElement
 		for (MulticastDemand demand : cache_nodeIncomingMulticastDemands) if (!demand.egressNodes.contains(this)) throw new RuntimeException ("Bad");
 		for (MulticastDemand demand : cache_nodeOutgoingMulticastDemands) if (demand.ingressNode != this) throw new RuntimeException ("Bad");
 		for (SharedRiskGroup srg : cache_nodeSRGs) if (!srg.nodes.contains(this)) throw new RuntimeException ("Bad");
-		for (Route route : cache_nodeAssociatedRoutes) if (!route.seqNodesRealPath.contains(this)) throw new RuntimeException ("Bad: " + cache_nodeAssociatedRoutes);
+		for (Route route : cache_nodeAssociatedRoutes) if (!route.cache_seqNodesRealPath.contains(this)) throw new RuntimeException ("Bad: " + cache_nodeAssociatedRoutes);
 		for (ProtectionSegment segment : cache_nodeAssociatedSegments) if (!segment.seqNodes.contains(this)) throw new RuntimeException ("Bad");
 		for (MulticastTree tree : cache_nodeAssociatedulticastTrees) if (!tree.cache_traversedNodes.contains(this)) throw new RuntimeException ("Bad");
 	}

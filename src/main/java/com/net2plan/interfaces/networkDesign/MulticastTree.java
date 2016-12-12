@@ -72,6 +72,42 @@ public class MulticastTree extends NetworkElement
 	}
 
 	
+	boolean isDeepCopy (MulticastTree e2)
+	{
+		if (!super.isDeepCopy(e2)) return false;
+		if (layer.id != e2.layer.id) return false;
+		if (demand.id != e2.demand.id) return false;
+		if (!NetPlan.isDeepCopy(this.pathToEgressNode.keySet() , e2.pathToEgressNode.keySet ())) return false;
+		for (Node n1 : pathToEgressNode.keySet())
+		{
+			final Node n2 = e2.netPlan.getNodeFromId(n1.id);
+			final Collection<Long> l1Links = NetPlan.getIds(pathToEgressNode.get(n1));
+			final Collection<Long> l2Links = NetPlan.getIds(e2.pathToEgressNode.get(n2));
+			if (!l1Links.equals(l2Links)) return false;
+		}
+		if (!NetPlan.isDeepCopy(this.linkSet , e2.linkSet)) return false;
+		if (!NetPlan.isDeepCopy(this.initialSetLinksWhenWasCreated , e2.initialSetLinksWhenWasCreated)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_traversedNodes , e2.cache_traversedNodes)) return false;
+		if (this.carriedTraffic != e2.carriedTraffic) return false;
+		if (this.carriedTrafficIfNotFailing != e2.carriedTrafficIfNotFailing) return false;
+		if (this.occupiedLinkCapacity != e2.occupiedLinkCapacity) return false;
+		if (this.occupiedLinkCapacityIfNotFailing != e2.occupiedLinkCapacityIfNotFailing) return false;
+		if (!NetPlan.isDeepCopy(this.cache_ingressLinkOfNode.keySet() , e2.cache_ingressLinkOfNode.keySet ())) return false;
+		if (!NetPlan.isDeepCopy(this.cache_egressLinksOfNode.keySet() , e2.cache_egressLinksOfNode.keySet ())) return false;
+		for (Node n1 : cache_ingressLinkOfNode.keySet())
+		{
+			final Node n2 = e2.netPlan.getNodeFromId(n1.id);
+			if (cache_ingressLinkOfNode.get(n1).id != e2.cache_ingressLinkOfNode.get(n2).id) return false;
+		}
+		for (Node n1 : cache_egressLinksOfNode.keySet())
+		{
+			final Node n2 = e2.netPlan.getNodeFromId(n1.id);
+			if (!NetPlan.isDeepCopy(this.cache_egressLinksOfNode.get(n1) , e2.cache_egressLinksOfNode.get(n2))) return false;
+		}
+		return true;
+	}
+
+	
 	/**
 	 * <p>Returns the initial {@code Set} of {@link com.net2plan.interfaces.networkDesign.Link Links} of the tree when it was created. That is, before any tree rerouting action was made.</p>
 	 * @return The {@code Set} of links, as an unmodifiable set

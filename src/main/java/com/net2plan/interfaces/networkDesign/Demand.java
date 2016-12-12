@@ -56,6 +56,7 @@ public class Demand extends NetworkElement
 	
 	Set<Route> cache_routes;
 	Link coupledUpperLayerLink;
+	List<String> mandatorySequenceOfTraversedResourceTypes;
 
 	/**
 	 * Generates a new Demand.
@@ -83,6 +84,7 @@ public class Demand extends NetworkElement
 		this.routingCycleType = RoutingCycleType.LOOPLESS;
 		this.cache_routes = new LinkedHashSet<Route> ();
 		this.coupledUpperLayerLink = null;
+		this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> ();
 	}
 
 	/**
@@ -99,8 +101,25 @@ public class Demand extends NetworkElement
 		this.coupledUpperLayerLink = origin.coupledUpperLayerLink == null? null : this.netPlan.getLinkFromId (origin.coupledUpperLayerLink.id);
 		this.cache_routes = new LinkedHashSet<Route> ();
 		for (Route r : origin.cache_routes) this.cache_routes.add(this.netPlan.getRouteFromId(r.id));
+		this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> (origin.mandatorySequenceOfTraversedResourceTypes);
 	}
 
+
+	boolean isDeepCopy (Demand e2)
+	{
+		if (!super.isDeepCopy(e2)) return false;
+		if (layer.id != e2.layer.id) return false;
+		if (ingressNode.id != e2.ingressNode.id) return false;
+		if (egressNode.id != e2.egressNode.id) return false;
+		if (this.offeredTraffic != e2.offeredTraffic) return false;
+		if (this.carriedTraffic != e2.carriedTraffic) return false;
+		if (this.routingCycleType != e2.routingCycleType) return false;
+		if ((this.coupledUpperLayerLink == null) != (e2.coupledUpperLayerLink == null)) return false; 
+		if ((this.coupledUpperLayerLink != null) && (coupledUpperLayerLink.id != e2.coupledUpperLayerLink.id)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_routes , e2.cache_routes)) return false;
+		if (!this.mandatorySequenceOfTraversedResourceTypes.equals(e2.mandatorySequenceOfTraversedResourceTypes)) return false;
+		return true;
+	}
 
 	/**
 	 * <p>Returns the routes associated to this demand.</p>
@@ -130,7 +149,7 @@ public class Demand extends NetworkElement
 			for (Route r : this.cache_routes)
 			{
 				double timeInMs = 0; 
-				for (Link e : r.seqLinksRealPath) 
+				for (Link e : r.cache_seqLinksRealPath) 
 					if (e.isCoupled()) 
 						timeInMs += e.coupledLowerLayerDemand.getWorseCasePropagationTimeInMs();
 					else
@@ -180,7 +199,7 @@ public class Demand extends NetworkElement
 		if (layer.routingType == RoutingType.SOURCE_ROUTING)
 		{
 			for (Route r : this.cache_routes)
-				for (Link e : r.seqLinksRealPath) 
+				for (Link e : r.cache_seqLinksRealPath) 
 					if (e.isOversubscribed()) return true;
 		}
 		else
@@ -191,6 +210,42 @@ public class Demand extends NetworkElement
 					if (e.isOversubscribed()) return true;
 		}
 		return false;
+	}
+	
+	/**
+	 * <p>Returns {@code true} if the traffic of the demand is traversing an oversubscribed resource, {@code false} otherwise. If the 
+	 * layer is not in a SOURCE ROUTING mode, an Exception is thrown</p>
+	 * @return {@code true} if the traffic is traversing an oversubscribed resource, {@code false} otherwise
+	 */
+	public boolean isTraversingOversubscribedResources ()
+	{
+		if (layer.routingType != RoutingType.SOURCE_ROUTING) throw new Net2PlanException ("The routing type must be SOURCE ROUTING");
+		for (Route r : this.cache_routes)
+			for (Resource res : r.resourcesTraversedAndOccupiedCapIfnotFailMap.keySet()) 
+				if (res.isOversubscribed()) return true;
+		return false;
+	}
+
+	/** Gets the sequence of types of resources defined (the ones that the routes of this demand have to follow). An empty list is 
+	 * returned if the method setMandatorySequenceOfTraversedResourceTypes was not called never before for this demand.
+	 * @return the list
+	 */
+	public List<String> getServiceChainSequenceOfTraversedResourceTypes ()
+	{
+		if (layer.routingType != RoutingType.SOURCE_ROUTING) throw new Net2PlanException ("The routing type must be SOURCE ROUTING");
+		return Collections.unmodifiableList(this.mandatorySequenceOfTraversedResourceTypes);
+	}
+
+	/** Sets the sequence of types of resources that the routes of this demand have to follow. This method is to make the demand become 
+	 * a request of service chains. This method can only be called if the routing type is SOURCE ROUTING, and the demand has no routes 
+	 * at the moment.
+	 * @param resourceTypesSequence the sequence of types of the resources that has to be traversed by all the routes of this demand
+	 */
+	public void setServiceChainSequenceOfTraversedResourceTypes (List<String> resourceTypesSequence)
+	{
+		if (layer.routingType != RoutingType.SOURCE_ROUTING) throw new Net2PlanException ("The routing type must be SOURCE ROUTING");
+		if (!cache_routes.isEmpty()) throw new Net2PlanException ("The demand must not have routes to execute this method");
+		this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> (resourceTypesSequence);
 	}
 	
 	/**
@@ -229,6 +284,14 @@ public class Demand extends NetworkElement
 		return this.carriedTraffic + Configuration.precisionFactor < offeredTraffic;
 	}
 
+	/** Returns if the current demand reflects a service chain request, that is, if the routes are constrained 
+	 * to traverse a given sequence of resources of given types.
+	 * @return true if the demand defines a service chain request, false otherwise
+	 */
+	public boolean isServiceChainRequest ()
+	{
+		return !mandatorySequenceOfTraversedResourceTypes.isEmpty();
+	}
 	/**
 	 * <p>Returns {@code true} if the demand is coupled to a link of an upper layer.</p>
 	 * @return {@code true} is coupled, false otherwise
@@ -463,7 +526,7 @@ public class Demand extends NetworkElement
 		double shortestPathCost = Double.MAX_VALUE;
 		for (Route r : cache_routes)
 		{
-			double cost = 0; for (Link link : r.seqLinksRealPath) cost += costs [link.index];
+			double cost = 0; for (Link link : r.cache_seqLinksRealPath) cost += costs [link.index];
 			if (cost < shortestPathCost) { shortestPathCost = cost; shortestRoutes.clear(); shortestRoutes.add (r); }
 		}
 		return Pair.of(shortestRoutes , shortestPathCost);

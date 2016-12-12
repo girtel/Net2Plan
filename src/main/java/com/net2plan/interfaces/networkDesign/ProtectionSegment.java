@@ -49,6 +49,15 @@ public class ProtectionSegment extends Link
 		this.associatedRoutesToWhichIAmPotentialBackup = new HashSet<Route> ();
 	}
 
+	boolean isDeepCopy (ProtectionSegment e2)
+	{
+		if (!super.isDeepCopy(e2)) return false;
+		if (!NetPlan.isDeepCopy(this.seqLinks , e2.seqLinks)) return false;
+		if (!NetPlan.isDeepCopy(this.seqNodes, e2.seqNodes)) return false;
+		if (!NetPlan.isDeepCopy(this.associatedRoutesToWhichIAmPotentialBackup, e2.associatedRoutesToWhichIAmPotentialBackup)) return false;
+		return true;
+	}
+
 	void copyFrom (ProtectionSegment origin)
 	{
 		if ((this.id != origin.id) || (this.index != origin.index)) throw new RuntimeException ("Bad");
@@ -319,7 +328,7 @@ public class ProtectionSegment extends Link
 		{
 			final Route r = entry.getKey();
 			final Integer times = entry.getValue(); if (times < 1) throw new RuntimeException ("Bad");
-			if (!r.seqLinksAndProtectionSegments.contains(this)) throw new RuntimeException ("Bad");
+			if (!r.cache_seqLinksAndProtectionSegments.contains(this)) throw new RuntimeException ("Bad");
 			if (!shouldBeUp && (r.carriedTraffic > 1e-3)) throw new RuntimeException ("Bad");
 			if (!shouldBeUp && (r.occupiedLinkCapacity > 1e-3)) throw new RuntimeException ("Bad");
 			checkCarryingTraffic += times * r.carriedTraffic; 
