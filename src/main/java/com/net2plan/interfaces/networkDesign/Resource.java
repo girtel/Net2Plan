@@ -122,6 +122,20 @@ public class Resource extends NetworkElement
 		}
 	}
 
+	boolean isDeepCopy (Resource r2)
+	{
+		if (!super.isDeepCopy(r2)) return false;
+		if (this.hostNode.id != r2.hostNode.id) return false;
+		if (!this.capacityMeasurementUnits.equals(r2.capacityMeasurementUnits)) return false;
+		if (!this.type.equals(r2.type)) return false;
+		if (!this.name.equals(r2.name)) return false;
+		if (this.processingTimeToTraversingTrafficInMs != r2.processingTimeToTraversingTrafficInMs) return false;
+		if (this.capacity != r2.capacity) return false;
+		if (!NetPlan.isDeepCopy(this.capacityIOccupyInBaseResource , r2.capacityIOccupyInBaseResource)) return false;
+		if (!NetPlan.isDeepCopy(this.capacityUpperResourcesOccupyInMe , r2.capacityUpperResourcesOccupyInMe)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute , r2.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute)) return false;
+		return true;
+	}
 	
 	/** Returns true if the occupied capacity of the resource exceeds its capacity
 	 * @return

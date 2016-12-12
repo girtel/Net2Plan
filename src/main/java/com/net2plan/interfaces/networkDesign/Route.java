@@ -104,6 +104,27 @@ public class Route extends NetworkElement
 		this.occupiedLinkCapacity = 0;
 	}
 
+	boolean isDeepCopy (Route e2)
+	{
+		if (!super.isDeepCopy(e2)) return false;
+		if (this.demand.id != e2.demand.id) return false;
+		if (this.ingressNode.id != e2.ingressNode.id) return false;
+		if (this.egressNode.id != e2.egressNode.id) return false;
+		if (!NetPlan.isDeepCopy(this.initialSeqLinksAndResourcesTraversedWhenCreated , e2.initialSeqLinksAndResourcesTraversedWhenCreated)) return false;
+		if (!NetPlan.isDeepCopy(this.initialResourcesTraversedMap , e2.initialResourcesTraversedMap)) return false;
+		if (!NetPlan.isDeepCopy(this.seqLinksSegmentsAndResourcesTraversed , e2.seqLinksSegmentsAndResourcesTraversed)) return false;
+		if (!NetPlan.isDeepCopy(this.resourcesTraversedAndOccupiedCapIfnotFailMap , e2.resourcesTraversedAndOccupiedCapIfnotFailMap)) return false;
+		if (!NetPlan.isDeepCopy(this.potentialBackupSegments , e2.potentialBackupSegments)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_seqLinksAndProtectionSegments , e2.cache_seqLinksAndProtectionSegments)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_seqLinksRealPath , e2.cache_seqLinksRealPath)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_seqNodesRealPath , e2.cache_seqNodesRealPath)) return false;
+		if (this.carriedTraffic != e2.carriedTraffic) return false;
+		if (this.carriedTrafficIfNotFailing != e2.carriedTrafficIfNotFailing) return false;
+		if (this.occupiedLinkCapacity != e2.occupiedLinkCapacity) return false;
+		if (this.occupiedLinkCapacityIfNotFailing != e2.occupiedLinkCapacityIfNotFailing) return false;		
+		return true;
+	}
+
 	void copyFrom (Route origin)
 	{
 		if ((this.id != origin.id) || (this.index != origin.index)) throw new RuntimeException ("Bad");

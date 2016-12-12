@@ -65,7 +65,6 @@ import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import junit.framework.Assert;
 
 /**
  * <p>Class defining a complete multi-layer network structure. Layers may 
@@ -143,10 +142,7 @@ public class NetPlan extends NetworkElement
 	boolean isModifiable;
 	String networkDescription;
 	String networkName;
-	
 	NetworkLayer defaultLayer;
-	
-
 	MutableLong nextElementId;
 	
 	ArrayList<NetworkLayer> layers;
@@ -285,6 +281,11 @@ public class NetPlan extends NetworkElement
 									netPlanFormat = new ReaderNetPlan_v4 ();
 									break;
 
+								case 5:
+									System.out.println ("Version 5");
+									netPlanFormat = new ReaderNetPlan_v5 ();
+									break;
+
 								default:
 									throw new Net2PlanException("Wrong version number");
 							}
@@ -361,6 +362,35 @@ public class NetPlan extends NetworkElement
 		}
 	}
 
+	
+	/**
+	 * <p>Returns true if the given NetPlan object contains the same network than this, meaning that all the network elements 
+	 * are a copy in every aspect. In particular, saving in disk a design and then loading it again, should produce a network 
+	 * that is a deep copy of the original. Also, creating a new network using the copy method, should be also a deep copy</p>
+	 * @param indexToRemove Index to remove
+	 * @return true if the given network is a copy of this one
+	 */
+	public boolean isDeepCopy (NetPlan np2)
+	{
+		if (this.DEFAULT_ROUTING_TYPE != np2.DEFAULT_ROUTING_TYPE) throw new RuntimeException ("Bad"); //return false;
+		if (this.isModifiable != np2.isModifiable) throw new RuntimeException ("Bad"); //return false;
+		if (!this.networkDescription.equals(np2.networkDescription)) throw new RuntimeException ("Bad"); //return false;
+		if (!this.networkName.equals(np2.networkName)) throw new RuntimeException ("Bad"); //return false;
+		if (this.defaultLayer.id != np2.defaultLayer.id) throw new RuntimeException ("Bad"); //return false;
+		if (this.nextElementId.longValue() != np2.nextElementId.longValue()) { System.out.println (this.nextElementId + "," + np2.nextElementId); throw new RuntimeException ("Bad"); } //return false;
+		
+		for (int cont = 0 ; cont < nodes.size() ; cont ++)
+			if (!this.getNode(cont).isDeepCopy (np2.getNode(cont))) throw new RuntimeException ("Bad"); //return false;
+		for (int cont = 0 ; cont < resources.size() ; cont ++)
+			if (!this.getResource(cont).isDeepCopy (np2.getResource(cont))) throw new RuntimeException ("Bad"); //return false;
+		for (int cont = 0 ; cont < srgs.size() ; cont ++)
+			if (!this.getSRG(cont).isDeepCopy (np2.getSRG(cont))) throw new RuntimeException ("Bad"); //return false;
+		for (int cont = 0 ; cont < layers.size() ; cont ++)
+			if (!this.getNetworkLayer(cont).isDeepCopy (np2.getNetworkLayer(cont))) throw new RuntimeException ("Bad"); //return false;
+		return true;
+	}
+	
+	
 	/**
 	 * <p>Removes the network element contained in the list which has the given index, and shifts the indexes of the rest of the elements accordingly.</p>
 	 * @param x Network elements
@@ -411,6 +441,10 @@ public class NetPlan extends NetworkElement
 	 */
 	public Demand addDemand(Node ingressNode, Node egressNode, double offeredTraffic, Map<String, String> attributes , NetworkLayer ... optionalLayerParameter)
 	{
+		return addDemand (null , ingressNode, egressNode, offeredTraffic, attributes , optionalLayerParameter);
+	}
+	Demand addDemand(Long demandId , Node ingressNode, Node egressNode, double offeredTraffic, Map<String, String> attributes , NetworkLayer ... optionalLayerParameter)
+	{
 		offeredTraffic = NetPlan.adjustToTolerance(offeredTraffic);
 		checkIsModifiable();
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
@@ -419,8 +453,7 @@ public class NetPlan extends NetworkElement
 		if (ingressNode.equals (egressNode)) throw new Net2PlanException("Self-demands are not allowed");
 		if (offeredTraffic < 0) throw new Net2PlanException ("Offered traffic must be non-negative");
 		
-		final long demandId = nextElementId.longValue();
-		nextElementId.increment();
+		if (demandId == null) { demandId = nextElementId.longValue(); nextElementId.increment(); }
 
 		Demand demand = new Demand (this , demandId , layer.demands.size () , layer , ingressNode , egressNode , offeredTraffic , new AttributeMap (attributes));
 
@@ -483,14 +516,17 @@ public class NetPlan extends NetworkElement
 	 */
 	public NetworkLayer addLayer(String name, String description, String linkCapacityUnitsName, String demandTrafficUnitsName, Map<String, String> attributes)
 	{
+		return addLayer(null , name, description, linkCapacityUnitsName, demandTrafficUnitsName, attributes);
+	}
+	NetworkLayer addLayer(Long id , String name, String description, String linkCapacityUnitsName, String demandTrafficUnitsName, Map<String, String> attributes)
+	{
 		checkIsModifiable();
 		if (name == null) name = "";
 		if (description == null) description = "";
 		if (linkCapacityUnitsName == null) linkCapacityUnitsName = "";
 		if (demandTrafficUnitsName == null) demandTrafficUnitsName = "";
 		
-		final long id = nextElementId.longValue();
-		nextElementId.increment();
+		if (id == null)  { id = nextElementId.longValue(); nextElementId.increment(); }
 		
 		NetworkLayer layer = new NetworkLayer (this , id, layers.size() , demandTrafficUnitsName, description, name, linkCapacityUnitsName, new AttributeMap (attributes));
 		
@@ -500,7 +536,6 @@ public class NetPlan extends NetworkElement
 		if (layers.size () == 1) defaultLayer = layer;
 
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
-		
 		return layer;
 	}
 
@@ -579,6 +614,10 @@ public class NetPlan extends NetworkElement
 	 */
 	public Link addLink(Node originNode, Node destinationNode , double capacity, double lengthInKm, double propagationSpeedInKmPerSecond, Map<String, String> attributes , NetworkLayer ... optionalLayerParameter)
 	{
+		return addLink (null , originNode, destinationNode , capacity, lengthInKm, propagationSpeedInKmPerSecond, attributes , optionalLayerParameter);
+	}
+	Link addLink(Long linkId , Node originNode, Node destinationNode , double capacity, double lengthInKm, double propagationSpeedInKmPerSecond, Map<String, String> attributes , NetworkLayer ... optionalLayerParameter)
+	{
 		capacity = NetPlan.adjustToTolerance(capacity);
 		checkIsModifiable();
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
@@ -589,8 +628,7 @@ public class NetPlan extends NetworkElement
 		if (lengthInKm < 0) throw new Net2PlanException ("Link length must be non-negative");
 		if (propagationSpeedInKmPerSecond <= 0) throw new Net2PlanException ("Propagation speed must be positive");
 
-		final long linkId = nextElementId.longValue();
-		nextElementId.increment();
+		if (linkId == null) { linkId = nextElementId.longValue(); nextElementId.increment(); }
 
 		Link link = new Link (this, linkId , layer.links.size (),  layer , originNode,  destinationNode , lengthInKm , propagationSpeedInKmPerSecond , capacity , new AttributeMap (attributes));
 
@@ -668,6 +706,10 @@ public class NetPlan extends NetworkElement
 	 */
 	public MulticastDemand addMulticastDemand(Node ingressNode , Set<Node> egressNodes , double offeredTraffic, Map<String, String> attributes , NetworkLayer ... optionalLayerParameter)
 	{
+		return addMulticastDemand(null , ingressNode , egressNodes , offeredTraffic, attributes , optionalLayerParameter);
+	}
+	MulticastDemand addMulticastDemand(Long demandId , Node ingressNode , Set<Node> egressNodes , double offeredTraffic, Map<String, String> attributes , NetworkLayer ... optionalLayerParameter)
+	{
 		offeredTraffic = NetPlan.adjustToTolerance(offeredTraffic);
 		checkIsModifiable();
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
@@ -680,8 +722,7 @@ public class NetPlan extends NetworkElement
 		if (egressNodes.contains(ingressNode)) throw new Net2PlanException("The ingress node is also an egress node of the multicast demand");
 		if (offeredTraffic < 0) throw new Net2PlanException ("Offered traffic must be non-negative");
 
-		final long demandId = nextElementId.longValue();
-		nextElementId.increment();
+		if (demandId == null) { demandId = nextElementId.longValue(); nextElementId.increment(); }
 		
 		MulticastDemand demand = new MulticastDemand (this , demandId , layer.multicastDemands.size () , layer , ingressNode , egressNodes , offeredTraffic , new AttributeMap (attributes));
 
@@ -710,6 +751,10 @@ public class NetPlan extends NetworkElement
 	 */
 	public MulticastTree addMulticastTree(MulticastDemand demand , double carriedTraffic, double occupiedLinkCapacity, Set<Link> linkSet , Map<String, String> attributes)
 	{
+		return addMulticastTree(null , demand , carriedTraffic, occupiedLinkCapacity, linkSet , attributes);
+	}
+	MulticastTree addMulticastTree(Long treeId , MulticastDemand demand , double carriedTraffic, double occupiedLinkCapacity, Set<Link> linkSet , Map<String, String> attributes)
+	{
 		carriedTraffic = NetPlan.adjustToTolerance(carriedTraffic);
 		occupiedLinkCapacity = NetPlan.adjustToTolerance(occupiedLinkCapacity);
 		checkIsModifiable();
@@ -719,8 +764,7 @@ public class NetPlan extends NetworkElement
 		if (occupiedLinkCapacity < 0) occupiedLinkCapacity = carriedTraffic; 
 		NetworkLayer layer = demand.layer;
 		
-		final long treeId = nextElementId.longValue();
-		nextElementId.increment();
+		if (treeId == null) { treeId = nextElementId.longValue(); nextElementId.increment(); }
 
 		MulticastTree tree = new MulticastTree(this, treeId , layer.multicastTrees.size() , demand, linkSet , new AttributeMap(attributes));
 
@@ -751,10 +795,12 @@ public class NetPlan extends NetworkElement
 	 */
 	public Node addNode(double xCoord, double yCoord, String name, Map<String, String> attributes)
 	{
+		return addNode(null , xCoord, yCoord, name, attributes);
+	}
+	Node addNode(Long nodeId , double xCoord, double yCoord, String name, Map<String, String> attributes)
+	{
 		checkIsModifiable();
-
-		final long nodeId = nextElementId.longValue();
-		nextElementId.increment();
+		if (nodeId == null) { nodeId = nextElementId.longValue(); nextElementId.increment(); }
 		
 		Node node = new Node(this, nodeId, nodes.size(), xCoord, yCoord, name, new AttributeMap(attributes));
 		
@@ -786,18 +832,23 @@ public class NetPlan extends NetworkElement
 	public Resource addResource (String type , String name , Node hostNode , double capacity , String capacityMeasurementUnits,
 				Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTraffic , AttributeMap attributes)
 	{
+		return addResource (null , type , name , hostNode , capacity , capacityMeasurementUnits,
+				capacityIOccupyInBaseResource , processingTimeToTraversingTraffic , attributes);
+	}
+	Resource addResource (Long resourceId , String type , String name , Node hostNode , double capacity , String capacityMeasurementUnits,
+			Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTraffic , AttributeMap attributes)
+	{
 		checkIsModifiable();
 		if (capacity < 0) throw new Net2PlanException ("Resource capacity cannot be negative");
 		if (processingTimeToTraversingTraffic < 0) throw new Net2PlanException ("Resource processing time cannot be negative");
 		if (capacityIOccupyInBaseResource == null) capacityIOccupyInBaseResource = new HashMap<Resource,Double> ();
 		for (Double val : capacityIOccupyInBaseResource.values()) if (val < 0) throw new Net2PlanException ("Resource capacity cannot be negative");
-
-		final long resourceId = nextElementId.longValue();
-		nextElementId.increment();
+	
+		if (resourceId == null) { resourceId = nextElementId.longValue(); nextElementId.increment(); }
 		
 		Resource resource = new Resource (this , resourceId , resources.size () , type , name , hostNode , capacity , 
 				capacityMeasurementUnits, capacityIOccupyInBaseResource , processingTimeToTraversingTraffic , attributes);
-
+	
 		resources.add (resource);
 		cache_id2ResourceMap.put (resourceId , resource);
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
@@ -818,6 +869,10 @@ public class NetPlan extends NetworkElement
 	 */
 	public ProtectionSegment addProtectionSegment(List<Link> sequenceOfLinks, double reservedCapacity, Map<String, String> attributes)
 	{
+		return addProtectionSegment(null , sequenceOfLinks, reservedCapacity, attributes);
+	}
+	ProtectionSegment addProtectionSegment(Long segmentId , List<Link> sequenceOfLinks, double reservedCapacity, Map<String, String> attributes)
+	{
 		reservedCapacity = NetPlan.adjustToTolerance(reservedCapacity);
 
 		checkIsModifiable();
@@ -828,8 +883,7 @@ public class NetPlan extends NetworkElement
 		if (sequenceOfLinks.size () != new HashSet<Link> (sequenceOfLinks).size()) throw new Net2PlanException ("Protection segments cannot traverse the same link more than once");
 		
 		
-		final long segmentId = nextElementId.longValue();
-		nextElementId.increment();
+		if (segmentId == null) { segmentId = nextElementId.longValue(); nextElementId.increment(); }
 		ProtectionSegment segment = new ProtectionSegment (this, segmentId , layer.protectionSegments.size (),  sequenceOfLinks , reservedCapacity , new AttributeMap (attributes));
 
 		cache_id2ProtectionSegmentMap.put (segmentId , segment);
@@ -875,6 +929,10 @@ public class NetPlan extends NetworkElement
 	 */
 	public Route addServiceChain(Demand demand , double carriedTraffic, double occupiedLinkCapacity, List<? extends NetworkElement> sequenceOfLinksAndResources, Map <Resource,Double> occupationInformationInTraversedResources , Map<String, String> attributes)
 	{
+		return addServiceChain(null , demand , carriedTraffic, occupiedLinkCapacity, sequenceOfLinksAndResources, occupationInformationInTraversedResources , attributes);
+	}
+	Route addServiceChain(Long routeId , Demand demand , double carriedTraffic, double occupiedLinkCapacity, List<? extends NetworkElement> sequenceOfLinksAndResources, Map <Resource,Double> occupationInformationInTraversedResources , Map<String, String> attributes)
+	{
 		carriedTraffic = NetPlan.adjustToTolerance(carriedTraffic);
 		occupiedLinkCapacity = NetPlan.adjustToTolerance(occupiedLinkCapacity);
 
@@ -890,8 +948,7 @@ public class NetPlan extends NetworkElement
 		if (occupiedLinkCapacity < 0) occupiedLinkCapacity = carriedTraffic;
 		NetworkLayer layer = demand.layer;
 		
-		final long routeId = nextElementId.longValue();
-		nextElementId.increment();
+		if (routeId == null) { routeId = nextElementId.longValue(); nextElementId.increment(); }
 		
 		Route route = new Route(this, routeId, layer.routes.size(), demand , sequenceOfLinksAndResources , occupationInformationInTraversedResources , new AttributeMap(attributes));
 		
@@ -1310,12 +1367,15 @@ public class NetPlan extends NetworkElement
 	 */
 	public SharedRiskGroup addSRG(double mttfInHours, double mttrInHours, Map<String, String> attributes)
 	{
+		return addSRG(null , mttfInHours, mttrInHours, attributes);
+	}
+	SharedRiskGroup addSRG(Long srgId , double mttfInHours, double mttrInHours, Map<String, String> attributes)
+	{
 		checkIsModifiable();
 		if (mttfInHours <= 0) throw new Net2PlanException ("Mean Time To Fail must be a positive value");
 		if (mttrInHours <= 0) throw new Net2PlanException ("Mean Time To Repair must be a positive value");
 
-		final long srgId = nextElementId.longValue();
-		nextElementId.increment();
+		if (srgId == null) { srgId = nextElementId.longValue(); nextElementId.increment(); }
 		
 		SharedRiskGroup srg = new SharedRiskGroup(this, srgId, srgs.size(), new HashSet<Node> (), new HashSet<Link> () , mttfInHours , mttrInHours , new AttributeMap(attributes));
 		
@@ -4622,6 +4682,7 @@ public class NetPlan extends NetworkElement
 			writer.writeAttribute("description", getNetworkDescription());
 			writer.writeAttribute("name", getNetworkName());
 			writer.writeAttribute("version", Version.getFileFormatVersion());
+			writer.writeAttribute("nextElementId", nextElementId.toString());
 			
 			//Set<Long> nodeIds_thisNetPlan = new HashSet<Long> (getNodeIds());
 			for (Node node : nodes)
@@ -4701,6 +4762,7 @@ public class NetPlan extends NetworkElement
 				writer.writeAttribute("id", Long.toString(layer.id));
 				writer.writeAttribute("name", layer.name);
 				writer.writeAttribute("description", layer.description);
+				writer.writeAttribute("isDefaultLayer", Boolean.toString(defaultLayer == layer));
 				writer.writeAttribute("linkCapacityUnitsName", layer.linkCapacityUnitsName);
 				writer.writeAttribute("demandTrafficUnitsName", layer.demandTrafficUnitsName);
 
@@ -6410,6 +6472,69 @@ public class NetPlan extends NetworkElement
 		return res;
 	}
 
+	static boolean isDeepCopy (Map<? extends NetworkElement,? extends Object> m1 , Map<? extends NetworkElement,? extends Object> m2)
+	{
+		if (m1.size() != m2.size()) return false;
+		if (m1.isEmpty()) return true;
+		final NetPlan np2 = m2.keySet().iterator().next().netPlan;
+		for (Entry<? extends NetworkElement,? extends Object> entry1 : m1.entrySet())
+		{
+			final NetworkElement k1 = entry1.getKey();
+			final Object v1 = entry1.getValue();
+			final NetworkElement k2 = np2.getFromId(k1.id , k1.getClass());
+			if (k2 == null) throw new RuntimeException ("Bad"); //return false;
+			final Object v2 = m2.get(k2);
+			if (v2 == null) throw new RuntimeException ("Bad"); //return false;
+			if (!v1.equals(v2)) throw new RuntimeException ("Bad"); //return false;
+		}
+		return true;
+	}
+
+	static boolean isDeepCopy (Set<? extends NetworkElement> m1 , Set<? extends NetworkElement> m2)
+	{
+		if (m1.size() != m2.size()) throw new RuntimeException ("Bad"); //return false;
+		if (m1.isEmpty()) return true;
+		final NetPlan np2 = m2.iterator().next().netPlan;
+		for (NetworkElement e1 : m1)
+		{
+			final NetworkElement e2 = np2.getFromId(e1.id , e1.getClass());
+			if (e2 == null) throw new RuntimeException ("Bad"); //return false;
+			if (!m2.contains(e2)) throw new RuntimeException ("Bad"); //return false;
+		}
+		return true;
+	}
+
+	static boolean isDeepCopy (List<? extends NetworkElement> m1 , List<? extends NetworkElement> m2)
+	{
+		if (m1.size() != m2.size()) throw new RuntimeException ("Bad"); //return false;
+		if (m1.isEmpty()) return true;
+		final NetPlan np2 = m2.iterator().next().netPlan;
+		for (int cont = 0; cont < m1.size() ; cont ++)
+		{
+			final NetworkElement e1 = m1.get(cont);
+			final NetworkElement e2 = np2.getFromId(e1.id , e1.getClass());
+			if (e2 == null) throw new RuntimeException ("Bad"); //return false;
+			if (!m2.get(cont).equals(e2)) throw new RuntimeException ("Bad"); //return false;
+		}
+		return true;
+	}
+
+	private NetworkElement getFromId (long id , Class e)
+	{
+		if (e.equals(Link.class)) return cache_id2LinkMap.get(id);
+		else if (e.equals(Demand.class)) return cache_id2DemandMap.get(id);
+		else if (e.equals(MulticastDemand.class))  return cache_id2MulticastDemandMap.get(id);
+		else if (e.equals(MulticastTree.class))  return cache_id2MulticastTreeMap.get(id);
+		else if (e.equals(NetworkLayer.class))  return cache_id2LayerMap.get(id);
+		else if (e.equals(Node.class))  return cache_id2NodeMap.get(id);
+		else if (e.equals(ProtectionSegment.class))  return cache_id2ProtectionSegmentMap.get(id);
+		else if (e.equals(Resource.class))  return cache_id2ResourceMap.get(id);
+		else if (e.equals(Route.class))  return cache_id2RouteMap.get(id);
+		else if (e.equals(SharedRiskGroup.class))  return cache_id2srgMap.get(id);
+		else throw new RuntimeException ("Bad");
+
+	}
+	
 }
 
 

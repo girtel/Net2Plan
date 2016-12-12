@@ -82,6 +82,32 @@ public class MulticastDemand extends NetworkElement
 		}
 	}
 
+
+	boolean isDeepCopy (MulticastDemand e2)
+	{
+		if (!super.isDeepCopy(e2)) return false;
+		if (layer.id != e2.layer.id) return false;
+		if (ingressNode.id != e2.ingressNode.id) return false;
+		if (this.offeredTraffic != e2.offeredTraffic) return false;
+		if (this.carriedTraffic != e2.carriedTraffic) return false;
+		if (!NetPlan.isDeepCopy(this.egressNodes , e2.egressNodes)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_multicastTrees , e2.cache_multicastTrees)) return false;
+		if ((this.coupledUpperLayerLinks == null) != (e2.coupledUpperLayerLinks == null)) return false; 
+		if (coupledUpperLayerLinks != null)
+		{
+			if (!NetPlan.isDeepCopy(this.coupledUpperLayerLinks.keySet() , e2.coupledUpperLayerLinks.keySet())) return false;
+			for (Node n1 : coupledUpperLayerLinks.keySet())
+			{
+				final Node n2 = e2.netPlan.getNodeFromId(n1.id);
+				final Link l2 = e2.coupledUpperLayerLinks.get(n2);
+				if (l2 == null) return false;
+				if (l2.id != this.coupledUpperLayerLinks.get(n1).id) return false;
+			}
+		}
+		return true;
+	}
+
+	
 	/**
 	 * <p>Returns the {@link com.net2plan.interfaces.networkDesign.NetworkLayer NetworkLayer} object this element belongs to</p>
 	 * @return The {@code NetworkLayer}

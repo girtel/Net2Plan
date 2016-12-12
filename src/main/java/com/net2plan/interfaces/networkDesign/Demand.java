@@ -105,6 +105,22 @@ public class Demand extends NetworkElement
 	}
 
 
+	boolean isDeepCopy (Demand e2)
+	{
+		if (!super.isDeepCopy(e2)) return false;
+		if (layer.id != e2.layer.id) return false;
+		if (ingressNode.id != e2.ingressNode.id) return false;
+		if (egressNode.id != e2.egressNode.id) return false;
+		if (this.offeredTraffic != e2.offeredTraffic) return false;
+		if (this.carriedTraffic != e2.carriedTraffic) return false;
+		if (this.routingCycleType != e2.routingCycleType) return false;
+		if ((this.coupledUpperLayerLink == null) != (e2.coupledUpperLayerLink == null)) return false; 
+		if ((this.coupledUpperLayerLink != null) && (coupledUpperLayerLink.id != e2.coupledUpperLayerLink.id)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_routes , e2.cache_routes)) return false;
+		if (!this.mandatorySequenceOfTraversedResourceTypes.equals(e2.mandatorySequenceOfTraversedResourceTypes)) return false;
+		return true;
+	}
+
 	/**
 	 * <p>Returns the routes associated to this demand.</p>
 	 * <p><b>Important</b>: If network layer routing type is not {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, an exception is thrown.</p>

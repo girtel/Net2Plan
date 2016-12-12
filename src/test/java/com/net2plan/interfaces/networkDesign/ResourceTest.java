@@ -6,7 +6,9 @@ package com.net2plan.interfaces.networkDesign;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -97,6 +99,16 @@ public class ResourceTest
 	public void testCheckCaches() 
 	{
 		np.checkCachesConsistency();
+	}
+
+	@Test
+	public void testCopyFromAndEquals() 
+	{
+		NetPlan np2 = np.copy();
+		np2.checkCachesConsistency();
+		assertTrue (np.isDeepCopy(np));
+		assertTrue (np.isDeepCopy(np2));
+		assertTrue (np2.isDeepCopy(np));
 	}
 
 	@Test
@@ -231,10 +243,12 @@ public class ResourceTest
 	{
 		NetPlan np2 = np.copy();
 		np2.checkCachesConsistency();
-		assertEquals(np2.getResource(0).getId() , np.getResource(0).getId());
-		assertEquals(np2.getResource(1).getId() , np.getResource(1).getId());
-		assertEquals(np2.getRoute(0).getId() , np.getRoute(0).getId());
-		assertEquals(np2.getRoute(1).getId() , np.getRoute(1).getId());
+		assertTrue (np.isDeepCopy(np2));
+		assertTrue (np2.isDeepCopy(np));
+//		assertEquals(np2.getResource(0).getId() , np.getResource(0).getId());
+//		assertEquals(np2.getResource(1).getId() , np.getResource(1).getId());
+//		assertEquals(np2.getRoute(0).getId() , np.getRoute(0).getId());
+//		assertEquals(np2.getRoute(1).getId() , np.getRoute(1).getId());
 	}
 
 	@Test
@@ -243,10 +257,12 @@ public class ResourceTest
 		NetPlan np2 = new NetPlan ();
 		np2.copyFrom(np.copy());
 		np2.checkCachesConsistency();
-		assertEquals(np2.getResource(0).getId() , np.getResource(0).getId());
-		assertEquals(np2.getResource(1).getId() , np.getResource(1).getId());
-		assertEquals(np2.getRoute(0).getId() , np.getRoute(0).getId());
-		assertEquals(np2.getRoute(1).getId() , np.getRoute(1).getId());
+		assertTrue (np.isDeepCopy(np2));
+		assertTrue (np2.isDeepCopy(np));
+//		assertEquals(np2.getResource(0).getId() , np.getResource(0).getId());
+//		assertEquals(np2.getResource(1).getId() , np.getResource(1).getId());
+//		assertEquals(np2.getRoute(0).getId() , np.getRoute(0).getId());
+//		assertEquals(np2.getRoute(1).getId() , np.getRoute(1).getId());
 	}
 
 	@Test
@@ -271,12 +287,36 @@ public class ResourceTest
 		File file = null;
 		try
 		{
-			file = File.createTempFile("testN2p" , "n2p");
+			file = new File ("test.n2p"); //File.createTempFile("testN2p" , "n2p");
 		} catch (Exception e) { Assert.fail ("could not make the test: no temprary file creation possible"); }
 		assertTrue (file != null);
 		np.saveToFile(file);
 		NetPlan np2 = new NetPlan (file);
 		np2.checkCachesConsistency();
+		assertTrue (np.isDeepCopy(np2));
+		assertTrue (np2.isDeepCopy(np));
 	}
 	
+	@Test
+	public void testReadSave2 ()
+	{
+		File fileIn = null;
+		File fileOut = null;
+		try
+		{
+			fileIn = new File ("src/main/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"); //File.createTempFile("testN2p" , "n2p");
+			fileOut = new File ("test.n2p"); //File.createTempFile("testN2p" , "n2p");
+		} catch (Exception e) { Assert.fail ("could not make the test: no temprary file creation possible"); }
+		assertTrue (fileIn != null);
+		assertTrue (fileOut != null);
+		NetPlan np1 = new NetPlan (fileIn);
+		np1.checkCachesConsistency();
+		np1.saveToFile(fileOut);
+		NetPlan np2 = new NetPlan (fileOut);
+		np2.checkCachesConsistency();
+		assertTrue (np1.isDeepCopy(np2));
+		assertTrue (np2.isDeepCopy(np1));
+	}
+
+
 }

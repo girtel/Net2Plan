@@ -148,6 +148,28 @@ public class Link extends NetworkElement
 		this.coupledLowerLayerMulticastDemand = origin.coupledLowerLayerMulticastDemand == null? null : this.netPlan.getMulticastDemandFromId(origin.coupledLowerLayerMulticastDemand.id);
 	}
 
+	boolean isDeepCopy (Link e2)
+	{
+		if (!super.isDeepCopy(e2)) return false;
+		if (layer.id != e2.layer.id) return false;
+		if (originNode.id != e2.originNode.id) return false;
+		if (destinationNode.id != e2.destinationNode.id) return false;
+		if (this.capacity != e2.capacity) return false;
+		if (this.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments != e2.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) return false;
+		if (this.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments != e2.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) return false;
+		if (this.lengthInKm != e2.lengthInKm) return false;
+		if (this.propagationSpeedInKmPerSecond != e2.propagationSpeedInKmPerSecond) return false;
+		if (this.isUp != e2.isUp) return false;
+		if ((this.coupledLowerLayerDemand == null) != (e2.coupledLowerLayerDemand == null)) return false; 
+		if ((this.coupledLowerLayerDemand != null) && (coupledLowerLayerDemand.id != e2.coupledLowerLayerDemand.id)) return false;
+		if ((this.coupledLowerLayerMulticastDemand == null) != (e2.coupledLowerLayerMulticastDemand == null)) return false; 
+		if ((this.coupledLowerLayerMulticastDemand != null) && (coupledLowerLayerMulticastDemand.id != e2.coupledLowerLayerMulticastDemand.id)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_srgs , e2.cache_srgs)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_traversingRoutes , e2.cache_traversingRoutes)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_traversingTrees , e2.cache_traversingTrees)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_traversingSegments , e2.cache_traversingSegments)) return false;
+		return true;
+	}
 	
 	/**
 	 * <p>Returns the link origin node.</p>

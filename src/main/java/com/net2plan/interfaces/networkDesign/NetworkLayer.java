@@ -139,6 +139,34 @@ public class NetworkLayer extends NetworkElement
 		for (ProtectionSegment s : origin.protectionSegments) this.protectionSegments.get(s.index).copyFrom(s);
 	}
 	
+	public boolean isDeepCopy (NetworkLayer e2)
+	{
+		if (!super.isDeepCopy(e2)) return false;
+		if (!this.demandTrafficUnitsName.equals(e2.demandTrafficUnitsName)) return false;
+		if (!this.description.equals(e2.description)) return false;
+		if (!this.name.equals(e2.name)) return false;
+		if (!this.linkCapacityUnitsName.equals(e2.linkCapacityUnitsName)) return false;
+		if (this.routingType != e2.routingType) return false;
+		if (!NetPlan.isDeepCopy(this.links , e2.links)) return false;
+		if (!NetPlan.isDeepCopy(this.demands , e2.demands)) return false;
+		if (!NetPlan.isDeepCopy(this.multicastDemands , e2.multicastDemands)) return false;
+		if (!NetPlan.isDeepCopy(this.routes , e2.routes)) return false;
+		if (!NetPlan.isDeepCopy(this.multicastTrees , e2.multicastTrees)) return false;
+		if (!NetPlan.isDeepCopy(this.protectionSegments , e2.protectionSegments)) return false;
+		if (!NetPlan.isDeepCopy(this.multicastTrees , e2.multicastTrees)) return false;
+		if ((this.forwardingRules_f_de != null) && (!this.forwardingRules_f_de.equals(e2.forwardingRules_f_de))) return false;
+		if ((this.forwardingRules_x_de != null) && (!this.forwardingRules_x_de.equals(e2.forwardingRules_x_de))) return false;
+		if ((this.forwardingRules_Aout_ne != null) && (!this.forwardingRules_Aout_ne.equals(e2.forwardingRules_Aout_ne))) return false;
+		if ((this.forwardingRules_Ain_ne != null) && (!this.forwardingRules_Ain_ne.equals(e2.forwardingRules_Ain_ne))) return false;
+		if (!NetPlan.isDeepCopy(this.cache_linksDown , e2.cache_linksDown)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_coupledLinks , e2.cache_coupledLinks)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_coupledDemands , e2.cache_coupledDemands)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_coupledMulticastDemands , e2.cache_coupledMulticastDemands)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_routesDown , e2.cache_routesDown)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_multicastTreesDown , e2.cache_multicastTreesDown)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_segmentsDown , e2.cache_segmentsDown)) return false;
+		return true;
+	}
 	
 //	/**
 //	 * Returns the name of the units in which the offered traffic is measured (e.g. "Gbps")
