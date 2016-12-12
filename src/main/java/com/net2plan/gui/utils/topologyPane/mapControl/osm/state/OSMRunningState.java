@@ -47,7 +47,7 @@ public class OSMRunningState implements OSMState
     @Override
     public void zoomAll()
     {
-        OSMMapController.restoreMap();
+        OSMMapController.zoomAll();
     }
 
     @Override
@@ -65,7 +65,7 @@ public class OSMRunningState implements OSMState
         topologyPanel.getCanvas().addNode(node);
         topologyPanel.getCanvas().refresh();
 
-        OSMMapController.restoreMap();
+        OSMMapController.zoomAll();
     }
 
     @Override

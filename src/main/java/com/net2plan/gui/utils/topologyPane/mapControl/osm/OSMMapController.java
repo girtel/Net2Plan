@@ -9,7 +9,6 @@ import com.net2plan.gui.utils.topologyPane.components.mapPanel.OSMMapPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMRunningState;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.ITopologyCanvas;
@@ -19,7 +18,6 @@ import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import org.jxmapviewer.viewer.*;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.util.*;
@@ -128,20 +126,22 @@ public class OSMMapController
     /**
      * Creates the starting state of the OSM map.
      * This state is the one where all nodes are seen and they all fit their corresponding position on the OSM map.
-     * This method should only be executed when the OSM map is first run. From then on use {@link #restoreMap()}
+     * This method should only be executed when the OSM map is first run. From then on use {@link #zoomAll()}
      */
     private static void restartMapState()
     {
+        //NOTE: I do not like neither the phantom node idea nor the originalZoom variable. But they do work for now.
+
+        final boolean isEmptyTopology = !callback.getDesign().hasNodes();
+
         // If no topology is loaded.
-        Node phantom = null;
-        if (!callback.getDesign().hasNodes())
+        if (isEmptyTopology)
         {
             mapViewer.setDefaultPosition();
 
             final GeoPosition mapCenter = mapViewer.getCenterPosition();
-            phantom = callback.getDesign().addNode(mapCenter.getLongitude(), mapCenter.getLatitude(), "Phantom", null);
-            canvas.addNode(phantom);
-            canvas.refresh();
+            final Node phantomNode = callback.getDesign().addNode(mapCenter.getLongitude(), mapCenter.getLatitude(), "Phantom", null);
+            canvas.addNode(phantomNode);
         }
 
         // Canvas components.
@@ -193,11 +193,12 @@ public class OSMMapController
         // As the topology is centered at the same point as the OSM map, and the relation is 1:1 between their coordinates.
         // The nodes will be placed at the exact place as they are supposed to.
 
-        if (phantom != null)
+        if (isEmptyTopology)
         {
-            canvas.removeNode(phantom);
-            canvas.refresh();
-            phantom.remove();
+            final Node phantomNode = callback.getDesign().getNodeByName("Phantom");
+
+            canvas.removeNode(phantomNode);
+            phantomNode.remove();
         }
 
         previousOSMViewportBounds = mapViewer.getViewportBounds();
@@ -288,7 +289,7 @@ public class OSMMapController
     /**
      * Restores the topology to its original state.
      */
-    public static void restoreMap()
+    public static void zoomAll()
     {
         if (isMapActivated())
         {
