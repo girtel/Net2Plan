@@ -53,9 +53,6 @@ public class OSMRunningState implements OSMState
     @Override
     public void addNode(TopologyPanel topologyPanel, NetPlan netPlan, String name, Point2D pos)
     {
-        // Changing the original state zoom seems to break the point to geoposition conversion. For the time being, it is necessary to add the new nodes at the original state.
-        OSMMapController.restoreMap();
-
         final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(new Point2D.Double(pos.getX(), -pos.getY()));
 
         if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))

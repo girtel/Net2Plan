@@ -9,6 +9,7 @@ import com.net2plan.gui.utils.topologyPane.components.mapPanel.OSMMapPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMRunningState;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.ITopologyCanvas;
@@ -39,6 +40,7 @@ public class OSMMapController
     // Previous osmMap state
     private static Rectangle previousOSMViewportBounds;
     private static int previousZoomLevel;
+    private static int originalZoomLevel;
 
     // Non-instanciable
     private OSMMapController()
@@ -163,6 +165,7 @@ public class OSMMapController
         mapViewer.setSize(1280, 720);
         mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
         mapViewer.setSize(size);
+        originalZoomLevel = mapViewer.getZoom();
 
         // Moving the nodes to the position dictated by their geoposition.
         for (Map.Entry<Long, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
@@ -383,7 +386,9 @@ public class OSMMapController
     {
         public static GeoPosition convertPointToGeo(final Point2D point)
         {
-            return mapViewer.getTileFactory().pixelToGeo(point, mapViewer.getZoom());
+            // Pixel to geo must be calculated at the zoom level where canvas and map align.
+            // That zoom level is the one given by the restore map method.
+            return mapViewer.getTileFactory().pixelToGeo(point, originalZoomLevel);
         }
 
         public static boolean isInsideBounds(final Point2D point)
