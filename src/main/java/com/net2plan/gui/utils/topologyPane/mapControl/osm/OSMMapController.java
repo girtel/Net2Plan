@@ -133,10 +133,15 @@ public class OSMMapController
     private static void restartMapState()
     {
         // If no topology is loaded.
+        Node phantom = null;
         if (!callback.getDesign().hasNodes())
         {
             mapViewer.setDefaultPosition();
-            return;
+
+            final GeoPosition mapCenter = mapViewer.getCenterPosition();
+            phantom = callback.getDesign().addNode(mapCenter.getLongitude(), mapCenter.getLatitude(), "Phantom", null);
+            canvas.addNode(phantom);
+            canvas.refresh();
         }
 
         // Canvas components.
@@ -187,6 +192,13 @@ public class OSMMapController
 
         // As the topology is centered at the same point as the OSM map, and the relation is 1:1 between their coordinates.
         // The nodes will be placed at the exact place as they are supposed to.
+
+        if (phantom != null)
+        {
+            canvas.removeNode(phantom);
+            canvas.refresh();
+            phantom.remove();
+        }
 
         previousOSMViewportBounds = mapViewer.getViewportBounds();
         previousZoomLevel = mapViewer.getZoom();
