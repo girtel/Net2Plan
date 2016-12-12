@@ -6482,39 +6482,39 @@ public class NetPlan extends NetworkElement
 			final NetworkElement k1 = entry1.getKey();
 			final Object v1 = entry1.getValue();
 			final NetworkElement k2 = np2.getFromId(k1.id , k1.getClass());
-			if (k2 == null) throw new RuntimeException ("Bad"); //return false;
+			if (k2 == null) return false;
 			final Object v2 = m2.get(k2);
-			if (v2 == null) throw new RuntimeException ("Bad"); //return false;
-			if (!v1.equals(v2)) throw new RuntimeException ("Bad"); //return false;
+			if (v2 == null) return false;
+			if (!v1.equals(v2)) return false;
 		}
 		return true;
 	}
 
 	static boolean isDeepCopy (Set<? extends NetworkElement> m1 , Set<? extends NetworkElement> m2)
 	{
-		if (m1.size() != m2.size()) throw new RuntimeException ("Bad"); //return false;
+		if (m1.size() != m2.size()) return false;
 		if (m1.isEmpty()) return true;
 		final NetPlan np2 = m2.iterator().next().netPlan;
 		for (NetworkElement e1 : m1)
 		{
 			final NetworkElement e2 = np2.getFromId(e1.id , e1.getClass());
-			if (e2 == null) throw new RuntimeException ("Bad"); //return false;
-			if (!m2.contains(e2)) throw new RuntimeException ("Bad"); //return false;
+			if (e2 == null) return false;
+			if (!m2.contains(e2)) return false;
 		}
 		return true;
 	}
 
 	static boolean isDeepCopy (List<? extends NetworkElement> m1 , List<? extends NetworkElement> m2)
 	{
-		if (m1.size() != m2.size()) throw new RuntimeException ("Bad"); //return false;
+		if (m1.size() != m2.size()) return false;
 		if (m1.isEmpty()) return true;
 		final NetPlan np2 = m2.iterator().next().netPlan;
 		for (int cont = 0; cont < m1.size() ; cont ++)
 		{
 			final NetworkElement e1 = m1.get(cont);
 			final NetworkElement e2 = np2.getFromId(e1.id , e1.getClass());
-			if (e2 == null) throw new RuntimeException ("Bad"); //return false;
-			if (!m2.get(cont).equals(e2)) throw new RuntimeException ("Bad"); //return false;
+			if (e2 == null) return false;
+			if (!m2.get(cont).equals(e2)) return false;
 		}
 		return true;
 	}

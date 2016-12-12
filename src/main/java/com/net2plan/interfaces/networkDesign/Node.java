@@ -108,10 +108,10 @@ public class Node extends NetworkElement
 	
 	boolean isDeepCopy (Node e2)
 	{
-		if (!super.isDeepCopy(e2)) throw new RuntimeException ("Bad"); //return false;return false;
-		if (!this.name.equals(e2.name)) throw new RuntimeException ("Bad"); //return false;return false;
-		if (!this.nodeXYPositionMap.equals(e2.nodeXYPositionMap)) throw new RuntimeException ("Bad"); //return false;return false;
-		if (this.isUp != e2.isUp) throw new RuntimeException ("Bad"); //return false;return false;
+		if (!super.isDeepCopy(e2)) return false;
+		if (!this.name.equals(e2.name)) return false;
+		if (!this.nodeXYPositionMap.equals(e2.nodeXYPositionMap)) return false;
+		if (this.isUp != e2.isUp) return false;
 		if (!NetPlan.isDeepCopy(this.cache_nodeIncomingLinks , e2.cache_nodeIncomingLinks)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_nodeOutgoingLinks , e2.cache_nodeOutgoingLinks)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_nodeIncomingDemands , e2.cache_nodeIncomingDemands)) return false;
