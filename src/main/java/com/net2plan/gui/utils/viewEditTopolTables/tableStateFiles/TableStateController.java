@@ -2,6 +2,7 @@ package com.net2plan.gui.utils.viewEditTopolTables.tableStateFiles;
 
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
 import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.internal.Constants;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.XMLUtils;
 import com.net2plan.internal.plugins.IOFilter;
@@ -46,60 +47,63 @@ public final class TableStateController
 
      */
 
-    public static void loadTableState(AdvancedJTableNetworkElement table) throws XMLStreamException {
-        int rc = chooser.showOpenDialog(null);
-        if (rc != JFileChooser.APPROVE_OPTION) return;
-        selectedFile = chooser.getSelectedFile();
-        try {
-            inputStream = new FileInputStream(selectedFile);
-        } catch (FileNotFoundException ex) {
-            ex.printStackTrace();
-        }
-        XMLInputFactory2 xmlInputFactory = (XMLInputFactory2) XMLInputFactory2.newInstance();
+    public static HashMap<Constants.NetworkElementType, TableState> loadTableState(Map<Constants.NetworkElementType, AdvancedJTableNetworkElement> tables) throws XMLStreamException {
         XMLStreamReader2 xmlStreamReader = null;
-        try {
-            xmlStreamReader = (XMLStreamReader2) xmlInputFactory.createXMLStreamReader(inputStream);
-        } catch (XMLStreamException e) {
-            e.printStackTrace();
-        }
-
-        int counter = 0;
-        boolean continueFlag = false;
-        while (xmlStreamReader.hasNext()) {
-            int eventType = xmlStreamReader.next();
-            switch (eventType) {
-                case XMLEvent.START_ELEMENT:
-                    String fileType = xmlStreamReader.getName().toString();
-                    if (!fileType.equals("tableState"))
-                        throw new RuntimeException("Bad. This is not a table state file");
-
-                    String type = xmlStreamReader.getAttributeValue(0);
-                    if(!type.equals(table.getNetworkElementType().toString()))
-                        throw new RuntimeException("Bad. This Table Model is not from this table");
-
-                    continueFlag = true;
-
-                default:
-                    break;
+        int rc = chooser.showOpenDialog(null);
+        HashMap<Constants.NetworkElementType, TableState> tStateMap = new HashMap<>();
+        if (rc == JFileChooser.APPROVE_OPTION) {
+            selectedFile = chooser.getSelectedFile();
+            try {
+                inputStream = new FileInputStream(selectedFile);
+            } catch (FileNotFoundException ex) {
+                ex.printStackTrace();
             }
-            if(continueFlag)
-                break;
+            XMLInputFactory2 xmlInputFactory = (XMLInputFactory2) XMLInputFactory2.newInstance();
+            try {
+                xmlStreamReader = (XMLStreamReader2) xmlInputFactory.createXMLStreamReader(inputStream);
+            } catch (XMLStreamException e) {
+                e.printStackTrace();
+            }
 
+            int counter = 0;
+            boolean continueFlag = false;
+            while (xmlStreamReader.hasNext()) {
+                int eventType = xmlStreamReader.next();
+                switch (eventType) {
+                    case XMLEvent.START_ELEMENT:
+                        String fileType = xmlStreamReader.getName().toString();
+                        if (!fileType.equals("tableStateFile"))
+                            throw new RuntimeException("Bad. This is not a table state file");
+
+                        continueFlag = true;
+
+                    default:
+                        break;
+                }
+                if (continueFlag)
+                    break;
+
+            }
+            for (Map.Entry<Constants.NetworkElementType, AdvancedJTableNetworkElement> entry : tables.entrySet()) {
+
+                Pair<Constants.NetworkElementType, TableState> networkElementTypeTableStatePair = parseTableState(xmlStreamReader, entry.getKey());
+                tStateMap.put(networkElementTypeTableStatePair.getFirst(),networkElementTypeTableStatePair.getSecond());
+
+            }
         }
-
-        updateTableFromTableState(xmlStreamReader, table);
         try {
             inputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
         xmlStreamReader.close();
+        return tStateMap;
     }
 
     /*Takes the current State from table and saves in a external file .n2pst
 
      */
-    public static void saveTableState(AdvancedJTableNetworkElement table) throws XMLStreamException {
+    public static void saveTableState(Map<Constants.NetworkElementType, AdvancedJTableNetworkElement> tables) throws XMLStreamException {
 
         int rc = saveFileChooser.showSaveDialog(null);
         if (rc != JFileChooser.APPROVE_OPTION) return;
@@ -120,52 +124,66 @@ public final class TableStateController
         writer.writeStartDocument("UTF-8", "1.0");
 
         XMLUtils.indent(writer, 0);
-        writer.writeStartElement("tableState");
-        writer.writeAttribute("networkElementType", table.getNetworkElementType().toString());
+        writer.writeStartElement("tableStateFile");
 
-        XMLUtils.indent(writer, 1);
-        writer.writeStartElement("mainTableColumns");
-        XMLUtils.indent(writer, 2);
-        ArrayList<String> mainTableColumns = table.getMainTableColumns();
-        for(int i = 0; i < mainTableColumns.size(); i++){
 
-            writer.writeStartElement("column");
-            writer.writeAttribute("name",mainTableColumns.get(i));
-            writer.writeAttribute("position", String.valueOf(i));
+        for(Map.Entry<Constants.NetworkElementType, AdvancedJTableNetworkElement> entry : tables.entrySet()) {
+
+            AdvancedJTableNetworkElement table = entry.getValue();
+            XMLUtils.indent(writer, 1);
+            writer.writeStartElement("tableState");
+            writer.writeAttribute("networkElementType", table.getNetworkElementType().toString());
+
+            XMLUtils.indent(writer, 2);
+            writer.writeStartElement("mainTableColumns");
+            XMLUtils.indent(writer, 3);
+            ArrayList<String> mainTableColumns = table.getMainTableColumns();
+
+            for (int i = 0; i < mainTableColumns.size(); i++) {
+
+                writer.writeStartElement("column");
+                writer.writeAttribute("name", mainTableColumns.get(i));
+                writer.writeAttribute("position", String.valueOf(i));
+                writer.writeEndElement();
+            }
+
             writer.writeEndElement();
-        }
+            XMLUtils.indent(writer, 2);
+            writer.writeStartElement("fixedTableColumns");
+            XMLUtils.indent(writer, 3);
+            ArrayList<String> fixedTableColumns = table.getFixedTableColumns();
+            for (int i = 0; i < fixedTableColumns.size(); i++) {
 
-        writer.writeEndElement();
-        XMLUtils.indent(writer, 1);
-        writer.writeStartElement("fixedTableColumns");
-        XMLUtils.indent(writer, 2);
-        ArrayList<String> fixedTableColumns = table.getFixedTableColumns();
-        for(int i = 0; i < fixedTableColumns.size(); i++){
+                writer.writeStartElement("column");
+                writer.writeAttribute("name", fixedTableColumns.get(i));
+                writer.writeAttribute("position", String.valueOf(i));
+                writer.writeEndElement();
+            }
 
-            writer.writeStartElement("column");
-            writer.writeAttribute("name",fixedTableColumns.get(i));
-            writer.writeAttribute("position", String.valueOf(i));
             writer.writeEndElement();
-        }
+            XMLUtils.indent(writer, 2);
+            writer.writeStartElement("hiddenTableColumns");
+            XMLUtils.indent(writer, 3);
+            HashMap<String, Integer> hiddenMap = table.getHiddenColumns();
+            for (Map.Entry<String, Integer> entry2 : hiddenMap.entrySet()) {
 
-        writer.writeEndElement();
-        XMLUtils.indent(writer, 1);
-        writer.writeStartElement("hiddenTableColumns");
-        XMLUtils.indent(writer, 2);
-        HashMap<String, Integer> hiddenMap = table.getHiddenColumns();
-        for(Map.Entry<String, Integer> entry : hiddenMap.entrySet()){
+                writer.writeStartElement("column");
+                writer.writeAttribute("name", entry2.getKey());
+                writer.writeAttribute("position", String.valueOf(entry2.getValue()));
+                writer.writeEndElement();
+            }
 
-            writer.writeStartElement("column");
-            writer.writeAttribute("name", entry.getKey());
-            writer.writeAttribute("position", String.valueOf(entry.getValue()));
             writer.writeEndElement();
-        }
+            XMLUtils.indent(writer, 2);
+            writer.writeStartElement("attributesState");
+            writer.writeAttribute("expandAttributes", String.valueOf(table.areAttributesInDifferentColums()));
+            writer.writeEndElement();
 
-        writer.writeEndElement();
-        XMLUtils.indent(writer, 1);
-        writer.writeStartElement("attributesState");
-        writer.writeAttribute("expandAttributes", String.valueOf(table.areAttributesInDifferentColums()));
-        writer.writeEndElement();
+            XMLUtils.indent(writer, 1);
+            writer.writeEndElement();
+
+
+        }
 
         XMLUtils.indent(writer, 0);
         writer.writeEndElement();
@@ -177,7 +195,7 @@ public final class TableStateController
 
     }
 
-    private static void updateTableFromTableState(XMLStreamReader2 xmlStreamReader, AdvancedJTableNetworkElement table) throws XMLStreamException
+    private static Pair<Constants.NetworkElementType,TableState> parseTableState(XMLStreamReader2 xmlStreamReader, Constants.NetworkElementType networkElementType) throws XMLStreamException
     {
 
         ArrayList<String> mainTableColumns = new ArrayList<>();
@@ -186,36 +204,58 @@ public final class TableStateController
         boolean expandAttributes = false;
 
         boolean finish = false;
-
+        boolean cont = false;
         while (xmlStreamReader.hasNext()) {
             xmlStreamReader.next();
             switch (xmlStreamReader.getEventType()) {
                 case XMLEvent.START_ELEMENT:
                     String startElementName = xmlStreamReader.getName().toString();
-                    System.out.println(startElementName);
-                    if(startElementName.equals("mainTableColumns"))
+                    if(!cont && startElementName.equals("tableState"))
                     {
-                        mainTableColumns = parseMainTableColumns(xmlStreamReader);
+                        int numAtt = xmlStreamReader.getAttributeCount();
+                        for(int i = 0; i < numAtt; i++)
+                        {
+                            String net = xmlStreamReader.getAttributeValue(i);
+                            if(net.equals(networkElementType.toString()))
+                            {
+                                cont = true;
+                            }
+                        }
 
                     }
-                    if(startElementName.equals("fixedTableColumns")){
 
-                        fixedTableColumns = parseFixedTableColumns(xmlStreamReader);
+                    if(cont) {
+                        if (startElementName.equals("mainTableColumns")) {
 
+                            mainTableColumns = parseMainTableColumns(xmlStreamReader);
+                        }
+                        if (startElementName.equals("fixedTableColumns")) {
+
+                            fixedTableColumns = parseFixedTableColumns(xmlStreamReader);
+                        }
+                        if (startElementName.equals("hiddenTableColumns")) {
+
+                            hiddenColumns = parseHiddenColumns(xmlStreamReader);
+                        }
+                        if (startElementName.equals("attributesState")) {
+
+                            expandAttributes = parseAttributesState(xmlStreamReader);
+                            finish = true;
+                        }
                     }
-                    if(startElementName.equals("hiddenTableColumns")){
-
-                        hiddenColumns = parseHiddenColumns(xmlStreamReader);
-
-                    }
-                    if(startElementName.equals("attributesState")){
-
-                        expandAttributes = parseAttributesState(xmlStreamReader);
-
-                    }
+                    break;
             }
+            if(finish)
+                break;
         }
 
+        TableState tState = new TableState(networkElementType);
+        tState.setExpandAttributes(expandAttributes);
+        tState.setFixedTableColumns(fixedTableColumns);
+        tState.setHiddenTableColumns(hiddenColumns);
+        tState.setMainTableColumns(mainTableColumns);
+
+        return Pair.of(networkElementType,tState);
     }
 
     private static ArrayList<String> parseMainTableColumns(XMLStreamReader2 xmlStreamReader) throws XMLStreamException {

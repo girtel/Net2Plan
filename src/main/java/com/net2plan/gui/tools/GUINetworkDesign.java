@@ -36,6 +36,7 @@ import javax.swing.KeyStroke;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableModel;
 
+import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
@@ -43,6 +44,7 @@ import com.net2plan.gui.utils.onlineSimulationPane.OnlineSimulationPane;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
 import com.net2plan.gui.utils.visualizationFilters.VisualizationFiltersPane;
 import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
@@ -96,6 +98,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     private OfflineExecutionPanel executionPane;
     private OnlineSimulationPane onlineSimulationPane;
     private VisualizationFiltersPane visualizationFiltersPane;
+
+    private Map<NetworkElementType, AdvancedJTableNetworkElement> currentTables;
 
     /**
      * Reference to the popup menu in the topology panel.
@@ -161,6 +165,9 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         contentPane.add(leftPane, "grow");
 
         viewEditTopTables = new ViewEditTopologyTablesPane(GUINetworkDesign.this, new BorderLayout());
+
+        currentTables = viewEditTopTables.currentTables();
+
         reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
 
         loadDesign(new NetPlan());
@@ -193,6 +200,10 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         return pane;
     }
 
+    public Map<NetworkElementType,AdvancedJTableNetworkElement> getCurrentTables(){
+
+        return currentTables;
+    }
 
     @Override
     public String getDescription()

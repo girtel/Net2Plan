@@ -22,8 +22,10 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.xml.stream.XMLStreamException;
 
+import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
+import com.net2plan.gui.utils.viewEditTopolTables.tableStateFiles.TableState;
 import com.net2plan.gui.utils.viewEditTopolTables.tableStateFiles.TableStateController;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -720,11 +722,19 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      */
     private void loadTableState()
     {
+        Map<NetworkElementType, AdvancedJTableNetworkElement> currentTables = ((GUINetworkDesign)networkViewer).getCurrentTables();
+        HashMap<NetworkElementType,TableState> tStateMap = null;
         try {
-            TableStateController.loadTableState(this);
+            tStateMap = TableStateController.loadTableState(currentTables);
         } catch (XMLStreamException e) {
             e.printStackTrace();
         }
+        for(Map.Entry<NetworkElementType, AdvancedJTableNetworkElement> entry : currentTables.entrySet())
+        {
+            entry.getValue().updateTableFromTableState(tStateMap.get(entry.getValue().getNetworkElementType()));
+        }
+        JOptionPane.showMessageDialog(null,"Table State loaded succesfully!");
+
     }
 
     /**
@@ -732,10 +742,67 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      *
      * @param
      */
-    private void saveTableState() throws XMLStreamException {
-        TableStateController.saveTableState(this);
+    private void saveTableState() throws XMLStreamException
+    {
+
+        Map<NetworkElementType, AdvancedJTableNetworkElement> currentTables = ((GUINetworkDesign)networkViewer).getCurrentTables();
+        TableStateController.saveTableState(currentTables);
     }
 
+    /**
+     * Update columns positions from a table state
+     *
+     * @param state TableState where the table configuration is saved
+     */
+    public void updateTableFromTableState(TableState state)
+    {
+        resetColumnsPositions();
+        TableColumn fixedTableCol = null;
+        while(fixedTable.getColumnModel().getColumnCount() > 0){
+            fixedTableCol = fixedTable.getColumnModel().getColumn(0);
+            fixedTable.getColumnModel().removeColumn(fixedTableCol);
+        }
+        createDefaultColumnsFromModel();
+        ArrayList<String> fixedTableColumns = state.getFixedTableColumns();
+        ArrayList<String> mainTableColumns = state.getMainTableColumns();
+        HashMap<String, Integer> hiddenColumnsMap = state.getHiddenTableColumns();
+        boolean areAttributesExpanded = state.getExpandAttributes();
+
+        if(areAttributesExpanded){
+            attributesInDifferentColumns();
+            attributesItem.setSelected(true);
+        }
+
+        for(String col : fixedTableColumns)
+        {
+            TableColumn mainTableCol = null;
+            for(int i = 0; i < mainTable.getColumnModel().getColumnCount();i++)
+            {
+                mainTableCol = mainTable.getColumnModel().getColumn(i);
+                if(col.equals(mainTableCol.getHeaderValue().toString()))
+                {
+                    mainTable.getColumnModel().removeColumn(mainTableCol);
+                    fixedTable.getColumnModel().addColumn(mainTableCol);
+                    break;
+                }
+            }
+        }
+
+        while(mainTable.getColumnModel().getColumnCount() > 0)
+        {
+            hideColumn(0);
+        }
+        for(String col : mainTableColumns)
+        {
+            showColumn(col,0,false);
+        }
+        indexForEachHiddenColumn.clear();
+        for(Map.Entry<String,Integer> entry : hiddenColumnsMap.entrySet())
+        {
+            indexForEachHiddenColumn.put(entry.getKey(),entry.getValue());
+        }
+
+    }
 
     /**
      * Reset the column positions
