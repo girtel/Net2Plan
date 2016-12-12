@@ -43,7 +43,7 @@ public final class TableStateController
 
     }
 
-    /*Loads a external file .n2pst and updates the state of table
+    /*Loads a external file .xml and updates the state of table
 
      */
 
@@ -65,7 +65,6 @@ public final class TableStateController
                 e.printStackTrace();
             }
 
-            int counter = 0;
             boolean continueFlag = false;
             while (xmlStreamReader.hasNext()) {
                 int eventType = xmlStreamReader.next();
