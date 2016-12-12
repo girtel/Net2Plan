@@ -28,11 +28,13 @@ import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
 import com.net2plan.gui.utils.onlineSimulationPane.OnlineSimulationPane;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.topologyPane.jung.topologyDistribution.CircularDistribution;
+import com.net2plan.gui.utils.topologyPane.jung.topologyDistribution.ITopologyDistribution;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
 import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
-import com.net2plan.gui.utils.windows.WindowController;
-import com.net2plan.gui.utils.windows.utils.WindowUtils;
+import com.net2plan.gui.utils.viewEditWindows.WindowController;
+import com.net2plan.gui.utils.viewEditWindows.utils.WindowUtils;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -49,9 +51,9 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.libraries.NetworkPerformanceMetrics;
-import com.net2plan.utils.TopologyMap;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
+import com.net2plan.utils.TopologyMap;
 import com.net2plan.utils.Triple;
 
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
@@ -89,7 +91,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     private JPanel leftPane;
     private NetPlan currentNetPlan;
 
-    private TopologyMap initialTopologySetting, circleTopologySetting;
+    private TopologyMap initialTopologySetting;
+    private ITopologyDistribution circularTopologySetting;
 
     /**
      * Default constructor.
@@ -123,7 +126,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
 
         initialTopologySetting = new TopologyMap();
-        circleTopologySetting = new TopologyMap();
+        circularTopologySetting = new CircularDistribution();
 
         leftPane = new JPanel(new BorderLayout());
         JPanel logSection = configureLeftBottomPanel();
@@ -411,9 +414,11 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
             JMenuItem circularSetting = new JMenuItem("Circular");
             circularSetting.addActionListener(e ->
             {
+                final Map<Long, Point2D> nodePosition = circularTopologySetting.getNodeDistribution(currentNetPlan.getNodes());
+
                 for (Node node : currentNetPlan.getNodes())
                 {
-                    moveNode(node.getId(), circleTopologySetting.getNodeLocation(node));
+                    moveNode(node.getId(), nodePosition.get(node.getId()));
                 }
 
                 topologyPanel.zoomAll();
@@ -507,9 +512,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
         // Saving original topology structure
         currentNetPlan.getNodes().stream().forEach(node -> initialTopologySetting.addNodeLocation(node));
-
-        // Creating topology layouts
-        createCircularSetting();
 
         topologyPanel.updateLayerChooser();
         topologyPanel.getCanvas().zoomAll();
@@ -912,9 +914,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         public void actionPerformed(ActionEvent e)
         {
             addNode(pos);
-
-            // Updating layouts
-            createCircularSetting();
         }
     }
 
@@ -1186,35 +1185,5 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
                 WindowController.showControlWindow();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
-    }
-
-    private void createCircularSetting()
-    {
-        // Node list
-        final List<Node> nodeList = currentNetPlan.getNodes();
-
-        final int maxAng = 360;
-
-        final int minWidth = 320;
-        final int minHeight = 320;
-
-        final int width = 30 * nodeList.size();
-        final int height = 30 * nodeList.size();
-
-        final int finalWidth = width < minWidth ? minWidth : width;
-        final int finalHeight = height < minHeight ? minHeight : height;
-
-        // Distribute nodes along a circle
-        for (int i = 0; i < nodeList.size(); i++)
-        {
-            final Node node = nodeList.get(i);
-
-            final int ang = (i + 1) * (maxAng / nodeList.size());
-
-            final int x = (int) (finalWidth * Math.cos(Math.toRadians(ang)));
-            final int y = (int) (finalHeight * Math.sin(Math.toRadians(ang)));
-
-            circleTopologySetting.addNodeLocation(node.getId(), new Point(x, y));
-        }
     }
 }

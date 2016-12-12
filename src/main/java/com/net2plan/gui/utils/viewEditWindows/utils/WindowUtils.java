@@ -1,4 +1,4 @@
-package com.net2plan.gui.utils.windows.utils;
+package com.net2plan.gui.utils.viewEditWindows.utils;
 
 import com.net2plan.gui.GUINet2Plan;
 
