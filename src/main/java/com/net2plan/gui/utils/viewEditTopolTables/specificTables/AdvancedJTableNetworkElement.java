@@ -20,6 +20,7 @@ import javax.swing.event.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
+import javax.xml.stream.XMLStreamException;
 
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
@@ -366,7 +367,12 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 @Override
                 public void actionPerformed(ActionEvent e)
                 {
-                    saveTableState();
+
+                    try {
+                        saveTableState();
+                    } catch (XMLStreamException e1) {
+                        e1.printStackTrace();
+                    }
                 }
             });
             attributesItem.addItemListener(new ItemListener()
@@ -714,7 +720,11 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      */
     private void loadTableState()
     {
-        TableStateController.loadTableState(this);
+        try {
+            TableStateController.loadTableState(this);
+        } catch (XMLStreamException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -722,8 +732,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      *
      * @param
      */
-    private void saveTableState()
-    {
+    private void saveTableState() throws XMLStreamException {
         TableStateController.saveTableState(this);
     }
 
@@ -940,25 +949,46 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         }
     }
 
-    private boolean areAttributesInDifferentColums()
+    public ArrayList<String> getMainTableColumns(){
+
+        ArrayList<String> mainTableColumns = new ArrayList<>();
+        for(int i = 0; i < mainTable.getColumnModel().getColumnCount();i++)
+        {
+            mainTableColumns.add(mainTable.getColumnModel().getColumn(i).getHeaderValue().toString());
+        }
+
+        return mainTableColumns;
+
+    }
+
+    public ArrayList<String> getFixedTableColumns()
+    {
+        ArrayList<String> fixedTableColumns = new ArrayList<>();
+        for(int i = 0; i < fixedTable.getColumnModel().getColumnCount();i++)
+        {
+            fixedTableColumns.add(fixedTable.getColumnModel().getColumn(i).getHeaderValue().toString());
+        }
+
+        return fixedTableColumns;
+    }
+
+    public HashMap<String, Integer> getHiddenColumns()
+    {
+        HashMap<String, Integer> hiddenTableColumns = new HashMap<>();
+        String col = null;
+        for(int i = 0; i < hiddenColumns.size();i++)
+        {
+            col = hiddenColumns.get(i).getHeaderValue().toString();
+            hiddenTableColumns.put(col,indexForEachHiddenColumn.get(col));
+        }
+
+        return hiddenTableColumns;
+
+    }
+
+    public boolean areAttributesInDifferentColums()
     {
         return expandAttributes;
-    }
-
-
-    private boolean hasBeenAddedEachColumn(String columnName)
-    {
-        if(!hasBeenAddedEachAttColumn.containsKey(columnName))
-        {
-            return false;
-        }
-        return hasBeenAddedEachAttColumn.get(columnName);
-    }
-
-
-    private void updateHasBeenAddedEachColumn(String columnName, boolean flag)
-    {
-        hasBeenAddedEachAttColumn.put(columnName,flag);
     }
 
     public JScrollPane getScroll(){
