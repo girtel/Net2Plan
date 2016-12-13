@@ -45,9 +45,7 @@ public class MulticastTree extends NetworkElement
 	Map<Node,List<Link>> pathToEgressNode;
 	Set<Link> linkSet;
 	final Set<Link> initialSetLinksWhenWasCreated;
-//	double carriedTraffic;
 	double carriedTrafficIfNotFailing;
-//	double occupiedLinkCapacity;
 	double occupiedLinkCapacityIfNotFailing;
 	Set<Node> cache_traversedNodes;
 	Map<Node,Link> cache_ingressLinkOfNode;
@@ -487,19 +485,16 @@ public class MulticastTree extends NetworkElement
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		if ((newCarriedTraffic < 0) || (newOccupiedLinkCapacity < 0)) throw new Net2PlanException ("Carried traffics and occupied link capacities must be non-negative");
-		final double extraCarriedTraffic = isDown ()? 0.0 : this.carriedTrafficIfNotFailing - newCarriedTraffic;
-		final double extraOccupiedLinkCapacity = isDown ()? 0.0 : this.occupiedLinkCapacityIfNotFailing - newOccupiedLinkCapacity;
+//		final double extraCarriedTraffic = isDown ()? 0.0 : this.carriedTrafficIfNotFailing - newCarriedTraffic;
+//		final double extraOccupiedLinkCapacity = isDown ()? 0.0 : this.occupiedLinkCapacityIfNotFailing - newOccupiedLinkCapacity;
 		this.carriedTrafficIfNotFailing = newCarriedTraffic;
 		this.occupiedLinkCapacityIfNotFailing = newOccupiedLinkCapacity;
 //		if (this.isDown()) { this.carriedTraffic = 0; this.occupiedLinkCapacity = 0;  } else { this.carriedTraffic = newCarriedTraffic; this.occupiedLinkCapacity = newOccupiedLinkCapacity; }
 		
 		/* Update the links, with the carried traffic depending on the link state */
-		for (Link link : linkSet) 
-		{ 
-			link.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += extraCarriedTraffic;
-			link.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += extraOccupiedLinkCapacity;
-		}
-		demand.carriedTraffic += extraCarriedTraffic;
+		for (Link link : linkSet)
+			link.updateLinkTrafficAndOccupation();
+		demand.carriedTraffic = 0; for (MulticastTree t : demand.cache_multicastTrees) demand.carriedTraffic += t.getCarriedTraffic();
 		if (demand.coupledUpperLayerLinks != null) for (Link e : demand.coupledUpperLayerLinks.values()) e.capacity = demand.carriedTraffic;
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
