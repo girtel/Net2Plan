@@ -305,14 +305,8 @@
                                         <descriptor>src/assembly/defaultCLIAssembly.xml</descriptor>
                                         <descriptor>src/assembly/defaultGUIAssembly.xml</descriptor>
                                         <descriptor>src/assembly/defaultIOAssembly.xml</descriptor>
-                                        <descriptor>src/assembly/guiTrafficDesignAssembly.xml</descriptor>
                                         <descriptor>src/assembly/BuiltInExamplesAssembly.xml</descriptor>
                                     </descriptors>
-                                    <archive>
-                                        <manifestEntries>
-                                            <!--@formatter:off--><Class-Path>${project.classpath}</Class-Path><!--@formatter:on-->
-                                        </manifestEntries>
-                                    </archive>
                                 </configuration>
                             </execution>
                             <execution>
@@ -500,7 +494,6 @@
                                         <descriptor>src/assembly/defaultCLIAssembly.xml</descriptor>
                                         <descriptor>src/assembly/defaultGUIAssembly.xml</descriptor>
                                         <descriptor>src/assembly/defaultIOAssembly.xml</descriptor>
-                                        <descriptor>src/assembly/guiTrafficDesignAssembly.xml</descriptor>
                                         <descriptor>src/assembly/BuiltInExamplesAssembly.xml</descriptor>
                                     </descriptors>
                                     <archive>
