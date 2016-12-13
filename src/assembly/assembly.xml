@@ -75,11 +75,6 @@
             <destName>defaultIO.jar</destName>
         </file>
         <file>
-            <source>${project.build.directory}/${artifactId}-${version}-guiTrafficDesign.jar</source>
-            <outputDirectory>plugins</outputDirectory>
-            <destName>guiTrafficDesign.jar</destName>
-        </file>
-        <file>
             <source>${project.build.directory}/${artifactId}-${version}-Net2Plan-cli.jar</source>
             <outputDirectory></outputDirectory>
             <destName>Net2Plan-cli.jar</destName>
