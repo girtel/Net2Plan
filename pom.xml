@@ -185,15 +185,15 @@
 		    <groupId>junit</groupId>
 		    <artifactId>junit</artifactId>
 		    <version>4.12</version>
-		    <scope>test</scope>
+		    <scope>provided</scope>
 		</dependency>
-<!--         <dependency> -->
-<!--             <groupId>com.sun</groupId> -->
-<!--             <artifactId>tools</artifactId> -->
-<!--             <version>1.4.2</version> -->
-<!--             <scope>system</scope> -->
-<!--             <systemPath>${java.home}/../lib/tools.jar</systemPath> -->
-<!--         </dependency> -->
+         <dependency>
+             <groupId>com.sun</groupId>
+             <artifactId>tools</artifactId>
+             <version>1.4.2</version>
+             <scope>system</scope>
+             <systemPath>${java.home}/../lib/tools.jar</systemPath>
+         </dependency>
     </dependencies>
 
     <repositories>
@@ -377,14 +377,15 @@
                         <version>1.8</version>
                         <executions>
                             <execution>
-                                <id>default-cli</id>
+                                <id>clean-after</id>
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
+                                <phase>package</phase>
                                 <configuration>
                                     <target>
                                         <delete dir="${project.build.directory}"
-                                                includes="*.jar net2plan-0.4.0-Net2Plan-src.zip"/>
+                                                includes="*.jar net2plan-${project.version}-Net2Plan-src.zip"/>
                                         <delete dir="${project.basedir}/src/main/resources/lib"/>
                                     </target>
                                 </configuration>

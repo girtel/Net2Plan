@@ -36,3 +36,4 @@ lib/
 /net2plan.iml
 /data/
 *.stackdump
+*.n2p
