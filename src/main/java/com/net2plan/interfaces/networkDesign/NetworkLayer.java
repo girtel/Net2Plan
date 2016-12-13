@@ -270,8 +270,8 @@ public class NetworkLayer extends NetworkElement
 			final double newXde = h_d * M.get (demand.ingressNode.index , link.originNode.index) * layer.forwardingRules_f_de.get (demand.index , link.index);
 			if (newXde < -1E-5) throw new RuntimeException ("Bad");
 			layer.forwardingRules_x_de.set (demand.index , link.index , newXde);
-			link.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += newXde - oldXde; // in hop-by-hop carried traffic is the same as occupied capacity
-			link.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += newXde - oldXde;
+			link.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += newXde - oldXde; // in hop-by-hop carried traffic is the same as occupied capacity
+			link.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += newXde - oldXde;
 			if ((newXde > 1e-3) && (!link.isUp)) throw new RuntimeException ("Bad");
 		}
 

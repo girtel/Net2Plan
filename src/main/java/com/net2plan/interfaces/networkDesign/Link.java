@@ -48,8 +48,8 @@ public class Link extends NetworkElement
 	final Node originNode;
 	final Node destinationNode;
 	double capacity;
-	double carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments;
-	double occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments;
+	double cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments;
+	double cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments;
 	double lengthInKm;
 	double propagationSpeedInKmPerSecond;
 	boolean isUp;
@@ -89,8 +89,8 @@ public class Link extends NetworkElement
 		this.originNode = originNode;
 		this.destinationNode = destinationNode;
 		this.capacity = capacity;
-		this.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = 0;
-		this.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = 0;
+		this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = 0;
+		this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = 0;
 		this.lengthInKm = lengthInKm;
 		this.propagationSpeedInKmPerSecond = propagationSpeedInKmPerSecond;
 		this.isUp = true;
@@ -114,8 +114,8 @@ public class Link extends NetworkElement
 		this.destinationNode = lastLink.destinationNode;
 		this.layer = firstLink.getLayer();
 		this.capacity = segmentReservedCapacity;
-		this.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = 0;
-		this.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = 0;
+		this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = 0;
+		this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = 0;
 		this.lengthInKm = 0; for (Link e : segmentSeqLinks) lengthInKm += e.getLengthInKm(); 
 		this.propagationSpeedInKmPerSecond = 0; for (Link e : segmentSeqLinks) propagationSpeedInKmPerSecond += e.getPropagationSpeedInKmPerSecond() *  e.getLengthInKm() / this.lengthInKm ; 
 		this.isUp = true;
@@ -131,8 +131,8 @@ public class Link extends NetworkElement
 		if ((this.id != origin.id) || (this.index != origin.index)) throw new RuntimeException ("Bad");
 		if ((this.netPlan == null) || (origin.netPlan == null) || (this.netPlan == origin.netPlan)) throw new RuntimeException ("Bad");
 		this.capacity = origin.capacity;
-		this.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = origin.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments;
-		this.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = origin.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments;
+		this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = origin.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments;
+		this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = origin.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments;
 		this.lengthInKm = origin.lengthInKm;
 		this.propagationSpeedInKmPerSecond = origin.propagationSpeedInKmPerSecond;
 		this.isUp = origin.isUp;
@@ -155,8 +155,8 @@ public class Link extends NetworkElement
 		if (originNode.id != e2.originNode.id) return false;
 		if (destinationNode.id != e2.destinationNode.id) return false;
 		if (this.capacity != e2.capacity) return false;
-		if (this.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments != e2.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) return false;
-		if (this.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments != e2.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) return false;
+		if (this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments != e2.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) return false;
+		if (this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments != e2.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) return false;
 		if (this.lengthInKm != e2.lengthInKm) return false;
 		if (this.propagationSpeedInKmPerSecond != e2.propagationSpeedInKmPerSecond) return false;
 		if (this.isUp != e2.isUp) return false;
@@ -275,7 +275,7 @@ public class Link extends NetworkElement
 	public double getCarriedTrafficNotIncludingProtectionSegments()
 	{
 		checkAttachedToNetPlanObject();
-		double accum = this.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments; for (ProtectionSegment segment : cache_traversingSegments) accum -= segment.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments;
+		double accum = this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments; for (ProtectionSegment segment : cache_traversingSegments) accum -= segment.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments;
 		return accum;
 	}
 
@@ -287,7 +287,7 @@ public class Link extends NetworkElement
 	 */
 	public double getCarriedTrafficIncludingProtectionSegments()
 	{
-		return carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments;
+		return cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments;
 	}
 	
 	/**
@@ -298,7 +298,7 @@ public class Link extends NetworkElement
 	 * */
 	public double getUtilizationIncludingProtectionSegments()
 	{
-		return capacity == 0? 0 : occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments / capacity;
+		return capacity == 0? 0 : cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments / capacity;
 	}
 	
 	/** <p>Returns the link utilization, measured as the ratio between the total occupied capacity in the link and the total link capacity. In {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING},
@@ -318,7 +318,7 @@ public class Link extends NetworkElement
 	public double getOccupiedCapacityNotIncludingProtectionSegments()
 	{
 		checkAttachedToNetPlanObject();
-		double accum = this.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments; for (ProtectionSegment segment : cache_traversingSegments) accum -= segment.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments;
+		double accum = this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments; for (ProtectionSegment segment : cache_traversingSegments) accum -= segment.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments;
 		return accum;
 	}
 
@@ -327,7 +327,7 @@ public class Link extends NetworkElement
 	 * */
 	public double getOccupiedCapacityIncludingProtectionSegments()
 	{
-		return occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments;
+		return cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments;
 	}
 	
 	/**
@@ -437,7 +437,7 @@ public class Link extends NetworkElement
 	public boolean isOversubscribed ()
 	{
 		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-		return (occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments > capacity + PRECISION_FACTOR);
+		return (cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments > capacity + PRECISION_FACTOR);
 	}
 	
 	/** <p>Returns the Shared Risk Groups ({@link com.net2plan.interfaces.networkDesign.SharedRiskGroup SRGs}) the link belongs to. The link fails when any of these SRGs is down.</p>
@@ -615,9 +615,9 @@ public class Link extends NetworkElement
 		if (!isUp && !layer.cache_linksDown.contains(this)) throw new RuntimeException ("Bad");
 		if (!isUp)
 		{
-			if (Math.abs(carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) > 1e-3)
+			if (Math.abs(cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) > 1e-3)
 			{
-				System.out.println ("Link " + this + ", is down, and carried traffic is: " + carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
+				System.out.println ("Link " + this + ", is down, and carried traffic is: " + cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
 				System.out.println ("Traversing routes: " + cache_traversingRoutes);
 				for (Route r : cache_traversingRoutes.keySet())
 					System.out.println ("Route " + r + ", isDown? " + r.isDown() + ", carriedTraffic: " + r.getCarriedTraffic() + ", carried of all ok: " + r.carriedTrafficIfNotFailing);
@@ -625,7 +625,7 @@ public class Link extends NetworkElement
 				if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) System.out.println ("x_d for this link, all demands: " + layer.forwardingRules_x_de.viewColumn(index));
 				throw new RuntimeException ("Bad");
 			}
-			if (Math.abs(occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > 1e-3) throw new RuntimeException ("Bad");
+			if (Math.abs(cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > 1e-3) throw new RuntimeException ("Bad");
 			for (Route r : cache_traversingRoutes.keySet()) if ((r.getCarriedTraffic() != 0) || (r.getOccupiedCapacity() != 0)) throw new RuntimeException ("Bad");
 			for (MulticastTree r : cache_traversingTrees) if ((r.getCarriedTraffic() != 0) || (r.getOccupiedLinkCapacity() != 0)) throw new RuntimeException ("Bad");
 			for (ProtectionSegment r : cache_traversingSegments) if ((r.getCarriedTraffic() != 0) || (r.getOccupiedLinkCapacity() != 0)) throw new RuntimeException ("Bad");
@@ -670,19 +670,36 @@ public class Link extends NetworkElement
 			check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += x_e;
 		}
 
-		if (Math.abs(carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments - check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) 
+		if (Math.abs(cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments - check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) 
 		{
 			System.out.println ("Link "+ this + ", is Up: " + isUp + ", trav routes: " + cache_traversingRoutes + ", trav segments: " + cache_traversingSegments);
 			for (Route r : cache_traversingRoutes.keySet()) System.out.println ("-- trav route: " + r + ", is down: " + r.isDown() + ", carried: " + r.getCarriedTraffic() + ", carried all ok: " + r.carriedTrafficIfNotFailing + ", seq links and ps: " + r.cache_seqLinksAndProtectionSegments + ", seqlinks real: " + r.cache_seqLinksRealPath);
-			for (ProtectionSegment r : cache_traversingSegments) System.out.println ("-- trav segment: " + r + ", is down: " + r.isDown() + ", carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + r.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments + ", sea links: " + r.seqLinks);
-			throw new RuntimeException ("Bad: carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments + ", check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
+			for (ProtectionSegment r : cache_traversingSegments) System.out.println ("-- trav segment: " + r + ", is down: " + r.isDown() + ", carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + r.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments + ", sea links: " + r.seqLinks);
+			throw new RuntimeException ("Bad: Link: " + this + ". carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments + ", check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
 		}
-		if (Math.abs(occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments - check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) throw new RuntimeException ("Bad");
+		if (Math.abs(cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments - check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) throw new RuntimeException ("Bad");
 		
 		if (coupledLowerLayerDemand != null)
 			if (!coupledLowerLayerDemand.coupledUpperLayerLink.equals (this)) throw new RuntimeException ("Bad");
 		if (coupledLowerLayerMulticastDemand != null)
 			if (!coupledLowerLayerMulticastDemand.coupledUpperLayerLinks.containsValue(this)) throw new RuntimeException ("Bad");
+	}
+	
+	void updateLinkTrafficAndOccupation ()
+	{
+		this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = 0;
+		this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = 0;
+		for (Entry<Route,Integer> entry : cache_traversingRoutes.entrySet())
+		{
+			/* this includes routes traversing the link, and routes traversing a protection segment containing the link */
+			this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += entry.getValue() * entry.getKey().getCarriedTraffic();
+			this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += entry.getValue() * entry.getKey().getOccupiedCapacity();
+		}
+		for (MulticastTree t : cache_traversingTrees)
+		{
+			this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += t.getCarriedTraffic();
+			this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += t.getOccupiedLinkCapacity();
+		}
 	}
 	
 }

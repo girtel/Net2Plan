@@ -550,7 +550,7 @@ public class Demand extends NetworkElement
 			layer.forwardingRules_f_de = DoubleFactory2D.sparse.appendRows(layer.forwardingRules_f_de.viewPart(0, 0, index, E), layer.forwardingRules_f_de.viewPart(index + 1, 0, layer.demands.size() - index - 1, E));
 			DoubleMatrix1D x_e = layer.forwardingRules_x_de.viewRow (index).copy ();
 			layer.forwardingRules_x_de = DoubleFactory2D.sparse.appendRows(layer.forwardingRules_x_de.viewPart(0, 0, index, E), layer.forwardingRules_x_de.viewPart(index + 1, 0, layer.demands.size() - index - 1, E));
-			for (Link link : layer.links) { link.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments -= x_e.get(link.index); link.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments -= x_e.get(link.index); }
+			for (Link link : layer.links) { link.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments -= x_e.get(link.index); link.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments -= x_e.get(link.index); }
 		}
 		
 		netPlan.cache_id2DemandMap.remove(id);

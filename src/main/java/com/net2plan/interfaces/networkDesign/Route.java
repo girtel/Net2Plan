@@ -331,7 +331,7 @@ public class Route extends NetworkElement
 			else if (!it.hasPrevious())
 				if (link.originNode.isUp) firstAvailableNodeAfterFailures = link.originNode;
 		}
-		
+		if (firstAvailableNodeAfterFailures == this.ingressNode) firstAvailableNodeAfterFailures = this.egressNode; 
 		return firstAvailableNodeAfterFailures;
 	}
 
@@ -496,7 +496,7 @@ public class Route extends NetworkElement
 	public int getNumberOfTimesLinkIsTraversed (Link e)
 	{
 		if (e instanceof ProtectionSegment) throw new Net2PlanException ("This method is just for links, not protection segments");
-		Integer num = e.cache_traversingRoutes.get (e); return num == null? 0 : num;
+		Integer num = e.cache_traversingRoutes.get (this); return num == null? 0 : num;
 	}
 
 	/** Returns the number of times that a particular resource is traversed in its real path 
@@ -628,31 +628,17 @@ public class Route extends NetworkElement
 		newCarriedTraffic = NetPlan.adjustToTolerance(newCarriedTraffic);
 		newOccupiedLinkCapacity = NetPlan.adjustToTolerance(newOccupiedLinkCapacity);
 		if ((newCarriedTraffic < 0) || (newOccupiedLinkCapacity < 0)) throw new Net2PlanException ("Carried traffics and occupied link capacities must be non-negative");
-		final double extraCarriedTraffic = this.isDown()? 0.0 : newCarriedTraffic - this.carriedTrafficIfNotFailing;
-		final double extraOccupiedCapacity = this.isDown()? 0.0 : newOccupiedLinkCapacity - this.occupiedLinkCapacityIfNotFailing;
+
 		this.carriedTrafficIfNotFailing = newCarriedTraffic;
 		this.occupiedLinkCapacityIfNotFailing = newOccupiedLinkCapacity;
-//		if (this.isDown()) { this.carriedTraffic = 0; this.occupiedLinkCapacity = 0;  } else { this.carriedTraffic = newCarriedTraffic; this.occupiedLinkCapacity = newOccupiedLinkCapacity; }
-//		final double oldCarriedTraffic = this.getCarriedTraffic();
-//		final double oldOccupiedLinkCapacity = this.getOccupiedCapacity();
 		for (Link linkOrSegment : cache_seqLinksAndProtectionSegments) 
 		{ 
-			linkOrSegment.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += extraCarriedTraffic;
-			linkOrSegment.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += extraOccupiedCapacity;
-			if (linkOrSegment.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments < -1e-3) throw new RuntimeException ("Bad");
-			if (linkOrSegment.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments < -1e-3) throw new RuntimeException ("Bad");
+			if (linkOrSegment instanceof Link) ((Link) linkOrSegment).updateLinkTrafficAndOccupation();
 			if (linkOrSegment instanceof ProtectionSegment)
-			{
 				for (Link link : ((ProtectionSegment) linkOrSegment).seqLinks)
-				{
-					link.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += extraCarriedTraffic;
-					link.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += extraOccupiedCapacity;
-					if (link.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments < -1e-3) throw new RuntimeException ("Bad");
-					if (link.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments < -1e-3) throw new RuntimeException ("Bad");
-				}
-			}
+					link.updateLinkTrafficAndOccupation();
 		}
-		demand.carriedTraffic += extraCarriedTraffic;
+		demand.carriedTraffic = 0; for (Route r : demand.cache_routes) demand.carriedTraffic += r.getCarriedTraffic();
 		if (demand.coupledUpperLayerLink != null) demand.coupledUpperLayerLink.capacity = demand.carriedTraffic;
 		
 		/* Now the update of the resources */
@@ -667,14 +653,6 @@ public class Route extends NetworkElement
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 	
-
-
-//	List<NetworkElement> seqLinksSegmentsAndResourcesTraversed; // each object is a Link, or a Resource
-//	Map<Resource,Double> resourcesOccupationMap;  // for each resource, the total occupation in it (if more than one pass, the total effect
-//	List<Link> cache_seqLinksAndProtectionSegments;
-//	List<Link> cache_seqLinksRealPath;
-//	List<Node> cache_seqNodesRealPath;
-
 	/** Sets the new sequence of links and/or protection segments traversed by the route. If the route is a service chain,
 	 * an error is returned (other method should be used). If the new route traverses failing link or nodes, its current 
 	 * carried traffic and occupied link capacities will be zero. If not, will be the base ones in the no failure state
@@ -854,14 +832,18 @@ public class Route extends NetworkElement
 	private static List<Link> listLinksRealPath (List<? extends NetworkElement> listLinksResourcesAndSegments)
 	{
 		List<Link> links = new LinkedList<Link> ();
-		for (NetworkElement e : listLinksResourcesAndSegments) if (e instanceof Link) links.add((Link) e); else if (e instanceof ProtectionSegment) for (Link ee : ((ProtectionSegment) e).seqLinks) links.add(ee);
+		for (NetworkElement e : listLinksResourcesAndSegments) 
+			if (e instanceof ProtectionSegment) for (Link ee : ((ProtectionSegment) e).seqLinks) links.add(ee);
+			else if (e instanceof Link) links.add((Link) e); 
 		return links;
 	}
 
 	private static List<NetworkElement> listLinksRealPathAndResources (List<? extends NetworkElement> listLinksResourcesAndSegments)
 	{
 		List<NetworkElement> linksAndResources = new LinkedList<NetworkElement> ();
-		for (NetworkElement e : listLinksResourcesAndSegments) if (e instanceof Link || e instanceof Resource) linksAndResources.add(e); else if (e instanceof ProtectionSegment) for (Link ee : ((ProtectionSegment) e).seqLinks) linksAndResources.add(ee);
+		for (NetworkElement e : listLinksResourcesAndSegments)
+			if (e instanceof ProtectionSegment) for (Link ee : ((ProtectionSegment) e).seqLinks) linksAndResources.add(ee);
+			else if ((e instanceof Link) || (e instanceof Resource)) linksAndResources.add(e); 
 		return linksAndResources;
 	}
 

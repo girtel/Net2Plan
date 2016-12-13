@@ -496,8 +496,8 @@ public class MulticastTree extends NetworkElement
 		/* Update the links, with the carried traffic depending on the link state */
 		for (Link link : linkSet) 
 		{ 
-			link.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += extraCarriedTraffic;
-			link.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += extraOccupiedLinkCapacity;
+			link.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += extraCarriedTraffic;
+			link.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += extraOccupiedLinkCapacity;
 		}
 		demand.carriedTraffic += extraCarriedTraffic;
 		if (demand.coupledUpperLayerLinks != null) for (Link e : demand.coupledUpperLayerLinks.values()) e.capacity = demand.carriedTraffic;

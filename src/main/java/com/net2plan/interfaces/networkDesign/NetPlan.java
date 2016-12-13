@@ -2156,11 +2156,11 @@ public class NetPlan extends NetworkElement
 		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
 		Set<Link> res = new HashSet<Link> ();
 		for (Link e : layer.links) 
-			if (Math.abs (e.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments / e.capacity - maxRho) < PRECISION_FACTOR) 
+			if (Math.abs (e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments / e.capacity - maxRho) < PRECISION_FACTOR) 
 				res.add (e);
-			else if (e.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments / e.capacity > maxRho)
+			else if (e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments / e.capacity > maxRho)
 			{
-				maxRho = e.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments / e.capacity;
+				maxRho = e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments / e.capacity;
 				res.clear (); res.add (e);
 			}
 		return res; 
@@ -2258,7 +2258,7 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		Set<Link> res = new HashSet<Link> ();
-		for (Link e : layer.links) if (e.capacity < e.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) res.add (e);
+		for (Link e : layer.links) if (e.capacity < e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) res.add (e);
 		return res; 
 	}
 
@@ -3720,7 +3720,7 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
-		for (Link e : layer.links) res.set(e.index, Math.max(0 , e.capacity - e.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments));
+		for (Link e : layer.links) res.set(e.index, Math.max(0 , e.capacity - e.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments));
 		return res;
 	}
 
@@ -3786,7 +3786,7 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
-		for (Link e : layer.links) res.set(e.index, e.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
+		for (Link e : layer.links) res.set(e.index, e.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
 		return res;
 	}
 
@@ -3800,7 +3800,7 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
-		for (Link e : layer.links) res.set(e.index, e.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments);
+		for (Link e : layer.links) res.set(e.index, e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments);
 		return res;
 	}
 
@@ -3858,7 +3858,7 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
-		for (Link e : layer.links) res.set(e.index, Math.max(0 , e.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments - e.capacity));
+		for (Link e : layer.links) res.set(e.index, Math.max(0 , e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments - e.capacity));
 		return res;
 	}
 
@@ -4000,7 +4000,7 @@ public class NetPlan extends NetworkElement
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.protectionSegments.size());
-		for (ProtectionSegment e : layer.protectionSegments) res.set(e.index, e.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
+		for (ProtectionSegment e : layer.protectionSegments) res.set(e.index, e.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
 		return res;
 	}
 
@@ -4042,7 +4042,7 @@ public class NetPlan extends NetworkElement
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.protectionSegments.size());
-		for (ProtectionSegment e : layer.protectionSegments) res.set(e.index, e.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments);
+		for (ProtectionSegment e : layer.protectionSegments) res.set(e.index, e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments);
 		return res;
 	}
 
@@ -4439,8 +4439,8 @@ public class NetPlan extends NetworkElement
 		}
 		for (Link e : layer.links)
 		{
-			e.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = e.getMulticastCarriedTraffic();
-			e.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = e.getMulticastOccupiedLinkCapacity();
+			e.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = e.getMulticastCarriedTraffic();
+			e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = e.getMulticastOccupiedLinkCapacity();
 		}
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 	}
@@ -5630,8 +5630,8 @@ public class NetPlan extends NetworkElement
 				removeAllProtectionSegments(layer);
 				for (Link e : layer.links)
 				{
-					e.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = e.getMulticastCarriedTraffic();
-					e.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = e.getMulticastOccupiedLinkCapacity();
+					e.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = e.getMulticastCarriedTraffic();
+					e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = e.getMulticastOccupiedLinkCapacity();
 				}
 				for (Demand d : layer.demands) d.carriedTraffic = 0;
 				
@@ -5980,7 +5980,7 @@ public class NetPlan extends NetworkElement
 
 				for (Link link : layer.links)
 				{
-					String linkInformation = String.format("e%d (id %d), n%d (%s) -> n%d (%s), state: %s, capacity: %.3g, length: %.3g km, propagation speed: %.3g km/s, carried traffic (incl. segments): %.3g , occupied capacity (incl. traffic in segments): %.3g, attributes: %s", link.index,  link.id , link.originNode.id, link.originNode.name, link.destinationNode.id, link.destinationNode.name , !link.isUp? "down" : "up", link.capacity , link.lengthInKm , link.propagationSpeedInKmPerSecond, link.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments , link.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments , link.attributes.isEmpty() ? "none" : link.attributes);
+					String linkInformation = String.format("e%d (id %d), n%d (%s) -> n%d (%s), state: %s, capacity: %.3g, length: %.3g km, propagation speed: %.3g km/s, carried traffic (incl. segments): %.3g , occupied capacity (incl. traffic in segments): %.3g, attributes: %s", link.index,  link.id , link.originNode.id, link.originNode.name, link.destinationNode.id, link.destinationNode.name , !link.isUp? "down" : "up", link.capacity , link.lengthInKm , link.propagationSpeedInKmPerSecond, link.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments , link.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments , link.attributes.isEmpty() ? "none" : link.attributes);
 					netPlanInformation.append(linkInformation);
 					
 					if (link.coupledLowerLayerDemand != null)
