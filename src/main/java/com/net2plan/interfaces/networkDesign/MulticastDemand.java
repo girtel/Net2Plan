@@ -412,7 +412,7 @@ public class MulticastDemand extends NetworkElement
 		for (MulticastTree t : cache_multicastTrees)
 		{
 			if (!t.demand.equals (this)) throw new RuntimeException ("Bad");
-			check_arriedTraffic += t.carriedTraffic;
+			check_arriedTraffic += t.getCarriedTraffic();
 		}
 		if (carriedTraffic != check_arriedTraffic) throw new RuntimeException ("Bad");
 		if (coupledUpperLayerLinks != null)

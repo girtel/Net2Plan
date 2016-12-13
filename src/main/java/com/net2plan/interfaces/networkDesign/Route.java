@@ -64,8 +64,10 @@ public class Route extends NetworkElement
 	List<Link> cache_seqLinksAndProtectionSegments;
 	List<Link> cache_seqLinksRealPath;
 	List<Node> cache_seqNodesRealPath;
-	double carriedTraffic , carriedTrafficIfNotFailing;
-	double occupiedLinkCapacity , occupiedLinkCapacityIfNotFailing;
+	//double carriedTraffic;
+	double carriedTrafficIfNotFailing;
+	//double occupiedLinkCapacity;
+	double occupiedLinkCapacityIfNotFailing;
 
 	Route (NetPlan netPlan , long id , int index , Demand demand , List<? extends NetworkElement> seqLinksRealPathAndResourcesTraversedWhenCreated , Map <Resource,Double> occupationInformationInTraversedResources , AttributeMap attributes)
 	{
@@ -100,8 +102,6 @@ public class Route extends NetworkElement
 		this.cache_seqNodesRealPath = Route.listTraversedNodes(cache_seqLinksRealPath);
 		this.carriedTrafficIfNotFailing = 0; 
 		this.occupiedLinkCapacityIfNotFailing = 0; 
-		this.carriedTraffic = 0;
-		this.occupiedLinkCapacity = 0;
 	}
 
 	boolean isDeepCopy (Route e2)
@@ -118,9 +118,7 @@ public class Route extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.cache_seqLinksAndProtectionSegments , e2.cache_seqLinksAndProtectionSegments)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_seqLinksRealPath , e2.cache_seqLinksRealPath)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_seqNodesRealPath , e2.cache_seqNodesRealPath)) return false;
-		if (this.carriedTraffic != e2.carriedTraffic) return false;
 		if (this.carriedTrafficIfNotFailing != e2.carriedTrafficIfNotFailing) return false;
-		if (this.occupiedLinkCapacity != e2.occupiedLinkCapacity) return false;
 		if (this.occupiedLinkCapacityIfNotFailing != e2.occupiedLinkCapacityIfNotFailing) return false;		
 		return true;
 	}
@@ -129,8 +127,6 @@ public class Route extends NetworkElement
 	{
 		if ((this.id != origin.id) || (this.index != origin.index)) throw new RuntimeException ("Bad");
 		if ((this.netPlan == null) || (origin.netPlan == null) || (this.netPlan == origin.netPlan)) throw new RuntimeException ("Bad");
-		this.carriedTraffic = origin.carriedTraffic;
-		this.occupiedLinkCapacity = origin.occupiedLinkCapacity;
 		this.carriedTrafficIfNotFailing = origin.carriedTrafficIfNotFailing;
 		this.occupiedLinkCapacityIfNotFailing = origin.occupiedLinkCapacityIfNotFailing;
 
@@ -224,7 +220,7 @@ public class Route extends NetworkElement
 	 */
 	public double getCarriedTraffic()
 	{
-		return carriedTraffic;
+		return isDown ()? 0.0 : carriedTrafficIfNotFailing;
 	}
 
 	/** Returns the route occupied capacity at the traversing links at this moment. Recall that if the route is down (traverses a link or node that is down) its 
@@ -235,7 +231,7 @@ public class Route extends NetworkElement
 	 */
 	public double getOccupiedCapacity ()
 	{
-		return occupiedLinkCapacity;
+		return isDown ()? 0.0 : occupiedLinkCapacityIfNotFailing;
 	}
 
 	/**
@@ -540,7 +536,6 @@ public class Route extends NetworkElement
 	 */
 	public boolean isDown ()
 	{
-		checkAttachedToNetPlanObject();
 		return layer.cache_routesDown.contains(this);
 	}
 	
@@ -554,8 +549,6 @@ public class Route extends NetworkElement
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		this.setCarriedTrafficAndResourcesOccupationInformation(0 , 0 , null); // release all previous occupation
 		
-		// PABLO: AQUI ACTUALIZAR EL RELEASE REALIZADO EN TODAS LAS CACHES.
-
 		for (Node node : cache_seqNodesRealPath) node.cache_nodeAssociatedRoutes.remove(this);
 		for (Link linkOrSegment : cache_seqLinksAndProtectionSegments) 
 		{ 
@@ -580,11 +573,13 @@ public class Route extends NetworkElement
 	}
 
 	/**
-	 * <p>Removes a protection segment from the list of backup protection segments of a route. If the segment was not in the list, nothing happens</p>
+	 * <p>Removes a protection segment from the list of backup protection segments of a route. 
+	 * If the segment is being used, an exception is thrown. If the segment was not in the list, nothing happens</p>
 	 * @param segment the segment to remove
 	 */
 	public void removeProtectionSegmentFromBackupSegmentList(ProtectionSegment segment)
 	{
+		if (cache_seqLinksAndProtectionSegments.contains(segment)) throw new Net2PlanException ("The segment cannot be removed from the list while being used b ythis route");
 		potentialBackupSegments.remove (segment);
 		segment.associatedRoutesToWhichIAmPotentialBackup.remove (this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
@@ -633,30 +628,31 @@ public class Route extends NetworkElement
 		newCarriedTraffic = NetPlan.adjustToTolerance(newCarriedTraffic);
 		newOccupiedLinkCapacity = NetPlan.adjustToTolerance(newOccupiedLinkCapacity);
 		if ((newCarriedTraffic < 0) || (newOccupiedLinkCapacity < 0)) throw new Net2PlanException ("Carried traffics and occupied link capacities must be non-negative");
-		final double oldCarriedTraffic = this.carriedTraffic;
-		final double oldOccupiedLinkCapacity = this.occupiedLinkCapacity;
+		final double extraCarriedTraffic = this.isDown()? 0.0 : newCarriedTraffic - this.carriedTrafficIfNotFailing;
+		final double extraOccupiedCapacity = this.isDown()? 0.0 : newOccupiedLinkCapacity - this.occupiedLinkCapacityIfNotFailing;
 		this.carriedTrafficIfNotFailing = newCarriedTraffic;
 		this.occupiedLinkCapacityIfNotFailing = newOccupiedLinkCapacity;
-		if (this.isDown()) { this.carriedTraffic = 0; this.occupiedLinkCapacity = 0;  } else { this.carriedTraffic = newCarriedTraffic; this.occupiedLinkCapacity = newOccupiedLinkCapacity; }
-
+//		if (this.isDown()) { this.carriedTraffic = 0; this.occupiedLinkCapacity = 0;  } else { this.carriedTraffic = newCarriedTraffic; this.occupiedLinkCapacity = newOccupiedLinkCapacity; }
+//		final double oldCarriedTraffic = this.getCarriedTraffic();
+//		final double oldOccupiedLinkCapacity = this.getOccupiedCapacity();
 		for (Link linkOrSegment : cache_seqLinksAndProtectionSegments) 
 		{ 
-			linkOrSegment.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += this.carriedTraffic - oldCarriedTraffic;
-			linkOrSegment.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += this.occupiedLinkCapacity - oldOccupiedLinkCapacity;
+			linkOrSegment.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += extraCarriedTraffic;
+			linkOrSegment.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += extraOccupiedCapacity;
 			if (linkOrSegment.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments < -1e-3) throw new RuntimeException ("Bad");
 			if (linkOrSegment.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments < -1e-3) throw new RuntimeException ("Bad");
 			if (linkOrSegment instanceof ProtectionSegment)
 			{
 				for (Link link : ((ProtectionSegment) linkOrSegment).seqLinks)
 				{
-					link.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += (this.carriedTraffic - oldCarriedTraffic);
-					link.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += (this.occupiedLinkCapacity - oldOccupiedLinkCapacity);
+					link.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += extraCarriedTraffic;
+					link.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += extraOccupiedCapacity;
 					if (link.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments < -1e-3) throw new RuntimeException ("Bad");
 					if (link.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments < -1e-3) throw new RuntimeException ("Bad");
 				}
 			}
 		}
-		demand.carriedTraffic += this.carriedTraffic - oldCarriedTraffic;
+		demand.carriedTraffic += extraCarriedTraffic;
 		if (demand.coupledUpperLayerLink != null) demand.coupledUpperLayerLink.capacity = demand.carriedTraffic;
 		
 		/* Now the update of the resources */
@@ -838,7 +834,7 @@ public class Route extends NetworkElement
 		if (shouldBeUp) for (Node n : cache_seqNodesRealPath) if (!n.isUp) { shouldBeUp = false; break; }
 		if (!shouldBeUp != this.isDown())
 		{
-			System.out.println ("Route : " + this + ", should be up: " + shouldBeUp + ", isDown: " + isDown() + ", carried traffic: " + carriedTraffic + ", carried all ok: " + carriedTrafficIfNotFailing);
+			System.out.println ("Route : " + this + ", should be up: " + shouldBeUp + ", isDown: " + isDown() + ", carried traffic: " + this.getCarriedTraffic() + ", carried all ok: " + carriedTrafficIfNotFailing);
 			for (Link e : cache_seqLinksRealPath)
 				System.out.println ("Link e: " + e + ", isUp " + e.isUp);
 			for (Node n : cache_seqNodesRealPath)
@@ -847,11 +843,11 @@ public class Route extends NetworkElement
 		}
 		if (shouldBeUp)
 		{
-			assertEquals(carriedTraffic , carriedTrafficIfNotFailing , 0.001);
+			assertEquals(getCarriedTraffic() , carriedTrafficIfNotFailing , 0.001);
 		}
 		else
 		{
-			assertEquals(carriedTraffic , 0 , 0.001);
+			assertEquals(getCarriedTraffic() , 0 , 0.001);
 		}
 	}
 

@@ -45,8 +45,10 @@ public class MulticastTree extends NetworkElement
 	Map<Node,List<Link>> pathToEgressNode;
 	Set<Link> linkSet;
 	final Set<Link> initialSetLinksWhenWasCreated;
-	double carriedTraffic , carriedTrafficIfNotFailing;
-	double occupiedLinkCapacity , occupiedLinkCapacityIfNotFailing;
+//	double carriedTraffic;
+	double carriedTrafficIfNotFailing;
+//	double occupiedLinkCapacity;
+	double occupiedLinkCapacityIfNotFailing;
 	Set<Node> cache_traversedNodes;
 	Map<Node,Link> cache_ingressLinkOfNode;
 	Map<Node,Set<Link>> cache_egressLinksOfNode;
@@ -63,8 +65,6 @@ public class MulticastTree extends NetworkElement
 		this.initialSetLinksWhenWasCreated = new HashSet<Link> (links);
 		this.carriedTrafficIfNotFailing = 0; 
 		this.occupiedLinkCapacityIfNotFailing = 0; 
-		this.carriedTraffic = 0;
-		this.occupiedLinkCapacity = 0;
 		Triple<Set<Node>,Map<Node,Link>,Map<Node,Set<Link>>> caches = updateCaches ();	
 		this.cache_traversedNodes = caches.getFirst ();
 		this.cache_ingressLinkOfNode = caches.getSecond ();
@@ -88,9 +88,7 @@ public class MulticastTree extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.linkSet , e2.linkSet)) return false;
 		if (!NetPlan.isDeepCopy(this.initialSetLinksWhenWasCreated , e2.initialSetLinksWhenWasCreated)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_traversedNodes , e2.cache_traversedNodes)) return false;
-		if (this.carriedTraffic != e2.carriedTraffic) return false;
 		if (this.carriedTrafficIfNotFailing != e2.carriedTrafficIfNotFailing) return false;
-		if (this.occupiedLinkCapacity != e2.occupiedLinkCapacity) return false;
 		if (this.occupiedLinkCapacityIfNotFailing != e2.occupiedLinkCapacityIfNotFailing) return false;
 		if (!NetPlan.isDeepCopy(this.cache_ingressLinkOfNode.keySet() , e2.cache_ingressLinkOfNode.keySet ())) return false;
 		if (!NetPlan.isDeepCopy(this.cache_egressLinksOfNode.keySet() , e2.cache_egressLinksOfNode.keySet ())) return false;
@@ -147,8 +145,6 @@ public class MulticastTree extends NetworkElement
 		if ((this.id != origin.id) || (this.index != origin.index)) throw new RuntimeException ("Bad");
 		if ((this.netPlan == null) || (origin.netPlan == null) || (this.netPlan == origin.netPlan)) throw new RuntimeException ("Bad");
 
-		this.carriedTraffic = origin.carriedTraffic;
-		this.occupiedLinkCapacity = origin.occupiedLinkCapacity;
 		this.linkSet.clear (); for (Link e : origin.linkSet) this.linkSet.add((Link) this.netPlan.getPeerElementInThisNetPlan (e));
 		this.initialSetLinksWhenWasCreated.clear (); for (Link originLink : origin.initialSetLinksWhenWasCreated) this.initialSetLinksWhenWasCreated.add (this.netPlan.getLinkFromId (originLink.getId ()));  
 		this.cache_traversedNodes.clear (); for (Node n : origin.cache_traversedNodes) this.cache_traversedNodes.add((Node) this.netPlan.getPeerElementInThisNetPlan (n));
@@ -293,7 +289,6 @@ public class MulticastTree extends NetworkElement
 	 */
 	public boolean isDown ()
 	{
-		checkAttachedToNetPlanObject();
 		return layer.cache_multicastTreesDown.contains(this);
 	}
 
@@ -443,7 +438,7 @@ public class MulticastTree extends NetworkElement
 	 */
 	public double getCarriedTraffic () 
 	{
-		return carriedTraffic;
+		return isDown ()? 0.0 : carriedTrafficIfNotFailing;
 	}
 
 	/**
@@ -453,7 +448,7 @@ public class MulticastTree extends NetworkElement
 	 */
 	public double getOccupiedLinkCapacity () 
 	{
-		return occupiedLinkCapacity;
+		return isDown ()? 0.0 : occupiedLinkCapacityIfNotFailing;
 	}
 	
 	/**
@@ -492,19 +487,19 @@ public class MulticastTree extends NetworkElement
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		if ((newCarriedTraffic < 0) || (newOccupiedLinkCapacity < 0)) throw new Net2PlanException ("Carried traffics and occupied link capacities must be non-negative");
-		final double oldCarriedTraffic = this.carriedTraffic;
-		final double oldOccupiedLinkCapacity = this.occupiedLinkCapacity;
+		final double extraCarriedTraffic = isDown ()? 0.0 : this.carriedTrafficIfNotFailing - newCarriedTraffic;
+		final double extraOccupiedLinkCapacity = isDown ()? 0.0 : this.occupiedLinkCapacityIfNotFailing - newOccupiedLinkCapacity;
 		this.carriedTrafficIfNotFailing = newCarriedTraffic;
 		this.occupiedLinkCapacityIfNotFailing = newOccupiedLinkCapacity;
-		if (this.isDown()) { this.carriedTraffic = 0; this.occupiedLinkCapacity = 0;  } else { this.carriedTraffic = newCarriedTraffic; this.occupiedLinkCapacity = newOccupiedLinkCapacity; }
+//		if (this.isDown()) { this.carriedTraffic = 0; this.occupiedLinkCapacity = 0;  } else { this.carriedTraffic = newCarriedTraffic; this.occupiedLinkCapacity = newOccupiedLinkCapacity; }
 		
 		/* Update the links, with the carried traffic depending on the link state */
 		for (Link link : linkSet) 
 		{ 
-			link.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += this.carriedTraffic - oldCarriedTraffic;
-			link.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += this.occupiedLinkCapacity - oldOccupiedLinkCapacity;
+			link.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += extraCarriedTraffic;
+			link.occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += extraOccupiedLinkCapacity;
 		}
-		demand.carriedTraffic += this.carriedTraffic - oldCarriedTraffic;
+		demand.carriedTraffic += extraCarriedTraffic;
 		if (demand.coupledUpperLayerLinks != null) for (Link e : demand.coupledUpperLayerLinks.values()) e.capacity = demand.carriedTraffic;
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
@@ -616,11 +611,11 @@ public class MulticastTree extends NetworkElement
 		if (!shouldBeUp != this.isDown()) throw new RuntimeException("Bad");
 		if (shouldBeUp)
 		{
-			if (carriedTraffic != carriedTrafficIfNotFailing) throw new RuntimeException ("Bad");
+			if (getCarriedTraffic() != carriedTrafficIfNotFailing) throw new RuntimeException ("Bad");
 		}
 		else
 		{
-			if (carriedTraffic != 0) throw new RuntimeException ("Bad");
+			if (getCarriedTraffic() != 0) throw new RuntimeException ("Bad");
 		}
 }
 

@@ -365,7 +365,7 @@ public class Link extends NetworkElement
 	 */
 	public double getMulticastCarriedTraffic()
 	{
-		double accum = 0; for (MulticastTree t : cache_traversingTrees) accum += t.carriedTraffic;
+		double accum = 0; for (MulticastTree t : cache_traversingTrees) accum += t.getCarriedTraffic();
 		return accum;
 	}
 
@@ -375,7 +375,7 @@ public class Link extends NetworkElement
 	 */
 	public double getMulticastOccupiedLinkCapacity()
 	{
-		double accum = 0; for (MulticastTree t : cache_traversingTrees) accum += t.occupiedLinkCapacity;
+		double accum = 0; for (MulticastTree t : cache_traversingTrees) accum += t.getOccupiedLinkCapacity();
 		return accum;
 	}
 
@@ -620,14 +620,14 @@ public class Link extends NetworkElement
 				System.out.println ("Link " + this + ", is down, and carried traffic is: " + carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
 				System.out.println ("Traversing routes: " + cache_traversingRoutes);
 				for (Route r : cache_traversingRoutes.keySet())
-					System.out.println ("Route " + r + ", isDown? " + r.isDown() + ", carriedTraffic: " + r.carriedTraffic + ", carried of all ok: " + r.carriedTrafficIfNotFailing);
+					System.out.println ("Route " + r + ", isDown? " + r.isDown() + ", carriedTraffic: " + r.getCarriedTraffic() + ", carried of all ok: " + r.carriedTrafficIfNotFailing);
 				if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) System.out.println ("f_d for this link, all demands: " + layer.forwardingRules_f_de.viewColumn(index));
 				if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) System.out.println ("x_d for this link, all demands: " + layer.forwardingRules_x_de.viewColumn(index));
 				throw new RuntimeException ("Bad");
 			}
 			if (Math.abs(occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > 1e-3) throw new RuntimeException ("Bad");
-			for (Route r : cache_traversingRoutes.keySet()) if ((r.carriedTraffic != 0) || (r.occupiedLinkCapacity != 0)) throw new RuntimeException ("Bad");
-			for (MulticastTree r : cache_traversingTrees) if ((r.carriedTraffic != 0) || (r.occupiedLinkCapacity != 0)) throw new RuntimeException ("Bad");
+			for (Route r : cache_traversingRoutes.keySet()) if ((r.getCarriedTraffic() != 0) || (r.getOccupiedCapacity() != 0)) throw new RuntimeException ("Bad");
+			for (MulticastTree r : cache_traversingTrees) if ((r.getCarriedTraffic() != 0) || (r.getOccupiedLinkCapacity() != 0)) throw new RuntimeException ("Bad");
 			for (ProtectionSegment r : cache_traversingSegments) if ((r.getCarriedTraffic() != 0) || (r.getOccupiedLinkCapacity() != 0)) throw new RuntimeException ("Bad");
 		}
 		
@@ -643,8 +643,8 @@ public class Link extends NetworkElement
 				if (this.cache_traversingRoutes.containsKey(route))
 				{
 					int numPasses = 0; for (Link linkRoute : route.cache_seqLinksRealPath) if (linkRoute == this) numPasses ++; if (numPasses != this.cache_traversingRoutes.get(route)) throw new RuntimeException ("Bad");
-					check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += route.carriedTraffic * this.cache_traversingRoutes.get(route);
-					check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += route.occupiedLinkCapacity * this.cache_traversingRoutes.get(route);
+					check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += route.getCarriedTraffic() * this.cache_traversingRoutes.get(route);
+					check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += route.getOccupiedCapacity() * this.cache_traversingRoutes.get(route);
 //					System.out.println ("Route " + route + ", traverses this link (" + this + "), numPasses: " + this.cache_traversingRoutes.get(route) + ", its carried traffic is: " + route.carriedTraffic + " and thus accumlates a carried traffic of: " + (route.carriedTraffic * this.cache_traversingRoutes.get(route)));
 				}
 			}
@@ -658,8 +658,8 @@ public class Link extends NetworkElement
 			if (this.cache_traversingTrees.contains(tree) != tree.linkSet.contains(this)) throw new RuntimeException ("Bad");
 			if (this.cache_traversingTrees.contains(tree))
 			{
-				check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += tree.carriedTraffic;
-				check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += tree.occupiedLinkCapacity;
+				check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += tree.getCarriedTraffic();
+				check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += tree.getOccupiedLinkCapacity();
 			}
 		}
 
@@ -673,7 +673,7 @@ public class Link extends NetworkElement
 		if (Math.abs(carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments - check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) 
 		{
 			System.out.println ("Link "+ this + ", is Up: " + isUp + ", trav routes: " + cache_traversingRoutes + ", trav segments: " + cache_traversingSegments);
-			for (Route r : cache_traversingRoutes.keySet()) System.out.println ("-- trav route: " + r + ", is down: " + r.isDown() + ", carried: " + r.carriedTraffic + ", carried all ok: " + r.carriedTrafficIfNotFailing + ", seq links and ps: " + r.cache_seqLinksAndProtectionSegments + ", seqlinks real: " + r.cache_seqLinksRealPath);
+			for (Route r : cache_traversingRoutes.keySet()) System.out.println ("-- trav route: " + r + ", is down: " + r.isDown() + ", carried: " + r.getCarriedTraffic() + ", carried all ok: " + r.carriedTrafficIfNotFailing + ", seq links and ps: " + r.cache_seqLinksAndProtectionSegments + ", seqlinks real: " + r.cache_seqLinksRealPath);
 			for (ProtectionSegment r : cache_traversingSegments) System.out.println ("-- trav segment: " + r + ", is down: " + r.isDown() + ", carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + r.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments + ", sea links: " + r.seqLinks);
 			throw new RuntimeException ("Bad: carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments + ", check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
 		}

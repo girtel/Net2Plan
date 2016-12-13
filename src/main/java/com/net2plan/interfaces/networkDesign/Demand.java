@@ -641,7 +641,7 @@ public class Demand extends NetworkElement
 			for (Route r : cache_routes)
 			{
 				if (!r.demand.equals (this)) throw new RuntimeException ("Bad");
-				check_carriedTraffic += r.carriedTraffic;
+				check_carriedTraffic += r.getCarriedTraffic();
 			}
 		}
 		else

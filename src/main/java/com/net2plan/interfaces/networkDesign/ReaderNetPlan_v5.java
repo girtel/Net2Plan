@@ -287,10 +287,10 @@ class ReaderNetPlan_v5 implements IReaderNetPlan //extends NetPlanFormat_v3
 		long routeId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "id"));
 		if (routeId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
 		long demandId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "demandId"));
-		double carriedTraffic = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "carriedTraffic"));
-		double occupiedCapacity = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "occupiedCapacity"));
-		double carriedTrafficIfNotFailing = carriedTraffic; try { carriedTrafficIfNotFailing = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "carriedTrafficIfNotFailing")); } catch (Exception e) {} 
-		double occupiedLinkCapacityIfNotFailing = occupiedCapacity; try { occupiedLinkCapacityIfNotFailing = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "occupiedLinkCapacityIfNotFailing")); } catch (Exception e) {} 
+		//double carriedTraffic = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "carriedTraffic"));
+		//double occupiedCapacity = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "occupiedCapacity"));
+		double carriedTrafficIfNotFailing = 0.0; try { carriedTrafficIfNotFailing = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "carriedTrafficIfNotFailing")); } catch (Exception e) {} 
+		double occupiedLinkCapacityIfNotFailing = 0.0; try { occupiedLinkCapacityIfNotFailing = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "occupiedLinkCapacityIfNotFailing")); } catch (Exception e) {} 
 		if (occupiedLinkCapacityIfNotFailing < 0) occupiedLinkCapacityIfNotFailing = carriedTrafficIfNotFailing;
 		
 		List<Long> initialSeqLinksAndResources = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "initialSeqLinksAndResources")));
@@ -344,8 +344,8 @@ class ReaderNetPlan_v5 implements IReaderNetPlan //extends NetPlanFormat_v3
 		Route newRoute = netPlan.addServiceChain(routeId , netPlan.getDemandFromId(demandId) , carriedTrafficIfNotFailing, occupiedLinkCapacityIfNotFailing, initialSeqLinksAndResources_obj, initialResourceOccupationMap_obj , null);
 		for(long segmentId : backupSegmentList) newRoute.addProtectionSegment(netPlan.getProtectionSegmentFromId(segmentId));
 		newRoute.setSeqLinksSegmentsAndResourcesOccupation(currentSeqLinksSegmentsAndResources_obj , currentResourceOccupationMap_obj);
-		if (Math.abs (newRoute.getCarriedTraffic() - carriedTraffic) > 1e-3) throw new RuntimeException ("Bad");
-		if (Math.abs (newRoute.getOccupiedCapacity() - occupiedCapacity) > 1e-3) throw new RuntimeException ("Bad");
+		if (Math.abs (newRoute.getCarriedTrafficInNoFailureState() - carriedTrafficIfNotFailing) > 1e-3) throw new RuntimeException ("Bad");
+		if (Math.abs (newRoute.getOccupiedCapacityInNoFailureState() - occupiedLinkCapacityIfNotFailing) > 1e-3) throw new RuntimeException ("Bad");
 		
 		while(xmlStreamReader.hasNext())
 		{

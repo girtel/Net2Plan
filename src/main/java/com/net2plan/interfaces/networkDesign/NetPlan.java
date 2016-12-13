@@ -575,7 +575,7 @@ public class NetPlan extends NetworkElement
 		for (Route originRoute : origin.routes)
 		{
 			List<Link> newSeqLinksRealPath = new LinkedList<Link> (); for (Link originLink : originRoute.cache_seqLinksRealPath) newSeqLinksRealPath.add (newLayer.links.get (originLink.index));
-			Route newRoute = this.addRoute(newLayer.demands.get(originRoute.demand.index) , originRoute.carriedTraffic , originRoute.occupiedLinkCapacity , newSeqLinksRealPath , originRoute.attributes);
+			Route newRoute = this.addRoute(newLayer.demands.get(originRoute.demand.index) , originRoute.carriedTrafficIfNotFailing , originRoute.occupiedLinkCapacityIfNotFailing , newSeqLinksRealPath , originRoute.attributes);
 			List<Link> newSeqLinksAndProtectionSegment = new LinkedList<Link> (); 
 			for (Link originLink : originRoute.cache_seqLinksAndProtectionSegments) 
 				if (originLink instanceof ProtectionSegment)
@@ -587,7 +587,7 @@ public class NetPlan extends NetworkElement
 		for (MulticastTree originTree: origin.multicastTrees)
 		{
 			Set<Link> newSetLinks = new HashSet<Link> (); for (Link originLink : originTree.linkSet) newSetLinks.add (newLayer.links.get (originLink.index));
-			this.addMulticastTree(newLayer.multicastDemands.get(originTree.demand.index) , originTree.carriedTraffic , originTree.occupiedLinkCapacity , newSetLinks , originTree.attributes);
+			this.addMulticastTree(newLayer.multicastDemands.get(originTree.demand.index) , originTree.carriedTrafficIfNotFailing , originTree.occupiedLinkCapacityIfNotFailing , newSetLinks , originTree.attributes);
 		}
 
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
@@ -1785,9 +1785,7 @@ public class NetPlan extends NetworkElement
 						originRoute.attributes); 
 				//Route (NetPlan netPlan , long id , int index , Demand demand , List<? extends NetworkElement> seqLinksRealPathAndResourcesTraversedWhenCreated , Map <Resource,Double> occupationInformationInTraversedResources , AttributeMap attributes)
 
-				newElement.carriedTraffic = originRoute.carriedTraffic;
 				newElement.carriedTrafficIfNotFailing = originRoute.carriedTrafficIfNotFailing;
-				newElement.occupiedLinkCapacity = originRoute.occupiedLinkCapacity;
 				newElement.occupiedLinkCapacityIfNotFailing = originRoute.occupiedLinkCapacityIfNotFailing;
 				cache_id2RouteMap.put(originRoute.id, newElement);
 				newLayer.routes.add (newElement);
@@ -1799,8 +1797,6 @@ public class NetPlan extends NetworkElement
 				MulticastTree newElement = new MulticastTree (this , originTree.id , originTree.index , cache_id2MulticastDemandMap.get(originTree.demand.id) , newSetLinks , originTree.attributes); 
 				cache_id2MulticastTreeMap.put(originTree.id, newElement);
 				newLayer.multicastTrees.add (newElement);
-				newElement.carriedTraffic = originTree.carriedTraffic;
-				newElement.occupiedLinkCapacity = originTree.occupiedLinkCapacity;
 				newElement.carriedTrafficIfNotFailing = originTree.carriedTrafficIfNotFailing;
 				newElement.occupiedLinkCapacityIfNotFailing = originTree.occupiedLinkCapacityIfNotFailing;
 			}
@@ -2356,7 +2352,7 @@ public class NetPlan extends NetworkElement
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) return layer.forwardingRules_x_de.copy();
 		DoubleMatrix2D x_de = DoubleFactory2D.sparse.make (layer.demands.size () , layer.links.size ());
-		for (Route r : layer.routes) for (Link e : r.cache_seqLinksRealPath) x_de.set (r.demand.index , e.index , x_de.get(r.demand.index , e.index) + r.carriedTraffic);
+		for (Route r : layer.routes) for (Link e : r.cache_seqLinksRealPath) x_de.set (r.demand.index , e.index , x_de.get(r.demand.index , e.index) + r.getCarriedTraffic());
 		return x_de;
 	}
 
@@ -2521,7 +2517,7 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix2D x_de = DoubleFactory2D.sparse.make (layer.multicastDemands.size () , layer.links.size ());
-		for (MulticastTree t : layer.multicastTrees) for (Link e : t.linkSet) x_de.set (t.demand.index , e.index , x_de.get(t.demand.index , e.index) + t.carriedTraffic);
+		for (MulticastTree t : layer.multicastTrees) for (Link e : t.linkSet) x_de.set (t.demand.index , e.index , x_de.get(t.demand.index , e.index) + t.getCarriedTraffic());
 		return x_de;
 	}
 
@@ -3914,7 +3910,7 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.multicastTrees.size());
-		for (MulticastTree e : layer.multicastTrees) res.set(e.index, e.carriedTraffic);
+		for (MulticastTree e : layer.multicastTrees) res.set(e.index, e.getCarriedTraffic());
 		return res;
 	}
 
@@ -3953,7 +3949,7 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.multicastTrees.size());
-		for (MulticastTree e : layer.multicastTrees) res.set(e.index, e.occupiedLinkCapacity);
+		for (MulticastTree e : layer.multicastTrees) res.set(e.index, e.getOccupiedLinkCapacity());
 		return res;
 	}
 
@@ -4060,7 +4056,7 @@ public class NetPlan extends NetworkElement
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
-		for (Route e : layer.routes) res.set(e.index, e.carriedTraffic);
+		for (Route e : layer.routes) res.set(e.index, e.getCarriedTraffic());
 		return res;
 	}
 
@@ -4182,7 +4178,7 @@ public class NetPlan extends NetworkElement
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
-		for (Route e : layer.routes) res.set(e.index, e.occupiedLinkCapacity);
+		for (Route e : layer.routes) res.set(e.index, e.getOccupiedCapacity());
 		return res;
 	}
 
@@ -4486,7 +4482,7 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Removes all the multicast trees carrying no traffic and occupying no link capacity defined in the given layer. If no layer is provided, default layer is used.</p>
+	 * <p>Removes all the multicast trees carrying no traffic and occupying no link capacity (even in the no failure state) defined in the given layer. If no layer is provided, default layer is used.</p>
 	 *
 	 * @param toleranceTrafficAndCapacityValueToConsiderUnusedTree Tolerance capacity to consider a link unsused
 	 * @param optionalLayerParameter Network layer (optional)
@@ -4495,7 +4491,7 @@ public class NetPlan extends NetworkElement
 	{
 		checkIsModifiable();
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		for (MulticastTree t : new ArrayList<MulticastTree> (layer.multicastTrees)) if ((t.carriedTraffic < toleranceTrafficAndCapacityValueToConsiderUnusedTree) && (t.occupiedLinkCapacity < toleranceTrafficAndCapacityValueToConsiderUnusedTree)) t.remove ();
+		for (MulticastTree t : new ArrayList<MulticastTree> (layer.multicastTrees)) if ((t.carriedTrafficIfNotFailing < toleranceTrafficAndCapacityValueToConsiderUnusedTree) && (t.occupiedLinkCapacityIfNotFailing < toleranceTrafficAndCapacityValueToConsiderUnusedTree)) t.remove ();
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 	}
 
@@ -4553,7 +4549,8 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Removes all the routes defined in the given layer that do not carry traffic nor occupy link capacity in the given layer. If no layer is provided, default layer is assumed.</p>
+	 * <p>Removes all the routes defined in the given layer that do not carry traffic nor occupy link capacity in the given layer
+	 *  (even in a no-failure state). If no layer is provided, default layer is assumed.</p>
 	 * @param toleranceTrafficAndCapacityValueToConsiderUnusedRoute Tolerance traffic to consider a route unused
 	 * @param optionalLayerParameter Network layer (optional)
 	 */
@@ -4562,7 +4559,7 @@ public class NetPlan extends NetworkElement
 		checkIsModifiable();
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		for (Route r : new ArrayList<Route> (layer.routes)) if ((r.carriedTraffic < toleranceTrafficAndCapacityValueToConsiderUnusedRoute) && (r.occupiedLinkCapacity < toleranceTrafficAndCapacityValueToConsiderUnusedRoute)) r.remove ();
+		for (Route r : new ArrayList<Route> (layer.routes)) if ((r.carriedTrafficIfNotFailing < toleranceTrafficAndCapacityValueToConsiderUnusedRoute) && (r.occupiedLinkCapacityIfNotFailing < toleranceTrafficAndCapacityValueToConsiderUnusedRoute)) r.remove ();
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 	}
 
@@ -4871,8 +4868,6 @@ public class NetPlan extends NetworkElement
 
 					writer.writeAttribute("id", Long.toString(tree.id));
 					writer.writeAttribute("demandId", Long.toString(tree.demand.id));
-					writer.writeAttribute("carriedTraffic", Double.toString(tree.carriedTraffic));
-					writer.writeAttribute("occupiedCapacity", Double.toString(tree.occupiedLinkCapacity));
 					writer.writeAttribute("carriedTrafficIfNotFailing", Double.toString(tree.carriedTrafficIfNotFailing));
 					writer.writeAttribute("occupiedLinkCapacityIfNotFailing", Double.toString(tree.occupiedLinkCapacityIfNotFailing));
 					List<Long> linkIds = new LinkedList<Long> (); for (Link e : tree.linkSet) linkIds.add (e.id);
@@ -4944,8 +4939,6 @@ public class NetPlan extends NetworkElement
 
 						writer.writeAttribute("id", Long.toString(route.id));
 						writer.writeAttribute("demandId", Long.toString(route.demand.id));
-						writer.writeAttribute("carriedTraffic", Double.toString(route.carriedTraffic));
-						writer.writeAttribute("occupiedCapacity", Double.toString(route.occupiedLinkCapacity));
 						writer.writeAttribute("carriedTrafficIfNotFailing", Double.toString(route.carriedTrafficIfNotFailing));
 						writer.writeAttribute("occupiedLinkCapacityIfNotFailing", Double.toString(route.occupiedLinkCapacityIfNotFailing));
 						/* If the initial seq links (when the route was created) contains removed links: we use the current sequence */
@@ -6061,7 +6054,7 @@ public class NetPlan extends NetworkElement
 						String str_seqLinks = CollectionUtils.join(route.cache_seqLinksRealPath , " => ");
 						String backupSegments = route.potentialBackupSegments.isEmpty() ? "none" : CollectionUtils.join(route.potentialBackupSegments, ", ");
 
-						String routeInformation = String.format("r%d (id %d), demand: d%d (id %d), carried traffic: %.3g, occupied capacity: %.3g, seq. links: %s, seq. nodes: %s, backup segments: %s, attributes: %s", route.index , route.id , route.demand.index , route.demand.id, route.carriedTraffic, route.occupiedLinkCapacity, str_seqLinks, str_seqNodes, backupSegments, route.attributes.isEmpty() ? "none" : route.attributes);
+						String routeInformation = String.format("r%d (id %d), demand: d%d (id %d), carried traffic: %.3g, occupied capacity: %.3g, seq. links: %s, seq. nodes: %s, backup segments: %s, attributes: %s", route.index , route.id , route.demand.index , route.demand.id, route.getCarriedTraffic(), route.getOccupiedCapacity(), str_seqLinks, str_seqNodes, backupSegments, route.attributes.isEmpty() ? "none" : route.attributes);
 						netPlanInformation.append(routeInformation);
 						netPlanInformation.append(NEWLINE);
 					}
@@ -6099,12 +6092,11 @@ public class NetPlan extends NetworkElement
 						String str_seqNodes = CollectionUtils.join(tree.cache_traversedNodes , " , ");
 						String str_seqLinks = CollectionUtils.join(tree.linkSet , " , ");
 
-						String treeInformation = String.format("mt%d (id %d), multicast demand: md%d (id %d), carried traffic: %.3g, occupied capacity: %.3g, links: %s, nodes: %s, attributes: %s", tree.index , tree.id , tree.demand.index , tree.demand.id , tree.carriedTraffic, tree.occupiedLinkCapacity, str_seqLinks, str_seqNodes, tree.attributes.isEmpty() ? "none" : tree.attributes);
+						String treeInformation = String.format("mt%d (id %d), multicast demand: md%d (id %d), carried traffic: %.3g, occupied capacity: %.3g, links: %s, nodes: %s, attributes: %s", tree.index , tree.id , tree.demand.index , tree.demand.id , tree.getCarriedTraffic(), tree.getOccupiedLinkCapacity(), str_seqLinks, str_seqNodes, tree.attributes.isEmpty() ? "none" : tree.attributes);
 						netPlanInformation.append(treeInformation);
 						netPlanInformation.append(NEWLINE);
 					}
 				}
-
 			}
 			else
 			{
@@ -6225,8 +6217,6 @@ public class NetPlan extends NetworkElement
 			if (isUp == previouslyUp) return;
 			if (isUp) // from down to up
 			{
-				if (route.occupiedLinkCapacity != 0) throw new RuntimeException ("Bad");
-				if (route.carriedTraffic != 0) throw new RuntimeException ("Bad");
 				route.layer.cache_routesDown.remove (route); 
 				final boolean previousDebug = ErrorHandling.isDebugEnabled(); ErrorHandling.setDebug(false);
 	 			route.setCarriedTrafficAndResourcesOccupationInformation(route.carriedTrafficIfNotFailing , route.occupiedLinkCapacityIfNotFailing , route.resourcesTraversedAndOccupiedCapIfnotFailMap);
@@ -6235,8 +6225,6 @@ public class NetPlan extends NetworkElement
 			}
 			else 
 			{
-				if (route.occupiedLinkCapacity != route.occupiedLinkCapacityIfNotFailing) throw new RuntimeException ("Bad");
-				if (route.carriedTraffic != route.carriedTrafficIfNotFailing) throw new RuntimeException ("Bad");
 				route.layer.cache_routesDown.add (route); 
 //				System.out.println ("up to down : route.layer.cache_routesDown: " + route.layer.cache_routesDown);
 				final boolean previousDebug = ErrorHandling.isDebugEnabled(); ErrorHandling.setDebug(false);
@@ -6254,14 +6242,14 @@ public class NetPlan extends NetworkElement
 			if (isUp == previouslyUp) return;
 			if (isUp) // from down to up
 			{
-				if (tree.occupiedLinkCapacity != 0) throw new RuntimeException ("Bad");
-				if (tree.carriedTraffic != 0) throw new RuntimeException ("Bad");
+				if (tree.getOccupiedLinkCapacity()!= 0) throw new RuntimeException ("Bad");
+				if (tree.getCarriedTraffic() != 0) throw new RuntimeException ("Bad");
 				tree.layer.cache_multicastTreesDown.remove (tree); 
 			}
 			else 
 			{
-				if (tree.occupiedLinkCapacity != tree.occupiedLinkCapacityIfNotFailing) throw new RuntimeException ("Bad");
-				if (tree.carriedTraffic != tree.carriedTrafficIfNotFailing) throw new RuntimeException ("Bad");
+				if (tree.getOccupiedLinkCapacity() != tree.occupiedLinkCapacityIfNotFailing) throw new RuntimeException ("Bad");
+				if (tree.getCarriedTraffic() != tree.carriedTrafficIfNotFailing) throw new RuntimeException ("Bad");
 				tree.layer.cache_multicastTreesDown.add (tree); 
 			}
 			final boolean previousDebug = ErrorHandling.isDebugEnabled(); ErrorHandling.setDebug(false);

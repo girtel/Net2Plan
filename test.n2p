@@ -15,8 +15,8 @@
 		<serviceChainResourceTypeOfSequence type="baseType"/>
 		</demand>
 		<sourceRouting>
-			<route id="9" demandId="5" carriedTraffic="100.0" occupiedCapacity="200.0" carriedTrafficIfNotFailing="100.0" occupiedLinkCapacityIfNotFailing="200.0" initialSeqLinksAndResources="8 4" initialResourceOccupationMap="8.0 1.0" currentSeqLinksSegmentsAndResources="8 4" currentResourceOccupationMap="8.0 1.0" backupSegmentList=""/>
-			<route id="10" demandId="6" carriedTraffic="100.0" occupiedCapacity="300.0" carriedTrafficIfNotFailing="100.0" occupiedLinkCapacityIfNotFailing="300.0" initialSeqLinksAndResources="7 4" initialResourceOccupationMap="7.0 1.0" currentSeqLinksSegmentsAndResources="7 4" currentResourceOccupationMap="7.0 1.0" backupSegmentList=""/>
+			<route id="9" demandId="5" carriedTrafficIfNotFailing="100.0" occupiedLinkCapacityIfNotFailing="200.0" initialSeqLinksAndResources="8 4" initialResourceOccupationMap="8.0 1.0" currentSeqLinksSegmentsAndResources="8 4" currentResourceOccupationMap="8.0 1.0" backupSegmentList=""/>
+			<route id="10" demandId="6" carriedTrafficIfNotFailing="100.0" occupiedLinkCapacityIfNotFailing="300.0" initialSeqLinksAndResources="7 4" initialResourceOccupationMap="7.0 1.0" currentSeqLinksSegmentsAndResources="7 4" currentResourceOccupationMap="7.0 1.0" backupSegmentList=""/>
 		</sourceRouting>
 	</layer>
 </network>

@@ -329,10 +329,10 @@ public class ProtectionSegment extends Link
 			final Route r = entry.getKey();
 			final Integer times = entry.getValue(); if (times < 1) throw new RuntimeException ("Bad");
 			if (!r.cache_seqLinksAndProtectionSegments.contains(this)) throw new RuntimeException ("Bad");
-			if (!shouldBeUp && (r.carriedTraffic > 1e-3)) throw new RuntimeException ("Bad");
-			if (!shouldBeUp && (r.occupiedLinkCapacity > 1e-3)) throw new RuntimeException ("Bad");
-			checkCarryingTraffic += times * r.carriedTraffic; 
-			checkOccupiedSegmentCapacity += times * r.occupiedLinkCapacity;
+			if (!shouldBeUp && (r.getCarriedTraffic() > 1e-3)) throw new RuntimeException ("Bad");
+			if (!shouldBeUp && (r.getOccupiedCapacity() > 1e-3)) throw new RuntimeException ("Bad");
+			checkCarryingTraffic += times * r.getCarriedTraffic(); 
+			checkOccupiedSegmentCapacity += times * r.getOccupiedCapacity();
 		}
 		if (Math.abs(checkCarryingTraffic - this.carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) > 1e-3)
 		{
