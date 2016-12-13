@@ -190,7 +190,7 @@ public final class TableStateController
         writer.flush();
         writer.close();
 
-        JOptionPane.showMessageDialog(null,"Table State saved successfully!");
+        JOptionPane.showMessageDialog(null,"Tables Visualization Profile saved successfully!");
 
     }
 

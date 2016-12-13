@@ -141,8 +141,8 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         hideAllItem.setToolTipText("It will hide all unlocked columns unless the first of them");
         attributesItem = new JCheckBoxMenuItem("Expand attributes as columns", false);
         resetItem = new JMenuItem("Reset columns positions");
-        loadStateItem = new JMenuItem("Load table state");
-        saveStateItem = new JMenuItem("Save table state");
+        loadStateItem = new JMenuItem("Load tables visualization profile");
+        saveStateItem = new JMenuItem("Save tables visualization profile");
 
 
         if (canExpandAttributes)
@@ -733,7 +733,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         {
             entry.getValue().updateTableFromTableState(tStateMap.get(entry.getValue().getNetworkElementType()));
         }
-        JOptionPane.showMessageDialog(null,"Table State loaded succesfully!");
+        JOptionPane.showMessageDialog(null,"Tables Visualization Profile loaded succesfully!");
 
     }
 
