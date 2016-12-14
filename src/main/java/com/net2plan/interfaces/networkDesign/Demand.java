@@ -357,10 +357,8 @@ public class Demand extends NetworkElement
 	public RoutingCycleType getRoutingCycleType()
 	{
 		checkAttachedToNetPlanObject ();
-		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
-			return routingCycleType;
-		else
-			for (Route r : cache_routes) if (r.hasLoops()) return RoutingCycleType.OPEN_CYCLES;
+		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) return routingCycleType;
+		for (Route r : cache_routes) if (r.hasLoops()) return RoutingCycleType.OPEN_CYCLES;
 		return RoutingCycleType.LOOPLESS;
 	}
 
