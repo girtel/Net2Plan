@@ -366,12 +366,7 @@ public class OSMMapController
     {
         if (isMapActivated())
         {
-            final int maximumZoomLevel = mapViewer.getTileFactory().getInfo().getMaximumZoomLevel() - 1;
-
-            if (!(mapViewer.getZoom() == maximumZoomLevel))
-            {
-                mapViewer.setZoom(mapViewer.getZoom() + 1);
-            }
+            mapViewer.setZoom(mapViewer.getZoom() + 1);
 
             // Align the topology to the newly change OSM map.
             alignZoomJUNGToOSMMap();
