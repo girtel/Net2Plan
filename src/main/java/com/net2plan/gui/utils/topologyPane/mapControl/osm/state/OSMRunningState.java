@@ -23,31 +23,38 @@ import java.io.File;
  */
 public class OSMRunningState implements OSMState
 {
+    private final OSMMapController mapController;
+
+    public OSMRunningState(final OSMMapController mapController)
+    {
+         this.mapController = mapController;
+    }
+
     @Override
     public void panTo(Point2D initialPoint, Point2D currentPoint)
     {
         final double dxPanelPixelCoord = (currentPoint.getX() - initialPoint.getX());
         final double dyPanelPixelCoord = (currentPoint.getY() - initialPoint.getY());
 
-        OSMMapController.moveMap(-dxPanelPixelCoord, -dyPanelPixelCoord);
+        mapController.moveMap(-dxPanelPixelCoord, -dyPanelPixelCoord);
     }
 
     @Override
     public void zoomIn()
     {
-        OSMMapController.zoomIn();
+        mapController.zoomIn();
     }
 
     @Override
     public void zoomOut()
     {
-        OSMMapController.zoomOut();
+        mapController.zoomOut();
     }
 
     @Override
     public void zoomAll()
     {
-        OSMMapController.zoomAll();
+        mapController.zoomAll();
     }
 
     @Override
@@ -65,7 +72,7 @@ public class OSMRunningState implements OSMState
         topologyPanel.getCanvas().addNode(node);
         topologyPanel.getCanvas().refresh();
 
-        OSMMapController.zoomAll();
+        mapController.zoomAll();
     }
 
     @Override
@@ -95,7 +102,7 @@ public class OSMRunningState implements OSMState
         FileNameExtensionFilter pngFilter = new FileNameExtensionFilter("PNG files", "png");
         fc.setFileFilter(pngFilter);
 
-        JComponent component = OSMMapController.getMapComponent();
+        JComponent component = mapController.getMapComponent();
         BufferedImage bi = ImageUtils.trim(ImageUtils.takeSnapshot(component));
 
         int s = fc.showSaveDialog(null);

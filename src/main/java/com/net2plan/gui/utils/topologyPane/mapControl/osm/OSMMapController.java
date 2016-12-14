@@ -23,26 +23,21 @@ import java.awt.geom.Point2D;
 import java.util.*;
 
 /**
- * Created by Jorge San Emeterio on 03/11/2016.
+ * @author Jorge San Emeterio
+ * @date 03/11/2016
  */
+@SuppressWarnings({"unchecked"})
 public class OSMMapController
 {
     private static OSMMapPanel mapViewer;
 
-    private static TopologyPanel topologyPanel;
-    private static ITopologyCanvas canvas;
-    private static INetworkCallback callback;
-
-    private static final double zoomRatio = 0.6;
+    private TopologyPanel topologyPanel;
+    private ITopologyCanvas canvas;
+    private INetworkCallback callback;
 
     // Previous OSM map state
-    private static Rectangle previousOSMViewportBounds;
-    private static int previousZoomLevel;
-
-    // Non-instanciable
-    private OSMMapController()
-    {
-    }
+    private Rectangle previousOSMViewportBounds;
+    private int previousZoomLevel;
 
     /**
      * Starts and runs the OSM map to its original state.
@@ -52,7 +47,7 @@ public class OSMMapController
      * @param canvas        The JUNG canvas.
      * @param callback      The interface to the NetPlan.
      */
-    public static void startMap(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final INetworkCallback callback)
+    public void startMap(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final INetworkCallback callback)
     {
         // Checking if the nodes are valid for this operation.
         // They may not go outside the bounds: x: -180, 180: y: -90, 90
@@ -65,15 +60,15 @@ public class OSMMapController
 
             if (!OSMMapUtils.isInsideBounds(x, y))
             {
-                final StringBuilder builder = new StringBuilder();
-                builder.append("Node: " + node.getName() + " is out of the accepted bounds.\n");
-                builder.append("All nodes must have their coordinates between the ranges: \n");
-                builder.append("x = [-180, 180]\n");
-                builder.append("y = [-90, 90]\n");
+                String message =
+                        "Node: " + node.getName() + " is out of the accepted bounds.\n" +
+                                "All nodes must have their coordinates between the ranges: \n" +
+                                "x = [-180, 180]\n" +
+                                "y = [-90, 90]\n";
 
                 GUINetworkDesign.getStateManager().setStoppedState();
 
-                throw new OSMMapException(builder.toString());
+                throw new OSMMapException(message);
             }
         }
 
@@ -86,10 +81,11 @@ public class OSMMapController
             throw new OSMMapException("Screen resolutions above 1080p are currently not supported.");
         }
 
-        OSMMapController.topologyPanel = topologyPanel;
-        OSMMapController.canvas = canvas;
-        OSMMapController.callback = callback;
-        OSMMapController.mapViewer = new OSMMapPanel();
+        this.topologyPanel = topologyPanel;
+        this.canvas = canvas;
+        this.callback = callback;
+
+        mapViewer = new OSMMapPanel();
 
         // Activating maps on the canvas
         loadMapOntoTopologyPanel();
@@ -101,7 +97,7 @@ public class OSMMapController
     /**
      * Sets the swing component structure.
      */
-    private static void loadMapOntoTopologyPanel()
+    private void loadMapOntoTopologyPanel()
     {
         // Making some swing adjustments.
         // Canvas on top of the OSM map panel.
@@ -127,10 +123,12 @@ public class OSMMapController
      * This state is the one where all nodes are seen and they all fit their corresponding position on the OSM map.
      * This method should only be executed when the OSM map is first run. From then on use {@link #zoomAll()}
      */
-    private static void restartMapState()
+    private void restartMapState()
     {
+        final double zoomRatio = 0.6;
+
         // Canvas components.
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
+        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) this.canvas.getComponent();
         final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
 
         final Map<Long, GeoPosition> nodeToGeoPositionMap = new HashMap<>();
@@ -164,7 +162,7 @@ public class OSMMapController
 
             // The nodes' xy coordinates are not modified.
             final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
-            ((JUNGCanvas) canvas).moveNodeToXYPosition(node, realPosition);
+            canvas.moveNodeToXYPosition(node, realPosition);
         }
 
         // The OSM map is now centered, now is time to fit the topology to the OSM map.
@@ -185,7 +183,7 @@ public class OSMMapController
         mapViewer.repaint();
     }
 
-    private static void alignZoomJUNGToOSMMap()
+    private void alignZoomJUNGToOSMMap()
     {
         final double zoomChange = mapViewer.getZoom() - previousZoomLevel;
 
@@ -201,21 +199,21 @@ public class OSMMapController
         mapViewer.repaint();
     }
 
-    private static void alignPanJUNGToOSMMap()
+    private void alignPanJUNGToOSMMap()
     {
         final Rectangle currentOSMViewportBounds = mapViewer.getViewportBounds();
 
         final double currentCenterX = currentOSMViewportBounds.getCenterX();
         final double currentCenterY = currentOSMViewportBounds.getCenterY();
 
-        final Point2D currentOSMCenterJUNG = ((JUNGCanvas) canvas).convertViewCoordinatesToRealCoordinates(new Point2D.Double(currentCenterX, currentCenterY));
+        final Point2D currentOSMCenterJUNG = canvas.convertViewCoordinatesToRealCoordinates(new Point2D.Double(currentCenterX, currentCenterY));
 
         final double preCenterX = previousOSMViewportBounds.getCenterX();
         final double preCenterY = previousOSMViewportBounds.getCenterY();
 
-        final Point2D previousOSMCenterJUNG = ((JUNGCanvas) canvas).convertViewCoordinatesToRealCoordinates(new Point2D.Double(preCenterX, preCenterY));
+        final Point2D previousOSMCenterJUNG = canvas.convertViewCoordinatesToRealCoordinates(new Point2D.Double(preCenterX, preCenterY));
 
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
+        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) this.canvas.getComponent();
         final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
 
         final double dx = (currentOSMCenterJUNG.getX() - previousOSMCenterJUNG.getX());
@@ -234,7 +232,7 @@ public class OSMMapController
     /**
      * Returns the swing component to the state they were before activating the OSM map.
      */
-    public static void cleanMap()
+    public void cleanMap()
     {
         if (mapViewer != null)
         {
@@ -265,7 +263,7 @@ public class OSMMapController
     /**
      * Restores the topology to its original state.
      */
-    public static void zoomAll()
+    public void zoomAll()
     {
         if (isMapActivated())
         {
@@ -282,7 +280,7 @@ public class OSMMapController
      * @param dx Moves OSM map dx pixels over the X axis.
      * @param dy Moves OSM map dy pixels over the Y axis.
      */
-    public static void moveMap(final double dx, final double dy)
+    public void moveMap(final double dx, final double dy)
     {
         if (isMapActivated())
         {
@@ -307,7 +305,7 @@ public class OSMMapController
     /**
      * Zooms the OSM map in and adapts the topology to its new state.
      */
-    public static void zoomIn()
+    public void zoomIn()
     {
         if (isMapActivated())
         {
@@ -324,7 +322,7 @@ public class OSMMapController
     /**
      * Zooms the OSM map out and adapts the topology to the new state.
      */
-    public static void zoomOut()
+    public void zoomOut()
     {
         if (isMapActivated())
         {
@@ -348,19 +346,19 @@ public class OSMMapController
      *
      * @return Map activation state.
      */
-    private static boolean isMapActivated()
+    private boolean isMapActivated()
     {
         return GUINetworkDesign.getStateManager().getCurrentState() instanceof OSMRunningState;
     }
 
-    public static JComponent getMapComponent()
+    public JComponent getMapComponent()
     {
         return mapViewer;
     }
 
     public static class OSMMapException extends Net2PlanException
     {
-        public OSMMapException(final String message)
+        private OSMMapException(final String message)
         {
             ErrorHandling.showErrorDialog(message, "Could not display OSM Map");
         }
@@ -380,19 +378,9 @@ public class OSMMapController
             return mapViewer.getTileFactory().pixelToGeo(point, mapViewer.getZoom());
         }
 
-        public static boolean isInsideBounds(final Point2D point)
-        {
-            return isInsideBounds(point.getX(), point.getY());
-        }
-
         public static boolean isInsideBounds(final double x, final double y)
         {
-            if ((x > 180 || x < -180) || (y > 90 || y < -90))
-            {
-                return false;
-            }
-
-            return true;
+            return !((x > 180 || x < -180) || (y > 90 || y < -90));
         }
     }
 }

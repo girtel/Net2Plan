@@ -24,13 +24,16 @@ public class OSMStateManager
     private final ITopologyCanvas canvas;
     private final INetworkCallback callback;
 
+    private final OSMMapController mapController;
+
     public OSMStateManager(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final INetworkCallback callback)
     {
         this.topologyPanel = topologyPanel;
         this.canvas = canvas;
         this.callback = callback;
+        this.mapController = new OSMMapController();
 
-        runningState = new OSMRunningState();
+        runningState = new OSMRunningState(mapController);
         stoppedState = new OSMStoppedState(canvas);
         currentState = stoppedState;
     }
@@ -38,13 +41,13 @@ public class OSMStateManager
     public void setRunningState()
     {
         currentState = runningState;
-        OSMMapController.startMap(topologyPanel, canvas, callback);
+        mapController.startMap(topologyPanel, canvas, callback);
     }
 
     public void setStoppedState()
     {
         currentState = stoppedState;
-        OSMMapController.cleanMap();
+        mapController.cleanMap();
     }
 
     public void panTo(final Point2D initialPoint, final Point2D currentPoint)
