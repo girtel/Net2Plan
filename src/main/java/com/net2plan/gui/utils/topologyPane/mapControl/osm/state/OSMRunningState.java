@@ -61,11 +61,7 @@ public class OSMRunningState implements OSMState
     @Override
     public void addNode(TopologyPanel topologyPanel, NetPlan netPlan, String name, Point2D pos)
     {
-        // Compensating canvas zoom
-        final MutableTransformer layoutTransformer = ((JUNGCanvas) topologyPanel.getCanvas()).getTransformer();
-        final double scale = layoutTransformer.getScale();
-
-        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(new Point2D.Double(pos.getX() * scale, -pos.getY() * scale));
+        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(convertJungPointToMapSwing(topologyPanel.getCanvas(), pos));
 
         if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
         {
@@ -86,11 +82,7 @@ public class OSMRunningState implements OSMState
         // Calculating JUNG Coordinates
         final Point2D jungPoint = canvas.convertViewCoordinatesToRealCoordinates(pos);
 
-        // Compensating zoom, all movements must be done over a 1:1 ratio.
-        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getTransformer();
-        final double scale = layoutTransformer.getScale();
-
-        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(new Point2D.Double(jungPoint.getX() * scale, -jungPoint.getY() * scale));
+        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(convertJungPointToMapSwing(canvas, jungPoint));
 
         if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
         {
@@ -117,5 +109,14 @@ public class OSMRunningState implements OSMState
             File f = fc.getSelectedFile();
             ImageUtils.writeImageToFile(f, bi, ImageUtils.ImageType.PNG);
         }
+    }
+
+    private Point2D convertJungPointToMapSwing(final ITopologyCanvas canvas, final Point2D jungPoint)
+    {
+        // Compensating zoom, all movements must be done over a 1:1 ratio.
+        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getTransformer();
+        final double scale = layoutTransformer.getScale();
+
+        return new Point2D.Double(jungPoint.getX() * scale, -jungPoint.getY() * scale);
     }
 }
