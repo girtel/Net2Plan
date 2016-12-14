@@ -254,7 +254,11 @@ public class NetworkLayer extends NetworkElement
 
 		/* update the demand routing cycle information */
 		demand.routingCycleType = fundMatrixComputation.getSecond();
-		if (demand.routingCycleType == RoutingCycleType.CLOSED_CYCLES) { forwardingRules_f_de.viewRow(demand.index).assign(oldForwardingThisDemand); throw new ClosedCycleRoutingException("Closed routing cycle for demand " + demand); }
+		if (demand.routingCycleType == RoutingCycleType.CLOSED_CYCLES) 
+		{ 
+			forwardingRules_f_de.viewRow(demand.index).assign(oldForwardingThisDemand); 
+			throw new ClosedCycleRoutingException("Closed routing cycle for demand " + demand); 
+		}
 		
 		/* update the demand carried traffic */
 		demand.carriedTraffic = demand.offeredTraffic * M.get(demand.ingressNode.index , demand.egressNode.index) * s_egressNode;

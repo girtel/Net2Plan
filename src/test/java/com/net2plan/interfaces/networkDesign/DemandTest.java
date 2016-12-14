@@ -18,6 +18,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
@@ -49,7 +50,8 @@ public class DemandTest
 	{
 		this.np = new NetPlan ();
 		this.lowerLayer = np.getNetworkLayerDefault();
-		this.upperLayer = np.addLayer("upperLayer" , "description" , "upperTrafficUnits" , "upperLinkCapUnits" , null);
+		np.setDemandTrafficUnitsName("Mbps" , lowerLayer);
+		this.upperLayer = np.addLayer("upperLayer" , "description" , "Mbps" , "upperTrafficUnits" , null);
 		this.n1 = this.np.addNode(0 , 0 , "node1" , null);
 		this.n2 = np.addNode(0 , 0 , "node2" , null);
 		this.n3 = np.addNode(0 , 0 , "node3" , null);
@@ -93,8 +95,8 @@ public class DemandTest
 	@Test
 	public void testGetWorseCasePropagationTimeInMs() 
 	{
-		assertEquals (d13.getWorseCasePropagationTimeInMs() , 200 , 0.0);
-		assertEquals (d12.getWorseCasePropagationTimeInMs() , 100 , 0.0);
+		assertEquals (d13.getWorseCasePropagationTimeInMs() , 200000 , 0.0);
+		assertEquals (d12.getWorseCasePropagationTimeInMs() , 100000 , 0.0);
 		r12.remove();
 		assertEquals (d12.getWorseCasePropagationTimeInMs() , 0 , 0.0);
 	}
@@ -102,10 +104,16 @@ public class DemandTest
 	@Test
 	public void testIsTraversingOversubscribedLinks() 
 	{
-		assertTrue (!d12.isTraversingOversubscribedLinks());
-		assertTrue (!d13.isTraversingOversubscribedLinks());
-		link12.setCapacity(1);
+		System.out.println(d12.getRoutes().iterator().next().getSeqLinksRealPath());
+		System.out.println(link12.getCapacity());
+		System.out.println(link12.getOccupiedCapacityIncludingProtectionSegments());
 		assertTrue (d12.isTraversingOversubscribedLinks());
+		assertTrue (d13.isTraversingOversubscribedLinks());
+		link12.setCapacity(500);
+		assertTrue (!d12.isTraversingOversubscribedLinks());
+		assertTrue (d13.isTraversingOversubscribedLinks());
+		link23.setCapacity(500);
+		assertTrue (!d12.isTraversingOversubscribedLinks());
 		assertTrue (!d13.isTraversingOversubscribedLinks());
 	}
 
@@ -183,16 +191,15 @@ public class DemandTest
 	@Test
 	public void testGetForwardingRules() 
 	{
+		scd123.remove();
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		Map<Pair<Demand,Link>,Double> frs = new HashMap<Pair<Demand,Link>,Double> ();
 		frs.put(Pair.of(d12 , link12) , 1.0);
 		assertEquals (d12.getForwardingRules() , frs);
 		frs = new HashMap<Pair<Demand,Link>,Double> ();
 		frs.put(Pair.of(d13 , link12) , 1.0);
+		frs.put(Pair.of(d13 , link23) , 1.0);
 		assertEquals (d13.getForwardingRules() , frs);
-		frs = new HashMap<Pair<Demand,Link>,Double> ();
-		frs.put(Pair.of(scd123 , link12) , 1.0);
-		assertEquals (scd123.getForwardingRules() , frs);
 	}
 
 	@Test
@@ -217,67 +224,124 @@ public class DemandTest
 		assertEquals (d12.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
 		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
 		assertEquals (scd123.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
-		
+		scd123.remove();
+		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		assertEquals (d12.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
+		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
+		np.setRoutingType(RoutingType.SOURCE_ROUTING , lowerLayer);
+		Link link21 = np.addLink(n2,n1,100,100,1,null,lowerLayer);
+		List<Link> path1213 = new LinkedList<Link> (); path1213.add(link12); path1213.add(link21); path1213.add(link13); 
+		Route r1213 = np.addRoute(d13,1,1.5,path1213,null);
+		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.OPEN_CYCLES);
+		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.OPEN_CYCLES);
+		d12.removeAllForwardingRules();
+		np.setForwardingRule(d12, link12 , 1);
+		try { np.setForwardingRule(d12, link21 , 1); fail ("An exception should be here"); } catch (ClosedCycleRoutingException e) {} 
 	}
 
 	@Test
-	public void testGetIngressNode() {
-		fail("Not yet implemented");
+	public void testGetIngressNode() 
+	{
+		assertEquals (d12.getIngressNode() , n1);
+		assertEquals (d13.getIngressNode() , n1);
+		assertEquals (scd123.getIngressNode() , n1);
 	}
 
 	@Test
-	public void testGetEgressNode() {
-		fail("Not yet implemented");
+	public void testGetEgressNode() 
+	{
+		assertEquals (d12.getEgressNode() , n2);
+		assertEquals (d13.getEgressNode() , n3);
+		assertEquals (scd123.getEgressNode() , n3);
 	}
 
 	@Test
-	public void testGetBidirectionalPair() {
-		fail("Not yet implemented");
+	public void testGetBidirectionalPair() 
+	{
+		assertEquals (d12.getBidirectionalPair() , null);
+		Pair<Demand,Demand> pair = np.addDemandBidirectional(n1,n2,3,null,lowerLayer);
+		assertEquals (pair.getFirst().getBidirectionalPair() , pair.getSecond());
+		assertEquals (pair.getSecond().getBidirectionalPair() , pair.getFirst());
 	}
 
 	@Test
-	public void testGetCoupledLink() {
-		fail("Not yet implemented");
+	public void testGetCoupledLink() 
+	{
+		assertEquals (d12.getCoupledLink() , upperLink12);
+		upperLink12.remove();
+		assertEquals (d12.getCoupledLink() , null);
+		assertEquals (d13.getCoupledLink() , null);
 	}
 
 	@Test
-	public void testCoupleToUpperLayerLink() {
-		fail("Not yet implemented");
+	public void testCoupleToNewLinkCreated() 
+	{
+		try { d12.coupleToNewLinkCreated(upperLayer); fail ("Should not be here"); } catch (Exception e) {}
+		try { d13.coupleToNewLinkCreated(lowerLayer); fail ("Should not be here"); } catch (Exception e) {}
+		Link link13new = d13.coupleToNewLinkCreated(upperLayer);
+		assertEquals (d13.getCoupledLink() , link13new);
+		link13new.remove();
+		assertEquals (d13.getCoupledLink() , null);
 	}
 
 	@Test
-	public void testCoupleToNewLinkCreated() {
-		fail("Not yet implemented");
+	public void testDecouple() 
+	{
+		d12.decouple();
+		assertEquals (d12.getCoupledLink() , null);
+		Link link13new = d13.coupleToNewLinkCreated(upperLayer);
+		assertEquals (d13.getCoupledLink() , link13new);
+		d13.decouple();
+		assertEquals (d13.getCoupledLink() , null);
 	}
 
 	@Test
-	public void testDecouple() {
-		fail("Not yet implemented");
+	public void testRemoveAllForwardingRules() 
+	{
+		try { d12.removeAllForwardingRules(); fail ("Bad"); } catch (Exception e) {}
+		scd123.remove();
+		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		d12.removeAllForwardingRules();
+		assertEquals (d12.getCarriedTraffic() , 0 , 0.0);
+		assertEquals (d12.getForwardingRules() , Collections.emptyMap());
 	}
 
 	@Test
-	public void testRemoveAllForwardingRules() {
-		fail("Not yet implemented");
+	public void testComputeShortestPathRoutes() 
+	{
+		Pair<Set<Route>,Double> sps = d12.computeShortestPathRoutes(null);
+		assertEquals (sps.getFirst() , Collections.singleton(r12));
+		assertEquals (sps.getSecond() , 1.0 , 0.0);
+		sps = d13.computeShortestPathRoutes(null);
+		assertEquals (sps.getFirst() , d13.getRoutes());
+		assertEquals (sps.getSecond() , 2 , 0.0);
 	}
 
 	@Test
-	public void testComputeShortestPathRoutes() {
-		fail("Not yet implemented");
+	public void testRemove() 
+	{
+		d12.remove();
+		scd123.remove();
 	}
 
 	@Test
-	public void testRemove() {
-		fail("Not yet implemented");
+	public void testSetOfferedTraffic() 
+	{
+		d12.setOfferedTraffic(101);
+		assertEquals (d12.getOfferedTraffic() , 101 , 0.0);
+		scd123.setOfferedTraffic(101);
+		assertEquals (scd123.getOfferedTraffic() , 101 , 0.0);
 	}
 
 	@Test
-	public void testSetOfferedTraffic() {
-		fail("Not yet implemented");
-	}
-
-	@Test
-	public void testComputeRoutingFundamentalMatrixDemand() {
-		fail("Not yet implemented");
+	public void testComputeRoutingFundamentalMatrixDemand() 
+	{
+		scd123.remove();
+		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		np.setRoutingType(RoutingType.SOURCE_ROUTING , lowerLayer);
+		assertEquals(d12.getRoutes().size() , 1);
+		assertEquals(d12.getRoutes().iterator().next().getSeqLinksRealPath() , Collections.singletonList(link12));
 	}
 
 }

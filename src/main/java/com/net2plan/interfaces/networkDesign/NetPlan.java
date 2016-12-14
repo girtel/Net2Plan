@@ -39,6 +39,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
 
 import org.apache.commons.lang3.mutable.MutableLong;
+import org.apache.commons.math3.genetics.NPointCrossover;
 import org.codehaus.stax2.XMLInputFactory2;
 import org.codehaus.stax2.XMLOutputFactory2;
 import org.codehaus.stax2.XMLStreamReader2;
@@ -50,6 +51,7 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.Version;
 import com.net2plan.internal.XMLUtils;
 import com.net2plan.libraries.GraphUtils;
+import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Constants.RoutingCycleType;
@@ -5261,8 +5263,12 @@ public class NetPlan extends NetworkElement
 		final double previousValueFr = layer.forwardingRules_f_de.get(demand.index , link.index);
 		if (sumOutFde + splittingRatio - previousValueFr > 1 + PRECISION_FACTOR) throw new Net2PlanException("The sum of splitting factors for outgoing links cannot exceed one");
 
+		final double oldSplittingRatio = layer.forwardingRules_f_de.get(demand.index , link.index);
 		layer.forwardingRules_f_de.set(demand.index , link.index , splittingRatio);
-		layer.updateHopByHopRoutingDemand (demand);
+		try 
+		{
+			layer.updateHopByHopRoutingDemand (demand);
+		} catch (Exception e) { layer.forwardingRules_f_de.set(demand.index , link.index , oldSplittingRatio); throw e; }
 
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 		return previousValueFr;
@@ -5593,7 +5599,9 @@ public class NetPlan extends NetworkElement
 		checkIsModifiable();
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		if (layer.routingType == newRoutingType) return;
-
+		if (newRoutingType == RoutingType.HOP_BY_HOP_ROUTING) for (Demand d : layer.demands) if (d.isServiceChainRequest()) 
+			throw new Net2PlanException ("Cannot perform this operation with service chain demands, since the resource traversing information is lost");
+		
 		switch(newRoutingType)
 		{
 			case HOP_BY_HOP_ROUTING:

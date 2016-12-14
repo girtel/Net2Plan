@@ -526,6 +526,7 @@ public class Demand extends NetworkElement
 		{
 			double cost = 0; for (Link link : r.cache_seqLinksRealPath) cost += costs [link.index];
 			if (cost < shortestPathCost) { shortestPathCost = cost; shortestRoutes.clear(); shortestRoutes.add (r); }
+			else if (cost == shortestPathCost) { shortestRoutes.add (r); }
 		}
 		return Pair.of(shortestRoutes , shortestPathCost);
 	}
