@@ -56,6 +56,7 @@ import com.net2plan.utils.StringUtils;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
+@SuppressWarnings("unchecked")
 public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     protected final TableModel model;
     protected final INetworkCallback networkViewer;

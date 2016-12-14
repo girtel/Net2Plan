@@ -67,6 +67,7 @@ import java.util.Map.Entry;
  * @see <a name='jung'></a><a href='http://jung.sourceforge.net/'>Java Universal Network/Graph Framework (JUNG) website</a>
  * @since 0.2.3
  */
+@SuppressWarnings("unchecked")
 public final class JUNGCanvas extends ITopologyCanvas
 {
     private final static Color CANVAS_BGCOLOR = new Color(212, 208, 200);

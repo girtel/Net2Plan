@@ -56,6 +56,7 @@ import java.util.List;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
+@SuppressWarnings("unchecked")
 public final class GUITrafficDesign extends IGUIModule {
     private final static String TITLE = "Traffic matrix design";
     private final static int DEFAULT_NUMBER_OF_NODES = 4;

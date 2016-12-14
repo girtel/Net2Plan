@@ -34,6 +34,7 @@ import java.awt.geom.Point2D;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
+@SuppressWarnings("unchecked")
 public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugin {
     private INetworkCallback callback;
     private long startVertex;

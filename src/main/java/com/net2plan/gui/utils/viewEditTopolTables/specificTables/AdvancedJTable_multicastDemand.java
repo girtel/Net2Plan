@@ -47,6 +47,7 @@ import com.net2plan.utils.StringUtils;
 
 /**
  */
+@SuppressWarnings("unchecked")
 public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement {
     private static final int COLUMN_ID = 0;
     private static final int COLUMN_INDEX = 1;

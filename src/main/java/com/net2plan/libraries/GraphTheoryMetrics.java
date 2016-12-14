@@ -42,6 +42,7 @@ import java.util.*;
  *
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  */
+@SuppressWarnings("unchecked")
 public class GraphTheoryMetrics
 {
 	private final List<Node> nodes;

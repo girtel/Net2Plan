@@ -55,6 +55,7 @@ import net.miginfocom.swing.MigLayout;
 
 /**
  */
+@SuppressWarnings("unchecked")
 public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
     public static final int COLUMN_ID = 0;
     public static final int COLUMN_INDEX = 1;

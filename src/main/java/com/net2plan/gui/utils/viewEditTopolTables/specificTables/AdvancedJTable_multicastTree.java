@@ -48,6 +48,7 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 /**
  */
+@SuppressWarnings("unchecked")
 public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
     private static final int COLUMN_ID = 0;
     private static final int COLUMN_INDEX = 1;

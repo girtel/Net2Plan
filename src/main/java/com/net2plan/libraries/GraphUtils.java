@@ -104,6 +104,7 @@ import edu.uci.ics.jung.visualization.renderers.Renderer;
  * @see <a name='jom'></a><a href='http://www.net2plan.com/jom'>Java Optimization Modeler (JOM) website</a>
  * @see <a name='jgrapht'></a><a href='http://jgrapht.org/'>JGraphT website</a>
  * @see <a name='jung'></a><a href='http://jung.sourceforge.net/'>Java Universal Network/Graph Framework (JUNG) website</a> */
+@SuppressWarnings("unchecked")
 public class GraphUtils
 {
 	private GraphUtils()

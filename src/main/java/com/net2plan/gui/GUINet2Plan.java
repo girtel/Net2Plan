@@ -82,6 +82,7 @@ import net.miginfocom.swing.MigLayout;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
+@SuppressWarnings("unchecked")
 public class GUINet2Plan extends JFrame implements ActionListener {
     private final static String USERSGUIDEFILENAME = "usersGuide.pdf";
     private static GUINet2Plan instance;

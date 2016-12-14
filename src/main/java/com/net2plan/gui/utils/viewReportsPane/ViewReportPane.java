@@ -35,6 +35,7 @@ import com.net2plan.utils.ClassLoaderUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
+@SuppressWarnings("unchecked")
 public class ViewReportPane extends JSplitPane implements ThreadExecutionController.IThreadExecutionHandler
 {
 	private final INetworkCallback mainWindow;

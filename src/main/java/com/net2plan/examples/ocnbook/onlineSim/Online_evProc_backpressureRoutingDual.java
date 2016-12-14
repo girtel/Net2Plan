@@ -60,7 +60,8 @@ import com.net2plan.utils.Triple;
  * @net2plan.inputParameters 
  * @author Pablo Pavon-Marino
  */
-public class Online_evProc_backpressureRoutingDual extends IEventProcessor 
+@SuppressWarnings("unchecked")
+public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 {
 	private static PrintStream getNulFile () { try { return new PrintStream (new FileOutputStream ("NUL") , false); } catch (Exception e) {e.printStackTrace(); throw new RuntimeException ("Not NUL file"); }   } 
 	private PrintStream log = getNulFile (); //System.err;//new PrintStream (new FileOutputStream ("NUL") , true);

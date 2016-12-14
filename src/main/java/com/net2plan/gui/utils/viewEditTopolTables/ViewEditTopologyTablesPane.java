@@ -42,7 +42,8 @@ import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
-public class ViewEditTopologyTablesPane extends JPanel 
+@SuppressWarnings("unchecked")
+public class ViewEditTopologyTablesPane extends JPanel
 {
 	private final INetworkCallback mainWindow;
     private JTabbedPane netPlanView;

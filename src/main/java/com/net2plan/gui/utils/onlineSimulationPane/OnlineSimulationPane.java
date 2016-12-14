@@ -258,6 +258,7 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
             updateSimulationInfo();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void simulationStateChanged(SimCore.SimState simulationState, Throwable reason) {
         simulationConfigurationPanel.setEnabled(false);

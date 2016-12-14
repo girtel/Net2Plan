@@ -27,6 +27,7 @@ import java.util.*;
  *
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  */
+@SuppressWarnings("unchecked")
 public class SRGUtils
 {
 	private SRGUtils() { }

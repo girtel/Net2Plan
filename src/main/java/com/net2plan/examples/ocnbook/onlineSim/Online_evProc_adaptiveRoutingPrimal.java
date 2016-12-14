@@ -58,7 +58,8 @@ import com.net2plan.utils.Constants.RoutingType;
  * @net2plan.inputParameters 
  * @author Pablo Pavon-Marino
  */
-public class Online_evProc_adaptiveRoutingPrimal extends IEventProcessor 
+@SuppressWarnings("unchecked")
+public class Online_evProc_adaptiveRoutingPrimal extends IEventProcessor
 {
 	private InputParameter signaling_isSynchronous = new InputParameter ("signaling_isSynchronous", false , "true if all the distributed agents involved wake up synchronously to send the signaling messages");
 	private InputParameter signaling_averageInterMessageTime = new InputParameter ("signaling_averageInterMessageTime", 1.0 , "Average time between two signaling messages sent by an agent" , 0 , false , Double.MAX_VALUE , true);

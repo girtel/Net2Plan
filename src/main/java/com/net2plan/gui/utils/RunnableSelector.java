@@ -43,6 +43,7 @@ import java.util.List;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
+@SuppressWarnings("unchecked")
 public class RunnableSelector extends JPanel {
     private final static Comparator<String> SORT_FQCN;
     private JButton load;

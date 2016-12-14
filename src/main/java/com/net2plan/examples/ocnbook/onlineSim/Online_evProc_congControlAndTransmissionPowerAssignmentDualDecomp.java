@@ -56,7 +56,8 @@ import com.net2plan.utils.Triple;
  * @net2plan.inputParameters 
  * @author Pablo Pavon-Marino
  */
-public class Online_evProc_congControlAndTransmissionPowerAssignmentDualDecomp extends IEventProcessor 
+@SuppressWarnings("unchecked")
+public class Online_evProc_congControlAndTransmissionPowerAssignmentDualDecomp extends IEventProcessor
 {
 	private Random rng;
 

@@ -54,7 +54,8 @@ import com.net2plan.utils.Triple;
  * @net2plan.inputParameters 
  * @author Pablo Pavon-Marino
  */
-public class Online_evProc_congControlAndQoSTwoClassesPrimalDecomp extends IEventProcessor 
+@SuppressWarnings("unchecked")
+public class Online_evProc_congControlAndQoSTwoClassesPrimalDecomp extends IEventProcessor
 {
 	private double PRECISIONFACTOR;
 	private Random rng;

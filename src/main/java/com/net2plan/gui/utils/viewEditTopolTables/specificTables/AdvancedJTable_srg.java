@@ -70,6 +70,7 @@ import net.miginfocom.swing.MigLayout;
 
 /**
  */
+@SuppressWarnings("unchecked")
 public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
     private static final String netPlanViewTabName = "Shared-risk groups";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "MTTF (hours)", "MTTR (hours)", "Availability",

@@ -62,6 +62,7 @@ import java.util.List;
  * @author rharder@users.sf.net
  * @version 1.0.1
  */
+@SuppressWarnings("unchecked")
 public class FileDrop {
     private transient Border normalBorder;
     private transient java.awt.dnd.DropTargetListener dropListener;
