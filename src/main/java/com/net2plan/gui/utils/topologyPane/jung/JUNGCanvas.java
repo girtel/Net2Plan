@@ -629,11 +629,9 @@ public final class JUNGCanvas extends ITopologyCanvas
         l.setLocation(node, point);
     }
 
-    public double getCurrentScale()
+    public MutableTransformer getTransformer()
     {
-        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
-
-        return layoutTransformer.getScale();
+        return vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
     }
 
     @Override

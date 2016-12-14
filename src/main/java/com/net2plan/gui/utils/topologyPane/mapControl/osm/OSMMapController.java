@@ -2,8 +2,6 @@ package com.net2plan.gui.utils.topologyPane.mapControl.osm;
 
 import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.utils.INetworkCallback;
-import com.net2plan.gui.utils.topologyPane.GUILink;
-import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.components.mapPanel.OSMMapPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
@@ -12,8 +10,6 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.ITopologyCanvas;
-import edu.uci.ics.jung.visualization.Layer;
-import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import org.jxmapviewer.viewer.*;
 
@@ -26,7 +22,6 @@ import java.util.*;
  * @author Jorge San Emeterio
  * @date 03/11/2016
  */
-@SuppressWarnings({"unchecked"})
 public class OSMMapController
 {
     private static OSMMapPanel mapViewer;
@@ -128,8 +123,7 @@ public class OSMMapController
         final double zoomRatio = 0.6;
 
         // Canvas components.
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) this.canvas.getComponent();
-        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getTransformer();
 
         final Map<Long, GeoPosition> nodeToGeoPositionMap = new HashMap<>();
         // Read xy coordinates of each node as latitude and longitude coordinates.
@@ -213,8 +207,7 @@ public class OSMMapController
 
         final Point2D previousOSMCenterJUNG = canvas.convertViewCoordinatesToRealCoordinates(new Point2D.Double(preCenterX, preCenterY));
 
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) this.canvas.getComponent();
-        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getTransformer();
 
         final double dx = (currentOSMCenterJUNG.getX() - previousOSMCenterJUNG.getX());
         final double dy = (currentOSMCenterJUNG.getY() - previousOSMCenterJUNG.getY());
@@ -358,7 +351,7 @@ public class OSMMapController
 
     public static class OSMMapException extends Net2PlanException
     {
-        private OSMMapException(final String message)
+        public OSMMapException(final String message)
         {
             ErrorHandling.showErrorDialog(message, "Could not display OSM Map");
         }
