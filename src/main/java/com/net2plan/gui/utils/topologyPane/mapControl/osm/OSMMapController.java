@@ -38,7 +38,6 @@ public class OSMMapController
     // Previous OSM map state
     private static Rectangle previousOSMViewportBounds;
     private static int previousZoomLevel;
-    private static int originalZoomLevel;
 
     // Non-instanciable
     private OSMMapController()
@@ -130,20 +129,6 @@ public class OSMMapController
      */
     private static void restartMapState()
     {
-        //NOTE: I do not like neither the phantom node idea nor the originalZoom variable. But they do work for now.
-
-        final boolean isEmptyTopology = !callback.getDesign().hasNodes();
-
-        // If no topology is loaded.
-        if (isEmptyTopology)
-        {
-            mapViewer.setDefaultPosition();
-
-            final GeoPosition mapCenter = mapViewer.getCenterPosition();
-            final Node phantomNode = callback.getDesign().addNode(mapCenter.getLongitude(), mapCenter.getLatitude(), "Phantom", null);
-            canvas.addNode(phantomNode);
-        }
-
         // Canvas components.
         final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) OSMMapController.canvas.getComponent();
         final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
@@ -170,7 +155,6 @@ public class OSMMapController
         mapViewer.setSize(1280, 720);
         mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
         mapViewer.setSize(size);
-        originalZoomLevel = mapViewer.getZoom();
 
         // Moving the nodes to the position dictated by their geoposition.
         for (Map.Entry<Long, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
@@ -192,14 +176,6 @@ public class OSMMapController
 
         // As the topology is centered at the same point as the OSM map, and the relation is 1:1 between their coordinates.
         // The nodes will be placed at the exact place as they are supposed to.
-
-        if (isEmptyTopology)
-        {
-            final Node phantomNode = callback.getDesign().getNodeByName("Phantom");
-
-            canvas.removeNode(phantomNode);
-            phantomNode.remove();
-        }
 
         previousOSMViewportBounds = mapViewer.getViewportBounds();
         previousZoomLevel = mapViewer.getZoom();
@@ -401,7 +377,7 @@ public class OSMMapController
         {
             // Pixel to geo must be calculated at the zoom level where canvas and map align.
             // That zoom level is the one given by the restore map method.
-            return mapViewer.getTileFactory().pixelToGeo(point, originalZoomLevel);
+            return mapViewer.getTileFactory().pixelToGeo(point, mapViewer.getZoom());
         }
 
         public static boolean isInsideBounds(final Point2D point)

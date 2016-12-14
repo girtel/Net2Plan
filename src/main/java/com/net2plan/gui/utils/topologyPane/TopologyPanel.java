@@ -31,8 +31,6 @@ import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.components.MenuButton;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMStateManager;
 import com.net2plan.gui.utils.windows.WindowController;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
