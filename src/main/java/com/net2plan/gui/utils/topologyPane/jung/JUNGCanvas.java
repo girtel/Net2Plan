@@ -606,11 +606,11 @@ public final class JUNGCanvas extends ITopologyCanvas
         scalingControl.scale(vv, ratio, vv.getCenter());
 
 		/* Generate an auxiliary node at center of the graph */
-//		GUINode aux = new GUINode(-1, new Point2D.Double((aux_xmin + aux_xmax) / 2, (aux_ymin + aux_ymax) / 2));
         Point2D q = new Point2D.Double((auxTransf_xmin + auxTransf_xmax) / 2, (auxTransf_ymin + auxTransf_ymax) / 2);
         Point2D lvc = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getCenter());
         double dx = (lvc.getX() - q.getX());
         double dy = (lvc.getY() - q.getY());
+
         vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT).translate(dx, dy);
     }
 

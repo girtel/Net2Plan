@@ -16,8 +16,11 @@ public class OSMMapPanel extends JXMapViewer
 {
     private static int imageID = 0;
 
-    protected final TileFactoryInfo info;
-    protected final DefaultTileFactory tileFactory;
+    private static GeoPosition defaultPosition = new GeoPosition(47.20, 25.2);
+    private static int defaultZoom = 16;
+
+    private final TileFactoryInfo info;
+    private final DefaultTileFactory tileFactory;
 
     private final int NUMBER_OF_THREADS = 8;
 
@@ -36,10 +39,18 @@ public class OSMMapPanel extends JXMapViewer
     public void setDefaultPosition()
     {
         // Default position
-        final GeoPosition europe = new GeoPosition(47.20, 25.2);
+        this.setZoom(defaultZoom);
+        this.setCenterPosition(defaultPosition);
+    }
 
-        this.setZoom(16);
-        this.setCenterPosition(europe);
+    public GeoPosition getDefaultPosition()
+    {
+        return defaultPosition;
+    }
+
+    public int getDefaultZoom()
+    {
+        return defaultZoom;
     }
 
     public File saveMap(final int width, final int height)

@@ -7,6 +7,7 @@ import com.net2plan.gui.utils.topologyPane.components.mapPanel.OSMMapPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMRunningState;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.ITopologyCanvas;
@@ -121,6 +122,31 @@ public class OSMMapController
     private void restartMapState()
     {
         final double zoomRatio = 0.6;
+        final boolean isTopologyEmpty = !callback.getDesign().hasNodes();
+
+        final NetPlan netPlan = callback.getDesign();
+
+        // If no topology was loaded.
+        if (isTopologyEmpty)
+        {
+            // Set the map to the default position.
+            final GeoPosition mapCenter = mapViewer.getDefaultPosition();
+            mapViewer.setCenterPosition(mapCenter);
+
+            // Add an auxiliary node to help us center the canvas.
+            final Node phantom = netPlan.addNode(mapCenter.getLongitude(), mapCenter.getLatitude(), "Phantom", null);
+            canvas.addNode(phantom);
+
+            // Redo the function using the auxiliary node.
+            restartMapState();
+
+            // Remove the auxiliary node
+            canvas.removeNode(phantom);
+            phantom.remove();
+
+            // Close the routine in order to avoid recursion.
+            return;
+        }
 
         // Canvas components.
         final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getTransformer();
@@ -139,14 +165,22 @@ public class OSMMapController
         }
 
         // Calculating OSM map center and zoom.
+
         // zoomToBestFit fails to deliver the correct center when the map is too big.
         // To solve this, we will be always calculating the center over a 720p.
         // Resolution at which the map is correctly centered.
         // FIXME: Change this solution?
-        final Dimension size = mapViewer.getSize();
-        mapViewer.setSize(1280, 720);
+//        final Dimension size = mapViewer.getSize();
+//        mapViewer.setSize(1280, 720);
+//        mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
+//        if (netPlan.getNumberOfNodes() == 1)
+//        {
+//            mapViewer.setZoom(16);
+//        }
+//        mapViewer.setSize(size);
+
         mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
-        mapViewer.setSize(size);
+        if (netPlan.getNumberOfNodes() == 1) mapViewer.setZoom(16); // So that the map is not to close to the node.
 
         // Moving the nodes to the position dictated by their geoposition.
         for (Map.Entry<Long, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
