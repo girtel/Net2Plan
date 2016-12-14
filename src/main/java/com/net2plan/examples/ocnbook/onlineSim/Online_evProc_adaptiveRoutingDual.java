@@ -57,6 +57,7 @@ import com.net2plan.utils.Triple;
  * @net2plan.inputParameters 
  * @author Pablo Pavon-Marino
  */
+@SuppressWarnings("unchecked")
 public class Online_evProc_adaptiveRoutingDual extends IEventProcessor
 {
 	private static PrintStream getNulFile () { try { return new PrintStream (new FileOutputStream ("NUL") , false); } catch (Exception e) {e.printStackTrace(); throw new RuntimeException ("Not NUL file"); }   } 

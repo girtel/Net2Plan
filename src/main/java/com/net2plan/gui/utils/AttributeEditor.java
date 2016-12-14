@@ -46,6 +46,7 @@ import com.net2plan.utils.Pair;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.3.0
  */
+@SuppressWarnings("unchecked")
 public class AttributeEditor extends JDialog implements ActionListener {
     private final JTable table;
     private final ArrayList<Long> itemIds;

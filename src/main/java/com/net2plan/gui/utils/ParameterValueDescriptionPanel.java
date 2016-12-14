@@ -44,6 +44,7 @@ import com.net2plan.utils.Triple;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
+@SuppressWarnings("unchecked")
 public class ParameterValueDescriptionPanel extends JPanel
 {
     private final static TableCellRenderer CHECKBOX_RENDERER;

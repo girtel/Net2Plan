@@ -55,6 +55,7 @@ import net.miginfocom.swing.MigLayout;
 
 /**
  */
+@SuppressWarnings("unchecked")
 public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement {
     private static final String netPlanViewTabName = "Forwarding rules";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Node", "Demand", "Outgoing link", "Splitting ratio", "Carried traffic");

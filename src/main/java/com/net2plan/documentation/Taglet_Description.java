@@ -15,7 +15,7 @@ import com.sun.tools.doclets.Taglet;
 // Taglet API
 // Doclet API
 // Used in register(Map)
-
+@SuppressWarnings("unchecked")
 public class Taglet_Description implements Taglet
 {
 

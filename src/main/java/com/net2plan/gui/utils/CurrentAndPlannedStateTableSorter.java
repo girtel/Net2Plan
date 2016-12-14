@@ -25,6 +25,7 @@ import java.util.Comparator;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
+@SuppressWarnings("unchecked")
 public class CurrentAndPlannedStateTableSorter<M extends TableModel> extends TableRowSorter<M> {
     /**
      * Default constructor.

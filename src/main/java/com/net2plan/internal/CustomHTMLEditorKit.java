@@ -63,6 +63,7 @@ import org.jsoup.Jsoup;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.3.0
  */
+@SuppressWarnings("unchecked")
 public class CustomHTMLEditorKit extends HTMLEditorKit
 {
 	private static final long serialVersionUID = 1L;

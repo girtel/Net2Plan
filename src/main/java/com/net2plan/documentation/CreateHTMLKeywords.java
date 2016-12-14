@@ -22,6 +22,7 @@ import com.sun.javadoc.DocErrorReporter;
 import com.sun.javadoc.RootDoc;
 import com.sun.javadoc.Tag;
 
+@SuppressWarnings("unchecked")
 public class CreateHTMLKeywords
 {
 	public static Map<String,Pair<String,String>> keywordDescriptionMap = null;

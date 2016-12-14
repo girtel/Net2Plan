@@ -210,6 +210,7 @@ public class ThreadExecutionController {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private class StopExecution implements ActionListener {
         private final SwingWorker worker;
 

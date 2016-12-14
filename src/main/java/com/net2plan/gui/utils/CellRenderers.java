@@ -35,6 +35,7 @@ import java.util.Set;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
+@SuppressWarnings("unchecked")
 public class CellRenderers {
     /**
      * Renderer for cells containing boolean values.

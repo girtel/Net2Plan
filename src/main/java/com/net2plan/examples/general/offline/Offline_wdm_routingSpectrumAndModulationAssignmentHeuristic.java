@@ -128,6 +128,7 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
  * @net2plan.inputParameters 
  * @author Pablo Pavon-Marino
  */
+@SuppressWarnings("unchecked")
 public class Offline_wdm_routingSpectrumAndModulationAssignmentHeuristic implements IAlgorithm
 {
 	private InputParameter k = new InputParameter ("k", (int) 5 , "Maximum number of admissible paths per input-output node pair" , 1 , Integer.MAX_VALUE);

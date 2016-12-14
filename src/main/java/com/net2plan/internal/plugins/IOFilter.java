@@ -44,6 +44,7 @@ import com.net2plan.io.IONet2Plan;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.3.0
  */
+@SuppressWarnings("unchecked")
 public abstract class IOFilter extends FileFilter implements Plugin
 {
 	private final static UnsupportedOperationException UNSUPPORTED_IO_OPERATION = new UnsupportedOperationException();

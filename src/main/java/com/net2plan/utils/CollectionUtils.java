@@ -26,6 +26,7 @@ import java.util.Map.Entry;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.3.0
  */
+@SuppressWarnings("unchecked")
 public class CollectionUtils
 {
 	private CollectionUtils() { }
