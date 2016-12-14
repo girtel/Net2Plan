@@ -32,6 +32,7 @@ public class OSMMapController
     private INetworkCallback callback;
 
     // Previous OSM map state
+    private GeoPosition previousMapCenter;
     private Rectangle previousOSMViewportBounds;
     private int previousZoomLevel;
 
@@ -180,7 +181,18 @@ public class OSMMapController
 //        mapViewer.setSize(size);
 
         mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
-        if (netPlan.getNumberOfNodes() == 1) mapViewer.setZoom(16); // So that the map is not to close to the node.
+        if (netPlan.getNumberOfNodes() == 1) mapViewer.setZoom(16); // So that the map is not too close to the node.
+
+        final GeoPosition currentMapCenter = mapViewer.getCenterPosition();
+        if (previousMapCenter != null)
+        {
+            final double mapdy = currentMapCenter.getLatitude() - previousMapCenter.getLatitude();
+
+            if (mapdy == 0)
+            {
+                // Event that registers when the map is not moving vertically anymore
+            }
+        }
 
         // Moving the nodes to the position dictated by their geoposition.
         for (Map.Entry<Long, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
@@ -205,6 +217,7 @@ public class OSMMapController
 
         previousOSMViewportBounds = mapViewer.getViewportBounds();
         previousZoomLevel = mapViewer.getZoom();
+        previousMapCenter = mapViewer.getCenterPosition();
 
         // Refresh swing components.
         canvas.refresh();
