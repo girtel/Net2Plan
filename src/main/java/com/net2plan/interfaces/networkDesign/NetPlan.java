@@ -154,6 +154,7 @@ public class NetPlan extends NetworkElement
 	ArrayList<SharedRiskGroup> srgs;
 
 	HashSet<Node> cache_nodesDown;
+	Map<String,Set<Resource>> cache_type2Resources;
 	Map<Long,Node> cache_id2NodeMap;
 	Map<Long,Resource> cache_id2ResourceMap;
 	Map<Long,NetworkLayer> cache_id2LayerMap;
@@ -164,6 +165,8 @@ public class NetPlan extends NetworkElement
 	Map<Long,MulticastTree> cache_id2MulticastTreeMap;
 	Map<Long,ProtectionSegment> cache_id2ProtectionSegmentMap;
 	Map<Long,SharedRiskGroup> cache_id2srgMap;
+	
+	
 
 	DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping> interLayerCoupling;
 
@@ -192,6 +195,7 @@ public class NetPlan extends NetworkElement
 		resources = new ArrayList<Resource> ();
 
 		cache_nodesDown = new HashSet<Node> ();
+		this.cache_type2Resources = new HashMap<String,Set<Resource>> ();
 		this.cache_id2NodeMap = new HashMap <Long,Node> ();
 		this.cache_id2ResourceMap = new HashMap <Long,Resource> ();
 		this.cache_id2LayerMap = new HashMap <Long,NetworkLayer> ();
@@ -852,8 +856,12 @@ public class NetPlan extends NetworkElement
 		Resource resource = new Resource (this , resourceId , resources.size () , type , name , hostNode , capacity ,
 				capacityMeasurementUnits, capacityIOccupyInBaseResource , processingTimeToTraversingTraffic , attributes);
 
-		resources.add (resource);
+		resources.add (resource); 
 		cache_id2ResourceMap.put (resourceId , resource);
+		Set<Resource> resOfThisType = cache_type2Resources.get(type);
+		if (resOfThisType == null) { resOfThisType = new HashSet<Resource> (); cache_type2Resources.put(type, resOfThisType); } 
+		resOfThisType.add(resource);
+		hostNode.cache_nodeResources.add(resource);
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 		return resource;
 	}
@@ -1413,6 +1421,7 @@ public class NetPlan extends NetworkElement
 		this.srgs = netPlan.srgs;
 		this.resources = netPlan.resources;
 		this.cache_nodesDown = netPlan.cache_nodesDown;
+		this.cache_type2Resources = netPlan.cache_type2Resources;
 		this.cache_id2LayerMap = netPlan.cache_id2LayerMap;
 		this.cache_id2NodeMap = netPlan.cache_id2NodeMap;
 		this.cache_id2ResourceMap = netPlan.cache_id2ResourceMap;
@@ -1713,6 +1722,7 @@ public class NetPlan extends NetworkElement
 		this.srgs = new ArrayList<SharedRiskGroup> ();
 		this.resources = new ArrayList<Resource> ();
 		this.cache_nodesDown = new HashSet<Node> ();
+		this.cache_type2Resources = new HashMap<String,Set<Resource>> ();
 		this.cache_id2NodeMap = new HashMap <Long,Node> ();
 		this.cache_id2ResourceMap = new HashMap <Long,Resource> ();
 		this.cache_id2LayerMap = new HashMap <Long,NetworkLayer> ();
@@ -1744,6 +1754,9 @@ public class NetPlan extends NetworkElement
 					originResource.name , this.cache_id2NodeMap.get(originResource.hostNode.id) ,
 					originResource.capacity , originResource.capacityMeasurementUnits , null , originResource.processingTimeToTraversingTrafficInMs , originResource.attributes);
 			cache_id2ResourceMap.put(originResource.id, newElement);
+			Set<Resource> resOfThisType = cache_type2Resources.get(originResource.type);
+			if (resOfThisType == null) { resOfThisType = new HashSet<Resource> (); cache_type2Resources.put(originResource.type, resOfThisType); } 
+			resOfThisType.add(newElement);
 			resources.add (newElement);
 		}
 		for (SharedRiskGroup originSrg : originNetPlan.srgs)
@@ -2066,6 +2079,7 @@ public class NetPlan extends NetworkElement
 	 * @return The node with the given index ({@code null} if it does not exist, index iss lesser than zero or greater than the number of elements minus one)
 	 */
 	public Node getNode (int index) { if ((index < 0) || (index > nodes.size () -1)) return null; else return nodes.get(index); }
+
 
 	/**
 	 * <p>Returns the link with the given index in the given layer. If no layer is provided, default layer is assumed.</p>
@@ -3570,6 +3584,12 @@ public class NetPlan extends NetworkElement
 	 */
 	public List<Resource> getResources () { return (List<Resource>) Collections.unmodifiableList(resources); }
 
+	/** Returns the set of resources in the network for the given type. If none resource exists for that type, an empty set is returned
+	 * @param type the type
+	 * @return the set of resources
+	 */
+	public Set<Resource> getResources (String type) { final Set<Resource> res = cache_type2Resources.get(type); return (res == null)? new HashSet<Resource> () : res; } 
+	
 	/**
 	 * <p>Returns a vector with the carried traffic per demand, at the given layer. i-th vector corresponds to i-th index of the element. If no layer is provided, the defaulf layer is assumed.</p>
 	 * @param optionalLayerParameter Network layer (optional)
@@ -6332,7 +6352,10 @@ public class NetPlan extends NetworkElement
 		this.checkInThisNetPlan (srgs);
 		this.checkInThisNetPlan (layers);
 		this.checkInThisNetPlan (defaultLayer);
-
+		
+		/* What is in the cache is correct */
+		for (String type : cache_type2Resources.keySet()) for (Resource r : cache_type2Resources.get(type)) if (!r.type.equals(type)) throw new RuntimeException ("Bad");
+		
 		for (Node node : nodes) node.checkCachesConsistency(); 
 		for (Resource res : resources) res.checkCachesConsistency(); 
 		for (SharedRiskGroup srg : srgs) srg.checkCachesConsistency();

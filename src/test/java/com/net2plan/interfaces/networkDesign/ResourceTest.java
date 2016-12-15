@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -92,11 +93,41 @@ public class ResourceTest
 	{
 	}
 
+	
 
 	@Test
 	public void testCheckCaches() 
 	{
 		np.checkCachesConsistency();
+	}
+
+	@Test
+	public void testGetResourcesOfType () 
+	{
+		assertEquals(np.getResources("baseType"), Collections.singleton(baseResource));
+		assertEquals(np.getResources("upperType"), Collections.singleton(upperResource));
+		assertEquals(np.getResources("xxx"), Collections.emptySet());
+		upperResource.remove();
+		assertEquals(np.getResources("upperType"), Collections.emptySet());
+		baseResource.remove();
+		assertEquals(np.getResources("baseType"), Collections.emptySet());
+	}
+
+	@Test
+	public void testGetResources () 
+	{
+		assertEquals(hostNode.getResources("baseType"), Collections.singleton(baseResource));
+		assertEquals(hostNode.getResources("upperType"), Collections.singleton(upperResource));
+		assertEquals(hostNode.getResources("xxx"), Collections.emptySet());
+		Set<Resource> res = new HashSet<Resource> (); res.add(baseResource); res.add (upperResource);
+		assertEquals(hostNode.getResources(), res);
+		assertEquals(hostNode.getResources("upperType" , "baseType"), res);
+		baseResource.remove();
+		assertEquals(hostNode.getResources("baseType"), Collections.emptySet());
+		assertEquals(hostNode.getResources("upperType"), Collections.emptySet());
+		assertEquals(hostNode.getResources("xxx"), Collections.emptySet());
+		assertEquals(hostNode.getResources(), Collections.emptySet());
+		assertEquals(hostNode.getResources("upperType" , "baseType"), Collections.emptySet());
 	}
 
 	@Test

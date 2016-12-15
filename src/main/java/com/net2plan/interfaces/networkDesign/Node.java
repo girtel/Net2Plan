@@ -51,6 +51,7 @@ public class Node extends NetworkElement
 	Set<Route> cache_nodeAssociatedRoutes;
 	Set<ProtectionSegment> cache_nodeAssociatedSegments;
 	Set<MulticastTree> cache_nodeAssociatedulticastTrees;
+	Set<Resource> cache_nodeResources;
 
 
 	/**
@@ -80,6 +81,7 @@ public class Node extends NetworkElement
 		this.cache_nodeIncomingMulticastDemands = new HashSet<MulticastDemand> ();
 		this.cache_nodeOutgoingMulticastDemands = new HashSet<MulticastDemand> ();
 		this.cache_nodeSRGs = new HashSet<SharedRiskGroup> ();
+		this.cache_nodeResources = new HashSet<Resource> ();
 		this.cache_nodeAssociatedRoutes = new HashSet<Route> ();
 		this.cache_nodeAssociatedSegments = new HashSet<ProtectionSegment> ();
 		this.cache_nodeAssociatedulticastTrees = new HashSet<MulticastTree> ();
@@ -101,6 +103,7 @@ public class Node extends NetworkElement
 		this.cache_nodeIncomingMulticastDemands.clear (); for (MulticastDemand d : origin.cache_nodeIncomingMulticastDemands) this.cache_nodeIncomingMulticastDemands.add(this.netPlan.getMulticastDemandFromId(d.id));
 		this.cache_nodeOutgoingMulticastDemands.clear (); for (MulticastDemand d : origin.cache_nodeOutgoingMulticastDemands) this.cache_nodeOutgoingMulticastDemands.add(this.netPlan.getMulticastDemandFromId(d.id));
 		this.cache_nodeSRGs.clear (); for (SharedRiskGroup s : origin.cache_nodeSRGs) this.cache_nodeSRGs.add(this.netPlan.getSRGFromId(s.id));
+		this.cache_nodeResources.clear(); for (Resource r : origin.cache_nodeResources) this.cache_nodeResources.add(this.netPlan.getResourceFromId(r.id));
 		this.cache_nodeAssociatedRoutes.clear (); for (Route r : origin.cache_nodeAssociatedRoutes) this.cache_nodeAssociatedRoutes.add(this.netPlan.getRouteFromId (r.id));
 		this.cache_nodeAssociatedSegments.clear (); for (ProtectionSegment s : origin.cache_nodeAssociatedSegments) this.cache_nodeAssociatedSegments.add(this.netPlan.getProtectionSegmentFromId(s.id));
 		this.cache_nodeAssociatedulticastTrees.clear (); for (MulticastTree t : origin.cache_nodeAssociatedulticastTrees) this.cache_nodeAssociatedulticastTrees.add(this.netPlan.getMulticastTreeFromId(t.id));
@@ -119,6 +122,7 @@ public class Node extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.cache_nodeIncomingMulticastDemands , e2.cache_nodeIncomingMulticastDemands)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_nodeOutgoingMulticastDemands , e2.cache_nodeOutgoingMulticastDemands)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_nodeSRGs , e2.cache_nodeSRGs)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeResources, e2.cache_nodeResources)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_nodeAssociatedRoutes , e2.cache_nodeAssociatedRoutes)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_nodeAssociatedSegments , e2.cache_nodeAssociatedSegments)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_nodeAssociatedulticastTrees , e2.cache_nodeAssociatedulticastTrees)) return false;
@@ -619,6 +623,20 @@ public class Node extends NetworkElement
 		return (Set<SharedRiskGroup>) Collections.unmodifiableSet(cache_nodeSRGs);
 	}
 
+	/** Returns the set of resources that this node hosts. If no resource, an empty set is returned. If one ore more optional parameters type are given, 
+	 * a set with the hosted resources of any of those types is returned (or an empty set if none)
+	 * @param type one or more optional types (optional)
+	 * @return the set
+	 */
+	public Set<Resource> getResources (String ... type)
+	{
+		if (type.length == 0) return Collections.unmodifiableSet(cache_nodeResources);
+		Set<Resource> res = new HashSet<Resource> ();
+		for (Resource r : cache_nodeResources) for (String thisType : type) if (r.type.equals(thisType)) { res.add(r); break; }
+		return res;
+	}
+	
+	
 	/**
 	 * <p>Removes a node, and any associated link, demand, route, protection segment or forwarding rule.</p>
 	 */

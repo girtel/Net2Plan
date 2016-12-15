@@ -59,6 +59,7 @@ import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.ProtectionSegment;
+import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Constants;
@@ -899,6 +900,73 @@ public class GraphUtils
 		//		return JUNGUtils.getKLooplessShortestPaths(graph, nev, originNode, destinationNode , K);
 	}
 
+	/** Returns the K-loopless shortest paths between two nodes, satisfying some user-defined constraints. If only <i>n</i> shortest path are found (n&lt;K), those are returned.
+	 * @param nodes List of nodes
+	 * @param links List of links
+	 * @param originNode Origin node
+	 * @param destinationNode Destination node
+	 * @param linkCost Cost per link, where the key is the link identifier and the value is the cost of traversing the link. No special iteration-order (i.e. ascending) is required. If {@code null}, all links have weight one
+	 * @param K Desired nummber of paths (a lower number of paths may be returned if there are less than {@code K} loop-less paths admissible)
+	 * @param maxLengthInKm Maximum length of the path. If non-positive, no maximum limit is assumed
+	 * @param maxNumHops Maximum number of hops. If non-positive, no maximum limit is assumed
+	 * @param maxPropDelayInMs Maximum propagation delay of the path. If non-positive, no maximum limit is assumed
+	 * @param maxRouteCost Maximum route cost. If non-positive, no maximum limit is assumed
+	 * @param maxRouteCostFactorRespectToShortestPath Maximum route cost factor respect to the shortest path. If non-positive, no maximum limit is assumed
+	 * @param maxRouteCostRespectToShortestPath Maximum route cost respect to the shortest path. If non-positive, no maximum limit is assumed
+	 * @return K-shortest paths */
+	public static List<List<NetworkElement>> getKMinimumCostServiceChains(NetPlan np , Node originNode, Node destinationNode, List<String> resourceTypes , DoubleMatrix1D linkCost, int K, double maxLengthInKm, int maxNumHops, double maxPropDelayInMs, double maxCost , NetworkLayer ... optionalLayerParameter)
+	{
+		if (maxLengthInKm <= 0) maxLengthInKm = Double.MAX_VALUE;
+		if (maxNumHops <= 0) maxNumHops = Integer.MAX_VALUE;
+		if (maxPropDelayInMs <= 0) maxPropDelayInMs = Double.MAX_VALUE;
+		final NetworkLayer layer = np.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		final int E = np.getNumberOfLinks(layer);
+		final int N = np.getNumberOfNodes();
+		if (linkCost == null) linkCost = DoubleFactory1D.dense.make(E , 1.0);
+		if (linkCost.size() != E) throw new Net2PlanException ("Wrong size of cost array");
+		Map<Link,Double> linkCostMap = new HashMap<Link,Double> (); 
+		for (int cont = 0; cont < E ; cont ++) linkCostMap.put(np.getLink(cont, layer), linkCost.get(cont));
+		
+		List<Set<Node>> nodesPerPhase = new ArrayList<Set<Node>> ();
+		for (String resourceType : resourceTypes)
+		{
+			Set<Node> nodesWithResourcesThisType = new HashSet<Node> ();
+			for (Resource resource : np.getResources(resourceType)) nodesWithResourcesThisType.add(resource.getHostNode());
+			if (nodesWithResourcesThisType.isEmpty()) return new LinkedList<List<NetworkElement>> ();
+			nodesPerPhase.add(nodesWithResourcesThisType);
+		}
+		nodesPerPhase.add(Collections.singleton(destinationNode));
+		
+		for (int contPhase = 0; contPhase < nodesPerPhase.size() ; contPhase ++)
+		{
+			final Set<Node> outputNodes = nodesPerPhase.get(contPhase);
+			
+		}
+		
+		final class PathList 
+		{
+			private final Node outputNode;
+			private List<List<NetworkElement>> paths;
+			private double cost, lengthInKm, numLinks , propProcessingAndPropagationDelay;
+			PathList (Node originNode , Node outputNode) 
+			{ 
+				this.outputNode = outputNode; 
+				final List<List<Link>> kPaths = getKLooplessShortestPaths(np.getNodes(), np.getLinks(layer) , originNode, outputNode, linkCostMap, K, maxLengthInKm, maxNumHops, maxPropDelayInMs, -1, -1, -1);
+				//this.paths = (List<List<?>>) (List<List<NetworkElement>>) 
+				this.cost = 0; this.lengthInKm = 0; this.numLinks = 0; this.propProcessingAndPropagationDelay = 0;
+			}
+			void addFinalResource (Resource ... resources)
+			{
+			}
+		}
+		
+			
+			
+		return null;//paths.getPaths(originNode, destinationNode, K);
+	}
+
+	
+	
 	/** Returns the shortest pair of link-disjoint paths, where each item represents a path. The number of returned items will be equal to the number of paths found: when empty, no path was found; when {@code size()} = 1, only one path was found; and when {@code size()} = 2, the link-disjoint paths were found. Internally it uses the Suurballe-Tarjan algorithm.
 	 * @param nodes Collection of nodes
 	 * @param links Collection of links

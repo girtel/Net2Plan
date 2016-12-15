@@ -400,6 +400,10 @@ public class Resource extends NetworkElement
 		for (Resource upperResource : capacityUpperResourcesOccupyInMe.keySet()) upperResource.remove();
 		for (Resource baseResource : capacityIOccupyInBaseResource.keySet()) baseResource.removeUpperResourceOccupation(this);
 		netPlan.cache_id2ResourceMap.remove (id);
+		Set<Resource> resourcesThisType = netPlan.cache_type2Resources.get(type);
+		if (!resourcesThisType.contains(this)) throw new RuntimeException ("Bad");
+		if (resourcesThisType.size() == 1) netPlan.cache_type2Resources.remove (type); else resourcesThisType.remove(this);
+		hostNode.cache_nodeResources.remove(this);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.resources , index);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		removeId ();
@@ -415,6 +419,8 @@ public class Resource extends NetworkElement
 
 	void checkCachesConsistency ()
 	{
+		if (!netPlan.cache_type2Resources.get(this.type).contains(this)) throw new RuntimeException ("Bad");
+
 		double accumOccupCap = 0;
 		for (Entry<Resource,Double> upperEntry : capacityUpperResourcesOccupyInMe.entrySet())
 		{
