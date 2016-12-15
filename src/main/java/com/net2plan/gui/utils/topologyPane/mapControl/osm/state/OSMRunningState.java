@@ -71,7 +71,6 @@ public class OSMRunningState implements OSMState
         final Node node = netPlan.addNode(geoPosition.getLongitude(), geoPosition.getLatitude(), name, null);
 
         topologyPanel.getCanvas().addNode(node);
-        topologyPanel.getCanvas().refresh();
 
         mapController.zoomAll();
     }

@@ -2,6 +2,8 @@ package com.net2plan.gui.utils.topologyPane.mapControl.osm;
 
 import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.topologyPane.GUILink;
+import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.components.mapPanel.OSMMapPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
@@ -11,6 +13,7 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.ITopologyCanvas;
+import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import org.jxmapviewer.viewer.*;
 
@@ -165,20 +168,6 @@ public class OSMMapController
         }
 
         // Calculating OSM map center and zoom.
-
-        // zoomToBestFit fails to deliver the correct center when the map is too big.
-        // To solve this, we will be always calculating the center over a 720p.
-        // Resolution at which the map is correctly centered.
-        // FIXME: Change this solution?
-//        final Dimension size = mapViewer.getSize();
-//        mapViewer.setSize(1280, 720);
-//        mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
-//        if (netPlan.getNumberOfNodes() == 1)
-//        {
-//            mapViewer.setZoom(16);
-//        }
-//        mapViewer.setSize(size);
-
         mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
         if (netPlan.getNumberOfNodes() == 1) mapViewer.setZoom(16); // So that the map is not too close to the node.
 
@@ -192,13 +181,6 @@ public class OSMMapController
             final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
             canvas.moveNodeToXYPosition(node, realPosition);
         }
-
-        // The OSM map is now centered, now is time to fit the topology to the OSM map.
-        // Center the topology.
-        ((JUNGCanvas) canvas).frameTopology();
-
-        // Removing the zoom all scale, so that the relation between the JUNG Canvas and the SWING Canvas is 1:1.
-        ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
 
         // As the topology is centered at the same point as the OSM map, and the relation is 1:1 between their coordinates.
         // The nodes will be placed at the exact place as they are supposed to.
@@ -398,6 +380,11 @@ public class OSMMapController
             // Pixel to geo must be calculated at the zoom level where canvas and map align.
             // That zoom level is the one given by the restore map method.
             return mapViewer.getTileFactory().pixelToGeo(point, mapViewer.getZoom());
+        }
+
+        public static Point2D convertGeoToPoint(final GeoPosition geoPosition)
+        {
+            return mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
         }
 
         public static boolean isInsideBounds(final double x, final double y)
