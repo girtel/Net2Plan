@@ -733,7 +733,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         {
             entry.getValue().updateTableFromTableState(tStateMap.get(entry.getValue().getNetworkElementType()));
         }
-        JOptionPane.showMessageDialog(null,"Tables Visualization Profile loaded succesfully!");
+        JOptionPane.showMessageDialog(null,"Tables visualization profile successfully loaded!");
 
     }
 
