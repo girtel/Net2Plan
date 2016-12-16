@@ -23,6 +23,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -30,6 +32,8 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants.RunnableCodeType;
 import com.net2plan.internal.ErrorHandling;
@@ -181,6 +185,7 @@ public class ParameterValueDescriptionPanel extends JPanel
 
                 final JFileChooser fileChooser = new JFileChooser();
                 fileChooser.setMultiSelectionEnabled(false);
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
                 final int returnVal = fileChooser.showOpenDialog(null);
 
@@ -214,6 +219,7 @@ public class ParameterValueDescriptionPanel extends JPanel
                 final String fileSeparator = "<>";
                 final JFileChooser fileChooser = new JFileChooser();
                 fileChooser.setMultiSelectionEnabled(true);
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
                 final int returnVal = fileChooser.showOpenDialog(null);
 
@@ -240,7 +246,38 @@ public class ParameterValueDescriptionPanel extends JPanel
         });
     }
 
+    private void addPathChooserCellEditor(int rowIndex, int columnIndex, String defaultValue)
+    {
+        final JTextField textField = new JTextField();
+        textField.setEnabled(false);
+        textField.setBorder(BorderFactory.createEmptyBorder());
 
+        final DefaultCellEditor editor = new DefaultCellEditor(textField);
+        editor.setClickCountToStart(1);
+
+        table.getModel().setValueAt(defaultValue, rowIndex, columnIndex);
+
+        table.setCellEditor(rowIndex, columnIndex, new ActionTableCellEditor(editor)
+        {
+            @Override
+            protected void editCell(JTable table, int row, int column)
+            {
+                final int rowModel = table.convertRowIndexToModel(row);
+                final TableModel model = table.getModel();
+
+                final JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setMultiSelectionEnabled(false);
+                fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+                final int returnVal = fileChooser.showOpenDialog(null);
+
+                if (returnVal == JFileChooser.APPROVE_OPTION)
+                {
+                    model.setValueAt(fileChooser.getSelectedFile().getAbsolutePath(), rowModel, 1);
+                }
+            }
+        });
+    }
 
     /**
      * Returns the parameter-value map.
@@ -290,7 +327,22 @@ public class ParameterValueDescriptionPanel extends JPanel
         {
             String paramName = model.getValueAt(row, 0).toString();
             if (parameters.containsKey(paramName))
-                model.setValueAt(parameters.get(paramName), row, 1);
+            {
+                String value = parameters.get(paramName);
+
+                Pattern p = Pattern.compile("#.*?#");
+                Matcher m = p.matcher(value);
+
+                String filteredValue = value;
+                if (m.find())
+                {
+                    final String option = m.group();
+
+                    filteredValue = filteredValue.replace(option, "").trim();
+                }
+
+                model.setValueAt(filteredValue, row, 1);
+            }
         }
     }
 
@@ -355,6 +407,13 @@ public class ParameterValueDescriptionPanel extends JPanel
 
                         model.addRow(StringUtils.arrayOf(aux.getFirst(), "", aux.getThird()));
                         addFileMultiChooserCellEditor(model.getRowCount() - 1, 1, fileDefaultValue);
+                        continue;
+                    } else if (defaultValue.startsWith("#path#"))
+                    {
+                        final String fileDefaultValue = aux.getSecond().replaceFirst("#path#", "").trim();
+
+                        model.addRow(StringUtils.arrayOf(aux.getFirst(), "", aux.getThird()));
+                        addPathChooserCellEditor(model.getRowCount() - 1, 1, fileDefaultValue);
                         continue;
                     }
 
