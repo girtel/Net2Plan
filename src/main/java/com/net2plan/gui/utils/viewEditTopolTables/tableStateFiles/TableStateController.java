@@ -23,6 +23,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author César
@@ -145,20 +146,20 @@ public final class TableStateController
                 writer.writeStartElement("tableState");
                 writer.writeAttribute("networkElementType", table.getNetworkElementType().toString());
 
+
+
                 XMLUtils.indent(writer, 2);
                 writer.writeStartElement("mainTableColumns");
                 XMLUtils.indent(writer, 3);
                 ArrayList<String> mainTableColumns = table.getMainTableColumns();
-
                 for (int i = 0; i < mainTableColumns.size(); i++)
                 {
-
-                    writer.writeStartElement("column");
+                    writer.writeEmptyElement("column");
                     writer.writeAttribute("name", mainTableColumns.get(i));
                     writer.writeAttribute("position", String.valueOf(i));
-                    writer.writeEndElement();
+                    if (i != mainTableColumns.size() - 1) XMLUtils.indent(writer, 3);
                 }
-
+                XMLUtils.indent(writer, 2);
                 writer.writeEndElement();
                 XMLUtils.indent(writer, 2);
                 writer.writeStartElement("fixedTableColumns");
@@ -166,27 +167,29 @@ public final class TableStateController
                 ArrayList<String> fixedTableColumns = table.getFixedTableColumns();
                 for (int i = 0; i < fixedTableColumns.size(); i++)
                 {
-
-                    writer.writeStartElement("column");
+                    writer.writeEmptyElement("column");
                     writer.writeAttribute("name", fixedTableColumns.get(i));
                     writer.writeAttribute("position", String.valueOf(i));
-                    writer.writeEndElement();
+                    if (i != fixedTableColumns.size() - 1) XMLUtils.indent(writer, 3);
                 }
-
+                XMLUtils.indent(writer, 2);
                 writer.writeEndElement();
                 XMLUtils.indent(writer, 2);
                 writer.writeStartElement("hiddenTableColumns");
-                XMLUtils.indent(writer, 3);
-                HashMap<String, Integer> hiddenMap = table.getHiddenColumns();
-                for (Map.Entry<String, Integer> entry2 : hiddenMap.entrySet())
-                {
 
-                    writer.writeStartElement("column");
-                    writer.writeAttribute("name", entry2.getKey());
-                    writer.writeAttribute("position", String.valueOf(entry2.getValue()));
-                    writer.writeEndElement();
+                HashMap<String, Integer> hiddenMap = table.getHiddenColumns();
+                final ArrayList<Map.Entry<String, Integer>> hiddenMapEntries = new ArrayList<>(hiddenMap.entrySet());
+
+                for (int i = 0; i < hiddenMapEntries.size(); i++)
+                {
+                    final Map.Entry<String, Integer> hiddenEntry = hiddenMapEntries.get(i);
+                    writer.writeEmptyElement("column");
+                    writer.writeAttribute("name", hiddenEntry.getKey());
+                    writer.writeAttribute("position", String.valueOf(hiddenEntry.getValue()));
+                    if (i != hiddenMapEntries.size() - 1) XMLUtils.indent(writer, 3);
                 }
 
+                XMLUtils.indent(writer, 2);
                 writer.writeEndElement();
                 XMLUtils.indent(writer, 2);
                 writer.writeStartElement("attributesState");
