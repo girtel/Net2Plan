@@ -19,6 +19,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -30,8 +31,8 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import javax.naming.ConfigurationException;
 import javax.swing.JComponent;
 
 import org.apache.commons.collections15.ListUtils;
@@ -54,9 +55,7 @@ import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Resource;
@@ -68,7 +67,6 @@ import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Quadruple;
-import com.net2plan.utils.Triple;
 
 import cern.colt.list.tdouble.DoubleArrayList;
 import cern.colt.list.tint.IntArrayList;
@@ -914,55 +912,150 @@ public class GraphUtils
 	 * @param maxRouteCostFactorRespectToShortestPath Maximum route cost factor respect to the shortest path. If non-positive, no maximum limit is assumed
 	 * @param maxRouteCostRespectToShortestPath Maximum route cost respect to the shortest path. If non-positive, no maximum limit is assumed
 	 * @return K-shortest paths */
-	public static List<List<NetworkElement>> getKMinimumCostServiceChains(NetPlan np , Node originNode, Node destinationNode, List<String> resourceTypes , DoubleMatrix1D linkCost, int K, double maxLengthInKm, int maxNumHops, double maxPropDelayInMs, double maxCost , NetworkLayer ... optionalLayerParameter)
+	/**
+	 * @param nodes
+	 * @param links
+	 * @param resources we assume all the resources are hosted in nodes in the nodes list
+	 * @param originNode initial node of the service chain, should be in the nodes list
+	 * @param destinationNode end node of the service chain, should be in the nodes list
+	 * @param resourceTypes 
+	 * @param linkCost
+	 * @param K
+	 * @param maxLengthInKm
+	 * @param maxNumHops
+	 * @param maxPropDelayInMs
+	 * @param maxCost
+	 * @param cacheMapResourceTypes
+	 * @param cachePathLists
+	 * @return
+	 */
+	public static List<Pair<List<NetworkElement>,Double>> getKMinimumCostServiceChains(List<Node> nodes , List<Link> links , List<Resource> resources , 
+			Node originNode, Node destinationNode, List<String> resourceTypes , DoubleMatrix1D linkCost, 
+			int K, double maxLengthInKm, int maxNumHops, double maxPropDelayInMs, double maxCost , 
+			Map<String,Set<Resource>> cacheMapResourceTypes , Map<Pair<Node,Node>,List<Pair<List<Link>,Double>>> cachePathLists)
 	{
 		if (maxLengthInKm <= 0) maxLengthInKm = Double.MAX_VALUE;
 		if (maxNumHops <= 0) maxNumHops = Integer.MAX_VALUE;
 		if (maxPropDelayInMs <= 0) maxPropDelayInMs = Double.MAX_VALUE;
-		final NetworkLayer layer = np.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		final int E = np.getNumberOfLinks(layer);
-		final int N = np.getNumberOfNodes();
+		final int E = links.size();
 		if (linkCost == null) linkCost = DoubleFactory1D.dense.make(E , 1.0);
 		if (linkCost.size() != E) throw new Net2PlanException ("Wrong size of cost array");
+
+		/* initialize the link cost map */
 		Map<Link,Double> linkCostMap = new HashMap<Link,Double> (); 
-		for (int cont = 0; cont < E ; cont ++) linkCostMap.put(np.getLink(cont, layer), linkCost.get(cont));
+		for (int cont = 0; cont < E ; cont ++) linkCostMap.put(links.get(cont), linkCost.get(cont));
+	
+		/* initialize the map type->resources */
+		if (cacheMapResourceTypes == null)
+		{
+			cacheMapResourceTypes = new HashMap<String,Set<Resource>> ();
+			for (Resource r : resources) 
+			{
+				Set<Resource> resourcesThisType = cacheMapResourceTypes.get(r.getType());
+				if (resourcesThisType == null) { resourcesThisType = new HashSet<Resource> (); cacheMapResourceTypes.put(r.getType(), resourcesThisType); }
+				resourcesThisType.add(r);
+			}
+		}
 		
+		/* initialize the nodes per phase. One element per resource type to traverse, plus one for the last node  */
 		List<Set<Node>> nodesPerPhase = new ArrayList<Set<Node>> ();
 		for (String resourceType : resourceTypes)
 		{
-			Set<Node> nodesWithResourcesThisType = new HashSet<Node> ();
-			for (Resource resource : np.getResources(resourceType)) nodesWithResourcesThisType.add(resource.getHostNode());
-			if (nodesWithResourcesThisType.isEmpty()) return new LinkedList<List<NetworkElement>> ();
+			final Set<Resource> resourcesThisType = cacheMapResourceTypes.get(resourceType);
+			if (resourcesThisType == null) return new LinkedList<Pair<List<NetworkElement>,Double>> ();
+			final Set<Node> nodesWithResourcesThisType = resourcesThisType.stream().map(e -> e.getHostNode()).collect(Collectors.toCollection(HashSet::new));
 			nodesPerPhase.add(nodesWithResourcesThisType);
 		}
 		nodesPerPhase.add(Collections.singleton(destinationNode));
-		
+
+		/* initialize the path lists. This includes (n,n) pairs with one path of empty seq links and zero cost */
+		if (cachePathLists == null) cachePathLists = new HashMap<Pair<Node,Node>,List<Pair<List<Link>,Double>>> ();
+//		Map<Pair<Node,Node>,PathList> kShortestPathsPool = new HashMap<Pair<Node,Node>,PathList> ();
 		for (int contPhase = 0; contPhase < nodesPerPhase.size() ; contPhase ++)
 		{
 			final Set<Node> outputNodes = nodesPerPhase.get(contPhase);
-			
+			final Set<Node> inputNodes = contPhase == 0? Collections.singleton(originNode) : nodesPerPhase.get(contPhase-1); 
+			for (Node nIn : inputNodes)
+				for (Node nOut : outputNodes)
+					if (!cachePathLists.containsKey(Pair.of(nIn, nOut)))
+						if (nIn != nOut)
+						{
+							List<List<Link>> kPaths = getKLooplessShortestPaths(nodes, links , nIn, nOut, linkCostMap, K, maxLengthInKm, maxNumHops, maxPropDelayInMs, -1, -1, -1);
+							List<Pair<List<Link> , Double>> pathsInfo = new ArrayList<Pair<List<Link> , Double>> ();
+							double previousCost = 0;
+							for (List<Link> path : kPaths)
+							{
+								final double thisCost = path.stream().mapToDouble(e -> linkCostMap.get(e)).sum ();
+								if (thisCost > previousCost + 0.001) throw new RuntimeException ("Bad");
+								pathsInfo.add(Pair.of(path, thisCost));
+								previousCost = thisCost;
+							}
+							cachePathLists.put(Pair.of(nIn, nOut), pathsInfo);
+						}
+						else cachePathLists.put(Pair.of (nIn,nIn), Collections.singletonList(Pair.of(new LinkedList<Link> (), 0.0)));
 		}
 		
-		final class PathList 
+		/* Start the main loop */
+
+		/* Initialize the SCs per out node, with those from origin node, to each node with resources of the first type (or end node if this is not a SC) */
+		Map<Node , List<Pair<List<NetworkElement>,Double>>> outNodeToKSCsMap = new HashMap<Node , List<Pair<List<NetworkElement>,Double>>> (); 
+		for (Node outNode : nodesPerPhase.get(0))
 		{
-			private final Node outputNode;
-			private List<List<NetworkElement>> paths;
-			private double cost, lengthInKm, numLinks , propProcessingAndPropagationDelay;
-			PathList (Node originNode , Node outputNode) 
-			{ 
-				this.outputNode = outputNode; 
-				final List<List<Link>> kPaths = getKLooplessShortestPaths(np.getNodes(), np.getLinks(layer) , originNode, outputNode, linkCostMap, K, maxLengthInKm, maxNumHops, maxPropDelayInMs, -1, -1, -1);
-				//this.paths = (List<List<?>>) (List<List<NetworkElement>>) 
-				this.cost = 0; this.lengthInKm = 0; this.numLinks = 0; this.propProcessingAndPropagationDelay = 0;
-			}
-			void addFinalResource (Resource ... resources)
-			{
-			}
+			List<Pair<List<NetworkElement>,Double>> thisFirstStageNodeSCs = new ArrayList<Pair<List<NetworkElement>,Double>> ();
+			for (Pair<List<Link>,Double> path : cachePathLists.get(Pair.of(originNode, outNode)))
+				thisFirstStageNodeSCs.add(Pair.of(new LinkedList<NetworkElement> (path.getFirst()), path.getSecond()));
+			outNodeToKSCsMap.put(outNode, thisFirstStageNodeSCs);
 		}
 		
-			
-			
-		return null;//paths.getPaths(originNode, destinationNode, K);
+		final Comparator<Pair<List<NetworkElement>,Double>> scComparator = 
+				new Comparator<Pair<List<NetworkElement>,Double>> () 
+				{ 
+					public int compare(Pair<List<NetworkElement>,Double> t1, Pair<List<NetworkElement>,Double> t2) { return Double.compare(t1.getSecond() ,  t2.getSecond());  }   
+				}; 
+		
+		for (int nextPhase = 1; nextPhase < nodesPerPhase.size() ; nextPhase ++)
+		{
+			final Set<Node> thisPhaseNodes = nodesPerPhase.get(nextPhase-1); 
+			final Set<Node> nextPhaseNodes = nodesPerPhase.get(nextPhase);
+			final String intermediateNodeResourceType = resourceTypes.get(nextPhase-1);
+			Map<Node , List<Pair<List<NetworkElement>,Double>>> new_outNodeToKSCsMap = new HashMap<Node , List<Pair<List<NetworkElement>,Double>>> ();		
+			for (Node newOutNode : nextPhaseNodes)
+			{
+				List<Pair<List<NetworkElement>,Double>> kSCsToThisOutNode = new ArrayList<Pair<List<NetworkElement>,Double>> (); 
+				for (Node intermediateNode : thisPhaseNodes)
+				{
+					Set<Resource> intermediateResources = new HashSet<Resource> (intermediateNode.getResources(intermediateNodeResourceType));
+					intermediateResources.retainAll(cacheMapResourceTypes.get(intermediateNodeResourceType));
+					for (Pair<List<NetworkElement>,Double> scOriginToIntermediateInfo : outNodeToKSCsMap.get(intermediateNode))
+					{
+						final List<NetworkElement> scOriginToIntermediate = scOriginToIntermediateInfo.getFirst();
+						final double scOriginToIntermediateCost = scOriginToIntermediateInfo.getSecond();
+						for (Pair<List<Link>,Double> scIntermediateToOutInfo : cachePathLists.get(Pair.of(intermediateNode, newOutNode)))
+						{
+							final List<NetworkElement> scIntermediateToOut = (List<NetworkElement>) (List<?>) scIntermediateToOutInfo.getFirst();
+							final double scIntermediateToOutCost = scIntermediateToOutInfo.getSecond();
+							if (kSCsToThisOutNode.size () == K)
+								if (kSCsToThisOutNode.get(K-1).getSecond() < scOriginToIntermediateCost + scIntermediateToOutCost)
+									break; // do not add this SC (already full), and no more interm->out paths: all are worse
+							/* Add as many concatenated SCs as resources here, but do not exceed maximum size k of total list  */
+							for (Resource intermediateResource : intermediateResources)
+							{
+								List<NetworkElement> newSC = new LinkedList<NetworkElement> (scOriginToIntermediate);
+								newSC.add(intermediateResource);
+								newSC.addAll(scIntermediateToOut);
+								kSCsToThisOutNode.add(Pair.of(newSC, scOriginToIntermediateCost + scIntermediateToOutCost));
+								if (kSCsToThisOutNode.size() == K) break; // do not add more than K
+							}
+							/* Since at least one SC was added, sort again */
+							Collections.sort(kSCsToThisOutNode, scComparator);
+						}
+					}
+				}
+			}
+			outNodeToKSCsMap = new_outNodeToKSCsMap;
+		}
+		if (outNodeToKSCsMap.keySet().equals(Collections.singleton(destinationNode))) throw new RuntimeException ("Bad");
+		return outNodeToKSCsMap.get(destinationNode);
 	}
 
 	
