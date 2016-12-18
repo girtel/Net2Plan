@@ -2635,6 +2635,81 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
+	 * <p>Returns a matrix with as many rows and columns as resources. Coordinate (r1,r2) is 1 if r1 is an upper resource respect to r2, 
+	 * even if currently 0 capacity units are occupied in base resource r2 because of r1</p>
+	 * @return The matrix
+	 */
+	public DoubleMatrix2D getMatrixResource2ResourceUpperToBaseRelation ()
+	{
+		final int R = resources.size();
+		DoubleMatrix2D out = DoubleFactory2D.dense.make(R, R);
+		for(Resource upperResource : resources)
+			for (Resource baseResource : upperResource.capacityIOccupyInBaseResource.keySet())
+				out.set(upperResource.index, baseResource.index, 1.0);
+		return out;
+	}
+
+	/**
+	 * <p>Returns a matrix with as many rows and columns as resources. Coordinate (r1,r2) contains the capacity that resource r1 currently occupies 
+	 * in r2. If r2 is not a base resource of r1, coordinate is zero</p>
+	 * @return The matrix
+	 */
+	public DoubleMatrix2D getMatrixResource2ResourceUpperToBaseOccupation ()
+	{
+		final int R = resources.size();
+		DoubleMatrix2D out = DoubleFactory2D.dense.make(R, R);
+		for(Resource upperResource : resources)
+			for (Entry<Resource,Double> baseResource : upperResource.capacityIOccupyInBaseResource.entrySet())
+				out.set(upperResource.index, baseResource.getKey().index, baseResource.getValue());
+		return out;
+	}
+
+	/**
+	 * <p>Returns a matrix with as many rows resources, and columns as routes in the given layer. Coordinate (res,rou) contains the number times that route rou 
+	 * traverses resource res. If no layer is provided, default layer is assumed</p>
+	 * @return The matrix
+	 */
+	public DoubleMatrix2D getMatrixResource2RouteAssignment  (NetworkLayer ... optionalLayerParameter)
+	{
+		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		final int RES = resources.size();
+		final int ROU = layer.routes.size();
+		DoubleMatrix2D delta_er = DoubleFactory2D.sparse.make(RES, ROU);
+		for (Resource res : resources) 
+			for (Route rou : res.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet())
+				if (rou.layer.equals(layer))
+					delta_er.set (res.index , rou.index , rou.getNumberOfTimesResourceIsTraversed (res));
+		return delta_er;
+	}
+
+	/**
+	 * <p>Returns a matrix with as many rows resources, and columns as SRGs. Coordinate (res,srg) is 1 if resource res fails when srg fails</p>
+	 * @return The matrix
+	 */
+	public DoubleMatrix2D getMatrixResource2SRGAssignment  ()
+	{
+		DoubleMatrix2D delta_es = DoubleFactory2D.sparse.make (resources.size() , srgs.size());
+		for (SharedRiskGroup srg : srgs)
+			for (Node n : srg.nodes)
+				for (Resource res : n.cache_nodeResources)
+					delta_es.set (res.index , srg.index , 1.0);
+		return delta_es;
+	}
+
+	/**
+	 * <p>Returns a matrix with as many rows resources, and columns as nodes. Coordinate (res,n) is 1 if resource res is hosted in node n</p>
+	 * @return The matrix
+	 */
+	public DoubleMatrix2D getMatrixResource2NodeAssignment  ()
+	{
+		DoubleMatrix2D delta_en = DoubleFactory2D.sparse.make (resources.size() , nodes.size());
+		for (Resource res : resources)
+			delta_en.set (res.index , res.hostNode.index , 1.0);
+		return delta_en;
+	}
+
+	/**
 	 * <p>Returns the <i>N</i>x<i>N</i> Haversine distance matrix (derived
 	 * from node coordinates, where 'xCoord' is equal to longitude and 'yCoord'
 	 * is equal to latitude), where <i>N</i> is the number of nodes within the network.</p>
@@ -4115,6 +4190,52 @@ public class NetPlan extends NetworkElement
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.protectionSegments.size());
 		for (ProtectionSegment e : layer.protectionSegments) res.set(e.index, e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments);
+		return res;
+	}
+
+	/**
+	 * <p>Returns a vector with as many elements as resources, containing the processing time in ms for the traversig traffic, for each resource.
+	 * @return The vector 
+	 */
+	public DoubleMatrix1D getVectorResourceProcessingTimeInMs ()
+	{
+		DoubleMatrix1D res = DoubleFactory1D.dense.make(resources.size());
+		for (Resource e : resources) res.set(e.index, e.getProcessingTimeToTraversingTrafficInMs());
+		return res;
+	}
+
+	/**
+	 * <p>Returns a vector with as many elements as resources, containing the capacity (in the own resource capacity units), for each resource.
+	 * @return The vector 
+	 */
+	public DoubleMatrix1D getVectorResourceCapacity ()
+	{
+		DoubleMatrix1D res = DoubleFactory1D.dense.make(resources.size());
+		for (Resource e : resources) res.set(e.index, e.getCapacity());
+		return res;
+	}
+
+	/**
+	 * <p>Returns a vector with as many elements as resources, containing the currently occupied capacity (in the own resource capacity units), for each resource.
+	 * @return The vector 
+	 */
+	public DoubleMatrix1D getVectorResourceOccupiedCapacity ()
+	{
+		DoubleMatrix1D res = DoubleFactory1D.dense.make(resources.size());
+		for (Resource e : resources) res.set(e.index, e.getOccupiedCapacity());
+		return res;
+	}
+
+	/**
+	 * <p>Returns a vector with as many elements as resources, containing a 1 in coordinate of index i if the resource of index i is of the given type, a 0 if not.
+	 * @return The vector 
+	 */
+	public DoubleMatrix1D getVectorResourceIsOfType (String type)
+	{
+		DoubleMatrix1D res = DoubleFactory1D.dense.make(resources.size());
+		Set<Resource> resourcesThisType = cache_type2Resources.get (type);
+		if (resourcesThisType == null) return res;
+		for (Resource e : resourcesThisType) res.set(e.index, 1.0);
 		return res;
 	}
 
