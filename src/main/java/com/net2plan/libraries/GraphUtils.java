@@ -55,6 +55,7 @@ import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.ProtectionSegment;
@@ -921,23 +922,25 @@ public class GraphUtils
 	 * @param resourceTypes 
 	 * @param linkCost
 	 * @param K
-	 * @param maxLengthInKm
-	 * @param maxNumHops
-	 * @param maxPropDelayInMs
-	 * @param maxCost
+	 * @param maxLengthInKmPerSubpath
+	 * @param maxNumHopsPerSubpath
+	 * @param maxPropDelayInMsPerSubpath
+	 * @param maxCostServiceChain
 	 * @param cacheMapResourceTypes
 	 * @param cachePathLists
 	 * @return
 	 */
-	public static List<Pair<List<NetworkElement>,Double>> getKMinimumCostServiceChains(List<Node> nodes , List<Link> links , List<Resource> resources , 
+	public static List<Pair<List<NetworkElement>,Double>> getKMinimumCostServiceChains(List<Link> links , List<Resource> resources , 
 			Node originNode, Node destinationNode, List<String> resourceTypes , DoubleMatrix1D linkCost, 
-			int K, double maxLengthInKm, int maxNumHops, double maxPropDelayInMs, double maxCost , 
-			Map<String,Set<Resource>> cacheMapResourceTypes , Map<Pair<Node,Node>,List<Pair<List<Link>,Double>>> cachePathLists)
+			int K, double maxCostServiceChain , double maxLengthInKmPerSubpath, int maxNumHopsPerSubpath, double maxPropDelayInMsPerSubpath, 
+			Map<Pair<Node,Node>,List<Pair<List<Link>,Double>>> cachePathLists)
 	{
-		if (maxLengthInKm <= 0) maxLengthInKm = Double.MAX_VALUE;
-		if (maxNumHops <= 0) maxNumHops = Integer.MAX_VALUE;
-		if (maxPropDelayInMs <= 0) maxPropDelayInMs = Double.MAX_VALUE;
+		if (maxLengthInKmPerSubpath <= 0) maxLengthInKmPerSubpath = Double.MAX_VALUE;
+		if (maxNumHopsPerSubpath <= 0) maxNumHopsPerSubpath = Integer.MAX_VALUE;
+		if (maxPropDelayInMsPerSubpath <= 0) maxPropDelayInMsPerSubpath = Double.MAX_VALUE;
 		final int E = links.size();
+		if (E == 0) return new LinkedList<Pair<List<NetworkElement>,Double>> ();
+		final NetPlan netPlan = links.get(0).getNetPlan();
 		if (linkCost == null) linkCost = DoubleFactory1D.dense.make(E , 1.0);
 		if (linkCost.size() != E) throw new Net2PlanException ("Wrong size of cost array");
 
@@ -945,23 +948,11 @@ public class GraphUtils
 		Map<Link,Double> linkCostMap = new HashMap<Link,Double> (); 
 		for (int cont = 0; cont < E ; cont ++) linkCostMap.put(links.get(cont), linkCost.get(cont));
 	
-		/* initialize the map type->resources */
-		if (cacheMapResourceTypes == null)
-		{
-			cacheMapResourceTypes = new HashMap<String,Set<Resource>> ();
-			for (Resource r : resources) 
-			{
-				Set<Resource> resourcesThisType = cacheMapResourceTypes.get(r.getType());
-				if (resourcesThisType == null) { resourcesThisType = new HashSet<Resource> (); cacheMapResourceTypes.put(r.getType(), resourcesThisType); }
-				resourcesThisType.add(r);
-			}
-		}
-		
 		/* initialize the nodes per phase. One element per resource type to traverse, plus one for the last node  */
 		List<Set<Node>> nodesPerPhase = new ArrayList<Set<Node>> ();
 		for (String resourceType : resourceTypes)
 		{
-			final Set<Resource> resourcesThisType = cacheMapResourceTypes.get(resourceType);
+			final Set<Resource> resourcesThisType = netPlan.getResources(resourceType);
 			if (resourcesThisType == null) return new LinkedList<Pair<List<NetworkElement>,Double>> ();
 			final Set<Node> nodesWithResourcesThisType = resourcesThisType.stream().map(e -> e.getHostNode()).collect(Collectors.toCollection(HashSet::new));
 			nodesPerPhase.add(nodesWithResourcesThisType);
@@ -970,7 +961,6 @@ public class GraphUtils
 
 		/* initialize the path lists. This includes (n,n) pairs with one path of empty seq links and zero cost */
 		if (cachePathLists == null) cachePathLists = new HashMap<Pair<Node,Node>,List<Pair<List<Link>,Double>>> ();
-//		Map<Pair<Node,Node>,PathList> kShortestPathsPool = new HashMap<Pair<Node,Node>,PathList> ();
 		for (int contPhase = 0; contPhase < nodesPerPhase.size() ; contPhase ++)
 		{
 			final Set<Node> outputNodes = nodesPerPhase.get(contPhase);
@@ -980,13 +970,14 @@ public class GraphUtils
 					if (!cachePathLists.containsKey(Pair.of(nIn, nOut)))
 						if (nIn != nOut)
 						{
-							List<List<Link>> kPaths = getKLooplessShortestPaths(nodes, links , nIn, nOut, linkCostMap, K, maxLengthInKm, maxNumHops, maxPropDelayInMs, -1, -1, -1);
+							List<List<Link>> kPaths = getKLooplessShortestPaths(netPlan.getNodes(), links , nIn, nOut, linkCostMap, K, maxLengthInKmPerSubpath, maxNumHopsPerSubpath, maxPropDelayInMsPerSubpath, -1, -1, -1);
 							List<Pair<List<Link> , Double>> pathsInfo = new ArrayList<Pair<List<Link> , Double>> ();
 							double previousCost = 0;
 							for (List<Link> path : kPaths)
 							{
 								final double thisCost = path.stream().mapToDouble(e -> linkCostMap.get(e)).sum ();
 								if (thisCost > previousCost + 0.001) throw new RuntimeException ("Bad");
+								if (thisCost > maxCostServiceChain) break; // the maximum cost is exceeded, do not add this as subpath
 								pathsInfo.add(Pair.of(path, thisCost));
 								previousCost = thisCost;
 							}
@@ -1003,7 +994,8 @@ public class GraphUtils
 		{
 			List<Pair<List<NetworkElement>,Double>> thisFirstStageNodeSCs = new ArrayList<Pair<List<NetworkElement>,Double>> ();
 			for (Pair<List<Link>,Double> path : cachePathLists.get(Pair.of(originNode, outNode)))
-				thisFirstStageNodeSCs.add(Pair.of(new LinkedList<NetworkElement> (path.getFirst()), path.getSecond()));
+				if (path.getSecond() <= maxCostServiceChain)
+					thisFirstStageNodeSCs.add(Pair.of(new LinkedList<NetworkElement> (path.getFirst()), path.getSecond()));
 			outNodeToKSCsMap.put(outNode, thisFirstStageNodeSCs);
 		}
 		
@@ -1024,8 +1016,6 @@ public class GraphUtils
 				List<Pair<List<NetworkElement>,Double>> kSCsToThisOutNode = new ArrayList<Pair<List<NetworkElement>,Double>> (); 
 				for (Node intermediateNode : thisPhaseNodes)
 				{
-					Set<Resource> intermediateResources = new HashSet<Resource> (intermediateNode.getResources(intermediateNodeResourceType));
-					intermediateResources.retainAll(cacheMapResourceTypes.get(intermediateNodeResourceType));
 					for (Pair<List<NetworkElement>,Double> scOriginToIntermediateInfo : outNodeToKSCsMap.get(intermediateNode))
 					{
 						final List<NetworkElement> scOriginToIntermediate = scOriginToIntermediateInfo.getFirst();
@@ -1034,27 +1024,29 @@ public class GraphUtils
 						{
 							final List<NetworkElement> scIntermediateToOut = (List<NetworkElement>) (List<?>) scIntermediateToOutInfo.getFirst();
 							final double scIntermediateToOutCost = scIntermediateToOutInfo.getSecond();
+							if (scOriginToIntermediateCost + scIntermediateToOutCost > maxCostServiceChain) break; // do not add this SC, and no more interm->out paths: all are worse
 							if (kSCsToThisOutNode.size () == K)
-								if (kSCsToThisOutNode.get(K-1).getSecond() < scOriginToIntermediateCost + scIntermediateToOutCost)
+								if (kSCsToThisOutNode.get(K-1).getSecond() <= scOriginToIntermediateCost + scIntermediateToOutCost)
 									break; // do not add this SC (already full), and no more interm->out paths: all are worse
 							/* Add as many concatenated SCs as resources here, but do not exceed maximum size k of total list  */
-							for (Resource intermediateResource : intermediateResources)
+							for (Resource intermediateResource : intermediateNode.getResources(intermediateNodeResourceType))
 							{
 								List<NetworkElement> newSC = new LinkedList<NetworkElement> (scOriginToIntermediate);
 								newSC.add(intermediateResource);
 								newSC.addAll(scIntermediateToOut);
 								kSCsToThisOutNode.add(Pair.of(newSC, scOriginToIntermediateCost + scIntermediateToOutCost));
-								if (kSCsToThisOutNode.size() == K) break; // do not add more than K
 							}
-							/* Since at least one SC was added, sort again */
+							/* Since at least one SC was added, sort again, and remove the last SCs (higher cost), keep up to K */
 							Collections.sort(kSCsToThisOutNode, scComparator);
+							if (kSCsToThisOutNode.size() > K) kSCsToThisOutNode = kSCsToThisOutNode.subList(0, K);
 						}
 					}
 				}
+				new_outNodeToKSCsMap.put(newOutNode, kSCsToThisOutNode);
 			}
 			outNodeToKSCsMap = new_outNodeToKSCsMap;
 		}
-		if (outNodeToKSCsMap.keySet().equals(Collections.singleton(destinationNode))) throw new RuntimeException ("Bad");
+		if (!outNodeToKSCsMap.keySet().equals(Collections.singleton(destinationNode))) throw new RuntimeException ("Bad");
 		return outNodeToKSCsMap.get(destinationNode);
 	}
 
