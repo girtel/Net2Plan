@@ -137,11 +137,11 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable
         showMenu = new JMenu("Show column");
         lockColumn = new JCheckBoxMenuItem("Lock column", false);
         unfixCheckBox = new JCheckBoxMenuItem("Unlock column", true);
-        showAllItem = new JMenuItem("Show all unlocked columns");
+        showAllItem = new JMenuItem("Unhide all columns");
         hideColumn = new JCheckBoxMenuItem("Hide column", false);
-        hideAllItem = new JMenuItem("Hide all unlocked columns");
+        hideAllItem = new JMenuItem("Hide all columns");
         hideAllItem.setToolTipText("All columns will be hidden except for the first one.");
-        attributesItem = new JCheckBoxMenuItem("Expand attributes as columns", false);
+        attributesItem = new JCheckBoxMenuItem("Attributes in different columns", false);
         resetItem = new JMenuItem("Reset columns positions");
         loadStateItem = new JMenuItem("Load tables visualization profile");
         saveStateItem = new JMenuItem("Save tables visualization profile");
@@ -220,6 +220,11 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable
                                 mainTableMenu.add(attributesItem);
                                 break;
                             default:
+                                if(columnName.startsWith("Att:"))
+                                {
+                                    mainTableMenu.add(new JPopupMenu.Separator());
+                                    mainTableMenu.add(attributesItem);
+                                }
                                 break;
                         }
 
@@ -278,11 +283,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable
                         fixedTableMenu.add(new JPopupMenu.Separator());
                         fixedTableMenu.add(resetItem);
                         fixedTableMenu.add(new JPopupMenu.Separator());
-                        if (canExpandAttributes)
-                        {
-                            fixedTableMenu.add(attributesItem);
-                            fixedTableMenu.add(new JPopupMenu.Separator());
-                        }
                         fixedTableMenu.add(showMenu);
                         fixedTableMenu.add(new JPopupMenu.Separator());
                         fixedTableMenu.add(showAllItem);
