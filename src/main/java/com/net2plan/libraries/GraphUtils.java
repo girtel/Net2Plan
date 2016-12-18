@@ -928,6 +928,7 @@ public class GraphUtils
 		if (maxLengthInKmPerSubpath <= 0) maxLengthInKmPerSubpath = Double.MAX_VALUE;
 		if (maxNumHopsPerSubpath <= 0) maxNumHopsPerSubpath = Integer.MAX_VALUE;
 		if (maxPropDelayInMsPerSubpath <= 0) maxPropDelayInMsPerSubpath = Double.MAX_VALUE;
+		if (maxCostServiceChain < 0) maxCostServiceChain = Double.MAX_VALUE;
 		final int E = links.size();
 		if (E == 0) return new LinkedList<Pair<List<NetworkElement>,Double>> ();
 		final NetPlan netPlan = links.get(0).getNetPlan();
@@ -1048,7 +1049,35 @@ public class GraphUtils
 		return outNodeToKSCsMap.get(destinationNode);
 	}
 
-	
+	/** Returns the K minimum cost service chains between two nodes (summing costs of links and resources traversed), traversing a given set of resource types, satisfying some user-defined constraints.
+	 * If only <i>n</i> shortest path are found (n&lt;K), those are returned. If none is found an empty list is returned. 
+	 * The subpaths (the set of links between two resources, or the first(last) resource and the origin (destination) node, are constrained to be loopless 
+	 * (the algorithm uses Yen's scheme for subpaths enumeration).
+	 * @param links The set of links which can be used for the chain
+	 * @param originNode The origin node of the chain
+	 * @param destinationNode The destination node of the chain (could be the same as the origin node)
+	 * @param sequenceOfResourceTypesToTraverse the types of the sequence of resources to traverse
+	 * @param linkCost the cost of each link (if null, all links have cost one), all numbers must be strictly positive
+	 * @param resourceCost a map with the cost of each resource (if null, all resources have cost zero). All costs must be nonnegative. If a resource is not present in the map, its cost is zero. 
+	 * @param K The maximum number of service chains to return (less than K may be returned if there are no different paths).
+	 * @param maxCostServiceChain Service chains with a cost higher than this are not enumerated
+	 * @param maxLengthInKmPerSubpath The maximum length in km in each subpath. Service chains not satisfying this are not enumerated
+	 * @param maxNumHopsPerSubpath The maximum number of traversed links in each subpath. Service chains not satisfying this are not enumerated
+	 * @param maxPropDelayInMsPerSubpath The propagation delay summing the links in each subpath. Service chains not satisfying this are not enumerated
+	 * @param cacheSubpathLists A map which associated to node pairs, the k-shortest paths (only considering links) already computed to be used. 
+	 * The algorithm will add new entries here for those pairs of nodes for which no per-computed values exist, and that are needed in the algorithm 
+	 * (e.g. for origin node to all nodes of the first resource type, nodes of the first resource type to the second...). If null, then no entries are 
+	 * precomputed AND also no new entries are returned.   
+	 * @return the (at most) K minimum cost service chains.
+	 */
+	public static List<Pair<List<NetworkElement>,Double>> getMinimumCostServiceChain(List<Link> links ,  
+			Node originNode, Node destinationNode, List<String> sequenceOfResourceTypesToTraverse , DoubleMatrix1D linkCost, Map<Resource,Double> resourceCost , 
+			double maxLengthInKmPerSubpath, int maxNumHopsPerSubpath, double maxPropDelayInMsPerSubpath)
+	{
+		return getKMinimumCostServiceChains(links ,  
+				originNode, destinationNode, sequenceOfResourceTypesToTraverse , linkCost, resourceCost , 
+				1, Double.MAX_VALUE , maxLengthInKmPerSubpath, maxNumHopsPerSubpath, maxPropDelayInMsPerSubpath, null); 
+	}	
 	
 	/** Returns the shortest pair of link-disjoint paths, where each item represents a path. The number of returned items will be equal to the number of paths found: when empty, no path was found; when {@code size()} = 1, only one path was found; and when {@code size()} = 2, the link-disjoint paths were found. Internally it uses the Suurballe-Tarjan algorithm.
 	 * @param nodes Collection of nodes

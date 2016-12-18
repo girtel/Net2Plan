@@ -531,6 +531,34 @@ public class Demand extends NetworkElement
 		return Pair.of(shortestRoutes , shortestPathCost);
 	}
 
+	/**
+	 * <p>Returns the set of demand service chains with shortest cost, using the cost per link and cost per resources arrays provided. 
+	 * If more than one minimum cost route exists, all of them are provided.
+	 * If the link cost vector provided is null, all links have cost one. The same for the resource costs array. 
+	 * If the route traverses a protection segment, the cost of its links is summed.</p>
+	 * @param linkCosts Costs for each link (indexed by link index)
+	 * @param resourceCosts the costs of the resources (indexed by resource index)
+	 * @return Pair where the first element is a set of routes (may be empty) and the second element the minimum cost (will be {@code Double.MAX_VALUE} if there is no shortest path)
+	 */
+	public Pair<Set<Route>,Double> computeMinimumCostServiceChains (double [] linkCosts , double [] resourceCosts)
+	{
+		if (linkCosts == null) linkCosts = DoubleUtils.ones(layer.links.size ()); else if (linkCosts.length != layer.links.size()) throw new Net2PlanException ("The array of costs must have the same length as the number of links in the layer");
+		if (resourceCosts == null) resourceCosts = DoubleUtils.ones(netPlan.resources.size ()); else if (resourceCosts.length != netPlan.resources.size ()) throw new Net2PlanException ("The array of resources costs must have the same length as the number of resources");
+		Set<Route> minCostRoutes = new HashSet<Route> ();
+		double shortestPathCost = Double.MAX_VALUE;
+		for (Route r : cache_routes)
+		{
+			double cost = 0; 
+			for (NetworkElement e : r.seqLinksSegmentsAndResourcesTraversed) 
+				if (e instanceof ProtectionSegment) for (Link ee : ((ProtectionSegment) e).seqLinks) cost += linkCosts [ee.index];
+				else if (e instanceof Link) cost += linkCosts [e.index];
+				else if (e instanceof Resource) cost += resourceCosts [e.index];
+				else throw new RuntimeException ("Bad");
+			if (cost < shortestPathCost) { shortestPathCost = cost; minCostRoutes.clear(); minCostRoutes.add (r); }
+			else if (cost == shortestPathCost) { minCostRoutes.add (r); }
+		}
+		return Pair.of(minCostRoutes , shortestPathCost);
+	}
 
 	/**
 	 * <p>Removes a demand, and any associated routes or forwarding rules.</p>

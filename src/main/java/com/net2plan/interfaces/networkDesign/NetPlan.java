@@ -1,5 +1,4 @@
 /*******************************************************************************
- * Copyright (c) 2016 Pablo Pavon-Marino.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Lesser Public License v2.1
  * which accompanies this distribution, and is available at
@@ -33,13 +32,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
 
 import org.apache.commons.lang3.mutable.MutableLong;
-import org.apache.commons.math3.genetics.NPointCrossover;
 import org.codehaus.stax2.XMLInputFactory2;
 import org.codehaus.stax2.XMLOutputFactory2;
 import org.codehaus.stax2.XMLStreamReader2;
@@ -51,7 +50,6 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.Version;
 import com.net2plan.internal.XMLUtils;
 import com.net2plan.libraries.GraphUtils;
-import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Constants.RoutingCycleType;
@@ -1019,29 +1017,44 @@ public class NetPlan extends NetworkElement
 	 * @param cpl Candidate path list per demand
 	 * @param disjointType Type of disjointness: 0 for SRG-disjoint, 1 for link and node disjoint, other value means link disjoint
 	 * @return List of disjoint path pairs for each demand
-	 * @since 0.4.0
 	 */
 	public static Map<Demand,List<Pair<List<Link>,List<Link>>>> computeUnicastCandidate11PathList (Map<Demand,List<List<Link>>> cpl , int disjointType)
+	{
+		Map<Demand,List<Pair<List<NetworkElement>,List<NetworkElement>>>>  res = computeUnicastCandidate11ServiceChainList ((Map<Demand,List<List<NetworkElement>>>) (Map<Demand,?>) cpl , disjointType);
+		return (Map<Demand,List<Pair<List<Link>,List<Link>>>>) (Map<Demand,?>) res;
+	}
+
+	/**
+	 * <p>Computes a list of disjoint service chain pairs for each demand (service chain requests), using the service chain paths in the input 
+	 * candidate path list given.</p>
+	 *
+	 * @param cpl Candidate path list per demand
+	 * @param disjointType Type of disjointness: 0 for SRG-disjoint, 1 for link and node disjoint, other value means link disjoint
+	 * @return List of disjoint path pairs for each demand
+	 */
+	public static Map<Demand,List<Pair<List<NetworkElement>,List<NetworkElement>>>> computeUnicastCandidate11ServiceChainList (Map<Demand,List<List<NetworkElement>>> cpl , int disjointType)
 	{
 		final boolean srgDisjoint = disjointType == 0;
 		final boolean linkAndNodeDisjoint = disjointType == 1;
 		final boolean linkDisjoint = !srgDisjoint && !linkAndNodeDisjoint;
-		Map<Demand,List<Pair<List<Link>,List<Link>>>> result = new HashMap<Demand,List<Pair<List<Link>,List<Link>>>> ();
+		Map<Demand,List<Pair<List<NetworkElement>,List<NetworkElement>>>> result = new HashMap<Demand,List<Pair<List<NetworkElement>,List<NetworkElement>>>> ();
 		for (Demand d : cpl.keySet())
 		{
-			for (List<Link> path : cpl.get(d)) d.netPlan.checkInThisNetPlanAndLayer(path , d.layer);
-			List<Pair<List<Link>,List<Link>>> pairs11ThisDemand = new ArrayList<Pair<List<Link>,List<Link>>> ();
-			final List<List<Link>> paths = new ArrayList<List<Link>> (cpl.get(d));
+			for (List<NetworkElement> path : cpl.get(d)) d.netPlan.checkInThisNetPlanAndLayer(path , d.layer);
+			List<Pair<List<NetworkElement>,List<NetworkElement>>> pairs11ThisDemand = new ArrayList<Pair<List<NetworkElement>,List<NetworkElement>>> ();
+			
+			final List<List<NetworkElement>> paths = new ArrayList<List<NetworkElement>> (cpl.get(d));
 			final int P_d = paths.size ();
 			for (int firstPathIndex = 0; firstPathIndex < P_d-1 ; firstPathIndex ++)
 			{
-				final List<Link> firstPath = paths.get(firstPathIndex);
-				final Set<Link> firstPathLinks = new HashSet<Link> (firstPath);
+				// final List<NetworkElement> firstPath = paths.get(firstPathIndex);
+				final List<Link> firstPathSeqLinks = paths.get(firstPathIndex).stream().filter(e -> e instanceof Link).map(e -> (Link) e).collect(Collectors.toList());
+				final Set<Link> firstPathLinks = new HashSet<Link> (firstPathSeqLinks);
 				Set<Node> firstPathNodesButLastAndFirst = null;
 				Set<SharedRiskGroup> firstPathSRGs = null;
 				if (linkAndNodeDisjoint)
 				{
-					List<Node> firstPathSeqNodes = GraphUtils.convertSequenceOfLinksToSequenceOfNodes(firstPath);
+					List<Node> firstPathSeqNodes = GraphUtils.convertSequenceOfLinksToSequenceOfNodes(firstPathSeqLinks);
 					firstPathNodesButLastAndFirst = new HashSet<Node> (firstPathSeqNodes);
 					firstPathNodesButLastAndFirst.remove(d.ingressNode);
 					firstPathNodesButLastAndFirst.remove(d.egressNode);
@@ -1051,26 +1064,27 @@ public class NetPlan extends NetworkElement
 				}
 				for (int secondPathIndex = firstPathIndex + 1; secondPathIndex < P_d ; secondPathIndex ++)
 				{
-					List<Link> secondPath = paths.get(secondPathIndex);
+					//List<Link> secondPath = paths.get(secondPathIndex);
+					final List<Link> secondPathSeqLinks = paths.get(secondPathIndex).stream().filter(e -> e instanceof Link).map(e -> (Link) e).collect(Collectors.toList());
 					boolean disjoint = true; boolean firstLink = true;
 					if (linkDisjoint)
 					{
-						for (Link e : secondPath) if (firstPathLinks.contains(e)) { disjoint = false; break; }
+						for (Link e : secondPathSeqLinks) if (firstPathLinks.contains(e)) { disjoint = false; break; }
 					} else if (linkAndNodeDisjoint)
 					{
-						for (Link e : secondPath)
+						for (Link e : secondPathSeqLinks)
 						{
 							if (firstPathLinks.contains(e)) { disjoint = false; break; }
 							if (firstLink) firstLink = false; else { if (firstPathNodesButLastAndFirst.contains(e.originNode)) disjoint = false; break;  }
 						}
 					} else if (srgDisjoint)
 					{
-						for (SharedRiskGroup srg : SRGUtils.getAffectingSRGs(secondPath)) if (firstPathSRGs.contains(srg)) { disjoint = false; break; }
+						for (SharedRiskGroup srg : SRGUtils.getAffectingSRGs(secondPathSeqLinks)) if (firstPathSRGs.contains(srg)) { disjoint = false; break; }
 					}
 					if (disjoint)
 					{
-						checkDisjointness (firstPath , secondPath , disjointType);
-						pairs11ThisDemand.add (Pair.of(firstPath, secondPath));
+						checkDisjointness (firstPathSeqLinks , secondPathSeqLinks , disjointType);
+						pairs11ThisDemand.add (Pair.of(paths.get(firstPathIndex), paths.get(secondPathIndex)));
 					}
 				}
 			}
@@ -1103,10 +1117,46 @@ public class NetPlan extends NetworkElement
 
 	}
 
+	/** Computes for each demand (service chain request) up to k minimum cost service chain paths (sequence and links and resources), according to 
+	 * the link and resources cost information provided, as well as other constraints defined in the input parameters. 
+	 * The algorithm calls the function getKMinimumCostServiceChains in GraphUtils, for each demand. Some of the constraints limit the vaild subpaths, 
+	 * where a subpath means the sequence of links between two consecutive resources, or from origin/end node to to/from its next/previous visited resource.
+	 * @param linkCost the cost of each link (if null, all links have cost one), all numbers must be strictly positive
+	 * @param resourceCost a vector with the cost of each resource (if null, all resources have cost zero). All costs must be nonnegative.  
+	 * @param K The maximum number of service chains to return (less than K may be returned if there are no different paths).
+	 * @param maxCostServiceChain Service chains with a cost higher than this are not enumerated
+	 * @param maxLengthInKmPerSubpath The maximum length in km in each subpath. Service chains not satisfying this are not enumerated
+	 * @param maxNumHopsPerSubpath The maximum number of traversed links in each subpath. Service chains not satisfying this are not enumerated
+	 * @param maxPropDelayInMsPerSubpath The propagation delay summing the links in each subpath. Service chains not satisfying this are not enumerated
+	 * @param optionalLayerParameter
+	 * @return Map with all the computed service chain paths (values) per demands (keys)
+	 */
+	public Map<Demand,List<List<NetworkElement>>> computeUnicastCandidateServiceChainList (DoubleMatrix1D linkCosts , DoubleMatrix1D resourceCosts , 
+			int K, double maxCostServiceChain , double maxLengthInKmPerSubpath, int maxNumHopsPerSubpath, double maxPropDelayInMsPerSubpath, 
+			NetworkLayer ... optionalLayerParameter)
+	{
+		final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		Map<Pair<Node,Node>,List<Pair<List<Link>,Double>>> cacheSubpathLists = new HashMap<Pair<Node,Node>,List<Pair<List<Link>,Double>>> ();
+		if (linkCosts == null) linkCosts = DoubleFactory1D.dense.make(layer.links.size() , 1.0);
+		if (resourceCosts == null) resourceCosts = DoubleFactory1D.dense.make(resources.size() , 0.0);
+		Map<Resource,Double> resourceCostMap = new HashMap<Resource,Double> ();
+		for (int rIndex = 0; rIndex < resources.size() ; rIndex ++) resourceCostMap.put(resources.get(rIndex), resourceCosts.get(rIndex));
+		Map<Demand,List<List<NetworkElement>>> cpl = new HashMap<Demand,List<List<NetworkElement>>> ();
+		for (Demand d : layer.demands)
+		{
+			List<Pair<List<NetworkElement>,Double>> kSCsInfo = GraphUtils.getKMinimumCostServiceChains(layer.links ,  
+					d.ingressNode, d.egressNode, d.mandatorySequenceOfTraversedResourceTypes, 
+					linkCosts, resourceCostMap , 
+					K, maxCostServiceChain , maxLengthInKmPerSubpath, maxNumHopsPerSubpath, maxPropDelayInMsPerSubpath, 
+					cacheSubpathLists);
+			List<List<NetworkElement>> kSCs = kSCsInfo.stream().map(e -> e.getFirst()).collect(Collectors.toList());
+			cpl.put(d, kSCs);
+		}
+		return cpl;
+	}
+	
 	/**
-	 * <p>Adds traffic routes specified by those paths that satisfy the candidate path list options described below. Existing routes will not be removed.</p>
-	 *
-	 * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}.</p>
+	 * <p>Computes for each demand a candidate path list, composed of the k shortest paths according with the options indicated below.</p>
 	 *
 	 * <p>The candidate path list elaborated contains a set of paths
 	 * computed for each unicast demand in the network, based on the k-shortest path idea. In general, for every demand k
@@ -1136,7 +1186,6 @@ public class NetPlan extends NetworkElement
 	{
 		checkIsModifiable();
 		checkInThisNetPlan(layer);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		if (costs != null) if (costs.length != layer.links.size()) throw new Net2PlanException ("The array of costs must have the same length as the number of links in the layer");
 
 		int K = 3;
