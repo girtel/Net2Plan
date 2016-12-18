@@ -899,41 +899,31 @@ public class GraphUtils
 		//		return JUNGUtils.getKLooplessShortestPaths(graph, nev, originNode, destinationNode , K);
 	}
 
-	/** Returns the K-loopless shortest paths between two nodes, satisfying some user-defined constraints. If only <i>n</i> shortest path are found (n&lt;K), those are returned.
-	 * @param nodes List of nodes
-	 * @param links List of links
-	 * @param originNode Origin node
-	 * @param destinationNode Destination node
-	 * @param linkCost Cost per link, where the key is the link identifier and the value is the cost of traversing the link. No special iteration-order (i.e. ascending) is required. If {@code null}, all links have weight one
-	 * @param K Desired nummber of paths (a lower number of paths may be returned if there are less than {@code K} loop-less paths admissible)
-	 * @param maxLengthInKm Maximum length of the path. If non-positive, no maximum limit is assumed
-	 * @param maxNumHops Maximum number of hops. If non-positive, no maximum limit is assumed
-	 * @param maxPropDelayInMs Maximum propagation delay of the path. If non-positive, no maximum limit is assumed
-	 * @param maxRouteCost Maximum route cost. If non-positive, no maximum limit is assumed
-	 * @param maxRouteCostFactorRespectToShortestPath Maximum route cost factor respect to the shortest path. If non-positive, no maximum limit is assumed
-	 * @param maxRouteCostRespectToShortestPath Maximum route cost respect to the shortest path. If non-positive, no maximum limit is assumed
-	 * @return K-shortest paths */
-	/**
-	 * @param nodes
-	 * @param links
-	 * @param resources we assume all the resources are hosted in nodes in the nodes list
-	 * @param originNode initial node of the service chain, should be in the nodes list
-	 * @param destinationNode end node of the service chain, should be in the nodes list
-	 * @param resourceTypes 
-	 * @param linkCost
-	 * @param K
-	 * @param maxLengthInKmPerSubpath
-	 * @param maxNumHopsPerSubpath
-	 * @param maxPropDelayInMsPerSubpath
-	 * @param maxCostServiceChain
-	 * @param cacheMapResourceTypes
-	 * @param cachePathLists
-	 * @return
+	/** Returns the K minimum cost service chains between two nodes (summing costs of links and resources traversed), traversing a given set of resource types, satisfying some user-defined constraints.
+	 * If only <i>n</i> shortest path are found (n&lt;K), those are returned. If none is found an empty list is returned. 
+	 * The subpaths (the set of links between two resources, or the first(last) resource and the origin (destination) node, are constrained to be loopless 
+	 * (the algorithm uses Yen's scheme for subpaths enumeration).
+	 * @param links The set of links which can be used for the chain
+	 * @param originNode The origin node of the chain
+	 * @param destinationNode The destination node of the chain (could be the same as the origin node)
+	 * @param sequenceOfResourceTypesToTraverse the types of the sequence of resources to traverse
+	 * @param linkCost the cost of each link (if null, all links have cost one), all numbers must be strictly positive
+	 * @param resourceCost a map with the cost of each resource (if null, all resources have cost zero). All costs must be nonnegative. If a resource is not present in the map, its cost is zero. 
+	 * @param K The maximum number of service chains to return (less than K may be returned if there are no different paths).
+	 * @param maxCostServiceChain Service chains with a cost higher than this are not enumerated
+	 * @param maxLengthInKmPerSubpath The maximum length in km in each subpath. Service chains not satisfying this are not enumerated
+	 * @param maxNumHopsPerSubpath The maximum number of traversed links in each subpath. Service chains not satisfying this are not enumerated
+	 * @param maxPropDelayInMsPerSubpath The propagation delay summing the links in each subpath. Service chains not satisfying this are not enumerated
+	 * @param cacheSubpathLists A map which associated to node pairs, the k-shortest paths (only considering links) already computed to be used. 
+	 * The algorithm will add new entries here for those pairs of nodes for which no per-computed values exist, and that are needed in the algorithm 
+	 * (e.g. for origin node to all nodes of the first resource type, nodes of the first resource type to the second...). If null, then no entries are 
+	 * precomputed AND also no new entries are returned.   
+	 * @return the (at most) K minimum cost service chains.
 	 */
-	public static List<Pair<List<NetworkElement>,Double>> getKMinimumCostServiceChains(List<Link> links , List<Resource> resources , 
-			Node originNode, Node destinationNode, List<String> resourceTypes , DoubleMatrix1D linkCost, 
+	public static List<Pair<List<NetworkElement>,Double>> getKMinimumCostServiceChains(List<Link> links ,  
+			Node originNode, Node destinationNode, List<String> sequenceOfResourceTypesToTraverse , DoubleMatrix1D linkCost, Map<Resource,Double> resourceCost , 
 			int K, double maxCostServiceChain , double maxLengthInKmPerSubpath, int maxNumHopsPerSubpath, double maxPropDelayInMsPerSubpath, 
-			Map<Pair<Node,Node>,List<Pair<List<Link>,Double>>> cachePathLists)
+			Map<Pair<Node,Node>,List<Pair<List<Link>,Double>>> cacheSubpathLists)
 	{
 		if (maxLengthInKmPerSubpath <= 0) maxLengthInKmPerSubpath = Double.MAX_VALUE;
 		if (maxNumHopsPerSubpath <= 0) maxNumHopsPerSubpath = Integer.MAX_VALUE;
@@ -943,14 +933,17 @@ public class GraphUtils
 		final NetPlan netPlan = links.get(0).getNetPlan();
 		if (linkCost == null) linkCost = DoubleFactory1D.dense.make(E , 1.0);
 		if (linkCost.size() != E) throw new Net2PlanException ("Wrong size of cost array");
-
+		if (linkCost.getMinLocation() [0] <= 0) throw new Net2PlanException ("All link costs must be strictly positive");
+		if (resourceCost == null) resourceCost = new HashMap<Resource,Double> ();
+		for (Double val : resourceCost.values()) if (val < 0) throw new Net2PlanException ("All resource costs must be non-negative");
+		
 		/* initialize the link cost map */
 		Map<Link,Double> linkCostMap = new HashMap<Link,Double> (); 
 		for (int cont = 0; cont < E ; cont ++) linkCostMap.put(links.get(cont), linkCost.get(cont));
 	
 		/* initialize the nodes per phase. One element per resource type to traverse, plus one for the last node  */
 		List<Set<Node>> nodesPerPhase = new ArrayList<Set<Node>> ();
-		for (String resourceType : resourceTypes)
+		for (String resourceType : sequenceOfResourceTypesToTraverse)
 		{
 			final Set<Resource> resourcesThisType = netPlan.getResources(resourceType);
 			if (resourcesThisType == null) return new LinkedList<Pair<List<NetworkElement>,Double>> ();
@@ -960,14 +953,14 @@ public class GraphUtils
 		nodesPerPhase.add(Collections.singleton(destinationNode));
 
 		/* initialize the path lists. This includes (n,n) pairs with one path of empty seq links and zero cost */
-		if (cachePathLists == null) cachePathLists = new HashMap<Pair<Node,Node>,List<Pair<List<Link>,Double>>> ();
+		if (cacheSubpathLists == null) cacheSubpathLists = new HashMap<Pair<Node,Node>,List<Pair<List<Link>,Double>>> ();
 		for (int contPhase = 0; contPhase < nodesPerPhase.size() ; contPhase ++)
 		{
 			final Set<Node> outputNodes = nodesPerPhase.get(contPhase);
 			final Set<Node> inputNodes = contPhase == 0? Collections.singleton(originNode) : nodesPerPhase.get(contPhase-1); 
 			for (Node nIn : inputNodes)
 				for (Node nOut : outputNodes)
-					if (!cachePathLists.containsKey(Pair.of(nIn, nOut)))
+					if (!cacheSubpathLists.containsKey(Pair.of(nIn, nOut)))
 						if (nIn != nOut)
 						{
 							List<List<Link>> kPaths = getKLooplessShortestPaths(netPlan.getNodes(), links , nIn, nOut, linkCostMap, K, maxLengthInKmPerSubpath, maxNumHopsPerSubpath, maxPropDelayInMsPerSubpath, -1, -1, -1);
@@ -981,9 +974,9 @@ public class GraphUtils
 								pathsInfo.add(Pair.of(path, thisCost));
 								previousCost = thisCost;
 							}
-							cachePathLists.put(Pair.of(nIn, nOut), pathsInfo);
+							cacheSubpathLists.put(Pair.of(nIn, nOut), pathsInfo);
 						}
-						else cachePathLists.put(Pair.of (nIn,nIn), Collections.singletonList(Pair.of(new LinkedList<Link> (), 0.0)));
+						else cacheSubpathLists.put(Pair.of (nIn,nIn), Collections.singletonList(Pair.of(new LinkedList<Link> (), 0.0)));
 		}
 		
 		/* Start the main loop */
@@ -993,7 +986,7 @@ public class GraphUtils
 		for (Node outNode : nodesPerPhase.get(0))
 		{
 			List<Pair<List<NetworkElement>,Double>> thisFirstStageNodeSCs = new ArrayList<Pair<List<NetworkElement>,Double>> ();
-			for (Pair<List<Link>,Double> path : cachePathLists.get(Pair.of(originNode, outNode)))
+			for (Pair<List<Link>,Double> path : cacheSubpathLists.get(Pair.of(originNode, outNode)))
 				if (path.getSecond() <= maxCostServiceChain)
 					thisFirstStageNodeSCs.add(Pair.of(new LinkedList<NetworkElement> (path.getFirst()), path.getSecond()));
 			outNodeToKSCsMap.put(outNode, thisFirstStageNodeSCs);
@@ -1009,7 +1002,7 @@ public class GraphUtils
 		{
 			final Set<Node> thisPhaseNodes = nodesPerPhase.get(nextPhase-1); 
 			final Set<Node> nextPhaseNodes = nodesPerPhase.get(nextPhase);
-			final String intermediateNodeResourceType = resourceTypes.get(nextPhase-1);
+			final String intermediateNodeResourceType = sequenceOfResourceTypesToTraverse.get(nextPhase-1);
 			Map<Node , List<Pair<List<NetworkElement>,Double>>> new_outNodeToKSCsMap = new HashMap<Node , List<Pair<List<NetworkElement>,Double>>> ();		
 			for (Node newOutNode : nextPhaseNodes)
 			{
@@ -1020,7 +1013,7 @@ public class GraphUtils
 					{
 						final List<NetworkElement> scOriginToIntermediate = scOriginToIntermediateInfo.getFirst();
 						final double scOriginToIntermediateCost = scOriginToIntermediateInfo.getSecond();
-						for (Pair<List<Link>,Double> scIntermediateToOutInfo : cachePathLists.get(Pair.of(intermediateNode, newOutNode)))
+						for (Pair<List<Link>,Double> scIntermediateToOutInfo : cacheSubpathLists.get(Pair.of(intermediateNode, newOutNode)))
 						{
 							final List<NetworkElement> scIntermediateToOut = (List<NetworkElement>) (List<?>) scIntermediateToOutInfo.getFirst();
 							final double scIntermediateToOutCost = scIntermediateToOutInfo.getSecond();
@@ -1028,17 +1021,22 @@ public class GraphUtils
 							if (kSCsToThisOutNode.size () == K)
 								if (kSCsToThisOutNode.get(K-1).getSecond() <= scOriginToIntermediateCost + scIntermediateToOutCost)
 									break; // do not add this SC (already full), and no more interm->out paths: all are worse
-							/* Add as many concatenated SCs as resources here, but do not exceed maximum size k of total list  */
+							/* Add as many concatenated SCs as resources here, but do not exceed maximum size k of total list. Resource costs may not be ordered  */
 							for (Resource intermediateResource : intermediateNode.getResources(intermediateNodeResourceType))
 							{
+								final Double intermediateResourceCost = resourceCost.get(intermediateResource);
+								final double totalSCCost = scOriginToIntermediateCost + scIntermediateToOutCost + ((intermediateResourceCost == null)? 0.0 : intermediateResourceCost);	
+								if (totalSCCost > maxCostServiceChain) continue; // do not add this, but maybe other resources later are cheaper
+								if ((kSCsToThisOutNode.size () == K) && (totalSCCost > kSCsToThisOutNode.get(K-1).getSecond())) continue; // do not add this, but maybe other resources later are cheaper 
+								/* Add this SC */
 								List<NetworkElement> newSC = new LinkedList<NetworkElement> (scOriginToIntermediate);
 								newSC.add(intermediateResource);
 								newSC.addAll(scIntermediateToOut);
 								kSCsToThisOutNode.add(Pair.of(newSC, scOriginToIntermediateCost + scIntermediateToOutCost));
+								/* One SC was added, sort again, and remove the last SCs (higher cost), keep up to K */
+								Collections.sort(kSCsToThisOutNode, scComparator);
+								if (kSCsToThisOutNode.size() > K) kSCsToThisOutNode = kSCsToThisOutNode.subList(0, K);
 							}
-							/* Since at least one SC was added, sort again, and remove the last SCs (higher cost), keep up to K */
-							Collections.sort(kSCsToThisOutNode, scComparator);
-							if (kSCsToThisOutNode.size() > K) kSCsToThisOutNode = kSCsToThisOutNode.subList(0, K);
 						}
 					}
 				}
