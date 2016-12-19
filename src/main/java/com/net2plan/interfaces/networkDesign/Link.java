@@ -44,6 +44,7 @@ import java.util.Map.Entry;
 
 public class Link extends NetworkElement
 {
+	
 	final NetworkLayer layer;
 	final Node originNode;
 	final Node destinationNode;
