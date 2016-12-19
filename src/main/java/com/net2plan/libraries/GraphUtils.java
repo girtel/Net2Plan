@@ -1,11 +1,9 @@
-DOC AND CHECK THAT  LINKS INFINITE COST NOT USED
-MAKE ALGORITHM
-MAKE TESTS JUNIT
-MAKE USERS GUIDE WITH THAT
-MORE GETMATRIX: A GET MATRIX THAT RxRYPE => KEEPS THE COLUMNS OF THE GIVEN TYPE
---
-ONE MORE TABLE
-CHANGE THE TIP IN THE NODES
+//MAKE ALGORITHM
+//MAKE TESTS JUNIT
+//MAKE USERS GUIDE WITH THAT
+//--
+//ONE MORE TABLE
+//CHANGE THE TIP IN THE NODES
 
 
 
@@ -751,6 +749,7 @@ public class GraphUtils
 	}
 
 	/** Returns all the loopless shortest paths between two nodes. All these paths have the same total cost.
+	 * Links with cost {@code Double.MAX_VALUE} are not considered.
 	 * 
 	 * @param nodes List of nodes
 	 * @param links List of links
@@ -1292,7 +1291,8 @@ public class GraphUtils
 		return A_ne;
 	}
 
-	/** Obtains the sequence of links representing the (unidirectional) shortest path between two nodes.
+	/** Obtains the sequence of links representing the (unidirectional) shortest path between two nodes. 
+	 * Links with cost {@code Double.MAX_VALUE} are not considered.
 	 * @param nodes Collection of nodes
 	 * @param links Collection of links
 	 * @param originNode Origin node
@@ -2354,7 +2354,8 @@ public class GraphUtils
 			return linkFilter.transform(graph);
 		}
 
-		/** Returns the shortest path that fulfills a given minimum capacity requirement along its traversed edges. In case no path can be found, an empty list will be returned.
+		/** Returns the shortest path that fulfills a given minimum capacity requirement along its traversed edges. 
+		 * In case no path can be found, an empty list will be returned. Links with cost {@code Double.MAX_VALUE} are not considered.
 		 * 
 		 * @param <V> Class type for vertices
 		 * @param <E> Class type for edges
@@ -2465,6 +2466,7 @@ public class GraphUtils
 		//		}
 
 		/** Returns the K-loopless shortest paths between two nodes. If <i>n</i> shortest paths are found (n&lt;K), those are returned.
+		 * Links with cost {@code Double.MAX_VALUE} are not considered.
 		 * 
 		 * @param <V> Class type for vertices
 		 * @param <E> Class type for edges
@@ -2503,7 +2505,7 @@ public class GraphUtils
 			return pathWeight;
 		}
 
-		/** Returns the shortest path between two nodes using Dijkstra's algorithm.
+		/** Returns the shortest path between two nodes using Dijkstra's algorithm. Links with cost {@code Double.MAX_VALUE} are not considered.
 		 * 
 		 * @param <V> Vertex type
 		 * @param <E> Edge type
@@ -3013,7 +3015,7 @@ public class GraphUtils
 		protected double maxRouteCostFactorRespectToShortestPath;
 		protected double maxRouteCostRespectToShortestPath;
 
-		/** Default constructor.
+		/** Default constructor. Links with cost {@code Double.MAX_VALUE} are not considered.
 		 * 
 		 * @param graph Graph on which shortest paths are searched
 		 * @param nev The class responsible for returning weights for edges */
@@ -3039,7 +3041,7 @@ public class GraphUtils
 			dijkstra = new DijkstraShortestPath<V, E>(graph, nev);
 		}
 
-		/** Default constructor.
+		/** Default constructor. Links with cost {@code Double.MAX_VALUE} are not considered.
 		 * 
 		 * @param graph Graph on which shortest paths are searched
 		 * @param nev The class responsible for returning weights for edges */

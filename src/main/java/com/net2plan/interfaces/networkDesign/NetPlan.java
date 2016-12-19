@@ -2347,6 +2347,25 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
+	 * <p>Returns the demand-resource incidence matrix, with as many rows as demands of the given layer, and 
+	 * a many colmns as resources, coordinate (d,r) equals the number of times that 
+	 * traffic routes of the demand d, traverse resource r. 
+	 * If no layer is provided, the default layer is assumed.</p>
+	 *
+	 * @param optionalLayerParameter Network layer (optional)
+	 * @return The demand-link incidence matrix
+	 */
+	public DoubleMatrix2D getMatrixDemand2ResourceAssignment(NetworkLayer ... optionalLayerParameter)
+	{
+		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		DoubleMatrix2D delta_dr = getMatrixDemand2RouteAssignment(layer);
+		DoubleMatrix2D delta_er = getMatrixResource2RouteAssignment();
+
+		return delta_dr.zMult(delta_er.viewDice(), null);
+	}
+
+	/**
 	 * <p>Returns the route-srg incidence matrix (an <i>R</i>x<i>S</i> matrix in which an element <i>&delta;<sub>rs</sub></i> equals 1 if route <i>r</i>
 	 * fails when SRG <i>s</i> is affected. If no layer is provided, the default layer is assumed.</p>
 	 * @param optionalLayerParameter Network layer (optional)
@@ -2422,6 +2441,25 @@ public class NetPlan extends NetworkElement
 		return x_de;
 	}
 
+	/**
+	 * <p>Returns the demand-resource matrix, with as many rows as demands of the given layer, and as many columns as resources, 
+	 * coordinate (d,r) is the resource capacity that demand d currently occupies in resource r (recall that failed routes do not occupy capacity 
+	 * in the traversed resources). If no layer is provided, the default layer is assumed</p>
+	 *
+	 * @param optionalLayerParameter Network layer (optional)
+	 * @return The matrix
+	 */
+	public DoubleMatrix2D getMatrixDemand2ResourceOccupiedCapacity(NetworkLayer ... optionalLayerParameter)
+	{
+		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		DoubleMatrix2D x_dr = DoubleFactory2D.sparse.make (layer.demands.size () , resources.size ());
+		for (Route r : layer.routes) 
+			if (!r.isDown()) 
+				for (Entry<Resource,Double> e : r.resourcesTraversedAndOccupiedCapIfnotFailMap.entrySet()) 
+					x_dr.set (r.demand.index , e.getKey().index , e.getValue());
+		return x_dr;
+	}
 
 	public DoubleMatrix2D getMatrixDestination2LinkTrafficCarried(NetworkLayer ... optionalLayerParameter)
 	{
@@ -2639,7 +2677,7 @@ public class NetPlan extends NetworkElement
 	 * even if currently 0 capacity units are occupied in base resource r2 because of r1</p>
 	 * @return The matrix
 	 */
-	public DoubleMatrix2D getMatrixResource2ResourceUpperToBaseRelation ()
+	public DoubleMatrix2D getMatrixResource2ResourceUpperToBaseAssignment ()
 	{
 		final int R = resources.size();
 		DoubleMatrix2D out = DoubleFactory2D.dense.make(R, R);
@@ -2650,7 +2688,7 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns a matrix with as many rows and columns as resources. Coordinate (r1,r2) contains the capacity that resource r1 currently occupies 
+	 * <p>Returns a matrix with as many rows and columns as resources, coordinate (r1,r2) contains the capacity that resource r1 currently occupies 
 	 * in r2. If r2 is not a base resource of r1, coordinate is zero</p>
 	 * @return The matrix
 	 */
@@ -2665,7 +2703,8 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns a matrix with as many rows resources, and columns as routes in the given layer. Coordinate (res,rou) contains the number times that route rou 
+	 * <p>Returns a matrix with as many rows resources, and columns as routes in the given layer, 
+	 * coordinate (res,rou) contains the number times that route rou 
 	 * traverses resource res. If no layer is provided, default layer is assumed</p>
 	 * @return The matrix
 	 */
@@ -2680,6 +2719,26 @@ public class NetPlan extends NetworkElement
 			for (Route rou : res.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet())
 				if (rou.layer.equals(layer))
 					delta_er.set (res.index , rou.index , rou.getNumberOfTimesResourceIsTraversed (res));
+		return delta_er;
+	}
+
+	/**
+	 * <p>Returns a matrix with as many rows resources, and columns as routes in the given layer, and coordinate (res,rou) contains 
+	 * the capacity occupied by route rou in resource res (note that if a route is down, its occupied capacity in a resource becomes zero). 
+	 * If no layer is provided, default layer is assumed</p>
+	 * @return The matrix
+	 */
+	public DoubleMatrix2D getMatrixResource2RouteOccupation (NetworkLayer ... optionalLayerParameter)
+	{
+		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		final int RES = resources.size();
+		final int ROU = layer.routes.size();
+		DoubleMatrix2D delta_er = DoubleFactory2D.sparse.make(RES, ROU);
+		for (Resource res : resources) 
+			for (Entry<Route,Double> rou : res.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.entrySet())
+				if (rou.getKey().layer.equals(layer))
+					delta_er.set (res.index , rou.getKey().index , rou.getKey().isDown()? 0 : rou.getValue());
 		return delta_er;
 	}
 
@@ -2707,6 +2766,24 @@ public class NetPlan extends NetworkElement
 		for (Resource res : resources)
 			delta_en.set (res.index , res.hostNode.index , 1.0);
 		return delta_en;
+	}
+
+	/**
+	 * <p>Returns a matrix with as many rows resources as resources of the given type (ordered in an arbitrary form), 
+	 * and as many columns as resources in the network. It is constructed by taking the diagonal matrix, and keeping only the rows associated to 
+	 * resources of the given type. When left multiplied to a matrix with as many rows as resources, it keeps the rows associated to the resources 
+	 * of the given type, removing the rest.</p>
+	 * @param type the resource type
+	 * @return The matrix
+	 */
+	public DoubleMatrix2D getMatrixResource2ResourceType (String type)
+	{
+		Set<Resource> resType = netPlan.getResources(type);
+		DoubleMatrix2D delta_rr = DoubleFactory2D.sparse.make (resType.size() , resources.size());
+		int contResType = 0;
+		for (Resource rThisType : resType)
+			delta_rr.set (contResType++ , rThisType.index , 1.0);
+		return delta_rr;
 	}
 
 	/**
