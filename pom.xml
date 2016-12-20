@@ -214,6 +214,7 @@
             </activation>
 
             <build>
+            	<pluginManagement>
                 <plugins>
                     <!-- Ignore default jar generation -->
                     <plugin>
@@ -387,6 +388,7 @@
                         </executions>
                     </plugin>
                 </plugins>
+                </pluginManagement>
             </build>
         </profile>
         
