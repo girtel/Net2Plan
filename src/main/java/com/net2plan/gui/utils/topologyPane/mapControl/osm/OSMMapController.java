@@ -21,6 +21,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Jorge San Emeterio
@@ -125,35 +126,9 @@ public class OSMMapController
     private void restartMapState()
     {
         final double zoomRatio = 0.6;
-        final boolean isTopologyEmpty = !callback.getDesign().hasNodes();
 
         final NetPlan netPlan = callback.getDesign();
-
         // If no topology was loaded.
-        if (isTopologyEmpty)
-        {
-            // Set the map to the default position.
-            final GeoPosition mapCenter = mapViewer.getDefaultPosition();
-            mapViewer.setCenterPosition(mapCenter);
-
-            // Add an auxiliary node to help us center the canvas.
-            final Node phantom = netPlan.addNode(mapCenter.getLongitude(), mapCenter.getLatitude(), "Phantom", null);
-            canvas.addNode(phantom);
-
-            // Redo the function using the auxiliary node.
-            restartMapState();
-
-            // Remove the auxiliary node
-            canvas.removeNode(phantom);
-            phantom.remove();
-
-            // Close the routine in order to avoid recursion.
-            return;
-        }
-
-        // Canvas components.
-        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getTransformer();
-
         final Map<Long, GeoPosition> nodeToGeoPositionMap = new HashMap<>();
         // Read xy coordinates of each node as latitude and longitude coordinates.
         for (Node node : callback.getDesign().getNodes())
@@ -168,8 +143,8 @@ public class OSMMapController
         }
 
         // Calculating OSM map center and zoom.
-        mapViewer.zoomToBestFit(new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
-        if (netPlan.getNumberOfNodes() == 1) mapViewer.setZoom(16); // So that the map is not too close to the node.
+        mapViewer.zoomToBestFit(nodeToGeoPositionMap.isEmpty()? Collections.singleton(mapViewer.getDefaultPosition()) : new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
+        if (netPlan.getNumberOfNodes()  <= 1) mapViewer.setZoom(16); // So that the map is not too close to the node.
 
         // Moving the nodes to the position dictated by their geoposition.
         for (Map.Entry<Long, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
@@ -182,8 +157,18 @@ public class OSMMapController
             canvas.moveNodeToXYPosition(node, realPosition);
         }
 
-        // As the topology is centered at the same point as the OSM map, and the relation is 1:1 between their coordinates.
-        // The nodes will be placed at the exact place as they are supposed to.
+        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) this.canvas.getComponent();
+        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getTransformer();
+
+        /* Rescale and pan JUNG layout so that it fits to OSM viewing */
+        ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
+
+        Point2D q = mapViewer.getCenter();
+        Point2D lvc = layoutTransformer.inverseTransform(vv.getCenter());
+        double dx = (lvc.getX() - q.getX());
+        double dy = (lvc.getY() - q.getY());
+
+        layoutTransformer.translate(dx, dy);
 
         previousOSMViewportBounds = mapViewer.getViewportBounds();
         previousZoomLevel = mapViewer.getZoom();

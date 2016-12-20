@@ -455,7 +455,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             zoomAll();
         } else if (src == btn_debug)
         {
-            loadDesignFromFile(new File("C:\\Users\\Jorge\\Desktop\\Maps\\NSFNet_N14_E42_complete.n2p"));
+            loadDesignFromFile(new File("C:\\Users\\Jorge\\Desktop\\Maps\\California_attrib.n2p"));
         } else if (src == btn_reset)
         {
             callback.reset();
