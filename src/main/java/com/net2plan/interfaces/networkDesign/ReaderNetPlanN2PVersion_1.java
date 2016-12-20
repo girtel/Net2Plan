@@ -33,7 +33,7 @@ import javax.xml.stream.events.XMLEvent;
 
 import org.codehaus.stax2.XMLStreamReader2;
 
-class ReaderNetPlan_v1 implements IReaderNetPlan
+class ReaderNetPlanN2PVersion_1 implements IReaderNetPlan
 {
 	Map<Long, List<Long>> backupSegmentMap = new LinkedHashMap<Long, List<Long>>();
 	

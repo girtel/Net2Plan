@@ -39,7 +39,7 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.LongUtils;
 
-class ReaderNetPlan_v5 implements IReaderNetPlan //extends NetPlanFormat_v3
+class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanFormat_v3
 {
 //	private Map<Long,NetworkElement> mapId2NewNE;
 //	protected Map<Long,Node> mapOldId2Node;

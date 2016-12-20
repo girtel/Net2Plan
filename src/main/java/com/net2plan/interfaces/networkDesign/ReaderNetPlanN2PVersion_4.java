@@ -35,7 +35,7 @@ import org.codehaus.stax2.XMLStreamReader2;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.LongUtils;
 
-class ReaderNetPlan_v4 implements IReaderNetPlan //extends NetPlanFormat_v3
+class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanFormat_v3
 {
 	protected Map<Long,Node> mapOldId2Node;
 	protected Map<Long,SharedRiskGroup> mapOldId2Srg;

@@ -264,7 +264,7 @@ public class NetPlan extends NetworkElement
 						if (index == -1)
 						{
 							System.out.println ("Version 1");
-							netPlanFormat = new ReaderNetPlan_v1();
+							netPlanFormat = new ReaderNetPlanN2PVersion_1();
 						}
 						else
 						{
@@ -273,22 +273,22 @@ public class NetPlan extends NetworkElement
 							{
 								case 2:
 									System.out.println ("Version 2");
-									netPlanFormat = new ReaderNetPlan_v2();
+									netPlanFormat = new ReaderNetPlanN2PVersion_2();
 									break;
 
 								case 3:
 									System.out.println ("Version 3");
-									netPlanFormat = new ReaderNetPlan_v3();
+									netPlanFormat = new ReaderNetPlanN2PVersion_3();
 									break;
 
 								case 4:
 									System.out.println ("Version 4");
-									netPlanFormat = new ReaderNetPlan_v4 ();
+									netPlanFormat = new ReaderNetPlanN2PVersion_4 ();
 									break;
 
 								case 5:
 									System.out.println ("Version 5");
-									netPlanFormat = new ReaderNetPlan_v5 ();
+									netPlanFormat = new ReaderNetPlanN2PVersion_5 ();
 									break;
 
 								default:

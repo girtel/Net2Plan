@@ -33,7 +33,7 @@ import org.codehaus.stax2.XMLStreamReader2;
 import com.net2plan.utils.LongUtils;
 import com.net2plan.utils.Pair;
 
-class ReaderNetPlan_v2 implements IReaderNetPlan
+class ReaderNetPlanN2PVersion_2 implements IReaderNetPlan
 {
 	protected Map<Long,Node> mapOldId2Node;
 	protected Map<Long,SharedRiskGroup> mapOldId2Srg;
