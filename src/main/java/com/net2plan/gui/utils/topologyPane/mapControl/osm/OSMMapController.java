@@ -91,7 +91,7 @@ public class OSMMapController
         loadMapOntoTopologyPanel();
 
         // Making the relation between the OSM map and the topology
-        restartMapState();
+        restartMapState(true);
     }
 
     /**
@@ -123,7 +123,7 @@ public class OSMMapController
      * This state is the one where all nodes are seen and they all fit their corresponding position on the OSM map.
      * This method should only be executed when the OSM map is first run. From then on use {@link #zoomAll()}
      */
-    private void restartMapState()
+    public void restartMapState(boolean changeZoomToZoomAll)
     {
         final double zoomRatio = 0.6;
 
@@ -142,9 +142,12 @@ public class OSMMapController
             nodeToGeoPositionMap.put(node.getId(), geoPosition);
         }
 
-        // Calculating OSM map center and zoom.
-        mapViewer.zoomToBestFit(nodeToGeoPositionMap.isEmpty()? Collections.singleton(mapViewer.getDefaultPosition()) : new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
-        if (netPlan.getNumberOfNodes()  <= 1) mapViewer.setZoom(16); // So that the map is not too close to the node.
+        if (changeZoomToZoomAll)
+        {
+            // Calculating OSM map center and zoom.
+            mapViewer.zoomToBestFit(nodeToGeoPositionMap.isEmpty() ? Collections.singleton(mapViewer.getDefaultPosition()) : new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
+            if (netPlan.getNumberOfNodes() <= 1) mapViewer.setZoom(16); // So that the map is not too close to the node.
+        }
 
         // Moving the nodes to the position dictated by their geoposition.
         for (Map.Entry<Long, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
@@ -157,7 +160,7 @@ public class OSMMapController
             canvas.moveNodeToXYPosition(node, realPosition);
         }
 
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) this.canvas.getComponent();
+        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
         final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getTransformer();
 
         /* Rescale and pan JUNG layout so that it fits to OSM viewing */
@@ -165,6 +168,7 @@ public class OSMMapController
 
         Point2D q = mapViewer.getCenter();
         Point2D lvc = layoutTransformer.inverseTransform(vv.getCenter());
+
         double dx = (lvc.getX() - q.getX());
         double dy = (lvc.getY() - q.getY());
 
@@ -261,7 +265,7 @@ public class OSMMapController
     {
         if (isMapActivated())
         {
-            restartMapState();
+            restartMapState(true);
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
@@ -286,10 +290,7 @@ public class OSMMapController
             mapViewer.setCenterPosition(tileFactory.pixelToGeo(newMapCenter, mapViewer.getZoom()));
 
             // Align the topology to the newly change OSM map.
-            if (callback.getDesign().hasNodes())
-            {
-                alignPanJUNGToOSMMap();
-            }
+            alignPanJUNGToOSMMap();
         } else
         {
             throw new OSMMapException("Map is currently deactivated");

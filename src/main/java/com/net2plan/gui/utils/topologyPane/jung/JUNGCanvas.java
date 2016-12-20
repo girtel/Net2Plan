@@ -236,9 +236,7 @@ public final class JUNGCanvas extends ITopologyCanvas
     public Point2D convertRealCoordinatesToViewCoordinates(Point2D screenPoint)
     {
         screenPoint.setLocation(screenPoint.getX(), -screenPoint.getY());
-        Point2D layoutCoordinates = vv.getRenderContext().getMultiLayerTransformer().transform(Layer.LAYOUT, screenPoint);
-
-        return layoutCoordinates;
+        return vv.getRenderContext().getMultiLayerTransformer().transform(Layer.LAYOUT, screenPoint);
     }
 
     @Override
