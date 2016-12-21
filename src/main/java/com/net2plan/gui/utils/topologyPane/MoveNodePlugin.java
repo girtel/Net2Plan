@@ -12,6 +12,7 @@
 
 package com.net2plan.gui.utils.topologyPane;
 
+import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
@@ -72,10 +73,12 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        System.out.println("mouseDragged: " + e + ", startVertex: " + startVertex);
+        //System.out.println("mouseDragged: " + e + ", startVertex: " + startVertex);
         if (startVertex != -1) {
             Point p = e.getPoint();
-            callback.moveNode(startVertex, getCanvas().convertViewCoordinatesToRealCoordinates(p));
+
+            GUINetworkDesign.getStateManager().modeNode(callback.getDesign().getNodeFromId(startVertex), p);
+
             e.consume();
         }
     }

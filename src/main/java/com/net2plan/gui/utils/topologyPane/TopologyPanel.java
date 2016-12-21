@@ -12,26 +12,24 @@
 
 package com.net2plan.gui.utils.topologyPane;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Point;
+import java.awt.*;
 import java.awt.event.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
+import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.utils.FileChooserNetworkDesign;
 import com.net2plan.gui.utils.FileDrop;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.gui.utils.topologyPane.components.MenuButton;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.utils.MenuButton;
@@ -171,6 +169,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         JComponent canvasComponent = canvas.getComponent();
         canvasComponent.setBorder(LineBorder.createBlackLineBorder());
+
         add(canvasComponent, BorderLayout.CENTER);
 
         btn_load = new JButton();
@@ -273,10 +272,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void componentResized(ComponentEvent e)
             {
-                if (getSize().getHeight() != 0)
-                {
-                    canvas.zoomAll();
-                }
+                GUINetworkDesign.getStateManager().zoomAll();
             }
         });
 
@@ -379,8 +375,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Network topology"));
 //        setAllowLoadTrafficDemand(callback.allowLoadTrafficDemands());
-
-
     }
 
     @Override
@@ -497,7 +491,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             NetPlan aux = fc_netPlan.readNetPlan();
 
             aux.checkCachesConsistency();
-
 
             callback.loadDesign(aux);
 

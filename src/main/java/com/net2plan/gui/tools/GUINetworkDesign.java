@@ -29,8 +29,7 @@ import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
 import com.net2plan.gui.utils.onlineSimulationPane.OnlineSimulationPane;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.utils.topologyPane.jung.topologyDistribution.CircularDistribution;
-import com.net2plan.gui.utils.topologyPane.jung.topologyDistribution.ITopologyDistribution;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMStateManager;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
@@ -96,6 +95,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     private TopologyMap initialTopologySetting;
     private ITopologyDistribution circularTopologySetting;
 
+    private static OSMStateManager osmStateManager;
+
     /**
      * Default constructor.
      *
@@ -126,6 +127,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     public void configure(JPanel contentPane)
     {
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
+
+        osmStateManager = new OSMStateManager(topologyPanel, topologyPanel.getCanvas(), this);
 
         initialTopologySetting = new TopologyMap();
         circularTopologySetting = new CircularDistribution();
@@ -371,9 +374,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
         NetPlan netPlan = getDesign();
         long nodeId = netPlan.getNetworkElementNextId();
-        Node node = netPlan.addNode(pos.getX(), pos.getY(), "Node " + nodeId, null);
-        topologyPanel.getCanvas().addNode(node);
-        topologyPanel.getCanvas().refresh();
+
+        GUINetworkDesign.getStateManager().addNode(netPlan, "Node " + nodeId, pos);
         updateNetPlanView();
     }
 
@@ -1192,5 +1194,10 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
                 WindowController.showControlWindow();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
+    }
+
+    public static OSMStateManager getStateManager()
+    {
+        return osmStateManager;
     }
 }
