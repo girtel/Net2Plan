@@ -29,6 +29,8 @@ import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
 import com.net2plan.gui.utils.onlineSimulationPane.OnlineSimulationPane;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.topologyPane.jung.topologyDistribution.CircularDistribution;
+import com.net2plan.gui.utils.topologyPane.jung.topologyDistribution.ITopologyDistribution;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMStateManager;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
