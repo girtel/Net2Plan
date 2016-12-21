@@ -231,9 +231,9 @@ public class ViewEditTopologyTablesPane extends JPanel
         currentState.checkCachesConsistency();
 
         for (AdvancedJTableNetworkElement table : netPlanViewTable.values())
+        {
             table.updateView(currentState, initialState);
-
-
+        }
         ((NetPlanViewTableComponent_layer) netPlanViewTableComponent.get(NetworkElementType.LAYER)).updateNetPlanView(currentState);
         ((NetPlanViewTableComponent_network) netPlanViewTableComponent.get(NetworkElementType.NETWORK)).updateNetPlanView(currentState);
     }
