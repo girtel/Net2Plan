@@ -918,7 +918,7 @@ public class GraphUtils
 	 * @param destinationNode The destination node of the chain (could be the same as the origin node)
 	 * @param sequenceOfResourceTypesToTraverse the types of the sequence of resources to traverse
 	 * @param linkCost the cost of each link (if null, all links have cost one), all numbers must be strictly positive
-	 * @param resourceCost a map with the cost of each resource (if null, all resources have cost zero). All costs must be nonnegative. If a resource is not present in the map, its cost is zero. 
+	 * @param resourceCost a map with the cost of each resource (if null, all resources have cost zero). A resources with Double.MAX_VALUE cost cannot be traversed (as if it was not there). All costs must be nonnegative. If a resource is not present in the map, its cost is zero.  
 	 * @param K The maximum number of service chains to return (less than K may be returned if there are no different paths).
 	 * @param maxCostServiceChain Service chains with a cost higher than this are not enumerated
 	 * @param maxLengthInKmPerSubpath The maximum length in km in each subpath. Service chains not satisfying this are not enumerated
@@ -945,8 +945,7 @@ public class GraphUtils
 		if (linkCost == null) linkCost = DoubleFactory1D.dense.make(E , 1.0);
 		if (linkCost.size() != E) throw new Net2PlanException ("Wrong size of cost array");
 		if (linkCost.getMinLocation() [0] <= 0) throw new Net2PlanException ("All link costs must be strictly positive");
-		if (resourceCost == null) resourceCost = new HashMap<Resource,Double> ();
-		for (Double val : resourceCost.values()) if (val < 0) throw new Net2PlanException ("All resource costs must be non-negative");
+		if (resourceCost != null) for (Double val : resourceCost.values()) if (val < 0) throw new Net2PlanException ("All resource costs must be non-negative");
 		
 		/* initialize the link cost map */
 		Map<Link,Double> linkCostMap = new HashMap<Link,Double> (); 
@@ -956,10 +955,12 @@ public class GraphUtils
 		List<Set<Node>> nodesPerPhase = new ArrayList<Set<Node>> ();
 		for (String resourceType : sequenceOfResourceTypesToTraverse)
 		{
-			final Set<Resource> resourcesThisType = netPlan.getResources(resourceType);
-			if (resourcesThisType == null) return new LinkedList<Pair<List<NetworkElement>,Double>> ();
-			final Set<Node> nodesWithResourcesThisType = resourcesThisType.stream().map(e -> e.getHostNode()).collect(Collectors.toCollection(HashSet::new));
-			nodesPerPhase.add(nodesWithResourcesThisType);
+			Set<Resource> resourcesNotInfiniteCostThisType = netPlan.getResources(resourceType);
+			if (resourceCost != null) resourcesNotInfiniteCostThisType.removeIf(e-> resourceCost.get(e) == Double.MAX_VALUE); 
+			if (resourcesNotInfiniteCostThisType.isEmpty()) return new LinkedList<Pair<List<NetworkElement>,Double>> ();
+			final Set<Node> nodesWithResourcesNotInfiniteCostThisType = resourcesNotInfiniteCostThisType.stream().map(e -> e.getHostNode()).
+					collect(Collectors.toCollection(HashSet::new));
+			nodesPerPhase.add(nodesWithResourcesNotInfiniteCostThisType);
 		}
 		nodesPerPhase.add(Collections.singleton(destinationNode));
 
@@ -1035,7 +1036,8 @@ public class GraphUtils
 							/* Add as many concatenated SCs as resources here, but do not exceed maximum size k of total list. Resource costs may not be ordered  */
 							for (Resource intermediateResource : intermediateNode.getResources(intermediateNodeResourceType))
 							{
-								final Double intermediateResourceCost = resourceCost.get(intermediateResource);
+								final Double intermediateResourceCost = resourceCost == null? 0 : resourceCost.get(intermediateResource);
+								if (intermediateResourceCost == Double.MAX_VALUE) continue; // resources with infinite cost cannot be used
 								final double totalSCCost = scOriginToIntermediateCost + scIntermediateToOutCost + ((intermediateResourceCost == null)? 0.0 : intermediateResourceCost);	
 								if (totalSCCost > maxCostServiceChain) continue; // do not add this, but maybe other resources later are cheaper
 								if ((kSCsToThisOutNode.size () == K) && (totalSCCost > kSCsToThisOutNode.get(K-1).getSecond())) continue; // do not add this, but maybe other resources later are cheaper 
