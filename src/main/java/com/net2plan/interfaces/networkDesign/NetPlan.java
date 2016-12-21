@@ -1122,7 +1122,7 @@ public class NetPlan extends NetworkElement
 	 * The algorithm calls the function getKMinimumCostServiceChains in GraphUtils, for each demand. Some of the constraints limit the vaild subpaths, 
 	 * where a subpath means the sequence of links between two consecutive resources, or from origin/end node to to/from its next/previous visited resource.
 	 * @param linkCost the cost of each link (if null, all links have cost one), all numbers must be strictly positive
-	 * @param resourceCost a vector with the cost of each resource (if null, all resources have cost zero). All costs must be nonnegative.  
+	 * @param resourceCost a vector with the cost of each resource (if null, all resources have cost zero). All costs must be nonnegative. If a resource has a cost of Double.MAX_VALUE, it is as if it did not existed (cannot be traversed)  
 	 * @param K The maximum number of service chains to return (less than K may be returned if there are no different paths).
 	 * @param maxCostServiceChain Service chains with a cost higher than this are not enumerated
 	 * @param maxLengthInKmPerSubpath The maximum length in km in each subpath. Service chains not satisfying this are not enumerated
