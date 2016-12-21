@@ -221,7 +221,7 @@ public class Demand extends NetworkElement
 	{
 		if (layer.routingType != RoutingType.SOURCE_ROUTING) throw new Net2PlanException ("The routing type must be SOURCE ROUTING");
 		for (Route r : this.cache_routes)
-			for (Resource res : r.cache_linkAndResourcesTraversedAndOccupiedCapIfnotFailMap.keySet()) 
+			for (Resource res : r.cache_linkSegmentsAndResourcesTraversedAndOccupiedCapIfnotFailMap.keySet()) 
 				if (res.isOversubscribed()) return true;
 		return false;
 	}

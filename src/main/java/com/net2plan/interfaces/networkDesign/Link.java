@@ -627,7 +627,7 @@ public class Link extends NetworkElement
 				throw new RuntimeException ("Bad");
 			}
 			if (Math.abs(cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > 1e-3) throw new RuntimeException ("Bad");
-			for (Route r : cache_traversingRoutes.keySet()) if ((r.getCarriedTraffic() != 0) || (r.getOccupiedCapacity() != 0)) throw new RuntimeException ("Bad");
+			for (Route r : cache_traversingRoutes.keySet()) if ((r.getCarriedTraffic() != 0) || (r.getOccupiedCapacity(this) != 0)) throw new RuntimeException ("Bad");
 			for (MulticastTree r : cache_traversingTrees) if ((r.getCarriedTraffic() != 0) || (r.getOccupiedLinkCapacity() != 0)) throw new RuntimeException ("Bad");
 			for (ProtectionSegment r : cache_traversingSegments) if ((r.getCarriedTraffic() != 0) || (r.getOccupiedLinkCapacity() != 0)) throw new RuntimeException ("Bad");
 		}
@@ -645,7 +645,7 @@ public class Link extends NetworkElement
 				{
 					int numPasses = 0; for (Link linkRoute : route.cache_seqLinksRealPath) if (linkRoute == this) numPasses ++; if (numPasses != this.cache_traversingRoutes.get(route)) throw new RuntimeException ("Bad");
 					check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += route.getCarriedTraffic() * this.cache_traversingRoutes.get(route);
-					check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += route.getOccupiedCapacity() * this.cache_traversingRoutes.get(route);
+					check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += route.getOccupiedCapacity(this) * this.cache_traversingRoutes.get(route);
 //					System.out.println ("Route " + route + ", traverses this link (" + this + "), numPasses: " + this.cache_traversingRoutes.get(route) + ", its carried traffic is: " + route.carriedTraffic + " and thus accumlates a carried traffic of: " + (route.carriedTraffic * this.cache_traversingRoutes.get(route)));
 				}
 			}
@@ -694,7 +694,7 @@ public class Link extends NetworkElement
 		{
 			/* this includes routes traversing the link, and routes traversing a protection segment containing the link */
 			this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += entry.getValue() * entry.getKey().getCarriedTraffic();
-			this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += entry.getValue() * entry.getKey().getOccupiedCapacity();
+			this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += entry.getValue() * entry.getKey().getOccupiedCapacity(this);
 		}
 		for (MulticastTree t : cache_traversingTrees)
 		{
