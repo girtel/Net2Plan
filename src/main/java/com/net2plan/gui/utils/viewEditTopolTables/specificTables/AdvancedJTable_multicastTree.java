@@ -28,7 +28,6 @@ import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
-import com.net2plan.gui.utils.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -99,7 +98,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
             String egressNodesString = "";
             for (Node n : egressNodes) egressNodesString += n + "(" + (n.getName().isEmpty() ? "" : n.getName()) + ") ";
 
-            Object[] treeData = new Object[netPlanViewTableHeader.length];
+            Object[] treeData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
             treeData[0] = tree.getId();
             treeData[1] = tree.getIndex();
             treeData[2] = demand.getIndex();
@@ -124,9 +123,8 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
                     treeData[i] = tree.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                 }
             }
-            boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(tree);
-            if(visibleNetworkElement)
-                 allTreeData.add(treeData);
+
+            allTreeData.add(treeData);
 
             if (initialState != null && initialState.getMulticastTreeFromId(tree.getId()) != null) {
                 tree = initialState.getMulticastTreeFromId(tree.getId());
@@ -165,8 +163,8 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
                         treeData_initialNetPlan[i] = tree.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                     }
                 }
-                if(visibleNetworkElement)
-                    allTreeData.add(treeData_initialNetPlan);
+
+                allTreeData.add(treeData_initialNetPlan);
             }
         }
         return allTreeData;

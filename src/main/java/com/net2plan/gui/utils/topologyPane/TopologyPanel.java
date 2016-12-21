@@ -64,7 +64,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final MenuButton btn_view;
     private final JPopupMenu viewPopUp;
-    private final JMenuItem it_topology, it_report, it_online, it_offline, it_filters;
+    private final JMenuItem it_topology, it_report, it_online, it_offline;
     private final JLabel position;
 
     private final File defaultDesignDirectory, defaultDemandDirectory;
@@ -232,22 +232,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             WindowController.showOnlineWindow();
         });
 
-        it_filters = new JMenuItem("View visualization filters window");
-        it_filters.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_5, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
-        it_filters.addActionListener(new ActionListener(){
-
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                WindowController.showFiltersWindow();
-            }
-        });
 
         viewPopUp.add(it_topology);
         viewPopUp.add(it_report);
         viewPopUp.add(it_offline);
         viewPopUp.add(it_online);
-        viewPopUp.add(it_filters);
 
         btn_view = new MenuButton("View", viewPopUp);
         btn_view.setMnemonic(KeyEvent.VK_V);

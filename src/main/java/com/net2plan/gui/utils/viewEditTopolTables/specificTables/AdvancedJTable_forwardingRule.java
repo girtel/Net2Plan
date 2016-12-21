@@ -32,7 +32,6 @@ import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.gui.utils.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -98,9 +97,8 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
             forwardingRuleData[COLUMN_OUTGOINGLINK] = link.getIndex() + " (" + originNode.getIndex() + (originNodeName.isEmpty() ? "" : " (" + originNodeName + ")") + " -> " + destinationNode.getIndex() + (destinationNodeName.isEmpty() ? "" : " (" + destinationNodeName + ")") + ")";
             forwardingRuleData[COLUMN_SPLITTINGRATIO] = currentState.getForwardingRuleSplittingFactor(demand, link);
             forwardingRuleData[COLUMN_CARRIEDTRAFFIC] = currentState.getForwardingRuleCarriedTraffic(demand, link);
-            boolean visibleFRule = VisualizationFiltersController.isVisibleForwardingRules(demandLinkPair,currentState.getForwardingRuleSplittingFactor(demand, link));
-            if(visibleFRule)
-                allForwardingRuleData.add(forwardingRuleData);
+
+            allForwardingRuleData.add(forwardingRuleData);
 
             if (initialState != null && sameRoutingType && initialState.getDemandFromId(demand.getId()) != null && initialState.getLinkFromId(link.getId()) != null) {
                 demand = initialState.getDemandFromId(demand.getId());
@@ -119,8 +117,8 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
                 forwardingRuleData_initialNetPlan[COLUMN_OUTGOINGLINK] = null;
                 forwardingRuleData_initialNetPlan[COLUMN_SPLITTINGRATIO] = currentState.getForwardingRuleSplittingFactor(demand, link);
                 forwardingRuleData_initialNetPlan[COLUMN_CARRIEDTRAFFIC] = currentState.getForwardingRuleCarriedTraffic(demand, link);
-                if(visibleFRule)
-                    allForwardingRuleData.add(forwardingRuleData_initialNetPlan);
+
+                allForwardingRuleData.add(forwardingRuleData_initialNetPlan);
             }
         }
         return allForwardingRuleData;

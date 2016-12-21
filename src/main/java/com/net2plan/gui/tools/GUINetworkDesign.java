@@ -46,7 +46,6 @@ import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
-import com.net2plan.gui.utils.visualizationFilters.VisualizationFiltersPane;
 import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
 import com.net2plan.gui.utils.windows.WindowController;
 import com.net2plan.gui.utils.windows.utils.WindowUtils;
@@ -97,7 +96,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     private ViewReportPane reportPane;
     private OfflineExecutionPanel executionPane;
     private OnlineSimulationPane onlineSimulationPane;
-    private VisualizationFiltersPane visualizationFiltersPane;
 
     private Map<NetworkElementType, AdvancedJTableNetworkElement> currentTables;
 
@@ -174,7 +172,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
         onlineSimulationPane = new OnlineSimulationPane(this);
         executionPane = new OfflineExecutionPanel(this);
-        visualizationFiltersPane = new VisualizationFiltersPane(this);
 
         // Closing windows
         WindowUtils.clearFloatingWindows();
@@ -184,7 +181,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         WindowController.buildReportWindow(reportPane);
         WindowController.buildOfflineWindow(executionPane);
         WindowController.buildOnlineWindow(onlineSimulationPane);
-        WindowController.buildFiltersWindow(visualizationFiltersPane);
 
         addAllKeyCombinationActions();
     }

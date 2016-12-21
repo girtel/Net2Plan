@@ -33,7 +33,6 @@ import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.gui.utils.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -105,7 +104,7 @@ public class AdvancedJTable_segment extends AdvancedJTableNetworkElement {
             String originNodeName = originNode.getName();
             String destinationNodeName = destinationNode.getName();
 
-            Object[] segmentData = new Object[netPlanViewTableHeader.length];
+            Object[] segmentData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
             segmentData[0] = segment.getId();
             segmentData[1] = segment.getIndex();
             segmentData[2] = originNode.getIndex() + (originNodeName.isEmpty() ? "" : " (" + originNodeName + ")");
@@ -128,8 +127,7 @@ public class AdvancedJTable_segment extends AdvancedJTableNetworkElement {
                     segmentData[i] = segment.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                 }
             }
-            boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(segment);
-            if(visibleNetworkElement)
+
             allSegmentData.add(segmentData);
 
             if (initialState != null && sameRoutingType && initialState.getProtectionSegmentFromId(segment.getId()) != null) {
@@ -167,8 +165,8 @@ public class AdvancedJTable_segment extends AdvancedJTableNetworkElement {
                         segmentData_initialNetPlan[i] = segment.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                     }
                 }
-                if(visibleNetworkElement)
-                    allSegmentData.add(segmentData_initialNetPlan);
+
+                allSegmentData.add(segmentData_initialNetPlan);
             }
 
         }

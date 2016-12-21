@@ -55,7 +55,6 @@ import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.gui.utils.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -131,7 +130,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
             String ingressNodeName = ingressNode.getName();
             String egressNodeName = egressNode.getName();
 
-            Object[] routeData = new Object[netPlanViewTableHeader.length];
+            Object[] routeData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
             routeData[0] = route.getId();
             routeData[1] = route.getIndex();
             routeData[2] = demand.getIndex();
@@ -156,9 +155,8 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                     routeData[i] = route.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                 }
             }
-            boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(route);
-            if(visibleNetworkElement)
-                allRouteData.add(routeData);
+
+            allRouteData.add(routeData);
 
             if (initialState != null && sameRoutingType && initialState.getRouteFromId(route.getId()) != null) {
                 route = initialState.getRouteFromId(route.getId());
@@ -196,8 +194,8 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                         routeData_initialNetPlan[i] = route.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                     }
                 }
-                if(visibleNetworkElement)
-                    allRouteData.add(routeData_initialNetPlan);
+
+                allRouteData.add(routeData_initialNetPlan);
             }
         }
 

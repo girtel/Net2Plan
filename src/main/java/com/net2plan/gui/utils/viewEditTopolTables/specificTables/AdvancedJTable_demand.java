@@ -32,7 +32,6 @@ import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.gui.utils.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -129,9 +128,8 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                     demandData[i] = demand.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                 }
             }
-            boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(demand);
-            if(visibleNetworkElement)
-                allDemandData.add(demandData);
+
+            allDemandData.add(demandData);
 
             if (initialState != null && initialState.getDemandFromId(demand.getId()) != null) {
                 demand = initialState.getDemandFromId(demand.getId());
@@ -162,8 +160,8 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                         demandData_initialNetPlan[i] = demand.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                     }
                 }
-                if(visibleNetworkElement)
-                    allDemandData.add(demandData_initialNetPlan);
+
+                allDemandData.add(demandData_initialNetPlan);
             }
         }
 

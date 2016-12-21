@@ -45,7 +45,6 @@ import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.SwingUtils;
-import com.net2plan.gui.utils.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastTree;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -118,7 +117,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
             Set<Node> nodeIds_thisSRG = srg.getNodes();
             Set<Link> linkIds_thisSRG = srg.getLinks(layer);
 
-            Object[] srgData = new Object[netPlanViewTableHeader.length];
+            Object[] srgData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
             srgData[0] = srg.getId();
             srgData[1] = srg.getIndex();
             srgData[2] = srg.getMeanTimeToFailInHours();
@@ -139,8 +138,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
                     srgData[i] = srg.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                 }
             }
-            boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(srg);
-            if(visibleNetworkElement)
+
             allSRGData.add(srgData);
 
             if (initialState != null && initialState.getSRGFromId(srg.getId()) != null) {
@@ -177,8 +175,8 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
                         srgData_initialNetPlan[i] = srg.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                     }
                 }
-                if(visibleNetworkElement)
-                    allSRGData.add(srgData_initialNetPlan);
+
+                allSRGData.add(srgData_initialNetPlan);
             }
         }
 
