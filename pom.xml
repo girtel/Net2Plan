@@ -348,15 +348,15 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <profile>
             <id>build-with-javadoc</id>
 
             <activation>
                 <activeByDefault>false</activeByDefault>
                 <property>
-	                <name>javadoc</name>
-	                <value>true</value>
+                    <name>javadoc</name>
+                    <value>true</value>
                 </property>
                 <jdk>[1.8,)</jdk>
             </activation>

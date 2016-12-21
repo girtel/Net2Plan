@@ -12,30 +12,16 @@
 
 package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.DefaultRowSorter;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import javax.swing.ScrollPaneConstants;
+import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableModel;
 
@@ -47,7 +33,6 @@ import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -102,6 +87,7 @@ public class AdvancedJTable_segment extends AdvancedJTableNetworkElement {
         fixedTable.setDefaultRenderer(Long.class, this.getDefaultRenderer(Long.class));
         fixedTable.setDefaultRenderer(Integer.class, this.getDefaultRenderer(Integer.class));
         fixedTable.setDefaultRenderer(String.class, this.getDefaultRenderer(String.class));
+        fixedTable.getTableHeader().setDefaultRenderer(new CellRenderers.FixedTableHeaderRenderer());
 
     }
 
@@ -119,7 +105,7 @@ public class AdvancedJTable_segment extends AdvancedJTableNetworkElement {
             String originNodeName = originNode.getName();
             String destinationNodeName = destinationNode.getName();
 
-            Object[] segmentData = new Object[netPlanViewTableHeader.length];
+            Object[] segmentData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
             segmentData[0] = segment.getId();
             segmentData[1] = segment.getIndex();
             segmentData[2] = originNode.getIndex() + (originNodeName.isEmpty() ? "" : " (" + originNodeName + ")");
@@ -142,8 +128,7 @@ public class AdvancedJTable_segment extends AdvancedJTableNetworkElement {
                     segmentData[i] = segment.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                 }
             }
-            boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(segment);
-            if(visibleNetworkElement)
+
             allSegmentData.add(segmentData);
 
             if (initialState != null && sameRoutingType && initialState.getProtectionSegmentFromId(segment.getId()) != null) {
@@ -181,8 +166,8 @@ public class AdvancedJTable_segment extends AdvancedJTableNetworkElement {
                         segmentData_initialNetPlan[i] = segment.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                     }
                 }
-                if(visibleNetworkElement)
-                    allSegmentData.add(segmentData_initialNetPlan);
+
+                allSegmentData.add(segmentData_initialNetPlan);
             }
 
         }

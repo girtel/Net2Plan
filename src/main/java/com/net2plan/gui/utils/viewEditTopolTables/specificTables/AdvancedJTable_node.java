@@ -12,25 +12,16 @@
 
 package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
 import java.util.*;
+import java.util.List;
 
-import javax.swing.DefaultRowSorter;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.event.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 
 import com.net2plan.gui.utils.CellRenderers;
@@ -40,15 +31,12 @@ import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.IVisualizationFilter;
-import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.CollectionUtils;
-import com.net2plan.utils.IntUtils;
 import com.net2plan.utils.StringUtils;
 
 import net.miginfocom.swing.MigLayout;
@@ -101,6 +89,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
         fixedTable.setDefaultRenderer(Long.class, this.getDefaultRenderer(Long.class));
         fixedTable.setDefaultRenderer(Integer.class, this.getDefaultRenderer(Integer.class));
         fixedTable.setDefaultRenderer(String.class, this.getDefaultRenderer(String.class));
+        fixedTable.getTableHeader().setDefaultRenderer(new CellRenderers.FixedTableHeaderRenderer());
 
     }
 
@@ -108,6 +97,8 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
 
     public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesTitles) {
         List<Object[]> allNodeData = new LinkedList<Object[]>();
+
+
         for (Node node : currentState.getNodes()) {
             Set<Link> outgoingLinks = node.getOutgoingLinks();
             Set<Link> incomingLinks = node.getIncomingLinks();
@@ -137,13 +128,9 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                     nodeData[i] = node.getAttribute(attributesTitles.get(i-netPlanViewTableHeader.length));
                 }
             }
-            boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(node);
-            if(visibleNetworkElement)
-                allNodeData.add(nodeData);
-            else{
-                networkViewer.getTopologyPanel().getCanvas().setNodeVisible(node, false);
-                topologyPanel.getCanvas().refresh();
-            }
+
+            allNodeData.add(nodeData);
+
 
             if (initialState != null && initialState.getNodeFromId(node.getId()) != null) {
                 node = initialState.getNodeFromId(node.getId());
@@ -176,15 +163,11 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                     }
 
                 }
-                if(visibleNetworkElement){
-                    allNodeData.add(nodeData_initialNetPlan);
-                    networkViewer.getTopologyPanel().getCanvas().setNodeVisible(node, true);
-                    topologyPanel.getCanvas().refresh();
-                }
-                else{
-                    networkViewer.getTopologyPanel().getCanvas().setNodeVisible(node, false);
-                    topologyPanel.getCanvas().refresh();
-                }
+
+                allNodeData.add(nodeData_initialNetPlan);
+
+
+                topologyPanel.getCanvas().refresh();
             }
         }
         return allNodeData;

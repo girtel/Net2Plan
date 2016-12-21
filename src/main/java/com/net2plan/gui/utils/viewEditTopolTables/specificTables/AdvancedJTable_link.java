@@ -44,8 +44,6 @@ import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.IVisualizationFilter;
-import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -114,6 +112,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
         fixedTable.setDefaultRenderer(Long.class, this.getDefaultRenderer(Long.class));
         fixedTable.setDefaultRenderer(Integer.class, this.getDefaultRenderer(Integer.class));
         fixedTable.setDefaultRenderer(String.class, this.getDefaultRenderer(String.class));
+        fixedTable.getTableHeader().setDefaultRenderer(new CellRenderers.FixedTableHeaderRenderer());
     }
 
 
@@ -183,16 +182,9 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                     linkData[i] = link.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                 }
             }
-            boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(link);
-            if(visibleNetworkElement){
-                allLinkData.add(linkData);
-                networkViewer.getTopologyPanel().getCanvas().setLinkVisible(link, true);
-                topologyPanel.getCanvas().refresh();
-            }
-            else{
-                networkViewer.getTopologyPanel().getCanvas().setLinkVisible(link, false);
-                topologyPanel.getCanvas().refresh();
-            }
+
+            allLinkData.add(linkData);
+
 
             if (initialState != null && initialState.getLinkFromId(link.getId()) != null) {
                 link = initialState.getLinkFromId(link.getId());
@@ -253,15 +245,9 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                         linkData_initialNetPlan[i] = link.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                     }
                 }
-                if(visibleNetworkElement){
-                    allLinkData.add(linkData_initialNetPlan);
-                    networkViewer.getTopologyPanel().getCanvas().setLinkVisible(link, true);
-                    topologyPanel.getCanvas().refresh();
-                }
-                else{
-                    networkViewer.getTopologyPanel().getCanvas().setLinkVisible(link, false);
-                    topologyPanel.getCanvas().refresh();
-                }
+
+                allLinkData.add(linkData_initialNetPlan);
+
 
             }
         }

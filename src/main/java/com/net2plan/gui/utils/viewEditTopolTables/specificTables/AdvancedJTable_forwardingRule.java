@@ -12,22 +12,16 @@
 
 package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 
-import javax.swing.DefaultRowSorter;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.table.TableModel;
 
 import com.net2plan.gui.utils.CellRenderers;
@@ -38,8 +32,6 @@ import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.IVisualizationFilter;
-import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -79,6 +71,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
         fixedTable.setDefaultRenderer(Long.class, this.getDefaultRenderer(Long.class));
         fixedTable.setDefaultRenderer(Integer.class, this.getDefaultRenderer(Integer.class));
         fixedTable.setDefaultRenderer(String.class, this.getDefaultRenderer(String.class));
+        fixedTable.getTableHeader().setDefaultRenderer(new CellRenderers.FixedTableHeaderRenderer());
     }
 
     public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
@@ -105,9 +98,8 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
             forwardingRuleData[COLUMN_OUTGOINGLINK] = link.getIndex() + " (" + originNode.getIndex() + (originNodeName.isEmpty() ? "" : " (" + originNodeName + ")") + " -> " + destinationNode.getIndex() + (destinationNodeName.isEmpty() ? "" : " (" + destinationNodeName + ")") + ")";
             forwardingRuleData[COLUMN_SPLITTINGRATIO] = currentState.getForwardingRuleSplittingFactor(demand, link);
             forwardingRuleData[COLUMN_CARRIEDTRAFFIC] = currentState.getForwardingRuleCarriedTraffic(demand, link);
-            boolean visibleFRule = VisualizationFiltersController.isVisibleForwardingRules(demandLinkPair,currentState.getForwardingRuleSplittingFactor(demand, link));
-            if(visibleFRule)
-                allForwardingRuleData.add(forwardingRuleData);
+
+            allForwardingRuleData.add(forwardingRuleData);
 
             if (initialState != null && sameRoutingType && initialState.getDemandFromId(demand.getId()) != null && initialState.getLinkFromId(link.getId()) != null) {
                 demand = initialState.getDemandFromId(demand.getId());
@@ -126,8 +118,8 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
                 forwardingRuleData_initialNetPlan[COLUMN_OUTGOINGLINK] = null;
                 forwardingRuleData_initialNetPlan[COLUMN_SPLITTINGRATIO] = currentState.getForwardingRuleSplittingFactor(demand, link);
                 forwardingRuleData_initialNetPlan[COLUMN_CARRIEDTRAFFIC] = currentState.getForwardingRuleCarriedTraffic(demand, link);
-                if(visibleFRule)
-                    allForwardingRuleData.add(forwardingRuleData_initialNetPlan);
+
+                allForwardingRuleData.add(forwardingRuleData_initialNetPlan);
             }
         }
         return allForwardingRuleData;

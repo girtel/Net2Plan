@@ -4748,6 +4748,7 @@ public class NetPlan extends NetworkElement
 		checkIsModifiable();
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		for (Link e : new ArrayList<Link> (layer.links)) e.remove ();
+		for (Link e : new ArrayList<Link> (layer.links)) e.remove ();
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 	}
 

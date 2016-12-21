@@ -12,14 +12,12 @@
 
 package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 
-import java.awt.Color;
-import java.awt.Dialog;
-import java.awt.Dimension;
-import java.awt.GridLayout;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.DefaultRowSorter;
 import javax.swing.JCheckBox;
@@ -45,10 +43,8 @@ import com.net2plan.gui.utils.CellRenderers.UnfocusableCellRenderer;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
-import com.net2plan.gui.utils.FixedColumnDecorator;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.SwingUtils;
-import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastTree;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -106,6 +102,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
         fixedTable.setDefaultRenderer(Long.class, this.getDefaultRenderer(Long.class));
         fixedTable.setDefaultRenderer(Integer.class, this.getDefaultRenderer(Integer.class));
         fixedTable.setDefaultRenderer(String.class, this.getDefaultRenderer(String.class));
+        fixedTable.getTableHeader().setDefaultRenderer(new CellRenderers.FixedTableHeaderRenderer());
     }
 
     public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
@@ -121,7 +118,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
             Set<Node> nodeIds_thisSRG = srg.getNodes();
             Set<Link> linkIds_thisSRG = srg.getLinks(layer);
 
-            Object[] srgData = new Object[netPlanViewTableHeader.length];
+            Object[] srgData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
             srgData[0] = srg.getId();
             srgData[1] = srg.getIndex();
             srgData[2] = srg.getMeanTimeToFailInHours();
@@ -142,8 +139,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
                     srgData[i] = srg.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                 }
             }
-            boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(srg);
-            if(visibleNetworkElement)
+
             allSRGData.add(srgData);
 
             if (initialState != null && initialState.getSRGFromId(srg.getId()) != null) {
@@ -180,8 +176,8 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
                         srgData_initialNetPlan[i] = srg.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                     }
                 }
-                if(visibleNetworkElement)
-                    allSRGData.add(srgData_initialNetPlan);
+
+                allSRGData.add(srgData_initialNetPlan);
             }
         }
 

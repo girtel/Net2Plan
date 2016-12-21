@@ -124,6 +124,11 @@ public class ViewEditTopologyTablesPane extends JPanel
         
 	}
 
+	public Map<NetworkElementType,AdvancedJTableNetworkElement> currentTables(){
+
+	    return netPlanViewTable;
+    }
+
 	public void resetTables()
     {
         netPlanViewTable.clear();

@@ -13,12 +13,15 @@
 package com.net2plan.gui.utils;
 
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.internal.Constants;
 import com.net2plan.utils.Pair;
 
 import javax.swing.*;
 import java.awt.geom.Point2D;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Interface to be implemented by any class dealing with network designs.
@@ -26,7 +29,8 @@ import java.util.List;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.3
  */
-public interface INetworkCallback {
+public interface INetworkCallback
+{
     /**
      * Adds a new link.
      *
@@ -107,7 +111,7 @@ public interface INetworkCallback {
      * Returns the set of actions to be added to the popup menu for links.
      *
      * @param link Link identifier
-     * @param pos    Network coordinates where the popup action was triggered
+     * @param pos  Network coordinates where the popup action was triggered
      * @return List of actions to be shown for the given link
      * @since 0.3.1
      */
@@ -117,7 +121,7 @@ public interface INetworkCallback {
      * Returns the set of actions to be added to the popup menu for nodes.
      *
      * @param node Node identifier
-     * @param pos    Network coordinates where the popup action was triggered
+     * @param pos  Network coordinates where the popup action was triggered
      * @return List of actions to be shown for the given node
      * @since 0.3.1
      */
@@ -159,7 +163,7 @@ public interface INetworkCallback {
      * Moves the node to the given position.
      *
      * @param node Node identifier
-     * @param pos    2D position
+     * @param pos  2D position
      * @since 0.3.1
      */
     public void moveNode(long node, Point2D pos);
@@ -293,11 +297,17 @@ public interface INetworkCallback {
     // added by Pablo
 //    public boolean allowDocumentUpdate ();
     // added by Pablo
-    public TopologyPanel getTopologyPanel ();
+    public TopologyPanel getTopologyPanel();
+
     // added by Pablo
     public boolean inOnlineSimulationMode();
+
     // added by Pablo
     public void showNetPlanView();
     // added by Pablo
     //public boolean allowLoadTrafficDemands();
+
+    // added by Jorge
+    public Map<Constants.NetworkElementType, AdvancedJTableNetworkElement> getTables();
+
 }

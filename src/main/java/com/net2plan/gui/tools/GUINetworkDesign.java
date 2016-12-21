@@ -22,6 +22,7 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableModel;
 
+import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
@@ -31,6 +32,7 @@ import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.jung.topologyDistribution.CircularDistribution;
 import com.net2plan.gui.utils.topologyPane.jung.topologyDistribution.ITopologyDistribution;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
 import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
@@ -148,6 +150,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         contentPane.add(leftPane, "grow");
 
         viewEditTopTables = new ViewEditTopologyTablesPane(GUINetworkDesign.this, new BorderLayout());
+
         reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
 
         loadDesign(new NetPlan());
@@ -262,6 +265,11 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         return pane;
     }
 
+    @Override
+    public Map<NetworkElementType, AdvancedJTableNetworkElement> getTables()
+    {
+        return viewEditTopTables.currentTables();
+    }
 
     @Override
     public String getDescription()
@@ -1180,9 +1188,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         addKeyCombinationAction("Show control window", new AbstractAction()
         {
             @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                WindowController.showControlWindow();
+            public void actionPerformed(ActionEvent e) {
+                WindowController.showTopologyWindow();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
     }

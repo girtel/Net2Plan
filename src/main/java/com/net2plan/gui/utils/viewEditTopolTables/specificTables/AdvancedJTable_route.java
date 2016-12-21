@@ -12,17 +12,14 @@
 
 package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dialog;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -58,7 +55,6 @@ import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.gui.utils.viewEditTopolTables.visualizationFilters.VisualizationFiltersController;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -117,6 +113,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         fixedTable.setDefaultRenderer(Long.class, this.getDefaultRenderer(Long.class));
         fixedTable.setDefaultRenderer(Integer.class, this.getDefaultRenderer(Integer.class));
         fixedTable.setDefaultRenderer(String.class, this.getDefaultRenderer(String.class));
+        fixedTable.getTableHeader().setDefaultRenderer(new CellRenderers.FixedTableHeaderRenderer());
 
     }
 
@@ -134,7 +131,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
             String ingressNodeName = ingressNode.getName();
             String egressNodeName = egressNode.getName();
 
-            Object[] routeData = new Object[netPlanViewTableHeader.length];
+            Object[] routeData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
             routeData[0] = route.getId();
             routeData[1] = route.getIndex();
             routeData[2] = demand.getIndex();
@@ -159,9 +156,8 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                     routeData[i] = route.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                 }
             }
-            boolean visibleNetworkElement = VisualizationFiltersController.isVisibleNetworkElement(route);
-            if(visibleNetworkElement)
-                allRouteData.add(routeData);
+
+            allRouteData.add(routeData);
 
             if (initialState != null && sameRoutingType && initialState.getRouteFromId(route.getId()) != null) {
                 route = initialState.getRouteFromId(route.getId());
@@ -199,8 +195,8 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                         routeData_initialNetPlan[i] = route.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                     }
                 }
-                if(visibleNetworkElement)
-                    allRouteData.add(routeData_initialNetPlan);
+
+                allRouteData.add(routeData_initialNetPlan);
             }
         }
 
