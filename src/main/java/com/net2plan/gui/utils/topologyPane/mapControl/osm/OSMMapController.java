@@ -10,6 +10,7 @@ import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMRunningState;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.ITopologyCanvas;
@@ -21,7 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.util.*;
-import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Jorge San Emeterio
@@ -60,8 +61,7 @@ public class OSMMapController
 
             if (!OSMMapUtils.isInsideBounds(x, y))
             {
-                String message =
-                        "Node: " + node.getName() + " is out of the accepted bounds.\n" +
+                String message = "Node: " + node.getName() + " is out of the accepted bounds.\n" +
                                 "All nodes must have their coordinates between the ranges: \n" +
                                 "x = [-180, 180]\n" +
                                 "y = [-90, 90]\n";
@@ -125,22 +125,11 @@ public class OSMMapController
      */
     public void restartMapState(boolean changeZoomToZoomAll)
     {
+        final NetPlan netPlan = callback.getDesign();
         final double zoomRatio = 0.6;
 
-        final NetPlan netPlan = callback.getDesign();
-        // If no topology was loaded.
-        final Map<Long, GeoPosition> nodeToGeoPositionMap = new HashMap<>();
         // Read xy coordinates of each node as latitude and longitude coordinates.
-        for (Node node : callback.getDesign().getNodes())
-        {
-            final Point2D nodeXY = node.getXYPositionMap();
-
-            final double latitude = nodeXY.getY();
-            final double longitude = nodeXY.getX();
-
-            final GeoPosition geoPosition = new GeoPosition(latitude, longitude);
-            nodeToGeoPositionMap.put(node.getId(), geoPosition);
-        }
+        final Map<Long, GeoPosition> nodeToGeoPositionMap = netPlan.getNodes().stream().collect(Collectors.toMap(Node::getId, node -> new GeoPosition(node.getXYPositionMap().getY(), node.getXYPositionMap().getX())));
 
         if (changeZoomToZoomAll)
         {
@@ -160,6 +149,7 @@ public class OSMMapController
             canvas.moveNodeToXYPosition(node, realPosition);
         }
 
+        @SuppressWarnings("unchecked")
         final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
         final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getTransformer();
 
