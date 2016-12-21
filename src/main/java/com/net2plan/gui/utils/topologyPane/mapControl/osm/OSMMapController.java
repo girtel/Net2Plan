@@ -72,15 +72,6 @@ public class OSMMapController
             }
         }
 
-        // Check screen resolution
-        final GraphicsDevice graphicsDevice = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-        final Dimension screenSize = new Dimension(graphicsDevice.getDisplayMode().getWidth(), graphicsDevice.getDisplayMode().getHeight());
-
-        if (screenSize.getWidth() > 1920 || screenSize.getHeight() > 1080)
-        {
-            throw new OSMMapException("Screen resolutions above 1080p are currently not supported.");
-        }
-
         this.topologyPanel = topologyPanel;
         this.canvas = canvas;
         this.callback = callback;
@@ -147,6 +138,7 @@ public class OSMMapController
 
     /**
      * Aligns the topology with the map so that the nodes are placed in their corresponding geoposition.
+     * For every problem regarding the nodes not correctly aligning to the map, call this function.
      */
     private void alignTopologyToOSMMap()
     {
