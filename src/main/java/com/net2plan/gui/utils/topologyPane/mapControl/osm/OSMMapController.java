@@ -62,9 +62,9 @@ public class OSMMapController
             if (!OSMMapUtils.isInsideBounds(x, y))
             {
                 String message = "Node: " + node.getName() + " is out of the accepted bounds.\n" +
-                                "All nodes must have their coordinates between the ranges: \n" +
-                                "x = [-180, 180]\n" +
-                                "y = [-90, 90]\n";
+                        "All nodes must have their coordinates between the ranges: \n" +
+                        "x = [-180, 180]\n" +
+                        "y = [-90, 90]\n";
 
                 GUINetworkDesign.getStateManager().setStoppedState();
 
@@ -123,7 +123,16 @@ public class OSMMapController
      * This state is the one where all nodes are seen and they all fit their corresponding position on the OSM map.
      * This method should only be executed when the OSM map is first run. From then on use {@link #zoomAll()}
      */
-    public void restartMapState(boolean changeZoomToZoomAll)
+    public void restartMapState(final boolean calculateMap)
+    {
+        if (calculateMap) calculateMapPosition();
+        alignTopologyToOSMMap();
+    }
+
+    /**
+     * Calculates the correct map center and zoom so that all nodes are visible.
+     */
+    private void calculateMapPosition()
     {
         final NetPlan netPlan = callback.getDesign();
         final double zoomRatio = 0.6;
@@ -131,12 +140,18 @@ public class OSMMapController
         // Read xy coordinates of each node as latitude and longitude coordinates.
         final Map<Long, GeoPosition> nodeToGeoPositionMap = netPlan.getNodes().stream().collect(Collectors.toMap(Node::getId, node -> new GeoPosition(node.getXYPositionMap().getY(), node.getXYPositionMap().getX())));
 
-        if (changeZoomToZoomAll)
-        {
-            // Calculating OSM map center and zoom.
-            mapViewer.zoomToBestFit(nodeToGeoPositionMap.isEmpty() ? Collections.singleton(mapViewer.getDefaultPosition()) : new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
-            if (netPlan.getNumberOfNodes() <= 1) mapViewer.setZoom(16); // So that the map is not too close to the node.
-        }
+        // Calculating OSM map center and zoom.
+        mapViewer.zoomToBestFit(nodeToGeoPositionMap.isEmpty() ? Collections.singleton(mapViewer.getDefaultPosition()) : new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
+        if (netPlan.getNumberOfNodes() <= 1) mapViewer.setZoom(16); // So that the map is not too close to the node.
+    }
+
+    /**
+     * Aligns the topology with the map so that the nodes are placed in their corresponding geoposition.
+     */
+    private void alignTopologyToOSMMap()
+    {
+        final NetPlan netPlan = callback.getDesign();
+        final Map<Long, GeoPosition> nodeToGeoPositionMap = netPlan.getNodes().stream().collect(Collectors.toMap(Node::getId, node -> new GeoPosition(node.getXYPositionMap().getY(), node.getXYPositionMap().getX())));
 
         // Moving the nodes to the position dictated by their geoposition.
         for (Map.Entry<Long, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
@@ -172,6 +187,9 @@ public class OSMMapController
         mapViewer.repaint();
     }
 
+    /**
+     * Aligns the topology to the map's zoom.
+     */
     private void alignZoomJUNGToOSMMap()
     {
         final double zoomChange = mapViewer.getZoom() - previousZoomLevel;
@@ -188,6 +206,9 @@ public class OSMMapController
         mapViewer.repaint();
     }
 
+    /**
+     * Aligns the topology to the map's pan.
+     */
     private void alignPanJUNGToOSMMap()
     {
         final Rectangle currentOSMViewportBounds = mapViewer.getViewportBounds();
