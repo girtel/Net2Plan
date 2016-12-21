@@ -32,7 +32,6 @@ import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.components.MenuButton;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.utils.topologyPane.utils.MenuButton;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -62,7 +61,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final MenuButton btn_view;
     private final JPopupMenu viewPopUp;
-    private final JMenuItem it_control;
+    private final JMenuItem it_control, it_osmMap, it_closeMap;
     private final JLabel position;
 
     private final File defaultDesignDirectory, defaultDemandDirectory;
@@ -210,7 +209,27 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             WindowController.showControlWindow();
         });
 
+        it_osmMap = new JMenuItem("Run OpenStreetMap map support");
+        it_closeMap = new JMenuItem("Shutdown OpenStreetMap map support");
+
+        it_closeMap.addActionListener(e ->
+        {
+            GUINetworkDesign.getStateManager().setStoppedState();
+            it_osmMap.setEnabled(true);
+            viewPopUp.remove(it_closeMap);
+        });
+
+        it_osmMap.addActionListener(e ->
+        {
+            GUINetworkDesign.getStateManager().setRunningState();
+            it_osmMap.setEnabled(false);
+
+            viewPopUp.add(it_closeMap);
+        });
+
         viewPopUp.add(it_control);
+        viewPopUp.add(new JPopupMenu.Separator());
+        viewPopUp.add(it_osmMap);
 
         btn_view = new MenuButton("View", viewPopUp);
         btn_view.setMnemonic(KeyEvent.VK_V);
