@@ -372,7 +372,7 @@ public class NetPlan extends NetworkElement
 	 * <p>Returns true if the given NetPlan object contains the same network than this, meaning that all the network elements
 	 * are a copy in every aspect. In particular, saving in disk a design and then loading it again, should produce a network
 	 * that is a deep copy of the original. Also, creating a new network using the copy method, should be also a deep copy</p>
-	 * @param indexToRemove Index to remove
+	 * @param np2 The NetPlan object to compare to 
 	 * @return true if the given network is a copy of this one
 	 */
 	public boolean isDeepCopy (NetPlan np2)
@@ -825,34 +825,36 @@ public class NetPlan extends NetworkElement
 		return node;
 	}
 
-	/**
-	 * <p>Adds a new Resource to the network. Resources are associated to a node, and have no layer associated to it.</p>
-	 * @param xCoord Node position in x-axis
-	 * @param yCoord Node position in y-axis
-	 * @param name Node name ({@code null} will be converted to "Node " + node identifier)
-	 * @param attributes Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
-	 * @return The newly created node object
-	 * @see com.net2plan.interfaces.networkDesign.Node
+	/** <p>Adds a new Resource to the network. Resources are associated to a node, and have no layer associated to it.</p>
+	 * @param type The resource type
+	 * @param name The resource name
+	 * @param hostNode The node hosting the resource
+	 * @param capacity The capacity of the resource
+	 * @param capacityMeasurementUnits The units in which the resource capacity is measured
+	 * @param capacityIOccupyInBaseResource A map with a key per base resource (a resource in the same node in which this resource occupies capacity), and the value the capacity that this resource occupies in the base resource (key), in base resource capacity units
+	 * @param processingTimeToTraversingTrafficInMs The time in ms that takes the traffic traverse this resource
+	 * @param attributes The resource attributes
+	 * @return The created Resource object
 	 */
 	public Resource addResource (String type , String name , Node hostNode , double capacity , String capacityMeasurementUnits,
-				Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTraffic , AttributeMap attributes)
+				Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTrafficInMs , AttributeMap attributes)
 	{
 		return addResource (null , type , name , hostNode , capacity , capacityMeasurementUnits,
-				capacityIOccupyInBaseResource , processingTimeToTraversingTraffic , attributes);
+				capacityIOccupyInBaseResource , processingTimeToTraversingTrafficInMs , attributes);
 	}
 	Resource addResource (Long resourceId , String type , String name , Node hostNode , double capacity , String capacityMeasurementUnits,
-			Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTraffic , AttributeMap attributes)
+			Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTrafficInMs , AttributeMap attributes)
 	{
 		checkIsModifiable();
 		if (capacity < 0) throw new Net2PlanException ("Resource capacity cannot be negative");
-		if (processingTimeToTraversingTraffic < 0) throw new Net2PlanException ("Resource processing time cannot be negative");
+		if (processingTimeToTraversingTrafficInMs < 0) throw new Net2PlanException ("Resource processing time cannot be negative");
 		if (capacityIOccupyInBaseResource == null) capacityIOccupyInBaseResource = new HashMap<Resource,Double> ();
 		for (Double val : capacityIOccupyInBaseResource.values()) if (val < 0) throw new Net2PlanException ("Resource capacity cannot be negative");
 
 		if (resourceId == null) { resourceId = nextElementId.longValue(); nextElementId.increment(); }
 
 		Resource resource = new Resource (this , resourceId , resources.size () , type , name , hostNode , capacity ,
-				capacityMeasurementUnits, capacityIOccupyInBaseResource , processingTimeToTraversingTraffic , attributes);
+				capacityMeasurementUnits, capacityIOccupyInBaseResource , processingTimeToTraversingTrafficInMs , attributes);
 
 		resources.add (resource); 
 		cache_id2ResourceMap.put (resourceId , resource);
@@ -1121,14 +1123,14 @@ public class NetPlan extends NetworkElement
 	 * the link and resources cost information provided, as well as other constraints defined in the input parameters. 
 	 * The algorithm calls the function getKMinimumCostServiceChains in GraphUtils, for each demand. Some of the constraints limit the vaild subpaths, 
 	 * where a subpath means the sequence of links between two consecutive resources, or from origin/end node to to/from its next/previous visited resource.
-	 * @param linkCost the cost of each link (if null, all links have cost one), all numbers must be strictly positive
-	 * @param resourceCost a vector with the cost of each resource (if null, all resources have cost zero). All costs must be nonnegative. If a resource has a cost of Double.MAX_VALUE, it is as if it did not existed (cannot be traversed)  
+	 * @param linkCosts the cost of each link (if null, all links have cost one), all numbers must be strictly positive
+	 * @param resourceCosts a vector with the cost of each resource (if null, all resources have cost zero). All costs must be nonnegative. If a resource has a cost of Double.MAX_VALUE, it is as if it did not existed (cannot be traversed)
 	 * @param K The maximum number of service chains to return (less than K may be returned if there are no different paths).
 	 * @param maxCostServiceChain Service chains with a cost higher than this are not enumerated
 	 * @param maxLengthInKmPerSubpath The maximum length in km in each subpath. Service chains not satisfying this are not enumerated
 	 * @param maxNumHopsPerSubpath The maximum number of traversed links in each subpath. Service chains not satisfying this are not enumerated
 	 * @param maxPropDelayInMsPerSubpath The propagation delay summing the links in each subpath. Service chains not satisfying this are not enumerated
-	 * @param optionalLayerParameter
+	 * @param optionalLayerParameter 
 	 * @return Map with all the computed service chain paths (values) per demands (keys)
 	 */
 	public Map<Demand,List<List<NetworkElement>>> computeUnicastCandidateServiceChainList (DoubleMatrix1D linkCosts , DoubleMatrix1D resourceCosts , 
@@ -1708,8 +1710,7 @@ public class NetPlan extends NetworkElement
 	 * is not valid, an exception is thrown.</p>
 	 * @param path Sequence of links
 	 * @param d Demand
-	 * @see com.net2plan.interfaces.networkDesign.Demand
-	 * @see com.net2plan.interfaces.networkDesign.Link
+	 * @return
 	 */
 	Pair<List<Link>,List<Resource>> checkPathValidityForDemand(List<? extends NetworkElement> path, Demand d)
 	{
@@ -2706,6 +2707,7 @@ public class NetPlan extends NetworkElement
 	 * <p>Returns a matrix with as many rows resources, and columns as routes in the given layer, 
 	 * coordinate (res,rou) contains the number times that route rou 
 	 * traverses resource res. If no layer is provided, default layer is assumed</p>
+	 * @param optionalLayerParameter
 	 * @return The matrix
 	 */
 	public DoubleMatrix2D getMatrixResource2RouteAssignment  (NetworkLayer ... optionalLayerParameter)
@@ -2726,6 +2728,8 @@ public class NetPlan extends NetworkElement
 	 * <p>Returns a matrix with as many rows resources, and columns as routes in the given layer, 
 	 * coordinate (res,rou) contains the number times that route rou 
 	 * traverses resource res. If no layer is provided, default layer is assumed</p>
+	 * @param type The resource type
+	 * @param optionalLayerParameter 
 	 * @return The matrix
 	 */
 	public Pair<List<Resource> , DoubleMatrix2D> getMatrixResource2RouteAssignment  (String type , NetworkLayer ... optionalLayerParameter)
@@ -2750,6 +2754,7 @@ public class NetPlan extends NetworkElement
 	 * <p>Returns a matrix with as many rows resources, and columns as routes in the given layer, and coordinate (res,rou) contains 
 	 * the capacity occupied by route rou in resource res (note that if a route is down, its occupied capacity in a resource becomes zero). 
 	 * If no layer is provided, default layer is assumed</p>
+	 * @param optionalLayerParameter
 	 * @return The matrix
 	 */
 	public DoubleMatrix2D getMatrixResource2RouteOccupation (NetworkLayer ... optionalLayerParameter)
@@ -4329,6 +4334,7 @@ public class NetPlan extends NetworkElement
 
 	/**
 	 * <p>Returns a vector with as many elements as resources, containing a 1 in coordinate of index i if the resource of index i is of the given type, a 0 if not.
+	 * @param type the resource type
 	 * @return The vector 
 	 */
 	public DoubleMatrix1D getVectorResourceIsOfType (String type)

@@ -1071,8 +1071,6 @@ public class GraphUtils
 	 * @param sequenceOfResourceTypesToTraverse the types of the sequence of resources to traverse
 	 * @param linkCost the cost of each link (if null, all links have cost one), all numbers must be strictly positive
 	 * @param resourceCost a map with the cost of each resource (if null, all resources have cost zero). A resources with Double.MAX_VALUE cost cannot be traversed (as if it was not there). All costs must be nonnegative. If a resource is not present in the map, its cost is zero. 
-	 * @param K The maximum number of service chains to return (less than K may be returned if there are no different paths).
-	 * @param maxCostServiceChain Service chains with a cost higher than this are not enumerated (negative number means no limit)
 	 * @param maxLengthInKmPerSubpath The maximum length in km in each subpath. Service chains not satisfying this are not enumerated (negative number means no limit)
 	 * @param maxNumHopsPerSubpath The maximum number of traversed links in each subpath. Service chains not satisfying this are not enumerated (negative number means no limit)
 	 * @param maxPropDelayInMsPerSubpath The propagation delay summing the links in each subpath. Service chains not satisfying this are not enumerated (negative number means no limit)

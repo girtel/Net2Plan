@@ -163,14 +163,13 @@ public class Route extends NetworkElement
 	 */
 	public List<Link> getInitialSequenceOfLinks () { return Route.listLinksRealPath(this.initialSeqLinksAndResourcesTraversedWhenCreated); }
 	
-	/** Return a list of elements Link and Pair<Resource,Double>, which corresponds to the sequence of link and resources traversed 
+	/** Return a list of elements Link and Resource which corresponds to the sequence of link and resources traversed 
 	 * initially, when the route was created. The Pair structure contains the resource traversed, and the occupied capacity in this traversal
 	 * @return The sequence info
 	 */
 	public List<NetworkElement> getInitialSeqLinksAndResourcesTraversed () { return Collections.unmodifiableList(this.initialSeqLinksAndResourcesTraversedWhenCreated);}
 
-	/** Return a list of elements Link and Pair<Resource,Double>, which corresponds to the current sequence of links (not protection segments, but the real path) and resources traversed 
-	 * initially. The Pair structure contains the resource traversed, and the occupied capacity in this traversal
+	/** Return a list of elements Link, ProtectionSegment and Resource, which corresponds to the current sequence of links, segments and resources traversed. 
 	 * @return The sequence info
 	 */
 	public List<NetworkElement> getCurrentSeqLinksAndResourcesTraversed () { return Collections.unmodifiableList(this.seqLinksSegmentsAndResourcesTraversed);}
@@ -656,7 +655,8 @@ public class Route extends NetworkElement
 	/** Sets the new sequence of links and/or protection segments traversed by the route. If the route is a service chain,
 	 * an error is returned (other method should be used). If the new route traverses failing link or nodes, its current 
 	 * carried traffic and occupied link capacities will be zero. If not, will be the base ones in the no failure state
-	 * @param cache_seqLinksAndProtectionSegments the new sequence of links and protection segments
+	 * @param seqLinksSegmentsAndResources New sequence of links, segments and resources
+	 * @param newResourceOccupation new map information of the occupation in the resources
 	 */
 	public void setSeqLinksSegmentsAndResourcesOccupation (List<? extends NetworkElement> seqLinksSegmentsAndResources , Map<Resource,Double> newResourceOccupation)
 	{

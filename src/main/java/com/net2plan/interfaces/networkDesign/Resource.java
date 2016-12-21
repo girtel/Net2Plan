@@ -138,7 +138,7 @@ public class Resource extends NetworkElement
 	}
 	
 	/** Returns true if the occupied capacity of the resource exceeds its capacity
-	 * @return
+	 * @return See above
 	 */
 	public boolean isOversubscribed ()
 	{
@@ -214,6 +214,7 @@ public class Resource extends NetworkElement
 	}
 
 	/** Sets the name of the resource
+	 * @param name The name
 	 */
 	public void setName(String name) 
 	{
@@ -239,7 +240,7 @@ public class Resource extends NetworkElement
 
 	/** Returns the capacity that this resource is occupying in the base resource. If bsaeResource is not a base resource for this resource,
 	 *  the method returns zero
-	 * @param baseResource
+	 * @param baseResource The base resource
 	 * @return the occupied capacity
 	 */
 	public double getCapacityOccupiedInBaseResource (Resource baseResource)
@@ -294,6 +295,7 @@ public class Resource extends NetworkElement
 
 	/** Returns the capacity that is occupied in this resource, because of a traversing route. If the route is not traversing 
 	 * the resource, zero is returned. If the route is down, the occupied capacity is zero
+	 * @param route the route
 	 * @return the occupied capacity
 	 */
 	public double getTraversingRouteOccupiedCapacity(Route route) 
