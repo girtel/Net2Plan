@@ -178,7 +178,14 @@ public class Constants
 		 * 
 		 * @since 0.3.0
 		 */
-		SRG("SRG");
+		SRG("SRG"),
+
+		/**
+		 * Resource group type.
+		 *
+		 * @since 0.5.0
+		 */
+		RESOURCE("resource");
 		
 		private final String label;
 		
