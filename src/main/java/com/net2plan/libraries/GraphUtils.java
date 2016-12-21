@@ -1036,7 +1036,7 @@ public class GraphUtils
 							/* Add as many concatenated SCs as resources here, but do not exceed maximum size k of total list. Resource costs may not be ordered  */
 							for (Resource intermediateResource : intermediateNode.getResources(intermediateNodeResourceType))
 							{
-								final Double intermediateResourceCost = resourceCost == null? 0 : resourceCost.get(intermediateResource);
+								final Double intermediateResourceCost = resourceCost == null? 0.0 : resourceCost.get(intermediateResource);
 								if (intermediateResourceCost == Double.MAX_VALUE) continue; // resources with infinite cost cannot be used
 								final double totalSCCost = scOriginToIntermediateCost + scIntermediateToOutCost + ((intermediateResourceCost == null)? 0.0 : intermediateResourceCost);	
 								if (totalSCCost > maxCostServiceChain) continue; // do not add this, but maybe other resources later are cheaper
