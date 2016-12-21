@@ -1189,7 +1189,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         {
             @Override
             public void actionPerformed(ActionEvent e) {
-                WindowController.showTopologyWindow();
+                WindowController.showControlWindow();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
     }
