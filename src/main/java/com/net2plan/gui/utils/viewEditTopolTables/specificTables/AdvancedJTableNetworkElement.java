@@ -277,9 +277,9 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable
                         fixedTableMenu.repaint();
                         fixedTableMenu.add(unfixCheckBox);
                         fixedTableMenu.add(new JPopupMenu.Separator());
-                        fixedTableMenu.add(loadStateItem);
-                        fixedTableMenu.add(saveStateItem);
-                        fixedTableMenu.add(new JPopupMenu.Separator());
+                        //fixedTableMenu.add(loadStateItem);
+                        //fixedTableMenu.add(saveStateItem);
+                        //fixedTableMenu.add(new JPopupMenu.Separator());
                         fixedTableMenu.add(resetItem);
                         fixedTableMenu.add(new JPopupMenu.Separator());
                         fixedTableMenu.add(showMenu);
