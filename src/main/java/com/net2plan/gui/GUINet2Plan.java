@@ -98,7 +98,8 @@ public class GUINet2Plan extends JFrame implements ActionListener {
             + "and simulator.</p><br><p align='justify'>Net2Plan is a free and open-source "
             + "Java tool devoted to the planning, optimization and evaluation of "
             + "communication networks.</p><br><p align='justify'>For more information, please "
-            + "visit Net2Plan website: http://www.net2plan.com</p></html>";
+            + "visit Net2Plan website: http://www.net2plan.com</p><br>"
+            + "<p>Map support provided by: © OpenStreetMap contributors (Provided under ODbL license: http://www.openstreetmap.org/copyright)</p></html>";
 
     static {
         CLOSE_NET2PLAN = new CloseNet2PlanListener();
