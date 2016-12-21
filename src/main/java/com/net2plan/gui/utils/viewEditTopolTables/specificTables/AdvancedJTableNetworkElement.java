@@ -18,7 +18,6 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.xml.stream.XMLStreamException;
@@ -741,7 +740,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable
      */
     private void loadTableState()
     {
-        Map<NetworkElementType, AdvancedJTableNetworkElement> currentTables = ((GUINetworkDesign) networkViewer).getCurrentTables();
+        Map<NetworkElementType, AdvancedJTableNetworkElement> currentTables = networkViewer.getTables();
         HashMap<NetworkElementType, TableState> tStateMap = null;
         try
         {
@@ -766,7 +765,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable
     private void saveTableState() throws XMLStreamException
     {
 
-        Map<NetworkElementType, AdvancedJTableNetworkElement> currentTables = ((GUINetworkDesign) networkViewer).getCurrentTables();
+        Map<NetworkElementType, AdvancedJTableNetworkElement> currentTables = networkViewer.getTables();
         TableStateController.saveTableState(currentTables);
     }
 

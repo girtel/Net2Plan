@@ -97,8 +97,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     private OfflineExecutionPanel executionPane;
     private OnlineSimulationPane onlineSimulationPane;
 
-    private Map<NetworkElementType, AdvancedJTableNetworkElement> currentTables;
-
     /**
      * Reference to the popup menu in the topology panel.
      *
@@ -164,8 +162,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
         viewEditTopTables = new ViewEditTopologyTablesPane(GUINetworkDesign.this, new BorderLayout());
 
-        currentTables = viewEditTopTables.currentTables();
-
         reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
 
         loadDesign(new NetPlan());
@@ -196,9 +192,10 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         return pane;
     }
 
-    public Map<NetworkElementType,AdvancedJTableNetworkElement> getCurrentTables(){
-
-        return currentTables;
+    @Override
+    public Map<NetworkElementType, AdvancedJTableNetworkElement> getTables()
+    {
+        return viewEditTopTables.currentTables();
     }
 
     @Override
@@ -438,7 +435,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     }
 
     @Override
-    public void loadDesign(NetPlan netPlan) {
+    public void loadDesign(NetPlan netPlan)
+    {
         viewEditTopTables.resetTables();
         netPlan.checkCachesConsistency();
         if (onlineSimulationPane != null) onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
@@ -1117,30 +1115,38 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         }, KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK));
 
         // Windows
-        addKeyCombinationAction("Show network state window", new AbstractAction() {
+        addKeyCombinationAction("Show network state window", new AbstractAction()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 WindowController.showTopologyWindow();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
 
-        addKeyCombinationAction("Show report window", new AbstractAction() {
+        addKeyCombinationAction("Show report window", new AbstractAction()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 WindowController.showReportWindow();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_2, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
 
-        addKeyCombinationAction("Show offline design window", new AbstractAction() {
+        addKeyCombinationAction("Show offline design window", new AbstractAction()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 WindowController.showOfflineWindow();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_3, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
 
-        addKeyCombinationAction("Show online design window", new AbstractAction() {
+        addKeyCombinationAction("Show online design window", new AbstractAction()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 WindowController.showOnlineWindow();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_4, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
@@ -1148,7 +1154,10 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         addKeyCombinationAction("Show visualization filters window", new AbstractAction()
         {
             @Override
-            public void actionPerformed(ActionEvent e) {WindowController.showFiltersWindow();}
+            public void actionPerformed(ActionEvent e)
+            {
+                WindowController.showFiltersWindow();
+            }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_5, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
     }
 
