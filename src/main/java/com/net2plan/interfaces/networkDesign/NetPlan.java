@@ -2723,6 +2723,30 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
+	 * <p>Returns a matrix with as many rows resources, and columns as routes in the given layer, 
+	 * coordinate (res,rou) contains the number times that route rou 
+	 * traverses resource res. If no layer is provided, default layer is assumed</p>
+	 * @return The matrix
+	 */
+	public Pair<List<Resource> , DoubleMatrix2D> getMatrixResource2RouteAssignment  (String type , NetworkLayer ... optionalLayerParameter)
+	{
+		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		List<Resource> listRes = new ArrayList<Resource> (netPlan.getResources(type));
+		final int RES = listRes.size();
+		final int ROU = layer.routes.size();
+		DoubleMatrix2D delta_er = DoubleFactory2D.sparse.make(RES, ROU);
+		for (int contRes = 0; contRes < RES ; contRes ++)
+		{
+			final Resource res = listRes.get(contRes);
+			for (Route rou : res.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet())
+				if (rou.layer.equals(layer))
+					delta_er.set (contRes , rou.index , rou.getNumberOfTimesResourceIsTraversed (res));
+		}
+		return Pair.of(listRes, delta_er);
+	}
+
+	/**
 	 * <p>Returns a matrix with as many rows resources, and columns as routes in the given layer, and coordinate (res,rou) contains 
 	 * the capacity occupied by route rou in resource res (note that if a route is down, its occupied capacity in a resource becomes zero). 
 	 * If no layer is provided, default layer is assumed</p>
