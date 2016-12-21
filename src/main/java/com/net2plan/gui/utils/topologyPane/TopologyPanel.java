@@ -55,7 +55,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
     private final JPanel layerChooserPane;
     private final JComboBox layerChooser;
-    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset, btn_debug;
+    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final MenuButton btn_view;
     private final JPopupMenu viewPopUp;
@@ -256,9 +256,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_reset.setToolTipText("Reset the user interface");
         btn_reset.setMnemonic(KeyEvent.VK_R);
 
-        btn_debug = new JButton("Quick load");
-        btn_debug.setMnemonic(KeyEvent.VK_D);
-
         btn_load.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDesign.png")));
         btn_loadDemand.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDemand.png")));
         btn_save.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/saveDesign.png")));
@@ -285,7 +282,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_zoomAll.addActionListener(this);
         btn_takeSnapshot.addActionListener(this);
         btn_reset.addActionListener(this);
-        btn_debug.addActionListener(this);
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
@@ -304,7 +300,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(increaseFontSize);
         toolbar.add(decreaseFontSize);
         toolbar.add(Box.createHorizontalGlue());
-        toolbar.add(btn_debug);
         toolbar.add(btn_view);
         toolbar.add(btn_reset);
 
@@ -453,9 +448,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         } else if (src == btn_zoomAll)
         {
             zoomAll();
-        } else if (src == btn_debug)
-        {
-            loadDesignFromFile(new File("C:\\Users\\Jorge\\Desktop\\Maps\\California_attrib.n2p"));
         } else if (src == btn_reset)
         {
             callback.reset();
