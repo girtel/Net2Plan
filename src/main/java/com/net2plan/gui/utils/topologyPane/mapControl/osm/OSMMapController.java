@@ -202,8 +202,7 @@ public class OSMMapController
         previousZoomLevel = mapViewer.getZoom();
         previousOSMViewportBounds = mapViewer.getViewportBounds();
 
-        canvas.refresh();
-        mapViewer.repaint();
+        alignTopologyToOSMMap();
     }
 
     /**
