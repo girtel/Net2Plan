@@ -790,15 +790,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable
         HashMap<String, Integer> hiddenColumnsMap = state.getHiddenTableColumns();
         boolean areAttributesExpanded = state.getExpandAttributes();
 
-        String[] currentHeaders = getCurrentTableHeaders();
-        ArrayList<String> currentHeadersList = new ArrayList<>();
-
-        for(int i = 0; i < currentHeaders.length;i++)
-        {
-            currentHeadersList.add(currentHeaders[i]);
-        }
-
-        if (areAttributesExpanded && getAttributesColumnsHeaders().size() > 0)
+        if (areAttributesExpanded)
         {
             attributesInDifferentColumns();
             attributesItem.setSelected(true);
@@ -806,8 +798,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable
 
         for (String col : fixedTableColumns)
         {
-            if(!currentHeadersList.contains(col))
-                continue;
             TableColumn mainTableCol = null;
             for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
             {
@@ -827,15 +817,11 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable
         }
         for (String col : mainTableColumns)
         {
-            if(!currentHeadersList.contains(col))
-                continue;
             showColumn(col, 0, false);
         }
         indexForEachHiddenColumn.clear();
         for (Map.Entry<String, Integer> entry : hiddenColumnsMap.entrySet())
         {
-            if(!currentHeadersList.contains(entry.getKey()))
-                continue;
             indexForEachHiddenColumn.put(entry.getKey(), entry.getValue());
         }
 
