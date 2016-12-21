@@ -2456,7 +2456,7 @@ public class NetPlan extends NetworkElement
 		DoubleMatrix2D x_dr = DoubleFactory2D.sparse.make (layer.demands.size () , resources.size ());
 		for (Route r : layer.routes) 
 			if (!r.isDown()) 
-				for (Entry<Resource,Double> e : r.resourcesTraversedAndOccupiedCapIfnotFailMap.entrySet()) 
+				for (Entry<Resource,Double> e : r.cache_linkAndResourcesTraversedAndOccupiedCapIfnotFailMap.entrySet()) 
 					x_dr.set (r.demand.index , e.getKey().index , e.getValue());
 		return x_dr;
 	}
@@ -5220,14 +5220,14 @@ public class NetPlan extends NetworkElement
 							initialSeqLinksAndResourcesWhenCreated.add (e.id);
 						/* Initial resource occupation map, but if link/resources where removed, then use the current resource occupation map */
 						List<Double> initialResourceOccupationMapIdCap = new LinkedList<Double> ();
-						for (Entry<Resource,Double> e : initialSeqLinksAndResourcesNotRemoved? route.initialResourcesTraversedMap.entrySet(): route.resourcesTraversedAndOccupiedCapIfnotFailMap.entrySet())
+						for (Entry<Resource,Double> e : initialSeqLinksAndResourcesNotRemoved? route.initialResourcesTraversedMap.entrySet(): route.cache_linkAndResourcesTraversedAndOccupiedCapIfnotFailMap.entrySet())
 							{ initialResourceOccupationMapIdCap.add ((double) e.getKey().id); initialResourceOccupationMapIdCap.add (e.getValue()); }
 						/* Current sequence */
 						List<Long> seqLinksAndProtectionSegmentsAndResources = new LinkedList<Long> ();
 						for (NetworkElement e : route.seqLinksSegmentsAndResourcesTraversed) seqLinksAndProtectionSegmentsAndResources.add (e.id);
 						/* Current resource occupation map */
 						List<Double> currentResourceOccupationMapIdCap = new LinkedList<Double> ();
-						for (Entry<Resource,Double> e : route.resourcesTraversedAndOccupiedCapIfnotFailMap.entrySet())
+						for (Entry<Resource,Double> e : route.cache_linkAndResourcesTraversedAndOccupiedCapIfnotFailMap.entrySet())
 							{ currentResourceOccupationMapIdCap.add ((double) e.getKey().id); currentResourceOccupationMapIdCap.add (e.getValue()); }
 						/* Backup segment list */
 						List<Long> backupSegmentList = new LinkedList<Long> (); for (ProtectionSegment e : route.potentialBackupSegments) backupSegmentList.add (e.id);
@@ -6495,7 +6495,7 @@ public class NetPlan extends NetworkElement
 			{
 				route.layer.cache_routesDown.remove (route); 
 				final boolean previousDebug = ErrorHandling.isDebugEnabled(); ErrorHandling.setDebug(false);
-	 			route.setCarriedTrafficAndResourcesOccupationInformation(route.carriedTrafficIfNotFailing , route.occupiedLinkCapacityIfNotFailing , route.resourcesTraversedAndOccupiedCapIfnotFailMap);
+	 			route.setCarriedTrafficAndResourcesOccupationInformation(route.carriedTrafficIfNotFailing , route.occupiedLinkCapacityIfNotFailing , route.cache_linkAndResourcesTraversedAndOccupiedCapIfnotFailMap);
 				ErrorHandling.setDebug(previousDebug);
 //				System.out.println ("down to up: route.layer.cache_routesDown: " + route.layer.cache_routesDown);
 			}
