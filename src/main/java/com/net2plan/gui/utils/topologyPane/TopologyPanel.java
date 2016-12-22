@@ -22,7 +22,6 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
-import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.utils.FileChooserNetworkDesign;
 import com.net2plan.gui.utils.FileDrop;
 import com.net2plan.gui.utils.INetworkCallback;
@@ -32,6 +31,7 @@ import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.components.MenuButton;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -214,14 +214,14 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         it_closeMap.addActionListener(e ->
         {
-            GUINetworkDesign.getStateManager().setStoppedState();
+            OSMMapStateBuilder.getSingleton().setStoppedState();
             it_osmMap.setEnabled(true);
             viewPopUp.remove(it_closeMap);
         });
 
         it_osmMap.addActionListener(e ->
         {
-            GUINetworkDesign.getStateManager().setRunningState();
+            OSMMapStateBuilder.getSingleton().setRunningState();
             it_osmMap.setEnabled(false);
 
             viewPopUp.add(it_closeMap);
@@ -291,7 +291,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void componentResized(ComponentEvent e)
             {
-                GUINetworkDesign.getStateManager().zoomAll();
+                zoomAll();
             }
         });
 

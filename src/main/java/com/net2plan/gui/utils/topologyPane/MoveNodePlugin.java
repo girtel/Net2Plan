@@ -12,8 +12,8 @@
 
 package com.net2plan.gui.utils.topologyPane;
 
-import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
 import java.awt.*;
@@ -77,7 +77,7 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
         if (startVertex != -1) {
             Point p = e.getPoint();
 
-            GUINetworkDesign.getStateManager().modeNode(callback.getDesign().getNodeFromId(startVertex), p);
+            OSMMapStateBuilder.getSingleton().moveNode(callback.getDesign().getNodeFromId(startVertex), p);
 
             e.consume();
         }
