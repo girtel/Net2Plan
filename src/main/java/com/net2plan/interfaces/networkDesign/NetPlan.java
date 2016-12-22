@@ -32,6 +32,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import javax.xml.stream.FactoryConfigurationError;
@@ -579,15 +580,13 @@ public class NetPlan extends NetworkElement
 		}
 		for (Route originRoute : origin.routes)
 		{
-			List<Link> newSeqLinksRealPath = new LinkedList<Link> (); for (Link originLink : originRoute.cache_seqLinksRealPath) newSeqLinksRealPath.add (newLayer.links.get (originLink.index));
-			Route newRoute = this.addRoute(newLayer.demands.get(originRoute.demand.index) , originRoute.carriedTrafficIfNotFailing , originRoute.occupiedLinkCapacityIfNotFailing , newSeqLinksRealPath , originRoute.attributes);
-			List<Link> newSeqLinksAndProtectionSegment = new LinkedList<Link> (); 
-			for (Link originLink : originRoute.cache_seqLinksAndProtectionSegments) 
-				if (originLink instanceof ProtectionSegment)
-					newSeqLinksAndProtectionSegment.add (newLayer.protectionSegments.get (originLink.index));
-				else
-					newSeqLinksAndProtectionSegment.add (newLayer.links.get (originLink.index));
-			newRoute.setSeqLinksAndProtectionSegments(newSeqLinksAndProtectionSegment);
+			List<NetworkElement> newInitialPath = (List<NetworkElement>) this.translateCollectionToThisNetPlan(originRoute.initialSeqLinksAndResourcesTraversedWhenCreated); 
+			Route newRoute = this.addServiceChain(newLayer.demands.get(originRoute.demand.index) , 
+					originRoute.initialCarriedTrafficWhenCreated , originRoute.initialLinksAndResourcesOccupation , 
+					newInitialPath , originRoute.attributes);
+			newRoute.setCarriedTrafficAndPath(originRoute.carriedTrafficIfNotFailing, 
+					(List<NetworkElement>) translateCollectionToThisNetPlan(originRoute.seqLinksSegmentsAndResourcesTraversed) ,
+					originRoute.occupiedLinksSegmentsAndResourcesCapacitiesIfNotFailing);
 		}
 		for (MulticastTree originTree: origin.multicastTrees)
 		{
@@ -921,7 +920,7 @@ public class NetPlan extends NetworkElement
 	 */
 	public Route addRoute (Demand demand , double carriedTraffic, double occupiedLinkCapacity, List<Link> sequenceOfLinks, Map<String, String> attributes)
 	{
-		return addServiceChain(demand , carriedTraffic, occupiedLinkCapacity, sequenceOfLinks, null , attributes);
+		return addServiceChain(demand , carriedTraffic, Collections.nCopies(sequenceOfLinks.size(), occupiedLinkCapacity), sequenceOfLinks, attributes);
 	}
 
 	/**
@@ -930,36 +929,33 @@ public class NetPlan extends NetworkElement
 	 * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}.</p>
 	 * @param demand Demand associated to the route
 	 * @param carriedTraffic Carried traffic. It must be greater or equal than zero
-	 * @param occupiedLinkCapacity Occupied link capacity, it must be greater or equal than zero.
+	 * @param occupiedLinkAndResourceCapacities Occupied link capacity, it must be greater or equal than zero.
 	 * @param sequenceOfLinksAndResources Sequence of Link and Resource objects defining the sequence traversed by the route
 	 * @param occupationInformationInTraversedResources a map with one entry per different resource traversed, and associated to it the total amount of capacity utilized in that resource by this service chain
 	 * @param attributes Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
 	 * @return The newly created route object
 	 */
-	public Route addServiceChain(Demand demand , double carriedTraffic, double occupiedLinkCapacity, List<? extends NetworkElement> sequenceOfLinksAndResources, Map <Resource,Double> occupationInformationInTraversedResources , Map<String, String> attributes)
+	public Route addServiceChain(Demand demand , double carriedTraffic, List<Double> occupiedLinkAndResourceCapacities, List<? extends NetworkElement> sequenceOfLinksAndResources, Map<String, String> attributes)
 	{
-		return addServiceChain(null , demand , carriedTraffic, occupiedLinkCapacity, sequenceOfLinksAndResources, occupationInformationInTraversedResources , attributes);
+		return addServiceChain(null , demand , carriedTraffic, occupiedLinkAndResourceCapacities, sequenceOfLinksAndResources, attributes);
 	}
-	Route addServiceChain(Long routeId , Demand demand , double carriedTraffic, double occupiedLinkCapacity, List<? extends NetworkElement> sequenceOfLinksAndResources, Map <Resource,Double> occupationInformationInTraversedResources , Map<String, String> attributes)
+	Route addServiceChain(Long routeId , Demand demand , double carriedTraffic, List<Double> occupiedLinkAndResourceCapacities, List<? extends NetworkElement> sequenceOfLinksAndResources, Map<String, String> attributes)
 	{
 		carriedTraffic = NetPlan.adjustToTolerance(carriedTraffic);
-		occupiedLinkCapacity = NetPlan.adjustToTolerance(occupiedLinkCapacity);
+		occupiedLinkAndResourceCapacities = NetPlan.adjustToTolerance(occupiedLinkAndResourceCapacities);
 
 		checkIsModifiable();
 		checkInThisNetPlan(demand);
 		Pair<List<Link>,List<Resource>> listLinksAndListResources = checkPathValidityForDemand(sequenceOfLinksAndResources, demand);
 		demand.layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		if (occupationInformationInTraversedResources == null) occupationInformationInTraversedResources = new HashMap<Resource,Double> ();
-		for (double val : occupationInformationInTraversedResources.values()) if (val < 0) throw new Net2PlanException ("The occupation of a resource cannot be negative");
-		if (!occupationInformationInTraversedResources.keySet().equals(new HashSet<Resource> (listLinksAndListResources.getSecond())))
-			throw new Net2PlanException ("The set of traversed resources does not match with the resources occupation information");
 		if (carriedTraffic < 0) throw new Net2PlanException ("Carried traffic must be non-negative");
-		if (occupiedLinkCapacity < 0) occupiedLinkCapacity = carriedTraffic;
+		if (occupiedLinkAndResourceCapacities.size() != sequenceOfLinksAndResources.size()) throw new Net2PlanException ("Wrong size of occupations vector");
+		for (double val : occupiedLinkAndResourceCapacities) if (val < 0) throw new Net2PlanException ("Occupied capacities cannot be negative");
 		NetworkLayer layer = demand.layer;
 
 		if (routeId == null) { routeId = nextElementId.longValue(); nextElementId.increment(); }
 
-		Route route = new Route(this, routeId, layer.routes.size(), demand , sequenceOfLinksAndResources , occupationInformationInTraversedResources , new AttributeMap(attributes));
+		Route route = new Route(this, routeId, layer.routes.size(), demand , carriedTraffic , sequenceOfLinksAndResources , occupiedLinkAndResourceCapacities , new AttributeMap(attributes));
 
 		layer.routes.add(route);
 		cache_id2RouteMap.put (routeId,route);
@@ -973,7 +969,7 @@ public class NetPlan extends NetworkElement
 		}
 		demand.cache_routes.add (route);
 		if (!isUpThisRoute) layer.cache_routesDown.add (route);
-		route.setCarriedTrafficAndResourcesOccupationInformation(carriedTraffic , occupiedLinkCapacity , occupationInformationInTraversedResources);
+		route.setCarriedTraffic(carriedTraffic , occupiedLinkAndResourceCapacities);
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 		return route;
 	}
@@ -1845,13 +1841,11 @@ public class NetPlan extends NetworkElement
 			for (Route originRoute : originLayer.routes)
 			{
 				Route newElement = new Route (this , originRoute.id , originRoute.index , cache_id2DemandMap.get(originRoute.demand.id) ,
-						(List<NetworkElement>) translateCollectionToThisNetPlan(originRoute.initialSeqLinksAndResourcesTraversedWhenCreated) ,
-						(Map<Resource,Double>) translateCollectionToThisNetPlan(originRoute.initialResourcesTraversedMap) ,
+						originRoute.initialCarriedTrafficWhenCreated , (List<NetworkElement>) translateCollectionToThisNetPlan(originRoute.initialSeqLinksAndResourcesTraversedWhenCreated) ,
+						originRoute.initialLinksAndResourcesOccupation ,
 						originRoute.attributes);
-				//Route (NetPlan netPlan , long id , int index , Demand demand , List<? extends NetworkElement> seqLinksRealPathAndResourcesTraversedWhenCreated , Map <Resource,Double> occupationInformationInTraversedResources , AttributeMap attributes)
-
 				newElement.carriedTrafficIfNotFailing = originRoute.carriedTrafficIfNotFailing;
-				newElement.occupiedLinkCapacityIfNotFailing = originRoute.occupiedLinkCapacityIfNotFailing;
+				newElement.occupiedLinksSegmentsAndResourcesCapacitiesIfNotFailing = new ArrayList<Double> (originRoute.occupiedLinksSegmentsAndResourcesCapacitiesIfNotFailing);
 				cache_id2RouteMap.put(originRoute.id, newElement);
 				newLayer.routes.add (newElement);
 			}
@@ -2456,8 +2450,9 @@ public class NetPlan extends NetworkElement
 		DoubleMatrix2D x_dr = DoubleFactory2D.sparse.make (layer.demands.size () , resources.size ());
 		for (Route r : layer.routes) 
 			if (!r.isDown()) 
-				for (Entry<Resource,Double> e : r.cache_linkSegmentsAndResourcesTraversedAndOccupiedCapIfnotFailMap.entrySet()) 
-					x_dr.set (r.demand.index , e.getKey().index , e.getValue());
+				for (Entry<NetworkElement,Double> e : r.cache_linkSegmentsAndResourcesTraversedAndOccupiedCapIfnotFailMap.entrySet())
+					if (e.getKey() instanceof Resource)
+						x_dr.set (r.demand.index , e.getKey().index , e.getValue());
 		return x_dr;
 	}
 
@@ -4829,7 +4824,13 @@ public class NetPlan extends NetworkElement
 		checkIsModifiable();
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		for (Route r : new ArrayList<Route> (layer.routes)) if ((r.carriedTrafficIfNotFailing < toleranceTrafficAndCapacityValueToConsiderUnusedRoute) && (r.occupiedLinkCapacityIfNotFailing < toleranceTrafficAndCapacityValueToConsiderUnusedRoute)) r.remove ();
+		for (Route r : new ArrayList<Route> (layer.routes))
+		{
+			if (r.carriedTrafficIfNotFailing >= toleranceTrafficAndCapacityValueToConsiderUnusedRoute) continue;
+			boolean emptyRoute = true;
+			for(double val : r.occupiedLinksSegmentsAndResourcesCapacitiesIfNotFailing) if (val >= toleranceTrafficAndCapacityValueToConsiderUnusedRoute) { emptyRoute = false; break; }
+			if (emptyRoute) r.remove ();
+		}
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 	}
 
@@ -5210,31 +5211,39 @@ public class NetPlan extends NetworkElement
 						writer.writeAttribute("id", Long.toString(route.id));
 						writer.writeAttribute("demandId", Long.toString(route.demand.id));
 						writer.writeAttribute("carriedTrafficIfNotFailing", Double.toString(route.carriedTrafficIfNotFailing));
-						writer.writeAttribute("occupiedLinkCapacityIfNotFailing", Double.toString(route.occupiedLinkCapacityIfNotFailing));
-						/* If the initial seq links (when the route was created) contains removed links: we use the current sequence */
+						writer.writeAttribute("occupiedLinksSegmentsAndResourcesCapacitiesIfNotFailing", CollectionUtils.join(route.occupiedLinksSegmentsAndResourcesCapacitiesIfNotFailing, " "));
+
+						/* Write the initial route state info (if all links/resources still exist, if not, the current) */
 						boolean initialSeqLinksAndResourcesNotRemoved = true;
 						for (NetworkElement e : route.initialSeqLinksAndResourcesTraversedWhenCreated) if (e.netPlan == null) { initialSeqLinksAndResourcesNotRemoved = false; break; }
 						/* Initial sequence, but if link/resources where removed, then use the current sequence */
-						List<Long> initialSeqLinksAndResourcesWhenCreated = new LinkedList<Long> ();
-						for (NetworkElement e : initialSeqLinksAndResourcesNotRemoved? route.initialSeqLinksAndResourcesTraversedWhenCreated : route.getSeqLinksRealPathAndResources())
-							initialSeqLinksAndResourcesWhenCreated.add (e.id);
-						/* Initial resource occupation map, but if link/resources where removed, then use the current resource occupation map */
-						List<Double> initialResourceOccupationMapIdCap = new LinkedList<Double> ();
-						for (Entry<Resource,Double> e : initialSeqLinksAndResourcesNotRemoved? route.initialResourcesTraversedMap.entrySet(): route.cache_linkSegmentsAndResourcesTraversedAndOccupiedCapIfnotFailMap.entrySet())
-							{ initialResourceOccupationMapIdCap.add ((double) e.getKey().id); initialResourceOccupationMapIdCap.add (e.getValue()); }
+						final double initialCarriedTrafficToWrite = initialSeqLinksAndResourcesNotRemoved? route.initialCarriedTrafficWhenCreated : route.carriedTrafficIfNotFailing; 
+						final List<NetworkElement> initialSeqLinksAndResourcesToWrite = initialSeqLinksAndResourcesNotRemoved? route.initialSeqLinksAndResourcesTraversedWhenCreated : route.getSeqLinksRealPathAndResources(); 
+						final List<Double> initialOccupationToWrite = route.initialLinksAndResourcesOccupation;
+						if (!initialSeqLinksAndResourcesNotRemoved)
+						{
+							initialOccupationToWrite.clear();
+							for (int cont = 0 ; cont < route.seqLinksSegmentsAndResourcesTraversed.size() ; cont ++)
+							{
+								final NetworkElement e = route.seqLinksSegmentsAndResourcesTraversed.get(cont);
+								final double occup = route.occupiedLinksSegmentsAndResourcesCapacitiesIfNotFailing.get(cont);
+								if (e instanceof ProtectionSegment)
+									initialOccupationToWrite.addAll(Collections.nCopies(((ProtectionSegment) e).getNumberOfHops(), occup));
+								else if (e instanceof Link)
+									initialOccupationToWrite.add(occup);
+							}
+						}
+						writer.writeAttribute("initialCarriedTrafficWhenCreated", Double.toString(initialCarriedTrafficToWrite));
+						writer.writeAttribute("initialLinksAndResourcesOccupation", CollectionUtils.join(initialOccupationToWrite, " "));
+						writer.writeAttribute("initialSeqLinksAndResourcesTraversedWhenCreated", CollectionUtils.join(initialSeqLinksAndResourcesToWrite.stream().map(e->e.id).collect(Collectors.toList()), " "));
+						
 						/* Current sequence */
-						List<Long> seqLinksAndProtectionSegmentsAndResources = new LinkedList<Long> ();
-						for (NetworkElement e : route.seqLinksSegmentsAndResourcesTraversed) seqLinksAndProtectionSegmentsAndResources.add (e.id);
+						List<Long> seqLinksAndProtectionSegmentsAndResources = route.seqLinksSegmentsAndResourcesTraversed.stream().map(e->e.id).collect(Collectors.toList());
 						/* Current resource occupation map */
-						List<Double> currentResourceOccupationMapIdCap = new LinkedList<Double> ();
-						for (Entry<Resource,Double> e : route.cache_linkSegmentsAndResourcesTraversedAndOccupiedCapIfnotFailMap.entrySet())
-							{ currentResourceOccupationMapIdCap.add ((double) e.getKey().id); currentResourceOccupationMapIdCap.add (e.getValue()); }
 						/* Backup segment list */
-						List<Long> backupSegmentList = new LinkedList<Long> (); for (ProtectionSegment e : route.potentialBackupSegments) backupSegmentList.add (e.id);
-						writer.writeAttribute("initialSeqLinksAndResources", CollectionUtils.join(initialSeqLinksAndResourcesWhenCreated, " "));
-						writer.writeAttribute("initialResourceOccupationMap", CollectionUtils.join(initialResourceOccupationMapIdCap, " "));
-						writer.writeAttribute("currentSeqLinksSegmentsAndResources", CollectionUtils.join(seqLinksAndProtectionSegmentsAndResources, " "));
-						writer.writeAttribute("currentResourceOccupationMap", CollectionUtils.join(currentResourceOccupationMapIdCap, " "));
+						List<Long> backupSegmentList = route.potentialBackupSegments.stream().map(seg -> seg.id).collect(Collectors.toList());
+						writer.writeAttribute("seqLinksSegmentsAndResourcesTraversed", CollectionUtils.join(seqLinksAndProtectionSegmentsAndResources, " "));
+						writer.writeAttribute("occupiedLinksSegmentsAndResourcesCapacitiesIfNotFailing", CollectionUtils.join(route.occupiedLinksSegmentsAndResourcesCapacitiesIfNotFailing, " "));
 						writer.writeAttribute("backupSegmentList", CollectionUtils.join(backupSegmentList, " "));
 
 						for (Entry<String, String> entry : route.attributes.entrySet())
@@ -6495,7 +6504,7 @@ public class NetPlan extends NetworkElement
 			{
 				route.layer.cache_routesDown.remove (route); 
 				final boolean previousDebug = ErrorHandling.isDebugEnabled(); ErrorHandling.setDebug(false);
-	 			route.setCarriedTrafficAndResourcesOccupationInformation(route.carriedTrafficIfNotFailing , route.occupiedLinkCapacityIfNotFailing , route.cache_linkSegmentsAndResourcesTraversedAndOccupiedCapIfnotFailMap);
+	 			route.setCarriedTraffic(route.carriedTrafficIfNotFailing , route.occupiedLinksSegmentsAndResourcesCapacitiesIfNotFailing);
 				ErrorHandling.setDebug(previousDebug);
 //				System.out.println ("down to up: route.layer.cache_routesDown: " + route.layer.cache_routesDown);
 			}
@@ -6504,7 +6513,7 @@ public class NetPlan extends NetworkElement
 				route.layer.cache_routesDown.add (route); 
 //				System.out.println ("up to down : route.layer.cache_routesDown: " + route.layer.cache_routesDown);
 				final boolean previousDebug = ErrorHandling.isDebugEnabled(); ErrorHandling.setDebug(false);
-	 			route.setCarriedTrafficAndResourcesOccupationInformation(route.carriedTrafficIfNotFailing , route.occupiedLinkCapacityIfNotFailing , null);
+	 			route.setCarriedTraffic(route.carriedTrafficIfNotFailing , route.occupiedLinksSegmentsAndResourcesCapacitiesIfNotFailing);
 				ErrorHandling.setDebug(previousDebug);
 			}
 		} 
@@ -6675,6 +6684,11 @@ public class NetPlan extends NetworkElement
 	}
 	
 	static double adjustToTolerance (double val) { final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor")); return (Math.abs(val) < PRECISION_FACTOR)? 0 : val; }
+	static List<Double> adjustToTolerance (List<Double> vals) 
+	{ 
+		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor")); 
+		return vals.stream().map(val -> (Math.abs(val) < PRECISION_FACTOR)? 0 : val).collect(Collectors.toList()); 
+	}
 	static DoubleMatrix1D adjustToTolerance (DoubleMatrix1D vals) 
 	{
 		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor")); 
