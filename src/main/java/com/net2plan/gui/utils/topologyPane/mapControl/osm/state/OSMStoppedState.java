@@ -77,7 +77,10 @@ public class OSMStoppedState implements OSMState
     @Override
     public void moveNode(INetworkCallback callback, ITopologyCanvas canvas, Node node, Point2D pos)
     {
-        callback.moveNode(node.getId(), canvas.convertViewCoordinatesToRealCoordinates(pos));
+        final Point2D jungPoint = canvas.convertViewCoordinatesToRealCoordinates(pos);
+
+        callback.moveNode(node.getId(), pos);
+        canvas.moveNodeToXYPosition(node, new Point2D.Double(jungPoint.getX(), -jungPoint.getY()));
     }
 
     @Override
