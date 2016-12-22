@@ -8,6 +8,7 @@
         <module>Net2Plan-Examples</module>
         <module>Net2Plan-CLI</module>
         <module>Net2Plan-Javadoc</module>
+        <module>Net2Plan-IO</module>
     </modules>
     <name>Net2Plan</name>
     <packaging>pom</packaging>
