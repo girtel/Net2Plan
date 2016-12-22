@@ -291,7 +291,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void componentResized(ComponentEvent e)
             {
-                OSMMapStateBuilder.getSingleton().zoomAll();
+                zoomAll();
             }
         });
 

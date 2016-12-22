@@ -411,7 +411,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
             {
                 for (Node node : currentNetPlan.getNodes())
                 {
-                    OSMMapStateBuilder.getSingleton().moveNode(node, initialTopologySetting.getNodeLocation(node));
+                    // This is supposed to be done with the OSM state manager, but that does not exactly do what is required here.
+                    moveNode(node.getId(), initialTopologySetting.getNodeLocation(node));
                 }
 
                 topologyPanel.zoomAll();
