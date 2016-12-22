@@ -97,7 +97,7 @@ public enum OSMMapStateBuilder
             currentState.addNode(topologyPanel, netPlan, name, pos);
         }
 
-        public void modeNode(final Node node, final Point2D pos)
+        public void moveNode(final Node node, final Point2D pos)
         {
             currentState.moveNode(callback, canvas, node, pos);
         }

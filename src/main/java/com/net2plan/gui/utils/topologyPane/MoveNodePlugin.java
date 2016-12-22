@@ -77,7 +77,7 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
         if (startVertex != -1) {
             Point p = e.getPoint();
 
-            OSMMapStateBuilder.getSingleton().modeNode(callback.getDesign().getNodeFromId(startVertex), p);
+            OSMMapStateBuilder.getSingleton().moveNode(callback.getDesign().getNodeFromId(startVertex), p);
 
             e.consume();
         }
