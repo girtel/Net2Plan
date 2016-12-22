@@ -29,9 +29,11 @@ public class OSMStoppedState implements OSMState
     private final JUNGCanvas canvas;
     private final VisualizationViewer<GUINode, GUILink> vv;
 
+    @SuppressWarnings("unchecked")
     public OSMStoppedState(final ITopologyCanvas canvas)
     {
         this.canvas = (JUNGCanvas) canvas;
+
         this.vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
     }
 
