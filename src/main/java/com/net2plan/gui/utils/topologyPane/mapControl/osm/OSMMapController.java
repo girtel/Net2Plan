@@ -1,16 +1,15 @@
 package com.net2plan.gui.utils.topologyPane.mapControl.osm;
 
-import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.components.mapPanel.OSMMapPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMRunningState;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.ITopologyCanvas;
@@ -66,7 +65,7 @@ public class OSMMapController
                         "x = [-180, 180]\n" +
                         "y = [-90, 90]\n";
 
-                GUINetworkDesign.getStateManager().setStoppedState();
+                OSMMapStateBuilder.getSingleton().setStoppedState();
 
                 throw new OSMMapException(message);
             }
@@ -340,7 +339,7 @@ public class OSMMapController
      */
     private boolean isMapActivated()
     {
-        return GUINetworkDesign.getStateManager().getCurrentState() instanceof OSMRunningState;
+        return OSMMapStateBuilder.getSingleton().getCurrentState() instanceof OSMRunningState;
     }
 
     public JComponent getMapComponent()

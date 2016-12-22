@@ -21,31 +21,23 @@
 package com.net2plan.internal.plugins;
 
 import java.awt.Color;
-import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
-import com.net2plan.gui.tools.GUINetworkDesign;
-import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.CommandLineParser;
-import com.net2plan.utils.CollectionUtils;
-import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.Pair;
-import com.net2plan.utils.Triple;
 
 /**
  * Base class for topology canvas.
@@ -413,7 +405,7 @@ public abstract class ITopologyCanvas implements Plugin
 	 */
 	public final void takeSnapshot()
 	{
-		GUINetworkDesign.getStateManager().takeSnapshot(this);
+		OSMMapStateBuilder.getSingleton().takeSnapshot(this);
 	}
 
 	/**

@@ -12,11 +12,10 @@
 
 package com.net2plan.gui.utils.topologyPane.jung;
 
-import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
-import com.net2plan.gui.utils.topologyPane.TopologyPanel;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -346,7 +345,7 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void panTo(Point2D initialPoint, Point2D currentPoint)
     {
-        GUINetworkDesign.getStateManager().panTo(initialPoint, currentPoint);
+        OSMMapStateBuilder.getSingleton().panTo(initialPoint, currentPoint);
     }
 
     @Override
@@ -564,7 +563,7 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void zoomAll()
     {
-        GUINetworkDesign.getStateManager().zoomAll();
+        OSMMapStateBuilder.getSingleton().zoomAll();
     }
 
     public void frameTopology()
@@ -636,13 +635,13 @@ public final class JUNGCanvas extends ITopologyCanvas
     @Override
     public void zoomIn()
     {
-        GUINetworkDesign.getStateManager().zoomIn();
+        OSMMapStateBuilder.getSingleton().zoomIn();
     }
 
     @Override
     public void zoomOut()
     {
-        GUINetworkDesign.getStateManager().zoomOut();
+        OSMMapStateBuilder.getSingleton().zoomOut();
     }
 
     public void addLink(Link npLink)
@@ -901,17 +900,17 @@ public final class JUNGCanvas extends ITopologyCanvas
                 {
                     if (amount > 0)
                     {
-                        GUINetworkDesign.getStateManager().zoomOut();
+                        OSMMapStateBuilder.getSingleton().zoomOut();
                     } else if (amount < 0)
                     {
-                        GUINetworkDesign.getStateManager().zoomIn();
+                        OSMMapStateBuilder.getSingleton().zoomIn();
                     }
                 } else if (amount > 0)
                 {
-                    GUINetworkDesign.getStateManager().zoomOut();
+                    OSMMapStateBuilder.getSingleton().zoomOut();
                 } else if (amount < 0)
                 {
-                    GUINetworkDesign.getStateManager().zoomIn();
+                    OSMMapStateBuilder.getSingleton().zoomIn();
                 }
 
                 e.consume();

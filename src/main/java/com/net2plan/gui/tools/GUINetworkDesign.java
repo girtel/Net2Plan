@@ -22,7 +22,6 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableModel;
 
-import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
@@ -31,7 +30,7 @@ import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.jung.topologyDistribution.CircularDistribution;
 import com.net2plan.gui.utils.topologyPane.jung.topologyDistribution.ITopologyDistribution;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMStateManager;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
@@ -97,8 +96,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     private TopologyMap initialTopologySetting;
     private ITopologyDistribution circularTopologySetting;
 
-    private static OSMStateManager osmStateManager;
-
     /**
      * Default constructor.
      *
@@ -130,7 +127,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     {
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
 
-        osmStateManager = new OSMStateManager(topologyPanel, topologyPanel.getCanvas(), this);
+        // Running OSM state machine.
+        new OSMMapStateBuilder.SingletonBuilder(topologyPanel, this).build();
 
         initialTopologySetting = new TopologyMap();
         circularTopologySetting = new CircularDistribution();
@@ -377,7 +375,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         NetPlan netPlan = getDesign();
         long nodeId = netPlan.getNetworkElementNextId();
 
-        GUINetworkDesign.getStateManager().addNode(netPlan, "Node " + nodeId, pos);
+        OSMMapStateBuilder.getSingleton().addNode(netPlan, "Node " + nodeId, pos);
         updateNetPlanView();
     }
 
@@ -1196,10 +1194,5 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
                 WindowController.showControlWindow();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
-    }
-
-    public static OSMStateManager getStateManager()
-    {
-        return osmStateManager;
     }
 }
