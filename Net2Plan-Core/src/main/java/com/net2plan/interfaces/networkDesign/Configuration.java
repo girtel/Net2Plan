@@ -16,21 +16,15 @@ package com.net2plan.interfaces.networkDesign;
 
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.SystemUtils;
-import com.net2plan.internal.plugins.ITopologyCanvas;
-import com.net2plan.internal.plugins.Plugin;
-import com.net2plan.internal.plugins.PluginSystem;
-import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
 import java.io.*;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
 import java.util.StringTokenizer;
 
 /**

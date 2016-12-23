@@ -39,7 +39,6 @@ import com.net2plan.utils.Quadruple;
 import com.net2plan.utils.RandomUtils;
 import com.net2plan.utils.Triple;
 
-import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;

@@ -104,30 +104,30 @@ public class ResourceTest
 	@Test
 	public void testGetResourcesOfType () 
 	{
-		assertEquals(np.getResources("baseType"), Collections.singleton(baseResource));
-		assertEquals(np.getResources("upperType"), Collections.singleton(upperResource));
-		assertEquals(np.getResources("xxx"), Collections.emptySet());
+		Assert.assertEquals(np.getResources("baseType"), Collections.singleton(baseResource));
+		Assert.assertEquals(np.getResources("upperType"), Collections.singleton(upperResource));
+		Assert.assertEquals(np.getResources("xxx"), Collections.emptySet());
 		upperResource.remove();
-		assertEquals(np.getResources("upperType"), Collections.emptySet());
+		Assert.assertEquals(np.getResources("upperType"), Collections.emptySet());
 		baseResource.remove();
-		assertEquals(np.getResources("baseType"), Collections.emptySet());
+		Assert.assertEquals(np.getResources("baseType"), Collections.emptySet());
 	}
 
 	@Test
 	public void testGetResources () 
 	{
-		assertEquals(hostNode.getResources("baseType"), Collections.singleton(baseResource));
-		assertEquals(hostNode.getResources("upperType"), Collections.singleton(upperResource));
-		assertEquals(hostNode.getResources("xxx"), Collections.emptySet());
+		Assert.assertEquals(hostNode.getResources("baseType"), Collections.singleton(baseResource));
+		Assert.assertEquals(hostNode.getResources("upperType"), Collections.singleton(upperResource));
+		Assert.assertEquals(hostNode.getResources("xxx"), Collections.emptySet());
 		Set<Resource> res = new HashSet<Resource> (); res.add(baseResource); res.add (upperResource);
-		assertEquals(hostNode.getResources(), res);
-		assertEquals(hostNode.getResources("upperType" , "baseType"), res);
+		Assert.assertEquals(hostNode.getResources(), res);
+		Assert.assertEquals(hostNode.getResources("upperType" , "baseType"), res);
 		baseResource.remove();
-		assertEquals(hostNode.getResources("baseType"), Collections.emptySet());
-		assertEquals(hostNode.getResources("upperType"), Collections.emptySet());
-		assertEquals(hostNode.getResources("xxx"), Collections.emptySet());
-		assertEquals(hostNode.getResources(), Collections.emptySet());
-		assertEquals(hostNode.getResources("upperType" , "baseType"), Collections.emptySet());
+		Assert.assertEquals(hostNode.getResources("baseType"), Collections.emptySet());
+		Assert.assertEquals(hostNode.getResources("upperType"), Collections.emptySet());
+		Assert.assertEquals(hostNode.getResources("xxx"), Collections.emptySet());
+		Assert.assertEquals(hostNode.getResources(), Collections.emptySet());
+		Assert.assertEquals(hostNode.getResources("upperType" , "baseType"), Collections.emptySet());
 	}
 
 	@Test
@@ -181,39 +181,39 @@ public class ResourceTest
 	@Test
 	public void testGetOccupiedCapacity ()
 	{
-		assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0);
-		assertEquals(baseResource.getOccupiedCapacity() , 6.0 , 0);
+		Assert.assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0);
+		Assert.assertEquals(baseResource.getOccupiedCapacity() , 6.0 , 0);
 	}
 	
 	@Test
 	public void testGetTraversingDemands ()
 	{
-		assertEquals(upperResource.getTraversingDemands().iterator().next() , demandUpper);
-		assertEquals(baseResource.getTraversingDemands().iterator().next() , demandBase);
+		Assert.assertEquals(upperResource.getTraversingDemands().iterator().next() , demandUpper);
+		Assert.assertEquals(baseResource.getTraversingDemands().iterator().next() , demandBase);
 	}
 	
 	@Test
 	public void testGetTraversingRouteOccupiedCapacity ()
 	{
-		assertEquals(upperResource.getTraversingRouteOccupiedCapacity(demandUpper.getRoutes().iterator().next()) , 1.0 , 0);
-		assertEquals(baseResource.getTraversingRouteOccupiedCapacity(demandBase.getRoutes().iterator().next()) , 1.0 , 0);
+		Assert.assertEquals(upperResource.getTraversingRouteOccupiedCapacity(demandUpper.getRoutes().iterator().next()) , 1.0 , 0);
+		Assert.assertEquals(baseResource.getTraversingRouteOccupiedCapacity(demandBase.getRoutes().iterator().next()) , 1.0 , 0);
 		interLink.setFailureState(false);
-		assertEquals(upperResource.getTraversingRouteOccupiedCapacity(demandUpper.getRoutes().iterator().next()) , 0.0 , 0);
-		assertEquals(baseResource.getTraversingRouteOccupiedCapacity(demandBase.getRoutes().iterator().next()) , 0.0 , 0);
+		Assert.assertEquals(upperResource.getTraversingRouteOccupiedCapacity(demandUpper.getRoutes().iterator().next()) , 0.0 , 0);
+		Assert.assertEquals(baseResource.getTraversingRouteOccupiedCapacity(demandBase.getRoutes().iterator().next()) , 0.0 , 0);
 	}
 
 	@Test
 	public void testGetTraversingRoutes ()
 	{
-		assertEquals (baseResource.getTraversingRoutes() , Collections.singleton(serviceChainBase));
-		assertEquals (upperResource.getTraversingRoutes() , Collections.singleton(serviceChainUpper));
+		Assert.assertEquals (baseResource.getTraversingRoutes() , Collections.singleton(serviceChainBase));
+		Assert.assertEquals (upperResource.getTraversingRoutes() , Collections.singleton(serviceChainUpper));
 	}
 
 	@Test
 	public void testGetUpperResources ()
 	{
-		assertEquals (baseResource.getUpperResources() , Collections.singleton(upperResource));
-		assertEquals (upperResource.getUpperResources() , new HashSet<Resource> ());
+		Assert.assertEquals (baseResource.getUpperResources() , Collections.singleton(upperResource));
+		Assert.assertEquals (upperResource.getUpperResources() , new HashSet<Resource> ());
 	}
 	
 	@Test
@@ -236,10 +236,10 @@ public class ResourceTest
 	{
 		baseResource.remove();
 		np.checkCachesConsistency();
-		assertEquals(upperResource.getNetPlan() , null);
-		assertEquals(baseResource.getNetPlan() , null);
-		assertEquals(serviceChainBase.getNetPlan() , null);
-		assertEquals(serviceChainUpper.getNetPlan() , null);
+		Assert.assertEquals(upperResource.getNetPlan() , null);
+		Assert.assertEquals(baseResource.getNetPlan() , null);
+		Assert.assertEquals(serviceChainBase.getNetPlan() , null);
+		Assert.assertEquals(serviceChainUpper.getNetPlan() , null);
 	}
 
 	@Test
@@ -247,8 +247,8 @@ public class ResourceTest
 	{
 		upperResource.remove();
 		np.checkCachesConsistency();
-		assertEquals(upperResource.getNetPlan() , null);
-		assertEquals(serviceChainUpper.getNetPlan() , null);
+		Assert.assertEquals(upperResource.getNetPlan() , null);
+		Assert.assertEquals(serviceChainUpper.getNetPlan() , null);
 		assertTrue(baseResource.getNetPlan() != null);
 		assertTrue(serviceChainBase.getNetPlan() != null);
 	}
@@ -257,14 +257,14 @@ public class ResourceTest
 	@Test
 	public void testSetCapacity ()
 	{
-		assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
-		assertEquals(baseResource.getOccupiedCapacity() , 6.0 , 0.0);
+		Assert.assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
+		Assert.assertEquals(baseResource.getOccupiedCapacity() , 6.0 , 0.0);
 		upperResource.setCapacity(10 , Collections.singletonMap(baseResource , 3.0));
 		np.checkCachesConsistency();
-		assertEquals(upperResource.getCapacity() , 10.0 , 0.0);
-		assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
-		assertEquals(baseResource.getCapacity() , 10.0 , 0.0);
-		assertEquals(baseResource.getOccupiedCapacity() , 4.0 , 0.0);
+		Assert.assertEquals(upperResource.getCapacity() , 10.0 , 0.0);
+		Assert.assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
+		Assert.assertEquals(baseResource.getCapacity() , 10.0 , 0.0);
+		Assert.assertEquals(baseResource.getOccupiedCapacity() , 4.0 , 0.0);
 	}
 
 	@Test
@@ -297,17 +297,17 @@ public class ResourceTest
 	@Test
 	public void testFailureRoute ()
 	{
-		assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
-		assertEquals(baseResource.getOccupiedCapacity() , 6.0 , 0.0);
+		Assert.assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
+		Assert.assertEquals(baseResource.getOccupiedCapacity() , 6.0 , 0.0);
 		interLink.setFailureState(false);
-		assertEquals(serviceChainBase.getCarriedTraffic() , 0 , 0.0);
-		assertEquals(serviceChainUpper.getCarriedTraffic() , 0 , 0.0);
-		assertEquals(serviceChainBase.getOccupiedCapacity() , 0 , 0.0);
-		assertEquals(serviceChainUpper.getOccupiedCapacity() , 0 , 0.0);
-		assertEquals(serviceChainBase.getOccupiedCapacityInNoFailureState() , 300.0 , 0.0);
-		assertEquals(serviceChainUpper.getOccupiedCapacityInNoFailureState() , 200.0 , 0.0);
-		assertEquals(upperResource.getOccupiedCapacity() , 0.0 , 0.0);
-		assertEquals(baseResource.getOccupiedCapacity() , 5.0 , 0.0);
+		Assert.assertEquals(serviceChainBase.getCarriedTraffic() , 0 , 0.0);
+		Assert.assertEquals(serviceChainUpper.getCarriedTraffic() , 0 , 0.0);
+		Assert.assertEquals(serviceChainBase.getOccupiedCapacity() , 0 , 0.0);
+		Assert.assertEquals(serviceChainUpper.getOccupiedCapacity() , 0 , 0.0);
+		Assert.assertEquals(serviceChainBase.getOccupiedCapacityInNoFailureState() , 300.0 , 0.0);
+		Assert.assertEquals(serviceChainUpper.getOccupiedCapacityInNoFailureState() , 200.0 , 0.0);
+		Assert.assertEquals(upperResource.getOccupiedCapacity() , 0.0 , 0.0);
+		Assert.assertEquals(baseResource.getOccupiedCapacity() , 5.0 , 0.0);
 	}
 	
 	@Test

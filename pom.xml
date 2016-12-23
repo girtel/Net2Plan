@@ -10,10 +10,11 @@
     <url>http://www.net2plan.com</url>
 
     <modules>
+        <module>Net2Plan-Core</module>
         <module>Net2Plan-Examples</module>
         <module>Net2Plan-CLI</module>
-        <module>Net2Plan-Javadoc</module>
         <module>Net2Plan-IO</module>
+        <module>Net2Plan-Javadoc</module>
     </modules>
 
     <licenses>
@@ -199,6 +200,65 @@
     </repositories>
 
     <profiles>
+        <profile>
+            <id>test</id>
+
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+
+            <build>
+                <plugins>
+                    <!-- Ignore default jar generation -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>2.6</version>
+                        <executions>
+                            <execution>
+                                <id>default-jar</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Modifies the compiler to jdk 1.8 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>3.5.1</version>
+                        <configuration>
+                            <compilerVersion>1.8</compilerVersion>
+                            <source>1.8</source>
+                            <target>1.8</target>
+                            <failOnError>true</failOnError>
+                        </configuration>
+                    </plugin>
+
+                    <!-- Downloads dependencies into local folder -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>2.10</version>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/src/main/resources/lib</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>copy-dependencies</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>copy-dependencies</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>build-without-javadoc</id>
 

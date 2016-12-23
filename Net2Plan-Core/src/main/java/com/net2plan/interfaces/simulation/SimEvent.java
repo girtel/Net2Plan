@@ -12,7 +12,6 @@
 
 package com.net2plan.interfaces.simulation;
 
-import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.StringUtils;
 
 import java.util.*;

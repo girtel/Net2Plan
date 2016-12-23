@@ -25,8 +25,6 @@ import javax.xml.stream.events.XMLEvent;
 
 import org.codehaus.stax2.XMLStreamReader2;
 
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 

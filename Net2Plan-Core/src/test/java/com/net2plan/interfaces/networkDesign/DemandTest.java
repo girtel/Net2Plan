@@ -12,11 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.utils.Constants.RoutingCycleType;
@@ -85,20 +81,20 @@ public class DemandTest
 	public void testGetRoutes() 
 	{
 		Set<Route> twoRoutes = new HashSet<Route> (); twoRoutes.add (r123a); twoRoutes.add (r123b);
-		assertEquals (d13.getRoutes() , twoRoutes);
-		assertEquals (d12.getRoutes() , Collections.singleton(r12));
-		assertEquals (scd123.getRoutes() , Collections.singleton(sc123));
+		Assert.assertEquals (d13.getRoutes() , twoRoutes);
+		Assert.assertEquals (d12.getRoutes() , Collections.singleton(r12));
+		Assert.assertEquals (scd123.getRoutes() , Collections.singleton(sc123));
 		r123b.remove ();
-		assertEquals (d13.getRoutes() , Collections.singleton(r123a));
+		Assert.assertEquals (d13.getRoutes() , Collections.singleton(r123a));
 	}
 
 	@Test
 	public void testGetWorseCasePropagationTimeInMs() 
 	{
-		assertEquals (d13.getWorseCasePropagationTimeInMs() , 200000 , 0.0);
-		assertEquals (d12.getWorseCasePropagationTimeInMs() , 100000 , 0.0);
+		Assert.assertEquals (d13.getWorseCasePropagationTimeInMs() , 200000 , 0.0);
+		Assert.assertEquals (d12.getWorseCasePropagationTimeInMs() , 100000 , 0.0);
 		r12.remove();
-		assertEquals (d12.getWorseCasePropagationTimeInMs() , 0 , 0.0);
+		Assert.assertEquals (d12.getWorseCasePropagationTimeInMs() , 0 , 0.0);
 	}
 
 	@Test
@@ -129,8 +125,8 @@ public class DemandTest
 	@Test
 	public void testGetServiceChainSequenceOfTraversedResourceTypes() 
 	{
-		assertEquals(d12.getServiceChainSequenceOfTraversedResourceTypes() , Collections.emptyList());
-		assertEquals(scd123.getServiceChainSequenceOfTraversedResourceTypes() , Collections.singletonList("type"));
+		Assert.assertEquals(d12.getServiceChainSequenceOfTraversedResourceTypes() , Collections.emptyList());
+		Assert.assertEquals(scd123.getServiceChainSequenceOfTraversedResourceTypes() , Collections.singletonList("type"));
 	}
 
 	@Test
@@ -139,14 +135,14 @@ public class DemandTest
 		try { d12.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("rrr")); fail ("Should fail"); } catch (Exception e) {}
 		r12.remove();
 		d12.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("rrr")); 
-		assertEquals(d12.getServiceChainSequenceOfTraversedResourceTypes() , Collections.singletonList("rrr"));
+		Assert.assertEquals(d12.getServiceChainSequenceOfTraversedResourceTypes() , Collections.singletonList("rrr"));
 	}
 
 	@Test
 	public void testGetLayer() 
 	{
-		assertEquals(d12.getLayer() , np.getNetworkLayerDefault());
-		assertEquals(scd123.getLayer() , np.getNetworkLayerDefault());
+		Assert.assertEquals(d12.getLayer() , np.getNetworkLayerDefault());
+		Assert.assertEquals(scd123.getLayer() , np.getNetworkLayerDefault());
 	}
 
 	@Test
@@ -184,8 +180,8 @@ public class DemandTest
 	@Test
 	public void testGetOfferedTraffic() 
 	{
-		assertEquals(d12.getOfferedTraffic() , 3 , 0.0);
-		assertEquals(scd123.getOfferedTraffic() , 3 , 0.0);
+		Assert.assertEquals(d12.getOfferedTraffic() , 3 , 0.0);
+		Assert.assertEquals(scd123.getOfferedTraffic() , 3 , 0.0);
 	}
 
 	@Test
@@ -195,46 +191,46 @@ public class DemandTest
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		Map<Pair<Demand,Link>,Double> frs = new HashMap<Pair<Demand,Link>,Double> ();
 		frs.put(Pair.of(d12 , link12) , 1.0);
-		assertEquals (d12.getForwardingRules() , frs);
+		Assert.assertEquals (d12.getForwardingRules() , frs);
 		frs = new HashMap<Pair<Demand,Link>,Double> ();
 		frs.put(Pair.of(d13 , link12) , 1.0);
 		frs.put(Pair.of(d13 , link23) , 1.0);
-		assertEquals (d13.getForwardingRules() , frs);
+		Assert.assertEquals (d13.getForwardingRules() , frs);
 	}
 
 	@Test
 	public void testGetCarriedTraffic() 
 	{
-		assertEquals (d12.getCarriedTraffic() , 1 , 0.0);
-		assertEquals (d13.getCarriedTraffic() , 2 , 0.0);
-		assertEquals (scd123.getCarriedTraffic() , 100 , 0.0);
+		Assert.assertEquals (d12.getCarriedTraffic() , 1 , 0.0);
+		Assert.assertEquals (d13.getCarriedTraffic() , 2 , 0.0);
+		Assert.assertEquals (scd123.getCarriedTraffic() , 100 , 0.0);
 	}
 
 	@Test
 	public void testGetBlockedTraffic() 
 	{
-		assertEquals (d12.getBlockedTraffic() , 2 , 0.0);
-		assertEquals (d13.getBlockedTraffic() , 1 , 0.0);
-		assertEquals (scd123.getBlockedTraffic() , 0, 0.0);
+		Assert.assertEquals (d12.getBlockedTraffic() , 2 , 0.0);
+		Assert.assertEquals (d13.getBlockedTraffic() , 1 , 0.0);
+		Assert.assertEquals (scd123.getBlockedTraffic() , 0, 0.0);
 	}
 
 	@Test
 	public void testGetRoutingCycleType() 
 	{
-		assertEquals (d12.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
-		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
-		assertEquals (scd123.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
+		Assert.assertEquals (d12.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
+		Assert.assertEquals (d13.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
+		Assert.assertEquals (scd123.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
 		scd123.remove();
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
-		assertEquals (d12.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
-		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
+		Assert.assertEquals (d12.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
+		Assert.assertEquals (d13.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
 		np.setRoutingType(RoutingType.SOURCE_ROUTING , lowerLayer);
 		Link link21 = np.addLink(n2,n1,100,100,1,null,lowerLayer);
 		List<Link> path1213 = new LinkedList<Link> (); path1213.add(link12); path1213.add(link21); path1213.add(link13); 
 		Route r1213 = np.addRoute(d13,1,1.5,path1213,null);
-		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.OPEN_CYCLES);
+		Assert.assertEquals (d13.getRoutingCycleType() , RoutingCycleType.OPEN_CYCLES);
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
-		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.OPEN_CYCLES);
+		Assert.assertEquals (d13.getRoutingCycleType() , RoutingCycleType.OPEN_CYCLES);
 		d12.removeAllForwardingRules();
 		np.setForwardingRule(d12, link12 , 1);
 		try { np.setForwardingRule(d12, link21 , 1); fail ("An exception should be here"); } catch (ClosedCycleRoutingException e) {} 
@@ -243,35 +239,35 @@ public class DemandTest
 	@Test
 	public void testGetIngressNode() 
 	{
-		assertEquals (d12.getIngressNode() , n1);
-		assertEquals (d13.getIngressNode() , n1);
-		assertEquals (scd123.getIngressNode() , n1);
+		Assert.assertEquals (d12.getIngressNode() , n1);
+		Assert.assertEquals (d13.getIngressNode() , n1);
+		Assert.assertEquals (scd123.getIngressNode() , n1);
 	}
 
 	@Test
 	public void testGetEgressNode() 
 	{
-		assertEquals (d12.getEgressNode() , n2);
-		assertEquals (d13.getEgressNode() , n3);
-		assertEquals (scd123.getEgressNode() , n3);
+		Assert.assertEquals (d12.getEgressNode() , n2);
+		Assert.assertEquals (d13.getEgressNode() , n3);
+		Assert.assertEquals (scd123.getEgressNode() , n3);
 	}
 
 	@Test
 	public void testGetBidirectionalPair() 
 	{
-		assertEquals (d12.getBidirectionalPair() , null);
+		Assert.assertEquals (d12.getBidirectionalPair() , null);
 		Pair<Demand,Demand> pair = np.addDemandBidirectional(n1,n2,3,null,lowerLayer);
-		assertEquals (pair.getFirst().getBidirectionalPair() , pair.getSecond());
-		assertEquals (pair.getSecond().getBidirectionalPair() , pair.getFirst());
+		Assert.assertEquals (pair.getFirst().getBidirectionalPair() , pair.getSecond());
+		Assert.assertEquals (pair.getSecond().getBidirectionalPair() , pair.getFirst());
 	}
 
 	@Test
 	public void testGetCoupledLink() 
 	{
-		assertEquals (d12.getCoupledLink() , upperLink12);
+		Assert.assertEquals (d12.getCoupledLink() , upperLink12);
 		upperLink12.remove();
-		assertEquals (d12.getCoupledLink() , null);
-		assertEquals (d13.getCoupledLink() , null);
+		Assert.assertEquals (d12.getCoupledLink() , null);
+		Assert.assertEquals (d13.getCoupledLink() , null);
 	}
 
 	@Test
@@ -280,20 +276,20 @@ public class DemandTest
 		try { d12.coupleToNewLinkCreated(upperLayer); fail ("Should not be here"); } catch (Exception e) {}
 		try { d13.coupleToNewLinkCreated(lowerLayer); fail ("Should not be here"); } catch (Exception e) {}
 		Link link13new = d13.coupleToNewLinkCreated(upperLayer);
-		assertEquals (d13.getCoupledLink() , link13new);
+		Assert.assertEquals (d13.getCoupledLink() , link13new);
 		link13new.remove();
-		assertEquals (d13.getCoupledLink() , null);
+		Assert.assertEquals (d13.getCoupledLink() , null);
 	}
 
 	@Test
 	public void testDecouple() 
 	{
 		d12.decouple();
-		assertEquals (d12.getCoupledLink() , null);
+		Assert.assertEquals (d12.getCoupledLink() , null);
 		Link link13new = d13.coupleToNewLinkCreated(upperLayer);
-		assertEquals (d13.getCoupledLink() , link13new);
+		Assert.assertEquals (d13.getCoupledLink() , link13new);
 		d13.decouple();
-		assertEquals (d13.getCoupledLink() , null);
+		Assert.assertEquals (d13.getCoupledLink() , null);
 	}
 
 	@Test
@@ -303,19 +299,19 @@ public class DemandTest
 		scd123.remove();
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		d12.removeAllForwardingRules();
-		assertEquals (d12.getCarriedTraffic() , 0 , 0.0);
-		assertEquals (d12.getForwardingRules() , Collections.emptyMap());
+		Assert.assertEquals (d12.getCarriedTraffic() , 0 , 0.0);
+		Assert.assertEquals (d12.getForwardingRules() , Collections.emptyMap());
 	}
 
 	@Test
 	public void testComputeShortestPathRoutes() 
 	{
 		Pair<Set<Route>,Double> sps = d12.computeShortestPathRoutes(null);
-		assertEquals (sps.getFirst() , Collections.singleton(r12));
-		assertEquals (sps.getSecond() , 1.0 , 0.0);
+		Assert.assertEquals (sps.getFirst() , Collections.singleton(r12));
+		Assert.assertEquals (sps.getSecond() , 1.0 , 0.0);
 		sps = d13.computeShortestPathRoutes(null);
-		assertEquals (sps.getFirst() , d13.getRoutes());
-		assertEquals (sps.getSecond() , 2 , 0.0);
+		Assert.assertEquals (sps.getFirst() , d13.getRoutes());
+		Assert.assertEquals (sps.getSecond() , 2 , 0.0);
 	}
 
 	@Test
@@ -329,9 +325,9 @@ public class DemandTest
 	public void testSetOfferedTraffic() 
 	{
 		d12.setOfferedTraffic(101);
-		assertEquals (d12.getOfferedTraffic() , 101 , 0.0);
+		Assert.assertEquals (d12.getOfferedTraffic() , 101 , 0.0);
 		scd123.setOfferedTraffic(101);
-		assertEquals (scd123.getOfferedTraffic() , 101 , 0.0);
+		Assert.assertEquals (scd123.getOfferedTraffic() , 101 , 0.0);
 	}
 
 	@Test
@@ -340,8 +336,8 @@ public class DemandTest
 		scd123.remove();
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		np.setRoutingType(RoutingType.SOURCE_ROUTING , lowerLayer);
-		assertEquals(d12.getRoutes().size() , 1);
-		assertEquals(d12.getRoutes().iterator().next().getSeqLinksRealPath() , Collections.singletonList(link12));
+		Assert.assertEquals(d12.getRoutes().size() , 1);
+		Assert.assertEquals(d12.getRoutes().iterator().next().getSeqLinksRealPath() , Collections.singletonList(link12));
 	}
 
 }
