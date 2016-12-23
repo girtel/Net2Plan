@@ -11,9 +11,9 @@
 
     <modules>
         <module>Net2Plan-Core</module>
-        <module>Net2Plan-Examples</module>
         <module>Net2Plan-CLI</module>
         <module>Net2Plan-IO</module>
+        <module>Net2Plan-Examples</module>
         <module>Net2Plan-Javadoc</module>
     </modules>
 
@@ -241,7 +241,7 @@
                         <artifactId>maven-dependency-plugin</artifactId>
                         <version>2.10</version>
                         <configuration>
-                            <outputDirectory>${project.parent.basedir}/src/main/resources/lib</outputDirectory>
+                            <outputDirectory>${project.basedir}/src/main/resources/lib</outputDirectory>
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>
@@ -253,6 +253,7 @@
                                 <goals>
                                     <goal>copy-dependencies</goal>
                                 </goals>
+                                <inherited>false</inherited>
                             </execution>
                         </executions>
                     </plugin>
