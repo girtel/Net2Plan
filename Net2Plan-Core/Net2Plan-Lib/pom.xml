@@ -10,5 +10,5 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.net2plan.net2plan-core</groupId>
-    <artifactId>netplan-lib</artifactId>
+    <artifactId>net2plan-core-lib</artifactId>
 </project>

@@ -18,6 +18,7 @@
 
 package com.net2plan.internal.sim;
 
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.HTMLUtils;
 import com.net2plan.utils.StringUtils;
 import org.apache.commons.lang3.mutable.MutableDouble;

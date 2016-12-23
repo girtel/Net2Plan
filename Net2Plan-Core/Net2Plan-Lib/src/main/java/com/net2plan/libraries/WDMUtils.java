@@ -24,6 +24,7 @@ import cern.colt.matrix.tint.IntFactory2D;
 import cern.colt.matrix.tint.IntMatrix1D;
 import cern.colt.matrix.tint.IntMatrix2D;
 import com.net2plan.utils.*;
+import com.net2plan.interfaces.networkDesign.*;
 
 import java.util.*;
 

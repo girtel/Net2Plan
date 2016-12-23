@@ -15,6 +15,7 @@ package com.net2plan.libraries;
 import cern.colt.function.tdouble.DoubleFunction;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.jet.math.tdouble.DoubleFunctions;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.Constants;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.IntUtils;

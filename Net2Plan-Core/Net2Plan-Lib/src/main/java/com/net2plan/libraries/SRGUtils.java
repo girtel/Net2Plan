@@ -16,6 +16,7 @@ import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Pair;
 
@@ -70,7 +71,7 @@ public class SRGUtils
 	{
 		final int NUMSRGS = (int) A_f.size ();
 		final int NUMSTATES = A_sf.rows ();
-		if (NUMSRGS != A_sf.columns ()) throw new Net2PlanException ("Wrong vector size");
+		if (NUMSRGS != A_sf.columns ()) throw new Net2PlanException("Wrong vector size");
 		DoubleMatrix1D pi_s = DoubleFactory1D.dense.make (NUMSTATES);
 		if (A_sf.rows() == 0) return pi_s;
 		if ((A_f.getMaxLocation() [0] > 1) || (A_f.getMinLocation() [0] < 0)) throw new RuntimeException("Availability must be in range [0, 1]");

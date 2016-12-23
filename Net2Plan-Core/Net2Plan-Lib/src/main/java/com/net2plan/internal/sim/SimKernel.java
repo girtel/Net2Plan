@@ -21,6 +21,7 @@ package com.net2plan.internal.sim;
 import com.jom.JOMException;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.simulation.*;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.IExternal;

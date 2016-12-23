@@ -16,6 +16,7 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
+import com.net2plan.interfaces.networkDesign.*;
 
 import java.util.HashMap;
 import java.util.LinkedList;

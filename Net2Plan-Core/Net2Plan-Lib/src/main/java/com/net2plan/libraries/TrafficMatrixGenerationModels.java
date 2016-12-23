@@ -21,6 +21,7 @@ import com.jom.OptimizationProblem;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.RandomUtils;
+import com.net2plan.interfaces.networkDesign.*;
 
 import java.util.LinkedList;
 import java.util.List;

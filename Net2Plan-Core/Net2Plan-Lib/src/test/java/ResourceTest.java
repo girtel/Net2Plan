@@ -1,7 +1,6 @@
 /**
  * 
  */
-package com.net2plan.interfaces.networkDesign;
 
 import org.junit.*;
 

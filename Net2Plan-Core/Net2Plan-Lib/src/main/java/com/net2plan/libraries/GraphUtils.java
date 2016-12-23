@@ -25,6 +25,7 @@ import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
 import cern.jet.math.tdouble.DoubleFunctions;
 import cern.jet.math.tdouble.DoublePlusMultFirst;
 import com.jom.OptimizationProblem;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.*;
 import com.net2plan.utils.Constants.CheckRoutingCycleType;
 import com.net2plan.utils.Constants.RoutingCycleType;

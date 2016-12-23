@@ -1,5 +1,4 @@
-package com.net2plan.interfaces.networkDesign;
-
+import com.net2plan.interfaces.networkDesign.*;
 import org.junit.*;
 
 import java.util.Collections;
