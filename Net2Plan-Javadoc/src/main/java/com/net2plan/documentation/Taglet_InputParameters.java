@@ -11,7 +11,6 @@ import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.IEventProcessor;
-import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
 import com.sun.javadoc.Tag;

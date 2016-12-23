@@ -32,8 +32,6 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.libraries.GraphTheoryMetrics;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.HTMLUtils;
-import com.net2plan.utils.IntUtils;
-import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

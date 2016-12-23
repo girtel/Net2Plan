@@ -5,7 +5,6 @@ package com.net2plan.documentation;
 
 import java.io.File;
 import java.util.Map;
-import cern.colt.matrix.tdouble.*;
 
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.utils.StringUtils;
