@@ -140,7 +140,7 @@ public class ReportBrowser extends JPanel {
         Map<String, Image> aux = htmlEditorKit1.getImages();
         for (Entry<String, Image> entry : aux.entrySet()) {
             String path = entry.getKey();
-            if (!path.endsWith("/common/reportHeader.png")) continue;
+            if (!path.endsWith("/resources/common/reportHeader.png")) continue;
 
             path2Image.put(path, entry.getValue());
         }
