@@ -32,3 +32,4 @@ etc/
 *.releaseBackup
 *.stackdump
 *.n2p
+**/javadoc/

@@ -2,7 +2,6 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <name>Net2Plan</name>
     <groupId>com.net2plan</groupId>
     <artifactId>net2plan</artifactId>
     <version>0.5-SNAPSHOT</version>
@@ -11,8 +10,8 @@
 
     <modules>
         <module>Net2Plan-Core</module>
-        <module>Net2Plan-CLI</module>
         <module>Net2Plan-IO</module>
+        <module>Net2Plan-CLI</module>
         <module>Net2Plan-Examples</module>
         <module>Net2Plan-Javadoc</module>
     </modules>
@@ -209,17 +208,11 @@
 
             <build>
                 <plugins>
-                    <!-- Ignore default jar generation -->
+                    <!-- Generates each module jar -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
-                        <version>2.6</version>
-                        <executions>
-                            <execution>
-                                <id>default-jar</id>
-                                <phase>none</phase>
-                            </execution>
-                        </executions>
+                        <version>3.0.2</version>
                     </plugin>
 
                     <!-- Modifies the compiler to jdk 1.8 -->
