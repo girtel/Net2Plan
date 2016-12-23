@@ -14,7 +14,7 @@ package com.net2plan.gui.utils.topologyPane.jung;
 
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
-import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
+import com.net2plan.internal.plugins.ITopologyCanvasPlugin;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -531,6 +531,12 @@ public final class JUNGCanvas extends ITopologyCanvas
             showHideNonConnectedNodes = show;
             refresh();
         }
+    }
+
+    @Override
+    public void takeSnapshot()
+    {
+        OSMMapStateBuilder.getSingleton().takeSnapshot(this);
     }
 
     @Override

@@ -12,7 +12,7 @@
 
 package com.net2plan.gui.utils.topologyPane.jung;
 
-import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
+import com.net2plan.internal.plugins.ITopologyCanvasPlugin;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
 

@@ -25,6 +25,7 @@ import com.net2plan.internal.Constants.DialogType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.ITopologyCanvas;
+import com.net2plan.internal.plugins.ITopologyCanvasPlugin;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;

@@ -100,8 +100,7 @@ public class PluginSystem
 
 				case GUI:
 					PLUGIN_TYPES.add(IGUIModule.class);
-					//TODO: Solve this line.
-					//PLUGIN_TYPES.add(ITopologyCanvas.class);
+					PLUGIN_TYPES.add(ITopologyCanvas.class);
 					PLUGIN_TYPES.add(IOFilter.class);
 					break;
 			}

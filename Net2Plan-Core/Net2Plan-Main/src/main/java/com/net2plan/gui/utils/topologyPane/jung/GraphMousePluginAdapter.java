@@ -12,13 +12,13 @@
 
 package com.net2plan.gui.utils.topologyPane.jung;
 
-import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
+import com.net2plan.internal.plugins.ITopologyCanvasPlugin;
 import edu.uci.ics.jung.visualization.control.GraphMousePlugin;
 
 import java.awt.event.*;
 
 /**
- * Wrapper class for {@link com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin ITopologyCanvasPlugin}
+ * Wrapper class for {@link ITopologyCanvasPlugin ITopologyCanvasPlugin}
  * to be used as {@link edu.uci.ics.jung.visualization.control.GraphMousePlugin GraphMousePlugin} for JUNG.
  *
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza

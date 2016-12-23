@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.utils.topologyPane;
+package com.net2plan.internal.plugins;
 
 import com.net2plan.internal.plugins.ITopologyCanvas;
 

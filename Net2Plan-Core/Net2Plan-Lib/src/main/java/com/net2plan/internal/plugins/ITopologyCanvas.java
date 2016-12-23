@@ -20,8 +20,6 @@
 
 package com.net2plan.internal.plugins;
 
-import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -401,9 +399,8 @@ public abstract class ITopologyCanvas implements Plugin
 	 *
 	 * @since 0.3.0
 	 */
-	public final void takeSnapshot()
+	public void takeSnapshot()
 	{
-		OSMMapStateBuilder.getSingleton().takeSnapshot(this);
 	}
 
 	/**
