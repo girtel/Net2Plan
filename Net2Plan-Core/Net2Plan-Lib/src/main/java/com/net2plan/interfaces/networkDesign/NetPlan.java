@@ -46,6 +46,9 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import static com.net2plan.utils.Constants.RoutingType.HOP_BY_HOP_ROUTING;
+import static com.net2plan.utils.Constants.RoutingType.SOURCE_ROUTING;
+
 /**
  * <p>Class defining a complete multi-layer network structure. Layers may 
  * contain links, demands, routes and protection segments or forwarding rules, 
@@ -119,7 +122,7 @@ public class NetPlan extends NetworkElement
 	final static String UNMODIFIABLE_EXCEPTION_STRING = "Unmodifiable NetState object - can't be changed";
 	final static String KEY_STRING_BIDIRECTIONALCOUPLE = "bidirectionalCouple";
 
-	RoutingType DEFAULT_ROUTING_TYPE = RoutingType.SOURCE_ROUTING;
+	RoutingType DEFAULT_ROUTING_TYPE = SOURCE_ROUTING;
 	boolean isModifiable;
 	String networkDescription;
 	String networkName;
@@ -159,7 +162,7 @@ public class NetPlan extends NetworkElement
 		super (null , 0 , 0 , new AttributeMap());
 
 		this.netPlan = this;
-		DEFAULT_ROUTING_TYPE = RoutingType.SOURCE_ROUTING;
+		DEFAULT_ROUTING_TYPE = SOURCE_ROUTING;
 		isModifiable = true;
 
 		networkDescription = "";
@@ -447,7 +450,7 @@ public class NetPlan extends NetworkElement
 		egressNode.cache_nodeIncomingDemands.add (demand);
 		ingressNode.cache_nodeOutgoingDemands.add (demand);
 
-		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
+		if (layer.routingType == HOP_BY_HOP_ROUTING)
 		{
 			layer.forwardingRules_f_de = DoubleFactory2D.sparse.appendRow(layer.forwardingRules_f_de , DoubleFactory1D.sparse.make (layer.links.size ()));
 			layer.forwardingRules_x_de = DoubleFactory2D.sparse.appendRow(layer.forwardingRules_x_de , DoubleFactory1D.sparse.make (layer.links.size ()));
@@ -622,7 +625,7 @@ public class NetPlan extends NetworkElement
 		originNode.cache_nodeOutgoingLinks.add (link);
 		destinationNode.cache_nodeIncomingLinks.add (link);
 
-		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
+		if (layer.routingType == HOP_BY_HOP_ROUTING)
 		{
 			layer.forwardingRules_f_de = DoubleFactory2D.sparse.appendColumn(layer.forwardingRules_f_de , DoubleFactory1D.sparse.make (layer.demands.size ()));
 			layer.forwardingRules_x_de = DoubleFactory2D.sparse.appendColumn(layer.forwardingRules_x_de , DoubleFactory1D.sparse.make (layer.demands.size ()));
@@ -795,7 +798,7 @@ public class NetPlan extends NetworkElement
 		for (NetworkLayer layer : layers)
 		{
 			final int E = layer.links.size();
-			if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
+			if (layer.routingType == HOP_BY_HOP_ROUTING)
 			{
 				layer.forwardingRules_Aout_ne = DoubleFactory2D.sparse.appendRow(layer.forwardingRules_Aout_ne , DoubleFactory1D.sparse.make (E));
 				layer.forwardingRules_Ain_ne = DoubleFactory2D.sparse.appendRow(layer.forwardingRules_Ain_ne , DoubleFactory1D.sparse.make (E));
@@ -869,7 +872,7 @@ public class NetPlan extends NetworkElement
 		checkIsModifiable();
 		NetworkLayer layer = checkContiguousPath (sequenceOfLinks , null , null , null);
 		checkInThisNetPlanAndLayer(sequenceOfLinks , layer);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		if (reservedCapacity < 0) throw new Net2PlanException ("Reserved capacity must be non-negative");
 		if (sequenceOfLinks.size () != new HashSet<Link> (sequenceOfLinks).size()) throw new Net2PlanException ("Protection segments cannot traverse the same link more than once");
 
@@ -930,7 +933,7 @@ public class NetPlan extends NetworkElement
 		checkIsModifiable();
 		checkInThisNetPlan(demand);
 		Pair<List<Link>,List<Resource>> listLinksAndListResources = checkPathValidityForDemand(sequenceOfLinksAndResources, demand);
-		demand.layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		demand.layer.checkRoutingType(SOURCE_ROUTING);
 		if (occupationInformationInTraversedResources == null) occupationInformationInTraversedResources = new HashMap<Resource,Double> ();
 		for (double val : occupationInformationInTraversedResources.values()) if (val < 0) throw new Net2PlanException ("The occupation of a resource cannot be negative");
 		if (!occupationInformationInTraversedResources.keySet().equals(new HashSet<Resource> (listLinksAndListResources.getSecond())))
@@ -1369,8 +1372,8 @@ public class NetPlan extends NetworkElement
 				throw new RuntimeException("Unknown parameter " + parameter);
 		}
 
-		final DoubleMatrix2D Aout_ne = (layer.routingType == RoutingType.SOURCE_ROUTING)? getMatrixNodeLinkOutgoingIncidence(layer) : layer.forwardingRules_Aout_ne;
-		final DoubleMatrix2D Ain_ne = (layer.routingType == RoutingType.SOURCE_ROUTING)? getMatrixNodeLinkIncomingIncidence(layer) : layer.forwardingRules_Ain_ne;
+		final DoubleMatrix2D Aout_ne = (layer.routingType == SOURCE_ROUTING)? getMatrixNodeLinkOutgoingIncidence(layer) : layer.forwardingRules_Aout_ne;
+		final DoubleMatrix2D Ain_ne = (layer.routingType == SOURCE_ROUTING)? getMatrixNodeLinkIncomingIncidence(layer) : layer.forwardingRules_Ain_ne;
 
 		for (MulticastDemand d : layer.multicastDemands)
 		{
@@ -2048,7 +2051,7 @@ public class NetPlan extends NetworkElement
 	{
 		checkInThisNetPlan(demand);
 		checkInThisNetPlanAndLayer(link , demand.layer);
-		demand.layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+		demand.layer.checkRoutingType(HOP_BY_HOP_ROUTING);
 		return demand.layer.forwardingRules_x_de.get(demand.index,link.index);
 	}
 
@@ -2063,7 +2066,7 @@ public class NetPlan extends NetworkElement
 	public Map<Pair<Demand,Link>,Double> getForwardingRules (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+		layer.checkRoutingType(HOP_BY_HOP_ROUTING);
 
 		Map<Pair<Demand,Link>,Double> res = new HashMap<Pair<Demand,Link>,Double> ();
 		IntArrayList ds = new IntArrayList (); IntArrayList es = new IntArrayList (); DoubleArrayList vals = new DoubleArrayList ();
@@ -2085,7 +2088,7 @@ public class NetPlan extends NetworkElement
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		checkInThisNetPlanAndLayer(demand , layer);
 		checkInThisNetPlanAndLayer(link , layer);
-		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+		layer.checkRoutingType(HOP_BY_HOP_ROUTING);
 		return layer.forwardingRules_f_de.get(demand.index,link.index);
 	}
 
@@ -2339,7 +2342,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix2D getMatrixDemand2ResourceAssignment(NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		DoubleMatrix2D delta_dr = getMatrixDemand2RouteAssignment(layer);
 		DoubleMatrix2D delta_er = getMatrixResource2RouteAssignment();
 
@@ -2416,7 +2419,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix2D getMatrixDemand2LinkTrafficCarried(NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) return layer.forwardingRules_x_de.copy();
+		if (layer.routingType == HOP_BY_HOP_ROUTING) return layer.forwardingRules_x_de.copy();
 		DoubleMatrix2D x_de = DoubleFactory2D.sparse.make (layer.demands.size () , layer.links.size ());
 		for (Route r : layer.routes) for (Link e : r.cache_seqLinksRealPath) x_de.set (r.demand.index , e.index , x_de.get(r.demand.index , e.index) + r.getCarriedTraffic());
 		return x_de;
@@ -2433,7 +2436,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix2D getMatrixDemand2ResourceOccupiedCapacity(NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		DoubleMatrix2D x_dr = DoubleFactory2D.sparse.make (layer.demands.size () , resources.size ());
 		for (Route r : layer.routes) 
 			if (!r.isDown()) 
@@ -2458,7 +2461,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix2D getMatrixDemand2RouteAssignment (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		int D = layer.demands.size ();
 		int R = layer.routes.size ();
 		DoubleMatrix2D delta_dr = DoubleFactory2D.sparse.make(D, R);
@@ -2496,7 +2499,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix2D getMatrixDemandBasedForwardingRules (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) return layer.forwardingRules_f_de.copy ();
+		if (layer.routingType == HOP_BY_HOP_ROUTING) return layer.forwardingRules_f_de.copy ();
 		else return GraphUtils.convert_xp2xde(layer.links , layer.demands , layer.routes);
 	}
 
@@ -2510,7 +2513,7 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayer);
 		DoubleMatrix2D x_te = null;
-		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
+		if (layer.routingType == HOP_BY_HOP_ROUTING)
 			x_te = GraphUtils.convert_xde2xte(nodes ,layer.links , layer.demands , layer.forwardingRules_f_de);
 		else
 			x_te = GraphUtils.convert_xp2xte(nodes,layer.links,layer.demands,layer.routes);
@@ -2527,7 +2530,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix2D getMatrixLink2ProtectionSegmentAssignment (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		DoubleMatrix2D delta_er = DoubleFactory2D.sparse.make(layer.links.size(), layer.protectionSegments.size());
 		for (ProtectionSegment r : layer.protectionSegments) for (Link e : r.seqLinks) delta_er.set (e.index , r.index , delta_er.get (e.index , r.index) + 1);
 		return delta_er;
@@ -2543,7 +2546,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix2D getMatrixLink2RouteAssignment (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		int E = layer.links.size();
 		int R = layer.routes.size ();
 		DoubleMatrix2D delta_er = DoubleFactory2D.sparse.make(E, R);
@@ -2693,7 +2696,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix2D getMatrixResource2RouteAssignment  (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		final int RES = resources.size();
 		final int ROU = layer.routes.size();
 		DoubleMatrix2D delta_er = DoubleFactory2D.sparse.make(RES, ROU);
@@ -2715,7 +2718,7 @@ public class NetPlan extends NetworkElement
 	public Pair<List<Resource> , DoubleMatrix2D> getMatrixResource2RouteAssignment  (String type , NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		List<Resource> listRes = new ArrayList<Resource> (netPlan.getResources(type));
 		final int RES = listRes.size();
 		final int ROU = layer.routes.size();
@@ -2740,7 +2743,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix2D getMatrixResource2RouteOccupation (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		final int RES = resources.size();
 		final int ROU = layer.routes.size();
 		DoubleMatrix2D delta_er = DoubleFactory2D.sparse.make(RES, ROU);
@@ -3529,7 +3532,7 @@ public class NetPlan extends NetworkElement
 	public int getNumberOfForwardingRules (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+		layer.checkRoutingType(HOP_BY_HOP_ROUTING);
 		IntArrayList ds = new IntArrayList (); IntArrayList es = new IntArrayList (); DoubleArrayList vals = new DoubleArrayList ();
 		layer.forwardingRules_f_de.getNonZeros(ds , es , vals);
 		return ds.size ();
@@ -3594,7 +3597,7 @@ public class NetPlan extends NetworkElement
 	public int getNumberOfProtectionSegments (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		return layer.protectionSegments.size();
 	}
 
@@ -3606,7 +3609,7 @@ public class NetPlan extends NetworkElement
 	public int getNumberOfRoutes (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		return layer.routes.size();
 	}
 
@@ -3628,7 +3631,7 @@ public class NetPlan extends NetworkElement
 	 * @param optionalLayerParameter network layer (optional)
 	 * @return The protection segment with the given index ({@code null} if it does not exist, index is lesser thatn zero or greater that the number of elements minus one)
 	 */
-	public ProtectionSegment getProtectionSegment  (int index , NetworkLayer ... optionalLayerParameter) { NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter); layer.checkRoutingType(RoutingType.SOURCE_ROUTING); if ((index < 0) || (index > layer.protectionSegments.size () -1)) return null; else return layer.protectionSegments.get(index); }
+	public ProtectionSegment getProtectionSegment  (int index , NetworkLayer ... optionalLayerParameter) { NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter); layer.checkRoutingType(SOURCE_ROUTING); if ((index < 0) || (index > layer.protectionSegments.size () -1)) return null; else return layer.protectionSegments.get(index); }
 
 	/**
 	 * <p>Returns the protection segment with the given unique identifier.</p>
@@ -3645,7 +3648,7 @@ public class NetPlan extends NetworkElement
 	public ArrayList<Long> getProtectionSegmentIds (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		ArrayList<Long> res = new ArrayList<Long> (); for (ProtectionSegment e : layer.protectionSegments) res.add (e.id);
 		return res;
 	}
@@ -3658,7 +3661,7 @@ public class NetPlan extends NetworkElement
 	public List<ProtectionSegment> getProtectionSegments (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		return (List<ProtectionSegment>) Collections.unmodifiableList(layer.protectionSegments);
 	}
 
@@ -3670,7 +3673,7 @@ public class NetPlan extends NetworkElement
 	public Set<ProtectionSegment> getProtectionSegmentsDown (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		Set<ProtectionSegment> res = new HashSet<ProtectionSegment> ();
 		for (ProtectionSegment r : layer.protectionSegments) if (r.isDown()) res.add (r);
 		return res;
@@ -3682,7 +3685,7 @@ public class NetPlan extends NetworkElement
 	 * @param optionalLayerParameter network layer (optional)
 	 * @return The route with the given index ({@code null} if it does not exist, index is lesser than zero or greater than the number of elements minus one)
 	 */
-	public Route getRoute  (int index , NetworkLayer ... optionalLayerParameter) { NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter); layer.checkRoutingType(RoutingType.SOURCE_ROUTING); layer.checkRoutingType(RoutingType.SOURCE_ROUTING); if ((index < 0) || (index > layer.routes.size () -1)) return null; else return layer.routes.get(index); }
+	public Route getRoute  (int index , NetworkLayer ... optionalLayerParameter) { NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter); layer.checkRoutingType(SOURCE_ROUTING); layer.checkRoutingType(SOURCE_ROUTING); if ((index < 0) || (index > layer.routes.size () -1)) return null; else return layer.routes.get(index); }
 
 	/**
 	 * <p>Returns the route with the given unique identifier.</p>
@@ -3699,7 +3702,7 @@ public class NetPlan extends NetworkElement
 	public ArrayList<Long> getRouteIds (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		ArrayList<Long> res = new ArrayList<Long> (); for (Route e : layer.routes) res.add (e.id);
 		return res;
 	}
@@ -3712,7 +3715,7 @@ public class NetPlan extends NetworkElement
 	public List<Route> getRoutes (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		return (List<Route>) Collections.unmodifiableList(layer.routes);
 	}
 
@@ -3724,7 +3727,7 @@ public class NetPlan extends NetworkElement
 	public Set<Route> getRoutesDown (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		Set<Route> res = new HashSet<Route> ();
 		for (Route r : layer.routes) if (r.isDown()) res.add (r);
 		return res;
@@ -4231,7 +4234,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix1D getVectorProtectionSegmentCarriedTraffic (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.protectionSegments.size());
 		for (ProtectionSegment e : layer.protectionSegments) res.set(e.index, e.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
 		return res;
@@ -4245,7 +4248,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix1D getVectorProtectionSegmentLengthInKm (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.protectionSegments.size());
 		for (ProtectionSegment e : layer.protectionSegments) res.set(e.index, e.lengthInKm);
 		return res;
@@ -4259,7 +4262,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix1D getVectorProtectionSegmentNumberOfLinks (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.protectionSegments.size());
 		for (ProtectionSegment e : layer.protectionSegments) res.set(e.index, e.seqLinks.size());
 		return res;
@@ -4273,7 +4276,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix1D getVectorProtectionSegmentOccupiedCapacity (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.protectionSegments.size());
 		for (ProtectionSegment e : layer.protectionSegments) res.set(e.index, e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments);
 		return res;
@@ -4334,7 +4337,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix1D getVectorRouteCarriedTraffic (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
 		for (Route e : layer.routes) res.set(e.index, e.getCarriedTraffic());
 		return res;
@@ -4348,7 +4351,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix1D getVectorRouteOfferedTrafficOfAssociatedDemand (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
 		for (Route e : layer.routes) res.set(e.index, e.demand.offeredTraffic);
 		return res;
@@ -4375,7 +4378,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix1D getVectorRouteLengthInKm (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
 		for (Route e : layer.routes) res.set(e.index, e.getLengthInKm());
 		return res;
@@ -4389,7 +4392,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix1D getVectorRoutePropagationDelayInMiliseconds (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
 		for (Route e : layer.routes) res.set(e.index, e.getPropagationDelayInMiliseconds());
 		return res;
@@ -4404,7 +4407,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix1D getVectorRouteNumberOfLinks (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
 		for (Route e : layer.routes) res.set(e.index, e.cache_seqLinksRealPath.size());
 		return res;
@@ -4423,7 +4426,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix1D computeRouteCostVector (double [] costs , NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		if (costs == null) costs = DoubleUtils.ones(layer.links.size ()); else if (costs.length != layer.links.size()) throw new Net2PlanException ("The array of costs must have the same length as the number of links in the layer");
 		DoubleMatrix1D res = DoubleFactory1D.dense.make (layer.routes.size());
 		for (Route r : layer.routes) for (Link link : r.cache_seqLinksRealPath) res.set (r.index , res.get(r.index) + costs [link.index]);
@@ -4456,7 +4459,7 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix1D getVectorRouteOccupiedCapacity (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
 		for (Route e : layer.routes) res.set(e.index, e.getOccupiedCapacity());
 		return res;
@@ -4481,7 +4484,7 @@ public class NetPlan extends NetworkElement
 	public boolean hasForwardingRules (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+		layer.checkRoutingType(HOP_BY_HOP_ROUTING);
 		IntArrayList rows = new IntArrayList (); IntArrayList cols = new IntArrayList (); DoubleArrayList vals = new DoubleArrayList ();
 		layer.forwardingRules_f_de.getNonZeros(rows,cols,vals);
 		return (rows.size () != 0);
@@ -4534,7 +4537,7 @@ public class NetPlan extends NetworkElement
 	public boolean hasProtectionSegments (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		return layer.protectionSegments.size() > 0;
 	}
 
@@ -4546,7 +4549,7 @@ public class NetPlan extends NetworkElement
 	public boolean hasRoutes (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		return layer.routes.size() > 0;
 	}
 
@@ -4708,7 +4711,7 @@ public class NetPlan extends NetworkElement
 	{
 		checkIsModifiable();
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+		layer.checkRoutingType(HOP_BY_HOP_ROUTING);
 
 		layer.forwardingRules_f_de = DoubleFactory2D.sparse.make (layer.demands.size() , layer.links.size());
 		layer.forwardingRules_x_de = DoubleFactory2D.sparse.make (layer.demands.size() , layer.links.size());
@@ -4798,7 +4801,7 @@ public class NetPlan extends NetworkElement
 	public void removeAllNodes ()
 	{
 		checkIsModifiable();
-		for (NetworkLayer layer : layers) if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) removeAllForwardingRules(layer); // to speed up things
+		for (NetworkLayer layer : layers) if (layer.routingType == HOP_BY_HOP_ROUTING) removeAllForwardingRules(layer); // to speed up things
 		for (Node n : new ArrayList<Node> (nodes)) n.remove ();
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 	}
@@ -4811,7 +4814,7 @@ public class NetPlan extends NetworkElement
 	{
 		checkIsModifiable();
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		for (ProtectionSegment s : new ArrayList<ProtectionSegment> (layer.protectionSegments)) s.remove ();
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 	}
@@ -4824,7 +4827,7 @@ public class NetPlan extends NetworkElement
 	{
 		checkIsModifiable();
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		for (Route r : new ArrayList<Route> (layer.routes)) r.remove ();
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 	}
@@ -4839,7 +4842,7 @@ public class NetPlan extends NetworkElement
 	{
 		checkIsModifiable();
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		for (Route r : new ArrayList<Route> (layer.routes)) if ((r.carriedTrafficIfNotFailing < toleranceTrafficAndCapacityValueToConsiderUnusedRoute) && (r.occupiedLinkCapacityIfNotFailing < toleranceTrafficAndCapacityValueToConsiderUnusedRoute)) r.remove ();
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 	}
@@ -4869,12 +4872,12 @@ public class NetPlan extends NetworkElement
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		switch(layer.routingType)
 		{
-			case RoutingType.SOURCE_ROUTING:
+			case SOURCE_ROUTING:
 				removeAllRoutes(layer);
 				removeAllProtectionSegments(layer);
 				break;
 
-			case RoutingType.HOP_BY_HOP_ROUTING:
+			case HOP_BY_HOP_ROUTING:
 				removeAllForwardingRules(layer);
 				break;
 			default:
@@ -5174,7 +5177,7 @@ public class NetPlan extends NetworkElement
 				}
 
 
-				if (layer.routingType == RoutingType.SOURCE_ROUTING)
+				if (layer.routingType == SOURCE_ROUTING)
 				{
 					boolean emptySourceRouting = !hasProtectionSegments(layer) && !hasRoutes(layer);
 					XMLUtils.indent(writer, 2);
@@ -5465,7 +5468,7 @@ public class NetPlan extends NetworkElement
 
 		for (Link link : affectedLinks)
 		{
-			if (link.layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
+			if (link.layer.routingType == HOP_BY_HOP_ROUTING)
 			{
 				if (affectedLayersHopByHopRouting.contains(link.layer)) continue;
 				affectedLayersHopByHopRouting.add (link.layer);
@@ -5534,7 +5537,7 @@ public class NetPlan extends NetworkElement
 		final NetworkLayer layer = demand.layer;
 		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
 		checkInThisNetPlanAndLayer(link , demand.layer);
-		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+		layer.checkRoutingType(HOP_BY_HOP_ROUTING);
 		if (splittingRatio < 0) throw new Net2PlanException("Splitting ratio must be greater or equal than zero");
 		if (splittingRatio > 1) throw new Net2PlanException("Splitting ratio must be lower or equal than one");
 		double sumOutFde = 0; for (Link e : link.originNode.getOutgoingLinks(layer)) sumOutFde += layer.forwardingRules_f_de.get(demand.index, e.index);
@@ -5571,7 +5574,7 @@ public class NetPlan extends NetworkElement
 		checkInThisNetPlanAndLayer(demands , layer);
 		checkInThisNetPlanAndLayer(links , layer);
 		for (double sf : splittingFactors) if ((sf < 0) || (sf > 1)) throw new Net2PlanException("Splitting ratio must be greater or equal than zero and lower or equal than one");
-		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+		layer.checkRoutingType(HOP_BY_HOP_ROUTING);
 
 		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
 		DoubleMatrix2D original_fde = layer.forwardingRules_f_de.copy();
@@ -5619,7 +5622,7 @@ public class NetPlan extends NetworkElement
 	{
 		checkIsModifiable();
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+		layer.checkRoutingType(HOP_BY_HOP_ROUTING);
 		int D = layer.demands.size ();
 		int E = layer.links.size ();
 		if (f_de.rows() != D || f_de.columns() != E) throw new Net2PlanException("'f_de' should be a " + D + " x" + E + " matrix (demands x links)");
@@ -5773,7 +5776,7 @@ public class NetPlan extends NetworkElement
 
 		if (removeCycles) x_de = GraphUtils.removeCyclesFrom_xde(nodes, layer.links, layer.demands, x_de, xdeValueAsFractionsRespectToDemandOfferedTraffic , Configuration.getOption("defaultILPSolver") , null, -1);
 
-		if (layer.routingType == RoutingType.SOURCE_ROUTING)
+		if (layer.routingType == SOURCE_ROUTING)
 		{
 			removeAllRoutes(layer);
 			removeAllProtectionSegments(layer);
@@ -5796,7 +5799,7 @@ public class NetPlan extends NetworkElement
 				addRoute(demand , x_p_thisPath , x_p_thisPath , seqLinks_thisPath, null);
 			}
 		}
-		else if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
+		else if (layer.routingType == HOP_BY_HOP_ROUTING)
 		{
 			DoubleMatrix2D f_de = GraphUtils.convert_xde2fde(nodes , layer.links , layer.demands , trafficBased_xde);
 			setForwardingRules(f_de,  layer);
@@ -5826,7 +5829,7 @@ public class NetPlan extends NetworkElement
 
 		if (removeCycles) x_te = GraphUtils.removeCyclesFrom_xte(nodes, layer.links, getMatrixNode2NodeOfferedTraffic(layer), x_te, Configuration.getOption("defaultILPSolver") , null , -1);
 
-		if (layer.routingType == RoutingType.SOURCE_ROUTING)
+		if (layer.routingType == SOURCE_ROUTING)
 		{
 			removeAllRoutes(layer);
 			removeAllProtectionSegments(layer);
@@ -5850,7 +5853,7 @@ public class NetPlan extends NetworkElement
 				addRoute(demand , x_p_thisPath , x_p_thisPath , seqLinks_thisPath, null);
 			}
 		}
-		else if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
+		else if (layer.routingType == HOP_BY_HOP_ROUTING)
 		{
 			DoubleMatrix2D f_te = GraphUtils.convert_xte2fte(nodes , layer.links , x_te);
 			DoubleMatrix2D f_de = GraphUtils.convert_fte2fde(layer.demands , f_te);
@@ -5877,12 +5880,12 @@ public class NetPlan extends NetworkElement
 		checkIsModifiable();
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		if (layer.routingType == newRoutingType) return;
-		if (newRoutingType == RoutingType.HOP_BY_HOP_ROUTING) for (Demand d : layer.demands) if (d.isServiceChainRequest()) 
+		if (newRoutingType == HOP_BY_HOP_ROUTING) for (Demand d : layer.demands) if (d.isServiceChainRequest())
 			throw new Net2PlanException ("Cannot perform this operation with service chain demands, since the resource traversing information is lost");
 		
 		switch(newRoutingType)
 		{
-			case RoutingType.HOP_BY_HOP_ROUTING:
+			case HOP_BY_HOP_ROUTING:
 			{
 				layer.forwardingRules_x_de = GraphUtils.convert_xp2xde(layer.links, layer.demands, layer.routes);
 				layer.forwardingRules_Aout_ne = this.getMatrixNodeLinkOutgoingIncidence(layer);
@@ -5891,7 +5894,7 @@ public class NetPlan extends NetworkElement
 				DoubleMatrix2D A_dn = layer.forwardingRules_x_de.zMult(layer.forwardingRules_Aout_ne , null , 1 , 0 , false , true); // traffic of demand d that leaves node n
 				removeAllProtectionSegments(layer);
 				removeAllRoutes(layer);
-				layer.routingType = RoutingType.HOP_BY_HOP_ROUTING;
+				layer.routingType = HOP_BY_HOP_ROUTING;
 
 				IntArrayList ds = new IntArrayList();
 				IntArrayList es = new IntArrayList();
@@ -5910,9 +5913,9 @@ public class NetPlan extends NetworkElement
 				break;
 			}
 
-			case RoutingType.SOURCE_ROUTING:
+			case SOURCE_ROUTING:
 			{
-				layer.routingType = RoutingType.SOURCE_ROUTING;
+				layer.routingType = SOURCE_ROUTING;
 				removeAllRoutes(layer);
 				removeAllProtectionSegments(layer);
 				for (Link e : layer.links)
@@ -6044,7 +6047,7 @@ public class NetPlan extends NetworkElement
 		for (Demand d : layer.demands)
 		{
 			d.offeredTraffic = offeredTrafficVector.get (d.index);
-			if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) layer.updateHopByHopRoutingDemand(d);
+			if (layer.routingType == HOP_BY_HOP_ROUTING) layer.updateHopByHopRoutingDemand(d);
 		}
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 	}
@@ -6121,7 +6124,7 @@ public class NetPlan extends NetworkElement
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		if (segmentCapacities.size() != layer.protectionSegments.size()) throw new Net2PlanException ("Wrong veector size");
 		if (segmentCapacities.size () > 0) if (segmentCapacities.getMinLocation() [0] < 0) throw new Net2PlanException("Protection segment reserved capacities must be greater or equal than zero");
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		for (ProtectionSegment s : layer.protectionSegments)
 			s.capacity = segmentCapacities.get (s.index);
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
@@ -6145,7 +6148,7 @@ public class NetPlan extends NetworkElement
 		if (carriedTraffic.size() != occupiedLinkCapacity.size()) throw new Net2PlanException ("Wrong veector size");
 		if (carriedTraffic.size () > 0) if (carriedTraffic.getMinLocation() [0] < 0) throw new Net2PlanException("Carried traffics must be greater or equal than zero");
 		if (occupiedLinkCapacity.size () > 0) if (occupiedLinkCapacity.getMinLocation() [0] < 0) throw new Net2PlanException("Occupied link capacities must be greater or equal than zero");
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		layer.checkRoutingType(SOURCE_ROUTING);
 		for (Route r : layer.routes)
 			r.setCarriedTraffic(carriedTraffic.get (r.index) , occupiedLinkCapacity.get(r.index));
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
@@ -6251,7 +6254,7 @@ public class NetPlan extends NetworkElement
 			netPlanInformation.append("Number of demands: ").append(layer.demands.size ()).append(NEWLINE);
 			netPlanInformation.append("Number of multicast demands: ").append(layer.multicastDemands.size ()).append(NEWLINE);
 			netPlanInformation.append("Number of multicast trees: ").append(layer.multicastTrees.size ()).append(NEWLINE);
-			if (layer.routingType == RoutingType.SOURCE_ROUTING)
+			if (layer.routingType == SOURCE_ROUTING)
 			{
 				netPlanInformation.append("Number of routes: ").append(layer.routes.size ()).append(NEWLINE);
 				netPlanInformation.append("Number of protection segments: ").append(layer.protectionSegments.size ()).append(NEWLINE);
@@ -6325,7 +6328,7 @@ public class NetPlan extends NetworkElement
 				}
 			}
 
-			if (layer.routingType == RoutingType.SOURCE_ROUTING)
+			if (layer.routingType == SOURCE_ROUTING)
 			{
 				if (!layer.routes.isEmpty())
 				{
@@ -6633,7 +6636,7 @@ public class NetPlan extends NetworkElement
 			for (MulticastTree tree : layer.multicastTrees) tree.checkCachesConsistency();
 			for (ProtectionSegment segment : layer.protectionSegments) segment.checkCachesConsistency();
 			
-			if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
+			if (layer.routingType == HOP_BY_HOP_ROUTING)
 			{
 				for (int d = 0 ; d < layer.demands.size() ; d ++)
 				{

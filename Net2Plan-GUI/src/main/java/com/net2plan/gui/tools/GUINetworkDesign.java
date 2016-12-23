@@ -28,6 +28,7 @@ import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
 import com.net2plan.gui.utils.viewEditWindows.utils.WindowUtils;
 import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
+import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
@@ -38,6 +39,7 @@ import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.TopologyMap;
 import com.net2plan.utils.Triple;
 import net.miginfocom.swing.MigLayout;
+import com.net2plan.interfaces.networkDesign.*;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;

@@ -26,6 +26,7 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.net2plan.interfaces.networkDesign.*;
 
 /**
  * Set of several cell renderers used into the GUI.

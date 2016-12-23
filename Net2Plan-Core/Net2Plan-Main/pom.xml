@@ -17,11 +17,6 @@
             <artifactId>net2plan-core-lib</artifactId>
             <version>0.5-SNAPSHOT</version>
         </dependency>
-        <dependency>
-            <groupId>com.net2plan</groupId>
-            <artifactId>net2plan-gui</artifactId>
-            <version>0.5-SNAPSHOT</version>
-        </dependency>
     </dependencies>
 
 </project>

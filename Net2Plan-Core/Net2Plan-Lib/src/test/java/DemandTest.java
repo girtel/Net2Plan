@@ -1,3 +1,4 @@
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;

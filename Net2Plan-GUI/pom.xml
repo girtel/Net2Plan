@@ -10,4 +10,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>net2plan-gui</artifactId>
+    <dependencies>
+        <dependency>
+            <groupId>com.net2plan.net2plan-core</groupId>
+            <artifactId>net2plan-core-lib</artifactId>
+            <version>0.5-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-core</groupId>
+            <artifactId>net2plan-core-main</artifactId>
+            <version>0.5-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 </project>

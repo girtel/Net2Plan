@@ -1,6 +1,7 @@
 package com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs;
 
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_layer;
 import com.net2plan.internal.Constants.NetworkElementType;

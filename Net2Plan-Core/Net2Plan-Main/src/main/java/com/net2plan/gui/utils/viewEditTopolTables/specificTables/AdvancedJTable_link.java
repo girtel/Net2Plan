@@ -14,6 +14,7 @@ package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
