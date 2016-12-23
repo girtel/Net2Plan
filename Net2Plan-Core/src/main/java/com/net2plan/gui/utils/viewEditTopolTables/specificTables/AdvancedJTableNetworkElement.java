@@ -12,17 +12,6 @@
 
 package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 
-import java.awt.event.*;
-import java.util.*;
-
-import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
-import javax.xml.stream.XMLStreamException;
-
-import com.net2plan.gui.tools.GUINetworkDesign;
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.viewEditTopolTables.tableStateFiles.TableState;
@@ -33,6 +22,15 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
+
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
+import javax.xml.stream.XMLStreamException;
+import java.awt.event.*;
+import java.util.*;
 
 
 /**

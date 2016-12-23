@@ -17,15 +17,10 @@ package com.net2plan.interfaces.networkDesign;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.utils.Triple;
+
 import java.io.*;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.StringTokenizer;
 
 /**
  * <p>Class containing current Net2Plan-wide options, and methods to work with them.</p>

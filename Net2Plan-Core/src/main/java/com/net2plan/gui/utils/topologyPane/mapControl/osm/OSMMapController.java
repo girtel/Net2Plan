@@ -15,12 +15,15 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
-import org.jxmapviewer.viewer.*;
+import org.jxmapviewer.viewer.GeoPosition;
+import org.jxmapviewer.viewer.TileFactory;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**

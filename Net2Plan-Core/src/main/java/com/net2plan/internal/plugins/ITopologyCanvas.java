@@ -20,16 +20,6 @@
 
 package com.net2plan.internal.plugins;
 
-import java.awt.Color;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.swing.JComponent;
-import javax.swing.JFileChooser;
-
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Configuration;
@@ -38,6 +28,14 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.utils.Pair;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Base class for topology canvas.

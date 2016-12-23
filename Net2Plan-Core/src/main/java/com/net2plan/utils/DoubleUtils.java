@@ -17,12 +17,8 @@ import cern.colt.list.tint.IntArrayList;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Serializable;
+
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.Map.Entry;

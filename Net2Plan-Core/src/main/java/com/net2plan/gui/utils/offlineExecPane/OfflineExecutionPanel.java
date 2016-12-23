@@ -1,15 +1,5 @@
 package com.net2plan.gui.utils.offlineExecPane;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.Closeable;
-import java.io.File;
-import java.util.Map;
-
-import javax.swing.JButton;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.RunnableSelector;
@@ -22,8 +12,14 @@ import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.utils.ClassLoaderUtils;
 import com.net2plan.utils.Triple;
-
 import net.miginfocom.swing.MigLayout;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.Closeable;
+import java.io.File;
+import java.util.Map;
 
 public class OfflineExecutionPanel extends JPanel implements ThreadExecutionController.IThreadExecutionHandler
 {

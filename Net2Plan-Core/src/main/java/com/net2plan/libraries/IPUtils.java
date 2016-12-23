@@ -25,7 +25,6 @@ import com.net2plan.utils.Quadruple;
 import org.apache.commons.collections15.Transformer;
 
 import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Class for destination-based routing (IP-like).

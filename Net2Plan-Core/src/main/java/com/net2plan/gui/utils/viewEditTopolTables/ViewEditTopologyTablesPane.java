@@ -1,46 +1,28 @@
 package com.net2plan.gui.utils.viewEditTopolTables;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.LayoutManager;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.MouseEvent;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
-
-import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter.CurrentAndPlannedStateTableCellValue;
-import com.net2plan.gui.utils.topologyPane.TopologyPanel;
-import com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
-import com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_demand;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_forwardingRule;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_layer;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_link;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_multicastDemand;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_multicastTree;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_route;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_segment;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_srg;
-import com.net2plan.gui.utils.FixedColumnDecorator;
 import com.net2plan.gui.utils.FullScrollPaneLayout;
 import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
+import com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.*;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.EnumMap;
+import java.util.Map;
 
 @SuppressWarnings("unchecked")
 public class ViewEditTopologyTablesPane extends JPanel

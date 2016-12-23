@@ -12,9 +12,9 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import javax.xml.stream.XMLStreamException;
-
 import org.codehaus.stax2.XMLStreamReader2;
+
+import javax.xml.stream.XMLStreamException;
 
 interface IReaderNetPlan
 {

@@ -1,11 +1,8 @@
 package com.net2plan.gui.utils.viewEditTopolTables.tableStateFiles;
 
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
-import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants;
-import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.XMLUtils;
-import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.utils.Pair;
 import org.codehaus.stax2.XMLInputFactory2;
 import org.codehaus.stax2.XMLOutputFactory2;
@@ -13,17 +10,13 @@ import org.codehaus.stax2.XMLStreamReader2;
 import org.codehaus.stax2.XMLStreamWriter2;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.events.XMLEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author César

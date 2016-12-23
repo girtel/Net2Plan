@@ -1,11 +1,11 @@
 package com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs;
 
+import com.net2plan.gui.utils.INetworkCallback;
+
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
-
-import com.net2plan.gui.utils.INetworkCallback;
 
 abstract class DocumentAdapter implements DocumentListener 
 {

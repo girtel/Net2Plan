@@ -29,12 +29,12 @@ package com.net2plan.gui.utils;
  */
 
 
-import java.awt.Component;
-import java.awt.Color;
 import javax.swing.*;
-import javax.swing.plaf.UIResource;
 import javax.swing.border.Border;
-import javax.swing.table.*;
+import javax.swing.plaf.UIResource;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
+import java.awt.*;
 
 /**
  */

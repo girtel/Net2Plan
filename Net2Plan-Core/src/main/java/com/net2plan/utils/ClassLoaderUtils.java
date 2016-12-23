@@ -14,6 +14,9 @@ package com.net2plan.utils;
 
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.SystemUtils;
+
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -27,8 +30,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  * <p>Class to deal with dynamic Java class loading from .class/.jar files.</p>

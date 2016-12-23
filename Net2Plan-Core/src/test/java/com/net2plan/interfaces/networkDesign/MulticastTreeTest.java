@@ -1,15 +1,10 @@
 package com.net2plan.interfaces.networkDesign;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
 import org.junit.*;
+
+import java.util.*;
+
+import static org.junit.Assert.assertTrue;
 
 public class MulticastTreeTest 
 {

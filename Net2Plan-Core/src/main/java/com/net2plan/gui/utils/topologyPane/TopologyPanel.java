@@ -12,22 +12,7 @@
 
 package com.net2plan.gui.utils.topologyPane;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.event.ActionEvent;
-import java.io.File;
-import java.util.*;
-import java.util.List;
-
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-
-import com.net2plan.gui.utils.FileChooserNetworkDesign;
-import com.net2plan.gui.utils.FileDrop;
-import com.net2plan.gui.utils.INetworkCallback;
-import com.net2plan.gui.utils.StringLabeller;
-import com.net2plan.gui.utils.SwingUtils;
-import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.gui.utils.*;
 import com.net2plan.gui.utils.topologyPane.components.MenuButton;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
@@ -40,6 +25,15 @@ import com.net2plan.internal.Constants.DialogType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.ITopologyCanvas;
+
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.File;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * <p>Wrapper class for the graph canvas.</p>

@@ -1,14 +1,13 @@
 package com.net2plan.interfaces.networkDesign;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.*;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.junit.*;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class RouteTest 
 {

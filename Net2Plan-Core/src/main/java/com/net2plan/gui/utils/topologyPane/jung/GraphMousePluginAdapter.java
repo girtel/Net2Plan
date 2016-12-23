@@ -12,11 +12,10 @@
 
 package com.net2plan.gui.utils.topologyPane.jung;
 
+import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
 import edu.uci.ics.jung.visualization.control.GraphMousePlugin;
 
 import java.awt.event.*;
-
-import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
 
 /**
  * Wrapper class for {@link com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin ITopologyCanvasPlugin}

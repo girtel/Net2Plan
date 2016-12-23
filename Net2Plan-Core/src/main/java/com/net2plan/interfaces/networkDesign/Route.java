@@ -16,22 +16,15 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import static org.junit.Assert.*;
-
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
+
+import java.util.*;
+import java.util.Map.Entry;
+
+import static org.junit.Assert.*;
 
 
 /**

@@ -12,35 +12,6 @@
 
 package com.net2plan.gui.utils;
 
-import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.border.LineBorder;
-import javax.swing.filechooser.FileFilter;
-
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.ErrorHandling;
@@ -49,8 +20,19 @@ import com.net2plan.internal.SystemUtils;
 import com.net2plan.utils.ClassLoaderUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
-
 import net.miginfocom.swing.MigLayout;
+
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import javax.swing.filechooser.FileFilter;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.List;
 
 /**
  * This class construct a panel that can be used to load some runnable code
