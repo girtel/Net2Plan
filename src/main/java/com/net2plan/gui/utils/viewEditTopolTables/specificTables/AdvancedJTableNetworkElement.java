@@ -1389,6 +1389,9 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             itemId = netPlan.getSRGs().get(itemIndex).getId();
                             break;
 
+                        case RESOURCE:
+                            itemId = netPlan.getResources().get(itemIndex).getId();
+
                         default:
                             throw new RuntimeException("Bad");
                     }
@@ -1497,6 +1500,12 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         }
                         break;
 
+                        case RESOURCE:
+                            Resource element = netPlan.getResources().get(itemIndex);
+                            itemId = element.getId();
+                            attributeList = StringUtils.toArray(element.getAttributes().keySet());
+                            break;
+
                         default:
                             throw new RuntimeException("Bad");
                     }
@@ -1603,6 +1612,11 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                                 case SRG:
                                     for (SharedRiskGroup element : netPlan.getSRGs())
+                                        element.setAttribute(attribute, value);
+                                    break;
+
+                                case RESOURCE:
+                                    for (Resource element: netPlan.getResources())
                                         element.setAttribute(attribute, value);
                                     break;
 
@@ -1731,6 +1745,12 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                                 break;
 
+                            case RESOURCE:
+                                itemIds = netPlan.getResourceIds();
+                                for (long resourceId : itemIds)
+                                    attributeSet.addAll(netPlan.getResourceFromId(resourceId).getAttributes().keySet());
+                                break;
+
                             default:
                                 throw new RuntimeException("Bad");
                         }
@@ -1787,6 +1807,11 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             case SRG:
                                 for (long srgId : itemIds)
                                     netPlan.getSRGFromId(srgId).removeAttribute(attributeToRemove);
+                                break;
+
+                            case RESOURCE:
+                                for (long resourceId : itemIds)
+                                    netPlan.getResourceFromId(resourceId).removeAttribute(attributeToRemove);
                                 break;
 
                             default:
@@ -1871,6 +1896,12 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 Collection<Long> srgIds = netPlan.getSRGIds();
                                 for (long srgId : srgIds)
                                     netPlan.getSRGFromId(srgId).removeAllAttributes();
+                                break;
+
+                            case RESOURCE:
+                                Collection<Long> resourceIds = netPlan.getResourceIds();
+                                for (long resourceId : resourceIds)
+                                    netPlan.getResourceFromId(resourceId).removeAllAttributes();
                                 break;
 
                             default:
