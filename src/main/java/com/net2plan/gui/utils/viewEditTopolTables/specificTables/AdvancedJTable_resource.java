@@ -41,6 +41,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique Identifier","Index","Name","Type","Host Node","Capacity","Cap. Units","Ocuppied capacity","Traversing Routes","Upper Resources","Base Resources","Processing Time","Attributes");
     private List<Resource> currentResources = new LinkedList<>();
     private NetPlan currentTopology = null;
+    private final String[] resourceTypes = StringUtils.arrayOf("Firewall","NAT","CPU","RAM");
 
     public AdvancedJTable_resource(final INetworkCallback networkViewer)
     {
@@ -180,7 +181,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
 
     private static TableModel createTableModel(final INetworkCallback networkViewer) {
         final TopologyPanel topologyPanel = networkViewer.getTopologyPanel();
-        TableModel nodeTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
+        TableModel resourceTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
             @Override
@@ -239,7 +240,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
             }
         };
 
-        return nodeTableModel;
+        return resourceTableModel;
     }
     private void setSpecificCellRenderers() {
     }
@@ -406,6 +407,10 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
 
                     JComboBox hostNodeSelector = new WiderJComboBox();
                     JTextField capUnitsField = new JTextField(20);
+                    JComboBox typeSelector = new WiderJComboBox();
+                    for(int i = 0; i < resourceTypes.length; i++)
+                        typeSelector.addItem(resourceTypes[i]);
+
                     for (Node n : netPlan.getNodes()) {
                         final String nodeName = n.getName();
                         String nodeLabel = "Node " + n.getIndex();
@@ -413,6 +418,9 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                         hostNodeSelector.addItem(StringLabeller.of(n.getId(), nodeLabel));
                     }
                     JPanel pane = new JPanel();
+                    pane.add(new JLabel("Resource Type"));
+                    pane.add(typeSelector);
+                    pane.add(Box.createHorizontalStrut(30));
                     pane.add(new JLabel("Host Node"));
                     pane.add(hostNodeSelector);
                     pane.add(Box.createHorizontalStrut(30));
@@ -422,8 +430,8 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                         int result = JOptionPane.showConfirmDialog(null, pane, "Please enter parameters for the new " + networkElementType, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                         if (result != JOptionPane.OK_OPTION) return;
                         Node hostNode = netPlan.getNodeFromId((Long) ((StringLabeller) hostNodeSelector.getSelectedItem()).getObject());
-                        netPlan.addResource("Tipo", "Resource n_" + netPlan.getResources().size(), hostNode,
-                                0, capUnitsField.getText(), null, 0, new AttributeMap());
+                        netPlan.addResource(typeSelector.getSelectedItem().toString(), "Resource n_" + netPlan.getResources().size(), hostNode,
+                                0, capUnitsField.getText(), null, 0, null);
 
                         networkViewer.updateNetPlanView();
                         break;
