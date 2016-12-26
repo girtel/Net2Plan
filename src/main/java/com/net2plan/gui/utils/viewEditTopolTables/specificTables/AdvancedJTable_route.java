@@ -43,6 +43,8 @@ import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
+import cern.colt.matrix.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ButtonColumn;
 import com.net2plan.gui.utils.CellRenderers;
@@ -55,13 +57,7 @@ import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
-import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.libraries.GraphUtils;
@@ -761,10 +757,10 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         List<JComponent> options = new LinkedList<JComponent>();
         NetPlan netPlan = networkViewer.getDesign();
 
-        final JMenuItem oneRoutePerDemandSPFHops = new JMenuItem("Add one route per demand, shortest path in hops");
+        final JMenuItem oneRoutePerDemandSPFHops = new JMenuItem("Add one route per demand, shortest path (Service chain) in hops");
         options.add(oneRoutePerDemandSPFHops);
         oneRoutePerDemandSPFHops.addActionListener(new RouteSPFActionListener(true, false));
-        final JMenuItem oneRoutePerDemandSPFKm = new JMenuItem("Add one route per demand, shortest path in km");
+        final JMenuItem oneRoutePerDemandSPFKm = new JMenuItem("Add one route per demand, shortest path (Service chain) in km");
         options.add(oneRoutePerDemandSPFKm);
         oneRoutePerDemandSPFKm.addActionListener(new RouteSPFActionListener(false, false));
         final JMenuItem oneRouteAndLinkDisjointSegmentPerDemandSPFHops = new JMenuItem("Add one route and 1+1 link disjoint protection per demand (minimize total num hops)");
@@ -795,7 +791,17 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
             Map<Link, Double> linkCostMap = new HashMap<Link, Double>();
             List<Route> addedRoutes = new LinkedList<Route>();
             List<ProtectionSegment> addedProtectionSegments = new LinkedList<ProtectionSegment>();
-            for (Link link : netPlan.getLinks()) linkCostMap.put(link, isMinHops ? 1 : link.getLengthInKm());
+            for (Link link : netPlan.getLinks())
+            {
+                linkCostMap.put(link, isMinHops ? 1 : link.getLengthInKm());
+            }
+            DoubleMatrix1D linkCostVector = null;
+            if(isMinHops)
+                linkCostVector = cern.colt.matrix.tdouble.DoubleFactory1D.dense.make(netPlan.getLinks().size(),1.0);
+            else{
+                linkCostVector = netPlan.getVectorLinkLengthInKm();
+            }
+
             try {
                 for (Demand d : netPlan.getDemands()) {
                     if (add11LinkDisjointSegment) {
@@ -809,6 +815,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                         addedProtectionSegments.add(s);
                     } else {
                         List<Link> seqLinks = GraphUtils.getShortestPath(netPlan.getNodes(), netPlan.getLinks(), d.getIngressNode(), d.getEgressNode(), linkCostMap);
+                        List<Pair<List<NetworkElement>,Double>> minCostServiceChain = GraphUtils.getMinimumCostServiceChain(seqLinks, d.getIngressNode(), d.getEgressNode(), d.getServiceChainSequenceOfTraversedResourceTypes(), linkCostVector , null, -1,-1,-1 );
                         if (seqLinks.isEmpty())
                             throw new Net2PlanException("Cannot find a route for demand of index " + d.getIndex() + ". No route is created");
                         Route r = netPlan.addRoute(d, d.getOfferedTraffic(), d.getOfferedTraffic(), seqLinks, null);
