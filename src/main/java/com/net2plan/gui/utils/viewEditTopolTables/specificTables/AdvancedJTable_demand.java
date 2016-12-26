@@ -22,16 +22,12 @@ import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
-import com.net2plan.gui.utils.CellRenderers;
+import com.net2plan.gui.utils.*;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
-import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
-import com.net2plan.gui.utils.INetworkCallback;
-import com.net2plan.gui.utils.StringLabeller;
-import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -59,15 +55,17 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
     private static final int COLUMN_OFFEREDTRAFFIC = 5;
     private static final int COLUMN_CARRIEDTRAFFIC = 6;
     private static final int COLUMN_LOSTTRAFFIC = 7;
-    private static final int COLUMN_ROUTINGCYCLES = 8;
-    private static final int COLUMN_BIFURCATED = 9;
-    private static final int COLUMN_NUMROUTES = 10;
-    private static final int COLUMN_MAXE2ELATENCY = 11;
-    private static final int COLUMN_ATTRIBUTES = 12;
+    private static final int COLUMN_ISSERVICECHAIN = 8;
+    private static final int COLUMN_TRAVERSEDRESOURCESTYPES = 9;
+    private static final int COLUMN_ROUTINGCYCLES = 10;
+    private static final int COLUMN_BIFURCATED = 11;
+    private static final int COLUMN_NUMROUTES = 12;
+    private static final int COLUMN_MAXE2ELATENCY = 13;
+    private static final int COLUMN_ATTRIBUTES = 14;
     private static final String netPlanViewTabName = "Demands";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Ingress node", "Egress node", "Coupled to link",
-            "Offered traffic", "Carried traffic", "% Lost traffic", "Routing cycles", "Bifurcated", "# Routes", "Max e2e latency (ms)", "Attributes");
-    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Ingress node", "Egress node", "Indicates the coupled upper layer link, if any, or empty", "Offered traffic by the demand", "Carried traffic by routes carrying traffic from the demand", "Percentage of lost traffic from the offered", "Indicates whether there are routing cycles: loopless (no cycle in some route), open cycles (traffic reaches egress node after some cycles in some route), closed cycles (traffic does not reach the egress node in some route)", "Indicates whether the demand has more than one associated route carrying traffic", "Number of associated routes", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", "Demand-specific attributes");
+            "Offered traffic", "Carried traffic", "% Lost traffic", "Is Service Chain","Service types","Routing cycles", "Bifurcated", "# Routes", "Max e2e latency (ms)", "Attributes");
+    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Ingress node", "Egress node", "Indicates the coupled upper layer link, if any, or empty", "Offered traffic by the demand", "Carried traffic by routes carrying traffic from the demand", "Percentage of lost traffic from the offered","Is Service Chain","Service Types", "Indicates whether there are routing cycles: loopless (no cycle in some route), open cycles (traffic reaches egress node after some cycles in some route), closed cycles (traffic does not reach the egress node in some route)", "Indicates whether the demand has more than one associated route carrying traffic", "Number of associated routes", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", "Demand-specific attributes");
 
     private NetPlan currentTopology = null;
     private List<Demand> currentDemands = new LinkedList<>();
@@ -100,6 +98,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
 
     public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
         List<Object[]> allDemandData = new LinkedList<Object[]>();
+        int counter = 0;
         for (Demand demand : currentState.getDemands()) {
             Set<Route> routes_thisDemand = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING ? demand.getRoutes() : new LinkedHashSet<Route>();
             Link coupledLink = demand.getCoupledLink();
@@ -116,11 +115,13 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
             demandData[5] = h_d;
             demandData[6] = demand.getCarriedTraffic();
             demandData[7] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d;
-            demandData[8] = demand.getRoutingCycleType();
-            demandData[9] = currentState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
-            demandData[10] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(routes_thisDemand), ",") + ")";
-            demandData[11] = demand.getWorseCasePropagationTimeInMs();
-            demandData[12] = StringUtils.mapToString(demand.getAttributes());
+            demandData[8] = demand.isServiceChainRequest();
+            demandData[9] = joinTraversedResourcesTypes(demand);
+            demandData[10] = demand.getRoutingCycleType();
+            demandData[11] = currentState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
+            demandData[12] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(routes_thisDemand), ",") + ")";
+            demandData[13] = demand.getWorseCasePropagationTimeInMs();
+            demandData[14] = StringUtils.mapToString(demand.getAttributes());
 
             for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
             {
@@ -148,11 +149,13 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                 demandData_initialNetPlan[5] = h_d;
                 demandData_initialNetPlan[6] = demand.getCarriedTraffic();
                 demandData_initialNetPlan[7] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d;
-                demandData_initialNetPlan[8] = demand.getRoutingCycleType();
-                demandData_initialNetPlan[9] = initialState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
-                demandData_initialNetPlan[10] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(routes_thisDemand), ",") + ")";
-                demandData_initialNetPlan[11] = demand.getWorseCasePropagationTimeInMs();
-                demandData_initialNetPlan[12] = StringUtils.mapToString(demand.getAttributes());
+                demandData_initialNetPlan[8] = demand.isServiceChainRequest();
+                demandData_initialNetPlan[9] = joinTraversedResourcesTypes(demand);
+                demandData_initialNetPlan[10] = demand.getRoutingCycleType();
+                demandData_initialNetPlan[11] = initialState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
+                demandData_initialNetPlan[12] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(routes_thisDemand), ",") + ")";
+                demandData_initialNetPlan[13] = demand.getWorseCasePropagationTimeInMs();
+                demandData_initialNetPlan[14] = StringUtils.mapToString(demand.getAttributes());
 
                 for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
                 {
@@ -842,4 +845,15 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
     private List<JComponent> getForcedOptions() {
         return new LinkedList<JComponent>();
     }
+
+    private String joinTraversedResourcesTypes(Demand d)
+    {
+        List<String> trt = d.getServiceChainSequenceOfTraversedResourceTypes();
+        String t = "";
+        for(String s : trt)
+            t = t + s+", ";
+
+        return t;
+    }
+
 }
