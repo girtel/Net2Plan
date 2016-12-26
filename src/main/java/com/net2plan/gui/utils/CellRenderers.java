@@ -218,6 +218,7 @@ public class CellRenderers {
         private static final long serialVersionUID = 1L;
         private final int offeredTrafficColumnModelIndex;
         private final int lostTrafficColumnModelIndex;
+        private final TableCellRenderer tcr;
 
         /**
          * Default constructor.
@@ -225,17 +226,22 @@ public class CellRenderers {
          * @param offeredTrafficColumnModelIndex Column index (in model order) in which is found the offered traffic
          * @since 0.2.0
          */
-        public LostTrafficCellRenderer(int offeredTrafficColumnModelIndex, int lostTrafficColumnModelIndex) {
+        public LostTrafficCellRenderer(TableCellRenderer tcr, int offeredTrafficColumnModelIndex, int lostTrafficColumnModelIndex) {
             super();
 
+            this.tcr = tcr;
             this.offeredTrafficColumnModelIndex = offeredTrafficColumnModelIndex;
             this.lostTrafficColumnModelIndex = lostTrafficColumnModelIndex;
         }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
+            Component c = null;
+            if(tcr != null)
+                c = tcr.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            else{
+                c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            }
             if (!isSelected && value != null) {
                 int demandId = table.convertRowIndexToModel(row);
                 double lostTraffic = (Double) table.getModel().getValueAt(demandId, lostTrafficColumnModelIndex);
