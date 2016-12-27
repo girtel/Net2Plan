@@ -986,6 +986,25 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             {
                 networkViewer.updateNetPlanView();
                 createDefaultColumnsFromModel();
+                ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
+                String[] columnTips = getTableTips();
+                String[] columnHeader = getTableHeaders();
+                for (int c = 0; c < columnHeader.length; c++)
+                {
+                    String modelColumn = getModel().getColumnName(c);
+                    for(int i = 0; i < getColumnModel().getColumnCount(); i++)
+                    {
+                        TableColumn col = getColumnModel().getColumn(i);
+                        if(modelColumn.equals(col.getHeaderValue().toString()))
+                        {
+                            tips.setToolTip(col, columnTips[c]);
+                            break;
+                        }
+
+                    }
+
+                }
+                getTableHeader().addMouseMotionListener(tips);
                 removedColumns.clear();
                 removeNewColumn("Attributes");
                 updateTables();
@@ -1038,6 +1057,25 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                 networkViewer.updateNetPlanView();
                 createDefaultColumnsFromModel();
+                ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
+                String[] columnTips = getTableTips();
+                String[] columnHeader = getTableHeaders();
+                for (int c = 0; c < columnHeader.length; c++)
+                {
+                    String modelColumn = getModel().getColumnName(c);
+                    for(int i = 0; i < getColumnModel().getColumnCount(); i++)
+                    {
+                        TableColumn col = getColumnModel().getColumn(i);
+                        if(modelColumn.equals(col.getHeaderValue().toString()))
+                        {
+                            tips.setToolTip(col, columnTips[c]);
+                            break;
+                        }
+
+                    }
+
+                }
+                getTableHeader().addMouseMotionListener(tips);
                 removedColumns.clear();
                 for (String att : attributesColumnsNames)
                 {
@@ -1171,6 +1209,25 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             if (attColumnsHeaders != null && networkElementType != NetworkElementType.FORWARDING_RULE)
             {
                 createDefaultColumnsFromModel();
+                ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
+                String[] columnTips = getTableTips();
+                String[] columnHeader = getTableHeaders();
+                for (int c = 0; c < columnHeader.length; c++)
+                {
+                    String modelColumn = getModel().getColumnName(c);
+                    for(int i = 0; i < getColumnModel().getColumnCount(); i++)
+                    {
+                        TableColumn col = getColumnModel().getColumn(i);
+                        if(modelColumn.equals(col.getHeaderValue().toString()))
+                        {
+                            tips.setToolTip(col, columnTips[c]);
+                            break;
+                        }
+
+                    }
+
+                }
+                getTableHeader().addMouseMotionListener(tips);
                 if (areAttributesInDifferentColums())
                 {
                     removeNewColumn("Attributes");
@@ -1207,6 +1264,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         }
                     }
                 }
+
             }
             for (int columnId : getColumnsOfSpecialComparatorForSorting())
                 ((DefaultRowSorter) getRowSorter()).setComparator(columnId, new ColumnComparator());
