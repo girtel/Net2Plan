@@ -297,9 +297,15 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
     {
         Map<Route, Double> routesCapacities = res.getTraversingRouteOccupiedCapacityMap();
         String t = "";
+        int counter = 0;
         for(Map.Entry<Route, Double> entry : routesCapacities.entrySet())
         {
-            t = t + "Route "+entry.getKey().toString()+" ("+entry.getValue()+"), ";
+            if(counter == routesCapacities.size() - 1)
+                t = t + "Route "+entry.getKey().toString()+" ("+entry.getValue()+") ";
+            else
+                t = t + "Route "+entry.getKey().toString()+" ("+entry.getValue()+"), ";
+
+            counter++;
         }
 
         return t;
@@ -309,9 +315,15 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
     {
         Map<Resource, Double> upperResourcesCapacities = res.getCapacityOccupiedByUpperResourcesMap();
         String t = "";
+        int counter = 0;
         for(Map.Entry<Resource, Double> entry : upperResourcesCapacities.entrySet())
         {
-            t = t + "Resource "+entry.getKey().toString()+" ("+entry.getValue()+"), ";
+            if(counter == upperResourcesCapacities.size() - 1)
+                t = t + "Resource "+entry.getKey().toString()+" ("+entry.getValue()+") ";
+            else
+                t = t + "Resource "+entry.getKey().toString()+" ("+entry.getValue()+"), ";
+
+            counter++;
         }
 
         return t;
@@ -321,9 +333,15 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
     {
         Map<Resource, Double> baseResourcesCapacities = res.getCapacityOccupiedInBaseResourcesMap();
         String t = "";
+        int counter = 0;
         for(Map.Entry<Resource, Double> entry : baseResourcesCapacities.entrySet())
         {
-            t = t + "Resource "+entry.getKey().toString()+" ("+entry.getValue()+"), ";
+            if(counter == baseResourcesCapacities.size() - 1)
+                t = t + "Resource "+entry.getKey().toString()+" ("+entry.getValue()+") ";
+            else
+                t = t + "Resource "+entry.getKey().toString()+" ("+entry.getValue()+"), ";
+
+            counter++;
         }
 
         return t;

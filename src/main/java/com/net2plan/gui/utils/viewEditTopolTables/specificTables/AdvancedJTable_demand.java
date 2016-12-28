@@ -22,19 +22,16 @@ import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.CollectionUtils;
@@ -69,6 +66,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
 
     private NetPlan currentTopology = null;
     private List<Demand> currentDemands = new LinkedList<>();
+    private final String[] resourceTypes = StringUtils.arrayOf("Firewall","NAT","CPU","RAM");
     /**
      * Default constructor.
      *
@@ -628,6 +626,51 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
         });
         options.add(scaleOfferedTrafficToAll);
 
+        JMenuItem setServiceTypes = new JMenuItem("Set traversed resource types");
+        setServiceTypes.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                NetPlan netPlan = networkViewer.getDesign();
+                //try {
+
+                    int numTraversedResourceTypes = Integer.parseInt(JOptionPane.showInputDialog(null,"How many resource types will traverse this demand?"));
+                    String [] headers = StringUtils.arrayOf("Position/Priority","Type");
+                    Object [][] data = {null, null};
+                    DefaultTableModel model = new ClassAwareTableModelImpl(data, headers);
+                    AdvancedJTable table = new AdvancedJTable(model);
+                    Object [][] newData = new Object[numTraversedResourceTypes][headers.length];
+                    for(int i = 0; i < numTraversedResourceTypes; i++)
+                    {
+                        newData[i][0] = i;
+                        newData[i][1] = resourceTypes[0];
+                        addComboCellEditor(resourceTypes,i,1, table);
+                    }
+                ((DefaultTableModel)table.getModel()).setDataVector(newData, headers);
+                    JPanel pane = new JPanel();
+                    pane.setLayout(new BorderLayout());
+                    pane.add(new JScrollPane(table),BorderLayout.CENTER);
+                    while (true) {
+                        int result = JOptionPane.showConfirmDialog(null, pane, "Set traversed resource types", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if (result != JOptionPane.OK_OPTION) return;
+                        List<String> newTraversedResourcesTypes = new LinkedList<>();
+                        Demand d = netPlan.getDemandFromId((Long)itemId);
+                        for(int j = 0; j < table.getRowCount(); j++)
+                        {
+                            String travResourceType = table.getModel().getValueAt(j,1).toString();
+                            newTraversedResourcesTypes.add(travResourceType);
+                        }
+                        d.setServiceChainSequenceOfTraversedResourceTypes(newTraversedResourcesTypes);
+                        networkViewer.updateNetPlanView();
+                        break;
+                    }
+                /*} catch (Throwable ex) {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to base resources");
+                }*/
+            }
+
+        });
+        options.add(setServiceTypes);
         if (itemId != null && netPlan.isMultilayer()) {
             final long demandId = (long) itemId;
             if (netPlan.getDemandFromId(demandId).isCoupled()) {
@@ -839,6 +882,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
 
             }
         }
+
         return options;
     }
 
@@ -850,10 +894,48 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
     {
         List<String> trt = d.getServiceChainSequenceOfTraversedResourceTypes();
         String t = "";
+        int counter = 0;
         for(String s : trt)
-            t = t + s+", ";
+        {
+            if(counter == trt.size() - 1)
+                t = t + s;
+            else
+                t = t + s+", ";
+
+            counter++;
+
+        }
 
         return t;
+    }
+
+    private void addComboCellEditor(String[] options, int rowIndex, int columnIndex, AdvancedJTable table)
+    {
+        JComboBox comboBox = new JComboBox();
+        for (String option : options) comboBox.addItem(option);
+        table.setCellEditor(rowIndex, columnIndex, new DefaultCellEditor(comboBox));
+    }
+
+    private class ClassAwareTableModelImpl extends ClassAwareTableModel
+    {
+        public ClassAwareTableModelImpl(Object[][] dataVector, Object[] columnIdentifiers)
+        {
+            super(dataVector, columnIdentifiers);
+        }
+
+        @Override
+        public boolean isCellEditable(int rowIndex, int columnIndex)
+        {
+            if(columnIndex == 1) return true;
+            return false;
+        }
+
+        @Override
+        public void setValueAt(Object value, int row, int column)
+        {
+            super.setValueAt(value, row, column);
+
+        }
     }
 
 }
