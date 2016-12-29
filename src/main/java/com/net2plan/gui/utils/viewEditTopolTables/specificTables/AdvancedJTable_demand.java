@@ -632,29 +632,49 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
             public void actionPerformed(ActionEvent e) {
 
                 NetPlan netPlan = networkViewer.getDesign();
-                //try {
-
-                    int numTraversedResourceTypes = Integer.parseInt(JOptionPane.showInputDialog(null,"How many resource types will traverse this demand?"));
+                try {
+                    Demand d = netPlan.getDemandFromId((Long)itemId);
                     String [] headers = StringUtils.arrayOf("Position/Priority","Type");
                     Object [][] data = {null, null};
                     DefaultTableModel model = new ClassAwareTableModelImpl(data, headers);
                     AdvancedJTable table = new AdvancedJTable(model);
-                    Object [][] newData = new Object[numTraversedResourceTypes][headers.length];
-                    for(int i = 0; i < numTraversedResourceTypes; i++)
+                    JButton addRow = new JButton("Add new traversed resource");
+                    addRow.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            Object [] newRow = {table.getRowCount(),resourceTypes[0]};
+                            ((DefaultTableModel)table.getModel()).addRow(newRow);
+                            addComboCellEditor(resourceTypes,table.getRowCount() - 1,1, table);
+                        }
+                    });
+                    JButton removeRow = new JButton("Remove last traversed resource");
+                    removeRow.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            int lastRow = table.getRowCount() - 1;
+                            ((DefaultTableModel)table.getModel()).removeRow(lastRow);
+                        }
+                    });
+                    List<String> oldTraversedResourceTypes = d.getServiceChainSequenceOfTraversedResourceTypes();
+                    Object [][] newData = new Object[oldTraversedResourceTypes.size()][headers.length];
+                    for(int i = 0; i < oldTraversedResourceTypes.size(); i++)
                     {
                         newData[i][0] = i;
-                        newData[i][1] = resourceTypes[0];
+                        newData[i][1] = oldTraversedResourceTypes.get(i);
                         addComboCellEditor(resourceTypes,i,1, table);
                     }
                 ((DefaultTableModel)table.getModel()).setDataVector(newData, headers);
                     JPanel pane = new JPanel();
+                    JPanel pane2 = new JPanel();
                     pane.setLayout(new BorderLayout());
                     pane.add(new JScrollPane(table),BorderLayout.CENTER);
+                    pane2.add(addRow,BorderLayout.WEST);
+                    pane2.add(removeRow,BorderLayout.EAST);
+                    pane.add(pane2,BorderLayout.SOUTH);
                     while (true) {
                         int result = JOptionPane.showConfirmDialog(null, pane, "Set traversed resource types", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                         if (result != JOptionPane.OK_OPTION) return;
                         List<String> newTraversedResourcesTypes = new LinkedList<>();
-                        Demand d = netPlan.getDemandFromId((Long)itemId);
                         for(int j = 0; j < table.getRowCount(); j++)
                         {
                             String travResourceType = table.getModel().getValueAt(j,1).toString();
@@ -664,9 +684,9 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                         networkViewer.updateNetPlanView();
                         break;
                     }
-                /*} catch (Throwable ex) {
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to base resources");
-                }*/
+                } catch (Throwable ex) {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set traversed resource types");
+                }
             }
 
         });
