@@ -815,7 +815,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                         addedProtectionSegments.add(s);
                     } else {
                         List<Link> seqLinks = GraphUtils.getShortestPath(netPlan.getNodes(), netPlan.getLinks(), d.getIngressNode(), d.getEgressNode(), linkCostMap);
-                        List<Pair<List<NetworkElement>,Double>> minCostServiceChain = GraphUtils.getMinimumCostServiceChain(seqLinks, d.getIngressNode(), d.getEgressNode(), d.getServiceChainSequenceOfTraversedResourceTypes(), linkCostVector , null, -1,-1,-1 );
+                        List<Pair<List<NetworkElement>,Double>> minCostServiceChain = GraphUtils.getMinimumCostServiceChain(netPlan.getLinks(), d.getIngressNode(), d.getEgressNode(), d.getServiceChainSequenceOfTraversedResourceTypes(), linkCostVector , null, -1,-1,-1 );
                         if (seqLinks.isEmpty())
                             throw new Net2PlanException("Cannot find a route for demand of index " + d.getIndex() + ". No route is created");
                         Route r = netPlan.addRoute(d, d.getOfferedTraffic(), d.getOfferedTraffic(), seqLinks, null);

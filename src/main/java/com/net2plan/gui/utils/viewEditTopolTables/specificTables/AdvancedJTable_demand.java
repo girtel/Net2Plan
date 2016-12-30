@@ -638,7 +638,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                     Object [][] data = {null, null};
                     DefaultTableModel model = new ClassAwareTableModelImpl(data, headers);
                     AdvancedJTable table = new AdvancedJTable(model);
-                    JButton addRow = new JButton("Add new traversed resource");
+                    JButton addRow = new JButton("Add new traversed resource type");
                     addRow.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
@@ -647,12 +647,20 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                             addComboCellEditor(resourceTypes,table.getRowCount() - 1,1, table);
                         }
                     });
-                    JButton removeRow = new JButton("Remove last traversed resource");
+                    JButton removeRow = new JButton("Remove last traversed resource type");
                     removeRow.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             int lastRow = table.getRowCount() - 1;
                             ((DefaultTableModel)table.getModel()).removeRow(lastRow);
+                        }
+                    });
+                    JButton removeAllRows = new JButton("Remove all traversed resource types");
+                    removeAllRows.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            while(table.getRowCount() > 0)
+                                ((DefaultTableModel)table.getModel()).removeRow(0);
                         }
                     });
                     List<String> oldTraversedResourceTypes = d.getServiceChainSequenceOfTraversedResourceTypes();
@@ -667,9 +675,11 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                     JPanel pane = new JPanel();
                     JPanel pane2 = new JPanel();
                     pane.setLayout(new BorderLayout());
+                    pane2.setLayout(new BorderLayout());
                     pane.add(new JScrollPane(table),BorderLayout.CENTER);
                     pane2.add(addRow,BorderLayout.WEST);
                     pane2.add(removeRow,BorderLayout.EAST);
+                    pane2.add(removeAllRows, BorderLayout.SOUTH);
                     pane.add(pane2,BorderLayout.SOUTH);
                     while (true) {
                         int result = JOptionPane.showConfirmDialog(null, pane, "Set traversed resource types", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
