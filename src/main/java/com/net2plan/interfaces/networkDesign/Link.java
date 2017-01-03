@@ -621,7 +621,7 @@ public class Link extends NetworkElement
 				System.out.println ("Link " + this + ", is down, and carried traffic is: " + cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
 				System.out.println ("Traversing routes: " + cache_traversingRoutes);
 				for (Route r : cache_traversingRoutes.keySet())
-					System.out.println ("Route " + r + ", isDown? " + r.isDown() + ", carriedTraffic: " + r.getCarriedTraffic() + ", carried of all ok: " + r.carriedTrafficIfNotFailing);
+					System.out.println ("Route " + r + ", isDown? " + r.isDown() + ", carriedTraffic: " + r.getCarriedTraffic() + ", carried of all ok: " + r.currentCarriedTrafficIfNotFailing);
 				if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) System.out.println ("f_d for this link, all demands: " + layer.forwardingRules_f_de.viewColumn(index));
 				if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) System.out.println ("x_d for this link, all demands: " + layer.forwardingRules_x_de.viewColumn(index));
 				throw new RuntimeException ("Bad");
@@ -674,7 +674,7 @@ public class Link extends NetworkElement
 		if (Math.abs(cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments - check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) 
 		{
 			System.out.println ("Link "+ this + ", is Up: " + isUp + ", trav routes: " + cache_traversingRoutes + ", trav segments: " + cache_traversingSegments);
-			for (Route r : cache_traversingRoutes.keySet()) System.out.println ("-- trav route: " + r + ", is down: " + r.isDown() + ", carried: " + r.getCarriedTraffic() + ", carried all ok: " + r.carriedTrafficIfNotFailing + ", seq links and ps: " + r.cache_seqLinksAndProtectionSegments + ", seqlinks real: " + r.cache_seqLinksRealPath);
+			for (Route r : cache_traversingRoutes.keySet()) System.out.println ("-- trav route: " + r + ", is down: " + r.isDown() + ", carried: " + r.getCarriedTraffic() + ", carried all ok: " + r.currentCarriedTrafficIfNotFailing + ", seq links and ps: " + r.cache_seqLinksAndProtectionSegments + ", seqlinks real: " + r.cache_seqLinksRealPath);
 			for (ProtectionSegment r : cache_traversingSegments) System.out.println ("-- trav segment: " + r + ", is down: " + r.isDown() + ", carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + r.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments + ", sea links: " + r.seqLinks);
 			throw new RuntimeException ("Bad: Link: " + this + ". carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments + ", check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
 		}

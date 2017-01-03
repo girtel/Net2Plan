@@ -549,7 +549,7 @@ public class Demand extends NetworkElement
 		for (Route r : cache_routes)
 		{
 			double cost = 0; 
-			for (NetworkElement e : r.seqLinksSegmentsAndResourcesTraversed) 
+			for (NetworkElement e : r.currentSeqLinksSegmentsAndResourcesTraversed) 
 				if (e instanceof ProtectionSegment) for (Link ee : ((ProtectionSegment) e).seqLinks) cost += linkCosts [ee.index];
 				else if (e instanceof Link) cost += linkCosts [e.index];
 				else if (e instanceof Resource) cost += resourceCosts [e.index];
