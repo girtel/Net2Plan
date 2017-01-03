@@ -16,6 +16,8 @@ import cern.colt.list.tdouble.DoubleArrayList;
 import cern.colt.list.tint.IntArrayList;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import junit.framework.Assert;
+
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
@@ -644,8 +646,8 @@ public class Link extends NetworkElement
 				if (this.cache_traversingRoutes.containsKey(route))
 				{
 					int numPasses = 0; for (Link linkRoute : route.cache_seqLinksRealPath) if (linkRoute == this) numPasses ++; if (numPasses != this.cache_traversingRoutes.get(route)) throw new RuntimeException ("Bad");
-					check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += route.getCarriedTraffic() * this.cache_traversingRoutes.get(route);
-					check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += route.getOccupiedCapacity(this) * this.cache_traversingRoutes.get(route);
+					check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += route.getCarriedTraffic();
+					check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += route.getOccupiedCapacity(this);
 //					System.out.println ("Route " + route + ", traverses this link (" + this + "), numPasses: " + this.cache_traversingRoutes.get(route) + ", its carried traffic is: " + route.carriedTraffic + " and thus accumlates a carried traffic of: " + (route.carriedTraffic * this.cache_traversingRoutes.get(route)));
 				}
 			}
@@ -678,7 +680,7 @@ public class Link extends NetworkElement
 			for (ProtectionSegment r : cache_traversingSegments) System.out.println ("-- trav segment: " + r + ", is down: " + r.isDown() + ", carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + r.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments + ", sea links: " + r.seqLinks);
 			throw new RuntimeException ("Bad: Link: " + this + ". carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments + ", check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
 		}
-		if (Math.abs(cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments - check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) throw new RuntimeException ("Bad");
+		org.junit.Assert.assertEquals(cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments , check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments , 1E-3);
 		
 		if (coupledLowerLayerDemand != null)
 			if (!coupledLowerLayerDemand.coupledUpperLayerLink.equals (this)) throw new RuntimeException ("Bad");
@@ -693,8 +695,8 @@ public class Link extends NetworkElement
 		for (Entry<Route,Integer> entry : cache_traversingRoutes.entrySet())
 		{
 			/* this includes routes traversing the link, and routes traversing a protection segment containing the link */
-			this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += entry.getValue() * entry.getKey().getCarriedTraffic();
-			this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += entry.getValue() * entry.getKey().getOccupiedCapacity(this);
+			this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += entry.getKey().getCarriedTraffic();
+			this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += entry.getKey().getOccupiedCapacity(this);
 		}
 		for (MulticastTree t : cache_traversingTrees)
 		{

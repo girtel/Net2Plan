@@ -35,6 +35,8 @@ import java.util.Set;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 
+import junit.framework.Assert;
+
 /** <p>.</p> 
  * @author Pablo Pavon-Marino
  */
@@ -440,9 +442,9 @@ public class Resource extends NetworkElement
 			final Route r = travRoute.getKey();
 			final double val = travRoute.getValue();
 			if (r.cache_linkSegmentsAndResourcesTraversedAndOccupiedCapIfnotFailMap.get(this) != val) throw new RuntimeException ("Bad");
-			accumOccupCap += val;
+			if (!r.isDown()) accumOccupCap += val;
 		}
-		if (Math.abs(accumOccupCap - cache_totalOccupiedCapacity) > 1e-3) throw new RuntimeException ("Bad");
+		org.junit.Assert.assertEquals (accumOccupCap , cache_totalOccupiedCapacity , 0.001);
 	}
 
 	

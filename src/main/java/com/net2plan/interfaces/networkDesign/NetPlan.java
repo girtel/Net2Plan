@@ -580,9 +580,9 @@ public class NetPlan extends NetworkElement
 		}
 		for (Route originRoute : origin.routes)
 		{
-			List<NetworkElement> newInitialPath = (List<NetworkElement>) this.translateCollectionToThisNetPlan(originRoute.initialSeqLinksAndResourcesTraversedWhenCreated); 
+			List<NetworkElement> newInitialPath = (List<NetworkElement>) this.translateCollectionToThisNetPlan(originRoute.initialSeqLinksAndResourcesTraversed); 
 			Route newRoute = this.addServiceChain(newLayer.demands.get(originRoute.demand.index) , 
-					originRoute.initialCarriedTrafficWhenCreated , originRoute.initialLinksAndResourcesOccupationIfNotFailing , 
+					originRoute.initialCarriedTrafficIfNotFailing , originRoute.initialLinksAndResourcesOccupationIfNotFailing , 
 					newInitialPath , originRoute.attributes);
 			newRoute.setCarriedTrafficAndPath(originRoute.currentCarriedTrafficIfNotFailing, 
 					(List<NetworkElement>) translateCollectionToThisNetPlan(originRoute.currentSeqLinksSegmentsAndResourcesTraversed) ,
@@ -1841,7 +1841,7 @@ public class NetPlan extends NetworkElement
 			for (Route originRoute : originLayer.routes)
 			{
 				Route newElement = new Route (this , originRoute.id , originRoute.index , cache_id2DemandMap.get(originRoute.demand.id) ,
-						originRoute.initialCarriedTrafficWhenCreated , (List<NetworkElement>) translateCollectionToThisNetPlan(originRoute.initialSeqLinksAndResourcesTraversedWhenCreated) ,
+						originRoute.initialCarriedTrafficIfNotFailing , (List<NetworkElement>) translateCollectionToThisNetPlan(originRoute.initialSeqLinksAndResourcesTraversed) ,
 						originRoute.initialLinksAndResourcesOccupationIfNotFailing ,
 						originRoute.attributes);
 				newElement.currentCarriedTrafficIfNotFailing = originRoute.currentCarriedTrafficIfNotFailing;
@@ -5205,15 +5205,13 @@ public class NetPlan extends NetworkElement
 
 						writer.writeAttribute("id", Long.toString(route.id));
 						writer.writeAttribute("demandId", Long.toString(route.demand.id));
-						writer.writeAttribute("currentCarriedTrafficIfNotFailing", Double.toString(route.currentCarriedTrafficIfNotFailing));
-						writer.writeAttribute("currentLinksSegmentsAndResourcesOccupationIfNotFailing", CollectionUtils.join(route.currentLinksSegmentsAndResourcesOccupationIfNotFailing, " "));
 
 						/* Write the initial route state info (if all links/resources still exist, if not, the current) */
 						boolean initialSeqLinksAndResourcesNotRemoved = true;
-						for (NetworkElement e : route.initialSeqLinksAndResourcesTraversedWhenCreated) if (e.netPlan == null) { initialSeqLinksAndResourcesNotRemoved = false; break; }
+						for (NetworkElement e : route.initialSeqLinksAndResourcesTraversed) if (e.netPlan == null) { initialSeqLinksAndResourcesNotRemoved = false; break; }
 						/* Initial sequence, but if link/resources where removed, then use the current sequence */
-						final double initialCarriedTrafficToWrite = initialSeqLinksAndResourcesNotRemoved? route.initialCarriedTrafficWhenCreated : route.currentCarriedTrafficIfNotFailing; 
-						final List<NetworkElement> initialSeqLinksAndResourcesToWrite = initialSeqLinksAndResourcesNotRemoved? route.initialSeqLinksAndResourcesTraversedWhenCreated : route.getSeqLinksRealPathAndResources(); 
+						final double initialCarriedTrafficToWrite = initialSeqLinksAndResourcesNotRemoved? route.initialCarriedTrafficIfNotFailing : route.currentCarriedTrafficIfNotFailing; 
+						final List<NetworkElement> initialSeqLinksAndResourcesToWrite = initialSeqLinksAndResourcesNotRemoved? route.initialSeqLinksAndResourcesTraversed : route.getSeqLinksRealPathAndResources(); 
 						final List<Double> initialOccupationToWrite = route.initialLinksAndResourcesOccupationIfNotFailing;
 						if (!initialSeqLinksAndResourcesNotRemoved)
 						{
@@ -5228,14 +5226,16 @@ public class NetPlan extends NetworkElement
 									initialOccupationToWrite.add(occup);
 							}
 						}
-						writer.writeAttribute("initialCarriedTrafficWhenCreated", Double.toString(initialCarriedTrafficToWrite));
+						writer.writeAttribute("initialCarriedTrafficIfNotFailing", Double.toString(initialCarriedTrafficToWrite));
 						writer.writeAttribute("initialLinksAndResourcesOccupationIfNotFailing", CollectionUtils.join(initialOccupationToWrite, " "));
-						writer.writeAttribute("initialSeqLinksAndResourcesTraversedWhenCreated", CollectionUtils.join(initialSeqLinksAndResourcesToWrite.stream().map(e->e.id).collect(Collectors.toList()), " "));
+						writer.writeAttribute("initialSeqLinksAndResourcesTraversed", CollectionUtils.join(initialSeqLinksAndResourcesToWrite.stream().map(e->e.id).collect(Collectors.toList()), " "));
 						
 						/* Current resource occupation map */
 						/* Backup segment list */
-						writer.writeAttribute("currentSeqLinksSegmentsAndResourcesTraversed", CollectionUtils.join(NetPlan.getIds(route.currentSeqLinksSegmentsAndResourcesTraversed), " "));
+						writer.writeAttribute("currentCarriedTrafficIfNotFailing", Double.toString(route.currentCarriedTrafficIfNotFailing));
 						writer.writeAttribute("currentLinksSegmentsAndResourcesOccupationIfNotFailing", CollectionUtils.join(route.currentLinksSegmentsAndResourcesOccupationIfNotFailing, " "));
+						writer.writeAttribute("currentSeqLinksSegmentsAndResourcesTraversed", CollectionUtils.join(NetPlan.getIds(route.currentSeqLinksSegmentsAndResourcesTraversed), " "));
+
 						writer.writeAttribute("potentialBackupSegments", CollectionUtils.join(NetPlan.getIds(route.potentialBackupSegments), " "));
 
 						for (Entry<String, String> entry : route.attributes.entrySet())

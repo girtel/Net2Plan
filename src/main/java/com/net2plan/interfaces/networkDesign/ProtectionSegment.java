@@ -20,6 +20,8 @@ import com.net2plan.utils.Pair;
 import java.util.*;
 import java.util.Map.Entry;
 
+import org.junit.Assert;
+
 /**
  * <p>This class contains a representation of a protection segment. This is a contiguous sequence of links in a particular network layer
  *  (with a routing of type source routnig), and an amount of reserved capacity in each of the traversed links. A protection segment can be associated
@@ -329,9 +331,9 @@ public class ProtectionSegment extends Link
 			final Integer times = entry.getValue(); if (times < 1) throw new RuntimeException ("Bad");
 			if (!r.cache_seqLinksAndProtectionSegments.contains(this)) throw new RuntimeException ("Bad");
 			if (!shouldBeUp && (r.getCarriedTraffic() > 1e-3)) throw new RuntimeException ("Bad");
-			if (!shouldBeUp && (r.getOccupiedCapacity() > 1e-3)) throw new RuntimeException ("Bad");
+			if (!shouldBeUp && (r.getOccupiedCapacity(this) > 1e-3)) throw new RuntimeException ("Bad");
 			checkCarryingTraffic += times * r.getCarriedTraffic(); 
-			checkOccupiedSegmentCapacity += times * r.getOccupiedCapacity();
+			checkOccupiedSegmentCapacity += times * r.getOccupiedCapacity(this);
 		}
 		if (Math.abs(checkCarryingTraffic - this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) > 1e-3)
 		{
@@ -342,7 +344,7 @@ public class ProtectionSegment extends Link
 			System.out.println ("carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
 			throw new RuntimeException ("Bad");
 		}
-		if (Math.abs(checkOccupiedSegmentCapacity - this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > 1e-3) throw new RuntimeException ("Bad");
+		Assert.assertEquals (this.toString() , checkOccupiedSegmentCapacity , this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments , 0.001);
 	}
 
 }

@@ -35,7 +35,6 @@ import javax.xml.stream.events.XMLEvent;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.codehaus.stax2.XMLStreamReader2;
 
-import com.net2plan.internal.AttributeMap;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.LongUtils;
@@ -207,83 +206,28 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final long routeId = getLong ("id");
 		if (routeId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
 		final long demandId = getLong ("demandId");
-		final double currentCarriedTrafficIfNotFailing = getDouble ("currentCarriedTrafficIfNotFailing");  
-		final double currentLinksSegmentsAndResourcesOccupationIfNotFailing = getDouble ("currentLinksSegmentsAndResourcesOccupationIfNotFailing");  
-//		if (occupiedLinksSegmentsAndResourcesCapacitiesIfNotFailing < 0) occupiedLinksSegmentsAndResourcesCapacitiesIfNotFailing = carriedTrafficIfNotFailing;
 		
-//		List<Long> currentSeqLinksAndProtectionSegments = new LinkedList<Long> (initialSeqLinksWhenCreated);
-//		try { currentSeqLinksAndProtectionSegments = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "currentSeqLinksAndProtectionSegments"))); } catch (Exception e) { }
-		List<Long> potentialBackupSegments = getListLong("potentialBackupSegments");
-		List<NetworkElement> initialSeqLinksAndResources_obj = getLinkAndResorceListFromIds(netPlan, getListLong("initialSeqLinksAndResources"));
-		List<NetworkElement> currentSeqLinksSegmentsAndResources_obj = getLinkSegmentAndResorceListFromIds(netPlan, getListLong("currentSeqLinksSegmentsAndResources"));
-		List<Double> initialResourceOccupationMap = getListDouble("initialResourceOccupationMap");
-		List<Double> currentResourceOccupationMap = getListDouble ("currentResourceOccupationMap");
-		Map<Resource,Double> initialResourceOccupationMap_obj = new HashMap<Resource,Double> ();
+		final double initialCarriedTrafficIfNotFailing = getDouble ("initialCarriedTrafficIfNotFailing");
+		final List<Double> initialLinksAndResourcesOccupationIfNotFailing = getListDouble("initialLinksAndResourcesOccupationIfNotFailing");
+		final List<NetworkElement> initialSeqLinksAndResourcesTraversed = getLinkAndResorceListFromIds(netPlan, getListLong("initialSeqLinksAndResourcesTraversed"));
+
+		final double currentCarriedTrafficIfNotFailing = getDouble ("currentCarriedTrafficIfNotFailing");
+		final List<Double> currentLinksSegmentsAndResourcesOccupationIfNotFailing = getListDouble("currentLinksSegmentsAndResourcesOccupationIfNotFailing");
+		final List<NetworkElement> currentSeqLinksSegmentsAndResourcesTraversed = getLinkSegmentAndResorceListFromIds(netPlan, getListLong("currentSeqLinksSegmentsAndResourcesTraversed"));
+
+		final List<Long> potentialBackupSegments = getListLong("potentialBackupSegments");
+
+		final Route newRoute = netPlan.addServiceChain(netPlan.getDemandFromId(demandId), initialCarriedTrafficIfNotFailing, 
+				initialLinksAndResourcesOccupationIfNotFailing, initialSeqLinksAndResourcesTraversed, null);
+		
+		for(long segmentId : potentialBackupSegments)
 		{
-			Iterator<Double> it = initialResourceOccupationMap.iterator();
-			while (it.hasNext())
-			{
-				final long id = (long) (double) it.next();
-				final double cap = it.next();
-				if (netPlan.getResourceFromId(id) == null) throw new Net2PlanException ("Error parsing route information. Unknown element of id: " + id);
-				initialResourceOccupationMap_obj.put(netPlan.getResourceFromId(id) , cap);
-			}
-		}
-		Map<Resource,Double> currentResourceOccupationMap_obj = new HashMap<Resource,Double> ();
-		{
-			Iterator<Double> it = currentResourceOccupationMap.iterator();
-			while (it.hasNext())
-			{
-				final long id = (long) (double) it.next();
-				final double cap = it.next();
-				if (netPlan.getResourceFromId(id) == null) throw new Net2PlanException ("Error parsing route information. Unknown element of id: " + id);
-				currentResourceOccupationMap_obj.put(netPlan.getResourceFromId(id) , cap);
-			}
+			if (netPlan.getProtectionSegmentFromId(segmentId) == null) throw new Net2PlanException ("Uknown segment id");
+			newRoute.addProtectionSegment(netPlan.getProtectionSegmentFromId(segmentId));
 		}
 		
-//		List<Link> initialSeqLinksAndResources_obj = new LinkedList<Link> (); for (long linkId : initialSeqLinksAndResources) initialSeqLinksAndResources_obj.add (netPlan.getLinkFromId(linkId));
-//		List<Link> seqLinksAndProtectionSegments_link = new LinkedList<Link> (); 
-//		for (long linkId : currentSeqLinksAndProtectionSegments) 
-//			if (netPlan.getLinkFromId(linkId) != null) seqLinksAndProtectionSegments_link.add (netPlan.getLinkFromId(linkId));
-//			else if (mapOldId2ProtectionSegment.get(linkId) != null) seqLinksAndProtectionSegments_link.add (mapOldId2ProtectionSegment.get(linkId));
-//			else throw new Net2PlanException ("Error parsing route information (current sequence of links and protection segments)");
-//		Route newRoute = netPlan.addRoute(mapOldId2Demand.get(demandId) , carriedTrafficIfNotFailing, occupiedLinkCapacityIfNotFailing, initialSeqLinksWhenCreated_link, null);
-		Route newRoute = netPlan.addServiceChain(routeId , netPlan.getDemandFromId(demandId) , carriedTrafficIfNotFailing, occupiedLinkCapacityIfNotFailing, initialSeqLinksAndResources_obj, initialResourceOccupationMap_obj , null);
-		for(long segmentId : backupSegmentList) newRoute.addProtectionSegment(netPlan.getProtectionSegmentFromId(segmentId));
-		newRoute.setSeqLinksSegmentsAndResourcesOccupation(currentSeqLinksSegmentsAndResources_obj , currentResourceOccupationMap_obj);
-		if (Math.abs (newRoute.getCarriedTrafficInNoFailureState() - carriedTrafficIfNotFailing) > 1e-3) throw new RuntimeException ("Bad");
-		if (Math.abs (newRoute.getOccupiedCapacityInNoFailureState() - occupiedLinkCapacityIfNotFailing) > 1e-3) throw new RuntimeException ("Bad");
-		
-		while(xmlStreamReader.hasNext())
-		{
-			xmlStreamReader.next();
-
-			switch(xmlStreamReader.getEventType())
-			{
-				case XMLEvent.START_ELEMENT:
-					String startElementName = xmlStreamReader.getName().toString();
-					switch(startElementName)
-					{
-						case "attribute":
-							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
-							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
-							newRoute.setAttribute(key, name);
-							break;
-
-						default:
-							throw new RuntimeException("Bad");
-					}
-
-					break;
-
-				case XMLEvent.END_ELEMENT:
-					String endElementName = xmlStreamReader.getName().toString();
-					if (endElementName.equals("route")) return;
-					break;
-			}
-		}
-
-		throw new RuntimeException("'Route' element not parsed correctly (end tag not found)");
+		newRoute.setCarriedTrafficAndPath(currentCarriedTrafficIfNotFailing, currentSeqLinksSegmentsAndResourcesTraversed, currentLinksSegmentsAndResourcesOccupationIfNotFailing);
+		readAndAddAttributesToEnd(newRoute, "route");
 	}
 	
 	
@@ -593,22 +537,6 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 			if (!it.hasNext()) throw new Net2PlanException ("Wrong array size");
 			final double val = it.next();
 			final Resource r = np.getResourceFromId(id); if (r == null) throw new Net2PlanException ("Unknown resource id");
-			res.put(r, val);
-		}
-		return res;
-	}
-	private static Map<NetworkElement,Double> getLinkAndResourceOccupationMap (NetPlan np , List<Double> resAndOccList)
-	{
-		Map<NetworkElement,Double> res = new HashMap<NetworkElement,Double> ();
-		Iterator<Double> it = resAndOccList.iterator();
-		while (it.hasNext())
-		{
-			final long id = (long) (double) it.next();
-			if (!it.hasNext()) throw new Net2PlanException ("Wrong array size");
-			final double val = it.next();
-			NetworkElement r = np.getResourceFromId(id);
-			if (r == null) r = np.getLinkFromId(id);
-			if (r == null) throw new Net2PlanException ("Unknown resource or link id");
 			res.put(r, val);
 		}
 		return res;
