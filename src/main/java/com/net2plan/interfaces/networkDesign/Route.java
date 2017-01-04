@@ -88,7 +88,6 @@ public class Route extends NetworkElement
 		this.egressNode = demand.egressNode;
 		this.primaryPath = new ArrayList<NetworkElement> (seqLinksAndResourcesTraversed);
 		this.currentPath = new LinkedList<NetworkElement> (seqLinksAndResourcesTraversed);
-		this.primaryPath = new LinkedList<NetworkElement> ();
 		this.backupPaths = new ArrayList<List<NetworkElement>> ();
 		this.currentCarriedTrafficIfNotFailing = 0; 
 		this.currentLinksAndResourcesOccupationIfNotFailing = Collections.nCopies(seqLinksAndResourcesTraversed.size() , 0.0);  
@@ -163,12 +162,12 @@ public class Route extends NetworkElement
 	 * <p>Adds a path to the list of potential backup path of this demand. By default, the path is added at the end of the list. 
 	 * @param path the sequence of links and resources to traverse (must be a valid path for the demand, or an exception is thrown)
 	 */
-	public void addBackupPath (List<NetworkElement> path)
+	public void addBackupPath (List<? extends NetworkElement> path)
 	{
 		this.checkAttachedToNetPlanObject();
 		netPlan.checkPathValidityForDemand (path, demand);
 		netPlan.checkIsModifiable();
-		this.backupPaths.add (path);
+		this.backupPaths.add ((List<NetworkElement>) path);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 
@@ -622,22 +621,6 @@ public class Route extends NetworkElement
 
 	void checkCachesConsistency ()
 	{
-//		final NetworkLayer layer;
-//		final Demand demand;
-//		final Node ingressNode;
-//		final Node egressNode;
-//		double currentCarriedTrafficIfNotFailing;
-//		List<Double> currentLinksAndResourcesOccupationIfNotFailing;
-//		List<NetworkElement> primaryPath;
-//		List<NetworkElement> currentPath; // each object is a Link, or a Resource
-
-//		List<List<NetworkElement>> backupPaths;
-//		List<Link> cache_seqLinksRealPath;
-//		List<Node> cache_seqNodesRealPath;
-//		Map<NetworkElement,Double> cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap;  
-		
-
-
 		assertTrue (layer.routes.contains(this));
 		assertTrue (demand.cache_routes.contains(this));
 		assertNotNull (ingressNode.netPlan);

@@ -195,13 +195,10 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		out.append("<tr><td align=\"left\">Total number of frequency slot converters needed</td><td>" + stat.numberOfWavelengthConversions + "</td></tr>");
 		
 		out.append("<tr><th align=\"left\"><b>Resilience stats</b></th></tr>");
-		out.append("<tr><td align=\"left\">Number of reserved protection segments</td><td>" + netPlan.getNumberOfProtectionSegments() + "</td></tr>");
 		out.append("<tr><td align=\"left\">The protection lightpaths are bidirectional? (same number of the same number of slots reserved between each node pair)?</td><td>" + stat.bidirectionalProtectionSegments + "</td></tr>");
 		out.append("<tr><td align=\"left\">Fiber capacity (number of slots) reserved for protection (min/average/max)</td><td>" + stat.fiberCapacityReservedForProtection.toString(df_2) + "</td></tr>");
-		final Triple<Double, Double, Double> resilienceInfo = TrafficComputationEngine.getTrafficProtectionDegree(netPlan);
-		out.append("<tr><td align=\"left\">% of carried traffic unprotected</td><td>" + df_2.format(resilienceInfo.getFirst()) + " %" + "</td></tr>");
-		out.append("<tr><td align=\"left\">% of carried traffic with complete and dedicated protection (e.g. 1+1)</td><td>" + df_2.format(resilienceInfo.getSecond()) + " %" + "</td></tr>");
-		out.append("<tr><td align=\"left\">% of carried traffic with partial and/or shared protection</td><td>" + df_2.format(resilienceInfo.getThird()) + " %" + "</td></tr>");
+		final double resilienceInfo = TrafficComputationEngine.getTrafficProtectionDegree(netPlan);
+		out.append("<tr><td align=\"left\">% of carried traffic with at least one backup path</td><td>" + df_2.format(resilienceInfo) + " %" + "</td></tr>");
 		out.append("</table>");
 		
 		/* Per link information */

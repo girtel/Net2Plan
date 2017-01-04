@@ -4400,7 +4400,7 @@ public class NetPlan extends NetworkElement
 	 * @param col the collection
 	 * @return see above
 	 */
-	public boolean isUp (Collection<NetworkElement> col)
+	public boolean isUp (Collection<? extends NetworkElement> col)
 	{
 		for (NetworkElement e : col)
 		{
@@ -4950,12 +4950,20 @@ public class NetPlan extends NetworkElement
 
 						/* Primary and backup paths are set when do not traverse removed links/resources */
 						if (route.primaryPath.stream().allMatch(e -> e.netPlan != null))
-							writer.writeAttribute("primaryPath", CollectionUtils.join(NetPlan.getIds(route.primaryPath), " "));
-						
+						{
+							XMLUtils.indent(writer, 4);
+							writer.writeEmptyElement("primaryPath");
+							writer.writeAttribute("path", CollectionUtils.join(NetPlan.getIds(route.primaryPath), " "));
+						}
 						for (List<NetworkElement> backupPath : route.backupPaths)
+						{
 							if (backupPath.stream().allMatch(e -> e.netPlan != null))
-								writer.writeAttribute("backupPath", CollectionUtils.join(NetPlan.getIds(backupPath), " "));
-						
+							{							
+								XMLUtils.indent(writer, 4);
+								writer.writeEmptyElement("backupPath");
+								writer.writeAttribute("path", CollectionUtils.join(NetPlan.getIds(backupPath), " "));
+							}
+						}
 						for (Entry<String, String> entry : route.attributes.entrySet())
 						{
 							XMLUtils.indent(writer, 4);

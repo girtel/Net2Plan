@@ -357,7 +357,7 @@ public class IOMatPlanWDM_design extends IOFilter
 				}
 				while (layerDemandId < numLayers);
 				
-				WDMUtils.checkResourceAllocationClashing(netPlan, false, false , wdmLayer);
+				WDMUtils.checkResourceAllocationClashing(netPlan, false, false , false , false , wdmLayer);
 			}
 			
 			return netPlan;

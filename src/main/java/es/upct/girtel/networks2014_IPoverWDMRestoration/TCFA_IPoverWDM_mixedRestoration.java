@@ -122,7 +122,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
         }
 
         final DoubleMatrix1D w_f = WDMUtils.getVectorFiberNumFrequencySlots(netPlan, wdmLayer);
-        final DoubleMatrix2D wavelengthFiberOccupancy = WDMUtils.getNetworkSlotAndRegeneratorOcupancy(netPlan, true, wdmLayer).getFirst();
+        final DoubleMatrix2D wavelengthFiberOccupancy = WDMUtils.getNetworkSlotAndRegeneratorOcupancy(netPlan, true, false , false , wdmLayer).getFirst();
 				
 		/* First stage: full mesh of enough lightpaths to carry all in one hop. HLDA strategy to create the lightpaths */
         DoubleMatrix1D pendingCarriedTraffic_d = netPlan.getVectorDemandOfferedTraffic(ipLayer).copy();
@@ -142,7 +142,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
 
 			/* Allocate the lightpath */
             final List<Link> seqFibers = new LinkedList<Link>();
-            for (Link cplLink : lp.getFirst().getSeqLinksRealPath())
+            for (Link cplLink : lp.getFirst().getSeqLinks())
                 seqFibers.add(netPlan.getLinkFromId(cplLink.getId()));
             final int wavelengthId = lp.getSecond();
             final double trafficToCarry = Math.min(pendingCarriedTraffic_thisDemand, lineRatePerLightpath_Gbps);
@@ -241,7 +241,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
                     if (lp == null) continue;
 
                     final List<Link> seqFibers = new LinkedList<Link>();
-                    for (Link cplLink : lp.getFirst().getSeqLinksRealPath())
+                    for (Link cplLink : lp.getFirst().getSeqLinks())
                         seqFibers.add(netPlan.getLinkFromId(cplLink.getId()));
                     final int wavelengthId = lp.getSecond();
 					
@@ -273,7 +273,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
         IPUtils.setECMPForwardingRulesFromLinkWeights(netPlan, null, ipLayer);
 		
 		/* Check consistency of WDM layer */
-        WDMUtils.checkResourceAllocationClashing(netPlan, true, false , wdmLayer);
+        WDMUtils.checkResourceAllocationClashing(netPlan, true, false , false , false , wdmLayer);
 
         return "Ok";
     }
@@ -332,7 +332,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
         final Demand cplDemand = cpl.getNodePairDemands(cpl.getNodeFromId(ingressNode.getId()), cpl.getNodeFromId(egressNode.getId()), false).iterator().next();
         for (Route cplRoute : cplDemand.getRoutes()) {
             List<Link> seqLinks = new LinkedList<Link>();
-            for (Link cplLink : cplRoute.getSeqLinksRealPath()) seqLinks.add(netPlan.getLinkFromId(cplLink.getId()));
+            for (Link cplLink : cplRoute.getSeqLinks()) seqLinks.add(netPlan.getLinkFromId(cplLink.getId()));
             final int wavelength = WDMUtils.spectrumAssignment_firstFit(seqLinks, wavelengthFiberOccupancy,1);
             if (wavelength != -1)
                 return Pair.of(cplRoute, wavelength);

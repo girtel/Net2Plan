@@ -129,16 +129,6 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		throw new RuntimeException("'Network' element not parsed correctly (end tag not found)");
 	}
 	
-	private void parseProtectionSegment(NetPlan netPlan, long layerId) throws XMLStreamException
-	{
-		final long segmentId = getLong ("id");
-		if (segmentId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
-		final double reservedCapacity = getDouble ("reservedCapacity");
-		final List<Link> newSeqLinks = getLinkListFromIds(netPlan, getListLong("seqLinks"));
-		ProtectionSegment newSegment = netPlan.addProtectionSegment(segmentId , newSeqLinks, reservedCapacity, null);
-		readAndAddAttributesToEnd(newSegment, "protectionSegment");
-	}
-
 	private void parseNode(NetPlan netPlan) throws XMLStreamException
 	{
 		final long nodeId = getLong ("id");
@@ -207,27 +197,45 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		if (routeId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
 		final long demandId = getLong ("demandId");
 		
-		final double initialCarriedTrafficIfNotFailing = getDouble ("initialCarriedTrafficIfNotFailing");
-		final List<Double> initialLinksAndResourcesOccupationIfNotFailing = getListDouble("initialLinksAndResourcesOccupationIfNotFailing");
-		final List<NetworkElement> initialSeqLinksAndResourcesTraversed = getLinkAndResorceListFromIds(netPlan, getListLong("initialSeqLinksAndResourcesTraversed"));
-
 		final double currentCarriedTrafficIfNotFailing = getDouble ("currentCarriedTrafficIfNotFailing");
-		final List<Double> currentLinksSegmentsAndResourcesOccupationIfNotFailing = getListDouble("currentLinksSegmentsAndResourcesOccupationIfNotFailing");
-		final List<NetworkElement> currentSeqLinksSegmentsAndResourcesTraversed = getLinkSegmentAndResorceListFromIds(netPlan, getListLong("currentSeqLinksSegmentsAndResourcesTraversed"));
-
-		final List<Long> potentialBackupSegments = getListLong("potentialBackupSegments");
-
-		final Route newRoute = netPlan.addServiceChain(netPlan.getDemandFromId(demandId), initialCarriedTrafficIfNotFailing, 
-				initialLinksAndResourcesOccupationIfNotFailing, initialSeqLinksAndResourcesTraversed, null);
+		final List<Double> currentLinksAndResourcesOccupationIfNotFailing = getListDouble("currentLinksAndResourcesOccupationIfNotFailing");
+		final List<NetworkElement> currentPath = getLinkAndResorceListFromIds(netPlan, getListLong("currentPath"));
+		final Route newRoute = netPlan.addServiceChain(netPlan.getDemandFromId(demandId), currentCarriedTrafficIfNotFailing, 
+				currentLinksAndResourcesOccupationIfNotFailing, currentPath, null);
 		
-		for(long segmentId : potentialBackupSegments)
+		while(xmlStreamReader.hasNext())
 		{
-			if (netPlan.getProtectionSegmentFromId(segmentId) == null) throw new Net2PlanException ("Uknown segment id");
-			newRoute.addProtectionSegment(netPlan.getProtectionSegmentFromId(segmentId));
+			xmlStreamReader.next();
+
+			switch(xmlStreamReader.getEventType())
+			{
+				case XMLEvent.START_ELEMENT:
+					String startElementName = xmlStreamReader.getName().toString();
+					switch(startElementName)
+					{
+						case "primaryPath":
+							newRoute.setPrimaryPath(getLinkAndResorceListFromIds(netPlan, getListLong("path")));
+							break;
+						case "backupPath":
+							newRoute.addBackupPath(getLinkAndResorceListFromIds(netPlan, getListLong("path")));
+							break;
+						case "attribute":
+							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
+							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
+							newRoute.setAttribute(key, name);
+							break;
+						default:
+							throw new RuntimeException("Bad");
+					}
+					break;
+	
+				case XMLEvent.END_ELEMENT:
+					String endElementName = xmlStreamReader.getName().toString();
+					if (endElementName.equals("route")) return;
+					break;
+			}
 		}
-		
-		newRoute.setPath(currentCarriedTrafficIfNotFailing, currentSeqLinksSegmentsAndResourcesTraversed, currentLinksSegmentsAndResourcesOccupationIfNotFailing);
-		readAndAddAttributesToEnd(newRoute, "route");
+		throw new RuntimeException("'Route' element not parsed correctly (end tag not found)");
 	}
 	
 	
@@ -443,10 +451,6 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 					String startElementName = xmlStreamReader.getName().toString();
 					switch(startElementName)
 					{
-						case "protectionSegment":
-							parseProtectionSegment(netPlan, layerId);
-							break;
-
 						case "route":
 							parseRoute(netPlan, layerId);
 							break;
@@ -509,19 +513,6 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		{
 			NetworkElement e = np.getLinkFromId(id);
 			if (e == null) e = np.getResourceFromId(id);
-			if (e == null) throw new Net2PlanException ("Unknown id in the list");
-			res.add(e); 
-		}
-		return res;
-	}
-	private static List<NetworkElement> getLinkSegmentAndResorceListFromIds (NetPlan np , Collection<Long> ids) 
-	{
-		List<NetworkElement> res = new LinkedList<NetworkElement> (); 
-		for (long id : ids)
-		{
-			NetworkElement e = np.getLinkFromId(id);
-			if (e == null) e = np.getResourceFromId(id);
-			if (e == null) e = np.getProtectionSegmentFromId(id);
 			if (e == null) throw new Net2PlanException ("Unknown id in the list");
 			res.add(e); 
 		}

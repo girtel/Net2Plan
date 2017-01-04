@@ -55,7 +55,6 @@ import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.Triple;
 
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import net.miginfocom.swing.MigLayout;
@@ -422,15 +421,11 @@ public class NetPlanViewTableComponent_layer extends JPanel {
 
         layerSummaryInfo.add(trafficData);
 
-        DoubleMatrix1D vector_rhoe = netPlan.getVectorLinkUtilizationIncludingProtectionSegments();
+        DoubleMatrix1D vector_rhoe = netPlan.getVectorLinkUtilization();
         double max_rho_e = vector_rhoe.size() == 0 ? 0 : vector_rhoe.getMaxLocation()[0];
         RoutingType routingType = netPlan.getRoutingType();
         if (routingType == RoutingType.SOURCE_ROUTING) {
-            DoubleMatrix1D vector_rho_e_noProtection = netPlan.getVectorLinkUtilizationNotIncludingProtectionSegments();
-            double max_rho_e_noProtection = vector_rho_e_noProtection.size() == 0 ? 0 : vector_rho_e_noProtection.getMaxLocation()[0];
-
             int R = netPlan.getNumberOfRoutes();
-            int S = netPlan.getNumberOfProtectionSegments();
             boolean isUnicastRoutingBifurcated = netPlan.isUnicastRoutingBifurcated();
             boolean hasUnicastRoutingLoops = netPlan.hasUnicastRoutingLoops();
 
@@ -441,7 +436,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
             Map<String, Object> routingData = new LinkedHashMap<String, Object>();
             routingData.put("Number of routes", R);
             routingData.put("Unicast routing is bifurcated?", isUnicastRoutingBifurcated ? "Yes" : "No");
-            routingData.put("Network congestion - bottleneck utilization (w. reserved bw, w.o. reserved bw)", String.format("%.3f, %.3f", max_rho_e, max_rho_e_noProtection));
+            routingData.put("Network congestion - bottleneck utilization", String.format("%.3f, %.3f", max_rho_e, max_rho_e));
             routingData.put("Average (unicast) route length (hops, km, ms)", String.format("%.3f, %.3f, %.3g", averageRouteLength_hops, averageRouteLength_km, averageRouteLength_ms));
             routingData.put("Unicast routing has loops?", hasUnicastRoutingLoops ? "Yes" : "No");
             routingData.put("Number of multicast trees", netPlan.getNumberOfMulticastTrees());
@@ -451,30 +446,15 @@ public class NetPlanViewTableComponent_layer extends JPanel {
 
             layerSummaryInfo.add(routingData);
 
-            DoubleMatrix1D reservedCapacityMap = netPlan.getVectorLinkCapacityReservedForProtection();
-            double u_e_reservedForProtection_avg = S == 0 ? 0 : reservedCapacityMap.zSum() / S;
-            double percentageReserved = 0;
-            for (Link link : netPlan.getLinks())
-                percentageReserved += Math.max(0, reservedCapacityMap.get(link.getIndex()) / link.getCapacity());
-
-            if (E != 0) percentageReserved *= 100.0 / E;
-
-            Triple<Double, Double, Double> protectionPercentage = TrafficComputationEngine.getTrafficProtectionDegree(netPlan);
-            double percentageUnprotected = protectionPercentage.getFirst();
-            double percentageDedicated = protectionPercentage.getSecond();
-            double percentageShared = protectionPercentage.getThird();
+            final double protectionPercentage = TrafficComputationEngine.getTrafficProtectionDegree(netPlan);
             Pair<Double, Double> srgDisjointnessPercentage = SRGUtils.getSRGDisjointnessPercentage(netPlan);
             String srgModel = SRGUtils.getSRGModel(netPlan);
 
             Map<String, Object> protectionData = new LinkedHashMap<String, Object>();
-            protectionData.put("Number of protection segments in this layer", S);
-            protectionData.put("Average link capacity reserved for protection (absolute, %)", String.format("%.3f, %.3f", u_e_reservedForProtection_avg, percentageReserved));
-            protectionData.put("% of carried traffic unprotected", String.format("%.3f", percentageUnprotected));
-            protectionData.put("% of carried traffic complete and dedicated protection", String.format("%.3f", percentageDedicated));
-            protectionData.put("% of carried traffic partial and/or shared protection", String.format("%.3f", percentageShared));
+            protectionData.put("% of carried traffic with at least one backup path", String.format("%.3f", protectionPercentage));
             protectionData.put("Number of SRGs in the network", numSRGs);
             protectionData.put("SRG definition characteristic", srgModel);
-            protectionData.put("% routes protected with SRG disjoint segments (w. end nodes, w.o. end nodes)", String.format("%.3f, %.3f", srgDisjointnessPercentage.getFirst(), srgDisjointnessPercentage.getSecond()));
+            protectionData.put("% routes protected with SRG disjoint backup paths (w. end nodes, w.o. end nodes)", String.format("%.3f, %.3f", srgDisjointnessPercentage.getFirst(), srgDisjointnessPercentage.getSecond()));
 
             layerSummaryInfo.add(protectionData);
         } else {

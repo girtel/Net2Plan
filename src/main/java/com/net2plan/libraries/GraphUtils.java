@@ -67,7 +67,6 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.utils.CollectionUtils;
@@ -666,7 +665,7 @@ public class GraphUtils
 		for (Route route : routes)
 		{
 			final int t = route.getEgressNode().getIndex();
-			for (Link link : route.getSeqLinksRealPath())
+			for (Link link : route.getSeqLinks())
 			{
 				final int e = link.getIndex();
 				x_te.setQuick(t, e, x_te.getQuick(t, e) + route.getCarriedTraffic());
@@ -685,7 +684,7 @@ public class GraphUtils
 		final int E = links.size();
 		DoubleMatrix1D y_e = DoubleFactory1D.dense.make(E);
 		for (Route r : routes)
-			for (Link e : r.getSeqLinksRealPath())
+			for (Link e : r.getSeqLinks())
 				y_e.set(e.getIndex(), y_e.get(e.getIndex()) + r.getCarriedTraffic());
 		return y_e;
 	}
@@ -730,7 +729,7 @@ public class GraphUtils
 		for (Route route : routes)
 		{
 			final int d = route.getDemand().getIndex();
-			for (Link link : route.getSeqLinksRealPath())
+			for (Link link : route.getSeqLinks())
 			{
 				final int e = link.getIndex();
 				x_de.setQuick(d, e, x_de.getQuick(d, e) + route.getCarriedTraffic());
@@ -795,7 +794,7 @@ public class GraphUtils
 		{
 			final Map<Link, Double> linkSpareCapacityMapToUse = new HashMap<Link, Double>();
 			for (Link e : links)
-				linkSpareCapacityMapToUse.put(e, Math.max(0, e.getCapacity() - e.getCarriedTrafficIncludingProtectionSegments()));
+				linkSpareCapacityMapToUse.put(e, Math.max(0, e.getCapacity() - e.getOccupiedCapacity()));
 			capacityTransformer = JUNGUtils.getEdgeWeightTransformer(linkSpareCapacityMapToUse);
 		} else
 			capacityTransformer = JUNGUtils.getEdgeWeightTransformer(linkSpareCapacityMap);
@@ -1591,12 +1590,6 @@ public class GraphUtils
 			Map<Route, Double> linkCostMapMap = CollectionUtils.toMap((List<Route>) elements, linkCostMap);
 			org.jgrapht.Graph<Node, Route> graph = JGraphTUtils.getAsWeightedGraph(auxGraph, linkCostMapMap);
 			return JGraphTUtils.isWeightedBidirectional(graph);
-		} else if (elements.get(0) instanceof ProtectionSegment)
-		{
-			org.jgrapht.Graph<Node, ProtectionSegment> auxGraph = JGraphTUtils.getGraphFromProtectionSegmentMap((List<ProtectionSegment>) elements);
-			Map<ProtectionSegment, Double> linkCostMapMap = CollectionUtils.toMap((List<ProtectionSegment>) elements, linkCostMap);
-			org.jgrapht.Graph<Node, ProtectionSegment> graph = JGraphTUtils.getAsWeightedGraph(auxGraph, linkCostMapMap);
-			return JGraphTUtils.isWeightedBidirectional(graph);
 		} else
 			throw new Net2PlanException("Unexpected network element type");
 	}
@@ -1878,30 +1871,6 @@ public class GraphUtils
 					if (!graph.containsVertex(destinationNode)) graph.addVertex(destinationNode);
 
 					graph.addEdge(originNode, destinationNode, route);
-				}
-			}
-			return graph;
-		}
-
-		/** <p>Obtains a {@code JGraphT} graph from a given protection segment map.</p>
-		 * 
-		 * @param demands List of demands
-		 * @return {@code JGraphT} graph */
-		public static org.jgrapht.Graph<Node, ProtectionSegment> getGraphFromProtectionSegmentMap(List<ProtectionSegment> segments)
-		{
-			org.jgrapht.Graph<Node, ProtectionSegment> graph = new DirectedWeightedMultigraph<Node, ProtectionSegment>(ProtectionSegment.class);
-
-			if (segments != null)
-			{
-				for (ProtectionSegment segment : segments)
-				{
-					Node originNode = segment.getOriginNode();
-					Node destinationNode = segment.getDestinationNode();
-
-					if (!graph.containsVertex(originNode)) graph.addVertex(originNode);
-					if (!graph.containsVertex(destinationNode)) graph.addVertex(destinationNode);
-
-					graph.addEdge(originNode, destinationNode, segment);
 				}
 			}
 			return graph;
