@@ -226,7 +226,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 			newRoute.addProtectionSegment(netPlan.getProtectionSegmentFromId(segmentId));
 		}
 		
-		newRoute.setCarriedTrafficAndPath(currentCarriedTrafficIfNotFailing, currentSeqLinksSegmentsAndResourcesTraversed, currentLinksSegmentsAndResourcesOccupationIfNotFailing);
+		newRoute.setPath(currentCarriedTrafficIfNotFailing, currentSeqLinksSegmentsAndResourcesTraversed, currentLinksSegmentsAndResourcesOccupationIfNotFailing);
 		readAndAddAttributesToEnd(newRoute, "route");
 	}
 	

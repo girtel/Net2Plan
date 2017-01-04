@@ -162,7 +162,6 @@ public class NetPlan extends NetworkElement
 	Map<Long,MulticastDemand> cache_id2MulticastDemandMap;
 	Map<Long,Route> cache_id2RouteMap;
 	Map<Long,MulticastTree> cache_id2MulticastTreeMap;
-	Map<Long,ProtectionSegment> cache_id2ProtectionSegmentMap;
 	Map<Long,SharedRiskGroup> cache_id2srgMap;
 	
 	
@@ -204,7 +203,6 @@ public class NetPlan extends NetworkElement
 		this.cache_id2MulticastDemandMap = new HashMap<Long,MulticastDemand> ();
 		this.cache_id2RouteMap = new HashMap<Long,Route> ();
 		this.cache_id2MulticastTreeMap = new HashMap<Long,MulticastTree> ();
-		this.cache_id2ProtectionSegmentMap = new HashMap<Long,ProtectionSegment> ();
 
 		interLayerCoupling = new DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping>(DemandLinkMapping.class);
 
@@ -567,26 +565,23 @@ public class NetPlan extends NetworkElement
 		for (Link originLink : origin.links)
 			this.addLink(nodes.get(originLink.originNode.index) , nodes.get(originLink.destinationNode.index) , originLink.capacity , originLink.lengthInKm , originLink.propagationSpeedInKmPerSecond , originLink.attributes , newLayer);
 		for (Demand originDemand : origin.demands)
-			this.addDemand(nodes.get(originDemand.ingressNode.index) , nodes.get(originDemand.egressNode.index) , originDemand.offeredTraffic , originDemand.attributes , newLayer);
+		{
+			Demand newDemand = this.addDemand(nodes.get(originDemand.ingressNode.index) , nodes.get(originDemand.egressNode.index) , originDemand.offeredTraffic , originDemand.attributes , newLayer);
+			newDemand.setServiceChainSequenceOfTraversedResourceTypes(originDemand.getServiceChainSequenceOfTraversedResourceTypes());
+		}
 		for (MulticastDemand originDemand : origin.multicastDemands)
 		{
 			Set<Node> newEgressNodes = new HashSet<Node> (); for (Node originEgress : originDemand.egressNodes) newEgressNodes.add (nodes.get(originEgress.index));
 			this.addMulticastDemand(nodes.get(originDemand.ingressNode.index) , newEgressNodes , originDemand.offeredTraffic , originDemand.attributes , newLayer);
 		}
-		for (ProtectionSegment originSegment: origin.protectionSegments)
-		{
-			List<Link> newSeqLinks = new LinkedList<Link> (); for (Link originLink : originSegment.seqLinks) newSeqLinks.add (newLayer.links.get (originLink.index));
-			this.addProtectionSegment(newSeqLinks , originSegment.capacity , originSegment.attributes);
-		}
 		for (Route originRoute : origin.routes)
 		{
-			List<NetworkElement> newInitialPath = (List<NetworkElement>) this.translateCollectionToThisNetPlan(originRoute.primaryPath); 
 			Route newRoute = this.addServiceChain(newLayer.demands.get(originRoute.demand.index) , 
-					originRoute.initialCarriedTrafficIfNotFailing , originRoute.initialLinksAndResourcesOccupationIfNotFailing , 
-					newInitialPath , originRoute.attributes);
-			newRoute.setCarriedTrafficAndPath(originRoute.currentCarriedTrafficIfNotFailing, 
-					(List<NetworkElement>) translateCollectionToThisNetPlan(originRoute.currentPath) ,
-					originRoute.currentLinksAndResourcesOccupationIfNotFailing);
+					originRoute.currentCarriedTrafficIfNotFailing , originRoute.currentLinksAndResourcesOccupationIfNotFailing , 
+					(List<NetworkElement>) this.translateCollectionToThisNetPlan(originRoute.currentPath) , originRoute.attributes);
+			newRoute.setPrimaryPath((List<NetworkElement>) translateCollectionToThisNetPlan(originRoute.primaryPath));
+			for (List<NetworkElement> originBackupPath : originRoute.getBackupPathList())
+				newRoute.addBackupPath((List<NetworkElement>) translateCollectionToThisNetPlan(originBackupPath));
 		}
 		for (MulticastTree originTree: origin.multicastTrees)
 		{
@@ -865,46 +860,6 @@ public class NetPlan extends NetworkElement
 
 
 	/**
-	 * <p>Adds a new protection segment. All the links must belong to the same layer</p>
-	 *
-	 * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}.</p>
-	 * @param sequenceOfLinks Sequence of links
-	 * @param reservedCapacity Reserved capacity in each link from {@code sequenceOfLinks}. It must be greater or equal than zero
-	 * @param attributes Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
-	 * @return The newly created protetion segment object
-	 * @see com.net2plan.interfaces.networkDesign.ProtectionSegment
-	 * @see com.net2plan.interfaces.networkDesign.Link
-	 */
-	public ProtectionSegment addProtectionSegment(List<Link> sequenceOfLinks, double reservedCapacity, Map<String, String> attributes)
-	{
-		return addProtectionSegment(null , sequenceOfLinks, reservedCapacity, attributes);
-	}
-	ProtectionSegment addProtectionSegment(Long segmentId , List<Link> sequenceOfLinks, double reservedCapacity, Map<String, String> attributes)
-	{
-		reservedCapacity = NetPlan.adjustToTolerance(reservedCapacity);
-
-		checkIsModifiable();
-		NetworkLayer layer = checkContiguousPath (sequenceOfLinks , null , null , null);
-		checkInThisNetPlanAndLayer(sequenceOfLinks , layer);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		if (reservedCapacity < 0) throw new Net2PlanException ("Reserved capacity must be non-negative");
-		if (sequenceOfLinks.size () != new HashSet<Link> (sequenceOfLinks).size()) throw new Net2PlanException ("Protection segments cannot traverse the same link more than once");
-
-
-		if (segmentId == null) { segmentId = nextElementId.longValue(); nextElementId.increment(); }
-		ProtectionSegment segment = new ProtectionSegment (this, segmentId , layer.protectionSegments.size (),  sequenceOfLinks , reservedCapacity , new AttributeMap (attributes));
-
-		cache_id2ProtectionSegmentMap.put (segmentId , segment);
-		layer.protectionSegments.add (segment);
-		boolean segmentIsUp = true;
-		for (Link link : sequenceOfLinks) { link.cache_traversingSegments.add (segment); if (!link.isUp) segmentIsUp = false; }
-		for (Node node : segment.seqNodes) {node.cache_nodeAssociatedSegments.add (segment) ; if (!node.isUp) segmentIsUp = false; }
-		if (!segmentIsUp) layer.cache_segmentsDown.add (segment);
-		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
-		return segment;
-	}
-
-	/**
 	 * <p>Adds a new traffic route </p>
 	 *
 	 * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}.</p>
@@ -955,7 +910,7 @@ public class NetPlan extends NetworkElement
 
 		if (routeId == null) { routeId = nextElementId.longValue(); nextElementId.increment(); }
 
-		Route route = new Route(this, routeId, layer.routes.size(), demand , carriedTraffic , sequenceOfLinksAndResources , occupiedLinkAndResourceCapacities , new AttributeMap(attributes));
+		Route route = new Route(this, routeId, layer.routes.size(), demand , sequenceOfLinksAndResources , new AttributeMap(attributes));
 
 		layer.routes.add(route);
 		cache_id2RouteMap.put (routeId,route);
@@ -1266,11 +1221,10 @@ public class NetPlan extends NetworkElement
 		addRoutesFromCandidatePathList(computeUnicastCandidatePathList(costs , paramValuePairs));
 	}
 
-	public void addRoutesAndProtectionSegmentFromCandidate11PathList (Map<Demand,List<Pair<List<Link>,List<Link>>>> cpl11)
+	public void addRoutesAndBackupPathsFromCandidate11PathList (Map<Demand,List<Pair<List<Link>,List<Link>>>> cpl11)
 	{
 		checkIsModifiable();
 		List<Route> routes = new LinkedList<Route> ();
-		List<ProtectionSegment> segments = new LinkedList<ProtectionSegment> ();
 		try
 		{
 			for(Entry<Demand,List<Pair<List<Link>,List<Link>>>> entry : cpl11.entrySet())
@@ -1278,11 +1232,9 @@ public class NetPlan extends NetworkElement
 				{
 					final Route newRoute = addRoute(entry.getKey() , 0 , 0 , pathPair.getFirst() , null);
 					routes.add (newRoute);
-					final ProtectionSegment newSegment = addProtectionSegment(pathPair.getSecond(), 0, null);
-					segments.add (newSegment);
-					newRoute.addProtectionSegment(newSegment);
+					newRoute.addBackupPath((List<NetworkElement>) (List<?>) pathPair.getSecond());
 				}
-		} catch (Exception e) { for (Route r : routes) r.remove (); for (ProtectionSegment s : segments) s.remove (); throw e; }
+		} catch (Exception e) { for (Route r : routes) r.remove (); throw e; }
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 	}
 
@@ -1475,7 +1427,6 @@ public class NetPlan extends NetworkElement
 		this.cache_id2MulticastDemandMap = netPlan.cache_id2MulticastDemandMap;
 		this.cache_id2RouteMap = netPlan.cache_id2RouteMap;
 		this.cache_id2MulticastTreeMap = netPlan.cache_id2MulticastTreeMap;
-		this.cache_id2ProtectionSegmentMap = netPlan.cache_id2ProtectionSegmentMap;
 		this.cache_id2srgMap = netPlan.cache_id2srgMap;
 		this.interLayerCoupling = netPlan.interLayerCoupling;
 		this.attributes.clear (); this.attributes.putAll(netPlan.attributes);
@@ -1489,7 +1440,6 @@ public class NetPlan extends NetworkElement
 			for (Demand e : layer.demands) e.netPlan = this;
 			for (MulticastDemand e : layer.multicastDemands) e.netPlan = this;
 			for (Route e : layer.routes) e.netPlan = this;
-			for (ProtectionSegment e : layer.protectionSegments) e.netPlan = this;
 			for (MulticastTree e : layer.multicastTrees) e.netPlan = this;
 		}
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
@@ -1561,12 +1511,6 @@ public class NetPlan extends NetworkElement
 	 * @param id Node id
 	 */
 	void checkExistsNode (long id) { if (cache_id2NodeMap.get(id) == null) throw new Net2PlanException ("Node of id: " + id + " does not exist"); }
-
-	/**
-	 * <p>Checks if a protection segment exists in this {@code NetPlan} object. Throws an exception if nonexistent.</p>
-	 * @param id Protection segment id
-	 */
-	void checkExistsProtectionSegment (long id) { if (cache_id2ProtectionSegmentMap.get(id) == null) throw new Net2PlanException ("ProtectionSegment of id: " + id + " does not exist"); }
 
 	/**
 	 * <p>Checks if a route exists in this {@code NetPlan} object. Throws an exception if nonexistent.</p>
@@ -1643,7 +1587,6 @@ public class NetPlan extends NetworkElement
 		{
 			layer.checkAttachedToNetPlanObject(this);
 			if (e instanceof Demand) { if (e != layer.demands.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
-			else if (e instanceof ProtectionSegment) { if (e != layer.protectionSegments.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
 			else if (e instanceof Link) { if (e != layer.links.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
 			else if (e instanceof MulticastDemand) { if (e != layer.multicastDemands.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
 			else if (e instanceof MulticastTree) { if (e != layer.multicastTrees.get(e.index)) throw new Net2PlanException ("Element " + e + " is not the same object as the one in netPlan object."); }
@@ -1740,13 +1683,13 @@ public class NetPlan extends NetworkElement
 	 */
 	public NetPlan copy()
 	{
-		this.checkCachesConsistency();
+		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 		NetPlan netPlan = new NetPlan();
-		netPlan.checkCachesConsistency();
+		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		netPlan.copyFrom(this);
 //		System.out.println ("************** En el copy () *********************************************************");
-		this.checkCachesConsistency();
-		netPlan.checkCachesConsistency();
+		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
+		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		return netPlan;
 	}
 
@@ -1777,7 +1720,6 @@ public class NetPlan extends NetworkElement
 		this.cache_id2MulticastDemandMap = new HashMap<Long,MulticastDemand> ();
 		this.cache_id2RouteMap = new HashMap<Long,Route> ();
 		this.cache_id2MulticastTreeMap = new HashMap<Long,MulticastTree> ();
-		this.cache_id2ProtectionSegmentMap = new HashMap<Long,ProtectionSegment> ();
 		this.DEFAULT_ROUTING_TYPE = originNetPlan.DEFAULT_ROUTING_TYPE;
 		this.isModifiable = true;
 		this.networkDescription = originNetPlan.networkDescription;
@@ -1841,8 +1783,7 @@ public class NetPlan extends NetworkElement
 			for (Route originRoute : originLayer.routes)
 			{
 				Route newElement = new Route (this , originRoute.id , originRoute.index , cache_id2DemandMap.get(originRoute.demand.id) ,
-						originRoute.initialCarriedTrafficIfNotFailing , (List<NetworkElement>) translateCollectionToThisNetPlan(originRoute.primaryPath) ,
-						originRoute.initialLinksAndResourcesOccupationIfNotFailing ,
+						(List<NetworkElement>) translateCollectionToThisNetPlan(originRoute.currentPath) ,
 						originRoute.attributes);
 				newElement.currentCarriedTrafficIfNotFailing = originRoute.currentCarriedTrafficIfNotFailing;
 				newElement.currentLinksAndResourcesOccupationIfNotFailing = new ArrayList<Double> (originRoute.currentLinksAndResourcesOccupationIfNotFailing);
@@ -1858,14 +1799,6 @@ public class NetPlan extends NetworkElement
 				newLayer.multicastTrees.add (newElement);
 				newElement.carriedTrafficIfNotFailing = originTree.carriedTrafficIfNotFailing;
 				newElement.occupiedLinkCapacityIfNotFailing = originTree.occupiedLinkCapacityIfNotFailing;
-			}
-			for (ProtectionSegment originSegment : originLayer.protectionSegments)
-			{
-				List<Link> newSeqLinks = new LinkedList<Link> ();
-				for (Link oldLink : originSegment.seqLinks) newSeqLinks.add (this.cache_id2LinkMap.get(oldLink.id));
-				ProtectionSegment newElement = new ProtectionSegment (this , originSegment.id , originSegment.index , newSeqLinks , originSegment.capacity , originSegment.attributes);
-				cache_id2ProtectionSegmentMap.put(originSegment.id, newElement);
-				newLayer.protectionSegments.add (newElement);
 			}
 		}
 
@@ -2150,36 +2083,6 @@ public class NetPlan extends NetworkElement
 		return layer.linkCapacityUnitsName;
 	}
 
-//	/**
-//	 * <p>Returns a map where keys are the unique id of network elements and the values are a pair of uid representing the end nodes.</p>
-//	 * @param links Network elements
-//	 * @return A map with the end nodes unique ids (values) of each network element (key)
-//	 * @see com.net2plan.utils.Pair
-//	 */
-//	public Map<Long,Pair<Long,Long>> getLinkIdMap (Collection<? extends NetworkElement> links)
-//	{
-//		checkInThisNetPlan(links);
-//		Map<Long,Pair<Long,Long>> map = new HashMap<Long,Pair<Long,Long>> ();
-//		if (links.isEmpty()) return map;
-//		if (links.iterator().next() instanceof Link)
-//			for (Link e : (List<Link>) links)
-//			{
-//				map.put(e.id, Pair.of(e.originNode.id, e.destinationNode.id));
-//			}
-//		else if (links.iterator().next() instanceof Demand)
-//			for (Demand e : (List<Demand>) links)
-//			{
-//				map.put(e.id, Pair.of(e.ingressNode.id, e.egressNode.id));
-//			}
-//		else if (links.iterator().next() instanceof Route)
-//			for (Route e : (List<Route>) links)
-//			{
-//				map.put(e.id, Pair.of(e.ingressNode.id, e.egressNode.id));
-//			}
-//		else throw new Net2PlanException ("Only can make id link maps for links, demands, routes and protection segments");
-//		return map;
-//	}
-
 	/**
 	 * <p>Returns the array of link ids for the given layer (i-th position, corresponds to index i). If no layer is provided, the default layer is assumed.</p>
 	 * @param optionalLayerParameter Network layer (optional
@@ -2216,11 +2119,11 @@ public class NetPlan extends NetworkElement
 		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
 		Set<Link> res = new HashSet<Link> ();
 		for (Link e : layer.links) 
-			if (Math.abs (e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments / e.capacity - maxRho) < PRECISION_FACTOR) 
+			if (Math.abs (e.cache_occupiedCapacity / e.capacity - maxRho) < PRECISION_FACTOR) 
 				res.add (e);
-			else if (e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments / e.capacity > maxRho)
+			else if (e.cache_occupiedCapacity / e.capacity > maxRho)
 			{
-				maxRho = e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments / e.capacity;
+				maxRho = e.cache_occupiedCapacity / e.capacity;
 				res.clear (); res.add (e);
 			}
 		return res;
@@ -2318,7 +2221,7 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		Set<Link> res = new HashSet<Link> ();
-		for (Link e : layer.links) if (e.capacity < e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) res.add (e);
+		for (Link e : layer.links) if (e.capacity < e.cache_occupiedCapacity) res.add (e);
 		return res; 
 	}
 
@@ -2369,21 +2272,40 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix2D A_rs = DoubleFactory2D.sparse.make (layer.routes.size () , srgs.size ());
-		for (Route r : layer.routes) for (Link e : r.cache_seqLinksRealPath) for (SharedRiskGroup srg : e.cache_srgs) A_rs.set (r.index , srg.index , 1.0);
+		for (Route r : layer.routes)
+		{
+			for (SharedRiskGroup srg : r.ingressNode.cache_nodeSRGs) A_rs.set (r.index , srg.index , 1.0);
+			for (Link e : r.cache_seqLinksRealPath)
+			{
+				for (SharedRiskGroup srg : e.destinationNode.cache_nodeSRGs) A_rs.set (r.index , srg.index , 1.0);
+				for (SharedRiskGroup srg : e.cache_srgs) A_rs.set (r.index , srg.index , 1.0);
+			}
+		}
 		return A_rs;
 	}
 
 	/**
-	 * <p>Returns the protection segment-srg incidence matrix (an <i>P</i>x<i>S</i> matrix in which an element <i>&delta;<sub>ps</sub></i> equals 1 if protection segment <i>p</i>
-	 * fails when SRG <i>s</i> is affected. If no layer is provided, the default layer is assumed.</p>
+	 * <p>Returns a matrix with as many rows as routes of the given layer, and as many 
+	 * columns as SRGS. The position (r,s) is 1 if the first backup route defined for route r is affected by SRG s (fails if s fails), and 
+	 * 0 otherwise. If no layer is provided, the default layer is assumed.</p>
 	 * @param optionalLayerParameter Network layer (optional)
-	 * @return The protection segment-srg incidence matrix
+	 * @return The matrix
 	 */
-	public DoubleMatrix2D getMatrixProtectionSegment2SRGAffecting (NetworkLayer ... optionalLayerParameter)
+	public DoubleMatrix2D getMatrixRouteFirstBackupPath2SRGAffecting (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		DoubleMatrix2D A_rs = DoubleFactory2D.sparse.make (layer.protectionSegments.size () , srgs.size ());
-		for (ProtectionSegment r : layer.protectionSegments) for (Link e : r.seqLinks) for (SharedRiskGroup srg : e.cache_srgs) A_rs.set (r.index , srg.index , 1.0);
+		DoubleMatrix2D A_rs = DoubleFactory2D.sparse.make (layer.routes.size () , srgs.size ());
+		for (Route r : layer.routes)
+		{
+			if (r.getBackupPathList().size() == 0) throw new Net2PlanException ("A route has no backup path");
+			final List<Link> path = Route.getSeqLinks(r.getBackupPathList().get(0)); 
+			for (SharedRiskGroup srg : r.ingressNode.cache_nodeSRGs) A_rs.set (r.index , srg.index , 1.0);
+			for (Link e : path)
+			{
+				for (SharedRiskGroup srg : e.destinationNode.cache_nodeSRGs) A_rs.set (r.index , srg.index , 1.0);
+				for (SharedRiskGroup srg : e.cache_srgs) A_rs.set (r.index , srg.index , 1.0);
+			}
+		}
 		return A_rs;
 	}
 
@@ -2397,7 +2319,15 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix2D A_rs = DoubleFactory2D.sparse.make (layer.multicastTrees.size () , srgs.size ());
-		for (MulticastTree r : layer.multicastTrees) for (Link e : r.linkSet) for (SharedRiskGroup srg : e.cache_srgs) A_rs.set (r.index , srg.index , 1.0);
+		for (MulticastTree r : layer.multicastTrees)
+		{
+			for (SharedRiskGroup srg : r.demand.ingressNode.cache_nodeSRGs) A_rs.set (r.index , srg.index , 1.0);
+			for (Link e : r.linkSet)
+			{
+				for (SharedRiskGroup srg : e.destinationNode.cache_nodeSRGs) A_rs.set (r.index , srg.index , 1.0);
+				for (SharedRiskGroup srg : e.cache_srgs) A_rs.set (r.index , srg.index , 1.0);
+			}
+		}
 		return A_rs;
 	}
 
@@ -2450,7 +2380,7 @@ public class NetPlan extends NetworkElement
 		DoubleMatrix2D x_dr = DoubleFactory2D.sparse.make (layer.demands.size () , resources.size ());
 		for (Route r : layer.routes) 
 			if (!r.isDown()) 
-				for (Entry<NetworkElement,Double> e : r.cache_linkAndResourcesTraversedAndOccupiedCapIfnotFailMap.entrySet())
+				for (Entry<NetworkElement,Double> e : r.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.entrySet())
 					if (e.getKey() instanceof Resource)
 						x_dr.set (r.demand.index , e.getKey().index , e.getValue());
 		return x_dr;
@@ -2531,19 +2461,24 @@ public class NetPlan extends NetworkElement
 		return GraphUtils.convert_xte2fte(nodes , layer.links , x_te);
 	}
 
+	
 	/**
-	 * Returns the link-protection segment assignment matrix (an <i>E</i>x<i>R</i> matrix in
-	 * which an element <i>&delta;<sub>ep</sub></i> is equal to the number of
-	 * times which protection segment <i>r</i> traverses link <i>e</i>).
+	 * Returns a matrix with as many rows as links and as many columns as routes in the given layer, 
+	 * the position (e,r) contains the number of times that the first backup path of route r traveres link e
 	 * @param optionalLayerParameter Network layer (optional)
-	 * @return The link-protection segment assignment matrix
+	 * @return The matrix
 	 */
-	public DoubleMatrix2D getMatrixLink2ProtectionSegmentAssignment (NetworkLayer ... optionalLayerParameter)
+	public DoubleMatrix2D getMatrixLink2RouteFirstBackupPathAssignment (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		DoubleMatrix2D delta_er = DoubleFactory2D.sparse.make(layer.links.size(), layer.protectionSegments.size());
-		for (ProtectionSegment r : layer.protectionSegments) for (Link e : r.seqLinks) delta_er.set (e.index , r.index , delta_er.get (e.index , r.index) + 1);
+		DoubleMatrix2D delta_er = DoubleFactory2D.sparse.make(layer.links.size(), layer.routes.size());
+		for (Route r : layer.routes)
+		{
+			if (r.getBackupPathList().isEmpty()) throw new Net2PlanException ("A route has no backup path");
+			final List<Link> path = Route.getSeqLinks(r.getBackupPathList().get(0)); 
+			for (Link e : path) delta_er.set (e.index , r.index , delta_er.get (e.index , r.index) + 1);
+		}
 		return delta_er;
 	}
 
@@ -3206,7 +3141,6 @@ public class NetPlan extends NetworkElement
 		e = cache_id2MulticastDemandMap.get(id); if (e != null) return e;
 		e = cache_id2MulticastTreeMap.get(id); if (e != null) return e;
 		e = cache_id2NodeMap.get(id); if (e != null) return e;
-		e = cache_id2ProtectionSegmentMap.get(id); if (e != null) return e;
 		e = cache_id2RouteMap.get(id); if (e != null) return e;
 		e = cache_id2srgMap.get(id); if (e != null) return e;
 		e = cache_id2ResourceMap.get(id); if (e != null) return e;
@@ -3428,55 +3362,10 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Return the set of protection segments at the given layer for the given nodes (if {@code returnSegmentsInBothDirections} is {@code true}, also the reversed protection segments are included)
-	 * If no layer is provided, default layer is assumed.</p>
-	 * @param originNode Origin node
-	 * @param destinationNode Destination node
-	 * @param returnSegmentsInBothDirections Include protection segments in both directions
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return The {@code Set} of protection segments between a pair of nodes
-	 */
-	public Set<ProtectionSegment> getNodePairProtectionSegments (Node originNode, Node destinationNode , boolean returnSegmentsInBothDirections , NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		checkInThisNetPlan(originNode);
-		checkInThisNetPlan(destinationNode);
-		Set<ProtectionSegment> res = new HashSet<ProtectionSegment> ();
-		for (ProtectionSegment s : originNode.cache_nodeAssociatedSegments)
-		{
-			if (s.layer != layer) continue;
-			if ((s.originNode == originNode) && (s.destinationNode == destinationNode)) res.add (s);
-			if (returnSegmentsInBothDirections) if ((s.originNode == destinationNode) && (s.destinationNode == originNode)) res.add (s);
-		}
-		return res;
-	}
-
-	/**
 	 * <p>Returns the array of nodes (i-th position, corresponds to index i).</p>
  	 * @return The {@code List} of nodes
 	 */
 	public List<Node> getNodes () { return (List<Node>) Collections.unmodifiableList(nodes); }
-
-//	/**
-//	 * Computes the shortest path between the end nodes, using the given link costs (if null, the shortest path is in number of hops), for the
-//	 * given layer. If no layer is provided, the default layer is assumed. An infinite cost makes the link unusable. Returns null if no path exists
-//	 */
-//	public List<Link> computeShortestPath (Node origin , Node destination , DoubleMatrix1D linkCosts , NetworkLayer ... optionalLayerParameter)
-//	{
-//		checkIsModifiable();
-//		if (optionalLayerParameter.length >= 2) throw new Net2PlanException ("None or one layer parameter can be supplied");
-//		NetworkLayer layer = (optionalLayerParameter.length == 1)? optionalLayerParameter [0] : defaultLayer;
-//		if (linkCosts == null) linkCosts = DoubleFactory1D.dense.make (layer.links.size() , 1.0);
-//		if (linkCosts.size () != layer.links.size()) throw new Net2PlanException ("Wrong cost vector");
-//		final Map<Long,Pair<Long,Long>> netPlanLinkMap = getLinkIdMap (layer.links);
-//		Map<Long,Double> linkCost = new HashMap<Long,Double> ();
-//		for (Link link : layer.links)
-//			linkCost.put(link.id, linkCosts.get(link.index));
-//		final List<Long> seqLinkIds =  GraphUtils.getShortestPath(netPlanLinkMap, origin.id , destination.id , linkCost);
-//		List<Link> seqLinks = new LinkedList<Link> ();  for (long id : seqLinkIds) seqLinks.add (cache_id2LinkMap.get(id));
-//		return seqLinks;
-//	}
-//
 
 	/**
 	 * <p>Returns the set of nodes that are down (iteration order corresponds to ascending order of indexes).</p>
@@ -3573,18 +3462,6 @@ public class NetPlan extends NetworkElement
 	public int getNumberOfNodePairs () { return nodes.size() * (nodes.size()-1); }
 
 	/**
-	 * <p>Returns the number of protection segments at the given layer. If no layer is provided, the default layer is assumed.</p>
-	 * @param optionalLayerParameter network layer (optional)
-	 * @return The number of protection segments
-	 */
-	public int getNumberOfProtectionSegments (NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		return layer.protectionSegments.size();
-	}
-
-	/**
 	 * <p>Returns the number of routes at the given layer. If no layer is provided, the default layer is assumed.</p>
 	 * @param optionalLayerParameter network layer (optional)
 	 * @return The number of routes
@@ -3607,60 +3484,6 @@ public class NetPlan extends NetworkElement
 	 * @return The number of defined resources
 	 */
 	public int getNumberOfResources () { return resources.size(); }
-
-	/**
-	 * <p>Returns the protection segment with the given index in the given layer. if no layer is provided, default layer is assumed.</p>
-	 * @param index Protection segment index
-	 * @param optionalLayerParameter network layer (optional)
-	 * @return The protection segment with the given index ({@code null} if it does not exist, index is lesser thatn zero or greater that the number of elements minus one)
-	 */
-	public ProtectionSegment getProtectionSegment  (int index , NetworkLayer ... optionalLayerParameter) { NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter); layer.checkRoutingType(RoutingType.SOURCE_ROUTING); if ((index < 0) || (index > layer.protectionSegments.size () -1)) return null; else return layer.protectionSegments.get(index); }
-
-	/**
-	 * <p>Returns the protection segment with the given unique identifier.</p>
-	 * @param uid Protection segment unique id
-	 * @return The protection segment with the given id ({@code null} if it does not exist)
-	 */
-	public ProtectionSegment getProtectionSegmentFromId (long uid) { return cache_id2ProtectionSegmentMap.get(uid); }
-
-	/**
-	 * <p>Returns the array of protection segment ids for the given layer (i-th position, corresponds to index i). If no layer is provided, the default layer is assumed</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return The {@code ArrayList} of protection segments unique ids
-	 */
-	public ArrayList<Long> getProtectionSegmentIds (NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		ArrayList<Long> res = new ArrayList<Long> (); for (ProtectionSegment e : layer.protectionSegments) res.add (e.id);
-		return res;
-	}
-
-	/**
-	 * <p>Returns the array of protection segmets for the given layer (i-th position, corresponds to index i). If no layer is provided, the default layer is assumed.</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return The {@code List} of protection segments
-	 */
-	public List<ProtectionSegment> getProtectionSegments (NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		return (List<ProtectionSegment>) Collections.unmodifiableList(layer.protectionSegments);
-	}
-
-	/**
-	 * <p>Returns the set of protection segments that are down (traverse a link or node that is failed). If no layer is provided, default layer is assumed.</p>
-	 * @param optionalLayerParameter network layer (optional)
-	 * @return The {@code Set} of protection segments that are down
-	 */
-	public Set<ProtectionSegment> getProtectionSegmentsDown (NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		Set<ProtectionSegment> res = new HashSet<ProtectionSegment> ();
-		for (ProtectionSegment r : layer.protectionSegments) if (r.isDown()) res.add (r);
-		return res;
-	}
 
 	/**
 	 * <p>Returns the route with the given index in the given layer. if no layer is provided, default layer is assumed</p>
@@ -3931,7 +3754,7 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns a vector with the capacity per link, at the given layer. i-th vector corresponds to i-th index of the element. If no layer is provided, the defaulf layer is assumed.</p>
+	 * <p>Returns a vector with the spare capacity (available minus occupied, or zero if oversubscribed) per link, at the given layer. i-th vector corresponds to i-th index of the element. If no layer is provided, the defaulf layer is assumed.</p>
 	 * @param optionalLayerParameter Network layer (optional)
 	 * @return The vector with the spare capacity per link
 	 */
@@ -3939,20 +3762,7 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
-		for (Link e : layer.links) res.set(e.index, Math.max(0 , e.capacity - e.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments));
-		return res;
-	}
-
-	/**
-	 * <p>Returns a vector with the capacity per link reserved for protection, at the given layer. i-th vector corresponds to i-th index of the element. If no layer is provided, the defaulf layer is assumed.</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return The vector with the capacity per link reserver for protection
-	 */
-	public DoubleMatrix1D getVectorLinkCapacityReservedForProtection (NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
-		for (Link e : layer.links) res.set(e.index, e.getReservedCapacityForProtection());
+		for (Link e : layer.links) res.set(e.index, Math.max(0 , e.capacity - e.cache_occupiedCapacity));
 		return res;
 	}
 
@@ -4005,12 +3815,12 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
-		for (Link e : layer.links) res.set(e.index, e.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
+		for (Link e : layer.links) res.set(e.index, e.cache_carriedTraffic);
 		return res;
 	}
 
 	/**
-	 * <p>Returns a vector with the total occupied capacity in the links (counting the capacity occupied by the traffic in the traversed protection segments), at the given layer.
+	 * <p>Returns a vector with the total occupied capacity in the links, at the given layer.
 	 * i-th vector corresponds to i-th index of the element. If no layer is provided, the defaulf layer is assumed.</p>
 	 * @param optionalLayerParameter Network layer (optional)
 	 * @return The vector with the tootal occupied capacity per link
@@ -4019,7 +3829,7 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
-		for (Link e : layer.links) res.set(e.index, e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments);
+		for (Link e : layer.links) res.set(e.index, e.cache_occupiedCapacity);
 		return res;
 	}
 
@@ -4038,32 +3848,17 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns a vector with the utilization per link, at the given layer. Utilization is measured as the total link occupied capacity by the link traffic
-	 * including the one in the protection segments, divided by the total link capacity (accounting the reserved capacity by the protection segments).
+	 * <p>Returns a vector with the utilization per link, at the given layer. Utilization is measured as the total link occupied capacity by the link 
+	 * traffic divided by the total link capacity.
 	 * i-th vector corresponds to i-th index of the element. If no layer is provided, the defaulf layer is assumed.</p>
 	 * @param optionalLayerParameter Network layer (optional)
 	 * @return The vector with the utilization per link
 	 */
-	public DoubleMatrix1D getVectorLinkUtilizationIncludingProtectionSegments (NetworkLayer ... optionalLayerParameter)
+	public DoubleMatrix1D getVectorLinkUtilization (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
-		for (Link e : layer.links) res.set(e.index, e.getUtilizationIncludingProtectionSegments());
-		return res;
-	}
-
-	/**
-	 * <p>Returns a vector with the utilization per link, at the given layer. Utilization is measured as the total link occupied capacity by the link traffic
-	 * <b>not</b> including the one in the protection segments, divided by the total link capacity, <b>not</b> including that reserved by the protection segments.
-	 * i-th vector corresponds to i-th index of the element. If no layer is provided, the defaulf layer is assumed.</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return The link utilization vector (not including protection segments)
-	 */
-	public DoubleMatrix1D getVectorLinkUtilizationNotIncludingProtectionSegments (NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
-		for (Link e : layer.links) res.set(e.index, e.getUtilizationNotIncludingProtectionSegments());
+		for (Link e : layer.links) res.set(e.index, e.getUtilization());
 		return res;
 	}
 
@@ -4077,7 +3872,7 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
-		for (Link e : layer.links) res.set(e.index, Math.max(0 , e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments - e.capacity));
+		for (Link e : layer.links) res.set(e.index, Math.max(0 , e.cache_occupiedCapacity - e.capacity));
 		return res;
 	}
 
@@ -4210,58 +4005,43 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns a vector with the carried traffic per protection segment, at the given layer. i-th vector corresponds to i-th index of the element. If no layer is provided, the defaulf layer is assumed.</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return The vector with the carried traffic per protection segment
-	 */
-	public DoubleMatrix1D getVectorProtectionSegmentCarriedTraffic (NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.protectionSegments.size());
-		for (ProtectionSegment e : layer.protectionSegments) res.set(e.index, e.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
-		return res;
-	}
-
-	/**
-	 * <p>Returns a vector with the length in km per protection segment, at the given layer. i-th vector corresponds to i-th index of the element. If no layer is provided, the defaulf layer is assumed.</p>
+	 * <p>Returns a vector with one element per route, containing the length in km of the first defined backup path for such route. 
+	 * If a route has no backup path defined, an exception is thrown. If no layer is provided, the defaulf layer is assumed.</p>
 	 * @param optionalLayerParameter network layer (optional)
-	 * @return The vector with the length in km per protection segment
+	 * @return The vector 
 	 */
-	public DoubleMatrix1D getVectorProtectionSegmentLengthInKm (NetworkLayer ... optionalLayerParameter)
+	public DoubleMatrix1D getVectorRouteFirstBackupPathLengthInKm (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.protectionSegments.size());
-		for (ProtectionSegment e : layer.protectionSegments) res.set(e.index, e.lengthInKm);
+		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
+		for (Route r : layer.routes)
+		{ 
+			if (r.getBackupPathList().size() == 0) throw new Net2PlanException ("A route has no backup path");
+			final List<Link> path = Route.getSeqLinks(r.getBackupPathList().get(0)); 
+			final double length = path.stream().mapToDouble(e -> e.getLengthInKm()).sum();
+			res.set(r.index, length);
+		}
 		return res;
 	}
 
 	/**
-	 * <p>Returns a vector with the number of links per protection segment, at the given layer. i-th vector corresponds to i-th index of the element. If no layer is provided, the defaulf layer is assumed.</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return The vector with the number of links per protection segment
+	 * <p>Returns a vector with one element per route, containing the number of links of the first defined backup path for such route. 
+	 * If a route has no backup path defined, an exception is thrown. If no layer is provided, the defaulf layer is assumed.</p>
+	 * @param optionalLayerParameter network layer (optional)
+	 * @return The vector 
 	 */
-	public DoubleMatrix1D getVectorProtectionSegmentNumberOfLinks (NetworkLayer ... optionalLayerParameter)
+	public DoubleMatrix1D getVectorRouteFirstBackupPathNumberOfLinks (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.protectionSegments.size());
-		for (ProtectionSegment e : layer.protectionSegments) res.set(e.index, e.seqLinks.size());
-		return res;
-	}
-
-	/**
-	 * <p>Returns a vector with the occupied capacity traffic per protection segment, at the given layer. i-th vector corresponds to i-th index of the element. If no layer is provided, the defaulf layer is assumed.</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return The vector with the occupied capacity traffic per protection segment
-	 */
-	public DoubleMatrix1D getVectorProtectionSegmentOccupiedCapacity (NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.protectionSegments.size());
-		for (ProtectionSegment e : layer.protectionSegments) res.set(e.index, e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments);
+		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
+		for (Route r : layer.routes)
+		{ 
+			if (r.getBackupPathList().size() == 0) throw new Net2PlanException ("A route has no backup path");
+			final List<Link> path = Route.getSeqLinks(r.getBackupPathList().get(0)); 
+			res.set(r.index, path.size());
+		}
 		return res;
 	}
 
@@ -4512,18 +4292,6 @@ public class NetPlan extends NetworkElement
 	public boolean hasNodes () { return nodes.size() > 0; }
 
 	/**
-	 * <p>Returns {@code true} if the network has one or more protection segments at the given layer. If no layer is provided, the default layer is assumed.</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return {@code True} if the network has one or more protection segments, {@code false} otherwise
-	 */
-	public boolean hasProtectionSegments (NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		return layer.protectionSegments.size() > 0;
-	}
-
-	/**
 	 * <p>Returns {@code true} if the network has one or moreroutes at the given layer. If no layer is provided, the default layer is assumed.</p>
 	 * @param optionalLayerParameter Network layer (optional)
 	 * @return {@code True} if the network has one or more routes, {@code false} otherwise
@@ -4628,20 +4396,34 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Indicates whether or not a path, multicast tree or arbitrary collection of links (and/or protection segments) is up.
-	 * This means that all links are up, and all end nodes of the links are also up</p>
-	 * @param linksAndOrProtectionSegments Sequence of links
-	 * @return {@code True} if all links in the sequence are up, {@code false} otherwise
+	 * <p>Indicates whether or not a path, multicast tree or arbitrary collection of links and/or resources and/or nodes is up and belonging to this netPlan object (so they were not removed), and false otherwise
+	 * @param col the collection
+	 * @return see above
 	 */
-	public boolean isUp (Collection<Link> linksAndOrProtectionSegments)
+	public boolean isUp (Collection<NetworkElement> col)
 	{
-		checkInThisNetPlan(linksAndOrProtectionSegments);
-		for (Link e : linksAndOrProtectionSegments)
+		for (NetworkElement e : col)
 		{
-			e.checkAttachedToNetPlanObject(this);
-			if (!e.isUp ()) return false;
-			if (!e.originNode.isUp) return false;
-			if (!e.destinationNode.isUp) return false;
+			if (e instanceof Resource) 
+			{
+				final Resource ee = (Resource) e;
+				if (ee.netPlan != this) return false;
+				if (!ee.hostNode.isUp) return false;
+			}
+			else if (e instanceof Link) 
+			{
+				final Link ee = (Link) e;
+				if (ee.netPlan != this) return false;
+				if (!ee.originNode.isUp) return false;
+				if (!ee.destinationNode.isUp) return false;
+				if (!ee.isUp) return false;
+			}
+			else if (e instanceof Node) 
+			{
+				final Node ee = (Node) e;
+				if (ee.netPlan != this) return false;
+				if (!ee.isUp) return false;
+			}
 		}
 		return true;
 	}
@@ -4658,7 +4440,6 @@ public class NetPlan extends NetworkElement
 		netPlan.checkIsModifiable();
 		if (netPlan.layers.size () == 1) throw new Net2PlanException("At least one layer must exist");
 
-		for (ProtectionSegment segment : new LinkedList<ProtectionSegment> (layer.protectionSegments)) segment.remove ();
 		for (Route route : new LinkedList<Route> (layer.routes)) route.remove ();
 		for (MulticastTree tree : new LinkedList<MulticastTree> (layer.multicastTrees)) tree.remove ();
 		for (Link link : new LinkedList<Link> (layer.links)) link.remove ();
@@ -4704,8 +4485,8 @@ public class NetPlan extends NetworkElement
 		}
 		for (Link e : layer.links)
 		{
-			e.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = e.getMulticastCarriedTraffic();
-			e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = e.getMulticastOccupiedLinkCapacity();
+			e.cache_carriedTraffic = e.getMulticastCarriedTraffic();
+			e.cache_occupiedCapacity = e.getMulticastOccupiedLinkCapacity();
 		}
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 	}
@@ -4788,19 +4569,6 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Removes all the protection segments defined in the given layer. If no layer is provided, default layer is assumed.</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 */
-	public void removeAllProtectionSegments(NetworkLayer ... optionalLayerParameter)
-	{
-		checkIsModifiable();
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		for (ProtectionSegment s : new ArrayList<ProtectionSegment> (layer.protectionSegments)) s.remove ();
-		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
-	}
-
-	/**
 	 * <p>Removes all the routes defined in the given layer. If no layer is provided, default layer is assumed.</p>
 	 * @param optionalLayerParameter Network layer (optional)
 	 */
@@ -4861,7 +4629,6 @@ public class NetPlan extends NetworkElement
 		{
 			case SOURCE_ROUTING:
 				removeAllRoutes(layer);
-				removeAllProtectionSegments(layer);
 				break;
 
 			case HOP_BY_HOP_ROUTING:
@@ -5161,39 +4928,10 @@ public class NetPlan extends NetworkElement
 
 				if (layer.routingType == RoutingType.SOURCE_ROUTING)
 				{
-					boolean emptySourceRouting = !hasProtectionSegments(layer) && !hasRoutes(layer);
+					boolean emptySourceRouting = !hasRoutes(layer);
 					XMLUtils.indent(writer, 2);
 					if (emptySourceRouting) writer.writeEmptyElement("sourceRouting");
 					else writer.writeStartElement("sourceRouting");
-
-					for(ProtectionSegment segment : layer.protectionSegments)
-					{
-						boolean emptySegment = segment.attributes.isEmpty();
-
-						XMLUtils.indent(writer, 3);
-						if (emptySegment) writer.writeEmptyElement("protectionSegment");
-						else writer.writeStartElement("protectionSegment");
-
-						writer.writeAttribute("id", Long.toString(segment.id));
-						writer.writeAttribute("reservedCapacity", Double.toString(segment.capacity));
-
-						List<Long> seqLinks = new LinkedList<Long> (); for (Link e : segment.seqLinks) seqLinks.add (e.id);
-						writer.writeAttribute("seqLinks", CollectionUtils.join(seqLinks, " "));
-
-						for (Entry<String, String> entry : segment.attributes.entrySet())
-						{
-							XMLUtils.indent(writer, 4);
-							writer.writeEmptyElement("attribute");
-							writer.writeAttribute("key", entry.getKey());
-							writer.writeAttribute("value", entry.getValue());
-						}
-
-						if (!emptySegment)
-						{
-							XMLUtils.indent(writer, 3);
-							writer.writeEndElement();
-						}
-					}
 
 					for(Route route : layer.routes)
 					{
@@ -5205,39 +4943,19 @@ public class NetPlan extends NetworkElement
 
 						writer.writeAttribute("id", Long.toString(route.id));
 						writer.writeAttribute("demandId", Long.toString(route.demand.id));
-
-						/* Write the initial route state info (if all links/resources still exist, if not, the current) */
-						boolean initialSeqLinksAndResourcesNotRemoved = true;
-						for (NetworkElement e : route.primaryPath) if (e.netPlan == null) { initialSeqLinksAndResourcesNotRemoved = false; break; }
-						/* Initial sequence, but if link/resources where removed, then use the current sequence */
-						final double initialCarriedTrafficToWrite = initialSeqLinksAndResourcesNotRemoved? route.initialCarriedTrafficIfNotFailing : route.currentCarriedTrafficIfNotFailing; 
-						final List<NetworkElement> initialSeqLinksAndResourcesToWrite = initialSeqLinksAndResourcesNotRemoved? route.primaryPath : route.getSeqLinksRealPathAndResources(); 
-						final List<Double> initialOccupationToWrite = route.initialLinksAndResourcesOccupationIfNotFailing;
-						if (!initialSeqLinksAndResourcesNotRemoved)
-						{
-							initialOccupationToWrite.clear();
-							for (int cont = 0 ; cont < route.currentPath.size() ; cont ++)
-							{
-								final NetworkElement e = route.currentPath.get(cont);
-								final double occup = route.currentLinksAndResourcesOccupationIfNotFailing.get(cont);
-								if (e instanceof ProtectionSegment)
-									initialOccupationToWrite.addAll(Collections.nCopies(((ProtectionSegment) e).getNumberOfHops(), occup));
-								else if (e instanceof Link)
-									initialOccupationToWrite.add(occup);
-							}
-						}
-						writer.writeAttribute("initialCarriedTrafficIfNotFailing", Double.toString(initialCarriedTrafficToWrite));
-						writer.writeAttribute("initialLinksAndResourcesOccupationIfNotFailing", CollectionUtils.join(initialOccupationToWrite, " "));
-						writer.writeAttribute("initialSeqLinksAndResourcesTraversed", CollectionUtils.join(initialSeqLinksAndResourcesToWrite.stream().map(e->e.id).collect(Collectors.toList()), " "));
 						
-						/* Current resource occupation map */
-						/* Backup segment list */
 						writer.writeAttribute("currentCarriedTrafficIfNotFailing", Double.toString(route.currentCarriedTrafficIfNotFailing));
-						writer.writeAttribute("currentLinksSegmentsAndResourcesOccupationIfNotFailing", CollectionUtils.join(route.currentLinksAndResourcesOccupationIfNotFailing, " "));
-						writer.writeAttribute("currentSeqLinksSegmentsAndResourcesTraversed", CollectionUtils.join(NetPlan.getIds(route.currentPath), " "));
+						writer.writeAttribute("currentLinksAndResourcesOccupationIfNotFailing", CollectionUtils.join(route.currentLinksAndResourcesOccupationIfNotFailing, " "));
+						writer.writeAttribute("currentPath", CollectionUtils.join(NetPlan.getIds(route.currentPath), " "));
 
-						writer.writeAttribute("potentialBackupSegments", CollectionUtils.join(NetPlan.getIds(route.potentialBackupSegments), " "));
-
+						/* Primary and backup paths are set when do not traverse removed links/resources */
+						if (route.primaryPath.stream().allMatch(e -> e.netPlan != null))
+							writer.writeAttribute("primaryPath", CollectionUtils.join(NetPlan.getIds(route.primaryPath), " "));
+						
+						for (List<NetworkElement> backupPath : route.backupPaths)
+							if (backupPath.stream().allMatch(e -> e.netPlan != null))
+								writer.writeAttribute("backupPath", CollectionUtils.join(NetPlan.getIds(backupPath), " "));
+						
 						for (Entry<String, String> entry : route.attributes.entrySet())
 						{
 							XMLUtils.indent(writer, 4);
@@ -5438,7 +5156,6 @@ public class NetPlan extends NetworkElement
 
 		Set<NetworkLayer> affectedLayersHopByHopRouting = new HashSet<NetworkLayer> ();
 		Set<Route> affectedRoutesSourceRouting = new HashSet<Route> ();
-		Set<ProtectionSegment> affectedSegmentsSourceRouting = new HashSet<ProtectionSegment> ();
 		Set<MulticastTree> affectedTrees = new HashSet<MulticastTree> ();
 
 		for (Link link : affectedLinks)
@@ -5451,7 +5168,6 @@ public class NetPlan extends NetworkElement
 			else
 			{
 				affectedRoutesSourceRouting.addAll (link.cache_traversingRoutes.keySet());
-				affectedSegmentsSourceRouting.addAll (link.cache_traversingSegments);
 			}
 			affectedTrees.addAll (link.cache_traversingTrees);
 		}
@@ -5459,7 +5175,6 @@ public class NetPlan extends NetworkElement
 //		System.out.println ("affected routes: " + affectedRoutesSourceRouting);
 		for (NetworkLayer affectedLayer : affectedLayersHopByHopRouting) for (Demand d : affectedLayer.demands) d.layer.updateHopByHopRoutingDemand(d);
 		netPlan.updateFailureStateRoutesTreesSegments(affectedRoutesSourceRouting);
-		netPlan.updateFailureStateRoutesTreesSegments(affectedSegmentsSourceRouting);
 		netPlan.updateFailureStateRoutesTreesSegments(affectedTrees);
 
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
@@ -5754,7 +5469,6 @@ public class NetPlan extends NetworkElement
 		if (layer.routingType == RoutingType.SOURCE_ROUTING)
 		{
 			removeAllRoutes(layer);
-			removeAllProtectionSegments(layer);
 
 			/* Convert the x_de variables into a set of routes for each demand */
 			List<Demand> demands = new LinkedList<Demand>();
@@ -5807,7 +5521,6 @@ public class NetPlan extends NetworkElement
 		if (layer.routingType == RoutingType.SOURCE_ROUTING)
 		{
 			removeAllRoutes(layer);
-			removeAllProtectionSegments(layer);
 
 			/* Convert the x_te variables into a set of routes for each demand */
 			DoubleMatrix2D f_te = GraphUtils.convert_xte2fte(nodes , layer.links , x_te);
@@ -5867,7 +5580,6 @@ public class NetPlan extends NetworkElement
 				layer.forwardingRules_Ain_ne = this.getMatrixNodeLinkIncomingIncidence(layer);
 				layer.forwardingRules_f_de = DoubleFactory2D.sparse.make (layer.demands.size(),layer.links.size ());
 				DoubleMatrix2D A_dn = layer.forwardingRules_x_de.zMult(layer.forwardingRules_Aout_ne , null , 1 , 0 , false , true); // traffic of demand d that leaves node n
-				removeAllProtectionSegments(layer);
 				removeAllRoutes(layer);
 				layer.routingType = RoutingType.HOP_BY_HOP_ROUTING;
 
@@ -5892,11 +5604,10 @@ public class NetPlan extends NetworkElement
 			{
 				layer.routingType = RoutingType.SOURCE_ROUTING;
 				removeAllRoutes(layer);
-				removeAllProtectionSegments(layer);
 				for (Link e : layer.links)
 				{
-					e.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = e.getMulticastCarriedTraffic();
-					e.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = e.getMulticastOccupiedLinkCapacity();
+					e.cache_carriedTraffic = e.getMulticastCarriedTraffic();
+					e.cache_occupiedCapacity = e.getMulticastOccupiedLinkCapacity();
 				}
 				for (Demand d : layer.demands) d.carriedTraffic = 0;
 
@@ -5914,55 +5625,6 @@ public class NetPlan extends NetworkElement
 					final List<Link> seqLinks = it_pathList.next();
 					addRoute(d, trafficInPath , trafficInPath , seqLinks , null);
 				}
-//				final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-//				final int E = layer.links.size ();
-//				Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes , layer.links);
-//				Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(null);
-//				for (Demand demand : layer.demands)
-//				{
-//					Node ingressNode = demand.getIngressNode();
-//					Node egressNode = demand.getEgressNode();
-//					DoubleMatrix1D x_e = layer.forwardingRules_x_de.viewRow(demand.getIndex()).copy();
-//
-//					Collection<Link> incomingLinksToIngressNode = graph.getInEdges(ingressNode);
-//					Collection<Link> outgoingLinksFromIngressNode = graph.getOutEdges(ingressNode);
-//					if (incomingLinksToIngressNode == null) incomingLinksToIngressNode = new LinkedHashSet<Link>();
-//					if (outgoingLinksFromIngressNode == null) outgoingLinksFromIngressNode = new LinkedHashSet<Link>();
-//
-//					double divAtIngressNode = 0;
-//					for(Link link : outgoingLinksFromIngressNode)
-//						divAtIngressNode += x_e.get(link.getIndex());
-//
-//					for(Link link : incomingLinksToIngressNode)
-//						divAtIngressNode -= x_e.get(link.getIndex());
-//
-//					while (divAtIngressNode > PRECISION_FACTOR)
-//					{
-//						List<Link> candidateLinks = new LinkedList<Link>(); for (int e = 0; e < E ; e ++) if (x_e.get(e) > 0)candidateLinks.add(layer.links.get(e));
-//						if (candidateLinks.isEmpty()) break;
-//
-//						Graph<Node, Link> auxGraph = JUNGUtils.filterGraph(graph, null, null, candidateLinks, null);
-//						List<Link> seqLinks = JUNGUtils.getShortestPath(auxGraph, nev, ingressNode, egressNode);
-//						if (seqLinks.isEmpty()) break;
-//
-//						double trafficInPath = Double.MAX_VALUE;
-//						for(Link link : seqLinks) trafficInPath = Math.min(trafficInPath, x_e.get(link.getIndex()));
-//
-//						trafficInPath = Math.min(trafficInPath, divAtIngressNode);
-//						divAtIngressNode -= trafficInPath;
-//
-//						addRoute(demand, trafficInPath , trafficInPath , seqLinks , null);
-//
-//						for (Link link  : seqLinks)
-//						{
-//							double newTrafficValue_thisLink = x_e.get(link.getIndex()) - trafficInPath;
-//							if (newTrafficValue_thisLink < PRECISION_FACTOR) x_e.set(link.getIndex() , 0);
-//							else x_e.set(link.getIndex(), newTrafficValue_thisLink);
-//						}
-//
-//						if (divAtIngressNode <= PRECISION_FACTOR) break;
-//					}
-//				}
 
 				/* Remove previous 'hop-by-hop' routing information */
 				layer.forwardingRules_f_de = null;
@@ -6083,25 +5745,6 @@ public class NetPlan extends NetworkElement
 		if (occupiedLinkCapacity.size () > 0) if (occupiedLinkCapacity.getMinLocation() [0] < 0) throw new Net2PlanException("Occupied link capacities must be greater or equal than zero");
 		for (MulticastTree t : layer.multicastTrees)
 			t.setCarriedTraffic(carriedTraffic.get (t.index) , occupiedLinkCapacity.get(t.index));
-		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
-	}
-
-	/**
-	 * <p>Sets the vector of the reserved capacity for protection segments, at the given layer. i-th vector corresponds to i-th index of the element. If no layer is provided, the defaulf layer is
-	 * assumed.</p>
-	 * @param segmentCapacities Protection segment reserved capacities vector
-	 * @param optionalLayerParameter Network layer (optional)
-	 */
-	public void setVectorProtectionSegmentReservedCapacity (DoubleMatrix1D segmentCapacities , NetworkLayer ... optionalLayerParameter)
-	{
-		segmentCapacities = NetPlan.adjustToTolerance(segmentCapacities);
-		checkIsModifiable();
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		if (segmentCapacities.size() != layer.protectionSegments.size()) throw new Net2PlanException ("Wrong veector size");
-		if (segmentCapacities.size () > 0) if (segmentCapacities.getMinLocation() [0] < 0) throw new Net2PlanException("Protection segment reserved capacities must be greater or equal than zero");
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-		for (ProtectionSegment s : layer.protectionSegments)
-			s.capacity = segmentCapacities.get (s.index);
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 	}
 
@@ -6232,7 +5875,6 @@ public class NetPlan extends NetworkElement
 			if (layer.routingType == RoutingType.SOURCE_ROUTING)
 			{
 				netPlanInformation.append("Number of routes: ").append(layer.routes.size ()).append(NEWLINE);
-				netPlanInformation.append("Number of protection segments: ").append(layer.protectionSegments.size ()).append(NEWLINE);
 			}
 
 			if (!layer.links.isEmpty())
@@ -6245,7 +5887,7 @@ public class NetPlan extends NetworkElement
 
 				for (Link link : layer.links)
 				{
-					String linkInformation = String.format("e%d (id %d), n%d (%s) -> n%d (%s), state: %s, capacity: %.3g, length: %.3g km, propagation speed: %.3g km/s, carried traffic (incl. segments): %.3g , occupied capacity (incl. traffic in segments): %.3g, attributes: %s", link.index,  link.id , link.originNode.id, link.originNode.name, link.destinationNode.id, link.destinationNode.name , !link.isUp? "down" : "up", link.capacity , link.lengthInKm , link.propagationSpeedInKmPerSecond, link.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments , link.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments , link.attributes.isEmpty() ? "none" : link.attributes);
+					String linkInformation = String.format("e%d (id %d), n%d (%s) -> n%d (%s), state: %s, capacity: %.3g, length: %.3g km, propagation speed: %.3g km/s, carried traffic (incl. segments): %.3g , occupied capacity (incl. traffic in segments): %.3g, attributes: %s", link.index,  link.id , link.originNode.id, link.originNode.name, link.destinationNode.id, link.destinationNode.name , !link.isUp? "down" : "up", link.capacity , link.lengthInKm , link.propagationSpeedInKmPerSecond, link.cache_carriedTraffic , link.cache_occupiedCapacity , link.attributes.isEmpty() ? "none" : link.attributes);
 					netPlanInformation.append(linkInformation);
 
 					if (link.coupledLowerLayerDemand != null)
@@ -6317,29 +5959,9 @@ public class NetPlan extends NetworkElement
 					{
 						String str_seqNodes = CollectionUtils.join(route.cache_seqNodesRealPath , " => ");
 						String str_seqLinks = CollectionUtils.join(route.cache_seqLinksRealPath , " => ");
-						String backupSegments = route.potentialBackupSegments.isEmpty() ? "none" : CollectionUtils.join(route.potentialBackupSegments, ", ");
-
-						String routeInformation = String.format("r%d (id %d), demand: d%d (id %d), carried traffic: %.3g, occupied capacity: %.3g, seq. links: %s, seq. nodes: %s, backup segments: %s, attributes: %s", route.index , route.id , route.demand.index , route.demand.id, route.getCarriedTraffic(), route.getOccupiedCapacity(), str_seqLinks, str_seqNodes, backupSegments, route.attributes.isEmpty() ? "none" : route.attributes);
+						String numBackupPaths = route.backupPaths.isEmpty() ? "none" : "" + route.backupPaths.size();
+						String routeInformation = String.format("r%d (id %d), demand: d%d (id %d), carried traffic: %.3g, occupied capacity: %.3g, seq. links: %s, seq. nodes: %s, number of backup paths: %s, attributes: %s", route.index , route.id , route.demand.index , route.demand.id, route.getCarriedTraffic(), route.getOccupiedCapacity(), str_seqLinks, str_seqNodes, numBackupPaths, route.attributes.isEmpty() ? "none" : route.attributes);
 						netPlanInformation.append(routeInformation);
-						netPlanInformation.append(NEWLINE);
-					}
-				}
-
-				if (!layer.protectionSegments.isEmpty())
-				{
-					netPlanInformation.append(NEWLINE);
-					netPlanInformation.append("Protection segment information");
-					netPlanInformation.append(NEWLINE);
-					netPlanInformation.append("--------------------------------");
-					netPlanInformation.append(NEWLINE).append(NEWLINE);
-
-					for (ProtectionSegment segment : layer.protectionSegments)
-					{
-						String str_seqLinks = CollectionUtils.join(segment.seqLinks, " => ");
-						String str_seqNodes = CollectionUtils.join(segment.seqNodes, " => ");
-
-						String segmentInformation = String.format("s%d (id %d), reserved bandwidth: %.3g, seq. links: %s, seq. nodes: %s, attributes: %s", segment.index , segment.id , segment.capacity , str_seqLinks, str_seqNodes, segment.attributes.isEmpty() ? "none" : segment.attributes);
-						netPlanInformation.append(segmentInformation);
 						netPlanInformation.append(NEWLINE);
 					}
 				}
@@ -6446,7 +6068,6 @@ public class NetPlan extends NetworkElement
 		if (e.netPlan == this) throw new RuntimeException ("Bad");
 		if (e instanceof Node) res = this.cache_id2NodeMap.get (e.id);
 		else if (e instanceof Demand) res = this.cache_id2DemandMap.get (e.id);
-		else if (e instanceof ProtectionSegment) res = this.cache_id2ProtectionSegmentMap.get (e.id);
 		else if (e instanceof Link) res = this.cache_id2LinkMap.get (e.id);
 		else if (e instanceof MulticastDemand) res = this.cache_id2MulticastDemandMap.get (e.id);
 		else if (e instanceof MulticastTree) res = this.cache_id2MulticastTreeMap.get (e.id);
@@ -6462,10 +6083,10 @@ public class NetPlan extends NetworkElement
 	void updateFailureStateRoutesTreesSegments (Collection<? extends NetworkElement> set)
 	{
 		for (NetworkElement thisElement : set)
-			updateFailureStateRoutesTreesSegments (thisElement);
+			updateFailureStateRoutesAndTrees (thisElement);
 	}
 	/* Receives a route, segment or multicast tree, and updates its failure state according to the traversing links and nodes */
-	void updateFailureStateRoutesTreesSegments (NetworkElement thisElement)
+	void updateFailureStateRoutesAndTrees (NetworkElement thisElement)
 	{
 		if (thisElement instanceof Route)
 		{
@@ -6521,23 +6142,6 @@ public class NetPlan extends NetworkElement
 			tree.setCarriedTraffic(tree.carriedTrafficIfNotFailing , tree.occupiedLinkCapacityIfNotFailing); // updates links since all are up
 			ErrorHandling.setDebug(previousDebug);
 		}
-		else if (thisElement instanceof ProtectionSegment)
-		{
-			ProtectionSegment segment = (ProtectionSegment) thisElement;
-			boolean previouslyUp = !segment.layer.cache_segmentsDown.contains (segment);
-			boolean isUp = true;
-			for (Link e : segment.seqLinks) if (!e.isUp) { isUp = false; break; }
-			for (Node e : segment.seqNodes) if (!e.isUp) { isUp = false; break; }
-			if (isUp == previouslyUp) return;
-			if (isUp) // from down to up
-			{
-				segment.layer.cache_segmentsDown.remove (segment); 
-			}
-			else 
-			{
-				segment.layer.cache_segmentsDown.add (segment); 
-			}
-		}
 		else throw new RuntimeException ("Bad");
 	}
 
@@ -6579,7 +6183,6 @@ public class NetPlan extends NetworkElement
 			checkCachesConsistency (layer.demands , cache_id2DemandMap , false);
 			checkCachesConsistency (layer.multicastDemands , cache_id2MulticastDemandMap , false);
 			checkCachesConsistency (layer.multicastTrees , cache_id2MulticastTreeMap , false);
-			checkCachesConsistency (layer.protectionSegments , cache_id2ProtectionSegmentMap, false);
 			checkCachesConsistency (layer.routes , cache_id2RouteMap , false);
 		}
 
@@ -6602,14 +6205,12 @@ public class NetPlan extends NetworkElement
 			this.checkInThisNetPlanAndLayer (layer.multicastDemands , layer);
 			this.checkInThisNetPlanAndLayer (layer.multicastTrees , layer);
 			this.checkInThisNetPlanAndLayer (layer.routes , layer);
-			this.checkInThisNetPlanAndLayer (layer.protectionSegments , layer);
 			layer.checkCachesConsistency();
 			for (Link link : layer.links) link.checkCachesConsistency();
 			for (Demand demand : layer.demands) demand.checkCachesConsistency();
 			for (MulticastDemand demand : layer.multicastDemands) demand.checkCachesConsistency();
 			for (Route route : layer.routes) route.checkCachesConsistency();
 			for (MulticastTree tree : layer.multicastTrees) tree.checkCachesConsistency();
-			for (ProtectionSegment segment : layer.protectionSegments) segment.checkCachesConsistency();
 			
 			if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
 			{
@@ -6697,7 +6298,6 @@ public class NetPlan extends NetworkElement
 			else if (e instanceof MulticastTree) myElement = cache_id2MulticastTreeMap.get(e.id);
 			else if (e instanceof NetworkLayer) myElement = cache_id2LayerMap.get(e.id);
 			else if (e instanceof Node) myElement = cache_id2NodeMap.get(e.id);
-			else if (e instanceof ProtectionSegment) myElement = cache_id2ProtectionSegmentMap.get(e.id);
 			else if (e instanceof Resource) myElement = cache_id2ResourceMap.get(e.id);
 			else if (e instanceof Route) myElement = cache_id2RouteMap.get(e.id);
 			else if (e instanceof SharedRiskGroup) myElement = cache_id2srgMap.get(e.id);
@@ -6722,7 +6322,6 @@ public class NetPlan extends NetworkElement
 			else if (e instanceof MulticastTree) myElement = cache_id2MulticastTreeMap.get(e.id);
 			else if (e instanceof NetworkLayer) myElement = cache_id2LayerMap.get(e.id);
 			else if (e instanceof Node) myElement = cache_id2NodeMap.get(e.id);
-			else if (e instanceof ProtectionSegment) myElement = cache_id2ProtectionSegmentMap.get(e.id);
 			else if (e instanceof Resource) myElement = cache_id2ResourceMap.get(e.id);
 			else if (e instanceof Route) myElement = cache_id2RouteMap.get(e.id);
 			else if (e instanceof SharedRiskGroup) myElement = cache_id2srgMap.get(e.id);
@@ -6767,6 +6366,8 @@ public class NetPlan extends NetworkElement
 
 	static boolean isDeepCopy (List<? extends NetworkElement> m1 , List<? extends NetworkElement> m2)
 	{
+		if ((m1 == null) && (m2 == null)) return true;
+		if ((m1 == null) != (m2 == null)) return false;
 		if (m1.size() != m2.size()) return false;
 		if (m1.isEmpty()) return true;
 		final NetPlan np2 = m2.iterator().next().netPlan;
@@ -6788,7 +6389,6 @@ public class NetPlan extends NetworkElement
 		else if (e.equals(MulticastTree.class))  return cache_id2MulticastTreeMap.get(id);
 		else if (e.equals(NetworkLayer.class))  return cache_id2LayerMap.get(id);
 		else if (e.equals(Node.class))  return cache_id2NodeMap.get(id);
-		else if (e.equals(ProtectionSegment.class))  return cache_id2ProtectionSegmentMap.get(id);
 		else if (e.equals(Resource.class))  return cache_id2ResourceMap.get(id);
 		else if (e.equals(Route.class))  return cache_id2RouteMap.get(id);
 		else if (e.equals(SharedRiskGroup.class))  return cache_id2srgMap.get(id);
