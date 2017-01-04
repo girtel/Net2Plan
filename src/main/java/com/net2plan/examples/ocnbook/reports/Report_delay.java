@@ -78,7 +78,7 @@ public class Report_delay implements IReport
 		double[] T_e = new double [E];
 		for (Link e : netPlan.getLinks())
 		{
-			final double rho_e = e.getUtilizationIncludingProtectionSegments();
+			final double rho_e = e.getUtilization();
 			T_e_prop [e.getIndex()] = e.getPropagationDelayInMs();
 			T_e_tx [e.getIndex()] = 1000 * averagePacketLength_bits.getDouble() / (e.getCapacity() * linkCapacityUnits_bps.getDouble()); 
 			T_e_buf [e.getIndex()] = 1000 * averagePacketLength_bits.getDouble() / (e.getCapacity() * linkCapacityUnits_bps.getDouble()) * Math.pow(rho_e, 1/(2*(1-hurstParameter.getDouble()))) / Math.pow(1-rho_e , hurstParameter.getDouble()/(1 - hurstParameter.getDouble())); 
@@ -91,7 +91,7 @@ public class Report_delay implements IReport
 		double[] T_r_buf = new double [R];
 		double[] T_r = new double [R];
 		for (Route r : netPlan.getRoutes())
-			for (Link e : r.getSeqLinksRealPath())
+			for (Link e : r.getSeqLinks())
 			{
 				T_r_prop [r.getIndex()] += T_e_prop [e.getIndex()];
 				T_r_tx [r.getIndex()] += T_e_tx [e.getIndex()];
@@ -144,7 +144,7 @@ public class Report_delay implements IReport
 		{
 			final int rIndex = r.getIndex();
 			final Demand d = r.getDemand();
-			out.append(String.format("<tr><td>%d</td><td>%d</td><td>%d (%s)</td><td>%d (%s)</td><td>%s</td><td>%.3g</td><td>%.3g</td><td>%.3g</td><td>%.3g</td><td>%s</td></tr>", r.getIndex () , d.getIndex(), r.getIngressNode().getIndex() , r.getIngressNode().getName(), r.getEgressNode().getIndex() , r.getEgressNode().getName(), r.getSeqLinksRealPath(), T_r_prop[rIndex], T_r_tx[rIndex], T_r_buf[rIndex], T_r[rIndex], r.getAttributes()));
+			out.append(String.format("<tr><td>%d</td><td>%d</td><td>%d (%s)</td><td>%d (%s)</td><td>%s</td><td>%.3g</td><td>%.3g</td><td>%.3g</td><td>%.3g</td><td>%s</td></tr>", r.getIndex () , d.getIndex(), r.getIngressNode().getIndex() , r.getIngressNode().getName(), r.getEgressNode().getIndex() , r.getEgressNode().getName(), r.getSeqLinks(), T_r_prop[rIndex], T_r_tx[rIndex], T_r_buf[rIndex], T_r[rIndex], r.getAttributes()));
 		}
 		out.append("</table>");
 

@@ -502,6 +502,18 @@ public class WDMUtils
 			if (seqRegeneratorsOccupancy_e.length != seqLinks.size()) throw new WDMException ("Wrong regenerators occupancy in the RSA");
 			seqRegeneratorsOccupancy_e[0] = 0;
 		}
+		
+		/** Returns true if this RSA has the same sequence of links, occupied slots and regenerators as the given RSA 
+		 * @param rsa
+		 * @return
+		 */
+		public boolean equals (RSA rsa)
+		{
+			if (!this.seqLinks.equals(rsa.seqLinks)) return false;
+			if (!this.seqFrequencySlots_se.equals(rsa.seqFrequencySlots_se)) return false;
+			if (!Arrays.equals(this.seqRegeneratorsOccupancy_e , rsa.seqRegeneratorsOccupancy_e)) return false;
+			return true;
+		}
 	}
 	
 	/**
@@ -719,8 +731,26 @@ public class WDMUtils
 		setLightpathRSAAttributes (r , rsa , false , indexOfBackupPathAdded);
 	}
 
+	/** Removes a lightpath as backup path of a route (in the given index), updating also the information in theroute attribtues regarding the RSA
+	 * @param r the route
+	 * @param indexToRemove the index of the backup path to remove (in the backup path list of the route)
+	 */
+	public static void removeLightpathAsBackupPath (Route r , int indexToRemove)
+	{
+		final int originalNumBackupPaths = r.getBackupPathList().size();
+		if ((indexToRemove < 0) || (indexToRemove >= originalNumBackupPaths)) throw new WDMException ("Wrong backup path index");
+		r.removeBackupPath(indexToRemove);
+		for (int index = indexToRemove + 1; index < originalNumBackupPaths ; index ++)
+		{
+			r.setAttribute(SEQUENCE_OF_FREQUENCYSLOTS_BACKUPPATH_ATTRIBUTE_NAME + (index-1), r.getAttribute(SEQUENCE_OF_FREQUENCYSLOTS_BACKUPPATH_ATTRIBUTE_NAME + index));
+			r.setAttribute(SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + (index-1), r.getAttribute(SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + index));
+		}
+		r.removeAttribute(SEQUENCE_OF_FREQUENCYSLOTS_BACKUPPATH_ATTRIBUTE_NAME + (originalNumBackupPaths-1));
+		r.removeAttribute(SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + (originalNumBackupPaths-1));
+	}
+
 	/** Checks resource clashing: no frequency slot in the same fiber can be occupied by more than one lightpath, nor 
-	 * any slot of an index higher than the fiber capacity can be occupied. 
+	 * any slot of an index higher than the fiber capacity can be occupied. If a lightpath has as current route one of the backups, the clashing for this backup is not checked 
 	 * @param netPlan The object representing the network
 	 * @param countDownPaths Include paths (current, primary or backup) that are down
 	 * @param boolean countPrimaryPathInsteadOfCurrentPath if true, we account for the resources allocated by the primary RSA, if false, the one of the current RSA.
@@ -739,15 +769,15 @@ public class WDMUtils
 				final RSA rsa = new RSA (lpRoute , countPrimaryPathInsteadOfCurrentPath);
 				if (!countDownPaths && rsa.isDown()) continue;
 				rsa.checkFrequencySlotConversionOccupiesARegenerator();
+				if (countBackupPathLightpaths)
+				for (int index = 0; index < lpRoute.getBackupPathList().size() ; index ++)
+				{
+					final RSA rsaBackup = new RSA (lpRoute , index);
+					if (rsaBackup.equals(rsa)) continue;
+					if (!countDownPaths && rsaBackup.isDown()) continue;
+					rsaBackup.checkFrequencySlotConversionOccupiesARegenerator();
+				}
 			}
-			if (countBackupPathLightpaths)
-				for (Route lpRoute : netPlan.getRoutes(layer))
-					for (int index = 0; index < lpRoute.getBackupPathList().size() ; index ++)
-					{
-						final RSA rsa = new RSA (lpRoute , index);
-						if (!countDownPaths && rsa.isDown()) continue;
-						rsa.checkFrequencySlotConversionOccupiesARegenerator();
-					}
 		}
 		getNetworkSlotAndRegeneratorOcupancy(netPlan , countDownPaths , countPrimaryPathInsteadOfCurrentPath , countBackupPathLightpaths ,  layer); // serves as check
 	}
@@ -910,7 +940,7 @@ public class WDMUtils
 	/**
 	 * Returns the fiber occupied (columns) in each wavelength (rows), and an array with the number of occupied regenerators in each node.
 	 * The lightpaths with occupied capacity equal to zero (as Route objects) are not counted. 
-	 * An exception is raised if a slot is allocated to more than one lightpath, or a slot with an id higher than the link capacity is occupied
+	 * An exception is raised if a slot is allocated to more than one lightpath (except if a lightpath current path is equal to one of its backup paths), or a slot with an id higher than the link capacity is occupied
 	 * @param netPlan Current design
 	 * @param countDownPaths Include paths (current, primary or backup) that are down
 	 * @param boolean countPrimaryPathInsteadOfCurrentPath if true, we account for the resources allocated by the primary RSA, if false, the one of the current RSA.
@@ -939,18 +969,19 @@ public class WDMUtils
 			if (!countDownPaths && rsa.isDown()) continue;
 			if (lpRoute.getOccupiedCapacity() == 0) continue; // not been used now
 			allocateResources(rsa , frequencySlot2FiberOccupancy_se , nodeRegeneratorOccupancy);
-		}
-		if (countBackupPathLightpaths)
-			for (Route lpRoute : netPlan.getRoutes(layer))
+
+			if (countBackupPathLightpaths)
 			{
 				if (lpRoute.getOccupiedCapacity() == 0) continue; // not been used now
 				for (int index = 0; index < lpRoute.getBackupPathList().size() ; index ++)
 				{
-					final RSA rsa = new RSA (lpRoute , index);
-					if (!countDownPaths && rsa.isDown()) continue;
-					allocateResources(rsa , frequencySlot2FiberOccupancy_se , nodeRegeneratorOccupancy);
+					final RSA rsaBackup = new RSA (lpRoute , index);
+					if (rsaBackup.equals(rsa)) continue; // do not allocate, the route is traversing a backup
+					if (!countDownPaths && rsaBackup.isDown()) continue;
+					allocateResources(rsaBackup , frequencySlot2FiberOccupancy_se , nodeRegeneratorOccupancy);
 				}
 			}
+		}
 		return Pair.of(frequencySlot2FiberOccupancy_se,nodeRegeneratorOccupancy);
 	}
 
