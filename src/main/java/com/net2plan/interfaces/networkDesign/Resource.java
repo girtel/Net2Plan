@@ -441,7 +441,7 @@ public class Resource extends NetworkElement
 		{
 			final Route r = travRoute.getKey();
 			final double val = travRoute.getValue();
-			if (r.cache_linkSegmentsAndResourcesTraversedAndOccupiedCapIfnotFailMap.get(this) != val) throw new RuntimeException ("Bad");
+			if (r.cache_linkAndResourcesTraversedAndOccupiedCapIfnotFailMap.get(this) != val) throw new RuntimeException ("Bad");
 			if (!r.isDown()) accumOccupCap += val;
 		}
 		org.junit.Assert.assertEquals (accumOccupCap , cache_totalOccupiedCapacity , 0.001);

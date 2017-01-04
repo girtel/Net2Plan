@@ -221,7 +221,7 @@ public class Demand extends NetworkElement
 	{
 		if (layer.routingType != RoutingType.SOURCE_ROUTING) throw new Net2PlanException ("The routing type must be SOURCE ROUTING");
 		for (Route r : this.cache_routes)
-			for (Resource res : r.cache_linkSegmentsAndResourcesTraversedAndOccupiedCapIfnotFailMap.keySet()) 
+			for (Resource res : r.cache_linkAndResourcesTraversedAndOccupiedCapIfnotFailMap.keySet()) 
 				if (res.isOversubscribed()) return true;
 		return false;
 	}
@@ -549,7 +549,7 @@ public class Demand extends NetworkElement
 		for (Route r : cache_routes)
 		{
 			double cost = 0; 
-			for (NetworkElement e : r.currentSeqLinksSegmentsAndResourcesTraversed) 
+			for (NetworkElement e : r.currentPath) 
 				if (e instanceof ProtectionSegment) for (Link ee : ((ProtectionSegment) e).seqLinks) cost += linkCosts [ee.index];
 				else if (e instanceof Link) cost += linkCosts [e.index];
 				else if (e instanceof Resource) cost += resourceCosts [e.index];
