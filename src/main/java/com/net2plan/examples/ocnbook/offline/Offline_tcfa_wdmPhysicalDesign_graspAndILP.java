@@ -25,12 +25,6 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import cern.jet.math.tdouble.DoubleFunctions;
-
 import com.jom.DoubleMatrixND;
 import com.jom.OptimizationProblem;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -40,7 +34,6 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.utils.Constants.RoutingType;
@@ -51,6 +44,12 @@ import com.net2plan.utils.IntUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Quadruple;
 import com.net2plan.utils.Triple;
+
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import cern.jet.math.tdouble.DoubleFunctions;
 
 /**
  * This algorithm is devoted to solve the several network planning problems in an optical WDM network (fiber placement, RWA, under different recovery schemes), appearing in the case study in the book section mentioned below. 
@@ -238,10 +237,10 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 			{
 				if (Math.abs(best_xr.viewSelection(routeList_d [d.getIndex ()]).zSum() - 1) > 1E-3) throw new RuntimeException ("Bad");
 				if (Math.abs(best_x2r.viewSelection(routeList_d [d.getIndex ()]).zSum() - 1) > 1E-3) throw new RuntimeException ("Bad");
-				Route primaryRoute = null; ProtectionSegment protSegment = null;  
+				Route primaryRoute = null; Route backupRoute = null;  
 				for (Route r : d.getRoutes ()) if (Math.abs(best_xr.get(r.getIndex ()) - 1) <= 1e-3) { primaryRoute = r; primaryRoute.setCarriedTraffic(tcfa_circuitCapacity_Gbps.getDouble () , tcfa_circuitCapacity_Gbps.getDouble ()); break; }
-				for (Route r : d.getRoutes ()) if (Math.abs(best_x2r.get(r.getIndex ()) - 1) <= 1e-3) { protSegment = netPlan.addProtectionSegment(r.getSeqLinks() , tcfa_circuitCapacity_Gbps.getDouble () , null); break; }
-				primaryRoute.addProtectionSegment(protSegment);
+				for (Route r : d.getRoutes ()) if (Math.abs(best_x2r.get(r.getIndex ()) - 1) <= 1e-3) { backupRoute = r; backupRoute.setCarriedTraffic(0 , tcfa_circuitCapacity_Gbps.getDouble ()); break; }
+				primaryRoute.addBackupRoute(backupRoute);
 			}
 			for (Link e : netPlan.getLinks ()) e.setCapacity(tcfa_linkCapacity_numCirc.getInt () * tcfa_circuitCapacity_Gbps.getDouble () * best_pe.get(e.getIndex()));
 		
@@ -400,7 +399,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 	private Pair<Map<Demand,Demand>,Map<Route,Route>> initializeNetPlanLinksBidirDemandsAndRoutes (NetPlan np)
 	{
 		/* Remove lower half demands from np */
-		np.removeAllRoutes(); np.removeAllProtectionSegments();
+		np.removeAllRoutes(); 
 		for (Node n1 : np.getNodes()) for (Node n2 : np.getNodes()) if (n1.getIndex () > n2.getIndex ()) for (Demand d : np.getNodePairDemands(n1, n2,false)) d.remove ();
 		np.addRoutesFromCandidatePathList(null , "K" , "" + tcfa_maxNumberPathsPerDemand.getInt () , "maxLengthInKm" , "" + tcfa_maxPathLengthInKm.getDouble() ,  "maxNumHops" , "" + tcfa_maxPathNumberOfHops.getInt ());
 
@@ -489,15 +488,15 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 
 		if (tcfa_recoveryType.getString ().equals("1+1"))
 		{ // one prot segment, and link disjoint
-			for (Route r : np.getRoutes())
+			for (Route r : np.getRoutesAreNotBackup())
 			{
-				if (r.getPotentialBackupProtectionSegments().size() != 1) throw new RuntimeException ("Bad");
-				final ProtectionSegment protSegment = r.getPotentialBackupProtectionSegments().iterator().next();
+				if (r.getBackupRoutes().size() != 1) throw new RuntimeException ("Bad");
+				final Route backupRoute = r.getBackupRoutes().get(0);
 				List<Link> seqLinks = new ArrayList<Link> (r.getSeqLinks());
-				seqLinks.retainAll(protSegment.getSeqLinks());
+				seqLinks.retainAll(backupRoute.getSeqLinks());
 				if (!seqLinks.isEmpty()) 
 				{
-					System.out.println ("Route : "+  r + " links: " + r.getSeqLinks() + ", prot segment " + protSegment + " links: " + protSegment.getSeqLinks() + ", get route carried traffic: " + r.getCarriedTraffic() + ", prot segment reserved traffic: " + protSegment.getReservedCapacityForProtection());
+					System.out.println ("Route : "+  r + " links: " + r.getSeqLinks() + ", backup route " + backupRoute + " links: " + backupRoute.getSeqLinks() + ", route carried traffic: " + r.getCarriedTraffic() + ", backup occupied capacity: " + backupRoute.getOccupiedCapacity());
 					throw new RuntimeException ("Bad");
 				}
 			}

@@ -150,7 +150,7 @@ public class Demand extends NetworkElement
 	 * */
 	public Set<Route> getRoutesAreNotBackup ()
 	{
-		return getRoutes ().stream().filter(e -> e.isBackupRoute()).collect(Collectors.toSet());
+		return getRoutes ().stream().filter(e -> !e.isBackupRoute()).collect(Collectors.toSet());
 	}
 
 	/**

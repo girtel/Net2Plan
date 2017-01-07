@@ -7,6 +7,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -79,10 +80,10 @@ public class ResourceTest
 		assertTrue (np.getNumberOfResources() == 2);
 		
 		/* create service chain */
-		List<NetworkElement> pathUpper = new LinkedList<NetworkElement> (); pathUpper.add(upperResource); pathUpper.add(interLink);
-		this.serviceChainUpper = np.addServiceChain(demandUpper , 100 , 200 , pathUpper , Collections.singletonMap(upperResource , 1.0) , null);
-		List<NetworkElement> pathBase = new LinkedList<NetworkElement> (); pathBase.add(baseResource); pathBase.add(interLink);
-		this.serviceChainBase = np.addServiceChain(demandBase , 100 , 300 , pathBase , Collections.singletonMap(baseResource , 1.0) , null);
+		List<NetworkElement> pathUpper = Arrays.asList(upperResource , interLink);
+		this.serviceChainUpper = np.addServiceChain(demandUpper , 100 , Arrays.asList(1.0 , 200.0) , pathUpper , null);
+		List<NetworkElement> pathBase = Arrays.asList(baseResource , interLink);
+		this.serviceChainBase = np.addServiceChain(demandBase , 100 , Arrays.asList(1.0 , 300.0) , pathBase , null);
 	}
 
 	/**
@@ -221,12 +222,12 @@ public class ResourceTest
 	{
 		assertTrue (!baseResource.isOversubscribed());
 		assertTrue (!upperResource.isOversubscribed());
-		serviceChainBase.setCarriedTrafficAndResourcesOccupationInformation(20,20,null);
+		serviceChainBase.setCarriedTraffic(20,Arrays.asList(0.0 , 20.0));
 		assertTrue (!baseResource.isOversubscribed());
 		assertTrue (!upperResource.isOversubscribed());
-		serviceChainBase.setCarriedTrafficAndResourcesOccupationInformation(20,20,Collections.singletonMap(baseResource , 100.0));
+		serviceChainBase.setCarriedTraffic(20,Arrays.asList(100.0 , 20.0));
 		assertTrue (baseResource.isOversubscribed());
-		serviceChainUpper.setCarriedTrafficAndResourcesOccupationInformation(20,20,Collections.singletonMap(upperResource , 100.0));
+		serviceChainUpper.setCarriedTraffic(20,Arrays.asList(100.0 , 20.0));
 		assertTrue (upperResource.isOversubscribed());
 		np.checkCachesConsistency();
 	}
@@ -304,8 +305,8 @@ public class ResourceTest
 		assertEquals(serviceChainUpper.getCarriedTraffic() , 0 , 0.0);
 		assertEquals(serviceChainBase.getOccupiedCapacity() , 0 , 0.0);
 		assertEquals(serviceChainUpper.getOccupiedCapacity() , 0 , 0.0);
-		assertEquals(serviceChainBase.getOccupiedCapacityInNoFailureState() , 300.0 , 0.0);
-		assertEquals(serviceChainUpper.getOccupiedCapacityInNoFailureState() , 200.0 , 0.0);
+		assertEquals(serviceChainBase.getOccupiedCapacityInNoFailureState() , 1.0 , 0.0);
+		assertEquals(serviceChainUpper.getOccupiedCapacityInNoFailureState() , 1.0 , 0.0);
 		assertEquals(upperResource.getOccupiedCapacity() , 0.0 , 0.0);
 		assertEquals(baseResource.getOccupiedCapacity() , 5.0 , 0.0);
 	}

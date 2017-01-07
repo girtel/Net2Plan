@@ -291,6 +291,14 @@ public class Link extends NetworkElement
 		return cache_occupiedCapacity;
 	}
 	
+	/** <p>Returns the link occupied capacity (in link capacity units). </p>
+	 * @return The occupied capacity as described above
+	 * */
+	public double getOccupiedCapacityOnlyBackupRoutes ()
+	{
+		return cache_traversingRoutes.keySet().stream ().filter(e -> e.isBackupRoute()).mapToDouble(e -> e.getOccupiedCapacity(this)).sum ();
+	}
+
 	/**
 	 * <p>Returns the link length in km.</p>
 	 * @return The link length in km

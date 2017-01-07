@@ -96,7 +96,7 @@ public class Route extends NetworkElement
 		this.currentLinksAndResourcesOccupationIfNotFailing = Collections.nCopies(seqLinksAndResourcesTraversed.size() , 0.0);  
 		this.initialStateCarriedTrafficIfNotFailing = -1;
 		this.initialStateOccupationIfNotFailing = null;
-		this.initialStatePath = null;
+		this.initialStatePath = new ArrayList<NetworkElement> (seqLinksAndResourcesTraversed);
 		this.cache_seqLinksRealPath = Route.getSeqLinks(seqLinksAndResourcesTraversed); 
 		this.cache_seqNodesRealPath = Route.listTraversedNodes(cache_seqLinksRealPath);
 		this.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap = updateLinkResourceOccupationCache ();
@@ -184,8 +184,10 @@ public class Route extends NetworkElement
 		if (backupRoute == null) throw new Net2PlanException ("The passed element is NULL");
 		this.checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
+		if (!backupRoute.demand.equals(demand)) throw new Net2PlanException ("The backup route must be of the same demand as the primary");
 		if (backupRoute.hasBackupRoutes()) throw new Net2PlanException ("A backup route cannot have backup routes itself"); 
 		this.backupRoutes.add (backupRoute);
+		backupRoute.cache_routesIAmBackUp.add(this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 
@@ -528,6 +530,14 @@ public class Route extends NetworkElement
 		linkAndResourcesOccupationInformation = linkAndResourcesOccupationInformation.stream().map(e->NetPlan.adjustToTolerance(e)).collect(Collectors.toList());
 		if (newCarriedTraffic < 0) throw new Net2PlanException ("Carried traffics must be non-negative");
 
+		/* Update the initial state if this is the first time this is called */
+		if (initialStateCarriedTrafficIfNotFailing == -1)
+		{
+			this.initialStateCarriedTrafficIfNotFailing = newCarriedTraffic;
+			this.initialStateOccupationIfNotFailing = new ArrayList<Double> (linkAndResourcesOccupationInformation);
+			if (initialStateOccupationIfNotFailing.size() != initialStatePath.size()) throw new RuntimeException ("Bad");
+		}
+
 		this.currentCarriedTrafficIfNotFailing = newCarriedTraffic;
 		this.currentLinksAndResourcesOccupationIfNotFailing = new ArrayList<Double> (linkAndResourcesOccupationInformation);
 
@@ -563,13 +573,6 @@ public class Route extends NetworkElement
 		for (Double val : newOccupationInformation) if (val < 0) throw new Net2PlanException ("The occupation of a link/resource cannot be negative");
 		if (newPath.size() != newOccupationInformation.size()) throw new Net2PlanException ("Wrong size of array");
 		
-		/* Update the initial state if this is the first time this is called */
-		if (initialStateCarriedTrafficIfNotFailing == -1)
-		{
-			this.initialStateCarriedTrafficIfNotFailing = newCarriedTraffic;
-			this.initialStateOccupationIfNotFailing = new ArrayList<Double> (newOccupationInformation);
-			this.initialStatePath = new ArrayList<NetworkElement> (newPath);
-		}
 		/* Remove the old route trace in the traversed nodes and links */
 		this.setCarriedTraffic(0 , 0); // releases all links, segments and resources occupation
 		for (Resource resource : this.getSeqResourcesTraversed()) resource.removeTraversingRoute(this); // removes the current route

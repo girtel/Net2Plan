@@ -19,10 +19,9 @@ package com.net2plan.examples.general.reports;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.IReport;
@@ -30,7 +29,6 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.TrafficComputationEngine;
@@ -78,7 +76,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		final NetworkLayer wdmLayer = wdmLayerIndex.getInt () == -1? netPlan.getNetworkLayerDefault() : netPlan.getNetworkLayer(wdmLayerIndex.getInt ());
 		this.netPlan.setNetworkLayerDefault(wdmLayer);
 
-		Map<Link, LinkedList<String>> warnings_e = new LinkedHashMap<Link, LinkedList<String>>();
+		//Map<Link, LinkedList<String>> warnings_e = new LinkedHashMap<Link, LinkedList<String>>();
 
 		String res = printReport();
 		netPlan.setNetworkLayerDefault(originalDefaultLayer);
@@ -156,8 +154,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		out.append("<table border='1'>");
 		out.append("<tr><th align=\"left\"><b>Format errors</b></th></tr>");
 		for (Link e : netPlan.getLinks()) if (!WDMUtils.isWDMFormatCorrect(e)) { correctFormat = false ; out.append("<tr><td>Fiber " + e.getIndex() + ": incorrect format</td></tr>"); }
-		for (Route r : netPlan.getRoutes()) if (!WDMUtils.isWDMFormatCorrect(r)) { correctFormat = false ; out.append("<tr><td>Route " + r.getIndex() + ": incorrect format</td></tr>"); }
-		for (ProtectionSegment r : netPlan.getProtectionSegments()) if (!WDMUtils.isWDMFormatCorrect(r)) { correctFormat = false ; out.append("<tr><td>ProtectionSegment " + r.getIndex() + ": incorrect format</td></tr>"); }
+		for (Route r : netPlan.getRoutes()) if (!WDMUtils.isWDMFormatCorrect(r)) { correctFormat = false ; out.append("<tr><td>Route " + r.getIndex() + ": incorrect format. Is backup route: " + r.isBackupRoute() + "</td></tr>"); }
 		if (correctFormat) out.append("<tr><td bgcolor=\"PaleGreen\">No format errors!!!</td></tr>"); 
 		out.append("</table>");
 		if (!correctFormat) return out.toString();
@@ -173,7 +170,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		out.append("<tr><th align=\"left\"><b>Fiber link stats</b></td></tr>");
 		out.append("<tr><td align=\"left\">Number of fibers</td><td>" + netPlan.getNumberOfLinks() + "</td></tr>");
 		out.append("<tr><td align=\"left\">Number of frequency slots per fiber (min/average/max)</td><td>" + stat.numberFrequencySlotsPerLink + "</td></tr>");
-		out.append("<tr><td align=\"left\">Number of slots occupied per fiber (min/average/max)</td><td>" + stat.linkUtilizationIncludingProtSegments.toString(df_2) + "</td></tr>");
+		out.append("<tr><td align=\"left\">Number of slots occupied per fiber (min/average/max)</td><td>" + stat.linkUtilization.toString(df_2) + "</td></tr>");
 		out.append("<tr><td align=\"left\">The topology of fibers is bidirectional (in fibers and number of slots)?</td><td>" + stat.bidirectionalLinks + "</td></tr>");
 		
 		out.append("<tr><th align=\"left\"><b>Traffic stats</b></td></tr>");
@@ -196,7 +193,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		
 		out.append("<tr><th align=\"left\"><b>Resilience stats</b></th></tr>");
 		out.append("<tr><td align=\"left\">The protection lightpaths are bidirectional? (same number of the same number of slots reserved between each node pair)?</td><td>" + stat.bidirectionalProtectionSegments + "</td></tr>");
-		out.append("<tr><td align=\"left\">Fiber capacity (number of slots) reserved for protection (min/average/max)</td><td>" + stat.fiberCapacityReservedForProtection.toString(df_2) + "</td></tr>");
+		out.append("<tr><td align=\"left\">Fiber capacity (number of slots) reserved for protection (min/average/max)</td><td>" + stat.fiberCapacityOccupiedByBackupRoutes.toString(df_2) + "</td></tr>");
 		final double resilienceInfo = TrafficComputationEngine.getTrafficProtectionDegree(netPlan);
 		out.append("<tr><td align=\"left\">% of carried traffic with at least one backup path</td><td>" + df_2.format(resilienceInfo) + " %" + "</td></tr>");
 		out.append("</table>");
@@ -207,9 +204,9 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		out.append("<ul>");
 		out.append("<li>Black: The slot number is higher than the capacity declared for the link, and is not assigned to any lightpath.</li>");
 		out.append("<li>White: The slot is within the fiber capacity, and is not assigned to any lightpath.</li>");
-		out.append("<li>Green: The slot is within the fiber capacity, and is occupied by one regular lightpath and assigned to no protection lightpath.</li>");
-		out.append("<li>Yellow: The slot is within the fiber capacity, and is occupied by zero regular lightpaths and assigned to one protection lightpath.</li>");
-		out.append("<li>Red: The slot is within the fiber capacity, and is occupied by more than one lightpath (summing regular and protection), or is outside the link capacity and is assigned to at leastone lightpath.</li>");
+		out.append("<li>Green: The slot is within the fiber capacity, and is occupied by one regular lightpath and assigned to no backup lightpath.</li>");
+		out.append("<li>Yellow: The slot is within the fiber capacity, and is occupied by zero regular lightpaths and assigned to one backup lightpath.</li>");
+		out.append("<li>Red: The slot is within the fiber capacity, and is occupied by more than one lightpath (summing regular and backup), or is outside the link capacity and is assigned to at leastone lightpath.</li>");
 		out.append("</ul>");
 		out.append("<table border='1'>");
 		out.append("<tr><th><b>Fiber #</b></th><th><b>Origin node</b></th><th><b>Dest. node</b></th><th><b>% slots used</b></th><th><b>Ok?</b></th>");
@@ -228,23 +225,22 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 			StringBuffer thisLine = new StringBuffer ();
 			for (int s = 0; s < stat.maxNumberSlots ; s ++)
 			{
-				Pair<List<Route> , List<ProtectionSegment>> lists = stat.slotOccupInfo.get(Pair.of(e,s)); 
-				List<Route> lps = lists == null? null : lists.getFirst();
-				List<ProtectionSegment> lpProts = lists == null? null : lists.getSecond();
+				List<Route> lps = stat.slotOccupInfo.get(Pair.of(e,s)); 
+//				List<Route> lps = lists == null? null : lists.getFirst();
+//				List<ProtectionSegment> lpProts = lists == null? null : lists.getSecond();
 				String color = "";
 				final boolean inFiberCapacity = (s < numSlotsThisFiber); 
-				final int numLps = lps == null? 0 : lps.size();
-				final int numProts = lpProts == null? 0 : lpProts.size();
-				numSlotsUsedThisFiber += numLps + numProts > 0? 1 : 0;
-				if (!inFiberCapacity && (numLps + numProts == 0)) color = "black";
-				else if (!inFiberCapacity && (numLps + numProts > 0)) { color = "red"; everythingOk = false; }
-				else if (inFiberCapacity && (numLps + numProts == 0)) color = "white";
-				else if (inFiberCapacity && (numLps == 1) && (numProts == 0)) color = "PaleGreen";
-				else if (inFiberCapacity && (numLps == 0) && (numProts == 1)) color = "yellow";
+				final int numLpsBackup = (int) lps.stream().filter(ee -> ee.isBackupRoute()).count();
+				final int numLpsPrimary = lps.size() - numLpsBackup;
+				numSlotsUsedThisFiber += numLpsPrimary + numLpsBackup > 0? 1 : 0;
+				if (!inFiberCapacity && (numLpsPrimary + numLpsBackup == 0)) color = "black";
+				else if (!inFiberCapacity && (numLpsPrimary + numLpsBackup > 0)) { color = "red"; everythingOk = false; }
+				else if (inFiberCapacity && (numLpsPrimary + numLpsBackup == 0)) color = "white";
+				else if (inFiberCapacity && (numLpsPrimary == 1) && (numLpsBackup == 0)) color = "PaleGreen";
+				else if (inFiberCapacity && (numLpsPrimary == 0) && (numLpsBackup == 1)) color = "yellow";
 				else { color = "red"; everythingOk = false; }
 				thisLine.append("<td bgcolor=\"" + color + "\">");
 				if (lps != null) for (Route r : lps) thisLine.append("<a href=\"#lp" + r.getIndex() + "\">L" + r.getIndex() + " </a>");
-				if (lpProts != null) for (ProtectionSegment segment : lpProts) thisLine.append("<a href=\"#lpProt" + segment.getIndex() + "\">P" + segment.getIndex() + " </a>");
 				thisLine.append("</td>");
 			}
 			out.append("<td>" + ((double) numSlotsUsedThisFiber) / ((double) numSlotsThisFiber) + "</td>");
@@ -255,15 +251,15 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		out.append("</table>");
 
 		/* Per Route lightpath information */
-		out.append("<h2><a name=\"routeStats\"></a>PER LIGHTPATH INFORMATION SUMMARY</h2>");
-		out.append("<p>This table shows information for each regular lightpath: lightpaths defined as Route objects in the design (in opposition to lightpaths defined as ProtectionSegments that reserve a slots in the links).</p>");
+		out.append("<h2><a name=\"routeStats\"></a>PER LIGHTPATH (NON BACKUP) INFORMATION SUMMARY</h2>");
+		out.append("<p>This table shows information for each regular lightpath (not backup lightpaths).</p>");
 		out.append("<table border='1'>");
 		out.append("<tr><th><b>Lighpath Route #</b></th><th><b>Demand #</b></th><th><b>Origin node</b></th>"
 				+ "<th><b>Dest. node</b></th><th><b>Trav. nodes</b></th><th><b>Length (km)</b></th><th><b>Propagation delay (ms)</b></th>"
 				+ "<th><b>Line rate (Gbps)</b></th><th><b>Num. slots</b></th><th><b>Occupied slots</b></th>"
 				+ "<th><b>Wavelength conversion?</b></th><th><b>Wavelength contiguity?</b></th></th>"
-				+ "<th><b>Num. regenerators (reg. nodes)</b></th><b>Protection segments assigned</b></th></tr><th><b>Ok?</b></th></tr>");
-		for (Route r : netPlan.getRoutes())
+				+ "<th><b>Num. regenerators (reg. nodes)</b></th><b>Backup routes assigned</b></th></tr><th><b>Ok?</b></th></tr>");
+		for (Route r : netPlan.getRoutesAreNotBackup())
 		{
 			WDMUtils.RSA rsa = new WDMUtils.RSA(r , false);
 			out.append("<tr>");
@@ -271,7 +267,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 			out.append("<td>" + r.getDemand().getIndex() + "</td>");
 			out.append("<td>" + printNode(r.getIngressNode())+ "</td>");
 			out.append("<td>" + printNode(r.getEgressNode())+ "</td>");
-			out.append("<td>" + seqNodesString(r.getSeqLinksRealPath()) + "</td>");
+			out.append("<td>" + seqNodesString(r.getSeqLinks()) + "</td>");
 			out.append("<td>" + df_2.format(r.getLengthInKm()) + "</td>");
 			out.append("<td>" + df_2.format(r.getPropagationDelayInMiliseconds()) + "</td>");
 			out.append("<td>" + df_2.format(r.getCarriedTraffic()) + "</td>");
@@ -284,8 +280,8 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 			out.append("<td>" + regPoints.size() + (regPoints.isEmpty()? "" : "[ " + regNodesString + "]"));
 			out.append("</td>");
 			out.append("<td>");
-			for (ProtectionSegment segment : r.getPotentialBackupProtectionSegments())
-				out.append("<a href=\"#lpProt" + segment.getIndex() + "\">P" + segment.getIndex() + "</a> ");
+			for (Route backupRoute : r.getBackupRoutes())
+				out.append("<a href=\"#lpProt" + backupRoute.getIndex() + "\">BU" + backupRoute.getIndex() + "</a> ");
 			out.append("</td>");
 			boolean isOk = isOk(rsa);
 			out.append("<td bgcolor=\""  +  (isOk? "PaleGreen" : "red") +"\">" + (isOk? "Yes" : "No") + "</td>");
@@ -294,28 +290,28 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		out.append("</table>");
 
 		/* Per protection lightpath information */
-		out.append("<h2><a name=\"protectionStats\"></a>PER PROTECTION LIGHTPATH INFORMATION SUMMARY</h2>");
-		out.append("<p>This table shows information for each so-called protection lightpath: lightpaths defined as ProtectionSegment objects in the design that reserve slots in the links.</p>");
+		out.append("<h2><a name=\"protectionStats\"></a>PER BACKUP LIGHTPATH INFORMATION SUMMARY</h2>");
+		out.append("<p>This table shows information for each so-called backup lightpath, that is designated as backup of one or more regular lightpaths.</p>");
 		out.append("<table border='1'>");
-		out.append("<tr><th><b>Lighpath ProtectionSegment #</b></th><th><b>Primary routes #</b></th><th><b>Origin node</b></th>"
+		out.append("<tr><th><b>Lighpath Route Index #</b></th><th><b>Primary routes #</b></th><th><b>Origin node</b></th>"
 				+ "<th><b>Dest. node</b></th><th><b>Trav. nodes</b></th><th><b>Length (km)</b></th><th><b>Propagation delay (ms)</b></th>"
 				+ "<th><b>Num. slots</b></th><th><b>Occupied slots</b></th>"
 				+ "<th><b>Wavelength conversion?</b></th><th><b>Wavelength contiguity?</b></th></th>"
 				+ "<th><b>Num. regenerators (reg. nodes)</b></th><th><b>Ok?</b></th></tr>");
-		for (ProtectionSegment segment : netPlan.getProtectionSegments ())
+		for (Route segment : netPlan.getRoutesAreBackup())
 		{
-			WDMUtils.RSA rsa = new WDMUtils.RSA(segment);
+			WDMUtils.RSA rsa = new WDMUtils.RSA(segment , false);
 			out.append("<tr>");
 			out.append("<td><a name=\"lpProt" + segment.getIndex() + "\">" + segment.getIndex() + " (id: " + segment.getId() + ")"+ "</a></td>");
 			out.append("<td>");
-			for (Route r : segment.getAssociatedRoutesToWhichIsBackup())
+			for (Route r : segment.getRoutesIAmBackup())
 				out.append("<a href=\"#lp" + r.getIndex() + "\">L" + r.getIndex() + "</a> ");
 			out.append("</td>");
-			out.append("<td>" + printNode(segment.getOriginNode()) + "</td>");
-			out.append("<td>" + printNode(segment.getDestinationNode()) + "</td>");
+			out.append("<td>" + printNode(segment.getIngressNode()) + "</td>");
+			out.append("<td>" + printNode(segment.getEgressNode()) + "</td>");
 			out.append("<td>" + seqNodesString(segment.getSeqLinks()) + "</td>");
 			out.append("<td>" + df_2.format(segment.getLengthInKm()) + "</td>");
-			out.append("<td>" + df_2.format(segment.getPropagationDelayInMs()) + "</td>");
+			out.append("<td>" + df_2.format(segment.getPropagationDelayInMiliseconds()) + "</td>");
 			out.append("<td>" + rsa.getNumSlots() + "</td>");
 			out.append("<td>" + occupiedSlotsString(rsa) + "</td>");
 			out.append("<td>" + rsa.hasFrequencySlotConversions() + "</td>");
@@ -336,31 +332,35 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		out.append("<p>This table shows information for each Optical Add/Drop Multiplexer (OADM) node in the network.</p>");
 		out.append("<table border='1'>");
 		out.append("<tr><th><b>OADM # and name</b></th><th><b>Num. input fibers</b></th><th><b>Num. output fibers</b></th>"
-				+ "<th><b>Num. add lps total (reg/prot)</b></th><th><b>Num. drop lps total (reg/prot)</b></th><th><b>Num. express lps total (reg/prto)</b></th>"
+				+ "<th><b>Num. add lps total (reg/backup)</b></th><th><b>Num. drop lps total (reg/prot)</b></th><th><b>Num. express lps total (reg/backup)</b></th>"
 				+ "<th><b>Num. signal regenerators total (reg/prot)</b></th>"
 				+ "<th><b>Num. slot conversions total (reg/prot)</b></th></tr>");
 		for (Node n : netPlan.getNodes())
 		{
-			final int addRegLps = n.getOutgoingRoutes().size();
-			final int dropRegLps = n.getIncomingRoutes().size();
-			final int expressRegLps = n.getAssociatedRoutes().size() - addRegLps - dropRegLps;
-			int addProtLps = 0; int dropProtLps = 0; int expressProtLps = 0;
-			for (ProtectionSegment s : n.getAssociatedProtectionSegments())
-				if (s.getOriginNode() == n) addProtLps ++; else if (s.getDestinationNode() == n) dropProtLps ++; else expressProtLps ++;
-			Pair<List<Route>,List<ProtectionSegment>> lists = stat.regOccupInfo.get(n);
-			final int regenRegLp = lists == null? 0 : lists.getFirst().size();
-			final int regenProtLp = lists == null? 0 : lists.getSecond().size();
-			int wcRegLp = 0; for (Route r : n.getAssociatedRoutes()) for (Node nReg : stat.routeLpRSA.get(r.getIndex()).getNodesWithFrequencySlotConversion()) if (n == nReg) wcRegLp ++;
-			int wcProtLp = 0; for (ProtectionSegment r : n.getAssociatedProtectionSegments()) for (Node nReg : stat.protLpRSA.get(r.getIndex()).getNodesWithFrequencySlotConversion()) if (n == nReg) wcProtLp ++;
+			final int addRegLps = (int) n.getOutgoingRoutes().stream ().filter(e -> !e.isBackupRoute()).count();
+			final int dropRegLps = (int) n.getIncomingRoutes().stream ().filter(e -> !e.isBackupRoute()).count();
+			final int expressRegLps = (int) n.getAssociatedRoutes().stream ().filter(e -> !e.isBackupRoute()).count() - addRegLps - dropRegLps;
+			final int addBackupLps = n.getOutgoingRoutes().size() - addRegLps;
+			final int dropBackupLps = n.getIncomingRoutes().size() - dropRegLps;
+			final int expressBackupLps = (int) n.getAssociatedRoutes().stream ().filter(e -> e.isBackupRoute()).count() - addBackupLps - dropBackupLps;
+			List<Route> lists = stat.regOccupInfo.get(n);
+			final int regenRegLp = lists == null? 0 : (int) lists.stream().filter(e -> !e.isBackupRoute()).count(); 
+			final int regenProtLp = lists == null? 0 : (int) lists.stream().filter(e -> e.isBackupRoute()).count();
+			int wcRegLp = 0; 
+			for (Route r : n.getAssociatedRoutes().stream().filter(e -> !e.isBackupRoute()).collect(Collectors.toSet())) 
+				for (Node nReg : stat.routeLpRSA.get(r.getIndex()).getNodesWithFrequencySlotConversion()) if (n == nReg) wcRegLp ++;
+			int wcBackupLp = 0; 
+			for (Route r : n.getAssociatedRoutes().stream().filter(e -> e.isBackupRoute()).collect(Collectors.toSet()))
+				for (Node nReg : stat.backupLpRSA.get(r.getIndex()).getNodesWithFrequencySlotConversion()) if (n == nReg) wcBackupLp ++;
 			out.append("<tr>");
 			out.append("<td><a name=\"node" + n.getIndex() + "\">n" + n.getIndex() + " (" + n.getName() + ")" + "</a></td>");
 			out.append("<td>" + n.getIncomingLinks().size() + "</td>");
 			out.append("<td>" + n.getOutgoingLinks().size() + "</td>");
-			out.append("<td>" + (addRegLps+addProtLps) + "(" + addRegLps + " / " + addProtLps + ")" + "</td>");
-			out.append("<td>" + (dropRegLps+dropProtLps) + "(" + dropRegLps + " / " + dropProtLps + ")" + "</td>");
-			out.append("<td>" + (expressRegLps+expressProtLps) + "(" + expressRegLps + " / " + expressProtLps + ")" + "</td>");
+			out.append("<td>" + (addRegLps+addBackupLps) + "(" + addRegLps + " / " + addBackupLps + ")" + "</td>");
+			out.append("<td>" + (dropRegLps+dropBackupLps) + "(" + dropRegLps + " / " + dropBackupLps + ")" + "</td>");
+			out.append("<td>" + (expressRegLps+expressBackupLps) + "(" + expressRegLps + " / " + expressBackupLps + ")" + "</td>");
 			out.append("<td>" + (regenProtLp+regenRegLp) + "(" + regenRegLp + " / " + regenProtLp + ")" + "</td>");
-			out.append("<td>" + (wcRegLp+wcProtLp) + "(" + wcRegLp + " / " + wcProtLp + ")" + "</td>");
+			out.append("<td>" + (wcRegLp+wcBackupLp) + "(" + wcRegLp + " / " + wcBackupLp + ")" + "</td>");
 		}
 		out.append("</table>");
 
@@ -379,16 +379,15 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 			{
 				final int s = rsa.seqFrequencySlots_se.get(contS , counterLink);
 				if (s >= WDMUtils.getFiberNumFrequencySlots(e)) return false;
-				final int numLps = stat.slotOccupInfo.containsKey(Pair.of(e,s))? stat.slotOccupInfo.get(Pair.of(e,s)).getFirst().size() : 0;
-				final int numLpsProt = stat.slotOccupInfo.containsKey(Pair.of(e,s))? stat.slotOccupInfo.get(Pair.of(e,s)).getSecond().size() : 0;
-				if (numLps+numLpsProt > 1) return false;
+				final int numLps = stat.slotOccupInfo.containsKey(Pair.of(e,s))? stat.slotOccupInfo.get(Pair.of(e,s)).size() : 0;
+				if (numLps > 1) return false;
 			}
 			counterLink ++;
 		}
 		return true;
 	}
 	
-	private String occupiedSlotsString (WDMUtils.RSA rsa)
+	private static String occupiedSlotsString (WDMUtils.RSA rsa)
 	{
 		if (!rsa.hasFrequencySlotConversions() && rsa.isFrequencySlotContiguous ()) return rsa.seqFrequencySlots_se.get(0,0) + "-"  +rsa.seqFrequencySlots_se.get(rsa.getNumSlots()-1,0);
 		String res = "";
@@ -398,7 +397,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 			for (int s = 0 ; s < rsa.getNumSlots() ; s ++) res += rsa.seqFrequencySlots_se.get(e,s) + " ";
 			res += "</p>";
 		}
-		return rsa.toString();
+		return res;
 	}
 	
 	private static class Statistics
@@ -414,15 +413,15 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		private boolean bidirectionalProtectionSegments;
 		private MinMaxAvCollector numberFrequencySlotsPerLink = new MinMaxAvCollector ();
 		private boolean unicastRoutingBifurcated;
-		private MinMaxAvCollector linkUtilizationIncludingProtSegments = new MinMaxAvCollector ();
+		private MinMaxAvCollector linkUtilization = new MinMaxAvCollector ();
 		private MinMaxAvCollector lpLengthKm = new MinMaxAvCollector ();
 		private MinMaxAvCollector lpLengthHops = new MinMaxAvCollector ();
 		private MinMaxAvCollector lpLengthMs = new MinMaxAvCollector ();
-		private MinMaxAvCollector fiberCapacityReservedForProtection = new MinMaxAvCollector ();
-		private Map<Pair<Link,Integer>,Pair<List<Route>,List<ProtectionSegment>>> slotOccupInfo = null;
-		private Map<Node,Pair<List<Route>,List<ProtectionSegment>>> regOccupInfo = null;
+		private MinMaxAvCollector fiberCapacityOccupiedByBackupRoutes = new MinMaxAvCollector ();
+		private Map<Pair<Link,Integer>,List<Route>> slotOccupInfo = null;
+		private Map<Node,List<Route>> regOccupInfo = null;
 		private List<WDMUtils.RSA> routeLpRSA = new ArrayList<WDMUtils.RSA> ();
-		private List<WDMUtils.RSA> protLpRSA = new ArrayList<WDMUtils.RSA> ();
+		private List<WDMUtils.RSA> backupLpRSA = new ArrayList<WDMUtils.RSA> ();
 		
 		
 		private Statistics (NetPlan netPlan , NetworkLayer wdmLayer) 
@@ -435,12 +434,11 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 			bidirectionalLinks = GraphUtils.isWeightedBidirectional(netPlan.getNodes() , netPlan.getLinks() , netPlan.getVectorLinkCapacity());
 			bidirectionalDemands = GraphUtils.isWeightedBidirectional(netPlan.getNodes() , netPlan.getDemands() , netPlan.getVectorDemandOfferedTraffic());
 			bidirectionalRoutes = GraphUtils.isWeightedBidirectional(netPlan.getNodes() , netPlan.getRoutes () , netPlan.getVectorRouteCarriedTraffic());
-			bidirectionalProtectionSegments = GraphUtils.isWeightedBidirectional(netPlan.getNodes() , netPlan.getProtectionSegments() , netPlan.getVectorProtectionSegmentOccupiedCapacity());
 			for (Link e : netPlan.getLinks())
 			{
 				numberFrequencySlotsPerLink.add((double) WDMUtils.getFiberNumFrequencySlots(e));
-				linkUtilizationIncludingProtSegments.add(e.getOccupiedCapacityIncludingProtectionSegments());
-				fiberCapacityReservedForProtection.add(e.getOccupiedCapacityIncludingProtectionSegments() - e.getOccupiedCapacityNotIncludingProtectionSegments());
+				linkUtilization.add(e.getOccupiedCapacity());
+				fiberCapacityOccupiedByBackupRoutes.add(e.getOccupiedCapacityOnlyBackupRoutes());
 			}
 			unicastRoutingBifurcated = false;
 			for (Demand d : netPlan.getDemands())
@@ -452,27 +450,33 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 				lpLengthMs.add(r.getPropagationDelayInMiliseconds());
 			}
 			this.maxNumberSlots = (int) WDMUtils.getVectorFiberNumFrequencySlots(netPlan).getMaxLocation() [0];
-			Pair<Map<Pair<Link,Integer>,Pair<List<Route>,List<ProtectionSegment>>> , Map<Node,Pair<List<Route>,List<ProtectionSegment>>>> pair = WDMUtils.getNetworkSlotOccupancyMap(netPlan , false);
+			Pair<Map<Pair<Link,Integer>,List<Route>> , Map<Node,List<Route>>> pair = WDMUtils.getNetworkSlotOccupancyMap(netPlan , false);
 			this.slotOccupInfo = pair.getFirst();
 			this.regOccupInfo = pair.getSecond();
 			for (Node n : netPlan.getNodes())
 			{
-				Pair<List<Route>,List<ProtectionSegment>> lists = regOccupInfo.get(n); 
-				numberOfSignalRegenerators += (lists == null? 0 : lists.getFirst().size() + lists.getSecond().size());
+				List<Route> lists = regOccupInfo.get(n); 
+				numberOfSignalRegenerators += (lists == null? 0 : lists.size());
 			}	
 					
-			for (Route lp : netPlan.getRoutes())
+			for (Route lp : netPlan.getRoutesAreNotBackup())
 			{
 				WDMUtils.RSA rsa = new WDMUtils.RSA(lp , false);
 				numberOfWavelengthConversions += rsa.getNodesWithFrequencySlotConversion().size();
 				routeLpRSA.add(rsa);
 			}
-			for (ProtectionSegment lp : netPlan.getProtectionSegments())
+			for (Route lp : netPlan.getRoutesAreBackup())
 			{
-				WDMUtils.RSA rsa = new WDMUtils.RSA(lp);
+				WDMUtils.RSA rsa = new WDMUtils.RSA(lp , false);
 				numberOfWavelengthConversions += rsa.getNodesWithFrequencySlotConversion().size();
-				protLpRSA.add(rsa);
+				backupLpRSA.add(rsa);
 			}
+//			for (ProtectionSegment lp : netPlan.getProtectionSegments())
+//			{
+//				WDMUtils.RSA rsa = new WDMUtils.RSA(lp);
+//				numberOfWavelengthConversions += rsa.getNodesWithFrequencySlotConversion().size();
+//				protLpRSA.add(rsa);
+//			}
 		}
 		
 	}
@@ -486,7 +490,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		return st + " ]";
 	}
 
-	private String printNode (Node n) { return "<a href=\"#node" + n.getIndex() + "\">n" + n.getIndex() + " (" + n.getName() + ")</a>"; }
+	private static String printNode (Node n) { return "<a href=\"#node" + n.getIndex() + "\">n" + n.getIndex() + " (" + n.getName() + ")</a>"; }
 	
 	private static class MinMaxAvCollector
 	{
