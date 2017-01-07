@@ -202,18 +202,6 @@ public class SharedRiskGroup extends NetworkElement
 	}
 	
 	/**
-	 * <p>Returns the set of routes for which this SRG affects to at least one of their backup routes (fail, when the SRG is in failure state). </p>
-	 * @return see info above
-	 */
-	public Set<Route> getAffectedRoutesInTheirBackupPaths (NetworkLayer layer)
-	{
-		Set<Route> res = new HashSet<Route> ();
-		for (Route r : layer.routes) 
-			for (List<NetworkElement> path : r.backupPaths) if (affectsAnyOf(path)) { res.add(r); break; }
-		return res;
-	}
-
-	/**
 	 * <p>Returns the set of links associated to the SRG (fail, when the SRG is in failure state).</p>
 	 * @return The set of failing links, as an unmodifiable set
 	 */

@@ -577,12 +577,18 @@ public class NetPlan extends NetworkElement
 		for (Route originRoute : origin.routes)
 		{
 			Route newRoute = this.addServiceChain(newLayer.demands.get(originRoute.demand.index) , 
-					originRoute.currentCarriedTrafficIfNotFailing , originRoute.currentLinksAndResourcesOccupationIfNotFailing , 
-					(List<NetworkElement>) this.translateCollectionToThisNetPlan(originRoute.currentPath) , originRoute.attributes);
-			newRoute.setPrimaryPath((List<NetworkElement>) translateCollectionToThisNetPlan(originRoute.primaryPath));
-			for (List<NetworkElement> originBackupPath : originRoute.getBackupPathList())
-				newRoute.addBackupPath((List<NetworkElement>) translateCollectionToThisNetPlan(originBackupPath));
+					originRoute.initialStateCarriedTrafficIfNotFailing , originRoute.initialStateOccupationIfNotFailing , 
+					(List<NetworkElement>) this.translateCollectionToThisNetPlan(originRoute.initialStatePath) , originRoute.attributes);
+			newRoute.setPath(originRoute.currentCarriedTrafficIfNotFailing , 
+					(List<NetworkElement>) translateCollectionToThisNetPlan(originRoute.currentPath) , 
+					originRoute.currentLinksAndResourcesOccupationIfNotFailing);
+			
 		}
+		// some routes could not exist in the previous pass of the loop!!!
+		for (Route originRoute : origin.routes)
+			for (Route originBackupRoute : originRoute.backupRoutes)
+				newLayer.routes.get (originRoute.index).addBackupRoute(newLayer.routes.get(originBackupRoute.index)); 
+		
 		for (MulticastTree originTree: origin.multicastTrees)
 		{
 			Set<Link> newSetLinks = new HashSet<Link> (); for (Link originLink : originTree.linkSet) newSetLinks.add (newLayer.links.get (originLink.index));
@@ -1221,7 +1227,7 @@ public class NetPlan extends NetworkElement
 		addRoutesFromCandidatePathList(computeUnicastCandidatePathList(costs , paramValuePairs));
 	}
 
-	public void addRoutesAndBackupPathsFromCandidate11PathList (Map<Demand,List<Pair<List<Link>,List<Link>>>> cpl11)
+	public void addRoutesAndBackupRoutesFromCandidate11PathList (Map<Demand,List<Pair<List<Link>,List<Link>>>> cpl11)
 	{
 		checkIsModifiable();
 		List<Route> routes = new LinkedList<Route> ();
@@ -1232,7 +1238,8 @@ public class NetPlan extends NetworkElement
 				{
 					final Route newRoute = addRoute(entry.getKey() , 0 , 0 , pathPair.getFirst() , null);
 					routes.add (newRoute);
-					newRoute.addBackupPath((List<NetworkElement>) (List<?>) pathPair.getSecond());
+					final Route newBackupRoute = addRoute(entry.getKey() , 0 , 0 , pathPair.getSecond() , null);
+					newRoute.addBackupRoute(newBackupRoute);
 				}
 		} catch (Exception e) { for (Route r : routes) r.remove (); throw e; }
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
@@ -2291,14 +2298,14 @@ public class NetPlan extends NetworkElement
 	 * @param optionalLayerParameter Network layer (optional)
 	 * @return The matrix
 	 */
-	public DoubleMatrix2D getMatrixRouteFirstBackupPath2SRGAffecting (NetworkLayer ... optionalLayerParameter)
+	public DoubleMatrix2D getMatrixRouteFirstBackupRoute2SRGAffecting (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix2D A_rs = DoubleFactory2D.sparse.make (layer.routes.size () , srgs.size ());
 		for (Route r : layer.routes)
 		{
-			if (r.getBackupPathList().size() == 0) throw new Net2PlanException ("A route has no backup path");
-			final List<Link> path = Route.getSeqLinks(r.getBackupPathList().get(0)); 
+			if (!r.hasBackupRoutes()) throw new Net2PlanException ("A route has no backup path");
+			final List<Link> path = r.getBackupRoutes().get(0).getSeqLinks(); 
 			for (SharedRiskGroup srg : r.ingressNode.cache_nodeSRGs) A_rs.set (r.index , srg.index , 1.0);
 			for (Link e : path)
 			{
@@ -2468,15 +2475,15 @@ public class NetPlan extends NetworkElement
 	 * @param optionalLayerParameter Network layer (optional)
 	 * @return The matrix
 	 */
-	public DoubleMatrix2D getMatrixLink2RouteFirstBackupPathAssignment (NetworkLayer ... optionalLayerParameter)
+	public DoubleMatrix2D getMatrixLink2RouteFirstBackupRouteAssignment (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		DoubleMatrix2D delta_er = DoubleFactory2D.sparse.make(layer.links.size(), layer.routes.size());
 		for (Route r : layer.routes)
 		{
-			if (r.getBackupPathList().isEmpty()) throw new Net2PlanException ("A route has no backup path");
-			final List<Link> path = Route.getSeqLinks(r.getBackupPathList().get(0)); 
+			if (!r.hasBackupRoutes()) throw new Net2PlanException ("A route has no backup path");
+			final List<Link> path = r.getBackupRoutes().get(0).getSeqLinks(); 
 			for (Link e : path) delta_er.set (e.index , r.index , delta_er.get (e.index , r.index) + 1);
 		}
 		return delta_er;
@@ -2648,7 +2655,7 @@ public class NetPlan extends NetworkElement
 		for (Resource res : resources) 
 			for (Route rou : res.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet())
 				if (rou.layer.equals(layer))
-					delta_er.set (res.index , rou.index , rou.getNumberOfTimesResourceIsTraversed (res));
+					delta_er.set (res.index , rou.index , rou.getNumberOfTimesIsTraversed (res));
 		return delta_er;
 	}
 
@@ -4010,15 +4017,15 @@ public class NetPlan extends NetworkElement
 	 * @param optionalLayerParameter network layer (optional)
 	 * @return The vector 
 	 */
-	public DoubleMatrix1D getVectorRouteFirstBackupPathLengthInKm (NetworkLayer ... optionalLayerParameter)
+	public DoubleMatrix1D getVectorRouteFirstBackupRouteLengthInKm (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
 		for (Route r : layer.routes)
 		{ 
-			if (r.getBackupPathList().size() == 0) throw new Net2PlanException ("A route has no backup path");
-			final List<Link> path = Route.getSeqLinks(r.getBackupPathList().get(0)); 
+			if (!r.hasBackupRoutes()) throw new Net2PlanException ("A route has no backup path");
+			final List<Link> path = r.getBackupRoutes().get(0).getSeqLinks(); 
 			final double length = path.stream().mapToDouble(e -> e.getLengthInKm()).sum();
 			res.set(r.index, length);
 		}
@@ -4031,15 +4038,15 @@ public class NetPlan extends NetworkElement
 	 * @param optionalLayerParameter network layer (optional)
 	 * @return The vector 
 	 */
-	public DoubleMatrix1D getVectorRouteFirstBackupPathNumberOfLinks (NetworkLayer ... optionalLayerParameter)
+	public DoubleMatrix1D getVectorRouteFirstBackupRouteNumberOfLinks (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
 		for (Route r : layer.routes)
 		{ 
-			if (r.getBackupPathList().size() == 0) throw new Net2PlanException ("A route has no backup path");
-			final List<Link> path = Route.getSeqLinks(r.getBackupPathList().get(0)); 
+			if (!r.hasBackupRoutes()) throw new Net2PlanException ("A route has no backup path");
+			final List<Link> path = r.getBackupRoutes().get(0).getSeqLinks(); 
 			res.set(r.index, path.size());
 		}
 		return res;
@@ -4948,22 +4955,12 @@ public class NetPlan extends NetworkElement
 						writer.writeAttribute("currentLinksAndResourcesOccupationIfNotFailing", CollectionUtils.join(route.currentLinksAndResourcesOccupationIfNotFailing, " "));
 						writer.writeAttribute("currentPath", CollectionUtils.join(NetPlan.getIds(route.currentPath), " "));
 
-						/* Primary and backup paths are set when do not traverse removed links/resources */
-						if (route.primaryPath.stream().allMatch(e -> e.netPlan != null))
-						{
-							XMLUtils.indent(writer, 4);
-							writer.writeEmptyElement("primaryPath");
-							writer.writeAttribute("path", CollectionUtils.join(NetPlan.getIds(route.primaryPath), " "));
-						}
-						for (List<NetworkElement> backupPath : route.backupPaths)
-						{
-							if (backupPath.stream().allMatch(e -> e.netPlan != null))
-							{							
-								XMLUtils.indent(writer, 4);
-								writer.writeEmptyElement("backupPath");
-								writer.writeAttribute("path", CollectionUtils.join(NetPlan.getIds(backupPath), " "));
-							}
-						}
+						writer.writeAttribute("initialStateCarriedTrafficIfNotFailing", Double.toString(route.initialStateCarriedTrafficIfNotFailing));
+						writer.writeAttribute("initialStateOccupationIfNotFailing", CollectionUtils.join(route.initialStateOccupationIfNotFailing, " "));
+						writer.writeAttribute("initialStatePath", CollectionUtils.join(NetPlan.getIds(route.initialStatePath), " "));
+
+						writer.writeAttribute("backupRoutes", CollectionUtils.join(NetPlan.getIds(route.backupRoutes), " "));
+
 						for (Entry<String, String> entry : route.attributes.entrySet())
 						{
 							XMLUtils.indent(writer, 4);
@@ -5967,7 +5964,7 @@ public class NetPlan extends NetworkElement
 					{
 						String str_seqNodes = CollectionUtils.join(route.cache_seqNodesRealPath , " => ");
 						String str_seqLinks = CollectionUtils.join(route.cache_seqLinksRealPath , " => ");
-						String numBackupPaths = route.backupPaths.isEmpty() ? "none" : "" + route.backupPaths.size();
+						String numBackupPaths = route.hasBackupRoutes() ? "none" : "" + route.backupRoutes.size();
 						String routeInformation = String.format("r%d (id %d), demand: d%d (id %d), carried traffic: %.3g, occupied capacity: %.3g, seq. links: %s, seq. nodes: %s, number of backup paths: %s, attributes: %s", route.index , route.id , route.demand.index , route.demand.id, route.getCarriedTraffic(), route.getOccupiedCapacity(), str_seqLinks, str_seqNodes, numBackupPaths, route.attributes.isEmpty() ? "none" : route.attributes);
 						netPlanInformation.append(routeInformation);
 						netPlanInformation.append(NEWLINE);

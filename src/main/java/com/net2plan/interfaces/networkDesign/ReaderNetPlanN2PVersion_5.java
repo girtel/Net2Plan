@@ -20,6 +20,7 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
@@ -43,11 +45,13 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 {
 	private boolean hasAlreadyReadOneLayer;
 	private XMLStreamReader2 xmlStreamReader;
+	private Map<Route,List<Long>> backupRouteIdsMap;
 	
 	public void create(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
 	{
 		this.hasAlreadyReadOneLayer = false;
 		this.xmlStreamReader = xmlStreamReader;
+		this.backupRouteIdsMap = new HashMap<Route,List<Long>> ();
 		parseNetwork(netPlan);
 
 //		System.out.println ("End ReaderNetPlan_v5: " + netPlan + " ----------- ");
@@ -200,42 +204,22 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final double currentCarriedTrafficIfNotFailing = getDouble ("currentCarriedTrafficIfNotFailing");
 		final List<Double> currentLinksAndResourcesOccupationIfNotFailing = getListDouble("currentLinksAndResourcesOccupationIfNotFailing");
 		final List<NetworkElement> currentPath = getLinkAndResorceListFromIds(netPlan, getListLong("currentPath"));
-		final Route newRoute = netPlan.addServiceChain(netPlan.getDemandFromId(demandId), currentCarriedTrafficIfNotFailing, 
-				currentLinksAndResourcesOccupationIfNotFailing, currentPath, null);
 		
-		while(xmlStreamReader.hasNext())
-		{
-			xmlStreamReader.next();
+		/* Initial route may not exist, if so current equals the initial */
+		List<NetworkElement> initialStatePath = new ArrayList<NetworkElement> (currentPath);
+		boolean initialPathExists = true; 
+		try { initialStatePath = getLinkAndResorceListFromIds(netPlan, getListLong("initialStatePath")); } catch (Exception e) { initialPathExists = false; } 
+		final double initialStateCarriedTrafficIfNotFailing = initialPathExists? getDouble ("initialStateCarriedTrafficIfNotFailing") : currentCarriedTrafficIfNotFailing;
+		final List<Double> initialStateOccupationIfNotFailing = initialPathExists? getListDouble("initialStateOccupationIfNotFailing") : new ArrayList<Double> (currentLinksAndResourcesOccupationIfNotFailing);
+		
+		final Route newRoute = netPlan.addServiceChain(netPlan.getDemandFromId(demandId), initialStateCarriedTrafficIfNotFailing, 
+				initialStateOccupationIfNotFailing, initialStatePath, null);
+		newRoute.setPath(currentCarriedTrafficIfNotFailing, currentPath, currentLinksAndResourcesOccupationIfNotFailing);
 
-			switch(xmlStreamReader.getEventType())
-			{
-				case XMLEvent.START_ELEMENT:
-					String startElementName = xmlStreamReader.getName().toString();
-					switch(startElementName)
-					{
-						case "primaryPath":
-							newRoute.setPrimaryPath(getLinkAndResorceListFromIds(netPlan, getListLong("path")));
-							break;
-						case "backupPath":
-							newRoute.addBackupPath(getLinkAndResorceListFromIds(netPlan, getListLong("path")));
-							break;
-						case "attribute":
-							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
-							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
-							newRoute.setAttribute(key, name);
-							break;
-						default:
-							throw new RuntimeException("Bad");
-					}
-					break;
-	
-				case XMLEvent.END_ELEMENT:
-					String endElementName = xmlStreamReader.getName().toString();
-					if (endElementName.equals("route")) return;
-					break;
-			}
-		}
-		throw new RuntimeException("'Route' element not parsed correctly (end tag not found)");
+		/* To be added at the end: backup routes may not exist yet */
+		this.backupRouteIdsMap.put(newRoute ,  getListLong ("backupRoutes")); 
+
+		readAndAddAttributesToEnd(newRoute, "route");
 	}
 	
 	
@@ -462,7 +446,16 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 
 				case XMLEvent.END_ELEMENT:
 					String endElementName = xmlStreamReader.getName().toString();
-					if (endElementName.equals("sourceRouting")) return;
+					if (endElementName.equals("sourceRouting"))
+					{
+						/* Before returning, we add the backup routes */
+						for (Entry<Route,List<Long>> entry : this.backupRouteIdsMap.entrySet())
+						{
+							final Route primary = entry.getKey();
+							for (long backupId : entry.getValue()) primary.addBackupRoute(netPlan.getRouteFromId(backupId));
+						}
+						return;
+					}
 					break;
 			}
 		}

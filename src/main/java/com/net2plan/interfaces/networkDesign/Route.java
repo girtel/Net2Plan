@@ -65,8 +65,8 @@ public class Route extends NetworkElement
 	double currentCarriedTrafficIfNotFailing;
 	List<Double> currentLinksAndResourcesOccupationIfNotFailing;
 	List<NetworkElement> initialStatePath; // could traverse removed links/resources
-	List<Double> initialStateOccupation; // could traverse removed links/resources
-	double initialStateCarriedTraffic;
+	List<Double> initialStateOccupationIfNotFailing; // could traverse removed links/resources
+	double initialStateCarriedTrafficIfNotFailing;
 	List<Route> backupRoutes; 
 	List<Link> cache_seqLinksRealPath;
 	List<Node> cache_seqNodesRealPath;
@@ -94,8 +94,8 @@ public class Route extends NetworkElement
 		this.backupRoutes = new ArrayList<Route> ();
 		this.currentCarriedTrafficIfNotFailing = 0; 
 		this.currentLinksAndResourcesOccupationIfNotFailing = Collections.nCopies(seqLinksAndResourcesTraversed.size() , 0.0);  
-		this.initialStateCarriedTraffic = -1;
-		this.initialStateOccupation = null;
+		this.initialStateCarriedTrafficIfNotFailing = -1;
+		this.initialStateOccupationIfNotFailing = null;
 		this.initialStatePath = null;
 		this.cache_seqLinksRealPath = Route.getSeqLinks(seqLinksAndResourcesTraversed); 
 		this.cache_seqNodesRealPath = Route.listTraversedNodes(cache_seqLinksRealPath);
@@ -113,8 +113,8 @@ public class Route extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.currentPath , e2.currentPath)) return false;
 		if (this.currentCarriedTrafficIfNotFailing != e2.currentCarriedTrafficIfNotFailing) return false;
 		if (!this.currentLinksAndResourcesOccupationIfNotFailing.equals(e2.currentLinksAndResourcesOccupationIfNotFailing)) return false;
-		if (this.initialStateCarriedTraffic != e2.initialStateCarriedTraffic) return false;
-		if (!this.initialStateOccupation.equals(e2.initialStateOccupation)) return false;
+		if (this.initialStateCarriedTrafficIfNotFailing != e2.initialStateCarriedTrafficIfNotFailing) return false;
+		if (!this.initialStateOccupationIfNotFailing.equals(e2.initialStateOccupationIfNotFailing)) return false;
 		if (!NetPlan.isDeepCopy(this.initialStatePath , e2.initialStatePath)) return false;
 		if (backupRoutes.size() != e2.backupRoutes.size()) return false;
 		if (!NetPlan.isDeepCopy(this.backupRoutes , e2.backupRoutes)) return false;
@@ -131,8 +131,8 @@ public class Route extends NetworkElement
 		if ((this.netPlan == null) || (origin.netPlan == null) || (this.netPlan == origin.netPlan)) throw new RuntimeException ("Bad");
 		this.currentCarriedTrafficIfNotFailing = origin.currentCarriedTrafficIfNotFailing;
 		this.currentLinksAndResourcesOccupationIfNotFailing = new ArrayList<Double> (origin.currentLinksAndResourcesOccupationIfNotFailing);
-		this.initialStateCarriedTraffic = origin.initialStateCarriedTraffic;
-		this.initialStateOccupation = new ArrayList<Double> (origin.initialStateOccupation);
+		this.initialStateCarriedTrafficIfNotFailing = origin.initialStateCarriedTrafficIfNotFailing;
+		this.initialStateOccupationIfNotFailing = new ArrayList<Double> (origin.initialStateOccupationIfNotFailing);
 		this.initialStatePath = (List<NetworkElement>) getInThisNetPlan(origin.initialStatePath);
 		this.currentPath = (List<NetworkElement>) getInThisNetPlan(origin.currentPath);
 		this.backupRoutes = (List<Route>) getInThisNetPlan(origin.backupRoutes);
@@ -157,25 +157,13 @@ public class Route extends NetworkElement
 	 * Note that some links/resources of this initial state could no longer exist
 	 * @return The info
 	 */
-	public Triple<Double,List<NetworkElement>,List<Double>> getInitialState () { return Triple.of(initialStateCarriedTraffic, Collections.unmodifiableList(initialStatePath), Collections.unmodifiableList(initialStateOccupation)); }
+	public Triple<Double,List<NetworkElement>,List<Double>> getInitialState () { return Triple.of(initialStateCarriedTrafficIfNotFailing, Collections.unmodifiableList(initialStatePath), Collections.unmodifiableList(initialStateOccupationIfNotFailing)); }
 	
 	/** Return the current path (sequence of links and resources) of the route.  
 	 * @return The info
 	 */
-	public List<NetworkElement> getCurrentPath () { return Collections.unmodifiableList(this.currentPath);}
+	public List<NetworkElement> getPath () { return Collections.unmodifiableList(this.currentPath);}
 	
-	/** Returns the list of resources this route is traversing (in the traversal order), getting the current path and filtering out the links 
-	 * @return the info
-	 */
-	public List<Resource>  getCurrentSeqResources () { return Route.getSeqResources(this.currentPath);  }
-	
-	/** Returns the list of links this route is traversing (in the traversal order), getting the current path and filtering out the resources
-	 * @return the info
-	 */
-	public List<Link>  getCurrentSeqLinks () { return Route.getSeqLinks (this.currentPath);  }
-
-
-
 	/** Returns true if this route has been defined as a backup route for other
 	 * @return the info
 	 */
@@ -193,6 +181,7 @@ public class Route extends NetworkElement
 	 */
 	public void addBackupRoute (Route backupRoute)
 	{
+		if (backupRoute == null) throw new Net2PlanException ("The passed element is NULL");
 		this.checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		if (backupRoute.hasBackupRoutes()) throw new Net2PlanException ("A backup route cannot have backup routes itself"); 
@@ -206,6 +195,7 @@ public class Route extends NetworkElement
 	 */
 	public void removeBackupRoute (Route backupRoute)
 	{
+		if (backupRoute == null) throw new Net2PlanException ("The passed element is NULL");
 		this.checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		if (!backupRoutes.contains(backupRoute)) throw new Net2PlanException ("This route is not a backup");
@@ -425,25 +415,23 @@ public class Route extends NetworkElement
 		return Collections.unmodifiableList(cache_seqNodesRealPath);
 	}
 
-	/** Returns the number of times that a particular link is traversed 
-	 * @param e the link to check
+	/** Returns the number of times that a particular link or resource is traversed 
+	 * @param e the link or resource to check
 	 * @return the number of times it is traversed
 	 */
-	public int getNumberOfTimesLinkIsTraversed (Link e)
+	public int getNumberOfTimesIsTraversed (NetworkElement e)
 	{
-		Integer num = e.cache_traversingRoutes.get (this); return num == null? 0 : num;
+		if (e instanceof Link)
+		{
+			Integer num = ((Link) e).cache_traversingRoutes.get (this); return num == null? 0 : num;
+		}
+		else if (e instanceof Resource)
+		{
+			int num = 0; for (NetworkElement ee : currentPath) if (ee.equals(e)) num ++; 
+			return num;
+		}
+		else throw new Net2PlanException ("This method can be called only for links and resources"); 
 	}
-
-	/** Returns the number of times that a particular resource is traversed in its real path 
-	 * @param r the resource to check
-	 * @return the number of times it is traversed (0 if none)
-	 */
-	public int getNumberOfTimesResourceIsTraversed (Resource r)
-	{
-		int num = 0; for (NetworkElement e : currentPath) if (e.equals(r)) num ++; 
-		return num;
-	}
-
 	/** Returns the SRGs the route is affected by (any traversed node or link is in the SRG)
 	 * @return see description above
 	 */
@@ -575,6 +563,13 @@ public class Route extends NetworkElement
 		for (Double val : newOccupationInformation) if (val < 0) throw new Net2PlanException ("The occupation of a link/resource cannot be negative");
 		if (newPath.size() != newOccupationInformation.size()) throw new Net2PlanException ("Wrong size of array");
 		
+		/* Update the initial state if this is the first time this is called */
+		if (initialStateCarriedTrafficIfNotFailing == -1)
+		{
+			this.initialStateCarriedTrafficIfNotFailing = newCarriedTraffic;
+			this.initialStateOccupationIfNotFailing = new ArrayList<Double> (newOccupationInformation);
+			this.initialStatePath = new ArrayList<NetworkElement> (newPath);
+		}
 		/* Remove the old route trace in the traversed nodes and links */
 		this.setCarriedTraffic(0 , 0); // releases all links, segments and resources occupation
 		for (Resource resource : this.getSeqResourcesTraversed()) resource.removeTraversingRoute(this); // removes the current route
@@ -630,9 +625,6 @@ public class Route extends NetworkElement
 	public String toString () { return "r" + index + " (id " + id + ")"; }
 
 	
-	falta hacer esto bien!!!!
-	
-	
 	void checkCachesConsistency ()
 	{
 		assertTrue (layer.routes.contains(this));
@@ -647,11 +639,13 @@ public class Route extends NetworkElement
 		assertNotNull (backupRoutes);
 		assertNotNull (cache_seqLinksRealPath);
 		assertNotNull (cache_seqNodesRealPath);
+		assertNotNull (cache_routesIAmBackUp);
 
 		netPlan.checkInThisNetPlanAndLayer(currentPath , layer);
 		netPlan.checkInThisNetPlanAndLayer(cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.keySet() , layer);
 		netPlan.checkInThisNetPlanAndLayer(cache_seqLinksRealPath , layer);
 		netPlan.checkInThisNetPlanAndLayer(cache_seqNodesRealPath , layer);
+		netPlan.checkInThisNetPlanAndLayer(cache_routesIAmBackUp , layer);
 		for (NetworkElement e : currentPath)
 		{
 			assertNotNull(e);
@@ -705,6 +699,9 @@ public class Route extends NetworkElement
 		{
 			assertEquals(getCarriedTraffic() , 0 , 0.001);
 		}
+		
+		for (Route r : backupRoutes) assertTrue (r.cache_routesIAmBackUp.contains(this));
+		for (Route r : cache_routesIAmBackUp) assertTrue (r.backupRoutes.contains(this));
 	}
 
 	/** Given a path, composed of a sequence of links and resources, extracts the list of links, filtering out the resources
