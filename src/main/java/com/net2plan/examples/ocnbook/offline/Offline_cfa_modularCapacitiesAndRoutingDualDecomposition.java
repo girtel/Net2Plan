@@ -261,7 +261,7 @@ public class Offline_cfa_modularCapacitiesAndRoutingDualDecomposition implements
 		for (Demand d : netPlan.getDemandsBlocked())
 			if (d.getBlockedTraffic() > PRECISIONFACTOR) throw new RuntimeException ("Bad");
 		for (Link e : netPlan.getLinksOversubscribed())
-			if (e.getOccupiedCapacityIncludingProtectionSegments() - e.getCapacity() > PRECISIONFACTOR) throw new RuntimeException ("Bad");
+			if (e.getOccupiedCapacity() - e.getCapacity() > PRECISIONFACTOR) throw new RuntimeException ("Bad");
 	}
 	
 }

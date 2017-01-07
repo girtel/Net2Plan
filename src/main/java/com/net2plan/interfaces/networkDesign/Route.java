@@ -511,14 +511,14 @@ public class Route extends NetworkElement
 	 * capacity will be still zero, but if the route becomes up later, its carried traffic and 
 	 * occupied link capacities will be the ones stated here. 
 	 * @param newCarriedTraffic the new carried traffic 
-	 * @param linkAndResourcesOccupationInformation the new occupied capacity in traversed link, segments, and resources. If null, the occupied capacity equals the carried traffic in the links and resources 
+	 * @param linkAndResourcesOccupationInformation the new occupied capacity in traversed link and resources. If null, the occupied capacities are kept unchanged 
 	 */
 	public void setCarriedTraffic (double newCarriedTraffic , List<Double> linkAndResourcesOccupationInformation)
 	{
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		netPlan.checkIsModifiable();
 		if (linkAndResourcesOccupationInformation == null)
-			linkAndResourcesOccupationInformation = Collections.nCopies(this.currentPath.size(), newCarriedTraffic);
+			linkAndResourcesOccupationInformation = new ArrayList<Double> (this.currentLinksAndResourcesOccupationIfNotFailing); //Collections.nCopies(this.currentPath.size(), newCarriedTraffic);
 		if (linkAndResourcesOccupationInformation.size() != this.currentPath.size()) throw new Net2PlanException ("Wrong vector size"); 
 		for (double val : linkAndResourcesOccupationInformation) if (val < 0) throw new Net2PlanException ("The occupation of a resource cannot be negative");
 

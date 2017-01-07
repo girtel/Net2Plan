@@ -31,6 +31,7 @@ import com.net2plan.utils.Quadruple;
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /** <p>This class contains a representation of a unicast demand. Unicast demands are defined by its initial and end node, the network layer they belong to, 
  * and their offered traffic. When the routing in the network layer is the type {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, demands are carried
@@ -130,6 +131,26 @@ public class Demand extends NetworkElement
 	{
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		return Collections.unmodifiableSet(cache_routes);
+	}
+
+	/**
+	 * <p>Returns the routes associated to this demand, but only those that are a backup route.</p>
+	 * <p><b>Important</b>: If network layer routing type is not {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, an exception is thrown.</p>
+	 * @return The set of routes
+	 * */
+	public Set<Route> getRoutesAreBackup ()
+	{
+		return getRoutes ().stream().filter(e -> e.isBackupRoute()).collect(Collectors.toSet());
+	}
+
+	/**
+	 * <p>Returns the routes associated to this demand, but only those that are not a backup route.</p>
+	 * <p><b>Important</b>: If network layer routing type is not {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, an exception is thrown.</p>
+	 * @return The set of routes
+	 * */
+	public Set<Route> getRoutesAreNotBackup ()
+	{
+		return getRoutes ().stream().filter(e -> e.isBackupRoute()).collect(Collectors.toSet());
 	}
 
 	/**

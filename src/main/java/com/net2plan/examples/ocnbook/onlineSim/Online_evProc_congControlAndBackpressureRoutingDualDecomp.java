@@ -175,7 +175,7 @@ public class Online_evProc_congControlAndBackpressureRoutingDualDecomp extends I
 		for (Route r: currentNetPlan.getRoutes())
 		{
 			r.setCarriedTraffic(0.0 , 0.0);
-			this.stat_mapSeqLinks2RouteId.put(r.getSeqLinksRealPath(),r);
+			this.stat_mapSeqLinks2RouteId.put(r.getSeqLinks(),r);
 			this.stat_mapRouteId2CarriedPacketsLastInterval.put(r, 0);
 		}
 		
@@ -513,7 +513,7 @@ public class Online_evProc_congControlAndBackpressureRoutingDualDecomp extends I
 			if (thisDemand_hd < cc_control_minHd.getDouble() - 1E-3) throw new RuntimeException ("Bad");
 			if (thisDemand_hd > cc_control_maxHd.getDouble() + 1E-3) throw new RuntimeException ("Bad");
 		}
-		if (np.getVectorLinkUtilizationIncludingProtectionSegments().getMaxLocation() [0] > 1.001) throw new RuntimeException ("Bad");
+		if (np.getVectorLinkUtilization().getMaxLocation() [0] > 1.001) throw new RuntimeException ("Bad");
 
 		return Pair.of(np,q_nd_array);
 	}

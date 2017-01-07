@@ -22,21 +22,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-
 import com.jom.OptimizationProblem;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
+
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 /**
  * Solves several variants of unicast routing problems with 1+1 protection, with flow-link formulations
@@ -196,9 +195,9 @@ public class Offline_fa_xde11PathProtection implements IAlgorithm
 			int backup_p = backup_demands.indexOf(demand);
 			if (backup_p == -1) throw new RuntimeException("Unexpected error");
 			
-			Route route = netPlan.addRoute(demand , demand.getOfferedTraffic() , demand.getOfferedTraffic() , primary_seqLinks.get(primary_p), null); /* add the primary route (primary path) */
-			ProtectionSegment segment = netPlan.addProtectionSegment(backup_seqLinks.get(backup_p), demand.getOfferedTraffic(), null); /* add the protection segment (backup path) */
-			route.addProtectionSegment(segment);
+			final Route route = netPlan.addRoute(demand , demand.getOfferedTraffic() , demand.getOfferedTraffic() , primary_seqLinks.get(primary_p), null); /* add the primary route (primary path) */
+			final Route backupRoute = netPlan.addRoute (demand , 0.0 , demand.getOfferedTraffic() , backup_seqLinks.get(backup_p), null); /* add the protection segment (backup path) */
+			route.addBackupRoute(backupRoute);
 		}
 
 		checkSolution(netPlan, type11.getString ());
@@ -231,19 +230,17 @@ public class Offline_fa_xde11PathProtection implements IAlgorithm
 		if (!netPlan.getLinksOversubscribed().isEmpty()) throw new Net2PlanException("Bad - Some link is oversubscribed (constraint violated)");
 		if (!netPlan.getDemandsBlocked().isEmpty()) throw new Net2PlanException("Bad - Some demand is blocked (constraint violated)");
 
-		for (Route route : netPlan.getRoutes())
+		for (Route route : netPlan.getRoutesAreNotBackup())
 		{
-			if (route.getPotentialBackupProtectionSegments().size () != 1) throw new RuntimeException("Bad");
+			if (route.getBackupRoutes().size () != 1) throw new RuntimeException("Bad");
 			
-			final ProtectionSegment segment = route.getPotentialBackupProtectionSegments().iterator().next();
-			if (route.getIngressNode() != segment.getOriginNode()) throw new RuntimeException("Bad");
-			if (route.getEgressNode() != segment.getDestinationNode()) throw new RuntimeException("Bad");
+			final Route backupRoute = route.getBackupRoutes().get(0);
 			
 			if (type11.equalsIgnoreCase("srgDisjoint"))
-				if (!Collections.disjoint(route.getSRGs(), segment.getSRGs()))
+				if (!Collections.disjoint(route.getSRGs(), backupRoute.getSRGs()))
 					throw new RuntimeException("Bad");
 			else if (type11.equalsIgnoreCase("linkDisjoint"))
-				if (!Collections.disjoint(route.getSeqLinksRealPath(), segment.getSeqLinks()))
+				if (!Collections.disjoint(route.getSeqLinks(), backupRoute.getSeqLinks()))
 					throw new RuntimeException("Bad");
 			else
 				throw new RuntimeException ("Bad");

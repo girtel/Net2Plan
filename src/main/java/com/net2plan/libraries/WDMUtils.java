@@ -36,6 +36,7 @@ import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Route;
@@ -295,45 +296,46 @@ public class WDMUtils
 
 		/** Creates a RSA object reading the information from the existing Route object (and its WDM-related attributes). 
 		 * @param r the route object
-		 * @param initializeWithThePrimaryRoute if {@code true}, the RSA object created gets the information from the route primary path: sequence of links, and if not, from the route current sequence of traversed links.
+		 * @param initializeWithTheInitialState if {@code true}, the RSA object created gets the information from the route primary path: sequence of links, and if not, from the route current sequence of traversed links.
 		 */
-		public RSA (Route r , boolean initializeWithThePrimaryRoute)
+		public RSA (Route r , boolean initializeWithTheInitialState)
 		{
 			this.ingressNode = r.getIngressNode();
 			this.egressNode = r.getEgressNode();
-			this.seqLinks = initializeWithThePrimaryRoute ? new ArrayList<>(Route.getSeqLinks(r.getPrimaryPath())) : new ArrayList<> (r.getSeqLinks());
+			this.seqLinks = initializeWithTheInitialState ? new ArrayList<>(Route.getSeqLinks(r.getInitialState().getSecond())) : new ArrayList<> (r.getSeqLinks());
 			try 
 			{
 				if (!isNonNegativeInteger(r.getOccupiedCapacity())) throw new WDMException ("");
 				if (!isNonNegativeInteger(r.getOccupiedCapacityInNoFailureState())) throw new WDMException ("");
-				final IntMatrix2D candidateSeqFreqSlots = StringUtils.readIntMatrix(r.getAttribute(initializeWithThePrimaryRoute? WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_PRIMARY_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME));
+				final IntMatrix2D candidateSeqFreqSlots = StringUtils.readIntMatrix(r.getAttribute(initializeWithTheInitialState? WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME));
 				this.seqFrequencySlots_se = candidateSeqFreqSlots.rows() > 0? candidateSeqFreqSlots : IntFactory2D.dense.make(0,this.seqLinks.size());
-				final int[] candidateSeqRegenerators = r.getAttribute(initializeWithThePrimaryRoute? WDMUtils.SEQUENCE_OF_REGENERATORS_PRIMARY_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME) == null? new int [seqLinks.size()] : StringUtils.toIntArray(StringUtils.split(initializeWithThePrimaryRoute? r.getAttribute(SEQUENCE_OF_REGENERATORS_PRIMARY_ROUTE_ATTRIBUTE_NAME): r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME), " "));
+				final int[] candidateSeqRegenerators = r.getAttribute(initializeWithTheInitialState? WDMUtils.SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME) == null? new int [seqLinks.size()] : StringUtils.toIntArray(StringUtils.split(initializeWithTheInitialState? r.getAttribute(SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME): r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME), " "));
 				this.seqRegeneratorsOccupancy_e = candidateSeqRegenerators.length == 0 ? new int[this.seqLinks.size()] : candidateSeqRegenerators;
 			} catch (Exception e) { throw new WDMException("RSA not correctly defined"); }
 
-			if (!initializeWithThePrimaryRoute && getNumSlots() != r.getOccupiedCapacityInNoFailureState()) throw new WDMException("The occupied link capacity is different to the number of slots");
+			if (initializeWithTheInitialState && getNumSlots() != r.getInitialState().getThird().get(0)) throw new WDMException("The occupied link capacity is different to the number of slots");
+			if (!initializeWithTheInitialState && getNumSlots() != r.getOccupiedCapacityInNoFailureState()) throw new WDMException("The occupied link capacity is different to the number of slots");
 			checkValidity();
 		}
 		
-		/** Creates a RSA object reading the information from the backup path of the route with the given order (and its WDM-related attributes). 
-		 * @param r the route object
-		 * @param indexOfBackupPath the index of the backup path in the list of backup paths for the route
-		 */
-		public RSA (Route r , int indexOfBackupPath)
-		{
-			if ((indexOfBackupPath < 0) || (indexOfBackupPath >= r.getBackupPathList().size())) throw new Net2PlanException ("Wrong index number");
-			this.ingressNode = r.getIngressNode();
-			this.egressNode = r.getEgressNode();
-			this.seqLinks = new ArrayList<Link> (Route.getSeqLinks(r.getBackupPathList().get(indexOfBackupPath)));
-			try 
-			{ 
-				this.seqFrequencySlots_se = StringUtils.readIntMatrix(r.getAttribute(WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_BACKUPPATH_ATTRIBUTE_NAME + indexOfBackupPath));
-				this.seqRegeneratorsOccupancy_e = r.getAttribute(WDMUtils.SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + indexOfBackupPath) == null? new int [seqLinks.size()] : StringUtils.toIntArray(StringUtils.split(r.getAttribute(WDMUtils.SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + indexOfBackupPath), " "));
-			} catch (Exception e) { throw new WDMException("RSA not correctly defined"); }
-			if (getNumSlots() != r.getOccupiedCapacityInNoFailureState()) throw new WDMException("The occupied link capacity is different to the number of slots");
-			checkValidity();
-		}
+//		/** Creates a RSA object reading the information from the backup path of the route with the given order (and its WDM-related attributes). 
+//		 * @param r the route object
+//		 * @param indexOfBackupPath the index of the backup path in the list of backup paths for the route
+//		 */
+//		public RSA (Route r , int indexOfBackupPath)
+//		{
+//			if ((indexOfBackupPath < 0) || (indexOfBackupPath >= r.getBackupPathList().size())) throw new Net2PlanException ("Wrong index number");
+//			this.ingressNode = r.getIngressNode();
+//			this.egressNode = r.getEgressNode();
+//			this.seqLinks = new ArrayList<Link> (Route.getSeqLinks(r.getBackupPathList().get(indexOfBackupPath)));
+//			try 
+//			{ 
+//				this.seqFrequencySlots_se = StringUtils.readIntMatrix(r.getAttribute(WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_BACKUPPATH_ATTRIBUTE_NAME + indexOfBackupPath));
+//				this.seqRegeneratorsOccupancy_e = r.getAttribute(WDMUtils.SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + indexOfBackupPath) == null? new int [seqLinks.size()] : StringUtils.toIntArray(StringUtils.split(r.getAttribute(WDMUtils.SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + indexOfBackupPath), " "));
+//			} catch (Exception e) { throw new WDMException("RSA not correctly defined"); }
+//			if (getNumSlots() != r.getOccupiedCapacityInNoFailureState()) throw new WDMException("The occupied link capacity is different to the number of slots");
+//			checkValidity();
+//		}
 
 		/** Creates a RSA object from the provided information
 		 * @param seqLinks sequence of traversed fibers (a copy is made internally)
@@ -665,24 +667,14 @@ public class WDMUtils
 	private final static String SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME = "seqFrequencySlots_se";
 	
 	/**
-	 * Route/protection segment attribute name for sequence of regenerators.
-	 */
-	private final static String SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME = "seqRegeneratorsBackup_";
-	
-	/**
-	 * Route/protection segment attribute name for sequence of wavelengths.
-	 */
-	private final static String SEQUENCE_OF_FREQUENCYSLOTS_BACKUPPATH_ATTRIBUTE_NAME = "seqFrequencySlotsBackup_se_";
-
-	/**
 	 * Route/protection segment attribute name for sequence of wavelengths for the initial sequence of links (when the route was created)
 	 */
-	private final static String SEQUENCE_OF_FREQUENCYSLOTS_PRIMARY_ROUTE_ATTRIBUTE_NAME = "seqFrequencySlotsInitialRoute";
+	private final static String SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME = "seqFrequencySlotsInitialRoute";
 	
 	/**
 	 * Route/protection segment attribute name for sequence of regenerators occupied for the initial sequence of links (when the route was created)
 	 */
-	private final static String SEQUENCE_OF_REGENERATORS_PRIMARY_ROUTE_ATTRIBUTE_NAME = "seqRegeneratorsInitialRoute";
+	private final static String SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME = "seqRegeneratorsInitialRoute";
 
 	private static class WDMException extends Net2PlanException
 	{
@@ -709,56 +701,54 @@ public class WDMUtils
 		return lp;
 	}
 
-	/** Sets the given RSA as the primary path of the given route
-	 * @param r the route
-	 * @param rsa the RSA (traversed fibers, and slots to reserve in them)
-	 */
-	public static void setLightpathAsPrimaryPath (Route r , RSA rsa)
-	{
-		r.setPrimaryPath(rsa.seqLinks);
-		setLightpathRSAAttributes (r , rsa , true);
-	}
+//	/** Sets the given RSA as the primary path of the given route
+//	 * @param r the route
+//	 * @param rsa the RSA (traversed fibers, and slots to reserve in them)
+//	 */
+//	public static void setLightpathAsPrimaryPath (Route r , RSA rsa)
+//	{
+//		r.setPrimaryPath(rsa.seqLinks);
+//		setLightpathRSAAttributes (r , rsa , true);
+//	}
 
-	/** Creates a new lightpath with the given RSA, as a backup lighptath in the given route. 
-	 * The attributes of the lightpath to store the WDM information are initialized appropriately
-	 * @param r the route
-	 * @param rsa the RSA (traversed fibers, and slots to reserve in them)
-	 */
-	public static void addLightpathAsBackupPath (Route r , RSA rsa)
-	{
-		r.addBackupPath(rsa.seqLinks);
-		final int indexOfBackupPathAdded = r.getBackupPathList().size() - 1; 
-		setLightpathRSAAttributes (r , rsa , false , indexOfBackupPathAdded);
-	}
-
-	/** Removes a lightpath as backup path of a route (in the given index), updating also the information in theroute attribtues regarding the RSA
-	 * @param r the route
-	 * @param indexToRemove the index of the backup path to remove (in the backup path list of the route)
-	 */
-	public static void removeLightpathAsBackupPath (Route r , int indexToRemove)
-	{
-		final int originalNumBackupPaths = r.getBackupPathList().size();
-		if ((indexToRemove < 0) || (indexToRemove >= originalNumBackupPaths)) throw new WDMException ("Wrong backup path index");
-		r.removeBackupPath(indexToRemove);
-		for (int index = indexToRemove + 1; index < originalNumBackupPaths ; index ++)
-		{
-			r.setAttribute(SEQUENCE_OF_FREQUENCYSLOTS_BACKUPPATH_ATTRIBUTE_NAME + (index-1), r.getAttribute(SEQUENCE_OF_FREQUENCYSLOTS_BACKUPPATH_ATTRIBUTE_NAME + index));
-			r.setAttribute(SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + (index-1), r.getAttribute(SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + index));
-		}
-		r.removeAttribute(SEQUENCE_OF_FREQUENCYSLOTS_BACKUPPATH_ATTRIBUTE_NAME + (originalNumBackupPaths-1));
-		r.removeAttribute(SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + (originalNumBackupPaths-1));
-	}
+//	/** Creates a new lightpath with the given RSA, as a backup lighptath in the given route. 
+//	 * The attributes of the lightpath to store the WDM information are initialized appropriately
+//	 * @param r the route
+//	 * @param rsa the RSA (traversed fibers, and slots to reserve in them)
+//	 */
+//	public static void addLightpathAsBackupPath (Route r , RSA rsa)
+//	{
+//		r.addBackupPath(rsa.seqLinks);
+//		final int indexOfBackupPathAdded = r.getBackupPathList().size() - 1; 
+//		setLightpathRSAAttributes (r , rsa , false , indexOfBackupPathAdded);
+//	}
+//
+//	/** Removes a lightpath as backup path of a route (in the given index), updating also the information in theroute attribtues regarding the RSA
+//	 * @param r the route
+//	 * @param indexToRemove the index of the backup path to remove (in the backup path list of the route)
+//	 */
+//	public static void removeLightpathAsBackupPath (Route r , int indexToRemove)
+//	{
+//		final int originalNumBackupPaths = r.getBackupPathList().size();
+//		if ((indexToRemove < 0) || (indexToRemove >= originalNumBackupPaths)) throw new WDMException ("Wrong backup path index");
+//		r.removeBackupPath(indexToRemove);
+//		for (int index = indexToRemove + 1; index < originalNumBackupPaths ; index ++)
+//		{
+//			r.setAttribute(SEQUENCE_OF_FREQUENCYSLOTS_BACKUPPATH_ATTRIBUTE_NAME + (index-1), r.getAttribute(SEQUENCE_OF_FREQUENCYSLOTS_BACKUPPATH_ATTRIBUTE_NAME + index));
+//			r.setAttribute(SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + (index-1), r.getAttribute(SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + index));
+//		}
+//		r.removeAttribute(SEQUENCE_OF_FREQUENCYSLOTS_BACKUPPATH_ATTRIBUTE_NAME + (originalNumBackupPaths-1));
+//		r.removeAttribute(SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + (originalNumBackupPaths-1));
+//	}
 
 	/** Checks resource clashing: no frequency slot in the same fiber can be occupied by more than one lightpath, nor 
 	 * any slot of an index higher than the fiber capacity can be occupied. If a lightpath has as current route one of the backups, the clashing for this backup is not checked 
 	 * @param netPlan The object representing the network
-	 * @param countDownPaths Include paths (current, primary or backup) that are down
-	 * @param boolean countPrimaryPathInsteadOfCurrentPath if true, we account for the resources allocated by the primary RSA, if false, the one of the current RSA.
-	 * @param countBackupPathLightpaths Include backup paths of the lightpaths
+	 * @param countFailedLightpaths Include paths (current, primary or backup) that are down
 	 * @param checkRegeneratorsAsWavelengthConverters Whether or not to check that a lighpath occupies one regenerator in every node where the RSA checnges the frequency slots (that is, where a wavelength conversion occurs)
 	 * @param optionalLayerParameter WDM network layer. If not present, the default layer is assumed
 	 */
-	public static void checkResourceAllocationClashing(NetPlan netPlan, boolean countDownPaths , boolean countPrimaryPathInsteadOfCurrentPath , boolean countBackupPathLightpaths , boolean checkRegeneratorsAsWavelengthConverters , NetworkLayer ... optionalLayerParameter)
+	public static void checkResourceAllocationClashing(NetPlan netPlan, boolean countFailedLightpaths , boolean checkRegeneratorsAsWavelengthConverters , NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		
@@ -766,20 +756,12 @@ public class WDMUtils
 		{
 			for (Route lpRoute : netPlan.getRoutes(layer))
 			{
-				final RSA rsa = new RSA (lpRoute , countPrimaryPathInsteadOfCurrentPath);
-				if (!countDownPaths && rsa.isDown()) continue;
+				final RSA rsa = new RSA (lpRoute , false);
+				if (!countFailedLightpaths && rsa.isDown()) continue;
 				rsa.checkFrequencySlotConversionOccupiesARegenerator();
-				if (countBackupPathLightpaths)
-				for (int index = 0; index < lpRoute.getBackupPathList().size() ; index ++)
-				{
-					final RSA rsaBackup = new RSA (lpRoute , index);
-					if (rsaBackup.equals(rsa)) continue;
-					if (!countDownPaths && rsaBackup.isDown()) continue;
-					rsaBackup.checkFrequencySlotConversionOccupiesARegenerator();
-				}
 			}
 		}
-		getNetworkSlotAndRegeneratorOcupancy(netPlan , countDownPaths , countPrimaryPathInsteadOfCurrentPath , countBackupPathLightpaths ,  layer); // serves as check
+		getNetworkSlotAndRegeneratorOcupancy(netPlan , countFailedLightpaths , layer); // serves as check
 	}
 	
 	/** Performs some checks in a WDM network. Checks that all the route and protection segment objects of the WDM layer have valid 
@@ -942,14 +924,12 @@ public class WDMUtils
 	 * The lightpaths with occupied capacity equal to zero (as Route objects) are not counted. 
 	 * An exception is raised if a slot is allocated to more than one lightpath (except if a lightpath current path is equal to one of its backup paths), or a slot with an id higher than the link capacity is occupied
 	 * @param netPlan Current design
-	 * @param countDownPaths Include paths (current, primary or backup) that are down
-	 * @param boolean countPrimaryPathInsteadOfCurrentPath if true, we account for the resources allocated by the primary RSA, if false, the one of the current RSA.
-	 * @param countBackupPathLightpaths Include backup paths of the lightpaths
+	 * @param countFailedLightpaths Include paths (current, primary or backup) that are down
 	 * @param optionalLayerParameter WDM network layer. If not present, the default layer is assumed
 	 * @return Frequency slot - links occupation matrix, and per node regenerator occupation vector
 	 */
 	public static Pair<DoubleMatrix2D,DoubleMatrix1D> getNetworkSlotAndRegeneratorOcupancy(NetPlan netPlan, 
-			boolean countDownPaths , boolean countPrimaryPathInsteadOfCurrentPath , boolean countBackupPathLightpaths, NetworkLayer ... optionalLayerParameter)
+			boolean countFailedLightpaths , NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		final int E = netPlan.getNumberOfLinks (layer);
@@ -965,22 +945,10 @@ public class WDMUtils
 		/* Wavlengths occupied by the lightpaths as routes */
 		for (Route lpRoute : netPlan.getRoutes(layer))
 		{
-			final RSA rsa = new RSA (lpRoute , countPrimaryPathInsteadOfCurrentPath);
-			if (!countDownPaths && rsa.isDown()) continue;
+			final RSA rsa = new RSA (lpRoute , false);
+			if (!countFailedLightpaths && rsa.isDown()) continue;
 			if (lpRoute.getOccupiedCapacity() == 0) continue; // not been used now
 			allocateResources(rsa , frequencySlot2FiberOccupancy_se , nodeRegeneratorOccupancy);
-
-			if (countBackupPathLightpaths)
-			{
-				if (lpRoute.getOccupiedCapacity() == 0) continue; // not been used now
-				for (int index = 0; index < lpRoute.getBackupPathList().size() ; index ++)
-				{
-					final RSA rsaBackup = new RSA (lpRoute , index);
-					if (rsaBackup.equals(rsa)) continue; // do not allocate, the route is traversing a backup
-					if (!countDownPaths && rsaBackup.isDown()) continue;
-					allocateResources(rsaBackup , frequencySlot2FiberOccupancy_se , nodeRegeneratorOccupancy);
-				}
-			}
 		}
 		return Pair.of(frequencySlot2FiberOccupancy_se,nodeRegeneratorOccupancy);
 	}
@@ -995,22 +963,21 @@ public class WDMUtils
 	 * of lightpaths (regular and protection) with a regenerator in it. If a lightpath has more than one regenerator in a node, 
 	 * it appears as many times as the number of regenerators there.
 	 * @param netPlan Current design
-	 * @param countPrimaryPathInsteadOfCurrentPath if true, we account for the resources allocated by the primary RSA, if false, the one of the current RSA.
-	 * @param countDownLightpaths if false, only those paths (current, primary, or backup) that are not down are accounted
+	 * @param countFailedLightpaths if false, only those paths (current, primary, or backup) that are not down are accounted
 	 * @param optionalLayerParameter WDM network layer. If not present, the default layer is assumed
 	 * @return Link - frequency slot occupation map
 	 */
-	public static Pair< Map<Pair<Link,Integer>,Pair<List<Route>,List<Pair<Route,Integer>>>> , Map<Node,Pair<List<Route>,List<Pair<Route,Integer>>>> > 
-	getNetworkSlotOccupancyMap (NetPlan netPlan, boolean countPrimaryPathInsteadOfCurrentPath , boolean countDownLightpaths , 
+	public static Pair< Map<Pair<Link,Integer>,List<Route>> , Map<Node,List<Route>> > 
+	getNetworkSlotOccupancyMap (NetPlan netPlan, boolean countFailedLightpaths , 
 			NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		Map<Pair<Link,Integer>,Pair<List<Route>,List<Pair<Route,Integer>>>> lpOccup = new HashMap<Pair<Link,Integer>,Pair<List<Route>,List<Pair<Route,Integer>>>> (); 
-		Map<Node,Pair<List<Route>,List<Pair<Route,Integer>>>> regeneratorOccup = new HashMap<Node,Pair<List<Route>,List<Pair<Route,Integer>>>> (); 
+		Map<Pair<Link,Integer>,List<Route>> lpOccup = new HashMap<Pair<Link,Integer>,List<Route>> (); 
+		Map<Node,List<Route>> regeneratorOccup = new HashMap<Node,List<Route>> (); 
 		for (Route r : netPlan.getRoutes(layer))
 		{
- 			final WDMUtils.RSA rsa = new WDMUtils.RSA(r , countPrimaryPathInsteadOfCurrentPath);
-			if (rsa.isDown() && countDownLightpaths) continue;
+ 			final WDMUtils.RSA rsa = new WDMUtils.RSA(r , false);
+			if (rsa.isDown() && countFailedLightpaths) continue;
  			
 			for (int contLink = 0; contLink < rsa.seqLinks.size() ; contLink ++)
 			{
@@ -1018,41 +985,18 @@ public class WDMUtils
 				for (int s = 0; s < rsa.getNumSlots() ; s ++)
 				{
 					Pair<Link,Integer> key = Pair.of(e , rsa.seqFrequencySlots_se.get(s,contLink));
-					Pair<List<Route>,List<Pair<Route,Integer>>> lists = lpOccup.get(key); 
-					if (lists == null) { lists = Pair.of(new LinkedList<Route> (), new LinkedList<Pair<Route,Integer>> ()); lpOccup.put(key,lists); }
-					lists.getFirst().add(r);
+					List<Route> lists = lpOccup.get(key); 
+					if (lists == null) { lists = new LinkedList<Route> (); lpOccup.put(key,lists); }
+					lists.add(r);
 				}
 			}
 			for (Node n : rsa.getSignalRegenerationNodes())
 			{
-				Pair<List<Route>,List<Pair<Route,Integer>>> lists = regeneratorOccup.get(n); 
-				if (lists == null) { lists = Pair.of(new LinkedList<Route> (), new LinkedList<Pair<Route,Integer>> ()); regeneratorOccup.put(n,lists); }
-				lists.getFirst().add(r);
+				List<Route> lists = regeneratorOccup.get(n); 
+				if (lists == null) { lists = new LinkedList<Route> (); regeneratorOccup.put(n,lists); }
+				lists.add(r);
 			}
 		}
-		for (Route route : netPlan.getRoutes(layer))
-			for (int backupPathIndex = 0; backupPathIndex < route.getBackupPathList().size() ; backupPathIndex ++)
-			{
-				final WDMUtils.RSA rsa = new WDMUtils.RSA(route , backupPathIndex);
-				if (rsa.isDown() && countDownLightpaths) continue;
-				for (int contLink = 0; contLink < rsa.seqLinks.size() ; contLink ++)
-				{
-					final Link e = rsa.seqLinks.get(contLink);
-					for (int s = 0; s < rsa.getNumSlots() ; s ++)
-					{
-						Pair<Link,Integer> key = Pair.of(e , rsa.seqFrequencySlots_se.get(s,contLink));
-						Pair<List<Route>,List<Pair<Route,Integer>>> lists = lpOccup.get(key); 
-						if (lists == null) { lists = Pair.of(new LinkedList<Route> (), new LinkedList<Pair<Route,Integer>> ()); lpOccup.put(key,lists); }
-						lists.getSecond().add(Pair.of(route, backupPathIndex));
-					 }
-				}
-				for (Node n : rsa.getSignalRegenerationNodes())
-				{
-					Pair<List<Route>,List<Pair<Route,Integer>>> lists = regeneratorOccup.get(n); 
-					if (lists == null) { lists = Pair.of(new LinkedList<Route> (), new LinkedList<Pair<Route,Integer>> ()); regeneratorOccup.put(n,lists); }
-					lists.getSecond().add(Pair.of(route, backupPathIndex));
-				}
-			}
 		return Pair.of(lpOccup,regeneratorOccup);
 	}
 	
@@ -1105,10 +1049,10 @@ public class WDMUtils
 	 * updated with the information of the initial RSA (also already stored in attributes of the route by previous WDMUtils methods)  
 	 * @param r The route of the lightpath to revert
 	 */
-	public static void revertToPrimaryRSA (Route r)
+	public static void revertToInitialRSA (Route r)
 	{
 		final RSA primaryRSA = new RSA (r , true);
-		r.setPath(r.getCarriedTrafficInNoFailureState(), r.getPrimaryPath(), Collections.nCopies(primaryRSA.seqLinks.size(), (double) primaryRSA.getNumSlots()));
+		r.setPath(r.getInitialState().getFirst(), primaryRSA.seqLinks, Collections.nCopies(primaryRSA.seqLinks.size(), (double) primaryRSA.getNumSlots()));
 		setLightpathRSAAttributes(r, primaryRSA, true);
 	}
 	
@@ -1132,25 +1076,19 @@ public class WDMUtils
 	 * @param initializeThePrimaryRoute If {@code true}, we assume that the RSA corresponds to the primary path information in the {@code Route} object.
 	 * @param indexOfBackupRoute if initializeThePrimaryRoute is false, and this parameter is set, it is assumed that we fix the RSA of the backup path of the given index in the list of backup paths of the route 
 	 */
-	public static void setLightpathRSAAttributes (Route lp , RSA rsa , boolean initializeThePrimaryRoute , int ... indexOfBackupRoute)
+	public static void setLightpathRSAAttributes (Route lp , RSA rsa , boolean initializeThePrimaryRoute)
 	{
 		String attNameSE, attNameREG;
 		if (initializeThePrimaryRoute)
 		{
-			attNameSE = SEQUENCE_OF_FREQUENCYSLOTS_PRIMARY_ROUTE_ATTRIBUTE_NAME;
-			attNameREG = SEQUENCE_OF_REGENERATORS_PRIMARY_ROUTE_ATTRIBUTE_NAME;
+			attNameSE = SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME;
+			attNameREG = SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME;
 			
 		}
-		else if (indexOfBackupRoute.length > 0)
+		else 
 		{
-			if ((indexOfBackupRoute [0] < 0) || (indexOfBackupRoute [0] >= lp.getBackupPathList().size())) throw new WDMException ("Wrong index of backup lightpath");
 			attNameSE = SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME;
 			attNameREG = SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME;
-		}
-		else
-		{
-			attNameSE = SEQUENCE_OF_FREQUENCYSLOTS_BACKUPPATH_ATTRIBUTE_NAME + (indexOfBackupRoute[0]);
-			attNameREG = SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + (indexOfBackupRoute[0]);
 		}
 		lp.setAttribute(attNameSE, StringUtils.writeMatrix(rsa.seqFrequencySlots_se));
 		lp.setAttribute(attNameREG, IntUtils.join(rsa.seqRegeneratorsOccupancy_e, " "));
@@ -1572,8 +1510,6 @@ public class WDMUtils
 		{
 			new RSA (lp , true);
 			new RSA (lp , false);
-			for (int indexBackupPath = 0; indexBackupPath < lp.getBackupPathList().size() ; indexBackupPath ++)
-				new RSA (lp , indexBackupPath);
 		} catch (Exception e) { return false; }
 		return true;
 	}

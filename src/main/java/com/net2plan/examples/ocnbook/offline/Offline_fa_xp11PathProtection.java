@@ -21,19 +21,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-
 import com.jom.OptimizationProblem;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
+
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 
 /**
  * Solves several variants of unicast routing problems with 1+1 protection, with flow-path formulations
@@ -137,11 +136,11 @@ public class Offline_fa_xp11PathProtection implements IAlgorithm
 		{
 			Route primary = null; Route backup = null;
 			for (Route r : d.getRoutes()) { if (xx_p [r.getIndex ()] == 1) primary = r; if (bb_p [r.getIndex ()] == 1) backup = r; }
-			ProtectionSegment segment = netPlan.addProtectionSegment(backup.getSeqLinksRealPath() , d.getOfferedTraffic() , null);
 			if (primary == null) throw new RuntimeException ("Bad");
 			if (backup == null) throw new RuntimeException ("Bad");
 			primary.setCarriedTraffic(d.getOfferedTraffic() , d.getOfferedTraffic());
-			primary.addProtectionSegment(segment);
+			backup.setCarriedTraffic(0 , d.getOfferedTraffic());
+			primary.addBackupRoute(backup);
 		}
 
 		netPlan.removeAllRoutesUnused(PRECISION_FACTOR); // routes with zero traffic (or close to zero, with PRECISION_FACTOR tolerance)
@@ -171,17 +170,15 @@ public class Offline_fa_xp11PathProtection implements IAlgorithm
 
 		for (Route route : netPlan.getRoutes())
 		{
-			if (route.getPotentialBackupProtectionSegments().size () != 1) throw new RuntimeException("Bad");
+			if (route.getBackupRoutes().size () != 1) throw new RuntimeException("Bad");
 			
-			final ProtectionSegment segment = route.getPotentialBackupProtectionSegments().iterator().next();
-			if (route.getIngressNode() != segment.getOriginNode()) throw new RuntimeException("Bad");
-			if (route.getEgressNode() != segment.getDestinationNode()) throw new RuntimeException("Bad");
+			final Route backupRoute = route.getBackupRoutes().get(0);
 			
 			if (type11.equalsIgnoreCase("srgDisjoint"))
-				if (!Collections.disjoint(route.getSRGs(), segment.getSRGs()))
+				if (!Collections.disjoint(route.getSRGs(), backupRoute.getSRGs()))
 					throw new RuntimeException("Bad");
 			else if (type11.equalsIgnoreCase("linkDisjoint"))
-				if (!Collections.disjoint(route.getSeqLinksRealPath(), segment.getSeqLinks()))
+				if (!Collections.disjoint(route.getSeqLinks(), backupRoute.getSeqLinks()))
 					throw new RuntimeException("Bad");
 			else
 				throw new RuntimeException ("Bad");

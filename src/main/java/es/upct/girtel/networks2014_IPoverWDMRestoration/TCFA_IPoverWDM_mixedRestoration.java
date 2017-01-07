@@ -122,7 +122,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
         }
 
         final DoubleMatrix1D w_f = WDMUtils.getVectorFiberNumFrequencySlots(netPlan, wdmLayer);
-        final DoubleMatrix2D wavelengthFiberOccupancy = WDMUtils.getNetworkSlotAndRegeneratorOcupancy(netPlan, true, false , false , wdmLayer).getFirst();
+        final DoubleMatrix2D wavelengthFiberOccupancy = WDMUtils.getNetworkSlotAndRegeneratorOcupancy(netPlan, true, wdmLayer).getFirst();
 				
 		/* First stage: full mesh of enough lightpaths to carry all in one hop. HLDA strategy to create the lightpaths */
         DoubleMatrix1D pendingCarriedTraffic_d = netPlan.getVectorDemandOfferedTraffic(ipLayer).copy();
@@ -273,7 +273,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
         IPUtils.setECMPForwardingRulesFromLinkWeights(netPlan, null, ipLayer);
 		
 		/* Check consistency of WDM layer */
-        WDMUtils.checkResourceAllocationClashing(netPlan, true, false , false , false , wdmLayer);
+        WDMUtils.checkResourceAllocationClashing(netPlan, true, false , wdmLayer);
 
         return "Ok";
     }

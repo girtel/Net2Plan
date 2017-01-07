@@ -19,14 +19,12 @@ import java.util.Map;
 
 import com.jom.DoubleMatrixND;
 import com.jom.OptimizationProblem;
-import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.libraries.WDMUtils;
@@ -402,8 +400,8 @@ public class Offline_wdm_routingSpectrumAndModulationAssignmentILP implements IA
 				if (cpl11 != null)
 				{
 					final int s2 = slots2.get(cont);
-					final ProtectionSegment segment = WDMUtils.addLightpathAsProtectionSegment(new WDMUtils.RSA(seqLinks2_p.get(p) , s2 , numSlots_p.get(p) , regPositions2_p.get(p)));
-					r.addProtectionSegment(segment);
+					final Route backupRoute = WDMUtils.addLightpath(demand_p.get(p) , new WDMUtils.RSA(seqLinks2_p.get(p) , s2 , numSlots_p.get(p) , regPositions2_p.get(p)) , 0);
+					r.addBackupRoute(backupRoute);
 				}
 			}
 		}

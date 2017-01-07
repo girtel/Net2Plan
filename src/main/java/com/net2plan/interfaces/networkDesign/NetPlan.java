@@ -1227,7 +1227,11 @@ public class NetPlan extends NetworkElement
 		addRoutesFromCandidatePathList(computeUnicastCandidatePathList(costs , paramValuePairs));
 	}
 
-	public void addRoutesAndBackupRoutesFromCandidate11PathList (Map<Demand,List<Pair<List<Link>,List<Link>>>> cpl11)
+	/** For each demand in the map, adds a number of route pairs with the given paths, where each route pair has a primary route and one backup to it.
+	 * All routes have zero carried traffic and zero occupied capacity in the links
+	 * @param cpl11 a map with the path info
+	 */
+	public void addRoutesAndBackupRoutesFromCandidate11PathList (Map<Demand,List<Pair<List<Link>,List<Link>>>> cpl11) 
 	{
 		checkIsModifiable();
 		List<Route> routes = new LinkedList<Route> ();
@@ -3530,6 +3534,26 @@ public class NetPlan extends NetworkElement
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		return (List<Route>) Collections.unmodifiableList(layer.routes);
+	}
+
+	/**
+	 * <p>Returns the list of routes which are not backup of any other route </p>
+	 * @param optionalLayerParameter network layer (optional)
+	 * @return the {@code List} of routes
+	 */
+	public List<Route> getRoutesAreBackup (NetworkLayer ... optionalLayerParameter)
+	{
+		return getRoutes (optionalLayerParameter).stream().filter(e -> !e.isBackupRoute()).collect(Collectors.toList());
+	}
+
+	/**
+	 * <p>Returns the list of routes which are backup of any other route </p>
+	 * @param optionalLayerParameter network layer (optional)
+	 * @return the {@code List} of routes
+	 */
+	public List<Route> getRoutesAreNotBackup (NetworkLayer ... optionalLayerParameter)
+	{
+		return getRoutes (optionalLayerParameter).stream().filter(e -> e.isBackupRoute()).collect(Collectors.toList());
 	}
 
 	/**

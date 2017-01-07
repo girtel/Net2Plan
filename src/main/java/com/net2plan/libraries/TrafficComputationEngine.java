@@ -127,7 +127,7 @@ public class TrafficComputationEngine
 		for (Route route : netPlan.getRoutes(layer))
 		{
 			totalCarriedTraffic += route.getCarriedTraffic();
-			if (route.getBackupPathList().size() > 0)
+			if (route.hasBackupRoutes())
 				totalCarriedAndProtectedTraffic += route.getCarriedTraffic();
 		}
 		return totalCarriedTraffic == 0? 0 : totalCarriedAndProtectedTraffic / totalCarriedTraffic;

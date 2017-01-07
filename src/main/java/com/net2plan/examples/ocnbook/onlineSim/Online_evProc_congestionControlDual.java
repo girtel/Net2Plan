@@ -201,7 +201,7 @@ public class Online_evProc_congestionControlDual extends IEventProcessor
 
 			/* Update the new price with the gradient approach */
 			final double u_e = eMe.getCapacity();
-			final double y_e = eMe.getCarriedTrafficIncludingProtectionSegments();
+			final double y_e = eMe.getCarriedTraffic();
 			final double old_pie = this.congControl_price_e.get(eMe.getIndex());
 			final double new_pie = Math.max(0, old_pie - this.gradient_gammaStep.getDouble() * (u_e - y_e) + 2*gradient_maxGradientAbsoluteNoise.getDouble()*(rng.nextDouble()-0.5));
 			this.congControl_price_e.set(eMe.getIndex(), new_pie);
@@ -290,7 +290,7 @@ public class Online_evProc_congestionControlDual extends IEventProcessor
 		{
 			final double h_r = r.getCarriedTraffic();
 			demandCarriedTraffic += h_r;
-			for (Link e : r.getSeqLinksRealPath())
+			for (Link e : r.getSeqLinks())
 				demandWeightedSumLinkPrices += h_r * infoIKnow_price_e.get(e.getIndex ());
 		}
 		demandWeightedSumLinkPrices /= demandCarriedTraffic;

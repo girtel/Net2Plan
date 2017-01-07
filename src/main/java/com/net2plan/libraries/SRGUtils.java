@@ -21,6 +21,7 @@ import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Pair;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Provides a set of static methods which can be useful when dealing with network resilience.
@@ -480,7 +481,7 @@ public class SRGUtils
 		int R = netPlan.getNumberOfRoutes(layer);
 		for (Route route : netPlan.getRoutes (layer))
 		{
-			Collection<List<NetworkElement>> backupPaths = route.getBackupPathList();
+			Collection<List<Link>> backupPaths = route.getBackupRoutes().stream().map(e -> e.getSeqLinks()).collect(Collectors.toList());
 			if (backupPaths.isEmpty()) continue;
 
 			boolean srgDisjoint_withEndNodes = true;
@@ -491,7 +492,7 @@ public class SRGUtils
 
 			Collection<SharedRiskGroup> routeSRGIds = route.getSRGs();
 			Set<SharedRiskGroup> backupPathSRGs = new LinkedHashSet<SharedRiskGroup>();
-			for(List<NetworkElement> path : backupPaths) backupPathSRGs.addAll(getAffectingSRGs(Route.getSeqLinks(path)));
+			for(List<Link> path : backupPaths) backupPathSRGs.addAll(getAffectingSRGs(path));
 			
 			Set<SharedRiskGroup> commonSRGs_withEndNodes = CollectionUtils.intersect(routeSRGIds, backupPathSRGs);
 			if (!commonSRGs_withEndNodes.isEmpty()) srgDisjoint_withEndNodes = false;

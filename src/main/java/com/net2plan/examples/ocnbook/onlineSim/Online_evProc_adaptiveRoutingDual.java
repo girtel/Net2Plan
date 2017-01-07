@@ -222,7 +222,7 @@ public class Online_evProc_adaptiveRoutingDual extends IEventProcessor
 			/* Update the gradient iteration */
 			final double previous_pi_e = this.routing_previousLinkWeight_e.get(eMe.getIndex ());
 			final double old_pi_e = this.routing_price_e.get(eMe.getIndex ());
-			final double gradient_e = eMe.getCarriedTrafficIncludingProtectionSegments() - eMe.getCapacity() +  2*gradient_maxGradientAbsoluteNoise.getDouble()*(this.rng.nextDouble()-0.5);
+			final double gradient_e = eMe.getCarriedTraffic() - eMe.getCapacity() +  2*gradient_maxGradientAbsoluteNoise.getDouble()*(this.rng.nextDouble()-0.5);
 			final double new_pi_e_notProjected = old_pi_e + this.gradient_gammaStep.getDouble() * gradient_e + this.gradient_heavyBallBetaParameter.getDouble() * (old_pi_e - previous_pi_e);
 			double new_pi_e_projected = Math.max(0, new_pi_e_notProjected);
 			if (gradient_maxGradientCoordinateChange.getDouble() > 0)
@@ -386,7 +386,7 @@ public class Online_evProc_adaptiveRoutingDual extends IEventProcessor
 		for (Route r : d.getRoutes())
 		{
 			double val = 0; 
-			for (Link e : r.getSeqLinksRealPath()) val += weightsKnown_e.get(e.getIndex()) + 1; 
+			for (Link e : r.getSeqLinks()) val += weightsKnown_e.get(e.getIndex()) + 1; 
 			a_k.set(r.getIndex (), val);
 //			map_a_k.put (r.getId () , val);
 		}

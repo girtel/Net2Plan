@@ -174,7 +174,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		initializeSRGs(netPlan);
 		this.nSRGs = netPlan.getNumberOfSRGs();
 		this.routeList_d = new int [D][]; for (Demand d : netPlan.getDemands ()) routeList_d [d.getIndex ()] = getIndexes (d.getRoutes ());
-		this.traversedLinks_r = new int [R][]; for (Route r : netPlan.getRoutes ()) traversedLinks_r [r.getIndex ()] = getIndexes (r.getSeqLinksRealPath());
+		this.traversedLinks_r = new int [R][]; for (Route r : netPlan.getRoutes ()) traversedLinks_r [r.getIndex ()] = getIndexes (r.getSeqLinks());
 		
 		
 		/* Initialize aux arrays for speed-up */
@@ -186,7 +186,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 			for (Link e : netPlan.getSRG (contSRG).getLinks())
 				A_se.set(contSRG+1 , e.getIndex () , 0.0);
 		this.A_rs = DoubleFactory2D.dense.make(R , 1 + nSRGs , 1.0); // 1 if link OK, 0 if fails
-		for (Route r : netPlan.getRoutes ()) for (Link e : r.getSeqLinksRealPath()) for (SharedRiskGroup srg : e.getSRGs())
+		for (Route r : netPlan.getRoutes ()) for (Link e : r.getSeqLinks()) for (SharedRiskGroup srg : e.getSRGs())
 					A_rs.set(r.getIndex (),1+srg.getIndex () , 0.0);
 
 		/* Check if the problem may have a solution: demands have at least one path in any failure state  */
@@ -240,7 +240,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 				if (Math.abs(best_x2r.viewSelection(routeList_d [d.getIndex ()]).zSum() - 1) > 1E-3) throw new RuntimeException ("Bad");
 				Route primaryRoute = null; ProtectionSegment protSegment = null;  
 				for (Route r : d.getRoutes ()) if (Math.abs(best_xr.get(r.getIndex ()) - 1) <= 1e-3) { primaryRoute = r; primaryRoute.setCarriedTraffic(tcfa_circuitCapacity_Gbps.getDouble () , tcfa_circuitCapacity_Gbps.getDouble ()); break; }
-				for (Route r : d.getRoutes ()) if (Math.abs(best_x2r.get(r.getIndex ()) - 1) <= 1e-3) { protSegment = netPlan.addProtectionSegment(r.getSeqLinksRealPath() , tcfa_circuitCapacity_Gbps.getDouble () , null); break; }
+				for (Route r : d.getRoutes ()) if (Math.abs(best_x2r.get(r.getIndex ()) - 1) <= 1e-3) { protSegment = netPlan.addProtectionSegment(r.getSeqLinks() , tcfa_circuitCapacity_Gbps.getDouble () , null); break; }
 				primaryRoute.addProtectionSegment(protSegment);
 			}
 			for (Link e : netPlan.getLinks ()) e.setCapacity(tcfa_linkCapacity_numCirc.getInt () * tcfa_circuitCapacity_Gbps.getDouble () * best_pe.get(e.getIndex()));
@@ -277,7 +277,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		stat_totalTimeSecs = (System.nanoTime() - algorithmInitialtime)*1e-9;
 		checkSolution (netPlan);
 
-		double averageLinkUtilization = netPlan.getVectorLinkUtilizationIncludingProtectionSegments().zSum() / stat_numLinks;
+		double averageLinkUtilization = netPlan.getVectorLinkUtilization().zSum() / stat_numLinks;
 		final String fileNameStem = algorithm_outputFileNameRoot.getString() + "_" + tcfa_srgType.getString() + "_c" + tcfa_circuitCapacity_Gbps.getDouble () + "_t" + algorithm_maxExecutionTimeInSeconds.getDouble() + "_r" + tcfa_recoveryType.getString ();  
 		try 
 		{
@@ -350,10 +350,11 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 			costLinks += linkCost_e.get(e.getIndex ()) * e.getCapacity() / (tcfa_linkCapacity_numCirc.getInt () * tcfa_circuitCapacity_Gbps.getDouble ());
 		
 		double costCircuits = 0;
-		for (Route r : np.getRoutes ())
-			costCircuits += tcfa_circuitCost.getDouble () * (r.getCarriedTraffic() / tcfa_circuitCapacity_Gbps.getDouble ());
-		for (ProtectionSegment p : np.getProtectionSegments())
-			costCircuits += tcfa_circuitCost.getDouble () * (p.getReservedCapacityForProtection() / tcfa_circuitCapacity_Gbps.getDouble ());
+		for (Route r : np.getRoutes ()) // sums both lps and 1+1 if there are any
+		{
+			final double lineRate = r.isBackupRoute()? r.getBackupRoutes().get(0).getCarriedTrafficInNoFailureState() : r.getCarriedTrafficInNoFailureState();
+			costCircuits += tcfa_circuitCost.getDouble () * (lineRate / tcfa_circuitCapacity_Gbps.getDouble ());
+		}
 		double costNodes = 0;
 		for (Node n : np.getNodes())
 		{
@@ -394,7 +395,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		return totalCost;
 	}
 
-	private Link oppositeLink (Link e) { return e.getNetPlan ().getNodePairLinks(e.getDestinationNode(), e.getOriginNode() , false).iterator().next(); }
+	private static Link oppositeLink (Link e) { return e.getNetPlan ().getNodePairLinks(e.getDestinationNode(), e.getOriginNode() , false).iterator().next(); }
 	
 	private Pair<Map<Demand,Demand>,Map<Route,Route>> initializeNetPlanLinksBidirDemandsAndRoutes (NetPlan np)
 	{
@@ -413,7 +414,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 			opposite_d.put(opDemand,d);
 			for (Route r : new HashSet<Route> (d.getRoutes ()))
 			{
-				final Route oppRoute = np.addRoute(opDemand, r.getCarriedTraffic(), r.getOccupiedCapacity() , oppositeSeqLinks (r.getSeqLinksRealPath()), null);
+				final Route oppRoute = np.addRoute(opDemand, r.getCarriedTraffic(), r.getOccupiedCapacity() , oppositeSeqLinks (r.getSeqLinks()), null);
 				opposite_r.put(r,oppRoute); opposite_r.put(oppRoute,r);
 			}
 		}
@@ -492,11 +493,11 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 			{
 				if (r.getPotentialBackupProtectionSegments().size() != 1) throw new RuntimeException ("Bad");
 				final ProtectionSegment protSegment = r.getPotentialBackupProtectionSegments().iterator().next();
-				List<Link> seqLinks = new ArrayList<Link> (r.getSeqLinksRealPath());
+				List<Link> seqLinks = new ArrayList<Link> (r.getSeqLinks());
 				seqLinks.retainAll(protSegment.getSeqLinks());
 				if (!seqLinks.isEmpty()) 
 				{
-					System.out.println ("Route : "+  r + " links: " + r.getSeqLinksRealPath() + ", prot segment " + protSegment + " links: " + protSegment.getSeqLinks() + ", get route carried traffic: " + r.getCarriedTraffic() + ", prot segment reserved traffic: " + protSegment.getReservedCapacityForProtection());
+					System.out.println ("Route : "+  r + " links: " + r.getSeqLinks() + ", prot segment " + protSegment + " links: " + protSegment.getSeqLinks() + ", get route carried traffic: " + r.getCarriedTraffic() + ", prot segment reserved traffic: " + protSegment.getReservedCapacityForProtection());
 					throw new RuntimeException ("Bad");
 				}
 			}

@@ -27,7 +27,6 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.libraries.WDMUtils;
@@ -300,9 +299,9 @@ public class Offline_wdm_routingSpectrumAndModulationAssignmentHeuristic impleme
 				WDMUtils.allocateResources(best_rsa , frequencySlot2FiberOccupancy_se , null);
 				if (cpl11 != null)
 				{
-					final ProtectionSegment lpProt = WDMUtils.addLightpathAsProtectionSegment(best_rsa2);
+					final Route lpBackup = WDMUtils.addLightpath(d , best_rsa2 , 0);
 					WDMUtils.allocateResources(best_rsa2 , frequencySlot2FiberOccupancy_se , null);
-					lp.addProtectionSegment(lpProt);
+					lp.addBackupRoute(lpBackup);
 				}
 				break;
 			}

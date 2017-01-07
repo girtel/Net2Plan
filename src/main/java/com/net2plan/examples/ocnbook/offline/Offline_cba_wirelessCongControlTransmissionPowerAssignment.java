@@ -148,7 +148,7 @@ public class Offline_cba_wirelessCongControlTransmissionPowerAssignment implemen
 			final double p_e = Double.parseDouble(e.getAttribute("p_e"));
 			if (p_e < mac_minTransmissionPower_logu.getDouble() - 1E-3) throw new RuntimeException ("Bad");
 			if (p_e > mac_maxTransmissionPower_logu.getDouble() + 1E-3) throw new RuntimeException ("Bad");
-			if (e.getCapacity() < e.getCarriedTrafficIncludingProtectionSegments() - PRECISIONFACTOR) throw new RuntimeException ("Bad"); 
+			if (e.getCapacity() < e.getCarriedTraffic() - PRECISIONFACTOR) throw new RuntimeException ("Bad"); 
 		} 
 
 		boolean allMaxPower = true;
