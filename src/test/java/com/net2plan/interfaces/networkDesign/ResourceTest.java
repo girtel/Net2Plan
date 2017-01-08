@@ -322,6 +322,7 @@ public class ResourceTest
 		assertTrue (file != null);
 		np.saveToFile(file);
 		NetPlan np2 = new NetPlan (file);
+		np.checkCachesConsistency();
 		np2.checkCachesConsistency();
 		assertTrue (np.isDeepCopy(np2));
 		assertTrue (np2.isDeepCopy(np));

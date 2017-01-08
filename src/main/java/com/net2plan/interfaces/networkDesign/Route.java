@@ -172,7 +172,7 @@ public class Route extends NetworkElement
 	/** Returns true if this route has at least one backup route defined 
 	 * @return the info
 	 */
-	public boolean hasBackupRoutes () { return !cache_routesIAmBackUp.isEmpty(); }
+	public boolean hasBackupRoutes () { return !backupRoutes.isEmpty(); }
 
 	/**
 	 * <p>Adds an existing route backupRoute in the same demand, designating it as a backup of this route. 
@@ -186,6 +186,7 @@ public class Route extends NetworkElement
 		netPlan.checkIsModifiable();
 		if (!backupRoute.demand.equals(demand)) throw new Net2PlanException ("The backup route must be of the same demand as the primary");
 		if (backupRoute.hasBackupRoutes()) throw new Net2PlanException ("A backup route cannot have backup routes itself"); 
+		if (this.backupRoutes.contains(backupRoute)) throw new Net2PlanException ("The route is already a backup route");
 		this.backupRoutes.add (backupRoute);
 		backupRoute.cache_routesIAmBackUp.add(this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
@@ -241,7 +242,7 @@ public class Route extends NetworkElement
 	}
 
 	/** The same as getOccupiedCapacity, but if the network had no failures
-	 * @param e one link or resource where to see the occupation (if not part of the route, zero is returned)
+	 * @param e one link or resource where to see the occupation (if not part of the route, zero is returned). If no element is passed, the result is the one of the first traversed element
 	 * @return the occupied capacity in no failure state
 	 */
 	public double getOccupiedCapacityInNoFailureState (NetworkElement ... e)
@@ -756,6 +757,7 @@ public class Route extends NetworkElement
 			if (e instanceof Link) res.add(this.netPlan.getLinkFromId(e.id));
 			else if (e instanceof Resource) res.add(this.netPlan.getResourceFromId(e.id));
 			else if (e instanceof Node) res.add(this.netPlan.getNodeFromId(e.id));
+			else if (e instanceof Route) res.add(this.netPlan.getRouteFromId(e.id));
 			else throw new RuntimeException ("Bad");
 			if (res.get(res.size()-1) == null) throw new RuntimeException ("Element of id: " + e.id + ", of class: " + e.getClass().getName() + ", does not exsit in current NetPlan");
 		}
@@ -771,6 +773,7 @@ public class Route extends NetworkElement
 			if (e instanceof Link) ee = this.netPlan.getLinkFromId(e.id);
 			else if (e instanceof Resource) ee = this.netPlan.getResourceFromId(e.id);
 			else if (e instanceof Node) ee = this.netPlan.getNodeFromId(e.id);
+			else if (e instanceof Route) ee = this.netPlan.getRouteFromId(e.id);
 			else throw new RuntimeException ("Bad");
 			if (ee == null) throw new RuntimeException ("Element of id: " + e.id + ", of class: " + e.getClass().getName() + ", does not exsit in current NetPlan");
 			res.add(ee);

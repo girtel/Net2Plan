@@ -1677,7 +1677,7 @@ public class NetPlan extends NetworkElement
 				if (links.isEmpty() && !((Resource) e).hostNode.equals(d.ingressNode)) throw new Net2PlanException ("Wrong resource node in the service chain");
 				if (!links.isEmpty() && !((Resource) e).hostNode.equals(links.getLast().destinationNode)) throw new Net2PlanException ("Wrong resource node in the service chain");
 			}
-			else throw new RuntimeException ("Bad");
+			else throw new Net2PlanException ("A list of links and/or resources is expected");
 		}
 		checkContiguousPath (links , d.layer , d.ingressNode, d.egressNode);
 		if (resources.size() != d.mandatorySequenceOfTraversedResourceTypes.size()) throw new Net2PlanException ("The path does not follow the sequence of resources of the service chain request");
@@ -5056,8 +5056,8 @@ public class NetPlan extends NetworkElement
 				writer.writeAttribute("id", Long.toString(srg.id));
 				writer.writeAttribute("meanTimeToFailInHours", Double.toString(srg.meanTimeToFailInHours));
 				writer.writeAttribute("meanTimeToRepairInHours", Double.toString(srg.meanTimeToRepairInHours));
-				writer.writeAttribute("nodes", CollectionUtils.join(srg.nodes, " "));
-				writer.writeAttribute("links", CollectionUtils.join(srg.links, " "));
+				writer.writeAttribute("nodes", CollectionUtils.join(NetPlan.getIds(srg.nodes), " "));
+				writer.writeAttribute("links", CollectionUtils.join(NetPlan.getIds(srg.links), " "));
 				
 				for (Entry<String, String> entry : srg.attributes.entrySet())
 				{

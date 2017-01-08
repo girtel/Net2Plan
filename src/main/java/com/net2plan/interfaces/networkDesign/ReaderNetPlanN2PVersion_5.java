@@ -212,7 +212,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final double initialStateCarriedTrafficIfNotFailing = initialPathExists? getDouble ("initialStateCarriedTrafficIfNotFailing") : currentCarriedTrafficIfNotFailing;
 		final List<Double> initialStateOccupationIfNotFailing = initialPathExists? getListDouble("initialStateOccupationIfNotFailing") : new ArrayList<Double> (currentLinksAndResourcesOccupationIfNotFailing);
 		
-		final Route newRoute = netPlan.addServiceChain(netPlan.getDemandFromId(demandId), initialStateCarriedTrafficIfNotFailing, 
+		final Route newRoute = netPlan.addServiceChain(routeId , netPlan.getDemandFromId(demandId), initialStateCarriedTrafficIfNotFailing, 
 				initialStateOccupationIfNotFailing, initialStatePath, null);
 		newRoute.setPath(currentCarriedTrafficIfNotFailing, currentPath, currentLinksAndResourcesOccupationIfNotFailing);
 
