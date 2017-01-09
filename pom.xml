@@ -15,6 +15,7 @@
         <module>Net2Plan-GUI</module>
         <module>Net2Plan-Examples</module>
         <module>Net2Plan-Javadoc</module>
+        <module>Net2Plan-Assembly</module>
     </modules>
 
     <licenses>
@@ -145,23 +146,23 @@
             <artifactId>jxmapviewer2</artifactId>
             <version>2.2</version>
         </dependency>
-		 <dependency>
-		    <groupId>junit</groupId>
-		    <artifactId>junit</artifactId>
-		    <version>4.12</version>
-		</dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+        </dependency>
         <dependency>
             <groupId>com.github.girtel</groupId>
             <artifactId>JOM</artifactId>
             <version>0.2.0.1</version>
         </dependency>
-          <dependency>
-              <groupId>com.sun</groupId>
-              <artifactId>tools</artifactId>
-              <version>1.4.2</version>
-              <scope>system</scope>
-              <systemPath>${java.home}/../lib/tools.jar</systemPath>
-          </dependency>
+        <dependency>
+            <groupId>com.sun</groupId>
+            <artifactId>tools</artifactId>
+            <version>1.4.2</version>
+            <scope>system</scope>
+            <systemPath>${java.home}/../lib/tools.jar</systemPath>
+        </dependency>
     </dependencies>
 
     <repositories>
@@ -172,603 +173,69 @@
         </repository>
     </repositories>
 
-    <profiles>
-        <profile>
-            <id>test</id>
+    <build>
+        <plugins>
+            <!-- Downloads dependencies into local folder -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.10</version>
+                <configuration>
+                    <outputDirectory>${project.basedir}/src/main/external-resources/lib</outputDirectory>
+                    <overWriteReleases>false</overWriteReleases>
+                    <overWriteSnapshots>false</overWriteSnapshots>
+                    <overWriteIfNewer>true</overWriteIfNewer>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <inherited>false</inherited>
+                    </execution>
+                </executions>
+            </plugin>
 
-            <activation>
-                <jdk>[1.8,)</jdk>
-            </activation>
+            <!-- Modifies the compiler to jdk 1.8 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.5.1</version>
+                <configuration>
+                    <compilerVersion>1.8</compilerVersion>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <failOnError>true</failOnError>
+                </configuration>
+            </plugin>
 
-            <build>
-                <plugins>
-                    <!-- Generates each module jar -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>3.0.2</version>
-                    </plugin>
-
-                    <!-- Modifies the compiler to jdk 1.8 -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <version>3.5.1</version>
+            <!-- Generates each module jar -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
+            </plugin>
+s
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>assemble-project</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
                         <configuration>
-                            <compilerVersion>1.8</compilerVersion>
-                            <source>1.8</source>
-                            <target>1.8</target>
-                            <failOnError>true</failOnError>
+                            <descriptors>
+                                <descriptor>Net2Plan-Assembly/src/assembly/assembler.xml</descriptor>
+                            </descriptors>
                         </configuration>
-                    </plugin>
-
-                    <!-- Downloads dependencies into local folder -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <version>2.10</version>
-                        <configuration>
-                            <outputDirectory>${project.basedir}/src/main/resources/lib</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>copy-dependencies</id>
-                                <phase>generate-resources</phase>
-                                <goals>
-                                    <goal>copy-dependencies</goal>
-                                </goals>
-                                <inherited>false</inherited>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>build-without-javadoc</id>
-
-            <activation>
-                <activeByDefault>true</activeByDefault>
-                <jdk>[1.8,)</jdk>
-            </activation>
-
-            <build>
-                <plugins>
-                    <!-- Ignore default jar generation -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>2.6</version>
-                        <executions>
-                            <execution>
-                                <id>default-jar</id>
-                                <phase>none</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <!-- Modifies the compiler to jdk 1.8 -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <version>3.5.1</version>
-                        <configuration>
-                            <compilerVersion>1.8</compilerVersion>
-                            <source>1.8</source>
-                            <target>1.8</target>
-                            <failOnError>true</failOnError>
-                        </configuration>
-                    </plugin>
-
-                    <!-- Downloads dependencies into local folder -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <version>2.10</version>
-                        <configuration>
-                            <outputDirectory>${project.basedir}/src/main/resources/lib</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>copy-dependencies</id>
-                                <phase>generate-resources</phase>
-                                <goals>
-                                    <goal>copy-dependencies</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <!-- Assembles the final project -->
-                    <plugin>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <version>2.6</version>
-                        <configuration>
-                            <appendAssemblyId>true</appendAssemblyId>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>non-executables</id>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <phase>package</phase>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>src/assembly/Net2PlanLibAssembly.xml</descriptor>
-                                        <descriptor>src/assembly/Net2PlanSrcAssembly.xml</descriptor>
-                                        <descriptor>src/assembly/defaultCLIAssembly.xml</descriptor>
-                                        <descriptor>src/assembly/defaultGUIAssembly.xml</descriptor>
-                                        <descriptor>src/assembly/defaultIOAssembly.xml</descriptor>
-                                        <descriptor>src/assembly/BuiltInExamplesAssembly.xml</descriptor>
-                                    </descriptors>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>net2plan</id>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <phase>package</phase>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>src/assembly/Net2PlanAssembly.xml</descriptor>
-                                    </descriptors>
-                                    <archive>
-                                        <manifest>
-                                            <mainClass>com.net2plan.gui.GUINet2Plan</mainClass>
-                                        </manifest>
-                                        <manifestEntries>
-                                            <!--@formatter:off--><Class-Path>${project.classpath}</Class-Path><!--@formatter:on-->
-                                        </manifestEntries>
-                                    </archive>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>net2plancli</id>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <phase>package</phase>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>src/assembly/Net2PlanCliAssembly.xml</descriptor>
-                                    </descriptors>
-                                    <archive>
-                                        <manifest>
-                                            <mainClass>com.net2plan.cli.CLINet2Plan</mainClass>
-                                        </manifest>
-                                        <manifestEntries>
-                                            <!--@formatter:off--><Class-Path>${project.classpath}</Class-Path><!--@formatter:on-->
-                                        </manifestEntries>
-                                    </archive>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>assembly</id>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <phase>package</phase>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>src/assembly/assembly.xml</descriptor>
-                                    </descriptors>
-                                    <appendAssemblyId>false</appendAssemblyId>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.8</version>
-                        <executions>
-                            <execution>
-                                <id>clean-after</id>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <phase>package</phase>
-                                <configuration>
-                                    <target>
-                                        <delete dir="${project.build.directory}"
-                                                includes="*.jar net2plan-${project.version}-Net2Plan-src.zip"/>
-                                        <delete dir="${project.basedir}/src/main/resources/lib"/>
-                                    </target>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>build-with-javadoc</id>
-
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <property>
-                    <name>javadoc</name>
-                    <value>true</value>
-                </property>
-                <jdk>[1.8,)</jdk>
-            </activation>
-
-            <build>
-                <plugins>
-                    <!-- Ignore default jar generation -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>2.6</version>
-                        <executions>
-                            <execution>
-                                <id>default-jar</id>
-                                <phase>none</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <!-- Modifies the compiler to jdk 1.8 -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <version>3.5.1</version>
-                        <configuration>
-                            <compilerVersion>1.8</compilerVersion>
-                            <source>1.8</source>
-                            <target>1.8</target>
-                            <failOnError>true</failOnError>
-                        </configuration>
-                    </plugin>
-
-                    <!-- Downloads dependencies into local folder -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <version>2.10</version>
-                        <configuration>
-                            <outputDirectory>${project.basedir}/src/main/resources/lib</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>copy-dependencies</id>
-                                <phase>generate-resources</phase>
-                                <goals>
-                                    <goal>copy-dependencies</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <!-- Assembles the final project -->
-                    <plugin>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <version>2.6</version>
-                        <configuration>
-                            <appendAssemblyId>true</appendAssemblyId>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>non-executables</id>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <phase>package</phase>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>src/assembly/Net2PlanLibAssembly.xml</descriptor>
-                                        <descriptor>src/assembly/Net2PlanSrcAssembly.xml</descriptor>
-                                        <descriptor>src/assembly/defaultCLIAssembly.xml</descriptor>
-                                        <descriptor>src/assembly/defaultGUIAssembly.xml</descriptor>
-                                        <descriptor>src/assembly/defaultIOAssembly.xml</descriptor>
-                                        <descriptor>src/assembly/BuiltInExamplesAssembly.xml</descriptor>
-                                    </descriptors>
-                                    <archive>
-                                        <manifestEntries>
-                                            <!--@formatter:off--><Class-Path>${project.classpath}</Class-Path><!--@formatter:on-->
-                                        </manifestEntries>
-                                    </archive>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>net2plan</id>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <phase>package</phase>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>src/assembly/Net2PlanAssembly.xml</descriptor>
-                                    </descriptors>
-                                    <archive>
-                                        <manifest>
-                                            <mainClass>com.net2plan.gui.GUINet2Plan</mainClass>
-                                        </manifest>
-                                        <manifestEntries>
-                                            <!--@formatter:off--><Class-Path>${project.classpath}</Class-Path><!--@formatter:on-->
-                                        </manifestEntries>
-                                    </archive>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>net2plancli</id>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <phase>package</phase>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>src/assembly/Net2PlanCliAssembly.xml</descriptor>
-                                    </descriptors>
-                                    <archive>
-                                        <manifest>
-                                            <mainClass>com.net2plan.cli.CLINet2Plan</mainClass>
-                                        </manifest>
-                                        <manifestEntries>
-                                            <!--@formatter:off--><Class-Path>${project.classpath}</Class-Path><!--@formatter:on-->
-                                        </manifestEntries>
-                                    </archive>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>assembly</id>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <phase>package</phase>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>src/assembly/assembly.xml</descriptor>
-                                    </descriptors>
-                                    <appendAssemblyId>false</appendAssemblyId>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>javadoc-dependencies</id>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <phase>prepare-package</phase>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>src/assembly/TagletAssembly.xml</descriptor>
-                                    </descriptors>
-                                    <appendAssemblyId>true</appendAssemblyId>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.8</version>
-                        <executions>
-                            <execution>
-                                <id>clean-after</id>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <phase>package</phase>
-                                <configuration>
-                                    <target>
-                                        <delete dir="${project.build.directory}"
-                                                includes="*.jar net2plan-${project.version}-Net2Plan-src.zip"/>
-                                        <delete dir="${project.build.directory}/colt"/>
-                                        <delete dir="${project.basedir}/src/main/resources/lib"/>
-                                    </target>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>make-dir</id>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <phase>initialize</phase>
-                                <configuration>
-                                    <target>
-                                        <mkdir dir="${project.build.directory}/site/apidocs/examples"/>
-                                        <mkdir dir="${project.build.directory}/site/apidocs/api"/>
-                                    </target>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>unpack</id>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <phase>generate-resources</phase>
-                                <configuration>
-                                    <target>
-                                        <unzip src="${project.basedir}/src/main/resources/lib/colt-1.2.0.jar"
-                                               dest="${project.build.directory}/colt"/>
-                                        <unzip src="${project.basedir}/src/main/resources/lib/parallelcolt-0.10.1.jar"
-                                               dest="${project.build.directory}/colt"/>
-                                        <copy file="${project.basedir}/src/main/resources/resources/documentation/bookCover.jpg"
-                                              todir="${project.build.directory}/site/apidocs/examples/doc-files"/>
-                                        <copy file="${project.basedir}/src/main/resources/resources/documentation/bookCover.jpg"
-                                              todir="${project.build.directory}/site/apidocs/api/doc-files"/>
-                                        <copy todir="${project.build.directory}/site/apidocs/parallelcolt">
-                                            <fileset dir="${project.basedir}/src/main/resources/javadoc/parallelcolt"/>
-                                        </copy>
-                                    </target>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <!-- Generate Javadoc -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.10.3</version>
-                        <executions>
-                            <execution>
-                                <id>net2plan-javadoc</id>
-                                <goals>
-                                    <goal>javadoc</goal>
-                                </goals>
-                                <phase>prepare-package</phase>
-                                <configuration>
-                                    <show>public</show>
-                                    <author>true</author>
-                                    <nodeprecated>true</nodeprecated>
-                                    <nodeprecatedlist>false</nodeprecatedlist>
-                                    <noindex>false</noindex>
-                                    <nonavbar>false</nonavbar>
-                                    <notree>false</notree>
-                                    <source>1.8</source>
-                                    <splitindex>true</splitindex>
-                                    <use>true</use>
-                                    <version>true</version>
-                                    <overview>${project.basedir}/src/main/resources/javadoc/overview-examples.html
-                                    </overview>
-                                    <additionalparam>-d ${project.build.directory}/site/apidocs/api
-                                    </additionalparam>
-                                    <links>
-                                        <link>../parallelcolt</link>
-                                    </links>
-                                    <sourcepath>${project.basedir}/src/main/java</sourcepath>
-                                    <sourceFileIncludes>
-                                        <include>com/net2plan/interfaces/networkDesign/**</include>
-                                        <include>com/net2plan/interfaces/simulation/**</include>
-                                        <include>com/net2plan/libraries/**</include>
-                                        <include>com/net2plan/utils/**</include>
-                                    </sourceFileIncludes>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>net2planExamples-javadoc</id>
-                                <goals>
-                                    <goal>javadoc</goal>
-                                </goals>
-                                <phase>prepare-package</phase>
-                                <configuration>
-                                    <show>public</show>
-                                    <author>false</author>
-                                    <nodeprecated>true</nodeprecated>
-                                    <nodeprecatedlist>true</nodeprecatedlist>
-                                    <noindex>false</noindex>
-                                    <nonavbar>false</nonavbar>
-                                    <notree>false</notree>
-                                    <source>1.8</source>
-                                    <splitindex>true</splitindex>
-                                    <use>true</use>
-                                    <version>true</version>
-                                    <linksource>true</linksource>
-                                    <additionalparam>-d ${project.build.directory}/site/apidocs/examples
-                                    </additionalparam>
-                                    <noqualifier>
-                                        java.lang:java.util:java.io:java.awt:java.net:java.awt.geom:javax.swing:cern.colt.matrix.tdouble
-                                    </noqualifier>
-                                    <overview>${project.basedir}/src/main/resources/javadoc/overview-examples.html
-                                    </overview>
-                                    <links>
-                                        <link>../parallelcolt</link>
-                                    </links>
-                                    <taglets>
-                                        <taglet>
-                                            <tagletClass>com.net2plan.documentation.Taglet_Description</tagletClass>
-                                        </taglet>
-                                        <taglet>
-                                            <tagletClass>com.net2plan.documentation.Taglet_Keywords</tagletClass>
-                                        </taglet>
-                                        <taglet>
-                                            <tagletClass>com.net2plan.documentation.Taglet_InputParameters</tagletClass>
-                                        </taglet>
-                                        <taglet>
-                                            <tagletClass>com.net2plan.documentation.Taglet_BookSections</tagletClass>
-                                        </taglet>
-                                    </taglets>
-                                    <tagletpath>
-                                        ${project.build.directory}/${project.artifactId}-${project.version}-Taglet.jar
-                                    </tagletpath>
-                                    <sourcepath>${project.basedir}/src/main/java</sourcepath>
-                                    <sourceFileIncludes>
-                                        <include>com/net2plan/examples/general/offline/**</include>
-                                        <include>com/net2plan/examples/general/onlineSim/**</include>
-                                        <include>com/net2plan/examples/general/reports/**</include>
-                                        <include>com/net2plan/examples/ocnbook/offline/**</include>
-                                        <include>com/net2plan/examples/ocnbook/onlineSim/**</include>
-                                        <include>com/net2plan/examples/ocnbook/reports/**</include>
-                                    </sourceFileIncludes>
-                                    <sourceFileExcludes>
-                                        <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
-                                    </sourceFileExcludes>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>keywordTable</id>
-                                <goals>
-                                    <goal>javadoc</goal>
-                                </goals>
-                                <phase>prepare-package</phase>
-                                <configuration>
-                                    <doclet>com.net2plan.documentation.CreateHTMLKeywords</doclet>
-                                    <docletPath>
-                                        ${project.build.directory}/${project.artifactId}-${project.version}-Taglet.jar
-                                    </docletPath>
-                                    <useStandardDocletOptions>false</useStandardDocletOptions>
-                                    <sourcepath>${project.basedir}/src/main/java</sourcepath>
-                                    <sourceFileIncludes>
-                                        <include>com/net2plan/examples/general/offline/**</include>
-                                        <include>com/net2plan/examples/general/onlineSim/**</include>
-                                        <include>com/net2plan/examples/general/reports/**</include>
-                                        <include>com/net2plan/examples/ocnbook/offline/**</include>
-                                        <include>com/net2plan/examples/ocnbook/onlineSim/**</include>
-                                        <include>com/net2plan/examples/ocnbook/reports/**</include>
-                                    </sourceFileIncludes>
-                                    <sourceFileExcludes>
-                                        <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
-                                    </sourceFileExcludes>
-                                    <additionalparam>-outputFolder ${project.build.directory}/site/apidocs/examples
-                                    </additionalparam>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>bookSectionsTable</id>
-                                <goals>
-                                    <goal>javadoc</goal>
-                                </goals>
-                                <phase>prepare-package</phase>
-                                <configuration>
-                                    <sourcepath>${project.basedir}/src/main/java</sourcepath>
-                                    <sourceFileIncludes>
-                                        <include>com/net2plan/examples/general/offline/**</include>
-                                        <include>com/net2plan/examples/general/onlineSim/**</include>
-                                        <include>com/net2plan/examples/general/reports/**</include>
-                                        <include>com/net2plan/examples/ocnbook/offline/**</include>
-                                        <include>com/net2plan/examples/ocnbook/onlineSim/**</include>
-                                        <include>com/net2plan/examples/ocnbook/reports/**</include>
-                                    </sourceFileIncludes>
-                                    <sourceFileExcludes>
-                                        <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
-                                    </sourceFileExcludes>
-                                    <doclet>com.net2plan.documentation.CreateBookSectionsTable</doclet>
-                                    <docletPath>
-                                        ${project.build.directory}/${project.artifactId}-${project.version}-Taglet.jar
-                                    </docletPath>
-                                    <useStandardDocletOptions>false</useStandardDocletOptions>
-                                    <additionalparam>-outputFolder ${project.build.directory}/site/apidocs/examples
-                                    </additionalparam>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

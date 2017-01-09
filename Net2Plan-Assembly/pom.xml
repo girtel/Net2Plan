@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <artifactId>net2plan</artifactId>
+        <groupId>com.net2plan</groupId>
+        <version>0.5-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>net2plan-assembly</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.net2plan.net2plan-cli</groupId>
+            <artifactId>net2plan-cli-core</artifactId>
+            <version>0.5-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-cli</groupId>
+            <artifactId>net2plan-cli-plugin</artifactId>
+            <version>0.5-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-core</groupId>
+            <artifactId>net2plan-core-lib</artifactId>
+            <version>0.5-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-core</groupId>
+            <artifactId>net2plan-core-main</artifactId>
+            <version>0.5-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-examples</artifactId>
+            <version>0.5-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-gui</artifactId>
+            <version>0.5-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-io</artifactId>
+            <version>0.5-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-javadoc</artifactId>
+            <version>0.5-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>assembly-project</id>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/assembly/assembler.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
