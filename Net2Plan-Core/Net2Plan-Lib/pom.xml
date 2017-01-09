@@ -12,4 +12,23 @@
 
     <groupId>com.net2plan.net2plan-core</groupId>
     <artifactId>net2plan-core-lib</artifactId>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <excludes>
+                    <exclude>data/**</exclude>
+                    <exclude>help/**</exclude>
+                </excludes>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
+
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 </project>
