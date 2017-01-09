@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>net2plan-javadoc</artifactId>
+
     <dependencies>
         <dependency>
             <groupId>com.net2plan.net2plan-core</groupId>
