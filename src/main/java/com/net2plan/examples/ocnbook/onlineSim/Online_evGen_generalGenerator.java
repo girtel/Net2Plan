@@ -349,7 +349,7 @@ public class Online_evGen_generalGenerator extends IEventGenerator
 			
 			/* Send event of appropriate failures to the processor (only links and nodes changing its state) */
 			Set<Node> nodesUpToDown = new HashSet<Node> (currentNetPlan.getNodesUp()); nodesUpToDown.retainAll(srg.getNodes());
-			Set<Link> linksUpToDown = new HashSet<Link> (currentNetPlan.getLinksUpAllLayers()); linksUpToDown.retainAll(srg.getLinks());
+			Set<Link> linksUpToDown = new HashSet<Link> (currentNetPlan.getLinksUpAllLayers()); linksUpToDown.retainAll(srg.getLinksAllLayers());
 			if (!nodesUpToDown.isEmpty() || !linksUpToDown.isEmpty())
 			{
 				SimEvent.NodesAndLinksChangeFailureState failEvent = new SimEvent.NodesAndLinksChangeFailureState (null , nodesUpToDown , null , linksUpToDown);
@@ -372,7 +372,7 @@ public class Online_evGen_generalGenerator extends IEventGenerator
 			for (SharedRiskGroup srgStillFailed : fail_currentlyFailedSRGs)
 			{
 				nodesDownAfterRepair.addAll (srgStillFailed.getNodes());
-				linksDownAfterRepair.addAll (srgStillFailed.getLinks());
+				linksDownAfterRepair.addAll (srgStillFailed.getLinksAllLayers());
 			}
 			Set<Node> nodesDownToUp = new HashSet<Node> (currentNetPlan.getNodesDown()); nodesDownToUp.removeAll (nodesDownAfterRepair);
 			Set<Link> linksDownToUp = new HashSet<Link> (currentNetPlan.getLinksDownAllLayers()); linksDownToUp.removeAll (linksDownAfterRepair);

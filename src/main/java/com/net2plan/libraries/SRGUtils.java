@@ -295,7 +295,7 @@ public class SRGUtils
 		Set<Node> nodesInSRGs = new LinkedHashSet<Node>();
 		for (SharedRiskGroup srg : srgs_thisNetPlan)
 		{
-			if (!srg.getLinks().isEmpty())
+			if (!srg.getLinksAllLayers().isEmpty())
 			{
 				isAnOneSRGPerNodeModel = false;
 				break;
@@ -338,13 +338,13 @@ public class SRGUtils
 				break;
 			}
 
-			switch (srg.getLinks ().size())
+			switch (srg.getLinksAllLayers ().size())
 			{
 				case 0:
 					continue;
 
 				case 1:
-					Link link = srg.getLinks ().iterator().next();
+					Link link = srg.getLinksAllLayers ().iterator().next();
 					if (linksInSRG.contains(link)) isAnOneSRGPerLinkModel = false;
 					else linksInSRG.add(link);
 
@@ -374,9 +374,9 @@ public class SRGUtils
 				break;
 			}
 
-			if (srg.getLinks().isEmpty()) continue;
+			if (srg.getLinksAllLayers().isEmpty()) continue;
 			
-			Link firstLink = srg.getLinks().iterator().next();
+			Link firstLink = srg.getLinksAllLayers().iterator().next();
 			Collection<Link> links_thisNodePair = netPlan.getNodePairLinks(firstLink.getOriginNode() , firstLink.getDestinationNode() , false , layer);
 			
 			for (Link link : links_thisNodePair)
@@ -406,14 +406,14 @@ public class SRGUtils
 				break;
 			}
 
-			if (srg.getLinks ().isEmpty()) continue;
+			if (srg.getLinksAllLayers ().isEmpty()) continue;
 			
-			Link firstLink = srg.getLinks().iterator().next();
+			Link firstLink = srg.getLinksAllLayers().iterator().next();
 			Collection<Link> links_thisNodePair = netPlan.getNodePairLinks(firstLink.getOriginNode() , firstLink.getDestinationNode() , true , layer);
 			
-			for (Link link : srg.getLinks ())
+			for (Link link : srg.getLinksAllLayers ())
 			{
-				if (linksInSRG.contains(link) || !srg.getLinks ().contains(link)) isAnOneSRGPerBidiLinkBundleModel = false;
+				if (linksInSRG.contains(link) || !srg.getLinksAllLayers ().contains(link)) isAnOneSRGPerBidiLinkBundleModel = false;
 				if (!isAnOneSRGPerBidiLinkBundleModel) break;
 
 				linksInSRG.add(link);

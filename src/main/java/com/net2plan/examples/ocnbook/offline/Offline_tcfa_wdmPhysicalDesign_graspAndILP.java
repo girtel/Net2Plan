@@ -182,7 +182,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		this.A_er = netPlan.getMatrixLink2RouteAssignment();
 		this.A_se = DoubleFactory2D.dense.make(1 + nSRGs , Efm , 1.0); // 1 if link OK, 0 if fails
 		for (int contSRG = 0 ; contSRG < nSRGs ; contSRG ++)
-			for (Link e : netPlan.getSRG (contSRG).getLinks())
+			for (Link e : netPlan.getSRG (contSRG).getLinksAllLayers())
 				A_se.set(contSRG+1 , e.getIndex () , 0.0);
 		this.A_rs = DoubleFactory2D.dense.make(R , 1 + nSRGs , 1.0); // 1 if link OK, 0 if fails
 		for (Route r : netPlan.getRoutes ()) for (Link e : r.getSeqLinks()) for (SharedRiskGroup srg : e.getSRGs())

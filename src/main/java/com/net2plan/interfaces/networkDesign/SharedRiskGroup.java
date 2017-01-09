@@ -94,7 +94,7 @@ public class SharedRiskGroup extends NetworkElement
 	 * <p>Returns all the links affected by the SRG at all the layers: the links affected, and the input and output links of the affected nodes</p>
 	 * @return All the affected links
 	 */
-	public Set<Link> getAffectedLinks ()
+	public Set<Link> getAffectedLinksAllLayers ()
 	{
 		Set<Link> res = new HashSet<Link> ();
 		res.addAll (links);
@@ -123,7 +123,7 @@ public class SharedRiskGroup extends NetworkElement
 	 * <p>Returns the set of routes affected by the SRG (fail, when the SRG is in failure state). </p>
 	 * @return The set of failing routes
 	 */
-	public Set<Route> getAffectedRoutes ()
+	public Set<Route> getAffectedRoutesAllLayers ()
 	{
 		Set<Route> res = new HashSet<Route> ();
 		for (Link e : links) res.addAll (e.cache_traversingRoutes.keySet());
@@ -148,7 +148,7 @@ public class SharedRiskGroup extends NetworkElement
 	 * <p>Returns the set of multicast trees affected by the SRG (fail, when the SRG is in failure state). </p>
 	 * @return The set of failing multicast trees
 	 */
-	public Set<MulticastTree> getAffectedMulticastTrees ()
+	public Set<MulticastTree> getAffectedMulticastTreesAllLayers ()
 	{
 		Set<MulticastTree> res = new HashSet<MulticastTree> ();
 		for (Link e : links) res.addAll (e.cache_traversingTrees);
@@ -182,30 +182,30 @@ public class SharedRiskGroup extends NetworkElement
 			if (e instanceof Link)
 			{
 				final Link ee = (Link) e;
-				if (nodes.contains(ee.originNode)) return false;
-				if (nodes.contains(ee.destinationNode)) return false;
-				if (links.contains(ee)) return false;
+				if (nodes.contains(ee.originNode)) return true;
+				if (nodes.contains(ee.destinationNode)) return true;
+				if (links.contains(ee)) return true;
 			}
 			else if (e instanceof Resource)
 			{
 				final Resource ee = (Resource) e;
-				if (nodes.contains(ee.hostNode)) return false;
+				if (nodes.contains(ee.hostNode)) return true;
 			}
 			else if (e instanceof Node)
 			{
 				final Node ee = (Node) e;
-				if (nodes.contains(ee)) return false;
+				if (nodes.contains(ee)) return true;
 			}
 			else throw new Net2PlanException ("The collection can contain only links, resources and/or nodes");
 		}
-		return true;
+		return false;
 	}
 	
 	/**
 	 * <p>Returns the set of links associated to the SRG (fail, when the SRG is in failure state).</p>
 	 * @return The set of failing links, as an unmodifiable set
 	 */
-	public Set<Link> getLinks()
+	public Set<Link> getLinksAllLayers()
 	{
 		return Collections.unmodifiableSet(links);
 	}

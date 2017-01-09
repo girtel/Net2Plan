@@ -221,7 +221,7 @@ public class Report_availability implements IReport
 			{
 				if (F_s.get(failureState , srg.getIndex ()) != 1) continue;
 				nodesToSetAsDown.addAll (srg.getNodes ());
-				linksToSetAsDown.addAll (srg.getLinks ());
+				linksToSetAsDown.addAll (srg.getLinksAllLayers ());
 			}
 
 			/* Make the algorithm process the event of nodes and links down */

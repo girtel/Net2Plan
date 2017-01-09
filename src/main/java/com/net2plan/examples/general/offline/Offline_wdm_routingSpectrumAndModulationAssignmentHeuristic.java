@@ -341,7 +341,7 @@ public class Offline_wdm_routingSpectrumAndModulationAssignmentHeuristic impleme
 			{
 				for (SharedRiskGroup srg : netPlan.getSRGs())
 				{
-					Set<Route> affectedRoutes = srg.getAffectedRoutes();
+					Set<Route> affectedRoutes = srg.getAffectedRoutesAllLayers();
 					double carriedTrafficThisFailure = 0; for (Route r : d.getRoutes()) if (!affectedRoutes.contains(r)) carriedTrafficThisFailure += r.getCarriedTraffic();
 					res [d.getIndex()] += Math.max(0 , d.getOfferedTraffic() - carriedTrafficThisFailure);
 				}
