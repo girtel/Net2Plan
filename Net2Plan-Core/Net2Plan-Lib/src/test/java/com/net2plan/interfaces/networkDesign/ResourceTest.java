@@ -1,8 +1,7 @@
-/**
+package com.net2plan.interfaces.networkDesign; /**
  * 
  */
 
-import com.net2plan.interfaces.networkDesign.*;
 import org.junit.*;
 
 import java.io.File;
@@ -307,7 +306,8 @@ public class ResourceTest
 		try
 		{
 			file = new File ("test.n2p"); //File.createTempFile("testN2p" , "n2p");
-		} catch (Exception e) { Assert.fail ("could not make the test: no temprary file creation possible"); }
+			file.deleteOnExit();
+		} catch (Exception e) { Assert.fail ("could not make the test: no temporary file creation possible"); }
 		assertTrue (file != null);
 		np.saveToFile(file);
 		NetPlan np2 = new NetPlan (file);
@@ -323,7 +323,7 @@ public class ResourceTest
 		File fileOut = null;
 		try
 		{
-			fileIn = new File ("src/main/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"); //File.createTempFile("testN2p" , "n2p");
+			fileIn = new File ("src/main/external-resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"); //File.createTempFile("testN2p" , "n2p");
 			fileOut = new File ("test.n2p"); //File.createTempFile("testN2p" , "n2p");
 		} catch (Exception e) { Assert.fail ("could not make the test: no temprary file creation possible"); }
 		assertTrue (fileIn != null);
