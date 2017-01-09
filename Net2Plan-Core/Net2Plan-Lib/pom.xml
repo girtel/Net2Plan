@@ -27,8 +27,32 @@
 
         <pluginManagement>
             <plugins>
+                <!-- Zips up resources not contained within the jars -->
                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.0.0</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.net2plan</groupId>
+                            <artifactId>net2plan-assembly</artifactId>
+                            <version>0.5-SNAPSHOT</version>
+                        </dependency>
+                    </dependencies>
+                    <executions>
+                        <execution>
+                            <id>assemble</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                            <configuration>
+                                <descriptorRefs>
+                                    <descriptorRef>bundle-descriptor</descriptorRef>
+                                </descriptorRefs>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
