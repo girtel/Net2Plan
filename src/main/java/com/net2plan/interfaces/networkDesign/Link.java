@@ -80,7 +80,7 @@ public class Link extends NetworkElement
 	 * @param capacity Link's capacity
 	 * @param attributes Link's attributes
 	 */
-	protected Link (NetPlan netPlan , long id , int index , NetworkLayer layer , Node originNode , Node destinationNode , double lengthInKm , double propagationSpeedInKmPerSecond , double capacity , AttributeMap attributes)
+	Link (NetPlan netPlan , long id , int index , NetworkLayer layer , Node originNode , Node destinationNode , double lengthInKm , double propagationSpeedInKmPerSecond , double capacity , AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);
 
@@ -99,28 +99,6 @@ public class Link extends NetworkElement
 		this.coupledLowerLayerDemand = null;
 		this.coupledLowerLayerMulticastDemand = null;
 		
-		this.cache_srgs = new HashSet<SharedRiskGroup> ();
-		this.cache_traversingRoutes = new HashMap<Route,Integer> ();
-		this.cache_traversingTrees = new HashSet<MulticastTree> ();
-	}
-
-	/** Constructor for protection segments */
-	Link (NetPlan netPlan , long segmentId , int index , List<Link> segmentSeqLinks , double segmentReservedCapacity  , AttributeMap attributes)
-	{
-		super (netPlan , segmentId , index , attributes);
-
-		Link firstLink = segmentSeqLinks.get (0);
-		Link lastLink = segmentSeqLinks.get (segmentSeqLinks.size() - 1);
-		this.originNode = firstLink.originNode;
-		this.destinationNode = lastLink.destinationNode;
-		this.layer = firstLink.getLayer();
-		this.capacity = segmentReservedCapacity;
-		this.cache_carriedTraffic = 0;
-		this.cache_occupiedCapacity = 0;
-		this.lengthInKm = 0; for (Link e : segmentSeqLinks) lengthInKm += e.getLengthInKm(); 
-		this.propagationSpeedInKmPerSecond = 0; for (Link e : segmentSeqLinks) propagationSpeedInKmPerSecond += e.getPropagationSpeedInKmPerSecond() *  e.getLengthInKm() / this.lengthInKm ; 
-		this.isUp = true;
-
 		this.cache_srgs = new HashSet<SharedRiskGroup> ();
 		this.cache_traversingRoutes = new HashMap<Route,Integer> ();
 		this.cache_traversingTrees = new HashSet<MulticastTree> ();
@@ -279,7 +257,7 @@ public class Link extends NetworkElement
 	 * */
 	public double getUtilization()
 	{
-		if (capacity == 0 && cache_occupiedCapacity > 0) return Double.POSITIVE_INFINITY;
+		if ((capacity == 0) && (cache_occupiedCapacity > 0)) return Double.POSITIVE_INFINITY;
 		return capacity == 0? 0 : cache_occupiedCapacity / capacity;
 	}
 	

@@ -1,17 +1,24 @@
 package com.net2plan.interfaces.networkDesign;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Constants.RoutingType;
 
 public class LinkTest 
 {
@@ -31,6 +38,8 @@ public class LinkTest
 	private NetworkLayer lowerLayer , upperLayer;
 	private Link upperLink12;
 	private Link upperMdLink12 , upperMdLink13;
+	private MulticastDemand upperMd123;
+	private MulticastTree upperMt123;
 	
 
 	@Before
@@ -63,12 +72,15 @@ public class LinkTest
 		this.upperLink12 = np.addLink(n1,n2,10,100,1,null,upperLayer);
 		this.d12.coupleToUpperLayerLink(upperLink12);
 		this.line123 = new HashSet<Link> (Arrays.asList(link12, link23)); 
-		this.star = new HashSet<Link> (Arrays.asList(link12, link13)); 
+		this.star = new HashSet<Link> (Arrays.asList(link12, link13));
+		this.endNodes = new HashSet<Node> (Arrays.asList(n2,n3));
 		this.d123 = np.addMulticastDemand(n1 , endNodes , 100 , null , lowerLayer);
 		this.t123 = np.addMulticastTree(d123 , 10,15,line123,null);
 		this.tStar = np.addMulticastTree(d123 , 10,15,star,null);
 		this.upperMdLink12 = np.addLink(n1,n2,10,100,1,null,upperLayer);
 		this.upperMdLink13 = np.addLink(n1,n3,10,100,1,null,upperLayer);
+		this.upperMd123 = np.addMulticastDemand (n1 , endNodes , 100 , null , upperLayer);
+		this.upperMt123 = np.addMulticastTree (upperMd123 , 10 , 15 , new HashSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)) , null);
 		d123.couple(new HashSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)));
 	}
 
@@ -148,7 +160,15 @@ public class LinkTest
 	@Test
 	public void testGetForwardingRules() 
 	{
-		fail("Not yet implemented");
+		try { np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer); fail ("Not in service chains"); } catch (Exception e) {}
+		scd123.remove();
+		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer); 
+		Map<Pair<Demand,Link>,Double> frLink12 = link12.getForwardingRules();
+		assertEquals (frLink12.get(Pair.of(d12,link12)) , 1.0 , 0);
+		assertEquals (frLink12.get(Pair.of(d12,link23)) , null);
+		assertEquals (frLink12.get(Pair.of(d13,link12)) , 1.0 , 0);
+		assertEquals (link23.getForwardingRules().get(Pair.of(d13,link23)) , 1.0 , 0);
+		assertEquals (frLink12.get(Pair.of(d13,link13)) , null);
 	}
 
 	@Test
@@ -163,123 +183,261 @@ public class LinkTest
 	}
 
 	@Test
-	public void testSetCapacity() {
-		fail("Not yet implemented");
+	public void testSetCapacity() 
+	{
+		assertEquals(link12.getCapacity() , 100 , 0);
+		link12.setCapacity(150);
+		assertEquals(link12.getCapacity() , 150 , 0);
+		try { upperLink12.setCapacity(5); fail (); } catch (Exception e) {}
+		try { upperMdLink12.setCapacity(5); fail (); } catch (Exception e) {}
+		try { upperMdLink13.setCapacity(5); fail (); } catch (Exception e) {}
+		link13.setCapacity(0);
+		assertEquals(link13.getCapacity() , 0 , 0);
+		try { link12.setCapacity(-1); fail (); } catch (Exception e) {}
 	}
 
 	@Test
-	public void testGetCarriedTraffic() {
-		fail("Not yet implemented");
+	public void testGetCarriedTraffic() 
+	{
+		assertEquals(link12.getCarriedTraffic() , 123 , 0);
+		assertEquals(link13.getCarriedTraffic() , 10 , 0); 
+		assertEquals(upperLink12.getCarriedTraffic() , 0 , 0); 
+		assertEquals(upperMdLink12.getCarriedTraffic() , 10 , 0); 
+		assertEquals(upperMdLink13.getCarriedTraffic() , 10 , 0); 
 	}
 
 	@Test
-	public void testGetUtilization() {
-		fail("Not yet implemented");
+	public void testGetUtilization() 
+	{
+		assertEquals(link12.getUtilization() , (1.5+1.5+1.5+300+15+15) / 100 , 0.0001);
+		assertEquals(link13.getUtilization() , (50.0+15.0) / 100.0 , 0.0001);
 	}
 
 	@Test
-	public void testGetOccupiedCapacity() {
-		fail("Not yet implemented");
+	public void testGetOccupiedCapacity() 
+	{
+		assertEquals(link12.getOccupiedCapacity() , (1.5+1.5+1.5+300+15+15) , 0.0001);
+		assertEquals(link13.getOccupiedCapacity() , (50+15) , 0.0001);
+		assertEquals(segm13.getOccupiedCapacity() , (50) , 0.0001);
+		assertEquals(upperLink12.getOccupiedCapacity() , 0 , 0.0001);
+		assertEquals(upperMdLink12.getOccupiedCapacity() , 15 , 0.0001);
+		assertEquals(upperMdLink13.getOccupiedCapacity() , 15 , 0.0001);
+		link12.setFailureState(false);
+		assertEquals(link12.getOccupiedCapacity() , 0 , 0.0001);
+		assertEquals(link23.getOccupiedCapacity() , 0 , 0.0001);
 	}
 
 	@Test
-	public void testGetOccupiedCapacityOnlyBackupRoutes() {
-		fail("Not yet implemented");
+	public void testGetOccupiedCapacityOnlyBackupRoutes() 
+	{
+		assertEquals(link12.getOccupiedCapacityOnlyBackupRoutes() , 0 , 0.0001);
+		assertEquals(link13.getOccupiedCapacityOnlyBackupRoutes() , 50 , 0.0001);
 	}
 
 	@Test
-	public void testGetLengthInKm() {
-		fail("Not yet implemented");
+	public void testGetLengthInKm() 
+	{
+		assertEquals(link13.getLengthInKm() , 100 , 0);
+		assertEquals(upperLink12.getLengthInKm() , 100 , 0);
+		assertEquals(upperMdLink12.getLengthInKm() , 100 , 0);
 	}
 
 	@Test
-	public void testSetLengthInKm() {
-		fail("Not yet implemented");
+	public void testSetLengthInKm() 
+	{
+		link13.setLengthInKm(200);
+		upperLink12.setLengthInKm(200);
+		upperMdLink12.setLengthInKm(200);
+		assertEquals(link13.getLengthInKm() , 200 , 0);
+		assertEquals(upperLink12.getLengthInKm() , 200 , 0);
+		assertEquals(upperMdLink12.getLengthInKm() , 200 , 0);
 	}
 
 	@Test
-	public void testGetPropagationSpeedInKmPerSecond() {
-		fail("Not yet implemented");
+	public void testGetPropagationSpeedInKmPerSecond() 
+	{
+		assertEquals(link13.getPropagationSpeedInKmPerSecond() , 1 , 0);
+		assertEquals(upperLink12.getPropagationSpeedInKmPerSecond() , 1 , 0);
+		assertEquals(upperMdLink12.getPropagationSpeedInKmPerSecond() , 1 , 0);
 	}
 
 	@Test
-	public void testGetMulticastCarriedTraffic() {
-		fail("Not yet implemented");
+	public void testGetMulticastCarriedTraffic() 
+	{
+		assertEquals(link12.getMulticastCarriedTraffic() , 20 , 0);
+		assertEquals(link23.getMulticastCarriedTraffic() , 10 , 0);
+		assertEquals(link13.getMulticastCarriedTraffic() , 10 , 0);
+		assertEquals(upperMdLink12.getMulticastCarriedTraffic() , 10 , 0);
+		assertEquals(upperMdLink13.getMulticastCarriedTraffic() , 10 , 0);
 	}
 
 	@Test
-	public void testGetMulticastOccupiedLinkCapacity() {
-		fail("Not yet implemented");
+	public void testGetMulticastOccupiedLinkCapacity() 
+	{
+		assertEquals(link12.getMulticastOccupiedLinkCapacity() , 30 , 0);
+		assertEquals(link23.getMulticastOccupiedLinkCapacity() , 15 , 0);
+		assertEquals(link13.getMulticastOccupiedLinkCapacity() , 15 , 0);
+		assertEquals(upperMdLink12.getMulticastOccupiedLinkCapacity() , 15 , 0);
+		assertEquals(upperMdLink13.getMulticastOccupiedLinkCapacity() , 15 , 0);
 	}
 
 	@Test
-	public void testSetPropagationSpeedInKmPerSecond() {
-		fail("Not yet implemented");
+	public void testSetPropagationSpeedInKmPerSecond() 
+	{
+		assertEquals(link12.getPropagationSpeedInKmPerSecond() , 1 , 0);
+		assertEquals(link23.getPropagationSpeedInKmPerSecond() , 1 , 0);
+		assertEquals(link13.getPropagationSpeedInKmPerSecond() , 1 , 0);
+		assertEquals(upperLink12.getPropagationSpeedInKmPerSecond() , 1 , 0);
+		assertEquals(upperMdLink12.getPropagationSpeedInKmPerSecond() , 1 , 0);
+		assertEquals(upperMdLink13.getPropagationSpeedInKmPerSecond() , 1 , 0);
 	}
 
 	@Test
-	public void testGetPropagationDelayInMs() {
-		fail("Not yet implemented");
+	public void testGetPropagationDelayInMs() 
+	{
+		assertEquals(link12.getPropagationDelayInMs() , 100000 , 0);
+		assertEquals(link23.getPropagationDelayInMs() , 100000 , 0);
+		assertEquals(link13.getPropagationDelayInMs() , 100000 , 0);
+		assertEquals(upperLink12.getPropagationDelayInMs() , 100000 , 0);
+		assertEquals(upperMdLink12.getPropagationDelayInMs() , 100000 , 0);
+		assertEquals(upperMdLink13.getPropagationDelayInMs() , 100000 , 0);
 	}
 
 	@Test
-	public void testIsUp() {
-		fail("Not yet implemented");
+	public void testIsUp() 
+	{
+		assertTrue(link12.isUp());
+		assertTrue(!link12.isDown());
+		link12.setFailureState(false);
+		assertTrue(!link12.isUp());
+		assertTrue(link12.isDown());
+	
+		assertTrue(upperLink12.isUp());
+		assertTrue(!upperLink12.isDown());
+		upperLink12.setFailureState(false);
+		assertTrue(!upperLink12.isUp());
+		assertTrue(upperLink12.isDown());
 	}
 
 	@Test
-	public void testIsDown() {
-		fail("Not yet implemented");
+	public void testIsOversubscribed() 
+	{
+		assertTrue(link12.isOversubscribed());
+		link12.setCapacity(100000);
+		assertTrue(!link12.isOversubscribed());
+		link12.setFailureState(false);
+		link12.setCapacity(1);
+		assertTrue(!link12.isOversubscribed());
+		link12.setCapacity(0);
+		assertTrue(!link12.isOversubscribed());
 	}
 
 	@Test
-	public void testIsOversubscribed() {
-		fail("Not yet implemented");
+	public void testGetSRGs() 
+	{
+		SharedRiskGroup srg = np.addSRG(1,1,null);
+		srg.addNode(n2);
+		assertEquals(link12.getSRGs() , Collections.emptySet());
+		srg.addLink(link12);
+		assertEquals(link12.getSRGs() , Collections.singleton(srg));
 	}
 
 	@Test
-	public void testGetSRGs() {
-		fail("Not yet implemented");
+	public void testGetTraversingRoutes() 
+	{
+		assertEquals(link12.getTraversingRoutes() , new HashSet<Route> (Arrays.asList(r12,r123a,r123b,sc123)));
+		assertEquals(link23.getTraversingRoutes() , new HashSet<Route> (Arrays.asList(r123a,r123b,sc123)));
+		assertEquals(link13.getTraversingRoutes() , new HashSet<Route> (Arrays.asList(segm13)));
+		assertEquals(upperLink12.getTraversingRoutes() , new HashSet<Route> (Arrays.asList()));
+		assertEquals(upperMdLink12.getTraversingRoutes() , new HashSet<Route> (Arrays.asList()));
+		assertEquals(upperMdLink13.getTraversingRoutes() , new HashSet<Route> (Arrays.asList()));
 	}
 
 	@Test
-	public void testGetTraversingRoutes() {
-		fail("Not yet implemented");
+	public void testGetTraversingTrees() 
+	{
+		assertEquals(link12.getTraversingTrees() , new HashSet<MulticastTree> (Arrays.asList(t123 , tStar)));
+		assertEquals(link23.getTraversingTrees() , new HashSet<MulticastTree> (Arrays.asList(t123)));
+		assertEquals(link13.getTraversingTrees() , new HashSet<MulticastTree> (Arrays.asList(tStar)));
+		assertEquals(upperLink12.getTraversingTrees() , new HashSet<MulticastTree> (Arrays.asList()));
+		assertEquals(upperMdLink12.getTraversingTrees() , new HashSet<MulticastTree> (Arrays.asList(upperMt123)));
+		assertEquals(upperMdLink13.getTraversingTrees() , new HashSet<MulticastTree> (Arrays.asList(upperMt123)));
 	}
 
 	@Test
-	public void testGetTraversingTrees() {
-		fail("Not yet implemented");
+	public void testCoupleToLowerLayerDemand() 
+	{
+		final Demand dd13 = np.addDemand(n1,n3,10,null,lowerLayer);
+		final Link ll13 = np.addLink(n1,n3,100,100,1,null,upperLayer);
+		ll13.coupleToLowerLayerDemand(dd13);
+		assertEquals(ll13.getCapacity() , 0 , 0);
+		assertTrue(ll13.isCoupled());
+		assertEquals(ll13.getCoupledDemand() , dd13);
+		try { ll13.coupleToLowerLayerDemand(dd13); fail (); } catch (Exception e) {}
 	}
 
 	@Test
-	public void testCoupleToLowerLayerDemand() {
-		fail("Not yet implemented");
+	public void testCoupleToNewDemandCreated() 
+	{
+		final Link ll13 = np.addLink(n1,n3,100,100,1,null,upperLayer);
+		final Demand dd13 = ll13.coupleToNewDemandCreated(lowerLayer);
+		assertEquals(ll13.getCapacity() , 0 , 0);
+		assertTrue(ll13.isCoupled());
+		assertEquals(ll13.getCoupledDemand() , dd13);
+		try { ll13.coupleToLowerLayerDemand(dd13); fail (); } catch (Exception e) {}
+		try { ll13.coupleToNewDemandCreated(lowerLayer); fail (); } catch (Exception e) {}
 	}
 
 	@Test
-	public void testCoupleToNewDemandCreated() {
-		fail("Not yet implemented");
+	public void testRemoveAllForwardingRules() 
+	{
+		try { np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer); fail ("Not in service chains"); } catch (Exception e) {}
+		scd123.remove();
+		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer); 
+		link12.removeAllForwardingRules();
+		assertEquals (link12.getForwardingRules() , Collections.emptyMap());
 	}
 
 	@Test
-	public void testRemoveAllForwardingRules() {
-		fail("Not yet implemented");
+	public void testGetBidirectionalPair() 
+	{
+		assertEquals(link12.getBidirectionalPair(),null);
+		Pair<Link,Link> pair = np.addLinkBidirectional(n1,n2,100,100,1,null,upperLayer);
+		assertEquals(pair.getFirst().getBidirectionalPair() , pair.getSecond());
+		assertEquals(pair.getSecond().getBidirectionalPair() , pair.getFirst());
 	}
 
 	@Test
-	public void testGetBidirectionalPair() {
-		fail("Not yet implemented");
+	public void testRemove() 
+	{
+		List<Link> lower = new ArrayList<Link> (np.getLinks(lowerLayer));
+		List<Link> upper = new ArrayList<Link> (np.getLinks(upperLayer));
+
+		link12.remove();
+		lower.remove(link12);
+		assertEquals (lower , np.getLinks(lowerLayer));
+		
+		upperLink12.remove();
+		upper.remove(upperLink12);
+		assertEquals (upper , np.getLinks(upperLayer));
+
+		upperMdLink12.remove();
+		upper.remove(upperMdLink12);
+		assertEquals (upper , np.getLinks(upperLayer));
 	}
 
 	@Test
-	public void testRemove() {
-		fail("Not yet implemented");
-	}
-
-	@Test
-	public void testSetFailureState() {
-		fail("Not yet implemented");
+	public void testSetFailureState() 
+	{
+		link12.setFailureState(false);
+		assertTrue (link12.isDown());
+		assertTrue (!upperLink12.isDown());
+		link12.setFailureState(true);
+		assertTrue (!link12.isDown());
+		upperLink12.setFailureState(false);
+		assertTrue (upperLink12.isDown());
+		upperLink12.setFailureState(true);
+		assertTrue (!upperLink12.isDown());
 	}
 
 }

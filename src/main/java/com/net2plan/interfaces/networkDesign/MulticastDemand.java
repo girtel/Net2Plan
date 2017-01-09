@@ -286,6 +286,7 @@ public class MulticastDemand extends NetworkElement
 		}
 
 		/* Link capacity at the upper layer is equal to the carried traffic at the lower layer */
+		coupledUpperLayerLinks = new HashMap<Node , Link> ();
 		layer.cache_coupledMulticastDemands.add (this);
 		for (Link link : links)
 		{
