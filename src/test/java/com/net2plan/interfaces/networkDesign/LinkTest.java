@@ -154,7 +154,12 @@ public class LinkTest
 	@Test
 	public void testGetCapacity() 
 	{
-		fail("Not yet implemented");
+		assertEquals(link12.getCapacity() , 100 , 0);
+		assertEquals(link13.getCapacity() , 100 , 0);
+		assertEquals(link23.getCapacity() , 100 , 0);
+		assertEquals(upperLink12.getCapacity() , 1 , 0);
+		assertEquals(upperMdLink12.getCapacity() , 20 , 0);
+		assertEquals(upperMdLink12.getCapacity() , 20 , 0);
 	}
 
 	@Test
