@@ -80,7 +80,7 @@ public class Link extends NetworkElement
 	 * @param capacity Link's capacity
 	 * @param attributes Link's attributes
 	 */
-	Link (NetPlan netPlan , long id , int index , NetworkLayer layer , Node originNode , Node destinationNode , double lengthInKm , double propagationSpeedInKmPerSecond , double capacity , AttributeMap attributes)
+	protected Link (NetPlan netPlan , long id , int index , NetworkLayer layer , Node originNode , Node destinationNode , double lengthInKm , double propagationSpeedInKmPerSecond , double capacity , AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);
 

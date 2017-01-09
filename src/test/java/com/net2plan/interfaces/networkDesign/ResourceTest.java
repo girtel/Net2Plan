@@ -92,6 +92,7 @@ public class ResourceTest
 	@After
 	public void tearDown() throws Exception 
 	{
+		np.checkCachesConsistency();
 	}
 
 	
