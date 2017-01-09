@@ -1,7 +1,4 @@
-<assembly xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3"
-          xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3 http://maven.apache.org/xsd/assembly-1.1.3.xsd">
-
+<assembly>
     <id>bundle-descriptor</id>
 
     <formats>
