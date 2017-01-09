@@ -3,13 +3,15 @@
           xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3 http://maven.apache.org/xsd/assembly-1.1.3.xsd">
 
     <id>bin</id>
+
     <formats>
         <format>zip</format>
     </formats>
 
     <fileSets>
         <fileSet>
-            <directory>${project.basedir}</directory>
+            <directory>${project.parent.basedir}</directory>
+            <outputDirectory/>
             <includes>
                 <include>README*</include>
                 <include>LICENSE*</include>
@@ -18,7 +20,7 @@
         </fileSet>
         <!-- Copy the lib directory -->
         <fileSet>
-            <directory>${project.basedir}/src/main/external-resources/lib</directory>
+            <directory>${project.parent.basedir}/src/main/external-resources/lib</directory>
             <outputDirectory>lib</outputDirectory>
             <includes>
                 <include>*.jar</include>
@@ -26,7 +28,7 @@
         </fileSet>
         <!-- Copying user guide -->
         <fileSet>
-            <directory>${project.basedir}/src/main/external-resources/help</directory>
+            <directory>${project.parent.basedir}/src/main/external-resources/help</directory>
             <outputDirectory>doc/help</outputDirectory>
             <includes>
                 <include>**</include>
@@ -34,7 +36,7 @@
         </fileSet>
         <!-- Copy the workspace folder -->
         <fileSet>
-            <directory>${project.basedir}/Net2Plan-Core/Net2Plan-Lib/src/main/external-resources/data</directory>
+            <directory>${project.parent.basedir}/Net2Plan-Core/Net2Plan-Lib/src/main/external-resources/data</directory>
             <outputDirectory>workspace/data</outputDirectory>
             <includes>
                 <include>**</include>
@@ -58,8 +60,19 @@
         </fileSet>-->
     </fileSets>
 
+    <dependencySets>
+        <dependencySet>
+            <useProjectArtifact>false</useProjectArtifact>
+            <useTransitiveDependencies>false</useTransitiveDependencies>
+            <unpack>false</unpack>
+            <includes>
+                <include>*:*:jar</include>
+            </includes>
+        </dependencySet>
+    </dependencySets>
+
+    <!--
     <files>
-        <!-- Create the BuiltInExample.jar file and copy it into the workspace directory -->
         <file>
             <source>${project.basedir}/Net2Plan-Examples/target/${artifactId}-${version}.jar</source>
             <outputDirectory>workspace</outputDirectory>
@@ -93,5 +106,5 @@
             <source>${project.basedir}/Net2Plan-Core/Net2Plan-Main/target/${artifactId}-${version}.jar</source>
             <destName>Net2Plan.jar</destName>
         </file>
-    </files>
+    </files>-->
 </assembly>

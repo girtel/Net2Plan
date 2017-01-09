@@ -4,6 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <packaging>pom</packaging>
+
     <parent>
         <artifactId>net2plan</artifactId>
         <groupId>com.net2plan</groupId>
@@ -17,48 +19,58 @@
             <groupId>com.net2plan.net2plan-cli</groupId>
             <artifactId>net2plan-cli-core</artifactId>
             <version>0.5-SNAPSHOT</version>
+            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>com.net2plan.net2plan-cli</groupId>
             <artifactId>net2plan-cli-plugin</artifactId>
             <version>0.5-SNAPSHOT</version>
+            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>com.net2plan.net2plan-core</groupId>
             <artifactId>net2plan-core-lib</artifactId>
             <version>0.5-SNAPSHOT</version>
+            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>com.net2plan.net2plan-core</groupId>
             <artifactId>net2plan-core-main</artifactId>
             <version>0.5-SNAPSHOT</version>
+            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>com.net2plan</groupId>
             <artifactId>net2plan-examples</artifactId>
             <version>0.5-SNAPSHOT</version>
+            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>com.net2plan</groupId>
             <artifactId>net2plan-gui</artifactId>
             <version>0.5-SNAPSHOT</version>
+            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>com.net2plan</groupId>
             <artifactId>net2plan-io</artifactId>
             <version>0.5-SNAPSHOT</version>
+            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>com.net2plan</groupId>
             <artifactId>net2plan-javadoc</artifactId>
             <version>0.5-SNAPSHOT</version>
+            <type>jar</type>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
                         <id>assembly-project</id>
