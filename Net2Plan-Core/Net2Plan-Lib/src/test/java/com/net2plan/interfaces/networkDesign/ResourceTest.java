@@ -306,7 +306,6 @@ public class ResourceTest
 		try
 		{
 			file = new File ("test.n2p"); //File.createTempFile("testN2p" , "n2p");
-			file.deleteOnExit();
 		} catch (Exception e) { Assert.fail ("could not make the test: no temporary file creation possible"); }
 		assertTrue (file != null);
 		np.saveToFile(file);
