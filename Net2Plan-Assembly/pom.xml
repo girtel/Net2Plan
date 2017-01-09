@@ -7,7 +7,10 @@
         <groupId>com.net2plan</groupId>
         <version>0.5-SNAPSHOT</version>
     </parent>
+
     <modelVersion>4.0.0</modelVersion>
+
+    <packaging>pom</packaging>
 
     <artifactId>net2plan-assembly</artifactId>
 
@@ -68,13 +71,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.6</version>
-                <configuration>
-                    <descriptors>
-                        <descriptor>src/main/assemblies/assembly-descriptor.xml</descriptor>
-                    </descriptors>
-                    <finalName>${project.name}-${project.version}</finalName>
-                </configuration>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
                         <id>assemble</id>
@@ -83,12 +80,13 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <skipAssembly>true</skipAssembly>
+                            <descriptors>
+                                <descriptor>src/assembly/assembler.xsl</descriptor>
+                            </descriptors>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
-
 </project>
