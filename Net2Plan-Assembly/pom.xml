@@ -35,6 +35,13 @@
         </dependency>
         <dependency>
             <groupId>com.net2plan.net2plan-core</groupId>
+            <artifactId>net2plan-core-lib</artifactId>
+            <version>0.5-SNAPSHOT</version>
+            <type>zip</type>
+            <classifier>bundle</classifier>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-core</groupId>
             <artifactId>net2plan-core-main</artifactId>
             <version>0.5-SNAPSHOT</version>
             <type>jar</type>

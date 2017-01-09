@@ -1,5 +1,5 @@
 <assembly>
-    <id>bundle-descriptor</id>
+    <id>bundle</id>
 
     <formats>
         <format>zip</format>

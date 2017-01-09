@@ -90,7 +90,7 @@
             <useTransitiveDependencies>false</useTransitiveDependencies>
             <unpack>true</unpack>
             <includes>
-                <include>${project.groupId}.net2plan-core:net2plan-core-lib:zip:*</include>
+                <include>${project.groupId}.net2plan-core:net2plan-core-lib:zip:bundle</include>
             </includes>
             <outputDirectory/>
         </dependencySet>
