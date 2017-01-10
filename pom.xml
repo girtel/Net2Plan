@@ -10,7 +10,7 @@
         <groupId>com.net2plan</groupId>
         <artifactId>net2plan-parent</artifactId>
         <version>0.5-SNAPSHOT</version>
-        <relativePath>./Net2Plan-Parent</relativePath>
+        <relativePath>./Net2Plan-Parent/pom.xml</relativePath>
     </parent>
 
     <modules>
