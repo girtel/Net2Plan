@@ -6,6 +6,18 @@
         <format>zip</format>
     </formats>
 
+    <fileSets>
+        <fileSet>
+            <directory>${project.parent.basedir}</directory>
+            <outputDirectory/>
+            <includes>
+                <include>README*</include>
+                <include>LICENSE*</include>
+                <include>NOTICE*</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+
     <dependencySets>
         <!--GUI Plugin-->
         <dependencySet>
@@ -107,16 +119,4 @@
             </excludes>
         </dependencySet>
     </dependencySets>
-
-    <fileSets>
-        <fileSet>
-            <directory>${project.parent.basedir}</directory>
-            <outputDirectory/>
-            <includes>
-                <include>README*</include>
-                <include>LICENSE*</include>
-                <include>NOTICE*</include>
-            </includes>
-        </fileSet>
-    </fileSets>
 </assembly>

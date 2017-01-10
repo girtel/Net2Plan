@@ -14,6 +14,7 @@
 
     <artifactId>net2plan-assembly</artifactId>
 
+
     <dependencies>
         <dependency>
             <groupId>com.net2plan.net2plan-core.net2plan-cli</groupId>
@@ -87,6 +88,7 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
+                            <appendAssemblyId>false</appendAssemblyId>
                             <descriptors>
                                 <descriptor>src/assembly/assembler.xsl</descriptor>
                             </descriptors>
