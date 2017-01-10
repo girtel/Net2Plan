@@ -645,23 +645,6 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
             }
         });
         options.add(capacityToAllBaseResources);
-
-        JMenuItem editBaseResources = new JMenuItem("Edit base resources");
-        editBaseResources.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-
-                NetPlan netPlan = networkViewer.getDesign();
-
-                try {
-
-
-                } catch (Throwable ex) {
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to base resources");
-                }
-                }
-        });
-        options.add(editBaseResources);
         return options;
     }
 
