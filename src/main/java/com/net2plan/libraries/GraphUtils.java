@@ -715,10 +715,12 @@ public class GraphUtils
 		return f_te;
 	}
 
-	/** Given a path-based routing, returns the amount of traffic for each demand d traversing each link e.
+	/** Given a path-based routing, returns the amount of traffic for each demand d traversing each link e. The link 
+	 * occupation information is not used, only the route carried traffic (recall that a route carried traffic is zero if 
+	 * it traverses a failed link/node)  
 	 * @param links List of links
 	 * @param demands List of demands
-	 * @param routes List of rutes
+	 * @param routes List of routes
 	 * @return Demand-link routing in the form x_de (amount of traffic from demand d, transmitted through link e) */
 	public static DoubleMatrix2D convert_xp2xde(List<Link> links, List<Demand> demands, List<Route> routes)
 	{
@@ -980,7 +982,7 @@ public class GraphUtils
 							for (List<Link> path : kPaths)
 							{
 								final double thisCost = path.stream().mapToDouble(e -> linkCostMap.get(e)).sum ();
-								if (thisCost > previousCost + 0.001) throw new RuntimeException ("Bad");
+								if (previousCost > thisCost + 0.001) throw new RuntimeException ("thisCost: " + thisCost + ", previousCost: " + previousCost + ", Bad");
 								if (thisCost > maxCostServiceChain) break; // the maximum cost is exceeded, do not add this as subpath
 								pathsInfo.add(Pair.of(path, thisCost));
 								previousCost = thisCost;
@@ -1383,6 +1385,7 @@ public class GraphUtils
 			op.addConstraint("Ain_ne * x_e' >= delta_bd'"); // a destination node receives at least one input link
 			op.addConstraint("Ain_ne * x_e' <= 1 - delta_ad'"); // source nodes receive 0 links, destination nodes at most one (then just one)
 			op.addConstraint("Aout_ne * x_e' <= K * (delta_ad' + Ain_ne * x_e')"); // at most K out links from ingress node and from intermediate nodes if they have one input link
+			if (maxTreeCost < Double.MAX_VALUE) op.addConstraint("c_e * x_e' <= " + maxTreeCost);
 			double maximumAllowedTreeCost = maxTreeCost;
 			if (!previousTrees.isEmpty())
 			{

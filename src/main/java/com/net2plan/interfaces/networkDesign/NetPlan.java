@@ -408,23 +408,19 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Adds new traffic demands froma traffic matrix given as a {@code DoubleMatrix2D} object.</p>
-	 *
-	 * <p><b>Important: </b>Previous demands will be removed.</p>
-	 * <p><b>Important</b>: Self-demands are not allowed.</p>
+	 * <p>Adds new traffic demands froma traffic matrix given as a {@code DoubleMatrix2D} object. Previous demands are not removed.</p>
 	 *
 	 * @param trafficMatrix Traffix matrix where i-th row is the ingress node, the j-th column the egress node and each entry the offered traffic
 	 * @param optionalLayerParameter Network layer to which to add the demands (optional)
 	 * @return A list with the newly created demands
-	 * @see com.net2plan.interfaces.networkDesign.Demand
 	 */
 	public List<Demand> addDemandsFromTrafficMatrix (DoubleMatrix2D trafficMatrix , NetworkLayer ... optionalLayerParameter)
 	{
 		trafficMatrix = NetPlan.adjustToTolerance(trafficMatrix);
 		checkIsModifiable();
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		List<Demand> demands = new LinkedList<Demand> ();
 		if ((trafficMatrix.rows () != nodes.size ()) || (trafficMatrix.columns () != nodes.size ())) throw new Net2PlanException ("Wrong matrix size");
+		List<Demand> demands = new LinkedList<Demand> ();
 		for (int n1 = 0 ; n1 < nodes.size () ; n1 ++) for (int n2 = 0 ; n2 < nodes.size () ; n2 ++) if (n1 != n2) demands.add (addDemand (nodes.get(n1) , nodes.get(n2) , trafficMatrix.get(n1,n2) , null , layer));
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 		return demands;
@@ -1945,43 +1941,6 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns the total blocked traffic, summing up all the unicast demands, in the given layer. If no layer is provided, the default layer is assumed.</p>
-	 *
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return Total blocked trafic
-	 */
-	public double getDemandTotalBlockedTraffic(NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		double accum = 0; for (Demand d : layer.demands) accum += Math.max(0 , d.offeredTraffic - d.carriedTraffic);
-		return accum;
-	}
-
-	/**
-	 * <p>Returns the total carried traffic, summing up for all the unicast demands, in the given layer. If no layer is provided, the default layer is assumed.</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return Total carried traffic
-	 */
-	public double getDemandTotalCarriedTraffic(NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		double accum = 0; for (Demand d : layer.demands) accum += d.carriedTraffic;
-		return accum;
-	}
-
-	/**
-	 * <p>Returns the total offered traffic, summing up for all the unicast demands, in the given layer. If no layer is provided, the default layer is assumed.</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return Total offered traffic
-	 */
-	public double getDemandTotalOfferedTraffic(NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		double accum = 0; for (Demand d : layer.demands) accum += d.offeredTraffic;
-		return accum;
-	}
-
-	/**
 	 * <p>Returns the name of the traffic units of the demands of the given layer. If no layer is provided, the default layer is assumed.</p>
 	 *
 	 * @param optionalLayerParameter Network layer (optional)
@@ -2442,9 +2401,11 @@ public class NetPlan extends NetworkElement
 	/**
 	 * <p>Returns the splitting ratio matrix (fractions of traffic entering a node from
 	 * demand 'd', leaving that node through link 'e'). Rows and columns are in
-	 * increasing order of demand and link identifiers, respectively.  If no layer is provided, the default layer is assumed</p>
+	 * increasing order of demand and link identifiers, respectively.  
+	 * If no layer is provided, the default layer is assumed. If the layer routing mode is SOURCE ROUTING, 
+	 * the routes are internally converted into forwarding rules, using the carried traffic of the routes (the 
+	 * link occupation information is not used)</p>
 	 *
-	 * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#HOP_BY_HOP_ROUTING HOP_BY_HOP_ROUTING}.</p>
 	 * @param optionalLayerParameter Network layer (optional)
 	 * @return Splitting ratio matrix
 	 */
@@ -2452,7 +2413,7 @@ public class NetPlan extends NetworkElement
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) return layer.forwardingRules_f_de.copy ();
-		else return GraphUtils.convert_xp2xde(layer.links , layer.demands , layer.routes);
+		else return GraphUtils.convert_xde2fde(nodes,layer.links,layer.demands , GraphUtils.convert_xp2xde(layer.links , layer.demands , layer.routes));
 	}
 
 	/**
@@ -3026,55 +2987,6 @@ public class NetPlan extends NetworkElement
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		List<MulticastDemand> res = new LinkedList<MulticastDemand> (); for (MulticastDemand d : layer.multicastDemands) if (d.isBlocked()) res.add (d);
 		return res;
-	}
-
-	/**
-	 * <p>Returns the set of multicas demands that are coupled.</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return the {@code Set} of multicast demands
-	 */
-	public Set<MulticastDemand> getMulticastDemandsCoupled (NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		Set<MulticastDemand> res = new HashSet<MulticastDemand> ();
-		for (MulticastDemand demand : layer.multicastDemands) if (demand.coupledUpperLayerLinks != null) res.add (demand);
-		return res;
-	}
-
-	/**
-	 * <p>Returns the total blocked traffic, summing up for all the multicast demands, in the given layer. If no layer is provided, the default layer is assumed.</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return The total blocked traffic for all multicast demands
-	 */
-	public double getMulticastDemandTotalBlockedTraffic(NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		double accum = 0; for (MulticastDemand d : layer.multicastDemands) accum += Math.max(0 , d.offeredTraffic - d.carriedTraffic);
-		return accum;
-	}
-
-	/**
-	 * <p>Returns the total carried traffic, summing up for all the multicast demands, in the given layer. If no layer is provided, the default layer is assumed.</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return The total carried traffic for all multicast demands
-	 */
-	public double getMulticastDemandTotalCarriedTraffic(NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		double accum = 0; for (MulticastDemand d : layer.multicastDemands) accum += d.carriedTraffic;
-		return accum;
-	}
-
-	/**
-	 * <p>Returns the total offered traffic, summing up for all the multicast demands, in the given layer. If no layer is provided, the default layer is assumed</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return the total offered traffic for all multicast demands
-	 */
-	public double getMulticastDemandTotalOfferedTraffic(NetworkLayer ... optionalLayerParameter)
-	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		double accum = 0; for (MulticastDemand d : layer.multicastDemands) accum += d.offeredTraffic;
-		return accum;
 	}
 
 	/**
@@ -5588,7 +5500,12 @@ public class NetPlan extends NetworkElement
 	 * routing consumes the same or less bandwidth in the demand traversed links, (ii) the demands with closed loops are
 	 * routed so that the traffic that enters the closed loops is not carried. These modifications are done since open or close
 	 * loops would require routes with an infinite number of links to be fairly represented.</p>
-	 *
+	 *<p>In the conversion to HOP-BY-HOP: An exception is thrown if a demand is service chain demand (since 
+	 * this information would be lost in the hop-by-bop representation). Also, in this conversion, some information 
+	 * can be lost (so a conversion back to SOURCE ROUTING will not produce the original network): 
+	 * the conversion uses the route carried traffics, and discards the information of the the 
+	 * routes occupied capacities in the links. A conversion back will put all the occupied capacities of the routes, 
+	 * equal to the carried traffics.</p>
 	 * @param optionalLayerParameter Network layer (optional)
 	 * @param newRoutingType {@link com.net2plan.utils.Constants.RoutingType RoutingType}
 	 */

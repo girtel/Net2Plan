@@ -424,7 +424,8 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 	private void parseSourceRouting(NetPlan netPlan, long layerId) throws XMLStreamException
 	{
 		netPlan.setRoutingType (RoutingType.SOURCE_ROUTING , netPlan.getNetworkLayerFromId(layerId));
-
+		this.backupRouteIdsMap.clear(); // in multiple layers, we have to refresh this
+		
 		while(xmlStreamReader.hasNext())
 		{
 			xmlStreamReader.next();
@@ -468,8 +469,8 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final long treeId = getLong ("id");
 		if (treeId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
 		final long demandId = getLong ("demandId");
-		final double carriedTraffic = getDouble ("carriedTraffic");
-		double occupiedCapacity = getDouble ("occupiedCapacity");
+		final double carriedTraffic = getDouble ("carriedTrafficIfNotFailing");
+		double occupiedCapacity = getDouble ("occupiedLinkCapacityIfNotFailing");
 		double carriedTrafficIfNotFailing = carriedTraffic; try { carriedTrafficIfNotFailing = getDouble ("carriedTrafficIfNotFailing"); } catch (Exception e) {} 
 		double occupiedLinkCapacityIfNotFailing = occupiedCapacity; try { occupiedLinkCapacityIfNotFailing = getDouble ("occupiedLinkCapacityIfNotFailing"); } catch (Exception e) {} 
 		if (occupiedCapacity < 0) occupiedCapacity = carriedTraffic;
