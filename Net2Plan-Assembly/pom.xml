@@ -14,7 +14,6 @@
 
     <artifactId>net2plan-assembly</artifactId>
 
-
     <dependencies>
         <dependency>
             <groupId>com.net2plan.net2plan-core.net2plan-cli</groupId>
