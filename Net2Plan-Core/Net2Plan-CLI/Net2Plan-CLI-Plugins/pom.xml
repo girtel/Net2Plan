@@ -3,13 +3,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <groupId>com.net2plan</groupId>
+        <groupId>com.net2plan.net2plan-core</groupId>
         <artifactId>net2plan-cli</artifactId>
         <version>0.5-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.net2plan.net2plan-cli</groupId>
+    <groupId>com.net2plan.net2plan-core.net2plan-cli</groupId>
     <artifactId>net2plan-cli-plugins</artifactId>
 </project>

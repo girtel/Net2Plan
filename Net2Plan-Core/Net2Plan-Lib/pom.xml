@@ -24,6 +24,10 @@
                 </excludes>
                 <filtering>false</filtering>
             </resource>
+            <resource>
+                <directory>${project.parent.basedir}/src/main/resources/common</directory>
+                <filtering>false</filtering>
+            </resource>
         </resources>
 
         <plugins>

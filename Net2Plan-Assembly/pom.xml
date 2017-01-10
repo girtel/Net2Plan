@@ -16,33 +16,33 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.net2plan.net2plan-cli</groupId>
-            <artifactId>net2plan-cli-core</artifactId>
+            <groupId>com.net2plan.net2plan-core.net2plan-cli</groupId>
+            <artifactId>net2plan-cli-exec</artifactId>
             <version>0.5-SNAPSHOT</version>
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>com.net2plan.net2plan-cli</groupId>
-            <artifactId>net2plan-cli-plugin</artifactId>
-            <version>0.5-SNAPSHOT</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>com.net2plan.net2plan-core</groupId>
-            <artifactId>net2plan-core-lib</artifactId>
+            <groupId>com.net2plan.net2plan-core.net2plan-cli</groupId>
+            <artifactId>net2plan-cli-plugins</artifactId>
             <version>0.5-SNAPSHOT</version>
             <type>jar</type>
         </dependency>
         <dependency>
             <groupId>com.net2plan.net2plan-core</groupId>
-            <artifactId>net2plan-core-lib</artifactId>
+            <artifactId>net2plan-lib</artifactId>
+            <version>0.5-SNAPSHOT</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-core</groupId>
+            <artifactId>net2plan-lib</artifactId>
             <version>0.5-SNAPSHOT</version>
             <type>zip</type>
             <classifier>bundle</classifier>
         </dependency>
         <dependency>
             <groupId>com.net2plan.net2plan-core</groupId>
-            <artifactId>net2plan-core-main</artifactId>
+            <artifactId>net2plan-gui</artifactId>
             <version>0.5-SNAPSHOT</version>
             <type>jar</type>
         </dependency>
@@ -54,7 +54,7 @@
         </dependency>
         <dependency>
             <groupId>com.net2plan</groupId>
-            <artifactId>net2plan-gui</artifactId>
+            <artifactId>net2plan-plugins</artifactId>
             <version>0.5-SNAPSHOT</version>
             <type>jar</type>
         </dependency>

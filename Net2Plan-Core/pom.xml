@@ -14,6 +14,7 @@
 
     <modules>
         <module>Net2Plan-Lib</module>
-        <module>Net2Plan-Main</module>
+        <module>Net2Plan-GUI</module>
+        <module>Net2Plan-CLI</module>
     </modules>
 </project>
