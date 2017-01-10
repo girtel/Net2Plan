@@ -25,6 +25,9 @@
                             <classpathPrefix>lib/</classpathPrefix>
                             <mainClass>com.net2plan.cli.CLINet2Plan</mainClass>
                         </manifest>
+                        <manifestEntries>
+                            <Class-Path>lib/NetPlan-lib.jar</Class-Path>
+                        </manifestEntries>
                     </archive>
                 </configuration>
             </plugin>
