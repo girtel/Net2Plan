@@ -11,9 +11,10 @@
     </parent>
 
     <groupId>com.net2plan.net2plan-core</groupId>
-    <artifactId>net2plan-core-lib</artifactId>
+    <artifactId>net2plan-lib</artifactId>
 
     <build>
+        <!--Filters out external resources-->
         <resources>
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>

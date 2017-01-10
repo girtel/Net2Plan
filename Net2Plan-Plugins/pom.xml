@@ -9,18 +9,17 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>net2plan-cli</artifactId>
-    <packaging>pom</packaging>
-
-    <modules>
-        <module>Net2Plan-CLI-Core</module>
-        <module>Net2Plan-CLI-Plugin</module>
-    </modules>
+    <artifactId>net2plan-plugins</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>com.net2plan.net2plan-core</groupId>
-            <artifactId>net2plan-core-lib</artifactId>
+            <artifactId>net2plan-lib</artifactId>
+            <version>0.5-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-core</groupId>
+            <artifactId>net2plan-gui</artifactId>
             <version>0.5-SNAPSHOT</version>
         </dependency>
     </dependencies>

@@ -16,7 +16,7 @@
     <dependencies>
         <dependency>
             <groupId>com.net2plan.net2plan-core</groupId>
-            <artifactId>net2plan-core-lib</artifactId>
+            <artifactId>net2plan-lib</artifactId>
             <version>0.5-SNAPSHOT</version>
         </dependency>
     </dependencies>
