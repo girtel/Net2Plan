@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.net2plan</groupId>
         <artifactId>net2plan-core</artifactId>
+        <groupId>com.net2plan</groupId>
         <version>0.5-SNAPSHOT</version>
     </parent>
 
@@ -25,7 +25,7 @@
                 <filtering>false</filtering>
             </resource>
             <resource>
-                <directory>${project.parent.basedir}/src/main/resources/common</directory>
+                <directory>${project.parent.relativePath}/../src/main/resources</directory>
                 <filtering>false</filtering>
             </resource>
         </resources>
