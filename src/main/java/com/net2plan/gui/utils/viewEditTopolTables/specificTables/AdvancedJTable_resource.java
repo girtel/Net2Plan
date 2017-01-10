@@ -478,6 +478,9 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                         if (!nodeName.isEmpty()) nodeLabel += " (" + nodeName + ")";
                         hostNodeSelector.addItem(StringLabeller.of(n.getId(), nodeLabel));
                     }
+                    Node hostNode = null;
+                    String capacityUnits = "";
+                    String resType = "";
                     JPanel pane = new JPanel();
                     pane.add(new JLabel("Resource Type"));
                     pane.add(typeSelector);
@@ -490,10 +493,45 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                     while (true) {
                         int result = JOptionPane.showConfirmDialog(null, pane, "Please enter parameters for the new " + networkElementType, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                         if (result != JOptionPane.OK_OPTION) return;
-                        Node hostNode = netPlan.getNodeFromId((Long) ((StringLabeller) hostNodeSelector.getSelectedItem()).getObject());
-                        netPlan.addResource(typeSelector.getSelectedItem().toString(), "Resource n_" + netPlan.getResources().size(), hostNode,
-                                0, capUnitsField.getText(), null, 0, null);
+                        hostNode = netPlan.getNodeFromId((Long) ((StringLabeller) hostNodeSelector.getSelectedItem()).getObject());
+                        capacityUnits = capUnitsField.getText();
+                        resType = typeSelector.getSelectedItem().toString();
+                        break;
+                    }
+                    JPanel panel = new JPanel();
+                    Object [][] data = {null,null,null};
+                    String [] headers = StringUtils.arrayOf("Base Resource","Is Base Resource","Capacity");
+                    TableModel tm = new ClassAwareTableModelImpl(data,headers);
+                    AdvancedJTable table = new AdvancedJTable(tm);
+                    Object[][] newData = new Object[netPlan.getResources().size() - 1][headers.length];
+                    int counter = 0;
+                    for(Resource r : netPlan.getResources())
+                    {
+                        newData[counter][0] = r.getName();
+                        newData[counter][1] = false;
+                        newData[counter][2] = 0;
+                        addCheckboxCellEditor(false,counter,1,table);
+                        counter++;
+                    }
+                    panel.setLayout(new BorderLayout());
+                    panel.add(new JLabel("Set new resource base resources"),BorderLayout.NORTH);
+                    panel.add(new JScrollPane(table),BorderLayout.CENTER);
+                    ((DefaultTableModel)table.getModel()).setDataVector(newData, headers);
+                    while (true) {
+                        int result = JOptionPane.showConfirmDialog(null, panel, "Set base resources", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if (result != JOptionPane.OK_OPTION) return;
+                        Map<Resource, Double> newBaseResources = new HashMap<>();
+                        for(int j = 0; j < table.getRowCount(); j++)
+                        {
+                            Resource r = netPlan.getResource(j);
+                            String capacity = table.getModel().getValueAt(j,2).toString();
+                            boolean isBaseResource = (boolean)table.getModel().getValueAt(j,1);
+                            if(isBaseResource)
+                                newBaseResources.put(r, Double.parseDouble(capacity));
 
+                        }
+                        netPlan.addResource(resType, "Resource n_" + netPlan.getResources().size(), hostNode,
+                                0, capacityUnits, newBaseResources, 0, null);
                         networkViewer.updateNetPlanView();
                         break;
                     }
@@ -617,50 +655,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
 
                 try {
 
-                    Resource res = netPlan.getResourceFromId((Long) itemId);
-                    Set<Resource> baseResources = res.getBaseResources();
-                    JPanel pane = new JPanel();
-                    Object [][] data = {null,null,null};
-                    String [] headers = StringUtils.arrayOf("Base Resource","Index","Is Base Resource","Capacity");
-                    TableModel tm = new ClassAwareTableModelImpl(data,headers);
-                    AdvancedJTable table = new AdvancedJTable(tm);
-                    Object[][] newData = new Object[netPlan.getResources().size() - 1][headers.length];
-                    int counter = 0;
-                    for(Resource r : netPlan.getResources())
-                    {
-                        if(r.equals(res)) continue;
-                        newData[counter][0] = r.getName();
-                        newData[counter][1] = r.getIndex();
-                        newData[counter][2] = baseResources.contains(r);
-                        if(baseResources.contains(r))
-                            newData[counter][3] = res.getCapacityOccupiedInBaseResource(r);
-                        else
-                            newData[counter][3] = 0;
-                        addCheckboxCellEditor(baseResources.contains(r),counter,2,table);
-                        counter++;
-                    }
-                    pane.setLayout(new BorderLayout());
-                    pane.add(new JLabel("Edit "+res.toString()+" base resources"),BorderLayout.NORTH);
-                    pane.add(new JScrollPane(table),BorderLayout.CENTER);
-                    ((DefaultTableModel)table.getModel()).setDataVector(newData, headers);
-                    while (true) {
-                        int result = JOptionPane.showConfirmDialog(null, pane, "Edit base resources", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                        if (result != JOptionPane.OK_OPTION) return;
-                        Map<Resource, Double> newBaseResources = new HashMap<>();
-                        for(int j = 0; j < table.getRowCount(); j++)
-                        {
-                            boolean isBaseResource = (Boolean)table.getModel().getValueAt(j,2);
-                            Integer resIndex = (Integer)table.getModel().getValueAt(j,1);
-                            Resource baseRes = netPlan.getResource(resIndex);
-                            String capacity = table.getModel().getValueAt(j,3).toString();
-                            if(isBaseResource)
-                                newBaseResources.put(baseRes, Double.parseDouble(capacity));
 
-                        }
-                        res.setCapacity(res.getCapacity(),newBaseResources);
-                        networkViewer.updateNetPlanView();
-                        break;
-                    }
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to base resources");
                 }
