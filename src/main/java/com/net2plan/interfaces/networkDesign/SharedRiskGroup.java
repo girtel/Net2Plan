@@ -323,7 +323,7 @@ public class SharedRiskGroup extends NetworkElement
 	}
 
 	/**
-	 * <p>Adds a link to the SRG. The object cannot be a protection segment (recall that segments are subclasses of Link). </p>
+	 * <p>Adds a link to the SRG. If the link is already part of the srg, no action is taken.</p>
 	 * @param link Link to add
 	 */
 	public void addLink(Link link)
@@ -331,13 +331,14 @@ public class SharedRiskGroup extends NetworkElement
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		link.checkAttachedToNetPlanObject(this.netPlan);
+		if (this.links.contains(link)) return;
 		link.cache_srgs.add(this);
 		this.links.add(link);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 
 	/**
-	 * <p>Adds a node to the SRG.</p>
+	 * <p>Adds a node to the SRG. If the node is already part of the SRG, no action is taken</p>
 	 * @param node Node to add
 	 */
 	public void addNode(Node node)
@@ -345,7 +346,7 @@ public class SharedRiskGroup extends NetworkElement
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		node.checkAttachedToNetPlanObject(this.netPlan);
-
+		if (this.nodes.contains(node)) return;
 		node.cache_nodeSRGs.add(this);
 		this.nodes.add(node);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();

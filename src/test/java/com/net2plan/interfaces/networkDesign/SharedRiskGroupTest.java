@@ -1,6 +1,7 @@
 package com.net2plan.interfaces.networkDesign;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,8 +16,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.sun.tools.javac.code.Attribute.Array;
-
 public class SharedRiskGroupTest 
 {
 	private NetPlan np = null;
@@ -30,7 +29,7 @@ public class SharedRiskGroupTest
 	private Route r12, r123a, r123b , sc123;
 	private List<Link> path13;
 	private List<NetworkElement> pathSc123;
-	private Resource res2 , res2backup;
+	private Resource res2;
 	private Route segm13;
 	private NetworkLayer lowerLayer , upperLayer;
 	private Link upperLink12;
@@ -67,7 +66,6 @@ public class SharedRiskGroupTest
 		this.r123a = np.addRoute(d13,1,1.5,path13,null);
 		this.r123b = np.addRoute(d13,1,1.5,path13,null);
 		this.res2 = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
-		this.res2backup = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
 		this.scd123 = np.addDemand(n1 , n3 , 3 , null,lowerLayer);
 		this.scd123.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("type"));
 		this.pathSc123 = Arrays.asList(link12 ,res2 , link23); 
@@ -223,34 +221,70 @@ public class SharedRiskGroupTest
 		assertEquals(srgL13.getAvailability() , 1.0/3.0 , 0.0001);
 	}
 
-//	@Test
-//	public void testSetAsDown() {
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemoveLink() {
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemoveNode() {
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemove() {
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testAddLink() {
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testAddNode() {
-//		fail("Not yet implemented");
-//	}
+	@Test
+	public void testSetAsDown() 
+	{
+		srgL13.setAsDown();
+		assertTrue(link13.isDown());
+		assertTrue(!link12.isDown());
+		assertTrue(!link23.isDown());
+		assertTrue(!n1.isDown());
+		assertTrue(!n2.isDown());
+		assertTrue(!n3.isDown());
+		link13.setFailureState(true);
+		srgN1L23.setAsDown();
+		assertTrue(!link13.isDown());
+		assertTrue(!link12.isDown());
+		assertTrue(link23.isDown());
+		assertTrue(n1.isDown());
+		assertTrue(!n2.isDown());
+		assertTrue(!n3.isDown());
+	}
+
+	@Test
+	public void testRemoveLink() 
+	{
+		srgL13.removeLink(link12);
+		assertEquals(srgL13.getLinksAllLayers() , new HashSet<Link> (Arrays.asList(link13)));
+		srgL13.removeLink(link13);
+		assertEquals(srgL13.getLinksAllLayers() , new HashSet<Link> (Arrays.asList()));
+	}
+
+	@Test
+	public void testRemoveNode() 
+	{
+		srgL13.removeNode(n1);
+		assertEquals(srgL13.getNodes() , new HashSet<Node> (Arrays.asList()));
+		assertEquals(srgN1L23.getNodes() , new HashSet<Node> (Arrays.asList(n1)));
+		srgN1L23.removeNode(n1);
+		assertEquals(srgN1L23.getNodes() , new HashSet<Node> (Arrays.asList()));
+	}
+
+	@Test
+	public void testRemove() 
+	{
+		assertEquals(np.getSRGs() , Arrays.asList(srgL13 , srgN1L23));
+		srgL13.remove();
+		assertEquals(np.getSRGs() , Arrays.asList(srgN1L23));
+	}
+
+	@Test
+	public void testAddLink() 
+	{
+		srgL13.addLink(link13);
+		assertEquals(srgL13.getLinksAllLayers() , new HashSet<Link> (Arrays.asList(link13)));
+		srgL13.addLink(link23);
+		assertEquals(srgL13.getLinksAllLayers() , new HashSet<Link> (Arrays.asList(link13 , link23)));
+	}
+
+	@Test
+	public void testAddNode() 
+	{
+		assertEquals(srgN1L23.getNodes() , new HashSet<Node> (Arrays.asList(n1)));
+		srgN1L23.addNode(n1);
+		assertEquals(srgN1L23.getNodes() , new HashSet<Node> (Arrays.asList(n1)));
+		srgN1L23.addNode(n2);
+		assertEquals(srgN1L23.getNodes() , new HashSet<Node> (Arrays.asList(n1 , n2)));
+	}
 
 }
