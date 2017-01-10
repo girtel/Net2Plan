@@ -503,15 +503,25 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                     String [] headers = StringUtils.arrayOf("Base Resource","Is Base Resource","Capacity");
                     TableModel tm = new ClassAwareTableModelImpl(data,headers);
                     AdvancedJTable table = new AdvancedJTable(tm);
-                    Object[][] newData = new Object[netPlan.getResources().size() - 1][headers.length];
+                    int baseResCounter = 0;
+                    for(Resource r : netPlan.getResources())
+                    {
+                        if(r.getHostNode().toString().equals(hostNode.toString()))
+                        {
+                            baseResCounter++;
+                        }
+                    }
+                    Object[][] newData = new Object[baseResCounter][headers.length];
                     int counter = 0;
                     for(Resource r : netPlan.getResources())
                     {
-                        newData[counter][0] = r.getName();
-                        newData[counter][1] = false;
-                        newData[counter][2] = 0;
-                        addCheckboxCellEditor(false,counter,1,table);
-                        counter++;
+                        if(r.getHostNode().toString().equals(hostNode.toString())) {
+                            newData[counter][0] = r.getName();
+                            newData[counter][1] = false;
+                            newData[counter][2] = 0;
+                            addCheckboxCellEditor(false, counter, 1, table);
+                            counter++;
+                        }
                     }
                     panel.setLayout(new BorderLayout());
                     panel.add(new JLabel("Set new resource base resources"),BorderLayout.NORTH);
@@ -571,8 +581,8 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                             return;
                         }
                         JPanel pane = new JPanel();
-                        Object [][] data = {null,null,null};
-                        String [] headers = StringUtils.arrayOf("Base Resource","Index","Capacity");
+                        Object [][] data = {null,null};
+                        String [] headers = StringUtils.arrayOf("Base Resource","Capacity");
                         TableModel tm = new ClassAwareTableModelImpl(data,headers);
                         AdvancedJTable table = new AdvancedJTable(tm);
                         Object[][] newData = new Object[baseResources.size()][headers.length];
@@ -580,7 +590,6 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                         for(Resource r : baseResources)
                         {
                             newData[counter][0] = r.getName();
-                            newData[counter][1] = r.getIndex();
                             newData[counter][2] = res.getCapacityOccupiedInBaseResource(r);
                             counter++;
                         }
@@ -674,7 +683,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex)
         {
-            if(columnIndex == 2 || columnIndex == 3) return true;
+            if(columnIndex == 1 || columnIndex == 2) return true;
             return false;
         }
 
