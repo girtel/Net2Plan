@@ -62,7 +62,6 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -810,7 +809,6 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
             final int E = links.size();
             Map<Link, Double> linkCostMap = new HashMap<Link, Double>();
             List<Route> addedRoutes = new LinkedList<Route>();
-            List<ProtectionSegment> addedProtectionSegments = new LinkedList<ProtectionSegment>();
             for (Link link : netPlan.getLinks())
             {
                 linkCostMap.put(link, isMinHops ? 1 : link.getLengthInKm());
@@ -873,7 +871,6 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
             } catch (Exception ex) {
                 ex.printStackTrace();
                 for (Route r : addedRoutes) r.remove();
-                for (ProtectionSegment s : addedProtectionSegments) s.remove();
                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error adding routes and/or protection segments");
             }
             networkViewer.updateNetPlanView();
@@ -887,19 +884,19 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         final NetPlan netPlan = networkViewer.getDesign();
 
         if (itemId != null) {
-            JMenuItem viewEditProtectionSegments = new JMenuItem("View/edit backup segment list");
-            viewEditProtectionSegments.addActionListener(new ActionListener() {
+            JMenuItem viewEditBackupRoutes = new JMenuItem("View/edit backup routes");
+            viewEditBackupRoutes.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     try {
                         viewEditBackupRoutesGUI(networkViewer, networkViewer.getTopologyPanel(), (long) itemId);
                     } catch (Throwable ex) {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error viewing/editing backup segment list");
+                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error viewing/editing backup routes");
                     }
                 }
             });
 
-            options.add(viewEditProtectionSegments);
+            options.add(viewEditBackupRoutes);
         }
 
 
