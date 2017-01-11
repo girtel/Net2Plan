@@ -144,6 +144,26 @@ public class Demand extends NetworkElement
 	}
 
 	/**
+	 * <p>Returns the routes associated to this demand, but only those that are have themselves a backup route.</p>
+	 * <p><b>Important</b>: If network layer routing type is not {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, an exception is thrown.</p>
+	 * @return The set of routes
+	 * */
+	public Set<Route> getRoutesHaveBackup ()
+	{
+		return getRoutes ().stream().filter(e -> e.hasBackupRoutes()).collect(Collectors.toSet());
+	}
+
+	/**
+	 * <p>Returns the routes associated to this demand, but only those that have no backup route themselves.</p>
+	 * <p><b>Important</b>: If network layer routing type is not {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, an exception is thrown.</p>
+	 * @return The set of routes
+	 * */
+	public Set<Route> getRoutesHaveNoBackup ()
+	{
+		return getRoutes ().stream().filter(e -> !e.hasBackupRoutes()).collect(Collectors.toSet());
+	}
+
+	/**
 	 * <p>Returns the routes associated to this demand, but only those that are not a backup route.</p>
 	 * <p><b>Important</b>: If network layer routing type is not {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, an exception is thrown.</p>
 	 * @return The set of routes

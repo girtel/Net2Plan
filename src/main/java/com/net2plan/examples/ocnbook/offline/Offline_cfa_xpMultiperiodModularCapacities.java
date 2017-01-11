@@ -174,7 +174,7 @@ public class Offline_cfa_xpMultiperiodModularCapacities implements IAlgorithm
 			thisNp.saveToFile(new File (rootOfNameOfOutputFiles.getString() + "_res_tm" + netPlanFiles.size () + ".n2p"));
 			if (t == 0) netPlan.assignFrom (thisNp);
 			if (thisNp.getVectorLinkOversubscribedTraffic().zSum () > PRECISION_FACTOR) throw new RuntimeException ("Bad: " + thisNp.getVectorLinkOversubscribedTraffic().zSum ());
-			if (thisNp.getDemandTotalBlockedTraffic() > PRECISION_FACTOR) throw new RuntimeException ("Bad: " + thisNp.getDemandTotalBlockedTraffic());
+			if (thisNp.getVectorDemandBlockedTraffic().zSum() > PRECISION_FACTOR) throw new RuntimeException ("Bad: " + thisNp.getVectorDemandBlockedTraffic().zSum());
 		}
 
 		return "Ok!: The solution found is guaranteed to be optimal: " + op.solutionIsOptimal() + ". Total cost = " + op.parseExpression("sum (c_kt .* sum(a_ket,2))").evaluate("a_ket" , new DoubleMatrixND (a_ket));

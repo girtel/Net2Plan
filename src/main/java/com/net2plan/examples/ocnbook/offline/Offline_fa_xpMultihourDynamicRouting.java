@@ -177,7 +177,7 @@ public class Offline_fa_xpMultihourDynamicRouting implements IAlgorithm
 			thisNp.saveToFile(new File (rootOfNameOfOutputFiles.getString() + "_res_tm" + netPlanFiles.size () + ".n2p"));
 			if (t == 0) netPlan.assignFrom (thisNp);
 			if (thisNp.getVectorLinkOversubscribedTraffic().zSum () > PRECISION_FACTOR) throw new RuntimeException ("Bad: " + thisNp.getVectorLinkOversubscribedTraffic().zSum ());
-			if (thisNp.getDemandTotalBlockedTraffic() > PRECISION_FACTOR) throw new RuntimeException ("Bad: " + thisNp.getDemandTotalBlockedTraffic());
+			if (thisNp.getVectorDemandBlockedTraffic().zSum() > PRECISION_FACTOR) throw new RuntimeException ("Bad: " + thisNp.getVectorDemandBlockedTraffic().zSum());
 		}
 
 		DoubleMatrix2D reroutedTraffic_pt = xx_pt.zMult (P_ttminus1 , null).assign (h_pt,  DoubleFunctions.mult).assign (DoubleFunctions.abs);

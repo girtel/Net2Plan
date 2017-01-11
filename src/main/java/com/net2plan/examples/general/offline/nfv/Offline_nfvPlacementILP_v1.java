@@ -2,6 +2,7 @@ package com.net2plan.examples.general.offline.nfv;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -146,10 +147,7 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 		for (Demand d : netPlan.getDemands())
 		{
 			for (List<NetworkElement> path : cpl.get(d))
-			{
-				Map<Resource,Double> traversedResourcesZeroOccupation = path.stream().filter(e -> e instanceof Resource).collect(Collectors.toMap(e -> (Resource) e , e -> 0.0));
-				netPlan.addServiceChain(d, 0, 0, path, traversedResourcesZeroOccupation, null);
-			}
+				netPlan.addServiceChain(d, 0, Collections.nCopies(path.size() , 0.0), path, null);
 		}
 		final int P = netPlan.getNumberOfRoutes(); 
 	
@@ -216,8 +214,7 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 		for (Route r : netPlan.getRoutes())
 		{
 			final double carriedTrafficAndOccupiedLinkCapacity = xx_p.get(r.getIndex()) * r.getDemand().getOfferedTraffic();
-			Map<Resource,Double> occupationMap = r.getCurrentResourcesTraversed().stream().collect(Collectors.toMap(e->e, e->r.getNumberOfTimesResourceIsTraversed(e) * carriedTrafficAndOccupiedLinkCapacity));
-			r.setCarriedTrafficAndResourcesOccupationInformation(carriedTrafficAndOccupiedLinkCapacity, carriedTrafficAndOccupiedLinkCapacity, occupationMap);
+			r.setCarriedTraffic(carriedTrafficAndOccupiedLinkCapacity, carriedTrafficAndOccupiedLinkCapacity);
 		}
 
 		for (Node n : netPlan.getNodes())

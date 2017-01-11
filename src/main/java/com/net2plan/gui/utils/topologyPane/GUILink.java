@@ -194,7 +194,7 @@ public class GUILink {
      * @since 0.2.0
      */
     public String getLabel() {
-        return String.format("%.2f", npLink.getUtilizationIncludingProtectionSegments());
+        return String.format("%.2f", npLink.getUtilization());
     }
 
     /**

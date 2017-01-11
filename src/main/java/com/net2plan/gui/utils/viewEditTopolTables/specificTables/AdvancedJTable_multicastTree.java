@@ -92,7 +92,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
             MulticastDemand demand = tree.getMulticastDemand();
             double maxUtilization = 0;
             for (Link e : tree.getLinkSet())
-                maxUtilization = Math.max(maxUtilization, e.getOccupiedCapacityIncludingProtectionSegments() / e.getCapacity());
+                maxUtilization = Math.max(maxUtilization, e.getOccupiedCapacity() / e.getCapacity());
             Node ingressNode = tree.getIngressNode();
             Set<Node> egressNodes = tree.getEgressNodes();
             String ingressNodeName = ingressNode.getName();
@@ -132,7 +132,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
                 demand = tree.getMulticastDemand();
                 maxUtilization = 0;
                 for (Link e : tree.getLinkSet())
-                    maxUtilization = Math.max(maxUtilization, e.getOccupiedCapacityIncludingProtectionSegments() / e.getCapacity());
+                    maxUtilization = Math.max(maxUtilization, e.getOccupiedCapacity() / e.getCapacity());
                 ingressNode = tree.getIngressNode();
                 egressNodes = tree.getEgressNodes();
                 ingressNodeName = ingressNode.getName();

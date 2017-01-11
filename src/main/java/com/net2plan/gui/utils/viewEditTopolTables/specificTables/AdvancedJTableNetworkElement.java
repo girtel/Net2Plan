@@ -1159,7 +1159,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
         if (currentState.getRoutingType() == RoutingType.SOURCE_ROUTING && networkElementType.equals(NetworkElementType.FORWARDING_RULE))
             return;
-        if (currentState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING && (networkElementType.equals(NetworkElementType.ROUTE) || networkElementType.equals(NetworkElementType.PROTECTION_SEGMENT)))
+        if (currentState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING && (networkElementType.equals(NetworkElementType.ROUTE)))
             return;
         if (hasElements(currentState))
         {
@@ -1381,10 +1381,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             itemId = netPlan.getMulticastTrees().get(itemIndex).getId();
                             break;
 
-                        case PROTECTION_SEGMENT:
-                            itemId = netPlan.getProtectionSegments().get(itemIndex).getId();
-                            break;
-
                         case SRG:
                             itemId = netPlan.getSRGs().get(itemIndex).getId();
                             break;
@@ -1476,14 +1472,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                         case MULTICAST_TREE:
                         {
                             MulticastTree element = netPlan.getMulticastTrees().get(itemIndex);
-                            itemId = element.getId();
-                            attributeList = StringUtils.toArray(element.getAttributes().keySet());
-                        }
-                        break;
-
-                        case PROTECTION_SEGMENT:
-                        {
-                            ProtectionSegment element = netPlan.getProtectionSegments().get(itemIndex);
                             itemId = element.getId();
                             attributeList = StringUtils.toArray(element.getAttributes().keySet());
                         }
@@ -1593,11 +1581,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                                 case MULTICAST_TREE:
                                     for (MulticastTree element : netPlan.getMulticastTrees())
-                                        element.setAttribute(attribute, value);
-                                    break;
-
-                                case PROTECTION_SEGMENT:
-                                    for (ProtectionSegment element : netPlan.getProtectionSegments())
                                         element.setAttribute(attribute, value);
                                     break;
 
@@ -1717,13 +1700,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                                 break;
 
-                            case PROTECTION_SEGMENT:
-                                itemIds = netPlan.getProtectionSegmentIds();
-                                for (long segmentId : itemIds)
-                                    attributeSet.addAll(netPlan.getProtectionSegmentFromId(segmentId).getAttributes().keySet());
-
-                                break;
-
                             case SRG:
                                 itemIds = netPlan.getSRGIds();
                                 for (long srgId : itemIds)
@@ -1777,11 +1753,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             case MULTICAST_TREE:
                                 for (long treeId : itemIds)
                                     netPlan.getMulticastTreeFromId(treeId).removeAttribute(attributeToRemove);
-                                break;
-
-                            case PROTECTION_SEGMENT:
-                                for (long segmentId : itemIds)
-                                    netPlan.getProtectionSegmentFromId(segmentId).removeAttribute(attributeToRemove);
                                 break;
 
                             case SRG:
@@ -1859,12 +1830,6 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 Collection<Long> treeIds = netPlan.getMulticastTreeIds();
                                 for (long treeId : treeIds)
                                     netPlan.getMulticastTreeFromId(treeId).removeAllAttributes();
-                                break;
-
-                            case PROTECTION_SEGMENT:
-                                Collection<Long> segmentIds = netPlan.getProtectionSegmentIds();
-                                for (long segmentId : segmentIds)
-                                    netPlan.getProtectionSegmentFromId(segmentId).removeAllAttributes();
                                 break;
 
                             case SRG:

@@ -5,20 +5,24 @@ import java.awt.Component;
 import java.awt.LayoutManager;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseEvent;
 import java.util.EnumMap;
-import java.util.List;
 import java.util.Map;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JViewport;
+import javax.swing.RowFilter;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
-import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter.CurrentAndPlannedStateTableCellValue;
-import com.net2plan.gui.utils.topologyPane.TopologyPanel;
+import com.net2plan.gui.utils.FullScrollPaneLayout;
+import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
@@ -29,12 +33,9 @@ import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_multicastDemand;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_multicastTree;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_resource;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_route;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_segment;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_srg;
-import com.net2plan.gui.utils.FixedColumnDecorator;
-import com.net2plan.gui.utils.FullScrollPaneLayout;
-import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
@@ -66,11 +67,11 @@ public class ViewEditTopologyTablesPane extends JPanel
         netPlanViewTable.put(NetworkElementType.LINK, new AdvancedJTable_link(mainWindow));
         netPlanViewTable.put(NetworkElementType.DEMAND, new AdvancedJTable_demand(mainWindow));
         netPlanViewTable.put(NetworkElementType.ROUTE, new AdvancedJTable_route(mainWindow));
-        netPlanViewTable.put(NetworkElementType.PROTECTION_SEGMENT, new AdvancedJTable_segment(mainWindow));
         netPlanViewTable.put(NetworkElementType.FORWARDING_RULE, new AdvancedJTable_forwardingRule(mainWindow));
         netPlanViewTable.put(NetworkElementType.MULTICAST_DEMAND, new AdvancedJTable_multicastDemand(mainWindow));
         netPlanViewTable.put(NetworkElementType.MULTICAST_TREE, new AdvancedJTable_multicastTree(mainWindow));
         netPlanViewTable.put(NetworkElementType.SRG, new AdvancedJTable_srg(mainWindow));
+        netPlanViewTable.put(NetworkElementType.RESOURCE, new AdvancedJTable_resource(mainWindow));
         netPlanViewTable.put(NetworkElementType.LAYER, new AdvancedJTable_layer(mainWindow));
 
         netPlanView = new JTabbedPane();
@@ -138,11 +139,11 @@ public class ViewEditTopologyTablesPane extends JPanel
         netPlanViewTable.put(NetworkElementType.LINK, new AdvancedJTable_link(mainWindow));
         netPlanViewTable.put(NetworkElementType.DEMAND, new AdvancedJTable_demand(mainWindow));
         netPlanViewTable.put(NetworkElementType.ROUTE, new AdvancedJTable_route(mainWindow));
-        netPlanViewTable.put(NetworkElementType.PROTECTION_SEGMENT, new AdvancedJTable_segment(mainWindow));
         netPlanViewTable.put(NetworkElementType.FORWARDING_RULE, new AdvancedJTable_forwardingRule(mainWindow));
         netPlanViewTable.put(NetworkElementType.MULTICAST_DEMAND, new AdvancedJTable_multicastDemand(mainWindow));
         netPlanViewTable.put(NetworkElementType.MULTICAST_TREE, new AdvancedJTable_multicastTree(mainWindow));
         netPlanViewTable.put(NetworkElementType.SRG, new AdvancedJTable_srg(mainWindow));
+        netPlanViewTable.put(NetworkElementType.RESOURCE, new AdvancedJTable_resource(mainWindow));
         netPlanViewTable.put(NetworkElementType.LAYER, new AdvancedJTable_layer(mainWindow));
 
         for (NetworkElementType elementType : Constants.NetworkElementType.values()) {
@@ -220,7 +221,7 @@ public class ViewEditTopologyTablesPane extends JPanel
         for (NetworkElementType elementType : Constants.NetworkElementType.values()) {
             if (routingType == RoutingType.SOURCE_ROUTING && elementType == NetworkElementType.FORWARDING_RULE)
                 continue;
-            if (routingType == RoutingType.HOP_BY_HOP_ROUTING && (elementType == NetworkElementType.PROTECTION_SEGMENT || elementType == NetworkElementType.ROUTE))
+            if (routingType == RoutingType.HOP_BY_HOP_ROUTING && (elementType == NetworkElementType.ROUTE))
                 continue;
             netPlanView.addTab(elementType == NetworkElementType.NETWORK ? "Network" : netPlanViewTable.get(elementType).getTabName(), netPlanViewTableComponent.get(elementType));
         }

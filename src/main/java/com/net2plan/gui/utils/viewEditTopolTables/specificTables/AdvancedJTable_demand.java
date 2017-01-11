@@ -12,26 +12,47 @@
 
 package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.DefaultCellEditor;
+import javax.swing.DefaultRowSorter;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
+import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
-import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -41,7 +62,6 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
-import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.StringUtils;
 
@@ -59,18 +79,36 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
     private static final int COLUMN_OFFEREDTRAFFIC = 5;
     private static final int COLUMN_CARRIEDTRAFFIC = 6;
     private static final int COLUMN_LOSTTRAFFIC = 7;
-    private static final int COLUMN_ROUTINGCYCLES = 8;
-    private static final int COLUMN_BIFURCATED = 9;
-    private static final int COLUMN_NUMROUTES = 10;
-    private static final int COLUMN_MAXE2ELATENCY = 11;
-    private static final int COLUMN_ATTRIBUTES = 12;
+    private static final int COLUMN_ISSERVICECHAIN = 8;
+    private static final int COLUMN_TRAVERSEDRESOURCESTYPES = 9;
+    private static final int COLUMN_ROUTINGCYCLES = 10;
+    private static final int COLUMN_BIFURCATED = 11;
+    private static final int COLUMN_NUMROUTES = 12;
+    private static final int COLUMN_MAXE2ELATENCY = 13;
+    private static final int COLUMN_ATTRIBUTES = 14;
     private static final String netPlanViewTabName = "Demands";
-    private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Ingress node", "Egress node", "Coupled to link",
-            "Offered traffic", "Carried traffic", "% Lost traffic", "Routing cycles", "Bifurcated", "# Routes", "Max e2e latency (ms)", "Attributes");
-    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Ingress node", "Egress node", "Indicates the coupled upper layer link, if any, or empty", "Offered traffic by the demand", "Carried traffic by routes carrying traffic from the demand", "Percentage of lost traffic from the offered", "Indicates whether there are routing cycles: loopless (no cycle in some route), open cycles (traffic reaches egress node after some cycles in some route), closed cycles (traffic does not reach the egress node in some route)", "Indicates whether the demand has more than one associated route carrying traffic", "Number of associated routes", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", "Demand-specific attributes");
+    private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", 
+    		"Ingress node", "Egress node", "Coupled to link",
+            "Offered traffic", "Carried traffic", "% Lost traffic", 
+            "Is Service Chain","Service types","Routing cycles", "Bifurcated", 
+            "# Routes (#BU)", "Max e2e latency (ms)", "Attributes");
+    private static final String[] netPlanViewTableTips = StringUtils.arrayOf(
+    		"Unique identifier (never repeated in the same netPlan object, never changes, long)", 
+    		"Index (consecutive integer starting in zero)", 
+    		"Ingress node", 
+    		"Egress node", 
+    		"Indicates the coupled upper layer link, if any, or empty", 
+    		"Offered traffic by the demand", 
+    		"Carried traffic by routes carrying traffic from the demand", 
+    		"Percentage of lost traffic from the offered",
+    		"Is Service Chain","Service Types", 
+    		"Indicates whether there are routing cycles: loopless (no cycle in some route), open cycles (traffic reaches egress node after some cycles in some route), closed cycles (traffic does not reach the egress node in some route)", 
+    		"Indicates whether the demand has more than one associated route", 
+    		"Number of associated routes (in parenthesis, the number out of them that are designated as backup routes)", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", "Demand-specific attributes");
 
     private NetPlan currentTopology = null;
     private List<Demand> currentDemands = new LinkedList<>();
+    private final String[] resourceTypes = StringUtils.arrayOf("Firewall","NAT","CPU","RAM");
     /**
      * Default constructor.
      *
@@ -100,6 +138,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
 
     public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
         List<Object[]> allDemandData = new LinkedList<Object[]>();
+        int counter = 0;
         for (Demand demand : currentState.getDemands()) {
             Set<Route> routes_thisDemand = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING ? demand.getRoutes() : new LinkedHashSet<Route>();
             Link coupledLink = demand.getCoupledLink();
@@ -116,11 +155,13 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
             demandData[5] = h_d;
             demandData[6] = demand.getCarriedTraffic();
             demandData[7] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d;
-            demandData[8] = demand.getRoutingCycleType();
-            demandData[9] = currentState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
-            demandData[10] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(routes_thisDemand), ",") + ")";
-            demandData[11] = demand.getWorseCasePropagationTimeInMs();
-            demandData[12] = StringUtils.mapToString(demand.getAttributes());
+            demandData[8] = demand.isServiceChainRequest();
+            demandData[9] = joinTraversedResourcesTypes(demand);
+            demandData[10] = demand.getRoutingCycleType();
+            demandData[11] = currentState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
+            demandData[12] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + routes_thisDemand.stream().filter(e->e.isBackupRoute()).count() + ")";
+            demandData[13] = demand.getWorseCasePropagationTimeInMs();
+            demandData[14] = StringUtils.mapToString(demand.getAttributes());
 
             for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
             {
@@ -148,11 +189,13 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                 demandData_initialNetPlan[5] = h_d;
                 demandData_initialNetPlan[6] = demand.getCarriedTraffic();
                 demandData_initialNetPlan[7] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d;
-                demandData_initialNetPlan[8] = demand.getRoutingCycleType();
-                demandData_initialNetPlan[9] = initialState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
-                demandData_initialNetPlan[10] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(routes_thisDemand), ",") + ")";
-                demandData_initialNetPlan[11] = demand.getWorseCasePropagationTimeInMs();
-                demandData_initialNetPlan[12] = StringUtils.mapToString(demand.getAttributes());
+                demandData_initialNetPlan[8] = demand.isServiceChainRequest();
+                demandData_initialNetPlan[9] = joinTraversedResourcesTypes(demand);
+                demandData_initialNetPlan[10] = demand.getRoutingCycleType();
+                demandData_initialNetPlan[11] = initialState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
+                demandData_initialNetPlan[12] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + routes_thisDemand.stream().filter(e->e.isBackupRoute()).count() + ")";
+                demandData_initialNetPlan[13] = demand.getWorseCasePropagationTimeInMs();
+                demandData_initialNetPlan[14] = StringUtils.mapToString(demand.getAttributes());
 
                 for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
                 {
@@ -270,17 +313,17 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
         setDefaultRenderer(String.class, new CellRenderers.NonEditableCellRenderer());
 
 
-        setDefaultRenderer(Boolean.class, new CellRenderers.LostTrafficCellRenderer(COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Double.class, new CellRenderers.LostTrafficCellRenderer(COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Object.class, new CellRenderers.LostTrafficCellRenderer(COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Float.class, new CellRenderers.LostTrafficCellRenderer(COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Long.class, new CellRenderers.LostTrafficCellRenderer(COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Integer.class, new CellRenderers.LostTrafficCellRenderer(COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(String.class, new CellRenderers.LostTrafficCellRenderer(COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Boolean.class, new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(Boolean.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Double.class, new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(Double.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Object.class, new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(Object.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Float.class, new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(Float.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Long.class, new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(Long.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Integer.class, new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(Integer.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(String.class, new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(String.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
     }
 
     private void setSpecificCellRenderers() {
-        getColumnModel().getColumn(this.convertColumnIndexToView(COLUMN_LOSTTRAFFIC)).setCellRenderer(new CellRenderers.LostTrafficCellRenderer(COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        getColumnModel().getColumn(this.convertColumnIndexToView(COLUMN_LOSTTRAFFIC)).setCellRenderer(new CellRenderers.LostTrafficCellRenderer(null, COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
     }
 
     public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
@@ -625,6 +668,81 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
         });
         options.add(scaleOfferedTrafficToAll);
 
+        JMenuItem setServiceTypes = new JMenuItem("Set traversed resource types");
+        setServiceTypes.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                NetPlan netPlan = networkViewer.getDesign();
+                try {
+                    Demand d = netPlan.getDemandFromId((Long)itemId);
+                    String [] headers = StringUtils.arrayOf("Position/Priority","Type");
+                    Object [][] data = {null, null};
+                    DefaultTableModel model = new ClassAwareTableModelImpl(data, headers);
+                    AdvancedJTable table = new AdvancedJTable(model);
+                    JButton addRow = new JButton("Add new traversed resource type");
+                    addRow.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            Object [] newRow = {table.getRowCount(),resourceTypes[0]};
+                            ((DefaultTableModel)table.getModel()).addRow(newRow);
+                            addComboCellEditor(resourceTypes,table.getRowCount() - 1,1, table);
+                        }
+                    });
+                    JButton removeRow = new JButton("Remove last traversed resource type");
+                    removeRow.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            int lastRow = table.getRowCount() - 1;
+                            ((DefaultTableModel)table.getModel()).removeRow(lastRow);
+                        }
+                    });
+                    JButton removeAllRows = new JButton("Remove all traversed resource types");
+                    removeAllRows.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            while(table.getRowCount() > 0)
+                                ((DefaultTableModel)table.getModel()).removeRow(0);
+                        }
+                    });
+                    List<String> oldTraversedResourceTypes = d.getServiceChainSequenceOfTraversedResourceTypes();
+                    Object [][] newData = new Object[oldTraversedResourceTypes.size()][headers.length];
+                    for(int i = 0; i < oldTraversedResourceTypes.size(); i++)
+                    {
+                        newData[i][0] = i;
+                        newData[i][1] = oldTraversedResourceTypes.get(i);
+                        addComboCellEditor(resourceTypes,i,1, table);
+                    }
+                ((DefaultTableModel)table.getModel()).setDataVector(newData, headers);
+                    JPanel pane = new JPanel();
+                    JPanel pane2 = new JPanel();
+                    pane.setLayout(new BorderLayout());
+                    pane2.setLayout(new BorderLayout());
+                    pane.add(new JScrollPane(table),BorderLayout.CENTER);
+                    pane2.add(addRow,BorderLayout.WEST);
+                    pane2.add(removeRow,BorderLayout.EAST);
+                    pane2.add(removeAllRows, BorderLayout.SOUTH);
+                    pane.add(pane2,BorderLayout.SOUTH);
+                    while (true) {
+                        int result = JOptionPane.showConfirmDialog(null, pane, "Set traversed resource types", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if (result != JOptionPane.OK_OPTION) return;
+                        List<String> newTraversedResourcesTypes = new LinkedList<>();
+                        for(int j = 0; j < table.getRowCount(); j++)
+                        {
+                            String travResourceType = table.getModel().getValueAt(j,1).toString();
+                            newTraversedResourcesTypes.add(travResourceType);
+                        }
+                        d.setServiceChainSequenceOfTraversedResourceTypes(newTraversedResourcesTypes);
+                        networkViewer.updateNetPlanView();
+                        break;
+                    }
+                } catch (Throwable ex) {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set traversed resource types");
+                }
+            }
+
+        });
+        options.add(setServiceTypes);
         if (itemId != null && netPlan.isMultilayer()) {
             final long demandId = (long) itemId;
             if (netPlan.getDemandFromId(demandId).isCoupled()) {
@@ -836,10 +954,60 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
 
             }
         }
+
         return options;
     }
 
     private List<JComponent> getForcedOptions() {
         return new LinkedList<JComponent>();
     }
+
+    private String joinTraversedResourcesTypes(Demand d)
+    {
+        List<String> trt = d.getServiceChainSequenceOfTraversedResourceTypes();
+        String t = "";
+        int counter = 0;
+        for(String s : trt)
+        {
+            if(counter == trt.size() - 1)
+                t = t + s;
+            else
+                t = t + s+", ";
+
+            counter++;
+
+        }
+
+        return t;
+    }
+
+    private void addComboCellEditor(String[] options, int rowIndex, int columnIndex, AdvancedJTable table)
+    {
+        JComboBox comboBox = new JComboBox();
+        for (String option : options) comboBox.addItem(option);
+        table.setCellEditor(rowIndex, columnIndex, new DefaultCellEditor(comboBox));
+    }
+
+    private class ClassAwareTableModelImpl extends ClassAwareTableModel
+    {
+        public ClassAwareTableModelImpl(Object[][] dataVector, Object[] columnIdentifiers)
+        {
+            super(dataVector, columnIdentifiers);
+        }
+
+        @Override
+        public boolean isCellEditable(int rowIndex, int columnIndex)
+        {
+            if(columnIndex == 1) return true;
+            return false;
+        }
+
+        @Override
+        public void setValueAt(Object value, int row, int column)
+        {
+            super.setValueAt(value, row, column);
+
+        }
+    }
+
 }

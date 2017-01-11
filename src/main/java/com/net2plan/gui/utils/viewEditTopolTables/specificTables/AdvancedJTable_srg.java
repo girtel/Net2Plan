@@ -18,6 +18,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.DefaultRowSorter;
 import javax.swing.JCheckBox;
@@ -70,8 +71,8 @@ import net.miginfocom.swing.MigLayout;
 public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
     private static final String netPlanViewTabName = "Shared-risk groups";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "MTTF (hours)", "MTTR (hours)", "Availability",
-            "Nodes", "Links", "Links (other layers)", "# Affected routes", "# Affected protection segments", "# Affected multicast trees", "Attributes");
-    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Mean time to fail", "Mean time to repair", "Expected availability", "Nodes included into the shared-risk group", "Links (in this layer) included into the shared-risk group", "Links (in other layers) included into the shared-risk group", "# Affected routes", "# Affected protection segments", "# Affected multicast trees", "Attributes");
+            "Nodes", "Links", "Links (other layers)", "# Affected routes", "# Affected backup routes", "# Affected multicast trees", "Attributes");
+    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Mean time to fail", "Mean time to repair", "Expected availability", "Nodes included into the shared-risk group", "Links (in this layer) included into the shared-risk group", "Links (in other layers) included into the shared-risk group", "# Affected routes (primary or backup)", "# Affected routes that are designated as backup routes", "# Affected multicast trees", "Attributes");
     private static final int COLUMN_ID = 0;
     private static final int COLUMN_INDEX = 1;
     private static final int COLUMN_MTTF = 2;
@@ -81,7 +82,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
     private static final int COLUMN_LINKS = 6;
     private static final int COLUMN_LINKSOTHERLAYERS = 7;
     private static final int COLUMN_AFFECTEDROUTES = 8;
-    private static final int COLUMN_AFFECTEDSEGMENTS = 9;
+    private static final int COLUMN_AFFECTEDBACKUPROUTES = 9;
     private static final int COLUMN_AFFECTEDTREES = 10;
     private static final int COLUMN_ATTRIBUTES = 11;
     private static int MAXNUMDECIMALSINAVAILABILITY = 7;
@@ -110,7 +111,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
         List<Object[]> allSRGData = new LinkedList<Object[]>();
         for (SharedRiskGroup srg : currentState.getSRGs()) {
             Set<Route> routeIds_thisSRG = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING ? srg.getAffectedRoutes(layer) : new LinkedHashSet<Route>();
-            Set<ProtectionSegment> segmentIds_thisSRG = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING ? srg.getAffectedProtectionSegments(layer) : new LinkedHashSet<ProtectionSegment>();
+            Set<Route> segmentIds_thisSRG = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING ? srg.getAffectedRoutes(layer).stream().filter(e->e.isBackupRoute()).collect(Collectors.toSet()) : new LinkedHashSet<Route>();
             Set<MulticastTree> treeIds_thisSRG = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING ? srg.getAffectedMulticastTrees(layer) : new LinkedHashSet<MulticastTree>();
             int numRoutes = routeIds_thisSRG.size();
             int numSegments = segmentIds_thisSRG.size();
@@ -146,7 +147,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
                 layer = initialState.getNetworkLayerDefault();
                 srg = initialState.getSRGFromId(srg.getId());
                 routeIds_thisSRG = initialState.getRoutingType() == RoutingType.SOURCE_ROUTING ? srg.getAffectedRoutes(layer) : new LinkedHashSet<Route>();
-                segmentIds_thisSRG = initialState.getRoutingType() == RoutingType.SOURCE_ROUTING ? srg.getAffectedProtectionSegments(layer) : new LinkedHashSet<ProtectionSegment>();
+                segmentIds_thisSRG = initialState.getRoutingType() == RoutingType.SOURCE_ROUTING ? srg.getAffectedRoutes(layer).stream().filter(e->e.isBackupRoute()).collect(Collectors.toSet()) : new LinkedHashSet<Route>();
                 treeIds_thisSRG = initialState.getRoutingType() == RoutingType.SOURCE_ROUTING ? srg.getAffectedMulticastTrees(layer) : new LinkedHashSet<MulticastTree>();
                 numRoutes = routeIds_thisSRG.size();
                 numSegments = segmentIds_thisSRG.size();
@@ -304,7 +305,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
         if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
         else setAutoCreateRowSorter(true);
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_AFFECTEDROUTES, new AdvancedJTableNetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_AFFECTEDSEGMENTS, new AdvancedJTableNetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_AFFECTEDBACKUPROUTES, new AdvancedJTableNetworkElement.ColumnComparator());
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_AFFECTEDTREES, new AdvancedJTableNetworkElement.ColumnComparator());
     }
 

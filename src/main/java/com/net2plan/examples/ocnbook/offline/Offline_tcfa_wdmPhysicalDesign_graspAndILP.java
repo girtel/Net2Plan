@@ -271,7 +271,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		stat_costNodes = q.getThird();
 		stat_costCirc = q.getFourth();
 		stat_numLinks = (int) (netPlan.getVectorLinkCapacity().zSum () / (tcfa_linkCapacity_numCirc.getInt () * tcfa_circuitCapacity_Gbps.getDouble ())); 
-		stat_numCirc = (int) Math.round(netPlan.getDemandTotalCarriedTraffic() / tcfa_circuitCapacity_Gbps.getDouble ()); if (tcfa_recoveryType.getString ().equals("1+1")) stat_numCirc *=2; 
+		stat_numCirc = (int) Math.round(netPlan.getVectorDemandCarriedTraffic().zSum() / tcfa_circuitCapacity_Gbps.getDouble ()); if (tcfa_recoveryType.getString ().equals("1+1")) stat_numCirc *=2; 
 		for (Node n : netPlan.getNodes()) if (n.getOutgoingLinks().size() > 2) stat_numNodesDeg3 ++; else stat_numNodesDeg2 ++;
 		stat_totalTimeSecs = (System.nanoTime() - algorithmInitialtime)*1e-9;
 		checkSolution (netPlan);

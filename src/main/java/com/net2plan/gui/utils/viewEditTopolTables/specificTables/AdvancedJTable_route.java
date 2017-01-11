@@ -1,25 +1,26 @@
-/*******************************************************************************
- * Copyright (c) 2015 Pablo Pavon Mariño.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- * <p>
- * Contributors:
- * Pablo Pavon Mariño - initial API and implementation
- ******************************************************************************/
 
 
 package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -48,19 +49,21 @@ import com.net2plan.gui.utils.ButtonColumn;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.CellRenderers.UnfocusableCellRenderer;
-import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.ProtectionSegment;
+import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -69,6 +72,8 @@ import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -83,19 +88,27 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
     private static final int COLUMN_DEMANDOFFEREDTRAFFIC = 5;
     private static final int COLUMN_CARRIEDTRAFFIC = 6;
     private static final int COLUMN_OCCUPIEDCAPACITY = 7;
-    private static final int COLUMN_SEQUENCEOFLINKS = 8;
+    private static final int COLUMN_SEQUENCEOFLINKSANDRESOURCES = 8;
     private static final int COLUMN_SEQUENCEOFNODES = 9;
     private static final int COLUMN_NUMHOPS = 10;
     private static final int COLUMN_LENGTH = 11;
     private static final int COLUMN_PROPDELAY = 12;
     public static final int COLUMN_BOTTLENECKUTILIZATION = 13;
-    private static final int COLUMN_BACKUPSEGMENTS = 14;
-    private static final int COLUMN_ATTRIBUTES = 15;
+    private static final int COLUMN_ISBACKUP = 14;
+    private static final int COLUMN_HASBACKUPROUTES = 15;
+    private static final int COLUMN_ATTRIBUTES = 16;
     private static final String netPlanViewTabName = "Routes";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Demand", "Ingress node", "Egress node",
-            "Demand offered traffic", "Carried traffic", "Occupied capacity", "Sequence of links", "Sequence of nodes", "Number of hops", "Length (km)",
-            "Propagation delay (ms)", "Bottleneck utilization", "Backup segments", "Attributes");
-    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Demand", "Ingress node", "Egress node", "Demand offered traffic", "Carried traffic", "Occupied capacity", "Sequence of links", "Sequence of nodes", "Number of hops", "Total route length", "Propagation delay (ms)", "Highest utilization among all traversed links", "Candidate protection segments for this route", "Route-specific attributes");
+            "Demand offered traffic", "Carried traffic", "Occupied capacity", "Sequence of links/resources", "Sequence of nodes", "Number of hops", "Length (km)",
+            "Propagation delay (ms)", "Bottleneck utilization", "Is backup?", "Has backup?" , "Attributes");
+    private static final String[] netPlanViewTableTips = StringUtils.arrayOf(
+    		"Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Demand", "Ingress node", "Egress node", "Demand offered traffic", 
+    		"Carried traffic", "Occupied capacity", "Sequence of indexes of the links (Lxx) and resources (Rxx) traversed", 
+    		"Sequence of nodes traversed, in parenthesis the indexes of the resources in each node", 
+    		"Number of hops", "Total route length", "Propagation delay (ms)", "Highest utilization among all traversed links", 
+    		"Indicates if this route is designated as a backup route, of other route for the same demand. If so, shows the index of the primary route that this route is backing up", 
+    		"Indicates if this route has backup routes. If so, their indexes are shown in parenthesis" , 
+    		"Route-specific attributes");
 
     private List<Route> currentRoutes = new LinkedList<>();
     private NetPlan currentTopology = null;
@@ -124,30 +137,32 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         for (Route route : currentState.getRoutes()) {
             Demand demand = route.getDemand();
             double maxUtilization = 0;
-            for (Link e : route.getSeqLinksRealPath())
-                maxUtilization = Math.max(maxUtilization, e.getOccupiedCapacityIncludingProtectionSegments() / e.getCapacity());
+            for (Link e : route.getSeqLinks())
+                maxUtilization = Math.max(maxUtilization, e.getOccupiedCapacity() / e.getCapacity());
             Node ingressNode = route.getDemand().getIngressNode();
             Node egressNode = route.getDemand().getEgressNode();
             String ingressNodeName = ingressNode.getName();
             String egressNodeName = egressNode.getName();
 
             Object[] routeData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
-            routeData[0] = route.getId();
-            routeData[1] = route.getIndex();
-            routeData[2] = demand.getIndex();
-            routeData[3] = ingressNode.getIndex() + (ingressNodeName.isEmpty() ? "" : " (" + ingressNodeName + ")");
-            routeData[4] = egressNode.getIndex() + (egressNodeName.isEmpty() ? "" : " (" + egressNodeName + ")");
-            routeData[5] = demand.getOfferedTraffic();
-            routeData[6] = route.getCarriedTraffic();
-            routeData[7] = route.getOccupiedCapacity();
-            routeData[8] = CollectionUtils.join(NetPlan.getIndexes(route.getSeqLinksRealPath()), " => ");
-            routeData[9] = CollectionUtils.join(NetPlan.getIndexes(route.getSeqNodesRealPath()), " => ");
-            routeData[10] = route.getNumberOfHops();
-            routeData[11] = route.getLengthInKm();
-            routeData[12] = route.getPropagationDelayInMiliseconds();
-            routeData[13] = maxUtilization;
-            routeData[14] = CollectionUtils.join(NetPlan.getIndexes(route.getPotentialBackupProtectionSegments()), ", ");
-            routeData[15] = StringUtils.mapToString(route.getAttributes());
+            
+            routeData[COLUMN_ID] = route.getId();
+            routeData[COLUMN_INDEX] = route.getIndex();
+            routeData[COLUMN_DEMAND] = demand.getIndex();
+            routeData[COLUMN_INGRESSNODE] = ingressNode.getIndex() + (ingressNodeName.isEmpty() ? "" : " (" + ingressNodeName + ")");
+            routeData[COLUMN_EGRESSNODE] = egressNode.getIndex() + (egressNodeName.isEmpty() ? "" : " (" + egressNodeName + ")");
+            routeData[COLUMN_DEMANDOFFEREDTRAFFIC] = demand.getOfferedTraffic();
+            routeData[COLUMN_CARRIEDTRAFFIC] = route.getCarriedTraffic();
+            routeData[COLUMN_OCCUPIEDCAPACITY] = getSequenceOccupiedCapacities (route);
+            routeData[COLUMN_SEQUENCEOFLINKSANDRESOURCES] = this.getSequenceLinkResourceIndexes (route);
+            routeData[COLUMN_SEQUENCEOFNODES] = getSequenceNodeIndexesWithResourceInfo (route);
+            routeData[COLUMN_NUMHOPS] = route.getNumberOfHops();
+            routeData[COLUMN_LENGTH] = route.getLengthInKm();
+            routeData[COLUMN_PROPDELAY] = route.getPropagationDelayInMiliseconds();
+            routeData[COLUMN_BOTTLENECKUTILIZATION] = maxUtilization;
+            routeData[COLUMN_ISBACKUP] = (route.isBackupRoute()? "yes (" + (CollectionUtils.join(NetPlan.getIndexes(route.getRoutesIAmBackup()) , ", ") ) +")" : "no");
+            routeData[COLUMN_HASBACKUPROUTES] = (route.hasBackupRoutes()? "yes (" + (CollectionUtils.join(NetPlan.getIndexes(route.getBackupRoutes()) , ", ") ) +")" : "no");
+            routeData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(route.getAttributes());
 
             for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
             {
@@ -163,30 +178,31 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                 route = initialState.getRouteFromId(route.getId());
                 demand = route.getDemand();
                 maxUtilization = 0;
-                for (Link e : route.getSeqLinksRealPath())
-                    maxUtilization = Math.max(maxUtilization, e.getOccupiedCapacityIncludingProtectionSegments() / e.getCapacity());
+                for (Link e : route.getSeqLinks())
+                    maxUtilization = Math.max(maxUtilization, e.getOccupiedCapacity() / e.getCapacity());
                 ingressNode = route.getDemand().getIngressNode();
                 egressNode = route.getDemand().getEgressNode();
                 ingressNodeName = ingressNode.getName();
                 egressNodeName = egressNode.getName();
 
                 Object[] routeData_initialNetPlan = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
-                routeData_initialNetPlan[0] = null;
-                routeData_initialNetPlan[1] = null;
-                routeData_initialNetPlan[2] = null;
-                routeData_initialNetPlan[3] = null;
-                routeData_initialNetPlan[4] = null;
-                routeData_initialNetPlan[5] = demand.getOfferedTraffic();
-                routeData_initialNetPlan[6] = route.getCarriedTraffic();
-                routeData_initialNetPlan[7] = route.getOccupiedCapacity();
-                routeData_initialNetPlan[8] = CollectionUtils.join(NetPlan.getIndexes(route.getSeqLinksRealPath()), " => ");
-                routeData_initialNetPlan[9] = CollectionUtils.join(NetPlan.getIndexes(route.getSeqNodesRealPath()), " => ");
-                routeData_initialNetPlan[10] = route.getNumberOfHops();
-                routeData_initialNetPlan[11] = route.getLengthInKm();
-                routeData_initialNetPlan[12] = route.getPropagationDelayInMiliseconds();
-                routeData_initialNetPlan[13] = maxUtilization;
-                routeData_initialNetPlan[14] = CollectionUtils.join(NetPlan.getIndexes(route.getPotentialBackupProtectionSegments()), ", ");
-                routeData_initialNetPlan[15] = StringUtils.mapToString(route.getAttributes());
+                routeData_initialNetPlan[COLUMN_ID] = null;
+                routeData_initialNetPlan[COLUMN_INDEX] = null;
+                routeData_initialNetPlan[COLUMN_DEMAND] = null;
+                routeData_initialNetPlan[COLUMN_INGRESSNODE] = null;
+                routeData_initialNetPlan[COLUMN_EGRESSNODE] = null;
+                routeData_initialNetPlan[COLUMN_DEMANDOFFEREDTRAFFIC] = demand.getOfferedTraffic();
+                routeData_initialNetPlan[COLUMN_CARRIEDTRAFFIC] = route.getCarriedTraffic();
+                routeData_initialNetPlan[COLUMN_OCCUPIEDCAPACITY] = getSequenceOccupiedCapacities (route);
+                routeData_initialNetPlan[COLUMN_SEQUENCEOFLINKSANDRESOURCES] = this.getSequenceLinkResourceIndexes (route);
+                routeData_initialNetPlan[COLUMN_SEQUENCEOFNODES] = getSequenceNodeIndexesWithResourceInfo (route);
+                routeData_initialNetPlan[COLUMN_NUMHOPS] = route.getNumberOfHops();
+                routeData_initialNetPlan[COLUMN_LENGTH] = route.getLengthInKm();
+                routeData_initialNetPlan[COLUMN_PROPDELAY] = route.getPropagationDelayInMiliseconds();
+                routeData_initialNetPlan[COLUMN_BOTTLENECKUTILIZATION] = maxUtilization;
+                routeData_initialNetPlan[COLUMN_ISBACKUP] = (route.isBackupRoute()? "yes (" + (CollectionUtils.join(NetPlan.getIndexes(route.getRoutesIAmBackup()) , ", ") ) +")" : "no");
+                routeData_initialNetPlan[COLUMN_HASBACKUPROUTES] = (route.hasBackupRoutes()? "yes (" + (CollectionUtils.join(NetPlan.getIndexes(route.getBackupRoutes()) , ", ") ) +")" : "no");
+                routeData_initialNetPlan[COLUMN_ATTRIBUTES] = StringUtils.mapToString(route.getAttributes());
 
                 for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
                 {
@@ -761,10 +777,10 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         List<JComponent> options = new LinkedList<JComponent>();
         NetPlan netPlan = networkViewer.getDesign();
 
-        final JMenuItem oneRoutePerDemandSPFHops = new JMenuItem("Add one route per demand, shortest path in hops");
+        final JMenuItem oneRoutePerDemandSPFHops = new JMenuItem("Add one route per demand, shortest path (Service chain) in hops");
         options.add(oneRoutePerDemandSPFHops);
         oneRoutePerDemandSPFHops.addActionListener(new RouteSPFActionListener(true, false));
-        final JMenuItem oneRoutePerDemandSPFKm = new JMenuItem("Add one route per demand, shortest path in km");
+        final JMenuItem oneRoutePerDemandSPFKm = new JMenuItem("Add one route per demand, shortest path (Service chain) in km");
         options.add(oneRoutePerDemandSPFKm);
         oneRoutePerDemandSPFKm.addActionListener(new RouteSPFActionListener(false, false));
         final JMenuItem oneRouteAndLinkDisjointSegmentPerDemandSPFHops = new JMenuItem("Add one route and 1+1 link disjoint protection per demand (minimize total num hops)");
@@ -795,23 +811,62 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
             Map<Link, Double> linkCostMap = new HashMap<Link, Double>();
             List<Route> addedRoutes = new LinkedList<Route>();
             List<ProtectionSegment> addedProtectionSegments = new LinkedList<ProtectionSegment>();
-            for (Link link : netPlan.getLinks()) linkCostMap.put(link, isMinHops ? 1 : link.getLengthInKm());
+            for (Link link : netPlan.getLinks())
+            {
+                linkCostMap.put(link, isMinHops ? 1 : link.getLengthInKm());
+            }
+            DoubleMatrix1D linkCostVector = null;
+            if(isMinHops)
+                linkCostVector = DoubleFactory1D.dense.make(netPlan.getLinks().size(),1.0);
+            else{
+                linkCostVector = netPlan.getVectorLinkLengthInKm();
+            }
+
             try {
                 for (Demand d : netPlan.getDemands()) {
-                    if (add11LinkDisjointSegment) {
-                        List<List<Link>> twoPaths = GraphUtils.getTwoLinkDisjointPaths(netPlan.getNodes(), netPlan.getLinks(), d.getIngressNode(), d.getEgressNode(), linkCostMap);
-                        if (twoPaths.size() != 2)
-                            throw new Net2PlanException("Cannot find two link disjoint paths for demand of index " + d.getIndex() + ". No route or protection segment is created");
-                        Route r = netPlan.addRoute(d, d.getOfferedTraffic(), d.getOfferedTraffic(), twoPaths.get(0), null);
-                        ProtectionSegment s = netPlan.addProtectionSegment(twoPaths.get(1), d.getOfferedTraffic(), null);
-                        r.addProtectionSegment(s);
-                        addedRoutes.add(r);
-                        addedProtectionSegments.add(s);
-                    } else {
-                        List<Link> seqLinks = GraphUtils.getShortestPath(netPlan.getNodes(), netPlan.getLinks(), d.getIngressNode(), d.getEgressNode(), linkCostMap);
-                        if (seqLinks.isEmpty())
+                    if (add11LinkDisjointSegment)
+                    {
+                    	if (d.isServiceChainRequest())
+                    	{
+                            List<NetworkElement> minCostServiceChain = GraphUtils.getMinimumCostServiceChain(netPlan.getLinks(), d.getIngressNode(), d.getEgressNode(), d.getServiceChainSequenceOfTraversedResourceTypes(), linkCostVector , null, -1,-1,-1 ).getFirst();
+                            if (minCostServiceChain.isEmpty()) throw new Net2PlanException("Cannot find a route for demand of index " + d.getIndex() + ". No route is created");
+                            DoubleMatrix1D linkCostModified = linkCostVector.copy();
+                            Map<Resource,Double> resourceCostModified = new HashMap<Resource,Double> ();
+                            for (NetworkElement ee : minCostServiceChain) 
+                            	if (ee instanceof Link) linkCostModified.set(ee.getIndex() , Double.MAX_VALUE);
+                            	else if (ee instanceof Resource) resourceCostModified.put((Resource) ee , Double.MAX_VALUE);
+                            List<NetworkElement> minCostServiceChain2 = 
+                            		GraphUtils.getMinimumCostServiceChain(netPlan.getLinks(), d.getIngressNode(), 
+                            				d.getEgressNode(), d.getServiceChainSequenceOfTraversedResourceTypes(), 
+                            				linkCostModified , resourceCostModified, -1,-1,-1 ).getFirst();
+                            if (minCostServiceChain2.isEmpty()) throw new Net2PlanException("Could not find two link and resource disjoint routes demand of index " + d.getIndex() + ". No route is created");
+                            final Route r = netPlan.addServiceChain(d, d.getOfferedTraffic(), 
+                            		Collections.nCopies(minCostServiceChain.size() , d.getOfferedTraffic()), minCostServiceChain, null);
+                            final Route s = netPlan.addServiceChain(d , 0 , 
+                            		Collections.nCopies(minCostServiceChain2.size() , d.getOfferedTraffic()) , minCostServiceChain2, null);
+                            r.addBackupRoute(s);
+                            addedRoutes.add(r);
+                            addedRoutes.add(s);
+                    	}
+                    	else
+                    	{
+                            List<List<Link>> twoPaths = GraphUtils.getTwoLinkDisjointPaths(netPlan.getNodes(), netPlan.getLinks(), d.getIngressNode(), d.getEgressNode(), linkCostMap);
+                            if (twoPaths.size() != 2)
+                                throw new Net2PlanException("There are no two link disjoint paths for demand of index " + d.getIndex() + ". No route or protection segment is created");
+                            final Route r = netPlan.addRoute(d, d.getOfferedTraffic(), d.getOfferedTraffic(), twoPaths.get(0), null);
+                            final Route s = netPlan.addRoute(d , 0 , d.getOfferedTraffic() , twoPaths.get(1), null);
+                            r.addBackupRoute(s);
+                            addedRoutes.add(r);
+                            addedRoutes.add(s);
+                    	}
+                    } else 
+                    {
+                        List<NetworkElement> minCostServiceChain = GraphUtils.getMinimumCostServiceChain(netPlan.getLinks(), d.getIngressNode(), d.getEgressNode(), d.getServiceChainSequenceOfTraversedResourceTypes(), linkCostVector , null, -1,-1,-1 ).getFirst();
+                        if (minCostServiceChain.isEmpty())
                             throw new Net2PlanException("Cannot find a route for demand of index " + d.getIndex() + ". No route is created");
-                        Route r = netPlan.addRoute(d, d.getOfferedTraffic(), d.getOfferedTraffic(), seqLinks, null);
+                        Route r = netPlan.addServiceChain(d, d.getOfferedTraffic(), 
+                        		Collections.nCopies(minCostServiceChain.size() , d.getOfferedTraffic()) , 
+                        		minCostServiceChain, null);
                         addedRoutes.add(r);
                     }
                 }
@@ -837,7 +892,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     try {
-                        viewEditBackupSegmentListGUI(networkViewer, networkViewer.getTopologyPanel(), (long) itemId);
+                        viewEditBackupRoutesGUI(networkViewer, networkViewer.getTopologyPanel(), (long) itemId);
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Error viewing/editing backup segment list");
                     }
@@ -851,33 +906,23 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         return options;
     }
 
-    private static void viewEditBackupSegmentListGUI(final INetworkCallback callback, final TopologyPanel topologyPanel, final long routeId) {
+    private static void viewEditBackupRoutesGUI(final INetworkCallback callback, final TopologyPanel topologyPanel, final long routeId) {
         final NetPlan netPlan = callback.getDesign();
         final Route route = netPlan.getRouteFromId(routeId);
+        if (route.isBackupRoute()) throw new Net2PlanException("A backup route cannot have backup routes itself.");
+        
+        Set<Route> candidateBackupRoutes = route.getDemand().getRoutesAreNotBackup();
+        List<Route> currentBackupRoutes = route.getBackupRoutes();
 
-        Set<Long> candidateSegmentIds = new HashSet<Long>();
-        Set<Long> currentSegmentIds = new HashSet<Long>();
+        final List<NetworkElement> seqLinksAndResources = route.getPath();
 
-        final Collection<Link> seqLinks = route.getSeqLinksAndProtectionSegments();
+        if (candidateBackupRoutes.isEmpty()) throw new Net2PlanException("No backup route can be applied to this route");
 
-        for (ProtectionSegment segment : netPlan.getProtectionSegments()) {
-            try {
-                /* Only considered a segment as candidate if it is mergeable to the current route */
-//				List<Long> seqLinks_thisSegment = netPlan.getProtectionSegmentSequenceOfLinks(segmentId);
-//				List<Long> mergedRoute = netPlan.getMergedPath(seqLinks, seqLinks_thisSegment); /* Not remove! It's used to check mergeability */
-                candidateSegmentIds.add(segment.getId());
-            } catch (Throwable e) {
-            }
-        }
+        candidateBackupRoutes.removeAll(currentBackupRoutes);
 
-        if (candidateSegmentIds.isEmpty()) throw new Net2PlanException("No segment can be applied to this route");
+        final JComboBox backupRouteSelector = new WiderJComboBox();
 
-        currentSegmentIds.addAll(NetPlan.getIds(route.getPotentialBackupProtectionSegments()));
-        candidateSegmentIds.removeAll(currentSegmentIds);
-
-        final JComboBox segmentSelector = new WiderJComboBox();
-
-        final DefaultTableModel model = new ClassAwareTableModel(new Object[1][6], new String[]{"Id", "Seq. links", "Seq. nodes", "Reserved capacity", "", ""}) {
+        final DefaultTableModel model = new ClassAwareTableModel(new Object[1][6], new String[]{"Id", "Seq. links/resources", "Seq. nodes", "Seq. occupied capacities", "", ""}) {
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return columnIndex == 4 || columnIndex == 5;
@@ -891,22 +936,21 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         addSegment_btn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Object selectedItem = segmentSelector.getSelectedItem();
-                long segmentId = (Long) ((StringLabeller) selectedItem).getObject();
-                ProtectionSegment segment = netPlan.getProtectionSegmentFromId(segmentId);
-                route.addProtectionSegment(segment);
+                Object selectedItem = backupRouteSelector.getSelectedItem();
+                long backupRouteId = (Long) ((StringLabeller) selectedItem).getObject();
+                Route backupRoute = netPlan.getRouteFromId(backupRouteId);
+                route.addBackupRoute(backupRoute);
                 callback.updateNetPlanView();
 
-                segmentSelector.removeItem(selectedItem);
-                if (segmentSelector.getItemCount() == 0) addSegment_pnl.setVisible(false);
-
-                Collection<Long> segmentSeqLinks = NetPlan.getIds(segment.getSeqLinks());
-                Collection<Long> segmentSeqNodes = NetPlan.getIds(segment.getSeqNodes());
-                double reservedCapacity = segment.getReservedCapacityForProtection();
+                backupRouteSelector.removeItem(selectedItem);
+                if (backupRouteSelector.getItemCount() == 0) addSegment_pnl.setVisible(false);
 
                 if (!table.isEnabled()) model.removeRow(0);
-                model.addRow(new Object[]{segmentId, CollectionUtils.join(segmentSeqLinks, " => "), CollectionUtils.join(segmentSeqNodes, " => "), reservedCapacity, "Remove", "View"});
-
+                model.addRow(new Object[]
+                		{backupRouteId, 
+                			getSequenceLinkResourceIndexes (backupRoute) , 
+                			getSequenceNodeIndexesWithResourceInfo(backupRoute), 
+                			getSequenceOccupiedCapacities(backupRoute), "Remove", "View"});
                 table.setEnabled(true);
             }
         });
@@ -915,18 +959,18 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         viewSegment_btn1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Object selectedItem = segmentSelector.getSelectedItem();
-                long segmentId = (Long) ((StringLabeller) selectedItem).getObject();
+                Object selectedItem = backupRouteSelector.getSelectedItem();
+                long backupRouteId = (Long) ((StringLabeller) selectedItem).getObject();
 
-                Collection<Link> segmentSeqLinks = netPlan.getProtectionSegmentFromId(segmentId).getSeqLinks();
+                List<NetworkElement> backupRoutePath = netPlan.getRouteFromId(backupRouteId).getPath();
                 Map<Link, Pair<Color, Boolean>> coloredLinks = new HashMap<Link, Pair<Color, Boolean>>();
-                for (Link thisLink : seqLinks) coloredLinks.put(thisLink, Pair.of(Color.BLUE, false));
-                for (Link thisLink : segmentSeqLinks) coloredLinks.put(thisLink, Pair.of(Color.ORANGE, false));
+                for (NetworkElement thisElement : seqLinksAndResources) if (thisElement instanceof Link) coloredLinks.put((Link)thisElement, Pair.of(Color.BLUE, false));
+                for (NetworkElement thisElement : backupRoutePath) if (thisElement instanceof Link) coloredLinks.put((Link)thisElement, Pair.of(Color.ORANGE, false));
                 topologyPanel.getCanvas().showAndPickNodesAndLinks(null, coloredLinks);
             }
         });
 
-        addSegment_pnl.add(segmentSelector, "growx, wmin 50");
+        addSegment_pnl.add(backupRouteSelector, "growx, wmin 50");
         addSegment_pnl.add(addSegment_btn);
         addSegment_pnl.add(viewSegment_btn1);
 
@@ -937,21 +981,17 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                     JTable table = (JTable) e.getSource();
                     int modelRow = Integer.parseInt(e.getActionCommand());
 
-                    long segmentId = (Long) table.getModel().getValueAt(modelRow, 0);
-                    ProtectionSegment segment = netPlan.getProtectionSegmentFromId(segmentId);
-                    netPlan.getRouteFromId(routeId).removeProtectionSegmentFromBackupSegmentList(segment);
+                    final long backupRouteId = (Long) table.getModel().getValueAt(modelRow, 0);
+                    final Route backupRoute = netPlan.getRouteFromId(backupRouteId);
+                    netPlan.getRouteFromId(routeId).removeBackupRoute(backupRoute);
                     callback.updateNetPlanView();
 
-                    Collection<Long> segmentSeqLinks = NetPlan.getIds(segment.getSeqLinks());
-                    Collection<Long> segmentSeqNodes = NetPlan.getIds(segment.getSeqNodes());
-                    double reservedCapacity = segment.getReservedCapacityForProtection();
+                    String segmentLabel = "Backup route id " + backupRouteId + 
+                    		": path = " + getSequenceLinkResourceIndexes(backupRoute) + 
+                    		", seq. nodes = " + getSequenceNodeIndexesWithResourceInfo(backupRoute) + 
+                    		", occupied capacity = " + getSequenceOccupiedCapacities(backupRoute);
 
-                    String segmentLabel = "Protection segment " + segmentId;
-                    segmentLabel += ": seq. links = " + CollectionUtils.join(segmentSeqLinks, " => ");
-                    segmentLabel += ", seq. nodes = " + CollectionUtils.join(segmentSeqNodes, " => ");
-                    segmentLabel += ", reserved capacity = " + reservedCapacity;
-
-                    segmentSelector.addItem(StringLabeller.of(segmentId, segmentLabel));
+                    backupRouteSelector.addItem(StringLabeller.of(backupRouteId, segmentLabel));
 
                     ((DefaultTableModel) table.getModel()).removeRow(modelRow);
 
@@ -973,11 +1013,11 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                     JTable table = (JTable) e.getSource();
                     int modelRow = Integer.parseInt(e.getActionCommand());
 
-                    long segmentId = (Long) table.getModel().getValueAt(modelRow, 0);
-                    Collection<Link> segmentSeqLinks = netPlan.getProtectionSegmentFromId(segmentId).getSeqLinks();
+                    final long backupRouteId = (Long) table.getModel().getValueAt(modelRow, 0);
+                    final Route backupRoute = netPlan.getRouteFromId(backupRouteId);
                     Map<Link, Pair<Color, Boolean>> coloredLinks = new HashMap<Link, Pair<Color, Boolean>>();
-                    for (Link thisLink : seqLinks) coloredLinks.put(thisLink, Pair.of(Color.BLUE, false));
-                    for (Link thisLink : segmentSeqLinks) coloredLinks.put(thisLink, Pair.of(Color.ORANGE, false));
+                    for (NetworkElement thisElement : seqLinksAndResources) if (thisElement instanceof Link) coloredLinks.put((Link)thisElement, Pair.of(Color.BLUE, false));
+                    for (NetworkElement thisElement : backupRoute.getPath()) if (thisElement instanceof Link) coloredLinks.put((Link)thisElement, Pair.of(Color.ORANGE, false));
                     topologyPanel.getCanvas().showAndPickNodesAndLinks(null, coloredLinks);
                 } catch (Throwable e1) {
                 }
@@ -996,35 +1036,29 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         dialog.add(addSegment_pnl, BorderLayout.NORTH);
         dialog.add(scrollPane, BorderLayout.CENTER);
 
-        for (long segmentId : candidateSegmentIds) {
-            ProtectionSegment segment = netPlan.getProtectionSegmentFromId(segmentId);
-            Collection<Long> segmentSeqLinks = NetPlan.getIds(segment.getSeqLinks());
-            Collection<Long> segmentSeqNodes = NetPlan.getIds(segment.getSeqNodes());
-            double reservedCapacity = segment.getReservedCapacityForProtection();
-
-            String segmentLabel = "Protection segment " + segmentId;
-            segmentLabel += ": seq. links = " + CollectionUtils.join(segmentSeqLinks, " => ");
-            segmentLabel += ", seq. nodes = " + CollectionUtils.join(segmentSeqNodes, " => ");
-            segmentLabel += ", reserved capacity = " + reservedCapacity;
-
-            segmentSelector.addItem(StringLabeller.of(segmentId, segmentLabel));
+        for (Route backupRoute : candidateBackupRoutes) 
+        {
+            String segmentLabel = "Backup route id " + backupRoute.getId() + 
+            		": path = " + getSequenceLinkResourceIndexes(backupRoute) + 
+            		", seq. nodes = " + getSequenceNodeIndexesWithResourceInfo(backupRoute) + 
+            		", occupied capacity = " + getSequenceOccupiedCapacities(backupRoute);
+            backupRouteSelector.addItem(StringLabeller.of(backupRoute, segmentLabel));
         }
 
-        if (segmentSelector.getItemCount() == 0) {
+        if (backupRouteSelector.getItemCount() == 0) {
             addSegment_pnl.setVisible(false);
         } else {
-            segmentSelector.setSelectedIndex(0);
+            backupRouteSelector.setSelectedIndex(0);
         }
 
-        if (!currentSegmentIds.isEmpty()) {
+        if (!currentBackupRoutes.isEmpty()) {
             model.removeRow(0);
 
-            for (long segmentId : currentSegmentIds) {
-                ProtectionSegment segment = netPlan.getProtectionSegmentFromId(segmentId);
-                Collection<Long> segmentSeqLinks = NetPlan.getIds(segment.getSeqLinks());
-                Collection<Long> segmentSeqNodes = NetPlan.getIds(segment.getSeqNodes());
-                double reservedCapacity = segment.getReservedCapacityForProtection();
-                model.addRow(new Object[]{segmentId, CollectionUtils.join(segmentSeqLinks, " => "), CollectionUtils.join(segmentSeqNodes, " => "), reservedCapacity, "Remove", "View"});
+            for (Route backupRoute : currentBackupRoutes)
+            {
+                model.addRow(new Object[]{backupRoute.getId(), 
+                		getSequenceLinkResourceIndexes(backupRoute) , getSequenceNodeIndexesWithResourceInfo (backupRoute) ,  
+                		getSequenceOccupiedCapacities (backupRoute) , "Remove", "View"});
             }
 
             table.setEnabled(true);
@@ -1039,8 +1073,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         table.setDefaultRenderer(String.class, new UnfocusableCellRenderer());
 
         double x_p = netPlan.getRouteFromId(routeId).getCarriedTraffic();
-        double y_p = netPlan.getRouteFromId(routeId).getOccupiedCapacity();
-        dialog.setTitle("View/edit backup segment list for route " + routeId + " (carried traffic = " + x_p + ", occupied capacity = " + y_p + ")");
+        dialog.setTitle("View/edit backup route list for route " + routeId + " (carried traffic = " + x_p + ", occupied capacity = " + getSequenceOccupiedCapacities(netPlan.getRouteFromId(routeId)) + ")");
         SwingUtils.configureCloseDialogOnEscape(dialog);
         dialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setSize(new Dimension(500, 300));
@@ -1053,5 +1086,33 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
 
     private List<JComponent> getForcedOptions() {
         return new LinkedList<JComponent>();
+    }
+    
+    private static String getSequenceLinkResourceIndexes (Route r)
+    {
+    	StringBuffer buf = new StringBuffer ();
+    	for (NetworkElement e : r.getPath())
+    		if (e instanceof Link) buf.append("L" + e.getIndex() + ",");
+    		else if (e instanceof Resource) buf.append("R" + e.getIndex() + ",");
+    	buf.setLength(buf.length()-1);
+    	return buf.toString();
+    }
+    private static String getSequenceNodeIndexesWithResourceInfo (Route r)
+    {
+    	StringBuffer buf = new StringBuffer ();
+    	buf.append("N" + r.getIngressNode().getIndex());
+    	for (NetworkElement e : r.getPath())
+    		if (e instanceof Link) buf.append("N" + ((Link) e).getDestinationNode().getIndex() + ",");
+    		else if (e instanceof Resource) buf.append("(R" + e.getIndex() + "),");
+    	buf.setLength(buf.length()-1);
+    	return buf.toString();
+    }
+    
+    private static String getSequenceOccupiedCapacities (Route r)
+    {
+    	if (r.isDown()) return "0";
+    	if (r.getSeqOccupiedCapacitiesIfNotFailing().equals(Collections.nCopies(r.getPath().size() , r.getOccupiedCapacity())))
+    		return ""+r.getOccupiedCapacity();
+    	return CollectionUtils.join(r.getSeqOccupiedCapacitiesIfNotFailing() , ", ");
     }
 }

@@ -180,7 +180,7 @@ public class CellRenderers {
             double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
 
             // In case both of them are not in red, paint only the correspondent column.
-            if (columnIndexModel == AdvancedJTable_link.COLUMN_UTILIZATION || columnIndexModel == AdvancedJTable_link.COLUMN_UTILIZATIONWOPROTECTION)
+            if (columnIndexModel == AdvancedJTable_link.COLUMN_UTILIZATION)
             {
                 double doubleValue = (Double) table.getModel().getValueAt(rowIndexModel, columnIndexModel);
                 if (DoubleUtils.isEqualWithinAbsoluteTolerance(doubleValue, 1, PRECISION_FACTOR))
@@ -195,13 +195,11 @@ public class CellRenderers {
             } else
             {
                 double utilizationValue = (Double) table.getModel().getValueAt(rowIndexModel, AdvancedJTable_link.COLUMN_UTILIZATION);
-                double protectionValue = (Double) table.getModel().getValueAt(rowIndexModel, AdvancedJTable_link.COLUMN_UTILIZATIONWOPROTECTION);
 
-                if (DoubleUtils.isEqualWithinAbsoluteTolerance(utilizationValue, 1, PRECISION_FACTOR) &&
-                        DoubleUtils.isEqualWithinAbsoluteTolerance(protectionValue, 1, PRECISION_FACTOR))
+                if (DoubleUtils.isEqualWithinAbsoluteTolerance(utilizationValue, 1, PRECISION_FACTOR))
                 {
                     c.setBackground(Color.ORANGE);
-                } else if (utilizationValue > 1 && protectionValue > 1)
+                } else if (utilizationValue > 1)
                 {
                     c.setBackground(Color.RED);
                 }
@@ -218,6 +216,7 @@ public class CellRenderers {
         private static final long serialVersionUID = 1L;
         private final int offeredTrafficColumnModelIndex;
         private final int lostTrafficColumnModelIndex;
+        private final TableCellRenderer tcr;
 
         /**
          * Default constructor.
@@ -225,17 +224,22 @@ public class CellRenderers {
          * @param offeredTrafficColumnModelIndex Column index (in model order) in which is found the offered traffic
          * @since 0.2.0
          */
-        public LostTrafficCellRenderer(int offeredTrafficColumnModelIndex, int lostTrafficColumnModelIndex) {
+        public LostTrafficCellRenderer(TableCellRenderer tcr, int offeredTrafficColumnModelIndex, int lostTrafficColumnModelIndex) {
             super();
 
+            this.tcr = tcr;
             this.offeredTrafficColumnModelIndex = offeredTrafficColumnModelIndex;
             this.lostTrafficColumnModelIndex = lostTrafficColumnModelIndex;
         }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
+            Component c = null;
+            if(tcr != null)
+                c = tcr.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            else{
+                c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            }
             if (!isSelected && value != null) {
                 int demandId = table.convertRowIndexToModel(row);
                 double lostTraffic = (Double) table.getModel().getValueAt(demandId, lostTrafficColumnModelIndex);
@@ -431,8 +435,8 @@ public class CellRenderers {
             if (initialNetPlan != null && initialNetPlan.getRouteFromId(routeId) != null) {
                 Route initialRoute = initialNetPlan.getRouteFromId(routeId);
                 Route currentRoute = currentNetPlan.getRouteFromId(routeId);
-                List<Long> currentSeqLinks = (List<Long>) NetPlan.getIds(currentRoute.getSeqLinksRealPath());
-                List<Long> initialSeqLinks = (List<Long>) NetPlan.getIds(initialRoute.getSeqLinksRealPath());
+                List<Long> currentSeqLinks = (List<Long>) NetPlan.getIds(currentRoute.getSeqLinks());
+                List<Long> initialSeqLinks = (List<Long>) NetPlan.getIds(initialRoute.getSeqLinks());
 
                 if (!currentSeqLinks.equals(initialSeqLinks))
                     c.setBackground(Color.YELLOW);
@@ -554,8 +558,8 @@ public class CellRenderers {
                     isDown = currentNetPlan.getMulticastTreeFromId((long) itemId).isDown();
                     break;
 
-                case PROTECTION_SEGMENT:
-                    isDown = currentNetPlan.getProtectionSegmentFromId((long) itemId).isDown();
+                case RESOURCE:
+                    isDown = currentNetPlan.getResourceFromId((long) itemId).getHostNode().isDown();
                     break;
 
                 case FORWARDING_RULE:

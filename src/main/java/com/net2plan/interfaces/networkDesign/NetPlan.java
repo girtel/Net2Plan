@@ -2647,7 +2647,7 @@ public class NetPlan extends NetworkElement
 			final Resource res = listRes.get(contRes);
 			for (Route rou : res.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet())
 				if (rou.layer.equals(layer))
-					delta_er.set (contRes , rou.index , rou.getNumberOfTimesResourceIsTraversed (res));
+					delta_er.set (contRes , rou.index , rou.getNumberOfTimesIsTraversed(res));
 		}
 		return Pair.of(listRes, delta_er);
 	}

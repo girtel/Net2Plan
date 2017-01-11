@@ -167,11 +167,11 @@ public class Constants
 		FORWARDING_RULE("forwarding rule"),
 		
 		/**
-		 * Protection segment type.
+		 * Resource type.
 		 * 
 		 * @since 0.3.0
 		 */
-		PROTECTION_SEGMENT("protection segment"),
+		RESOURCE ("resource"),
 		
 		/**
 		 * Shared-risk group type.

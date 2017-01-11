@@ -490,14 +490,14 @@ public class NetPlanTest
 	}
 
 
-	@Test
-	public void testAssignFrom()
-	{
-		NetPlan np2 = new NetPlan ();
-		np2.assignFrom(np);
-		assertTrue (np.isDeepCopy(np2));
-		assertTrue (np2.isDeepCopy(np));
-	}
+//	@Test
+//	public void testAssignFrom()
+//	{
+//		NetPlan np2 = new NetPlan ();
+//		np2.assignFrom(np);
+//		assertTrue (np.isDeepCopy(np2));
+//		assertTrue (np2.isDeepCopy(np));
+//	}
 //
 //	@Test
 //	public void testCopy()

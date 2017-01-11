@@ -357,7 +357,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         int MD = netPlan.getNumberOfMulticastDemands();
         int numSRGs = netPlan.getNumberOfSRGs();
         double U_e = netPlan.getVectorLinkCapacity().zSum();
-        double H_d = netPlan.getDemandTotalOfferedTraffic();
+        double H_d = netPlan.getVectorDemandOfferedTraffic().zSum();
         double u_e_avg = E == 0 ? 0 : U_e / E;
 
         int E_limitedCapacityLinks = 0;
@@ -407,7 +407,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
 
         boolean isTrafficSymmetric = GraphUtils.isWeightedBidirectional(netPlan.getNodes(), netPlan.getDemands(), netPlan.getVectorDemandOfferedTraffic());
         double averageNodePairOfferedTraffic = H_d == 0 ? 0 : H_d / (N * (N - 1));
-        double blockedTrafficPercentage = H_d == 0 ? 0 : 100 * (netPlan.getDemandTotalBlockedTraffic() / H_d);
+        double blockedTrafficPercentage = H_d == 0 ? 0 : 100 * (netPlan.getVectorDemandBlockedTraffic().zSum() / H_d);
 
         Map<String, Object> trafficData = new LinkedHashMap<String, Object>();
         trafficData.put("Number of UNICAST demands", D);
@@ -416,8 +416,8 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         trafficData.put("Blocked UNICAST traffic (%)", String.format("%.3f", blockedTrafficPercentage));
         trafficData.put("Symmetric offered UNICAST traffic?", isTrafficSymmetric ? "Yes" : "No");
         trafficData.put("Number of MULTICAST demands", MD);
-        trafficData.put("Offered MULTICAST traffic: total", String.format("%.3f", netPlan.getMulticastDemandTotalOfferedTraffic()));
-        trafficData.put("Blocked MULTICAST traffic (%)", String.format("%.3f", netPlan.getMulticastDemandTotalBlockedTraffic()));
+        trafficData.put("Offered MULTICAST traffic: total", String.format("%.3f", netPlan.getVectorMulticastDemandOfferedTraffic().zSum()));
+        trafficData.put("Blocked MULTICAST traffic (%)", String.format("%.3f", netPlan.getVectorMulticastDemandBlockedTraffic().zSum()));
 
         layerSummaryInfo.add(trafficData);
 

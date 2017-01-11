@@ -1062,10 +1062,9 @@ public class GraphUtils
 		return outNodeToKSCsMap.get(destinationNode);
 	}
 
-	/** Returns the K minimum cost service chains between two nodes (summing costs of links and resources traversed), traversing a given set of resource types, satisfying some user-defined constraints.
-	 * If only <i>n</i> shortest path are found (n&lt;K), those are returned. If none is found an empty list is returned. 
-	 * The subpaths (the set of links between two resources, or the first(last) resource and the origin (destination) node, are constrained to be loopless 
-	 * (the algorithm uses Yen's scheme for subpaths enumeration).
+	/** Returns the minimum cost service chain between two nodes (summing costs of links and resources traversed), traversing a given set of resource types, satisfying some user-defined constraints.
+	 * If none is found an empty list is returned, with cost equal to Double.MAX_VALUE. It makes so, calling to 
+	 * the method  {@link #getKMinimumCostServiceChains} with parameter {@code k = 1} (see more information in that method).
 	 * @param links The set of links which can be used for the chain
 	 * @param originNode The origin node of the chain
 	 * @param destinationNode The destination node of the chain (could be the same as the origin node)
@@ -1077,13 +1076,14 @@ public class GraphUtils
 	 * @param maxPropDelayInMsPerSubpath The propagation delay summing the links in each subpath. Service chains not satisfying this are not enumerated (negative number means no limit)
 	 * @return the (at most) K minimum cost service chains.
 	 */
-	public static List<Pair<List<NetworkElement>,Double>> getMinimumCostServiceChain(List<Link> links ,  
+	public static Pair<List<NetworkElement>,Double> getMinimumCostServiceChain(List<Link> links ,  
 			Node originNode, Node destinationNode, List<String> sequenceOfResourceTypesToTraverse , DoubleMatrix1D linkCost, Map<Resource,Double> resourceCost , 
 			double maxLengthInKmPerSubpath, int maxNumHopsPerSubpath, double maxPropDelayInMsPerSubpath)
 	{
-		return getKMinimumCostServiceChains(links ,  
+		List<Pair<List<NetworkElement>,Double>> res = getKMinimumCostServiceChains(links ,  
 				originNode, destinationNode, sequenceOfResourceTypesToTraverse , linkCost, resourceCost , 
 				1, Double.MAX_VALUE , maxLengthInKmPerSubpath, maxNumHopsPerSubpath, maxPropDelayInMsPerSubpath, null); 
+		return res.isEmpty()? Pair.of(new LinkedList<NetworkElement> () , Double.MAX_VALUE) : res.get(0);
 	}	
 	
 	/** Returns the shortest pair of link-disjoint paths, where each item represents a path. The number of returned items will be equal to the number of paths found: when empty, no path was found; when {@code size()} = 1, only one path was found; and when {@code size()} = 2, the link-disjoint paths were found. Internally it uses the Suurballe-Tarjan algorithm.

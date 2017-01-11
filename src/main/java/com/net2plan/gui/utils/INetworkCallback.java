@@ -240,14 +240,6 @@ public interface INetworkCallback
     public void showForwardingRule(Pair<Integer, Integer> demandLink);
 
     /**
-     * Shows the given protection segment.
-     *
-     * @param segment Protection segment identifier
-     * @since 0.3.0
-     */
-    public void showProtectionSegment(long segment);
-
-    /**
      * Shows the given route.
      *
      * @param route Route identifier

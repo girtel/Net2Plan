@@ -25,6 +25,7 @@ import com.net2plan.utils.Pair;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /** <p>This class contains a representation of a link. A link is characterized by its initial and end node, the network layer it belongs to, 
  * and its capacity, measured in the layer link capacity units. When the routing type at the link layer is {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, the link
@@ -249,6 +250,15 @@ public class Link extends NetworkElement
 	public double getCarriedTraffic()
 	{
 		return cache_carriedTraffic;
+	}
+	
+	
+	/** Returns the set of routes traversing the link that are designated as backup of other route
+	 * @return
+	 */
+	public Set<Route> getTraversingBackupRoutes ()
+	{
+		return getTraversingRoutes().stream ().filter(e->e.isBackupRoute()).collect(Collectors.toSet());
 	}
 	
 	/**

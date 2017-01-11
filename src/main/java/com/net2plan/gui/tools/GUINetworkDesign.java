@@ -12,13 +12,37 @@
 
 package com.net2plan.gui.tools;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableModel;
 
@@ -34,9 +58,9 @@ import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuild
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
-import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
 import com.net2plan.gui.utils.viewEditWindows.utils.WindowUtils;
+import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -46,7 +70,6 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -655,9 +678,9 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.FORWARDING_RULE).clearSelection();
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.LINK).clearSelection();
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.NODE).clearSelection();
-        viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.PROTECTION_SEGMENT).clearSelection();
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.MULTICAST_TREE).clearSelection();
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.SRG).clearSelection();
+        viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.RESOURCE).clearSelection();
     }
 
     public void showDemand(long demandId)
@@ -744,18 +767,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     }
 
     @Override
-    public void showProtectionSegment(long segmentId)
-    {
-        NetPlan netPlan = getDesign();
-        ProtectionSegment segment = netPlan.getProtectionSegmentFromId(segmentId);
-        selectNetPlanViewItem(segment.getLayer().getId(), NetworkElementType.PROTECTION_SEGMENT, segmentId);
-        Map<Link, Pair<Color, Boolean>> res = new HashMap<Link, Pair<Color, Boolean>>();
-        for (Link e : segment.getSeqLinks()) res.put(e, Pair.of(Color.YELLOW, false));
-        topologyPanel.getCanvas().showAndPickNodesAndLinks(null, res);
-        topologyPanel.getCanvas().refresh();
-    }
-
-    @Override
     public void showRoute(long routeId) // yellow segment link not used, orange segment link used, blue not segment link used. The same for initial state, in dashed
     {
         NetPlan netPlan = getDesign();
@@ -772,7 +783,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
             Route initialRoute = initialState.getRouteFromId(route.getId());
             if (initialRoute != null)
             {
-                for (ProtectionSegment s : initialRoute.getPotentialBackupProtectionSegments())
+                for (Route s : initialRoute.getBackupRoutes())
                     for (Link e : s.getSeqLinks())
                         if (netPlan.getLinkFromId(e.getId()) != null)
                         {
@@ -781,48 +792,29 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
                             selectedNodes.put(selectedLink.getDestinationNode(), Color.YELLOW);
                             coloredLinks.put(selectedLink, Pair.of(Color.YELLOW, true));
                         }
-                for (Link linkOrSegment : initialRoute.getSeqLinksAndProtectionSegments())
-                    if (linkOrSegment instanceof ProtectionSegment)
+                for (Link link : initialRoute.getSeqLinks())
+                	if (netPlan.getLinkFromId(link.getId()) != null)
                     {
-                        for (Link e : ((ProtectionSegment) linkOrSegment).getSeqLinks())
-                            if (netPlan.getLinkFromId(e.getId()) != null)
-                            {
-                                Link selectedLink = netPlan.getLinkFromId(e.getId());
-                                selectedNodes.put(selectedLink.getOriginNode(), Color.ORANGE);
-                                selectedNodes.put(selectedLink.getDestinationNode(), Color.ORANGE);
-                                coloredLinks.put(selectedLink, Pair.of(Color.ORANGE, true));
-                            }
-                    } else if (netPlan.getLinkFromId(linkOrSegment.getId()) != null)
-                    {
-                        Link selectedLink = netPlan.getLinkFromId(linkOrSegment.getId());
+                        Link selectedLink = netPlan.getLinkFromId(link.getId());
                         selectedNodes.put(selectedLink.getOriginNode(), Color.BLUE);
                         selectedNodes.put(selectedLink.getDestinationNode(), Color.BLUE);
                         coloredLinks.put(selectedLink, Pair.of(Color.BLUE, true));
                     }
             }
         }
-        for (ProtectionSegment s : route.getPotentialBackupProtectionSegments())
+        for (Route s : route.getBackupRoutes())
             for (Link e : s.getSeqLinks())
             {
                 selectedNodes.put(e.getOriginNode(), Color.YELLOW);
                 selectedNodes.put(e.getDestinationNode(), Color.YELLOW);
                 coloredLinks.put(e, Pair.of(Color.YELLOW, false));
             }
-        for (Link linkOrSegment : route.getSeqLinksAndProtectionSegments())
-            if (linkOrSegment instanceof ProtectionSegment)
-            {
-                for (Link e : ((ProtectionSegment) linkOrSegment).getSeqLinks())
-                {
-                    selectedNodes.put(e.getOriginNode(), Color.ORANGE);
-                    selectedNodes.put(e.getDestinationNode(), Color.ORANGE);
-                    coloredLinks.put(netPlan.getLinkFromId(e.getId()), Pair.of(Color.ORANGE, false));
-                }
-            } else
-            {
-                selectedNodes.put(linkOrSegment.getOriginNode(), Color.BLUE);
-                selectedNodes.put(linkOrSegment.getDestinationNode(), Color.BLUE);
-                coloredLinks.put(linkOrSegment, Pair.of(Color.BLUE, false));
-            }
+        for (Link linkOrSegment : route.getSeqLinks())
+        {
+            selectedNodes.put(linkOrSegment.getOriginNode(), Color.BLUE);
+            selectedNodes.put(linkOrSegment.getDestinationNode(), Color.BLUE);
+            coloredLinks.put(linkOrSegment, Pair.of(Color.BLUE, false));
+        }
 
         topologyPanel.getCanvas().showAndPickNodesAndLinks(selectedNodes, coloredLinks);
         topologyPanel.getCanvas().refresh();

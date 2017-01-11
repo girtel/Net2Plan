@@ -251,29 +251,24 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
         return multicastDemandTableModel;
     }
 
-    private void setDefaultCellRenderers(final INetworkCallback networkViewer) {
-        setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
-        setDefaultRenderer(Double.class, new NumberCellRenderer());
-        setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
-        setDefaultRenderer(Float.class, new NumberCellRenderer());
-        setDefaultRenderer(Long.class, new CellRenderers.NumberCellRenderer());
-        setDefaultRenderer(Integer.class, new CellRenderers.NumberCellRenderer());
-        setDefaultRenderer(String.class, new CellRenderers.NonEditableCellRenderer());
-
-        setDefaultRenderer(Boolean.class, new CellRenderers.LostTrafficCellRenderer(COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Double.class, new CellRenderers.LostTrafficCellRenderer(COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Object.class, new CellRenderers.LostTrafficCellRenderer(COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Float.class, new CellRenderers.LostTrafficCellRenderer(COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Long.class, new CellRenderers.LostTrafficCellRenderer(COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Integer.class, new CellRenderers.LostTrafficCellRenderer(COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(String.class, new CellRenderers.LostTrafficCellRenderer(COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+    private void setDefaultCellRenderers(final INetworkCallback networkViewer) 
+    {
+        setDefaultRenderer(Boolean.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.CheckBoxRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Double.class, new CellRenderers.LostTrafficCellRenderer(new NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Object.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.NonEditableCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Float.class, new CellRenderers.LostTrafficCellRenderer(new NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Long.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Integer.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(String.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.NonEditableCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
     }
 
-    private void setSpecificCellRenderers() {
-        getColumnModel().getColumn(this.convertColumnIndexToView(COLUMN_LOSTTRAFFIC)).setCellRenderer(new CellRenderers.LostTrafficCellRenderer(COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+    private void setSpecificCellRenderers() 
+    {
+        getColumnModel().getColumn(this.convertColumnIndexToView(COLUMN_LOSTTRAFFIC)).setCellRenderer(new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(Double.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
     }
 
-    public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
+    public void setColumnRowSorting(boolean allowShowInitialNetPlan) 
+    {
         if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
         else setAutoCreateRowSorter(true);
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INGRESSNODE, new AdvancedJTableNetworkElement.ColumnComparator());
@@ -281,7 +276,8 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMTREES, new AdvancedJTableNetworkElement.ColumnComparator());
     }
 
-    public int getNumFixedLeftColumnsInDecoration() {
+    public int getNumFixedLeftColumnsInDecoration() 
+    {
         return 2;
     }
 

@@ -43,9 +43,9 @@ import com.net2plan.utils.StringUtils;
 public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
     public static final String netPlanViewTabName = "Layers";
     public static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Name", "Routing type", "Number of links",
-            "Number of demands", "Number of multicast demands", "Number of routes", "Number of forwarding rules", "Number of protection segments",
+            "Number of demands", "Number of multicast demands", "Number of routes", "Number of forwarding rules", "Number of backup routes",
             "Number of multicast trees", "Description", "Link capacity units name", "Demand traffic units name", "Attributes");
-    public static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Name", "Routing type", "Number of links", "Number of demands", "Number of multicast demands", "Number of routes", "Number of forwarding rules", "Number of protection segments", "Number of multicast trees", "Description", "Link capacity units name", "Demand traffic units name", "Attributes");
+    public static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Name", "Routing type", "Number of links", "Number of demands", "Number of multicast demands", "Number of routes", "Number of forwarding rules", "Number of routes that are designated as backup of other route", "Number of multicast trees", "Description", "Link capacity units name", "Demand traffic units name", "Attributes");
     public static final int COLUMN_ID = 0;
     public static final int COLUMN_INDEX = 1;
     public static final int COLUMN_NAME = 2;
@@ -80,8 +80,8 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
         for (NetworkLayer auxLayer : currentState.getNetworkLayers()) {
             RoutingType routingType_thisLayer = currentState.getRoutingType(auxLayer);
             Object[] layerData = new Object[netPlanViewTableHeader.length];
-            layerData[0] = auxLayer.getId();
-            layerData[1] = auxLayer.getIndex();
+            layerData[COLUMN_ID] = auxLayer.getId();
+            layerData[COLUMN_INDEX] = auxLayer.getIndex();
             layerData[2] = auxLayer.getName();
             layerData[3] = currentState.getRoutingType(auxLayer);
             layerData[4] = currentState.getNumberOfLinks(auxLayer);
@@ -89,7 +89,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
             layerData[6] = currentState.getNumberOfMulticastDemands(auxLayer);
             layerData[7] = routingType_thisLayer == RoutingType.SOURCE_ROUTING ? currentState.getNumberOfRoutes(auxLayer) : 0;
             layerData[8] = routingType_thisLayer == RoutingType.HOP_BY_HOP_ROUTING ? currentState.getNumberOfForwardingRules(auxLayer) : 0;
-            layerData[9] = routingType_thisLayer == RoutingType.SOURCE_ROUTING ? currentState.getNumberOfProtectionSegments(auxLayer) : 0;
+            layerData[9] = routingType_thisLayer == RoutingType.SOURCE_ROUTING ? currentState.getRoutesAreBackup(auxLayer).size() : 0;
             layerData[10] = currentState.getNumberOfMulticastTrees(auxLayer);
             layerData[11] = auxLayer.getDescription();
             layerData[12] = currentState.getLinkCapacityUnitsName(auxLayer);
@@ -110,7 +110,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
                 layerData_initialNetPlan[6] = initialState.getNumberOfMulticastDemands(auxLayer);
                 layerData_initialNetPlan[7] = routingType_thisLayer_initialNetPlan == RoutingType.SOURCE_ROUTING ? initialState.getNumberOfRoutes(auxLayer) : 0;
                 layerData_initialNetPlan[8] = routingType_thisLayer_initialNetPlan == RoutingType.HOP_BY_HOP_ROUTING ? initialState.getNumberOfForwardingRules(auxLayer) : 0;
-                layerData_initialNetPlan[9] = routingType_thisLayer_initialNetPlan == RoutingType.SOURCE_ROUTING ? initialState.getNumberOfProtectionSegments(auxLayer) : 0;
+                layerData_initialNetPlan[9] = routingType_thisLayer_initialNetPlan == RoutingType.SOURCE_ROUTING ? initialState.getRoutesAreBackup(auxLayer).size() : 0;
                 layerData_initialNetPlan[10] = initialState.getNumberOfMulticastTrees(auxLayer);
                 layerData_initialNetPlan[11] = auxLayer.getDescription();
                 layerData_initialNetPlan[12] = initialState.getLinkCapacityUnitsName(auxLayer);

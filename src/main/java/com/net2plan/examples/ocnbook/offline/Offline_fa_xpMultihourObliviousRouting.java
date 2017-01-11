@@ -162,7 +162,7 @@ public class Offline_fa_xpMultihourObliviousRouting implements IAlgorithm
 			thisNp.saveToFile(new File (rootOfNameOfOutputFiles.getString() + "_res_tm" + netPlanFiles.size () + ".n2p"));
 			if (t == 0) netPlan.assignFrom (thisNp);
 			if (!thisNp.getLinksOversubscribed().isEmpty()) throw new RuntimeException ("Bad");
-			if (thisNp.getDemandTotalBlockedTraffic() > PRECISION_FACTOR) throw new RuntimeException ("Bad: " + thisNp.getDemandTotalBlockedTraffic());
+			if (thisNp.getVectorDemandBlockedTraffic().zSum() > PRECISION_FACTOR) throw new RuntimeException ("Bad: " + thisNp.getVectorDemandBlockedTraffic().zSum());
 		}
 
 		return "Ok!: The solution found is guaranteed to be optimal: " + op.solutionIsOptimal() + ". Number routes = " + netPlan.getNumberOfRoutes();
