@@ -359,7 +359,8 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                 popup.add(item);
         }
 
-        if (!isTableEmpty()) {
+        if (!isTableEmpty()) 
+        {
             if (networkViewer.isEditable()) {
                 if (row != -1) {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
@@ -423,7 +424,8 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                 popup.add(removeItemsOfAType);
                 JMenuItem removeItems = new JMenuItem("Remove all " + networkElementType + "s");
 
-                removeItems.addActionListener(new ActionListener() {
+                removeItems.addActionListener(new ActionListener() 
+                {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         NetPlan netPlan = networkViewer.getDesign();
@@ -611,21 +613,14 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
         });
         options.add(capacityInBaseResources);
 
-        JMenuItem capacityToAllBaseResources = new JMenuItem("Set equal capacity to base resources");
-        capacityToAllBaseResources.addActionListener(new ActionListener() {
+        JMenuItem setCapacityToAll = new JMenuItem("Set capacity to all (base resources occupation unchanged)");
+        setCapacityToAll.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 NetPlan netPlan = networkViewer.getDesign();
                 double cap;
-                Resource res = netPlan.getResourceFromId((Long)itemId);
-                Set<Resource> baseResources = res.getBaseResources();
-                if(baseResources.size() == 0)
-                {
-                    JOptionPane.showMessageDialog(null,"This resource hasn't any base resource");
-                    return;
-                }
                 while (true) {
-                    String str = JOptionPane.showInputDialog(null, "Capacity value", "Set capacity to all base resources", JOptionPane.QUESTION_MESSAGE);
+                    String str = JOptionPane.showInputDialog(null, "Capacity value", "Set capacity to all resources", JOptionPane.QUESTION_MESSAGE);
                     if (str == null) return;
 
                     try {
@@ -639,19 +634,47 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                 }
 
                 try {
-                    Map<Resource, Double> newBaseResourcesCapacities = new HashMap<>();
-                    for(Resource r : baseResources)
-                    {
-                        newBaseResourcesCapacities.put(r,cap);
-                    }
-                    res.setCapacity(res.getCapacity(),newBaseResourcesCapacities);
+                    for(Resource r : netPlan.getResources())
+                    		r.setCapacity(cap , null);
                     networkViewer.updateNetPlanView();
                 } catch (Throwable ex) {
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to base resources");
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to resources");
                 }
             }
         });
-        options.add(capacityToAllBaseResources);
+        options.add(setCapacityToAll);
+
+        JMenuItem setTraversingTimeToAll = new JMenuItem("Set processing time to all");
+        setTraversingTimeToAll.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                NetPlan netPlan = networkViewer.getDesign();
+                double procTime;
+                while (true) {
+                    String str = JOptionPane.showInputDialog(null, "Processing time in miliseconds value", "Set processing time in miliseconds to all resources", JOptionPane.QUESTION_MESSAGE);
+                    if (str == null) return;
+
+                    try {
+                        procTime = Double.parseDouble(str);
+                        if (procTime < 0) throw new RuntimeException();
+
+                        break;
+                    } catch (Throwable ex) {
+                        ErrorHandling.showErrorDialog("Please, introduce a non-negative number", "Error setting processing time");
+                    }
+                }
+
+                try {
+                    for(Resource r : netPlan.getResources())
+                    		r.setProcessingTimeToTraversingTrafficInMs(procTime);
+                    networkViewer.updateNetPlanView();
+                } catch (Throwable ex) {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set processing time to resources");
+                }
+            }
+        });
+        options.add(setTraversingTimeToAll);
+
         return options;
     }
 
