@@ -501,7 +501,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                     JPanel panel = new JPanel();
                     Object [][] data = {null,null,null};
                     String [] headers = StringUtils.arrayOf("Base Resource","Is Base Resource","Capacity");
-                    TableModel tm = new ClassAwareTableModelImpl(data,headers);
+                    TableModel tm = new ClassAwareTableModelImpl(data,headers,new HashSet<Integer>(Arrays.asList(1,2)));
                     AdvancedJTable table = new AdvancedJTable(tm);
                     int baseResCounter = 0;
                     for(Resource r : netPlan.getResources())
@@ -571,7 +571,8 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
 
                 NetPlan netPlan = networkViewer.getDesign();
 
-                    try {
+                    try 
+                    {
 
                         Resource res = netPlan.getResourceFromId((Long) itemId);
                         List<Resource> baseResources = new LinkedList<>(res.getBaseResources());
@@ -583,7 +584,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                         JPanel pane = new JPanel();
                         Object [][] data = {null,null,null};
                         String [] headers = StringUtils.arrayOf("Index","Type" , "Capacity");
-                        TableModel tm = new ClassAwareTableModelImpl(data,headers);
+                        TableModel tm = new ClassAwareTableModelImpl(data,headers,new HashSet<Integer>(Arrays.asList(2)));
                         AdvancedJTable table = new AdvancedJTable(tm);
                         Object[][] newData = new Object[baseResources.size()][headers.length];
                         int counter = 0;
@@ -594,14 +595,15 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                             newData[counter][2] = res.getCapacityOccupiedInBaseResource(r);
                             counter++;
                         }
-                        pane.add(new JLabel(res.toString()+" base resources"));
-                        pane.add(new JScrollPane(table));
+                        pane.setLayout(new BorderLayout());
+                        pane.add(new JLabel("Setting the occupied capacity in base resource of index: " + res.getIndex()) , BorderLayout.NORTH);
+                        pane.add(new JScrollPane(table) , BorderLayout.CENTER);
                         ((DefaultTableModel)table.getModel()).setDataVector(newData, headers);
                         int result = JOptionPane.showConfirmDialog(null, pane, "Set capacity to base resources", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                         if (result != JOptionPane.OK_OPTION) return;
                         Map<Resource,Double> newCapMap = new HashMap<> (); 
                         for (int t = 0 ; t < table.getRowCount() ; t ++)
-                        	newCapMap.put(baseResources.get(t) , (double) table.getModel().getValueAt(t,2));
+                        	newCapMap.put(baseResources.get(t) , Double.parseDouble((String) table.getModel().getValueAt(t,2)));
                         res.setCapacity(res.getCapacity() , newCapMap);
                         networkViewer.updateNetPlanView();
                     } catch (Throwable ex) {
@@ -690,10 +692,13 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
 
     private class ClassAwareTableModelImpl extends ClassAwareTableModel
     {
-        public ClassAwareTableModelImpl(Object[][] dataVector, Object[] columnIdentifiers)
+    	private final Set<Integer> editableColumns;
+        public ClassAwareTableModelImpl(Object[][] dataVector, Object[] columnIdentifiers , Set<Integer> editableColumns)
         {
             super(dataVector, columnIdentifiers);
+            this.editableColumns = editableColumns;
         }
+
 
         @Override
         public Class getColumnClass(int col)
@@ -704,8 +709,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex)
         {
-            if(columnIndex == 1 || columnIndex == 2) return true;
-            return false;
+            return (this.editableColumns.contains(columnIndex));
         }
 
         @Override
