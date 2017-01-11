@@ -38,6 +38,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -823,6 +824,23 @@ public class GraphUtils
 	//		return JUNGUtils.getCapacitatedShortestPath(graph, nev, originNodeId, destinationNodeId, capacityTransformer, capacityGoal);
 	//	}
 
+//	/** Receives a candidate path list indexed by demands, and converts it into a CPL indexed by node pairs. 
+//	 * If more than one demand exists with the same end node pairs, the paths used are the ones of the first found when iterating the input CPL 
+//	 * @param cpl thw input CPL
+//	 * @return
+//	 */
+//	public static Map<Pair<Node,Node>,List<List<NetworkElement>>> transformCPLToNodePairMap (Map<Demand,List<List<? extends NetworkElement>>> cpl)
+//	{
+//		Map<Pair<Node,Node>,List<List<NetworkElement>>> res = new HashMap<> ();
+//		for (Entry<Demand,List<List<? extends NetworkElement>>> entry : cpl.entrySet())
+//		{
+//			final Pair<Node,Node> pair = Pair.of(entry.getKey().getIngressNode() , entry.getKey().getEgressNode());
+//			if (res.containsKey(pair)) continue;
+//			res.put(pair , (List<List<NetworkElement>>) (List<?>) entry.getValue());
+//		}
+//		return res;
+//	}
+	
 	/** Obtains the sequence of links representing the (unidirectional) shortest path between two nodes.
 	 * 
 	 * @param nodes Collection of nodes
@@ -1426,7 +1444,7 @@ public class GraphUtils
 			/* If the problem is infeqasible, there are no more trees for this demand */
 			if (op.feasibleSolutionDoesNotExist())
 			{
-				System.out.println("*** K minimum cost multicast tree + BREAK when k = " + k);
+				//System.out.println("*** K minimum cost multicast tree + BREAK when k = " + k);
 				break;
 			}
 			if (!op.solutionIsFeasible()) throw new Net2PlanException("The multicast tree ILP in the candidate tree list ended without producing a feasible solution nor guaranteeing unfeasibility: increase the solver time?");

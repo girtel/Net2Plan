@@ -401,8 +401,8 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		/* Remove lower half demands from np */
 		np.removeAllRoutes(); 
 		for (Node n1 : np.getNodes()) for (Node n2 : np.getNodes()) if (n1.getIndex () > n2.getIndex ()) for (Demand d : np.getNodePairDemands(n1, n2,false)) d.remove ();
-		np.addRoutesFromCandidatePathList(null , "K" , "" + tcfa_maxNumberPathsPerDemand.getInt () , "maxLengthInKm" , "" + tcfa_maxPathLengthInKm.getDouble() ,  "maxNumHops" , "" + tcfa_maxPathNumberOfHops.getInt ());
-
+		np.addRoutesFromCandidatePathList(netPlan.computeUnicastCandidatePathList(null , tcfa_maxNumberPathsPerDemand.getInt(), tcfa_maxPathLengthInKm.getDouble(), tcfa_maxPathNumberOfHops.getInt(), -1, -1, -1, -1 , null));
+		
 		/* Add symmetric demands and routes */
 		Map<Demand,Demand> opposite_d = new HashMap<Demand,Demand> ();
 		Map<Route,Route> opposite_r = new HashMap<Route,Route> ();

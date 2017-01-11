@@ -177,7 +177,7 @@ public class Route extends NetworkElement
 	/**
 	 * <p>Adds an existing route backupRoute in the same demand, designating it as a backup of this route. 
 	 * For this to happen, this route cannot have backup routes itself, or an exception is thrown.</p>
-	 * @param path the backup route
+	 * @param backupRoute the backup route
 	 */
 	public void addBackupRoute (Route backupRoute)
 	{
@@ -193,8 +193,8 @@ public class Route extends NetworkElement
 	}
 
 	/**
-	 * <p>Removes the given backupRoute from the backupRoute list of this route
-	 * @param segment The route to remove as backup
+	 * <p>Removes the given backupRoute from the backupRoute list of this route</p>
+	 * @param backupRoute The route to remove as backup
 	 */
 	public void removeBackupRoute (Route backupRoute)
 	{
@@ -557,10 +557,12 @@ public class Route extends NetworkElement
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 	
-	/** Sets the new sequence of links and/or protection segments traversed by the route. If the route is a service chain,
-	 * an error is returned (other method should be used). If the new route traverses failing link or nodes, its current 
+	/** Sets the new sequence of links and/or resources traversed by the route, carried traffic, and occupied capacity in the traversed links/resources 
+	 * If the new route traverses failing link or nodes, its current 
 	 * carried traffic and occupied link capacities will be zero. If not, will be the base ones in the no failure state
-	 * @param cache_seqLinksAndProtectionSegments the new sequence of links and protection segments
+	 * @param newCarriedTraffic new amount of carried traffic
+	 * @param newPath the new sequence of links and resources 
+	 * @param newOccupationInformation the new link/resource occupation info
 	 */
 	public void setPath (double newCarriedTraffic , List<? extends NetworkElement> newPath , List<Double> newOccupationInformation)
 	{

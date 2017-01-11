@@ -131,7 +131,8 @@ public class Online_evProc_congestionControlPrimal extends IEventProcessor
 		/* Remove all routes, and create one with the shortest path in km for each demand */
 		currentNetPlan.removeAllUnicastRoutingInformation();
 		currentNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
-		currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.getVectorLinkLengthInKm().toArray()  , "K" , "1");
+		this.currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.computeUnicastCandidatePathList(currentNetPlan.getVectorLinkLengthInKm() , 1, -1, -1, -1, -1, -1, -1 , null));
+
 
 		this.control_isBarrierMethod = gradient_penaltyMethod.getString ().equals ("barrier");
 		this.control_epsilonOrMuFactor = control_isBarrierMethod? gradient_interiorPenaltyEpsilonFactor.getDouble() : gradient_exteriorPenaltyMuFactor.getDouble();

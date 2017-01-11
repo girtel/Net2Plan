@@ -178,7 +178,9 @@ public class Online_evProc_congControlAndQoSTwoClassesPrimalDecomp extends IEven
 		/* Remove all routes, and create one with the shortest path in km for each demand */
 		currentNetPlan.removeAllUnicastRoutingInformation();
 		currentNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
-		currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.getVectorLinkLengthInKm().toArray()  , "K" , "1");
+		this.currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.computeUnicastCandidatePathList(currentNetPlan.getVectorLinkLengthInKm() , 1, -1, -1, -1, -1, -1, -1 , null));
+
+		
 		for (Route r : currentNp.getRoutes ()) r.setCarriedTraffic(cc_control_minHd.getDouble() , cc_control_minHd.getDouble());
 		
 		/* INITIALIZE control information  */

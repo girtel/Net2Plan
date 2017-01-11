@@ -73,7 +73,8 @@ public class Offline_cba_wirelessCongControlTransmissionPowerAssignment implemen
 			for (Node n2 : netPlan.getNodes())
 				if (n1 != n2)
 					netPlan.addDemand(n1, n2, cc_minHd.getDouble(), null);
-		netPlan.addRoutesFromCandidatePathList(netPlan.getVectorLinkLengthInKm().toArray()  , "K" , "1");
+		netPlan.addRoutesFromCandidatePathList(netPlan.computeUnicastCandidatePathList(netPlan.getVectorLinkLengthInKm() , 1 , -1, -1, -1, -1, -1, -1, null)); // one route per demand, so P equals D
+		
 		
 		/* Initialize the gains between links, normalizing them so that the maximum gain is one */
 		DoubleMatrix2D mac_g_nu_ee = WirelessUtils.computeInterferenceMatrixNaturalUnits (netPlan.getLinks () , mac_interferenceAttenuationFactor_nu.getDouble() , mac_pathLossExponent.getDouble());

@@ -254,7 +254,7 @@ public class Link extends NetworkElement
 	
 	
 	/** Returns the set of routes traversing the link that are designated as backup of other route
-	 * @return
+	 * @return see above
 	 */
 	public Set<Route> getTraversingBackupRoutes ()
 	{

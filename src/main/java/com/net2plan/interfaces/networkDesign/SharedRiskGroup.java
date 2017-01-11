@@ -173,7 +173,7 @@ public class SharedRiskGroup extends NetworkElement
 	
 	/** Returns true if any element of the given collection of links, nodes and resources is affected by te SRG (fails if the SRG fails), false otherwise
 	 * @param col the collection
-	 * @return
+	 * @return see above
 	 */
 	public boolean affectsAnyOf (Collection<NetworkElement> col)
 	{

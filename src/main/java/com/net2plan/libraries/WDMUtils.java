@@ -460,7 +460,7 @@ public class WDMUtils
 		}
 
 		/** Returns true if the path in the RSA is down (traverses a node/link that is down)
-		 * @return
+		 * @return see above
 		 */
 		public boolean isDown () 
 		{
@@ -506,8 +506,8 @@ public class WDMUtils
 		}
 		
 		/** Returns true if this RSA has the same sequence of links, occupied slots and regenerators as the given RSA 
-		 * @param rsa
-		 * @return
+		 * @param rsa The RSA
+		 * @return see above
 		 */
 		public boolean equals (RSA rsa)
 		{
@@ -1074,7 +1074,6 @@ public class WDMUtils
 	 * @param lp the route object
 	 * @param rsa the RSA information
 	 * @param initializeThePrimaryRoute If {@code true}, we assume that the RSA corresponds to the primary path information in the {@code Route} object.
-	 * @param indexOfBackupRoute if initializeThePrimaryRoute is false, and this parameter is set, it is assumed that we fix the RSA of the backup path of the given index in the list of backup paths of the route 
 	 */
 	public static void setLightpathRSAAttributes (Route lp , RSA rsa , boolean initializeThePrimaryRoute)
 	{

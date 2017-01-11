@@ -12,6 +12,7 @@ package com.net2plan.examples.ocnbook.offline;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
@@ -22,8 +23,11 @@ import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.InputParameter;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
 /** 
@@ -63,7 +67,8 @@ public class Offline_ba_numFormulations implements IAlgorithm
 
 		/* Add all the k-shortest candidate routes to the netPlan object carrying no traffic */
 		final DoubleMatrix1D linkCostVector = shortestPathType.getString().equalsIgnoreCase("hops")? DoubleFactory1D.dense.make (E , 1.0) : netPlan.getVectorLinkLengthInKm();
-		netPlan.addRoutesFromCandidatePathList(linkCostVector.toArray() , "K", "1"); // one route per demand, so P equals D
+		
+		netPlan.addRoutesFromCandidatePathList(netPlan.computeUnicastCandidatePathList(linkCostVector , 1 , -1, -1, -1, -1, -1, -1, null)); // one route per demand, so P equals D
 		final int P = netPlan.getNumberOfRoutes(); 
 
 		/* Create the optimization problem object (JOM library) */

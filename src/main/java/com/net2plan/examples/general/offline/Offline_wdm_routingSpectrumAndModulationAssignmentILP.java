@@ -25,6 +25,7 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.libraries.WDMUtils;
@@ -175,9 +176,8 @@ public class Offline_wdm_routingSpectrumAndModulationAssignmentILP implements IA
 		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING , wdmLayer);
 
 		/* Compute the candidate path list of possible paths */
-		final Map<Demand,List<List<Link>>> cpl = netPlan.computeUnicastCandidatePathList(wdmLayer , 
-				netPlan.getVectorLinkLengthInKm(wdmLayer).toArray(), "K" , "" + k.getInt() , "maxLengthInKm" , ""+tpInfo.getMaxOpticalReachKm(), "maxPropDelayInMs" , "" + maxPropagationDelayMs.getDouble());
-		final Map<Demand,List<Pair<List<Link>,List<Link>>>> cpl11 = networkRecoveryType.getString().equals("1+1-srg-disjoint-lps")? NetPlan.computeUnicastCandidate11PathList(cpl,0) : null;
+		final Map<Pair<Node,Node>,List<List<Link>>> cpl = netPlan.computeUnicastCandidatePathList(netPlan.getVectorLinkLengthInKm(wdmLayer) , k.getInt(), tpInfo.getMaxOpticalReachKm() , -1, maxPropagationDelayMs.getDouble(), -1, -1, -1 , null , wdmLayer);
+		final Map<Pair<Node,Node>,List<Pair<List<Link>,List<Link>>>> cpl11 = networkRecoveryType.getString().equals("1+1-srg-disjoint-lps")? NetPlan.computeUnicastCandidate11PathList(cpl,0) : null;
 		
 		/* Compute the CPL, adding the routes */
 		/* 1+1 case: as many routes as 1+1 valid pairs (then, the same sequence of links can be in more than one Route). The route index and segment index are the same (1+1 pair index) */
@@ -198,9 +198,10 @@ public class Offline_wdm_routingSpectrumAndModulationAssignmentILP implements IA
 			boolean atLeastOnePathOrPathPair = false;
 			for (int t = 0 ; t < T ; t ++)
 			{
+				final Pair<Node,Node> nodePair = Pair.of(d.getIngressNode() , d.getEgressNode());
 				final double regeneratorCost = tpInfo.getRegeneratorCost(t);
 				final boolean isRegenerable = regeneratorCost >= 0;
-				for (Object sp : cpl11 != null? cpl11.get(d) : cpl.get(d))
+				for (Object sp : cpl11 != null? cpl11.get(nodePair) : cpl.get(nodePair))
 				{
 					List<Link> firstPath = (cpl11 == null)? ((List<Link>) sp) : ((Pair<List<Link>,List<Link>>) sp).getFirst(); 
 					List<Link> secondPath = (cpl11 == null)? null : ((Pair<List<Link>,List<Link>>) sp).getSecond (); 

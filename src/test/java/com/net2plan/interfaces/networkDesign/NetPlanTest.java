@@ -287,11 +287,18 @@ public class NetPlanTest
 	@Test
 	public void testComputeUnicastCandidatePathList()
 	{
-		Map<Demand,List<List<Link>>> cpl = netTriangle.computeUnicastCandidatePathList(null , "K" , "1");
+		int K = 1;
+		double maxLengthInKm = -1;
+		int maxNumHops = -1;
+		double maxPropDelayInMs = -1;
+		double maxRouteCost = -1; 
+		double maxRouteCostFactorRespectToShortestPath = -1;
+		double maxRouteCostRespectToShortestPath = -1;
+		Map<Pair<Node,Node>,List<List<Link>>> cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
 		for (Demand d : netTriangle.getDemands())
-			assertEquals(cpl.get(d) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
+			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
 
-		cpl = netTriangle.computeUnicastCandidatePathList(null , "K" , "2");
+		K=2; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
 		for (Demand d : netTriangle.getDemands())
 		{
 			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());  
@@ -300,9 +307,9 @@ public class NetPlanTest
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
 			final Link firstLink = netTriangle.getNodePairLinks(d.getIngressNode(),intermNode,false).iterator().next();
 			final Link secondLink = netTriangle.getNodePairLinks(intermNode , d.getEgressNode(),false).iterator().next();
-			assertEquals(cpl.get(d) , Arrays.asList(Arrays.asList(directLink) , Arrays.asList(firstLink,secondLink)));
+			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(directLink) , Arrays.asList(firstLink,secondLink)));
 		}
-		cpl = netTriangle.computeUnicastCandidatePathList(null , "K" , "3");
+		K=3; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
 		for (Demand d : netTriangle.getDemands())
 		{
 			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());  
@@ -311,32 +318,39 @@ public class NetPlanTest
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
 			final Link firstLink = netTriangle.getNodePairLinks(d.getIngressNode(),intermNode,false).iterator().next();
 			final Link secondLink = netTriangle.getNodePairLinks(intermNode , d.getEgressNode(),false).iterator().next();
-			assertEquals(cpl.get(d) , Arrays.asList(Arrays.asList(directLink) , Arrays.asList(firstLink,secondLink)));
+			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(directLink) , Arrays.asList(firstLink,secondLink)));
 		}
 
-		cpl = netTriangle.computeUnicastCandidatePathList(null , "K" , "3" , "maxLengthInKm" , "1");
+		K=3; maxLengthInKm = 1; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
+		maxLengthInKm = -1;
 		for (Demand d : netTriangle.getDemands())
-			assertEquals(cpl.get(d) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
-		cpl = netTriangle.computeUnicastCandidatePathList(null , "K" , "3" , "maxLengthInKm" , "0.5");
+			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
+		K=3; maxLengthInKm = 0.5; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
+		maxLengthInKm = -1;
 		for (Demand d : netTriangle.getDemands())
-			assertEquals(cpl.get(d) , Arrays.asList());
+			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList());
 		
-		cpl = netTriangle.computeUnicastCandidatePathList(null , "K" , "3" , "maxNumHops" , "1");
+		K=3; maxNumHops = 1; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
+		maxNumHops = -1; 
 		for (Demand d : netTriangle.getDemands())
-			assertEquals(cpl.get(d) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
+			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
 		
-		cpl = netTriangle.computeUnicastCandidatePathList(null , "K" , "3" , "maxPropDelayInMs" , "1000");
+		K=3; maxPropDelayInMs = 1000; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
+		maxPropDelayInMs = -1;
 		for (Demand d : netTriangle.getDemands())
-			assertEquals(cpl.get(d) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
+			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
 
-		cpl = netTriangle.computeUnicastCandidatePathList(null , "K" , "3" , "maxRouteCost" , "1");
+		K=3; maxRouteCost = 1; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
+		maxRouteCost = -1; 
 		for (Demand d : netTriangle.getDemands())
-			assertEquals(cpl.get(d) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
+			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
 
-		cpl = netTriangle.computeUnicastCandidatePathList(null , "K" , "3" , "maxRouteCostFactorRespectToShortestPath" , "0.1");
+		K=3; maxRouteCostFactorRespectToShortestPath = 0.1; cpl = cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
+		maxRouteCostFactorRespectToShortestPath = -1;
 		for (Demand d : netTriangle.getDemands())
-			assertEquals(cpl.get(d) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
-		cpl = netTriangle.computeUnicastCandidatePathList(null , "K" , "3" , "maxRouteCostFactorRespectToShortestPath" , "2");
+			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
+		K=3; maxRouteCostFactorRespectToShortestPath = 2; cpl = cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
+		maxRouteCostFactorRespectToShortestPath = -1;
 		for (Demand d : netTriangle.getDemands())
 		{
 			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());  
@@ -345,18 +359,26 @@ public class NetPlanTest
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
 			final Link firstLink = netTriangle.getNodePairLinks(d.getIngressNode(),intermNode,false).iterator().next();
 			final Link secondLink = netTriangle.getNodePairLinks(intermNode , d.getEgressNode(),false).iterator().next();
-			assertEquals(cpl.get(d) , Arrays.asList(Arrays.asList(directLink) , Arrays.asList(firstLink,secondLink)));
+			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(directLink) , Arrays.asList(firstLink,secondLink)));
 		}
-		cpl = netTriangle.computeUnicastCandidatePathList(null , "K" , "3" , "maxRouteCostRespectToShortestPath" , "0.1");
+		K=3; maxRouteCostRespectToShortestPath = 0.1; cpl = cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
+		maxRouteCostRespectToShortestPath = -1;
 		for (Demand d : netTriangle.getDemands())
-			assertEquals(cpl.get(d) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
+			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
 	}
 
 	@Test
 	public void testComputeUnicastCandidate11PathList()
 	{
-		Map<Demand,List<List<Link>>> cpl = netTriangle.computeUnicastCandidatePathList(null , "K" , "2");
-		Map<Demand,List<Pair<List<Link>,List<Link>>>> cpl11 = NetPlan.computeUnicastCandidate11PathList(cpl , 1);
+		int K = 2;
+		double maxLengthInKm = -1;
+		int maxNumHops = -1;
+		double maxPropDelayInMs = -1;
+		double maxRouteCost = -1; 
+		double maxRouteCostFactorRespectToShortestPath = -1;
+		double maxRouteCostRespectToShortestPath = -1;
+		Map<Pair<Node,Node>,List<List<Link>>> cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
+		Map<Pair<Node,Node>,List<Pair<List<Link>,List<Link>>>> cpl11 = NetPlan.computeUnicastCandidate11PathList(cpl , 1);
 		for (Demand d : netTriangle.getDemands())
 		{
 			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());  
@@ -365,7 +387,7 @@ public class NetPlanTest
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
 			final Link firstLink = netTriangle.getNodePairLinks(d.getIngressNode(),intermNode,false).iterator().next();
 			final Link secondLink = netTriangle.getNodePairLinks(intermNode , d.getEgressNode(),false).iterator().next();
-			assertEquals(cpl11.get(d) , Arrays.asList(Pair.of(Arrays.asList(directLink) , Arrays.asList(firstLink,secondLink))));
+			assertEquals(cpl11.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Pair.of(Arrays.asList(directLink) , Arrays.asList(firstLink,secondLink))));
 		}
 		cpl11 = NetPlan.computeUnicastCandidate11PathList(cpl , 2);
 		for (Demand d : netTriangle.getDemands())
@@ -376,12 +398,12 @@ public class NetPlanTest
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
 			final Link firstLink = netTriangle.getNodePairLinks(d.getIngressNode(),intermNode,false).iterator().next();
 			final Link secondLink = netTriangle.getNodePairLinks(intermNode , d.getEgressNode(),false).iterator().next();
-			assertEquals(cpl11.get(d) , Arrays.asList(Pair.of(Arrays.asList(directLink) , Arrays.asList(firstLink,secondLink))));
+			assertEquals(cpl11.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Pair.of(Arrays.asList(directLink) , Arrays.asList(firstLink,secondLink))));
 		}
-		cpl = netTriangle.computeUnicastCandidatePathList(null , "K" , "1");
+		K = 1; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
 		cpl11 = NetPlan.computeUnicastCandidate11PathList(cpl , 2);
 		for (Demand d : netTriangle.getDemands())
-			assertEquals(cpl11.get(d) , Arrays.asList());
+			assertEquals(cpl11.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList());
 	}
 	
 	@Test

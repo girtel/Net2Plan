@@ -106,7 +106,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
         NetPlan cpl = netPlan.copy();
         cpl.removeNetworkLayer(cpl.getNetworkLayerFromId(ipLayer.getId()));
         for (Node n1 : cpl.getNodes()) for (Node n2 : cpl.getNodes()) if (n1 != n2) cpl.addDemand(n1, n2, 0.0, null);
-        cpl.addRoutesFromCandidatePathList(null, "K", Integer.toString(K));
+		cpl.addRoutesFromCandidatePathList(cpl.computeUnicastCandidatePathList(null , K, -1, -1, -1, -1, -1, -1 , null));
 		
 		/* Configure SRGs */
         if (setSRGsAsBidirectionalLinkFiber) {

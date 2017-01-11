@@ -178,7 +178,9 @@ public class Online_evProc_congControlAndTransmissionPowerAssignmentDualDecomp e
 			for (Node n2 : this.currentNetPlan.getNodes())
 				if (n1 != n2)
 					this.currentNetPlan.addDemand(n1, n2, cc_minHd.getDouble(), null);
-		currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.getVectorLinkLengthInKm().toArray()  , "K" , "1");
+		this.currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.computeUnicastCandidatePathList(currentNetPlan.getVectorLinkLengthInKm() , 1, -1, -1, -1, -1, -1, -1 , null));
+
+		
 		for (Route r : currentNetPlan.getRoutes ()) r.setCarriedTraffic(r.getDemand().getOfferedTraffic() , r.getDemand().getOfferedTraffic());
 		this.D = this.currentNetPlan.getNumberOfDemands();
 		

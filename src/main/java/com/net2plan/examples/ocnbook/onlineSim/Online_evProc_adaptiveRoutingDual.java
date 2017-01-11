@@ -144,7 +144,8 @@ public class Online_evProc_adaptiveRoutingDual extends IEventProcessor
 		/* Sets the initial routing, according to the prices, with all the traffic balanced equally in all the paths of the demand */
 		currentNetPlan.removeAllUnicastRoutingInformation();
 		currentNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
-		this.currentNetPlan.addRoutesFromCandidatePathList(null , "K" , "" + control_maxNumberOfPathsPerDemand.getInt());
+		this.currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.computeUnicastCandidatePathList(null , control_maxNumberOfPathsPerDemand.getInt(), -1, -1, -1, -1, -1, -1 , null));
+		
 		this.R = currentNetPlan.getNumberOfRoutes ();
 		this.control_routeIndexes_d = new int [D][];
 		for (Demand d : this.currentNetPlan.getDemands())

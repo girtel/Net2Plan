@@ -69,7 +69,7 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 /**
  * <p>Class defining a complete multi-layer network structure. Layers may 
- * contain links, demands, routes and protection segments or forwarding rules, 
+ * contain links, demands, routes or forwarding rules, 
  * while nodes and SRGs are defined with a network-wide scope, that is, they 
  * appear in all layers. To simplify handling of single-layer designs, methods that may refer to 
  * layer-specific elements have an optiona input parameter of type {@link com.net2plan.interfaces.networkDesign.NetworkLayer NetworkLayer}.
@@ -85,7 +85,6 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
  *     <li>{@link com.net2plan.interfaces.networkDesign.Link Link} objects.</li>
  *     <li>{@link com.net2plan.interfaces.networkDesign.Route Route} objects (depending on the selected {@link com.net2plan.utils.Constants.RoutingCycleType Routing Type}.</li>
  *     <li>{@link com.net2plan.interfaces.networkDesign.Demand Unicast} or {@link com.net2plan.interfaces.networkDesign.MulticastDemand Multicast} demand objects. </li>
- *     <li>{@link com.net2plan.interfaces.networkDesign.ProtectionSegment Protection Segment} objects.</li>
  *     <li>{@link com.net2plan.interfaces.networkDesign.SharedRiskGroup Shared Risk Group} objects</li>
  * </ul>
  *
@@ -114,7 +113,6 @@ public class NetPlan extends NetworkElement
 	final static String TEMPLATE_NO_MORE_MULTICASTDEMANDS_ALLOWED = "Maximum multicast demand identifier for layer %d reached";
 	final static String TEMPLATE_NO_MORE_ROUTES_ALLOWED = "Maximum route identifier for layer %d reached";
 	final static String TEMPLATE_NO_MORE_MULTICASTTREES_ALLOWED = "Maximum multicast tree identifier for layer %d reached";
-	final static String TEMPLATE_NO_MORE_SEGMENTS_ALLOWED = "Maximum protection segment identifier for layer %d reached";
 	final static String TEMPLATE_NO_MORE_SRGS_ALLOWED = "Maximum SRG identifier reached";
 	final static String TEMPLATE_NOT_ACTIVE_LAYER = "Layer %d is not in the network";
 	final static String TEMPLATE_NOT_ACTIVE_NODE = "Node %d is not in the network";
@@ -124,19 +122,15 @@ public class NetPlan extends NetworkElement
 	final static String TEMPLATE_NOT_ACTIVE_ROUTE = "Route %d is not in the network";
 	final static String TEMPLATE_NOT_ACTIVE_MULTICASTTREE = "Multicast tree %d is not in the network";
 	final static String TEMPLATE_NOT_ACTIVE_FORWARDING_RULE = "Forwarding rule (%d, %d) is not in the network";
-	final static String TEMPLATE_NOT_ACTIVE_SEGMENT = "Protection segment %d is not in the network";
 	final static String TEMPLATE_NOT_ACTIVE_SRG = "SRG %d is not in the network";
 	final static String TEMPLATE_DEMAND_NOT_ACTIVE_IN_LAYER = "Demand %d is not in layer %d";
 	final static String TEMPLATE_LINK_NOT_ACTIVE_IN_LAYER = "Link %d is not in layer %d";
 	final static String TEMPLATE_ROUTE_NOT_ACTIVE_IN_LAYER = "Route %d is not in layer %d";
 	final static String TEMPLATE_MULTICASTDEMAND_NOT_ACTIVE_IN_LAYER = "Multicast demand %d is not in layer %d";
 	final static String TEMPLATE_MULTICASTTREE_NOT_ACTIVE_IN_LAYER = "Multicast tree %d is not in layer %d";
-	final static String TEMPLATE_PROTECTIONSEGMENT_NOT_ACTIVE_IN_LAYER = "Protection segment %d is not in layer %d";
 	final static String TEMPLATE_FORWARDINGRULE_NOT_ACTIVE_IN_LAYER = "Forwarding rule %d is not in layer %d";
 	final static String TEMPLATE_ROUTE_NOT_ALL_LINKS_SAME_LAYER = "Not all of the links of the route belong to the same layer";
-	final static String TEMPLATE_SEGMENT_NOT_ALL_LINKS_SAME_LAYER = "Not all of the links of the protection segment belong to the same layer";
 	final static String TEMPLATE_MULTICASTTREE_NOT_ALL_LINKS_SAME_LAYER = "Not all of the links of the multicast tree belong to the same layer";
-	final static String TEMPLATE_NOT_OF_THE_SAME_LAYER_ROUTE_AND_SEGMENT = "The route %d and the segment %d are of different layers (%d, %d)";
 	final static String UNMODIFIABLE_EXCEPTION_STRING = "Unmodifiable NetState object - can't be changed";
 	final static String KEY_STRING_BIDIRECTIONALCOUPLE = "bidirectionalCouple";
 
@@ -541,7 +535,7 @@ public class NetPlan extends NetworkElement
 
 	/**
 	 * <p>Creates a new layer and adds the links, routes etc. from the input layer. The number of nodes in the two designs must be the same (the unique ids may differ).
-	 * Any coupling information in the origin layer is omitted. Links, demands, multicast demands, routes, multicast trees and protecion segments
+	 * Any coupling information in the origin layer is omitted. Links, demands, multicast demands, routes and multicast trees 
 	 * will have the same index within the layer in the origin and in the copied layers, but may have different unique ids.</p>
 	 * @param origin Layer to be copied
 	 * @return The newly created layer object
@@ -890,7 +884,6 @@ public class NetPlan extends NetworkElement
 	 * @param carriedTraffic Carried traffic. It must be greater or equal than zero
 	 * @param occupiedLinkAndResourceCapacities Occupied link capacity, it must be greater or equal than zero.
 	 * @param sequenceOfLinksAndResources Sequence of Link and Resource objects defining the sequence traversed by the route
-	 * @param occupationInformationInTraversedResources a map with one entry per different resource traversed, and associated to it the total amount of capacity utilized in that resource by this service chain
 	 * @param attributes Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
 	 * @return The newly created route object
 	 */
@@ -934,49 +927,70 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Adds traffic routes specified by those paths that satisfy the candidate path list options described below. Existing routes will not be removed.</p>
-	 *
-	 * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}.</p>
-	 *
-	 * <p>The candidate path list elaborated contains a set of paths
-	 * computed for each unicast demand in the network, based on the k-shortest path idea. In general, for every demand k
-	 * paths are computed with the shortest weight according to some weights
-	 * assigned to the links.</p>
-	 * <p>The computation of paths can be configured via {@code "parameter=value"} options. There are several options to
-	 * configure, which can be combined:</p>
-	 *
-	 * <ul>
-	 * 		<li>{@code K}: Number of desired loopless shortest paths (default: 3). If <i>K'</i>&lt;{@code K} different paths are found between the demand node pairs, then only <i>K'</i> paths are
-	 * 		included in the candidate path list</li>
-	 * 		<li>{@code maxLengthInKm}: Maximum path length measured in kilometers allowed (default: Double.MAX_VALUE)</li>
-	 * 		<li>{@code maxNumHops}: Maximum number of hops allowed (default: Integer.MAX_VALUE)</li>
-	 * 		<li>{@code maxPropDelayInMs}: Maximum propagation delay in miliseconds allowed in a path (default: Double.MAX_VALUE)</li>
-	 * 		<li>{@code maxRouteCost}: Maximum path weight allowed (default: Double.MAX_VALUE)</li>
-	 * 		<li>{@code maxRouteCostFactorRespectToShortestPath}: Maximum path weight factor with respect to the shortest path weight (default: Double.MAX_VALUE)</li>
-	 *		<li>{@code maxRouteCostRespectToShortestPath}: Maximum path weight with respect to the shortest path weight (default: Double.MAX_VALUE). While the previous one is a multiplicative factor, this one is an additive factor</li>
-	 * </ul>
-	 *
-	 * @param costs Link weight vector for the shortest path algorithm
-	 * @param paramValuePairs Parameters to be passed to the class to tune its operation. An even number of {@code String} is to be passed. For each {@code String} pair, first {@code String}
-	 *                           must be the name of the parameter, second a {@code String} with its value. If no name-value pairs are set, default values are used
-	 * @return Map with all the computed paths (values) per demands (keys)
-	 */
-	public Map<Demand,List<List<Link>>> computeUnicastCandidatePathList (double [] costs , String... paramValuePairs)
-	{
-		return computeUnicastCandidatePathList(defaultLayer, costs, paramValuePairs);
-	}
-
-	/**
-	 * <p>Computes a list of disjoint path pairs for each demand, using the paths in the input candidate path list given.</p>
+	 * <p>Computes a list of disjoint path pairs for each node pair, using the paths in the input candidate path list given.</p>
 	 *
 	 * @param cpl Candidate path list per demand
 	 * @param disjointType Type of disjointness: 0 for SRG-disjoint, 1 for link and node disjoint, other value means link disjoint
 	 * @return List of disjoint path pairs for each demand
 	 */
-	public static Map<Demand,List<Pair<List<Link>,List<Link>>>> computeUnicastCandidate11PathList (Map<Demand,List<List<Link>>> cpl , int disjointType)
+	public static Map<Pair<Node,Node>,List<Pair<List<Link>,List<Link>>>> computeUnicastCandidate11PathList (Map<Pair<Node,Node>,List<List<Link>>> cpl , int disjointType)
 	{
-		Map<Demand,List<Pair<List<NetworkElement>,List<NetworkElement>>>>  res = computeUnicastCandidate11ServiceChainList ((Map<Demand,List<List<NetworkElement>>>) (Map<Demand,?>) cpl , disjointType);
-		return (Map<Demand,List<Pair<List<Link>,List<Link>>>>) (Map<Demand,?>) res;
+		final boolean srgDisjoint = disjointType == 0;
+		final boolean linkAndNodeDisjoint = disjointType == 1;
+		final boolean linkDisjoint = !srgDisjoint && !linkAndNodeDisjoint;
+		Map<Pair<Node,Node>,List<Pair<List<Link>,List<Link>>>> result = new HashMap<> ();
+		if (cpl.isEmpty()) return result;
+		
+		for (Pair<Node,Node> nodePair : cpl.keySet())
+		{
+			List<Pair<List<Link>,List<Link>>> pairs11ThisDemand = new ArrayList<> ();
+			final List<List<Link>> paths = new ArrayList<> (cpl.get(nodePair));
+			final int P_d = paths.size ();
+			for (int firstPathIndex = 0; firstPathIndex < P_d-1 ; firstPathIndex ++)
+			{
+				final List<Link> firstPathSeqLinks = paths.get(firstPathIndex).stream().filter(e -> e instanceof Link).map(e -> (Link) e).collect(Collectors.toList());
+				final Set<Link> firstPathLinks = new HashSet<Link> (firstPathSeqLinks);
+				Set<Node> firstPathNodesButLastAndFirst = null;
+				Set<SharedRiskGroup> firstPathSRGs = null;
+				if (linkAndNodeDisjoint)
+				{
+					List<Node> firstPathSeqNodes = GraphUtils.convertSequenceOfLinksToSequenceOfNodes(firstPathSeqLinks);
+					firstPathNodesButLastAndFirst = new HashSet<Node> (firstPathSeqNodes);
+					firstPathNodesButLastAndFirst.remove(nodePair.getFirst());
+					firstPathNodesButLastAndFirst.remove(nodePair.getSecond());
+				}	else if (srgDisjoint)
+				{
+					firstPathSRGs = SRGUtils.getAffectingSRGs(firstPathLinks);
+				}
+				for (int secondPathIndex = firstPathIndex + 1; secondPathIndex < P_d ; secondPathIndex ++)
+				{
+					//List<Link> secondPath = paths.get(secondPathIndex);
+					final List<Link> secondPathSeqLinks = paths.get(secondPathIndex).stream().filter(e -> e instanceof Link).map(e -> (Link) e).collect(Collectors.toList());
+					boolean disjoint = true; boolean firstLink = true;
+					if (linkDisjoint)
+					{
+						for (Link e : secondPathSeqLinks) if (firstPathLinks.contains(e)) { disjoint = false; break; }
+					} else if (linkAndNodeDisjoint)
+					{
+						for (Link e : secondPathSeqLinks)
+						{
+							if (firstPathLinks.contains(e)) { disjoint = false; break; }
+							if (firstLink) firstLink = false; else { if (firstPathNodesButLastAndFirst.contains(e.originNode)) disjoint = false; break;  }
+						}
+					} else if (srgDisjoint)
+					{
+						for (SharedRiskGroup srg : SRGUtils.getAffectingSRGs(secondPathSeqLinks)) if (firstPathSRGs.contains(srg)) { disjoint = false; break; }
+					}
+					if (disjoint)
+					{
+						checkDisjointness (firstPathSeqLinks , secondPathSeqLinks , disjointType);
+						pairs11ThisDemand.add (Pair.of(paths.get(firstPathIndex), paths.get(secondPathIndex)));
+					}
+				}
+			}
+			result.put (nodePair , pairs11ThisDemand);
+		}
+		return result;
 	}
 
 	/**
@@ -992,17 +1006,18 @@ public class NetPlan extends NetworkElement
 		final boolean srgDisjoint = disjointType == 0;
 		final boolean linkAndNodeDisjoint = disjointType == 1;
 		final boolean linkDisjoint = !srgDisjoint && !linkAndNodeDisjoint;
-		Map<Demand,List<Pair<List<NetworkElement>,List<NetworkElement>>>> result = new HashMap<Demand,List<Pair<List<NetworkElement>,List<NetworkElement>>>> ();
+		Map<Demand,List<Pair<List<NetworkElement>,List<NetworkElement>>>> result = new HashMap<> ();
+		if (cpl.isEmpty()) return result;
+		final NetPlan thisNp = cpl.keySet().iterator().next().netPlan;
+		
 		for (Demand d : cpl.keySet())
 		{
-			for (List<NetworkElement> path : cpl.get(d)) d.netPlan.checkInThisNetPlanAndLayer(path , d.layer);
-			List<Pair<List<NetworkElement>,List<NetworkElement>>> pairs11ThisDemand = new ArrayList<Pair<List<NetworkElement>,List<NetworkElement>>> ();
-			
-			final List<List<NetworkElement>> paths = new ArrayList<List<NetworkElement>> (cpl.get(d));
+			for (List<NetworkElement> path : cpl.get(d)) thisNp.checkInThisNetPlanAndLayer(path , d.layer);
+			List<Pair<List<NetworkElement>,List<NetworkElement>>> pairs11ThisDemand = new ArrayList<> ();
+			final List<List<NetworkElement>> paths = new ArrayList<> (cpl.get(d));
 			final int P_d = paths.size ();
 			for (int firstPathIndex = 0; firstPathIndex < P_d-1 ; firstPathIndex ++)
 			{
-				// final List<NetworkElement> firstPath = paths.get(firstPathIndex);
 				final List<Link> firstPathSeqLinks = paths.get(firstPathIndex).stream().filter(e -> e instanceof Link).map(e -> (Link) e).collect(Collectors.toList());
 				final Set<Link> firstPathLinks = new HashSet<Link> (firstPathSeqLinks);
 				Set<Node> firstPathNodesButLastAndFirst = null;
@@ -1011,8 +1026,8 @@ public class NetPlan extends NetworkElement
 				{
 					List<Node> firstPathSeqNodes = GraphUtils.convertSequenceOfLinksToSequenceOfNodes(firstPathSeqLinks);
 					firstPathNodesButLastAndFirst = new HashSet<Node> (firstPathSeqNodes);
-					firstPathNodesButLastAndFirst.remove(d.ingressNode);
-					firstPathNodesButLastAndFirst.remove(d.egressNode);
+					firstPathNodesButLastAndFirst.remove(d.getIngressNode());
+					firstPathNodesButLastAndFirst.remove(d.getEgressNode());
 				}	else if (srgDisjoint)
 				{
 					firstPathSRGs = SRGUtils.getAffectingSRGs(firstPathLinks);
@@ -1083,7 +1098,7 @@ public class NetPlan extends NetworkElement
 	 * @param maxLengthInKmPerSubpath The maximum length in km in each subpath. Service chains not satisfying this are not enumerated
 	 * @param maxNumHopsPerSubpath The maximum number of traversed links in each subpath. Service chains not satisfying this are not enumerated
 	 * @param maxPropDelayInMsPerSubpath The propagation delay summing the links in each subpath. Service chains not satisfying this are not enumerated
-	 * @param optionalLayerParameter 
+	 * @param optionalLayerParameter the optional layer parameter
 	 * @return Map with all the computed service chain paths (values) per demands (keys)
 	 */
 	public Map<Demand,List<List<NetworkElement>>> computeUnicastCandidateServiceChainList (DoubleMatrix1D linkCosts , DoubleMatrix1D resourceCosts , 
@@ -1091,7 +1106,7 @@ public class NetPlan extends NetworkElement
 			NetworkLayer ... optionalLayerParameter)
 	{
 		final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		Map<Pair<Node,Node>,List<Pair<List<Link>,Double>>> cacheSubpathLists = new HashMap<Pair<Node,Node>,List<Pair<List<Link>,Double>>> ();
+		Map<Pair<Node,Node>,List<Pair<List<Link>,Double>>> cacheSubpathLists = new HashMap<> ();
 		if (linkCosts == null) linkCosts = DoubleFactory1D.dense.make(layer.links.size() , 1.0);
 		if (resourceCosts == null) resourceCosts = DoubleFactory1D.dense.make(resources.size() , 0.0);
 		Map<Resource,Double> resourceCostMap = new HashMap<Resource,Double> ();
@@ -1111,147 +1126,84 @@ public class NetPlan extends NetworkElement
 	}
 	
 	/**
-	 * <p>Computes for each demand a candidate path list, composed of the k shortest paths according with the options indicated below.</p>
+	 * <p>Computes for all the node pairs, a candidate path list in the given layer, composed of the k shortest paths according with the options indicated below.</p>
 	 *
-	 * <p>The candidate path list elaborated contains a set of paths
-	 * computed for each unicast demand in the network, based on the k-shortest path idea. In general, for every demand k
-	 * paths are computed with the shortest weight according to some weights
-	 * assigned to the links.</p>
-	 * <p>The computation of paths can be configured via {@code "parameter=value"} options. There are several options to
-	 * configure, which can be combined:</p>
-	 *
-	 * <ul>
-	 * 		<li>{@code K}: Number of desired loopless shortest paths (default: 3). If <i>K'&lt;</i>{@code K} different paths are found between the demand node pairs, then only <i>K'</i> paths are
-	 * 		included in the candidate path list</li>
-	 * 		<li>{@code maxLengthInKm}: Maximum path length measured in kilometers allowed (default: Double.MAX_VALUE)</li>
-	 * 		<li>{@code maxNumHops}: Maximum number of hops allowed (default: Integer.MAX_VALUE)</li>
-	 * 		<li>{@code maxPropDelayInMs}: Maximum propagation delay in miliseconds allowed in a path (default: Double.MAX_VALUE)</li>
-	 * 		<li>{@code maxRouteCost}: Maximum path weight allowed (default: Double.MAX_VALUE)</li>
-	 * 		<li>{@code maxRouteCostFactorRespectToShortestPath}: Maximum path weight factor with respect to the shortest path weight (default: Double.MAX_VALUE)</li>
-	 *		<li>{@code maxRouteCostRespectToShortestPath}: Maximum path weight with respect to the shortest path weight (default: Double.MAX_VALUE). While the previous one is a multiplicative factor, this one is an additive factor</li>
-	 * </ul>
-	 *
-	 * @param layer Network layer
-	 * @param costs Link weight vector for the shortest path algorithm. If null, all the links have cost one
-	 * @param paramValuePairs Parameters to be passed to the class to tune its operation. An even number of {@code String} is to be passed. For each {@code String} pair, first {@code String}
-	 *           must be the name of the parameter, second a {@code String} with its value. If no name-value pairs are set, default values are used
-	 * @return Map with all the computed paths (values) per demands (keys)
+	 * @param linkCosts the cost of each link (if null, all links have cost one), all numbers must be strictly positive
+	 * @param K Desired nummber of paths (a lower number of paths may be returned if there are less than {@code K} loop-less paths admissible)
+	 * @param maxLengthInKm Maximum length of the path. If non-positive, no maximum limit is assumed
+	 * @param maxNumHops Maximum number of hops. If non-positive, no maximum limit is assumed
+	 * @param maxPropDelayInMs Maximum propagation delay of the path. If non-positive, no maximum limit is assumed
+	 * @param maxRouteCost Maximum route cost. If non-positive, no maximum limit is assumed
+	 * @param maxRouteCostFactorRespectToShortestPath Maximum route cost factor respect to the shortest path. If non-positive, no maximum limit is assumed
+	 * @param maxRouteCostRespectToShortestPath Maximum route cost respect to the shortest path. If non-positive, no maximum limit is assumed
+	 * @param nodePairs if this parameter is not null, the paths are computed only for this node pairs
+	 * @param optionalLayerParameter the layer (optional)
+	 * @return Map with all the computed paths (values) per node pairs (keys)
 	 */
-	public Map<Demand,List<List<Link>>> computeUnicastCandidatePathList (NetworkLayer layer , double [] costs , String... paramValuePairs)
+	public Map<Pair<Node,Node>,List<List<Link>>> computeUnicastCandidatePathList (DoubleMatrix1D linkCosts , 
+			int K, double maxLengthInKm, int maxNumHops, double maxPropDelayInMs, double maxRouteCost, 
+			double maxRouteCostFactorRespectToShortestPath, double maxRouteCostRespectToShortestPath , Set<Pair<Node,Node>> nodePairs , NetworkLayer ... optionalLayerParameter)
 	{
 		checkIsModifiable();
-		checkInThisNetPlan(layer);
-		if (costs != null) if (costs.length != layer.links.size()) throw new Net2PlanException ("The array of costs must have the same length as the number of links in the layer");
-
-		int K = 3;
-		double maxLengthInKm = Double.MAX_VALUE;
-		int maxNumHops = Integer.MAX_VALUE;
-		double maxPropDelayInMs = Double.MAX_VALUE;
-		double maxRouteCost = Double.MAX_VALUE;
-		double maxRouteCostFactorRespectToShortestPath = Double.MAX_VALUE;
-		double maxRouteCostRespectToShortestPath = Double.MAX_VALUE;
-		int numParameters = (int) (paramValuePairs.length / 2);
-		if (numParameters * 2 != paramValuePairs.length) throw new Net2PlanException("A parameter has not assigned its value");
-		for (int contParam = 0; contParam < numParameters; contParam++)
-		{
-			String parameter = paramValuePairs[contParam * 2];
-			String value = paramValuePairs[contParam * 2 + 1];
-
-			if (parameter.equalsIgnoreCase("K"))
-			{
-				K = Integer.parseInt(value);
-				if (K <= 0) throw new Net2PlanException("'K' parameter must be greater than zero");
-			}
-			else if (parameter.equalsIgnoreCase("maxLengthInKm"))
-				maxLengthInKm = Double.parseDouble(value) <= 0? Double.MAX_VALUE : Double.parseDouble(value);
-			else if (parameter.equalsIgnoreCase("maxPropDelayInMs"))
-				maxPropDelayInMs = Double.parseDouble(value) <= 0? Double.MAX_VALUE : Double.parseDouble(value);
-			else if (parameter.equalsIgnoreCase("maxNumHops"))
-				maxNumHops = Integer.parseInt(value) <= 0? Integer.MAX_VALUE : Integer.parseInt(value);
-			else if (parameter.equalsIgnoreCase("maxRouteCost"))
-				maxRouteCost = Double.parseDouble(value) <= 0? Double.MAX_VALUE : Double.parseDouble(value);
-			else if (parameter.equalsIgnoreCase("maxRouteCostFactorRespectToShortestPath"))
-				maxRouteCostFactorRespectToShortestPath = Double.parseDouble(value) <= 0? Double.MAX_VALUE : Double.parseDouble(value);
-			else if (parameter.equalsIgnoreCase("maxRouteCostRespectToShortestPath"))
-				maxRouteCostRespectToShortestPath = Double.parseDouble(value) <= 0? Double.MAX_VALUE : Double.parseDouble(value);
-			else
-				throw new RuntimeException("Unknown parameter " + parameter);
-		}
-
-		Map<Demand,List<List<Link>>> cpl = new HashMap<Demand,List<List<Link>>> ();
+		final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		if (linkCosts != null) if (linkCosts.size () != layer.links.size()) throw new Net2PlanException ("The array of costs must have the same length as the number of links in the layer");
+		Map<Pair<Node,Node>,List<List<Link>>> cpl = new HashMap<> ();
 		Map<Link,Double> linkCostMap = new HashMap<Link,Double> ();
-		for (Link e : layer.links) linkCostMap.put (e , costs == null? 1.0 : costs [e.index]);
-		for(Demand d : layer.demands) cpl.put (d , GraphUtils.getKLooplessShortestPaths(nodes , layer.links , d.ingressNode , d.egressNode , linkCostMap , K , maxLengthInKm, maxNumHops, maxPropDelayInMs , maxRouteCost , maxRouteCostFactorRespectToShortestPath ,	maxRouteCostRespectToShortestPath ));
+		for (Link e : layer.links) linkCostMap.put (e , linkCosts == null? 1.0 : linkCosts.get(e.index));
+		if (nodePairs == null)
+		{
+			nodePairs = new HashSet<> ();
+			for(Node n1 : netPlan.getNodes())
+				for(Node n2 : netPlan.getNodes())
+					if (n1 != n2) nodePairs.add(Pair.of(n1,n2));
+		}
+		for(Pair<Node,Node> pair : nodePairs)
+			cpl.put (pair ,	GraphUtils.getKLooplessShortestPaths(nodes , layer.links , pair.getFirst() , pair.getSecond() , linkCostMap , K , maxLengthInKm, maxNumHops, maxPropDelayInMs , maxRouteCost , maxRouteCostFactorRespectToShortestPath ,	maxRouteCostRespectToShortestPath ));
 		return cpl;
 	}
 
 	/**
-	 * <p>Adds multiples routes from a Candidate Path List.</p>
-	 * @param cpl {@code Map} where the keys are demands and the values a list of sequence of links (each sequence is a route)
+	 * <p>Adds multiples routes for each demand of the given layer, using the paths in an input Candidate Path List.
+	 * The paths should use the links of the same layer</p>
+	 * @param cpl {@code Map} where the keys are the node pairs and the values a list of sequence of links (each sequence is a route)
+	 * @param optionalLayer the layer (optional)
 	 */
-	public void addRoutesFromCandidatePathList (Map<Demand,List<List<Link>>> cpl)
+	public void addRoutesFromCandidatePathList (Map<Pair<Node,Node>,List<List<Link>>> cpl , NetworkLayer ... optionalLayer)
 	{
 		checkIsModifiable();
+		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayer);
 		List<Route> routes = new LinkedList<Route> ();
 		try
 		{
-			for(Entry<Demand,List<List<Link>>> entry : cpl.entrySet())
-				for (List<Link> seqLinks : entry.getValue())
-					routes.add (addRoute(entry.getKey() , 0 , 0 , seqLinks , null));
+			for (Demand d : getDemands(layer))
+				for (List<Link> path : cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())))
+					routes.add (this.addRoute(d , 0 , 0 , path , null));
 		} catch (Exception e) { for (Route r : routes) r.remove (); throw e; }
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
-	}
-
-	/**
-	 * <p>Same as {@code addRoutesFromCandidatePathList(computeUnicastCandidatePathList(layer , costs , paramValuePairs);}
-	 * @param layer Network layer
-	 * @param costs Link weight vector for the shortest path algorithm
-	 * @param paramValuePairs Parameters to be passed to the class to tune its operation. An even number of {@code String} is to be passed. For each {@code String} pair, first {@code String}
-	 *           must be the name of the parameter, second a {@code String} with its value. If no name-value pairs are set, default values are used
-	 */
-	public void addRoutesFromCandidatePathList (NetworkLayer layer , double [] costs , String... paramValuePairs)
-	{
-		addRoutesFromCandidatePathList(computeUnicastCandidatePathList(layer , costs , paramValuePairs));
-	}
-
-	/**
-	 * <p>Same as {@code addRoutesFromCandidatePathList(computeUnicastCandidatePathList(costs , paramValuePairs);}
-	 * @param costs Link weight vector for the shortest path algorithm
-	 * @param paramValuePairs Parameters to be passed to the class to tune its operation. An even number of {@code String} is to be passed. For each {@code String} pair, first {@code String}
-	 *           must be the name of the parameter, second a {@code String} with its value. If no name-value pairs are set, default values are used
-	 */
-	public void addRoutesFromCandidatePathList (double [] costs , String... paramValuePairs)
-	{
-		addRoutesFromCandidatePathList(computeUnicastCandidatePathList(costs , paramValuePairs));
 	}
 
 	/** For each demand in the map, adds a number of route pairs with the given paths, where each route pair has a primary route and one backup to it.
 	 * All routes have zero carried traffic and zero occupied capacity in the links
 	 * @param cpl11 a map with the path info
+	 * @param optionalLayer the layer (optional)
 	 */
-	public void addRoutesAndBackupRoutesFromCandidate11PathList (Map<Demand,List<Pair<List<Link>,List<Link>>>> cpl11) 
+	public void addRoutesAndBackupRoutesFromCandidate11PathList (Map<Pair<Node,Node>,List<Pair<List<Link>,List<Link>>>> cpl11, NetworkLayer ... optionalLayer)
 	{
 		checkIsModifiable();
+		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayer);
 		List<Route> routes = new LinkedList<Route> ();
 		try
 		{
-			for(Entry<Demand,List<Pair<List<Link>,List<Link>>>> entry : cpl11.entrySet())
-				for (Pair<List<Link>,List<Link>> pathPair : entry.getValue())
+			for (Demand d : getDemands(layer))
+				for (Pair<List<Link>,List<Link>> path : cpl11.get(Pair.of(d.getIngressNode(),d.getEgressNode())))
 				{
-					final Route newRoute = addRoute(entry.getKey() , 0 , 0 , pathPair.getFirst() , null);
-					routes.add (newRoute);
-					final Route newBackupRoute = addRoute(entry.getKey() , 0 , 0 , pathPair.getSecond() , null);
-					newRoute.addBackupRoute(newBackupRoute);
+					final Route primary = this.addRoute(d , 0 , 0 , path.getFirst() , null); routes.add (primary);
+					final Route backup = this.addRoute(d , 0 , 0 , path.getSecond() , null); routes.add (backup);
+					primary.addBackupRoute(backup);
 				}
 		} catch (Exception e) { for (Route r : routes) r.remove (); throw e; }
 		if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 	}
-
-	//	public void addMulticastTreesFromCandidateTreeList (double [] costs , String solverName , String solverLibraryName , double maxSolverTimeInSecondsPerTree , String... paramValuePairs)
-//	{
-//		addMulticastTreesFromCandidateTreeList (defaultLayer , costs , solverName , solverLibraryName , maxSolverTimeInSecondsPerTree , paramValuePairs);
-//	}
-//
 
 	/**
 	 * The same as {@code computeMulticastCandidatePathList} for the default layer
@@ -1656,7 +1608,7 @@ public class NetPlan extends NetworkElement
 	 * is not valid, an exception is thrown.</p>
 	 * @param path Sequence of links
 	 * @param d Demand
-	 * @return
+	 * @return see above
 	 */
 	Pair<List<Link>,List<Resource>> checkPathValidityForDemand(List<? extends NetworkElement> path, Demand d)
 	{
@@ -2078,7 +2030,7 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns the set of links that are a bottleneck, i.e the fraction of occupied capacity respect to the total (including the capacities in the protection segments)
+	 * <p>Returns the set of links that are a bottleneck, i.e the fraction of occupied capacity respect to the total 
 	 * is highest. If no layer is provided, the default layer is assumed.</p>
 	 * @param optionalLayerParameter Network layer (optional)
 	 * @return The {@code Set} of bottleneck links
@@ -2183,8 +2135,8 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns the set of links oversuscribed: the total occupied capacity (including the traffic in the protection segments) exceeds the link capacity
-	 * (including the reserved capacity by the protection segments). If no layer is provided, the default layer is assumed.</p>
+	 * <p>Returns the set of links oversuscribed: the total occupied capacity exceeds the link capacity.
+	 * If no layer is provided, the default layer is assumed.</p>
 	 * @param optionalLayerParameter Network layer (optional)
 	 * @return The {@code Set} of oversubscribed links
 	 */
@@ -2609,7 +2561,7 @@ public class NetPlan extends NetworkElement
 	 * <p>Returns a matrix with as many rows resources, and columns as routes in the given layer, 
 	 * coordinate (res,rou) contains the number times that route rou 
 	 * traverses resource res. If no layer is provided, default layer is assumed</p>
-	 * @param optionalLayerParameter
+	 * @param optionalLayerParameter the layer (optional)
 	 * @return The matrix
 	 */
 	public DoubleMatrix2D getMatrixResource2RouteAssignment  (NetworkLayer ... optionalLayerParameter)
@@ -2631,7 +2583,7 @@ public class NetPlan extends NetworkElement
 	 * coordinate (res,rou) contains the number times that route rou 
 	 * traverses resource res. If no layer is provided, default layer is assumed</p>
 	 * @param type The resource type
-	 * @param optionalLayerParameter 
+	 * @param optionalLayerParameter the layer (optional)
 	 * @return The matrix
 	 */
 	public Pair<List<Resource> , DoubleMatrix2D> getMatrixResource2RouteAssignment  (String type , NetworkLayer ... optionalLayerParameter)
@@ -2656,7 +2608,7 @@ public class NetPlan extends NetworkElement
 	 * <p>Returns a matrix with as many rows resources, and columns as routes in the given layer, and coordinate (res,rou) contains 
 	 * the capacity occupied by route rou in resource res (note that if a route is down, its occupied capacity in a resource becomes zero). 
 	 * If no layer is provided, default layer is assumed</p>
-	 * @param optionalLayerParameter
+	 * @param optionalLayerParameter the layer (optional)
 	 * @return The matrix
 	 */
 	public DoubleMatrix2D getMatrixResource2RouteOccupation (NetworkLayer ... optionalLayerParameter)
@@ -3778,7 +3730,7 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns a vector with the total carried traffic per link (counting the traffic in the traversed protection segments), at the given layer. i-th vector corresponds to i-th index of the element.
+	 * <p>Returns a vector with the total carried traffic per link, at the given layer. i-th vector corresponds to i-th index of the element.
 	 * If no layer is provided, the defaulf layer is assumed.</p>
 	 * @param optionalLayerParameter Network layer (optional)
 	 * @return The vector with the total carried traffic per link
@@ -3835,7 +3787,7 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns a vector with the oversubscibed traffic (oversubscribed traffic being the sum of all carried traffic, including protection segments minus the capacity, or 0 if such substraction is negative) in each link at the given layer.
+	 * <p>Returns a vector with the oversubscibed traffic (oversubscribed traffic being the sum of all carried traffic, minus the capacity, or 0 if such substraction is negative) in each link at the given layer.
 	 * i-th vector corresponds to i-th index of the element. If no layer is provided, default layer is assumed. </p>
 	 * @param optionalLayerParameter network layer (optional)
 	 * @return The vector with the oversubscribed traffic per link
@@ -4134,7 +4086,7 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns a vector with the number of links per route (including the links in the traversed protection segments if any), at the given layer. i-th vector corresponds to i-th index of the element.
+	 * <p>Returns a vector with the number of links per route, at the given layer. i-th vector corresponds to i-th index of the element.
 	 * If no layer is provided, the defaulf layer is assumed.</p>
 	 * @param optionalLayerParameter network layer (optional)
 	 * @return The vector with the number of links per route
@@ -4150,8 +4102,7 @@ public class NetPlan extends NetworkElement
 
 	/**
 	 * <p>Returns an array with the cost of each route in the layer. The cost of a route is given by the sum
-	 * of the costs of its links, given by the provided cost vector. If the route traverses protection segments, the cost
-	 * of its links is included. If the cost vector provided is {@code null},
+	 * of the costs of its links, given by the provided cost vector. If the cost vector provided is {@code null},
 	 * all links have cost one.</p>
 	 * @param costs Costs array
 	 * @param optionalLayerParameter Network layer (optional)
@@ -4402,7 +4353,7 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Removes a layer, and any associated link, demand, route, protection segment or forwarding rule. If this layer is the default, the new default layer is the one with index 0 (the smallest identifier) </p>
+	 * <p>Removes a layer, and any associated link, demand, route, or forwarding rule. If this layer is the default, the new default layer is the one with index 0 (the smallest identifier) </p>
 	 * @param optionalLayerParameter Network layer (optional)
 	 */
 	public void removeNetworkLayer (NetworkLayer ... optionalLayerParameter)
@@ -4591,7 +4542,7 @@ public class NetPlan extends NetworkElement
 
 	/**
 	 * <p>Removes all the routing information (unicast and multicast) for the given layer, irrespective of the routing type
-	 * setting. For source routing, all routes and protection segments are removed.
+	 * setting. For source routing, all routes are removed.
 	 * For hop-by-hop routing, all forwarding rules are removed. If no layer is provided, the default layer is assumed.</p>
 	 * @param optionalLayerParameter Network layer (optional)
 	 */
@@ -5086,7 +5037,7 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Changes the failure state of the links and updates the routes/trees/segments (they do not carry traffic nor occupy capacity), and hop-by-hop routing
+	 * <p>Changes the failure state of the links and updates the routes/trees (they do not carry traffic nor occupy capacity), and hop-by-hop routing
 	 * (no traffic is forwarded in links down)</p>
 	 * @param linksToSetAsUp Links to set as up
 	 * @param linksToSetAsDown Links to set as down
@@ -5864,7 +5815,7 @@ public class NetPlan extends NetworkElement
 
 				for (Link link : layer.links)
 				{
-					String linkInformation = String.format("e%d (id %d), n%d (%s) -> n%d (%s), state: %s, capacity: %.3g, length: %.3g km, propagation speed: %.3g km/s, carried traffic (incl. segments): %.3g , occupied capacity (incl. traffic in segments): %.3g, attributes: %s", link.index,  link.id , link.originNode.id, link.originNode.name, link.destinationNode.id, link.destinationNode.name , !link.isUp? "down" : "up", link.capacity , link.lengthInKm , link.propagationSpeedInKmPerSecond, link.cache_carriedTraffic , link.cache_occupiedCapacity , link.attributes.isEmpty() ? "none" : link.attributes);
+					String linkInformation = String.format("e%d (id %d), n%d (%s) -> n%d (%s), state: %s, capacity: %.3g, length: %.3g km, propagation speed: %.3g km/s, carried traffic: %.3g , occupied capacity: %.3g, attributes: %s", link.index,  link.id , link.originNode.id, link.originNode.name, link.destinationNode.id, link.destinationNode.name , !link.isUp? "down" : "up", link.capacity , link.lengthInKm , link.propagationSpeedInKmPerSecond, link.cache_carriedTraffic , link.cache_occupiedCapacity , link.attributes.isEmpty() ? "none" : link.attributes);
 					netPlanInformation.append(linkInformation);
 
 					if (link.coupledLowerLayerDemand != null)
@@ -6056,13 +6007,13 @@ public class NetPlan extends NetworkElement
 		if (res.index != e.index) throw new RuntimeException ("Bad");
 		return res;
 	}
-	/* Receives a collection of routes, segments or multicast trees, and updates its failure state according to the traversing links and nodes */
+	/* Receives a collection of routes, or multicast trees, and updates its failure state according to the traversing links and nodes */
 	void updateFailureStateRoutesTreesSegments (Collection<? extends NetworkElement> set)
 	{
 		for (NetworkElement thisElement : set)
 			updateFailureStateRoutesAndTrees (thisElement);
 	}
-	/* Receives a route, segment or multicast tree, and updates its failure state according to the traversing links and nodes */
+	/* Receives a route, or multicast tree, and updates its failure state according to the traversing links and nodes */
 	void updateFailureStateRoutesAndTrees (NetworkElement thisElement)
 	{
 		if (thisElement instanceof Route)
@@ -6144,7 +6095,7 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>For debug purposes: Checks the consistency of the internal cache (nodes, srgs, resources, layers, links, demands, multicast demands, multicast trees, routes, protection segments). If any
+	 * <p>For debug purposes: Checks the consistency of the internal cache (nodes, srgs, resources, layers, links, demands, multicast demands, multicast trees, routes). If any
 	 * inconsistency is found an exception is thrown.</p>
 	 */
 	public void checkCachesConsistency ()

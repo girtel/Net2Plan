@@ -120,7 +120,8 @@ public class Online_evProc_congestionControlDual extends IEventProcessor
 		/* Remove all routes, and create one with the shortest path in km for each demand */
 		currentNetPlan.removeAllUnicastRoutingInformation();
 		currentNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
-		currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.getVectorLinkLengthInKm().toArray()  , "K" , "1");
+		this.currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.computeUnicastCandidatePathList(currentNetPlan.getVectorLinkLengthInKm() , 1, -1, -1, -1, -1, -1, -1 , null));
+
 		for (Route r : currentNetPlan.getRoutes ()) r.setCarriedTraffic(r.getDemand().getOfferedTraffic() , r.getDemand().getOfferedTraffic());
 		
 		this.rng = new Random (simulation_randomSeed.getLong());

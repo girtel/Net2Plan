@@ -75,8 +75,7 @@ public class Offline_fa_xpFormulations implements IAlgorithm
 
 		/* Add all the k-shortest candidate routes to the netPlan object carrying no traffic */
 		final DoubleMatrix1D linkCostVector = shortestPathType.getString().equalsIgnoreCase("hops")? DoubleFactory1D.dense.make (E , 1.0) : netPlan.getVectorLinkLengthInKm();
-
-		netPlan.addRoutesFromCandidatePathList(linkCostVector.toArray() , "K", Integer.toString(k.getInt ()), "maxLengthInKm", Double.toString(maxLengthInKm.getDouble () > 0? maxLengthInKm.getDouble () : Double.MAX_VALUE));
+		netPlan.addRoutesFromCandidatePathList(netPlan.computeUnicastCandidatePathList(linkCostVector , k.getInt(), maxLengthInKm.getDouble(), -1, -1, -1, -1, -1 , null));
 		final int P = netPlan.getNumberOfRoutes(); 
 
 		/* Create the optimization problem object (JOM library) */

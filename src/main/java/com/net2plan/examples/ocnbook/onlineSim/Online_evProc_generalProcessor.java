@@ -80,8 +80,8 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 	private List<Node> nodes;
 	private NetworkLayer layer;
 	private Map<Route,List<Link>> routeOriginalLinks;
-	private Map<Demand,List<List<Link>>> cpl;
-	private Map<Demand,List<Pair<List<Link>,List<Link>>>> cpl11; 
+	private Map<Pair<Node,Node>,List<List<Link>>> cpl;
+	private Map<Pair<Node,Node>,List<Pair<List<Link>,List<Link>>>> cpl11; 
 
 	private boolean newRoutesHave11Protection;
 	private boolean isRestorationRecovery , isProtectionRecovery , isShortestPathNumHops;
@@ -132,10 +132,9 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 		/* Compute the candidate path list */
 		final int E = initialNetPlan.getNumberOfLinks(layer);
 		final DoubleMatrix1D linkCostVector = isShortestPathNumHops? DoubleFactory1D.dense.make (E , 1.0) : initialNetPlan.getVectorLinkLengthInKm();
-		this.cpl = initialNetPlan.computeUnicastCandidatePathList(linkCostVector.toArray() , "K", Integer.toString(k.getInt ()), "maxLengthInKm", Double.toString(maxLengthInKm.getDouble () > 0? maxLengthInKm.getDouble () : Double.MAX_VALUE) , "maxNumHops", Integer.toString(maxNumHops.getInt () > 0? maxNumHops.getInt () : Integer.MAX_VALUE));
+		this.cpl = initialNetPlan.computeUnicastCandidatePathList(linkCostVector , k.getInt(), maxLengthInKm.getDouble(), maxNumHops.getInt(), -1, -1, -1, -1 , null);
 		final int protectionTypeCode = protectionTypeToNewRoutes.equals("srg-disjoint") ? 0 : protectionTypeToNewRoutes.equals("1+1-node-disjoint")? 1 : 2;
 		this.cpl11 = !newRoutesHave11Protection? null : NetPlan.computeUnicastCandidate11PathList(cpl, protectionTypeCode); 
-
 		
 		//		System.out.println ("cpl: " + cpl);
 		System.out.println ("cpl11: " + cpl11);
