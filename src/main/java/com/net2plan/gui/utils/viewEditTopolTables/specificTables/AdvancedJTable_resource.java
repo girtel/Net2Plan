@@ -574,36 +574,36 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                     try {
 
                         Resource res = netPlan.getResourceFromId((Long) itemId);
-                        Set<Resource> baseResources = res.getBaseResources();
+                        List<Resource> baseResources = new LinkedList<>(res.getBaseResources());
                         if(baseResources.size() == 0)
                         {
                             JOptionPane.showMessageDialog(null,"This resource hasn't any base resource");
                             return;
                         }
                         JPanel pane = new JPanel();
-                        Object [][] data = {null,null};
-                        String [] headers = StringUtils.arrayOf("Base Resource","Capacity");
+                        Object [][] data = {null,null,null};
+                        String [] headers = StringUtils.arrayOf("Index","Type" , "Capacity");
                         TableModel tm = new ClassAwareTableModelImpl(data,headers);
                         AdvancedJTable table = new AdvancedJTable(tm);
                         Object[][] newData = new Object[baseResources.size()][headers.length];
                         int counter = 0;
                         for(Resource r : baseResources)
                         {
-                            newData[counter][0] = r.getName();
+                            newData[counter][0] = r.getIndex();
+                            newData[counter][1] = r.getType();
                             newData[counter][2] = res.getCapacityOccupiedInBaseResource(r);
                             counter++;
                         }
                         pane.add(new JLabel(res.toString()+" base resources"));
                         pane.add(new JScrollPane(table));
                         ((DefaultTableModel)table.getModel()).setDataVector(newData, headers);
-                        while (true) {
-                            int result = JOptionPane.showConfirmDialog(null, pane, "Set capacity to base resources", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                            if (result != JOptionPane.OK_OPTION) return;
-
-
-                            networkViewer.updateNetPlanView();
-                            break;
-                        }
+                        int result = JOptionPane.showConfirmDialog(null, pane, "Set capacity to base resources", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if (result != JOptionPane.OK_OPTION) return;
+                        Map<Resource,Double> newCapMap = new HashMap<> (); 
+                        for (int t = 0 ; t < table.getRowCount() ; t ++)
+                        	newCapMap.put(baseResources.get(t) , (double) table.getModel().getValueAt(t,2));
+                        res.setCapacity(res.getCapacity() , newCapMap);
+                        networkViewer.updateNetPlanView();
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to base resources");
                     }
