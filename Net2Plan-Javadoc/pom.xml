@@ -19,8 +19,65 @@
         </dependency>
     </dependencies>
 
+    <properties>
+        <netplan-lib.sources>${project.parent.basedir}/Net2Plan-Core/Net2Plan-Lib/src/main/java</netplan-lib.sources>
+        <netplan-examples.sources>${project.parent.basedir}/Net2Plan-Examples/src/main/java</netplan-examples.sources>
+    </properties>
+
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.10</version>
+                <configuration>
+                    <outputDirectory>${project.basedir}/src/main/resources/lib</outputDirectory>
+                    <overWriteReleases>false</overWriteReleases>
+                    <overWriteSnapshots>false</overWriteSnapshots>
+                    <overWriteIfNewer>true</overWriteIfNewer>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--Unpack parallel colt javadoc-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <id>unpack</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <target>
+                                <unzip src="${project.basedir}/src/main/resources/lib/colt-1.2.0.jar"
+                                       dest="${project.build.directory}/colt"/>
+                                <unzip src="${project.basedir}/src/main/resources/lib/parallelcolt-0.10.1.jar"
+                                       dest="${project.build.directory}/colt"/>
+                                <copy file="${project.basedir}/src/main/resources/resources/documentation/bookCover.jpg"
+                                      todir="${project.build.directory}/site/apidocs/examples/doc-files"/>
+                                <copy file="${project.basedir}/src/main/resources/resources/documentation/bookCover.jpg"
+                                      todir="${project.build.directory}/site/apidocs/api/doc-files"/>
+                                <copy todir="${project.build.directory}/site/apidocs/parallelcolt">
+                                    <fileset dir="${project.basedir}/src/main/resources/javadoc/parallelcolt"/>
+                                </copy>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!-- Generate Javadoc -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -32,7 +89,7 @@
                         <goals>
                             <goal>javadoc</goal>
                         </goals>
-                        <phase>prepare-package</phase>
+                        <phase>package</phase>
                         <configuration>
                             <show>public</show>
                             <author>true</author>
@@ -50,7 +107,7 @@
                             <links>
                                 <link>../parallelcolt</link>
                             </links>
-                            <sourcepath>${project.basedir}/src/main/java</sourcepath>
+                            <sourcepath>${netplan-lib.sources}</sourcepath>
                             <sourceFileIncludes>
                                 <include>com/net2plan/interfaces/networkDesign/**</include>
                                 <include>com/net2plan/interfaces/simulation/**</include>
@@ -64,7 +121,7 @@
                         <goals>
                             <goal>javadoc</goal>
                         </goals>
-                        <phase>prepare-package</phase>
+                        <phase>package</phase>
                         <configuration>
                             <show>public</show>
                             <author>false</author>
@@ -78,8 +135,7 @@
                             <use>true</use>
                             <version>true</version>
                             <linksource>true</linksource>
-                            <additionalparam>-d ${project.build.directory}/site/apidocs/examples
-                            </additionalparam>
+                            <additionalparam>-d ${project.build.directory}/site/apidocs/examples</additionalparam>
                             <noqualifier>
                                 java.lang:java.util:java.io:java.awt:java.net:java.awt.geom:javax.swing:cern.colt.matrix.tdouble
                             </noqualifier>
@@ -102,10 +158,8 @@
                                     <tagletClass>com.net2plan.documentation.Taglet_BookSections</tagletClass>
                                 </taglet>
                             </taglets>
-                            <tagletpath>
-                                ${project.build.directory}/${project.artifactId}-${project.version}-Taglet.jar
-                            </tagletpath>
-                            <sourcepath>${project.basedir}/src/main/java</sourcepath>
+                            <tagletpath>${project.build.directory}/${project.name}-${project.version}.jar</tagletpath>
+                            <sourcepath>${netplan-examples.sources}</sourcepath>
                             <sourceFileIncludes>
                                 <include>com/net2plan/examples/general/offline/**</include>
                                 <include>com/net2plan/examples/general/onlineSim/**</include>
@@ -124,14 +178,14 @@
                         <goals>
                             <goal>javadoc</goal>
                         </goals>
-                        <phase>prepare-package</phase>
+                        <phase>package</phase>
                         <configuration>
                             <doclet>com.net2plan.documentation.CreateHTMLKeywords</doclet>
                             <docletPath>
-                                ${project.build.directory}/${project.artifactId}-${project.version}-Taglet.jar
+                                ${project.build.directory}/${project.name}-${project.version}.jar
                             </docletPath>
                             <useStandardDocletOptions>false</useStandardDocletOptions>
-                            <sourcepath>${project.basedir}/src/main/java</sourcepath>
+                            <sourcepath>${netplan-examples.sources}</sourcepath>
                             <sourceFileIncludes>
                                 <include>com/net2plan/examples/general/offline/**</include>
                                 <include>com/net2plan/examples/general/onlineSim/**</include>
@@ -152,9 +206,9 @@
                         <goals>
                             <goal>javadoc</goal>
                         </goals>
-                        <phase>prepare-package</phase>
+                        <phase>package</phase>
                         <configuration>
-                            <sourcepath>${project.basedir}/src/main/java</sourcepath>
+                            <sourcepath>${netplan-examples.sources}</sourcepath>
                             <sourceFileIncludes>
                                 <include>com/net2plan/examples/general/offline/**</include>
                                 <include>com/net2plan/examples/general/onlineSim/**</include>
@@ -168,7 +222,7 @@
                             </sourceFileExcludes>
                             <doclet>com.net2plan.documentation.CreateBookSectionsTable</doclet>
                             <docletPath>
-                                ${project.build.directory}/${project.artifactId}-${project.version}-Taglet.jar
+                                ${project.build.directory}/${project.name}-${project.version}.jar
                             </docletPath>
                             <useStandardDocletOptions>false</useStandardDocletOptions>
                             <additionalparam>-outputFolder ${project.build.directory}/site/apidocs/examples
