@@ -108,7 +108,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
 
     private NetPlan currentTopology = null;
     private List<Demand> currentDemands = new LinkedList<>();
-    private final String[] resourceTypes = StringUtils.arrayOf("Firewall","NAT","CPU","RAM");
+//    private final String[] resourceTypes = StringUtils.arrayOf("Firewall","NAT","CPU","RAM");
     /**
      * Default constructor.
      *
@@ -668,7 +668,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
         });
         options.add(scaleOfferedTrafficToAll);
 
-        JMenuItem setServiceTypes = new JMenuItem("Set traversed resource types");
+        JMenuItem setServiceTypes = new JMenuItem("Set traversed resource types (to one or all demands)");
         setServiceTypes.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -676,7 +676,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                 NetPlan netPlan = networkViewer.getDesign();
                 try {
                     Demand d = netPlan.getDemandFromId((Long)itemId);
-                    String [] headers = StringUtils.arrayOf("Position/Priority","Type");
+                    String [] headers = StringUtils.arrayOf("Order","Type");
                     Object [][] data = {null, null};
                     DefaultTableModel model = new ClassAwareTableModelImpl(data, headers);
                     AdvancedJTable table = new AdvancedJTable(model);
@@ -684,20 +684,18 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                     addRow.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            Object [] newRow = {table.getRowCount(),resourceTypes[0]};
+                            Object [] newRow = {table.getRowCount(),""};
                             ((DefaultTableModel)table.getModel()).addRow(newRow);
-                            addComboCellEditor(resourceTypes,table.getRowCount() - 1,1, table);
                         }
                     });
-                    JButton removeRow = new JButton("Remove last traversed resource type");
+                    JButton removeRow = new JButton("Remove selected");
                     removeRow.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            int lastRow = table.getRowCount() - 1;
-                            ((DefaultTableModel)table.getModel()).removeRow(lastRow);
+                            ((DefaultTableModel)table.getModel()).removeRow(table.getSelectedRow());
                         }
                     });
-                    JButton removeAllRows = new JButton("Remove all traversed resource types");
+                    JButton removeAllRows = new JButton("Remove all");
                     removeAllRows.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
@@ -711,7 +709,6 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                     {
                         newData[i][0] = i;
                         newData[i][1] = oldTraversedResourceTypes.get(i);
-                        addComboCellEditor(resourceTypes,i,1, table);
                     }
                 ((DefaultTableModel)table.getModel()).setDataVector(newData, headers);
                     JPanel pane = new JPanel();
@@ -723,16 +720,29 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                     pane2.add(removeRow,BorderLayout.EAST);
                     pane2.add(removeAllRows, BorderLayout.SOUTH);
                     pane.add(pane2,BorderLayout.SOUTH);
-                    while (true) {
-                        int result = JOptionPane.showConfirmDialog(null, pane, "Set traversed resource types", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                        if (result != JOptionPane.OK_OPTION) return;
+                    final String [] optionsArray = new String [] { "Set to selected demand" , "Set to all demands" ,  "Cancel" };
+                    while (true) 
+                    {
+                    	
+                        int result = JOptionPane.showOptionDialog(pane, "Set traversed resource types", "" , JOptionPane.DEFAULT_OPTION , JOptionPane.PLAIN_MESSAGE , null , optionsArray , optionsArray[0]);
+                        if ((result != 0) || (result != 1)) return;
+                        final boolean setToAllDemands = (result == 1);
                         List<String> newTraversedResourcesTypes = new LinkedList<>();
                         for(int j = 0; j < table.getRowCount(); j++)
                         {
                             String travResourceType = table.getModel().getValueAt(j,1).toString();
                             newTraversedResourcesTypes.add(travResourceType);
                         }
-                        d.setServiceChainSequenceOfTraversedResourceTypes(newTraversedResourcesTypes);
+                        if (setToAllDemands)
+                        {
+                        	for (Demand dd : netPlan.getDemands()) if (!dd.getRoutes().isEmpty()) throw new Net2PlanException ("It is not possible to set the resource types traversed to demands with routes");
+                        	for (Demand dd : netPlan.getDemands()) dd.setServiceChainSequenceOfTraversedResourceTypes(newTraversedResourcesTypes);
+                        }
+                        else
+                        {
+                        	if (!d.getRoutes().isEmpty()) throw new Net2PlanException ("It is not possible to set the resource types traversed to demands with routes");
+                        	d.setServiceChainSequenceOfTraversedResourceTypes(newTraversedResourcesTypes);
+                        }
                         networkViewer.updateNetPlanView();
                         break;
                     }
@@ -743,6 +753,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
 
         });
         options.add(setServiceTypes);
+        
         if (itemId != null && netPlan.isMultilayer()) {
             final long demandId = (long) itemId;
             if (netPlan.getDemandFromId(demandId).isCoupled()) {

@@ -20,6 +20,7 @@ import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by César on 13/12/2016.
@@ -44,7 +45,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique Identifier","Index","Name","Type","Host Node","Capacity","Cap. Units","Ocuppied capacity","Traversing Routes","Upper Resources","Base Resources","Processing Time","Attributes");
     private List<Resource> currentResources = new LinkedList<>();
     private NetPlan currentTopology = null;
-    private final String[] resourceTypes = StringUtils.arrayOf("Firewall","NAT","CPU","RAM");
+//    private final String[] resourceTypes = StringUtils.arrayOf("Firewall","NAT","CPU","RAM");
 
     public AdvancedJTable_resource(final INetworkCallback networkViewer)
     {
@@ -387,10 +388,9 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                     public void actionPerformed(ActionEvent e) {
                         NetPlan netPlan = networkViewer.getDesign();
                         JComboBox typeSelector = new WiderJComboBox();
-                        for(int i = 0; i < resourceTypes.length; i++)
-                        {
-                            typeSelector.addItem(resourceTypes[i]);
-                        }
+                        final Set<String> resourceTypes = netPlan.getResources().stream().map(ee->ee.getType()).collect(Collectors.toSet());
+                        for(String type : resourceTypes)
+                            typeSelector.addItem(type);
                         try{
                             JPanel pane = new JPanel();
                             pane.add(new JLabel("Resource Type"));
@@ -468,9 +468,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
 
                     JComboBox hostNodeSelector = new WiderJComboBox();
                     JTextField capUnitsField = new JTextField(20);
-                    JComboBox typeSelector = new WiderJComboBox();
-                    for(int i = 0; i < resourceTypes.length; i++)
-                        typeSelector.addItem(resourceTypes[i]);
+                    JTextField typeSelector = new JTextField(20);
 
                     for (Node n : netPlan.getNodes()) {
                         final String nodeName = n.getName();
@@ -495,7 +493,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                         if (result != JOptionPane.OK_OPTION) return;
                         hostNode = netPlan.getNodeFromId((Long) ((StringLabeller) hostNodeSelector.getSelectedItem()).getObject());
                         capacityUnits = capUnitsField.getText();
-                        resType = typeSelector.getSelectedItem().toString();
+                        resType = typeSelector.getText();
                         break;
                     }
                     JPanel panel = new JPanel();
