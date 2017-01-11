@@ -302,9 +302,9 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
         for(Map.Entry<Route, Double> entry : routesCapacities.entrySet())
         {
             if(counter == routesCapacities.size() - 1)
-                t = t + "Route "+entry.getKey().toString()+" ("+entry.getValue()+") ";
+                t = t + "R"+entry.getKey().getIndex()+" ("+entry.getValue()+") ";
             else
-                t = t + "Route "+entry.getKey().toString()+" ("+entry.getValue()+"), ";
+                t = t + "R"+entry.getKey().getIndex()+" ("+entry.getValue()+"), ";
 
             counter++;
         }
@@ -320,9 +320,9 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
         for(Map.Entry<Resource, Double> entry : upperResourcesCapacities.entrySet())
         {
             if(counter == upperResourcesCapacities.size() - 1)
-                t = t + "Resource "+entry.getKey().toString()+" ("+entry.getValue()+") ";
+                t = t + "r"+entry.getKey().getIndex()+" ("+entry.getValue()+") ";
             else
-                t = t + "Resource "+entry.getKey().toString()+" ("+entry.getValue()+"), ";
+                t = t + "r"+entry.getKey().getIndex()+" ("+entry.getValue()+"), ";
 
             counter++;
         }
@@ -338,9 +338,9 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
         for(Map.Entry<Resource, Double> entry : baseResourcesCapacities.entrySet())
         {
             if(counter == baseResourcesCapacities.size() - 1)
-                t = t + "Resource "+entry.getKey().toString()+" ("+entry.getValue()+") ";
+                t = t + "r"+entry.getKey().getIndex()+" ("+entry.getValue()+") ";
             else
-                t = t + "Resource "+entry.getKey().toString()+" ("+entry.getValue()+"), ";
+                t = t + "r"+entry.getKey().getIndex()+" ("+entry.getValue()+"), ";
 
             counter++;
         }
