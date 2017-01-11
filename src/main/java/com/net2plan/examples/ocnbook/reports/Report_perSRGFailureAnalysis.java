@@ -125,7 +125,7 @@ public class Report_perSRGFailureAnalysis implements IReport
 			Set<Link> linksToSetAsDown = new HashSet<Link> ();
 			Set<Node> nodesToSetAsDown = new HashSet<Node> ();
 			nodesToSetAsDown.addAll (srg.getNodes ());
-			linksToSetAsDown.addAll (srg.getLinks ());
+			linksToSetAsDown.addAll (srg.getLinksAllLayers ());
 			
 			/* Make the algorithm process the event of nodes and links down */
 			SimEvent.NodesAndLinksChangeFailureState failureInfo = new SimEvent.NodesAndLinksChangeFailureState(null , nodesToSetAsDown , null , linksToSetAsDown);

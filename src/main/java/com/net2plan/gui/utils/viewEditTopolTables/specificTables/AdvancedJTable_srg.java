@@ -125,7 +125,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
             srgData[3] = srg.getMeanTimeToRepairInHours();
             srgData[4] = srg.getAvailability();
             srgData[5] = nodeIds_thisSRG.isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(nodeIds_thisSRG), ", ");
-            srgData[6] = linkIds_thisSRG.isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(srg.getLinks()), ", ");
+            srgData[6] = linkIds_thisSRG.isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(srg.getLinksAllLayers()), ", ");
             srgData[7] = srg.getLinks(layer).isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(srg.getLinks(layer)), ", ");
             srgData[8] = numRoutes == 0 ? "none" : numRoutes + " (" + CollectionUtils.join(NetPlan.getIndexes(routeIds_thisSRG), ", ") + ")";
             srgData[9] = numSegments == 0 ? "none" : numSegments + " (" + CollectionUtils.join(NetPlan.getIndexes(segmentIds_thisSRG), ", ") + ")";
@@ -162,7 +162,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
                 srgData_initialNetPlan[3] = srg.getMeanTimeToRepairInHours();
                 srgData_initialNetPlan[4] = srg.getAvailability();
                 srgData_initialNetPlan[5] = nodeIds_thisSRG.isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(nodeIds_thisSRG), ", ");
-                srgData_initialNetPlan[6] = linkIds_thisSRG.isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(srg.getLinks()), ", ");
+                srgData_initialNetPlan[6] = linkIds_thisSRG.isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(srg.getLinksAllLayers()), ", ");
                 srgData_initialNetPlan[7] = srg.getLinks(layer).isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(srg.getLinks(layer)), ", ");
                 srgData_initialNetPlan[8] = numRoutes == 0 ? "none" : numRoutes + " (" + CollectionUtils.join(NetPlan.getIndexes(routeIds_thisSRG), ", ") + ")";
                 srgData_initialNetPlan[9] = numSegments == 0 ? "none" : numSegments + " (" + CollectionUtils.join(NetPlan.getIndexes(segmentIds_thisSRG), ", ") + ")";
@@ -638,7 +638,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
         final Collection<Long> nodeIds = netPlan.getNodeIds();
         final Collection<Long> linkIds = netPlan.getLinkIds();
         final Collection<Node> nodeIds_thisSRG = netPlan.getSRGFromId(srgId).getNodes();
-        final Collection<Link> linkIds_thisSRG = netPlan.getSRGFromId(srgId).getLinks();
+        final Collection<Link> linkIds_thisSRG = netPlan.getSRGFromId(srgId).getLinksAllLayers();
 
         Map<Node, Color> coloredNodes = new HashMap<Node, Color>();
         for (Node n : nodeIds_thisSRG) coloredNodes.put(n, Color.ORANGE);

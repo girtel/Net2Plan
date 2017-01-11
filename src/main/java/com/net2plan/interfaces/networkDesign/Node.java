@@ -49,7 +49,6 @@ public class Node extends NetworkElement
 	Set<MulticastDemand> cache_nodeOutgoingMulticastDemands;
 	Set<SharedRiskGroup> cache_nodeSRGs;
 	Set<Route> cache_nodeAssociatedRoutes;
-	Set<ProtectionSegment> cache_nodeAssociatedSegments;
 	Set<MulticastTree> cache_nodeAssociatedulticastTrees;
 	Set<Resource> cache_nodeResources;
 
@@ -83,7 +82,6 @@ public class Node extends NetworkElement
 		this.cache_nodeSRGs = new HashSet<SharedRiskGroup> ();
 		this.cache_nodeResources = new HashSet<Resource> ();
 		this.cache_nodeAssociatedRoutes = new HashSet<Route> ();
-		this.cache_nodeAssociatedSegments = new HashSet<ProtectionSegment> ();
 		this.cache_nodeAssociatedulticastTrees = new HashSet<MulticastTree> ();
 
 	
@@ -105,7 +103,6 @@ public class Node extends NetworkElement
 		this.cache_nodeSRGs.clear (); for (SharedRiskGroup s : origin.cache_nodeSRGs) this.cache_nodeSRGs.add(this.netPlan.getSRGFromId(s.id));
 		this.cache_nodeResources.clear(); for (Resource r : origin.cache_nodeResources) this.cache_nodeResources.add(this.netPlan.getResourceFromId(r.id));
 		this.cache_nodeAssociatedRoutes.clear (); for (Route r : origin.cache_nodeAssociatedRoutes) this.cache_nodeAssociatedRoutes.add(this.netPlan.getRouteFromId (r.id));
-		this.cache_nodeAssociatedSegments.clear (); for (ProtectionSegment s : origin.cache_nodeAssociatedSegments) this.cache_nodeAssociatedSegments.add(this.netPlan.getProtectionSegmentFromId(s.id));
 		this.cache_nodeAssociatedulticastTrees.clear (); for (MulticastTree t : origin.cache_nodeAssociatedulticastTrees) this.cache_nodeAssociatedulticastTrees.add(this.netPlan.getMulticastTreeFromId(t.id));
 	}
 	
@@ -124,7 +121,6 @@ public class Node extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.cache_nodeSRGs , e2.cache_nodeSRGs)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_nodeResources, e2.cache_nodeResources)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_nodeAssociatedRoutes , e2.cache_nodeAssociatedRoutes)) return false;
-		if (!NetPlan.isDeepCopy(this.cache_nodeAssociatedSegments , e2.cache_nodeAssociatedSegments)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_nodeAssociatedulticastTrees , e2.cache_nodeAssociatedulticastTrees)) return false;
 		return true;
 	}
@@ -459,7 +455,7 @@ public class Node extends NetworkElement
 
 	/**
 	 * <p>Set the failure state of the node: up or down. Returns the previous failure state. The routing is automatically updated, making the traffic
-	 * of the traversing routes and segments as zero, and the hop-by-hop routing is updated as if the forwarding rules of input and output links were zero</p>
+	 * of the traversing routes as zero, and the hop-by-hop routing is updated as if the forwarding rules of input and output links were zero</p>
 	 * @param setAsUp The new failure state ({@code true} up, {@code false} down)
 	 * @return The previous failure state
 	 */
@@ -601,20 +597,6 @@ public class Node extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns the set of protection segments that start, end or traverse this node, in the given layer. If no layer is provided, the default layer is assumed.</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return The segments, or an empty set if none
-	 */
-	public Set<ProtectionSegment> getAssociatedProtectionSegments (NetworkLayer ... optionalLayerParameter)
-	{
-		checkAttachedToNetPlanObject();
-		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		Set<ProtectionSegment> res = new HashSet<ProtectionSegment> (); 
-		for (ProtectionSegment s : cache_nodeAssociatedSegments) if (s.layer.equals (layer)) res.add (s);
-		return res;
-	}
-
-	/**
 	 * <p>Returns the set of shared risk groups (SRGs) this node belongs to. </p>
 	 * @return The set of SRGs as an unmodifiable set
 	 */
@@ -638,7 +620,7 @@ public class Node extends NetworkElement
 	
 	
 	/**
-	 * <p>Removes a node, and any associated link, demand, route, protection segment or forwarding rule.</p>
+	 * <p>Removes a node, and any associated link, demand, route or forwarding rule.</p>
 	 */
 	public void remove ()
 	{
@@ -646,7 +628,6 @@ public class Node extends NetworkElement
 		netPlan.checkIsModifiable();
 
 		for (MulticastTree tree : new LinkedList<MulticastTree> (cache_nodeAssociatedulticastTrees)) tree.remove ();
-		for (ProtectionSegment segment : new LinkedList<ProtectionSegment> (cache_nodeAssociatedSegments)) segment.remove ();
 		for (Route route : new LinkedList<Route> (cache_nodeAssociatedRoutes)) route.remove ();
 		for (SharedRiskGroup srg : new LinkedList<SharedRiskGroup> (cache_nodeSRGs)) srg.remove ();
 		for (Link link : new LinkedList<Link> (cache_nodeIncomingLinks)) link.remove ();
@@ -728,7 +709,6 @@ public class Node extends NetworkElement
 		for (MulticastDemand demand : cache_nodeOutgoingMulticastDemands) if (demand.ingressNode != this) throw new RuntimeException ("Bad");
 		for (SharedRiskGroup srg : cache_nodeSRGs) if (!srg.nodes.contains(this)) throw new RuntimeException ("Bad");
 		for (Route route : cache_nodeAssociatedRoutes) if (!route.cache_seqNodesRealPath.contains(this)) throw new RuntimeException ("Bad: " + cache_nodeAssociatedRoutes);
-		for (ProtectionSegment segment : cache_nodeAssociatedSegments) if (!segment.seqNodes.contains(this)) throw new RuntimeException ("Bad");
 		for (MulticastTree tree : cache_nodeAssociatedulticastTrees) if (!tree.cache_traversedNodes.contains(this)) throw new RuntimeException ("Bad");
 	}
 

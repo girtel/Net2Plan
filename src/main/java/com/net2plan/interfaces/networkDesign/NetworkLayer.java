@@ -47,7 +47,6 @@ public class NetworkLayer extends NetworkElement
 	ArrayList<MulticastDemand> multicastDemands;
 	ArrayList<Route> routes;
 	ArrayList<MulticastTree> multicastTrees;
-	ArrayList<ProtectionSegment> protectionSegments;
 
 	DoubleMatrix2D forwardingRules_f_de; // splitting ratios
 	DoubleMatrix2D forwardingRules_x_de; // carried traffics (both routings)
@@ -60,7 +59,6 @@ public class NetworkLayer extends NetworkElement
 	
 	Set<Route> cache_routesDown;
 	Set<MulticastTree> cache_multicastTreesDown;
-	Set<ProtectionSegment> cache_segmentsDown;
 
 	NetworkLayer(NetPlan netPlan, long id, int index , String demandTrafficUnitsName, String description, String name, String linkCapacityUnitsName, AttributeMap attributes)
 	{
@@ -76,7 +74,6 @@ public class NetworkLayer extends NetworkElement
 		this.multicastDemands = new ArrayList<MulticastDemand> ();
 		this.routes = new ArrayList<Route> ();
 		this.multicastTrees = new ArrayList<MulticastTree> ();
-		this.protectionSegments = new ArrayList<ProtectionSegment> ();
 
 		this.cache_linksDown = new HashSet<Link> ();
 		this.cache_coupledLinks = new HashSet<Link> ();
@@ -85,7 +82,6 @@ public class NetworkLayer extends NetworkElement
 
 		this.cache_routesDown = new HashSet<Route> ();
 		this.cache_multicastTreesDown = new HashSet<MulticastTree> ();
-		this.cache_segmentsDown = new HashSet<ProtectionSegment> ();
 		this.forwardingRules_f_de = null;
 		this.forwardingRules_x_de = null;
 		this.forwardingRules_Aout_ne = null;
@@ -129,14 +125,12 @@ public class NetworkLayer extends NetworkElement
 		this.cache_coupledMulticastDemands.clear (); for (MulticastDemand d : origin.cache_coupledMulticastDemands) this.cache_coupledMulticastDemands.add(this.netPlan.getMulticastDemandFromId(d.id));
 		this.cache_routesDown.clear (); for (Route r : origin.cache_routesDown) this.cache_routesDown.add(this.netPlan.getRouteFromId (r.id));
 		this.cache_multicastTreesDown.clear (); for (MulticastTree t : origin.cache_multicastTreesDown) this.cache_multicastTreesDown.add(this.netPlan.getMulticastTreeFromId (t.id));
-		this.cache_segmentsDown.clear (); for (ProtectionSegment s : origin.cache_segmentsDown) this.cache_segmentsDown.add(this.netPlan.getProtectionSegmentFromId(s.id));
 		
 		for (Link e : origin.links) this.links.get(e.index).copyFrom(e);
 		for (Demand d : origin.demands) this.demands.get(d.index).copyFrom(d);
 		for (MulticastDemand d : origin.multicastDemands) this.multicastDemands.get(d.index).copyFrom(d);
 		for (Route r : origin.routes) this.routes.get(r.index).copyFrom(r);
 		for (MulticastTree t : origin.multicastTrees) this.multicastTrees.get(t.index).copyFrom(t);
-		for (ProtectionSegment s : origin.protectionSegments) this.protectionSegments.get(s.index).copyFrom(s);
 	}
 	
 	public boolean isDeepCopy (NetworkLayer e2)
@@ -152,7 +146,6 @@ public class NetworkLayer extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.multicastDemands , e2.multicastDemands)) return false;
 		if (!NetPlan.isDeepCopy(this.routes , e2.routes)) return false;
 		if (!NetPlan.isDeepCopy(this.multicastTrees , e2.multicastTrees)) return false;
-		if (!NetPlan.isDeepCopy(this.protectionSegments , e2.protectionSegments)) return false;
 		if (!NetPlan.isDeepCopy(this.multicastTrees , e2.multicastTrees)) return false;
 		if ((this.forwardingRules_f_de != null) && (!this.forwardingRules_f_de.equals(e2.forwardingRules_f_de))) return false;
 		if ((this.forwardingRules_x_de != null) && (!this.forwardingRules_x_de.equals(e2.forwardingRules_x_de))) return false;
@@ -164,7 +157,6 @@ public class NetworkLayer extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.cache_coupledMulticastDemands , e2.cache_coupledMulticastDemands)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_routesDown , e2.cache_routesDown)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_multicastTreesDown , e2.cache_multicastTreesDown)) return false;
-		if (!NetPlan.isDeepCopy(this.cache_segmentsDown , e2.cache_segmentsDown)) return false;
 		return true;
 	}
 	
@@ -274,8 +266,8 @@ public class NetworkLayer extends NetworkElement
 			final double newXde = h_d * M.get (demand.ingressNode.index , link.originNode.index) * layer.forwardingRules_f_de.get (demand.index , link.index);
 			if (newXde < -1E-5) throw new RuntimeException ("Bad");
 			layer.forwardingRules_x_de.set (demand.index , link.index , newXde);
-			link.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += newXde - oldXde; // in hop-by-hop carried traffic is the same as occupied capacity
-			link.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += newXde - oldXde;
+			link.cache_carriedTraffic += newXde - oldXde; // in hop-by-hop carried traffic is the same as occupied capacity
+			link.cache_occupiedCapacity += newXde - oldXde;
 			if ((newXde > 1e-3) && (!link.isUp)) throw new RuntimeException ("Bad");
 		}
 
@@ -315,7 +307,6 @@ public class NetworkLayer extends NetworkElement
 		for (MulticastDemand demand : cache_coupledMulticastDemands) if (demand.coupledUpperLayerLinks == null) throw new RuntimeException ("Bad");
 		for (Route route : cache_routesDown) if (!route.isDown()) throw new RuntimeException ("Bad");
 		for (MulticastTree tree : cache_multicastTreesDown) if (!tree.isDown()) throw new RuntimeException ("Bad");
-		for (ProtectionSegment segment : cache_segmentsDown) if (!segment.isDown()) throw new RuntimeException ("Bad");
 	}
 
 

@@ -405,7 +405,7 @@ public class Online_evProc_congControlAndQoSTwoClassesPrimalDecomp extends IEven
 		{
 			final double h_d = d.getCarriedTraffic();
 			final int type = (int) this.demandType.get(d.getIndex());
-			final List<Link> seqLinks = d.getRoutes ().iterator().next().getSeqLinksRealPath();
+			final List<Link> seqLinks = d.getRoutes ().iterator().next().getSeqLinks();
 			for (Link e : seqLinks)
 			{
 				final int index_e = e.getIndex ();
@@ -439,7 +439,7 @@ public class Online_evProc_congControlAndQoSTwoClassesPrimalDecomp extends IEven
 		{
 			final double h_r = r.getCarriedTraffic();
 			demandCarriedTraffic += h_r;
-			for (Link e : r.getSeqLinksRealPath())
+			for (Link e : r.getSeqLinks())
 				demandWeightedSumLinkPrices += h_r * infoIKnow_price_e.get(e.getIndex ());
 		}
 		//if (Math.abs(demandCarriedTraffic - this.currentNetPlan.getDemandCarriedTraffic(dIdMe)) > 1E-3) throw new RuntimeException ("Not all the traffic is carried");

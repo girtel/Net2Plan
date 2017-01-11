@@ -31,6 +31,7 @@ import com.net2plan.utils.Quadruple;
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /** <p>This class contains a representation of a unicast demand. Unicast demands are defined by its initial and end node, the network layer they belong to, 
  * and their offered traffic. When the routing in the network layer is the type {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, demands are carried
@@ -133,6 +134,26 @@ public class Demand extends NetworkElement
 	}
 
 	/**
+	 * <p>Returns the routes associated to this demand, but only those that are a backup route.</p>
+	 * <p><b>Important</b>: If network layer routing type is not {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, an exception is thrown.</p>
+	 * @return The set of routes
+	 * */
+	public Set<Route> getRoutesAreBackup ()
+	{
+		return getRoutes ().stream().filter(e -> e.isBackupRoute()).collect(Collectors.toSet());
+	}
+
+	/**
+	 * <p>Returns the routes associated to this demand, but only those that are not a backup route.</p>
+	 * <p><b>Important</b>: If network layer routing type is not {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, an exception is thrown.</p>
+	 * @return The set of routes
+	 * */
+	public Set<Route> getRoutesAreNotBackup ()
+	{
+		return getRoutes ().stream().filter(e -> !e.isBackupRoute()).collect(Collectors.toSet());
+	}
+
+	/**
 	 * <p>Returns the worse case end-to-end propagation time of the demand traffic. If the routing is source routing, this is the worse propagation time
 	 * (summing the link latencies) for all the routes carrying traffic. If the routing is hop-by-hop and loopless, the paths followed are computed and 
 	 * the worse case propagation time is returned. If the hop-by-hop routing has loops, {@code Double.MAX_VALUE} is returned. In multilayer design, when the
@@ -221,7 +242,7 @@ public class Demand extends NetworkElement
 	{
 		if (layer.routingType != RoutingType.SOURCE_ROUTING) throw new Net2PlanException ("The routing type must be SOURCE ROUTING");
 		for (Route r : this.cache_routes)
-			for (Resource res : r.resourcesTraversedAndOccupiedCapIfnotFailMap.keySet()) 
+			for (Resource res : r.getSeqResourcesTraversed()) 
 				if (res.isOversubscribed()) return true;
 		return false;
 	}
@@ -513,7 +534,7 @@ public class Demand extends NetworkElement
 
 	/**
 	 * <p>Returns the set of demand routes with shortest path (and its cost), using the cost per link array provided. If more than one shortest route exists, all of them are provided.
-	 * If the cost vector provided is null, all links have cost one. If the route traverses a protection segment, the cost of its links is summed.</p>
+	 * If the cost vector provided is null, all links have cost one.</p>
 	 * @param costs Costs for each link
 	 * @return Pair where the first element is a set of routes (may be empty) and the second element the minimum cost (may be {@code Double.MAX_VALUE} if there is no shortest path)
 	 */
@@ -535,7 +556,7 @@ public class Demand extends NetworkElement
 	 * <p>Returns the set of demand service chains with shortest cost, using the cost per link and cost per resources arrays provided. 
 	 * If more than one minimum cost route exists, all of them are provided.
 	 * If the link cost vector provided is null, all links have cost one. The same for the resource costs array. 
-	 * If the route traverses a protection segment, the cost of its links is summed.</p>
+	 * </p>
 	 * @param linkCosts Costs for each link (indexed by link index)
 	 * @param resourceCosts the costs of the resources (indexed by resource index)
 	 * @return Pair where the first element is a set of routes (may be empty) and the second element the minimum cost (will be {@code Double.MAX_VALUE} if there is no shortest path)
@@ -549,9 +570,8 @@ public class Demand extends NetworkElement
 		for (Route r : cache_routes)
 		{
 			double cost = 0; 
-			for (NetworkElement e : r.seqLinksSegmentsAndResourcesTraversed) 
-				if (e instanceof ProtectionSegment) for (Link ee : ((ProtectionSegment) e).seqLinks) cost += linkCosts [ee.index];
-				else if (e instanceof Link) cost += linkCosts [e.index];
+			for (NetworkElement e : r.currentPath) 
+				if (e instanceof Link) cost += linkCosts [e.index];
 				else if (e instanceof Resource) cost += resourceCosts [e.index];
 				else throw new RuntimeException ("Bad");
 			if (cost < shortestPathCost) { shortestPathCost = cost; minCostRoutes.clear(); minCostRoutes.add (r); }
@@ -577,7 +597,7 @@ public class Demand extends NetworkElement
 			layer.forwardingRules_f_de = DoubleFactory2D.sparse.appendRows(layer.forwardingRules_f_de.viewPart(0, 0, index, E), layer.forwardingRules_f_de.viewPart(index + 1, 0, layer.demands.size() - index - 1, E));
 			DoubleMatrix1D x_e = layer.forwardingRules_x_de.viewRow (index).copy ();
 			layer.forwardingRules_x_de = DoubleFactory2D.sparse.appendRows(layer.forwardingRules_x_de.viewPart(0, 0, index, E), layer.forwardingRules_x_de.viewPart(index + 1, 0, layer.demands.size() - index - 1, E));
-			for (Link link : layer.links) { link.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments -= x_e.get(link.index); link.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments -= x_e.get(link.index); }
+			for (Link link : layer.links) { link.cache_carriedTraffic -= x_e.get(link.index); link.cache_occupiedCapacity -= x_e.get(link.index); }
 		}
 		
 		netPlan.cache_id2DemandMap.remove(id);

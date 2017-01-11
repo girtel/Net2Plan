@@ -367,7 +367,7 @@ public class Resource extends NetworkElement
 
 	void addTraversingRoute (Route r , double resourceOccupiedCapacityByThisRouteIfNotFailing)
 	{
-		if (!r.getSeqNodesRealPath().contains(this.hostNode)) throw new Net2PlanException ("The route does not traverse the host node of this resource");
+		if (!r.getSeqNodes().contains(this.hostNode)) throw new Net2PlanException ("The route does not traverse the host node of this resource");
 		this.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.put(r , resourceOccupiedCapacityByThisRouteIfNotFailing);
 		updateTotalOccupiedCapacity();
 	}
@@ -441,10 +441,10 @@ public class Resource extends NetworkElement
 		{
 			final Route r = travRoute.getKey();
 			final double val = travRoute.getValue();
-			if (r.resourcesTraversedAndOccupiedCapIfnotFailMap.get(this) != val) throw new RuntimeException ("Bad");
-			accumOccupCap += val;
+			if (r.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.get(this) != val) throw new RuntimeException ("Bad");
+			if (!r.isDown()) accumOccupCap += val;
 		}
-		if (Math.abs(accumOccupCap - cache_totalOccupiedCapacity) > 1e-3) throw new RuntimeException ("Bad");
+		org.junit.Assert.assertEquals (accumOccupCap , cache_totalOccupiedCapacity , 0.001);
 	}
 
 	

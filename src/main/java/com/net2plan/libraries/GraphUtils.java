@@ -67,7 +67,6 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.utils.CollectionUtils;
@@ -666,7 +665,7 @@ public class GraphUtils
 		for (Route route : routes)
 		{
 			final int t = route.getEgressNode().getIndex();
-			for (Link link : route.getSeqLinksRealPath())
+			for (Link link : route.getSeqLinks())
 			{
 				final int e = link.getIndex();
 				x_te.setQuick(t, e, x_te.getQuick(t, e) + route.getCarriedTraffic());
@@ -685,7 +684,7 @@ public class GraphUtils
 		final int E = links.size();
 		DoubleMatrix1D y_e = DoubleFactory1D.dense.make(E);
 		for (Route r : routes)
-			for (Link e : r.getSeqLinksRealPath())
+			for (Link e : r.getSeqLinks())
 				y_e.set(e.getIndex(), y_e.get(e.getIndex()) + r.getCarriedTraffic());
 		return y_e;
 	}
@@ -716,10 +715,12 @@ public class GraphUtils
 		return f_te;
 	}
 
-	/** Given a path-based routing, returns the amount of traffic for each demand d traversing each link e.
+	/** Given a path-based routing, returns the amount of traffic for each demand d traversing each link e. The link 
+	 * occupation information is not used, only the route carried traffic (recall that a route carried traffic is zero if 
+	 * it traverses a failed link/node)  
 	 * @param links List of links
 	 * @param demands List of demands
-	 * @param routes List of rutes
+	 * @param routes List of routes
 	 * @return Demand-link routing in the form x_de (amount of traffic from demand d, transmitted through link e) */
 	public static DoubleMatrix2D convert_xp2xde(List<Link> links, List<Demand> demands, List<Route> routes)
 	{
@@ -730,7 +731,7 @@ public class GraphUtils
 		for (Route route : routes)
 		{
 			final int d = route.getDemand().getIndex();
-			for (Link link : route.getSeqLinksRealPath())
+			for (Link link : route.getSeqLinks())
 			{
 				final int e = link.getIndex();
 				x_de.setQuick(d, e, x_de.getQuick(d, e) + route.getCarriedTraffic());
@@ -795,7 +796,7 @@ public class GraphUtils
 		{
 			final Map<Link, Double> linkSpareCapacityMapToUse = new HashMap<Link, Double>();
 			for (Link e : links)
-				linkSpareCapacityMapToUse.put(e, Math.max(0, e.getCapacity() - e.getCarriedTrafficIncludingProtectionSegments()));
+				linkSpareCapacityMapToUse.put(e, Math.max(0, e.getCapacity() - e.getOccupiedCapacity()));
 			capacityTransformer = JUNGUtils.getEdgeWeightTransformer(linkSpareCapacityMapToUse);
 		} else
 			capacityTransformer = JUNGUtils.getEdgeWeightTransformer(linkSpareCapacityMap);
@@ -981,7 +982,7 @@ public class GraphUtils
 							for (List<Link> path : kPaths)
 							{
 								final double thisCost = path.stream().mapToDouble(e -> linkCostMap.get(e)).sum ();
-								if (thisCost > previousCost + 0.001) throw new RuntimeException ("Bad");
+								if (previousCost > thisCost + 0.001) throw new RuntimeException ("thisCost: " + thisCost + ", previousCost: " + previousCost + ", Bad");
 								if (thisCost > maxCostServiceChain) break; // the maximum cost is exceeded, do not add this as subpath
 								pathsInfo.add(Pair.of(path, thisCost));
 								previousCost = thisCost;
@@ -1382,6 +1383,7 @@ public class GraphUtils
 			op.addConstraint("Ain_ne * x_e' >= delta_bd'"); // a destination node receives at least one input link
 			op.addConstraint("Ain_ne * x_e' <= 1 - delta_ad'"); // source nodes receive 0 links, destination nodes at most one (then just one)
 			op.addConstraint("Aout_ne * x_e' <= K * (delta_ad' + Ain_ne * x_e')"); // at most K out links from ingress node and from intermediate nodes if they have one input link
+			if (maxTreeCost < Double.MAX_VALUE) op.addConstraint("c_e * x_e' <= " + maxTreeCost);
 			double maximumAllowedTreeCost = maxTreeCost;
 			if (!previousTrees.isEmpty())
 			{
@@ -1588,12 +1590,6 @@ public class GraphUtils
 			org.jgrapht.Graph<Node, Route> auxGraph = JGraphTUtils.getGraphFromRouteMap((List<Route>) elements);
 			Map<Route, Double> linkCostMapMap = CollectionUtils.toMap((List<Route>) elements, linkCostMap);
 			org.jgrapht.Graph<Node, Route> graph = JGraphTUtils.getAsWeightedGraph(auxGraph, linkCostMapMap);
-			return JGraphTUtils.isWeightedBidirectional(graph);
-		} else if (elements.get(0) instanceof ProtectionSegment)
-		{
-			org.jgrapht.Graph<Node, ProtectionSegment> auxGraph = JGraphTUtils.getGraphFromProtectionSegmentMap((List<ProtectionSegment>) elements);
-			Map<ProtectionSegment, Double> linkCostMapMap = CollectionUtils.toMap((List<ProtectionSegment>) elements, linkCostMap);
-			org.jgrapht.Graph<Node, ProtectionSegment> graph = JGraphTUtils.getAsWeightedGraph(auxGraph, linkCostMapMap);
 			return JGraphTUtils.isWeightedBidirectional(graph);
 		} else
 			throw new Net2PlanException("Unexpected network element type");
@@ -1876,30 +1872,6 @@ public class GraphUtils
 					if (!graph.containsVertex(destinationNode)) graph.addVertex(destinationNode);
 
 					graph.addEdge(originNode, destinationNode, route);
-				}
-			}
-			return graph;
-		}
-
-		/** <p>Obtains a {@code JGraphT} graph from a given protection segment map.</p>
-		 * 
-		 * @param demands List of demands
-		 * @return {@code JGraphT} graph */
-		public static org.jgrapht.Graph<Node, ProtectionSegment> getGraphFromProtectionSegmentMap(List<ProtectionSegment> segments)
-		{
-			org.jgrapht.Graph<Node, ProtectionSegment> graph = new DirectedWeightedMultigraph<Node, ProtectionSegment>(ProtectionSegment.class);
-
-			if (segments != null)
-			{
-				for (ProtectionSegment segment : segments)
-				{
-					Node originNode = segment.getOriginNode();
-					Node destinationNode = segment.getDestinationNode();
-
-					if (!graph.containsVertex(originNode)) graph.addVertex(originNode);
-					if (!graph.containsVertex(destinationNode)) graph.addVertex(destinationNode);
-
-					graph.addEdge(originNode, destinationNode, segment);
 				}
 			}
 			return graph;

@@ -234,7 +234,7 @@ public class Online_evProc_congestionControlPrimal extends IEventProcessor
 			{
 				final double h_r = r.getCarriedTraffic();
 				demandCarriedTraffic += h_r;
-				for (Link e : r.getSeqLinksRealPath())
+				for (Link e : r.getSeqLinks())
 				{
 					demandWeightedSumLinkPrices += h_r * infoIKnow_priceFirstOrder_e.get(e.getIndex ());
 					demandWeightedSumSecondDerivativeLinkPrices += h_r * infoIKnow_priceSecondOrder_e.get(e.getIndex ());
@@ -332,7 +332,7 @@ public class Online_evProc_congestionControlPrimal extends IEventProcessor
 	/* Computes the price, and the price for diagonal scaling */
 	private double computeFirstOrderPriceFromNetPlan (Link e)
 	{
-		final double y_e = e.getCarriedTrafficIncludingProtectionSegments();
+		final double y_e = e.getCarriedTraffic();
 		final double u_e = e.getCapacity();
 		if (u_e == 0) throw new RuntimeException ("Zero capacity in a link");
 		double price = 0;
@@ -350,7 +350,7 @@ public class Online_evProc_congestionControlPrimal extends IEventProcessor
 
 	private double computeSecondOrderPriceFromNetPlan (Link e)
 	{
-		final double y_e = e.getCarriedTrafficIncludingProtectionSegments();
+		final double y_e = e.getCarriedTraffic();
 		final double u_e = e.getCapacity();
 		if (u_e == 0) throw new RuntimeException ("Zero capacity in a link");
 		double priceDiagScaling = 0;

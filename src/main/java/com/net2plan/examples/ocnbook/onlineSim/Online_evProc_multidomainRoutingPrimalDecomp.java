@@ -564,7 +564,7 @@ public class Online_evProc_multidomainRoutingPrimalDecomp extends IEventProcesso
 		double maxOverssubs = 0;
 		for (Link e : np.getLinks())
 		{
-			final double y_e = e.getCarriedTrafficIncludingProtectionSegments();
+			final double y_e = e.getCarriedTraffic();
 			final double u_e = e.getCapacity();
 			maxOverssubs = Math.max(maxOverssubs, y_e - u_e);
 			optCost += Math.min(y_e, u_e);

@@ -85,7 +85,7 @@ public class Offline_fa_xdeSharedRestoration implements IAlgorithm
 		op.setInputParameter("onesS", DoubleFactory1D.dense.make (S , 1.0) , "row");
 		op.setInputParameter("A_nd", netPlan.getMatrixNodeDemandIncidence());
 		op.setInputParameter("A_es", netPlan.getMatrixLink2SRGAssignment());
-		DoubleMatrixND A_des = new DoubleMatrixND (new int []{D,E,S} , "sparse"); for (SharedRiskGroup srg : netPlan.getSRGs()) for (Link e : srg.getAffectedLinks()) for (int d = 0; d < D ; d ++) A_des.set(new int [] {d,e.getIndex (),srg.getIndex()} , 1.0);
+		DoubleMatrixND A_des = new DoubleMatrixND (new int []{D,E,S} , "sparse"); for (SharedRiskGroup srg : netPlan.getSRGs()) for (Link e : srg.getAffectedLinksAllLayers()) for (int d = 0; d < D ; d ++) A_des.set(new int [] {d,e.getIndex (),srg.getIndex()} , 1.0);
 		DoubleMatrixND A_nds = new DoubleMatrixND (new int []{N,D,S} , "sparse"); for (Demand d : netPlan.getDemands()) for (int s = 0; s < S ; s ++) { A_nds.set(new int [] {d.getIngressNode().getIndex(),d.getIndex(),s}, 1.0); A_nds.set(new int [] {d.getEgressNode().getIndex(),d.getIndex(),s}, -1.0); }
 		op.setInputParameter("A_des", A_des);
 		op.setInputParameter("A_nds", A_nds);
@@ -176,14 +176,14 @@ public class Offline_fa_xdeSharedRestoration implements IAlgorithm
 			NetPlan npThis = netPlan.copy ();
 			npThis.removeAllUnicastRoutingInformation();
 			DoubleMatrix2D this_xxde = xx_des.viewColumn (srg.getIndex ()).copy ();
-			for (Link e : srg.getAffectedLinks()) if (this_xxde.viewColumn(e.getIndex ()).zSum () != 0) throw new Net2PlanException("Bad - some failing links carry traffic");
+			for (Link e : srg.getAffectedLinksAllLayers()) if (this_xxde.viewColumn(e.getIndex ()).zSum () != 0) throw new Net2PlanException("Bad - some failing links carry traffic");
 			npThis.setRoutingFromDemandLinkCarriedTraffic(this_xxde , true , false);
 			if (!npThis.getLinksOversubscribed().isEmpty()) throw new Net2PlanException("Bad - Some link is oversubscribed (constraint violated) in a failure");
 			if (!npThis.getDemandsBlocked().isEmpty()) throw new Net2PlanException("Bad - Some demand is blocked (constraint violated) in a failure");
 			for (Demand d : netPlan.getDemands ())
 			{
 				IntArrayList es_noFailure = new IntArrayList (); xx_de.viewRow (d.getIndex ()).getNonZeros(es_noFailure , new DoubleArrayList ());
-				boolean affectedByThisFailure = false; for (Link e : srg.getAffectedLinks()) if (xx_de.get(d.getIndex() , e.getIndex ()) != 0) { affectedByThisFailure = true; break; }
+				boolean affectedByThisFailure = false; for (Link e : srg.getAffectedLinksAllLayers()) if (xx_de.get(d.getIndex() , e.getIndex ()) != 0) { affectedByThisFailure = true; break; }
 				if (!affectedByThisFailure)
 				{
 					IntArrayList es_thisFailure = new IntArrayList (); this_xxde.viewRow (d.getIndex ()).getNonZeros(es_thisFailure , new DoubleArrayList ());

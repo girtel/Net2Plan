@@ -187,47 +187,6 @@ public class SimEvent implements Comparable<SimEvent>
 	};
 
 	/**
-	 * This class represents the request to add a new Protection Segment.
-	 */
-	public static class SegmentAdd
-	{ 
-		public ProtectionSegment segmentAddedToFillByProcessor; public final Set<Route> associatedRoutes; public final List<Link> seqLinks; public final double reservedLinkCapacity;
-
-		/**
-		 * Default constructor.
-		 * @param associatedRoutes Associated routes
-		 * @param seqLinks Sequence of links
-		 * @param reservedLinkCapacity Reserved link capacity
-		 */
-		public SegmentAdd(Set<Route> associatedRoutes , List<Link> seqLinks, double reservedLinkCapacity) { this.associatedRoutes = new HashSet<Route> (associatedRoutes); this.seqLinks = new
-			LinkedList<Link> (seqLinks); this.reservedLinkCapacity = reservedLinkCapacity; }
-		@Override
-		public String toString()
-		{
-			return this.getClass ().getSimpleName() + " [associatedRoutes=" + associatedRoutes + ", seqLinks=" + seqLinks + ", reservedLinkCapacity=" + reservedLinkCapacity + "]";
-		}  
-	};
-
-	/**
-	 * This class represents the request to remove an existing Protection Segment.
-	 */
-	public static class SegmentRemove
-	{ 
-		public final ProtectionSegment segment;
-
-		/**
-		 * Default constructor.
-		 * @param segment Protection Segment to be removed
-		 */
-		public SegmentRemove (ProtectionSegment segment) { this.segment = segment; }
-		@Override
-		public String toString()
-		{
-			return this.getClass ().getSimpleName() + " [segment=" + segment + "]";
-		} 
-	};
-
-	/**
 	 * This class represents the request to modify the failure state of multiple links and nodes.
 	 */
 	public static class NodesAndLinksChangeFailureState

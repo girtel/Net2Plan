@@ -25,25 +25,23 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
-import com.net2plan.libraries.GraphUtils;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.RandomUtils;
 import com.net2plan.utils.Triple;
+
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 
 /** 
  * Implements the reactions of a technology-agnostic network to connection requests under various CAC options, and reactions to failures and repairs under different recovery schemes.
@@ -149,7 +147,7 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 		}
 
 		initialNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
-		for (Route r : initialNetPlan.getRoutes(layer)) routeOriginalLinks.put (r , r.getSeqLinksRealPath());
+		for (Route r : initialNetPlan.getRoutesAreNotBackup(layer)) routeOriginalLinks.put (r , r.getSeqLinks());
 		this.finishTransitory(0);
 	}
 
@@ -175,8 +173,8 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 				if (spLinks != null)
 				{
 					final Route addedRoute = currentNetPlan.addRoute(addRouteEvent.demand , addRouteEvent.carriedTraffic , addRouteEvent.occupiedLinkCapacity, spLinks.getFirst() , null);
-					final ProtectionSegment addedSegment = currentNetPlan.addProtectionSegment(spLinks.getSecond() , addRouteEvent.occupiedLinkCapacity , null);
-					addedRoute.addProtectionSegment(addedSegment);
+					final Route addedBackupRoute = currentNetPlan.addRoute(addRouteEvent.demand , 0 , addRouteEvent.occupiedLinkCapacity , spLinks.getSecond() , null);
+					addedRoute.addBackupRoute(addedBackupRoute);
 					addRouteEvent.routeAddedToFillByProcessor = addedRoute;
 					this.routeOriginalLinks.put (addedRoute , spLinks.getFirst());
 					this.stat_numCarriedConnections ++;
@@ -203,8 +201,8 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 			SimEvent.RouteRemove routeEvent = (SimEvent.RouteRemove) event.getEventObject ();
 			Route routeToRemove = routeEvent.route;
 			if (routeToRemove == null) throw new RuntimeException ("Bad");
+			for (Route backup : routeToRemove.getBackupRoutes()) backup.remove ();
 			routeToRemove.remove();
-			for (ProtectionSegment s : routeToRemove.getPotentialBackupProtectionSegments()) s.remove ();
 			this.routeOriginalLinks.remove(routeToRemove);
 		} else if (event.getEventObject () instanceof SimEvent.DemandModify)
 		{
@@ -220,19 +218,49 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 
 //			System.out.println ("Event NodesAndLinksChangeFailureState: links up" + ev.linksUp + ", links down: " + ev.linksDown);
 			/* This automatically sets as up the routes affected by a repair in its current path, and sets as down the affected by a failure in its current path */
+			Set<Route> routesFromDownToUp = currentNetPlan.getRoutesDown();
 			currentNetPlan.setLinksAndNodesFailureState(ev.linksToUp , ev.linksToDown , ev.nodesToUp , ev.nodesToDown);
+			routesFromDownToUp.removeAll(currentNetPlan.getRoutesDown());
 			
-			if (isProtectionRecovery || isRestorationRecovery)
+			if (isProtectionRecovery)
+			{
+				/* POLICY WITH PROTECTION: */
+				/* Primary up => backup carried traffic in no failure state is zero */
+				/* Primary down => backup carried traffic in no failure state is equal to the carried in no failure of the primary */
+
+				/* If primary GOES up => backup carried is set to zero */ 
+				for (Route r : routesFromDownToUp)
+					if (r.hasBackupRoutes()) r.getBackupRoutes().get(0).setCarriedTraffic(0, null); // primary to up => carried in backup to zero
+
+				/* Now for the each primary route that is down, set backup carried to the one of the primary, but count recovered only if backup is up */
+				for (Route r : new HashSet<Route> (currentNetPlan.getRoutesDown(layer)))
+				{
+					if (r.isBackupRoute()) continue;
+					this.stat_numAttemptedToRecoverConnections ++;
+					this.stat_trafficAttemptedToRecoverConnections += r.getCarriedTrafficInNoFailureState();
+					if (r.hasBackupRoutes())
+					{
+						final Route backupRoute = r.getBackupRoutes().get(0);
+						backupRoute.setCarriedTraffic(r.getCarriedTrafficInNoFailureState(), null);
+						if (!backupRoute.isDown())
+						{
+							this.stat_numSuccessfullyRecoveredConnections ++; 
+							this.stat_trafficSuccessfullyRecoveredConnections += r.getCarriedTrafficInNoFailureState(); 
+						}
+					}
+				}
+			}
+			else if (isRestorationRecovery)
 			{
 				/* Try to reroute the routes that are still failing */
 				for (Route r : new HashSet<Route> (currentNetPlan.getRoutesDown(layer)))
 				{
 					this.stat_numAttemptedToRecoverConnections ++;
 					this.stat_trafficAttemptedToRecoverConnections += r.getCarriedTrafficInNoFailureState();
-					List<Link> spLinks = isProtectionRecovery? computeValidReroute_protection(r) : computeValidPathNewRoute (r.getDemand() , r.getOccupiedCapacityInNoFailureState());
+					List<Link> spLinks = computeValidPathNewRoute (r.getDemand() , r.getOccupiedCapacityInNoFailureState());
 					if (!spLinks.isEmpty()) 
 					{ 
-						r.setSeqLinksAndProtectionSegments(spLinks);
+						r.setSeqLinks(spLinks);
 						this.stat_numSuccessfullyRecoveredConnections ++; 
 						this.stat_trafficSuccessfullyRecoveredConnections += r.getCarriedTrafficInNoFailureState(); 
 					}
@@ -336,37 +364,13 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 		return lcrSoFar; //if alternate, this is null also
 	}
 
-	/* down links or segments cannot be used */
-	private List<Link> computeValidReroute_protection (Route routeToReroute)
-	{
-		Map<Link,Double> costMap = new HashMap<Link,Double> (); Set<Link> linkMap = new HashSet<Link> (); 
-		final double minimumCapacityNeeded = routeToReroute.getOccupiedCapacityInNoFailureState();
-		for (Link e : this.routeOriginalLinks.get(routeToReroute)) 
-			if (!e.isDown() && !e.getOriginNode().isDown() && !e.getDestinationNode().isDown())
-				if (e.getCapacity() - e.getReservedCapacityForProtection() - e.getCarriedTrafficNotIncludingProtectionSegments() >= minimumCapacityNeeded) 
-				{
-					linkMap.add (e);
-					costMap.put (e , isShortestPathNumHops? 1 : e.getLengthInKm());
-				}
-					
-		for (ProtectionSegment s : routeToReroute.getPotentialBackupProtectionSegments()) 
-			if ((s.getReservedCapacityForProtection() - s.getCarriedTraffic() >= minimumCapacityNeeded) && (!s.isDown()))
-			{ 
-				linkMap.add (s);
-				costMap.put (s , isShortestPathNumHops? s.getNumberOfHops() : s.getLengthInKm()); 
-			}
-
-		List<Link> res = GraphUtils.getShortestPath(nodes , linkMap , routeToReroute.getIngressNode() , routeToReroute.getEgressNode() , costMap);
-		return res;
-	}
-
-	private Pair<Boolean,Double> isValidPath (List<Link> seqLinks , double routeOccupiedCapacity)
+	private static Pair<Boolean,Double> isValidPath (List<Link> seqLinks , double routeOccupiedCapacity)
 	{
 		final double minimumCapacityNeeded = routeOccupiedCapacity;
 		boolean validPath = true; double thisPathIdleCapacity = Double.MAX_VALUE; 
 		for (Link e : seqLinks) 
 		{
-			final double thisLinkIdleCapacity = e.getCapacity() - e.getCarriedTrafficNotIncludingProtectionSegments();
+			final double thisLinkIdleCapacity = e.getCapacity() - e.getCarriedTraffic();
 			thisPathIdleCapacity = Math.min(thisPathIdleCapacity, thisLinkIdleCapacity);
 			if (e.isDown() || e.getOriginNode().isDown() || e.getDestinationNode().isDown() || (thisLinkIdleCapacity <= minimumCapacityNeeded))
 			{ validPath = false; break; }

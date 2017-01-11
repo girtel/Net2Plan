@@ -163,7 +163,7 @@ public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 		for (Route r: currentNetPlan.getRoutes())
 		{
 			r.setCarriedTraffic(0.0 , 0.0);
-			this.stat_mapSeqLinks2RouteId.put(r.getSeqLinksRealPath(),r);
+			this.stat_mapSeqLinks2RouteId.put(r.getSeqLinks(),r);
 			this.stat_mapRouteId2CarriedPacketsLastInterval.put(r, 0);
 		}
 		this.ctlQueue_nd = new HashMap<Pair<Node,Demand>,LinkedList<PacketInfo>> ();
@@ -483,7 +483,7 @@ public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 		
 		/* Check solution: all traffic is carried, no link oversubscribed */
 		for (Demand d : np.getDemands()) if (d.getBlockedTraffic() > 1E-3) throw new RuntimeException ("d: " + d + ", hd: " +  d.getOfferedTraffic() + ", carried_d: " + d.getCarriedTraffic() + "... Bad");
-		for (Link e : np.getLinks()) if (e.getCarriedTrafficIncludingProtectionSegments() > e.getCapacity() + 1E-3) throw new RuntimeException ("Bad");
+		for (Link e : np.getLinks()) if (e.getCarriedTraffic() > e.getCapacity() + 1E-3) throw new RuntimeException ("Bad");
 
 		/* Scale q_nd multipliers by 1/gamma factor => they become now the optimum queue sizes in the algorithm */
 		double [][] optQueueSizes = new double [N][D];

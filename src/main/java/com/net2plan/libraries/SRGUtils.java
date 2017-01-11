@@ -21,6 +21,7 @@ import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Pair;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Provides a set of static methods which can be useful when dealing with network resilience.
@@ -294,7 +295,7 @@ public class SRGUtils
 		Set<Node> nodesInSRGs = new LinkedHashSet<Node>();
 		for (SharedRiskGroup srg : srgs_thisNetPlan)
 		{
-			if (!srg.getLinks().isEmpty())
+			if (!srg.getLinksAllLayers().isEmpty())
 			{
 				isAnOneSRGPerNodeModel = false;
 				break;
@@ -337,13 +338,13 @@ public class SRGUtils
 				break;
 			}
 
-			switch (srg.getLinks ().size())
+			switch (srg.getLinksAllLayers ().size())
 			{
 				case 0:
 					continue;
 
 				case 1:
-					Link link = srg.getLinks ().iterator().next();
+					Link link = srg.getLinksAllLayers ().iterator().next();
 					if (linksInSRG.contains(link)) isAnOneSRGPerLinkModel = false;
 					else linksInSRG.add(link);
 
@@ -373,9 +374,9 @@ public class SRGUtils
 				break;
 			}
 
-			if (srg.getLinks().isEmpty()) continue;
+			if (srg.getLinksAllLayers().isEmpty()) continue;
 			
-			Link firstLink = srg.getLinks().iterator().next();
+			Link firstLink = srg.getLinksAllLayers().iterator().next();
 			Collection<Link> links_thisNodePair = netPlan.getNodePairLinks(firstLink.getOriginNode() , firstLink.getDestinationNode() , false , layer);
 			
 			for (Link link : links_thisNodePair)
@@ -405,14 +406,14 @@ public class SRGUtils
 				break;
 			}
 
-			if (srg.getLinks ().isEmpty()) continue;
+			if (srg.getLinksAllLayers ().isEmpty()) continue;
 			
-			Link firstLink = srg.getLinks().iterator().next();
+			Link firstLink = srg.getLinksAllLayers().iterator().next();
 			Collection<Link> links_thisNodePair = netPlan.getNodePairLinks(firstLink.getOriginNode() , firstLink.getDestinationNode() , true , layer);
 			
-			for (Link link : srg.getLinks ())
+			for (Link link : srg.getLinksAllLayers ())
 			{
-				if (linksInSRG.contains(link) || !srg.getLinks ().contains(link)) isAnOneSRGPerBidiLinkBundleModel = false;
+				if (linksInSRG.contains(link) || !srg.getLinksAllLayers ().contains(link)) isAnOneSRGPerBidiLinkBundleModel = false;
 				if (!isAnOneSRGPerBidiLinkBundleModel) break;
 
 				linksInSRG.add(link);
@@ -459,15 +460,13 @@ public class SRGUtils
 	}
 
 	/**
-	 * <p>Returns the percentage of SRG disjointness of traffic routes and
-	 * protection segments.</p>
+	 * <p>Returns the percentage of SRG disjointness of traffic routes and their backup paths defined.</p>
 	 * 
 	 * <p><b>Important</b>: In case there are no SRGs, then it will return zero.</p>
 	 * 
 	 * @param netPlan Current network design
 	 * @param optionalLayerParameter Network layer (optional)
 	 * @return Two SRG disjointness values (either considering or not end nodes)
-	 * @since 0.2.3
 	 */
 	public static Pair<Double, Double> getSRGDisjointnessPercentage(NetPlan netPlan, NetworkLayer ... optionalLayerParameter)
 	{
@@ -482,20 +481,20 @@ public class SRGUtils
 		int R = netPlan.getNumberOfRoutes(layer);
 		for (Route route : netPlan.getRoutes (layer))
 		{
-			Collection<ProtectionSegment> segments = route.getPotentialBackupProtectionSegments();
-			if (segments.isEmpty()) continue;
+			Collection<List<Link>> backupPaths = route.getBackupRoutes().stream().map(e -> e.getSeqLinks()).collect(Collectors.toList());
+			if (backupPaths.isEmpty()) continue;
 
 			boolean srgDisjoint_withEndNodes = true;
 			boolean srgDisjoint_withoutEndNodes = true;
 
-			List<Link> seqLinks = route.getSeqLinksRealPath();
-			List<Node> seqNodes = route.getSeqNodesRealPath();
+			List<Link> seqLinks = route.getSeqLinks();
+			List<Node> seqNodes = route.getSeqNodes();
 
 			Collection<SharedRiskGroup> routeSRGIds = route.getSRGs();
-			Set<SharedRiskGroup> segmentSRGIds = new LinkedHashSet<SharedRiskGroup>();
-			for(ProtectionSegment segment : segments) segmentSRGIds.addAll(segment.getSRGs());
+			Set<SharedRiskGroup> backupPathSRGs = new LinkedHashSet<SharedRiskGroup>();
+			for(List<Link> path : backupPaths) backupPathSRGs.addAll(getAffectingSRGs(path));
 			
-			Set<SharedRiskGroup> commonSRGs_withEndNodes = CollectionUtils.intersect(routeSRGIds, segmentSRGIds);
+			Set<SharedRiskGroup> commonSRGs_withEndNodes = CollectionUtils.intersect(routeSRGIds, backupPathSRGs);
 			if (!commonSRGs_withEndNodes.isEmpty()) srgDisjoint_withEndNodes = false;
 
 			Set<SharedRiskGroup> routeSRGIds_withoutEndNodes = new LinkedHashSet<SharedRiskGroup>();
@@ -507,7 +506,7 @@ public class SRGUtils
 			for (Link link : seqLinks)
 				routeSRGIds_withoutEndNodes.addAll(link.getSRGs());
 				
-			Set<SharedRiskGroup> commonSRGs_withoutEndNodes = CollectionUtils.intersect(routeSRGIds_withoutEndNodes, segmentSRGIds);
+			Set<SharedRiskGroup> commonSRGs_withoutEndNodes = CollectionUtils.intersect(routeSRGIds_withoutEndNodes, backupPathSRGs);
 			if (!commonSRGs_withoutEndNodes.isEmpty()) srgDisjoint_withoutEndNodes = false;
 
 			if (srgDisjoint_withEndNodes) accum_routeSRGDisjoint_withEndNodes++;
