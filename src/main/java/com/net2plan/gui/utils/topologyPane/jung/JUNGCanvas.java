@@ -1,5 +1,4 @@
 /*******************************************************************************
- * Copyright (c) 2015 Pablo Pavon Mariño.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Lesser Public License v2.1
  * which accompanies this distribution, and is available at
@@ -33,7 +32,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -51,12 +49,12 @@ import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.gui.utils.topologyPane.VisualizationState.VisualizationLayer;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMRunningState;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.plugins.ITopologyCanvas;
@@ -103,16 +101,14 @@ import edu.uci.ics.jung.visualization.util.ArrowFactory;
 public final class JUNGCanvas implements ITopologyCanvas
 {
 	private final VisualizationState vs;
-    private final static float SCALE_IN = 1.1f;
-    private final static float SCALE_OUT = 1 / SCALE_IN;
     private final static Transformer<GUINode, Point2D> FLIP_VERTICAL_COORDINATES;
 
     private final Graph<GUINode, GUILink> g;
     private final Layout<GUINode, GUILink> l;
     private final VisualizationViewer<GUINode, GUILink> vv;
-    private final Map<Node, List<GUINode>> nodeTable;
-    private final Map<Link, GUILink> linkTable;
-    private final Map<Node,List<GUILink>> intraNodeLinkTable;
+//    private final Map<Node, List<GUINode>> nodeTable;
+//    private final Map<Link, GUILink> linkTable;
+//    private final Map<Node,List<GUILink>> intraNodeLinkTable;
     
     private final PluggableGraphMouse gm;
     private final ScalingControl scalingControl;
@@ -139,9 +135,9 @@ public final class JUNGCanvas implements ITopologyCanvas
     public JUNGCanvas(VisualizationState vs)
     {
     	this.vs = vs;
-        nodeTable = new LinkedHashMap<>();
-        linkTable = new LinkedHashMap<>();
-        intraNodeLinkTable = new LinkedHashMap<> ();
+//        nodeTable = new LinkedHashMap<>();
+//        linkTable = new LinkedHashMap<>();
+//        intraNodeLinkTable = new LinkedHashMap<> ();
         
         g = new DirectedOrderedSparseMultigraph<>();
         l = new StaticLayout<>(g, FLIP_VERTICAL_COORDINATES);
@@ -285,13 +281,6 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public void decreaseNodeSize()
-    {
-        for (GUINode n : nodeTable.values()) n.setShapeSize(n.getShapeSize() * SCALE_OUT);
-        refresh();
-    }
-
-    @Override
     public JComponent getComponent()
     {
         return vv;
@@ -352,27 +341,6 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public void increaseNodeSize()
-    {
-        for (GUINode n : nodeTable.values()) n.setShapeSize(n.getShapeSize() * SCALE_IN);
-        refresh();
-    }
-
-    @Override
-    public boolean isLinkVisible(Link npLink)
-    {
-        GUILink e = linkTable.get(npLink);
-        return e == null ? false : e.isVisible();
-    }
-
-    @Override
-    public boolean isNodeVisible(Node npNode)
-    {
-        GUINode n = nodeTable.get(npNode);
-        return n == null ? false : n.isVisible();
-    }
-
-    @Override
     public void panTo(Point2D initialPoint, Point2D currentPoint)
     {
         OSMMapStateBuilder.getSingleton().panTo(initialPoint, currentPoint);
@@ -385,8 +353,19 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public void removeLink(Link npLink)
+    public void removeLink(GUILink link)
     {
+        GUILink link = linkTable.get(npLink);
+
+        linkTable.remove(npLink);
+
+        if (alsoFromGraph)
+        {
+            g.removeEdge(link);
+            refresh();
+        }
+
+        
         removeLink(npLink, true);
     }
 
@@ -564,17 +543,29 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public void updateTopology(NetPlan netPlan, long layerId)//Map<Long, Point2D> nodeXYPositionMap, Map<Long, String> nodeNameMap, Map<Long, Pair<Long, Long>> linkMap)
+    public void updateTopology()
     {
-        reset();
-        final NetworkLayer layer = netPlan.getNetworkLayerFromId(layerId);
-        if (netPlan.getNumberOfNodes() == 0) return;
-
-        for (Node npNode : netPlan.getNodes())
-            addNode(npNode);
-        for (Link npLink : netPlan.getLinks(layer))
-            addLink(npLink);
-
+    	for (GUILink gl : new ArrayList<>(g.getEdges()))
+    		g.removeEdge(gl);
+    	for (GUINode gn : new ArrayList<>(g.getVertices()))
+    		g.removeVertex(gn);
+    	final int interLayerDistanceInPixels = vs.getInterLayerDistanceInPixels ();
+    	for (int layerIndex = 0 ; layerIndex < vs.getNumberOfVisualizationLayers() ; layerIndex ++)
+    	{
+    		final VisualizationLayer vl = vs.getVLList().get(layerIndex);
+    		for (GUINode gn : vl.getGUINodes())
+    		{
+    			g.addVertex(gn);
+    			Point2D basePositionInJungCoord = convertViewCoordinatesToRealCoordinates (gn.getAssociatedNetPlanNode().getXYPositionMap());
+    			
+    			final double yOfPixelZero = convertViewCoordinatesToRealCoordinates (new Point2D.Double (0 , 0)).getY();
+    			final double yOfPixelUp = convertViewCoordinatesToRealCoordinates (new Point2D.Double (0 , ((double) layerIndex) * vs.getInterLayerDistanceInPixels())).getY();
+    			final double extraInJungCoordinates =  Math.abs(yOfPixelUp - yOfPixelZero);
+    			l.setLocation(gn , new Point2D.Double(basePositionInJungCoord.getX() , basePositionInJungCoord.getY() + extraInJungCoordinates));
+    		}
+    		for (GUILink gl : vl.getGUILinks())
+    			g.addEdge(gl , gl.getOriginNode() , gl.getDestinationNode());
+    	}
         refresh();
     }
 

@@ -118,7 +118,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         try
         {
-        	this.vs = new VisualizationState();
+        	this.vs = new VisualizationState(callback.getDesign());
             canvas = canvasType.getDeclaredConstructor(VisualizationState.class).newInstance(vs);
         } catch (Exception e)
         {
@@ -405,6 +405,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 //        setAllowLoadTrafficDemand(callback.allowLoadTrafficDemands());
     }
 
+    public VisualizationState getVisualizationState () { return vs; }
+    
     @Override
     public void actionPerformed(ActionEvent e)
     {

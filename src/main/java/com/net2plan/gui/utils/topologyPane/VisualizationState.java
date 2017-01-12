@@ -4,11 +4,13 @@ import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -16,14 +18,16 @@ import com.net2plan.interfaces.networkDesign.Node;
 
 public class VisualizationState
 {
-	private boolean showNodeNames = false;
-	private boolean showLinkLabels = true;
-    private boolean showNonConnectedNodes = false;
+    private final static float SCALE_IN = 1.1f;
+    private final static float SCALE_OUT = 1 / SCALE_IN;
+	private boolean showNodeNames;
+	private boolean showLinkLabels;
+    private boolean showNonConnectedNodes;
     private NetPlan currentNp;
     private List<VisualizationLayer> vLayers;
-    private Map<Node,Font> fonts;
-    
-    
+    private Map<Node,List<GUILink>> intraNodeGUILinks;
+    private Map<Node,List<GUINode>> cache_nodeGuiNodeMap;
+    private int interLayerDistanceInPixels;
     
     public NetPlan getNetPlan () { return currentNp; }
 
@@ -35,49 +39,66 @@ public class VisualizationState
 		this.showNonConnectedNodes = false;
 		this.vLayers = new ArrayList<> ();
 		this.vLayers.add(new VisualizationLayer(currentNp.getNetworkLayerDefault() , this));
+		this.intraNodeGUILinks = new HashMap<> ();
+		this.cache_nodeGuiNodeMap = new HashMap<> ();
+		this.interLayerDistanceInPixels = 50;
 	}
 
+	public int getInterLayerDistanceInPixels () { return interLayerDistanceInPixels; }
 	
 	
-	/**
-	 * @return the fontSize
-	 */
-	public Font getFont(Node node)
-	{
-		if (node.getNetPlan() != currentNp) throw new RuntimeException("Bad");
-		return fonts.get(node);
-	}
-
-    public boolean decreaseFontSize()
+    public boolean decreaseFontSizeAll()
     {
         boolean changedSize = false;
-        for (Node n : fonts.keySet())
-        {
-        	final int currentSize = fonts.get(n).getSize(); 
-        	if (currentSize > 1) { fonts.put(n , new Font("Helvetica" , Font.PLAIN , currentSize - 1)); changedSize = true; }
-        }
+        for (VisualizationLayer vl : vLayers)
+        	for (GUINode gn : vl.guiNodes)
+        		changedSize |= gn.decreaseFontSize();
         return changedSize;
     }
 
-    public void increaseFontSize()
+    public void increaseFontSizeAll()
     {
-        for (Node n : fonts.keySet())
+        for (VisualizationLayer vl : vLayers)
+        	for (GUINode gn : vl.guiNodes)
+        		gn.increaseFontSize();
+    }
+
+    public void decreaseNodeSizeAll()
+    {
+        for (VisualizationLayer vl : vLayers)
+        	for (GUINode gn : vl.guiNodes)
+        		gn.setShapeSize(gn.getShapeSize() * SCALE_OUT);
+    }
+
+    public void increaseNodeSizeAll()
+    {
+        for (VisualizationLayer vl : vLayers)
+        	for (GUINode gn : vl.guiNodes)
+        		gn.setShapeSize(gn.getShapeSize() * SCALE_IN);
+    }
+
+
+    public void addNode(Node npNode) 
+    {
+        if (cache_nodeGuiNodeMap.containsKey(npNode)) throw new RuntimeException("Bad - Node " + npNode + " already exists");
+        List<GUINode> associatedGUINodes = new ArrayList<> ();
+        for (VisualizationState.VisualizationLayer vLayer : vLayers)
         {
-        	final int currentSize = fonts.get(n).getSize(); 
-        	if (currentSize > 1) { fonts.put(n , new Font("Helvetica" , Font.PLAIN , currentSize + 1));  }
+        	GUINode gn = new GUINode(npNode , vLayer);
+        	associatedGUINodes.add(gn);
+        	if (associatedGUINodes.size() > 1)
+        	{
+        		GUILink gl1 = new GUILink (null , associatedGUINodes.get(associatedGUINodes.size() - 2), gn);
+        		GUILink gl2 = new GUILink (null , gn , associatedGUINodes.get(associatedGUINodes.size() - 2));
+        		List<GUILink> existingList = intraNodeGUILinks.get(npNode);
+        		if (existingList == null) { existingList = new ArrayList<GUILink> (); intraNodeGUILinks.put(npNode , existingList); } 
+        		existingList.add(gl1); existingList.add(gl2);
+        	}
         }
+        cache_nodeGuiNodeMap.put(npNode, associatedGUINodes);
     }
 
     
-	/**
-	 * @param fontSize the fontSize to set
-	 */
-	public void setFontSize(Node node , Font font)
-	{
-		if (node.getNetPlan() != currentNp) throw new RuntimeException("Bad");
-		this.fonts.put(node, font);
-	}
-
 	public int getNumberOfVisualizationLayers () { return vLayers.size(); }
 	
 	public void setVisualizationLayers (List<List<NetworkLayer>> listOfLayersPerVL , NetPlan netPlan)
@@ -107,6 +128,9 @@ public class VisualizationState
     	private List<NetworkLayer> npLayersToShow;
     	private NetPlan currentNp;
     	private final VisualizationState vs;
+    	private List<GUINode> guiNodes;
+    	private List<GUILink> guiLink;
+    	
     	
     	public VisualizationLayer(List<NetworkLayer> layers , VisualizationState vs)
 		{
@@ -123,6 +147,11 @@ public class VisualizationState
     		this.vs = vs;
 		}
     	public VisualizationState getVisualizationState () { return vs; }
+
+    	public List<GUINode> getGUINodes () { return Collections.unmodifiableList(guiNodes); }
+    	public List<GUILink> getGUILinks () { return Collections.unmodifiableList(guiLinks); }
+    	
+    	
 	}
 
 	/**

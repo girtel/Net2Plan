@@ -35,6 +35,7 @@ public class GUINode
 
     /* New variables */
     private boolean visible;
+    private Font font;
     private Paint drawPaint, fillPaint, fillPaintIfPicked;
     private Shape shape, shapeIfPicked;
     private double shapeSize;
@@ -57,6 +58,7 @@ public class GUINode
         this.drawPaint = java.awt.Color.BLACK;
         this.fillPaint = java.awt.Color.BLACK;
         this.fillPaintIfPicked = java.awt.Color.BLACK;
+        this.font = new Font("Helvetica", Font.BOLD, 11);
         this.shapeSize = 30;
         this.shape = new Ellipse2D.Double(-1 * shapeSize / 2, -1 * shapeSize / 2, 1 * shapeSize, 1 * shapeSize);
         this.shapeIfPicked = new Ellipse2D.Double(-1.2 * shapeSize / 2, -1.2 * shapeSize / 2, 1.2 * shapeSize, 1.2 * shapeSize);
@@ -111,8 +113,11 @@ public class GUINode
         this.fillPaintIfPicked = p;
     }
 
+    public void setFont(Font f) {
+        this.font = f;
+    }
     public Font getFont() {
-        return vs.getFont(this);
+        return font;
     }
 
     public Shape getShape() {
@@ -139,14 +144,16 @@ public class GUINode
         this.userDefinedColorOverridesTheRest = c;
     }
 
-    public boolean decreaseFontSize() {
+    public boolean decreaseFontSize() 
+    {
         final int currentSize = font.getSize();
         if (currentSize == 1) return false;
         font = new Font("Helvetica", Font.BOLD, currentSize - 1);
         return true;
     }
 
-    public void increaseFontSize() {
+    public void increaseFontSize() 
+    {
         font = new Font("Helvetica", Font.BOLD, font.getSize() + 1);
     }
 

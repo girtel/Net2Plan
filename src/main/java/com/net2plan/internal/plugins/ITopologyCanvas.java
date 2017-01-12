@@ -155,24 +155,6 @@ public interface ITopologyCanvas extends Plugin
 	public void increaseNodeSize();
 
 	/**
-	 * Indicates whether a link is visible or not.
-	 *
-	 * @param associatedNpLink Link identifier
-	 * @return {@code true} if the link is visible. Otherwise, {@code false}
-	 * @since 0.3.0
-	 */
-	public boolean isLinkVisible(Link associatedNpLink);
-
-	/**
-	 * Indicates whether a node is visible or not.
-	 *
-	 * @param associatedNpNode Node identifier
-	 * @return {@code true} if the node is visible. Otherwise, {@code false}
-	 * @since 0.3.0
-	 */
-	public boolean isNodeVisible(Node associatedNpNode);
-
-	/**
 	 * Pans the graph to the .
 	 *
 	 * @param initialPoint Initial point where the mouse was pressed
