@@ -214,18 +214,23 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         it_closeMap.addActionListener(e ->
         {
-            OSMMapStateBuilder.getSingleton().setStoppedState();
-            it_osmMap.setEnabled(true);
-            viewPopUp.remove(it_closeMap);
+        	if (canvas.getBackgroundOSMMapsActiveState())
+        	{
+	            canvas.setBackgroundOSMMapsActiveState(false);
+	            it_osmMap.setEnabled(true);
+	            viewPopUp.remove(it_closeMap);
+        	}
         });
 
         it_osmMap.addActionListener(e ->
         {
-            OSMMapStateBuilder.getSingleton().setRunningState();
-            it_osmMap.setEnabled(false);
-
-            viewPopUp.add(it_closeMap);
-        });
+        	if (!canvas.getBackgroundOSMMapsActiveState())
+        	{
+	            canvas.setBackgroundOSMMapsActiveState(true);
+	            it_osmMap.setEnabled(false);
+	            viewPopUp.add(it_closeMap);
+        	}
+       	});
 
         viewPopUp.add(it_control);
         viewPopUp.add(new JPopupMenu.Separator());

@@ -61,6 +61,10 @@ public abstract class ITopologyCanvas implements Plugin
 		return 0;
 	}
 
+	public abstract void setBackgroundOSMMapsActiveState (boolean activateMap);
+	
+	public abstract boolean getBackgroundOSMMapsActiveState ();
+
 	/**
 	 * Adds a new unidirectional link between two nodes.
 	 *

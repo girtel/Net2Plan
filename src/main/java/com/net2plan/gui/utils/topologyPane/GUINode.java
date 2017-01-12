@@ -23,7 +23,8 @@ import java.awt.geom.Ellipse2D;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
-public class GUINode {
+public class GUINode 
+{
     private final Node npNode;
 
     /* New variables */

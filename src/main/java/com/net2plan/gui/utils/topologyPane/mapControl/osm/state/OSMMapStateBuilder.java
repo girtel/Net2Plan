@@ -62,12 +62,14 @@ public enum OSMMapStateBuilder
 
         public void setRunningState()
         {
+        	if (currentState == runningState) return;
             currentState = runningState;
             mapController.startMap(topologyPanel, canvas, callback);
         }
 
         public void setStoppedState()
         {
+        	if (currentState == stoppedState) return;
             currentState = stoppedState;
             mapController.cleanMap();
         }

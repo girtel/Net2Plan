@@ -16,6 +16,7 @@ import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMRunningState;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -919,4 +920,19 @@ public final class JUNGCanvas extends ITopologyCanvas
 
         }
     }
+
+	@Override
+	public void setBackgroundOSMMapsActiveState(boolean activateMap)
+	{
+		if (activateMap) 
+			OSMMapStateBuilder.getSingleton().setRunningState(); 
+		else 
+			OSMMapStateBuilder.getSingleton().setStoppedState(); 
+	}
+
+	@Override
+	public boolean getBackgroundOSMMapsActiveState()
+	{
+		return (OSMMapStateBuilder.getSingleton().getCurrentState() instanceof OSMRunningState);
+	}
 }
