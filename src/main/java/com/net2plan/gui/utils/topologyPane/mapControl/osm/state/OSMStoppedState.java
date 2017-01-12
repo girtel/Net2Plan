@@ -16,6 +16,8 @@ import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
+import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -92,8 +94,10 @@ public class OSMStoppedState implements OSMState
         FileNameExtensionFilter pngFilter = new FileNameExtensionFilter("PNG files", "png");
         fc.setFileFilter(pngFilter);
 
+        vv.setBackground(Color.WHITE);
         JComponent component = canvas.getInternalComponent();
         BufferedImage bi = ImageUtils.trim(ImageUtils.takeSnapshot(component));
+        vv.setBackground(new Color(212, 208, 200));
 
         int s = fc.showSaveDialog(null);
         if (s == JFileChooser.APPROVE_OPTION)

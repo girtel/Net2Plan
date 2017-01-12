@@ -100,7 +100,6 @@ import edu.uci.ics.jung.visualization.util.ArrowFactory;
 @SuppressWarnings("unchecked")
 public final class JUNGCanvas implements ITopologyCanvas
 {
-    private final static Color CANVAS_BGCOLOR = new Color(212, 208, 200);
     private final static float SCALE_IN = 1.1f;
     private final static float SCALE_OUT = 1 / SCALE_IN;
     private final static Transformer<GUINode, Point2D> FLIP_VERTICAL_COORDINATES;
@@ -982,9 +981,7 @@ public final class JUNGCanvas implements ITopologyCanvas
 	@Override
 	public void takeSnapshot()
 	{
-        vv.setBackground(Color.WHITE);
 		OSMMapStateBuilder.getSingleton().takeSnapshot(this);
-        vv.setBackground(CANVAS_BGCOLOR);
 	}
 	
 	@Override
