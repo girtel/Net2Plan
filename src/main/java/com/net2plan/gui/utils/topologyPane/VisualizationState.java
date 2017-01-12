@@ -1,20 +1,27 @@
 package com.net2plan.gui.utils.topologyPane;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.utils.Pair;
 
 public class VisualizationState
 {
@@ -27,6 +34,7 @@ public class VisualizationState
     private List<VisualizationLayer> vLayers;
     private Map<Node,List<GUILink>> intraNodeGUILinks;
     private Map<Node,List<GUINode>> cache_nodeGuiNodeMap;
+    private Map<Link,GUILink> regularLinkMap;
     private int interLayerDistanceInPixels;
     
     public NetPlan getNetPlan () { return currentNp; }
@@ -42,8 +50,45 @@ public class VisualizationState
 		this.intraNodeGUILinks = new HashMap<> ();
 		this.cache_nodeGuiNodeMap = new HashMap<> ();
 		this.interLayerDistanceInPixels = 50;
+		this.regularLinkMap = new HashMap<> ();
 	}
 
+	public void rebuildVisualizationState ()
+	{
+		for (Node n : currentNp.getNodes())
+		{
+	        List<GUINode> associatedGUINodes = new ArrayList<> ();
+	        for (VisualizationState.VisualizationLayer vLayer : vLayers)
+	        {
+	        	GUINode gn = new GUINode(n , vLayer);
+	        	associatedGUINodes.add(gn);
+	        	if (associatedGUINodes.size() > 1)
+	        	{
+	        		GUILink gl1 = new GUILink (null , associatedGUINodes.get(associatedGUINodes.size() - 2), gn);
+	        		GUILink gl2 = new GUILink (null , gn , associatedGUINodes.get(associatedGUINodes.size() - 2));
+	        		List<GUILink> existingList = intraNodeGUILinks.get(n);
+	        		if (existingList == null) { existingList = new ArrayList<GUILink> (); intraNodeGUILinks.put(n , existingList); } 
+	        		existingList.add(gl1); existingList.add(gl2);
+	        	}
+	        }
+	        cache_nodeGuiNodeMap.put(n, associatedGUINodes);
+		}
+		for (VisualizationLayer vl : vLayers)
+		{
+			for (int vLayerIndex = 0 ; vLayerIndex < vl.npLayersToShow.size() ; vLayerIndex ++)
+			{
+				final NetworkLayer layer  = vl.npLayersToShow.get(vLayerIndex);
+				for (Link e : currentNp.getLinks(layer))
+				{
+					final GUINode gn1 = cache_nodeGuiNodeMap.get(e.getOriginNode()).get(vLayerIndex);
+					final GUINode gn2 = cache_nodeGuiNodeMap.get(e.getDestinationNode()).get(vLayerIndex);
+					final GUILink gl1 = new GUILink (e , gn1 , gn2);
+					regularLinkMap.put(e , gl1);
+				}
+			}
+		}
+	}
+	
 	public int getInterLayerDistanceInPixels () { return interLayerDistanceInPixels; }
 	
 	
@@ -77,26 +122,6 @@ public class VisualizationState
         		gn.setShapeSize(gn.getShapeSize() * SCALE_IN);
     }
 
-
-    public void addNode(Node npNode) 
-    {
-        if (cache_nodeGuiNodeMap.containsKey(npNode)) throw new RuntimeException("Bad - Node " + npNode + " already exists");
-        List<GUINode> associatedGUINodes = new ArrayList<> ();
-        for (VisualizationState.VisualizationLayer vLayer : vLayers)
-        {
-        	GUINode gn = new GUINode(npNode , vLayer);
-        	associatedGUINodes.add(gn);
-        	if (associatedGUINodes.size() > 1)
-        	{
-        		GUILink gl1 = new GUILink (null , associatedGUINodes.get(associatedGUINodes.size() - 2), gn);
-        		GUILink gl2 = new GUILink (null , gn , associatedGUINodes.get(associatedGUINodes.size() - 2));
-        		List<GUILink> existingList = intraNodeGUILinks.get(npNode);
-        		if (existingList == null) { existingList = new ArrayList<GUILink> (); intraNodeGUILinks.put(npNode , existingList); } 
-        		existingList.add(gl1); existingList.add(gl2);
-        	}
-        }
-        cache_nodeGuiNodeMap.put(npNode, associatedGUINodes);
-    }
 
     
 	public int getNumberOfVisualizationLayers () { return vLayers.size(); }
@@ -202,5 +227,75 @@ public class VisualizationState
 		this.showNonConnectedNodes = showNonConnectedNodes;
 	}
 	
+
+    public void resetPickedAndUserDefinedColorState()
+    {
+        for (List<GUINode> list : cache_nodeGuiNodeMap.values()) for (GUINode n : list) n.setUserDefinedColorOverridesTheRest(null);
+        for (GUILink e : regularLinkMap.values())
+        {
+            e.setUserDefinedColorOverridesTheRest(null);
+            e.setUserDefinedStrokeOverridesTheRest(null);
+        }
+        for (List<GUILink> list : intraNodeGUILinks.values()) 
+        	for (GUILink e : list)
+	        {
+	            e.setUserDefinedColorOverridesTheRest(null);
+	            e.setUserDefinedStrokeOverridesTheRest(null);
+	        }
+    }
 	
+
+    public void setAllLinksVisibilityState(boolean regularLinksVisible , boolean intraNodeLinksVisible)
+    {
+        for (GUILink e : this.regularLinkMap.values()) e.setVisible(regularLinksVisible);
+        for (List<GUILink> list : this.intraNodeGUILinks.values()) for (GUILink e : list) e.setVisible(intraNodeLinksVisible);
+        
+    }
+
+    public void setAllNodesVisibilityState(boolean visible)
+    {
+        for (List<GUINode> list : this.cache_nodeGuiNodeMap.values()) for (GUINode n : list) n.setVisible(visible);
+    }
+
+    @Override
+    public void showAndPickNodesAndLinks(Map<Node, Color> npNodes, Map<Link, Pair<Color, Boolean>> npLinks)
+    {
+        resetPickedAndUserDefinedColorState();
+
+        if (npNodes != null)
+        {
+            for (Entry<Node, Color> npNode : npNodes.entrySet())
+            {
+                GUINode aux = nodeTable.get(npNode.getKey());
+                aux.setUserDefinedColorOverridesTheRest(npNode.getValue());
+                vv.getPickedVertexState().pick(aux, true);
+            }
+        }
+
+        if (npLinks != null)
+        {
+            for (Entry<Link, Pair<Color, Boolean>> link : npLinks.entrySet())
+            {
+                GUILink aux = linkTable.get(link.getKey());
+                aux.setUserDefinedColorOverridesTheRest(link.getValue().getFirst());
+                vv.getPickedEdgeState().pick(aux, true);
+                if (link.getValue().getSecond()) // if true, the edge is dashed
+                    aux.setUserDefinedStrokeOverridesTheRest(new BasicStroke(vv.getPickedEdgeState().isPicked(aux) ? 2 : 1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f));
+                else
+                    aux.setUserDefinedStrokeOverridesTheRest(null);
+            }
+        }
+        refresh();
+    }
+
+    @Override
+    public void showNonConnectedNodes(boolean show)
+    {
+        if (showHideNonConnectedNodes != show)
+        {
+            showHideNonConnectedNodes = show;
+            refresh();
+        }
+    }
+
 }

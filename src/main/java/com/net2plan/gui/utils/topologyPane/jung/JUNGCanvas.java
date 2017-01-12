@@ -223,27 +223,27 @@ public final class JUNGCanvas implements ITopologyCanvas
         reset();
     }
 
-    @Override
-    public void addNode(Node npNode) //long nodeId, Point2D pos, String label)
-    {
-        if (nodeTable.containsKey(npNode)) throw new RuntimeException("Bad - Node " + npNode + " already exists");
-        List<GUINode> associatedGUINodes = new ArrayList<> ();
-        for (VisualizationState.VisualizationLayer vLayer : vs.getVLList())
-        {
-        	GUINode gn = new GUINode(npNode , vLayer);
-            g.addVertex(gn);
-        	associatedGUINodes.add(gn);
-        	if (associatedGUINodes.size() > 1)
-        	{
-        		GUILink gl1 = new GUILink (null , associatedGUINodes.get(associatedGUINodes.size() - 2), gn);
-        		GUILink gl2 = new GUILink (null , gn , associatedGUINodes.get(associatedGUINodes.size() - 2));
-        		List<GUILink> existingList = intraNodeLinkTable.get(npNode);
-        		if (existingList == null) { existingList = new ArrayList<GUILink> (); intraNodeLinkTable.put(npNode , existingList); } 
-        		existingList.add(gl1); existingList.add(gl2);
-        	}
-        }
-        nodeTable.put(npNode, associatedGUINodes);
-    }
+//    @Override
+//    public void addNode(Node npNode) //long nodeId, Point2D pos, String label)
+//    {
+//        if (nodeTable.containsKey(npNode)) throw new RuntimeException("Bad - Node " + npNode + " already exists");
+//        List<GUINode> associatedGUINodes = new ArrayList<> ();
+//        for (VisualizationState.VisualizationLayer vLayer : vs.getVLList())
+//        {
+//        	GUINode gn = new GUINode(npNode , vLayer);
+//            g.addVertex(gn);
+//        	associatedGUINodes.add(gn);
+//        	if (associatedGUINodes.size() > 1)
+//        	{
+//        		GUILink gl1 = new GUILink (null , associatedGUINodes.get(associatedGUINodes.size() - 2), gn);
+//        		GUILink gl2 = new GUILink (null , gn , associatedGUINodes.get(associatedGUINodes.size() - 2));
+//        		List<GUILink> existingList = intraNodeLinkTable.get(npNode);
+//        		if (existingList == null) { existingList = new ArrayList<GUILink> (); intraNodeLinkTable.put(npNode , existingList); } 
+//        		existingList.add(gl1); existingList.add(gl2);
+//        	}
+//        }
+//        nodeTable.put(npNode, associatedGUINodes);
+//    }
 
     @Override
     public void addPlugin(ITopologyCanvasPlugin plugin)
@@ -352,42 +352,6 @@ public final class JUNGCanvas implements ITopologyCanvas
         vv.repaint();
     }
 
-    @Override
-    public void removeLink(GUILink link)
-    {
-        GUILink link = linkTable.get(npLink);
-
-        linkTable.remove(npLink);
-
-        if (alsoFromGraph)
-        {
-            g.removeEdge(link);
-            refresh();
-        }
-
-        
-        removeLink(npLink, true);
-    }
-
-    @Override
-    public void removeNode(Node npNode)
-    {
-        GUINode node = nodeTable.get(npNode);
-
-        Iterator<GUILink> linkIt;
-        Collection<GUILink> outLinks = g.getOutEdges(node);
-        if (outLinks == null) outLinks = new LinkedHashSet<>();
-        linkIt = outLinks.iterator();
-        while (linkIt.hasNext()) removeLink(linkIt.next().getAssociatedNetPlanLink(), false);
-
-        Collection<GUILink> inLinks = g.getInEdges(node);
-        if (inLinks == null) inLinks = new LinkedHashSet<>();
-        linkIt = inLinks.iterator();
-        while (linkIt.hasNext()) removeLink(linkIt.next().getAssociatedNetPlanLink(), false);
-
-        nodeTable.remove(npNode);
-        g.removeVertex(node);
-    }
 
     @Override
     public void removePlugin(ITopologyCanvasPlugin plugin)
@@ -395,151 +359,11 @@ public final class JUNGCanvas implements ITopologyCanvas
         if (plugin instanceof GraphMousePlugin) gm.remove((GraphMousePlugin) plugin);
     }
 
-    @Override
-    public void reset()
-    {
-        Iterator<GUILink> linkIt = linkTable.values().iterator();
-        while (linkIt.hasNext()) g.removeEdge(linkIt.next());
-
-        Iterator<GUINode> nodeIt = nodeTable.values().iterator();
-        while (nodeIt.hasNext()) g.removeVertex(nodeIt.next());
-
-        nodeTable.clear();
-        linkTable.clear();
-
-        refresh();
-    }
-
-    @Override
     public void resetPickedAndUserDefinedColorState()
     {
         vv.getPickedVertexState().clear();
         vv.getPickedEdgeState().clear();
-        for (GUINode n : nodeTable.values()) n.setUserDefinedColorOverridesTheRest(null);
-        for (GUILink e : linkTable.values())
-        {
-            e.setUserDefinedColorOverridesTheRest(null);
-            e.setUserDefinedStrokeOverridesTheRest(null);
-        }
         refresh();
-    }
-
-    @Override
-    public void setAllLinksVisible(boolean visible)
-    {
-        for (GUILink e : linkTable.values()) e.setVisible(visible);
-        refresh();
-    }
-
-    @Override
-    public void setAllNodesVisible(boolean visible)
-    {
-        for (GUINode n : nodeTable.values()) n.setVisible(visible);
-        refresh();
-    }
-
-    @Override
-    public void setLinkVisible(Link link, boolean visible)
-    {
-        GUILink e = linkTable.get(link);
-        if (e == null) throw new RuntimeException("Bad");
-        e.setVisible(visible);
-        refresh();
-    }
-
-    @Override
-    public void setLinksVisible(Collection<Link> links, boolean visible)
-    {
-        for (Link link : links)
-        {
-            GUILink e = linkTable.get(link);
-            if (e == null) throw new RuntimeException("Bad");
-            e.setVisible(visible);
-        }
-
-        refresh();
-    }
-
-    @Override
-    public void setNodeVisible(Node npNode, boolean visible)
-    {
-        GUINode node = nodeTable.get(npNode);
-        if (node == null) throw new RuntimeException("Bad");
-        node.setVisible(visible);
-        refresh();
-    }
-
-    @Override
-    public void setNodesVisible(Collection<Node> npNodes, boolean visible)
-    {
-        for (Node npNode : npNodes)
-        {
-            GUINode node = nodeTable.get(npNode);
-            node.setVisible(visible);
-        }
-
-        refresh();
-    }
-
-    @Override
-    public void showLinkLabels(boolean show)
-    {
-        if (showLinkIds != show)
-        {
-            showLinkIds = show;
-            refresh();
-        }
-    }
-
-    @Override
-    public void showNodeNames(boolean show)
-    {
-        if (showNodeNames != show)
-        {
-            showNodeNames = show;
-            refresh();
-        }
-    }
-
-    @Override
-    public void showAndPickNodesAndLinks(Map<Node, Color> npNodes, Map<Link, Pair<Color, Boolean>> npLinks)
-    {
-        resetPickedAndUserDefinedColorState();
-
-        if (npNodes != null)
-        {
-            for (Entry<Node, Color> npNode : npNodes.entrySet())
-            {
-                GUINode aux = nodeTable.get(npNode.getKey());
-                aux.setUserDefinedColorOverridesTheRest(npNode.getValue());
-                vv.getPickedVertexState().pick(aux, true);
-            }
-        }
-
-        if (npLinks != null)
-        {
-            for (Entry<Link, Pair<Color, Boolean>> link : npLinks.entrySet())
-            {
-                GUILink aux = linkTable.get(link.getKey());
-                aux.setUserDefinedColorOverridesTheRest(link.getValue().getFirst());
-                vv.getPickedEdgeState().pick(aux, true);
-                if (link.getValue().getSecond()) // if true, the edge is dashed
-                    aux.setUserDefinedStrokeOverridesTheRest(new BasicStroke(vv.getPickedEdgeState().isPicked(aux) ? 2 : 1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f));
-                else
-                    aux.setUserDefinedStrokeOverridesTheRest(null);
-            }
-        }
-        refresh();
-    }
-
-    @Override
-    public void showNonConnectedNodes(boolean show)
-    {
-        if (showHideNonConnectedNodes != show)
-        {
-            showHideNonConnectedNodes = show;
-            refresh();
-        }
     }
 
     @Override

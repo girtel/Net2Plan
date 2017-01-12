@@ -31,7 +31,6 @@ public class GUINode
 {
     private final Node npNode;
     private final VisualizationLayer vl;
-    private final VisualizationState vs;
 
     /* New variables */
     private boolean visible;
@@ -50,7 +49,6 @@ public class GUINode
     public GUINode(Node npNode , VisualizationLayer vl)
     {
     	this.vl = vl;
-    	this.vs = vl.getVisualizationState();
         this.npNode = npNode;
 
 		/* defaults */

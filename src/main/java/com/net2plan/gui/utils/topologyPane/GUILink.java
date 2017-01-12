@@ -12,6 +12,7 @@
 
 package com.net2plan.gui.utils.topologyPane;
 
+import com.net2plan.gui.utils.topologyPane.VisualizationState.VisualizationLayer;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.utils.Pair;
 
@@ -27,12 +28,14 @@ public class GUILink {
     private final GUINode originNode;
     private final GUINode destinationNode;
     private Link npLink;
+    private final VisualizationLayer vl;
 
     /* New variables */
     private Color normalColor, colorIfPicked;
     private boolean showLabel;
     private boolean isVisible;
     private boolean hasArrow;
+    private Stroke arrowStroke, arrowStrokeIfPicked, edgeStroke, edgeStrokeIfPicked;
     private Stroke arrowStroke, arrowStrokeIfPicked, edgeStroke, edgeStrokeIfPicked;
     private Paint arrowDrawPaint, arrowDrawPaintIfPicked, arrowFillPaint, arrowFillPaintIfPicked, edgeDrawPaint, edgeDrawPaintIfPicked;
     private Color userDefinedColorOverridesTheRest;
@@ -46,7 +49,9 @@ public class GUILink {
      * @param destinationNode Destination node identifier
      * @since 0.3.0
      */
-    public GUILink(Link npLink, GUINode originNode, GUINode destinationNode) {
+    public GUILink(Link npLink, GUINode originNode, GUINode destinationNode) 
+    {
+    	this.vl = (destinationNode.getVisualizationLayer() != originNode.getVisualizationLayer())? null : originNode.getVisualizationLayer();
         this.npLink = npLink;
         this.originNode = originNode;
         this.destinationNode = destinationNode;
@@ -72,6 +77,8 @@ public class GUILink {
         //PARA EL EDGE STROKE SI BACKUP: return new BasicStroke(vv.getPickedEdgeState().isPicked(i) ? 2 : 1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
     }
 
+    public VisualizationLayer getVisualizationLayer () { return vl; }
+    
     @Override
     public String toString() {
         return getLabel();
