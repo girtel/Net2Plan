@@ -17,6 +17,7 @@ import java.awt.Font;
 import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
+import java.util.List;
 
 import com.net2plan.gui.utils.topologyPane.VisualizationState.VisualizationLayer;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -35,10 +36,12 @@ public class GUINode
     /* New variables */
     private boolean visible;
     private Font font;
-    private Paint drawPaint, fillPaint, fillPaintIfPicked;
-    private Shape shape, shapeIfPicked;
+    //private Paint drawPaint, fillPaint, fillPaintIfPicked;
+    private Paint drawPaint, fillPaint;
+//    private Shape shape, shapeIfPicked;
+    private Shape shape;
     private double shapeSize;
-    private Color userDefinedColorOverridesTheRest;
+//    private Color userDefinedColorOverridesTheRest;
 
     /**
      * Constructor that allows to set a node label.
@@ -55,12 +58,12 @@ public class GUINode
         this.visible = true;
         this.drawPaint = java.awt.Color.BLACK;
         this.fillPaint = java.awt.Color.BLACK;
-        this.fillPaintIfPicked = java.awt.Color.BLACK;
+//        this.fillPaintIfPicked = java.awt.Color.BLACK;
         this.font = new Font("Helvetica", Font.BOLD, 11);
         this.shapeSize = 30;
         this.shape = new Ellipse2D.Double(-1 * shapeSize / 2, -1 * shapeSize / 2, 1 * shapeSize, 1 * shapeSize);
-        this.shapeIfPicked = new Ellipse2D.Double(-1.2 * shapeSize / 2, -1.2 * shapeSize / 2, 1.2 * shapeSize, 1.2 * shapeSize);
-        this.userDefinedColorOverridesTheRest = null;
+//        this.shapeIfPicked = new Ellipse2D.Double(-1.2 * shapeSize / 2, -1.2 * shapeSize / 2, 1.2 * shapeSize, 1.2 * shapeSize);
+//        this.userDefinedColorOverridesTheRest = null;
     }
     
     public VisualizationLayer getVisualizationLayer () { return vl; }
@@ -84,7 +87,7 @@ public class GUINode
     public void setShapeSize(double size) {
         this.shapeSize = size;
         this.shape = new Ellipse2D.Double(-1 * shapeSize / 2, -1 * shapeSize / 2, 1 * shapeSize, 1 * shapeSize);
-        this.shapeIfPicked = new Ellipse2D.Double(-1.2 * shapeSize / 2, -1.2 * shapeSize / 2, 1.2 * shapeSize, 1.2 * shapeSize);
+//        this.shapeIfPicked = new Ellipse2D.Double(-1.2 * shapeSize / 2, -1.2 * shapeSize / 2, 1.2 * shapeSize, 1.2 * shapeSize);
     }
 
     public Paint getDrawPaint() {
@@ -103,14 +106,6 @@ public class GUINode
         this.fillPaint = p;
     }
 
-    public Paint getFillPaintIfPicked() {
-        return fillPaintIfPicked;
-    }
-
-    public void setFillPaintIfPicked(Paint p) {
-        this.fillPaintIfPicked = p;
-    }
-
     public void setFont(Font f) {
         this.font = f;
     }
@@ -126,22 +121,11 @@ public class GUINode
         this.shape = f;
     }
 
-    public Shape getShapeIfPicked() {
-        return shapeIfPicked;
+    public List<GUINode> verticallyStackedNodes ()
+    {
+    	return this.vl.getVisualizationState().getVerticallyStackedNodes(this.npNode);
     }
-
-    public void setShapeIfPicked(Shape f) {
-        this.shapeIfPicked = f;
-    }
-
-    public Color getUserDefinedColorOverridesTheRest() {
-        return userDefinedColorOverridesTheRest;
-    }
-
-    public void setUserDefinedColorOverridesTheRest(Color c) {
-        this.userDefinedColorOverridesTheRest = c;
-    }
-
+    
     public boolean decreaseFontSize() 
     {
         final int currentSize = font.getSize();

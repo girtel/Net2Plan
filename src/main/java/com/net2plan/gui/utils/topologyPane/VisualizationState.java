@@ -3,6 +3,7 @@ package com.net2plan.gui.utils.topologyPane;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,8 +26,8 @@ import com.net2plan.utils.Pair;
 
 public class VisualizationState
 {
-    private final static float SCALE_IN = 1.1f;
-    private final static float SCALE_OUT = 1 / SCALE_IN;
+    public final static float SCALE_IN = 1.1f;
+    public final static float SCALE_OUT = 1 / SCALE_IN;
 	private boolean showNodeNames;
 	private boolean showLinkLabels;
     private boolean showNonConnectedNodes;
@@ -46,13 +47,15 @@ public class VisualizationState
 		this.showLinkLabels = true;
 		this.showNonConnectedNodes = false;
 		this.vLayers = new ArrayList<> ();
-		this.vLayers.add(new VisualizationLayer(currentNp.getNetworkLayerDefault() , this));
+		this.vLayers.add(new VisualizationLayer(currentNp.getNetworkLayerDefault() , this , vLayers.size()));
 		this.intraNodeGUILinks = new HashMap<> ();
 		this.cache_nodeGuiNodeMap = new HashMap<> ();
 		this.interLayerDistanceInPixels = 50;
 		this.regularLinkMap = new HashMap<> ();
 	}
 
+	public List<GUINode> getVerticallyStackedNodes (Node n) { return cache_nodeGuiNodeMap.get(n); } 
+	
 	public void rebuildVisualizationState ()
 	{
 		for (Node n : currentNp.getNodes())
@@ -90,8 +93,7 @@ public class VisualizationState
 	}
 	
 	public int getInterLayerDistanceInPixels () { return interLayerDistanceInPixels; }
-	
-	
+
     public boolean decreaseFontSizeAll()
     {
         boolean changedSize = false;
@@ -143,7 +145,7 @@ public class VisualizationState
 		this.currentNp = netPlan;
 		this.vLayers.clear();
 		for (List<NetworkLayer> layers : listOfLayersPerVL)
-			vLayers.add(new VisualizationLayer(layers, this));
+			vLayers.add(new VisualizationLayer(layers, this , vLayers.size()));
 	}
 
 	public List<VisualizationLayer> getVLList () { return Collections.unmodifiableList(vLayers); }
@@ -154,28 +156,30 @@ public class VisualizationState
     	private NetPlan currentNp;
     	private final VisualizationState vs;
     	private List<GUINode> guiNodes;
-    	private List<GUILink> guiLink;
+    	private List<GUILink> guiLinks;
+    	private final int index;
     	
-    	
-    	public VisualizationLayer(List<NetworkLayer> layers , VisualizationState vs)
+    	public VisualizationLayer(List<NetworkLayer> layers , VisualizationState vs , int index)
 		{
     		if (layers.isEmpty()) throw new Net2PlanException ("A visualization layer needs at least on layer");
     		this.npLayersToShow = layers;
     		this.currentNp = layers.get(0).getNetPlan();
     		for (NetworkLayer l : layers) if (l.getNetPlan() != currentNp) throw new RuntimeException("Bad");
     		this.vs = vs;
+    		this.index = index;
 		}
-    	public VisualizationLayer(NetworkLayer layer , VisualizationState vs)
+    	public VisualizationLayer(NetworkLayer layer , VisualizationState vs , int index)
 		{
     		this.currentNp = layer.getNetPlan();
     		this.npLayersToShow = Arrays.asList(layer);
     		this.vs = vs;
+    		this.index = index;
 		}
     	public VisualizationState getVisualizationState () { return vs; }
 
     	public List<GUINode> getGUINodes () { return Collections.unmodifiableList(guiNodes); }
     	public List<GUILink> getGUILinks () { return Collections.unmodifiableList(guiLinks); }
-    	
+    	public int getIndex () { return index; }
     	
 	}
 
@@ -236,12 +240,14 @@ public class VisualizationState
             e.setUserDefinedColorOverridesTheRest(null);
             e.setUserDefinedStrokeOverridesTheRest(null);
         }
-        for (List<GUILink> list : intraNodeGUILinks.values()) 
+        for (List<GUILink> list : intraNodeGUILinks.values())
+        {
         	for (GUILink e : list)
 	        {
 	            e.setUserDefinedColorOverridesTheRest(null);
 	            e.setUserDefinedStrokeOverridesTheRest(null);
 	        }
+        }
     }
 	
 

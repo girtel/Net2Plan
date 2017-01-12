@@ -11,7 +11,6 @@
 
 package com.net2plan.gui.utils.topologyPane.jung;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -30,12 +29,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.swing.ImageIcon;
@@ -148,13 +144,13 @@ public final class JUNGCanvas implements ITopologyCanvas
         ((EdgeShape.QuadCurve<GUINode, GUILink>) originalEdgeShapeTransformer).setEdgeIndexFunction(DefaultParallelEdgeIndexFunction.<GUINode, GUILink>getInstance()); // how much they separate from the direct line (default is 20)
 
 		/* Customize the graph */
-        vv.getRenderContext().setVertexDrawPaintTransformer(n -> n.getUserDefinedColorOverridesTheRest() == null ? n.getDrawPaint() : n.getUserDefinedColorOverridesTheRest());
-        vv.getRenderContext().setVertexFillPaintTransformer(n -> n.getUserDefinedColorOverridesTheRest() != null ? n.getUserDefinedColorOverridesTheRest() : vv.getPickedVertexState().isPicked(n) ? n.getFillPaintIfPicked() : n.getFillPaint());
+        vv.getRenderContext().setVertexDrawPaintTransformer(n -> n.getDrawPaint());
+        vv.getRenderContext().setVertexFillPaintTransformer(n -> n.getFillPaint());
         vv.getRenderContext().setVertexFontTransformer(n -> n.getFont());
 
 		
 		/* If icons => comment this line */
-        vv.getRenderContext().setVertexShapeTransformer(n -> vv.getPickedVertexState().isPicked(n) ? n.getShapeIfPicked() : n.getShape());
+        vv.getRenderContext().setVertexShapeTransformer(n -> n.getShape());
         /* If shapes, comment this line */
         //vv.getRenderContext().setVertexIconTransformer(new Transformer<GUINode,Icon> () {} ... )
 
@@ -165,14 +161,14 @@ public final class JUNGCanvas implements ITopologyCanvas
 
         vv.getRenderContext().setEdgeIncludePredicate(context -> context.element.isVisible());
         vv.getRenderContext().setEdgeArrowPredicate(context -> context.element.isVisible() && context.element.getHasArrow());
-        vv.getRenderContext().setEdgeArrowStrokeTransformer(i -> vv.getPickedEdgeState().isPicked(i) ? i.getArrowStroke().getSecond() : i.getArrowStroke().getFirst());
+        vv.getRenderContext().setEdgeArrowStrokeTransformer(i -> i.getArrowStroke());
         vv.getRenderContext().setEdgeArrowTransformer(new ConstantTransformer(ArrowFactory.getNotchedArrow(7, 10, 5)));
         vv.getRenderContext().setEdgeLabelClosenessTransformer(new ConstantDirectionalEdgeValueTransformer(.6, .6));
-        vv.getRenderContext().setEdgeStrokeTransformer(i -> i.getUserDefinedStrokeOverridesTheRest() != null ? i.getUserDefinedStrokeOverridesTheRest() : vv.getPickedEdgeState().isPicked(i) ? i.getEdgeStroke().getSecond() : i.getEdgeStroke().getFirst());
+        vv.getRenderContext().setEdgeStrokeTransformer(i -> i.getEdgeStroke());
 
-        vv.getRenderContext().setEdgeDrawPaintTransformer(e -> e.getUserDefinedColorOverridesTheRest() != null ? e.getUserDefinedColorOverridesTheRest() : vv.getPickedEdgeState().isPicked(e) ? e.getEdgeDrawPaint().getSecond() : e.getEdgeDrawPaint().getFirst());
-        vv.getRenderContext().setArrowDrawPaintTransformer(e -> e.getUserDefinedColorOverridesTheRest() != null ? e.getUserDefinedColorOverridesTheRest() : vv.getPickedEdgeState().isPicked(e) ? e.getArrowDrawPaint().getSecond() : e.getArrowDrawPaint().getFirst());
-        vv.getRenderContext().setArrowFillPaintTransformer(e -> e.getUserDefinedColorOverridesTheRest() != null ? e.getUserDefinedColorOverridesTheRest() : vv.getPickedEdgeState().isPicked(e) ? e.getArrowFillPaint().getSecond() : e.getArrowFillPaint().getFirst());
+        vv.getRenderContext().setEdgeDrawPaintTransformer(e -> e.getEdgeDrawPaint());
+        vv.getRenderContext().setArrowDrawPaintTransformer(e -> e.getArrowDrawPaint());
+        vv.getRenderContext().setArrowFillPaintTransformer(e -> e.getArrowFillPaint());
 
         vv.getRenderContext().setEdgeLabelRenderer(new DefaultEdgeLabelRenderer(Color.BLUE));
         vv.getRenderer().setEdgeLabelRenderer(new BasicEdgeLabelRenderer<GUINode, GUILink>()
@@ -183,25 +179,27 @@ public final class JUNGCanvas implements ITopologyCanvas
             }
         });
         vv.setEdgeToolTipTransformer(link -> link.getToolTip());
-        vv.getRenderContext().setEdgeShapeTransformer(c ->
-                {
-                    final GUINode origin = c.element.getOriginNode();
-                    final GUINode destination = c.element.getDestinationNode();
-                    boolean separateTheLinks = vv.getPickedVertexState().isPicked(origin) || vv.getPickedVertexState().isPicked(destination);
-                    if (!separateTheLinks)
-                    {
-                        Set<GUILink> linksNodePair = new HashSet<>(c.graph.getIncidentEdges(destination));
-                        linksNodePair.retainAll(c.graph.getIncidentEdges(origin));
-                        for (GUILink e : linksNodePair)
-                            if (vv.getPickedEdgeState().isPicked(e) || !e.getAssociatedNetPlanLink().isUp())
-                            {
-                                separateTheLinks = true;
-                                break;
-                            }
-                    }
-                    return separateTheLinks ? originalEdgeShapeTransformer.transform(c) : new Line2D.Float(0.0f, 0.0f, 1.0f, 0.0f);
-                }
-        );
+//        vv.getRenderContext().setEdgeShapeTransformer(c ->
+//                {
+//                    final GUINode origin = c.element.getOriginNode();
+//                    final GUINode destination = c.element.getDestinationNode();
+//                    boolean separateTheLinks = vv.getPickedVertexState().isPicked(origin) || vv.getPickedVertexState().isPicked(destination);
+//                    if (!separateTheLinks)
+//                    {
+//                        Set<GUILink> linksNodePair = new HashSet<>(c.graph.getIncidentEdges(destination));
+//                        linksNodePair.retainAll(c.graph.getIncidentEdges(origin));
+//                        for (GUILink e : linksNodePair)
+//                            if (vv.getPickedEdgeState().isPicked(e) || !e.getAssociatedNetPlanLink().isUp())
+//                            {
+//                                separateTheLinks = true;
+//                                break;
+//                            }
+//                    }
+//                    return separateTheLinks ? originalEdgeShapeTransformer.transform(c) : new Line2D.Float(0.0f, 0.0f, 1.0f, 0.0f);
+//                }
+//        );
+
+        vv.getRenderContext().setEdgeShapeTransformer(c -> c.element.isShownSeparated() ? originalEdgeShapeTransformer.transform(c) : new Line2D.Float(0.0f, 0.0f, 1.0f, 0.0f));
 
         // Background controller
         this.paintableAssociatedToBackgroundImage = null;
@@ -366,14 +364,12 @@ public final class JUNGCanvas implements ITopologyCanvas
         refresh();
     }
 
-    @Override
     public void updateTopology()
     {
     	for (GUILink gl : new ArrayList<>(g.getEdges()))
     		g.removeEdge(gl);
     	for (GUINode gn : new ArrayList<>(g.getVertices()))
     		g.removeVertex(gn);
-    	final int interLayerDistanceInPixels = vs.getInterLayerDistanceInPixels ();
     	for (int layerIndex = 0 ; layerIndex < vs.getNumberOfVisualizationLayers() ; layerIndex ++)
     	{
     		final VisualizationLayer vl = vs.getVLList().get(layerIndex);
@@ -445,19 +441,21 @@ public final class JUNGCanvas implements ITopologyCanvas
         vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT).translate(dx, dy);
     }
 
-    @Override
-    public void updateNodeXYPosition(Node npNode)
-    {
-        // Moves a node to its xy coordinates.
-        GUINode node = nodeTable.get(npNode);
-        l.setLocation(node, FLIP_VERTICAL_COORDINATES.transform(node));
-    }
+//    @Override
+//    public void updateNodeXYPosition(GUINode node)
+//    {
+//        l.setLocation(node, FLIP_VERTICAL_COORDINATES.transform(node));
+//    }
 
     @Override
     public void moveNodeToXYPosition(Node npNode, Point2D point)
     {
-        GUINode node = nodeTable.get(npNode);
-        l.setLocation(node, point);
+		final double yOfPixelZero = convertViewCoordinatesToRealCoordinates (new Point2D.Double (0 , 0)).getY();
+		final double yOfPixelUp = convertViewCoordinatesToRealCoordinates (new Point2D.Double (0 , vs.getInterLayerDistanceInPixels())).getY();
+		final double extraInJungCoordinates =  Math.abs(yOfPixelUp - yOfPixelZero);
+
+    	for (GUINode node : vs.getVerticallyStackedNodes(npNode))
+    		l.setLocation(node, new Point2D.Double(point.getX() , point.getY() + node.getVisualizationLayer().getIndex()*extraInJungCoordinates));
     }
 
     public MutableTransformer getTransformer()
@@ -477,31 +475,6 @@ public final class JUNGCanvas implements ITopologyCanvas
         OSMMapStateBuilder.getSingleton().zoomOut();
     }
 
-    public void addLink(Link npLink)
-    {
-        if (linkTable.containsKey(npLink)) throw new RuntimeException("Bad - Link " + npLink + " already exists");
-        final GUINode originNode = nodeTable.get(npLink.getOriginNode());
-        final GUINode destNode = nodeTable.get(npLink.getDestinationNode());
-        if ((originNode == null) || (destNode == null))
-            throw new RuntimeException("Bad - Link " + npLink + ". End nodes are still not in the graph");
-        GUILink link = new GUILink(npLink, originNode, destNode);
-        linkTable.put(npLink, link);
-        g.addEdge(link, link.getOriginNode(), link.getDestinationNode());
-    }
-
-    private void removeLink(Link npLink, boolean alsoFromGraph)
-    {
-        GUILink link = linkTable.get(npLink);
-
-        linkTable.remove(npLink);
-
-        if (alsoFromGraph)
-        {
-            g.removeEdge(link);
-            refresh();
-        }
-    }
-
     public void zoom(float scale)
     {
         scalingControl.scale(vv, scale, vv.getCenter());
@@ -509,12 +482,12 @@ public final class JUNGCanvas implements ITopologyCanvas
 
     public void zoomIn(Point2D point)
     {
-        scalingControl.scale(vv, SCALE_IN, point);
+        scalingControl.scale(vv, VisualizationState.SCALE_IN, point);
     }
 
     public void zoomOut(Point2D point)
     {
-        scalingControl.scale(vv, SCALE_OUT, point);
+        scalingControl.scale(vv, VisualizationState.SCALE_OUT, point);
     }
 
     public void setBackgroundImage(final File bgFile, final double x, final double y)
@@ -705,7 +678,7 @@ public final class JUNGCanvas implements ITopologyCanvas
 
         public ScalingCanvasPlugin(ScalingControl scaler, int modifiers)
         {
-            super(scaler, modifiers, SCALE_OUT, SCALE_IN);
+            super(scaler, modifiers, VisualizationState.SCALE_OUT, VisualizationState.SCALE_IN);
             setZoomAtMouse(false);
         }
 
