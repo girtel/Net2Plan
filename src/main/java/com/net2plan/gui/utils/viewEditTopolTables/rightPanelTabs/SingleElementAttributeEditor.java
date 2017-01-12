@@ -75,7 +75,7 @@ class SingleElementAttributeEditor extends MouseAdapter {
                                     return;
                             }
 
-                            callback.updateNetPlanView();
+                            callback.updateWarningsAndTables();
                             return;
                         } catch (Exception ex) {
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Error adding/editing attribute");
@@ -145,7 +145,7 @@ class SingleElementAttributeEditor extends MouseAdapter {
                                     return;
                             }
 
-                            callback.updateNetPlanView();
+                            callback.updateWarningsAndTables();
                         } catch (Exception ex) {
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attribute");
                         }
@@ -174,7 +174,7 @@ class SingleElementAttributeEditor extends MouseAdapter {
                                     return;
                             }
 
-                            callback.updateNetPlanView();
+                            callback.updateWarningsAndTables();
                         } catch (Exception ex) {
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attributes");
                         }

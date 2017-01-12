@@ -31,8 +31,6 @@ public class GUILink {
     private final VisualizationLayer vl;
 
     /* New variables */
-    private Color normalColor, colorIfPicked;
-    private boolean showLabel;
     private boolean isVisible;
     private boolean hasArrow;
 //    private Stroke arrowStroke, arrowStrokeIfPicked, edgeStroke, edgeStrokeIfPicked;
@@ -73,7 +71,7 @@ public class GUILink {
         this.arrowFillPaint = Color.BLACK;
 //        this.arrowFillPaintIfPicked = Color.BLUE;
         this.edgeStroke = new BasicStroke(3);
-        this.showSeparated = false;
+        this.shownSeparated = false;
 //        this.edgeStrokeIfPicked = new BasicStroke(5);
 //        this.userDefinedColorOverridesTheRest = null;
 //        this.userDefinedEdgeStrokeOverridesTheRest = null;

@@ -366,7 +366,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
                             NetPlan netPlan = networkViewer.getDesign();
                             try {
                                 netPlan.getSRGFromId((long) itemId).remove();
-                                networkViewer.updateNetPlanView();
+                                networkViewer.updateWarningsAndTables();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -386,7 +386,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
 
                         try {
                             netPlan.removeAllSRGs();
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -440,7 +440,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
 
                 try {
                     netPlan.addSRG(8748, 12, null);
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
@@ -524,7 +524,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
                     if (srgModel == null) throw new RuntimeException("Bad");
                     SRGUtils.configureSRGs(netPlan, mttf, mttr, srgModel, removeExistingSRGs);
 
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add SRGs from model");
                 }
@@ -554,7 +554,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
                 public void actionPerformed(ActionEvent e) {
                     try {
                         viewEditSRGGUI(networkViewer, networkViewer.getTopologyPanel(), (long) itemId);
-                        networkViewer.updateNetPlanView();
+                        networkViewer.updateWarningsAndTables();
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Error viewing/editing SRG");
                     }
@@ -592,7 +592,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
                     try {
                         for (SharedRiskGroup srg : netPlan.getSRGs()) srg.setMeanTimeToFailInHours(mttf);
 
-                        networkViewer.updateNetPlanView();
+                        networkViewer.updateWarningsAndTables();
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set MTTF to all SRGs");
                     }
@@ -628,7 +628,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
                     try {
                         for (SharedRiskGroup srg : netPlan.getSRGs()) srg.setMeanTimeToRepairInHours(mttr);
 
-                        networkViewer.updateNetPlanView();
+                        networkViewer.updateWarningsAndTables();
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set MTTR to all SRGs");
                     }

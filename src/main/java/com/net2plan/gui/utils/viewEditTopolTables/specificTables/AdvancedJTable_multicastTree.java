@@ -245,12 +245,12 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
                     switch (column) {
                         case COLUMN_CARRIEDTRAFFIC:
                             tree.setCarriedTraffic(Double.parseDouble(newValue.toString()), tree.getOccupiedLinkCapacity());
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                             break;
 
                         case COLUMN_OCCUPIEDCAPACITY:
                             tree.setCarriedTraffic(tree.getCarriedTraffic(), Double.parseDouble(newValue.toString()));
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                             break;
 
                         default:
@@ -343,7 +343,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
                             NetPlan netPlan = networkViewer.getDesign();
                             try {
                                 netPlan.getMulticastTreeFromId((long) itemId).remove();
-                                networkViewer.updateNetPlanView();
+                                networkViewer.updateWarningsAndTables();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -365,7 +365,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
 
                         try {
                             netPlan.removeAllMulticastTrees();
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -441,7 +441,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
 
                 try {
                     createMulticastTreeGUI(networkViewer, networkViewer.getTopologyPanel());
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
@@ -559,7 +559,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
                 for (MulticastTree t : addedTrees) t.remove();
                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error adding multicast trees. No tree was created.");
             }
-            networkViewer.updateNetPlanView();
+            networkViewer.updateWarningsAndTables();
         }
     }
 

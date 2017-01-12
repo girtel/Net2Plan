@@ -220,7 +220,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                         case COLUMN_CAPACITY:
                             if (newValue == null) return;
                             netPlan.getResourceFromId(resId).setCapacity((Double)newValue,  netPlan.getResourceFromId(resId).getCapacityOccupiedInBaseResourcesMap());
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                             topologyPanel.getCanvas().refresh();
                             break;
 
@@ -372,7 +372,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                             NetPlan netPlan = networkViewer.getDesign();
                             try {
                                 networkViewer.getDesign().getResourceFromId((Long)itemId).remove();
-                                networkViewer.updateNetPlanView();
+                                networkViewer.updateWarningsAndTables();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -411,7 +411,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                                     {
                                         res.remove();
                                     }
-                                networkViewer.updateNetPlanView();
+                                networkViewer.updateWarningsAndTables();
                                 break;
                             }
                         }catch (Throwable ex) {
@@ -432,7 +432,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
 
                         try {
                             netPlan.removeAllResources();
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -542,7 +542,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                         }
                         netPlan.addResource(resType, "Resource n_" + netPlan.getResources().size(), hostNode,
                                 0, capacityUnits, newBaseResources, 0, null);
-                        networkViewer.updateNetPlanView();
+                        networkViewer.updateWarningsAndTables();
                         break;
                     }
                 }catch (Throwable ex) {
@@ -605,7 +605,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                         for (int t = 0 ; t < table.getRowCount() ; t ++)
                         	newCapMap.put(baseResources.get(t) , Double.parseDouble((String) table.getModel().getValueAt(t,2)));
                         res.setCapacity(res.getCapacity() , newCapMap);
-                        networkViewer.updateNetPlanView();
+                        networkViewer.updateWarningsAndTables();
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to base resources");
                     }
@@ -638,7 +638,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                 try {
                     for(Resource r : netPlan.getResources())
                     		r.setCapacity(cap , null);
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to resources");
                 }
@@ -669,7 +669,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                 try {
                     for(Resource r : netPlan.getResources())
                     		r.setProcessingTimeToTraversingTrafficInMs(procTime);
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set processing time to resources");
                 }

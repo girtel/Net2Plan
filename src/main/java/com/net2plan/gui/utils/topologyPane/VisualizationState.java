@@ -3,21 +3,24 @@ package com.net2plan.gui.utils.topologyPane;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.geom.Point2D;
+import java.awt.Paint;
+import java.awt.Shape;
+import java.awt.Stroke;
+import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -28,15 +31,52 @@ public class VisualizationState
 {
     public final static float SCALE_IN = 1.1f;
     public final static float SCALE_OUT = 1 / SCALE_IN;
-	private boolean showNodeNames;
+    
+    public final static Paint DEFAULT_GUINODE_DRAWCOLOR = java.awt.Color.BLACK;
+    public final static Paint DEFAULT_GUINODE_FILLCOLOR = java.awt.Color.BLACK;
+    public final static Paint DEFAULT_GUINODE_FILLCOLOR_PICKED = java.awt.Color.BLACK;
+    public final static Font DEFAULT_GUINODE_FONT = new Font("Helvetica", Font.BOLD, 11);
+    public final static int DEFAULT_GUINODE_SHAPESIZE = 30;
+    public final static Shape DEFAULT_GUINODE_SHAPE = new Ellipse2D.Double(-1 * DEFAULT_GUINODE_SHAPESIZE / 2, -1 * DEFAULT_GUINODE_SHAPESIZE / 2, 1 * DEFAULT_GUINODE_SHAPESIZE, 1 * DEFAULT_GUINODE_SHAPESIZE);
+    public final static Shape DEFAULT_GUINODE_SHAPE_PICKED = new Ellipse2D.Double(-1.2 * DEFAULT_GUINODE_SHAPESIZE / 2, -1.2 * DEFAULT_GUINODE_SHAPESIZE / 2, 1.2 * DEFAULT_GUINODE_SHAPESIZE, 1.2 * DEFAULT_GUINODE_SHAPESIZE);
+
+    public final static boolean DEFAULT_REGGUILINK_HASARROW = false;
+    public final static Stroke DEFAULT_REGGUILINK_ARROWSTROKE = new BasicStroke(1);
+    public final static Stroke DEFAULT_REGGUILINK_ARROWSTROKE_PICKED = new BasicStroke(2);
+    public final static Stroke DEFAULT_REGGUILINK_EDGETROKE = new BasicStroke(3);
+    public final static Stroke DEFAULT_REGGUILINK_EDGESTROKE_PICKED = new BasicStroke(5);
+    public final static Paint DEFAULT_REGGUILINK_ARROWDRAWCOLOR = Color.BLACK;
+    public final static Paint DEFAULT_REGGUILINK_ARROWDRAWCOLOR_PICKED = Color.BLUE;
+    public final static Paint DEFAULT_REGGUILINK_ARROWFILLCOLOR = Color.BLACK;
+    public final static Paint DEFAULT_REGGUILINK_EDGEDRAWCOLOR = Color.BLACK;
+    public final static Paint DEFAULT_REGGUILINK_EDGEDRAWCOLOR_PICKED = Color.BLUE;
+    public final static Stroke DEFAULT_REGGUILINK_EDGESTROKE_BACKUP = new BasicStroke(1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
+    public final static Stroke DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_PICKED = new BasicStroke(2, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
+    
+    public final static boolean DEFAULT_INTRANODEGUILINK_HASARROW = false;
+    public final static Stroke DEFAULT_INTRANODEGUILINK_ARROWSTROKE = new BasicStroke(0.5f);
+    public final static Stroke DEFAULT_INTRANODEGUILINK_ARROWSTROKE_PICKED = new BasicStroke(2);
+    public final static Stroke DEFAULT_INTRANODEGUILINK_EDGETROKE = new BasicStroke(1.5f);
+    public final static Stroke DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED = new BasicStroke(2.5f);
+    public final static Paint DEFAULT_INTRANODEGUILINK_ARROWDRAWCOLOR = Color.BLACK;
+    public final static Paint DEFAULT_INTRANODEGUILINK_ARROWDRAWCOLOR_PICKED = Color.BLUE;
+    public final static Paint DEFAULT_INTRANODEGUILINK_ARROWFILLCOLOR = Color.BLACK;
+    public final static Paint DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR = Color.BLACK;
+    public final static Paint DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR_PICKED = Color.BLUE;
+    public final static Stroke DEFAULT_REGGUILINK_INTRANODEGESTROKE_BACKUP = new BasicStroke(0.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
+    public final static Stroke DEFAULT_REGGUILINK_INTRANODEGESTROKE_BACKUP_PICKED = new BasicStroke(1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
+
+    private boolean showNodeNames;
 	private boolean showLinkLabels;
     private boolean showNonConnectedNodes;
     private NetPlan currentNp;
     private List<VisualizationLayer> vLayers;
-    private Map<Node,List<GUILink>> intraNodeGUILinks;
+    private Map<Node,Map<Pair<VisualizationLayer,VisualizationLayer>,GUILink>> cache_perNodeIntraNodeGUILinkMap;
+    private Map<Node,Set<GUILink>> intraNodeGUILinks;
     private Map<Node,List<GUINode>> cache_nodeGuiNodeMap;
     private Map<Link,GUILink> regularLinkMap;
     private int interLayerDistanceInPixels;
+    private Map<NetworkLayer,VisualizationLayer> cache_layer2VLayerMap;
     
     public NetPlan getNetPlan () { return currentNp; }
 
@@ -49,15 +89,134 @@ public class VisualizationState
 		this.vLayers = new ArrayList<> ();
 		this.vLayers.add(new VisualizationLayer(currentNp.getNetworkLayerDefault() , this , vLayers.size()));
 		this.intraNodeGUILinks = new HashMap<> ();
+		this.cache_perNodeIntraNodeGUILinkMap = new HashMap <> ();
 		this.cache_nodeGuiNodeMap = new HashMap<> ();
 		this.interLayerDistanceInPixels = 50;
 		this.regularLinkMap = new HashMap<> ();
+		this.cache_layer2VLayerMap = new HashMap<> (); 
+		for (VisualizationLayer visualizationLayer : vLayers) 
+			for (NetworkLayer layer : visualizationLayer.npLayersToShow) 
+				cache_layer2VLayerMap.put(layer , visualizationLayer);
 	}
 
-	public List<GUINode> getVerticallyStackedNodes (Node n) { return cache_nodeGuiNodeMap.get(n); } 
+	public List<GUINode> getVerticallyStackedGUINodes (Node n) { return cache_nodeGuiNodeMap.get(n); } 
 	
-	public void rebuildVisualizationState ()
+	public GUINode getAssociatedGUINode (Node n , NetworkLayer layer) 
+	{ 
+		return getVerticallyStackedGUINodes(n).get(getAssociatedVisualizationLayer(layer).getIndex());
+	} 
+
+	public GUILink getAssociatedGUILink (Link e) { return regularLinkMap.get(e); } 
+
+	public Pair<Set<GUILink>,Set<GUILink>> getAssociatedGUILinksIncludingCoupling (Link e , boolean regularLinkIsPrimary) 
 	{
+		Set<GUILink> resPrimary = new HashSet<> ();
+		Set<GUILink> resBackup = new HashSet<> ();
+		if (regularLinkIsPrimary) resPrimary.add (getAssociatedGUILink(e)); else resBackup.add(getAssociatedGUILink(e));
+		if (!e.isCoupled()) return Pair.of(resPrimary , resBackup);
+		if (e.getCoupledDemand() != null)
+		{
+			/* add the intranode links */
+			final NetworkLayer upperLayer = e.getLayer();
+			final NetworkLayer downLayer = e.getCoupledDemand().getLayer();
+			if (regularLinkIsPrimary)
+			{
+				resPrimary.addAll(getIntraNodeGUILinkSequence(e.getOriginNode() , upperLayer , downLayer));
+				resPrimary.addAll(getIntraNodeGUILinkSequence(e.getDestinationNode() , downLayer , upperLayer));
+			}
+			else 
+			{
+				resBackup.addAll(getIntraNodeGUILinkSequence(e.getOriginNode() , upperLayer , downLayer));
+				resBackup.addAll(getIntraNodeGUILinkSequence(e.getDestinationNode() , downLayer , upperLayer));
+			}
+
+			/* add the regular links */
+			Pair<Set<Link>,Set<Link>> traversedLinks = e.getCoupledDemand().getLinksWithOccupiedCapacity(); 
+			for (Link ee : traversedLinks.getFirst())
+			{
+				Pair<Set<GUILink>,Set<GUILink>> pairGuiLinks = getAssociatedGUILinksIncludingCoupling (ee , true); 
+				if (regularLinkIsPrimary) resPrimary.addAll(pairGuiLinks.getFirst()); else resBackup.addAll(pairGuiLinks.getFirst());  
+				resBackup.addAll(pairGuiLinks.getSecond());
+			}
+			for (Link ee : traversedLinks.getSecond())
+			{
+				Pair<Set<GUILink>,Set<GUILink>> pairGuiLinks = getAssociatedGUILinksIncludingCoupling (ee , false); 
+				resPrimary.addAll(pairGuiLinks.getFirst());
+				resBackup.addAll(pairGuiLinks.getSecond());
+			}
+		}
+		else if (e.getCoupledMulticastDemand() != null)
+		{
+			/* add the intranode links */
+			final NetworkLayer upperLayer = e.getLayer();
+			final MulticastDemand lowerLayerDemand = e.getCoupledMulticastDemand(); 
+			final NetworkLayer downLayer = lowerLayerDemand.getLayer();
+			if (regularLinkIsPrimary)
+			{
+				resPrimary.addAll(getIntraNodeGUILinkSequence(lowerLayerDemand.getIngressNode() , upperLayer , downLayer));
+				resPrimary.addAll(getIntraNodeGUILinkSequence(lowerLayerDemand.getIngressNode() , downLayer , upperLayer));
+				for (Node n : lowerLayerDemand.getEgressNodes())
+				{
+					resPrimary.addAll(getIntraNodeGUILinkSequence(n , upperLayer , downLayer));
+					resPrimary.addAll(getIntraNodeGUILinkSequence(n , downLayer , upperLayer));
+				}
+			}
+			else 
+			{
+				resBackup.addAll(getIntraNodeGUILinkSequence(lowerLayerDemand.getIngressNode() , upperLayer , downLayer));
+				resBackup.addAll(getIntraNodeGUILinkSequence(lowerLayerDemand.getIngressNode() , downLayer , upperLayer));
+				for (Node n : lowerLayerDemand.getEgressNodes())
+				{
+					resBackup.addAll(getIntraNodeGUILinkSequence(n , upperLayer , downLayer));
+					resBackup.addAll(getIntraNodeGUILinkSequence(n , downLayer , upperLayer));
+				}
+			}
+
+			for (MulticastTree t : lowerLayerDemand.getMulticastTrees())
+				for (Link ee : t.getLinkSet())
+				{
+					Pair<Set<GUILink>,Set<GUILink>> pairGuiLinks = getAssociatedGUILinksIncludingCoupling (ee , true); 
+					resPrimary.addAll(pairGuiLinks.getFirst());
+					resBackup.addAll(pairGuiLinks.getSecond());
+				}
+			}
+		return Pair.of(resPrimary,resBackup);
+	} 
+
+	public GUILink getIntraNodeGUILink (Node n , VisualizationLayer from , VisualizationLayer to)
+	{
+		return cache_perNodeIntraNodeGUILinkMap.get(n).get(Pair.of(from,to));
+	}
+	
+	public Set<GUILink> getIntraNodeGUILinks (Node n) { return intraNodeGUILinks.get(n); } 
+
+	public VisualizationLayer getAssociatedVisualizationLayer (NetworkLayer layer) { return cache_layer2VLayerMap.get(layer); }
+	
+	public List<GUILink> getIntraNodeGUILinkSequence (Node n , NetworkLayer from , NetworkLayer to) 
+	{
+		if (from.getNetPlan() != currentNp) throw new RuntimeException ("Bad");
+		if (to.getNetPlan() != currentNp) throw new RuntimeException ("Bad");
+		final List<GUILink> res = new LinkedList<> ();
+		final VisualizationLayer vLayerFrom = cache_layer2VLayerMap.get(from);
+		final VisualizationLayer vLayerTo = cache_layer2VLayerMap.get(to);
+		if (vLayerFrom == vLayerTo) return res;
+		final int increment = vLayerTo.getIndex() > vLayerFrom.getIndex()? 1 : -1; 
+		int vLayerIndex = vLayerFrom.getIndex();
+		do
+		{
+			final VisualizationLayer origin = vLayers.get(vLayerIndex);
+			final VisualizationLayer destination = vLayers.get(vLayerIndex+increment);
+			res.add(cache_perNodeIntraNodeGUILinkMap.get(n).get(Pair.of(origin,destination)));
+			vLayerIndex += increment;
+		} while (vLayerIndex != vLayerTo.getIndex());
+		
+		return res; 
+	} 
+
+	
+	public void rebuildVisualizationState (NetPlan newCurrentNetPlan)
+	{
+		if (newCurrentNetPlan != null) this.currentNp = newCurrentNetPlan;
 		for (Node n : currentNp.getNodes())
 		{
 	        List<GUINode> associatedGUINodes = new ArrayList<> ();
@@ -69,9 +228,13 @@ public class VisualizationState
 	        	{
 	        		GUILink gl1 = new GUILink (null , associatedGUINodes.get(associatedGUINodes.size() - 2), gn);
 	        		GUILink gl2 = new GUILink (null , gn , associatedGUINodes.get(associatedGUINodes.size() - 2));
-	        		List<GUILink> existingList = intraNodeGUILinks.get(n);
-	        		if (existingList == null) { existingList = new ArrayList<GUILink> (); intraNodeGUILinks.put(n , existingList); } 
-	        		existingList.add(gl1); existingList.add(gl2);
+	        		Set<GUILink> existingGUILinksSet = intraNodeGUILinks.get(n);
+	        		if (existingGUILinksSet == null) { existingGUILinksSet = new HashSet<> (); intraNodeGUILinks.put(n , existingGUILinksSet); } 
+	        		existingGUILinksSet.add(gl1); existingGUILinksSet.add(gl2);
+	        		GUILink check = cache_perNodeIntraNodeGUILinkMap.get(n).put(Pair.of(gl1.getOriginNode().getVisualizationLayer() , gl1.getDestinationNode().getVisualizationLayer()) , gl1);
+	        		if (check != null) throw new RuntimeException ("Bad");
+	        		check = cache_perNodeIntraNodeGUILinkMap.get(n).put(Pair.of(gl2.getOriginNode().getVisualizationLayer() , gl2.getDestinationNode().getVisualizationLayer()) , gl2);
+	        		if (check != null) throw new RuntimeException ("Bad");
 	        	}
 	        }
 	        cache_nodeGuiNodeMap.put(n, associatedGUINodes);
@@ -146,6 +309,12 @@ public class VisualizationState
 		this.vLayers.clear();
 		for (List<NetworkLayer> layers : listOfLayersPerVL)
 			vLayers.add(new VisualizationLayer(layers, this , vLayers.size()));
+
+		this.cache_layer2VLayerMap = new HashMap<> (); 
+		for (VisualizationLayer visualizationLayer : vLayers) 
+			for (NetworkLayer layer : visualizationLayer.npLayersToShow) 
+				cache_layer2VLayerMap.put(layer , visualizationLayer);
+
 	}
 
 	public List<VisualizationLayer> getVLList () { return Collections.unmodifiableList(vLayers); }
@@ -232,76 +401,77 @@ public class VisualizationState
 	}
 	
 
-    public void resetPickedAndUserDefinedColorState()
+    /* Everything to its default color, shape. Separated nodes, are set together again. Visibility state is unchanged */
+	public void resetColorAndShapeState()
     {
-        for (List<GUINode> list : cache_nodeGuiNodeMap.values()) for (GUINode n : list) n.setUserDefinedColorOverridesTheRest(null);
-        for (GUILink e : regularLinkMap.values())
+		for (GUINode n : getAllGUINodes())
+		{
+		    //n.setVisible(true);
+		    n.setFont(DEFAULT_GUINODE_FONT);
+		    n.setDrawPaint(DEFAULT_GUINODE_DRAWCOLOR);
+		    n.setFillPaint(DEFAULT_GUINODE_FILLCOLOR);
+		    n.setShape(DEFAULT_GUINODE_SHAPE);
+		    n.setShapeSize(DEFAULT_GUINODE_SHAPESIZE);
+		}
+        for (GUILink e : getAllGUILinks(true,false))
         {
-            e.setUserDefinedColorOverridesTheRest(null);
-            e.setUserDefinedStrokeOverridesTheRest(null);
+        	//e.setVisible(true);
+        	e.setHasArrow(DEFAULT_REGGUILINK_HASARROW);
+        	e.setArrowStroke(DEFAULT_REGGUILINK_ARROWSTROKE);
+        	e.setEdgeStroke(DEFAULT_REGGUILINK_EDGETROKE);
+        	e.setArrowDrawPaint(DEFAULT_REGGUILINK_ARROWDRAWCOLOR);
+        	e.setArrowFillPaint(DEFAULT_REGGUILINK_ARROWFILLCOLOR);
+        	e.setEdgeDrawPaint(DEFAULT_REGGUILINK_EDGEDRAWCOLOR);
+        	e.setShownSeparated(false);
         }
-        for (List<GUILink> list : intraNodeGUILinks.values())
+    	for (GUILink e : getAllGUILinks(false,true))
         {
-        	for (GUILink e : list)
-	        {
-	            e.setUserDefinedColorOverridesTheRest(null);
-	            e.setUserDefinedStrokeOverridesTheRest(null);
-	        }
+        	e.setVisible(true);
+        	e.setHasArrow(DEFAULT_INTRANODEGUILINK_HASARROW);
+        	e.setArrowStroke(DEFAULT_INTRANODEGUILINK_ARROWSTROKE);
+        	e.setEdgeStroke(DEFAULT_INTRANODEGUILINK_EDGETROKE);
+        	e.setArrowDrawPaint(DEFAULT_INTRANODEGUILINK_ARROWDRAWCOLOR);
+        	e.setArrowFillPaint(DEFAULT_INTRANODEGUILINK_ARROWFILLCOLOR);
+        	e.setEdgeDrawPaint(DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
+        	e.setShownSeparated(false);
         }
     }
 	
+	public Set<GUILink> getAllGUILinks (boolean includeRegularLinks , boolean includeIntraNodeLinks)
+	{
+		Set<GUILink> res = new HashSet<> ();
+		if (includeRegularLinks) res.addAll(regularLinkMap.values());
+		if (includeIntraNodeLinks) for (Node n : currentNp.getNodes()) res.addAll(this.intraNodeGUILinks.get(n));
+		return res;
+	}
 
-    public void setAllLinksVisibilityState(boolean regularLinksVisible , boolean intraNodeLinksVisible)
+	public Set<GUINode> getAllGUINodes () 
+	{
+		Set<GUINode> res = new HashSet<> ();
+        for (List<GUINode> list : this.cache_nodeGuiNodeMap.values()) res.addAll(list);
+		return res;
+	}
+	
+
+    public void setNodeProperties (Collection<GUINode> nodes , Color color , Shape shape , double shapeSize)
     {
-        for (GUILink e : this.regularLinkMap.values()) e.setVisible(regularLinksVisible);
-        for (List<GUILink> list : this.intraNodeGUILinks.values()) for (GUILink e : list) e.setVisible(intraNodeLinksVisible);
-        
+    	for (GUINode n : nodes)
+    	{
+    		if (color != null) { n.setDrawPaint(color); n.setFillPaint(color); }
+    		if (shape != null) { n.setShape(shape); }
+    		if (shapeSize > 0) { n.setShapeSize(shapeSize); }
+    	}
     }
 
-    public void setAllNodesVisibilityState(boolean visible)
+    public void setLinkProperties (Collection<GUILink> links , Color color , Stroke stroke , Boolean hasArrows , Boolean shownSeparated)
     {
-        for (List<GUINode> list : this.cache_nodeGuiNodeMap.values()) for (GUINode n : list) n.setVisible(visible);
-    }
-
-    @Override
-    public void showAndPickNodesAndLinks(Map<Node, Color> npNodes, Map<Link, Pair<Color, Boolean>> npLinks)
-    {
-        resetPickedAndUserDefinedColorState();
-
-        if (npNodes != null)
-        {
-            for (Entry<Node, Color> npNode : npNodes.entrySet())
-            {
-                GUINode aux = nodeTable.get(npNode.getKey());
-                aux.setUserDefinedColorOverridesTheRest(npNode.getValue());
-                vv.getPickedVertexState().pick(aux, true);
-            }
-        }
-
-        if (npLinks != null)
-        {
-            for (Entry<Link, Pair<Color, Boolean>> link : npLinks.entrySet())
-            {
-                GUILink aux = linkTable.get(link.getKey());
-                aux.setUserDefinedColorOverridesTheRest(link.getValue().getFirst());
-                vv.getPickedEdgeState().pick(aux, true);
-                if (link.getValue().getSecond()) // if true, the edge is dashed
-                    aux.setUserDefinedStrokeOverridesTheRest(new BasicStroke(vv.getPickedEdgeState().isPicked(aux) ? 2 : 1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f));
-                else
-                    aux.setUserDefinedStrokeOverridesTheRest(null);
-            }
-        }
-        refresh();
-    }
-
-    @Override
-    public void showNonConnectedNodes(boolean show)
-    {
-        if (showHideNonConnectedNodes != show)
-        {
-            showHideNonConnectedNodes = show;
-            refresh();
-        }
+    	for (GUILink e : links)
+    	{
+    		if (color != null) { e.setArrowDrawPaint(color); e.setArrowFillPaint(color); e.setEdgeDrawPaint(color);}
+    		if (stroke != null) { e.setArrowStroke(stroke); e.setEdgeStroke(stroke);}
+    		if (hasArrows != null) { e.setHasArrow(hasArrows);}
+    		if (shownSeparated != null) { e.setShownSeparated(shownSeparated); }
+    	}
     }
 
 }

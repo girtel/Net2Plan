@@ -277,7 +277,7 @@ public interface INetworkCallback
      *
      * @since 0.2.3
      */
-    public void updateNetPlanView();
+    public void updateWarningsAndTables();
 
     /**
      * Updates the {@code NetPlan} warnings (over-subscribed links, blocked demands, and so on).

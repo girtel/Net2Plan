@@ -293,12 +293,12 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                     switch (column) {
                         case COLUMN_CARRIEDTRAFFIC:
                             route.setCarriedTraffic(Double.parseDouble(newValue.toString()), route.getOccupiedCapacity());
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                             break;
 
                         case COLUMN_OCCUPIEDCAPACITY:
                             route.setCarriedTraffic(route.getCarriedTraffic(), Double.parseDouble(newValue.toString()));
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                             break;
 
                         default:
@@ -392,7 +392,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                             NetPlan netPlan = networkViewer.getDesign();
                             try {
                                 netPlan.getRouteFromId((long) itemId).remove();
-                                networkViewer.updateNetPlanView();
+                                networkViewer.updateWarningsAndTables();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -414,7 +414,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
 
                         try {
                             netPlan.removeAllRoutes();
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -488,7 +488,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
 
                 try {
                     createRouteGUI(networkViewer, networkViewer.getTopologyPanel());
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
@@ -873,7 +873,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                 for (Route r : addedRoutes) r.remove();
                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error adding routes and/or protection segments");
             }
-            networkViewer.updateNetPlanView();
+            networkViewer.updateWarningsAndTables();
         }
     }
 
@@ -937,7 +937,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                 long backupRouteId = (Long) ((StringLabeller) selectedItem).getObject();
                 Route backupRoute = netPlan.getRouteFromId(backupRouteId);
                 route.addBackupRoute(backupRoute);
-                callback.updateNetPlanView();
+                callback.updateWarningsAndTables();
 
                 backupRouteSelector.removeItem(selectedItem);
                 if (backupRouteSelector.getItemCount() == 0) addSegment_pnl.setVisible(false);
@@ -981,7 +981,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                     final long backupRouteId = (Long) table.getModel().getValueAt(modelRow, 0);
                     final Route backupRoute = netPlan.getRouteFromId(backupRouteId);
                     netPlan.getRouteFromId(routeId).removeBackupRoute(backupRoute);
-                    callback.updateNetPlanView();
+                    callback.updateWarningsAndTables();
 
                     String segmentLabel = "Backup route id " + backupRouteId + 
                     		": path = " + getSequenceLinkResourceIndexes(backupRoute) + 

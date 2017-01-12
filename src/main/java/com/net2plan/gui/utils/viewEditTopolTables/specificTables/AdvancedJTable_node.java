@@ -106,7 +106,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
             Object[] nodeData = new Object[netPlanViewTableHeader.length + attributesTitles.size()];
             nodeData[0] = node.getId();
             nodeData[1] = node.getIndex();
-            nodeData[2] = topologyPanel.getVisualizationState().isVisible(node);
+            nodeData[2] = topologyPanel.getVisualizationState().getAssociatedGUINode(node , currentState.getNetworkLayerDefault()).isVisible();
             nodeData[3] = node.getName();
             nodeData[4] = node.isUp();
             nodeData[5] = node.getXYPositionMap().getX();
@@ -291,7 +291,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                             boolean isNodeUp = (Boolean) newValue;
                             node.setFailureState(isNodeUp);
                             topologyPanel.getCanvas().refresh();
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                             break;
 
                         case COLUMN_XCOORD:
@@ -395,7 +395,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                         try {
                             netPlan.removeAllNodes();
                             networkViewer.getTopologyPanel().getCanvas().updateTopology(netPlan);
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -452,7 +452,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                     node.setName("Node " + node.getIndex());
                     networkViewer.getTopologyPanel().getCanvas().addNode(node);
                     networkViewer.getTopologyPanel().getCanvas().refresh();
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
                     networkViewer.showNode(node.getId());
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
@@ -486,7 +486,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                     Point2D newPosition = new Point2D.Double(newX,newY);
                     networkViewer.moveNode(nodeId,newPosition);
                     networkViewer.getTopologyPanel().getCanvas().refresh();
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
                 }
             });
 
@@ -530,7 +530,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                                 networkViewer.moveNode(nodeId, new Point2D.Double(Double.parseDouble(netPlan.getNodeFromId(nodeId).getAttribute(lonAttribute)), Double.parseDouble(netPlan.getNodeFromId(nodeId).getAttribute(latAttribute))));
 
                                 networkViewer.getTopologyPanel().getCanvas().refresh();
-                                networkViewer.updateNetPlanView();
+                                networkViewer.updateWarningsAndTables();
                                 break;
                             } catch (Throwable ex) {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving coordinates from attributes");
@@ -574,7 +574,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                                 String name = selector.getSelectedItem().toString();
                                 netPlan.getNodeFromId(nodeId).setName(netPlan.getNodeFromId(nodeId).getAttribute(name));
                                 networkViewer.getTopologyPanel().getCanvas().refresh();
-                                networkViewer.updateNetPlanView();
+                                networkViewer.updateWarningsAndTables();
 
                                 break;
                             } catch (Throwable ex) {
@@ -611,7 +611,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                     }
 
                     networkViewer.getTopologyPanel().getCanvas().refresh();
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
                 }
             });
 
@@ -661,7 +661,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                                 }
 
                                 networkViewer.getTopologyPanel().getCanvas().refresh();
-                                networkViewer.updateNetPlanView();
+                                networkViewer.updateWarningsAndTables();
                                 break;
                             } catch (Throwable ex) {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving coordinates from attributes");
@@ -712,7 +712,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                                     }
                                 }
                                 networkViewer.getTopologyPanel().getCanvas().refresh();
-                                networkViewer.updateNetPlanView();
+                                networkViewer.updateWarningsAndTables();
                                 break;
                             } catch (Throwable ex) {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving name from attribute");

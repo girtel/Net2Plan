@@ -235,7 +235,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
                                 try {
                                     netPlan.removeNetworkLayer(netPlan.getNetworkLayerFromId((long) itemId));
                                     networkViewer.getTopologyPanel().updateLayerChooser();
-                                    networkViewer.updateNetPlanView();
+                                    networkViewer.updateWarningsAndTables();
                                 } catch (Throwable ex) {
                                     ErrorHandling.addErrorOrException(ex, getClass());
                                     ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);

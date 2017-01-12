@@ -199,7 +199,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
                     switch (column) {
                         case COLUMN_SPLITTINGRATIO:
                             netPlan.setForwardingRule(demand, link, Double.parseDouble(newValue.toString()));
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                             break;
 
                         default:
@@ -304,7 +304,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
 
                             try {
                                 netPlan.setForwardingRule(netPlan.getDemandFromId(((Pair<Long, Long>) itemId).getFirst()), netPlan.getLinkFromId(((Pair<Long, Long>) itemId).getSecond()), 0);
-                                networkViewer.updateNetPlanView();
+                                networkViewer.updateWarningsAndTables();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -323,7 +323,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
 
                         try {
                             netPlan.removeAllForwardingRules();
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -364,7 +364,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
 
                 try {
                     createForwardingRuleGUI(networkViewer);
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
@@ -504,7 +504,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
                 NetPlan netPlan = networkViewer.getDesign();
                 DoubleMatrix1D linkWeightMap = IPUtils.getLinkWeightVector(netPlan);
                 IPUtils.setECMPForwardingRulesFromLinkWeights(netPlan, linkWeightMap);
-                networkViewer.updateNetPlanView();
+                networkViewer.updateWarningsAndTables();
             }
         });
 

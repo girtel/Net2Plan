@@ -233,7 +233,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
                     switch (column) {
                         case 5:
                             demand.setOfferedTraffic(Double.parseDouble(newValue.toString()));
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                             break;
 
                         default:
@@ -331,7 +331,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
 
                                 try {
                                     netPlan.getMulticastDemandFromId((long) itemId).remove();
-                                    networkViewer.updateNetPlanView();
+                                    networkViewer.updateWarningsAndTables();
                                 } catch (Throwable ex) {
                                     ErrorHandling.addErrorOrException(ex, getClass());
                                     ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -353,7 +353,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
                             NetPlan netPlan = networkViewer.getDesign();
                             try {
                                 netPlan.removeAllMulticastDemands();
-                                networkViewer.updateNetPlanView();
+                                networkViewer.updateWarningsAndTables();
                             } catch (Throwable ex) {
                                 ex.printStackTrace();
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -433,7 +433,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
                 NetPlan netPlan = networkViewer.getDesign();
                 try {
                     createMulticastDemandGUI(networkElementType, networkViewer, networkViewer.getTopologyPanel());
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
@@ -532,7 +532,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
                 try {
                     for (MulticastDemand demand : netPlan.getMulticastDemands()) demand.setOfferedTraffic(h_d);
 
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set offered traffic to all multicast demands");
                 }
@@ -609,7 +609,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
                                     for (MulticastDemand demand : netPlan.getMulticastDemands())
                                         if (!demand.isCoupled())
                                             demand.coupleToNewLinksCreated(layer);
-                                    networkViewer.updateNetPlanView();
+                                    networkViewer.updateWarningsAndTables();
                                     break;
                                 } catch (Throwable ex) {
                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating upper layer links");
@@ -653,7 +653,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
                 netPlan.addMulticastDemand(ingressNode, egressNodes, 0, null);
             }
 
-            networkViewer.updateNetPlanView();
+            networkViewer.updateWarningsAndTables();
         }
     }
 
@@ -676,7 +676,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
                 netPlan.addMulticastDemand(ingressNode, egressNodes, 0, null);
             }
 
-            networkViewer.updateNetPlanView();
+            networkViewer.updateWarningsAndTables();
         }
     }
 

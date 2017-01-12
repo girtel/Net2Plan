@@ -30,6 +30,7 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.Quadruple;
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 
+import java.awt.Color;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -228,6 +229,31 @@ public class Demand extends NetworkElement
 			}
 		}
 		return maxPropTimeInMs;
+	}
+
+	/** Returns the set of links where some capacity is occupied because of this demand, in a pair of sets (disjoint or not), 
+	 * first set with the set of links carrying primary traffic and second with links in backup routes. If the routing is hop-by-hop, these are 
+	 * the links with carried traffic or capacity occupied (they are the same in this case, and there is no concept of backup routes). 
+	 * In source routing, the links returned are those in a route if the route currently occupies non-zero capacity in that link, 
+	 * and the routes that are backup and that are not are accounted separately   
+	 * @return see above
+	 */
+	public Pair<Set<Link>,Set<Link>> getLinksWithOccupiedCapacity ()
+	{
+		final double tolerance = Configuration.precisionFactor;
+		Set<Link> resPrimary = new HashSet<> ();
+		Set<Link> resBackup = new HashSet<> ();
+		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
+		{
+	        DoubleMatrix1D x_e = layer.forwardingRules_x_de.viewRow(getIndex());
+	        for (int e = 0 ; e < x_e.size() ; e ++) if (x_e.get(e) > tolerance) resPrimary.add(layer.links.get(e));
+		}
+		else
+		{
+			for (Route r : cache_routes) for (Link e : r.getSeqLinks()) if (r.getOccupiedCapacity(e) > tolerance) 
+				if (r.isBackupRoute()) resBackup.add(e); else resPrimary.add(e);
+		}
+		return Pair.of(resPrimary,resBackup);
 	}
 	
 	/**

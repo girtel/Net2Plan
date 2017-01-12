@@ -14,6 +14,7 @@ package com.net2plan.gui.tools;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -21,6 +22,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -50,7 +53,9 @@ import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
 import com.net2plan.gui.utils.onlineSimulationPane.OnlineSimulationPane;
+import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
+import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.jung.topologyDistribution.CircularDistribution;
 import com.net2plan.gui.utils.topologyPane.jung.topologyDistribution.ITopologyDistribution;
@@ -76,6 +81,7 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.libraries.NetworkPerformanceMetrics;
+import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.TopologyMap;
@@ -356,13 +362,15 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         NetPlan netPlan = getDesign();
         Link link = netPlan.addLink(netPlan.getNodeFromId(originNode), netPlan.getNodeFromId(destinationNode), 0, 0, 200000, null, netPlan.getNetworkLayerFromId(layer));
 
-        if (layer == netPlan.getNetworkLayerDefault().getId())
-        {
-            topologyPanel.getCanvas().addLink(link);
-            topologyPanel.getCanvas().refresh();
-        }
+        topologyPanel.getVisualizationState().rebuildVisualizationState(null);
+        topologyPanel.getCanvas().refresh();
+//        if (layer == netPlan.getNetworkLayerDefault().getId())
+//        {
+//            topologyPanel.getCanvas().addLink(link);
+//            topologyPanel.getCanvas().refresh();
+//        }
 
-        updateNetPlanView();
+        updateWarningsAndTables();
         return link.getId();
     }
 
@@ -379,14 +387,17 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
         NetPlan netPlan = getDesign();
         Pair<Link, Link> links = netPlan.addLinkBidirectional(netPlan.getNodeFromId(originNode), netPlan.getNodeFromId(destinationNode), 0, 0, 200000, null, netPlan.getNetworkLayerFromId(layer));
-        if (layer == netPlan.getNetworkLayerDefault().getId())
-        {
-            topologyPanel.getCanvas().addLink(links.getFirst());
-            topologyPanel.getCanvas().addLink(links.getSecond());
-            topologyPanel.getCanvas().refresh();
-        }
-
-        updateNetPlanView();
+        topologyPanel.getVisualizationState().rebuildVisualizationState(null);
+        topologyPanel.getCanvas().refresh();
+//
+//        if (layer == netPlan.getNetworkLayerDefault().getId())
+//        {
+//            topologyPanel.getCanvas().addLink(links.getFirst());
+//            topologyPanel.getCanvas().addLink(links.getSecond());
+//            topologyPanel.getCanvas().refresh();
+//        }
+//
+        updateWarningsAndTables();
         return Pair.of(links.getFirst().getId(), links.getSecond().getId());
     }
 
@@ -399,7 +410,9 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         long nodeId = netPlan.getNetworkElementNextId();
 
         OSMMapStateBuilder.getSingleton().addNode(netPlan, "Node " + nodeId, pos);
-        updateNetPlanView();
+        topologyPanel.getVisualizationState().rebuildVisualizationState(null);
+        topologyPanel.getCanvas().refresh();
+        updateWarningsAndTables();
     }
 
     @Override
@@ -581,7 +594,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
                 netPlan.addMulticastDemand(netPlan.getNode(demand.getIngressNode().getIndex()), egressNodesThisNetPlan, demand.getOfferedTraffic(), demand.getAttributes());
             }
 
-            updateNetPlanView();
+            updateWarningsAndTables();
         } catch (Throwable ex)
         {
             getDesign().assignFrom(aux_netPlan);
@@ -612,14 +625,15 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         if (!isEditable()) throw new UnsupportedOperationException("Not supported");
 
         NetPlan netPlan = getDesign();
-        if (netPlan.getLinkFromId(link).getLayer().equals(getDesign().getNetworkLayerDefault()))
-        {
-            topologyPanel.getCanvas().removeLink(netPlan.getLinkFromId(link));
-            topologyPanel.getCanvas().refresh();
-        }
+//        if (netPlan.getLinkFromId(link).getLayer().equals(getDesign().getNetworkLayerDefault()))
+//        {
+//            topologyPanel.getCanvas().removeLink(netPlan.getLinkFromId(link));
+//            topologyPanel.getCanvas().refresh();
+//        }
         netPlan.getLinkFromId(link).remove();
-
-        updateNetPlanView();
+        topologyPanel.getVisualizationState().rebuildVisualizationState(null);
+        topologyPanel.getCanvas().refresh();
+        updateWarningsAndTables();
     }
 
     @Override
@@ -628,10 +642,12 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         if (!isEditable()) throw new UnsupportedOperationException("Not supported");
 
         NetPlan netPlan = getDesign();
-        topologyPanel.getCanvas().removeNode(netPlan.getNodeFromId(node));
-        topologyPanel.getCanvas().refresh();
+//        topologyPanel.getCanvas().removeNode(netPlan.getNodeFromId(node));
+//        topologyPanel.getCanvas().refresh();
         netPlan.getNodeFromId(node).remove();
-        updateNetPlanView();
+        topologyPanel.getVisualizationState().rebuildVisualizationState(null);
+        topologyPanel.getCanvas().refresh();
+        updateWarningsAndTables();
     }
 
     @Override
@@ -672,7 +688,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     @Override
     public void resetView()
     {
-        topologyPanel.getCanvas().resetPickedAndUserDefinedColorState();
+        topologyPanel.getVisualizationState().resetColorAndShapeState();
+        topologyPanel.getCanvas().resetPickedStateAndRefresh();
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.DEMAND).clearSelection();
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.MULTICAST_DEMAND).clearSelection();
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.FORWARDING_RULE).clearSelection();
@@ -690,18 +707,31 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         selectNetPlanViewItem(layer.getId(), NetworkElementType.DEMAND, demandId);
         Demand demand = netPlan.getDemandFromId(demandId);
 
-        Map<Node, Color> nodes = new HashMap<Node, Color>();
-        nodes.put(demand.getIngressNode(), COLOR_INITIALNODE);
-        nodes.put(demand.getEgressNode(), COLOR_ENDNODE);
-        Map<Link, Pair<Color, Boolean>> links = new HashMap<Link, Pair<Color, Boolean>>();
+        final VisualizationState vs = getTopologyPanel().getVisualizationState();
+        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getIngressNode() , layer)) , COLOR_INITIALNODE , null , -1);
+        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getEgressNode() , layer)) , COLOR_ENDNODE , null , -1);
+        Pair<Set<Link>,Set<Link>> linksOccupiedThisLayer = demand.getLinksWithOccupiedCapacity();
+        Set<GUILink> linksToShowPrimary = new HashSet<> ();
+        Set<GUILink> linksToShowBackup = new HashSet<> ();
+        for (Link e : linksOccupiedThisLayer.getFirst())
+        {
+        	Pair<Set<GUILink>,Set<GUILink>> pairThisLink = vs.getAssociatedGUILinksIncludingCoupling(e , true);
+        	linksToShowPrimary.addAll (pairThisLink.getFirst());
+        	linksToShowBackup.addAll (pairThisLink.getSecond());
+        }
+        for (Link e : linksOccupiedThisLayer.getSecond())
+        {
+        	Pair<Set<GUILink>,Set<GUILink>> pairThisLink = vs.getAssociatedGUILinksIncludingCoupling(e , false);
+        	linksToShowPrimary.addAll (pairThisLink.getFirst());
+        	linksToShowBackup.addAll (pairThisLink.getSecond());
+        }
+        vs.setLinkProperties(linksToShowPrimary , 
+        		Color.BLUE , VisualizationState.DEFAULT_REGGUILINK_ARROWSTROKE_PICKED , 
+        		true , true);
+        vs.setLinkProperties(linksToShowBackup, 
+        		Color.YELLOW , VisualizationState.DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_PICKED , 
+        		true , true);
 
-        DoubleMatrix1D x_e = netPlan.getMatrixDemand2LinkTrafficCarried(layer).viewRow(demand.getIndex()).copy();
-        for (int e = 0; e < x_e.size(); e++)
-            if (x_e.get(e) > 0)
-            {
-                links.put(netPlan.getLink(e, layer), Pair.of(Color.BLUE, false));
-            }
-        topologyPanel.getCanvas().showAndPickNodesAndLinks(nodes, links);
         topologyPanel.getCanvas().refresh();
     }
 
@@ -1008,7 +1038,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     }
 
     @Override
-    public synchronized void updateNetPlanView()
+    public synchronized void updateWarningsAndTables()
     {
         updateWarnings();
         viewEditTopTables.updateView();

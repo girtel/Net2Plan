@@ -284,7 +284,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                     switch (column) {
                         case COLUMN_OFFEREDTRAFFIC:
                             demand.setOfferedTraffic(Double.parseDouble(newValue.toString()));
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                             break;
 
                         default:
@@ -384,7 +384,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
 
                             try {
                                 netPlan.getDemandFromId((long) itemId).remove();
-                                networkViewer.updateNetPlanView();
+                                networkViewer.updateWarningsAndTables();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -405,7 +405,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
 
                         try {
                             netPlan.removeAllDemands();
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -487,7 +487,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
 
                 try {
                     createLinkDemandGUI(networkElementType, networkViewer, networkViewer.getTopologyPanel());
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
@@ -588,7 +588,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                 }
             }
 
-            networkViewer.updateNetPlanView();
+            networkViewer.updateWarningsAndTables();
         }
     }
 
@@ -628,7 +628,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                     Collection<Long> demandIds = netPlan.getDemandIds();
                     for (long demandId : demandIds) netPlan.getDemandFromId(demandId).setOfferedTraffic(h_d);
 
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set offered traffic to all demands");
                 }
@@ -660,7 +660,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
 
                 try {
                     for (Demand d : netPlan.getDemands()) d.setOfferedTraffic(d.getOfferedTraffic() * scalingFactor);
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to scale demand offered traffics");
                 }
@@ -743,7 +743,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                     	if (!d.getRoutes().isEmpty()) throw new Net2PlanException ("It is not possible to set the resource types traversed to demands with routes");
                     	d.setServiceChainSequenceOfTraversedResourceTypes(newTraversedResourcesTypes);
                     }
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set traversed resource types");
                 }
@@ -797,7 +797,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                                 long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
                                 netPlan.getDemandFromId(demandId).coupleToNewLinkCreated(netPlan.getNetworkLayerFromId(layerId));
 
-                                networkViewer.updateNetPlanView();
+                                networkViewer.updateWarningsAndTables();
                                 break;
                             } catch (Throwable ex) {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating upper layer link from demand");
@@ -877,7 +877,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
 
                                 netPlan.getDemandFromId(demandId).coupleToUpperLayerLink(netPlan.getLinkFromId(linkId));
 
-                                networkViewer.updateNetPlanView();
+                                networkViewer.updateWarningsAndTables();
                                 break;
                             } catch (Throwable ex) {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error coupling upper layer link to demand");
@@ -945,7 +945,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                                         if (!demand.isCoupled())
                                             demand.coupleToNewLinkCreated(layer);
 
-                                    networkViewer.updateNetPlanView();
+                                    networkViewer.updateWarningsAndTables();
                                     break;
                                 } catch (Throwable ex) {
                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating upper layer links");

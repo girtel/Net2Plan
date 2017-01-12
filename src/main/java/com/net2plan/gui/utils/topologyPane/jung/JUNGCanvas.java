@@ -102,17 +102,10 @@ public final class JUNGCanvas implements ITopologyCanvas
     private final Graph<GUINode, GUILink> g;
     private final Layout<GUINode, GUILink> l;
     private final VisualizationViewer<GUINode, GUILink> vv;
-//    private final Map<Node, List<GUINode>> nodeTable;
-//    private final Map<Link, GUILink> linkTable;
-//    private final Map<Node,List<GUILink>> intraNodeLinkTable;
-    
     private final PluggableGraphMouse gm;
     private final ScalingControl scalingControl;
     private final Transformer<Context<Graph<GUINode, GUILink>, GUILink>, Shape> originalEdgeShapeTransformer;
-
     private VisualizationServer.Paintable paintableAssociatedToBackgroundImage;
-
-    private boolean showNodeNames, showLinkIds, showHideNonConnectedNodes;
 
     static
     {
@@ -175,7 +168,7 @@ public final class JUNGCanvas implements ITopologyCanvas
         {
             public void labelEdge(RenderContext<GUINode, GUILink> rc, Layout<GUINode, GUILink> layout, GUILink e, String label)
             {
-                if (showLinkIds) super.labelEdge(rc, layout, e, e.getLabel());
+                if (vs.isShowLinkLabels()) super.labelEdge(rc, layout, e, e.getLabel());
             }
         });
         vv.setEdgeToolTipTransformer(link -> link.getToolTip());
@@ -204,10 +197,6 @@ public final class JUNGCanvas implements ITopologyCanvas
         // Background controller
         this.paintableAssociatedToBackgroundImage = null;
 
-        showNodeNames(vs.isShowNodeNames());
-        showNonConnectedNodes(vs.isShowNonConnectedNodes());
-        showLinkLabels(vs.isShowLinkLabels());
-
         gm = new PluggableGraphMouse();
         vv.setGraphMouse(gm);
 
@@ -218,7 +207,7 @@ public final class JUNGCanvas implements ITopologyCanvas
         vv.setOpaque(false);
         vv.setBackground(new Color(0, 0, 0, 0));
 
-        reset();
+//        reset();
     }
 
 //    @Override
@@ -357,14 +346,17 @@ public final class JUNGCanvas implements ITopologyCanvas
         if (plugin instanceof GraphMousePlugin) gm.remove((GraphMousePlugin) plugin);
     }
 
-    public void resetPickedAndUserDefinedColorState()
+    
+    @Override
+    public void resetPickedStateAndRefresh()
     {
         vv.getPickedVertexState().clear();
         vv.getPickedEdgeState().clear();
         refresh();
     }
 
-    public void updateTopology()
+    @Override
+    public void rebuildTopology()
     {
     	for (GUILink gl : new ArrayList<>(g.getEdges()))
     		g.removeEdge(gl);
@@ -454,7 +446,7 @@ public final class JUNGCanvas implements ITopologyCanvas
 		final double yOfPixelUp = convertViewCoordinatesToRealCoordinates (new Point2D.Double (0 , vs.getInterLayerDistanceInPixels())).getY();
 		final double extraInJungCoordinates =  Math.abs(yOfPixelUp - yOfPixelZero);
 
-    	for (GUINode node : vs.getVerticallyStackedNodes(npNode))
+    	for (GUINode node : vs.getVerticallyStackedGUINodes(npNode))
     		l.setLocation(node, new Point2D.Double(point.getX() , point.getY() + node.getVisualizationLayer().getIndex()*extraInJungCoordinates));
     }
 
@@ -555,22 +547,13 @@ public final class JUNGCanvas implements ITopologyCanvas
         }
     }
 
-    private class LinkIdRenderer extends BasicEdgeLabelRenderer<GUINode, GUILink>
-    {
-        @Override
-        public void labelEdge(RenderContext<GUINode, GUILink> rc, Layout<GUINode, GUILink> layout, GUILink e, String label)
-        {
-            if (showLinkIds) super.labelEdge(rc, layout, e, e.getLabel());
-        }
-    }
-
     private final class NodeDisplayPredicate<Node, Link> implements Predicate<Context<Graph<Node, Link>, Node>>
     {
         @Override
         public boolean evaluate(Context<Graph<Node, Link>, Node> context)
         {
             com.net2plan.gui.utils.topologyPane.GUINode v = (com.net2plan.gui.utils.topologyPane.GUINode) context.element;
-            if (!showHideNonConnectedNodes)
+            if (!vs.isShowNonConnectedNodes())
             {
                 Collection<GUILink> incidentLinks = g.getIncidentEdges(v);
                 if (incidentLinks == null) return false;
@@ -622,7 +605,7 @@ public final class JUNGCanvas implements ITopologyCanvas
             Point p = getAnchorPoint(bounds, d, Renderer.VertexLabel.Position.CNTR);
             g.draw(component, rc.getRendererPane(), p.x, p.y, d.width, d.height, true);
 
-            if (showNodeNames)
+            if (vs.isShowNodeNames())
             {
                 component = prepareRenderer(rc, rc.getVertexLabelRenderer(), "<html><font color='black'>" + v.getLabel() + "</font></html>", rc.getPickedVertexState().isPicked(v), v);
                 g = rc.getGraphicsContext();
@@ -752,38 +735,10 @@ public final class JUNGCanvas implements ITopologyCanvas
 
 
 	@Override
-	public void showLink(Link link , Color color , boolean dashed)
-	{
-		final Map<Link,Pair<Color,Boolean>> map = new HashMap<Link,Pair<Color,Boolean>> (); map.put (link , Pair.of(color,dashed));
-		showAndPickNodesAndLinks(null, map);
-	}
-
-	@Override
-	public void showNode(Node node , Color color)
-	{
-		final Map<Node,Color> map = new HashMap<Node,Color> (); map.put (node , color);
-		showAndPickNodesAndLinks(map, null);
-	}
-	
-	@Override
-	public void showNodes(Map<Node,Color> nodes)
-	{
-		showAndPickNodesAndLinks(nodes, null);
-	}
-	
-	@Override
 	public void takeSnapshot()
 	{
 		OSMMapStateBuilder.getSingleton().takeSnapshot(this);
 	}
 	
-	@Override
-	public void updateTopology(NetPlan netPlan)
-	{
-		long layer = netPlan.getNetworkLayerDefault().getId ();
-		updateTopology(netPlan, layer);
-	}
-
-
 	
 }

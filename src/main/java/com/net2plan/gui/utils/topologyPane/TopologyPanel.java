@@ -156,8 +156,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 //				System.out.println ("Select layer: layerId " + layerId + ", layer: " + layer);
                 if (layer == null) throw new RuntimeException("Bad: " + layerId);
                 currentState.setNetworkLayerDefault(layer);
-                getCanvas().updateTopology(currentState);
-                callback.updateNetPlanView();
+                vs.rebuildVisualizationState(currentState);
+                getCanvas().rebuildTopology();
+                callback.updateWarningsAndTables();
                 callback.layerChanged(layerId);
             }
         });

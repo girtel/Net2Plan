@@ -174,7 +174,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             }
 
                         }
-                        networkViewer.updateNetPlanView();
+                        networkViewer.updateWarningsAndTables();
                     }
                 }
             });
@@ -984,7 +984,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         {
             if (attributesColumnsNames.size() > 0)
             {
-                networkViewer.updateNetPlanView();
+                networkViewer.updateWarningsAndTables();
                 createDefaultColumnsFromModel();
                 removedColumns.clear();
                 removeNewColumn("Attributes");
@@ -1036,7 +1036,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             if (attributesColumnsNames.size() > 0)
             {
 
-                networkViewer.updateNetPlanView();
+                networkViewer.updateWarningsAndTables();
                 createDefaultColumnsFromModel();
                 removedColumns.clear();
                 for (String att : attributesColumnsNames)
@@ -1314,7 +1314,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                         try
                         {
-                            networkViewer.updateNetPlanView();
+                            networkViewer.updateWarningsAndTables();
                         } catch (Throwable ex)
                         {
                             ErrorHandling.addErrorOrException(ex, getClass());
@@ -1391,7 +1391,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                     JDialog dialog = new AttributeEditor(networkViewer, networkElementType, itemId);
                     dialog.setVisible(true);
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
 
                 } catch (Throwable ex)
                 {
@@ -1498,7 +1498,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                     NetworkElement element = netPlan.getNetworkElement((long) itemId);
                     if (element == null) throw new RuntimeException("Bad");
                     element.removeAttribute(attributeToRemove);
-                    networkViewer.updateNetPlanView();
+                    networkViewer.updateWarningsAndTables();
 
                 } catch (Throwable ex)
                 {
@@ -1596,7 +1596,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             try
                             {
 
-                                networkViewer.updateNetPlanView();
+                                networkViewer.updateWarningsAndTables();
                             } catch (Throwable ex)
                             {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add attribute to all nodes");
@@ -1623,7 +1623,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                     {
                         JDialog dialog = new AttributeEditor(networkViewer, networkElementType);
                         dialog.setVisible(true);
-                        networkViewer.updateNetPlanView();
+                        networkViewer.updateWarningsAndTables();
 
                     } catch (Throwable ex)
                     {
@@ -1764,7 +1764,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 throw new RuntimeException("Bad");
                         }
 
-                        networkViewer.updateNetPlanView();
+                        networkViewer.updateWarningsAndTables();
 
                     } catch (Throwable ex)
                     {
@@ -1848,7 +1848,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             expandAttributes = false;
                             attributesItem.setSelected(false);
                         }
-                        networkViewer.updateNetPlanView();
+                        networkViewer.updateWarningsAndTables();
                     } catch (Throwable ex)
                     {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attributes");

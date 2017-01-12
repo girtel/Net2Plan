@@ -123,7 +123,7 @@ public class GUINode
 
     public List<GUINode> verticallyStackedNodes ()
     {
-    	return this.vl.getVisualizationState().getVerticallyStackedNodes(this.npNode);
+    	return this.vl.getVisualizationState().getVerticallyStackedGUINodes(this.npNode);
     }
     
     public boolean decreaseFontSize() 
