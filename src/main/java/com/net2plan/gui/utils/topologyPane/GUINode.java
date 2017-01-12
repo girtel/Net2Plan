@@ -12,10 +12,14 @@
 
 package com.net2plan.gui.utils.topologyPane;
 
-import com.net2plan.interfaces.networkDesign.Node;
-
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Paint;
+import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
+
+import com.net2plan.gui.utils.topologyPane.VisualizationState.VisualizationLayer;
+import com.net2plan.interfaces.networkDesign.Node;
 
 /**
  * Class representing a node.
@@ -26,11 +30,12 @@ import java.awt.geom.Ellipse2D;
 public class GUINode 
 {
     private final Node npNode;
+    private final VisualizationLayer vl;
+    private final VisualizationState vs;
 
     /* New variables */
     private boolean visible;
     private Paint drawPaint, fillPaint, fillPaintIfPicked;
-    private Font font;
     private Shape shape, shapeIfPicked;
     private double shapeSize;
     private Color userDefinedColorOverridesTheRest;
@@ -41,7 +46,10 @@ public class GUINode
      * @param npNode    Node identifier
      * @since 0.3.0
      */
-    public GUINode(Node npNode) {
+    public GUINode(Node npNode , VisualizationLayer vl)
+    {
+    	this.vl = vl;
+    	this.vs = vl.getVisualizationState();
         this.npNode = npNode;
 
 		/* defaults */
@@ -49,12 +57,13 @@ public class GUINode
         this.drawPaint = java.awt.Color.BLACK;
         this.fillPaint = java.awt.Color.BLACK;
         this.fillPaintIfPicked = java.awt.Color.BLACK;
-        this.font = new Font("Helvetica", Font.BOLD, 11);
         this.shapeSize = 30;
         this.shape = new Ellipse2D.Double(-1 * shapeSize / 2, -1 * shapeSize / 2, 1 * shapeSize, 1 * shapeSize);
         this.shapeIfPicked = new Ellipse2D.Double(-1.2 * shapeSize / 2, -1.2 * shapeSize / 2, 1.2 * shapeSize, 1.2 * shapeSize);
         this.userDefinedColorOverridesTheRest = null;
     }
+    
+    public VisualizationLayer getVisualizationLayer () { return vl; }
 
     public Node getAssociatedNetPlanNode() {
         return npNode;
@@ -103,11 +112,7 @@ public class GUINode
     }
 
     public Font getFont() {
-        return font;
-    }
-
-    public void setFont(Font f) {
-        this.font = f;
+        return vs.getFont(this);
     }
 
     public Shape getShape() {

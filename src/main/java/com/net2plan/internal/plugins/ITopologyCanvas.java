@@ -41,25 +41,10 @@ import com.net2plan.utils.Pair;
 
 /**
  * Base class for topology canvas.
- *
- * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
- * @since 0.2.3
  */
 public interface ITopologyCanvas extends Plugin
 {
-//	private JFileChooser fc;
-//
-//	@Override
 	public Map<String, String> getCurrentOptions();
-//	{
-//		return CommandLineParser.getParameters(getParameters(), Configuration.getOptions());
-//	}
-
-//	@Override
-//	public int getPriority();
-//	{
-//		return 0;
-//	}
 
 	public void setBackgroundOSMMapsActiveState (boolean activateMap);
 	

@@ -166,7 +166,8 @@ public class GUILink {
         return temp.toString();
     }
 
-
+    public boolean isIntraNodeLink () { return originNode == destinationNode; }
+    
     /**
      * Returns the destination node of the link.
      *

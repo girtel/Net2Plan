@@ -28,6 +28,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,6 +50,7 @@ import org.apache.commons.collections15.functors.ConstantTransformer;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
+import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMRunningState;
 import com.net2plan.interfaces.networkDesign.Configuration;
@@ -100,6 +102,7 @@ import edu.uci.ics.jung.visualization.util.ArrowFactory;
 @SuppressWarnings("unchecked")
 public final class JUNGCanvas implements ITopologyCanvas
 {
+	private final VisualizationState vs;
     private final static float SCALE_IN = 1.1f;
     private final static float SCALE_OUT = 1 / SCALE_IN;
     private final static Transformer<GUINode, Point2D> FLIP_VERTICAL_COORDINATES;
@@ -107,8 +110,10 @@ public final class JUNGCanvas implements ITopologyCanvas
     private final Graph<GUINode, GUILink> g;
     private final Layout<GUINode, GUILink> l;
     private final VisualizationViewer<GUINode, GUILink> vv;
-    private final Map<Node, GUINode> nodeTable;
+    private final Map<Node, List<GUINode>> nodeTable;
     private final Map<Link, GUILink> linkTable;
+    private final Map<Node,List<GUILink>> intraNodeLinkTable;
+    
     private final PluggableGraphMouse gm;
     private final ScalingControl scalingControl;
     private final Transformer<Context<Graph<GUINode, GUILink>, GUILink>, Shape> originalEdgeShapeTransformer;
@@ -131,11 +136,13 @@ public final class JUNGCanvas implements ITopologyCanvas
      *
      * @since 0.2.3
      */
-    public JUNGCanvas()
+    public JUNGCanvas(VisualizationState vs)
     {
+    	this.vs = vs;
         nodeTable = new LinkedHashMap<>();
         linkTable = new LinkedHashMap<>();
-
+        intraNodeLinkTable = new LinkedHashMap<> ();
+        
         g = new DirectedOrderedSparseMultigraph<>();
         l = new StaticLayout<>(g, FLIP_VERTICAL_COORDINATES);
         vv = new VisualizationViewer<>(l);
@@ -203,9 +210,9 @@ public final class JUNGCanvas implements ITopologyCanvas
         // Background controller
         this.paintableAssociatedToBackgroundImage = null;
 
-        showNodeNames(false);
-        showNonConnectedNodes(true);
-        showLinkLabels(false);
+        showNodeNames(vs.isShowNodeNames());
+        showNonConnectedNodes(vs.isShowNonConnectedNodes());
+        showLinkLabels(vs.isShowLinkLabels());
 
         gm = new PluggableGraphMouse();
         vv.setGraphMouse(gm);
@@ -224,9 +231,22 @@ public final class JUNGCanvas implements ITopologyCanvas
     public void addNode(Node npNode) //long nodeId, Point2D pos, String label)
     {
         if (nodeTable.containsKey(npNode)) throw new RuntimeException("Bad - Node " + npNode + " already exists");
-        GUINode node = new GUINode(npNode);
-        nodeTable.put(npNode, node);
-        g.addVertex(node);
+        List<GUINode> associatedGUINodes = new ArrayList<> ();
+        for (VisualizationState.VisualizationLayer vLayer : vs.getVLList())
+        {
+        	GUINode gn = new GUINode(npNode , vLayer);
+            g.addVertex(gn);
+        	associatedGUINodes.add(gn);
+        	if (associatedGUINodes.size() > 1)
+        	{
+        		GUILink gl1 = new GUILink (null , associatedGUINodes.get(associatedGUINodes.size() - 2), gn);
+        		GUILink gl2 = new GUILink (null , gn , associatedGUINodes.get(associatedGUINodes.size() - 2));
+        		List<GUILink> existingList = intraNodeLinkTable.get(npNode);
+        		if (existingList == null) { existingList = new ArrayList<GUILink> (); intraNodeLinkTable.put(npNode , existingList); } 
+        		existingList.add(gl1); existingList.add(gl2);
+        	}
+        }
+        nodeTable.put(npNode, associatedGUINodes);
     }
 
     @Override
@@ -262,14 +282,6 @@ public final class JUNGCanvas implements ITopologyCanvas
     {
         screenPoint.setLocation(screenPoint.getX(), -screenPoint.getY());
         return vv.getRenderContext().getMultiLayerTransformer().transform(Layer.LAYOUT, screenPoint);
-    }
-
-    @Override
-    public void decreaseFontSize()
-    {
-        boolean changedSize = false;
-        for (GUINode n : nodeTable.values()) changedSize |= n.decreaseFontSize();
-        if (changedSize) refresh();
     }
 
     @Override
@@ -337,13 +349,6 @@ public final class JUNGCanvas implements ITopologyCanvas
     public List<Triple<String, String, String>> getParameters()
     {
         return null;
-    }
-
-    @Override
-    public void increaseFontSize()
-    {
-        for (GUINode n : nodeTable.values()) n.increaseFontSize();
-        refresh();
     }
 
     @Override

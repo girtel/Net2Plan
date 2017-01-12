@@ -51,6 +51,7 @@ import com.net2plan.internal.plugins.ITopologyCanvas;
 @SuppressWarnings("unchecked")
 public class TopologyPanel extends JPanel implements ActionListener//FrequentisBackgroundPanel implements ActionListener//JPanel implements ActionListener
 {
+	private final VisualizationState vs;
     private final INetworkCallback callback;
     private final ITopologyCanvas canvas;
     private final ITopologyCanvasPlugin popupPlugin;
@@ -117,8 +118,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         try
         {
-            canvas = canvasType.newInstance();
-        } catch (InstantiationException | IllegalAccessException e)
+        	this.vs = new VisualizationState();
+            canvas = canvasType.getDeclaredConstructor(VisualizationState.class).newInstance(vs);
+        } catch (Exception e)
         {
             throw new RuntimeException(e);
         }
@@ -323,7 +325,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                getCanvas().increaseFontSize();
+            	vs.increaseFontSize();
+            	canvas.refresh();
             }
         });
 
@@ -332,7 +335,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                getCanvas().decreaseFontSize();
+            	final boolean somethingChanged = vs.decreaseFontSize();
+                if (somethingChanged) canvas.refresh();
             }
         });
 
