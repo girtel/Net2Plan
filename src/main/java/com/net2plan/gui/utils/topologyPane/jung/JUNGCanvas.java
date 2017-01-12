@@ -12,18 +12,55 @@
 
 package com.net2plan.gui.utils.topologyPane.jung;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.io.File;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import javax.swing.ImageIcon;
+import javax.swing.JComponent;
+
+import org.apache.commons.collections15.Predicate;
+import org.apache.commons.collections15.Transformer;
+import org.apache.commons.collections15.functors.ConstantTransformer;
+
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMRunningState;
+import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
+
 import edu.uci.ics.jung.algorithms.layout.GraphElementAccessor;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.algorithms.layout.StaticLayout;
@@ -35,7 +72,11 @@ import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.RenderContext;
 import edu.uci.ics.jung.visualization.VisualizationServer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
-import edu.uci.ics.jung.visualization.control.*;
+import edu.uci.ics.jung.visualization.control.GraphMousePlugin;
+import edu.uci.ics.jung.visualization.control.LayoutScalingControl;
+import edu.uci.ics.jung.visualization.control.PluggableGraphMouse;
+import edu.uci.ics.jung.visualization.control.ScalingControl;
+import edu.uci.ics.jung.visualization.control.ScalingGraphMousePlugin;
 import edu.uci.ics.jung.visualization.decorators.ConstantDirectionalEdgeValueTransformer;
 import edu.uci.ics.jung.visualization.decorators.EdgeShape;
 import edu.uci.ics.jung.visualization.renderers.BasicEdgeLabelRenderer;
@@ -48,22 +89,6 @@ import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
 import edu.uci.ics.jung.visualization.transform.shape.ShapeTransformer;
 import edu.uci.ics.jung.visualization.transform.shape.TransformingGraphics;
 import edu.uci.ics.jung.visualization.util.ArrowFactory;
-import org.apache.commons.collections15.Predicate;
-import org.apache.commons.collections15.Transformer;
-import org.apache.commons.collections15.functors.ConstantTransformer;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.io.File;
-import java.util.*;
-import java.util.List;
-import java.util.Map.Entry;
 
 /**
  * Topology canvas using JUNG library [<a href='#jung'>JUNG</a>].
@@ -73,7 +98,7 @@ import java.util.Map.Entry;
  * @since 0.2.3
  */
 @SuppressWarnings("unchecked")
-public final class JUNGCanvas extends ITopologyCanvas
+public final class JUNGCanvas implements ITopologyCanvas
 {
     private final static Color CANVAS_BGCOLOR = new Color(212, 208, 200);
     private final static float SCALE_IN = 1.1f;
@@ -535,18 +560,6 @@ public final class JUNGCanvas extends ITopologyCanvas
     }
 
     @Override
-    public void takeSnapshot_preConfigure()
-    {
-        vv.setBackground(Color.WHITE);
-    }
-
-    @Override
-    public void takeSnapshot_postConfigure()
-    {
-        vv.setBackground(CANVAS_BGCOLOR);
-    }
-
-    @Override
     public void updateTopology(NetPlan netPlan, long layerId)//Map<Long, Point2D> nodeXYPositionMap, Map<Long, String> nodeNameMap, Map<Long, Pair<Long, Long>> linkMap)
     {
         reset();
@@ -935,4 +948,52 @@ public final class JUNGCanvas extends ITopologyCanvas
 	{
 		return (OSMMapStateBuilder.getSingleton().getCurrentState() instanceof OSMRunningState);
 	}
+
+	@Override
+	public final Map<String, String> getCurrentOptions()
+	{
+		return CommandLineParser.getParameters(getParameters(), Configuration.getOptions());
+	}
+	
+	@Override
+	public int getPriority() { return 0; }
+
+
+	@Override
+	public void showLink(Link link , Color color , boolean dashed)
+	{
+		final Map<Link,Pair<Color,Boolean>> map = new HashMap<Link,Pair<Color,Boolean>> (); map.put (link , Pair.of(color,dashed));
+		showAndPickNodesAndLinks(null, map);
+	}
+
+	@Override
+	public void showNode(Node node , Color color)
+	{
+		final Map<Node,Color> map = new HashMap<Node,Color> (); map.put (node , color);
+		showAndPickNodesAndLinks(map, null);
+	}
+	
+	@Override
+	public void showNodes(Map<Node,Color> nodes)
+	{
+		showAndPickNodesAndLinks(nodes, null);
+	}
+	
+	@Override
+	public void takeSnapshot()
+	{
+        vv.setBackground(Color.WHITE);
+		OSMMapStateBuilder.getSingleton().takeSnapshot(this);
+        vv.setBackground(CANVAS_BGCOLOR);
+	}
+	
+	@Override
+	public void updateTopology(NetPlan netPlan)
+	{
+		long layer = netPlan.getNetworkLayerDefault().getId ();
+		updateTopology(netPlan, layer);
+	}
+
+
+	
 }

@@ -92,10 +92,8 @@ public class OSMStoppedState implements OSMState
         FileNameExtensionFilter pngFilter = new FileNameExtensionFilter("PNG files", "png");
         fc.setFileFilter(pngFilter);
 
-        canvas.takeSnapshot_preConfigure();
         JComponent component = canvas.getInternalComponent();
         BufferedImage bi = ImageUtils.trim(ImageUtils.takeSnapshot(component));
-        canvas.takeSnapshot_postConfigure();
 
         int s = fc.showSaveDialog(null);
         if (s == JFileChooser.APPROVE_OPTION)
