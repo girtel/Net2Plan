@@ -25,6 +25,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.table.TableModel;
 
+import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.INetworkCallback;
@@ -74,7 +75,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
     }
 
 
-    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
+    public List<Object[]> getAllData(NetPlan currentState, NetPlan initialState, ArrayList<String> attributesColumns) {
         NetworkLayer layer = currentState.getNetworkLayerDefault();
         List<Object[]> allLayerData = new LinkedList<Object[]>();
         for (NetworkLayer auxLayer : currentState.getNetworkLayers()) {
@@ -211,18 +212,18 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
     public void doPopup(MouseEvent e, int row, final Object itemId) {
         JPopupMenu popup = new JPopupMenu();
 
-        if (networkViewer.isEditable()) {
+        if (callback.getVisualizationState().isNetPlanEditable()) {
             popup.add(getAddOption());
             for (JComponent item : getExtraAddOptions())
                 popup.add(item);
         }
 
         if (!isTableEmpty()) {
-            if (networkViewer.isEditable()) {
+            if (callback.getVisualizationState().isNetPlanEditable()) {
                 if (row != -1) {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
 
-                    if (networkElementType == NetworkElementType.LAYER && networkViewer.getDesign().getNumberOfLayers() == 1) {
+                    if (networkElementType == NetworkElementType.LAYER && callback.getDesign().getNumberOfLayers() == 1) {
 
                     } else {
                         JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
@@ -230,12 +231,11 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
                         removeItem.addActionListener(new ActionListener() {
                             @Override
                             public void actionPerformed(ActionEvent e) {
-                                NetPlan netPlan = networkViewer.getDesign();
+                                NetPlan netPlan = callback.getDesign();
 
                                 try {
                                     netPlan.removeNetworkLayer(netPlan.getNetworkLayerFromId((long) itemId));
-                                    networkViewer.getTopologyPanel().updateLayerChooser();
-                                    networkViewer.updateWarningsAndTables();
+                                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                                 } catch (Throwable ex) {
                                     ErrorHandling.addErrorOrException(ex, getClass());
                                     ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -280,11 +280,11 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
         addItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                NetPlan netPlan = networkViewer.getDesign();
+                NetPlan netPlan = callback.getDesign();
 
                 try {
                     netPlan.addLayer("Layer " + netPlan.getNumberOfLayers(), null, null, null, null);
-                    networkViewer.getTopologyPanel().updateLayerChooser();
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }

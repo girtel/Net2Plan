@@ -41,9 +41,10 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
      * @param modifiers Mouse event modifiers to activate this functionality
      * @since 0.3.1
      */
-    public PanGraphPlugin(INetworkCallback callback, int modifiers) {
+    public PanGraphPlugin(INetworkCallback callback, ITopologyCanvas canvas , int modifiers) {
         setModifiers(modifiers);
         this.callback = callback;
+        this.canvas = canvas;
 
         originalCursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
         cursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
@@ -69,7 +70,7 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mouseDragged(MouseEvent e) {
         if (down != null) {
-            getCanvas().getInternalComponent().setCursor(cursor);
+            getCanvas().getInternalVisualizationController().setCursor(cursor);
             getCanvas().panTo(down, e.getPoint());
             down = e.getPoint();
             e.consume();
@@ -79,13 +80,12 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mousePressed(MouseEvent e) {
         if (checkModifiers(e)) {
-            long nodeId = getCanvas().getNode(e);
-            long linkId = getCanvas().getLink(e);
-            if (nodeId == -1 && linkId == -1) {
+            GUINode gn = canvas.getNode(e);
+            GUILink gl = canvas.getLink(e);
+            if (gn == null && gl == null) {
                 down = e.getPoint();
                 initialPoint = e.getPoint();
-                getCanvas().getInternalComponent().setCursor(cursor);
-
+                canvas.getInternalVisualizationController().setCursor(cursor);
                 e.consume();
             }
         }
@@ -94,17 +94,17 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mouseReleased(MouseEvent e) {
         if (initialPoint != null && initialPoint.equals(e.getPoint()))
-            callback.resetView();
+            callback.resetPickedStateAndUpdateView();
 
         down = null;
         initialPoint = null;
-        getCanvas().getInternalComponent().setCursor(originalCursor);
+        getCanvas().getInternalVisualizationController().setCursor(originalCursor);
     }
 
     @Override
     public void setCanvas(ITopologyCanvas canvas) {
         this.canvas = canvas;
-        originalCursor = this.canvas.getInternalComponent().getCursor();
+        originalCursor = this.canvas.getInternalVisualizationController().getCursor();
     }
 
     @Override

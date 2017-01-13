@@ -77,6 +77,8 @@ public class VisualizationState
     private Map<Link,GUILink> regularLinkMap;
     private int interLayerDistanceInPixels;
     private Map<NetworkLayer,VisualizationLayer> cache_layer2VLayerMap;
+    private boolean isNetPlanEditable;
+    
     
     public NetPlan getNetPlan () { return currentNp; }
 
@@ -97,6 +99,24 @@ public class VisualizationState
 		for (VisualizationLayer visualizationLayer : vLayers) 
 			for (NetworkLayer layer : visualizationLayer.npLayersToShow) 
 				cache_layer2VLayerMap.put(layer , visualizationLayer);
+		this.isNetPlanEditable = true;
+	}
+
+	
+	/**
+	 * @return the isNetPlanEditable
+	 */
+	public boolean isNetPlanEditable()
+	{
+		return isNetPlanEditable;
+	}
+
+	/**
+	 * @param isNetPlanEditable the isNetPlanEditable to set
+	 */
+	public void setNetPlanEditable(boolean isNetPlanEditable)
+	{
+		this.isNetPlanEditable = isNetPlanEditable;
 	}
 
 	public List<GUINode> getVerticallyStackedGUINodes (Node n) { return cache_nodeGuiNodeMap.get(n); } 
@@ -328,6 +348,10 @@ public class VisualizationState
     	private List<GUILink> guiLinks;
     	private final int index;
     	
+    	public int getNumberOfNetPlanLayers () { return npLayersToShow.size(); }
+    	
+    	public List<NetworkLayer> getNetPlanLayers () { return Collections.unmodifiableList(npLayersToShow); }
+
     	public VisualizationLayer(List<NetworkLayer> layers , VisualizationState vs , int index)
 		{
     		if (layers.isEmpty()) throw new Net2PlanException ("A visualization layer needs at least on layer");
@@ -400,8 +424,18 @@ public class VisualizationState
 		this.showNonConnectedNodes = showNonConnectedNodes;
 	}
 	
+	public void setVisibilityState (Node n , boolean isVisible)
+	{
+		for (GUINode gn : cache_nodeGuiNodeMap.get(n)) gn.setVisible(isVisible);
+	}
 
-    /* Everything to its default color, shape. Separated nodes, are set together again. Visibility state is unchanged */
+	public void setVisibilityState (Link e , boolean isVisible)
+	{
+		GUILink gn = regularLinkMap.get(e); if (gn == null) throw new RuntimeException ("Bad");
+		gn.setVisible(isVisible);
+	}
+
+	/* Everything to its default color, shape. Separated nodes, are set together again. Visibility state is unchanged */
 	public void resetColorAndShapeState()
     {
 		for (GUINode n : getAllGUINodes())

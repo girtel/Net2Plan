@@ -184,7 +184,8 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
             }else if (src == btn_reset) {
                 simKernel.getSimCore().setSimulationState(SimState.STOPPED);
                 simKernel.reset();
-                mainWindow.loadDesign(simKernel.getCurrentNetPlan());
+                mainWindow.loadDesignDoNotUpdateVisualization(simKernel.getInitialNetPlan());
+                mainWindow.updateVisualizationAfterNewTopology();
             } else if (src == btn_viewEventList) {
                 viewFutureEventList();
             } else if (src == btn_updateReport) {
@@ -318,8 +319,8 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
         if (simulationState == SimState.NOT_STARTED || simulationState == SimState.PAUSED || simulationState == SimState.STEP || simulationState == SimState.STOPPED) 
         {
             updateSimulationInfo();
-            mainWindow.getTopologyPanel().updateLayerChooser();
-            mainWindow.resetView();
+            mainWindow.updateVisualizationAfterNewTopology();
+            mainWindow.resetPickedStateAndUpdateView();
         }
 
         if (reason == null) return;

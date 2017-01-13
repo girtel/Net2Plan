@@ -12,80 +12,114 @@
 
 package com.net2plan.gui.utils;
 
-import com.net2plan.gui.utils.topologyPane.TopologyPanel;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.internal.Constants;
-import com.net2plan.utils.Pair;
-
-import javax.swing.*;
+import java.awt.Color;
 import java.awt.geom.Point2D;
-import java.util.List;
-import java.util.Map;
+import java.util.Collection;
+import java.util.Set;
+
+import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.utils.Pair;
 
 /**
  * Interface to be implemented by any class dealing with network designs.
- *
- * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
- * @since 0.2.3
  */
 public interface INetworkCallback
 {
-    /**
-     * Adds a new link.
-     *
-     * @param originNode      Origin node identifier
-     * @param destinationNode Destination node identifier
-     * @return Link identifier
-     * @since 0.3.1
-     */
-    public long addLink(long originNode, long destinationNode);
+	public VisualizationState getVisualizationState ();
+	
+	public void updateVisualizationAfterChanges (Set<NetworkElementType> changes);
 
-    /**
-     * Adds a new link.
-     *
-     * @param layer           Layer identifier
-     * @param originNode      Origin node identifier
-     * @param destinationNode Destination node identifier
-     * @return Link identifier
-     * @since 0.3.1
-     */
-    public long addLink(long layer, long originNode, long destinationNode);
+	public void updateVisualizationAfterLinkNodeColorChanges ();
 
-    /**
-     * Adds a new bidirectional link (one on each direction).
-     *
-     * @param originNode      Origin node identifier
-     * @param destinationNode Destination node identifier
-     * @return Link identifiers
-     * @since 0.3.1
-     */
-    public Pair<Long, Long> addLinkBidirectional(long originNode, long destinationNode);
+	public void updateVisualizationJustTables ();
 
-    /**
-     * Adds a new bidirectional link (one on each direction).
-     *
-     * @param layer           Layer identifier
-     * @param originNode      Origin node identifier
-     * @param destinationNode Destination node identifier
-     * @return Link identifiers
-     * @since 0.3.1
-     */
-    public Pair<Long, Long> addLinkBidirectional(long layer, long originNode, long destinationNode);
+	public void resetPickedStateAndUpdateView ();
 
-    /**
-     * Adds a node at the given coordinates.
-     *
-     * @param pos 2D position
-     * @since 0.3.1
-     */
-    public void addNode(Point2D pos);
+    public void pickLinkAndUpdateView (Link link);
+
+    public void pickNodeAndUpdateView (Node node);
+
+    public void pickDemandAndUpdateView (Demand demand);
+
+    public void pickMulticastDemandAndUpdateView (MulticastDemand demand);
+
+    public void pickForwardingRuleAndUpdateView (Pair<Demand, Link> demandLink);
+
+    public void pickRouteAndUpdateView (Route route);
+
+    public void pickMulticastTreeAndUpdateView (MulticastTree tree);
+
+    public void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg);
+
+    public void putColorInElementTopologyCanvas (Collection<? extends NetworkElement> linksAndNodes , Color color);
+
+	public void updateVisualizationAfterNewTopology ();
+
+	public void justApplyZoomAll ();
+
+	public void updateVisualizationJustTopologyCanvas ();
+
+	
+//    /**
+//     * Adds a new link.
+//     *
+//     * @param layer           Layer identifier
+//     * @param originNode      Origin node identifier
+//     * @param destinationNode Destination node identifier
+//     * @return Link identifier
+//     */
+//    public Link addLink (NetworkLayer layer , Node originNode, Node destinationNode , boolean updateView);
+//
+//    /**
+//     * Adds a new bidirectional link (one on each direction).
+//     *
+//     * @param layer           Layer identifier
+//     * @param originNode      Origin node identifier
+//     * @param destinationNode Destination node identifier
+//     * @return Link identifiers
+//     */
+//    public Pair<Link, Link> addLinkBidirectional (NetworkLayer layer , Node originNode, Node destinationNode , boolean updateView);
+//    
+//    /**
+//     * Adds a new bidirectional link (one on each direction).
+//     *
+//     * @param layer           Layer identifier
+//     * @param originNode      Origin node identifier
+//     * @param destinationNode Destination node identifier
+//     * @return Link identifiers
+//     */
+//    public void applyTopologyRearrangementAndUpdateView (ITopologyDistribution distribution);
+//
+//    
+//    public void setNodeVisibilityStateAndUpdateView (Node node, boolean setAsVisible);
+//    
+//    public void setNodeNameAndUpdateView (Node node, String name);
+//
+//    public void setNodeFailureState (Node node, boolean isUp , boolean updateView);
+//
+//    public void setLinkFailureState (Link link, boolean isUp , boolean updateView);
+/**
+//     * Adds a node at the given coordinates.
+//     *
+//     * @param pos 2D position
+//     */
+//    public Node addNode (Point2D pos , boolean updateView);
 
     /**
      * Returns the current network design.
      *
      * @return Current {@code NetPlan}
-     * @since 0.3.1
      */
     public NetPlan getDesign();
 
@@ -93,71 +127,32 @@ public interface INetworkCallback
      * Returns the current network plan.
      *
      * @return First item is the network plan, and the second one is the active layer
-     * @since 0.3.0
      */
     public NetPlan getInitialDesign();
 
-    /**
-     * Returns the set of actions to be added to the popup menu for the network
-     * canvas, where no element (either node or link) is selected.
-     *
-     * @param pos Network coordinates where the popup action was triggered
-     * @return List of actions to be shown for the canvas
-     * @since 0.3.1
-     */
-    public List<JComponent> getCanvasActions(Point2D pos);
+//    /**
+//     * Allows to execute some action whenever a layer is selected in the GUI.
+//     *
+//     * @param layer Layer identifier
+//     * @since 0.3.1
+//     */
+//    public void layerChanged(long layer);
 
-    /**
-     * Returns the set of actions to be added to the popup menu for links.
-     *
-     * @param link Link identifier
-     * @param pos  Network coordinates where the popup action was triggered
-     * @return List of actions to be shown for the given link
-     * @since 0.3.1
-     */
-    public List<JComponent> getLinkActions(long link, Point2D pos);
-
-    /**
-     * Returns the set of actions to be added to the popup menu for nodes.
-     *
-     * @param node Node identifier
-     * @param pos  Network coordinates where the popup action was triggered
-     * @return List of actions to be shown for the given node
-     * @since 0.3.1
-     */
-    public List<JComponent> getNodeActions(long node, Point2D pos);
-
-    /**
-     * Indicates whether or not the design is editable after loading.
-     *
-     * @return {@code true} if it is editable, and {@code false} otherwise
-     * @since 0.3.1
-     */
-    public boolean isEditable();
-
-    /**
-     * Allows to execute some action whenever a layer is selected in the GUI.
-     *
-     * @param layer Layer identifier
-     * @since 0.3.1
-     */
-    public void layerChanged(long layer);
-
-    /**
-     * It is called when a new network design is loaded.
-     *
-     * @param netPlan Network design
-     * @since 0.3.1
-     */
-    public void loadDesign(NetPlan netPlan);
-
-    /**
-     * Loads a set of traffic demands from the given {@code NetPlan}.
-     *
-     * @param netPlan Network design containing a demand set
-     * @since 0.3.1
-     */
-    public void loadTrafficDemands(NetPlan netPlan);
+//    /**
+//     * It is called when a new network design is loaded.
+//     *
+//     * @param netPlan Network design
+//     * @since 0.3.1
+//     */
+//    public void loadDesignAndUpdateView (File npFile);
+//
+//    /**
+//     * Loads a set of traffic demands from the given {@code NetPlan}.
+//     *
+//     * @param netPlan Network design containing a demand set
+//     * @since 0.3.1
+//     */
+//    public void loadTrafficDemandsAndUpdateView (File npFile);
 
     /**
      * Moves the node to the given position.
@@ -166,140 +161,69 @@ public interface INetworkCallback
      * @param pos  2D position
      * @since 0.3.1
      */
-    public void moveNode(long node, Point2D pos);
+    public void moveNodeXYPosition (Node node, Point2D pos , boolean updateView);
 
-    /**
-     * Removes the given link.
-     *
-     * @param link Link identifier
-     * @since 0.3.1
-     */
-    public void removeLink(long link);
+//    /**
+//     * Removes the given link.
+//     *
+//     * @param link Link identifier
+//     * @since 0.3.1
+//     */
+//    public void removeNetworkElementAndUpdateView (NetworkElement e);
 
 
-    /**
-     * Removes the given node.
-     *
-     * @param node Node identifier
-     * @since 0.3.1
-     */
-    public void removeNode(long node);
+//    /**
+//     * Resets the current topology (i.e. remove any node/link).
+//     *
+//     * @since 0.3.1
+//     */
+//    public void resetNetPlanAndUpdateView ();
+//
 
-    /**
-     * Resets the current topology (i.e. remove any node/link).
-     *
-     * @since 0.3.1
-     */
-    public void reset();
-
-    /**
-     * Resets the current view (i.e. reset picked state).
-     *
-     * @since 0.3.1
-     */
-    public void resetView();
-
-    /**
-     * Shows the given link.
-     *
-     * @param link Link identifier
-     * @since 0.3.1
-     */
-    public void showLink(long link);
-
-    /**
-     * Shows the given node.
-     *
-     * @param node Node identifier
-     * @since 0.3.1
-     */
-    public void showNode(long node);
-
-    /**
-     * Shows the given demand.
-     *
-     * @param demand Demand identifier
-     * @since 0.3.0
-     */
-    public void showDemand(long demand);
-
-    /**
-     * Shows the given multicast demand.
-     *
-     * @param demand Demand identifier
-     * @since 0.3.1
-     */
-    public void showMulticastDemand(long demand);
-
-    /**
-     * Shows the given forwarding rule.
-     *
-     * @param demandLink Forwarding rule identifier (first: demand identifier, second: link identifier)
-     * @since 0.3.0
-     */
-    public void showForwardingRule(Pair<Integer, Integer> demandLink);
-
-    /**
-     * Shows the given route.
-     *
-     * @param route Route identifier
-     * @since 0.3.0
-     */
-    public void showRoute(long route);
-
-    /**
-     * Shows the given multicast tree.
-     *
-     * @param tree Route identifier
-     * @since 0.3.1
-     */
-    public void showMulticastTree(long tree);
-
-    /**
-     * Shows the given SRG.
-     *
-     * @param srg SRG identifier
-     * @since 0.3.0
-     */
-    public void showSRG(long srg);
-
-    /**
-     * Shows the given SRG.
-     *
-     * @param layer Layer identifier
-     * @param srg   SRG identifier
-     * @since 0.3.0
-     */
-    public void showSRG(long layer, long srg);
-
-    /**
-     * Updates the {@code NetPlan} view (i.e. node info, link info, and so on).
-     *
-     * @since 0.2.3
-     */
-    public void updateWarningsAndTables();
-
-    /**
-     * Updates the {@code NetPlan} warnings (over-subscribed links, blocked demands, and so on).
-     *
-     * @since 0.3.0
-     */
-    public void updateWarnings();
-
+//    /**
+//     * Updates the {@code NetPlan} view (i.e. node info, link info, and so on).
+//     *
+//     * @since 0.2.3
+//     */
+//    public void updateWarningsAndTables();
+//
+//    /**
+//     * Updates the {@code NetPlan} warnings (over-subscribed links, blocked demands, and so on).
+//     *
+//     * @since 0.3.0
+//     */
+//    public void updateWarnings();
+//
     // added by Pablo
 //    public boolean allowDocumentUpdate ();
     // added by Pablo
-    public TopologyPanel getTopologyPanel();
+//    public TopologyPanel getTopologyPanel();
 
     // added by Pablo
     public boolean inOnlineSimulationMode();
 
     // added by Pablo
-    public void showNetPlanView();
+    public void offlineAlgorithmEndedUpdateView();
     // added by Pablo
     //public boolean allowLoadTrafficDemands();
 
+	public void loadDesignDoNotUpdateVisualization(NetPlan netPlan);
+
+
+//	void setDemandOfferedTraffic(Demand d, double traffic , boolean updateView);
+//
+//
+//	void removeAllNetworkElementsOfaTypeAndUpdateView (NetworkElementType type, NetworkLayer layer);
+//
+//
+//	Demand addDemand(NetworkLayer layer, Node originNode, Node destinationNode , boolean updateView);
+//
+//	Pair<Demand,Demand> addDemandBidirectional (NetworkLayer layer, Node originNode, Node destinationNode , boolean updateView);
+	
+	
+
+
     // added by Jorge
-    public Map<Constants.NetworkElementType, AdvancedJTableNetworkElement> getTables();
+//    public Map<Constants.NetworkElementType, AdvancedJTableNetworkElement> getTables();
 
 }

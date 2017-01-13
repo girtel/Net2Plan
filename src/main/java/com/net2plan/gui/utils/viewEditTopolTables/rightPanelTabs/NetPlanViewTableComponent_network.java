@@ -46,8 +46,8 @@ public class NetPlanViewTableComponent_network extends JPanel {
         txt_networkDescription.setFont(new JLabel().getFont());
         txt_networkDescription.setLineWrap(true);
         txt_networkDescription.setWrapStyleWord(true);
-        txt_networkName.setEditable(networkViewer.isEditable());
-        txt_networkDescription.setEditable(networkViewer.isEditable());
+        txt_networkName.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
+        txt_networkDescription.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
         txt_numLayers = new JTextField();
         txt_numLayers.setEditable(false);
         txt_numNodes = new JTextField();
@@ -55,7 +55,7 @@ public class NetPlanViewTableComponent_network extends JPanel {
         txt_numSRGs = new JTextField();
         txt_numSRGs.setEditable(false);
 
-        if (networkViewer.isEditable()) {
+        if (networkViewer.getVisualizationState().isNetPlanEditable()) {
             txt_networkName.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) {
                 @Override
                 protected void updateInfo(String text) {
@@ -72,7 +72,7 @@ public class NetPlanViewTableComponent_network extends JPanel {
         }
 
         networkAttributeTable = new AdvancedJTable(new ClassAwareTableModel(new Object[1][attributeTableHeader.length], attributeTableHeader));
-        if (networkViewer.isEditable()) {
+        if (networkViewer.getVisualizationState().isNetPlanEditable()) {
             networkAttributeTable.addMouseListener(new SingleElementAttributeEditor(networkViewer, NetworkElementType.NETWORK));
         }
 

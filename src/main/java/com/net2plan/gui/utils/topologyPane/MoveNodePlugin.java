@@ -29,7 +29,7 @@ import java.awt.event.MouseEvent;
 public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugin {
     private INetworkCallback callback;
     private ITopologyCanvas canvas;
-    private long startVertex;
+    private GUINode startVertex;
     private int modifiers;
 
     /**
@@ -38,8 +38,8 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
      * @param callback Topology callback listening plugin events
      * @since 0.3.1
      */
-    public MoveNodePlugin(INetworkCallback callback) {
-        this(callback, MouseEvent.BUTTON1_MASK);
+    public MoveNodePlugin(INetworkCallback callback , ITopologyCanvas canvas) {
+        this(callback, canvas , MouseEvent.BUTTON1_MASK);
     }
 
     /**
@@ -49,11 +49,12 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
      * @param modifiers Mouse event modifiers to activate this functionality
      * @since 0.3.1
      */
-    public MoveNodePlugin(INetworkCallback callback, int modifiers) {
+    public MoveNodePlugin(INetworkCallback callback, ITopologyCanvas canvas , int modifiers) {
         setModifiers(modifiers);
         this.callback = callback;
+        this.canvas = canvas;
 
-        startVertex = -1;
+        startVertex = null;
     }
 
     @Override
@@ -74,10 +75,10 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mouseDragged(MouseEvent e) {
         //System.out.println("mouseDragged: " + e + ", startVertex: " + startVertex);
-        if (startVertex != -1) {
+        if (startVertex != null) {
             Point p = e.getPoint();
 
-            OSMMapStateBuilder.getSingleton().moveNode(callback.getDesign().getNodeFromId(startVertex), p);
+            OSMMapStateBuilder.getSingleton().moveNode(startVertex.getAssociatedNetPlanNode(), p);
 
             e.consume();
         }
@@ -86,20 +87,20 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mousePressed(MouseEvent e) {
         if (checkModifiers(e)) {
-            long nodeId = getCanvas().getNode(e);
-            if (nodeId != -1) {
-                callback.showNode(nodeId);
-                startVertex = nodeId;
+            GUINode node = getCanvas().getNode(e);
+            if (node != null) {
+                callback.pickNodeAndUpdateView(node.getAssociatedNetPlanNode());
+                startVertex = node;
                 e.consume();
             } else {
-                callback.resetView();
+                callback.resetPickedStateAndUpdateView();
             }
         }
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        startVertex = -1;
+        startVertex = null;
     }
 
     @Override

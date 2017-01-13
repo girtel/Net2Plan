@@ -70,20 +70,15 @@ public class OSMStoppedState implements OSMState
     }
 
     @Override
-    public void addNode(TopologyPanel topologyPanel, NetPlan netPlan, String name, Point2D pos)
+    public Point2D.Double translateNodeBaseCoordinatesIntoNetPlanCoordinates(ITopologyCanvas topologyPanel, Point2D pos)
     {
-        final Node node = netPlan.addNode(pos.getX(), pos.getY(), name, null);
-
-        topologyPanel.getCanvas().addNode(node);
-        topologyPanel.getCanvas().refresh();
+    	return new Point2D.Double(pos.getX() , pos.getY());
     }
 
     @Override
-    public void moveNode(INetworkCallback callback, ITopologyCanvas canvas, Node node, Point2D pos)
+    public void moveNodeInVisualization(ITopologyCanvas canvas, Node node, Point2D pos)
     {
         final Point2D jungPoint = canvas.convertViewCoordinatesToRealCoordinates(pos);
-
-        callback.moveNode(node.getId(), pos);
         canvas.moveNodeToXYPosition(node, new Point2D.Double(jungPoint.getX(), -jungPoint.getY()));
     }
 
@@ -95,7 +90,7 @@ public class OSMStoppedState implements OSMState
         fc.setFileFilter(pngFilter);
 
         vv.setBackground(Color.WHITE);
-        JComponent component = canvas.getInternalComponent();
+        JComponent component = canvas.getInternalVisualizationController();
         BufferedImage bi = ImageUtils.trim(ImageUtils.takeSnapshot(component));
         vv.setBackground(new Color(212, 208, 200));
 

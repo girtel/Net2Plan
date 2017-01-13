@@ -3,6 +3,7 @@
 package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 
 import java.awt.BorderLayout;
+import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dialog;
 import java.awt.Dimension;
@@ -44,6 +45,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
+import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ButtonColumn;
 import com.net2plan.gui.utils.CellRenderers;
@@ -112,11 +114,11 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
     private List<Route> currentRoutes = new LinkedList<>();
     private NetPlan currentTopology = null;
 
-    public AdvancedJTable_route(final INetworkCallback networkViewer) {
-        super(createTableModel(networkViewer), networkViewer, NetworkElementType.ROUTE, true);
-        setDefaultCellRenderers(networkViewer);
+    public AdvancedJTable_route(final INetworkCallback callback) {
+        super(createTableModel(callback), callback, NetworkElementType.ROUTE, true);
+        setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSorting(networkViewer.inOnlineSimulationMode());
+        setColumnRowSorting(callback.inOnlineSimulationMode());
         fixedTable.setRowSorter(this.getRowSorter());
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
@@ -130,7 +132,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
     }
 
 
-    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
+    public List<Object[]> getAllData(NetPlan currentState,NetPlan initialState, ArrayList<String> attributesColumns) {
         final boolean sameRoutingType = initialState != null && initialState.getRoutingType() == currentState.getRoutingType();
         List<Object[]> allRouteData = new LinkedList<Object[]>();
         for (Route route : currentState.getRoutes()) {
@@ -262,14 +264,14 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         return new int[]{};
     }
 
-    private static TableModel createTableModel(final INetworkCallback networkViewer) {
-    	final TopologyPanel topologyPanel = networkViewer.getTopologyPanel();
+    private static TableModel createTableModel(final INetworkCallback callback) 
+    {
         TableModel routeTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                if (!networkViewer.isEditable()) return false;
+                if (!callback.getVisualizationState().isNetPlanEditable()) return false;
                 if (columnIndex >= netPlanViewTableHeader.length) return true;
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
 
@@ -283,7 +285,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
 
                 if (newValue.equals(oldValue)) return;
 
-                NetPlan netPlan = networkViewer.getDesign();
+                NetPlan netPlan = callback.getDesign();
 
                 if (getValueAt(row, 0) == null) row = row - 1;
                 final long routeId = (Long) getValueAt(row, 0);
@@ -293,12 +295,12 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                     switch (column) {
                         case COLUMN_CARRIEDTRAFFIC:
                             route.setCarriedTraffic(Double.parseDouble(newValue.toString()), route.getOccupiedCapacity());
-                            networkViewer.updateWarningsAndTables();
+                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                             break;
 
                         case COLUMN_OCCUPIEDCAPACITY:
                             route.setCarriedTraffic(route.getCarriedTraffic(), Double.parseDouble(newValue.toString()));
-                            networkViewer.updateWarningsAndTables();
+                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                             break;
 
                         default:
@@ -316,7 +318,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         return routeTableModel;
     }
 
-    private void setDefaultCellRenderers(final INetworkCallback networkViewer) {
+    private void setDefaultCellRenderers(final INetworkCallback callback) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
@@ -325,13 +327,13 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         setDefaultRenderer(Integer.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(String.class, new CellRenderers.NonEditableCellRenderer());
 
-        setDefaultRenderer(Boolean.class, new CellRenderers.RouteRenderer(getDefaultRenderer(Boolean.class), networkViewer));
-        setDefaultRenderer(Double.class, new CellRenderers.RouteRenderer(getDefaultRenderer(Double.class), networkViewer));
-        setDefaultRenderer(Object.class, new CellRenderers.RouteRenderer(getDefaultRenderer(Object.class), networkViewer));
-        setDefaultRenderer(Float.class, new CellRenderers.RouteRenderer(getDefaultRenderer(Float.class), networkViewer));
-        setDefaultRenderer(Long.class, new CellRenderers.RouteRenderer(getDefaultRenderer(Long.class), networkViewer));
-        setDefaultRenderer(Integer.class, new CellRenderers.RouteRenderer(getDefaultRenderer(Integer.class), networkViewer));
-        setDefaultRenderer(String.class, new CellRenderers.RouteRenderer(getDefaultRenderer(String.class), networkViewer));
+        setDefaultRenderer(Boolean.class, new CellRenderers.RouteRenderer(getDefaultRenderer(Boolean.class), callback));
+        setDefaultRenderer(Double.class, new CellRenderers.RouteRenderer(getDefaultRenderer(Double.class), callback));
+        setDefaultRenderer(Object.class, new CellRenderers.RouteRenderer(getDefaultRenderer(Object.class), callback));
+        setDefaultRenderer(Float.class, new CellRenderers.RouteRenderer(getDefaultRenderer(Float.class), callback));
+        setDefaultRenderer(Long.class, new CellRenderers.RouteRenderer(getDefaultRenderer(Long.class), callback));
+        setDefaultRenderer(Integer.class, new CellRenderers.RouteRenderer(getDefaultRenderer(Integer.class), callback));
+        setDefaultRenderer(String.class, new CellRenderers.RouteRenderer(getDefaultRenderer(String.class), callback));
     }
 
     private void setSpecificCellRenderers() {
@@ -350,7 +352,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
     public ArrayList<String> getAttributesColumnsHeaders()
     {
         ArrayList<String> attColumnsHeaders = new ArrayList<>();
-        currentTopology = networkViewer.getDesign();
+        currentTopology = callback.getDesign();
         currentRoutes = currentTopology.getRoutes();
         for(Route route : currentRoutes)
         {
@@ -373,14 +375,14 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
     public void doPopup(final MouseEvent e, final int row, final Object itemId) {
         JPopupMenu popup = new JPopupMenu();
 
-        if (networkViewer.isEditable()) {
+        if (callback.getVisualizationState().isNetPlanEditable()) {
             popup.add(getAddOption());
             for (JComponent item : getExtraAddOptions())
                 popup.add(item);
         }
 
         if (!isTableEmpty()) {
-            if (networkViewer.isEditable()) {
+            if (callback.getVisualizationState().isNetPlanEditable()) {
                 if (row != -1) {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
 
@@ -389,10 +391,10 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                     removeItem.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            NetPlan netPlan = networkViewer.getDesign();
+                            NetPlan netPlan = callback.getDesign();
                             try {
                                 netPlan.getRouteFromId((long) itemId).remove();
-                                networkViewer.updateWarningsAndTables();
+                            	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -410,11 +412,11 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                 removeItems.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        NetPlan netPlan = networkViewer.getDesign();
+                        NetPlan netPlan = callback.getDesign();
 
                         try {
                             netPlan.removeAllRoutes();
-                            networkViewer.updateWarningsAndTables();
+                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -442,41 +444,14 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, Object itemId) {
+    public void showInCanvas(MouseEvent e, Object itemId) 
+    {
         if (isTableEmpty()) return;
-
-        int clickCount = e.getClickCount();
-        switch (clickCount) {
-            case 1:
-                networkViewer.showRoute((long) itemId);
-                break;
-
-            case 2:
-                int col = convertColumnIndexToModel(columnAtPoint(e.getPoint()));
-                if (col == -1 || col >= getColumnCount()) return;
-
-                NetPlan netPlan = networkViewer.getDesign();
-
-                Demand demand = netPlan.getRouteFromId((long) itemId).getDemand();
-                switch (col) {
-                    case COLUMN_DEMAND:
-                        networkViewer.showDemand(demand.getId());
-                        break;
-                    case COLUMN_INGRESSNODE:
-                        networkViewer.showNode(demand.getIngressNode().getId());
-                        break;
-                    case COLUMN_EGRESSNODE:
-                        networkViewer.showNode(demand.getEgressNode().getId());
-                        break;
-                    default:
-                        break;
-                }
-                break;
-        }
+        callback.pickRouteAndUpdateView(callback.getDesign().getRouteFromId((long) itemId));
     }
 
     private boolean isTableEmpty() {
-        return !networkViewer.getDesign().hasRoutes();
+        return !callback.getDesign().hasRoutes();
     }
 
     private JMenuItem getAddOption() {
@@ -484,24 +459,24 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         addItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                NetPlan netPlan = networkViewer.getDesign();
+                NetPlan netPlan = callback.getDesign();
 
                 try {
-                    createRouteGUI(networkViewer, networkViewer.getTopologyPanel());
-                    networkViewer.updateWarningsAndTables();
+                    createRouteGUI(callback);
+                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
             }
         });
 
-        NetPlan netPlan = networkViewer.getDesign();
+        NetPlan netPlan = callback.getDesign();
         if (!netPlan.hasDemands()) addItem.setEnabled(false);
         return addItem;
     }
 
-    private static void createRouteGUI(final INetworkCallback networkViewer, final TopologyPanel topologyPanel) {
-        final NetPlan netPlan = networkViewer.getDesign();
+    private static void createRouteGUI(final INetworkCallback callback) {
+        final NetPlan netPlan = callback.getDesign();
         final Collection<Long> demandIds = NetPlan.getIds(netPlan.getDemands());
         final JComboBox demandSelector = new WiderJComboBox();
         if (netPlan.getNumberOfLinks() == 0)
@@ -556,13 +531,9 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                         seqLinks_pnl.revalidate();
 
                         List<Link> seqLinks = new LinkedList<Link>();
-                        for (JComboBox link : seqLinks_cmb) {
+                        for (JComboBox link : seqLinks_cmb) 
                             seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) link.getSelectedItem()).getObject()));
-                        }
-                        Map<Link, Pair<Color, Boolean>> res = new HashMap<Link, Pair<Color, Boolean>>();
-                        for (Link link : seqLinks) res.put(link, Pair.of(Color.BLUE, false));
-
-                        topologyPanel.getCanvas().showAndPickNodesAndLinks(null, res);
+                        callback.putColorInElementTopologyCanvas (seqLinks , Color.BLUE);
                     }
                 });
 
@@ -612,9 +583,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                                 List<Link> seqLinks = new LinkedList<Link>();
                                 for (JComboBox link : seqLinks_cmb)
                                     seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) link.getSelectedItem()).getObject()));
-                                Map<Link, Pair<Color, Boolean>> res = new HashMap<Link, Pair<Color, Boolean>>();
-                                for (Link link : seqLinks) res.put(link, Pair.of(Color.BLUE, false));
-                                topologyPanel.getCanvas().showAndPickNodesAndLinks(null, res);
+                                callback.putColorInElementTopologyCanvas (seqLinks , Color.BLUE);
                             }
                         });
 
@@ -628,9 +597,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                         for (JComboBox auxLink : seqLinks_cmb) {
                             seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) auxLink.getSelectedItem()).getObject()));
                         }
-                        Map<Link, Pair<Color, Boolean>> res = new HashMap<Link, Pair<Color, Boolean>>();
-                        for (Link thisLink : seqLinks) res.put(thisLink, Pair.of(Color.BLUE, false));
-                        topologyPanel.getCanvas().showAndPickNodesAndLinks(null, res);
+                        callback.putColorInElementTopologyCanvas (seqLinks , Color.BLUE);
                     }
                 });
 
@@ -653,9 +620,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                         List<Link> seqLinks = new LinkedList<Link>();
                         for (JComboBox link : seqLinks_cmb)
                             seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) link.getSelectedItem()).getObject()));
-                        Map<Link, Pair<Color, Boolean>> res = new HashMap<Link, Pair<Color, Boolean>>();
-                        for (Link thisLink : seqLinks) res.put(thisLink, Pair.of(Color.BLUE, false));
-                        topologyPanel.getCanvas().showAndPickNodesAndLinks(null, res);
+                        callback.putColorInElementTopologyCanvas (seqLinks , Color.BLUE);
                     }
                 });
 
@@ -667,9 +632,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                 List<Link> seqLinks = new LinkedList<Link>();
                 for (JComboBox link : seqLinks_cmb)
                     seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) link.getSelectedItem()).getObject()));
-                Map<Link, Pair<Color, Boolean>> res = new HashMap<Link, Pair<Color, Boolean>>();
-                for (Link thisLink : seqLinks) res.put(thisLink, Pair.of(Color.BLUE, false));
-                topologyPanel.getCanvas().showAndPickNodesAndLinks(null, res);
+                callback.putColorInElementTopologyCanvas (seqLinks , Color.BLUE);
             }
         });
 
@@ -760,8 +723,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
 
             break;
         }
-
-        topologyPanel.getCanvas().resetPickedAndUserDefinedColorState();
+        callback.resetPickedStateAndUpdateView();
     }
 
     private static void setMaxSize(JComponent c) {
@@ -774,7 +736,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
 
     private List<JComponent> getExtraAddOptions() {
         List<JComponent> options = new LinkedList<JComponent>();
-        NetPlan netPlan = networkViewer.getDesign();
+        NetPlan netPlan = callback.getDesign();
 
         final JMenuItem oneRoutePerDemandSPFHops = new JMenuItem("Add one route per demand, shortest path (Service chain) in hops");
         options.add(oneRoutePerDemandSPFHops);
@@ -804,7 +766,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            NetPlan netPlan = networkViewer.getDesign();
+            NetPlan netPlan = callback.getDesign();
             List<Link> links = netPlan.getLinks();
             final int E = links.size();
             Map<Link, Double> linkCostMap = new HashMap<Link, Double>();
@@ -873,7 +835,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                 for (Route r : addedRoutes) r.remove();
                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error adding routes and/or protection segments");
             }
-            networkViewer.updateWarningsAndTables();
+        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
         }
     }
 
@@ -881,7 +843,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         List<JComponent> options = new LinkedList<JComponent>();
 
         final int numRows = model.getRowCount();
-        final NetPlan netPlan = networkViewer.getDesign();
+        final NetPlan netPlan = callback.getDesign();
 
         if (itemId != null) {
             JMenuItem viewEditBackupRoutes = new JMenuItem("View/edit backup routes");
@@ -889,7 +851,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     try {
-                        viewEditBackupRoutesGUI(networkViewer, networkViewer.getTopologyPanel(), (long) itemId);
+                        viewEditBackupRoutesGUI(callback, (long) itemId);
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Error viewing/editing backup routes");
                     }
@@ -903,7 +865,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         return options;
     }
 
-    private static void viewEditBackupRoutesGUI(final INetworkCallback callback, final TopologyPanel topologyPanel, final long routeId) {
+    private static void viewEditBackupRoutesGUI(final INetworkCallback callback, final long routeId) {
         final NetPlan netPlan = callback.getDesign();
         final Route route = netPlan.getRouteFromId(routeId);
         if (route.isBackupRoute()) throw new Net2PlanException("A backup route cannot have backup routes itself.");
@@ -937,7 +899,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                 long backupRouteId = (Long) ((StringLabeller) selectedItem).getObject();
                 Route backupRoute = netPlan.getRouteFromId(backupRouteId);
                 route.addBackupRoute(backupRoute);
-                callback.updateWarningsAndTables();
+            	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
 
                 backupRouteSelector.removeItem(selectedItem);
                 if (backupRouteSelector.getItemCount() == 0) addSegment_pnl.setVisible(false);
@@ -958,12 +920,9 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
             public void actionPerformed(ActionEvent e) {
                 Object selectedItem = backupRouteSelector.getSelectedItem();
                 long backupRouteId = (Long) ((StringLabeller) selectedItem).getObject();
-
                 List<NetworkElement> backupRoutePath = netPlan.getRouteFromId(backupRouteId).getPath();
-                Map<Link, Pair<Color, Boolean>> coloredLinks = new HashMap<Link, Pair<Color, Boolean>>();
-                for (NetworkElement thisElement : seqLinksAndResources) if (thisElement instanceof Link) coloredLinks.put((Link)thisElement, Pair.of(Color.BLUE, false));
-                for (NetworkElement thisElement : backupRoutePath) if (thisElement instanceof Link) coloredLinks.put((Link)thisElement, Pair.of(Color.ORANGE, false));
-                topologyPanel.getCanvas().showAndPickNodesAndLinks(null, coloredLinks);
+                callback.putColorInElementTopologyCanvas(seqLinksAndResources , Color.ORANGE);
+                callback.putColorInElementTopologyCanvas(backupRoutePath , Color.ORANGE);
             }
         });
 
@@ -981,7 +940,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                     final long backupRouteId = (Long) table.getModel().getValueAt(modelRow, 0);
                     final Route backupRoute = netPlan.getRouteFromId(backupRouteId);
                     netPlan.getRouteFromId(routeId).removeBackupRoute(backupRoute);
-                    callback.updateWarningsAndTables();
+                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
 
                     String segmentLabel = "Backup route id " + backupRouteId + 
                     		": path = " + getSequenceLinkResourceIndexes(backupRoute) + 
@@ -1012,10 +971,8 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
 
                     final long backupRouteId = (Long) table.getModel().getValueAt(modelRow, 0);
                     final Route backupRoute = netPlan.getRouteFromId(backupRouteId);
-                    Map<Link, Pair<Color, Boolean>> coloredLinks = new HashMap<Link, Pair<Color, Boolean>>();
-                    for (NetworkElement thisElement : seqLinksAndResources) if (thisElement instanceof Link) coloredLinks.put((Link)thisElement, Pair.of(Color.BLUE, false));
-                    for (NetworkElement thisElement : backupRoute.getPath()) if (thisElement instanceof Link) coloredLinks.put((Link)thisElement, Pair.of(Color.ORANGE, false));
-                    topologyPanel.getCanvas().showAndPickNodesAndLinks(null, coloredLinks);
+                    callback.putColorInElementTopologyCanvas(seqLinksAndResources , Color.ORANGE);
+                    callback.putColorInElementTopologyCanvas(backupRoute.getPath() , Color.ORANGE);
                 } catch (Throwable e1) {
                 }
             }
@@ -1078,7 +1035,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.setVisible(true);
 
-        topologyPanel.getCanvas().resetPickedAndUserDefinedColorState();
+        callback.resetPickedStateAndUpdateView();
     }
 
     private List<JComponent> getForcedOptions() {

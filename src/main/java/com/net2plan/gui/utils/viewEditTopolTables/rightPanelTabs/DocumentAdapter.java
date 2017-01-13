@@ -29,7 +29,7 @@ abstract class DocumentAdapter implements DocumentListener
     }
 
     private void processEvent(DocumentEvent e) {
-        if (!networkViewer.isEditable()) return;
+        if (!networkViewer.getVisualizationState().isNetPlanEditable()) return;
 
         Document doc = e.getDocument();
         try {

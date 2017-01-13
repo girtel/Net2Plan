@@ -31,6 +31,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
+import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
@@ -88,11 +89,11 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         txt_layerDemandTrafficUnits = new JTextField();
         txt_layerLinkCapacityUnits = new JTextField();
         sourceRoutingActivated = new JRadioButton("Source routing", false);
-        sourceRoutingActivated.setEnabled(networkViewer.isEditable());
+        sourceRoutingActivated.setEnabled(networkViewer.getVisualizationState().isNetPlanEditable());
         hopByHopRoutingActivated = new JRadioButton("Hop-by-hop routing", false);
-        hopByHopRoutingActivated.setEnabled(networkViewer.isEditable());
+        hopByHopRoutingActivated.setEnabled(networkViewer.getVisualizationState().isNetPlanEditable());
 
-        if (networkViewer.isEditable()) {
+        if (networkViewer.getVisualizationState().isNetPlanEditable()) {
             ItemListener itemRoutingTypeListener = new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent event) {
@@ -105,13 +106,13 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                     if (button == sourceRoutingActivated && state == ItemEvent.SELECTED) {
                         netPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
                         if (previousRoutingType != RoutingType.SOURCE_ROUTING)
-                            networkViewer.updateWarningsAndTables();
+                            networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                     }
 
                     if (button == hopByHopRoutingActivated && state == ItemEvent.SELECTED) {
                         netPlan.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
                         if (previousRoutingType != RoutingType.HOP_BY_HOP_ROUTING)
-                            networkViewer.updateWarningsAndTables();
+                            networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                     }
                 }
             };
@@ -123,11 +124,11 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         routingSchemes.add(sourceRoutingActivated);
         routingSchemes.add(hopByHopRoutingActivated);
 
-        txt_layerName.setEditable(networkViewer.isEditable());
-        txt_layerDescription.setEditable(networkViewer.isEditable());
-        txt_layerDemandTrafficUnits.setEditable(networkViewer.isEditable());
-        txt_layerLinkCapacityUnits.setEditable(networkViewer.isEditable());
-        if (networkViewer.isEditable()) {
+        txt_layerName.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
+        txt_layerDescription.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
+        txt_layerDemandTrafficUnits.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
+        txt_layerLinkCapacityUnits.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
+        if (networkViewer.getVisualizationState().isNetPlanEditable()) {
             txt_layerName.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) {
                 @Override
                 protected void updateInfo(String text) {
@@ -140,7 +141,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                         if ((Long) model.getValueAt(row, AdvancedJTable_layer.COLUMN_ID) == layer.getId()) {
                             layer.setName(text);
                             model.setValueAt(text, row, AdvancedJTable_layer.COLUMN_NAME);
-                            networkViewer.getTopologyPanel().refreshLayerName(layer.getId());
+                            networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                         }
                     }
 //					allowDocumentUpdate = isEditable();
@@ -230,7 +231,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
 
 
         layerAttributeTable = new AdvancedJTable(new ClassAwareTableModel(new Object[1][attributeTableHeader.length], attributeTableHeader));
-        if (networkViewer.isEditable())
+        if (networkViewer.getVisualizationState().isNetPlanEditable())
             layerAttributeTable.addMouseListener(new SingleElementAttributeEditor(networkViewer, NetworkElementType.LAYER));
 
         JTable table = layerAttributeTable;

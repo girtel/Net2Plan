@@ -114,7 +114,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
                         ((TableRowSorter) netPlanViewTable.get(elementType).getRowSorter()).setRowFilter(rowFilter);
                     }
-                    mainWindow.getTopologyPanel().getCanvas().refresh();
+                    mainWindow.updateVisualizationAfterChanges(null);
                 }
             });
 
@@ -195,7 +195,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
                         ((TableRowSorter) netPlanViewTable.get(elementType).getRowSorter()).setRowFilter(rowFilter);
                     }
-                    mainWindow.getTopologyPanel().getCanvas().refresh();
+                    mainWindow.updateVisualizationAfterChanges(null);
                 }
             });
 
@@ -273,12 +273,13 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         TableModel model = table.getModel();
         int numRows = model.getRowCount();
-        for (int row = 0; row < numRows; row++) {
+        for (int row = 0; row < numRows; row++) 
+        {
             Object obj = model.getValueAt(row, 0);
             if (obj == null) continue;
 
             if (type == NetworkElementType.FORWARDING_RULE) {
-                obj = Pair.of(Integer.parseInt(model.getValueAt(row, 1).toString().split(" ")[0]), Integer.parseInt(model.getValueAt(row, 2).toString().split(" ")[0]));
+                obj = Pair.of(Integer.parseInt(model.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_DEMAND).toString().split(" ")[0]), Integer.parseInt(model.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK).toString().split(" ")[0]));
                 if (!obj.equals(itemId)) continue;
             } else if ((long) obj != (long) itemId) {
                 continue;
@@ -292,5 +293,10 @@ public class ViewEditTopologyTablesPane extends JPanel
         throw new RuntimeException(type + " " + itemId + " does not exist");
     }
 
-    
+
+    public void showMainTab ()
+    {
+    	getNetPlanView().setSelectedIndex(0);
+    }
+
 }

@@ -14,9 +14,9 @@ import java.util.Map;
 public class CircularDistribution implements ITopologyDistribution
 {
     @Override
-    public Map<Long, Point2D> getNodeDistribution(List<Node> nodes)
+    public Map<Node, Point2D> getNodeDistribution(List<Node> nodes)
     {
-        final Map<Long, Point2D> nodeDistribution = new HashMap<>();
+        final Map<Node, Point2D> nodeDistribution = new HashMap<>();
 
         final int maxAng = 360;
 
@@ -39,7 +39,7 @@ public class CircularDistribution implements ITopologyDistribution
             final int x = (int) (finalWidth * Math.cos(Math.toRadians(ang)));
             final int y = (int) (finalHeight * Math.sin(Math.toRadians(ang)));
 
-            nodeDistribution.put(node.getId(), new Point2D.Double(x, y));
+            nodeDistribution.put(node, new Point2D.Double(x, y));
         }
 
         return nodeDistribution;

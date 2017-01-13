@@ -12,22 +12,62 @@
 
 package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 
-import java.awt.event.*;
-import java.util.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.Box;
+import javax.swing.DefaultRowSorter;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TableColumnModelEvent;
+import javax.swing.event.TableColumnModelListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.xml.stream.XMLStreamException;
 
-import com.net2plan.gui.tools.GUINetworkDesign;
-import com.net2plan.gui.utils.*;
-import com.net2plan.gui.utils.topologyPane.TopologyPanel;
+import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.AttributeEditor;
+import com.net2plan.gui.utils.ColumnHeaderToolTips;
+import com.net2plan.gui.utils.FixedColumnDecorator;
+import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.viewEditTopolTables.tableStateFiles.TableState;
-import com.net2plan.gui.utils.viewEditTopolTables.tableStateFiles.TableStateController;
-import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
@@ -60,7 +100,7 @@ import com.net2plan.utils.StringUtils;
 @SuppressWarnings("unchecked")
 public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     protected final TableModel model;
-    protected final INetworkCallback networkViewer;
+    protected final INetworkCallback callback;
     protected final NetworkElementType networkElementType;
 
     protected final JTable mainTable;
@@ -95,7 +135,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
     {
         super(model);
         this.model = model;
-        this.networkViewer = networkViewer;
+        this.callback = networkViewer;
         this.networkElementType = networkElementType;
 
 		/* configure the tips */
@@ -174,7 +214,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             }
 
                         }
-                        networkViewer.updateWarningsAndTables();
+                        callback.updateVisualizationJustTables();
                     }
                 }
             });
@@ -740,21 +780,20 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      */
     private void loadTableState()
     {
-        Map<NetworkElementType, AdvancedJTableNetworkElement> currentTables = networkViewer.getTables();
-        HashMap<NetworkElementType, TableState> tStateMap = null;
-        try
-        {
-            tStateMap = TableStateController.loadTableState(currentTables);
-        } catch (XMLStreamException e)
-        {
-            e.printStackTrace();
-        }
-        for (Map.Entry<NetworkElementType, AdvancedJTableNetworkElement> entry : currentTables.entrySet())
-        {
-            entry.getValue().updateTableFromTableState(tStateMap.get(entry.getValue().getNetworkElementType()));
-        }
-        JOptionPane.showMessageDialog(null, "Tables visualization profile successfully loaded!");
-
+//        Map<NetworkElementType, AdvancedJTableNetworkElement> currentTables = callback.getTables();
+//        HashMap<NetworkElementType, TableState> tStateMap = null;
+//        try
+//        {
+//            tStateMap = TableStateController.loadTableState(currentTables);
+//        } catch (XMLStreamException e)
+//        {
+//            e.printStackTrace();
+//        }
+//        for (Map.Entry<NetworkElementType, AdvancedJTableNetworkElement> entry : currentTables.entrySet())
+//        {
+//            entry.getValue().updateTableFromTableState(tStateMap.get(entry.getValue().getNetworkElementType()));
+//        }
+//        JOptionPane.showMessageDialog(null, "Tables visualization profile successfully loaded!");
     }
 
     /**
@@ -764,9 +803,8 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      */
     private void saveTableState() throws XMLStreamException
     {
-
-        Map<NetworkElementType, AdvancedJTableNetworkElement> currentTables = networkViewer.getTables();
-        TableStateController.saveTableState(currentTables);
+//        Map<NetworkElementType, AdvancedJTableNetworkElement> currentTables = callback.getTables();
+//        TableStateController.saveTableState(currentTables);
     }
 
     /**
@@ -961,7 +999,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
     private void attributesInDifferentColumns()
     {
-        currentTopology = networkViewer.getDesign();
+        currentTopology = callback.getDesign();
         saveColumnsPositions();
         attributesColumnsNames = getAttributesColumnsHeaders();
         boolean attributesColumnInMainTable = false;
@@ -984,7 +1022,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         {
             if (attributesColumnsNames.size() > 0)
             {
-                networkViewer.updateWarningsAndTables();
+                callback.updateVisualizationJustTables();
                 createDefaultColumnsFromModel();
                 removedColumns.clear();
                 removeNewColumn("Attributes");
@@ -1009,7 +1047,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
     private void attributesInOneColumn()
     {
-        currentTopology = networkViewer.getDesign();
+        currentTopology = callback.getDesign();
         saveColumnsPositions();
         attributesColumnsNames = getAttributesColumnsHeaders();
         int attributesCounter = 0;
@@ -1036,7 +1074,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             if (attributesColumnsNames.size() > 0)
             {
 
-                networkViewer.updateWarningsAndTables();
+                callback.updateVisualizationJustTables();
                 createDefaultColumnsFromModel();
                 removedColumns.clear();
                 for (String att : attributesColumnsNames)
@@ -1123,7 +1161,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         return fixedTable;
     }
 
-    public abstract List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesTitles);
+    public abstract List<Object[]> getAllData(NetPlan currentState, NetPlan initialState, ArrayList<String> attributesTitles);
 
     public abstract String getTabName();
 
@@ -1165,7 +1203,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         {
             String[] tableHeaders = getCurrentTableHeaders();
             ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
-            List<Object[]> allData = getAllData(currentState, networkViewer.getTopologyPanel(), initialState, attColumnsHeaders);
+            List<Object[]> allData = getAllData(currentState, initialState, attColumnsHeaders);
             setEnabled(true);
             ((DefaultTableModel) getModel()).setDataVector(allData.toArray(new Object[allData.size()][tableHeaders.length]), tableHeaders);
             if (attColumnsHeaders != null && networkElementType != NetworkElementType.FORWARDING_RULE)
@@ -1220,7 +1258,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         {
             Object auxItemId = null;
             int row = -1;
-            if (hasElements(networkViewer.getDesign()))
+            if (hasElements(callback.getDesign()))
             {
                 JTable table = getTable(e);
                 row = table.rowAtPoint(e.getPoint());
@@ -1246,7 +1284,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
             if (itemId == null)
             {
-                networkViewer.resetView();
+                callback.resetPickedStateAndUpdateView();
                 return;
             }
 
@@ -1296,7 +1334,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 pane.add(new JLabel("Value: "));
                 pane.add(txt_value);
 
-                NetPlan netPlan = networkViewer.getDesign();
+                NetPlan netPlan = callback.getDesign();
 
                 while (true)
                 {
@@ -1314,7 +1352,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                         try
                         {
-                            networkViewer.updateWarningsAndTables();
+                        	callback.updateVisualizationJustTables();
                         } catch (Throwable ex)
                         {
                             ErrorHandling.addErrorOrException(ex, getClass());
@@ -1342,7 +1380,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             {
                 try
                 {
-                    NetPlan netPlan = networkViewer.getDesign();
+                    NetPlan netPlan = callback.getDesign();
                     int itemIndex = convertRowIndexToModel(row);
                     Object itemId;
 
@@ -1389,9 +1427,9 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             throw new RuntimeException("Bad");
                     }
 
-                    JDialog dialog = new AttributeEditor(networkViewer, networkElementType, itemId);
+                    JDialog dialog = new AttributeEditor(callback, networkElementType, itemId);
                     dialog.setVisible(true);
-                    networkViewer.updateWarningsAndTables();
+                    callback.updateVisualizationJustTables();
 
                 } catch (Throwable ex)
                 {
@@ -1410,7 +1448,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                NetPlan netPlan = networkViewer.getDesign();
+                NetPlan netPlan = callback.getDesign();
 
                 try
                 {
@@ -1498,7 +1536,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                     NetworkElement element = netPlan.getNetworkElement((long) itemId);
                     if (element == null) throw new RuntimeException("Bad");
                     element.removeAttribute(attributeToRemove);
-                    networkViewer.updateWarningsAndTables();
+                    callback.updateVisualizationJustTables();
 
                 } catch (Throwable ex)
                 {
@@ -1531,7 +1569,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                     pane.add(new JLabel("Value: "));
                     pane.add(txt_value);
 
-                    NetPlan netPlan = networkViewer.getDesign();
+                    NetPlan netPlan = callback.getDesign();
 
                     while (true)
                     {
@@ -1595,8 +1633,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                             try
                             {
-
-                                networkViewer.updateWarningsAndTables();
+                                callback.updateVisualizationJustTables();
                             } catch (Throwable ex)
                             {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add attribute to all nodes");
@@ -1621,9 +1658,9 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 {
                     try
                     {
-                        JDialog dialog = new AttributeEditor(networkViewer, networkElementType);
+                        JDialog dialog = new AttributeEditor(callback, networkElementType);
                         dialog.setVisible(true);
-                        networkViewer.updateWarningsAndTables();
+                        callback.updateVisualizationJustTables();
 
                     } catch (Throwable ex)
                     {
@@ -1642,7 +1679,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 @Override
                 public void actionPerformed(ActionEvent e)
                 {
-                    NetPlan netPlan = networkViewer.getDesign();
+                    NetPlan netPlan = callback.getDesign();
 
                     try
                     {
@@ -1764,7 +1801,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 throw new RuntimeException("Bad");
                         }
 
-                        networkViewer.updateWarningsAndTables();
+                        callback.updateVisualizationJustTables();
 
                     } catch (Throwable ex)
                     {
@@ -1782,7 +1819,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                 @Override
                 public void actionPerformed(ActionEvent e)
                 {
-                    NetPlan netPlan = networkViewer.getDesign();
+                    NetPlan netPlan = callback.getDesign();
                     ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
                     try
                     {
@@ -1848,7 +1885,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             expandAttributes = false;
                             attributesItem.setSelected(false);
                         }
-                        networkViewer.updateWarningsAndTables();
+                        callback.updateVisualizationJustTables();
                     } catch (Throwable ex)
                     {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attributes");

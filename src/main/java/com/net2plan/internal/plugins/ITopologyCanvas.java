@@ -26,8 +26,9 @@ import java.util.Map;
 
 import javax.swing.JComponent;
 
+import com.net2plan.gui.utils.topologyPane.GUILink;
+import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
-import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 
 /**
@@ -41,6 +42,9 @@ public interface ITopologyCanvas extends Plugin
 	
 	public boolean getBackgroundOSMMapsActiveState ();
 
+    public void updateNodeXYPosition(GUINode node);
+
+	
 	/**
 	 * Adds a new plugin to the canvas.
 	 *
@@ -48,6 +52,15 @@ public interface ITopologyCanvas extends Plugin
 	 * @since 0.3.0
 	 */
 	public void addPlugin(ITopologyCanvasPlugin plugin);
+
+//    /**
+//     * Returns the set of actions to be added to the popup menu for the network
+//     * canvas, where no element (either node or link) is selected.
+//     *
+//     * @param pos Network coordinates where the popup action was triggered
+//     * @return List of actions to be shown for the canvas
+//     */
+//    public List<JComponent> getCanvasActions(Point2D pos);
 
 	/**
 	 * Returns the real coordinates in the topology for a given screen point.
@@ -68,20 +81,12 @@ public interface ITopologyCanvas extends Plugin
 	public Point2D convertRealCoordinatesToViewCoordinates(Point2D screenPoint);
 
 	/**
-	 * Returns the top-level component of the canvas.
-	 *
-	 * @return Top-level component of the canvas
-	 * @since 0.3.0
-	 */
-	public JComponent getComponent();
-
-	/**
 	 * Returns a reference to the internal component containing the canvas.
 	 *
 	 * @return Internal component containing the canvas
 	 * @since 0.3.0
 	 */
-	public JComponent getInternalComponent();
+	public JComponent getInternalVisualizationController();
 
 	/**
 	 * Returns the identifier of a link associated to a mouse event, or -1 otherwise.
@@ -90,7 +95,7 @@ public interface ITopologyCanvas extends Plugin
 	 * @return Link identifier, or -1 if no link was clicked
 	 * @since 0.3.1
 	 */
-	public long getLink(MouseEvent e);
+	public GUILink getLink(MouseEvent e);
 
 	/**
 	 * Returns the identifier of a link associated to a mouse event, or -1 otherwise.
@@ -99,7 +104,7 @@ public interface ITopologyCanvas extends Plugin
 	 * @return Link identifier, or -1 if no link was clicked
 	 * @since 0.3.1
 	 */
-	public long getNode(MouseEvent e);
+	public GUINode getNode(MouseEvent e);
 
 	/**
 	 * Pans the graph to the .
@@ -156,7 +161,7 @@ public interface ITopologyCanvas extends Plugin
 	 * @param netPlan Network design
 	 * @since 0.3.0
 	 */
-	public void rebuildTopology();
+	public void rebuildTopologyAndRefresh();
 
 	/**
 	 * Makes zoom-all from the center of the view.
@@ -178,4 +183,6 @@ public interface ITopologyCanvas extends Plugin
 	 * @since 0.3.0
 	 */
 	public void zoomOut();
+
+	public JComponent getComponent();
 }

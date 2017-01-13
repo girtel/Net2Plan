@@ -21,6 +21,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,6 +43,7 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableModel;
 
+import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.ClassAwareTableModel;
@@ -50,6 +52,7 @@ import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
+import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -103,11 +106,11 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
 
     private List<Link> currentLinks = new LinkedList<>();
     private NetPlan currentTopology = null;
-    public AdvancedJTable_link(final INetworkCallback networkViewer) {
-        super(createTableModel(networkViewer), networkViewer, NetworkElementType.LINK, true);
-        setDefaultCellRenderers(networkViewer);
+    public AdvancedJTable_link(final INetworkCallback callback) {
+        super(createTableModel(callback), callback, NetworkElementType.LINK, true);
+        setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSorting(networkViewer.inOnlineSimulationMode());
+        setColumnRowSorting(callback.inOnlineSimulationMode());
         fixedTable.setRowSorter(this.getRowSorter());
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
@@ -121,7 +124,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
 
 
 
-    public List<Object[]> getAllData(NetPlan currentState, TopologyPanel topologyPanel, NetPlan initialState, ArrayList<String> attributesColumns) {
+    public List<Object[]> getAllData(NetPlan currentState, NetPlan initialState, ArrayList<String> attributesColumns) {
         double max_rho_e = 0;
         for (Link link : currentState.getLinks())
             max_rho_e = Math.max(max_rho_e, link.getOccupiedCapacity() / link.getCapacity());
@@ -158,7 +161,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
             Object[] linkData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
             linkData[COLUMN_ID] = link.getId();
             linkData[COLUMN_INDEX] = link.getIndex();
-            linkData[COLUMN_SHOWHIDE] = topologyPanel.getVisualizationState().getAssociatedGUILink(link).isVisible();
+            linkData[COLUMN_SHOWHIDE] = callback.getVisualizationState().getAssociatedGUILink(link).isVisible();
             linkData[COLUMN_ORIGINNODE] = originNode.getIndex() + (originNodeName.isEmpty() ? "" : " (" + originNodeName + ")");
             linkData[COLUMN_DESTNODE] = destinationNode.getIndex() + (destinationNodeName.isEmpty() ? "" : " (" + destinationNodeName + ")");
             linkData[COLUMN_STATE] = !link.isDown();
@@ -301,14 +304,15 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
         return new int[]{3, 4, 16, 17, 18, 19};
     } //{ return new int [] { 3,4,6,16,17,18,19 }; }
 
-    private static TableModel createTableModel(final INetworkCallback networkViewer) {
-    	final TopologyPanel topologyPanel = networkViewer.getTopologyPanel();
+    private static TableModel createTableModel(final INetworkCallback callback) {
+//    	final TopologyPanel topologyPanel = callback.getTopologyPanel();
+    	final VisualizationState vs = callback.getVisualizationState();
         TableModel linkTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                if (!networkViewer.isEditable()) return false;
+                if (!vs.isNetPlanEditable()) return false;
                 if (columnIndex >= netPlanViewTableHeader.length) return true;
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
                 switch (columnIndex) {
@@ -335,7 +339,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                         return true;
 
                     case COLUMN_CAPACITY:
-                            NetPlan netPlan = networkViewer.getDesign();
+                            NetPlan netPlan = callback.getDesign();
                             if (getValueAt(rowIndex, 0) == null)
                                 rowIndex = rowIndex - 1;
                             final long linkId = (Long) getValueAt(rowIndex, 0);
@@ -356,7 +360,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
 				/* If value doesn't change, exit from function */
                 if (newValue != null && newValue.equals(oldValue)) return;
 
-                NetPlan netPlan = networkViewer.getDesign();
+                NetPlan netPlan = callback.getDesign();
 
                 if (getValueAt(row, 0) == null) row = row - 1;
                 final long linkId = (Long) getValueAt(row, 0);
@@ -368,31 +372,31 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                         case COLUMN_SHOWHIDE:
                             if (newValue == null) return;
                             boolean visible = (Boolean) newValue;
-                            topologyPanel.getCanvas().setLinkVisible(link, visible);
+                            vs.setVisibilityState(link , visible);
+                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                             break;
 
                         case COLUMN_STATE:
                             boolean isLinkUp = (Boolean) newValue;
                             link.setFailureState(isLinkUp);
-                            topologyPanel.getCanvas().refresh();
-                            networkViewer.updateWarningsAndTables();
+                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                             break;
 
                         case COLUMN_CAPACITY:
                             String text = newValue.toString();
                             link.setCapacity(text.equalsIgnoreCase("inf") ? Double.MAX_VALUE : Double.parseDouble(text));
                             newValue = link.getCapacity();
-                            networkViewer.updateWarningsAndTables();
+                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                             break;
 
                         case COLUMN_LENGTH:
                             link.setLengthInKm(Double.parseDouble(newValue.toString()));
-                            networkViewer.updateWarningsAndTables();
+                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                             break;
 
                         case COLUMN_PROPSPEED:
                             link.setPropagationSpeedInKmPerSecond(Double.parseDouble(newValue.toString()));
-                            networkViewer.updateWarningsAndTables();
+                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                             break;
 
                         default:
@@ -410,7 +414,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
         return linkTableModel;
     }
 
-    private void setDefaultCellRenderers(final INetworkCallback networkViewer) {
+    private void setDefaultCellRenderers(final INetworkCallback callback) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
@@ -419,13 +423,13 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
         setDefaultRenderer(Integer.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(String.class, new CellRenderers.NonEditableCellRenderer());
 
-        setDefaultRenderer(Boolean.class, new CellRenderers.LinkRenderer(getDefaultRenderer(Boolean.class), networkViewer));
-        setDefaultRenderer(Double.class, new CellRenderers.LinkRenderer(getDefaultRenderer(Double.class), networkViewer));
-        setDefaultRenderer(Object.class, new CellRenderers.LinkRenderer(getDefaultRenderer(Object.class), networkViewer));
-        setDefaultRenderer(Float.class, new CellRenderers.LinkRenderer(getDefaultRenderer(Float.class), networkViewer));
-        setDefaultRenderer(Long.class, new CellRenderers.LinkRenderer(getDefaultRenderer(Long.class), networkViewer));
-        setDefaultRenderer(Integer.class, new CellRenderers.LinkRenderer(getDefaultRenderer(Integer.class), networkViewer));
-        setDefaultRenderer(String.class, new CellRenderers.LinkRenderer(getDefaultRenderer(String.class), networkViewer));
+        setDefaultRenderer(Boolean.class, new CellRenderers.LinkRenderer(getDefaultRenderer(Boolean.class), callback));
+        setDefaultRenderer(Double.class, new CellRenderers.LinkRenderer(getDefaultRenderer(Double.class), callback));
+        setDefaultRenderer(Object.class, new CellRenderers.LinkRenderer(getDefaultRenderer(Object.class), callback));
+        setDefaultRenderer(Float.class, new CellRenderers.LinkRenderer(getDefaultRenderer(Float.class), callback));
+        setDefaultRenderer(Long.class, new CellRenderers.LinkRenderer(getDefaultRenderer(Long.class), callback));
+        setDefaultRenderer(Integer.class, new CellRenderers.LinkRenderer(getDefaultRenderer(Integer.class), callback));
+        setDefaultRenderer(String.class, new CellRenderers.LinkRenderer(getDefaultRenderer(String.class), callback));
     }
 
     private void setSpecificCellRenderers() {
@@ -485,7 +489,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
     public ArrayList<String> getAttributesColumnsHeaders()
     {
         ArrayList<String> attColumnsHeaders = new ArrayList<>();
-        currentTopology = networkViewer.getDesign();
+        currentTopology = callback.getDesign();
         currentLinks = currentTopology.getLinks();
         for(Link link : currentLinks)
         {
@@ -509,14 +513,14 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
     public void doPopup(final MouseEvent e, final int row, final Object itemId) {
         JPopupMenu popup = new JPopupMenu();
 
-        if (networkViewer.isEditable()) {
+        if (callback.getVisualizationState().isNetPlanEditable()) {
             popup.add(getAddOption());
             for (JComponent item : getExtraAddOptions())
                 popup.add(item);
         }
 
         if (!isTableEmpty()) {
-            if (networkViewer.isEditable()) {
+            if (callback.getVisualizationState().isNetPlanEditable()) {
                 if (row != -1) {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
 
@@ -524,12 +528,12 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                     removeItem.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            NetPlan netPlan = networkViewer.getDesign();
+                            NetPlan netPlan = callback.getDesign();
 
                             try {
                                 Link link = netPlan.getLinkFromId((long) itemId);
-                                networkViewer.removeLink(link.getId());
-                                networkViewer.updateWarningsAndTables();
+                                link.remove();
+                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -547,14 +551,12 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                 removeItems.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        NetPlan netPlan = networkViewer.getDesign();
+                        NetPlan netPlan = callback.getDesign();
 
                         try {
                             Collection<Long> linkIds = netPlan.getLinkIds();
-                            for (long linkId : linkIds)
-                                networkViewer.removeLink(linkId);
-                            networkViewer.getTopologyPanel().getCanvas().refresh();
-                            networkViewer.updateWarningsAndTables();
+                            netPlan.removeAllLinks();
+                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -582,47 +584,15 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, Object itemId) {
+    public void showInCanvas(MouseEvent e, Object itemId) 
+    {
         if (isTableEmpty()) return;
-
-        int clickCount = e.getClickCount();
-        switch (clickCount) {
-            case 1:
-                networkViewer.showLink((long) itemId);
-                break;
-
-            case 2:
-                int col = convertColumnIndexToModel(columnAtPoint(e.getPoint()));
-                if (col == -1 || col >= getColumnCount()) return;
-
-                NetPlan netPlan = networkViewer.getDesign();
-
-                Link link = netPlan.getLinkFromId((long) itemId);
-                switch (col) {
-                    case COLUMN_ORIGINNODE:
-                        networkViewer.showNode(link.getOriginNode().getId());
-                        break;
-                    case COLUMN_DESTNODE:
-                        networkViewer.showNode(link.getDestinationNode().getId());
-                        break;
-                    case COLUMN_COUPLEDTODEMAND:
-                        if (link.isCoupled()) {
-                            if (link.getCoupledDemand() != null)
-                                networkViewer.showDemand(link.getCoupledDemand().getId());
-                            else if (link.getCoupledMulticastDemand() != null)
-                                networkViewer.showMulticastDemand(link.getCoupledMulticastDemand().getId());
-                        }
-                        break;
-                    default:
-                        break;
-                }
-
-                break;
-        }
+        final Link link = callback.getDesign().getLinkFromId((long) itemId);
+        callback.pickLinkAndUpdateView(link);
     }
 
     private boolean isTableEmpty() {
-        return !networkViewer.getDesign().hasLinks();
+        return !callback.getDesign().hasLinks();
     }
 
     private JMenuItem getAddOption() {
@@ -632,15 +602,14 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    AdvancedJTable_demand.createLinkDemandGUI(networkElementType, networkViewer, networkViewer.getTopologyPanel());
-                    networkViewer.updateWarningsAndTables();
+                    AdvancedJTable_demand.createLinkDemandGUI(networkElementType , callback);
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
             }
         });
 
-        NetPlan netPlan = networkViewer.getDesign();
+        NetPlan netPlan = callback.getDesign();
         int N = netPlan.getNumberOfNodes();
         if (N < 2) addItem.setEnabled(false);
 
@@ -649,7 +618,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
 
     private List<JComponent> getExtraAddOptions() {
         List<JComponent> options = new LinkedList<JComponent>();
-        NetPlan netPlan = networkViewer.getDesign();
+        NetPlan netPlan = callback.getDesign();
 
         if (netPlan.getNumberOfNodes() >= 2) {
             final JMenuItem fullMeshEuclidean = new JMenuItem("Generate full-mesh (link length as Euclidean distance)");
@@ -668,7 +637,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
         List<JComponent> options = new LinkedList<JComponent>();
 
         final int numRows = model.getRowCount();
-        final NetPlan netPlan = networkViewer.getDesign();
+        final NetPlan netPlan = callback.getDesign();
 
         if (itemId != null) {
             final long linkId = (long) itemId;
@@ -682,8 +651,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                     Node destinationNode = link.getDestinationNode();
                     double euclideanDistance = netPlan.getNodePairEuclideanDistance(originNode, destinationNode);
                     link.setLengthInKm(euclideanDistance);
-
-                    networkViewer.updateWarningsAndTables();
+                	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
                 }
             });
 
@@ -698,8 +666,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                     Node destinationNode = link.getDestinationNode();
                     double haversineDistanceInKm = netPlan.getNodePairHaversineDistanceInKm(originNode, destinationNode);
                     link.setLengthInKm(haversineDistanceInKm);
-
-                    networkViewer.updateWarningsAndTables();
+                	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
                 }
             });
 
@@ -726,8 +693,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                     }
 
                     netPlan.getLinkFromId(linkId).setLengthInKm(netPlan.getLinkFromId(linkId).getLengthInKm() * scaleFactor);
-
-                    networkViewer.updateWarningsAndTables();
+                	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
                 }
             });
 
@@ -742,7 +708,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                         public void actionPerformed(ActionEvent e) {
                             netPlan.getLinkFromId(linkId).getCoupledDemand().decouple();
                             model.setValueAt("", row, 20);
-                            networkViewer.updateWarnings();
+                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK , NetworkElementType.DEMAND));
                         }
                     });
 
@@ -778,7 +744,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                                     long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
                                     Link link = netPlan.getLinkFromId(linkId);
                                     netPlan.addDemand(link.getOriginNode(), link.getDestinationNode(), link.getCapacity(), link.getAttributes(), netPlan.getNetworkLayerFromId(layerId));
-                                    networkViewer.updateWarningsAndTables();
+                                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND));
                                     break;
                                 } catch (Throwable ex) {
                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating lower layer demand from link");
@@ -856,8 +822,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                                     }
 
                                     netPlan.getDemandFromId(demandId).coupleToUpperLayerLink(netPlan.getLinkFromId(linkId));
-
-                                    networkViewer.updateWarningsAndTables();
+                                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK , NetworkElementType.DEMAND));
                                     break;
                                 } catch (Throwable ex) {
                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error coupling lower layer demand to link");
@@ -894,12 +859,11 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                         }
                     }
 
-                    NetPlan netPlan = networkViewer.getDesign();
+                    NetPlan netPlan = callback.getDesign();
 
                     try {
                         for (Link link : netPlan.getLinks()) link.setCapacity(u_e);
-
-                        networkViewer.updateWarningsAndTables();
+                    	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to all links");
                     }
@@ -928,12 +892,12 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                         }
                     }
 
-                    NetPlan netPlan = networkViewer.getDesign();
+                    NetPlan netPlan = callback.getDesign();
 
                     try {
                         for (Link link : netPlan.getLinks())
                             link.setCapacity(link.getOccupiedCapacity() / utilization);
-                        networkViewer.updateWarningsAndTables();
+                    	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to all links according to a given link utilization");
                     }
@@ -962,12 +926,11 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                         }
                     }
 
-                    NetPlan netPlan = networkViewer.getDesign();
+                    NetPlan netPlan = callback.getDesign();
 
                     try {
                         for (Link link : netPlan.getLinks()) link.setLengthInKm(l_e);
-
-                        networkViewer.updateWarningsAndTables();
+                    	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set link length to all links");
                     }
@@ -980,14 +943,13 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
             lengthToEuclidean_allLinks.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    NetPlan netPlan = networkViewer.getDesign();
+                    NetPlan netPlan = callback.getDesign();
 
                     try {
                         for (Link link : netPlan.getLinks()) {
                             link.setLengthInKm(netPlan.getNodePairEuclideanDistance(link.getOriginNode(), link.getDestinationNode()));
                         }
-
-                        networkViewer.updateWarningsAndTables();
+                    	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set link length value to all links");
                     }
@@ -1000,14 +962,13 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
             lengthToHaversine_allLinks.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    NetPlan netPlan = networkViewer.getDesign();
+                    NetPlan netPlan = callback.getDesign();
 
                     try {
                         for (Link link : netPlan.getLinks()) {
                             link.setLengthInKm(netPlan.getNodePairHaversineDistanceInKm(link.getOriginNode(), link.getDestinationNode()));
                         }
-
-                        networkViewer.updateWarningsAndTables();
+                    	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set link length value to all links");
                     }
@@ -1036,13 +997,12 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                         }
                     }
 
-                    NetPlan netPlan = networkViewer.getDesign();
+                    NetPlan netPlan = callback.getDesign();
 
                     try {
                         for (Link link : netPlan.getLinks())
                             link.setLengthInKm(link.getLengthInKm() * scaleFactor);
-
-                        networkViewer.updateWarningsAndTables();
+                    	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to scale link length");
                     }
@@ -1062,8 +1022,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
 
                             int numRows = model.getRowCount();
                             for (int i = 0; i < numRows; i++) model.setValueAt("", i, 20);
-
-                            networkViewer.updateWarnings();
+                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK , NetworkElementType.DEMAND));
                         }
                     });
 
@@ -1102,8 +1061,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                                     for (Link link : netPlan.getLinks())
                                         if (!link.isCoupled())
                                             link.coupleToNewDemandCreated(layer);
-
-                                    networkViewer.updateWarningsAndTables();
+                                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK , NetworkElementType.DEMAND));
                                     break;
                                 } catch (Throwable ex) {
                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating lower layer demands");
@@ -1163,7 +1121,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            NetPlan netPlan = networkViewer.getDesign();
+            NetPlan netPlan = callback.getDesign();
 //			for (Link link : netPlan.getLinks()) topologyPanel.getCanvas().removeLink(link.getId ()); // PABLO
 //			netPlan.removeAllLinks();
             for (long nodeId_1 : netPlan.getNodeIds()) {
@@ -1173,13 +1131,9 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
                     Node n2 = netPlan.getNodeFromId(nodeId_2);
 
                     Pair<Link, Link> out = netPlan.addLinkBidirectional(n1, n2, 0, euclidean ? netPlan.getNodePairEuclideanDistance(n1, n2) : netPlan.getNodePairHaversineDistanceInKm(n1, n2), 200000, null);
-                    networkViewer.getTopologyPanel().getCanvas().addLink(out.getFirst());
-                    networkViewer.getTopologyPanel().getCanvas().addLink(out.getSecond());
                 }
             }
-
-            networkViewer.getTopologyPanel().getCanvas().refresh();
-            networkViewer.updateWarningsAndTables();
+        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
         }
     }
 }

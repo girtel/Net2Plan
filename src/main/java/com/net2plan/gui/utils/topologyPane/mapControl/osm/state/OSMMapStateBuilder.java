@@ -94,14 +94,14 @@ public enum OSMMapStateBuilder
             currentState.zoomAll();
         }
 
-        public void addNode(final NetPlan netPlan, final String name, final Point2D pos)
+        public Point2D.Double translateNodeBaseCoordinatesIntoNetPlanCoordinates(final ITopologyCanvas canvas , final Point2D pos)
         {
-            currentState.addNode(topologyPanel, netPlan, name, pos);
+            return currentState.translateNodeBaseCoordinatesIntoNetPlanCoordinates(canvas, pos);
         }
 
         public void moveNode(final Node node, final Point2D pos)
         {
-            currentState.moveNode(callback, canvas, node, pos);
+            currentState.moveNodeInVisualization(canvas, node, pos);
         }
 
         public OSMState getCurrentState()
@@ -113,7 +113,14 @@ public enum OSMMapStateBuilder
         {
             currentState.takeSnapshot(canvas);
         }
-    }
+
+        public void  restartMapState(boolean centerMap)
+        {
+        	if (currentState instanceof OSMRunningState) mapController.restartMapState(centerMap);
+        }
+}
+    
+
 
     public static class SingletonBuilder
     {

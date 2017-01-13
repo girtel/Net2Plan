@@ -75,7 +75,7 @@ class SingleElementAttributeEditor extends MouseAdapter {
                                     return;
                             }
 
-                            callback.updateWarningsAndTables();
+                            callback.updateVisualizationJustTables();
                             return;
                         } catch (Exception ex) {
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Error adding/editing attribute");
@@ -145,7 +145,7 @@ class SingleElementAttributeEditor extends MouseAdapter {
                                     return;
                             }
 
-                            callback.updateWarningsAndTables();
+                            callback.updateVisualizationJustTables();
                         } catch (Exception ex) {
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attribute");
                         }
@@ -174,7 +174,7 @@ class SingleElementAttributeEditor extends MouseAdapter {
                                     return;
                             }
 
-                            callback.updateWarningsAndTables();
+                            callback.updateVisualizationJustTables();
                         } catch (Exception ex) {
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attributes");
                         }

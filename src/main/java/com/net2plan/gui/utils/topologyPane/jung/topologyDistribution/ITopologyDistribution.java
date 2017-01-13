@@ -12,5 +12,5 @@ import java.util.Map;
  */
 public interface ITopologyDistribution
 {
-    Map<Long, Point2D> getNodeDistribution(final List<Node> nodes);
+    Map<Node, Point2D> getNodeDistribution(final List<Node> nodes);
 }

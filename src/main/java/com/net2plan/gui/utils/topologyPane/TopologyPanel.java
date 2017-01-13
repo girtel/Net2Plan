@@ -22,6 +22,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
+import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.FileChooserNetworkDesign;
 import com.net2plan.gui.utils.FileDrop;
 import com.net2plan.gui.utils.INetworkCallback;
@@ -33,10 +34,14 @@ import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.DialogType;
+import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.ITopologyCanvas;
@@ -51,7 +56,6 @@ import com.net2plan.internal.plugins.ITopologyCanvas;
 @SuppressWarnings("unchecked")
 public class TopologyPanel extends JPanel implements ActionListener//FrequentisBackgroundPanel implements ActionListener//JPanel implements ActionListener
 {
-	private final VisualizationState vs;
     private final INetworkCallback callback;
     private final ITopologyCanvas canvas;
     private final ITopologyCanvasPlugin popupPlugin;
@@ -75,7 +79,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      *
      * @param callback   Topology callback listening plugin events
      * @param canvasType Canvas type (i.e. JUNG)
-     * @since 0.2.3
      */
     public TopologyPanel(INetworkCallback callback, Class<? extends ITopologyCanvas> canvasType)
     {
@@ -89,7 +92,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param callback   Topology callback listening plugin events
      * @param canvasType Canvas type (i.e. JUNG)
      * @param plugins    List of plugins to be included (it may be null)
-     * @since 0.2.3
      */
     public TopologyPanel(INetworkCallback callback, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins)
     {
@@ -104,12 +106,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param defaultDemandDirectory Default location for design {@code .n2p} files (it may be null, then default is equal to {@code net2planFolder/workspace/data/trafficMatrices})
      * @param canvasType             Canvas type (i.e. JUNG)
      * @param plugins                List of plugins to be included (it may be null)
-     * @since 0.2.0
      */
     public TopologyPanel(final INetworkCallback callback, File defaultDesignDirectory, File defaultDemandDirectory, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins)
     {
-//		super (null, FrequentisBackgroundPanel.ACTUAL, 1.0f, 0.5f);
-
         File currentDir = SystemUtils.getCurrentDir();
 
         this.callback = callback;
@@ -118,8 +117,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         try
         {
-        	this.vs = new VisualizationState(callback.getDesign());
-            canvas = canvasType.getDeclaredConstructor(VisualizationState.class).newInstance(vs);
+            canvas = canvasType.getDeclaredConstructor(VisualizationState.class).newInstance(callback.getVisualizationState());
         } catch (Exception e)
         {
             throw new RuntimeException(e);
@@ -156,10 +154,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 //				System.out.println ("Select layer: layerId " + layerId + ", layer: " + layer);
                 if (layer == null) throw new RuntimeException("Bad: " + layerId);
                 currentState.setNetworkLayerDefault(layer);
-                vs.rebuildVisualizationState(currentState);
-                getCanvas().rebuildTopology();
-                callback.updateWarningsAndTables();
-                callback.layerChanged(layerId);
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
             }
         });
 
@@ -308,7 +303,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                getCanvas().increaseNodeSize();
+            	callback.getVisualizationState().increaseNodeSizeAll();
+            	callback.updateVisualizationJustTopologyCanvas ();
             }
         });
 
@@ -317,7 +313,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                getCanvas().decreaseNodeSize();
+            	callback.getVisualizationState().decreaseNodeSizeAll();
+            	callback.updateVisualizationJustTopologyCanvas ();
             }
         });
 
@@ -326,8 +323,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void actionPerformed(ActionEvent e)
             {
-            	vs.increaseFontSize();
-            	canvas.refresh();
+            	callback.getVisualizationState().increaseFontSizeAll();
+            	callback.updateVisualizationJustTopologyCanvas ();
             }
         });
 
@@ -336,8 +333,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void actionPerformed(ActionEvent e)
             {
-            	final boolean somethingChanged = vs.decreaseFontSize();
-                if (somethingChanged) canvas.refresh();
+            	final boolean somethingChanged = callback.getVisualizationState().decreaseFontSizeAll();
+            	if (somethingChanged) callback.updateVisualizationJustTopologyCanvas ();
             }
         });
 
@@ -348,7 +345,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         if (ErrorHandling.isDebugEnabled())
         {
-            canvas.getInternalComponent().addMouseMotionListener(new MouseMotionListener()
+            canvas.getInternalVisualizationController().addMouseMotionListener(new MouseMotionListener()
             {
                 @Override
                 public void mouseDragged(MouseEvent e)
@@ -394,19 +391,19 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showLinkIds.setSelected(false);
         btn_showNonConnectedNodes.setSelected(true);
 
-        popupPlugin = new PopupMenuPlugin(callback);
-        addPlugin(new PanGraphPlugin(callback, MouseEvent.BUTTON1_MASK));
-        if (callback.isEditable() && getCanvas() instanceof JUNGCanvas)
-            addPlugin(new AddLinkGraphPlugin(callback, MouseEvent.BUTTON1_MASK, MouseEvent.BUTTON1_MASK | MouseEvent.SHIFT_MASK));
+        popupPlugin = new PopupMenuPlugin(callback , this.canvas);
+        addPlugin(new PanGraphPlugin(callback, canvas , MouseEvent.BUTTON1_MASK));
+        if (callback.getVisualizationState().isNetPlanEditable() && getCanvas() instanceof JUNGCanvas)
+            addPlugin(new AddLinkGraphPlugin(callback, canvas , MouseEvent.BUTTON1_MASK, MouseEvent.BUTTON1_MASK | MouseEvent.SHIFT_MASK));
         addPlugin(popupPlugin);
-        if (callback.isEditable())
-            addPlugin(new MoveNodePlugin(callback, MouseEvent.BUTTON1_MASK | MouseEvent.CTRL_MASK));
+        if (callback.getVisualizationState().isNetPlanEditable())
+            addPlugin(new MoveNodePlugin(callback, canvas , MouseEvent.BUTTON1_MASK | MouseEvent.CTRL_MASK));
 
         setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Network topology"));
 //        setAllowLoadTrafficDemand(callback.allowLoadTrafficDemands());
     }
 
-    public VisualizationState getVisualizationState () { return vs; }
+    public VisualizationState getVisualizationState () { return callback.getVisualizationState(); }
     
     @Override
     public void actionPerformed(ActionEvent e)
@@ -424,13 +421,16 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             saveDesign();
         } else if (src == btn_showNodeNames)
         {
-            canvas.showNodeNames(btn_showNodeNames.isSelected());
+        	callback.getVisualizationState().setShowNodeNames(btn_showNodeNames.isSelected());
+        	callback.updateVisualizationJustTopologyCanvas();
         } else if (src == btn_showLinkIds)
         {
-            canvas.showLinkLabels(btn_showLinkIds.isSelected());
+        	callback.getVisualizationState().setShowLinkLabels(btn_showLinkIds.isSelected());
+        	callback.updateVisualizationJustTopologyCanvas();
         } else if (src == btn_showNonConnectedNodes)
         {
-            canvas.showNonConnectedNodes(btn_showNonConnectedNodes.isSelected());
+        	callback.getVisualizationState().setShowNonConnectedNodes(btn_showNonConnectedNodes.isSelected());
+        	callback.updateVisualizationJustTopologyCanvas();
         } else if (src == btn_takeSnapshot)
         {
             takeSnapshot();
@@ -445,7 +445,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             zoomAll();
         } else if (src == btn_reset)
         {
-            callback.reset();
+        	callback.loadDesignDoNotUpdateVisualization(new NetPlan ());
+        	callback.updateVisualizationAfterNewTopology();
+            callback.resetPickedStateAndUpdateView();
         }
     }
 
@@ -523,9 +525,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             aux.checkCachesConsistency();
 
-            callback.loadDesign(aux);
-
-
+            callback.loadDesignDoNotUpdateVisualization(aux);
+            callback.updateVisualizationAfterNewTopology();
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
@@ -545,9 +546,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             checkNetPlanFileChooser();
             fc_netPlan.setCurrentDirectory(file.getParentFile());
 
-            callback.loadDesign(netPlan);
-
-
+            callback.loadDesignDoNotUpdateVisualization(netPlan);
+            callback.updateVisualizationAfterNewTopology();
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
@@ -573,8 +573,39 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             int rc = fc_demands.showOpenDialog(null);
             if (rc != JFileChooser.APPROVE_OPTION) return;
 
-            NetPlan aux = fc_demands.readDemands();
-            callback.loadTrafficDemands(aux);
+            NetPlan demands = fc_demands.readDemands();
+            
+            if (!demands.hasDemands() && !demands.hasMulticastDemands())
+                throw new Net2PlanException("Selected file doesn't contain a demand set");
+
+            NetPlan netPlan = callback.getDesign();
+            if (netPlan.hasDemands() || netPlan.hasMulticastDemands())
+            {
+                int result = JOptionPane.showConfirmDialog(null, "Current network structure contains a demand set. Overwrite?", "Loading demand set", JOptionPane.YES_NO_OPTION);
+                if (result != JOptionPane.YES_OPTION) return;
+            }
+
+            NetPlan aux_netPlan = netPlan.copy();
+            try
+            {
+                netPlan.removeAllDemands();
+                for (Demand demand : demands.getDemands())
+                    netPlan.addDemand(netPlan.getNode(demand.getIngressNode().getIndex()), netPlan.getNode(demand.getEgressNode().getIndex()), demand.getOfferedTraffic(), demand.getAttributes());
+
+                netPlan.removeAllMulticastDemands();
+                for (MulticastDemand demand : demands.getMulticastDemands())
+                {
+                    Set<Node> egressNodesThisNetPlan = new HashSet<Node>();
+                    for (Node n : demand.getEgressNodes()) egressNodesThisNetPlan.add(netPlan.getNode(n.getIndex()));
+                    netPlan.addMulticastDemand(netPlan.getNode(demand.getIngressNode().getIndex()), egressNodesThisNetPlan, demand.getOfferedTraffic(), demand.getAttributes());
+                }
+
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.MULTICAST_DEMAND));
+            } catch (Throwable ex)
+            {
+                callback.getDesign().assignFrom(aux_netPlan);
+                throw new RuntimeException(ex);
+            }
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);

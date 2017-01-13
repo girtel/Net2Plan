@@ -210,6 +210,11 @@ public final class JUNGCanvas implements ITopologyCanvas
 //        reset();
     }
 
+    @Override
+    public JComponent getComponent()
+    {
+        return vv;
+    }
 //    @Override
 //    public void addNode(Node npNode) //long nodeId, Point2D pos, String label)
 //    {
@@ -268,36 +273,29 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public JComponent getComponent()
-    {
-        return vv;
-    }
-
-    @Override
     public String getDescription()
     {
         return null;
     }
 
     @Override
-    public JComponent getInternalComponent()
+    public JComponent getInternalVisualizationController()
     {
         return vv;
     }
 
     @Override
-    public long getLink(MouseEvent e)
+    public GUILink getLink(MouseEvent e)
     {
         final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) e.getSource();
         GraphElementAccessor<GUINode, GUILink> pickSupport = vv.getPickSupport();
         if (pickSupport != null)
         {
             final Point p = e.getPoint();
-            final GUILink edge = pickSupport.getEdge(vv.getModel().getGraphLayout(), p.getX(), p.getY());
-            if (edge != null) return edge.getAssociatedNetPlanLink().getId();
+            return pickSupport.getEdge(vv.getModel().getGraphLayout(), p.getX(), p.getY());
         }
 
-        return -1;
+        return null;
     }
 
     @Override
@@ -307,7 +305,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public long getNode(MouseEvent e)
+    public GUINode getNode(MouseEvent e)
     {
         final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) e.getSource();
         GraphElementAccessor<GUINode, GUILink> pickSupport = vv.getPickSupport();
@@ -315,10 +313,10 @@ public final class JUNGCanvas implements ITopologyCanvas
         {
             final Point p = e.getPoint();
             final GUINode vertex = pickSupport.getVertex(vv.getModel().getGraphLayout(), p.getX(), p.getY());
-            if (vertex != null) return vertex.getAssociatedNetPlanNode().getId();
+            if (vertex != null) return vertex;
         }
 
-        return -1;
+        return null;
     }
 
     @Override
@@ -356,7 +354,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public void rebuildTopology()
+    public void rebuildTopologyAndRefresh()
     {
     	for (GUILink gl : new ArrayList<>(g.getEdges()))
     		g.removeEdge(gl);
@@ -433,11 +431,11 @@ public final class JUNGCanvas implements ITopologyCanvas
         vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT).translate(dx, dy);
     }
 
-//    @Override
-//    public void updateNodeXYPosition(GUINode node)
-//    {
-//        l.setLocation(node, FLIP_VERTICAL_COORDINATES.transform(node));
-//    }
+    @Override
+    public void updateNodeXYPosition(GUINode node)
+    {
+        l.setLocation(node, FLIP_VERTICAL_COORDINATES.transform(node));
+    }
 
     @Override
     public void moveNodeToXYPosition(Node npNode, Point2D point)

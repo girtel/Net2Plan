@@ -12,21 +12,30 @@
 
 package com.net2plan.gui.utils.topologyPane.jung;
 
-import com.net2plan.gui.utils.INetworkCallback;
-import com.net2plan.gui.utils.topologyPane.GUILink;
-import com.net2plan.gui.utils.topologyPane.GUINode;
-import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
-import com.net2plan.internal.plugins.ITopologyCanvas;
-import edu.uci.ics.jung.visualization.VisualizationServer.Paintable;
-import edu.uci.ics.jung.visualization.VisualizationViewer;
-import edu.uci.ics.jung.visualization.util.ArrowFactory;
-
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Shape;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Point2D;
+
+import com.google.common.collect.Sets;
+import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.topologyPane.GUILink;
+import com.net2plan.gui.utils.topologyPane.GUINode;
+import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.internal.plugins.ITopologyCanvas;
+
+import edu.uci.ics.jung.visualization.VisualizationServer.Paintable;
+import edu.uci.ics.jung.visualization.VisualizationViewer;
+import edu.uci.ics.jung.visualization.util.ArrowFactory;
 
 /**
  * Plugin that allows to add new links graphically over the canvas.
@@ -37,7 +46,7 @@ import java.awt.geom.Point2D;
 @SuppressWarnings("unchecked")
 public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugin {
     private INetworkCallback callback;
-    private long startVertex;
+    private GUINode startVertex;
     private Paintable edgePaintable;
     private Paintable arrowPaintable;
     private CubicCurve2D rawEdge;
@@ -56,8 +65,8 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
      * @param callback Topology callback
      * @since 0.2.0
      */
-    public AddLinkGraphPlugin(INetworkCallback callback) {
-        this(callback, MouseEvent.BUTTON1_MASK, MouseEvent.BUTTON1_MASK | MouseEvent.SHIFT_MASK);
+    public AddLinkGraphPlugin(INetworkCallback callback , ITopologyCanvas canvas) {
+        this(callback, canvas , MouseEvent.BUTTON1_MASK, MouseEvent.BUTTON1_MASK | MouseEvent.SHIFT_MASK);
     }
 
     /**
@@ -69,18 +78,19 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
      * @param modifiersBidirectional Modifier to activate the plugin to add bidirectional links
      * @since 0.2.0
      */
-    public AddLinkGraphPlugin(INetworkCallback callback, int modifiers, int modifiersBidirectional) {
+    public AddLinkGraphPlugin(INetworkCallback callback, ITopologyCanvas canvas , int modifiers, int modifiersBidirectional) {
         setModifiers(modifiers);
         setModifiersBidirectional(modifiersBidirectional);
 
         this.callback = callback;
         down = null;
-        startVertex = -1;
+        startVertex = null;
         rawEdge = new CubicCurve2D.Float();
         rawEdge.setCurve(0.0f, 0.0f, 0.33f, 100, .66f, -50, 1.0f, 0.0f);
         rawArrowShape = ArrowFactory.getNotchedArrow(20, 16, 8);
         edgePaintable = new EdgePaintable();
         arrowPaintable = new ArrowPaintable();
+        this.canvas = canvas;
     }
 
     @Override
@@ -101,14 +111,16 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
     @Override
     public void mouseClicked(MouseEvent e) {
         if (checkModifiers(e)) {
-            long nodeId = getCanvas().getNode(e);
-            if (nodeId != -1) {
-                callback.showNode(nodeId);
+            GUINode guiNode = canvas.getNode(e);
+            Node node = guiNode == null? null : guiNode.getAssociatedNetPlanNode();
+            if (node != null) {
+                callback.pickNodeAndUpdateView(node);
                 e.consume();
             } else {
-                long linkId = getCanvas().getLink(e);
-                if (linkId != -1) {
-                    callback.showLink(linkId);
+                GUILink link = canvas.getLink(e);
+                if (link != null) 
+                {
+                	if (!link.isIntraNodeLink()) callback.pickLinkAndUpdateView(link.getAssociatedNetPlanLink());
                     e.consume();
                 }
             }
@@ -117,7 +129,7 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        if (startVertex != -1) {
+        if (startVertex != null) {
             VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) e.getSource();
             transformArrowShape(down, e.getPoint());
             transformEdgeShape(down, e.getPoint());
@@ -129,14 +141,15 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
     @Override
     public void mousePressed(MouseEvent e) {
         if (checkModifiers(e)) {
-            startVertex = -1;
+            startVertex = null;
             down = null;
 
-            long nodeId = getCanvas().getNode(e);
-            if (nodeId != -1) {
+            GUINode guiNode = canvas.getNode(e);
+            Node node = guiNode == null? null : guiNode.getAssociatedNetPlanNode();
+            if (node != null) {
                 final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) e.getSource();
 
-                startVertex = nodeId;
+                startVertex = guiNode;
                 down = e.getPoint();
                 transformEdgeShape(down, down);
                 vv.addPostRenderPaintable(edgePaintable);
@@ -149,22 +162,30 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        if (startVertex != -1) {
+        if (startVertex != null) {
             final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) e.getSource();
             vv.removePostRenderPaintable(edgePaintable);
             vv.removePostRenderPaintable(arrowPaintable);
 
-            final long nodeId = getCanvas().getNode(e);
-            if (nodeId != -1 && startVertex != nodeId) {
-                boolean bidirectional = (e.getModifiersEx() & MouseEvent.SHIFT_DOWN_MASK) == MouseEvent.SHIFT_DOWN_MASK;
-                if (bidirectional) callback.addLinkBidirectional(startVertex, nodeId);
-                else callback.addLink(startVertex, nodeId);
+            final GUINode guiNode = canvas.getNode(e);
+            final Node node = guiNode == null? null : guiNode.getAssociatedNetPlanNode();
+            if (node != null && startVertex.getAssociatedNetPlanNode() != node) 
+            {
+            	if ((guiNode.getVisualizationLayer().getNumberOfNetPlanLayers() == 1) &&
+            			(guiNode.getVisualizationLayer().getNetPlanLayers().equals(startVertex.getVisualizationLayer().getNetPlanLayers())))
+    			{
+            		final NetworkLayer layer = guiNode.getVisualizationLayer().getNetPlanLayers().get(0);
+        			boolean bidirectional = (e.getModifiersEx() & MouseEvent.SHIFT_DOWN_MASK) == MouseEvent.SHIFT_DOWN_MASK;
+                    if (bidirectional) node.getNetPlan().addLinkBidirectional(startVertex.getAssociatedNetPlanNode(), node,0,0,200000,null);
+                    else node.getNetPlan().addLink(startVertex.getAssociatedNetPlanNode(), node,0,0,200000,null);
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
+    			}
             }
 
-            startVertex = -1;
+            startVertex = null;
             down = null;
 
-            callback.resetView();
+            callback.resetPickedStateAndUpdateView();
             vv.repaint();
         }
     }

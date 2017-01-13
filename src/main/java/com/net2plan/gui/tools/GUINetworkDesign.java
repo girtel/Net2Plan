@@ -14,7 +14,6 @@ package com.net2plan.gui.tools;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -23,10 +22,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,7 +32,6 @@ import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -47,13 +43,14 @@ import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
-import javax.swing.table.TableModel;
 
+import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.INetworkCallback;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
 import com.net2plan.gui.utils.onlineSimulationPane.OnlineSimulationPane;
 import com.net2plan.gui.utils.topologyPane.GUILink;
+import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
@@ -61,7 +58,6 @@ import com.net2plan.gui.utils.topologyPane.jung.topologyDistribution.CircularDis
 import com.net2plan.gui.utils.topologyPane.jung.topologyDistribution.ITopologyDistribution;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
 import com.net2plan.gui.utils.viewEditWindows.utils.WindowUtils;
@@ -73,15 +69,17 @@ import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.MulticastTree;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.libraries.NetworkPerformanceMetrics;
-import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.TopologyMap;
@@ -113,6 +111,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     private ViewReportPane reportPane;
     private OfflineExecutionPanel executionPane;
     private OnlineSimulationPane onlineSimulationPane;
+	private VisualizationState vs;
 
     /**
      * Reference to the popup menu in the topology panel.
@@ -122,7 +121,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     private JPanel leftPane;
     private NetPlan currentNetPlan;
 
-    private TopologyMap initialTopologySetting;
+//    private TopologyMap initialTopologySetting;
     private ITopologyDistribution circularTopologySetting;
 
     /**
@@ -154,7 +153,10 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     @Override
     public void configure(JPanel contentPane)
     {
-        topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
+    	this.currentNetPlan = new NetPlan ();
+    	this.vs = new VisualizationState(currentNetPlan);
+
+    	topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
 
         // Running OSM state machine.
         new OSMMapStateBuilder.SingletonBuilder(topologyPanel, this).build();
@@ -185,7 +187,8 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 
         reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
 
-        loadDesign(new NetPlan());
+        loadDesign(currentNetPlan);
+
 
         onlineSimulationPane = new OnlineSimulationPane(this);
         executionPane = new OfflineExecutionPanel(this);
@@ -298,12 +301,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     }
 
     @Override
-    public Map<NetworkElementType, AdvancedJTableNetworkElement> getTables()
-    {
-        return viewEditTopTables.currentTables();
-    }
-
-    @Override
     public String getDescription()
     {
         return getName();
@@ -348,72 +345,196 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     }
 
     @Override
-    public long addLink(long originNode, long destinationNode)
+    public void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade)
     {
-        long layer = getDesign().getNetworkLayerDefault().getId();
-        return addLink(layer, originNode, destinationNode);
+    	if ((modificationsMade == null) ||  (modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE)))
+    	{
+	   		vs.rebuildVisualizationState(null);
+   	        topologyPanel.getCanvas().refresh();
+   	        viewEditTopTables.updateView();
+   	        updateWarnings();
+    	}
+    	else 
+    	{
+   	        viewEditTopTables.updateView();
+   	        updateWarnings();
+    	}
+    }
+
+    public void updateVisualizationFocus (NetworkElementType type , long id)
+    {
+        viewEditTopTables.selectViewItem(NetworkElementType.LINK , id);
+    }
+
+    public void updateVisualizationFocus (NetworkElementType type , int indexDemand , int indexLink)
+    {
+    	if (type != NetworkElementType.FORWARDING_RULE) throw new RuntimeException("Bad");
+        viewEditTopTables.selectViewItem(NetworkElementType.FORWARDING_RULE , Pair.of(indexDemand,indexLink));
+    }
+    
+    @Override
+    public Link addLink (NetworkLayer layer , Node originNode, Node destinationNode , boolean updateView)
+    {
+        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
+   		Link e = getDesign().addLink(originNode , destinationNode , 0 , 0 , 200000 , null ,  layer);
+   		if (updateView)
+   		{
+   	   		vs.rebuildVisualizationState(null);
+   	        topologyPanel.getCanvas().refresh();
+   	        viewEditTopTables.updateView();
+   	        viewEditTopTables.selectViewItem(NetworkElementType.LINK , e.getId());
+   	        updateWarnings();
+   		}
+        return e;
     }
 
     @Override
-    public long addLink(long layer, long originNode, long destinationNode)
+    public Demand addDemand (NetworkLayer layer , Node originNode, Node destinationNode , boolean updateView)
     {
-        if (!isEditable()) throw new UnsupportedOperationException("Not supported");
+        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
+   		Demand d = getDesign().addDemand(originNode , destinationNode , 0 , null ,  layer);
+   		if (updateView)
+   		{
+   	        viewEditTopTables.updateView();
+   	        viewEditTopTables.selectViewItem(NetworkElementType.DEMAND , d.getId());
+   	        updateWarnings();
+   		}
+        return d;
+    }
+
+    
+    @Override
+    public Pair<Demand,Demand> addDemandBidirectional (NetworkLayer layer, Node originNode, Node destinationNode , boolean updateView)
+    {
+        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
+   		Pair<Demand,Demand> d = getDesign().addDemandBidirectional(originNode , destinationNode , 0 , null ,  layer);
+   		if (updateView)
+   		{
+   	        viewEditTopTables.updateView();
+   	        viewEditTopTables.selectViewItem(NetworkElementType.DEMAND , d.getFirst().getId());
+   	        updateWarnings();
+   		}
+        return d;
+    }
+    
+    @Override
+    public Pair<Link, Link> addLinkBidirectional (NetworkLayer layer , Node originNode, Node destinationNode , boolean updateView)
+    {
+        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
 
         NetPlan netPlan = getDesign();
-        Link link = netPlan.addLink(netPlan.getNodeFromId(originNode), netPlan.getNodeFromId(destinationNode), 0, 0, 200000, null, netPlan.getNetworkLayerFromId(layer));
+        Pair<Link, Link> links = netPlan.addLinkBidirectional(originNode, destinationNode, 0, 0, 200000, null, layer);
+        if (updateView)
+        {
+        	vs.rebuildVisualizationState(null);
+            topologyPanel.getCanvas().rebuildTopologyAndRefresh();
+            viewEditTopTables.updateView();
+            viewEditTopTables.selectViewItem(NetworkElementType.LINK , links.getFirst().getId());
+            updateWarnings();
+        }
+        return Pair.of(links.getFirst(), links.getSecond());
+    }
+    
+    @Override
+    public Node addNode (Point2D pos , boolean updateView)
+    {
+        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
 
-        topologyPanel.getVisualizationState().rebuildVisualizationState(null);
-        topologyPanel.getCanvas().refresh();
-//        if (layer == netPlan.getNetworkLayerDefault().getId())
-//        {
-//            topologyPanel.getCanvas().addLink(link);
-//            topologyPanel.getCanvas().refresh();
-//        }
-
-        updateWarningsAndTables();
-        return link.getId();
+        Point2D.Double netPlanPos = OSMMapStateBuilder.getSingleton().translateNodeBaseCoordinatesIntoNetPlanCoordinates(getTopologyPanel().getCanvas() , pos);
+   		Node n = getDesign().addNode(netPlanPos.getX() , netPlanPos.getY() , "Node" + getDesign().getNumberOfNodes() , null);
+   		if (updateView)
+   		{
+   	        vs.rebuildVisualizationState(null);
+   	        topologyPanel.getCanvas().rebuildTopologyAndRefresh();
+   	        OSMMapStateBuilder.getSingleton().restartMapState(false);
+   	        viewEditTopTables.updateView();
+   	        viewEditTopTables.selectViewItem(NetworkElementType.NODE , n.getId());
+   	        updateWarnings();
+   		}
+        return n;
     }
 
     @Override
-    public Pair<Long, Long> addLinkBidirectional(long originNode, long destinationNode)
+    public void applyTopologyRearrangementAndUpdateView (ITopologyDistribution distribution)
     {
-        return addLinkBidirectional(getDesign().getNetworkLayerDefault().getId(), originNode, destinationNode);
+        final Map<Node, Point2D> nodePositionInNetPlanCoord = distribution.getNodeDistribution(currentNetPlan.getNodes());
+
+        for (Node node : currentNetPlan.getNodes())
+        {
+        	node.setXYPositionMap(nodePositionInNetPlanCoord.get(node));
+        	for (GUINode gn : vs.getVerticallyStackedGUINodes(node)) 
+        		topologyPanel.getCanvas().updateNodeXYPosition(gn);
+        }
+        topologyPanel.getCanvas().refresh();
+        topologyPanel.zoomAll();
+        viewEditTopTables.updateView();
     }
 
     @Override
-    public Pair<Long, Long> addLinkBidirectional(long layer, long originNode, long destinationNode)
+    public void setNodeVisibilityStateAndUpdateView (Node node, boolean setAsVisible)
     {
-        if (!isEditable()) throw new UnsupportedOperationException("Not supported");
-
-        NetPlan netPlan = getDesign();
-        Pair<Link, Link> links = netPlan.addLinkBidirectional(netPlan.getNodeFromId(originNode), netPlan.getNodeFromId(destinationNode), 0, 0, 200000, null, netPlan.getNetworkLayerFromId(layer));
-        topologyPanel.getVisualizationState().rebuildVisualizationState(null);
-        topologyPanel.getCanvas().refresh();
-//
-//        if (layer == netPlan.getNetworkLayerDefault().getId())
-//        {
-//            topologyPanel.getCanvas().addLink(links.getFirst());
-//            topologyPanel.getCanvas().addLink(links.getSecond());
-//            topologyPanel.getCanvas().refresh();
-//        }
-//
-        updateWarningsAndTables();
-        return Pair.of(links.getFirst().getId(), links.getSecond().getId());
+    	vs.setVisibilityState(node , setAsVisible);
+    	topologyPanel.getCanvas().refresh();
+    }
+    
+    @Override
+    public void setNodeNameAndUpdateView (Node node, String name)
+    {
+    	node.setName(name);
+    	topologyPanel.getCanvas().refresh();
     }
 
     @Override
-    public void addNode(Point2D pos)
+    public void setNodeFailureState (Node node, boolean isUp , boolean updateView)
     {
-        if (!isEditable()) throw new UnsupportedOperationException("Not supported");
-
-        NetPlan netPlan = getDesign();
-        long nodeId = netPlan.getNetworkElementNextId();
-
-        OSMMapStateBuilder.getSingleton().addNode(netPlan, "Node " + nodeId, pos);
-        topologyPanel.getVisualizationState().rebuildVisualizationState(null);
-        topologyPanel.getCanvas().refresh();
-        updateWarningsAndTables();
+        node.setFailureState(isUp);
+        if (updateView)
+        {
+            topologyPanel.getCanvas().refresh();
+            viewEditTopTables.updateView();
+            updateWarnings();
+        }
     }
+    
+    @Override
+    public void setLinkFailureState (Link link , boolean isUp , boolean updateView)
+    {
+        link.setFailureState(isUp);
+        if (updateView)
+        {
+            topologyPanel.getCanvas().refresh();
+            viewEditTopTables.updateView();
+            updateWarnings();
+        }
+    }
+
+    @Override
+    public void moveNodeXYPosition (Node node, Point2D posInNetPlanCoordinates , boolean updateView)
+    {
+        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
+
+        /* Change the netplan position */
+        node.setXYPositionMap(posInNetPlanCoordinates);
+        
+        if (updateView)
+        {
+            /* Just updates the X,Y columns in the table */
+            ClassAwareTableModel nodeTableModel = (ClassAwareTableModel) viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.NODE).getModel();
+            int numRows = nodeTableModel.getRowCount();
+            for (int row = 0; row < numRows; row++)
+            {
+                if ((long) nodeTableModel.getValueAt(row, 0) == node.getId())
+                {
+                    nodeTableModel.setAtValueSuper(node.getXYPositionMap().getX(), row, AdvancedJTable_node.COLUMN_XCOORD);
+                    nodeTableModel.setAtValueSuper(node.getXYPositionMap().getY(), row, AdvancedJTable_node.COLUMN_YCOORD);
+                }
+            }
+            
+            for (GUINode gn : vs.getVerticallyStackedGUINodes(node)) topologyPanel.getCanvas().updateNodeXYPosition(gn);
+            topologyPanel.getCanvas().refresh();
+        }
+    }
+
 
     @Override
     public NetPlan getDesign()
@@ -430,199 +551,94 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     }
 
     @Override
-    public List<JComponent> getCanvasActions(Point2D pos)
+    public void setDemandOfferedTraffic (Demand d , double traffic , boolean updateView)
     {
-        List<JComponent> actions = new LinkedList<>();
-
-        if (isEditable())
-        {
-            JMenuItem addNode = new JMenuItem(new AddNodeAction("Add node here", pos));
-            actions.add(addNode);
-
-            actions.add(new JPopupMenu.Separator());
-
-            JMenuItem restoreTopology = new JMenuItem("Restore topology to original layout");
-            restoreTopology.setToolTipText("Restores all nodes to their original position when the topology was loaded, leaves them in place if they were not in the original topology.");
-            restoreTopology.addActionListener(e ->
-            {
-                for (Node node : currentNetPlan.getNodes())
-                {
-                    // This is supposed to be done with the OSM state manager, but that does not exactly do what is required here.
-                    moveNode(node.getId(), initialTopologySetting.getNodeLocation(node));
-                }
-
-                topologyPanel.zoomAll();
-            });
-
-            actions.add(restoreTopology);
-
-            JMenu topologySettingMenu = new JMenu("Change topology layout");
-
-            JMenuItem circularSetting = new JMenuItem("Circular");
-            circularSetting.addActionListener(e ->
-            {
-                final Map<Long, Point2D> nodePosition = circularTopologySetting.getNodeDistribution(currentNetPlan.getNodes());
-
-                for (Node node : currentNetPlan.getNodes())
-                {
-                    OSMMapStateBuilder.getSingleton().moveNode(node, nodePosition.get(node.getId()));
-                }
-
-                topologyPanel.zoomAll();
-            });
-
-            topologySettingMenu.add(circularSetting);
-
-            actions.add(topologySettingMenu);
-        }
-
-        return actions;
+    	d.setOfferedTraffic(traffic);
+    	if (updateView)
+    		viewEditTopTables.updateView();
+    }
+    
+    @Override
+    public void removeNetworkElementAndUpdateView (NetworkElement e)
+    {
+    	boolean updateCanvas = (e instanceof Node) || (e instanceof Link) || (e instanceof NetworkLayer);
+    	if (e instanceof Demand) ((Demand) e).remove();
+    	else if (e instanceof Demand) ((Demand) e).remove();
+    	else if (e instanceof Link) ((Link) e).remove();
+    	else if (e instanceof MulticastDemand) ((MulticastDemand) e).remove();
+    	else if (e instanceof MulticastTree) ((MulticastTree) e).remove();
+    	else if (e instanceof NetworkLayer) e.getNetPlan().removeNetworkLayer((NetworkLayer) e);
+    	else if (e instanceof Node) ((Node) e).remove();
+    	else if (e instanceof Resource) ((Resource) e).remove();
+    	else if (e instanceof Route) ((Route) e).remove();
+    	else if (e instanceof SharedRiskGroup) ((SharedRiskGroup) e).remove();
+    	else throw new RuntimeException ("Bad");
+    		
+    	if (updateCanvas) 
+            topologyPanel.getCanvas().rebuildTopologyAndRefresh();
+        viewEditTopTables.updateView();
+        updateWarnings();
     }
 
     @Override
-    public List<JComponent> getLinkActions(long link, Point2D pos)
+    public void removeAllNetworkElementsOfaType (NetworkElementType type , NetworkLayer layer)
     {
-        List<JComponent> actions = new LinkedList<JComponent>();
-
-        if (isEditable())
-            actions.add(new JMenuItem(new RemoveLinkAction("Remove link", link)));
-
-        return actions;
+    	final NetPlan np = getDesign();
+    	boolean updateCanvas = (type == NetworkElementType.NODE) || (type == NetworkElementType.LINK) || (type == NetworkElementType.LAYER);
+    	if (type == NetworkElementType.DEMAND) np.removeAllDemands(layer);
+    	else if (type == NetworkElementType.LINK) np.removeAllLinks(layer);
+    	else if (type == NetworkElementType.MULTICAST_DEMAND) np.removeAllMulticastDemands(layer);
+    	else if (type == NetworkElementType.MULTICAST_TREE) np.removeAllMulticastTrees(layer);
+    	else if (type == NetworkElementType.LAYER) np.removeAllNetworkLayers();
+    	else if (type == NetworkElementType.NODE) np.removeAllNodes();
+    	else if (type == NetworkElementType.RESOURCE) np.removeAllResources();
+    	else if (type == NetworkElementType.ROUTE) np.removeAllRoutes(layer);
+    	else if (type == NetworkElementType.FORWARDING_RULE) np.removeAllForwardingRules(layer);
+    	else throw new RuntimeException ("Bad");
+    		
+    	if (updateCanvas) 
+            topologyPanel.getCanvas().rebuildTopologyAndRefresh();
+        viewEditTopTables.updateView();
+        updateWarnings();
     }
 
+    
     @Override
-    public List<JComponent> getNodeActions(long nodeId, Point2D pos)
+    public void loadDesignDoNotUpdateVisualization (NetPlan netPlan)
     {
-        List<JComponent> actions = new LinkedList<JComponent>();
-
-        if (isEditable())
-        {
-            actions.add(new JMenuItem(new RemoveNodeAction("Remove node", nodeId)));
-
-            NetPlan netPlan = getDesign();
-            Node node = netPlan.getNodeFromId(nodeId);
-            if (netPlan.getNumberOfNodes() > 1)
-            {
-                actions.add(new JPopupMenu.Separator());
-                JMenu unidirectionalMenu = new JMenu("Create unidirectional link");
-                JMenu bidirectionalMenu = new JMenu("Create bidirectional link");
-
-                String nodeName = node.getName() == null ? "" : node.getName();
-                String nodeString = Long.toString(nodeId) + (nodeName.isEmpty() ? "" : " (" + nodeName + ")");
-
-                long layer = netPlan.getNetworkLayerDefault().getId();
-                for (Node auxNode : netPlan.getNodes())
-                {
-                    if (auxNode.getId() == nodeId) continue;
-
-                    String auxNodeName = auxNode.getName() == null ? "" : auxNode.getName();
-                    String auxNodeString = Long.toString(auxNode.getId()) + (auxNodeName.isEmpty() ? "" : " (" + auxNodeName + ")");
-
-                    AbstractAction unidirectionalAction = new AddLinkAction(nodeString + " => " + auxNodeString, layer, nodeId, auxNode.getId());
-                    unidirectionalMenu.add(unidirectionalAction);
-
-                    AbstractAction bidirectionalAction = new AddLinkBidirectionalAction(nodeString + " <=> " + auxNodeString, layer, nodeId, auxNode.getId());
-                    bidirectionalMenu.add(bidirectionalAction);
-                }
-
-                actions.add(unidirectionalMenu);
-                actions.add(bidirectionalMenu);
-            }
-        }
-
-        return actions;
-    }
-
-    @Override
-    public boolean isEditable()
-    {
-        if (onlineSimulationPane == null) return true;
-        final SimState simState = onlineSimulationPane.getSimKernel().getSimCore().getSimulationState();
-        if (simState == SimState.PAUSED || simState == SimState.RUNNING || simState == SimState.STEP)
-            return false;
-        else return true;
-    }
-
-    @Override
-    public void layerChanged(long layer)
-    {
-    }
-
-    @Override
-    public void loadDesign(NetPlan netPlan)
-    {
-        viewEditTopTables.resetTables();
         netPlan.checkCachesConsistency();
         if (onlineSimulationPane != null) onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
         currentNetPlan = netPlan;
         netPlan.checkCachesConsistency();
 
         // Saving original topology structure
-        initialTopologySetting = new TopologyMap();
-        currentNetPlan.getNodes().stream().forEach(node -> initialTopologySetting.addNodeLocation(node.getId(), node.getXYPositionMap()));
-
-        topologyPanel.updateLayerChooser();
-        topologyPanel.getCanvas().zoomAll();
-        resetView();
+//        initialTopologySetting = new TopologyMap();
+//        currentNetPlan.getNodes().stream().forEach(node -> initialTopologySetting.addNodeLocation(node.getId(), node.getXYPositionMap()));
     }
 
-    @Override
-    public void loadTrafficDemands(NetPlan demands)
-    {
-        if (!demands.hasDemands() && !demands.hasMulticastDemands())
-            throw new Net2PlanException("Selected file doesn't contain a demand set");
+//    @Override
+//    public void loadDesign (NetPlan netPlan)
+//    {
+//        viewEditTopTables.resetTables();
+//        netPlan.checkCachesConsistency();
+//        if (onlineSimulationPane != null) onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
+//        currentNetPlan = netPlan;
+//        netPlan.checkCachesConsistency();
+//
+//        // Saving original topology structure
+//        initialTopologySetting = new TopologyMap();
+//        currentNetPlan.getNodes().stream().forEach(node -> initialTopologySetting.addNodeLocation(node.getId(), node.getXYPositionMap()));
+//
+//        topologyPanel.updateLayerChooser();
+//        topologyPanel.getCanvas().zoomAll();
+//        resetView();
+//    }
 
-        NetPlan netPlan = getDesign();
-        if (netPlan.hasDemands() || netPlan.hasMulticastDemands())
-        {
-            int result = JOptionPane.showConfirmDialog(null, "Current network structure contains a demand set. Overwrite?", "Loading demand set", JOptionPane.YES_NO_OPTION);
-            if (result != JOptionPane.YES_OPTION) return;
-        }
-
-        NetPlan aux_netPlan = netPlan.copy();
-        try
-        {
-            netPlan.removeAllDemands();
-            for (Demand demand : demands.getDemands())
-                netPlan.addDemand(netPlan.getNode(demand.getIngressNode().getIndex()), netPlan.getNode(demand.getEgressNode().getIndex()), demand.getOfferedTraffic(), demand.getAttributes());
-
-            netPlan.removeAllMulticastDemands();
-            for (MulticastDemand demand : demands.getMulticastDemands())
-            {
-                Set<Node> egressNodesThisNetPlan = new HashSet<Node>();
-                for (Node n : demand.getEgressNodes()) egressNodesThisNetPlan.add(netPlan.getNode(n.getIndex()));
-                netPlan.addMulticastDemand(netPlan.getNode(demand.getIngressNode().getIndex()), egressNodesThisNetPlan, demand.getOfferedTraffic(), demand.getAttributes());
-            }
-
-            updateWarningsAndTables();
-        } catch (Throwable ex)
-        {
-            getDesign().assignFrom(aux_netPlan);
-            throw new RuntimeException(ex);
-        }
-    }
-
-    @Override
-    public void moveNode(long node, Point2D pos)
-    {
-        if (!isEditable()) throw new UnsupportedOperationException("Not supported");
-
-        TableModel nodeTableModel = viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.NODE).getModel();
-        int numRows = nodeTableModel.getRowCount();
-        for (int row = 0; row < numRows; row++)
-        {
-            if ((long) nodeTableModel.getValueAt(row, 0) == node)
-            {
-                nodeTableModel.setValueAt(pos.getX(), row, AdvancedJTable_node.COLUMN_XCOORD);
-                nodeTableModel.setValueAt(pos.getY(), row, AdvancedJTable_node.COLUMN_YCOORD);
-            }
-        }
-    }
 
     @Override
     public void removeLink(long link)
     {
-        if (!isEditable()) throw new UnsupportedOperationException("Not supported");
+        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
 
         NetPlan netPlan = getDesign();
 //        if (netPlan.getLinkFromId(link).getLayer().equals(getDesign().getNetworkLayerDefault()))
@@ -631,7 +647,7 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
 //            topologyPanel.getCanvas().refresh();
 //        }
         netPlan.getLinkFromId(link).remove();
-        topologyPanel.getVisualizationState().rebuildVisualizationState(null);
+        vs.rebuildVisualizationState(null);
         topologyPanel.getCanvas().refresh();
         updateWarningsAndTables();
     }
@@ -639,13 +655,13 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
     @Override
     public void removeNode(long node)
     {
-        if (!isEditable()) throw new UnsupportedOperationException("Not supported");
+        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
 
         NetPlan netPlan = getDesign();
 //        topologyPanel.getCanvas().removeNode(netPlan.getNodeFromId(node));
 //        topologyPanel.getCanvas().refresh();
         netPlan.getNodeFromId(node).remove();
-        topologyPanel.getVisualizationState().rebuildVisualizationState(null);
+        vs.rebuildVisualizationState(null);
         topologyPanel.getCanvas().refresh();
         updateWarningsAndTables();
     }
@@ -685,10 +701,11 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         }
     }
 
+    
     @Override
-    public void resetView()
+    public void resetPickedStateAndUpdateView ()
     {
-        topologyPanel.getVisualizationState().resetColorAndShapeState();
+        vs.resetColorAndShapeState();
         topologyPanel.getCanvas().resetPickedStateAndRefresh();
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.DEMAND).clearSelection();
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.MULTICAST_DEMAND).clearSelection();
@@ -700,12 +717,11 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.RESOURCE).clearSelection();
     }
 
-    public void showDemand(long demandId)
+    @Override
+    public void pickDemandAndUpdateView (Demand demand)
     {
-        NetPlan netPlan = getDesign();
-        NetworkLayer layer = netPlan.getDemandFromId(demandId).getLayer();
-        selectNetPlanViewItem(layer.getId(), NetworkElementType.DEMAND, demandId);
-        Demand demand = netPlan.getDemandFromId(demandId);
+        NetworkLayer layer = demand.getLayer();
+        selectNetPlanViewItem(layer.getId(), NetworkElementType.DEMAND, demand.getId());
 
         final VisualizationState vs = getTopologyPanel().getVisualizationState();
         vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getIngressNode() , layer)) , COLOR_INITIALNODE , null , -1);
@@ -900,100 +916,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         topologyPanel.getCanvas().refresh();
     }
 
-    private class RemoveLinkAction extends AbstractAction
-    {
-        private final long link;
-
-        public RemoveLinkAction(String name, long link)
-        {
-            super(name);
-            this.link = link;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e)
-        {
-            removeLink(link);
-        }
-    }
-
-    private class RemoveNodeAction extends AbstractAction
-    {
-        private final long node;
-
-        public RemoveNodeAction(String name, long node)
-        {
-            super(name);
-            this.node = node;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e)
-        {
-            removeNode(node);
-        }
-    }
-
-    private class AddNodeAction extends AbstractAction
-    {
-        private final Point2D pos;
-
-        public AddNodeAction(String name, Point2D pos)
-        {
-            super(name);
-            this.pos = pos;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e)
-        {
-            addNode(pos);
-        }
-    }
-
-    private class AddLinkAction extends AbstractAction
-    {
-        private final long layer;
-        private final long originNode;
-        private final long destinationNode;
-
-        public AddLinkAction(String name, long layer, long originNode, long destinationNode)
-        {
-            super(name);
-            this.layer = layer;
-            this.originNode = originNode;
-            this.destinationNode = destinationNode;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e)
-        {
-            addLink(layer, originNode, destinationNode);
-        }
-    }
-
-    private class AddLinkBidirectionalAction extends AbstractAction
-    {
-        private final long layer;
-        private final long originNode;
-        private final long destinationNode;
-
-        public AddLinkBidirectionalAction(String name, long layer, long originNode, long destinationNode)
-        {
-            super(name);
-            this.layer = layer;
-            this.originNode = originNode;
-            this.destinationNode = destinationNode;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e)
-        {
-            addLinkBidirectional(layer, originNode, destinationNode);
-        }
-
-    }
-
     /**
      * Asks user to confirm plugin reset.
      *
@@ -1037,14 +959,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         else return false;
     }
 
-    @Override
-    public synchronized void updateWarningsAndTables()
-    {
-        updateWarnings();
-        viewEditTopTables.updateView();
-    }
-
-    @Override
     public void updateWarnings()
     {
         Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
@@ -1053,16 +967,16 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
         updateLog(warningMsg);
     }
 
-    /**
-     * Shows the {@code NetPlan} view, moving to the corresponding tab.
-     *
-     * @since 0.3.0
-     */
-    @Override
-    public final void showNetPlanView()
-    {
-        viewEditTopTables.getNetPlanView().setSelectedIndex(0);
-    }
+//    /**
+//     * Shows the {@code NetPlan} view, moving to the corresponding tab.
+//     *
+//     * @since 0.3.0
+//     */
+//    @Override
+//    public final void showNetPlanView()
+//    {
+//        viewEditTopTables.getNetPlanView().setSelectedIndex(0);
+//    }
 
     @Override
     public TopologyPanel getTopologyPanel()
@@ -1219,4 +1133,6 @@ public class GUINetworkDesign extends IGUIModule implements INetworkCallback
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
     }
+
+
 }
