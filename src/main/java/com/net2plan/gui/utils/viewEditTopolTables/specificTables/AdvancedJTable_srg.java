@@ -54,7 +54,7 @@ import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.CellRenderers.UnfocusableCellRenderer;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationControllerCallback;
 import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -100,7 +100,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
     private List<SharedRiskGroup> currentSRGs = new LinkedList<>();
     private NetPlan currentTopology = null;
 
-    public AdvancedJTable_srg(final INetworkCallback callback) {
+    public AdvancedJTable_srg(final IVisualizationControllerCallback callback) {
         super(createTableModel(callback), callback, NetworkElementType.SRG, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
@@ -242,7 +242,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
         return new int[]{8, 9};
     }
 
-    private static TableModel createTableModel(final INetworkCallback callback) {
+    private static TableModel createTableModel(final IVisualizationControllerCallback callback) {
         TableModel srgTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
@@ -297,7 +297,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
         return srgTableModel;
     }
 
-    private void setDefaultCellRenderers(final INetworkCallback callback) {
+    private void setDefaultCellRenderers(final IVisualizationControllerCallback callback) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
@@ -636,7 +636,7 @@ public class AdvancedJTable_srg extends AdvancedJTableNetworkElement {
     }
 
 
-    private static void viewEditSRGGUI(final INetworkCallback callback, final long srgId) {
+    private static void viewEditSRGGUI(final IVisualizationControllerCallback callback, final long srgId) {
         final NetPlan netPlan = callback.getDesign();
         final SharedRiskGroup srg = netPlan.getSRGFromId(srgId);
         callback.putColorInElementTopologyCanvas(srg.getNodes() , Color.ORANGE);

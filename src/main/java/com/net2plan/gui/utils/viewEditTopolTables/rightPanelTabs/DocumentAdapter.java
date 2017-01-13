@@ -5,13 +5,13 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationControllerCallback;
 
 abstract class DocumentAdapter implements DocumentListener 
 {
-	private final INetworkCallback networkViewer;
+	private final IVisualizationControllerCallback networkViewer;
 	
-	public DocumentAdapter(INetworkCallback networkViewer) { this.networkViewer = networkViewer; }
+	public DocumentAdapter(IVisualizationControllerCallback networkViewer) { this.networkViewer = networkViewer; }
 	
     @Override
     public void changedUpdate(DocumentEvent e) {

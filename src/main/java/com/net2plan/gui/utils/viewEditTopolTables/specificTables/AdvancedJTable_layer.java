@@ -28,7 +28,7 @@ import javax.swing.table.TableModel;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationControllerCallback;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -64,7 +64,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
     public static final int COLUMN_ATTRIBUTES = 14;
 
 
-    public AdvancedJTable_layer(final INetworkCallback networkViewer) {
+    public AdvancedJTable_layer(final IVisualizationControllerCallback networkViewer) {
         super(createTableModel(networkViewer), networkViewer, NetworkElementType.LAYER, false);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
@@ -166,7 +166,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
         return new int[]{};
     }
 
-    private static TableModel createTableModel(final INetworkCallback networkViewer) {
+    private static TableModel createTableModel(final IVisualizationControllerCallback networkViewer) {
         TableModel layerTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
@@ -188,7 +188,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
         return layerTableModel;
     }
 
-    private void setDefaultCellRenderers(final INetworkCallback networkViewer) {
+    private void setDefaultCellRenderers(final IVisualizationControllerCallback networkViewer) {
     }
 
     private void setSpecificCellRenderers() {

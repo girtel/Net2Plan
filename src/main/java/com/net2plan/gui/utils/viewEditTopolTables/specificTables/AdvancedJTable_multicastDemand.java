@@ -28,7 +28,7 @@ import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationControllerCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.*;
@@ -62,7 +62,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
     private NetPlan currentTopology = null;
     private List<MulticastDemand> currentMulticastDemands = new LinkedList<>();
 
-    public AdvancedJTable_multicastDemand(final INetworkCallback callback) {
+    public AdvancedJTable_multicastDemand(final IVisualizationControllerCallback callback) {
         super(createTableModel(callback), callback, NetworkElementType.MULTICAST_DEMAND, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
@@ -203,7 +203,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
         return new int[]{3, 4, 5, 9, 10};
     }
 
-    private static TableModel createTableModel(final INetworkCallback callback) {
+    private static TableModel createTableModel(final IVisualizationControllerCallback callback) {
         TableModel multicastDemandTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
@@ -252,7 +252,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
         return multicastDemandTableModel;
     }
 
-    private void setDefaultCellRenderers(final INetworkCallback callback) 
+    private void setDefaultCellRenderers(final IVisualizationControllerCallback callback) 
     {
         setDefaultRenderer(Boolean.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.CheckBoxRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
         setDefaultRenderer(Double.class, new CellRenderers.LostTrafficCellRenderer(new NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
@@ -408,7 +408,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
         return addItem;
     }
 
-    private static void createMulticastDemandGUI(final NetworkElementType networkElementType, final INetworkCallback callback) {
+    private static void createMulticastDemandGUI(final NetworkElementType networkElementType, final IVisualizationControllerCallback callback) {
         final NetPlan netPlan = callback.getDesign();
 
         JTextField textFieldIngressNodeId = new JTextField(20);

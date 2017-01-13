@@ -1,6 +1,6 @@
 package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationControllerCallback;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -23,7 +23,7 @@ public enum OSMMapStateBuilder
     private void build(final SingletonBuilder builder) throws Net2PlanException
     {
         final TopologyPanel topologyPanel = builder.topologyPanel;
-        final INetworkCallback callback = builder.callback;
+        final IVisualizationControllerCallback callback = builder.callback;
 
         if (topologyPanel == null || topologyPanel.getCanvas() == null || callback == null)
             throw new Net2PlanException("GUI component not correctly initialized before running state machine.");
@@ -44,11 +44,11 @@ public enum OSMMapStateBuilder
 
         private final TopologyPanel topologyPanel;
         private final ITopologyCanvas canvas;
-        private final INetworkCallback callback;
+        private final IVisualizationControllerCallback callback;
 
         private final OSMMapController mapController;
 
-        private OSMStateManager(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final INetworkCallback callback)
+        private OSMStateManager(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final IVisualizationControllerCallback callback)
         {
             this.topologyPanel = topologyPanel;
             this.canvas = canvas;
@@ -125,9 +125,9 @@ public enum OSMMapStateBuilder
     public static class SingletonBuilder
     {
         private final TopologyPanel topologyPanel;
-        private final INetworkCallback callback;
+        private final IVisualizationControllerCallback callback;
 
-        public SingletonBuilder(TopologyPanel topologyPanel, INetworkCallback callback)
+        public SingletonBuilder(TopologyPanel topologyPanel, IVisualizationControllerCallback callback)
         {
             this.topologyPanel = topologyPanel;
             this.callback = callback;

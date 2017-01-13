@@ -161,7 +161,7 @@ public class CellRenderers {
          * @param callback     Reference to the handler of the network design
          * @since 0.3.0
          */
-        public LinkRenderer(TableCellRenderer cellRenderer, INetworkCallback callback) {
+        public LinkRenderer(TableCellRenderer cellRenderer, IVisualizationControllerCallback callback) {
             super(cellRenderer, callback, NetworkElementType.LINK);
         }
 
@@ -389,7 +389,7 @@ public class CellRenderers {
          * @param callback     Reference to the handler of the network design
          * @since 0.3.0
          */
-        public ForwardingRuleRenderer(TableCellRenderer cellRenderer, INetworkCallback callback) {
+        public ForwardingRuleRenderer(TableCellRenderer cellRenderer, IVisualizationControllerCallback callback) {
             super(cellRenderer, callback, NetworkElementType.FORWARDING_RULE);
         }
     }
@@ -409,7 +409,7 @@ public class CellRenderers {
          * @param callback     Reference to the handler of the network design
          * @since 0.3.0
          */
-        public RouteRenderer(TableCellRenderer cellRenderer, INetworkCallback callback) {
+        public RouteRenderer(TableCellRenderer cellRenderer, IVisualizationControllerCallback callback) {
             super(cellRenderer, callback, NetworkElementType.ROUTE);
         }
 
@@ -462,7 +462,7 @@ public class CellRenderers {
          * @param callback     Reference to the handler of the network design
          * @since 0.3.1
          */
-        public MulticastTreeRenderer(TableCellRenderer cellRenderer, INetworkCallback callback) {
+        public MulticastTreeRenderer(TableCellRenderer cellRenderer, IVisualizationControllerCallback callback) {
             super(cellRenderer, callback, NetworkElementType.MULTICAST_TREE);
         }
 
@@ -520,7 +520,7 @@ public class CellRenderers {
          *
          * @since 0.3.0
          */
-        protected final INetworkCallback callback;
+        protected final IVisualizationControllerCallback callback;
 
         /**
          * Default constructor.
@@ -530,7 +530,7 @@ public class CellRenderers {
          * @param networkElementType Type of element (i.e. layers, nodes, links, and so on)
          * @since 0.3.0
          */
-        public UpDownRenderer(TableCellRenderer cellRenderer, INetworkCallback callback, NetworkElementType networkElementType) {
+        public UpDownRenderer(TableCellRenderer cellRenderer, IVisualizationControllerCallback callback, NetworkElementType networkElementType) {
             super(cellRenderer, networkElementType);
 
             this.callback = callback;

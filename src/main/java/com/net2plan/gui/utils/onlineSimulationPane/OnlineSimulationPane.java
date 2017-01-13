@@ -58,7 +58,7 @@ import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnFitAdapter;
 import com.net2plan.gui.utils.FixedColumnDecorator;
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationControllerCallback;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.ReportBrowser;
@@ -95,7 +95,7 @@ import net.miginfocom.swing.MigLayout;
  */
 public class OnlineSimulationPane extends JTabbedPane implements ActionListener, IGUISimulationListener {
 
-	private final INetworkCallback mainWindow;
+	private final IVisualizationControllerCallback mainWindow;
     private final int simReportTab;
     private JButton btn_run, btn_step, btn_pause, btn_stop , btn_reset;
     private JButton btn_viewEventList, btn_updateReport;
@@ -111,7 +111,7 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
     private SimKernel simKernel;
     private JPanel simulationControlPanel;
     
-    public OnlineSimulationPane(INetworkCallback mainWindow) 
+    public OnlineSimulationPane(IVisualizationControllerCallback mainWindow) 
     {
 		super ();
 		this.mainWindow = mainWindow;

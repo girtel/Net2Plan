@@ -53,7 +53,7 @@ import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.CellRenderers.UnfocusableCellRenderer;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationControllerCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
@@ -114,7 +114,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
     private List<Route> currentRoutes = new LinkedList<>();
     private NetPlan currentTopology = null;
 
-    public AdvancedJTable_route(final INetworkCallback callback) {
+    public AdvancedJTable_route(final IVisualizationControllerCallback callback) {
         super(createTableModel(callback), callback, NetworkElementType.ROUTE, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
@@ -264,7 +264,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         return new int[]{};
     }
 
-    private static TableModel createTableModel(final INetworkCallback callback) 
+    private static TableModel createTableModel(final IVisualizationControllerCallback callback) 
     {
         TableModel routeTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
@@ -318,7 +318,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         return routeTableModel;
     }
 
-    private void setDefaultCellRenderers(final INetworkCallback callback) {
+    private void setDefaultCellRenderers(final IVisualizationControllerCallback callback) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
@@ -475,7 +475,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         return addItem;
     }
 
-    private static void createRouteGUI(final INetworkCallback callback) {
+    private static void createRouteGUI(final IVisualizationControllerCallback callback) {
         final NetPlan netPlan = callback.getDesign();
         final Collection<Long> demandIds = NetPlan.getIds(netPlan.getDemands());
         final JComboBox demandSelector = new WiderJComboBox();
@@ -865,7 +865,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
         return options;
     }
 
-    private static void viewEditBackupRoutesGUI(final INetworkCallback callback, final long routeId) {
+    private static void viewEditBackupRoutesGUI(final IVisualizationControllerCallback callback, final long routeId) {
         final NetPlan netPlan = callback.getDesign();
         final Route route = netPlan.getRouteFromId(routeId);
         if (route.isBackupRoute()) throw new Net2PlanException("A backup route cannot have backup routes itself.");

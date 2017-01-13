@@ -34,7 +34,7 @@ import com.net2plan.utils.Pair;
 /**
  * Interface to be implemented by any class dealing with network designs.
  */
-public interface INetworkCallback
+public interface IVisualizationControllerCallback
 {
 	public VisualizationState getVisualizationState ();
 	
@@ -202,8 +202,6 @@ public interface INetworkCallback
     // added by Pablo
     public boolean inOnlineSimulationMode();
 
-    // added by Pablo
-    public void offlineAlgorithmEndedUpdateView();
     // added by Pablo
     //public boolean allowLoadTrafficDemands();
 

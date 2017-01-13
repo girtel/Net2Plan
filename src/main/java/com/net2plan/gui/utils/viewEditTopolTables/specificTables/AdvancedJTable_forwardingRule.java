@@ -30,7 +30,7 @@ import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationControllerCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -59,7 +59,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
     private static final int COLUMN_SPLITTINGRATIO = 3;
     private static final int COLUMN_CARRIEDTRAFFIC = 4;
 
-    public AdvancedJTable_forwardingRule(final INetworkCallback callback) {
+    public AdvancedJTable_forwardingRule(final IVisualizationControllerCallback callback) {
         super(createTableModel(callback), callback, NetworkElementType.FORWARDING_RULE, false);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
@@ -170,7 +170,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
         return new int[]{0, 1, 2};
     }
 
-    private static TableModel createTableModel(final INetworkCallback callback) {
+    private static TableModel createTableModel(final IVisualizationControllerCallback callback) {
         TableModel forwardingRuleTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
@@ -218,7 +218,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
         return forwardingRuleTableModel;
     }
 
-    private void setDefaultCellRenderers(final INetworkCallback callback) {
+    private void setDefaultCellRenderers(final IVisualizationControllerCallback callback) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
@@ -360,7 +360,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
         return addItem;
     }
 
-    private static void createForwardingRuleGUI(final INetworkCallback callback) {
+    private static void createForwardingRuleGUI(final IVisualizationControllerCallback callback) {
         final NetPlan netPlan = callback.getDesign();
         final JComboBox nodeSelector = new WiderJComboBox();
         final JComboBox linkSelector = new WiderJComboBox();

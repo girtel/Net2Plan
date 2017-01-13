@@ -1,6 +1,6 @@
 package com.net2plan.gui.utils.topologyPane.mapControl.osm;
 
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationControllerCallback;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
@@ -33,7 +33,7 @@ public class OSMMapController
 
     private TopologyPanel topologyPanel;
     private ITopologyCanvas canvas;
-    private INetworkCallback callback;
+    private IVisualizationControllerCallback callback;
 
     // Previous OSM map state
     private Rectangle previousOSMViewportBounds;
@@ -47,7 +47,7 @@ public class OSMMapController
      * @param canvas        The JUNG canvas.
      * @param callback      The interface to the NetPlan.
      */
-    public void startMap(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final INetworkCallback callback)
+    public void startMap(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final IVisualizationControllerCallback callback)
     {
         // Checking if the nodes are valid for this operation.
         // They may not go outside the bounds: x: -180, 180: y: -90, 90

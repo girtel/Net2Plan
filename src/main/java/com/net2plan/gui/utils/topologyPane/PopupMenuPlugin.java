@@ -28,7 +28,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 import com.google.common.collect.Sets;
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationControllerCallback;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -46,7 +46,7 @@ import com.net2plan.internal.plugins.ITopologyCanvas;
  */
 public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlugin 
 {
-    private final INetworkCallback callback;
+    private final IVisualizationControllerCallback callback;
     private final ITopologyCanvas canvas;
 
     /**
@@ -55,7 +55,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
      * @param callback Reference to the class handling change events.
      * @since 0.3.1
      */
-    public PopupMenuPlugin(INetworkCallback callback , ITopologyCanvas canvas) 
+    public PopupMenuPlugin(IVisualizationControllerCallback callback , ITopologyCanvas canvas) 
     {
         this.callback = callback;
         this.canvas = canvas;

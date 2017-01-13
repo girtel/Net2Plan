@@ -12,7 +12,7 @@
 
 package com.net2plan.gui.utils.topologyPane;
 
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationControllerCallback;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
 import java.awt.*;
@@ -26,7 +26,7 @@ import java.awt.event.MouseEvent;
  * @since 0.3.1
  */
 public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugin {
-    private final INetworkCallback callback;
+    private final IVisualizationControllerCallback callback;
     private final Cursor cursor;
 
     private ITopologyCanvas canvas;
@@ -41,7 +41,7 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
      * @param modifiers Mouse event modifiers to activate this functionality
      * @since 0.3.1
      */
-    public PanGraphPlugin(INetworkCallback callback, ITopologyCanvas canvas , int modifiers) {
+    public PanGraphPlugin(IVisualizationControllerCallback callback, ITopologyCanvas canvas , int modifiers) {
         setModifiers(modifiers);
         this.callback = callback;
         this.canvas = canvas;

@@ -16,17 +16,17 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationControllerCallback;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.StringUtils;
 
 class SingleElementAttributeEditor extends MouseAdapter {
-    private final INetworkCallback callback;
+    private final IVisualizationControllerCallback callback;
     private final NetworkElementType type;
 
-    public SingleElementAttributeEditor(final INetworkCallback callback, final NetworkElementType type) {
+    public SingleElementAttributeEditor(final IVisualizationControllerCallback callback, final NetworkElementType type) {
         this.callback = callback;
         this.type = type;
     }

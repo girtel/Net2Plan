@@ -25,7 +25,7 @@ import javax.swing.border.LineBorder;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.FileChooserNetworkDesign;
 import com.net2plan.gui.utils.FileDrop;
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationControllerCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.WiderJComboBox;
@@ -56,7 +56,7 @@ import com.net2plan.internal.plugins.ITopologyCanvas;
 @SuppressWarnings("unchecked")
 public class TopologyPanel extends JPanel implements ActionListener//FrequentisBackgroundPanel implements ActionListener//JPanel implements ActionListener
 {
-    private final INetworkCallback callback;
+    private final IVisualizationControllerCallback callback;
     private final ITopologyCanvas canvas;
     private final ITopologyCanvasPlugin popupPlugin;
 
@@ -80,7 +80,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param callback   Topology callback listening plugin events
      * @param canvasType Canvas type (i.e. JUNG)
      */
-    public TopologyPanel(INetworkCallback callback, Class<? extends ITopologyCanvas> canvasType)
+    public TopologyPanel(IVisualizationControllerCallback callback, Class<? extends ITopologyCanvas> canvasType)
     {
         this(callback, canvasType, null);
     }
@@ -93,7 +93,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param canvasType Canvas type (i.e. JUNG)
      * @param plugins    List of plugins to be included (it may be null)
      */
-    public TopologyPanel(INetworkCallback callback, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins)
+    public TopologyPanel(IVisualizationControllerCallback callback, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins)
     {
         this(callback, null, null, canvasType, plugins);
     }
@@ -107,7 +107,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param canvasType             Canvas type (i.e. JUNG)
      * @param plugins                List of plugins to be included (it may be null)
      */
-    public TopologyPanel(final INetworkCallback callback, File defaultDesignDirectory, File defaultDemandDirectory, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins)
+    public TopologyPanel(final IVisualizationControllerCallback callback, File defaultDesignDirectory, File defaultDemandDirectory, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins)
     {
         File currentDir = SystemUtils.getCurrentDir();
 

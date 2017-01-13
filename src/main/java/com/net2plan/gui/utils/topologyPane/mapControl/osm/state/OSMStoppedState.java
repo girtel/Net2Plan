@@ -1,7 +1,7 @@
 package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationControllerCallback;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;

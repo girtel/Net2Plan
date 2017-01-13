@@ -58,7 +58,7 @@ public class AttributeEditor extends JDialog implements ActionListener {
      * @param type     Type of element (i.e. layers, nodes, links, and so on)
      * @since 0.3.0
      */
-    public AttributeEditor(final INetworkCallback callback, final NetworkElementType type) {
+    public AttributeEditor(final IVisualizationControllerCallback callback, final NetworkElementType type) {
         NetPlan netPlan = callback.getDesign();
 
         Object[][] data;
@@ -473,7 +473,7 @@ public class AttributeEditor extends JDialog implements ActionListener {
      * @param itemId   Item identifier
      * @since 0.3.0
      */
-    public AttributeEditor(final INetworkCallback callback, final NetworkElementType type, Object itemId) {
+    public AttributeEditor(final IVisualizationControllerCallback callback, final NetworkElementType type, Object itemId) {
         this(callback, type);
 
         final TableColumnHider tch = new TableColumnHider(table);

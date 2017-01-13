@@ -49,7 +49,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
     private NetPlan currentTopology = null;
 //    private final String[] resourceTypes = StringUtils.arrayOf("Firewall","NAT","CPU","RAM");
 
-    public AdvancedJTable_resource(final INetworkCallback callback)
+    public AdvancedJTable_resource(final IVisualizationControllerCallback callback)
     {
         super(createTableModel(callback), callback, Constants.NetworkElementType.RESOURCE, true);
         setDefaultCellRenderers(callback);
@@ -185,7 +185,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
         return new int[]{5};
     }
 
-    private static TableModel createTableModel(final INetworkCallback callback) 
+    private static TableModel createTableModel(final IVisualizationControllerCallback callback) 
     {
         TableModel resourceTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
@@ -250,7 +250,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
     private void setSpecificCellRenderers() {
     }
 
-    private void setDefaultCellRenderers(final INetworkCallback callback) {
+    private void setDefaultCellRenderers(final IVisualizationControllerCallback callback) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
