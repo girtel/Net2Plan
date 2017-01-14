@@ -33,7 +33,6 @@ import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +54,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 
+import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationControllerCallback;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
@@ -65,8 +65,6 @@ import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.utils.topologyPane.jung.topologyDistribution.CircularDistribution;
-import com.net2plan.gui.utils.topologyPane.jung.topologyDistribution.ITopologyDistribution;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
@@ -83,7 +81,6 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -93,10 +90,8 @@ import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.libraries.NetworkPerformanceMetrics;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.TopologyMap;
 import com.net2plan.utils.Triple;
 
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -133,7 +128,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
     private NetPlan currentNetPlan;
 
 //    private TopologyMap initialTopologySetting;
-    private ITopologyDistribution circularTopologySetting;
+//    private ITopologyDistribution circularTopologySetting;
 
     /**
      * Default constructor.
@@ -171,9 +166,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 
         // Running OSM state machine.
         new OSMMapStateBuilder.SingletonBuilder(topologyPanel, this).build();
-
-        // Map distributions
-        circularTopologySetting = new CircularDistribution();
 
         leftPane = new JPanel(new BorderLayout());
         JPanel logSection = configureLeftBottomPanel();
@@ -731,38 +723,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.RESOURCE).clearSelection();
     }
 
-    @Override
-    public void pickDemandAndUpdateView (Demand demand)
-    {
-        NetworkLayer layer = demand.getLayer();
-        selectNetPlanViewItem(layer.getId(), NetworkElementType.DEMAND, demand.getId());
-
-        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getIngressNode() , layer)) , COLOR_INITIALNODE , null , -1);
-        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getEgressNode() , layer)) , COLOR_ENDNODE , null , -1);
-        Pair<Set<Link>,Set<Link>> linksOccupiedThisLayer = demand.getLinksWithOccupiedCapacity();
-        Set<GUILink> linksToShowPrimary = new HashSet<> ();
-        Set<GUILink> linksToShowBackup = new HashSet<> ();
-        for (Link e : linksOccupiedThisLayer.getFirst())
-        {
-        	Pair<Set<GUILink>,Set<GUILink>> pairThisLink = vs.getAssociatedGUILinksIncludingCoupling(e , true);
-        	linksToShowPrimary.addAll (pairThisLink.getFirst());
-        	linksToShowBackup.addAll (pairThisLink.getSecond());
-        }
-        for (Link e : linksOccupiedThisLayer.getSecond())
-        {
-        	Pair<Set<GUILink>,Set<GUILink>> pairThisLink = vs.getAssociatedGUILinksIncludingCoupling(e , false);
-        	linksToShowPrimary.addAll (pairThisLink.getFirst());
-        	linksToShowBackup.addAll (pairThisLink.getSecond());
-        }
-        vs.setLinkProperties(linksToShowPrimary , 
-        		Color.BLUE , VisualizationState.DEFAULT_REGGUILINK_ARROWSTROKE_PICKED , 
-        		true , true);
-        vs.setLinkProperties(linksToShowBackup, 
-        		Color.YELLOW , VisualizationState.DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_PICKED , 
-        		true , true);
-
-        topologyPanel.getCanvas().refresh();
-    }
 
 //    @Override
 //    public void showMulticastDemand(long demandId)
@@ -1152,50 +1112,94 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 	    viewEditTopTables.updateView();
 	}
 
-	@Override
-	public void pickLinkAndUpdateView(Link link)
+    @Override
+    public void pickDemandAndUpdateView (Demand demand , boolean includeUpLayerLinksCarryingThisTraffic , boolean includeThisLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffic)
+    {
+        NetworkLayer layer = demand.getLayer();
+        selectNetPlanViewItem(layer.getId(), NetworkElementType.DEMAND, demand.getId());
+
+        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getIngressNode() , layer)) , COLOR_INITIALNODE , null , -1);
+        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getEgressNode() , layer)) , COLOR_ENDNODE , null , -1);
+        Pair<Set<Link>,Set<Link>> linksOccupiedThisLayer = demand.getLinksWithOccupiedCapacity();
+        Set<GUILink> linksToShowPrimary = new HashSet<> ();
+        Set<GUILink> linksToShowBackup = new HashSet<> ();
+        for (Link e : linksOccupiedThisLayer.getFirst())
+        {
+        	Pair<Set<GUILink>,Set<GUILink>> pairThisLink = vs.getAssociatedGUILinksIncludingCoupling(e , true);
+        	linksToShowPrimary.addAll (pairThisLink.getFirst());
+        	linksToShowBackup.addAll (pairThisLink.getSecond());
+        }
+        for (Link e : linksOccupiedThisLayer.getSecond())
+        {
+        	Pair<Set<GUILink>,Set<GUILink>> pairThisLink = vs.getAssociatedGUILinksIncludingCoupling(e , false);
+        	linksToShowPrimary.addAll (pairThisLink.getFirst());
+        	linksToShowBackup.addAll (pairThisLink.getSecond());
+        }
+        vs.setLinkProperties(linksToShowPrimary , 
+        		Color.BLUE , VisualizationState.DEFAULT_REGGUILINK_ARROWSTROKE_PICKED , 
+        		true , true);
+        vs.setLinkProperties(linksToShowBackup, 
+        		Color.YELLOW , VisualizationState.DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_PICKED , 
+        		true , true);
+
+        topologyPanel.getCanvas().refresh();
+    }
+
+    @Override
+	public void pickLinkAndUpdateView(Link link , boolean includeUpLayerLinksCarryingThisTraffic , boolean includeThisLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffic)
 	{
-		// TODO Auto-generated method stub
-		
+        NetworkLayer layer = link.getLayer();
+        selectNetPlanViewItem(layer.getId(), NetworkElementType.LINK, link.getId());
+
+        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(link.getOriginNode() , layer)) , COLOR_INITIALNODE , null , -1);
+        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(link.getDestinationNode() , layer)) , COLOR_ENDNODE , null , -1);
+        Pair<Set<GUILink>,Set<GUILink>> pairLinksToShow = vs.getAssociatedGUILinksIncludingCoupling(link , true);
+        vs.setLinkProperties(pairLinksToShow.getFirst() , 
+        		Color.BLUE , VisualizationState.DEFAULT_REGGUILINK_ARROWSTROKE_PICKED , 
+        		true , true);
+        vs.setLinkProperties(pairLinksToShow.getSecond(), 
+        		Color.YELLOW , VisualizationState.DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_PICKED , 
+        		true , true);
+
+        topologyPanel.getCanvas().refresh();
 	}
 
 	@Override
 	public void pickNodeAndUpdateView(Node node)
 	{
-		// TODO Auto-generated method stub
-		
+        selectNetPlanViewItem(node.getNetPlan().getNetworkLayerDefault().getId(), NetworkElementType.NODE, node.getId());
+        vs.setNodeProperties(vs.getVerticallyStackedGUINodes(node) , Color.BLUE , null , -1);
+        topologyPanel.getCanvas().refresh();
 	}
 
 	@Override
-	public void pickMulticastDemandAndUpdateView(MulticastDemand demand)
+    public void pickMulticastDemandAndUpdateView (MulticastDemand demand , boolean includeUpLayerLinksCarryingThisTrafficc , boolean includeThisLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffi)
+	{
+	}
+
+	@Override
+    public void pickForwardingRuleAndUpdateView (Pair<Demand, Link> demandLink, boolean includeUpLayerLinksCarryingThisTraffic , boolean includeThisLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffic)
 	{
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void pickForwardingRuleAndUpdateView(Pair<Demand, Link> demandLink)
+    public void pickRouteAndUpdateView (Route route , boolean includeUpLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffic)
 	{
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void pickRouteAndUpdateView(Route route)
+    public void pickMulticastTreeAndUpdateView (MulticastTree tree , boolean includeUpLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffic)
 	{
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void pickMulticastTreeAndUpdateView(MulticastTree tree)
-	{
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void pickSRGAndUpdateView(NetworkLayer layer, SharedRiskGroup srg)
+    public void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg , boolean includeUpLayerLinksCarryingAffectedTraffic , boolean includeDownLayerLinksCarryingThisTraffic)
 	{
 		// TODO Auto-generated method stub
 		

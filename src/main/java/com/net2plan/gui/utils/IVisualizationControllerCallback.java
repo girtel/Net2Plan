@@ -46,21 +46,22 @@ public interface IVisualizationControllerCallback
 
 	public void resetPickedStateAndUpdateView ();
 
-    public void pickLinkAndUpdateView (Link link);
 
     public void pickNodeAndUpdateView (Node node);
 
-    public void pickDemandAndUpdateView (Demand demand);
+    public void pickLinkAndUpdateView (Link link , boolean includeUpLayerLinksCarryingThisTraffic , boolean includeThisLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffic);
 
-    public void pickMulticastDemandAndUpdateView (MulticastDemand demand);
+    public void pickDemandAndUpdateView (Demand demand , boolean includeUpLayerLinksCarryingThisTraffic , boolean includeThisLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffic);
 
-    public void pickForwardingRuleAndUpdateView (Pair<Demand, Link> demandLink);
+    public void pickMulticastDemandAndUpdateView (MulticastDemand demand , boolean includeUpLayerLinksCarryingThisTrafficc , boolean includeThisLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffi);
 
-    public void pickRouteAndUpdateView (Route route);
+    public void pickForwardingRuleAndUpdateView (Pair<Demand, Link> demandLink, boolean includeUpLayerLinksCarryingThisTraffic , boolean includeThisLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffic);
 
-    public void pickMulticastTreeAndUpdateView (MulticastTree tree);
+    public void pickRouteAndUpdateView (Route route , boolean includeUpLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffic);
 
-    public void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg);
+    public void pickMulticastTreeAndUpdateView (MulticastTree tree , boolean includeUpLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffic);
+
+    public void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg , boolean includeUpLayerLinksCarryingAffectedTraffic , boolean includeDownLayerLinksCarryingThisTraffic);
 
     public void putColorInElementTopologyCanvas (Collection<? extends NetworkElement> linksAndNodes , Color color);
 
