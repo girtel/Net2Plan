@@ -229,7 +229,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final long demandId = getLong ("demandId");
 		final double splittingRatio = getDouble ("splittingRatio");
 
-		netPlan.getNetworkLayerFromId(layerId).forwardingRules_f_de.set (netPlan.getDemandFromId(demandId).index , netPlan.getLinkFromId(linkId).index  , splittingRatio);
+		netPlan.getNetworkLayerFromId(layerId).forwardingRulesNoFailureState_f_de.set (netPlan.getDemandFromId(demandId).index , netPlan.getLinkFromId(linkId).index  , splittingRatio);
 		readAndAddAttributesToEnd(null, "forwardingRule");
 	}
 

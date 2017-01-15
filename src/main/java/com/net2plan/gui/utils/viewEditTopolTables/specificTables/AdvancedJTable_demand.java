@@ -162,7 +162,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
             demandData[10] = demand.getRoutingCycleType();
             demandData[11] = currentState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
             demandData[12] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + routes_thisDemand.stream().filter(e->e.isBackupRoute()).count() + ")";
-            demandData[13] = demand.getWorseCasePropagationTimeInMs();
+            demandData[13] = demand.getWorstCasePropagationTimeInMs();
             demandData[14] = StringUtils.mapToString(demand.getAttributes());
 
             for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
@@ -196,7 +196,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                 demandData_initialNetPlan[10] = demand.getRoutingCycleType();
                 demandData_initialNetPlan[11] = initialState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
                 demandData_initialNetPlan[12] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + routes_thisDemand.stream().filter(e->e.isBackupRoute()).count() + ")";
-                demandData_initialNetPlan[13] = demand.getWorseCasePropagationTimeInMs();
+                demandData_initialNetPlan[13] = demand.getWorstCasePropagationTimeInMs();
                 demandData_initialNetPlan[14] = StringUtils.mapToString(demand.getAttributes());
 
                 for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)

@@ -672,7 +672,7 @@ public class Node extends NetworkElement
 		for (Link e : getOutgoingLinks(layer))
 		{
 			IntArrayList ds = new IntArrayList (); DoubleArrayList vals = new DoubleArrayList ();
-			layer.forwardingRules_f_de.viewColumn(e.index).getNonZeros(ds,vals);
+			layer.forwardingRulesNoFailureState_f_de.viewColumn(e.index).getNonZeros(ds,vals);
 			for (int cont = 0 ; cont < ds.size () ; cont ++)
 				res.put (Pair.of (layer.demands.get(ds.get(cont)) , e) , vals.get(cont));
 		}
@@ -692,8 +692,8 @@ public class Node extends NetworkElement
 		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
 		Map<Pair<Demand,Link>,Double> res = new HashMap<Pair<Demand,Link>,Double> ();
 		for (Link e : getOutgoingLinks(layer))
-			if (layer.forwardingRules_f_de.get(demand.index , e.index) > 0)
-				res.put (Pair.of (demand , e) , layer.forwardingRules_f_de.get(demand.index , e.index));
+			if (layer.forwardingRulesNoFailureState_f_de.get(demand.index , e.index) > 0)
+				res.put (Pair.of (demand , e) , layer.forwardingRulesNoFailureState_f_de.get(demand.index , e.index));
 		return res;
 	}
 	

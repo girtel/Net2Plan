@@ -14,14 +14,19 @@ package com.net2plan.interfaces.networkDesign;
 
 import cern.colt.list.tdouble.DoubleArrayList;
 import cern.colt.list.tint.IntArrayList;
+import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import junit.framework.Assert;
 
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
+import com.net2plan.libraries.GraphUtils;
+import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
+import com.net2plan.utils.Quadruple;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -213,7 +218,7 @@ public class Link extends NetworkElement
 		
 		Map<Pair<Demand,Link>,Double> res = new HashMap<Pair<Demand,Link>,Double> ();
 		IntArrayList ds = new IntArrayList (); DoubleArrayList vals = new DoubleArrayList ();
-		layer.forwardingRules_f_de.viewColumn (index). getNonZeros(ds,vals);
+		layer.forwardingRulesNoFailureState_f_de.viewColumn (index). getNonZeros(ds,vals);
 		for (int cont = 0 ; cont < ds.size () ; cont ++)
 			res.put (Pair.of (layer.demands.get(ds.get(cont)) , this) , vals.get(cont));
 		return res;
@@ -452,7 +457,7 @@ public class Link extends NetworkElement
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
-		layer.forwardingRules_f_de.viewColumn (this.index).assign(0);
+		layer.forwardingRulesNoFailureState_f_de.viewColumn (this.index).assign(0);
 		/* update the routing of the demands traversing the eliminated link (others are unaffected) */
 		for (Demand d : layer.demands) if (layer.forwardingRules_x_de.get(d.index , this.index) > 0) layer.updateHopByHopRoutingDemand(d);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
@@ -504,7 +509,7 @@ public class Link extends NetworkElement
 			final int N = netPlan.nodes.size ();
 			layer.forwardingRules_Aout_ne = DoubleFactory2D.sparse.appendColumns(layer.forwardingRules_Aout_ne.viewPart(0, 0, N , index), layer.forwardingRules_Aout_ne.viewPart(0 , index + 1, N , layer.links.size() - index - 1));
 			layer.forwardingRules_Ain_ne = DoubleFactory2D.sparse.appendColumns(layer.forwardingRules_Ain_ne.viewPart(0, 0, N , index), layer.forwardingRules_Ain_ne.viewPart(0 , index + 1, N , layer.links.size() - index - 1));
-			layer.forwardingRules_f_de = DoubleFactory2D.sparse.appendColumns(layer.forwardingRules_f_de.viewPart(0, 0, D , index), layer.forwardingRules_f_de.viewPart(0 , index + 1, D , layer.links.size() - index - 1));
+			layer.forwardingRulesNoFailureState_f_de = DoubleFactory2D.sparse.appendColumns(layer.forwardingRulesNoFailureState_f_de.viewPart(0, 0, D , index), layer.forwardingRulesNoFailureState_f_de.viewPart(0 , index + 1, D , layer.links.size() - index - 1));
 			DoubleMatrix1D x_d_linkToRemove = layer.forwardingRules_x_de.viewColumn(index).copy ();
 			layer.forwardingRules_x_de = DoubleFactory2D.sparse.appendColumns(layer.forwardingRules_x_de.viewPart(0, 0, D , index), layer.forwardingRules_x_de.viewPart(0 , index + 1, D , layer.links.size() - index - 1));
 			NetPlan.removeNetworkElementAndShiftIndexes (layer.links , index);
@@ -554,7 +559,7 @@ public class Link extends NetworkElement
 				System.out.println ("Traversing routes: " + cache_traversingRoutes);
 				for (Route r : cache_traversingRoutes.keySet())
 					System.out.println ("Route " + r + ", isDown? " + r.isDown() + ", carriedTraffic: " + r.getCarriedTraffic() + ", carried of all ok: " + r.currentCarriedTrafficIfNotFailing);
-				if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) System.out.println ("f_d for this link, all demands: " + layer.forwardingRules_f_de.viewColumn(index));
+				if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) System.out.println ("f_d for this link, all demands: " + layer.forwardingRulesNoFailureState_f_de.viewColumn(index));
 				if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) System.out.println ("x_d for this link, all demands: " + layer.forwardingRules_x_de.viewColumn(index));
 				throw new RuntimeException ("Bad");
 			}
@@ -627,5 +632,89 @@ public class Link extends NetworkElement
 			this.cache_occupiedCapacity += t.getOccupiedLinkCapacity();
 		}
 	}
-	
+
+	/** Returns the set of links in this layer carry the traffic that traverses this link, before and after traversing it,
+	 *  according to the routes/forwarding rules defined. 
+	 * The method returns  a pair of sets (disjoint or not). In hop-by-hop routing mode second set is empty. 
+	 * In source routing mode, first set includes the links considerinf non-backup routes, second set considering backup routes
+	 * @param assumeNoFailureState in this case, the links are computed as if all network link/nodes are in no-failure state
+	 * @return see above
+	 */
+	public Pair<Set<Link>,Set<Link>> getOtherLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (boolean assumeNoFailureState)
+	{
+		final double tolerance = Configuration.precisionFactor;
+		Set<Link> resPrimary = new HashSet<> ();
+		Set<Link> resBackup = new HashSet<> ();
+		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
+		{
+			final boolean someLinksFailed = !layer.cache_linksDown.isEmpty() || !netPlan.cache_nodesDown.isEmpty();
+			DoubleMatrix1D f_eToApply = layer.fo;
+			if (!assumeNoFailureState || !someLinksFailed) 
+				x_e = layer.forwardingRules_x_de.viewRow(getIndex()); 
+			else
+			{
+				DoubleMatrix1D f_e = layer.forwardingRulesNoFailureState_f_de.viewRow(index).copy();
+				if (someLinksFailed)
+				{
+					for (Link e : layer.cache_linksDown) f_e.set(e.index, 0);
+					for (Node n : netPlan.cache_nodesDown)
+					{
+						for (Link e : n.getOutgoingLinks(layer)) f_e.set(e.index, 0);
+						for (Link e : n.getIncomingLinks(layer)) f_e.set(e.index, 0);
+					}
+				}
+				Quadruple<DoubleMatrix2D, RoutingCycleType , Double , DoubleMatrix1D> fundMatrixComputation = computeRoutingFundamentalMatrixDemand (f_e);
+				DoubleMatrix2D M = fundMatrixComputation.getFirst ();
+				x_e = DoubleFactory1D.dense.make(layer.links.size());
+				for (Link link : layer.links)
+				{
+					final double newXdeTrafficOneUnit = M.get (ingressNode.index , link.originNode.index) * f_e.get (link.index);
+					x_e.set(link.index , newXdeTrafficOneUnit);
+				}			
+			}
+			
+			List<Demand> justThisDemand = new LinkedList<Demand> (); justThisDemand.add(this);
+			List<Demand> d_p = new LinkedList<Demand> ();
+			List<Double> x_p = new LinkedList<Double> ();
+			List<List<Link>> pathList = new LinkedList<List<Link>> ();
+			
+			OJO ESTO ELIMINA BUCLES ABIERTOS!!!
+			
+			GraphUtils.convert_xde2xp(netPlan.nodes, layer.links , justThisDemand , layer.forwardingRules_x_de , d_p, x_p, pathList);
+			Iterator<Demand> it_demand = d_p.iterator();
+			Iterator<Double> it_xp = x_p.iterator();
+			Iterator<List<Link>> it_pathList = pathList.iterator();
+			while (it_demand.hasNext())
+			{
+				final Demand d = it_demand.next();
+				final double trafficInPath = it_xp.next();
+				final List<Link> seqLinks = it_pathList.next();
+				if (trafficInPath > PRECISION_FACTOR)
+				{
+					double propTimeThisSeqLinks = 0; 
+					for (Link e : seqLinks) 
+						if (e.isCoupled()) 
+							propTimeThisSeqLinks += e.coupledLowerLayerDemand.getWorstCasePropagationTimeInMs();
+						else
+							propTimeThisSeqLinks += e.getPropagationDelayInMs();
+					maxPropTimeInMs = Math.max(propTimeThisSeqLinks , propTimeThisSeqLinks);
+				}
+			}
+
+			
+			
+			for (int e = 0 ; e < x_e.size() ; e ++) if (x_e.get(e) > tolerance) resPrimary.add(layer.links.get(e));
+		}
+		else
+		{
+			for (Route r : cache_routes)
+			{
+				if (!assumeNoFailureState && r.isDown()) continue;
+				for (Link e : r.getSeqLinks()) 
+					if (!onlyLinksWithOccupiedCapacity || (r.getOccupiedCapacity(e) > tolerance)) 
+						if (r.isBackupRoute()) resBackup.add(e); else resPrimary.add(e);
+			}
+		}
+		return Pair.of(resPrimary,resBackup);
+	}
 }

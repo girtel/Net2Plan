@@ -95,7 +95,7 @@ public class Online_evProc_ipOspf extends IEventProcessor
 		stat_trafficCarried += timeSinceLastChange * currentNetPlan.getVectorDemandCarriedTraffic(this.ipLayer).zSum();
 		stat_trafficOversubscribed += timeSinceLastChange * currentNetPlan.getVectorLinkOversubscribedTraffic(this.ipLayer).zSum();
 		stat_trafficOfDemandsTraversingOversubscribedLink += timeSinceLastChange * currentNetPlan.getVectorDemandOfferedTraffic(this.ipLayer).zDotProduct(currentNetPlan.getVectorDemandTraversesOversubscribedLink(this.ipLayer));
-		if (ipMaximumE2ELatencyMs.getDouble () > 0) for (Demand d : currentNetPlan.getDemands (ipLayer)) if (d.getWorseCasePropagationTimeInMs() > ipMaximumE2ELatencyMs.getDouble ()) stat_trafficOutOfLatencyLimit += timeSinceLastChange * d.getOfferedTraffic();
+		if (ipMaximumE2ELatencyMs.getDouble () > 0) for (Demand d : currentNetPlan.getDemands (ipLayer)) if (d.getWorstCasePropagationTimeInMs() > ipMaximumE2ELatencyMs.getDouble ()) stat_trafficOutOfLatencyLimit += timeSinceLastChange * d.getOfferedTraffic();
 		
 		stat_timeLastChangeInNetwork = event.getEventTime();
 

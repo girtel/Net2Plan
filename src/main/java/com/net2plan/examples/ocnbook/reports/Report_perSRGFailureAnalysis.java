@@ -240,7 +240,7 @@ public class Report_perSRGFailureAnalysis implements IReport
 				totalOfferedTraffic += d.getOfferedTraffic();
 				totalBlockedTraffic += d.getBlockedTraffic();
 				final boolean travOversuscribedLink = d.isTraversingOversubscribedLinks();
-				final boolean hasExcessiveLatency = (maximumE2ELatencyMs.getDouble() > 0) && (d.getWorseCasePropagationTimeInMs() > maximumE2ELatencyMs.getDouble());
+				final boolean hasExcessiveLatency = (maximumE2ELatencyMs.getDouble() > 0) && (d.getWorstCasePropagationTimeInMs() > maximumE2ELatencyMs.getDouble());
 				if (considerTrafficInOversubscribedLinksAsLost.getBoolean())
 					totalTrafficOfDemandsTraversingOversubscribedLinks += travOversuscribedLink? d.getOfferedTraffic() : 0;
 				if (hasExcessiveLatency) 

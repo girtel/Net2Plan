@@ -118,10 +118,10 @@ public class DemandTest
 	@Test
 	public void testGetWorseCasePropagationTimeInMs() 
 	{
-		assertEquals (d13.getWorseCasePropagationTimeInMs() , 200000 , 0.0);
-		assertEquals (d12.getWorseCasePropagationTimeInMs() , 100000 , 0.0);
+		assertEquals (d13.getWorstCasePropagationTimeInMs() , 200000 , 0.0);
+		assertEquals (d12.getWorstCasePropagationTimeInMs() , 100000 , 0.0);
 		r12.remove();
-		assertEquals (d12.getWorseCasePropagationTimeInMs() , 0 , 0.0);
+		assertEquals (d12.getWorstCasePropagationTimeInMs() , 0 , 0.0);
 	}
 
 	@Test

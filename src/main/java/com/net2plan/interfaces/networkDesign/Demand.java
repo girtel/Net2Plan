@@ -12,14 +12,20 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import cern.colt.list.tdouble.DoubleArrayList;
-import cern.colt.list.tint.IntArrayList;
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
-import cern.jet.math.tdouble.DoublePlusMultSecond;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
+
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.libraries.GraphUtils;
@@ -28,11 +34,15 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Quadruple;
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 
-import java.awt.Color;
-import java.util.*;
-import java.util.stream.Collectors;
+import cern.colt.list.tdouble.DoubleArrayList;
+import cern.colt.list.tint.IntArrayList;
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
+import cern.jet.math.tdouble.DoublePlusMultSecond;
 
 /** <p>This class contains a representation of a unicast demand. Unicast demands are defined by its initial and end node, the network layer they belong to, 
  * and their offered traffic. When the routing in the network layer is the type {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, demands are carried
@@ -182,7 +192,7 @@ public class Demand extends NetworkElement
 	 * of the underlying demand.</p>
 	 * @return The worse case propagation time in miliseconds
 	 * */
-	public double getWorseCasePropagationTimeInMs ()
+	public double getWorstCasePropagationTimeInMs ()
 	{
 		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
 		double maxPropTimeInMs = 0;
@@ -193,7 +203,7 @@ public class Demand extends NetworkElement
 				double timeInMs = 0; 
 				for (Link e : r.cache_seqLinksRealPath) 
 					if (e.isCoupled()) 
-						timeInMs += e.coupledLowerLayerDemand.getWorseCasePropagationTimeInMs();
+						timeInMs += e.coupledLowerLayerDemand.getWorstCasePropagationTimeInMs();
 					else
 						timeInMs += e.getPropagationDelayInMs();
 				maxPropTimeInMs = Math.max (maxPropTimeInMs , timeInMs);
@@ -221,7 +231,7 @@ public class Demand extends NetworkElement
 					double propTimeThisSeqLinks = 0; 
 					for (Link e : seqLinks) 
 						if (e.isCoupled()) 
-							propTimeThisSeqLinks += e.coupledLowerLayerDemand.getWorseCasePropagationTimeInMs();
+							propTimeThisSeqLinks += e.coupledLowerLayerDemand.getWorstCasePropagationTimeInMs();
 						else
 							propTimeThisSeqLinks += e.getPropagationDelayInMs();
 					maxPropTimeInMs = Math.max(propTimeThisSeqLinks , propTimeThisSeqLinks);
@@ -231,31 +241,65 @@ public class Demand extends NetworkElement
 		return maxPropTimeInMs;
 	}
 
-	/** Returns the set of links where some capacity is occupied because of this demand, in a pair of sets (disjoint or not), 
-	 * first set with the set of links carrying primary traffic and second with links in backup routes. If the routing is hop-by-hop, these are 
-	 * the links with carried traffic or capacity occupied (they are the same in this case, and there is no concept of backup routes). 
-	 * In source routing, the links returned are those in a route if the route currently occupies non-zero capacity in that link, 
-	 * and the routes that are backup and that are not are accounted separately   
+	/** Returns the set of links in this layer that could potentially carry traffic of this demand, according to the routes/forwarding rules defined.
+	 * The method returns  a pair of sets (disjoint or not), first set with the set of links potentially carrying primary traffic and 
+	 * second with links in backup routes. Potentially carrying traffic means that 
+	 * (i) in source routing, down routes are not included, but all up routes are considered even if the carry zero traffic, 
+	 * (ii) in hop-by-hop routing the links are computed even if the demand offered traffic is zero, and all the links are considered primary.
+	 * @param assumeNoFailureState in this case, the links are computed as if all network link/nodes are in no-failure state
+	 * @param onlyLinksWithOccupiedCapacity in this case, in source routing case, a link is not included if the demand traversing routes occupy zero 
+	 * capacity in it
 	 * @return see above
 	 */
-	public Pair<Set<Link>,Set<Link>> getLinksWithOccupiedCapacity ()
+	public Pair<Set<Link>,Set<Link>> getLinksThisLayerPotentiallyCarryingTraffic  (boolean assumeNoFailureState , boolean onlyLinksWithOccupiedCapacity)
 	{
 		final double tolerance = Configuration.precisionFactor;
 		Set<Link> resPrimary = new HashSet<> ();
 		Set<Link> resBackup = new HashSet<> ();
 		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
 		{
-	        DoubleMatrix1D x_e = layer.forwardingRules_x_de.viewRow(getIndex());
-	        for (int e = 0 ; e < x_e.size() ; e ++) if (x_e.get(e) > tolerance) resPrimary.add(layer.links.get(e));
+			final boolean someLinksFailed = !layer.cache_linksDown.isEmpty() || !netPlan.cache_nodesDown.isEmpty();
+			DoubleMatrix1D x_e = null;
+			if (onlyLinksWithOccupiedCapacity && (!assumeNoFailureState || !someLinksFailed)) 
+				x_e = layer.forwardingRules_x_de.viewRow(getIndex()); 
+			else
+			{
+				DoubleMatrix1D f_e = layer.forwardingRulesNoFailureState_f_de.viewRow(index).copy();
+				if (someLinksFailed)
+				{
+					for (Link e : layer.cache_linksDown) f_e.set(e.index, 0);
+					for (Node n : netPlan.cache_nodesDown)
+					{
+						for (Link e : n.getOutgoingLinks(layer)) f_e.set(e.index, 0);
+						for (Link e : n.getIncomingLinks(layer)) f_e.set(e.index, 0);
+					}
+				}
+				Quadruple<DoubleMatrix2D, RoutingCycleType , Double , DoubleMatrix1D> fundMatrixComputation = computeRoutingFundamentalMatrixDemand (f_e);
+				DoubleMatrix2D M = fundMatrixComputation.getFirst ();
+				x_e = DoubleFactory1D.dense.make(layer.links.size());
+				for (Link link : layer.links)
+				{
+					final double newXdeTrafficOneUnit = M.get (ingressNode.index , link.originNode.index) * f_e.get (link.index);
+					x_e.set(link.index , newXdeTrafficOneUnit);
+				}			
+			}		
+			for (int e = 0 ; e < x_e.size() ; e ++) if (x_e.get(e) > tolerance) resPrimary.add(layer.links.get(e));
 		}
 		else
 		{
-			for (Route r : cache_routes) for (Link e : r.getSeqLinks()) if (r.getOccupiedCapacity(e) > tolerance) 
-				if (r.isBackupRoute()) resBackup.add(e); else resPrimary.add(e);
+			for (Route r : cache_routes)
+			{
+				if (!assumeNoFailureState && r.isDown()) continue;
+				for (Link e : r.getSeqLinks()) 
+					if (!onlyLinksWithOccupiedCapacity || (r.getOccupiedCapacity(e) > tolerance)) 
+						if (r.isBackupRoute()) resBackup.add(e); else resPrimary.add(e);
+			}
 		}
 		return Pair.of(resPrimary,resBackup);
 	}
 	
+	
+
 	/**
 	 * <p>Returns {@code true} if the traffic of the demand is traversing an oversubscribed link, {@code false} otherwise.</p>
 	 * @return {@code true} if the traffic is traversing an oversubscribed link, {@code false} otherwise
@@ -389,7 +433,7 @@ public class Demand extends NetworkElement
 
 		Map<Pair<Demand,Link>,Double> res = new HashMap<Pair<Demand,Link>,Double> ();
 		IntArrayList es = new IntArrayList (); DoubleArrayList vals = new DoubleArrayList ();
-		layer.forwardingRules_f_de.viewRow (index). getNonZeros(es,vals);
+		layer.forwardingRulesNoFailureState_f_de.viewRow (index). getNonZeros(es,vals);
 		for (int cont = 0 ; cont < es.size () ; cont ++)
 			res.put (Pair.of (this, layer.links.get(es.get(cont))) , vals.get(cont));
 		return res;
@@ -573,7 +617,7 @@ public class Demand extends NetworkElement
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
-		layer.forwardingRules_f_de.viewRow (this.index).assign(0);
+		layer.forwardingRulesNoFailureState_f_de.viewRow (this.index).assign(0);
 		layer.updateHopByHopRoutingDemand(this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
@@ -640,7 +684,7 @@ public class Demand extends NetworkElement
 		else
 		{
 			final int E = layer.links.size ();
-			layer.forwardingRules_f_de = DoubleFactory2D.sparse.appendRows(layer.forwardingRules_f_de.viewPart(0, 0, index, E), layer.forwardingRules_f_de.viewPart(index + 1, 0, layer.demands.size() - index - 1, E));
+			layer.forwardingRulesNoFailureState_f_de = DoubleFactory2D.sparse.appendRows(layer.forwardingRulesNoFailureState_f_de.viewPart(0, 0, index, E), layer.forwardingRulesNoFailureState_f_de.viewPart(index + 1, 0, layer.demands.size() - index - 1, E));
 			DoubleMatrix1D x_e = layer.forwardingRules_x_de.viewRow (index).copy ();
 			layer.forwardingRules_x_de = DoubleFactory2D.sparse.appendRows(layer.forwardingRules_x_de.viewPart(0, 0, index, E), layer.forwardingRules_x_de.viewPart(index + 1, 0, layer.demands.size() - index - 1, E));
 			for (Link link : layer.links) { link.cache_carriedTraffic -= x_e.get(link.index); link.cache_occupiedCapacity -= x_e.get(link.index); }
@@ -688,14 +732,15 @@ public class Demand extends NetworkElement
 	 *     <li>an array with fraction of the traffic that arrives to each node, that is dropped (this happens only in nodes different to the destination, when the sum of the forwarding percentages on the outupt links is less than one)</li>
 	 * </ol>
 	 * <p><b>Important: </b>If the routing type is not {@link com.net2plan.utils.Constants.RoutingType#HOP_BY_HOP_ROUTING HOP_BY_HOP_ROUTING}, an exception is thrown.</p>
+	 * @param forwardingRulesToUse_f_e if null, the current forwarding rules in the no failure state are used. If not null, this row defines the forwarding rules to apply in the matrix computation
 	 * @return See description above
 	 */
-	public Quadruple<DoubleMatrix2D, RoutingCycleType,  Double , DoubleMatrix1D> computeRoutingFundamentalMatrixDemand ()
+	public Quadruple<DoubleMatrix2D, RoutingCycleType,  Double , DoubleMatrix1D> computeRoutingFundamentalMatrixDemand(DoubleMatrix1D forwardingRulesToUse_f_e)
 	{
 		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
 
 		final int N = netPlan.nodes.size ();
-		DoubleMatrix1D f_e = layer.forwardingRules_f_de.viewRow(index);
+		DoubleMatrix1D f_e = forwardingRulesToUse_f_e == null? layer.forwardingRulesNoFailureState_f_de.viewRow(index) : forwardingRulesToUse_f_e;
 		/* q_n1n2 is the fraction of the traffic in n1 that is routed to n2 */
 		DoubleMatrix2D q_nn = layer.forwardingRules_Aout_ne.zMult(DoubleFactory2D.sparse.diagonal(f_e) , null);
 		q_nn = q_nn.zMult(layer.forwardingRules_Ain_ne , null , 1 , 0 , false , true);

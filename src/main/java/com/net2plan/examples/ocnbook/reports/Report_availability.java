@@ -168,7 +168,7 @@ public class Report_availability implements IReport
 			final DoubleMatrix1D h_d = netPlan.getVectorDemandOfferedTraffic(layer);
 			final DoubleMatrix1D blocked_d = netPlan.getVectorDemandBlockedTraffic(layer);
 			if (considerTrafficInOversubscribedLinksAsLost.getBoolean()) for (Demand d : netPlan.getDemands (layer)) if (d.isTraversingOversubscribedLinks()) blocked_d.set (d.getIndex () , d.getOfferedTraffic());
-			if (maximumE2ELatencyMs.getDouble () > 0) for (Demand d : netPlan.getDemands (layer)) if (d.getWorseCasePropagationTimeInMs() > maximumE2ELatencyMs.getDouble ()) blocked_d.set (d.getIndex () , d.getOfferedTraffic());
+			if (maximumE2ELatencyMs.getDouble () > 0) for (Demand d : netPlan.getDemands (layer)) if (d.getWorstCasePropagationTimeInMs() > maximumE2ELatencyMs.getDouble ()) blocked_d.set (d.getIndex () , d.getOfferedTraffic());
 			
 			final DoubleMatrix1D h_md = netPlan.getVectorMulticastDemandOfferedTraffic(layer);
 			final DoubleMatrix1D blocked_md = netPlan.getVectorMulticastDemandBlockedTraffic(layer);
@@ -247,7 +247,7 @@ public class Report_availability implements IReport
 				final DoubleMatrix1D h_d = auxNetPlan.getVectorDemandOfferedTraffic(layer);
 				final DoubleMatrix1D blocked_d = auxNetPlan.getVectorDemandBlockedTraffic(layer);
 				if (considerTrafficInOversubscribedLinksAsLost.getBoolean()) for (Demand d : auxNetPlan.getDemands (layer)) if (d.isTraversingOversubscribedLinks()) blocked_d.set (d.getIndex () , d.getOfferedTraffic());
-				if (maximumE2ELatencyMs.getDouble () > 0) for (Demand d : auxNetPlan.getDemands (layer)) if (d.getWorseCasePropagationTimeInMs() > maximumE2ELatencyMs.getDouble ()) blocked_d.set (d.getIndex () , d.getOfferedTraffic());
+				if (maximumE2ELatencyMs.getDouble () > 0) for (Demand d : auxNetPlan.getDemands (layer)) if (d.getWorstCasePropagationTimeInMs() > maximumE2ELatencyMs.getDouble ()) blocked_d.set (d.getIndex () , d.getOfferedTraffic());
 				final DoubleMatrix1D h_md = auxNetPlan.getVectorMulticastDemandOfferedTraffic(layer);
 				final DoubleMatrix1D blocked_md = auxNetPlan.getVectorMulticastDemandBlockedTraffic(layer);
 				if (considerTrafficInOversubscribedLinksAsLost.getBoolean()) for (MulticastDemand d : auxNetPlan.getMulticastDemands (layer)) if (d.isTraversingOversubscribedLinks()) blocked_md.set (d.getIndex () , d.getOfferedTraffic());
