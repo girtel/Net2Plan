@@ -217,7 +217,7 @@ public class Demand extends NetworkElement
 			List<Demand> d_p = new LinkedList<Demand> ();
 			List<Double> x_p = new LinkedList<Double> ();
 			List<List<Link>> pathList = new LinkedList<List<Link>> ();
-			GraphUtils.convert_xde2xp(netPlan.nodes, layer.links , justThisDemand , layer.forwardingRules_x_de , d_p, x_p, pathList);
+			GraphUtils.convert_xde2xp(netPlan.nodes, layer.links , justThisDemand , layer.forwardingRulesCurrentFailureState_x_de , d_p, x_p, pathList);
 			Iterator<Demand> it_demand = d_p.iterator();
 			Iterator<Double> it_xp = x_p.iterator();
 			Iterator<List<Link>> it_pathList = pathList.iterator();
@@ -259,10 +259,10 @@ public class Demand extends NetworkElement
 		{
 			final boolean someLinksFailed = !layer.cache_linksDown.isEmpty() || !netPlan.cache_nodesDown.isEmpty();
 			DoubleMatrix1D x_e = null;
-			if (someLinksFailed && !assumeNoFailureState)
+			if (someLinksFailed)
 			{
 				DoubleMatrix1D f_e = layer.forwardingRulesNoFailureState_f_de.viewRow(index).copy();
-				if (someLinksFailed)
+				if (!assumeNoFailureState)
 				{
 					for (Link e : layer.cache_linksDown) f_e.set(e.index, 0);
 					for (Node n : netPlan.cache_nodesDown)
@@ -282,7 +282,7 @@ public class Demand extends NetworkElement
 			}
 			else
 			{
-				x_e = layer.forwardingRules_x_de.viewRow(getIndex()); 
+				x_e = layer.forwardingRulesCurrentFailureState_x_de.viewRow(getIndex()); 
 			}
 			for (int e = 0 ; e < x_e.size() ; e ++) if (x_e.get(e) > tolerance) resPrimary.add(layer.links.get(e));
 		}
@@ -317,7 +317,7 @@ public class Demand extends NetworkElement
 		{
 			if (this.routingCycleType == RoutingCycleType.CLOSED_CYCLES) return true;
 			for (Link e : layer.links) 
-				if (layer.forwardingRules_x_de.get(index,e.index) > PRECISION_FACTOR) 
+				if (layer.forwardingRulesCurrentFailureState_x_de.get(index,e.index) > PRECISION_FACTOR) 
 					if (e.isOversubscribed()) return true;
 		}
 		return false;
@@ -379,7 +379,7 @@ public class Demand extends NetworkElement
 			return this.cache_routes.size () >= 2;
 		for (Node node : netPlan.nodes)
 		{
-			int numOutLinksCarryingTraffic = 0; for (Link e : node.getOutgoingLinks(layer)) if (layer.forwardingRules_x_de.get(index,e.index) > 0) numOutLinksCarryingTraffic ++;
+			int numOutLinksCarryingTraffic = 0; for (Link e : node.getOutgoingLinks(layer)) if (layer.forwardingRulesCurrentFailureState_x_de.get(index,e.index) > 0) numOutLinksCarryingTraffic ++;
 			if (numOutLinksCarryingTraffic > 1) return true;
 		}
 		return false;
@@ -685,8 +685,8 @@ public class Demand extends NetworkElement
 		{
 			final int E = layer.links.size ();
 			layer.forwardingRulesNoFailureState_f_de = DoubleFactory2D.sparse.appendRows(layer.forwardingRulesNoFailureState_f_de.viewPart(0, 0, index, E), layer.forwardingRulesNoFailureState_f_de.viewPart(index + 1, 0, layer.demands.size() - index - 1, E));
-			DoubleMatrix1D x_e = layer.forwardingRules_x_de.viewRow (index).copy ();
-			layer.forwardingRules_x_de = DoubleFactory2D.sparse.appendRows(layer.forwardingRules_x_de.viewPart(0, 0, index, E), layer.forwardingRules_x_de.viewPart(index + 1, 0, layer.demands.size() - index - 1, E));
+			DoubleMatrix1D x_e = layer.forwardingRulesCurrentFailureState_x_de.viewRow (index).copy ();
+			layer.forwardingRulesCurrentFailureState_x_de = DoubleFactory2D.sparse.appendRows(layer.forwardingRulesCurrentFailureState_x_de.viewPart(0, 0, index, E), layer.forwardingRulesCurrentFailureState_x_de.viewPart(index + 1, 0, layer.demands.size() - index - 1, E));
 			for (Link link : layer.links) { link.cache_carriedTraffic -= x_e.get(link.index); link.cache_occupiedCapacity -= x_e.get(link.index); }
 		}
 		
@@ -784,8 +784,8 @@ public class Demand extends NetworkElement
 		}
 		else
 		{
-			for (Link e : egressNode.getIncomingLinks(layer)) check_carriedTraffic += layer.forwardingRules_x_de.get(index,e.index);
-			for (Link e : egressNode.getOutgoingLinks(layer)) check_carriedTraffic -= layer.forwardingRules_x_de.get(index,e.index);
+			for (Link e : egressNode.getIncomingLinks(layer)) check_carriedTraffic += layer.forwardingRulesCurrentFailureState_x_de.get(index,e.index);
+			for (Link e : egressNode.getOutgoingLinks(layer)) check_carriedTraffic -= layer.forwardingRulesCurrentFailureState_x_de.get(index,e.index);
 		}
 		if (Math.abs(carriedTraffic - check_carriedTraffic) > 1e-3) throw new RuntimeException ("Bad, carriedTraffic: " + carriedTraffic + ", check_carriedTraffic: " + check_carriedTraffic);
 		if (coupledUpperLayerLink != null)

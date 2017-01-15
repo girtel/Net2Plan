@@ -459,7 +459,7 @@ public class Link extends NetworkElement
 		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
 		layer.forwardingRulesNoFailureState_f_de.viewColumn (this.index).assign(0);
 		/* update the routing of the demands traversing the eliminated link (others are unaffected) */
-		for (Demand d : layer.demands) if (layer.forwardingRules_x_de.get(d.index , this.index) > 0) layer.updateHopByHopRoutingDemand(d);
+		for (Demand d : layer.demands) if (layer.forwardingRulesCurrentFailureState_x_de.get(d.index , this.index) > 0) layer.updateHopByHopRoutingDemand(d);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		
 	}
@@ -510,8 +510,8 @@ public class Link extends NetworkElement
 			layer.forwardingRules_Aout_ne = DoubleFactory2D.sparse.appendColumns(layer.forwardingRules_Aout_ne.viewPart(0, 0, N , index), layer.forwardingRules_Aout_ne.viewPart(0 , index + 1, N , layer.links.size() - index - 1));
 			layer.forwardingRules_Ain_ne = DoubleFactory2D.sparse.appendColumns(layer.forwardingRules_Ain_ne.viewPart(0, 0, N , index), layer.forwardingRules_Ain_ne.viewPart(0 , index + 1, N , layer.links.size() - index - 1));
 			layer.forwardingRulesNoFailureState_f_de = DoubleFactory2D.sparse.appendColumns(layer.forwardingRulesNoFailureState_f_de.viewPart(0, 0, D , index), layer.forwardingRulesNoFailureState_f_de.viewPart(0 , index + 1, D , layer.links.size() - index - 1));
-			DoubleMatrix1D x_d_linkToRemove = layer.forwardingRules_x_de.viewColumn(index).copy ();
-			layer.forwardingRules_x_de = DoubleFactory2D.sparse.appendColumns(layer.forwardingRules_x_de.viewPart(0, 0, D , index), layer.forwardingRules_x_de.viewPart(0 , index + 1, D , layer.links.size() - index - 1));
+			DoubleMatrix1D x_d_linkToRemove = layer.forwardingRulesCurrentFailureState_x_de.viewColumn(index).copy ();
+			layer.forwardingRulesCurrentFailureState_x_de = DoubleFactory2D.sparse.appendColumns(layer.forwardingRulesCurrentFailureState_x_de.viewPart(0, 0, D , index), layer.forwardingRulesCurrentFailureState_x_de.viewPart(0 , index + 1, D , layer.links.size() - index - 1));
 			NetPlan.removeNetworkElementAndShiftIndexes (layer.links , index);
 			for (Demand d : layer.demands) if (x_d_linkToRemove.get(d.index) > PRECISION_FACTOR) layer.updateHopByHopRoutingDemand(d);
 		}
@@ -560,7 +560,7 @@ public class Link extends NetworkElement
 				for (Route r : cache_traversingRoutes.keySet())
 					System.out.println ("Route " + r + ", isDown? " + r.isDown() + ", carriedTraffic: " + r.getCarriedTraffic() + ", carried of all ok: " + r.currentCarriedTrafficIfNotFailing);
 				if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) System.out.println ("f_d for this link, all demands: " + layer.forwardingRulesNoFailureState_f_de.viewColumn(index));
-				if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) System.out.println ("x_d for this link, all demands: " + layer.forwardingRules_x_de.viewColumn(index));
+				if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) System.out.println ("x_d for this link, all demands: " + layer.forwardingRulesCurrentFailureState_x_de.viewColumn(index));
 				throw new RuntimeException ("Bad");
 			}
 			if (Math.abs(cache_occupiedCapacity) > 1e-3) throw new RuntimeException ("Bad");
@@ -598,7 +598,7 @@ public class Link extends NetworkElement
 
 		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
 		{
-			final double x_e = layer.forwardingRules_x_de.viewColumn(index).zSum();
+			final double x_e = layer.forwardingRulesCurrentFailureState_x_de.viewColumn(index).zSum();
 			check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += x_e;
 			check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += x_e;
 		}

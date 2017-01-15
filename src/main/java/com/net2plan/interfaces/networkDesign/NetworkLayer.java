@@ -49,7 +49,7 @@ public class NetworkLayer extends NetworkElement
 	ArrayList<MulticastTree> multicastTrees;
 
 	DoubleMatrix2D forwardingRulesNoFailureState_f_de; // splitting ratios
-	DoubleMatrix2D forwardingRules_x_de; // carried traffics (both routings)
+	DoubleMatrix2D forwardingRulesCurrentFailureState_x_de; // carried traffics (both routings)
 	DoubleMatrix2D forwardingRules_Aout_ne; // 1 if link e is outgoing from n, 0 otherwise
 	DoubleMatrix2D forwardingRules_Ain_ne; // 1 if link e is incominng from n, 0 otherwise
 	Set<Link> cache_linksDown;
@@ -83,7 +83,7 @@ public class NetworkLayer extends NetworkElement
 		this.cache_routesDown = new HashSet<Route> ();
 		this.cache_multicastTreesDown = new HashSet<MulticastTree> ();
 		this.forwardingRulesNoFailureState_f_de = null;
-		this.forwardingRules_x_de = null;
+		this.forwardingRulesCurrentFailureState_x_de = null;
 		this.forwardingRules_Aout_ne = null;
 		this.forwardingRules_Ain_ne = null;
 	}
@@ -107,14 +107,14 @@ public class NetworkLayer extends NetworkElement
 		if (origin.routingType == routingType.HOP_BY_HOP_ROUTING)
 		{
 			this.forwardingRulesNoFailureState_f_de = origin.forwardingRulesNoFailureState_f_de.copy();
-			this.forwardingRules_x_de = origin.forwardingRules_x_de.copy();
+			this.forwardingRulesCurrentFailureState_x_de = origin.forwardingRulesCurrentFailureState_x_de.copy();
 			this.forwardingRules_Aout_ne = origin.forwardingRules_Aout_ne.copy();
 			this.forwardingRules_Ain_ne = origin.forwardingRules_Ain_ne.copy();
 		}
 		else
 		{
 			this.forwardingRulesNoFailureState_f_de = null;
-			this.forwardingRules_x_de = null;
+			this.forwardingRulesCurrentFailureState_x_de = null;
 			this.forwardingRules_Aout_ne = null;
 			this.forwardingRules_Ain_ne = null;
 		}
@@ -148,7 +148,7 @@ public class NetworkLayer extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.multicastTrees , e2.multicastTrees)) return false;
 		if (!NetPlan.isDeepCopy(this.multicastTrees , e2.multicastTrees)) return false;
 		if ((this.forwardingRulesNoFailureState_f_de != null) && (!this.forwardingRulesNoFailureState_f_de.equals(e2.forwardingRulesNoFailureState_f_de))) return false;
-		if ((this.forwardingRules_x_de != null) && (!this.forwardingRules_x_de.equals(e2.forwardingRules_x_de))) return false;
+		if ((this.forwardingRulesCurrentFailureState_x_de != null) && (!this.forwardingRulesCurrentFailureState_x_de.equals(e2.forwardingRulesCurrentFailureState_x_de))) return false;
 		if ((this.forwardingRules_Aout_ne != null) && (!this.forwardingRules_Aout_ne.equals(e2.forwardingRules_Aout_ne))) return false;
 		if ((this.forwardingRules_Ain_ne != null) && (!this.forwardingRules_Ain_ne.equals(e2.forwardingRules_Ain_ne))) return false;
 		if (!NetPlan.isDeepCopy(this.cache_linksDown , e2.cache_linksDown)) return false;
@@ -265,10 +265,10 @@ public class NetworkLayer extends NetworkElement
 		final double h_d = demand.offeredTraffic;
 		for (Link link : links)
 		{
-			final double oldXde = layer.forwardingRules_x_de.get (demand.index , link.index);
+			final double oldXde = layer.forwardingRulesCurrentFailureState_x_de.get (demand.index , link.index);
 			final double newXde = h_d * M.get (demand.ingressNode.index , link.originNode.index) * fowardingRulesThisFailureState_f_e.get (link.index);
 			if (newXde < -1E-5) throw new RuntimeException ("Bad");
-			layer.forwardingRules_x_de.set (demand.index , link.index , newXde);
+			layer.forwardingRulesCurrentFailureState_x_de.set (demand.index , link.index , newXde);
 			link.cache_carriedTraffic += newXde - oldXde; // in hop-by-hop carried traffic is the same as occupied capacity
 			link.cache_occupiedCapacity += newXde - oldXde;
 			if ((newXde > 1e-3) && (!link.isUp)) throw new RuntimeException ("Bad");
@@ -292,7 +292,7 @@ public class NetworkLayer extends NetworkElement
 		if (routingType == RoutingType.HOP_BY_HOP_ROUTING)
 		{
 			if ((forwardingRulesNoFailureState_f_de.rows () != D) || (forwardingRulesNoFailureState_f_de.columns () != E)) throw new RuntimeException ("Bad");
-			if ((forwardingRules_x_de.rows () != D) || (forwardingRules_x_de.columns () != E)) throw new RuntimeException ("Bad");
+			if ((forwardingRulesCurrentFailureState_x_de.rows () != D) || (forwardingRulesCurrentFailureState_x_de.columns () != E)) throw new RuntimeException ("Bad");
 			if ((forwardingRules_Aout_ne.rows () != N) || (forwardingRules_Aout_ne.columns () != E)) throw new RuntimeException ("Bad");
 			if ((forwardingRules_Ain_ne.rows () != N) || (forwardingRules_Ain_ne.columns () != E)) throw new RuntimeException ("Bad");
 			if ((D > 0) && (E > 0))
