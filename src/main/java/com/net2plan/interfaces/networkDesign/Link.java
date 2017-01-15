@@ -647,72 +647,52 @@ public class Link extends NetworkElement
 		Set<Link> resBackup = new HashSet<> ();
 		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
 		{
+			final int index_ae = originNode.index;
+			final int index_be = destinationNode.index;
 			final boolean someLinksFailed = !layer.cache_linksDown.isEmpty() || !netPlan.cache_nodesDown.isEmpty();
-			DoubleMatrix1D f_eToApply = layer.fo;
-			if (!assumeNoFailureState || !someLinksFailed) 
-				x_e = layer.forwardingRules_x_de.viewRow(getIndex()); 
-			else
+			for (Demand d : layer.demands)
 			{
-				DoubleMatrix1D f_e = layer.forwardingRulesNoFailureState_f_de.viewRow(index).copy();
-				if (someLinksFailed)
+				final int index_ad = d.getIngressNode().index;
+				if (d.getOfferedTraffic() == 0) continue;
+				DoubleMatrix1D f_e;// = layer.forwardingRulesNoFailureState_f_de.viewRow(d.index);
+				DoubleMatrix2D fundMatrix;
+				if (someLinksFailed && !assumeNoFailureState)
 				{
+					f_e = layer.forwardingRulesNoFailureState_f_de.viewRow(d.index).copy();
 					for (Link e : layer.cache_linksDown) f_e.set(e.index, 0);
 					for (Node n : netPlan.cache_nodesDown)
 					{
 						for (Link e : n.getOutgoingLinks(layer)) f_e.set(e.index, 0);
 						for (Link e : n.getIncomingLinks(layer)) f_e.set(e.index, 0);
 					}
+					fundMatrix = d.computeRoutingFundamentalMatrixDemand(f_e).getFirst();
 				}
-				Quadruple<DoubleMatrix2D, RoutingCycleType , Double , DoubleMatrix1D> fundMatrixComputation = computeRoutingFundamentalMatrixDemand (f_e);
-				DoubleMatrix2D M = fundMatrixComputation.getFirst ();
-				x_e = DoubleFactory1D.dense.make(layer.links.size());
-				for (Link link : layer.links)
+				else
 				{
-					final double newXdeTrafficOneUnit = M.get (ingressNode.index , link.originNode.index) * f_e.get (link.index);
-					x_e.set(link.index , newXdeTrafficOneUnit);
-				}			
-			}
-			
-			List<Demand> justThisDemand = new LinkedList<Demand> (); justThisDemand.add(this);
-			List<Demand> d_p = new LinkedList<Demand> ();
-			List<Double> x_p = new LinkedList<Double> ();
-			List<List<Link>> pathList = new LinkedList<List<Link>> ();
-			
-			OJO ESTO ELIMINA BUCLES ABIERTOS!!!
-			
-			GraphUtils.convert_xde2xp(netPlan.nodes, layer.links , justThisDemand , layer.forwardingRules_x_de , d_p, x_p, pathList);
-			Iterator<Demand> it_demand = d_p.iterator();
-			Iterator<Double> it_xp = x_p.iterator();
-			Iterator<List<Link>> it_pathList = pathList.iterator();
-			while (it_demand.hasNext())
-			{
-				final Demand d = it_demand.next();
-				final double trafficInPath = it_xp.next();
-				final List<Link> seqLinks = it_pathList.next();
-				if (trafficInPath > PRECISION_FACTOR)
+					f_e = layer.forwardingRulesNoFailureState_f_de.viewRow(d.index);
+					fundMatrix = d.computeRoutingFundamentalMatrixDemand(f_e).getFirst();
+				}
+				/* If this link does not carry traffic of the demand => continue */
+				if (fundMatrix.get(index_ad, index_ae) * f_e.get(index_ae) < tolerance) continue;
+				/* See the links that carry traffic of this demand AND such traffic traversed BEFORE or AFTER this link */
+				for (Link candLink : layer.links)
 				{
-					double propTimeThisSeqLinks = 0; 
-					for (Link e : seqLinks) 
-						if (e.isCoupled()) 
-							propTimeThisSeqLinks += e.coupledLowerLayerDemand.getWorstCasePropagationTimeInMs();
-						else
-							propTimeThisSeqLinks += e.getPropagationDelayInMs();
-					maxPropTimeInMs = Math.max(propTimeThisSeqLinks , propTimeThisSeqLinks);
+					/* Candidate link does not carry demand traffic => continue */
+					if (fundMatrix.get(index_ad, candLink.originNode.index) * f_e.get(candLink.index) == 0) continue; 
+					/* if the traffic outgoing cand link enters my link, include it */
+					if (fundMatrix.get(candLink.destinationNode.index , index_ae) > tolerance) resPrimary.add(candLink);
+					/* if the traffic outgoing my link link enters cand link, include it */
+					if (fundMatrix.get(index_be , candLink.originNode.index) > tolerance) resPrimary.add(candLink);
 				}
 			}
-
-			
-			
-			for (int e = 0 ; e < x_e.size() ; e ++) if (x_e.get(e) > tolerance) resPrimary.add(layer.links.get(e));
 		}
 		else
 		{
-			for (Route r : cache_routes)
+			for (Route r : cache_traversingRoutes.keySet())
 			{
 				if (!assumeNoFailureState && r.isDown()) continue;
 				for (Link e : r.getSeqLinks()) 
-					if (!onlyLinksWithOccupiedCapacity || (r.getOccupiedCapacity(e) > tolerance)) 
-						if (r.isBackupRoute()) resBackup.add(e); else resPrimary.add(e);
+					if (r.isBackupRoute()) resBackup.add(e); else resPrimary.add(e);
 			}
 		}
 		return Pair.of(resPrimary,resBackup);

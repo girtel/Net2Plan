@@ -247,11 +247,10 @@ public class Demand extends NetworkElement
 	 * (i) in source routing, down routes are not included, but all up routes are considered even if the carry zero traffic, 
 	 * (ii) in hop-by-hop routing the links are computed even if the demand offered traffic is zero, and all the links are considered primary.
 	 * @param assumeNoFailureState in this case, the links are computed as if all network link/nodes are in no-failure state
-	 * @param onlyLinksWithOccupiedCapacity in this case, in source routing case, a link is not included if the demand traversing routes occupy zero 
 	 * capacity in it
 	 * @return see above
 	 */
-	public Pair<Set<Link>,Set<Link>> getLinksThisLayerPotentiallyCarryingTraffic  (boolean assumeNoFailureState , boolean onlyLinksWithOccupiedCapacity)
+	public Pair<Set<Link>,Set<Link>> getLinksThisLayerPotentiallyCarryingTraffic  (boolean assumeNoFailureState)
 	{
 		final double tolerance = Configuration.precisionFactor;
 		Set<Link> resPrimary = new HashSet<> ();
@@ -260,9 +259,7 @@ public class Demand extends NetworkElement
 		{
 			final boolean someLinksFailed = !layer.cache_linksDown.isEmpty() || !netPlan.cache_nodesDown.isEmpty();
 			DoubleMatrix1D x_e = null;
-			if (onlyLinksWithOccupiedCapacity && (!assumeNoFailureState || !someLinksFailed)) 
-				x_e = layer.forwardingRules_x_de.viewRow(getIndex()); 
-			else
+			if (someLinksFailed && !assumeNoFailureState)
 			{
 				DoubleMatrix1D f_e = layer.forwardingRulesNoFailureState_f_de.viewRow(index).copy();
 				if (someLinksFailed)
@@ -282,7 +279,11 @@ public class Demand extends NetworkElement
 					final double newXdeTrafficOneUnit = M.get (ingressNode.index , link.originNode.index) * f_e.get (link.index);
 					x_e.set(link.index , newXdeTrafficOneUnit);
 				}			
-			}		
+			}
+			else
+			{
+				x_e = layer.forwardingRules_x_de.viewRow(getIndex()); 
+			}
 			for (int e = 0 ; e < x_e.size() ; e ++) if (x_e.get(e) > tolerance) resPrimary.add(layer.links.get(e));
 		}
 		else
@@ -291,8 +292,7 @@ public class Demand extends NetworkElement
 			{
 				if (!assumeNoFailureState && r.isDown()) continue;
 				for (Link e : r.getSeqLinks()) 
-					if (!onlyLinksWithOccupiedCapacity || (r.getOccupiedCapacity(e) > tolerance)) 
-						if (r.isBackupRoute()) resBackup.add(e); else resPrimary.add(e);
+					if (r.isBackupRoute()) resBackup.add(e); else resPrimary.add(e);
 			}
 		}
 		return Pair.of(resPrimary,resBackup);
