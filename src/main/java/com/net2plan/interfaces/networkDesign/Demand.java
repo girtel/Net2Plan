@@ -13,6 +13,7 @@
 package com.net2plan.interfaces.networkDesign;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,6 +22,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -34,6 +36,7 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Quadruple;
+import com.net2plan.utils.Triple;
 
 import cern.colt.list.tdouble.DoubleArrayList;
 import cern.colt.list.tint.IntArrayList;
@@ -241,64 +244,7 @@ public class Demand extends NetworkElement
 		return maxPropTimeInMs;
 	}
 
-	/** Returns the set of links in this layer that could potentially carry traffic of this demand, according to the routes/forwarding rules defined.
-	 * The method returns  a pair of sets (disjoint or not), first set with the set of links potentially carrying primary traffic and 
-	 * second with links in backup routes. Potentially carrying traffic means that 
-	 * (i) in source routing, down routes are not included, but all up routes are considered even if the carry zero traffic, 
-	 * (ii) in hop-by-hop routing the links are computed even if the demand offered traffic is zero, and all the links are considered primary.
-	 * @param assumeNoFailureState in this case, the links are computed as if all network link/nodes are in no-failure state
-	 * capacity in it
-	 * @return see above
-	 */
-	public Pair<Set<Link>,Set<Link>> getLinksThisLayerPotentiallyCarryingTraffic  (boolean assumeNoFailureState)
-	{
-		final double tolerance = Configuration.precisionFactor;
-		Set<Link> resPrimary = new HashSet<> ();
-		Set<Link> resBackup = new HashSet<> ();
-		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
-		{
-			final boolean someLinksFailed = !layer.cache_linksDown.isEmpty() || !netPlan.cache_nodesDown.isEmpty();
-			DoubleMatrix1D x_e = null;
-			if (someLinksFailed)
-			{
-				DoubleMatrix1D f_e = layer.forwardingRulesNoFailureState_f_de.viewRow(index).copy();
-				if (!assumeNoFailureState)
-				{
-					for (Link e : layer.cache_linksDown) f_e.set(e.index, 0);
-					for (Node n : netPlan.cache_nodesDown)
-					{
-						for (Link e : n.getOutgoingLinks(layer)) f_e.set(e.index, 0);
-						for (Link e : n.getIncomingLinks(layer)) f_e.set(e.index, 0);
-					}
-				}
-				Quadruple<DoubleMatrix2D, RoutingCycleType , Double , DoubleMatrix1D> fundMatrixComputation = computeRoutingFundamentalMatrixDemand (f_e);
-				DoubleMatrix2D M = fundMatrixComputation.getFirst ();
-				x_e = DoubleFactory1D.dense.make(layer.links.size());
-				for (Link link : layer.links)
-				{
-					final double newXdeTrafficOneUnit = M.get (ingressNode.index , link.originNode.index) * f_e.get (link.index);
-					x_e.set(link.index , newXdeTrafficOneUnit);
-				}			
-			}
-			else
-			{
-				x_e = layer.forwardingRulesCurrentFailureState_x_de.viewRow(getIndex()); 
-			}
-			for (int e = 0 ; e < x_e.size() ; e ++) if (x_e.get(e) > tolerance) resPrimary.add(layer.links.get(e));
-		}
-		else
-		{
-			for (Route r : cache_routes)
-			{
-				if (!assumeNoFailureState && r.isDown()) continue;
-				for (Link e : r.getSeqLinks()) 
-					if (r.isBackupRoute()) resBackup.add(e); else resPrimary.add(e);
-			}
-		}
-		return Pair.of(resPrimary,resBackup);
-	}
-	
-	
+
 
 	/**
 	 * <p>Returns {@code true} if the traffic of the demand is traversing an oversubscribed link, {@code false} otherwise.</p>
@@ -792,5 +738,117 @@ public class Demand extends NetworkElement
 			if (!coupledUpperLayerLink.coupledLowerLayerDemand.equals (this)) throw new RuntimeException ("Bad");
 		if (!layer.demands.contains(this)) throw new RuntimeException ("Bad");
 	}
+
+	/** Returns the set of links in this layer that could potentially carry traffic of this demand, according to the routes/forwarding rules defined.
+	 * The method returns  a pair of sets (disjoint or not), first set with the set of links potentially carrying primary traffic and 
+	 * second with links in backup routes. Potentially carrying traffic means that 
+	 * (i) in source routing, down routes are not included, but all up routes are considered even if the carry zero traffic, 
+	 * (ii) in hop-by-hop routing the links are computed even if the demand offered traffic is zero, and all the links are considered primary.
+	 * @param assumeNoFailureState in this case, the links are computed as if all network link/nodes are in no-failure state
+	 * capacity in it
+	 * @return see above
+	 */
+	public Pair<Set<Link>,Set<Link>> getLinksThisLayerPotentiallyCarryingTraffic  (boolean assumeNoFailureState)
+	{
+		final double tolerance = Configuration.precisionFactor;
+		Set<Link> resPrimary = new HashSet<> ();
+		Set<Link> resBackup = new HashSet<> ();
+		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
+		{
+			final boolean someLinksFailed = !layer.cache_linksDown.isEmpty() || !netPlan.cache_nodesDown.isEmpty();
+			DoubleMatrix1D x_e = null;
+			if (someLinksFailed)
+			{
+				DoubleMatrix1D f_e = layer.forwardingRulesNoFailureState_f_de.viewRow(index).copy();
+				if (!assumeNoFailureState)
+				{
+					for (Link e : layer.cache_linksDown) f_e.set(e.index, 0);
+					for (Node n : netPlan.cache_nodesDown)
+					{
+						for (Link e : n.getOutgoingLinks(layer)) f_e.set(e.index, 0);
+						for (Link e : n.getIncomingLinks(layer)) f_e.set(e.index, 0);
+					}
+				}
+				Quadruple<DoubleMatrix2D, RoutingCycleType , Double , DoubleMatrix1D> fundMatrixComputation = computeRoutingFundamentalMatrixDemand (f_e);
+				DoubleMatrix2D M = fundMatrixComputation.getFirst ();
+				x_e = DoubleFactory1D.dense.make(layer.links.size());
+				for (Link link : layer.links)
+				{
+					final double newXdeTrafficOneUnit = M.get (ingressNode.index , link.originNode.index) * f_e.get (link.index);
+					x_e.set(link.index , newXdeTrafficOneUnit);
+				}			
+			}
+			else
+			{
+				x_e = layer.forwardingRulesCurrentFailureState_x_de.viewRow(getIndex()); 
+			}
+			for (int e = 0 ; e < x_e.size() ; e ++) if (x_e.get(e) > tolerance) resPrimary.add(layer.links.get(e));
+		}
+		else
+		{
+			for (Route r : cache_routes)
+			{
+				if (!assumeNoFailureState && r.isDown()) continue;
+				for (Link e : r.getSeqLinks()) 
+					if (r.isBackupRoute()) resBackup.add(e); else resPrimary.add(e);
+			}
+		}
+		return Pair.of(resPrimary,resBackup);
+	}
 	
+	
+//	/** Returns the set of links in this layer that could potentially carry traffic of this demand, according to the routes/forwarding rules defined.
+//	 * The method returns  a pair of sets (disjoint or not), first set with the set of links potentially carrying primary traffic and 
+//	 * second with links in backup routes. Potentially carrying traffic means that 
+//	 * (i) in source routing, down routes are not included, but all up routes are considered even if the carry zero traffic, 
+//	 * (ii) in hop-by-hop routing the links are computed even if the demand offered traffic is zero, and all the links are considered primary.
+//	 * @param assumeNoFailureState in this case, the links are computed as if all network link/nodes are in no-failure state
+//	 * capacity in it
+//	 * @return see above
+//	 */
+//	public Pair<Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> getLinksUpperLayersPotentiallyCarryingTrafficThisDemand  (boolean assumeNoFailureState)
+//	{
+//		if (coupledUpperLayerLink == null) return Pair.of(new HashMap<> (), new HashMap <> ());
+//		
+//		Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
+//				coupledUpperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (assumeNoFailureState);
+//		Map<Demand,Set<Link>> upperLayerLinksPuttingUnicastTrafficThisLink = triple.getFirst();
+//		for (Demand d : triple.getSecond().keySet())
+//		{
+//			Set<Link> links = upperLayerLinksPuttingUnicastTrafficThisLink.get(d);
+//			if (links == null) { links = new HashSet<Link> (); upperLayerLinksPuttingUnicastTrafficThisLink.put(d, links); }
+//			links.addAll(triple.getSecond().get(d));
+//		}
+//		Map<Pair<MulticastDemand,Node>,Set<Link>> upperLayerLinksPuttingMulticastTrafficThisLink = triple.getThird();
+//		
+//		/* Add upper layer info*/
+//		final Map<Demand,Set<Link>> res_unicast = new HashMap<> (upperLayerLinksPuttingUnicastTrafficThisLink);
+//		final Map<Pair<MulticastDemand,Node>,Set<Link>> res_multicast = new HashMap<> (upperLayerLinksPuttingMulticastTrafficThisLink);
+//
+//		/* Propagate to two layers up, and accumulate results */
+//		for (Demand upperLayerDemand : upperLayerLinksPuttingUnicastTrafficThisLink.keySet())
+//		{
+//			if (upperLayerDemand.isCoupled())
+//			{
+//				Pair<Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_twoLayersUp = upperLayerDemand.getLinksUpperLayersPotentiallyCarryingTrafficThisDemand (assumeNoFailureState); 
+//				res_unicast.putAll(res_twoLayersUp.getFirst());
+//				res_multicast.putAll(res_twoLayersUp.getSecond());
+//			}
+//		}
+//		for (Pair<MulticastDemand,Node> upperLayerMDemandAndEgressNode : upperLayerLinksPuttingMulticastTrafficThisLink.keySet())
+//		{
+//			final MulticastDemand upperLayerMDemand = upperLayerMDemandAndEgressNode.getFirst();
+//			final Node mDemandEgressNode = upperLayerMDemandAndEgressNode.getSecond();
+//			if (upperLayerMDemand.isCoupled()) 
+//			{
+//				Pair<Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_twoLayersUp = upperLayerMDemand.getLinksUpperLayersPotentiallyCarryingTrafficThisDemandToEgressNode  (mDemandEgressNode , assumeNoFailureState);
+//				res_unicast.putAll(res_twoLayersUp.getFirst());
+//				res_multicast.putAll(res_twoLayersUp.getSecond());
+//			}
+//		}
+//		return Pair.of(res_unicast, res_multicast);
+//	}
+	
+	
+
 }

@@ -12,25 +12,28 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import cern.colt.list.tdouble.DoubleArrayList;
-import cern.colt.list.tint.IntArrayList;
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import junit.framework.Assert;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
-import com.net2plan.libraries.GraphUtils;
-import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
-import com.net2plan.utils.Quadruple;
+import com.net2plan.utils.Triple;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
+import cern.colt.list.tdouble.DoubleArrayList;
+import cern.colt.list.tint.IntArrayList;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 /** <p>This class contains a representation of a link. A link is characterized by its initial and end node, the network layer it belongs to, 
  * and its capacity, measured in the layer link capacity units. When the routing type at the link layer is {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, the link
@@ -635,16 +638,24 @@ public class Link extends NetworkElement
 
 	/** Returns the set of links in this layer carry the traffic that traverses this link, before and after traversing it,
 	 *  according to the routes/forwarding rules defined. 
-	 * The method returns  a pair of sets (disjoint or not). In hop-by-hop routing mode second set is empty. 
-	 * In source routing mode, first set includes the links considerinf non-backup routes, second set considering backup routes
+	 *  Potentially carrying traffic means that (i) in source routing, down routes are not included, but all up routes 
+	 *  are considered even if the carry zero traffic, 
+	 * (ii) in hop-by-hop routing the links are computed even if the demand offered traffic is zero. All the links are considered primary.
+	 * The method returns  three maps: (i) first map, with one entry per demand whose traffic traverses this node, associated to 
+	 * the other links (aside of this) that this link traffic also traverses, but are not part of backup routes, 
+	 * (ii) second map, the same as before, but only links belonging to backup routes, (iii) other links with multicast trees that traverse this 
+	 * node, being a key its associated multicast demands.
+	 * <p>Note: this link is not included in any set an any map </p>
+	 *  
 	 * @param assumeNoFailureState in this case, the links are computed as if all network link/nodes are in no-failure state
+	 * capacity in it
 	 * @return see above
 	 */
-	public Pair<Set<Link>,Set<Link>> getOtherLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (boolean assumeNoFailureState)
+	public Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (boolean assumeNoFailureState)
 	{
 		final double tolerance = Configuration.precisionFactor;
-		Set<Link> resPrimary = new HashSet<> ();
-		Set<Link> resBackup = new HashSet<> ();
+		Map<Demand,Set<Link>> resPrimary = new HashMap<> ();
+		Map<Demand,Set<Link>> resBackup = new HashMap<> ();
 		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
 		{
 			final int index_ae = originNode.index;
@@ -652,6 +663,11 @@ public class Link extends NetworkElement
 			final boolean someLinksFailed = !layer.cache_linksDown.isEmpty() || !netPlan.cache_nodesDown.isEmpty();
 			for (Demand d : layer.demands)
 			{
+				final Set<Link> resThisDemand_primary = new HashSet<> ();
+				final Set<Link> resThisDemand_backup = new HashSet<> ();
+				resPrimary.put(d ,  resThisDemand_primary);
+				resBackup.put(d ,  resThisDemand_backup);
+				
 				final int index_ad = d.getIngressNode().index;
 				if (d.getOfferedTraffic() == 0) continue;
 				DoubleMatrix1D f_e;// = layer.forwardingRulesNoFailureState_f_de.viewRow(d.index);
@@ -677,12 +693,13 @@ public class Link extends NetworkElement
 				/* See the links that carry traffic of this demand AND such traffic traversed BEFORE or AFTER this link */
 				for (Link candLink : layer.links)
 				{
+					if (candLink == this) continue; // do not add this link
 					/* Candidate link does not carry demand traffic => continue */
 					if (fundMatrix.get(index_ad, candLink.originNode.index) * f_e.get(candLink.index) == 0) continue; 
 					/* if the traffic outgoing cand link enters my link, include it */
-					if (fundMatrix.get(candLink.destinationNode.index , index_ae) > tolerance) resPrimary.add(candLink);
+					if (fundMatrix.get(candLink.destinationNode.index , index_ae) > tolerance) resThisDemand_primary.add(candLink);
 					/* if the traffic outgoing my link link enters cand link, include it */
-					if (fundMatrix.get(index_be , candLink.originNode.index) > tolerance) resPrimary.add(candLink);
+					if (fundMatrix.get(index_be , candLink.originNode.index) > tolerance) resThisDemand_primary.add(candLink);
 				}
 			}
 		}
@@ -691,10 +708,159 @@ public class Link extends NetworkElement
 			for (Route r : cache_traversingRoutes.keySet())
 			{
 				if (!assumeNoFailureState && r.isDown()) continue;
-				for (Link e : r.getSeqLinks()) 
-					if (r.isBackupRoute()) resBackup.add(e); else resPrimary.add(e);
+				for (Link e : r.getSeqLinks())
+				{
+					if (e == this) continue; // do not add this link
+					if (r.isBackupRoute())
+					{
+						Set<Link> linksSoFar = resBackup.get(r.getDemand());
+						if (linksSoFar == null) { linksSoFar = new HashSet<> (); resBackup.put(r.getDemand(), linksSoFar); }
+						linksSoFar.add(e);
+					}
+					else 
+					{
+						Set<Link> linksSoFar = resPrimary.get(r.getDemand());
+						if (linksSoFar == null) { linksSoFar = new HashSet<> (); resPrimary.put(r.getDemand(), linksSoFar); }
+						linksSoFar.add(e);
+					}
+				}
 			}
 		}
-		return Pair.of(resPrimary,resBackup);
+		
+		Map<Pair<MulticastDemand,Node>,Set<Link>> resMCast = new HashMap<> ();
+		for (MulticastTree t : cache_traversingTrees)
+		{
+			for (Node egressNode : t.getMulticastDemand().getEgressNodes())
+			{
+				final List<Link> pathToEgressNode = t.getSeqLinksToEgressNode(egressNode);
+				if (!pathToEgressNode.contains(this)) continue;
+				if (!assumeNoFailureState && !netPlan.isUp (pathToEgressNode)) continue;
+				Set<Link> linksSoFar = resMCast.get(Pair.of(t.getMulticastDemand() , egressNode));
+				if (linksSoFar == null) { linksSoFar = new HashSet<> (); resMCast.put(Pair.of(t.getMulticastDemand() , egressNode), linksSoFar); }
+				linksSoFar.addAll(pathToEgressNode);
+				linksSoFar.remove(this);
+			}
+		}
+		return Triple.of(resPrimary,resBackup,resMCast);
 	}
+
+
+	/** Returns the set of links in this layer carry the traffic that traverses this link, before and after traversing it,
+	 *  according to the routes/forwarding rules defined. 
+	 *  Potentially carrying traffic means that (i) in source routing, down routes are not included, but all up routes 
+	 *  are considered even if the carry zero traffic, 
+	 * (ii) in hop-by-hop routing the links are computed even if the demand offered traffic is zero. All the links are considered primary.
+	 * The method returns  three maps: (i) first map, with one entry per demand whose traffic traverses this node, associated to 
+	 * the other links (aside of this) that this link traffic also traverses, but are not part of backup routes, 
+	 * (ii) second map, the same as before, but only links belonging to backup routes, (iii) other links with multicast trees that traverse this 
+	 * node, being a key its associated multicast demands.
+	 * <p>Note: this link is not included in any set an any map </p>
+	 *  
+	 * @param assumeNoFailureState in this case, the links are computed as if all network link/nodes are in no-failure state
+	 * capacity in it
+	 * @return see above
+	 */
+	public Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> getLinksLowerLayersPotentiallyCarryingTrafficTraversingThisLink  (boolean assumeNoFailureState)
+	{
+		final Map<Demand,Set<Link>> resPrimary = new HashMap <> ();
+		final Map<Demand,Set<Link>> resBackup = new HashMap <> ();
+		final Map<Pair<MulticastDemand,Node>,Set<Link>> resMCast = new HashMap <> ();
+		
+		if (!isCoupled()) return Triple.of(resPrimary, resBackup,resMCast);
+		if (!assumeNoFailureState && !this.isUp) return Triple.of(resPrimary, resBackup,resMCast);
+		
+		if (this.coupledLowerLayerDemand != null)
+		{
+			Pair<Set<Link>,Set<Link>> pair = coupledLowerLayerDemand.getLinksThisLayerPotentiallyCarryingTraffic  (assumeNoFailureState);
+			resPrimary.put(coupledLowerLayerDemand, pair.getFirst());
+			resBackup.put(coupledLowerLayerDemand, pair.getSecond());
+			for (Link lowerLayerLink_primary : pair.getFirst())
+			{
+				final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> linksLayersTwoBelow = lowerLayerLink_primary.getLinksLowerLayersPotentiallyCarryingTrafficTraversingThisLink  (assumeNoFailureState);
+				resPrimary.putAll(linksLayersTwoBelow.getFirst()); // primary traffic in lower layer, and in two layers below -> is primary
+				resBackup.putAll(linksLayersTwoBelow.getSecond()); // primary traffic in lower layer, and backup in two layers below -> is backup
+				resMCast.putAll (linksLayersTwoBelow.getThird());
+			}
+			for (Link lowerLayerLink_backup : pair.getFirst())
+			{
+				final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> linksLayersTwoBelow = lowerLayerLink_backup.getLinksLowerLayersPotentiallyCarryingTrafficTraversingThisLink  (assumeNoFailureState);
+				resBackup.putAll(linksLayersTwoBelow.getFirst()); // primary traffic in lower layer, and in two layers below -> is primary
+				resBackup.putAll(linksLayersTwoBelow.getSecond()); // primary traffic in lower layer, and backup in two layers below -> is backup
+				resMCast.putAll (linksLayersTwoBelow.getThird());
+			}
+		}
+		else if (this.coupledLowerLayerMulticastDemand != null)
+		{
+			Set<Link> linksLowerLayer = coupledLowerLayerMulticastDemand.getLinksThisLayerPotentiallyCarryingTraffic  (this.destinationNode , assumeNoFailureState);
+			resMCast.put(Pair.of(coupledLowerLayerMulticastDemand, this.destinationNode) , linksLowerLayer);
+			for (Link lowerLayerLink : linksLowerLayer)
+			{
+				final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> linksLayersTwoBelow = lowerLayerLink.getLinksLowerLayersPotentiallyCarryingTrafficTraversingThisLink  (assumeNoFailureState);
+				resPrimary.putAll(linksLayersTwoBelow.getFirst()); // primary traffic in lower layer, and in two layers below -> is primary
+				resBackup.putAll(linksLayersTwoBelow.getSecond()); // primary traffic in lower layer, and backup in two layers below -> is backup
+				resMCast.putAll (linksLayersTwoBelow.getThird());
+			}
+		}
+		return Triple.of(resPrimary,resBackup,resMCast);
+	}
+
+	public Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>>
+		getLinksUpperLayersPotentiallyPuttingTrafficInThisLink  (boolean assumeNoFailureState , Triple<Set<Demand>,Set<Demand>,Set<Pair<MulticastDemand,Node>>> thisLayerDemandsPuttingTrafficThisLink)
+	{
+		if (thisLayerDemandsPuttingTrafficThisLink == null)
+		{
+			Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
+					this.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (assumeNoFailureState);
+			thisLayerDemandsPuttingTrafficThisLink = Triple.of(triple.getFirst().keySet(), triple.getSecond().keySet(), triple.getThird().keySet());
+		}
+		
+		/* Add upper layer info*/
+		final Map<Demand,Set<Link>> res_unicastPrimary = new HashMap<> ();
+		final Map<Demand,Set<Link>> res_unicastBackup = new HashMap<> ();
+		final Map<Pair<MulticastDemand,Node>,Set<Link>> res_multicast = new HashMap<> ();
+
+		/* Propagate to two layers up, and accumulate results */
+		for (Demand thisLayerDemand : thisLayerDemandsPuttingTrafficThisLink.getFirst())
+		{
+			if (thisLayerDemand.isCoupled())
+			{
+				final Link upperLayerLink = thisLayerDemand.coupledUpperLayerLink;
+				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
+						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(assumeNoFailureState);
+				res_unicastPrimary.putAll(res_upperLayer.getFirst()); // primary traffic in primary links -> primary
+				res_unicastBackup.putAll(res_upperLayer.getSecond()); // primary traffic in backup links -> backup
+				res_multicast.putAll(res_upperLayer.getThird()); 
+			}
+		}
+		for (Demand thisLayerDemand : thisLayerDemandsPuttingTrafficThisLink.getSecond())
+		{
+			if (thisLayerDemand.isCoupled())
+			{
+				final Link upperLayerLink = thisLayerDemand.coupledUpperLayerLink;
+				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
+						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(assumeNoFailureState);
+				res_unicastBackup.putAll(res_upperLayer.getFirst()); // backup traffic in primary links -> backup
+				res_unicastBackup.putAll(res_upperLayer.getSecond()); // backup traffic in backup links -> backup
+				res_multicast.putAll(res_upperLayer.getThird()); 
+			}
+		}
+
+		for (Pair<MulticastDemand,Node> thisLayerMDemandInfo : thisLayerDemandsPuttingTrafficThisLink.getThird())
+		{
+			final MulticastDemand thisLayerMDemand = thisLayerMDemandInfo.getFirst();
+			final Node mDemandEgressNode = thisLayerMDemandInfo.getSecond();
+			if (thisLayerMDemand.isCoupled()) 
+			{
+				final Link upperLayerLink = thisLayerMDemand.coupledUpperLayerLinks.get(mDemandEgressNode);
+				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
+						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(assumeNoFailureState);
+				res_unicastPrimary.putAll(res_upperLayer.getFirst()); // primary traffic in primary links -> primary
+				res_unicastBackup.putAll(res_upperLayer.getSecond()); // primary traffic in backup links -> backup
+				res_multicast.putAll(res_upperLayer.getThird()); 
+			}
+		}
+		return Triple.of(res_unicastPrimary, res_unicastBackup , res_multicast);
+	}
+
+
 }
