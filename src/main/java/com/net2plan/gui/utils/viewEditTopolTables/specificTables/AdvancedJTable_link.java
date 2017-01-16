@@ -124,7 +124,9 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
 
 
 
-    public List<Object[]> getAllData(NetPlan currentState, NetPlan initialState, ArrayList<String> attributesColumns) {
+    public List<Object[]> getAllData(NetPlan currentState, NetPlan initialState, ArrayList<String> attributesColumns) 
+    {
+    	final boolean isSourceRouting = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING;
         double max_rho_e = 0;
         for (Link link : currentState.getLinks())
             max_rho_e = Math.max(max_rho_e, link.getOccupiedCapacity() / link.getCapacity());
@@ -134,10 +136,10 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
         List<Object[]> allLinkData = new LinkedList<Object[]>();
         for (Link link : currentState.getLinks()) {
             Set<SharedRiskGroup> srgIds_thisLink = link.getSRGs();
-            Set<Route> traversingRoutes = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING ? link.getTraversingRoutes() : new LinkedHashSet<Route>();
-            Set<Route> traversingBURoutes = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING ? link.getTraversingBackupRoutes() : new LinkedHashSet<Route>();
+            Set<Route> traversingRoutes = isSourceRouting ? link.getTraversingRoutes() : new LinkedHashSet<Route>();
+            Set<Route> traversingBURoutes = isSourceRouting ? link.getTraversingBackupRoutes() : new LinkedHashSet<Route>();
             Set<MulticastTree> traversingMulticastTrees = link.getTraversingTrees();
-            DoubleMatrix1D forwardingRules = currentState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING ? currentState.getMatrixDemandBasedForwardingRules().viewColumn(link.getIndex()).copy() : DoubleFactory1D.sparse.make(currentState.getNumberOfDemands(), 0);
+            DoubleMatrix1D forwardingRules = !isSourceRouting ? currentState.getMatrixDemandBasedForwardingRules().viewColumn(link.getIndex()).copy() : DoubleFactory1D.sparse.make(currentState.getNumberOfDemands(), 0);
             int numRoutes = traversingRoutes.size();
             int numSegments = traversingBURoutes.size();
             int numForwardingRules = 0;
@@ -167,7 +169,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
             linkData[COLUMN_STATE] = !link.isDown();
             linkData[COLUMN_CAPACITY] = link.getCapacity();
             linkData[COLUMN_CARRIEDTRAFFIC] = link.getCarriedTraffic();
-            final Link linkCopy = link; linkData[COLUMN_TRAFFICRESERVEDFORPROTECTION] = link.getTraversingBackupRoutes().stream ().mapToDouble(e->e.getOccupiedCapacity(linkCopy)).sum();
+            final Link linkCopy = link; linkData[COLUMN_TRAFFICRESERVEDFORPROTECTION] = !isSourceRouting? 0.0 : link.getTraversingBackupRoutes().stream ().mapToDouble(e->e.getOccupiedCapacity(linkCopy)).sum();
             linkData[COLUMN_UTILIZATION] = rho_e;
             linkData[COLUMN_ISBOTTLENECK] = DoubleUtils.isEqualWithinRelativeTolerance(max_rho_e, rho_e, Configuration.precisionFactor);
             linkData[COLUMN_LENGTH] = link.getLengthInKm();

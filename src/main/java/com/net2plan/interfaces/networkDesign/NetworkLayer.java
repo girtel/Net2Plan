@@ -226,7 +226,7 @@ public class NetworkLayer extends NetworkElement
 		/* set 0 in the down links and the link in-out from the down nodes (they do not send traffic) */
 		DoubleMatrix1D fowardingRulesThisFailureState_f_e;
 		if (cache_linksDown.isEmpty())
-			fowardingRulesThisFailureState_f_e = null;
+			fowardingRulesThisFailureState_f_e = forwardingRulesNoFailureState_f_de.viewRow(demand.index);
 		else
 		{
 			fowardingRulesThisFailureState_f_e = forwardingRulesNoFailureState_f_de.viewRow(demand.index).copy();

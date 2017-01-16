@@ -11,7 +11,6 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -102,6 +101,7 @@ public class VisualizationState
 		this.showInterLayerLinks = true;
 		this.showNonConnectedNodes = true;
 		this.isNetPlanEditable = true;
+		this.interLayerDistanceInPixels = 50;
 		rebuildVisualizationState(currentNp , vLayersInfo);
 //		
 //		this.intraNodeGUILinks = new HashMap<> ();
@@ -392,13 +392,14 @@ public class VisualizationState
 						assertTrue (vl.npLayersToShow.contains(layer));
 					else
 						assertTrue (!vl.npLayersToShow.contains(layer));
-			for (Link e : currentNp.getLinks(layer))
-			{
-				final GUILink gl = regularLinkMap.get(e);
-				assertTrue (gl != null);
-				assertEquals (gl.getAssociatedNetPlanLink() , e);
-				assertTrue (cache_layer2VLayerMap.get(layer).guiIntraLayerLinks.contains(gl));
-			}
+			if (cache_layer2VLayerMap.get(layer) != null)
+				for (Link e : currentNp.getLinks(layer))
+				{
+					final GUILink gl = regularLinkMap.get(e);
+					assertTrue (gl != null);
+					assertEquals (gl.getAssociatedNetPlanLink() , e);
+					assertTrue (cache_layer2VLayerMap.get(layer).guiIntraLayerLinks.contains(gl));
+				}
 		}
 		
 	}

@@ -29,6 +29,7 @@ public class GUILink {
     private final GUINode destinationNode;
     private Link npLink;
     private final VisualizationLayer vl;
+    private final VisualizationState vs;
 
     /* New variables */
     private boolean hasArrow;
@@ -50,15 +51,20 @@ public class GUILink {
      */
     public GUILink(Link npLink, GUINode originNode, GUINode destinationNode) 
     {
+    	this.vs = originNode.getVisualizationLayer().getVisualizationState();
     	this.vl = (destinationNode.getVisualizationLayer() != originNode.getVisualizationLayer())? null : originNode.getVisualizationLayer();
         this.npLink = npLink;
         this.originNode = originNode;
         this.destinationNode = destinationNode;
-        if (originNode.getAssociatedNetPlanNode() != npLink.getOriginNode())
-            throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
-        if (destinationNode.getAssociatedNetPlanNode() != npLink.getDestinationNode())
-            throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
-
+        if (npLink != null)
+        {
+        	if (originNode.getAssociatedNetPlanNode() != npLink.getOriginNode()) throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
+            if (destinationNode.getAssociatedNetPlanNode() != npLink.getDestinationNode()) throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
+        }
+        else
+        {
+        	if (Math.abs(originNode.getVisualizationLayer().getIndex() - destinationNode.getVisualizationLayer().getIndex()) != 1) throw new RuntimeException ("Bad");
+        }
         this.hasArrow = true;
         this.arrowStroke = new BasicStroke(1);
 //        this.arrowStrokeIfPicked = new BasicStroke(2);
@@ -89,8 +95,8 @@ public class GUILink {
 
     public boolean isVisible () 
     {
-    	if (isIntraNodeLink()) return vl.getVisualizationState().isShowInterLayerLinks();
-    	return vl.getVisualizationState().isVisible(this.npLink);
+    	if (isIntraNodeLink()) return vs.isShowInterLayerLinks();
+    	return vs.isVisible(this.npLink);
     }
 
     public void setHasArrow(boolean hasArrow) {
@@ -105,8 +111,9 @@ public class GUILink {
         this.arrowStroke = arrowStroke;
     }
 
-    public Paint getEdgeDrawPaint() {
-        return npLink.isUp() ? edgeDrawPaint : Color.RED;
+    public Paint getEdgeDrawPaint() 
+    {
+        return npLink == null? edgeDrawPaint : npLink.isUp() ? edgeDrawPaint : Color.RED;
     }
 
     public void setEdgeDrawPaint(Paint drawPaint) {
@@ -117,8 +124,9 @@ public class GUILink {
 
     public void setShownSeparated (boolean shownSeparated) { this.shownSeparated = shownSeparated; }
 
-    public Paint getArrowDrawPaint() {
-        return npLink.isUp() ? arrowDrawPaint : Color.RED;
+    public Paint getArrowDrawPaint() 
+    {
+        return npLink == null? arrowDrawPaint : npLink.isUp() ? arrowDrawPaint : Color.RED;
     }
 
     public void setArrowDrawPaint(Paint drawPaint)
@@ -126,8 +134,9 @@ public class GUILink {
         this.arrowDrawPaint = drawPaint;
     }
 
-    public Paint getArrowFillPaint() {
-        return npLink.isUp() ? arrowFillPaint : Color.RED;
+    public Paint getArrowFillPaint() 
+    {
+        return npLink == null? arrowFillPaint : npLink.isUp() ? arrowFillPaint : Color.RED;
     }
 
     public void setArrowFillPaint(Paint fillPaint) {
@@ -154,7 +163,7 @@ public class GUILink {
         return temp.toString();
     }
 
-    public boolean isIntraNodeLink () { return originNode == destinationNode; }
+    public boolean isIntraNodeLink () { return npLink == null; }
     
     /**
      * Returns the destination node of the link.
@@ -183,7 +192,7 @@ public class GUILink {
      * @since 0.2.0
      */
     public String getLabel() {
-        return String.format("%.2f", npLink.getUtilization());
+        return npLink == null? "" : String.format("%.2f", npLink.getUtilization());
     }
 
     /**

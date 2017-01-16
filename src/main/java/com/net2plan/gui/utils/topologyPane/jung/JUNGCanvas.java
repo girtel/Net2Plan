@@ -112,9 +112,6 @@ public final class JUNGCanvas implements ITopologyCanvas
     public JUNGCanvas(VisualizationState vs)
     {
     	this.vs = vs;
-//        nodeTable = new LinkedHashMap<>();
-//        linkTable = new LinkedHashMap<>();
-//        intraNodeLinkTable = new LinkedHashMap<> ();
 
         transformNetPlanCoordinatesToJungCoordinates = vertex ->
         {
@@ -125,6 +122,7 @@ public final class JUNGCanvas implements ITopologyCanvas
         	final VisualizationLayer vl = vertex.getVisualizationLayer();
     		final int vlIndex = vl.getIndex();
     		final double interLayerSpacePixels = vl.getVisualizationState().getInterLayerDistanceInPixels();
+    		final Point2D elevatedPositionInPixels = new Point2D.Double(basePositionInScreenPixels.getX() , basePositionInScreenPixels.getY() + (vlIndex * interLayerSpacePixels));
         	final Point2D elevatedPositionInNetPlanCoord = getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double(basePositionInScreenPixels.getX() , basePositionInScreenPixels.getY() + (vlIndex * interLayerSpacePixels)));
             return new Point2D.Double(elevatedPositionInNetPlanCoord.getX(), -elevatedPositionInNetPlanCoord.getY());
         };

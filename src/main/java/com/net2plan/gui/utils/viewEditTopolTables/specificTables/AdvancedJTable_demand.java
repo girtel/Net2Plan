@@ -138,11 +138,13 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
     }
 
 
-    public List<Object[]> getAllData(NetPlan currentState, NetPlan initialState, ArrayList<String> attributesColumns) {
+    public List<Object[]> getAllData(NetPlan currentState, NetPlan initialState, ArrayList<String> attributesColumns) 
+    {
+    	boolean isSourceRouting = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING;
         List<Object[]> allDemandData = new LinkedList<Object[]>();
         int counter = 0;
         for (Demand demand : currentState.getDemands()) {
-            Set<Route> routes_thisDemand = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING ? demand.getRoutes() : new LinkedHashSet<Route>();
+            Set<Route> routes_thisDemand = isSourceRouting ? demand.getRoutes() : new LinkedHashSet<Route>();
             Link coupledLink = demand.getCoupledLink();
             Node ingressNode = demand.getIngressNode();
             Node egressNode = demand.getEgressNode();
@@ -158,9 +160,9 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
             demandData[6] = demand.getCarriedTraffic();
             demandData[7] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d;
             demandData[8] = demand.isServiceChainRequest();
-            demandData[9] = joinTraversedResourcesTypes(demand);
+            demandData[9] = isSourceRouting? joinTraversedResourcesTypes(demand) : "";
             demandData[10] = demand.getRoutingCycleType();
-            demandData[11] = currentState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
+            demandData[11] = !isSourceRouting ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
             demandData[12] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + routes_thisDemand.stream().filter(e->e.isBackupRoute()).count() + ")";
             demandData[13] = demand.getWorstCasePropagationTimeInMs();
             demandData[14] = StringUtils.mapToString(demand.getAttributes());
@@ -175,7 +177,9 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
 
             allDemandData.add(demandData);
 
-            if (initialState != null && initialState.getDemandFromId(demand.getId()) != null) {
+            if (initialState != null && initialState.getDemandFromId(demand.getId()) != null) 
+            {
+            	isSourceRouting = initialState.getRoutingType() == RoutingType.SOURCE_ROUTING;
                 demand = initialState.getDemandFromId(demand.getId());
                 routes_thisDemand = initialState.getRoutingType() == RoutingType.SOURCE_ROUTING ? demand.getRoutes() : new LinkedHashSet<Route>();
                 coupledLink = demand.getCoupledLink();
@@ -192,9 +196,9 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
                 demandData_initialNetPlan[6] = demand.getCarriedTraffic();
                 demandData_initialNetPlan[7] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d;
                 demandData_initialNetPlan[8] = demand.isServiceChainRequest();
-                demandData_initialNetPlan[9] = joinTraversedResourcesTypes(demand);
+                demandData_initialNetPlan[9] = isSourceRouting? joinTraversedResourcesTypes(demand) : "";
                 demandData_initialNetPlan[10] = demand.getRoutingCycleType();
-                demandData_initialNetPlan[11] = initialState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
+                demandData_initialNetPlan[11] = !isSourceRouting ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
                 demandData_initialNetPlan[12] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + routes_thisDemand.stream().filter(e->e.isBackupRoute()).count() + ")";
                 demandData_initialNetPlan[13] = demand.getWorstCasePropagationTimeInMs();
                 demandData_initialNetPlan[14] = StringUtils.mapToString(demand.getAttributes());

@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -758,7 +759,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 	@Override
 	public void updateVisualizationAfterNewTopology()
 	{
-		vs.rebuildVisualizationState(getDesign() , Arrays.asList(Sets.newHashSet(currentNetPlan.getNetworkLayerDefault())));
+		vs.rebuildVisualizationState(getDesign() , currentNetPlan.getNetworkLayers().stream().map(e->Sets.newHashSet(e)).collect(Collectors.toList()));
 		topologyPanel.updateLayerChooser();
 		topologyPanel.getCanvas().rebuildTopologyAndRefresh();
 	    topologyPanel.getCanvas().zoomAll();
@@ -776,7 +777,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 
         if ((modificationsMade == null) ||  (modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE)))
         {
-            vs.rebuildVisualizationState(getDesign() , Arrays.asList(Sets.newHashSet(currentNetPlan.getNetworkLayerDefault())));
+            vs.rebuildVisualizationState(getDesign() , currentNetPlan.getNetworkLayers().stream().map(e->Sets.newHashSet(e)).collect(Collectors.toList()));
             topologyPanel.getCanvas().rebuildTopologyAndRefresh();
             viewEditTopTables.updateView();
             updateWarnings();
