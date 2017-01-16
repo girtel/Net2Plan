@@ -348,205 +348,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
     }
 
     @Override
-    public void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade)
-    {
-        if (modificationsMade == null || modificationsMade.contains(NetworkElementType.LAYER))
-        {
-            topologyPanel.updateLayerChooser();
-        }
-
-    	if ((modificationsMade == null) ||  (modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE)))
-    	{
-	   		vs.rebuildVisualizationState(getDesign());
-   	        topologyPanel.getCanvas().refresh();
-   	        viewEditTopTables.updateView();
-   	        updateWarnings();
-    	}
-    	else 
-    	{
-   	        viewEditTopTables.updateView();
-   	        updateWarnings();
-    	}
-    }
-
-//    @Override
-//    public void updateVisualizationFocus (NetworkElementType type , long id)
-//    {
-//        viewEditTopTables.selectViewItem(NetworkElementType.LINK , id);
-//    }
-//
-//    @Override
-//    public void updateVisualizationFocus (NetworkElementType type , int indexDemand , int indexLink)
-//    {
-//    	if (type != NetworkElementType.FORWARDING_RULE) throw new RuntimeException("Bad");
-//        viewEditTopTables.selectViewItem(NetworkElementType.FORWARDING_RULE , Pair.of(indexDemand,indexLink));
-//    }
-    
-//    @Override
-//    public Link addLink (NetworkLayer layer , Node originNode, Node destinationNode , boolean updateView)
-//    {
-//        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
-//   		Link e = getDesign().addLink(originNode , destinationNode , 0 , 0 , 200000 , null ,  layer);
-//   		if (updateView)
-//   		{
-//   	   		vs.rebuildVisualizationState(null);
-//   	        topologyPanel.getCanvas().refresh();
-//   	        viewEditTopTables.updateView();
-//   	        viewEditTopTables.selectViewItem(NetworkElementType.LINK , e.getId());
-//   	        updateWarnings();
-//   		}
-//        return e;
-//    }
-//
-//    @Override
-//    public Demand addDemand (NetworkLayer layer , Node originNode, Node destinationNode , boolean updateView)
-//    {
-//        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
-//   		Demand d = getDesign().addDemand(originNode , destinationNode , 0 , null ,  layer);
-//   		if (updateView)
-//   		{
-//   	        viewEditTopTables.updateView();
-//   	        viewEditTopTables.selectViewItem(NetworkElementType.DEMAND , d.getId());
-//   	        updateWarnings();
-//   		}
-//        return d;
-//    }
-//
-//    
-//    @Override
-//    public Pair<Demand,Demand> addDemandBidirectional (NetworkLayer layer, Node originNode, Node destinationNode , boolean updateView)
-//    {
-//        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
-//   		Pair<Demand,Demand> d = getDesign().addDemandBidirectional(originNode , destinationNode , 0 , null ,  layer);
-//   		if (updateView)
-//   		{
-//   	        viewEditTopTables.updateView();
-//   	        viewEditTopTables.selectViewItem(NetworkElementType.DEMAND , d.getFirst().getId());
-//   	        updateWarnings();
-//   		}
-//        return d;
-//    }
-//    
-//    @Override
-//    public Pair<Link, Link> addLinkBidirectional (NetworkLayer layer , Node originNode, Node destinationNode , boolean updateView)
-//    {
-//        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
-//
-//        NetPlan netPlan = getDesign();
-//        Pair<Link, Link> links = netPlan.addLinkBidirectional(originNode, destinationNode, 0, 0, 200000, null, layer);
-//        if (updateView)
-//        {
-//        	vs.rebuildVisualizationState(null);
-//            topologyPanel.getCanvas().rebuildTopologyAndRefresh();
-//            viewEditTopTables.updateView();
-//            viewEditTopTables.selectViewItem(NetworkElementType.LINK , links.getFirst().getId());
-//            updateWarnings();
-//        }
-//        return Pair.of(links.getFirst(), links.getSecond());
-//    }
-//    
-//    @Override
-//    public Node addNode (Point2D pos , boolean updateView)
-//    {
-//        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
-//
-//        Point2D.Double netPlanPos = OSMMapStateBuilder.getSingleton().translateNodeBaseCoordinatesIntoNetPlanCoordinates(getTopologyPanel().getCanvas() , pos);
-//   		Node n = getDesign().addNode(netPlanPos.getX() , netPlanPos.getY() , "Node" + getDesign().getNumberOfNodes() , null);
-//   		if (updateView)
-//   		{
-//   	        vs.rebuildVisualizationState(null);
-//   	        topologyPanel.getCanvas().rebuildTopologyAndRefresh();
-//   	        OSMMapStateBuilder.getSingleton().restartMapState(false);
-//   	        viewEditTopTables.updateView();
-//   	        viewEditTopTables.selectViewItem(NetworkElementType.NODE , n.getId());
-//   	        updateWarnings();
-//   		}
-//        return n;
-//    }
-//
-//    @Override
-//    public void applyTopologyRearrangementAndUpdateView (ITopologyDistribution distribution)
-//    {
-//        final Map<Node, Point2D> nodePositionInNetPlanCoord = distribution.getNodeDistribution(currentNetPlan.getNodes());
-//
-//        for (Node node : currentNetPlan.getNodes())
-//        {
-//        	node.setXYPositionMap(nodePositionInNetPlanCoord.get(node));
-//        	for (GUINode gn : vs.getVerticallyStackedGUINodes(node)) 
-//        		topologyPanel.getCanvas().updateNodeXYPosition(gn);
-//        }
-//        topologyPanel.getCanvas().refresh();
-//        topologyPanel.zoomAll();
-//        viewEditTopTables.updateView();
-//    }
-//
-//    @Override
-//    public void setNodeVisibilityStateAndUpdateView (Node node, boolean setAsVisible)
-//    {
-//    	vs.setVisibilityState(node , setAsVisible);
-//    	topologyPanel.getCanvas().refresh();
-//    }
-//    
-//    @Override
-//    public void setNodeNameAndUpdateView (Node node, String name)
-//    {
-//    	node.setName(name);
-//    	topologyPanel.getCanvas().refresh();
-//    }
-//
-//    @Override
-//    public void setNodeFailureState (Node node, boolean isUp , boolean updateView)
-//    {
-//        node.setFailureState(isUp);
-//        if (updateView)
-//        {
-//            topologyPanel.getCanvas().refresh();
-//            viewEditTopTables.updateView();
-//            updateWarnings();
-//        }
-//    }
-//    
-//    @Override
-//    public void setLinkFailureState (Link link , boolean isUp , boolean updateView)
-//    {
-//        link.setFailureState(isUp);
-//        if (updateView)
-//        {
-//            topologyPanel.getCanvas().refresh();
-//            viewEditTopTables.updateView();
-//            updateWarnings();
-//        }
-//    }
-
-//    @Override
-//    public void moveNodeXYPosition (Node node, Point2D posInNetPlanCoordinates , boolean updateView)
-//    {
-//        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
-//
-//        /* Change the netplan position */
-//        node.setXYPositionMap(posInNetPlanCoordinates);
-//        
-//        if (updateView)
-//        {
-//            /* Just updates the X,Y columns in the table */
-//            ClassAwareTableModel nodeTableModel = (ClassAwareTableModel) viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.NODE).getModel();
-//            int numRows = nodeTableModel.getRowCount();
-//            for (int row = 0; row < numRows; row++)
-//            {
-//                if ((long) nodeTableModel.getValueAt(row, 0) == node.getId())
-//                {
-//                    nodeTableModel.setAtValueSuper(node.getXYPositionMap().getX(), row, AdvancedJTable_node.COLUMN_XCOORD);
-//                    nodeTableModel.setAtValueSuper(node.getXYPositionMap().getY(), row, AdvancedJTable_node.COLUMN_YCOORD);
-//                }
-//            }
-//            
-//            for (GUINode gn : vs.getVerticallyStackedGUINodes(node)) topologyPanel.getCanvas().updateNodeXYPosition(gn);
-//            topologyPanel.getCanvas().refresh();
-//        }
-//    }
-
-
-    @Override
     public NetPlan getDesign()
     {
         if (inOnlineSimulationMode()) return onlineSimulationPane.getSimKernel().getCurrentNetPlan();
@@ -560,59 +361,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
         else return null;
     }
 
-//    @Override
-//    public void setDemandOfferedTraffic (Demand d , double traffic , boolean updateView)
-//    {
-//    	d.setOfferedTraffic(traffic);
-//    	if (updateView)
-//    		viewEditTopTables.updateView();
-//    }
-//    
-//    @Override
-//    public void removeNetworkElementAndUpdateView (NetworkElement e)
-//    {
-//    	boolean updateCanvas = (e instanceof Node) || (e instanceof Link) || (e instanceof NetworkLayer);
-//    	if (e instanceof Demand) ((Demand) e).remove();
-//    	else if (e instanceof Demand) ((Demand) e).remove();
-//    	else if (e instanceof Link) ((Link) e).remove();
-//    	else if (e instanceof MulticastDemand) ((MulticastDemand) e).remove();
-//    	else if (e instanceof MulticastTree) ((MulticastTree) e).remove();
-//    	else if (e instanceof NetworkLayer) e.getNetPlan().removeNetworkLayer((NetworkLayer) e);
-//    	else if (e instanceof Node) ((Node) e).remove();
-//    	else if (e instanceof Resource) ((Resource) e).remove();
-//    	else if (e instanceof Route) ((Route) e).remove();
-//    	else if (e instanceof SharedRiskGroup) ((SharedRiskGroup) e).remove();
-//    	else throw new RuntimeException ("Bad");
-//    		
-//    	if (updateCanvas) 
-//            topologyPanel.getCanvas().rebuildTopologyAndRefresh();
-//        viewEditTopTables.updateView();
-//        updateWarnings();
-//    }
-//
-//    @Override
-//    public void removeAllNetworkElementsOfaType (NetworkElementType type , NetworkLayer layer)
-//    {
-//    	final NetPlan np = getDesign();
-//    	boolean updateCanvas = (type == NetworkElementType.NODE) || (type == NetworkElementType.LINK) || (type == NetworkElementType.LAYER);
-//    	if (type == NetworkElementType.DEMAND) np.removeAllDemands(layer);
-//    	else if (type == NetworkElementType.LINK) np.removeAllLinks(layer);
-//    	else if (type == NetworkElementType.MULTICAST_DEMAND) np.removeAllMulticastDemands(layer);
-//    	else if (type == NetworkElementType.MULTICAST_TREE) np.removeAllMulticastTrees(layer);
-//    	else if (type == NetworkElementType.LAYER) np.removeAllNetworkLayers();
-//    	else if (type == NetworkElementType.NODE) np.removeAllNodes();
-//    	else if (type == NetworkElementType.RESOURCE) np.removeAllResources();
-//    	else if (type == NetworkElementType.ROUTE) np.removeAllRoutes(layer);
-//    	else if (type == NetworkElementType.FORWARDING_RULE) np.removeAllForwardingRules(layer);
-//    	else throw new RuntimeException ("Bad");
-//    		
-//    	if (updateCanvas) 
-//            topologyPanel.getCanvas().rebuildTopologyAndRefresh();
-//        viewEditTopTables.updateView();
-//        updateWarnings();
-//    }
-
-    
     @Override
     public void loadDesignDoNotUpdateVisualization (NetPlan netPlan)
     {
@@ -625,56 +373,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 //        initialTopologySetting = new TopologyMap();
 //        currentNetPlan.getNodes().stream().forEach(node -> initialTopologySetting.addNodeLocation(node.getId(), node.getXYPositionMap()));
     }
-
-//    @Override
-//    public void loadDesign (NetPlan netPlan)
-//    {
-//        viewEditTopTables.resetTables();
-//        netPlan.checkCachesConsistency();
-//        if (onlineSimulationPane != null) onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
-//        currentNetPlan = netPlan;
-//        netPlan.checkCachesConsistency();
-//
-//        // Saving original topology structure
-//        initialTopologySetting = new TopologyMap();
-//        currentNetPlan.getNodes().stream().forEach(node -> initialTopologySetting.addNodeLocation(node.getId(), node.getXYPositionMap()));
-//
-//        topologyPanel.updateLayerChooser();
-//        topologyPanel.getCanvas().zoomAll();
-//        resetView();
-//    }
-
-
-//    @Override
-//    public void removeLink(long link)
-//    {
-//        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
-//
-//        NetPlan netPlan = getDesign();
-////        if (netPlan.getLinkFromId(link).getLayer().equals(getDesign().getNetworkLayerDefault()))
-////        {
-////            topologyPanel.getCanvas().removeLink(netPlan.getLinkFromId(link));
-////            topologyPanel.getCanvas().refresh();
-////        }
-//        netPlan.getLinkFromId(link).remove();
-//        vs.rebuildVisualizationState(null);
-//        topologyPanel.getCanvas().refresh();
-//        updateWarningsAndTables();
-//    }
-//
-//    @Override
-//    public void removeNode(long node)
-//    {
-//        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
-//
-//        NetPlan netPlan = getDesign();
-////        topologyPanel.getCanvas().removeNode(netPlan.getNodeFromId(node));
-////        topologyPanel.getCanvas().refresh();
-//        netPlan.getNodeFromId(node).remove();
-//        vs.rebuildVisualizationState(null);
-//        topologyPanel.getCanvas().refresh();
-//        updateWarningsAndTables();
-//    }
 
     private void resetButton()
     {
@@ -728,172 +426,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.RESOURCE).clearSelection();
     }
 
-
-//    @Override
-//    public void showMulticastDemand(long demandId)
-//    {
-//        NetPlan netPlan = getDesign();
-//        MulticastDemand demand = netPlan.getMulticastDemandFromId(demandId);
-//        NetworkLayer layer = demand.getLayer();
-//        selectNetPlanViewItem(layer.getId(), NetworkElementType.MULTICAST_DEMAND, demandId);
-//
-//        Map<Node, Color> nodes = new HashMap<Node, Color>();
-//        nodes.put(demand.getIngressNode(), COLOR_INITIALNODE);
-//        for (Node n : demand.getEgressNodes()) nodes.put(n, COLOR_ENDNODE);
-//        Map<Link, Pair<Color, Boolean>> links = new HashMap<Link, Pair<Color, Boolean>>();
-//
-//        DoubleMatrix1D x_e = netPlan.getMatrixMulticastDemand2LinkTrafficCarried(layer).viewRow(demand.getIndex()).copy();
-//        for (int e = 0; e < x_e.size(); e++)
-//            if (x_e.get(e) > 0) links.put(netPlan.getLinkFromId(e), Pair.of(Color.BLUE, false));
-//        topologyPanel.getCanvas().showAndPickNodesAndLinks(nodes, links);
-//        topologyPanel.getCanvas().refresh();
-//    }
-
-//    @Override
-//    public void showForwardingRule(Pair<Integer, Integer> demandLink)
-//    {
-//        NetPlan netPlan = getDesign();
-//        Demand demand = netPlan.getDemand(demandLink.getFirst());
-//        Link link = netPlan.getLink(demandLink.getSecond());
-//        NetworkLayer layer = demand.getLayer();
-//        selectNetPlanViewItem(layer.getId(), NetworkElementType.FORWARDING_RULE, Pair.of(demand.getIndex(), link.getIndex()));
-//
-//        Map<Node, Color> nodes = new HashMap<Node, Color>();
-//        nodes.put(demand.getIngressNode(), COLOR_INITIALNODE);
-//        nodes.put(demand.getEgressNode(), COLOR_ENDNODE);
-//        Map<Link, Pair<Color, Boolean>> links = new HashMap<Link, Pair<Color, Boolean>>();
-//        links.put(link, Pair.of(Color.BLUE, false));
-//        topologyPanel.getCanvas().showAndPickNodesAndLinks(nodes, links);
-//        topologyPanel.getCanvas().refresh();
-//    }
-//
-//    @Override
-//    public void showLink(long linkId)
-//    {
-//        NetPlan netPlan = getDesign();
-//        Link link = netPlan.getLinkFromId(linkId);
-//        selectNetPlanViewItem(link.getLayer().getId(), NetworkElementType.LINK, linkId);
-//
-//        topologyPanel.getCanvas().showNode(link.getOriginNode(), COLOR_INITIALNODE);
-//        topologyPanel.getCanvas().showNode(link.getDestinationNode(), COLOR_ENDNODE);
-//
-//        topologyPanel.getCanvas().showLink(link, link.isUp() ? Color.BLUE : Color.RED, false);
-//        topologyPanel.getCanvas().refresh();
-//    }
-//
-//    @Override
-//    public void showNode(long nodeId)
-//    {
-//        selectNetPlanViewItem(getDesign().getNetworkLayerDefault().getId(), NetworkElementType.NODE, nodeId);
-//
-//        topologyPanel.getCanvas().showNode(getDesign().getNodeFromId(nodeId), Color.BLUE);
-//        topologyPanel.getCanvas().refresh();
-//    }
-//
-//    @Override
-//    public void showRoute(long routeId) // yellow segment link not used, orange segment link used, blue not segment link used. The same for initial state, in dashed
-//    {
-//        NetPlan netPlan = getDesign();
-//        Route route = netPlan.getRouteFromId(routeId);
-//        NetworkLayer layer = route.getLayer();
-//        selectNetPlanViewItem(layer.getId(), NetworkElementType.ROUTE, routeId);
-//
-//        NetPlan initialState = getInitialDesign();
-//
-//        Map<Node, Color> selectedNodes = new HashMap<>();
-//        Map<Link, Pair<Color, Boolean>> coloredLinks = new HashMap<Link, Pair<Color, Boolean>>();
-//        if (inOnlineSimulationMode() && viewEditTopTables.isInitialNetPlanShown())
-//        {
-//            Route initialRoute = initialState.getRouteFromId(route.getId());
-//            if (initialRoute != null)
-//            {
-//                for (Route s : initialRoute.getBackupRoutes())
-//                    for (Link e : s.getSeqLinks())
-//                        if (netPlan.getLinkFromId(e.getId()) != null)
-//                        {
-//                            Link selectedLink = netPlan.getLinkFromId(e.getId());
-//                            selectedNodes.put(selectedLink.getOriginNode(), Color.YELLOW);
-//                            selectedNodes.put(selectedLink.getDestinationNode(), Color.YELLOW);
-//                            coloredLinks.put(selectedLink, Pair.of(Color.YELLOW, true));
-//                        }
-//                for (Link link : initialRoute.getSeqLinks())
-//                	if (netPlan.getLinkFromId(link.getId()) != null)
-//                    {
-//                        Link selectedLink = netPlan.getLinkFromId(link.getId());
-//                        selectedNodes.put(selectedLink.getOriginNode(), Color.BLUE);
-//                        selectedNodes.put(selectedLink.getDestinationNode(), Color.BLUE);
-//                        coloredLinks.put(selectedLink, Pair.of(Color.BLUE, true));
-//                    }
-//            }
-//        }
-//        for (Route s : route.getBackupRoutes())
-//            for (Link e : s.getSeqLinks())
-//            {
-//                selectedNodes.put(e.getOriginNode(), Color.YELLOW);
-//                selectedNodes.put(e.getDestinationNode(), Color.YELLOW);
-//                coloredLinks.put(e, Pair.of(Color.YELLOW, false));
-//            }
-//        for (Link linkOrSegment : route.getSeqLinks())
-//        {
-//            selectedNodes.put(linkOrSegment.getOriginNode(), Color.BLUE);
-//            selectedNodes.put(linkOrSegment.getDestinationNode(), Color.BLUE);
-//            coloredLinks.put(linkOrSegment, Pair.of(Color.BLUE, false));
-//        }
-//
-//        topologyPanel.getCanvas().showAndPickNodesAndLinks(selectedNodes, coloredLinks);
-//        topologyPanel.getCanvas().refresh();
-//    }
-//
-//    @Override
-//    public void showMulticastTree(long treeId)
-//    {
-//        NetPlan netPlan = getDesign();
-//        MulticastTree tree = netPlan.getMulticastTreeFromId(treeId);
-//        NetworkLayer layer = tree.getLayer();
-//        selectNetPlanViewItem(layer.getId(), NetworkElementType.MULTICAST_TREE, treeId);
-//
-//        NetPlan currentState = getDesign();
-//        NetPlan initialState = getInitialDesign();
-//        Map<Node, Color> coloredNodes = new HashMap<Node, Color>();
-//        Map<Link, Pair<Color, Boolean>> coloredLinks = new HashMap<Link, Pair<Color, Boolean>>();
-//        if (inOnlineSimulationMode() && viewEditTopTables.isInitialNetPlanShown())
-//        {
-//            MulticastTree initialTree = initialState.getMulticastTreeFromId(treeId);
-//            if (initialTree != null)
-//                for (Link e : initialTree.getLinkSet())
-//                    if (currentState.getLinkFromId(e.getId()) != null)
-//                        coloredLinks.put(currentState.getLinkFromId(e.getId()), Pair.of(Color.BLUE, true));
-//        }
-//        for (Link e : tree.getLinkSet()) coloredLinks.put(e, Pair.of(Color.BLUE, false));
-//        coloredNodes.put(tree.getIngressNode(), COLOR_INITIALNODE);
-//        for (Node n : tree.getEgressNodes()) coloredNodes.put(n, COLOR_ENDNODE);
-//        topologyPanel.getCanvas().showAndPickNodesAndLinks(coloredNodes, coloredLinks);
-//        topologyPanel.getCanvas().refresh();
-//    }
-//
-//    @Override
-//    public void showSRG(long srg)
-//    {
-//        showSRG(getDesign().getNetworkLayerDefault().getId(), srg);
-//    }
-//
-//    @Override
-//    public void showSRG(long layer, long srg)
-//    {
-//        NetPlan netPlan = getDesign();
-//        selectNetPlanViewItem(layer, NetworkElementType.SRG, srg);
-//
-//        Set<Node> nodeIds_thisSRG = netPlan.getSRGFromId(srg).getNodes();
-//        Set<Link> linkIds_thisSRG_thisLayer = netPlan.getSRGFromId(srg).getLinks(netPlan.getNetworkLayerFromId(layer));
-//        Map<Node, Color> nodeColors = new HashMap<Node, Color>();
-//        Map<Link, Pair<Color, Boolean>> linkColors = new HashMap<Link, Pair<Color, Boolean>>();
-//        for (Node n : nodeIds_thisSRG) nodeColors.put(n, Color.ORANGE);
-//        for (Link e : linkIds_thisSRG_thisLayer) linkColors.put(e, Pair.of(Color.ORANGE, false));
-//
-//        topologyPanel.getCanvas().showAndPickNodesAndLinks(nodeColors, linkColors);
-//        topologyPanel.getCanvas().refresh();
-//    }
-
     /**
      * Shows the tab corresponding associated to a network element.
      *
@@ -931,23 +463,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
         String warningMsg = warnings.isEmpty() ? "Design is successfully completed!" : StringUtils.join(warnings, StringUtils.getLineSeparator());
         updateLog(warningMsg);
     }
-
-//    /**
-//     * Shows the {@code NetPlan} view, moving to the corresponding tab.
-//     *
-//     * @since 0.3.0
-//     */
-//    @Override
-//    public final void showNetPlanView()
-//    {
-//        viewEditTopTables.getNetPlanView().setSelectedIndex(0);
-//    }
-
-//    @Override
-//    public TopologyPanel getTopologyPanel()
-//    {
-//        return topologyPanel;
-//    }
 
     private void addAllKeyCombinationActions()
     {
@@ -1240,6 +755,28 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 	    viewEditTopTables.updateView();
 	    updateWarnings();
 	}
+
+    @Override
+    public void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade)
+    {
+        if (modificationsMade == null || modificationsMade.contains(NetworkElementType.LAYER))
+        {
+            topologyPanel.updateLayerChooser();
+        }
+
+        if ((modificationsMade == null) ||  (modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE)))
+        {
+            vs.rebuildVisualizationState(getDesign());
+            topologyPanel.getCanvas().rebuildTopologyAndRefresh();
+            viewEditTopTables.updateView();
+            updateWarnings();
+        }
+        else
+        {
+            viewEditTopTables.updateView();
+            updateWarnings();
+        }
+    }
 
 	@Override
 	public void justApplyZoomAll()

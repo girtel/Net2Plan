@@ -19,7 +19,6 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -29,10 +28,8 @@ import javax.swing.JPopupMenu;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.IVisualizationControllerCallback;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -81,20 +78,20 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
     {
         if (checkModifiers(e)) {
             final Point p = e.getPoint();
-            final Point2D pp = canvas.convertViewCoordinatesToRealCoordinates(p);
+            final Point2D positionInNetPlanCoordinates = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(p);
             final GUINode gn = canvas.getNode(e);
-            final Node node = gn == null? null : gn.getAssociatedNetPlanNode();
+            final Node node = gn == null ? null : gn.getAssociatedNetPlanNode();
             final GUILink gl = canvas.getLink(e);
-            final Link link = gl == null? null : gl.isIntraNodeLink()? null : gl.getAssociatedNetPlanLink();
+            final Link link = gl == null ? null : gl.isIntraNodeLink()? null : gl.getAssociatedNetPlanLink();
 
             List<JComponent> actions;
             if (node != null) {
-                actions = getNodeActions(node, pp);
+                actions = getNodeActions(node, positionInNetPlanCoordinates);
             } else if (link != null) {
-                actions = getLinkActions(link, pp);
+                actions = getLinkActions(link, positionInNetPlanCoordinates);
             } else {
             	callback.resetPickedStateAndUpdateView();
-                actions = getCanvasActionsMouseInNoNodeNorLinkPoint(pp);
+                actions = getCanvasActionsMouseInNoNodeNorLinkPoint(positionInNetPlanCoordinates);
             }
 
             if (actions == null || actions.isEmpty()) return;
@@ -210,13 +207,13 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
 
     }
 
-    public List<JComponent> getCanvasActionsMouseInNoNodeNorLinkPoint(Point2D pos)
+    public List<JComponent> getCanvasActionsMouseInNoNodeNorLinkPoint(Point2D positionInNetPlanCoordinates)
     {
         List<JComponent> actions = new LinkedList<>();
 
         if (callback.getVisualizationState().isNetPlanEditable())
         {
-            JMenuItem addNode = new JMenuItem(new AddNodeAction("Add node here", pos));
+            JMenuItem addNode = new JMenuItem(new AddNodeAction("Add node here", positionInNetPlanCoordinates));
             actions.add(addNode);
 
             actions.add(new JPopupMenu.Separator());
@@ -245,7 +242,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
             	final double angStep = 360.0 / nodes.size(); 
             	final double radius = 10; // PABLO: THIS SHOUD BE SET IN OTHER COORDINATES?
                 for (int i = 0; i < nodes.size(); i++)
-                	nodes.get(i).setXYPositionMap(new Point2D.Double(pos.getX() + radius * Math.cos(Math.toRadians(angStep*i)) , pos.getY() + radius * Math.sin(Math.toRadians(angStep*i))));
+                	nodes.get(i).setXYPositionMap(new Point2D.Double(positionInNetPlanCoordinates.getX() + radius * Math.cos(Math.toRadians(angStep*i)) , positionInNetPlanCoordinates.getY() + radius * Math.sin(Math.toRadians(angStep*i))));
 //                for (Node node : nodes)
 //                {
 //                    OSMMapStateBuilder.getSingleton().moveNode(node, nodePosition.get(node.getId()));
