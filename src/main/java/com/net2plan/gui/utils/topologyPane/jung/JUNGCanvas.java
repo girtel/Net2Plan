@@ -114,14 +114,14 @@ public final class JUNGCanvas implements ITopologyCanvas
 //        nodeTable = new LinkedHashMap<>();
 //        linkTable = new LinkedHashMap<>();
 //        intraNodeLinkTable = new LinkedHashMap<> ();
-        
+
         transformNetPlanCoordinatesToJungCoordinates = vertex ->
         {
 
         	final Node npNode = vertex.getAssociatedNetPlanNode();
         	final Point2D basePositionInNetPlanCoord = npNode.getXYPositionMap();
         	final Point2D basePositionInScreenPixels = getNetPlanCoordinatesFromScreenPixelCoordinate(basePositionInNetPlanCoord);
-        	final VisualizationLayer vl = vertex.getVisualizationLayer(); 
+        	final VisualizationLayer vl = vertex.getVisualizationLayer();
     		final int vlIndex = vl.getIndex();
     		final double interLayerSpacePixels = vl.getVisualizationState().getInterLayerDistanceInPixels();
         	final Point2D elevatedPositionInNetPlanCoord = getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double(basePositionInScreenPixels.getX() , basePositionInScreenPixels.getY() + (vlIndex * interLayerSpacePixels)));
@@ -343,7 +343,7 @@ public final class JUNGCanvas implements ITopologyCanvas
         if (plugin instanceof GraphMousePlugin) gm.remove((GraphMousePlugin) plugin);
     }
 
-    
+
     @Override
     public void resetPickedStateAndRefresh()
     {
@@ -367,9 +367,11 @@ public final class JUNGCanvas implements ITopologyCanvas
     			g.addVertex(gn);
     		}
     		for (GUILink gl : vl.getGUIIntraLayerLinks())
+            {
     			g.addEdge(gl , gl.getOriginNode() , gl.getDestinationNode());
+            }
     	}
-    	
+
     	/* Add inter layer links */
     	for (GUILink gl : vs.getAllGUILinks(false , true))
 			g.addEdge(gl , gl.getOriginNode() , gl.getDestinationNode());
@@ -694,10 +696,10 @@ public final class JUNGCanvas implements ITopologyCanvas
 	@Override
 	public void setBackgroundOSMMapsActiveState(boolean activateMap)
 	{
-		if (activateMap) 
-			OSMMapStateBuilder.getSingleton().setRunningState(); 
-		else 
-			OSMMapStateBuilder.getSingleton().setStoppedState(); 
+		if (activateMap)
+			OSMMapStateBuilder.getSingleton().setRunningState();
+		else
+			OSMMapStateBuilder.getSingleton().setStoppedState();
 	}
 
 	@Override
@@ -711,7 +713,7 @@ public final class JUNGCanvas implements ITopologyCanvas
 	{
 		return CommandLineParser.getParameters(getParameters(), Configuration.getOptions());
 	}
-	
+
 	@Override
 	public int getPriority() { return 0; }
 
@@ -721,6 +723,6 @@ public final class JUNGCanvas implements ITopologyCanvas
 	{
 		OSMMapStateBuilder.getSingleton().takeSnapshot(this);
 	}
-	
-	
+
+
 }

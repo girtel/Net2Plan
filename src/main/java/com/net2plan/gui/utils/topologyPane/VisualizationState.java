@@ -89,9 +89,9 @@ public class VisualizationState
 	{
 		this.currentNp = currentNp;
 		this.showNodeNames = false;
-		this.showLinkLabels = true;
+		this.showLinkLabels = false;
 		this.showInterLayerLinks = true;
-		this.showNonConnectedNodes = false;
+		this.showNonConnectedNodes = true;
 		this.vLayers = new ArrayList<> ();
 		this.vLayers.add(new VisualizationLayer(currentNp.getNetworkLayerDefault() , this , vLayers.size()));
 		this.intraNodeGUILinks = new HashMap<> ();

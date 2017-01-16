@@ -279,18 +279,18 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
 
     private class AddNodeAction extends AbstractAction
     {
-        private final Point2D pos;
+        private final Point2D positionInNetPlanCoordinates;
 
-        public AddNodeAction(String name, Point2D pos)
+        public AddNodeAction(String name, Point2D positionInNetPlanCoordinates)
         {
             super(name);
-            this.pos = pos;
+            this.positionInNetPlanCoordinates = positionInNetPlanCoordinates;
         }
 
         @Override
         public void actionPerformed(ActionEvent e)
         {
-        	callback.getDesign().addNode(pos.getX() , pos.getY() , "Node" + callback.getDesign().getNumberOfNodes(), null);
+        	callback.getDesign().addNode(positionInNetPlanCoordinates.getX() , positionInNetPlanCoordinates.getY() , "Node" + callback.getDesign().getNumberOfNodes(), null);
         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
         }
     }
