@@ -372,10 +372,14 @@ public final class JUNGCanvas implements ITopologyCanvas
     			final double extraInJungCoordinates =  Math.abs(yOfPixelUp - yOfPixelZero);
     			l.setLocation(gn , new Point2D.Double(basePositionInJungCoord.getX() , basePositionInJungCoord.getY() + extraInJungCoordinates));
     		}
-    		for (GUILink gl : vl.getGUILinks())
+    		for (GUILink gl : vl.getGUIIntraLayerLinks())
     			g.addEdge(gl , gl.getOriginNode() , gl.getDestinationNode());
     	}
-        refresh();
+    	
+    	/* Add inter layer links */
+    	for (GUILink gl : vs.getAllGUILinks(false , true))
+			g.addEdge(gl , gl.getOriginNode() , gl.getDestinationNode());
+    	refresh();
     }
 
     @Override

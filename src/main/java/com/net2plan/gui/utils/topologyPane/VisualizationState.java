@@ -358,7 +358,7 @@ public class VisualizationState
     	private NetPlan currentNp;
     	private final VisualizationState vs;
     	private List<GUINode> guiNodes;
-    	private List<GUILink> guiLinks;
+    	private List<GUILink> guiIntraLayerLinks;
     	private final int index;
     	
     	public int getNumberOfNetPlanLayers () { return npLayersToShow.size(); }
@@ -373,8 +373,7 @@ public class VisualizationState
     		for (NetworkLayer l : layers) if (l.getNetPlan() != currentNp) throw new RuntimeException("Bad");
     		this.vs = vs;
     		this.index = index;
-    		this.guiNodes = new ArrayList<>();
-    		this.guiLinks = new ArrayList<>();
+    		this.updateGUINodeAndGUILinks();
 		}
 
     	public VisualizationLayer(NetworkLayer layer , VisualizationState vs , int index)
@@ -383,14 +382,25 @@ public class VisualizationState
     		this.npLayersToShow = Collections.singletonList(layer);
     		this.vs = vs;
     		this.index = index;
-			this.guiNodes = new ArrayList<>();
-			this.guiLinks = new ArrayList<>();
+    		this.updateGUINodeAndGUILinks();
 		}
     	public VisualizationState getVisualizationState () { return vs; }
 
     	public List<GUINode> getGUINodes () { return Collections.unmodifiableList(guiNodes); }
-    	public List<GUILink> getGUILinks () { return Collections.unmodifiableList(guiLinks); }
+    	public List<GUILink> getGUIIntraLayerLinks () { return Collections.unmodifiableList(guiIntraLayerLinks); }
     	public int getIndex () { return index; }
+    	private void updateGUINodeAndGUILinks ()
+    	{
+			this.guiNodes = new ArrayList<>();
+			this.guiIntraLayerLinks = new ArrayList<>();
+			for (NetworkLayer layer : npLayersToShow)
+			{
+				for (Node n : currentNp.getNodes())
+					guiNodes.add(vs.getAssociatedGUINode(n , layer));
+				for (Link e : currentNp.getLinks(layer))
+					guiIntraLayerLinks.add(vs.getAssociatedGUILink(e));
+			}
+    	}
 	}
 
 	/**
@@ -488,11 +498,11 @@ public class VisualizationState
         }
     }
 	
-	public Set<GUILink> getAllGUILinks (boolean includeRegularLinks , boolean includeIntraNodeLinks)
+	public Set<GUILink> getAllGUILinks (boolean includeRegularLinks , boolean includeInterLayerLinks)
 	{
 		Set<GUILink> res = new HashSet<> ();
 		if (includeRegularLinks) res.addAll(regularLinkMap.values());
-		if (includeIntraNodeLinks) for (Node n : currentNp.getNodes()) res.addAll(this.intraNodeGUILinks.get(n));
+		if (includeInterLayerLinks) for (Node n : currentNp.getNodes()) res.addAll(this.intraNodeGUILinks.get(n));
 		return res;
 	}
 
