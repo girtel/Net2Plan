@@ -350,6 +350,11 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
     @Override
     public void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade)
     {
+        if (modificationsMade == null || modificationsMade.contains(NetworkElementType.LAYER))
+        {
+            topologyPanel.updateLayerChooser();
+        }
+
     	if ((modificationsMade == null) ||  (modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE)))
     	{
 	   		vs.rebuildVisualizationState(getDesign());
@@ -1115,6 +1120,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
     @Override
     public void pickDemandAndUpdateView (Demand demand)
     {
+        resetPickedStateAndUpdateView();
+
     	boolean includeUpLayerLinksCarryingThisTraffic = true;
     	boolean includeThisLayerLinksCarryingThisTraffic = true;
     	boolean includeDownLayerLinksCarryingThisTraffic = true;
@@ -1151,6 +1158,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
     @Override
 	public void pickLinkAndUpdateView(Link link)
 	{
+	    resetPickedStateAndUpdateView();
+
     	boolean includeUpLayerLinksCarryingThisTraffic = true;
     	boolean includeThisLayerLinksCarryingThisTraffic = true;
     	boolean includeDownLayerLinksCarryingThisTraffic = true;
@@ -1173,6 +1182,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 	@Override
 	public void pickNodeAndUpdateView(Node node)
 	{
+        resetPickedStateAndUpdateView();
         selectNetPlanViewItem(node.getNetPlan().getNetworkLayerDefault().getId(), NetworkElementType.NODE, node.getId());
         vs.setNodeProperties(vs.getVerticallyStackedGUINodes(node) , Color.BLUE , null , -1);
         topologyPanel.getCanvas().refresh();
@@ -1181,47 +1191,50 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 	@Override
     public void pickMulticastDemandAndUpdateView (MulticastDemand demand)
 	{
+        resetPickedStateAndUpdateView();
+        // TODO Auto-generated method stub
 	}
 
 	@Override
     public void pickForwardingRuleAndUpdateView (Pair<Demand, Link> demandLink)
 	{
+        resetPickedStateAndUpdateView();
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
     public void pickRouteAndUpdateView (Route route)
 	{
+        resetPickedStateAndUpdateView();
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
     public void pickMulticastTreeAndUpdateView (MulticastTree tree)
 	{
+        resetPickedStateAndUpdateView();
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
     public void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg)
 	{
+        resetPickedStateAndUpdateView();
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void putColorInElementTopologyCanvas(Collection<? extends NetworkElement> linksAndNodes, Color color)
 	{
+        resetPickedStateAndUpdateView();
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void updateVisualizationAfterNewTopology()
 	{
 		vs.rebuildVisualizationState(getDesign());
+		topologyPanel.updateLayerChooser();
 		topologyPanel.getCanvas().rebuildTopologyAndRefresh();
 	    topologyPanel.getCanvas().zoomAll();
 	    viewEditTopTables.updateView();
