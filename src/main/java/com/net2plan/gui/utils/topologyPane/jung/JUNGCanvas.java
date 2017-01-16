@@ -93,7 +93,7 @@ import edu.uci.ics.jung.visualization.util.ArrowFactory;
 public final class JUNGCanvas implements ITopologyCanvas
 {
 	private final VisualizationState vs;
-    private final static Transformer<GUINode, Point2D> FLIP_VERTICAL_COORDINATES;
+    private final Transformer<GUINode, Point2D> transformNetPlanCoordinatesToJungCoordinates;
 
     private final Graph<GUINode, GUILink> g;
     private final Layout<GUINode, GUILink> l;
@@ -102,15 +102,6 @@ public final class JUNGCanvas implements ITopologyCanvas
     private final ScalingControl scalingControl;
     private final Transformer<Context<Graph<GUINode, GUILink>, GUILink>, Shape> originalEdgeShapeTransformer;
     private VisualizationServer.Paintable paintableAssociatedToBackgroundImage;
-
-    static
-    {
-        FLIP_VERTICAL_COORDINATES = vertex ->
-        {
-            Point2D pos = vertex.getAssociatedNetPlanNode().getXYPositionMap();
-            return new Point2D.Double(pos.getX(), -pos.getY());
-        };
-    }
 
     /**
      * Default constructor.
@@ -124,8 +115,21 @@ public final class JUNGCanvas implements ITopologyCanvas
 //        linkTable = new LinkedHashMap<>();
 //        intraNodeLinkTable = new LinkedHashMap<> ();
         
-        g = new DirectedOrderedSparseMultigraph<>();
-        l = new StaticLayout<>(g, FLIP_VERTICAL_COORDINATES);
+        transformNetPlanCoordinatesToJungCoordinates = vertex ->
+        {
+
+        	final Node npNode = vertex.getAssociatedNetPlanNode();
+        	final Point2D basePositionInNetPlanCoord = npNode.getXYPositionMap();
+        	final Point2D basePositionInScreenPixels = getNetPlanCoordinatesFromScreenPixelCoordinate(basePositionInNetPlanCoord);
+        	final VisualizationLayer vl = vertex.getVisualizationLayer(); 
+    		final int vlIndex = vl.getIndex();
+    		final double interLayerSpacePixels = vl.getVisualizationState().getInterLayerDistanceInPixels();
+        	final Point2D elevatedPositionInNetPlanCoord = getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double(basePositionInScreenPixels.getX() , basePositionInScreenPixels.getY() + (vlIndex * interLayerSpacePixels)));
+            return new Point2D.Double(elevatedPositionInNetPlanCoord.getX(), -elevatedPositionInNetPlanCoord.getY());
+        };
+
+    	g = new DirectedOrderedSparseMultigraph<>();
+        l = new StaticLayout<>(g, transformNetPlanCoordinatesToJungCoordinates);
         vv = new VisualizationViewer<>(l);
 
         originalEdgeShapeTransformer = new EdgeShape.QuadCurve<>();
@@ -361,14 +365,6 @@ public final class JUNGCanvas implements ITopologyCanvas
     		for (GUINode gn : vl.getGUINodes())
     		{
     			g.addVertex(gn);
-
-    			Point2D basePositionInNetPlanCoord = getNetPlanCoordinatesFromScreenPixelCoordinate(gn.getAssociatedNetPlanNode().getXYPositionMap());
-
-    			final double yOfPixelZero = getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double (0 , 0)).getY();
-    			final double yOfPixelUp = getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double (0 , ((double) layerIndex) * vs.getInterLayerDistanceInPixels())).getY();
-    			final double extraInJungCoordinates =  Math.abs(yOfPixelUp - yOfPixelZero);
-
-                l.setLocation(gn , new Point2D.Double(basePositionInJungCoord.getX() , basePositionInJungCoord.getY() + extraInJungCoordinates));
     		}
     		for (GUILink gl : vl.getGUIIntraLayerLinks())
     			g.addEdge(gl , gl.getOriginNode() , gl.getDestinationNode());
@@ -436,7 +432,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     public void updateNodeXYPosition(Node node)
     {
     	for (GUINode gn : vs.getVerticallyStackedGUINodes(node))
-    		l.setLocation(gn, FLIP_VERTICAL_COORDINATES.transform(gn));
+    		l.setLocation(gn, transformNetPlanCoordinatesToJungCoordinates.transform(gn));
     }
 
     @Override

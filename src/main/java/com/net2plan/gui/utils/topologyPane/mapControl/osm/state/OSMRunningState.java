@@ -80,10 +80,10 @@ public class OSMRunningState implements OSMState
     
     
     @Override
-    public void moveNodeInVisualization(ITopologyCanvas canvas, Node node, Point2D pos)
+    public void moveNodeInVisualization(ITopologyCanvas canvas, Node node, Point2D positionInScreenPixels)
     {
         // Calculating JUNG Coordinates
-        final Point2D jungPoint = canvas.convertViewCoordinatesToRealCoordinates(pos);
+        final Point2D jungPoint = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(positionInScreenPixels);
         final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(convertJungPointToMapSwing(canvas, jungPoint));
 
         if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))

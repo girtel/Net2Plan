@@ -356,7 +356,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                 public void mouseMoved(MouseEvent e)
                 {
                     Point point = e.getPoint();
-                    position.setText("view = " + point + ", layout = " + canvas.convertViewCoordinatesToRealCoordinates(point));
+                    position.setText("view = " + point + ", NetPlan coord = " + canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(point));
                 }
             });
 

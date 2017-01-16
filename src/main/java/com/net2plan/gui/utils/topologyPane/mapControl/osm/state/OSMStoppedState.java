@@ -76,9 +76,9 @@ public class OSMStoppedState implements OSMState
     }
 
     @Override
-    public void moveNodeInVisualization(ITopologyCanvas canvas, Node node, Point2D pos)
+    public void moveNodeInVisualization(ITopologyCanvas canvas, Node node, Point2D positionInScreenPixels)
     {
-        final Point2D jungPoint = canvas.convertViewCoordinatesToRealCoordinates(pos);
+        final Point2D jungPoint = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(positionInScreenPixels);
         canvas.moveNodeToXYPosition(node, new Point2D.Double(jungPoint.getX(), -jungPoint.getY()));
     }
 

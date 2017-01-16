@@ -62,23 +62,9 @@ public interface ITopologyCanvas extends Plugin
 //     */
 //    public List<JComponent> getCanvasActions(Point2D pos);
 
-	/**
-	 * Returns the real coordinates in the topology for a given screen point.
-	 *
-	 * @param screenPoint Screen location
-	 * @return Coordinates in the topology system for the screen point
-	 * @since 0.3.0
-	 */
-	public Point2D convertViewCoordinatesToRealCoordinates(Point2D screenPoint);
+	public Point2D getNetPlanCoordinatesFromScreenPixelCoordinate(Point2D screenPoint);
 
-	/**
-	 * Returns the view coordinates in the panel for a given screen point.
-	 *
-	 * @param screenPoint Screen location
-	 * @return Coordinates in the view system for the screen point
-	 * @since 0.4.2
-	 */
-	public Point2D convertRealCoordinatesToViewCoordinates(Point2D screenPoint);
+	public Point2D getScreenPixelCoordinateFromNetPlanCoordinate(Point2D screenPoint);
 
 	/**
 	 * Returns a reference to the internal component containing the canvas.

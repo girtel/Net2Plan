@@ -206,12 +206,12 @@ public class OSMMapController
         final double currentCenterX = currentOSMViewportBounds.getCenterX();
         final double currentCenterY = currentOSMViewportBounds.getCenterY();
 
-        final Point2D currentOSMCenterJUNG = canvas.convertViewCoordinatesToRealCoordinates(new Point2D.Double(currentCenterX, currentCenterY));
+        final Point2D currentOSMCenterJUNG = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double(currentCenterX, currentCenterY));
 
         final double preCenterX = previousOSMViewportBounds.getCenterX();
         final double preCenterY = previousOSMViewportBounds.getCenterY();
 
-        final Point2D previousOSMCenterJUNG = canvas.convertViewCoordinatesToRealCoordinates(new Point2D.Double(preCenterX, preCenterY));
+        final Point2D previousOSMCenterJUNG = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double(preCenterX, preCenterY));
 
         final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getTransformer();
 

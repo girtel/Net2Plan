@@ -17,6 +17,7 @@ import java.awt.Font;
 import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
 import java.util.List;
 
 import com.net2plan.gui.utils.topologyPane.VisualizationState.VisualizationLayer;
