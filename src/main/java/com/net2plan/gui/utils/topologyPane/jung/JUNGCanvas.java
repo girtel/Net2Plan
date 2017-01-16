@@ -118,10 +118,10 @@ public final class JUNGCanvas implements ITopologyCanvas
 
         transformNetPlanCoordinatesToJungCoordinates = vertex ->
         {
-
         	final Node npNode = vertex.getAssociatedNetPlanNode();
         	final Point2D basePositionInNetPlanCoord = npNode.getXYPositionMap();
-        	final Point2D basePositionInScreenPixels = getNetPlanCoordinatesFromScreenPixelCoordinate(basePositionInNetPlanCoord);
+        	final Point2D basePositionInScreenPixels = getScreenPixelCoordinateFromNetPlanCoordinate(basePositionInNetPlanCoord);
+        	final Point2D basePositionInNetPlanCoordTransfAndInmverse = getNetPlanCoordinatesFromScreenPixelCoordinate(basePositionInScreenPixels);
         	final VisualizationLayer vl = vertex.getVisualizationLayer();
     		final int vlIndex = vl.getIndex();
     		final double interLayerSpacePixels = vl.getVisualizationState().getInterLayerDistanceInPixels();
@@ -268,8 +268,8 @@ public final class JUNGCanvas implements ITopologyCanvas
     @Override
     public Point2D getScreenPixelCoordinateFromNetPlanCoordinate(Point2D screenPoint)
     {
-        screenPoint.setLocation(screenPoint.getX(), -screenPoint.getY());
-        return vv.getRenderContext().getMultiLayerTransformer().transform(Layer.LAYOUT, screenPoint);
+//        screenPoint.setLocation(screenPoint.getX(), -screenPoint.getY());
+        return vv.getRenderContext().getMultiLayerTransformer().transform(Layer.LAYOUT, new Point2D.Double(screenPoint.getX() , -screenPoint.getY()));
     }
 
     @Override

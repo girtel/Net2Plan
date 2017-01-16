@@ -160,7 +160,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
     public void configure(JPanel contentPane)
     {
     	this.currentNetPlan = new NetPlan ();
-    	this.vs = new VisualizationState(currentNetPlan);
+    	this.vs = new VisualizationState(currentNetPlan , Arrays.asList(Sets.newHashSet(currentNetPlan.getNetworkLayerDefault())));
 
     	topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
 
@@ -758,7 +758,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 	@Override
 	public void updateVisualizationAfterNewTopology()
 	{
-		vs.rebuildVisualizationState(getDesign());
+		vs.rebuildVisualizationState(getDesign() , Arrays.asList(Sets.newHashSet(currentNetPlan.getNetworkLayerDefault())));
 		topologyPanel.updateLayerChooser();
 		topologyPanel.getCanvas().rebuildTopologyAndRefresh();
 	    topologyPanel.getCanvas().zoomAll();
@@ -776,7 +776,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 
         if ((modificationsMade == null) ||  (modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE)))
         {
-            vs.rebuildVisualizationState(getDesign());
+            vs.rebuildVisualizationState(getDesign() , Arrays.asList(Sets.newHashSet(currentNetPlan.getNetworkLayerDefault())));
             topologyPanel.getCanvas().rebuildTopologyAndRefresh();
             viewEditTopTables.updateView();
             updateWarnings();
@@ -797,7 +797,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 	@Override
 	public void updateVisualizationJustTopologyCanvas()
 	{
-		vs.rebuildVisualizationState(getDesign());
+//		vs.rebuildVisualizationState(getDesign() , Arrays.asList(Sets.newHashSet(currentNetPlan.getNetworkLayerDefault())));
+        topologyPanel.getCanvas().rebuildTopologyAndRefresh();
 	    topologyPanel.getCanvas().refresh();
 	}
 }

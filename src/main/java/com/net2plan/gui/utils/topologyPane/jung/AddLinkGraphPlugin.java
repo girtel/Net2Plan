@@ -169,7 +169,7 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
             	if ((guiNode.getVisualizationLayer().getNumberOfNetPlanLayers() == 1) &&
             			(guiNode.getVisualizationLayer().getNetPlanLayers().equals(startVertex.getVisualizationLayer().getNetPlanLayers())))
     			{
-            		final NetworkLayer layer = guiNode.getVisualizationLayer().getNetPlanLayers().get(0);
+            		final NetworkLayer layer = guiNode.getVisualizationLayer().getNetPlanLayers().iterator().next();
         			boolean bidirectional = (e.getModifiersEx() & MouseEvent.SHIFT_DOWN_MASK) == MouseEvent.SHIFT_DOWN_MASK;
                     if (bidirectional) node.getNetPlan().addLinkBidirectional(startVertex.getAssociatedNetPlanNode(), node,0,0,200000,null);
                     else node.getNetPlan().addLink(startVertex.getAssociatedNetPlanNode(), node,0,0,200000,null);
