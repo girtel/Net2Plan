@@ -161,7 +161,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
             Object[] linkData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
             linkData[COLUMN_ID] = link.getId();
             linkData[COLUMN_INDEX] = link.getIndex();
-            linkData[COLUMN_SHOWHIDE] = callback.getVisualizationState().getAssociatedGUILink(link).isVisible();
+            linkData[COLUMN_SHOWHIDE] = callback.getVisualizationState().isVisible(link);
             linkData[COLUMN_ORIGINNODE] = originNode.getIndex() + (originNodeName.isEmpty() ? "" : " (" + originNodeName + ")");
             linkData[COLUMN_DESTNODE] = destinationNode.getIndex() + (destinationNodeName.isEmpty() ? "" : " (" + destinationNodeName + ")");
             linkData[COLUMN_STATE] = !link.isDown();

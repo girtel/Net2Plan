@@ -34,7 +34,6 @@ public class GUINode
     private final VisualizationLayer vl;
 
     /* New variables */
-    private boolean visible;
     private Font font;
     //private Paint drawPaint, fillPaint, fillPaintIfPicked;
     private Paint drawPaint, fillPaint;
@@ -55,7 +54,6 @@ public class GUINode
         this.npNode = npNode;
 
 		/* defaults */
-        this.visible = true;
         this.drawPaint = java.awt.Color.BLACK;
         this.fillPaint = java.awt.Color.BLACK;
 //        this.fillPaintIfPicked = java.awt.Color.BLACK;
@@ -73,11 +71,7 @@ public class GUINode
     }
 
     public boolean isVisible() {
-        return visible;
-    }
-
-    public void setVisible(boolean isVisible) {
-        this.visible = isVisible;
+        return vl.getVisualizationState().isVisible(npNode);
     }
 
     public double getShapeSize() {

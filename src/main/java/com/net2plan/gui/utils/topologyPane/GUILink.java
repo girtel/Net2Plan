@@ -31,7 +31,6 @@ public class GUILink {
     private final VisualizationLayer vl;
 
     /* New variables */
-    private boolean isVisible;
     private boolean hasArrow;
 //    private Stroke arrowStroke, arrowStrokeIfPicked, edgeStroke, edgeStrokeIfPicked;
     private Stroke arrowStroke, edgeStroke;
@@ -60,7 +59,6 @@ public class GUILink {
         if (destinationNode.getAssociatedNetPlanNode() != npLink.getDestinationNode())
             throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
 
-        this.isVisible = true;
         this.hasArrow = true;
         this.arrowStroke = new BasicStroke(1);
 //        this.arrowStrokeIfPicked = new BasicStroke(2);
@@ -85,16 +83,14 @@ public class GUILink {
         return getLabel();
     }
 
-    public boolean isVisible() {
-        return this.isVisible;
-    }
-
-    public void setVisible(boolean isVisible) {
-        this.isVisible = isVisible;
-    }
-
     public boolean getHasArrow() {
         return this.hasArrow;
+    }
+
+    public boolean isVisible () 
+    {
+    	if (isIntraNodeLink()) return vl.getVisualizationState().isShowInterLayerLinks();
+    	return vl.getVisualizationState().isVisible(this.npLink);
     }
 
     public void setHasArrow(boolean hasArrow) {

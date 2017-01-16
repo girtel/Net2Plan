@@ -107,7 +107,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
             Object[] nodeData = new Object[netPlanViewTableHeader.length + attributesTitles.size()];
             nodeData[0] = node.getId();
             nodeData[1] = node.getIndex();
-            nodeData[2] = callback.getVisualizationState().getAssociatedGUINode(node , currentState.getNetworkLayerDefault()).isVisible();
+            nodeData[2] = callback.getVisualizationState().isVisible(node);
             nodeData[3] = node.getName();
             nodeData[4] = node.isUp();
             nodeData[5] = node.getXYPositionMap().getX();

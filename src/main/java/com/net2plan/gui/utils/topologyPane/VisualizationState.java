@@ -66,6 +66,7 @@ public class VisualizationState
     public final static Stroke DEFAULT_REGGUILINK_INTRANODEGESTROKE_BACKUP = new BasicStroke(0.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
     public final static Stroke DEFAULT_REGGUILINK_INTRANODEGESTROKE_BACKUP_PICKED = new BasicStroke(1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
 
+    private boolean showInterLayerLinks;
     private boolean showNodeNames;
 	private boolean showLinkLabels;
     private boolean showNonConnectedNodes;
@@ -77,6 +78,8 @@ public class VisualizationState
     private Map<Link,GUILink> regularLinkMap;
     private int interLayerDistanceInPixels;
     private Map<NetworkLayer,VisualizationLayer> cache_layer2VLayerMap;
+    private Set<Node> nonVisibleNodes;
+    private Set<Link> nonVisibleLinks;
     private boolean isNetPlanEditable;
     
     
@@ -87,6 +90,7 @@ public class VisualizationState
 		this.currentNp = currentNp;
 		this.showNodeNames = false;
 		this.showLinkLabels = true;
+		this.showInterLayerLinks = true;
 		this.showNonConnectedNodes = false;
 		this.vLayers = new ArrayList<> ();
 		this.vLayers.add(new VisualizationLayer(currentNp.getNetworkLayerDefault() , this , vLayers.size()));
@@ -100,9 +104,27 @@ public class VisualizationState
 			for (NetworkLayer layer : visualizationLayer.npLayersToShow) 
 				cache_layer2VLayerMap.put(layer , visualizationLayer);
 		this.isNetPlanEditable = true;
+		this.nonVisibleNodes = new HashSet<> ();
+		this.nonVisibleLinks = new HashSet<> ();
 	}
 
 	
+	/**
+	 * @return the showInterLayerLinks
+	 */
+	public boolean isShowInterLayerLinks()
+	{
+		return showInterLayerLinks;
+	}
+
+	/**
+	 * @param showInterLayerLinks the showInterLayerLinks to set
+	 */
+	public void setShowInterLayerLinks(boolean showInterLayerLinks)
+	{
+		this.showInterLayerLinks = showInterLayerLinks;
+	}
+
 	/**
 	 * @return the isNetPlanEditable
 	 */
@@ -249,6 +271,8 @@ public class VisualizationState
 		for (VisualizationLayer visualizationLayer : vLayers) 
 			for (NetworkLayer layer : visualizationLayer.npLayersToShow) 
 				cache_layer2VLayerMap.put(layer , visualizationLayer);
+		this.nonVisibleNodes = new HashSet<> ();
+		this.nonVisibleLinks = new HashSet<> ();
 		
 		for (Node n : currentNp.getNodes())
 		{
@@ -347,7 +371,8 @@ public class VisualizationState
 		for (VisualizationLayer visualizationLayer : vLayers) 
 			for (NetworkLayer layer : visualizationLayer.npLayersToShow) 
 				cache_layer2VLayerMap.put(layer , visualizationLayer);
-
+		for (VisualizationLayer visualizationLayer : vLayers) 
+			visualizationLayer.updateGUINodeAndGUILinks();
 	}
 
 	public List<VisualizationLayer> getVLList () { return Collections.unmodifiableList(vLayers); }
@@ -453,13 +478,22 @@ public class VisualizationState
 	
 	public void setVisibilityState (Node n , boolean isVisible)
 	{
-		for (GUINode gn : cache_nodeGuiNodeMap.get(n)) gn.setVisible(isVisible);
+		if (isVisible) nonVisibleNodes.remove(n); else nonVisibleNodes.add(n);
+	}
+
+	public boolean isVisible (Node n)
+	{
+		return !nonVisibleNodes.contains(n);
 	}
 
 	public void setVisibilityState (Link e , boolean isVisible)
 	{
-		GUILink gn = regularLinkMap.get(e); if (gn == null) throw new RuntimeException ("Bad");
-		gn.setVisible(isVisible);
+		if (isVisible) nonVisibleLinks.remove(e); else nonVisibleLinks.add(e);
+	}
+
+	public boolean isVisible (Link e)
+	{
+		return !nonVisibleLinks.contains(e);
 	}
 
 	/* Everything to its default color, shape. Separated nodes, are set together again. Visibility state is unchanged */
@@ -467,7 +501,6 @@ public class VisualizationState
     {
 		for (GUINode n : getAllGUINodes())
 		{
-		    //n.setVisible(true);
 		    n.setFont(DEFAULT_GUINODE_FONT);
 		    n.setDrawPaint(DEFAULT_GUINODE_DRAWCOLOR);
 		    n.setFillPaint(DEFAULT_GUINODE_FILLCOLOR);
@@ -476,7 +509,6 @@ public class VisualizationState
 		}
         for (GUILink e : getAllGUILinks(true,false))
         {
-        	//e.setVisible(true);
         	e.setHasArrow(DEFAULT_REGGUILINK_HASARROW);
         	e.setArrowStroke(DEFAULT_REGGUILINK_ARROWSTROKE);
         	e.setEdgeStroke(DEFAULT_REGGUILINK_EDGETROKE);
@@ -487,7 +519,6 @@ public class VisualizationState
         }
     	for (GUILink e : getAllGUILinks(false,true))
         {
-        	e.setVisible(true);
         	e.setHasArrow(DEFAULT_INTRANODEGUILINK_HASARROW);
         	e.setArrowStroke(DEFAULT_INTRANODEGUILINK_ARROWSTROKE);
         	e.setEdgeStroke(DEFAULT_INTRANODEGUILINK_EDGETROKE);
