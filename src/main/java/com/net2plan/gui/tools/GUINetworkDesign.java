@@ -352,7 +352,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
     {
     	if ((modificationsMade == null) ||  (modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE)))
     	{
-	   		vs.rebuildVisualizationState(null);
+	   		vs.rebuildVisualizationState(getDesign());
    	        topologyPanel.getCanvas().refresh();
    	        viewEditTopTables.updateView();
    	        updateWarnings();
@@ -1221,7 +1221,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 	@Override
 	public void updateVisualizationAfterNewTopology()
 	{
-		vs.rebuildVisualizationState(null);
+		vs.rebuildVisualizationState(getDesign());
 	    topologyPanel.getCanvas().refresh();
 	    topologyPanel.getCanvas().zoomAll();
 	    viewEditTopTables.updateView();
@@ -1237,9 +1237,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 	@Override
 	public void updateVisualizationJustTopologyCanvas()
 	{
-		vs.rebuildVisualizationState(null);
+		vs.rebuildVisualizationState(getDesign());
 	    topologyPanel.getCanvas().refresh();
 	}
-
-
 }

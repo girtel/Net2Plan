@@ -236,7 +236,7 @@ public class VisualizationState
 	
 	public void rebuildVisualizationState (NetPlan newCurrentNetPlan)
 	{
-		if (newCurrentNetPlan != null) this.currentNp = newCurrentNetPlan;
+		if (newCurrentNetPlan == null) throw new RuntimeException("Trying to update an empty topology");
 		for (Node n : currentNp.getNodes())
 		{
 	        List<GUINode> associatedGUINodes = new ArrayList<> ();
