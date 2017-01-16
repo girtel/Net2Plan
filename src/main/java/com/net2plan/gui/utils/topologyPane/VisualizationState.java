@@ -237,6 +237,19 @@ public class VisualizationState
 	public void rebuildVisualizationState (NetPlan newCurrentNetPlan)
 	{
 		if (newCurrentNetPlan == null) throw new RuntimeException("Trying to update an empty topology");
+		this.currentNp = newCurrentNetPlan;
+		
+		this.vLayers = new ArrayList<> ();
+		this.vLayers.add(new VisualizationLayer(currentNp.getNetworkLayerDefault() , this , vLayers.size()));
+		this.intraNodeGUILinks = new HashMap<> ();
+		this.cache_perNodeIntraNodeGUILinkMap = new HashMap <> ();
+		this.cache_nodeGuiNodeMap = new HashMap<> ();
+		this.regularLinkMap = new HashMap<> ();
+		this.cache_layer2VLayerMap = new HashMap<> (); 
+		for (VisualizationLayer visualizationLayer : vLayers) 
+			for (NetworkLayer layer : visualizationLayer.npLayersToShow) 
+				cache_layer2VLayerMap.put(layer , visualizationLayer);
+		
 		for (Node n : currentNp.getNodes())
 		{
 	        List<GUINode> associatedGUINodes = new ArrayList<> ();
