@@ -273,21 +273,25 @@ public class VisualizationState
 				cache_layer2VLayerMap.put(layer , visualizationLayer);
 		this.nonVisibleNodes = new HashSet<> ();
 		this.nonVisibleLinks = new HashSet<> ();
-		
+
 		for (Node n : currentNp.getNodes())
 		{
 	        List<GUINode> associatedGUINodes = new ArrayList<> ();
+
+			intraNodeGUILinks.put(n , new HashSet<>());
+
 	        for (VisualizationState.VisualizationLayer vLayer : vLayers)
 	        {
 	        	GUINode gn = new GUINode(n , vLayer);
 	        	associatedGUINodes.add(gn);
+
 	        	if (associatedGUINodes.size() > 1)
 	        	{
 	        		GUILink gl1 = new GUILink (null , associatedGUINodes.get(associatedGUINodes.size() - 2), gn);
 	        		GUILink gl2 = new GUILink (null , gn , associatedGUINodes.get(associatedGUINodes.size() - 2));
 	        		Set<GUILink> existingGUILinksSet = intraNodeGUILinks.get(n);
-	        		if (existingGUILinksSet == null) { existingGUILinksSet = new HashSet<> (); intraNodeGUILinks.put(n , existingGUILinksSet); } 
-	        		existingGUILinksSet.add(gl1); existingGUILinksSet.add(gl2);
+	        		existingGUILinksSet.add(gl1);
+	        		existingGUILinksSet.add(gl2);
 	        		GUILink check = cache_perNodeIntraNodeGUILinkMap.get(n).put(Pair.of(gl1.getOriginNode().getVisualizationLayer() , gl1.getDestinationNode().getVisualizationLayer()) , gl1);
 	        		if (check != null) throw new RuntimeException ("Bad");
 	        		check = cache_perNodeIntraNodeGUILinkMap.get(n).put(Pair.of(gl2.getOriginNode().getVisualizationLayer() , gl2.getDestinationNode().getVisualizationLayer()) , gl2);
@@ -309,6 +313,11 @@ public class VisualizationState
 					regularLinkMap.put(e , gl1);
 				}
 			}
+		}
+
+		for (VisualizationLayer vLayer : vLayers)
+		{
+			vLayer.updateGUINodeAndGUILinks();
 		}
 	}
 	
@@ -398,7 +407,6 @@ public class VisualizationState
     		for (NetworkLayer l : layers) if (l.getNetPlan() != currentNp) throw new RuntimeException("Bad");
     		this.vs = vs;
     		this.index = index;
-    		this.updateGUINodeAndGUILinks();
 		}
 
     	public VisualizationLayer(NetworkLayer layer , VisualizationState vs , int index)
@@ -407,14 +415,13 @@ public class VisualizationState
     		this.npLayersToShow = Collections.singletonList(layer);
     		this.vs = vs;
     		this.index = index;
-    		this.updateGUINodeAndGUILinks();
 		}
     	public VisualizationState getVisualizationState () { return vs; }
 
     	public List<GUINode> getGUINodes () { return Collections.unmodifiableList(guiNodes); }
     	public List<GUILink> getGUIIntraLayerLinks () { return Collections.unmodifiableList(guiIntraLayerLinks); }
     	public int getIndex () { return index; }
-    	private void updateGUINodeAndGUILinks ()
+    	public void updateGUINodeAndGUILinks ()
     	{
 			this.guiNodes = new ArrayList<>();
 			this.guiIntraLayerLinks = new ArrayList<>();
