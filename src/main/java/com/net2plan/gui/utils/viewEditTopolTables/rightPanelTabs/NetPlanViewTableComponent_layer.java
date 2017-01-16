@@ -339,11 +339,10 @@ public class NetPlanViewTableComponent_layer extends JPanel {
             ((DefaultTableModel) layerAttributeTable.getModel()).setDataVector(layerData, attributeTableHeader);
         }
 
-        txt_layerName.setText(layer.getName());
-        txt_layerDescription.setText(layer.getDescription());
-        txt_layerDescription.setCaretPosition(0);
-        txt_layerLinkCapacityUnits.setText(currentState.getLinkCapacityUnitsName());
-        txt_layerDemandTrafficUnits.setText(currentState.getDemandTrafficUnitsName());
+        if (!txt_layerName.getText().equals(layer.getName())) txt_layerName.setText(layer.getName());
+        if (!txt_layerDescription.getText().equals(layer.getDescription())) txt_layerDescription.setText(layer.getDescription());
+        if (!txt_layerLinkCapacityUnits.getText().equals(currentState.getLinkCapacityUnitsName())) txt_layerLinkCapacityUnits.setText(currentState.getLinkCapacityUnitsName());
+        if (!txt_layerDemandTrafficUnits.getText().equals(currentState.getDemandTrafficUnitsName())) txt_layerDemandTrafficUnits.setText(currentState.getDemandTrafficUnitsName());
 
         boolean hardComputations = currentState.getNumberOfNodes() <= 100;
         updateLayerMetrics(currentState, hardComputations);
