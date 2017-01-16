@@ -32,6 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -386,46 +387,49 @@ public final class JUNGCanvas implements ITopologyCanvas
 
     public void frameTopology()
     {
-        Set<GUINode> nodes = new LinkedHashSet<>();
-        for (GUINode n : g.getVertices()) if (n.isVisible()) nodes.add(n);
+        final Set<GUINode> visibleGUINodes = g.getVertices().stream().filter(e->e.isVisible()).collect(Collectors.toSet());
+        if (visibleGUINodes.isEmpty()) return;
 
-        if (nodes.isEmpty()) return;
-
-        double aux_xmax = Double.NEGATIVE_INFINITY;
-        double aux_xmin = Double.POSITIVE_INFINITY;
-        double aux_ymax = Double.NEGATIVE_INFINITY;
-        double aux_ymin = Double.POSITIVE_INFINITY;
-        double auxTransf_xmax = Double.NEGATIVE_INFINITY;
-        double auxTransf_xmin = Double.POSITIVE_INFINITY;
-        double auxTransf_ymax = Double.NEGATIVE_INFINITY;
-        double auxTransf_ymin = Double.POSITIVE_INFINITY;
-        for (GUINode node : nodes)
+        double xmaxNpCoords = Double.NEGATIVE_INFINITY;
+        double xminNpCoords = Double.POSITIVE_INFINITY;
+        double ymaxNpCoords = Double.NEGATIVE_INFINITY;
+        double yminNpCoords = Double.POSITIVE_INFINITY;
+        double xmaxJungCoords = Double.NEGATIVE_INFINITY;
+        double xminJungCoords = Double.POSITIVE_INFINITY;
+        double ymaxJungCoords = Double.NEGATIVE_INFINITY;
+        double yminJungCoords = Double.POSITIVE_INFINITY;
+        for (GUINode node : visibleGUINodes)
         {
-            Point2D aux = node.getAssociatedNetPlanNode().getXYPositionMap();
-            Point2D auxTransf = l.transform(node);
-            if (aux_xmax < aux.getX()) aux_xmax = aux.getX();
-            if (aux_xmin > aux.getX()) aux_xmin = aux.getX();
-            if (aux_ymax < aux.getY()) aux_ymax = aux.getY();
-            if (aux_ymin > aux.getY()) aux_ymin = aux.getY();
-            if (auxTransf_xmax < auxTransf.getX()) auxTransf_xmax = auxTransf.getX();
-            if (auxTransf_xmin > auxTransf.getX()) auxTransf_xmin = auxTransf.getX();
-            if (auxTransf_ymax < auxTransf.getY()) auxTransf_ymax = auxTransf.getY();
-            if (auxTransf_ymin > auxTransf.getY()) auxTransf_ymin = auxTransf.getY();
+            Point2D nodeNpCoordinates = node.getAssociatedNetPlanNode().getXYPositionMap();
+            Point2D nodeJungCoordinates = l.transform(node);
+            if (xmaxNpCoords < nodeNpCoordinates.getX()) xmaxNpCoords = nodeNpCoordinates.getX();
+            if (xminNpCoords > nodeNpCoordinates.getX()) xminNpCoords = nodeNpCoordinates.getX();
+            if (ymaxNpCoords < nodeNpCoordinates.getY()) ymaxNpCoords = nodeNpCoordinates.getY();
+            if (yminNpCoords > nodeNpCoordinates.getY()) yminNpCoords = nodeNpCoordinates.getY();
+            if (xmaxJungCoords < nodeJungCoordinates.getX()) xmaxJungCoords = nodeJungCoordinates.getX();
+            if (xminJungCoords > nodeJungCoordinates.getX()) xminJungCoords = nodeJungCoordinates.getX();
+            if (ymaxJungCoords < nodeJungCoordinates.getY()) ymaxJungCoords = nodeJungCoordinates.getY();
+            if (yminJungCoords > nodeJungCoordinates.getY()) yminJungCoords = nodeJungCoordinates.getY();
         }
 
         double PRECISION_FACTOR = 0.00001;
 
-        Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
-        float ratio_h = Math.abs(aux_xmax - aux_xmin) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getWidth() / (aux_xmax - aux_xmin));
-        float ratio_v = Math.abs(aux_ymax - aux_ymin) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getHeight() / (aux_ymax - aux_ymin));
+        Rectangle viewInJungCoordinates = vv.getBounds ();
+        float ratio_h = Math.abs(xmaxJungCoords - xminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInJungCoordinates.getWidth() / (xmaxJungCoords - xminJungCoords));
+        float ratio_v = Math.abs(ymaxJungCoords - yminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInJungCoordinates.getHeight() / (ymaxJungCoords - yminJungCoords));
         float ratio = (float) (0.8 * Math.min(ratio_h, ratio_v));
         scalingControl.scale(vv, ratio, vv.getCenter());
 
-		/* Generate an auxiliary node at center of the graph */
-        Point2D q = new Point2D.Double((auxTransf_xmin + auxTransf_xmax) / 2, (auxTransf_ymin + auxTransf_ymax) / 2);
-        Point2D lvc = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getCenter());
-        double dx = (lvc.getX() - q.getX());
-        double dy = (lvc.getY() - q.getY());
+//        Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
+//        float ratio_h = Math.abs(xmaxNpCoords - xminNpCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getWidth() / (xmaxNpCoords - xminNpCoords));
+//        float ratio_v = Math.abs(ymaxNpCoords - yminNpCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getHeight() / (ymaxNpCoords - yminNpCoords));
+//        float ratio = (float) (0.8 * Math.min(ratio_h, ratio_v));
+//        scalingControl.scale(vv, ratio, vv.getCenter());
+
+        Point2D topologyCenterJungCoord = new Point2D.Double((xminJungCoords + xmaxJungCoords) / 2, (yminJungCoords + ymaxJungCoords) / 2);
+        Point2D windowCenterJungCoord = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getCenter());
+        double dx = (windowCenterJungCoord.getX() - topologyCenterJungCoord.getX());
+        double dy = (windowCenterJungCoord.getY() - topologyCenterJungCoord.getY());
 
         vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT).translate(dx, dy);
     }
