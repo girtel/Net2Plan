@@ -32,13 +32,13 @@ public interface ITopologyCanvasPlugin {
      */
     boolean checkModifiers(MouseEvent e);
 
-    /**
-     * Returns the canvas associated to the plugin.
-     *
-     * @return Canvas
-     * @since 0.3.1
-     */
-    public ITopologyCanvas getCanvas();
+//    /**
+//     * Returns the canvas associated to the plugin.
+//     *
+//     * @return Canvas
+//     * @since 0.3.1
+//     */
+//    public ITopologyCanvas getCanvas();
 
     /**
      * Returns the mouse event modifiers that will activate this plugin.
@@ -48,13 +48,13 @@ public interface ITopologyCanvasPlugin {
      */
     public int getModifiers();
 
-    /**
-     * Sets the canvas for this plugin.
-     *
-     * @param canvas Reference to the canvas
-     * @since 0.3.1
-     */
-    public void setCanvas(ITopologyCanvas canvas);
+//    /**
+//     * Sets the canvas for this plugin.
+//     *
+//     * @param canvas Reference to the canvas
+//     * @since 0.3.1
+//     */
+//    public void setCanvas(ITopologyCanvas canvas);
 
     /**
      * Sets the mouse event modifiers that will activate this plugin.

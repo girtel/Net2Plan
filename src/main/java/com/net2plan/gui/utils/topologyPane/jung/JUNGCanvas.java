@@ -240,7 +240,6 @@ public final class JUNGCanvas implements ITopologyCanvas
     @Override
     public void addPlugin(ITopologyCanvasPlugin plugin)
     {
-        plugin.setCanvas(this);
         gm.add(new GraphMousePluginAdapter(plugin));
     }
 
@@ -656,24 +655,10 @@ public final class JUNGCanvas implements ITopologyCanvas
 
     private static class ScalingCanvasPlugin extends ScalingGraphMousePlugin implements ITopologyCanvasPlugin
     {
-        private ITopologyCanvas canvas;
-
         public ScalingCanvasPlugin(ScalingControl scaler, int modifiers)
         {
             super(scaler, modifiers, VisualizationState.SCALE_OUT, VisualizationState.SCALE_IN);
             setZoomAtMouse(false);
-        }
-
-        @Override
-        public ITopologyCanvas getCanvas()
-        {
-            return canvas;
-        }
-
-        @Override
-        public void setCanvas(ITopologyCanvas canvas)
-        {
-            this.canvas = canvas;
         }
 
         @Override

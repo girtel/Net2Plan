@@ -81,7 +81,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
     {
         if (checkModifiers(e)) {
             final Point p = e.getPoint();
-            final Point2D pp = getCanvas().convertViewCoordinatesToRealCoordinates(p);
+            final Point2D pp = canvas.convertViewCoordinatesToRealCoordinates(p);
             final GUINode gn = canvas.getNode(e);
             final Node node = gn == null? null : gn.getAssociatedNetPlanNode();
             final GUILink gl = canvas.getLink(e);
@@ -315,17 +315,5 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
         }
     }
-
-	@Override
-	public ITopologyCanvas getCanvas()
-	{
-		return canvas;
-	}
-
-	@Override
-	public void setCanvas(ITopologyCanvas canvas)
-	{
-		throw new RuntimeException ("Bad");
-	}
 
 }

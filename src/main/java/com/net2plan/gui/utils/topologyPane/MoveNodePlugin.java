@@ -63,11 +63,6 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
     }
 
     @Override
-    public ITopologyCanvas getCanvas() {
-        return canvas;
-    }
-
-    @Override
     public int getModifiers() {
         return modifiers;
     }
@@ -87,7 +82,7 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mousePressed(MouseEvent e) {
         if (checkModifiers(e)) {
-            GUINode node = getCanvas().getNode(e);
+            GUINode node = canvas.getNode(e);
             if (node != null) {
                 callback.pickNodeAndUpdateView(node.getAssociatedNetPlanNode());
                 startVertex = node;
@@ -101,11 +96,6 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mouseReleased(MouseEvent e) {
         startVertex = null;
-    }
-
-    @Override
-    public void setCanvas(ITopologyCanvas canvas) {
-        this.canvas = canvas;
     }
 
     @Override

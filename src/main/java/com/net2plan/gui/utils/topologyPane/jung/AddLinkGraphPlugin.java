@@ -99,11 +99,6 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
     }
 
     @Override
-    public ITopologyCanvas getCanvas() {
-        return canvas;
-    }
-
-    @Override
     public int getModifiers() {
         return modifiers;
     }
@@ -188,11 +183,6 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
             callback.resetPickedStateAndUpdateView();
             vv.repaint();
         }
-    }
-
-    @Override
-    public void setCanvas(ITopologyCanvas canvas) {
-        this.canvas = canvas;
     }
 
     @Override

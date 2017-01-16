@@ -40,23 +40,6 @@ public abstract class AbstractCanvasPlugin extends AbstractGraphMousePlugin impl
         super(modifiers);
     }
 
-    @Override
-    public ITopologyCanvas getCanvas() {
-        checkCanvas();
-        return canvas;
-    }
-
-    /**
-     * Sets the canvas for this plugin.
-     *
-     * @param canvas Reference to the canvas
-     * @since 0.2.3
-     */
-    @Override
-    public void setCanvas(ITopologyCanvas canvas) {
-        this.canvas = canvas;
-    }
-
     /**
      * Checks a canvas has been assigned to the plugin.
      *

@@ -41,11 +41,13 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
      * @param modifiers Mouse event modifiers to activate this functionality
      * @since 0.3.1
      */
-    public PanGraphPlugin(IVisualizationControllerCallback callback, ITopologyCanvas canvas , int modifiers) {
+    public PanGraphPlugin(IVisualizationControllerCallback callback, ITopologyCanvas canvas , int modifiers) 
+    {
         setModifiers(modifiers);
         this.callback = callback;
         this.canvas = canvas;
 
+        //originalCursor = this.canvas.getInternalVisualizationController().getCursor();
         originalCursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
         cursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
         down = null;
@@ -58,11 +60,6 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     }
 
     @Override
-    public ITopologyCanvas getCanvas() {
-        return canvas;
-    }
-
-    @Override
     public int getModifiers() {
         return modifiers;
     }
@@ -70,8 +67,8 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mouseDragged(MouseEvent e) {
         if (down != null) {
-            getCanvas().getInternalVisualizationController().setCursor(cursor);
-            getCanvas().panTo(down, e.getPoint());
+            canvas.getInternalVisualizationController().setCursor(cursor);
+            canvas.panTo(down, e.getPoint());
             down = e.getPoint();
             e.consume();
         }
@@ -98,14 +95,14 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
 
         down = null;
         initialPoint = null;
-        getCanvas().getInternalVisualizationController().setCursor(originalCursor);
+        canvas.getInternalVisualizationController().setCursor(originalCursor);
     }
 
-    @Override
-    public void setCanvas(ITopologyCanvas canvas) {
-        this.canvas = canvas;
-        originalCursor = this.canvas.getInternalVisualizationController().getCursor();
-    }
+//    @Override
+//    public void setCanvas(ITopologyCanvas canvas) {
+//        this.canvas = canvas;
+//        originalCursor = this.canvas.getInternalVisualizationController().getCursor();
+//    }
 
     @Override
     public void setModifiers(int modifiers) {
