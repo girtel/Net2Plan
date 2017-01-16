@@ -373,20 +373,24 @@ public class VisualizationState
     		for (NetworkLayer l : layers) if (l.getNetPlan() != currentNp) throw new RuntimeException("Bad");
     		this.vs = vs;
     		this.index = index;
+    		this.guiNodes = new ArrayList<>();
+    		this.guiLinks = new ArrayList<>();
 		}
+
     	public VisualizationLayer(NetworkLayer layer , VisualizationState vs , int index)
 		{
     		this.currentNp = layer.getNetPlan();
-    		this.npLayersToShow = Arrays.asList(layer);
+    		this.npLayersToShow = Collections.singletonList(layer);
     		this.vs = vs;
     		this.index = index;
+			this.guiNodes = new ArrayList<>();
+			this.guiLinks = new ArrayList<>();
 		}
     	public VisualizationState getVisualizationState () { return vs; }
 
     	public List<GUINode> getGUINodes () { return Collections.unmodifiableList(guiNodes); }
     	public List<GUILink> getGUILinks () { return Collections.unmodifiableList(guiLinks); }
     	public int getIndex () { return index; }
-    	
 	}
 
 	/**

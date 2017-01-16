@@ -1222,7 +1222,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 	public void updateVisualizationAfterNewTopology()
 	{
 		vs.rebuildVisualizationState(getDesign());
-	    topologyPanel.getCanvas().refresh();
+		topologyPanel.getCanvas().rebuildTopologyAndRefresh();
 	    topologyPanel.getCanvas().zoomAll();
 	    viewEditTopTables.updateView();
 	    updateWarnings();
