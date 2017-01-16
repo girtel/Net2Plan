@@ -541,6 +541,15 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_MULTIPLY, InputEvent.CTRL_DOWN_MASK));
 
+        addKeyCombinationAction("Zoom all", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_DOWN_MASK));
+
         addKeyCombinationAction("Take snapshot", new AbstractAction()
         {
             @Override
@@ -700,6 +709,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
         resetPickedStateAndUpdateView();
         selectNetPlanViewItem(node.getNetPlan().getNetworkLayerDefault().getId(), NetworkElementType.NODE, node.getId());
         vs.setNodeProperties(vs.getVerticallyStackedGUINodes(node) , Color.BLUE , null , -1);
+        topologyPanel.getCanvas().refresh();
         topologyPanel.getCanvas().refresh();
 	}
 
