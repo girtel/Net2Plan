@@ -151,7 +151,7 @@ public class VisualizationState
 			}
 
 			/* add the regular links */
-			Pair<Set<Link>,Set<Link>> traversedLinks = e.getCoupledDemand().getLinksWithOccupiedCapacity(); 
+			Pair<Set<Link>,Set<Link>> traversedLinks = e.getCoupledDemand().getLinksThisLayerPotentiallyCarryingTraffic(true); 
 			for (Link ee : traversedLinks.getFirst())
 			{
 				Pair<Set<GUILink>,Set<GUILink>> pairGuiLinks = getAssociatedGUILinksIncludingCoupling (ee , true); 

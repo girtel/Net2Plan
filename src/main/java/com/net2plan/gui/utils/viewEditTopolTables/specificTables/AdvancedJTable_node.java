@@ -296,6 +296,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                             Point2D newPosition = column == COLUMN_XCOORD ? 
                             		new Point2D.Double(Double.parseDouble(newValue.toString()), node.getXYPositionMap().getY()) : 
                             		new Point2D.Double(node.getXYPositionMap().getX(), Double.parseDouble(newValue.toString()));
+                            node.setXYPositionMap(newPosition);
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                             break;
 

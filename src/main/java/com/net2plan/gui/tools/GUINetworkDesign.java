@@ -513,32 +513,32 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 //        }
 //    }
 
-    @Override
-    public void moveNodeXYPosition (Node node, Point2D posInNetPlanCoordinates , boolean updateView)
-    {
-        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
-
-        /* Change the netplan position */
-        node.setXYPositionMap(posInNetPlanCoordinates);
-        
-        if (updateView)
-        {
-            /* Just updates the X,Y columns in the table */
-            ClassAwareTableModel nodeTableModel = (ClassAwareTableModel) viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.NODE).getModel();
-            int numRows = nodeTableModel.getRowCount();
-            for (int row = 0; row < numRows; row++)
-            {
-                if ((long) nodeTableModel.getValueAt(row, 0) == node.getId())
-                {
-                    nodeTableModel.setAtValueSuper(node.getXYPositionMap().getX(), row, AdvancedJTable_node.COLUMN_XCOORD);
-                    nodeTableModel.setAtValueSuper(node.getXYPositionMap().getY(), row, AdvancedJTable_node.COLUMN_YCOORD);
-                }
-            }
-            
-            for (GUINode gn : vs.getVerticallyStackedGUINodes(node)) topologyPanel.getCanvas().updateNodeXYPosition(gn);
-            topologyPanel.getCanvas().refresh();
-        }
-    }
+//    @Override
+//    public void moveNodeXYPosition (Node node, Point2D posInNetPlanCoordinates , boolean updateView)
+//    {
+//        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("Not supported");
+//
+//        /* Change the netplan position */
+//        node.setXYPositionMap(posInNetPlanCoordinates);
+//        
+//        if (updateView)
+//        {
+//            /* Just updates the X,Y columns in the table */
+//            ClassAwareTableModel nodeTableModel = (ClassAwareTableModel) viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.NODE).getModel();
+//            int numRows = nodeTableModel.getRowCount();
+//            for (int row = 0; row < numRows; row++)
+//            {
+//                if ((long) nodeTableModel.getValueAt(row, 0) == node.getId())
+//                {
+//                    nodeTableModel.setAtValueSuper(node.getXYPositionMap().getX(), row, AdvancedJTable_node.COLUMN_XCOORD);
+//                    nodeTableModel.setAtValueSuper(node.getXYPositionMap().getY(), row, AdvancedJTable_node.COLUMN_YCOORD);
+//                }
+//            }
+//            
+//            for (GUINode gn : vs.getVerticallyStackedGUINodes(node)) topologyPanel.getCanvas().updateNodeXYPosition(gn);
+//            topologyPanel.getCanvas().refresh();
+//        }
+//    }
 
 
     @Override
@@ -1113,14 +1113,17 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 	}
 
     @Override
-    public void pickDemandAndUpdateView (Demand demand , boolean includeUpLayerLinksCarryingThisTraffic , boolean includeThisLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffic)
+    public void pickDemandAndUpdateView (Demand demand)
     {
+    	boolean includeUpLayerLinksCarryingThisTraffic = true;
+    	boolean includeThisLayerLinksCarryingThisTraffic = true;
+    	boolean includeDownLayerLinksCarryingThisTraffic = true;
         NetworkLayer layer = demand.getLayer();
         selectNetPlanViewItem(layer.getId(), NetworkElementType.DEMAND, demand.getId());
 
         vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getIngressNode() , layer)) , COLOR_INITIALNODE , null , -1);
         vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getEgressNode() , layer)) , COLOR_ENDNODE , null , -1);
-        Pair<Set<Link>,Set<Link>> linksOccupiedThisLayer = demand.getLinksWithOccupiedCapacity();
+        Pair<Set<Link>,Set<Link>> linksOccupiedThisLayer = demand.getLinksThisLayerPotentiallyCarryingTraffic(true);
         Set<GUILink> linksToShowPrimary = new HashSet<> ();
         Set<GUILink> linksToShowBackup = new HashSet<> ();
         for (Link e : linksOccupiedThisLayer.getFirst())
@@ -1146,8 +1149,11 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
     }
 
     @Override
-	public void pickLinkAndUpdateView(Link link , boolean includeUpLayerLinksCarryingThisTraffic , boolean includeThisLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffic)
+	public void pickLinkAndUpdateView(Link link)
 	{
+    	boolean includeUpLayerLinksCarryingThisTraffic = true;
+    	boolean includeThisLayerLinksCarryingThisTraffic = true;
+    	boolean includeDownLayerLinksCarryingThisTraffic = true;
         NetworkLayer layer = link.getLayer();
         selectNetPlanViewItem(layer.getId(), NetworkElementType.LINK, link.getId());
 
@@ -1173,33 +1179,33 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationContro
 	}
 
 	@Override
-    public void pickMulticastDemandAndUpdateView (MulticastDemand demand , boolean includeUpLayerLinksCarryingThisTrafficc , boolean includeThisLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffi)
+    public void pickMulticastDemandAndUpdateView (MulticastDemand demand)
 	{
 	}
 
 	@Override
-    public void pickForwardingRuleAndUpdateView (Pair<Demand, Link> demandLink, boolean includeUpLayerLinksCarryingThisTraffic , boolean includeThisLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffic)
-	{
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-    public void pickRouteAndUpdateView (Route route , boolean includeUpLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffic)
+    public void pickForwardingRuleAndUpdateView (Pair<Demand, Link> demandLink)
 	{
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-    public void pickMulticastTreeAndUpdateView (MulticastTree tree , boolean includeUpLayerLinksCarryingThisTraffic , boolean includeDownLayerLinksCarryingThisTraffic)
+    public void pickRouteAndUpdateView (Route route)
 	{
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-    public void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg , boolean includeUpLayerLinksCarryingAffectedTraffic , boolean includeDownLayerLinksCarryingThisTraffic)
+    public void pickMulticastTreeAndUpdateView (MulticastTree tree)
+	{
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+    public void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg)
 	{
 		// TODO Auto-generated method stub
 		

@@ -42,7 +42,7 @@ public interface ITopologyCanvas extends Plugin
 	
 	public boolean getBackgroundOSMMapsActiveState ();
 
-    public void updateNodeXYPosition(GUINode node);
+    public void updateNodeXYPosition(Node node);
 
 	
 	/**

@@ -432,9 +432,10 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public void updateNodeXYPosition(GUINode node)
+    public void updateNodeXYPosition(Node node)
     {
-        l.setLocation(node, FLIP_VERTICAL_COORDINATES.transform(node));
+    	for (GUINode gn : vs.getVerticallyStackedGUINodes(node))
+    		l.setLocation(gn, FLIP_VERTICAL_COORDINATES.transform(gn));
     }
 
     @Override
