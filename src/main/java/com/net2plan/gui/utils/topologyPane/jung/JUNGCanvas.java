@@ -117,13 +117,13 @@ public final class JUNGCanvas implements ITopologyCanvas
         {
         	final Node npNode = vertex.getAssociatedNetPlanNode();
         	final Point2D basePositionInNetPlanCoord = npNode.getXYPositionMap();
-        	final Point2D basePositionInScreenPixels = getScreenPixelCoordinateFromNetPlanCoordinate(basePositionInNetPlanCoord);
-        	final Point2D basePositionInNetPlanCoordTransfAndInmverse = getNetPlanCoordinatesFromScreenPixelCoordinate(basePositionInScreenPixels);
+        	final Point2D basePositionInScreenPixels = getScreenPixelCoordinateFromNetPlanCoordinate(basePositionInNetPlanCoord, Layer.LAYOUT);
+        	final Point2D basePositionInNetPlanCoordTransfAndInmverse = getNetPlanCoordinatesFromScreenPixelCoordinate(basePositionInScreenPixels, Layer.LAYOUT);
         	final VisualizationLayer vl = vertex.getVisualizationLayer();
     		final int vlIndex = vl.getIndex();
     		final double interLayerSpacePixels = vl.getVisualizationState().getInterLayerDistanceInPixels();
     		final Point2D elevatedPositionInPixels = new Point2D.Double(basePositionInScreenPixels.getX() , basePositionInScreenPixels.getY() + (vlIndex * interLayerSpacePixels));
-        	final Point2D elevatedPositionInNetPlanCoord = getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double(basePositionInScreenPixels.getX() , basePositionInScreenPixels.getY() + (vlIndex * interLayerSpacePixels)));
+        	final Point2D elevatedPositionInNetPlanCoord = getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double(basePositionInScreenPixels.getX() , basePositionInScreenPixels.getY() + (vlIndex * interLayerSpacePixels)), Layer.LAYOUT);
             return new Point2D.Double(elevatedPositionInNetPlanCoord.getX(), -elevatedPositionInNetPlanCoord.getY());
         };
 
@@ -249,9 +249,9 @@ public final class JUNGCanvas implements ITopologyCanvas
      * @return (@code Point2D) on the JUNG canvas.
      */
     @Override
-    public Point2D getNetPlanCoordinatesFromScreenPixelCoordinate(Point2D screenPoint)
+    public Point2D getNetPlanCoordinatesFromScreenPixelCoordinate(Point2D screenPoint, Layer layer)
     {
-        Point2D layoutCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, screenPoint);
+        Point2D layoutCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(layer, screenPoint);
         layoutCoordinates.setLocation(layoutCoordinates.getX(), -layoutCoordinates.getY());
 
         return layoutCoordinates;
@@ -264,10 +264,9 @@ public final class JUNGCanvas implements ITopologyCanvas
      * @return (@code Point2D) on the SWING canvas.
      */
     @Override
-    public Point2D getScreenPixelCoordinateFromNetPlanCoordinate(Point2D screenPoint)
+    public Point2D getScreenPixelCoordinateFromNetPlanCoordinate(Point2D screenPoint, Layer layer)
     {
-//        screenPoint.setLocation(screenPoint.getX(), -screenPoint.getY());
-        return vv.getRenderContext().getMultiLayerTransformer().transform(Layer.LAYOUT, new Point2D.Double(screenPoint.getX() , -screenPoint.getY()));
+        return vv.getRenderContext().getMultiLayerTransformer().transform(layer, new Point2D.Double(screenPoint.getX() , -screenPoint.getY()));
     }
 
     @Override
@@ -399,7 +398,7 @@ public final class JUNGCanvas implements ITopologyCanvas
         for (GUINode node : visibleGUINodes)
         {
             Point2D nodeNpCoordinates = node.getAssociatedNetPlanNode().getXYPositionMap();
-            Point2D nodeJungCoordinates = l.transform(node);
+            Point2D nodeJungCoordinates = getNetPlanCoordinatesFromScreenPixelCoordinate(nodeNpCoordinates, Layer.VIEW);
             if (xmaxNpCoords < nodeNpCoordinates.getX()) xmaxNpCoords = nodeNpCoordinates.getX();
             if (xminNpCoords > nodeNpCoordinates.getX()) xminNpCoords = nodeNpCoordinates.getX();
             if (ymaxNpCoords < nodeNpCoordinates.getY()) ymaxNpCoords = nodeNpCoordinates.getY();
@@ -412,17 +411,17 @@ public final class JUNGCanvas implements ITopologyCanvas
 
         double PRECISION_FACTOR = 0.00001;
 
-//        Rectangle viewInJungCoordinates = vv.getBounds ();
-//        float ratio_h = Math.abs(xmaxJungCoords - xminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInJungCoordinates.getWidth() / (xmaxJungCoords - xminJungCoords));
-//        float ratio_v = Math.abs(ymaxJungCoords - yminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInJungCoordinates.getHeight() / (ymaxJungCoords - yminJungCoords));
-//        float ratio = (float) (0.8 * Math.min(ratio_h, ratio_v));
-//        scalingControl.scale(vv, ratio, vv.getCenter());
-
         Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
-        float ratio_h = Math.abs(xmaxNpCoords - xminNpCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getWidth() / (xmaxNpCoords - xminNpCoords));
-        float ratio_v = Math.abs(ymaxNpCoords - yminNpCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getHeight() / (ymaxNpCoords - yminNpCoords));
+        float ratio_h = Math.abs(xmaxJungCoords - xminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getWidth() / (xmaxJungCoords - xminJungCoords));
+        float ratio_v = Math.abs(ymaxJungCoords - yminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getHeight() / (ymaxJungCoords - yminJungCoords));
         float ratio = (float) (0.8 * Math.min(ratio_h, ratio_v));
         scalingControl.scale(vv, ratio, vv.getCenter());
+
+//        Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
+//        float ratio_h = Math.abs(xmaxNpCoords - xminNpCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getWidth() / (xmaxNpCoords - xminNpCoords));
+//        float ratio_v = Math.abs(ymaxNpCoords - yminNpCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getHeight() / (ymaxNpCoords - yminNpCoords));
+//        float ratio = (float) (0.8 * Math.min(ratio_h, ratio_v));
+//        scalingControl.scale(vv, ratio, vv.getCenter());
 
         Point2D topologyCenterJungCoord = new Point2D.Double((xminJungCoords + xmaxJungCoords) / 2, (yminJungCoords + ymaxJungCoords) / 2);
         Point2D windowCenterJungCoord = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getCenter());
@@ -442,8 +441,8 @@ public final class JUNGCanvas implements ITopologyCanvas
     @Override
     public void moveNodeToXYPosition(Node npNode, Point2D point)
     {
-		final double yOfPixelZero = getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double (0 , 0)).getY();
-		final double yOfPixelUp = getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double (0 , vs.getInterLayerDistanceInPixels())).getY();
+		final double yOfPixelZero = getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double (0 , 0), Layer.LAYOUT).getY();
+		final double yOfPixelUp = getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double (0 , vs.getInterLayerDistanceInPixels()), Layer.LAYOUT).getY();
 		final double extraInJungCoordinates =  Math.abs(yOfPixelUp - yOfPixelZero);
 
     	for (GUINode node : vs.getVerticallyStackedGUINodes(npNode))

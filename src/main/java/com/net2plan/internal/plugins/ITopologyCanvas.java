@@ -30,6 +30,7 @@ import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
 import com.net2plan.interfaces.networkDesign.Node;
+import edu.uci.ics.jung.visualization.Layer;
 
 /**
  * Base class for topology canvas.
@@ -62,9 +63,9 @@ public interface ITopologyCanvas extends Plugin
 //     */
 //    public List<JComponent> getCanvasActions(Point2D pos);
 
-	public Point2D getNetPlanCoordinatesFromScreenPixelCoordinate(Point2D screenPoint);
+	public Point2D getNetPlanCoordinatesFromScreenPixelCoordinate(Point2D screenPoint, Layer layer);
 
-	public Point2D getScreenPixelCoordinateFromNetPlanCoordinate(Point2D screenPoint);
+	public Point2D getScreenPixelCoordinateFromNetPlanCoordinate(Point2D screenPoint, Layer layer);
 
 	/**
 	 * Returns a reference to the internal component containing the canvas.

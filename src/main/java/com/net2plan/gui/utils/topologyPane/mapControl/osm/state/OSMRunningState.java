@@ -11,6 +11,7 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.ImageUtils;
+import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import org.jxmapviewer.viewer.GeoPosition;
@@ -83,7 +84,7 @@ public class OSMRunningState implements OSMState
     public void moveNodeInVisualization(ITopologyCanvas canvas, Node node, Point2D positionInScreenPixels)
     {
         // Calculating JUNG Coordinates
-        final Point2D jungPoint = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(positionInScreenPixels);
+        final Point2D jungPoint = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(positionInScreenPixels, Layer.LAYOUT);
         final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(convertJungPointToMapSwing(canvas, jungPoint));
 
         if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
