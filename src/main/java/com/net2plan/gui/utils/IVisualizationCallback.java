@@ -40,9 +40,7 @@ public interface IVisualizationCallback
 
 	void updateVisualization(Set<NetworkElementType> changes);
 
-	void updateVisualizationAfterLinkNodeColorChanges ();
-
-	void updateVisualizationJustTables ();
+	void updateTables();
 
 	void resetPickedStateAndUpdateView ();
 
@@ -76,5 +74,5 @@ public interface IVisualizationCallback
 
     boolean inOnlineSimulationMode();
 
-	void loadDesignDoNotUpdateVisualization(NetPlan netPlan);
+	void loadDesign(NetPlan netPlan, boolean updateVisualization);
 }

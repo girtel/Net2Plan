@@ -36,14 +36,11 @@ import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 
+import com.net2plan.gui.utils.topologyPane.*;
 import org.apache.commons.collections15.Predicate;
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.collections15.functors.ConstantTransformer;
 
-import com.net2plan.gui.utils.topologyPane.GUILink;
-import com.net2plan.gui.utils.topologyPane.GUINode;
-import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.gui.utils.topologyPane.VisualizationState.VisualizationLayer;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Configuration;
@@ -479,12 +476,12 @@ public final class JUNGCanvas implements ITopologyCanvas
 
     public void zoomIn(Point2D point)
     {
-        scalingControl.scale(vv, VisualizationState.SCALE_IN, point);
+        scalingControl.scale(vv, VisualizationConstants.SCALE_IN, point);
     }
 
     public void zoomOut(Point2D point)
     {
-        scalingControl.scale(vv, VisualizationState.SCALE_OUT, point);
+        scalingControl.scale(vv, VisualizationConstants.SCALE_OUT, point);
     }
 
     public void setBackgroundImage(final File bgFile, final double x, final double y)
@@ -664,7 +661,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     {
         public ScalingCanvasPlugin(ScalingControl scaler, int modifiers)
         {
-            super(scaler, modifiers, VisualizationState.SCALE_OUT, VisualizationState.SCALE_IN);
+            super(scaler, modifiers, VisualizationConstants.SCALE_OUT, VisualizationConstants.SCALE_IN);
             setZoomAtMouse(false);
         }
 

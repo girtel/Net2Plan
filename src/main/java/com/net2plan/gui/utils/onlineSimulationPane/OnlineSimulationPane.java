@@ -176,8 +176,7 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
             }else if (src == btn_reset) {
                 simKernel.getSimCore().setSimulationState(SimState.STOPPED);
                 simKernel.reset();
-                mainWindow.loadDesignDoNotUpdateVisualization(simKernel.getInitialNetPlan());
-                mainWindow.updateVisualization(true);
+                mainWindow.loadDesign(simKernel.getInitialNetPlan(), true);
             } else if (src == btn_viewEventList) {
                 viewFutureEventList();
             } else if (src == btn_updateReport) {

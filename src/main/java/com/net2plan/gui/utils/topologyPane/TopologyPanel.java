@@ -445,8 +445,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             zoomAll();
         } else if (src == btn_reset)
         {
-        	callback.loadDesignDoNotUpdateVisualization(new NetPlan ());
-        	callback.updateVisualization(true);
+        	callback.loadDesign(new NetPlan (), true);
             callback.resetPickedStateAndUpdateView();
         }
     }
@@ -525,8 +524,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             aux.checkCachesConsistency();
 
-            callback.loadDesignDoNotUpdateVisualization(aux);
-            callback.updateVisualization(true);
+            callback.loadDesign(aux, true);
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
@@ -546,8 +544,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             checkNetPlanFileChooser();
             fc_netPlan.setCurrentDirectory(file.getParentFile());
 
-            callback.loadDesignDoNotUpdateVisualization(netPlan);
-            callback.updateVisualization(true);
+            callback.loadDesign(netPlan, true);
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
