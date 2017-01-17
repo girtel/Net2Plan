@@ -34,6 +34,7 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.plugins.ITopologyCanvas;
+import edu.uci.ics.jung.visualization.Layer;
 
 /**
  * Plugin for the popup menu of the canvas.
@@ -78,7 +79,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
     {
         if (checkModifiers(e)) {
             final Point p = e.getPoint();
-            final Point2D positionInNetPlanCoordinates = canvas.getNetPlanCoordinatesFromJungLayoutCoordinate(p);
+            final Point2D positionInNetPlanCoordinates = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(p, Layer.LAYOUT);
             final GUINode gn = canvas.getNode(e);
             final Node node = gn == null ? null : gn.getAssociatedNetPlanNode();
             final GUILink gl = canvas.getLink(e);

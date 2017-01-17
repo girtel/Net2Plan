@@ -45,6 +45,7 @@ import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.ITopologyCanvas;
+import edu.uci.ics.jung.visualization.Layer;
 
 /**
  * <p>Wrapper class for the graph canvas.</p>
@@ -356,7 +357,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                 public void mouseMoved(MouseEvent e)
                 {
                     Point point = e.getPoint();
-                    position.setText("view = " + point + ", NetPlan coord = " + canvas.getNetPlanCoordinatesFromJungLayoutCoordinate(point));
+                    position.setText("view = " + point + ", NetPlan coord = " + canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(point, Layer.LAYOUT));
                 }
             });
 
