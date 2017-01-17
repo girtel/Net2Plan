@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2015 Pablo Pavon Mariño.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the GNU Lesser License v2.1
  * which accompanies this distribution, and is available at
  * http://www.gnu.org/licenses/lgpl.html
  *
@@ -37,22 +37,19 @@ import edu.uci.ics.jung.visualization.Layer;
  */
 public interface ITopologyCanvas extends Plugin
 {
-	public Map<String, String> getCurrentOptions();
+	Map<String, String> getCurrentOptions();
 
-	public void setBackgroundOSMMapsActiveState (boolean activateMap);
+	void setBackgroundOSMMapsActiveState (boolean activateMap);
 	
-	public boolean getBackgroundOSMMapsActiveState ();
+	boolean getBackgroundOSMMapsActiveState ();
 
-    public void updateNodeXYPosition(Node node);
-
-	
 	/**
 	 * Adds a new plugin to the canvas.
 	 *
 	 * @param plugin Plugin
 	 * @since 0.3.0
 	 */
-	public void addPlugin(ITopologyCanvasPlugin plugin);
+	void addPlugin(ITopologyCanvasPlugin plugin);
 
 //    /**
 //     * Returns the set of actions to be added to the popup menu for the network
@@ -61,11 +58,11 @@ public interface ITopologyCanvas extends Plugin
 //     * @param pos Network coordinates where the popup action was triggered
 //     * @return List of actions to be shown for the canvas
 //     */
-//    public List<JComponent> getCanvasActions(Point2D pos);
+//    List<JComponent> getCanvasActions(Point2D pos);
 
-	public Point2D getNetPlanCoordinatesFromScreenPixelCoordinate(Point2D screenPoint, Layer layer);
+	Point2D getNetPlanCoordinatesFromScreenPixelCoordinate(Point2D screenPoint, Layer layer);
 
-	public Point2D getScreenPixelCoordinateFromNetPlanCoordinate(Point2D screenPoint, Layer layer);
+	Point2D getScreenPixelCoordinateFromNetPlanCoordinate(Point2D screenPoint, Layer layer);
 
 	/**
 	 * Returns a reference to the internal component containing the canvas.
@@ -73,7 +70,7 @@ public interface ITopologyCanvas extends Plugin
 	 * @return Internal component containing the canvas
 	 * @since 0.3.0
 	 */
-	public JComponent getInternalVisualizationController();
+	JComponent getInternalVisualizationController();
 
 	/**
 	 * Returns the identifier of a link associated to a mouse event, or -1 otherwise.
@@ -82,7 +79,7 @@ public interface ITopologyCanvas extends Plugin
 	 * @return Link identifier, or -1 if no link was clicked
 	 * @since 0.3.1
 	 */
-	public GUILink getLink(MouseEvent e);
+	GUILink getLink(MouseEvent e);
 
 	/**
 	 * Returns the identifier of a link associated to a mouse event, or -1 otherwise.
@@ -91,7 +88,7 @@ public interface ITopologyCanvas extends Plugin
 	 * @return Link identifier, or -1 if no link was clicked
 	 * @since 0.3.1
 	 */
-	public GUINode getNode(MouseEvent e);
+	GUINode getNode(MouseEvent e);
 
 	/**
 	 * Pans the graph to the .
@@ -100,15 +97,16 @@ public interface ITopologyCanvas extends Plugin
 	 * @param currentPoint Current point where the mouse is
 	 * @since 0.3.1
 	 */
-	public void panTo(Point2D initialPoint, Point2D currentPoint);
+	void panTo(Point2D initialPoint, Point2D currentPoint);
 
 	/**
 	 * Refreshes the canvas.
 	 *
 	 * @since 0.3.0
 	 */
-	public void refresh();
+	void refresh();
 
+	void updateNodeXYPosition(Node node);
 
 	/**
 	 * Moves a node to the desired point.
@@ -118,7 +116,7 @@ public interface ITopologyCanvas extends Plugin
 	 * @param npNode Node to move.
 	 * @param point  Point to which the node will be moved.
 	 */
-	public void moveNodeToXYPosition(Node npNode, Point2D point);
+	void moveNodeToXYPosition(Node npNode, Point2D point);
 
 	/**
 	 * Removes a plugin from the canvas.
@@ -126,50 +124,47 @@ public interface ITopologyCanvas extends Plugin
 	 * @param plugin Plugin
 	 * @since 0.3.0
 	 */
-	public void removePlugin(ITopologyCanvasPlugin plugin);
+	void removePlugin(ITopologyCanvasPlugin plugin);
 
 	/**
 	 * Resets the emphasized elements.
 	 *
 	 * @since 0.3.0
 	 */
-	public void resetPickedStateAndRefresh();
+	void resetPickedStateAndRefresh();
 
 	/**
 	 * Takes a snapshot of the canvas.
 	 *
 	 * @since 0.3.0
 	 */
-	public void takeSnapshot();
+	void takeSnapshot();
 
 	/**
 	 * Refresh the canvas with the physical topology from the given network design.
 	 *
-	 * @param netPlan Network design
 	 * @since 0.3.0
 	 */
-	public void rebuildTopologyAndRefresh();
+	void rebuildTopologyAndRefresh();
 
 	/**
 	 * Makes zoom-all from the center of the view.
 	 *
 	 * @since 0.3.0
 	 */
-	public void zoomAll();
+	void zoomAll();
 
 	/**
 	 * Makes zoom-in from the center of the view.
 	 *
 	 * @since 0.3.0
 	 */
-	public void zoomIn();
+	void zoomIn();
 
 	/**
 	 * Makes zoom-out from the center of the view.
 	 *
 	 * @since 0.3.0
 	 */
-	public void zoomOut();
-
-	public JComponent getComponent();
+	void zoomOut();
 }

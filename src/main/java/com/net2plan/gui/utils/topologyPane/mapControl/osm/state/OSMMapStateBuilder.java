@@ -4,7 +4,6 @@ import com.net2plan.gui.utils.IVisualizationControllerCallback;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
@@ -94,9 +93,9 @@ public enum OSMMapStateBuilder
             currentState.zoomAll();
         }
 
-        public Point2D.Double translateNodeBaseCoordinatesIntoNetPlanCoordinates(final ITopologyCanvas canvas , final Point2D pos)
+        public void addNode (IVisualizationControllerCallback callback, ITopologyCanvas canvas, Point2D pos)
         {
-            return currentState.translateNodeBaseCoordinatesIntoNetPlanCoordinates(canvas, pos);
+            currentState.addNode(callback, canvas, pos);
         }
 
         public void moveNode(final Node node, final Point2D pos)

@@ -153,7 +153,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     		final int vlIndex = vl.getIndex();
             final double interLayerDistanceInNpCoord = vl.getVisualizationState().getDefaultVerticalDistanceForInterLayers();
         	final Point2D basePositionInNetPlanCoord = vertex.getAssociatedNetPlanNode().getXYPositionMap();
-            return new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() + (vlIndex * interLayerDistanceInNpCoord)) );
+            return new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() + (vlIndex * interLayerDistanceInNpCoord)));
         };
 
     	g = new DirectedOrderedSparseMultigraph<>();
@@ -239,33 +239,6 @@ public final class JUNGCanvas implements ITopologyCanvas
 
 //        reset();
     }
-
-    @Override
-    public JComponent getComponent()
-    {
-        return vv;
-    }
-//    @Override
-//    public void addNode(Node npNode) //long nodeId, Point2D pos, String label)
-//    {
-//        if (nodeTable.containsKey(npNode)) throw new RuntimeException("Bad - Node " + npNode + " already exists");
-//        List<GUINode> associatedGUINodes = new ArrayList<> ();
-//        for (VisualizationState.VisualizationLayer vLayer : vs.getVLList())
-//        {
-//        	GUINode gn = new GUINode(npNode , vLayer);
-//            g.addVertex(gn);
-//        	associatedGUINodes.add(gn);
-//        	if (associatedGUINodes.size() > 1)
-//        	{
-//        		GUILink gl1 = new GUILink (null , associatedGUINodes.get(associatedGUINodes.size() - 2), gn);
-//        		GUILink gl2 = new GUILink (null , gn , associatedGUINodes.get(associatedGUINodes.size() - 2));
-//        		List<GUILink> existingList = intraNodeLinkTable.get(npNode);
-//        		if (existingList == null) { existingList = new ArrayList<GUILink> (); intraNodeLinkTable.put(npNode , existingList); } 
-//        		existingList.add(gl1); existingList.add(gl2);
-//        	}
-//        }
-//        nodeTable.put(npNode, associatedGUINodes);
-//    }
 
     @Override
     public void addPlugin(ITopologyCanvasPlugin plugin)
@@ -469,19 +442,17 @@ public final class JUNGCanvas implements ITopologyCanvas
     		l.setLocation(gn, transformNetPlanCoordinatesToJungCoordinates.transform(gn));
     }
 
-    @Override
     public void moveNodeToXYPosition(Node npNode, Point2D point)
     {
-		final double yOfPixelZero = getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double (0 , 0), Layer.LAYOUT).getY();
-		final double yOfPixelUp = getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double (0 , vs.getInterLayerDistanceInPixels()), Layer.LAYOUT).getY();
-		final double extraInJungCoordinates =  Math.abs(yOfPixelUp - yOfPixelZero);
-
-    	for (GUINode node : vs.getVerticallyStackedGUINodes(npNode))
-    		l.setLocation(node, new Point2D.Double(point.getX() , point.getY() + node.getVisualizationLayer().getIndex()*extraInJungCoordinates));
+    	for (GUINode guiNode : vs.getVerticallyStackedGUINodes(npNode))
+        {
+            final VisualizationLayer vl = guiNode.getVisualizationLayer();
+            final int vlIndex = vl.getIndex();
+            final double interLayerDistanceInNpCoord = vl.getVisualizationState().getDefaultVerticalDistanceForInterLayers();
+            l.setLocation(guiNode, new Point2D.Double(point.getX() , point.getY() + (vlIndex * interLayerDistanceInNpCoord)));
+        }
     }
 
-    public Layout getGraphLayout () { return vv.getGraphLayout(); }
-    
     public MutableTransformer getLayoutTransformer()
     {
         return vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);

@@ -22,7 +22,7 @@ public interface OSMState
 
     void zoomAll();
     
-    Point2D.Double translateNodeBaseCoordinatesIntoNetPlanCoordinates (ITopologyCanvas canvas, Point2D pos);
+    void addNode(IVisualizationControllerCallback callback, ITopologyCanvas canvas, Point2D pos);
 
     void moveNodeInVisualization(ITopologyCanvas canvas, Node node, Point2D pos);
 

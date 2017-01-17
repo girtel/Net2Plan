@@ -28,6 +28,7 @@ import javax.swing.JPopupMenu;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.IVisualizationControllerCallback;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -218,7 +219,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
             actions.add(addNode);
 
             actions.add(new JPopupMenu.Separator());
-
+            // TODO
 //            JMenuItem restoreTopology = new JMenuItem("Restore topology to original layout");
 //            restoreTopology.setToolTipText("Restores all nodes to their original position when the topology was loaded, leaves them in place if they were not in the original topology.");
 //            restoreTopology.addActionListener(e ->
@@ -291,8 +292,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         @Override
         public void actionPerformed(ActionEvent e)
         {
-        	callback.getDesign().addNode(positionInNetPlanCoordinates.getX() , positionInNetPlanCoordinates.getY() , "Node" + callback.getDesign().getNumberOfNodes(), null);
-        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+            OSMMapStateBuilder.getSingleton().addNode(callback, canvas, positionInNetPlanCoordinates);
         }
     }
 

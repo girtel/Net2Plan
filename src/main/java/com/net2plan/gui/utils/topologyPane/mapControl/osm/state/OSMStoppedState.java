@@ -1,5 +1,6 @@
 package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
+import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.utils.IVisualizationControllerCallback;
 import com.net2plan.gui.utils.topologyPane.GUILink;
@@ -8,6 +9,7 @@ import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.internal.Constants;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.ImageUtils;
 import edu.uci.ics.jung.visualization.Layer;
@@ -21,6 +23,7 @@ import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Collections;
 
 /**
  * @author Jorge San Emeterio
@@ -32,11 +35,11 @@ public class OSMStoppedState implements OSMState
     private final VisualizationViewer<GUINode, GUILink> vv;
 
     @SuppressWarnings("unchecked")
-    public OSMStoppedState(final ITopologyCanvas canvas)
+    OSMStoppedState(final ITopologyCanvas canvas)
     {
         this.canvas = (JUNGCanvas) canvas;
 
-        this.vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
+        this.vv = (VisualizationViewer<GUINode, GUILink>) canvas.getInternalVisualizationController();
     }
 
     @Override
@@ -70,9 +73,10 @@ public class OSMStoppedState implements OSMState
     }
 
     @Override
-    public Point2D.Double translateNodeBaseCoordinatesIntoNetPlanCoordinates(ITopologyCanvas topologyPanel, Point2D pos)
+    public void addNode(IVisualizationControllerCallback callback, ITopologyCanvas topologyPanel, Point2D pos)
     {
-    	return new Point2D.Double(pos.getX() , pos.getY());
+        callback.getDesign().addNode(pos.getX() , pos.getY() , "Node" + callback.getDesign().getNumberOfNodes(), null);
+        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
     }
 
     @Override

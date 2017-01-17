@@ -95,10 +95,10 @@ public class OSMMapController
         final LayoutManager layout = new OverlayLayout(mapViewer);
         mapViewer.setLayout(layout);
 
-        topologyPanel.remove(canvas.getComponent());
+        topologyPanel.remove(canvas.getInternalVisualizationController());
 
         mapViewer.removeAll();
-        mapViewer.add(canvas.getComponent());
+        mapViewer.add(canvas.getInternalVisualizationController());
 
         topologyPanel.add(mapViewer, BorderLayout.CENTER);
 
@@ -157,7 +157,7 @@ public class OSMMapController
         }
 
         @SuppressWarnings("unchecked")
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
+        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getInternalVisualizationController();
         final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getLayoutTransformer();
 
         /* Rescale and pan JUNG layout so that it fits to OSM viewing */
@@ -246,7 +246,7 @@ public class OSMMapController
             mapViewer = null;
 
             // Repaint canvas on the topology panel
-            topologyPanel.add(canvas.getComponent(), BorderLayout.CENTER);
+            topologyPanel.add(canvas.getInternalVisualizationController(), BorderLayout.CENTER);
 
             // Reset nodes' original position
             for (Node node : callback.getDesign().getNodes())

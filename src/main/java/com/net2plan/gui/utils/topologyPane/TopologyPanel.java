@@ -165,7 +165,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         add(topPanel, BorderLayout.NORTH);
 
-        JComponent canvasComponent = canvas.getComponent();
+        JComponent canvasComponent = canvas.getInternalVisualizationController();
         canvasComponent.setBorder(LineBorder.createBlackLineBorder());
 
         add(canvasComponent, BorderLayout.CENTER);

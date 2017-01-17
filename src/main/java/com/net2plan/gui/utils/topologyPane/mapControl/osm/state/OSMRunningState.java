@@ -2,17 +2,14 @@ package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.utils.IVisualizationControllerCallback;
-import com.net2plan.gui.utils.topologyPane.GUILink;
-import com.net2plan.gui.utils.topologyPane.GUINode;
-import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.internal.Constants;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.ImageUtils;
 import edu.uci.ics.jung.visualization.Layer;
-import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import org.jxmapviewer.viewer.GeoPosition;
 
@@ -21,6 +18,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Collections;
 
 /**
  * @author Jorge San Emeterio
@@ -30,9 +28,9 @@ public class OSMRunningState implements OSMState
 {
     private final OSMMapController mapController;
 
-    public OSMRunningState(final OSMMapController mapController)
+    OSMRunningState(final OSMMapController mapController)
     {
-         this.mapController = mapController;
+        this.mapController = mapController;
     }
 
     @Override
@@ -63,23 +61,22 @@ public class OSMRunningState implements OSMState
     }
 
     @Override
-    public Point2D.Double translateNodeBaseCoordinatesIntoNetPlanCoordinates (ITopologyCanvas canvas, Point2D pos)
+    public void addNode(IVisualizationControllerCallback callback, ITopologyCanvas canvas, Point2D pos)
     {
         final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(convertJungPointToMapSwing(canvas, pos));
         if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
         {
             throw new OSMMapController.OSMMapException("The node is out of the map's bounds", "Problem while adding node");
         }
-        return new Point2D.Double(geoPosition.getLongitude() , geoPosition.getLatitude());
-//
-//
-//        topologyPanel.getCanvas().addNode(node);
-//
-//        mapController.restartMapState(false);
+
+        final NetPlan netPlan = callback.getDesign();
+        netPlan.addNode(geoPosition.getLongitude(), geoPosition.getLatitude(), "Node" + netPlan.getNumberOfNodes(), null);
+
+        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
+        mapController.restartMapState(false);
     }
 
-    
-    
+
     @Override
     public void moveNodeInVisualization(ITopologyCanvas canvas, Node node, Point2D positionInScreenPixels)
     {
