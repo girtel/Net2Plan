@@ -158,7 +158,7 @@ public class OSMMapController
 
         @SuppressWarnings("unchecked")
         final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
-        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getTransformer();
+        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getLayoutTransformer();
 
         /* Rescale and pan JUNG layout so that it fits to OSM viewing */
         ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
@@ -214,7 +214,7 @@ public class OSMMapController
 
         final Point2D previousOSMCenterJUNG = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double(preCenterX, preCenterY), Layer.LAYOUT);
 
-        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getTransformer();
+        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getLayoutTransformer();
 
         final double dx = (currentOSMCenterJUNG.getX() - previousOSMCenterJUNG.getX());
         final double dy = (currentOSMCenterJUNG.getY() - previousOSMCenterJUNG.getY());

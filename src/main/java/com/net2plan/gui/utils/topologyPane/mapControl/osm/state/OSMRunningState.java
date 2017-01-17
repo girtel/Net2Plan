@@ -113,7 +113,7 @@ public class OSMRunningState implements OSMState
     private Point2D convertJungPointToMapSwing(final ITopologyCanvas canvas, final Point2D jungPoint)
     {
         // Compensating zoom, all movements must be done over a 1:1 ratio.
-        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getTransformer();
+        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getLayoutTransformer();
         final double scale = layoutTransformer.getScale();
 
         return new Point2D.Double(jungPoint.getX() * scale, -jungPoint.getY() * scale);

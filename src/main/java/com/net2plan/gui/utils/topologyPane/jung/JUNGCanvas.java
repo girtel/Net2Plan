@@ -282,27 +282,9 @@ public final class JUNGCanvas implements ITopologyCanvas
     @Override
     public Point2D getNetPlanCoordinatesFromScreenPixelCoordinate(Point2D screenPoint, Layer layer)
     {
-        Point2D layoutCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, screenPoint);
-        layoutCoordinates.setLocation(layoutCoordinates.getX(), -layoutCoordinates.getY());
-
-        return netPlanCoordinates;
-    }
-
-    @Override
-    public Point2D getNetPlanCoordinatesFromJungViewCoordinate(Point2D jungViewCoord)
-    {
-        Point2D viewCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.VIEW, jungViewCoord);
-        //viewCoordinates.setLocation(viewCoordinates.getX(), -viewCoordinates.getY());
-        return viewCoordinates;
-    }
-
-    @Override
-    public Point2D getJungViewCoordinatesFromNetPlanCoordinates(Point2D netPlanCoord)
-    {
-    	/* Next line returns what it receives, whatever the scaling is!! */
-        Point2D viewCoordinates = vv.getRenderContext().getMultiLayerTransformer().transform(Layer.VIEW, netPlanCoord); 
-        //viewCoordinates.setLocation(viewCoordinates.getX(), -viewCoordinates.getY());
-        return viewCoordinates;
+        Point2D layoutOrViewCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(layer, screenPoint);
+        layoutOrViewCoordinates.setLocation(layoutOrViewCoordinates.getX(), -layoutOrViewCoordinates.getY());
+        return layoutOrViewCoordinates;
     }
 
     /**
