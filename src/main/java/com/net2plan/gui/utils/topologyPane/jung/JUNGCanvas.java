@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 import org.apache.commons.collections15.Predicate;
 import org.apache.commons.collections15.Transformer;
@@ -115,22 +116,52 @@ public final class JUNGCanvas implements ITopologyCanvas
 
         transformNetPlanCoordinatesToJungCoordinates = vertex ->
         {
-        	final Node npNode = vertex.getAssociatedNetPlanNode();
-        	final Point2D basePositionInNetPlanCoord = npNode.getXYPositionMap();
-        	final Point2D basePositionInScreenPixels = getScreenPixelCoordinateFromNetPlanCoordinate(basePositionInNetPlanCoord);
-        	final Point2D basePositionInNetPlanCoordTransfAndInmverse = getNetPlanCoordinatesFromScreenPixelCoordinate(basePositionInScreenPixels);
+//        	final Graphics2D g2d = getGraphics2DObject ();
+//        	final Layout graphLayout = getGraphLayout();
+//        	final Dimension sizeGraphLayout = graphLayout.getSize();
+//        	final MutableTransformer layoutTransformer = getLayoutTransformer();
+//        	final MutableTransformer viewTransformer = getViewTransformer();
+//        	final double scaleLayout = layoutTransformer.getScale();
+//        	final double scaleView = viewTransformer.getScale();
+//        	final double translateYView = viewTransformer.getTranslateY();
+//        	final double translateXView = viewTransformer.getTranslateX();
+//        	final Dimension size = getInternalVisualizationController().getSize();
+//        	final Node npNode = vertex.getAssociatedNetPlanNode();
+//        	final Point2D basePositionInNetPlanCoord = npNode.getXYPositionMap();
+//        	final Point2D basePositionInJungLayoutCoord = getJungLayoutCoordinateFromNetPlanCoordinate(basePositionInNetPlanCoord);
+//        	final Point2D basePositionInNetPlanCoordTransfLayoutAndInverse = getNetPlanCoordinatesFromJungLayoutCoordinate(basePositionInJungLayoutCoord);
+//        	final Point2D basePositionInJungViewCoordFromNp = getJungViewCoordinatesFromNetPlanCoordinates(basePositionInNetPlanCoord);
+//        	final Point2D affineViewTransformOfNpCoord = viewTransformer.getTransform().transform(basePositionInNetPlanCoord , null);
+//        	final Point2D basePositionInG2Coord = g2d.getTransform().transform(basePositionInNetPlanCoord , null);
+//        	final VisualizationLayer vl = vertex.getVisualizationLayer();
+//    		final int vlIndex = vl.getIndex();
+//    		final int interLayerSpacePixels = vl.getVisualizationState().getInterLayerDistanceInPixels();
+////    		final Point2D elevatedPositionInPixels = new Point2D.Double(basePositionInJungLayoutCoord.getX() , basePositionInJungLayoutCoord.getY() + (vlIndex * interLayerSpacePixels));
+////        	final Point2D elevatedPositionInNetPlanCoord = getNetPlanCoordinatesFromJungLayoutCoordinate(new Point2D.Double(basePositionInJungLayoutCoord.getX() , basePositionInJungLayoutCoord.getY() + (vlIndex * interLayerSpacePixels)));
+//    		final VisualizationViewer vv = (VisualizationViewer) getInternalVisualizationController();
+//    		final Rectangle viewLayoutBounds = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
+//    		final double verticalCoordEquivalentOfOnePixel = viewLayoutBounds.getHeight() / sizeGraphLayout.getHeight(); 
+//        	Point zeroPositionInNetPlan = new Point (0,0);
+//        	Point elevatedFromZeroPositionInNetPlan = new Point (0,interLayerSpacePixels);
+//        	SwingUtilities.convertPointFromScreen(zeroPositionInNetPlan , getInternalVisualizationController());
+//        	SwingUtilities.convertPointFromScreen(elevatedFromZeroPositionInNetPlan , getInternalVisualizationController());
+//        	final double interlayerDistanceInNpCoord = elevatedFromZeroPositionInNetPlan.getY() - zeroPositionInNetPlan.getY();
+//        	final Point2D elevatedPositionInNetPlanCoord = new Point2D.Double(basePositionInNetPlanCoord.getX() , basePositionInNetPlanCoord.getY() + (vlIndex * verticalCoordEquivalentOfOnePixel));
+//            return new Point2D.Double(elevatedPositionInNetPlanCoord.getX(), -elevatedPositionInNetPlanCoord.getY());
+
         	final VisualizationLayer vl = vertex.getVisualizationLayer();
     		final int vlIndex = vl.getIndex();
-    		final double interLayerSpacePixels = vl.getVisualizationState().getInterLayerDistanceInPixels();
-    		final Point2D elevatedPositionInPixels = new Point2D.Double(basePositionInScreenPixels.getX() , basePositionInScreenPixels.getY() + (vlIndex * interLayerSpacePixels));
-        	final Point2D elevatedPositionInNetPlanCoord = getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double(basePositionInScreenPixels.getX() , basePositionInScreenPixels.getY() + (vlIndex * interLayerSpacePixels)));
-            return new Point2D.Double(elevatedPositionInNetPlanCoord.getX(), -elevatedPositionInNetPlanCoord.getY());
+            final double interLayerDistanceInNpCoord = vl.getVisualizationState().getDefaultVerticalDistanceForInterLayers();
+        	final Point2D basePositionInNetPlanCoord = vertex.getAssociatedNetPlanNode().getXYPositionMap();
+            return new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() + (vlIndex * interLayerDistanceInNpCoord)) );
         };
 
     	g = new DirectedOrderedSparseMultigraph<>();
         l = new StaticLayout<>(g, transformNetPlanCoordinatesToJungCoordinates);
         vv = new VisualizationViewer<>(l);
 
+        
+        
         originalEdgeShapeTransformer = new EdgeShape.QuadCurve<>();
         ((EdgeShape.QuadCurve<GUINode, GUILink>) originalEdgeShapeTransformer).setControlOffsetIncrement(10); // how much they separate from the direct line (default is 20)
         ((EdgeShape.QuadCurve<GUINode, GUILink>) originalEdgeShapeTransformer).setEdgeIndexFunction(DefaultParallelEdgeIndexFunction.<GUINode, GUILink>getInstance()); // how much they separate from the direct line (default is 20)
@@ -245,30 +276,46 @@ public final class JUNGCanvas implements ITopologyCanvas
     /**
      * Converts a point from the SWING coordinates system into a point from the JUNG coordinates system.
      *
-     * @param screenPoint (@code Point2D) on the SWING canvas.
+     * @param jungLayoutCoord (@code Point2D) on the SWING canvas.
      * @return (@code Point2D) on the JUNG canvas.
      */
     @Override
-    public Point2D getNetPlanCoordinatesFromScreenPixelCoordinate(Point2D screenPoint)
+    public Point2D getNetPlanCoordinatesFromJungLayoutCoordinate(Point2D jungLayoutCoord)
     {
-        Point2D layoutCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, screenPoint);
-        layoutCoordinates.setLocation(layoutCoordinates.getX(), -layoutCoordinates.getY());
+        Point2D netPlanCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, jungLayoutCoord);
+        netPlanCoordinates.setLocation(netPlanCoordinates.getX(), -netPlanCoordinates.getY());
 
-        return layoutCoordinates;
+        return netPlanCoordinates;
+    }
+
+    public Point2D getNetPlanCoordinatesFromJungViewCoordinate(Point2D jungViewCoord)
+    {
+        Point2D viewCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.VIEW, jungViewCoord);
+        //viewCoordinates.setLocation(viewCoordinates.getX(), -viewCoordinates.getY());
+        return viewCoordinates;
+    }
+
+    public Point2D getJungViewCoordinatesFromNetPlanCoordinates(Point2D netPlanCoord)
+    {
+    	/* Next line returns what it receives, whatever the scaling is!! */
+        Point2D viewCoordinates = vv.getRenderContext().getMultiLayerTransformer().transform(Layer.VIEW, netPlanCoord); 
+        //viewCoordinates.setLocation(viewCoordinates.getX(), -viewCoordinates.getY());
+        return viewCoordinates;
     }
 
     /**
      * Converts a point from the JUNG coordinates system to the SWING coordinates system.
      *
-     * @param screenPoint (@code Point2D) on the JUNG canvas.
+     * @param netPlanCoord (@code Point2D) on the JUNG canvas.
      * @return (@code Point2D) on the SWING canvas.
      */
     @Override
-    public Point2D getScreenPixelCoordinateFromNetPlanCoordinate(Point2D screenPoint)
+    public Point2D getJungLayoutCoordinateFromNetPlanCoordinate(Point2D netPlanCoord)
     {
 //        screenPoint.setLocation(screenPoint.getX(), -screenPoint.getY());
-        return vv.getRenderContext().getMultiLayerTransformer().transform(Layer.LAYOUT, new Point2D.Double(screenPoint.getX() , -screenPoint.getY()));
+        return vv.getRenderContext().getMultiLayerTransformer().transform(Layer.LAYOUT, new Point2D.Double(netPlanCoord.getX() , -netPlanCoord.getY()));
     }
+
 
     @Override
     public String getDescription()
@@ -442,17 +489,24 @@ public final class JUNGCanvas implements ITopologyCanvas
     @Override
     public void moveNodeToXYPosition(Node npNode, Point2D point)
     {
-		final double yOfPixelZero = getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double (0 , 0)).getY();
-		final double yOfPixelUp = getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double (0 , vs.getInterLayerDistanceInPixels())).getY();
+		final double yOfPixelZero = getNetPlanCoordinatesFromJungLayoutCoordinate(new Point2D.Double (0 , 0)).getY();
+		final double yOfPixelUp = getNetPlanCoordinatesFromJungLayoutCoordinate(new Point2D.Double (0 , vs.getInterLayerDistanceInPixels())).getY();
 		final double extraInJungCoordinates =  Math.abs(yOfPixelUp - yOfPixelZero);
 
     	for (GUINode node : vs.getVerticallyStackedGUINodes(npNode))
     		l.setLocation(node, new Point2D.Double(point.getX() , point.getY() + node.getVisualizationLayer().getIndex()*extraInJungCoordinates));
     }
 
-    public MutableTransformer getTransformer()
+    public Layout getGraphLayout () { return vv.getGraphLayout(); }
+    
+    public MutableTransformer getLayoutTransformer()
     {
         return vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+    }
+
+    public MutableTransformer getViewTransformer()
+    {
+        return vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.VIEW);
     }
 
     @Override
@@ -726,5 +780,7 @@ public final class JUNGCanvas implements ITopologyCanvas
 		OSMMapStateBuilder.getSingleton().takeSnapshot(this);
 	}
 
-
+	
+	public Graphics2D getGraphics2DObject () { return vv.getRenderContext().getGraphicsContext().getDelegate(); } 
+	
 }

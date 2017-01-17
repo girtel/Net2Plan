@@ -662,4 +662,17 @@ public class VisualizationState
     	}
     }
 
+    public double getDefaultVerticalDistanceForInterLayers ()
+    {
+    	double minY = Double.MAX_VALUE; double maxY = -Double.MAX_VALUE;
+    	for (Node n : currentNp.getNodes())
+    	{
+    		final double y = n.getXYPositionMap().getY();
+    		minY = Math.min(minY , y);
+    		maxY = Math.max(maxY , y);
+    	}
+    	if ((maxY - minY < 1e-6)) return maxY / (30 * getNumberOfVisualizationLayers());
+    	return (maxY - minY) / (30 * getNumberOfVisualizationLayers());
+    }
+    
 }

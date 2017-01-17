@@ -157,7 +157,7 @@ public class OSMMapController
 
         @SuppressWarnings("unchecked")
         final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getComponent();
-        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getTransformer();
+        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getLayoutTransformer();
 
         /* Rescale and pan JUNG layout so that it fits to OSM viewing */
         ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
@@ -206,14 +206,14 @@ public class OSMMapController
         final double currentCenterX = currentOSMViewportBounds.getCenterX();
         final double currentCenterY = currentOSMViewportBounds.getCenterY();
 
-        final Point2D currentOSMCenterJUNG = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double(currentCenterX, currentCenterY));
+        final Point2D currentOSMCenterJUNG = canvas.getNetPlanCoordinatesFromJungLayoutCoordinate(new Point2D.Double(currentCenterX, currentCenterY));
 
         final double preCenterX = previousOSMViewportBounds.getCenterX();
         final double preCenterY = previousOSMViewportBounds.getCenterY();
 
-        final Point2D previousOSMCenterJUNG = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double(preCenterX, preCenterY));
+        final Point2D previousOSMCenterJUNG = canvas.getNetPlanCoordinatesFromJungLayoutCoordinate(new Point2D.Double(preCenterX, preCenterY));
 
-        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getTransformer();
+        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getLayoutTransformer();
 
         final double dx = (currentOSMCenterJUNG.getX() - previousOSMCenterJUNG.getX());
         final double dy = (currentOSMCenterJUNG.getY() - previousOSMCenterJUNG.getY());

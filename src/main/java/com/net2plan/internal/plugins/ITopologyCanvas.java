@@ -62,9 +62,9 @@ public interface ITopologyCanvas extends Plugin
 //     */
 //    public List<JComponent> getCanvasActions(Point2D pos);
 
-	public Point2D getNetPlanCoordinatesFromScreenPixelCoordinate(Point2D screenPoint);
+	public Point2D getNetPlanCoordinatesFromJungLayoutCoordinate(Point2D screenPoint);
 
-	public Point2D getScreenPixelCoordinateFromNetPlanCoordinate(Point2D screenPoint);
+	public Point2D getJungLayoutCoordinateFromNetPlanCoordinate(Point2D screenPoint);
 
 	/**
 	 * Returns a reference to the internal component containing the canvas.
