@@ -288,6 +288,7 @@ public final class JUNGCanvas implements ITopologyCanvas
         return netPlanCoordinates;
     }
 
+    @Override
     public Point2D getNetPlanCoordinatesFromJungViewCoordinate(Point2D jungViewCoord)
     {
         Point2D viewCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.VIEW, jungViewCoord);
@@ -295,6 +296,7 @@ public final class JUNGCanvas implements ITopologyCanvas
         return viewCoordinates;
     }
 
+    @Override
     public Point2D getJungViewCoordinatesFromNetPlanCoordinates(Point2D netPlanCoord)
     {
     	/* Next line returns what it receives, whatever the scaling is!! */
@@ -446,7 +448,7 @@ public final class JUNGCanvas implements ITopologyCanvas
         for (GUINode node : visibleGUINodes)
         {
             Point2D nodeNpCoordinates = node.getAssociatedNetPlanNode().getXYPositionMap();
-            Point2D nodeJungCoordinates = l.transform(node);
+            Point2D nodeJungCoordinates = getJungLayoutCoordinateFromNetPlanCoordinate(nodeNpCoordinates);
             if (xmaxNpCoords < nodeNpCoordinates.getX()) xmaxNpCoords = nodeNpCoordinates.getX();
             if (xminNpCoords > nodeNpCoordinates.getX()) xminNpCoords = nodeNpCoordinates.getX();
             if (ymaxNpCoords < nodeNpCoordinates.getY()) ymaxNpCoords = nodeNpCoordinates.getY();
@@ -460,17 +462,18 @@ public final class JUNGCanvas implements ITopologyCanvas
         double PRECISION_FACTOR = 0.00001;
 
 //        Rectangle viewInJungCoordinates = vv.getBounds ();
-//        float ratio_h = Math.abs(xmaxJungCoords - xminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInJungCoordinates.getWidth() / (xmaxJungCoords - xminJungCoords));
-//        float ratio_v = Math.abs(ymaxJungCoords - yminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInJungCoordinates.getHeight() / (ymaxJungCoords - yminJungCoords));
-//        float ratio = (float) (0.8 * Math.min(ratio_h, ratio_v));
-//        scalingControl.scale(vv, ratio, vv.getCenter());
-
         Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
-        float ratio_h = Math.abs(xmaxNpCoords - xminNpCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getWidth() / (xmaxNpCoords - xminNpCoords));
-        float ratio_v = Math.abs(ymaxNpCoords - yminNpCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getHeight() / (ymaxNpCoords - yminNpCoords));
+        float ratio_h = Math.abs(xmaxJungCoords - xminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getWidth() / (xmaxJungCoords - xminJungCoords));
+        float ratio_v = Math.abs(ymaxJungCoords - yminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getHeight() / (ymaxJungCoords - yminJungCoords));
         float ratio = (float) (0.8 * Math.min(ratio_h, ratio_v));
         scalingControl.scale(vv, ratio, vv.getCenter());
 
+//        Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
+//        float ratio_h = Math.abs(xmaxNpCoords - xminNpCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getWidth() / (xmaxNpCoords - xminNpCoords));
+//        float ratio_v = Math.abs(ymaxNpCoords - yminNpCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getHeight() / (ymaxNpCoords - yminNpCoords));
+//        float ratio = (float) (0.8 * Math.min(ratio_h, ratio_v));
+//        scalingControl.scale(vv, ratio, vv.getCenter());
+//
         Point2D topologyCenterJungCoord = new Point2D.Double((xminJungCoords + xmaxJungCoords) / 2, (yminJungCoords + ymaxJungCoords) / 2);
         Point2D windowCenterJungCoord = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getCenter());
         double dx = (windowCenterJungCoord.getX() - topologyCenterJungCoord.getX());
