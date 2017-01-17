@@ -51,10 +51,9 @@ import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
-import com.net2plan.gui.utils.IVisualizationControllerCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -117,7 +116,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
      * @param callback The network callback
      * @since 0.2.0
      */
-    public AdvancedJTable_demand(final IVisualizationControllerCallback callback) {
+    public AdvancedJTable_demand(final IVisualizationCallback callback) {
         super(createTableModel(callback), callback, NetworkElementType.DEMAND, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
@@ -258,7 +257,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
         return new int[]{COLUMN_INGRESSNODE, COLUMN_EGRESSNODE, COLUMN_COUPLEDTOLINK, COLUMN_BIFURCATED, COLUMN_NUMROUTES};
     } //{ return new int [] { 3,4,5,9,10 }; }
 
-    private static TableModel createTableModel(final IVisualizationControllerCallback callback) 
+    private static TableModel createTableModel(final IVisualizationCallback callback)
     {
         TableModel demandTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
@@ -310,7 +309,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
         return demandTableModel;
     }
 
-    private void setDefaultCellRenderers(final IVisualizationControllerCallback callback)
+    private void setDefaultCellRenderers(final IVisualizationCallback callback)
     {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new NumberCellRenderer());
@@ -485,7 +484,7 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
 
     }
 
-    public static void createLinkDemandGUI(final NetworkElementType networkElementType, final IVisualizationControllerCallback callback) {
+    public static void createLinkDemandGUI(final NetworkElementType networkElementType, final IVisualizationCallback callback) {
         final NetPlan netPlan = callback.getDesign();
         final JComboBox originNodeSelector = new WiderJComboBox();
         final JComboBox destinationNodeSelector = new WiderJComboBox();

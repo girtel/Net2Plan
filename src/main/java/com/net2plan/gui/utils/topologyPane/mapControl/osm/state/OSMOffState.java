@@ -2,12 +2,10 @@ package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
-import com.net2plan.gui.utils.IVisualizationControllerCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
-import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
-import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.plugins.ITopologyCanvas;
@@ -29,13 +27,13 @@ import java.util.Collections;
  * @author Jorge San Emeterio
  * @date 01-Dec-16
  */
-public class OSMStoppedState implements OSMState
+class OSMOffState implements OSMState
 {
     private final JUNGCanvas canvas;
     private final VisualizationViewer<GUINode, GUILink> vv;
 
     @SuppressWarnings("unchecked")
-    OSMStoppedState(final ITopologyCanvas canvas)
+    OSMOffState(final ITopologyCanvas canvas)
     {
         this.canvas = (JUNGCanvas) canvas;
 
@@ -73,9 +71,16 @@ public class OSMStoppedState implements OSMState
     }
 
     @Override
-    public void addNode(IVisualizationControllerCallback callback, ITopologyCanvas topologyPanel, Point2D pos)
+    public void addNode(IVisualizationCallback callback, ITopologyCanvas topologyPanel, Point2D pos)
     {
         callback.getDesign().addNode(pos.getX() , pos.getY() , "Node" + callback.getDesign().getNumberOfNodes(), null);
+        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
+    }
+
+    @Override
+    public void removeNode(IVisualizationCallback callback, Node node)
+    {
+        node.remove();
         callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
     }
 

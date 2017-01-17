@@ -1,7 +1,8 @@
 package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
+import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
-import com.net2plan.gui.utils.IVisualizationControllerCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -24,11 +25,11 @@ import java.util.Collections;
  * @author Jorge San Emeterio
  * @date 01-Dec-16
  */
-public class OSMRunningState implements OSMState
+class OSMOnState implements OSMState
 {
     private final OSMMapController mapController;
 
-    OSMRunningState(final OSMMapController mapController)
+    OSMOnState(final OSMMapController mapController)
     {
         this.mapController = mapController;
     }
@@ -61,7 +62,7 @@ public class OSMRunningState implements OSMState
     }
 
     @Override
-    public void addNode(IVisualizationControllerCallback callback, ITopologyCanvas canvas, Point2D pos)
+    public void addNode(IVisualizationCallback callback, ITopologyCanvas canvas, Point2D pos)
     {
         final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(convertJungPointToMapSwing(canvas, pos));
         if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
@@ -76,6 +77,13 @@ public class OSMRunningState implements OSMState
         mapController.restartMapState(false);
     }
 
+    @Override
+    public void removeNode(IVisualizationCallback callback, Node node)
+    {
+        node.remove();
+        callback.updateVisualizationAfterChanges(Sets.newHashSet(Constants.NetworkElementType.NODE));
+        mapController.restartMapState(false);
+    }
 
     @Override
     public void moveNodeInVisualization(ITopologyCanvas canvas, Node node, Point2D positionInScreenPixels)

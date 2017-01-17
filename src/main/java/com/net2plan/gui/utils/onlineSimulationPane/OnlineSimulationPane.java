@@ -20,15 +20,11 @@ import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
-import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -42,7 +38,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JToolBar;
-import javax.swing.KeyStroke;
 import javax.swing.RowSorter;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
@@ -57,8 +52,7 @@ import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnFitAdapter;
-import com.net2plan.gui.utils.FixedColumnDecorator;
-import com.net2plan.gui.utils.IVisualizationControllerCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.ReportBrowser;
@@ -66,12 +60,10 @@ import com.net2plan.gui.utils.RunnableSelector;
 import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.IExternal;
 import com.net2plan.internal.SystemUtils;
-import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.sim.EndSimulationException;
 import com.net2plan.internal.sim.IGUISimulationListener;
@@ -95,7 +87,7 @@ import net.miginfocom.swing.MigLayout;
  */
 public class OnlineSimulationPane extends JTabbedPane implements ActionListener, IGUISimulationListener {
 
-	private final IVisualizationControllerCallback mainWindow;
+	private final IVisualizationCallback mainWindow;
     private final int simReportTab;
     private JButton btn_run, btn_step, btn_pause, btn_stop , btn_reset;
     private JButton btn_viewEventList, btn_updateReport;
@@ -111,7 +103,7 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
     private SimKernel simKernel;
     private JPanel simulationControlPanel;
     
-    public OnlineSimulationPane(IVisualizationControllerCallback mainWindow) 
+    public OnlineSimulationPane(IVisualizationCallback mainWindow)
     {
 		super ();
 		this.mainWindow = mainWindow;

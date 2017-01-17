@@ -12,7 +12,7 @@
 
 package com.net2plan.gui.utils.topologyPane;
 
-import com.net2plan.gui.utils.IVisualizationControllerCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
@@ -27,7 +27,7 @@ import java.awt.event.MouseEvent;
  * @since 0.3.1
  */
 public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugin {
-    private IVisualizationControllerCallback callback;
+    private IVisualizationCallback callback;
     private ITopologyCanvas canvas;
     private GUINode startVertex;
     private int modifiers;
@@ -38,7 +38,7 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
      * @param callback Topology callback listening plugin events
      * @since 0.3.1
      */
-    public MoveNodePlugin(IVisualizationControllerCallback callback , ITopologyCanvas canvas) {
+    public MoveNodePlugin(IVisualizationCallback callback , ITopologyCanvas canvas) {
         this(callback, canvas , MouseEvent.BUTTON1_MASK);
     }
 
@@ -49,7 +49,7 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
      * @param modifiers Mouse event modifiers to activate this functionality
      * @since 0.3.1
      */
-    public MoveNodePlugin(IVisualizationControllerCallback callback, ITopologyCanvas canvas , int modifiers) {
+    public MoveNodePlugin(IVisualizationCallback callback, ITopologyCanvas canvas , int modifiers) {
         setModifiers(modifiers);
         this.callback = callback;
         this.canvas = canvas;

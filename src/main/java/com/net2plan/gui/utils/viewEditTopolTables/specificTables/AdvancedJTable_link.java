@@ -48,10 +48,9 @@ import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
-import com.net2plan.gui.utils.IVisualizationControllerCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -106,7 +105,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
 
     private List<Link> currentLinks = new LinkedList<>();
     private NetPlan currentTopology = null;
-    public AdvancedJTable_link(final IVisualizationControllerCallback callback) {
+    public AdvancedJTable_link(final IVisualizationCallback callback) {
         super(createTableModel(callback), callback, NetworkElementType.LINK, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
@@ -306,7 +305,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
         return new int[]{3, 4, 16, 17, 18, 19};
     } //{ return new int [] { 3,4,6,16,17,18,19 }; }
 
-    private static TableModel createTableModel(final IVisualizationControllerCallback callback) {
+    private static TableModel createTableModel(final IVisualizationCallback callback) {
 //    	final TopologyPanel topologyPanel = callback.getTopologyPanel();
     	final VisualizationState vs = callback.getVisualizationState();
         TableModel linkTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
@@ -416,7 +415,7 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
         return linkTableModel;
     }
 
-    private void setDefaultCellRenderers(final IVisualizationControllerCallback callback) {
+    private void setDefaultCellRenderers(final IVisualizationCallback callback) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());

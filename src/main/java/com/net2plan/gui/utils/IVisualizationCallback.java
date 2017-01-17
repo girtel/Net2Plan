@@ -34,7 +34,7 @@ import com.net2plan.utils.Pair;
 /**
  * Interface to be implemented by any class dealing with network designs.
  */
-public interface IVisualizationControllerCallback
+public interface IVisualizationCallback
 {
 	public VisualizationState getVisualizationState ();
 	

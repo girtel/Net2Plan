@@ -12,7 +12,6 @@
 
 package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -25,10 +24,9 @@ import javax.swing.table.TableModel;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
-import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
-import com.net2plan.gui.utils.IVisualizationControllerCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -69,7 +67,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
     private NetPlan currentTopology = null;
     private List<MulticastTree> currentMulticastTrees = new LinkedList<>();
 
-    public AdvancedJTable_multicastTree(final IVisualizationControllerCallback callback) {
+    public AdvancedJTable_multicastTree(final IVisualizationCallback callback) {
         super(createTableModel(callback), callback, NetworkElementType.MULTICAST_TREE, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
@@ -216,7 +214,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
         return new int[]{};
     }
 
-    private static TableModel createTableModel(final IVisualizationControllerCallback callback) {
+    private static TableModel createTableModel(final IVisualizationCallback callback) {
         TableModel treeTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
@@ -269,7 +267,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
         return treeTableModel;
     }
 
-    private void setDefaultCellRenderers(final IVisualizationControllerCallback callback) {
+    private void setDefaultCellRenderers(final IVisualizationCallback callback) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
@@ -424,7 +422,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTableNetworkElement {
         return addItem;
     }
 
-    private static void createMulticastTreeGUI(final IVisualizationControllerCallback callback) {
+    private static void createMulticastTreeGUI(final IVisualizationCallback callback) {
         final NetPlan netPlan = callback.getDesign();
 
         JTextField textFieldDemandIndex = new JTextField(20);

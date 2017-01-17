@@ -12,7 +12,6 @@
 
 package com.net2plan.gui.utils;
 
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_demand;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_link;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_route;
 import com.net2plan.interfaces.networkDesign.*;
@@ -161,7 +160,7 @@ public class CellRenderers {
          * @param callback     Reference to the handler of the network design
          * @since 0.3.0
          */
-        public LinkRenderer(TableCellRenderer cellRenderer, IVisualizationControllerCallback callback) {
+        public LinkRenderer(TableCellRenderer cellRenderer, IVisualizationCallback callback) {
             super(cellRenderer, callback, NetworkElementType.LINK);
         }
 
@@ -389,7 +388,7 @@ public class CellRenderers {
          * @param callback     Reference to the handler of the network design
          * @since 0.3.0
          */
-        public ForwardingRuleRenderer(TableCellRenderer cellRenderer, IVisualizationControllerCallback callback) {
+        public ForwardingRuleRenderer(TableCellRenderer cellRenderer, IVisualizationCallback callback) {
             super(cellRenderer, callback, NetworkElementType.FORWARDING_RULE);
         }
     }
@@ -409,7 +408,7 @@ public class CellRenderers {
          * @param callback     Reference to the handler of the network design
          * @since 0.3.0
          */
-        public RouteRenderer(TableCellRenderer cellRenderer, IVisualizationControllerCallback callback) {
+        public RouteRenderer(TableCellRenderer cellRenderer, IVisualizationCallback callback) {
             super(cellRenderer, callback, NetworkElementType.ROUTE);
         }
 
@@ -462,7 +461,7 @@ public class CellRenderers {
          * @param callback     Reference to the handler of the network design
          * @since 0.3.1
          */
-        public MulticastTreeRenderer(TableCellRenderer cellRenderer, IVisualizationControllerCallback callback) {
+        public MulticastTreeRenderer(TableCellRenderer cellRenderer, IVisualizationCallback callback) {
             super(cellRenderer, callback, NetworkElementType.MULTICAST_TREE);
         }
 
@@ -520,7 +519,7 @@ public class CellRenderers {
          *
          * @since 0.3.0
          */
-        protected final IVisualizationControllerCallback callback;
+        protected final IVisualizationCallback callback;
 
         /**
          * Default constructor.
@@ -530,7 +529,7 @@ public class CellRenderers {
          * @param networkElementType Type of element (i.e. layers, nodes, links, and so on)
          * @since 0.3.0
          */
-        public UpDownRenderer(TableCellRenderer cellRenderer, IVisualizationControllerCallback callback, NetworkElementType networkElementType) {
+        public UpDownRenderer(TableCellRenderer cellRenderer, IVisualizationCallback callback, NetworkElementType networkElementType) {
             super(cellRenderer, networkElementType);
 
             this.callback = callback;

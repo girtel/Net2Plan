@@ -10,7 +10,7 @@ import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-import com.net2plan.gui.utils.IVisualizationControllerCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.RunnableSelector;
 import com.net2plan.gui.utils.ThreadExecutionController;
@@ -27,13 +27,13 @@ import net.miginfocom.swing.MigLayout;
 
 public class OfflineExecutionPanel extends JPanel implements ThreadExecutionController.IThreadExecutionHandler
 {
-	private final IVisualizationControllerCallback mainWindow;
+	private final IVisualizationCallback mainWindow;
     private ThreadExecutionController algorithmController;
     private RunnableSelector algorithmSelector;
     private long start;
     final JButton btn_solve;
 	
-	public OfflineExecutionPanel (IVisualizationControllerCallback mainWindow)
+	public OfflineExecutionPanel (IVisualizationCallback mainWindow)
 	{
 		super ();
 

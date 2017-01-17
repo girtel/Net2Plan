@@ -36,7 +36,7 @@ import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.FullScrollPaneLayout;
-import com.net2plan.gui.utils.IVisualizationControllerCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.ParamValueTable;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.TableCursorNavigation;
@@ -74,9 +74,9 @@ public class NetPlanViewTableComponent_layer extends JPanel {
     private JButton forceUpdate;
     private final AdvancedJTable_layer layerTable;
 
-    private final IVisualizationControllerCallback networkViewer;
+    private final IVisualizationCallback networkViewer;
 
-    public NetPlanViewTableComponent_layer(final IVisualizationControllerCallback networkViewer, final AdvancedJTable_layer layerTable) {
+    public NetPlanViewTableComponent_layer(final IVisualizationCallback networkViewer, final AdvancedJTable_layer layerTable) {
         super(new MigLayout("", "[grow]", "[][][][][][grow]"));
         this.layerTable = layerTable;
         this.networkViewer = networkViewer;

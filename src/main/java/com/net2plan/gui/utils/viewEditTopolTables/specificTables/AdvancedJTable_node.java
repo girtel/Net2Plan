@@ -12,7 +12,6 @@
 
 package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -21,16 +20,14 @@ import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
-import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
-import com.net2plan.gui.utils.IVisualizationControllerCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -77,7 +74,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
      * @param callback The network callback
      * @since 0.2.0
      */
-    public AdvancedJTable_node(final IVisualizationControllerCallback callback) {
+    public AdvancedJTable_node(final IVisualizationCallback callback) {
         super(createTableModel(callback), callback, NetworkElementType.NODE, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
@@ -241,7 +238,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
     }
 
 
-    private static TableModel createTableModel(final IVisualizationControllerCallback callback) 
+    private static TableModel createTableModel(final IVisualizationCallback callback)
     {
 //    	final TopologyPanel topologyPanel = callback.getTopologyPanel();
         TableModel nodeTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
@@ -318,7 +315,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
         return nodeTableModel;
     }
 
-    private void setDefaultCellRenderers(final IVisualizationControllerCallback callback) {
+    private void setDefaultCellRenderers(final IVisualizationCallback callback) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());

@@ -22,7 +22,7 @@ import javax.swing.table.TableRowSorter;
 
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter.CurrentAndPlannedStateTableCellValue;
 import com.net2plan.gui.utils.FullScrollPaneLayout;
-import com.net2plan.gui.utils.IVisualizationControllerCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
@@ -46,13 +46,13 @@ import com.net2plan.utils.Pair;
 @SuppressWarnings("unchecked")
 public class ViewEditTopologyTablesPane extends JPanel
 {
-	private final IVisualizationControllerCallback mainWindow;
+	private final IVisualizationCallback mainWindow;
     private JTabbedPane netPlanView;
     private Map<NetworkElementType, AdvancedJTableNetworkElement> netPlanViewTable;
     private Map<NetworkElementType, JComponent> netPlanViewTableComponent;
     private JCheckBox showInitialPlan;
 
-	public ViewEditTopologyTablesPane (IVisualizationControllerCallback mainWindow , LayoutManager layout)
+	public ViewEditTopologyTablesPane (IVisualizationCallback mainWindow , LayoutManager layout)
 	{
 		super (layout);
 		

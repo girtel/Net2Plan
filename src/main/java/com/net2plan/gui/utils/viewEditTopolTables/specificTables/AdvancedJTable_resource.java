@@ -2,24 +2,18 @@ package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.*;
-import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.StringUtils;
-import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Point2D;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -49,7 +43,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
     private NetPlan currentTopology = null;
 //    private final String[] resourceTypes = StringUtils.arrayOf("Firewall","NAT","CPU","RAM");
 
-    public AdvancedJTable_resource(final IVisualizationControllerCallback callback)
+    public AdvancedJTable_resource(final IVisualizationCallback callback)
     {
         super(createTableModel(callback), callback, Constants.NetworkElementType.RESOURCE, true);
         setDefaultCellRenderers(callback);
@@ -185,7 +179,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
         return new int[]{5};
     }
 
-    private static TableModel createTableModel(final IVisualizationControllerCallback callback) 
+    private static TableModel createTableModel(final IVisualizationCallback callback)
     {
         TableModel resourceTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
@@ -250,7 +244,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
     private void setSpecificCellRenderers() {
     }
 
-    private void setDefaultCellRenderers(final IVisualizationControllerCallback callback) {
+    private void setDefaultCellRenderers(final IVisualizationCallback callback) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());

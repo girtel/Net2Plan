@@ -27,7 +27,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 import com.google.common.collect.Sets;
-import com.net2plan.gui.utils.IVisualizationControllerCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -45,7 +45,7 @@ import edu.uci.ics.jung.visualization.Layer;
  */
 public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlugin 
 {
-    private final IVisualizationControllerCallback callback;
+    private final IVisualizationCallback callback;
     private final ITopologyCanvas canvas;
 
     /**
@@ -54,7 +54,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
      * @param callback Reference to the class handling change events.
      * @since 0.3.1
      */
-    public PopupMenuPlugin(IVisualizationControllerCallback callback , ITopologyCanvas canvas) 
+    public PopupMenuPlugin(IVisualizationCallback callback , ITopologyCanvas canvas)
     {
         this.callback = callback;
         this.canvas = canvas;
@@ -274,8 +274,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         @Override
         public void actionPerformed(ActionEvent e)
         {
-        	node.remove();
-        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+        	OSMMapStateBuilder.getSingleton().removeNode(callback, node);
         }
     }
 

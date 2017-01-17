@@ -1,13 +1,12 @@
 package com.net2plan.gui.utils.topologyPane.mapControl.osm;
 
-import com.net2plan.gui.utils.IVisualizationControllerCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.components.mapPanel.OSMMapPanel;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMRunningState;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -34,7 +33,7 @@ public class OSMMapController
 
     private TopologyPanel topologyPanel;
     private ITopologyCanvas canvas;
-    private IVisualizationControllerCallback callback;
+    private IVisualizationCallback callback;
 
     // Previous OSM map state
     private Rectangle previousOSMViewportBounds;
@@ -48,7 +47,7 @@ public class OSMMapController
      * @param canvas        The JUNG canvas.
      * @param callback      The interface to the NetPlan.
      */
-    public void startMap(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final IVisualizationControllerCallback callback)
+    public void startMap(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final IVisualizationCallback callback)
     {
         // Checking if the nodes are valid for this operation.
         // They may not go outside the bounds: x: -180, 180: y: -90, 90
@@ -340,7 +339,7 @@ public class OSMMapController
      */
     private boolean isMapActivated()
     {
-        return OSMMapStateBuilder.getSingleton().getCurrentState() instanceof OSMRunningState;
+        return OSMMapStateBuilder.getSingleton().isMapActivated();
     }
 
     public JComponent getMapComponent()

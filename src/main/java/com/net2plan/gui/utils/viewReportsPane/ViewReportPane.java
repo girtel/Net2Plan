@@ -18,7 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 
-import com.net2plan.gui.utils.IVisualizationControllerCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.ReportBrowser;
@@ -38,13 +38,13 @@ import com.net2plan.utils.Triple;
 @SuppressWarnings("unchecked")
 public class ViewReportPane extends JSplitPane implements ThreadExecutionController.IThreadExecutionHandler
 {
-	private final IVisualizationControllerCallback mainWindow;
+	private final IVisualizationCallback mainWindow;
     private RunnableSelector reportSelector;
     private ThreadExecutionController reportController;
     private JTabbedPane reportContainer;
     private JButton closeAllReports;
 
-	public ViewReportPane (IVisualizationControllerCallback mainWindow , int newOrientation)
+	public ViewReportPane (IVisualizationCallback mainWindow , int newOrientation)
 	{
 		super (newOrientation);
 
