@@ -1,6 +1,5 @@
 package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
-import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.GUILink;
@@ -74,14 +73,14 @@ class OSMOffState implements OSMState
     public void addNode(IVisualizationCallback callback, ITopologyCanvas topologyPanel, Point2D pos)
     {
         callback.getDesign().addNode(pos.getX() , pos.getY() , "Node" + callback.getDesign().getNumberOfNodes(), null);
-        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
+        callback.updateVisualization(Collections.singleton(Constants.NetworkElementType.NODE));
     }
 
     @Override
     public void removeNode(IVisualizationCallback callback, Node node)
     {
         node.remove();
-        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
+        callback.updateVisualization(Collections.singleton(Constants.NetworkElementType.NODE));
     }
 
     @Override

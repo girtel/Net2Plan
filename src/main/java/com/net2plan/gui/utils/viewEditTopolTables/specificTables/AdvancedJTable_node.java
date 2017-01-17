@@ -274,18 +274,18 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                         case COLUMN_SHOWHIDE:
                             if (newValue == null) return;
                         	callback.getVisualizationState().setVisibilityState(node , (Boolean) newValue);
-                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                        	callback.updateVisualization(Sets.newHashSet(NetworkElementType.NODE));
                             break;
 
                         case COLUMN_NAME:
                         	node.setName(newValue.toString());
-                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                        	callback.updateVisualization(Sets.newHashSet(NetworkElementType.NODE));
                             break;
 
                         case COLUMN_STATE:
                             boolean isNodeUp = (Boolean) newValue;
                         	node.setFailureState(isNodeUp);
-                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                        	callback.updateVisualization(Sets.newHashSet(NetworkElementType.NODE));
                             break;
 
                         case COLUMN_XCOORD:
@@ -294,7 +294,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                             		new Point2D.Double(Double.parseDouble(newValue.toString()), node.getXYPositionMap().getY()) : 
                             		new Point2D.Double(node.getXYPositionMap().getX(), Double.parseDouble(newValue.toString()));
                             node.setXYPositionMap(newPosition);
-                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                            callback.updateVisualization(Sets.newHashSet(NetworkElementType.NODE));
                             break;
 
                         default:
@@ -371,7 +371,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                             try
                             {
                             	callback.getDesign().getNodeFromId((long) itemId).remove();
-                            	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                            	callback.updateVisualization(Sets.newHashSet(NetworkElementType.NODE));
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -391,7 +391,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
 
                         try {
                             netPlan.removeAllNodes();
-                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                        	callback.updateVisualization(Sets.newHashSet(NetworkElementType.NODE));
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -439,7 +439,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
 
                 try {
                     Node node = netPlan.addNode(0, 0, "Node " + netPlan.getNumberOfNodes(), null);
-                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                	callback.updateVisualization(Sets.newHashSet(NetworkElementType.NODE));
                 	callback.pickNodeAndUpdateView(node);
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
@@ -469,7 +469,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                     Node node = netPlan.getNodeFromId((long) itemId);
                     Point2D currentPosition = node.getXYPositionMap();
                     node.setXYPositionMap(new Point2D.Double(currentPosition.getY() , currentPosition.getX()));
-                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                	callback.updateVisualization(Sets.newHashSet(NetworkElementType.NODE));
                 }
             });
 
@@ -511,7 +511,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                                 String lonAttribute = lonSelector.getSelectedItem().toString();
                                 
                                 node.setXYPositionMap(new Point2D.Double(Double.parseDouble(node.getAttribute(lonAttribute)), Double.parseDouble(node.getAttribute(latAttribute))));
-                            	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                            	callback.updateVisualization(Sets.newHashSet(NetworkElementType.NODE));
                                 break;
                             } catch (Throwable ex) {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving coordinates from attributes");
@@ -554,7 +554,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                             try {
                                 String name = selector.getSelectedItem().toString();
                                 netPlan.getNodeFromId(nodeId).setName(netPlan.getNodeFromId(nodeId).getAttribute(name));
-                            	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                            	callback.updateVisualization(Sets.newHashSet(NetworkElementType.NODE));
 
                                 break;
                             } catch (Throwable ex) {
@@ -588,7 +588,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                         Point2D newPosition = new Point2D.Double(newX,newY);
                         netPlan.getNodeFromId(nodeId).setXYPositionMap(newPosition);
                     }
-                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                	callback.updateVisualization(Sets.newHashSet(NetworkElementType.NODE));
                 }
             });
 
@@ -632,7 +632,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
 
                                 for (Node node : nodes) 
                                     	node.setXYPositionMap(new Point2D.Double(Double.parseDouble(node.getAttribute(lonAttribute)), Double.parseDouble(node.getAttribute(latAttribute))));
-                            	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                            	callback.updateVisualization(Sets.newHashSet(NetworkElementType.NODE));
                                 break;
                             } catch (Throwable ex) {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving coordinates from attributes");
@@ -676,7 +676,7 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
                                 String name = selector.getSelectedItem().toString();
 
                                 for (Node node : netPlan.getNodes()) node.setName(node.getAttribute(name) != null? node.getAttribute(name) : "");
-                            	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                            	callback.updateVisualization(Sets.newHashSet(NetworkElementType.NODE));
                                 break;
                             } catch (Throwable ex) {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving name from attribute");

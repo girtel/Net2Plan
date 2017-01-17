@@ -232,7 +232,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
 
                                 try {
                                     netPlan.removeNetworkLayer(netPlan.getNetworkLayerFromId((long) itemId));
-                                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+                                    callback.updateVisualization(Sets.newHashSet(NetworkElementType.LAYER));
                                 } catch (Throwable ex) {
                                     ErrorHandling.addErrorOrException(ex, getClass());
                                     ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -281,7 +281,7 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
 
                 try {
                     netPlan.addLayer("Layer " + netPlan.getNumberOfLayers(), null, null, null, null);
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+                    callback.updateVisualization(Sets.newHashSet(NetworkElementType.LAYER));
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }

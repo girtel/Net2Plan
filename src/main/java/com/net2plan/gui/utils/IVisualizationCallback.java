@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2015 Pablo Pavon Mariño.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the GNU Lesser License v2.1
  * which accompanies this distribution, and is available at
  * http://www.gnu.org/licenses/lgpl.html
  * <p>
@@ -36,48 +36,45 @@ import com.net2plan.utils.Pair;
  */
 public interface IVisualizationCallback
 {
-	public VisualizationState getVisualizationState ();
-	
-	public void updateVisualizationAfterChanges (Set<NetworkElementType> changes);
+	VisualizationState getVisualizationState ();
 
-	public void updateVisualizationAfterLinkNodeColorChanges ();
+	void updateVisualization(Set<NetworkElementType> changes);
 
-	public void updateVisualizationJustTables ();
+	void updateVisualizationAfterLinkNodeColorChanges ();
 
-	public void resetPickedStateAndUpdateView ();
+	void updateVisualizationJustTables ();
 
-    public void pickNodeAndUpdateView (Node node);
+	void resetPickedStateAndUpdateView ();
 
-    public void pickLinkAndUpdateView (Link link);
+    void pickNodeAndUpdateView (Node node);
 
-    public void pickDemandAndUpdateView (Demand demand);
+    void pickLinkAndUpdateView (Link link);
 
-    public void pickMulticastDemandAndUpdateView (MulticastDemand demand);
+    void pickDemandAndUpdateView (Demand demand);
 
-    public void pickForwardingRuleAndUpdateView (Pair<Demand, Link> demandLink);
+    void pickMulticastDemandAndUpdateView (MulticastDemand demand);
 
-    public void pickRouteAndUpdateView (Route route);
+    void pickForwardingRuleAndUpdateView (Pair<Demand, Link> demandLink);
 
-    public void pickMulticastTreeAndUpdateView (MulticastTree tree);
+    void pickRouteAndUpdateView (Route route);
 
-    public void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg);
+    void pickMulticastTreeAndUpdateView (MulticastTree tree);
 
-    public void putColorInElementTopologyCanvas (Collection<? extends NetworkElement> linksAndNodes , Color color);
+    void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg);
 
-	public void updateVisualizationAfterNewTopology ();
+    void putColorInElementTopologyCanvas (Collection<? extends NetworkElement> linksAndNodes , Color color);
 
-	public void justApplyZoomAll ();
+	void updateVisualization(boolean doZoomAll);
 
-	public void updateVisualizationJustTopologyCanvas ();
+	void refreshTopologyCanvas(boolean doZoomAll);
 
-    public NetPlan getDesign();
+    NetPlan getDesign();
 
-    public NetPlan getInitialDesign();
+    NetPlan getInitialDesign();
 
-//    public void moveNodeXYPosition (Node node, Point2D pos , boolean updateView);
+//    void moveNodeXYPosition (Node node, Point2D pos , boolean updateView);
 
-    public boolean inOnlineSimulationMode();
+    boolean inOnlineSimulationMode();
 
-	public void loadDesignDoNotUpdateVisualization(NetPlan netPlan);
-
+	void loadDesignDoNotUpdateVisualization(NetPlan netPlan);
 }
