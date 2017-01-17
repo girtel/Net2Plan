@@ -22,6 +22,8 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
+import org.apache.commons.collections15.BidiMap;
+
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.FileChooserNetworkDesign;
 import com.net2plan.gui.utils.FileDrop;
@@ -44,6 +46,8 @@ import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.ITopologyCanvas;
+import com.net2plan.utils.Pair;
+
 import edu.uci.ics.jung.visualization.Layer;
 
 /**
@@ -154,7 +158,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 //				System.out.println ("Select layer: layerId " + layerId + ", layer: " + layer);
                 if (layer == null) throw new RuntimeException("Bad: " + layerId);
                 currentState.setNetworkLayerDefault(layer);
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+                final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
+                		(currentState , false , true , false , true , null , null); // shown in topological order
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER) , visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
             }
         });
 
@@ -446,7 +452,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         } else if (src == btn_reset)
         {
         	callback.loadDesignDoNotUpdateVisualization(new NetPlan ());
-        	callback.updateVisualizationAfterNewTopology();
+            final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
+            		(callback.getDesign() , false , true , false , true , null , null); // shown in topological order
+        	callback.updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
             callback.resetPickedStateAndUpdateView();
         }
     }
@@ -526,7 +534,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             aux.checkCachesConsistency();
 
             callback.loadDesignDoNotUpdateVisualization(aux);
-            callback.updateVisualizationAfterNewTopology();
+            final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
+            		(callback.getDesign() , false , true , false , true , null , null); // shown in topological order
+            callback.updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
@@ -547,7 +557,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             fc_netPlan.setCurrentDirectory(file.getParentFile());
 
             callback.loadDesignDoNotUpdateVisualization(netPlan);
-            callback.updateVisualizationAfterNewTopology();
+            final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
+            		(callback.getDesign() , false , true , false , true , null , null); // shown in topological order
+            callback.updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
@@ -600,7 +612,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     netPlan.addMulticastDemand(netPlan.getNode(demand.getIngressNode().getIndex()), egressNodesThisNetPlan, demand.getOfferedTraffic(), demand.getAttributes());
                 }
 
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.MULTICAST_DEMAND));
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.MULTICAST_DEMAND) , null , null);
             } catch (Throwable ex)
             {
                 callback.getDesign().assignFrom(aux_netPlan);

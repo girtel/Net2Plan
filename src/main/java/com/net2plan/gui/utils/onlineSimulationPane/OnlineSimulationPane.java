@@ -22,6 +22,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
@@ -47,6 +48,9 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.text.DefaultCaret;
 
+import org.apache.commons.collections15.BidiMap;
+
+import com.google.common.collect.Sets;
 import com.jom.JOMException;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.CellRenderers;
@@ -58,12 +62,15 @@ import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.ReportBrowser;
 import com.net2plan.gui.utils.RunnableSelector;
 import com.net2plan.gui.utils.SwingUtils;
+import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.IExternal;
 import com.net2plan.internal.SystemUtils;
+import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.sim.EndSimulationException;
 import com.net2plan.internal.sim.IGUISimulationListener;
@@ -71,6 +78,7 @@ import com.net2plan.internal.sim.SimCore;
 import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.internal.sim.SimKernel;
 import com.net2plan.utils.ClassLoaderUtils;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
 
@@ -177,7 +185,9 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
                 simKernel.getSimCore().setSimulationState(SimState.STOPPED);
                 simKernel.reset();
                 mainWindow.loadDesignDoNotUpdateVisualization(simKernel.getInitialNetPlan());
-                mainWindow.updateVisualizationAfterNewTopology();
+                final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
+                		(mainWindow.getDesign() , false , true , false , true , null , null); // shown in topological order
+                mainWindow.updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
             } else if (src == btn_viewEventList) {
                 viewFutureEventList();
             } else if (src == btn_updateReport) {
@@ -311,7 +321,9 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
         if (simulationState == SimState.NOT_STARTED || simulationState == SimState.PAUSED || simulationState == SimState.STEP || simulationState == SimState.STOPPED) 
         {
             updateSimulationInfo();
-            mainWindow.updateVisualizationAfterNewTopology();
+            final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
+            		(mainWindow.getDesign() , false , true , false , true , null , null); // shown in topological order
+            mainWindow.updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
             mainWindow.resetPickedStateAndUpdateView();
         }
 

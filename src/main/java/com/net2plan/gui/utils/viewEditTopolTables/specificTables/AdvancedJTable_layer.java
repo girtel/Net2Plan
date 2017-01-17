@@ -24,15 +24,19 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.table.TableModel;
 
+import org.apache.commons.collections15.BidiMap;
+
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
 /**
@@ -232,7 +236,9 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
 
                                 try {
                                     netPlan.removeNetworkLayer(netPlan.getNetworkLayerFromId((long) itemId));
-                                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+                                    final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
+                                    		(netPlan , false , true , false , true , null , null); // shown in topological order
+                                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER) , visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
                                 } catch (Throwable ex) {
                                     ErrorHandling.addErrorOrException(ex, getClass());
                                     ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -281,7 +287,9 @@ public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
 
                 try {
                     netPlan.addLayer("Layer " + netPlan.getNumberOfLayers(), null, null, null, null);
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+                    final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
+                    		(netPlan , false , true , false , true , null , null); // shown in topological order
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER) , visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }

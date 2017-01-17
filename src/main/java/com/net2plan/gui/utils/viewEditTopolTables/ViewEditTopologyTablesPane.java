@@ -114,7 +114,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
                         ((TableRowSorter) netPlanViewTable.get(elementType).getRowSorter()).setRowFilter(rowFilter);
                     }
-                    mainWindow.updateVisualizationAfterChanges(null);
+                    mainWindow.updateVisualizationAfterChanges(null , null , null);
                 }
             });
 
@@ -195,7 +195,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
                         ((TableRowSorter) netPlanViewTable.get(elementType).getRowSorter()).setRowFilter(rowFilter);
                     }
-                    mainWindow.updateVisualizationAfterChanges(null);
+                    mainWindow.updateVisualizationAfterChanges(null , null , null);
                 }
             });
 

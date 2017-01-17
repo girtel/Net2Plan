@@ -28,6 +28,7 @@ import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
+import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -163,17 +164,17 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
             vv.removePostRenderPaintable(arrowPaintable);
 
             final GUINode guiNode = canvas.getNode(e);
+            final VisualizationState vs = guiNode.getVisualizationState();
             final Node node = guiNode == null? null : guiNode.getAssociatedNetPlanNode();
             if (node != null && startVertex.getAssociatedNetPlanNode() != node) 
             {
-            	if ((guiNode.getVisualizationLayer().getNumberOfNetPlanLayers() == 1) &&
-            			(guiNode.getVisualizationLayer().getNetPlanLayers().equals(startVertex.getVisualizationLayer().getNetPlanLayers())))
+            	if (guiNode.getLayer() == startVertex.getLayer ())
     			{
-            		final NetworkLayer layer = guiNode.getVisualizationLayer().getNetPlanLayers().iterator().next();
+            		final NetworkLayer layer = guiNode.getLayer();
         			boolean bidirectional = (e.getModifiersEx() & MouseEvent.SHIFT_DOWN_MASK) == MouseEvent.SHIFT_DOWN_MASK;
                     if (bidirectional) node.getNetPlan().addLinkBidirectional(startVertex.getAssociatedNetPlanNode(), node,0,0,200000,null);
                     else node.getNetPlan().addLink(startVertex.getAssociatedNetPlanNode(), node,0,0,200000,null);
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK) , null , null);
     			}
             }
 

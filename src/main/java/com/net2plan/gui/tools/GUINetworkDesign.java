@@ -30,8 +30,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +55,9 @@ import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
+
+import org.apache.commons.collections15.BidiMap;
+import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.IVisualizationCallback;
@@ -157,7 +162,12 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     public void configure(JPanel contentPane)
     {
     	this.currentNetPlan = new NetPlan ();
-    	this.vs = new VisualizationState(currentNetPlan , Arrays.asList(Sets.newHashSet(currentNetPlan.getNetworkLayerDefault())));
+    	
+    	BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder = new DualHashBidiMap<>();
+    	for (NetworkLayer layer : currentNetPlan.getNetworkLayers())
+    		mapLayer2VisualizationOrder.put(layer , mapLayer2VisualizationOrder.size());
+    	List<Boolean> isLayerVisibleIndexedByLayerIndex = Collections.nCopies(currentNetPlan.getNumberOfLayers() , true);
+    	this.vs = new VisualizationState(currentNetPlan , mapLayer2VisualizationOrder , isLayerVisibleIndexedByLayerIndex);
 
     	topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
 
@@ -188,7 +198,9 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
 
         loadDesignDoNotUpdateVisualization(currentNetPlan);
-        updateVisualizationAfterNewTopology();
+        final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo (currentNetPlan , 
+        		false , true , false , true , null , null); // shown in topological order
+        updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
         
         onlineSimulationPane = new OnlineSimulationPane(this);
         executionPane = new OfflineExecutionPanel(this);
@@ -404,7 +416,11 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             ErrorHandling.addErrorOrException(ex, GUINetworkDesign.class);
             ErrorHandling.showErrorDialog("Unable to reset");
         }
-        updateVisualizationAfterNewTopology();
+        
+        final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
+        		(getDesign () , 
+        		false , true , false , true , null , null); // shown in topological order
+        updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
     }
 
     
@@ -537,15 +553,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                 topologyPanel.zoomAll();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_MULTIPLY, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Zoom all", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_DOWN_MASK));
 
         addKeyCombinationAction("Take snapshot", new AbstractAction()
         {
@@ -753,9 +760,9 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 	}
 
 	@Override
-	public void updateVisualizationAfterNewTopology()
+	public void updateVisualizationAfterNewTopology(BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder , List<Boolean> isLayerVisibleIndexedByLayerIndex)
 	{
-		vs.rebuildVisualizationState(getDesign() , currentNetPlan.getNetworkLayers().stream().map(e->Sets.newHashSet(e)).collect(Collectors.toList()));
+		vs.rebuildVisualizationState(getDesign() , mapLayer2VisualizationOrder , isLayerVisibleIndexedByLayerIndex);
 		topologyPanel.updateLayerChooser();
 		topologyPanel.getCanvas().rebuildTopologyAndRefresh();
 	    topologyPanel.getCanvas().zoomAll();
@@ -764,7 +771,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 	}
 
     @Override
-    public void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade)
+    public void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade , BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder , List<Boolean> isLayerVisibleIndexedByLayerIndex)
     {
         if (modificationsMade == null || modificationsMade.contains(NetworkElementType.LAYER))
         {
@@ -773,7 +780,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         if ((modificationsMade == null) ||  (modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE)))
         {
-            vs.rebuildVisualizationState(getDesign() , currentNetPlan.getNetworkLayers().stream().map(e->Sets.newHashSet(e)).collect(Collectors.toList()));
+            vs.rebuildVisualizationState(getDesign() , mapLayer2VisualizationOrder , isLayerVisibleIndexedByLayerIndex);
             topologyPanel.getCanvas().rebuildTopologyAndRefresh();
             viewEditTopTables.updateView();
             updateWarnings();

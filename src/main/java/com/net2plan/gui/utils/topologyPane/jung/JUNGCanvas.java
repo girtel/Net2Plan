@@ -27,7 +27,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,7 +35,6 @@ import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 
-import org.apache.commons.collections15.Predicate;
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.collections15.functors.ConstantTransformer;
 
@@ -44,7 +42,6 @@ import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
-import com.net2plan.gui.utils.topologyPane.VisualizationState.VisualizationLayer;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -146,9 +143,8 @@ public final class JUNGCanvas implements ITopologyCanvas
 //        	final Point2D elevatedPositionInNetPlanCoord = new Point2D.Double(basePositionInNetPlanCoord.getX() , basePositionInNetPlanCoord.getY() + (vlIndex * verticalCoordEquivalentOfOnePixel));
 //            return new Point2D.Double(elevatedPositionInNetPlanCoord.getX(), -elevatedPositionInNetPlanCoord.getY());
 
-        	final VisualizationLayer vl = vertex.getVisualizationLayer();
-    		final int vlIndex = vl.getIndex();
-            final double interLayerDistanceInNpCoord = vl.getVisualizationState().getDefaultVerticalDistanceForInterLayers();
+    		final int vlIndex = vertex.getVisualizationOrderRemovingNonVisibleLayers();
+            final double interLayerDistanceInNpCoord = vertex.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
         	final Point2D basePositionInNetPlanCoord = vertex.getAssociatedNetPlanNode().getXYPositionMap();
             return new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() + (vlIndex * interLayerDistanceInNpCoord)));
         };
@@ -174,13 +170,13 @@ public final class JUNGCanvas implements ITopologyCanvas
         /* If shapes, comment this line */
         //vv.getRenderContext().setVertexIconTransformer(new Transformer<GUINode,Icon> () {} ... )
 
-        vv.getRenderContext().setVertexIncludePredicate(new NodeDisplayPredicate<>());
+        vv.getRenderContext().setVertexIncludePredicate(guiNodeContext -> vs.isVisible(guiNodeContext.element));
         vv.getRenderer().setVertexLabelRenderer(new NodeLabelRenderer());
         vv.setVertexToolTipTransformer(node -> node.getToolTip());
 
 
-        vv.getRenderContext().setEdgeIncludePredicate(context -> context.element.isVisible());
-        vv.getRenderContext().setEdgeArrowPredicate(context -> context.element.isVisible() && context.element.getHasArrow());
+        vv.getRenderContext().setEdgeIncludePredicate(context -> vs.isVisible(context.element));
+        vv.getRenderContext().setEdgeArrowPredicate(context -> vs.isVisible(context.element) && context.element.getHasArrow());
         vv.getRenderContext().setEdgeArrowStrokeTransformer(i -> i.getArrowStroke());
         vv.getRenderContext().setEdgeArrowTransformer(new ConstantTransformer(ArrowFactory.getNotchedArrow(7, 10, 5)));
         vv.getRenderContext().setEdgeLabelClosenessTransformer(new ConstantDirectionalEdgeValueTransformer(.6, .6));
@@ -358,21 +354,8 @@ public final class JUNGCanvas implements ITopologyCanvas
     		g.removeEdge(gl);
     	for (GUINode gn : new ArrayList<>(g.getVertices()))
     		g.removeVertex(gn);
-    	for (int layerIndex = 0 ; layerIndex < vs.getNumberOfVisualizationLayers() ; layerIndex ++)
-    	{
-    		final VisualizationLayer vl = vs.getVLList().get(layerIndex);
-    		for (GUINode gn : vl.getGUINodes())
-    		{
-    			g.addVertex(gn);
-    		}
-    		for (GUILink gl : vl.getGUIIntraLayerLinks())
-            {
-    			g.addEdge(gl , gl.getOriginNode() , gl.getDestinationNode());
-            }
-    	}
-
-    	/* Add inter layer links */
-    	for (GUILink gl : vs.getAllGUILinks(false , true))
+    	for (GUINode gn : vs.getAllGUINodes()) g.addVertex(gn);
+    	for (GUILink gl : vs.getAllGUILinks(true , true))
 			g.addEdge(gl , gl.getOriginNode() , gl.getDestinationNode());
     	refresh();
     }
@@ -385,7 +368,7 @@ public final class JUNGCanvas implements ITopologyCanvas
 
     public void frameTopology()
     {
-        final Set<GUINode> visibleGUINodes = g.getVertices().stream().filter(e->e.isVisible()).collect(Collectors.toSet());
+        final Set<GUINode> visibleGUINodes = g.getVertices().stream().filter(e->vs.isVisible(e)).collect(Collectors.toSet());
         if (visibleGUINodes.isEmpty()) return;
 
         double xmaxNpCoords = Double.NEGATIVE_INFINITY;
@@ -443,9 +426,8 @@ public final class JUNGCanvas implements ITopologyCanvas
     {
     	for (GUINode guiNode : vs.getVerticallyStackedGUINodes(npNode))
         {
-            final VisualizationLayer vl = guiNode.getVisualizationLayer();
-            final int vlIndex = vl.getIndex();
-            final double interLayerDistanceInNpCoord = vl.getVisualizationState().getDefaultVerticalDistanceForInterLayers();
+            final int vlIndex = guiNode.getVisualizationOrderRemovingNonVisibleLayers();
+            final double interLayerDistanceInNpCoord = vs.getInterLayerSpaceInNetPlanCoordinates();
             l.setLocation(guiNode, new Point2D.Double(point.getX() , point.getY() + (vlIndex * interLayerDistanceInNpCoord)));
         }
     }
@@ -551,24 +533,6 @@ public final class JUNGCanvas implements ITopologyCanvas
             vv.addPreRenderPaintable(paintableAssociatedToBackgroundImage);
         }
     }
-
-    private final class NodeDisplayPredicate<Node, Link> implements Predicate<Context<Graph<Node, Link>, Node>>
-    {
-        @Override
-        public boolean evaluate(Context<Graph<Node, Link>, Node> context)
-        {
-            com.net2plan.gui.utils.topologyPane.GUINode v = (com.net2plan.gui.utils.topologyPane.GUINode) context.element;
-            if (!vs.isShowNonConnectedNodes())
-            {
-                Collection<GUILink> incidentLinks = g.getIncidentEdges(v);
-                if (incidentLinks == null) return false;
-                if (incidentLinks.isEmpty()) return false;
-            }
-
-            return v.isVisible();
-        }
-    }
-
 
     private class NodeLabelRenderer extends BasicVertexLabelRenderer<GUINode, GUILink>
     {

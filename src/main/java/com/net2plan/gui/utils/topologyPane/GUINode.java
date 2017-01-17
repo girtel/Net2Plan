@@ -17,10 +17,9 @@ import java.awt.Font;
 import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.Point2D;
 import java.util.List;
 
-import com.net2plan.gui.utils.topologyPane.VisualizationState.VisualizationLayer;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 
 /**
@@ -32,7 +31,8 @@ import com.net2plan.interfaces.networkDesign.Node;
 public class GUINode 
 {
     private final Node npNode;
-    private final VisualizationLayer vl;
+    private final NetworkLayer layer;
+    private final VisualizationState vs;
 
     /* New variables */
     private Font font;
@@ -49,10 +49,12 @@ public class GUINode
      * @param npNode    Node identifier
      * @since 0.3.0
      */
-    public GUINode(Node npNode , VisualizationLayer vl)
+    public GUINode(Node npNode , NetworkLayer layer , VisualizationState vs)
     {
-    	this.vl = vl;
+    	this.layer = layer;
         this.npNode = npNode;
+        this.vs = vs;
+        if (!vs.isLayerVisible(layer)) throw new RuntimeException ("Bad");
 
 		/* defaults */
         this.drawPaint = java.awt.Color.BLACK;
@@ -65,14 +67,10 @@ public class GUINode
 //        this.userDefinedColorOverridesTheRest = null;
     }
     
-    public VisualizationLayer getVisualizationLayer () { return vl; }
+    public NetworkLayer getLayer () { return layer; }
 
     public Node getAssociatedNetPlanNode() {
         return npNode;
-    }
-
-    public boolean isVisible() {
-        return vl.getVisualizationState().isVisible(npNode);
     }
 
     public double getShapeSize() {
@@ -116,11 +114,6 @@ public class GUINode
         this.shape = f;
     }
 
-    public List<GUINode> verticallyStackedNodes ()
-    {
-    	return this.vl.getVisualizationState().getVerticallyStackedGUINodes(this.npNode);
-    }
-    
     public boolean decreaseFontSize() 
     {
         final int currentSize = font.getSize();
@@ -160,5 +153,9 @@ public class GUINode
     public String getLabel() {
         return npNode.getName();
     }
+    
+    public VisualizationState getVisualizationState () { return vs; }
 
+    public int getVisualizationOrderRemovingNonVisibleLayers () { return vs.getVisualizationOrderRemovingNonVisible(layer); }
+    
 }

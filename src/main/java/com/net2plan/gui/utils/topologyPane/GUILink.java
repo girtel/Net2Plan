@@ -12,11 +12,12 @@
 
 package com.net2plan.gui.utils.topologyPane;
 
-import com.net2plan.gui.utils.topologyPane.VisualizationState.VisualizationLayer;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.utils.Pair;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Paint;
+import java.awt.Stroke;
 
-import java.awt.*;
+import com.net2plan.interfaces.networkDesign.Link;
 
 /**
  * Class representing a link.
@@ -24,11 +25,11 @@ import java.awt.*;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
-public class GUILink {
+public class GUILink 
+{
     private final GUINode originNode;
     private final GUINode destinationNode;
     private Link npLink;
-    private final VisualizationLayer vl;
     private final VisualizationState vs;
 
     /* New variables */
@@ -51,8 +52,7 @@ public class GUILink {
      */
     public GUILink(Link npLink, GUINode originNode, GUINode destinationNode) 
     {
-    	this.vs = originNode.getVisualizationLayer().getVisualizationState();
-    	this.vl = (destinationNode.getVisualizationLayer() != originNode.getVisualizationLayer())? null : originNode.getVisualizationLayer();
+    	this.vs = originNode.getVisualizationState();
         this.npLink = npLink;
         this.originNode = originNode;
         this.destinationNode = destinationNode;
@@ -63,7 +63,7 @@ public class GUILink {
         }
         else
         {
-        	if (Math.abs(originNode.getVisualizationLayer().getIndex() - destinationNode.getVisualizationLayer().getIndex()) != 1) throw new RuntimeException ("Bad");
+        	if (Math.abs(originNode.getVisualizationOrderRemovingNonVisibleLayers() - destinationNode.getVisualizationOrderRemovingNonVisibleLayers()) != 1) throw new RuntimeException ("Bad");
         }
         this.hasArrow = true;
         this.arrowStroke = new BasicStroke(1);
@@ -82,8 +82,6 @@ public class GUILink {
         //PARA EL EDGE STROKE SI BACKUP: return new BasicStroke(vv.getPickedEdgeState().isPicked(i) ? 2 : 1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
     }
 
-    public VisualizationLayer getVisualizationLayer () { return vl; }
-    
     @Override
     public String toString() {
         return getLabel();
@@ -91,12 +89,6 @@ public class GUILink {
 
     public boolean getHasArrow() {
         return this.hasArrow;
-    }
-
-    public boolean isVisible () 
-    {
-    	if (isIntraNodeLink()) return vs.isShowInterLayerLinks();
-    	return vs.isVisible(this.npLink);
     }
 
     public void setHasArrow(boolean hasArrow) {

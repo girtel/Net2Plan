@@ -3133,9 +3133,9 @@ public class NetPlan extends NetworkElement
 	 * @return The {@code Set} of network layers in topological order
 	 * @since 0.3.0
 	 */
-	public Set<NetworkLayer> getNetworkLayerInTopologicalOrder()
+	public List<NetworkLayer> getNetworkLayerInTopologicalOrder()
 	{
-		Set<NetworkLayer> layers_topologicalSort = new LinkedHashSet<NetworkLayer>();
+		List<NetworkLayer> layers_topologicalSort = new LinkedList<NetworkLayer>();
 		Iterator<NetworkLayer> it = interLayerCoupling.iterator();
 		while(it.hasNext())	layers_topologicalSort.add(it.next());
 		return layers_topologicalSort;

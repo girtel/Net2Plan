@@ -15,7 +15,10 @@ package com.net2plan.gui.utils;
 import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
+
+import org.apache.commons.collections15.BidiMap;
 
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -38,12 +41,6 @@ public interface IVisualizationCallback
 {
 	public VisualizationState getVisualizationState ();
 	
-	public void updateVisualizationAfterChanges (Set<NetworkElementType> changes);
-
-	public void updateVisualizationAfterLinkNodeColorChanges ();
-
-	public void updateVisualizationJustTables ();
-
 	public void resetPickedStateAndUpdateView ();
 
     public void pickNodeAndUpdateView (Node node);
@@ -64,13 +61,19 @@ public interface IVisualizationCallback
 
     public void putColorInElementTopologyCanvas (Collection<? extends NetworkElement> linksAndNodes , Color color);
 
-	public void updateVisualizationAfterNewTopology ();
-
 	public void justApplyZoomAll ();
 
 	public void updateVisualizationJustTopologyCanvas ();
 
-    public NetPlan getDesign();
+	public void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade , BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder , List<Boolean> isLayerVisibleIndexedByLayerIndex);
+
+	public void updateVisualizationAfterLinkNodeColorChanges ();
+
+	public void updateVisualizationJustTables ();
+
+	public void updateVisualizationAfterNewTopology (BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder , List<Boolean> isLayerVisibleIndexedByLayerIndex);
+
+	public NetPlan getDesign();
 
     public NetPlan getInitialDesign();
 

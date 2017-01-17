@@ -210,19 +210,19 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                     switch (column) {
                         case COLUMN_NAME:
                             netPlan.getResourceFromId(resId).setName(newValue.toString());
-                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
+                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE) , null , null);
                             break;
 
                         case COLUMN_CAPACITY:
                             if (newValue == null) return;
                             netPlan.getResourceFromId(resId).setCapacity((Double)newValue,  netPlan.getResourceFromId(resId).getCapacityOccupiedInBaseResourcesMap());
-                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
+                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE) , null , null);
                             break;
 
                         case COLUMN_PROCESSINGTIME:
                             if(newValue == null) return;
                             netPlan.getResourceFromId(resId).setProcessingTimeToTraversingTrafficInMs((Double)newValue);
-                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
+                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE) , null , null);
                             break;
 
                         default:
@@ -367,7 +367,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                             NetPlan netPlan = callback.getDesign();
                             try {
                                 callback.getDesign().getResourceFromId((Long)itemId).remove();
-                            	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
+                            	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE) , null , null);
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -406,7 +406,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                                     {
                                         res.remove();
                                     }
-                                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
+                                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE) , null , null);
                                 break;
                             }
                         }catch (Throwable ex) {
@@ -427,7 +427,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
 
                         try {
                             netPlan.removeAllResources();
-                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
+                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE) , null , null);
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -537,7 +537,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                         }
                         netPlan.addResource(resType, "Resource n_" + netPlan.getResources().size(), hostNode,
                                 0, capacityUnits, newBaseResources, 0, null);
-                    	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
+                    	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE) , null , null);
                         break;
                     }
                 }catch (Throwable ex) {
@@ -600,7 +600,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                         for (int t = 0 ; t < table.getRowCount() ; t ++)
                         	newCapMap.put(baseResources.get(t) , Double.parseDouble((String) table.getModel().getValueAt(t,2)));
                         res.setCapacity(res.getCapacity() , newCapMap);
-                    	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
+                    	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE) , null , null);
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to base resources");
                     }
@@ -633,7 +633,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                 try {
                     for(Resource r : netPlan.getResources())
                     		r.setCapacity(cap , null);
-                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
+                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE) , null , null);
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to resources");
                 }
@@ -664,7 +664,7 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
                 try {
                     for(Resource r : netPlan.getResources())
                     		r.setProcessingTimeToTraversingTrafficInMs(procTime);
-                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
+                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE) , null , null);
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set processing time to resources");
                 }

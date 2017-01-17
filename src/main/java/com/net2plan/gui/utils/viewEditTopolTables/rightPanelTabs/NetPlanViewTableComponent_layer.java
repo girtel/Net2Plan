@@ -106,13 +106,13 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                     if (button == sourceRoutingActivated && state == ItemEvent.SELECTED) {
                         netPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
                         if (previousRoutingType != RoutingType.SOURCE_ROUTING)
-                            networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+                            networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER) , null , null);
                     }
 
                     if (button == hopByHopRoutingActivated && state == ItemEvent.SELECTED) {
                         netPlan.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
                         if (previousRoutingType != RoutingType.HOP_BY_HOP_ROUTING)
-                            networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+                            networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER) , null , null);
                     }
                 }
             };
@@ -141,7 +141,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                         if ((Long) model.getValueAt(row, AdvancedJTable_layer.COLUMN_ID) == layer.getId()) {
                             layer.setName(text);
                             model.setValueAt(text, row, AdvancedJTable_layer.COLUMN_NAME);
-                            networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+                            networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER) , null , null);
                         }
                     }
 //					allowDocumentUpdate = isEditable();

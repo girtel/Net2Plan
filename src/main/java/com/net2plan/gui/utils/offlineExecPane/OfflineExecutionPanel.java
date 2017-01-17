@@ -4,23 +4,29 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.Closeable;
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
+import org.apache.commons.collections15.BidiMap;
+
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.RunnableSelector;
 import com.net2plan.gui.utils.ThreadExecutionController;
+import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.utils.ClassLoaderUtils;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
 import net.miginfocom.swing.MigLayout;
@@ -96,7 +102,9 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
 	{
         try {
             double execTime = (System.nanoTime() - start) / 1e9;
-            mainWindow.updateVisualizationAfterNewTopology();
+            final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
+            		(mainWindow.getDesign() , false , true , false , true , null , null); // shown in topological order
+            mainWindow.updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
 
             String outMessage = String.format("Algorithm executed successfully%nExecution time: %.3g s%nExit message: %s", execTime, out);
             JOptionPane.showMessageDialog(null, outMessage, "Solve design", JOptionPane.PLAIN_MESSAGE);

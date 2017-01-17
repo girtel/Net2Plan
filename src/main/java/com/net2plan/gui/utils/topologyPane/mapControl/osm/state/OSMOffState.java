@@ -74,14 +74,14 @@ class OSMOffState implements OSMState
     public void addNode(IVisualizationCallback callback, ITopologyCanvas topologyPanel, Point2D pos)
     {
         callback.getDesign().addNode(pos.getX() , pos.getY() , "Node" + callback.getDesign().getNumberOfNodes(), null);
-        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
+        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE) , null , null);
     }
 
     @Override
     public void removeNode(IVisualizationCallback callback, Node node)
     {
         node.remove();
-        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
+        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE) , null , null);
     }
 
     @Override
