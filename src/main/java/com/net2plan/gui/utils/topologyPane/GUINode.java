@@ -151,7 +151,7 @@ public class GUINode
      * @since 0.2.0
      */
     public String getLabel() {
-        return npNode.getName();
+        return npNode.getName() + " - L" + layer.getIndex() + ", VL" + getVisualizationOrderRemovingNonVisibleLayers();
     }
     
     public VisualizationState getVisualizationState () { return vs; }

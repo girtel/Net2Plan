@@ -102,17 +102,17 @@ public class VisualizationState
 	{
 		this.currentNp = currentNp;
 //		this.activateMultilayerView = false;
-		this.showNodeNames = false;
-		this.showLinkLabels = false;
-		this.showLinksInNonActiveLayer = false;
+		this.showNodeNames = true;
+		this.showLinkLabels = true;
+		this.showLinksInNonActiveLayer = true;
 		this.showInterLayerLinks = true;
 		this.showNonConnectedNodes = true;
 		this.isNetPlanEditable = true;
 		this.showLowerLayerPropagation = false;
 		this.showUpperLayerPropagation = false;
-		this.interLayerSpaceInNetPlanCoordinates = getDefaultVerticalDistanceForInterLayers();
 	    this.nonVisibleNodes = new HashSet<> ();
 	    this.nonVisibleLinks = new HashSet<> ();
+		this.interLayerSpaceInNetPlanCoordinates = getDefaultVerticalDistanceForInterLayers((int) isLayerVisibleIndexedByLayerIndex.stream().filter(e->e).count());
 		rebuildVisualizationState(currentNp , mapLayer2VisualizationOrder , isLayerVisibleIndexedByLayerIndex);
 	}
 	
@@ -133,7 +133,7 @@ public class VisualizationState
 		final Link e = gl.getAssociatedNetPlanLink();
 		
 		if (nonVisibleLinks.contains(e)) return false;
-		final boolean inActiveLayer = e.getLayer() != currentNp.getNetworkLayerDefault();
+		final boolean inActiveLayer = e.getLayer() == currentNp.getNetworkLayerDefault();
 		if (!showLinksInNonActiveLayer && !inActiveLayer) return false;
 		return true;
 	}
@@ -315,7 +315,7 @@ public class VisualizationState
 		if (mapLayer2VisualizationOrder == null) mapLayer2VisualizationOrder = this.mapLayer2VisualizationOrder;
 		if (isLayerVisibleIndexedByLayerIndex == null) isLayerVisibleIndexedByLayerIndex = this.isLayerVisibleIndexedByLayerIndex;
 		
-		if (!mapLayer2VisualizationOrder.keySet().equals(new HashSet<> (currentNp.getNetworkLayers()))) 
+		if (!mapLayer2VisualizationOrder.keySet().equals(new HashSet<> (currentNp.getNetworkLayers())))
 			throw new RuntimeException ();
 		if (isLayerVisibleIndexedByLayerIndex.size() != currentNp.getNumberOfLayers()) 
 			throw new RuntimeException ();
@@ -324,7 +324,7 @@ public class VisualizationState
 		this.isLayerVisibleIndexedByLayerIndex = new ArrayList<> (isLayerVisibleIndexedByLayerIndex);
 
 		/* Default layer always visible */
-		isLayerVisibleIndexedByLayerIndex.set(currentNp.getNetworkLayerDefault().getIndex() , true);
+		this.isLayerVisibleIndexedByLayerIndex.set(currentNp.getNetworkLayerDefault().getIndex() , true);
 				
 		if (netPlanChanged)
 		{
@@ -410,9 +410,9 @@ public class VisualizationState
 			int indexLayer = 0;
 			for (GUINode gn : cache_mapNode2ListVerticallyStackedGUINodes.get(n))
 			{
+				assertEquals(gn.getLayer () , cache_mapVisibleLayer2VisualizationOrderRemovingNonVisible.inverseBidiMap().get(indexLayer));
 				assertEquals(gn.getVisualizationOrderRemovingNonVisibleLayers() , indexLayer ++);
 				assertEquals(gn.getAssociatedNetPlanNode() , n);
-				assertEquals(gn.getLayer () , cache_mapVisibleLayer2VisualizationOrderRemovingNonVisible.inverseBidiMap().get(indexLayer));
 			}
 		}
 //
@@ -636,8 +636,9 @@ public class VisualizationState
     	}
     }
 
-    public double getDefaultVerticalDistanceForInterLayers ()
+    public double getDefaultVerticalDistanceForInterLayers (int ... numberOfVisibleLayers)
     {
+    	final int numVisibleLayers = numberOfVisibleLayers.length == 0? getNumberOfVisibleLayers() : numberOfVisibleLayers [0]; 
     	double minY = Double.MAX_VALUE; double maxY = -Double.MAX_VALUE;
     	for (Node n : currentNp.getNodes())
     	{
@@ -645,8 +646,8 @@ public class VisualizationState
     		minY = Math.min(minY , y);
     		maxY = Math.max(maxY , y);
     	}
-    	if ((maxY - minY < 1e-6)) return maxY / (30 * getNumberOfVisibleLayers());
-    	return (maxY - minY) / (30 * getNumberOfVisibleLayers());
+    	if ((maxY - minY < 1e-6)) return Math.abs(maxY) / (30 * numVisibleLayers);
+    	return (maxY - minY) / (30 * numVisibleLayers);
     }
 
     public boolean isLayerVisible (NetworkLayer layer) 
@@ -684,29 +685,23 @@ public class VisualizationState
 
     public static Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> getVisualizationLayerInfo (NetPlan np , 
     		boolean isActiveMultilayerView , boolean setAllLayersVisible , boolean setLayerOrderAsLayerIndexes , 
-    		boolean setLayerOrderAsCoupling , List<Integer> setLayerOrderDirectly , 
+    		boolean setLayerOrderAsCoupling , List<Integer> orderOfLayerIndexedByLayerIndex , 
     		List<Boolean> setLayerVisibilityDirectly)
 	{
     	final int L = np.getNumberOfLayers();
     	final BidiMap<NetworkLayer,Integer> res_1 = new DualHashBidiMap<> ();
     	final List<Boolean> res_2 = new ArrayList<> (L);
     	
-    	if (!isActiveMultilayerView)
-    	{
-    		res_1.put(np.getNetworkLayerDefault() , 0);
-    		res_2.add(true);
-    		return Pair.of(res_1,res_2);
-    	}
-    	
    		List<NetworkLayer> layersInTopologicalOrderDownToUp = setLayerOrderAsCoupling ? np.getNetworkLayerInTopologicalOrder() : null;
-    	
-		for (int indexOrderList = 0 ; indexOrderList < L ; indexOrderList ++)
+
+   		for (NetworkLayer layer : np.getNetworkLayers())
 		{
-			if (setLayerOrderDirectly != null) res_1.put(np.getNetworkLayer(setLayerOrderDirectly.get(indexOrderList)) , indexOrderList);
-			else if (setLayerOrderAsLayerIndexes) res_1.put(np.getNetworkLayer(indexOrderList) , indexOrderList);
-			else if (setLayerOrderAsCoupling) res_1.put(layersInTopologicalOrderDownToUp.get(indexOrderList) , indexOrderList);
+			if (orderOfLayerIndexedByLayerIndex != null) res_1.put(layer , orderOfLayerIndexedByLayerIndex.get(layer.getIndex()));
+			else if (setLayerOrderAsLayerIndexes) res_1.put(layer , layer.getIndex());
+			else if (setLayerOrderAsCoupling) res_1.put(layersInTopologicalOrderDownToUp.get(layer.getIndex()) , layer.getIndex());
 			
-			if (setLayerVisibilityDirectly != null) res_2.add(setLayerVisibilityDirectly.get(indexOrderList));
+			if (setLayerVisibilityDirectly != null) res_2.add(setLayerVisibilityDirectly.get(layer.getIndex()));
+			else if (isActiveMultilayerView)  res_2.add(layer.equals(np.getNetworkLayerDefault()));
 			else res_2.add(true);
 		}
 		return Pair.of(res_1,res_2);

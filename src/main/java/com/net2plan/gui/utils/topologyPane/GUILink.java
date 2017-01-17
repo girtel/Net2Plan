@@ -184,7 +184,7 @@ public class GUILink
      * @since 0.2.0
      */
     public String getLabel() {
-        return npLink == null? "" : String.format("%.2f", npLink.getUtilization());
+        return npLink == null? "IntraLink (" + getOriginNode() + "->" + getDestinationNode() +")" : String.format("%.2f", npLink.getUtilization());
     }
 
     /**

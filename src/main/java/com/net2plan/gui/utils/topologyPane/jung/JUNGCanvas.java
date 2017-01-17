@@ -153,8 +153,6 @@ public final class JUNGCanvas implements ITopologyCanvas
         l = new StaticLayout<>(g, transformNetPlanCoordinatesToJungCoordinates);
         vv = new VisualizationViewer<>(l);
 
-        
-        
         originalEdgeShapeTransformer = new EdgeShape.QuadCurve<>();
         ((EdgeShape.QuadCurve<GUINode, GUILink>) originalEdgeShapeTransformer).setControlOffsetIncrement(10); // how much they separate from the direct line (default is 20)
         ((EdgeShape.QuadCurve<GUINode, GUILink>) originalEdgeShapeTransformer).setEdgeIndexFunction(DefaultParallelEdgeIndexFunction.<GUINode, GUILink>getInstance()); // how much they separate from the direct line (default is 20)
@@ -695,7 +693,5 @@ public final class JUNGCanvas implements ITopologyCanvas
 		OSMMapStateBuilder.getSingleton().takeSnapshot(this);
 	}
 
-	
-	public Graphics2D getGraphics2DObject () { return vv.getRenderContext().getGraphicsContext().getDelegate(); } 
 	
 }
