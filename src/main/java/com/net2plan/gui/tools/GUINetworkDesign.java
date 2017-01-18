@@ -778,7 +778,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             topologyPanel.updateLayerChooser();
         }
 
-        if ((modificationsMade == null) ||  (modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE)))
+        if ((modificationsMade == null) ||  (modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE) || modificationsMade.contains(NetworkElementType.LAYER)))
         {
             vs.rebuildVisualizationState(getDesign() , mapLayer2VisualizationOrder , isLayerVisibleIndexedByLayerIndex);
             topologyPanel.getCanvas().rebuildTopologyAndRefresh();

@@ -152,11 +152,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                 if (!(selectedItem instanceof StringLabeller))
                     ErrorHandling.showErrorDialog("Bad object", "Error selecting layer");
 
-                long layerId = (Long) ((StringLabeller) selectedItem).getObject();
-                NetPlan currentState = callback.getDesign();
-                NetworkLayer layer = currentState.getNetworkLayerFromId(layerId);
+                final long newDefaultLayerId = (Long) ((StringLabeller) selectedItem).getObject();
+                final NetPlan currentState = callback.getDesign();
+                final NetworkLayer layer = currentState.getNetworkLayerFromId(newDefaultLayerId);
 //				System.out.println ("Select layer: layerId " + layerId + ", layer: " + layer);
-                if (layer == null) throw new RuntimeException("Bad: " + layerId);
+                if (layer == null) throw new RuntimeException("Bad: " + newDefaultLayerId);
                 currentState.setNetworkLayerDefault(layer);
                 final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
                 		(currentState , false , true , false , true , null , null); // shown in topological order

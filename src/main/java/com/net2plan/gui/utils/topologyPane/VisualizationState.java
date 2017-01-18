@@ -102,8 +102,8 @@ public class VisualizationState
 	{
 		this.currentNp = currentNp;
 //		this.activateMultilayerView = false;
-		this.showNodeNames = true;
-		this.showLinkLabels = true;
+		this.showNodeNames = false;
+		this.showLinkLabels = false;
 		this.showLinksInNonActiveLayer = true;
 		this.showInterLayerLinks = true;
 		this.showNonConnectedNodes = true;
@@ -112,7 +112,6 @@ public class VisualizationState
 		this.showUpperLayerPropagation = false;
 	    this.nonVisibleNodes = new HashSet<> ();
 	    this.nonVisibleLinks = new HashSet<> ();
-		this.interLayerSpaceInNetPlanCoordinates = getDefaultVerticalDistanceForInterLayers((int) isLayerVisibleIndexedByLayerIndex.stream().filter(e->e).count());
 		rebuildVisualizationState(currentNp , mapLayer2VisualizationOrder , isLayerVisibleIndexedByLayerIndex);
 	}
 	
@@ -326,6 +325,10 @@ public class VisualizationState
 		/* Default layer always visible */
 		this.isLayerVisibleIndexedByLayerIndex.set(currentNp.getNetworkLayerDefault().getIndex() , true);
 				
+		/* Update the interlayer space */
+		this.interLayerSpaceInNetPlanCoordinates = getDefaultVerticalDistanceForInterLayers();
+
+		
 		if (netPlanChanged)
 		{
 			nonVisibleNodes = new HashSet<> ();
@@ -358,6 +361,7 @@ public class VisualizationState
 	        	{
 	        		final GUINode lowerLayerGNode = guiNodesThisNode.get(trueVisualizationOrderIndex-1);
 	        		final GUINode upperLayerGNode = guiNodesThisNode.get(trueVisualizationOrderIndex);
+	        		if (upperLayerGNode != gn) throw new RuntimeException ();
 	        		final GUILink glLowerToUpper = new GUILink (null , lowerLayerGNode, gn);
 	        		final GUILink glUpperToLower = new GUILink (null , gn , lowerLayerGNode);
 	        		intraNodeGUILinksThisNode.add(glLowerToUpper);
@@ -636,9 +640,10 @@ public class VisualizationState
     	}
     }
 
-    public double getDefaultVerticalDistanceForInterLayers (int ... numberOfVisibleLayers)
+    public double getDefaultVerticalDistanceForInterLayers ()
     {
-    	final int numVisibleLayers = numberOfVisibleLayers.length == 0? getNumberOfVisibleLayers() : numberOfVisibleLayers [0]; 
+    	if (currentNp.getNumberOfNodes() == 0) return 1.0; 
+    	final int numVisibleLayers = getNumberOfVisibleLayers() == 0? currentNp.getNumberOfLayers() : getNumberOfVisibleLayers(); 
     	double minY = Double.MAX_VALUE; double maxY = -Double.MAX_VALUE;
     	for (Node n : currentNp.getNodes())
     	{

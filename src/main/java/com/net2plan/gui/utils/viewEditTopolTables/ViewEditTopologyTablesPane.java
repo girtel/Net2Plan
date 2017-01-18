@@ -218,7 +218,8 @@ public class ViewEditTopologyTablesPane extends JPanel
         final RoutingType routingType = currentState.getRoutingType();
         Component selectedTab = netPlanView.getSelectedComponent();
         netPlanView.removeAll();
-        for (NetworkElementType elementType : Constants.NetworkElementType.values()) {
+        for (NetworkElementType elementType : Constants.NetworkElementType.values()) 
+        {
             if (routingType == RoutingType.SOURCE_ROUTING && elementType == NetworkElementType.FORWARDING_RULE)
                 continue;
             if (routingType == RoutingType.HOP_BY_HOP_ROUTING && (elementType == NetworkElementType.ROUTE))
@@ -235,13 +236,14 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         NetPlan initialState = null;
         if (showInitialPlan != null && mainWindow.getInitialDesign().getNetworkLayerFromId(layer.getId()) != null)
+        {
             initialState = mainWindow.getInitialDesign();
-
+            initialState.setNetworkLayerDefault(initialState.getNetworkLayerFromId(currentState.getNetworkLayerDefault().getId()));
+        }
         currentState.checkCachesConsistency();
 
         for (AdvancedJTableNetworkElement table : netPlanViewTable.values())
             table.updateView(currentState, initialState);
-
 
         ((NetPlanViewTableComponent_layer) netPlanViewTableComponent.get(NetworkElementType.LAYER)).updateNetPlanView(currentState);
         ((NetPlanViewTableComponent_network) netPlanViewTableComponent.get(NetworkElementType.NETWORK)).updateNetPlanView(currentState);
