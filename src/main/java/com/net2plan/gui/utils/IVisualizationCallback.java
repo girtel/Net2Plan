@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2015 Pablo Pavon Mariño.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the GNU Lesser License v2.1
  * which accompanies this distribution, and is available at
  * http://www.gnu.org/licenses/lgpl.html
  * <p>
@@ -53,19 +53,19 @@ public interface IVisualizationCallback
 
     public void pickForwardingRuleAndUpdateView (Pair<Demand, Link> demandLink);
 
-    public void pickRouteAndUpdateView (Route route);
+    void pickMulticastDemandAndUpdateView (MulticastDemand demand);
 
-    public void pickMulticastTreeAndUpdateView (MulticastTree tree);
+    void pickForwardingRuleAndUpdateView (Pair<Demand, Link> demandLink);
 
-    public void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg);
+    void pickRouteAndUpdateView (Route route);
 
-    public void putColorInElementTopologyCanvas (Collection<? extends NetworkElement> linksAndNodes , Color color);
+    void pickMulticastTreeAndUpdateView (MulticastTree tree);
 
-	public void justApplyZoomAll ();
+    void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg);
 
-	public void updateVisualizationJustTopologyCanvas ();
+    void putColorInElementTopologyCanvas (Collection<? extends NetworkElement> linksAndNodes , Color color);
 
-	public void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade , BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder , List<Boolean> isLayerVisibleIndexedByLayerIndex);
+	void updateVisualization(boolean doZoomAll);
 
 	public void updateVisualizationAfterLinkNodeColorChanges ();
 

@@ -7,8 +7,8 @@
 /*******************************************************************************
 
 
- * 
- * 
+ *
+ *
  * Copyright (c) 2015 Pablo Pavon Mariño.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Lesser Public License v2.1
@@ -66,6 +66,7 @@ import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
 import com.net2plan.gui.utils.onlineSimulationPane.OnlineSimulationPane;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
+import com.net2plan.gui.utils.topologyPane.VisualizationConstants;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
@@ -119,7 +120,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     private ViewReportPane reportPane;
     private OfflineExecutionPanel executionPane;
     private OnlineSimulationPane onlineSimulationPane;
-	private VisualizationState vs;
+    private VisualizationState vs;
 
     /**
      * Reference to the popup menu in the topology panel.
@@ -169,7 +170,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     	List<Boolean> isLayerVisibleIndexedByLayerIndex = Collections.nCopies(currentNetPlan.getNumberOfLayers() , true);
     	this.vs = new VisualizationState(currentNetPlan , mapLayer2VisualizationOrder , isLayerVisibleIndexedByLayerIndex);
 
-    	topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
+        topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
 
         // Running OSM state machine.
         new OSMMapStateBuilder.SingletonBuilder(topologyPanel, this).build();
@@ -348,14 +349,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         return Integer.MAX_VALUE;
     }
 
-
-    private void updateLog(String text)
-    {
-        txt_netPlanLog.setText(null);
-        txt_netPlanLog.setText(text);
-        txt_netPlanLog.setCaretPosition(0);
-    }
-
     @Override
     public NetPlan getDesign()
     {
@@ -371,7 +364,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
     @Override
-    public void loadDesignDoNotUpdateVisualization (NetPlan netPlan)
+    public void loadDesign(NetPlan netPlan, boolean updateVisualization)
     {
         netPlan.checkCachesConsistency();
         if (onlineSimulationPane != null) onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
@@ -381,6 +374,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         // Saving original topology structure
 //        initialTopologySetting = new TopologyMap();
 //        currentNetPlan.getNodes().stream().forEach(node -> initialTopologySetting.addNodeLocation(node.getId(), node.getXYPositionMap()));
+
+        if (updateVisualization) updateVisualization(true);
     }
 
     private void resetButton()
@@ -402,10 +397,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                         break;
                 }
                 onlineSimulationPane.getSimKernel().reset();
-                loadDesignDoNotUpdateVisualization(onlineSimulationPane.getSimKernel().getCurrentNetPlan());
+                loadDesign(onlineSimulationPane.getSimKernel().getCurrentNetPlan(), false);
             } else
             {
-                loadDesignDoNotUpdateVisualization(new NetPlan());
+                loadDesign(new NetPlan(), false);
                 //algorithmSelector.reset();
                 executionPane.reset();
             }
@@ -423,9 +418,9 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
     }
 
-    
+
     @Override
-    public void resetPickedStateAndUpdateView ()
+    public void resetPickedStateAndUpdateView()
     {
         vs.resetColorAndShapeState();
         topologyPanel.getCanvas().resetPickedStateAndRefresh();
@@ -467,14 +462,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         if (simState == SimState.PAUSED || simState == SimState.RUNNING || simState == SimState.STEP)
             return true;
         else return false;
-    }
-
-    public void updateWarnings()
-    {
-        Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
-        List<String> warnings = NetworkPerformanceMetrics.checkNetworkState(getDesign(), net2planParameters);
-        String warningMsg = warnings.isEmpty() ? "Design is successfully completed!" : StringUtils.join(warnings, StringUtils.getLineSeparator());
-        updateLog(warningMsg);
     }
 
     private void addAllKeyCombinationActions()
@@ -621,143 +608,132 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         addKeyCombinationAction("Show control window", new AbstractAction()
         {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 WindowController.showControlWindow();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
     }
 
-	@Override
-	public VisualizationState getVisualizationState()
-	{
-		return vs;
-	}
-
-	@Override
-	public void updateVisualizationAfterLinkNodeColorChanges()
-	{
-	    topologyPanel.getCanvas().refresh();
-	}
-
-	@Override
-	public void updateVisualizationJustTables()
-	{
-	    viewEditTopTables.updateView();
-	}
+    @Override
+    public VisualizationState getVisualizationState()
+    {
+        return vs;
+    }
 
     @Override
-    public void pickDemandAndUpdateView (Demand demand)
+    public void pickDemandAndUpdateView(Demand demand)
     {
         resetPickedStateAndUpdateView();
 
-    	boolean includeUpLayerLinksCarryingThisTraffic = true;
-    	boolean includeThisLayerLinksCarryingThisTraffic = true;
-    	boolean includeDownLayerLinksCarryingThisTraffic = true;
+        boolean includeUpLayerLinksCarryingThisTraffic = true;
+        boolean includeThisLayerLinksCarryingThisTraffic = true;
+        boolean includeDownLayerLinksCarryingThisTraffic = true;
         NetworkLayer layer = demand.getLayer();
         selectNetPlanViewItem(layer.getId(), NetworkElementType.DEMAND, demand.getId());
 
-        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getIngressNode() , layer)) , COLOR_INITIALNODE , null , -1);
-        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getEgressNode() , layer)) , COLOR_ENDNODE , null , -1);
-        Pair<Set<Link>,Set<Link>> linksOccupiedThisLayer = demand.getLinksThisLayerPotentiallyCarryingTraffic(true);
-        Set<GUILink> linksToShowPrimary = new HashSet<> ();
-        Set<GUILink> linksToShowBackup = new HashSet<> ();
+        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getIngressNode(), layer)), COLOR_INITIALNODE, null, -1);
+        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getEgressNode(), layer)), COLOR_ENDNODE, null, -1);
+        Pair<Set<Link>, Set<Link>> linksOccupiedThisLayer = demand.getLinksThisLayerPotentiallyCarryingTraffic(true);
+        Set<GUILink> linksToShowPrimary = new HashSet<>();
+        Set<GUILink> linksToShowBackup = new HashSet<>();
         for (Link e : linksOccupiedThisLayer.getFirst())
         {
-        	Pair<Set<GUILink>,Set<GUILink>> pairThisLink = vs.getAssociatedGUILinksIncludingCoupling(e , true);
-        	linksToShowPrimary.addAll (pairThisLink.getFirst());
-        	linksToShowBackup.addAll (pairThisLink.getSecond());
+            Pair<Set<GUILink>, Set<GUILink>> pairThisLink = vs.getAssociatedGUILinksIncludingCoupling(e, true);
+            linksToShowPrimary.addAll(pairThisLink.getFirst());
+            linksToShowBackup.addAll(pairThisLink.getSecond());
         }
         for (Link e : linksOccupiedThisLayer.getSecond())
         {
-        	Pair<Set<GUILink>,Set<GUILink>> pairThisLink = vs.getAssociatedGUILinksIncludingCoupling(e , false);
-        	linksToShowPrimary.addAll (pairThisLink.getFirst());
-        	linksToShowBackup.addAll (pairThisLink.getSecond());
+            Pair<Set<GUILink>, Set<GUILink>> pairThisLink = vs.getAssociatedGUILinksIncludingCoupling(e, false);
+            linksToShowPrimary.addAll(pairThisLink.getFirst());
+            linksToShowBackup.addAll(pairThisLink.getSecond());
         }
-        vs.setLinkProperties(linksToShowPrimary , 
-        		Color.BLUE , VisualizationState.DEFAULT_REGGUILINK_ARROWSTROKE_PICKED , 
-        		true , true);
-        vs.setLinkProperties(linksToShowBackup, 
-        		Color.YELLOW , VisualizationState.DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_PICKED , 
-        		true , true);
+        vs.setLinkProperties(linksToShowPrimary,
+                Color.BLUE, VisualizationConstants.DEFAULT_REGGUILINK_ARROWSTROKE_PICKED,
+                true, true);
+        vs.setLinkProperties(linksToShowBackup,
+                Color.YELLOW, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_PICKED,
+                true, true);
 
         topologyPanel.getCanvas().refresh();
     }
 
     @Override
-	public void pickLinkAndUpdateView(Link link)
-	{
-	    resetPickedStateAndUpdateView();
+    public void pickLinkAndUpdateView(Link link)
+    {
+        resetPickedStateAndUpdateView();
 
-    	boolean includeUpLayerLinksCarryingThisTraffic = true;
-    	boolean includeThisLayerLinksCarryingThisTraffic = true;
-    	boolean includeDownLayerLinksCarryingThisTraffic = true;
+        boolean includeUpLayerLinksCarryingThisTraffic = true;
+        boolean includeThisLayerLinksCarryingThisTraffic = true;
+        boolean includeDownLayerLinksCarryingThisTraffic = true;
         NetworkLayer layer = link.getLayer();
         selectNetPlanViewItem(layer.getId(), NetworkElementType.LINK, link.getId());
 
-        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(link.getOriginNode() , layer)) , COLOR_INITIALNODE , null , -1);
-        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(link.getDestinationNode() , layer)) , COLOR_ENDNODE , null , -1);
-        Pair<Set<GUILink>,Set<GUILink>> pairLinksToShow = vs.getAssociatedGUILinksIncludingCoupling(link , true);
-        vs.setLinkProperties(pairLinksToShow.getFirst() , 
-        		Color.BLUE , VisualizationState.DEFAULT_REGGUILINK_ARROWSTROKE_PICKED , 
-        		true , true);
-        vs.setLinkProperties(pairLinksToShow.getSecond(), 
-        		Color.YELLOW , VisualizationState.DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_PICKED , 
-        		true , true);
+        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(link.getOriginNode(), layer)), COLOR_INITIALNODE, null, -1);
+        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(link.getDestinationNode(), layer)), COLOR_ENDNODE, null, -1);
+        Pair<Set<GUILink>, Set<GUILink>> pairLinksToShow = vs.getAssociatedGUILinksIncludingCoupling(link, true);
+        vs.setLinkProperties(pairLinksToShow.getFirst(),
+                Color.BLUE, VisualizationConstants.DEFAULT_REGGUILINK_ARROWSTROKE_PICKED,
+                true, true);
+        vs.setLinkProperties(pairLinksToShow.getSecond(),
+                Color.YELLOW, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_PICKED,
+                true, true);
 
         topologyPanel.getCanvas().refresh();
-	}
+    }
 
-	@Override
-	public void pickNodeAndUpdateView(Node node)
-	{
+    @Override
+    public void pickNodeAndUpdateView(Node node)
+    {
         resetPickedStateAndUpdateView();
         selectNetPlanViewItem(node.getNetPlan().getNetworkLayerDefault().getId(), NetworkElementType.NODE, node.getId());
-        vs.setNodeProperties(vs.getVerticallyStackedGUINodes(node) , Color.BLUE , null , -1);
+        vs.setNodeProperties(vs.getVerticallyStackedGUINodes(node), Color.BLUE, null, -1);
         topologyPanel.getCanvas().refresh();
         topologyPanel.getCanvas().refresh();
-	}
+    }
 
-	@Override
-    public void pickMulticastDemandAndUpdateView (MulticastDemand demand)
-	{
+    @Override
+    public void pickMulticastDemandAndUpdateView(MulticastDemand demand)
+    {
         resetPickedStateAndUpdateView();
         // TODO Auto-generated method stub
-	}
+    }
 
-	@Override
-    public void pickForwardingRuleAndUpdateView (Pair<Demand, Link> demandLink)
-	{
+    @Override
+    public void pickForwardingRuleAndUpdateView(Pair<Demand, Link> demandLink)
+    {
         resetPickedStateAndUpdateView();
-		// TODO Auto-generated method stub
-	}
+        // TODO Auto-generated method stub
+    }
 
-	@Override
-    public void pickRouteAndUpdateView (Route route)
-	{
+    @Override
+    public void pickRouteAndUpdateView(Route route)
+    {
         resetPickedStateAndUpdateView();
-		// TODO Auto-generated method stub
-	}
+        // TODO Auto-generated method stub
+    }
 
-	@Override
-    public void pickMulticastTreeAndUpdateView (MulticastTree tree)
-	{
+    @Override
+    public void pickMulticastTreeAndUpdateView(MulticastTree tree)
+    {
         resetPickedStateAndUpdateView();
-		// TODO Auto-generated method stub
-	}
+        // TODO Auto-generated method stub
+    }
 
-	@Override
-    public void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg)
-	{
+    @Override
+    public void pickSRGAndUpdateView(NetworkLayer layer, SharedRiskGroup srg)
+    {
         resetPickedStateAndUpdateView();
-		// TODO Auto-generated method stub
-	}
+        // TODO Auto-generated method stub
+    }
 
-	@Override
-	public void putColorInElementTopologyCanvas(Collection<? extends NetworkElement> linksAndNodes, Color color)
-	{
+    @Override
+    public void putColorInElementTopologyCanvas(Collection<? extends NetworkElement> linksAndNodes, Color color)
+    {
         resetPickedStateAndUpdateView();
-		// TODO Auto-generated method stub
-	}
+        // TODO Auto-generated method stub
+    }
 
 	@Override
 	public void updateVisualizationAfterNewTopology(BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder , List<Boolean> isLayerVisibleIndexedByLayerIndex)
@@ -773,9 +749,9 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @Override
     public void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade , BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder , List<Boolean> isLayerVisibleIndexedByLayerIndex)
     {
-        if (modificationsMade == null || modificationsMade.contains(NetworkElementType.LAYER))
+        if (modificationsMade == null)
         {
-            topologyPanel.updateLayerChooser();
+            throw new RuntimeException("Unable to update non-existent network elements");
         }
 
         if ((modificationsMade == null) ||  (modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE) || modificationsMade.contains(NetworkElementType.LAYER)))
@@ -784,25 +760,40 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             topologyPanel.getCanvas().rebuildTopologyAndRefresh();
             viewEditTopTables.updateView();
             updateWarnings();
-        }
-        else
+        } else
         {
-            viewEditTopTables.updateView();
+            updateTables();
             updateWarnings();
         }
     }
 
-	@Override
-	public void justApplyZoomAll()
-	{
-	    topologyPanel.getCanvas().zoomAll();
-	}
+    private void updateLog(String text)
+    {
+        txt_netPlanLog.setText(null);
+        txt_netPlanLog.setText(text);
+        txt_netPlanLog.setCaretPosition(0);
+    }
 
-	@Override
-	public void updateVisualizationJustTopologyCanvas()
-	{
-//		vs.rebuildVisualizationState(getDesign() , Arrays.asList(Sets.newHashSet(currentNetPlan.getNetworkLayerDefault())));
+    public void updateWarnings()
+    {
+        Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
+        List<String> warnings = NetworkPerformanceMetrics.checkNetworkState(getDesign(), net2planParameters);
+        String warningMsg = warnings.isEmpty() ? "Design is successfully completed!" : StringUtils.join(warnings, StringUtils.getLineSeparator());
+        updateLog(warningMsg);
+    }
+
+    @Override
+    public void updateTables()
+    {
+        viewEditTopTables.updateView();
+    }
+
+    @Override
+    public void refreshTopologyCanvas(final boolean doZoomAll)
+    {
+        topologyPanel.updateLayerChooser();
         topologyPanel.getCanvas().rebuildTopologyAndRefresh();
-	    topologyPanel.getCanvas().refresh();
-	}
+
+        if (doZoomAll) topologyPanel.getCanvas().zoomAll();
+    }
 }

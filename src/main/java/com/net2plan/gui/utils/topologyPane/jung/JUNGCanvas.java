@@ -459,12 +459,12 @@ public final class JUNGCanvas implements ITopologyCanvas
 
     public void zoomIn(Point2D point)
     {
-        scalingControl.scale(vv, VisualizationState.SCALE_IN, point);
+        scalingControl.scale(vv, VisualizationConstants.SCALE_IN, point);
     }
 
     public void zoomOut(Point2D point)
     {
-        scalingControl.scale(vv, VisualizationState.SCALE_OUT, point);
+        scalingControl.scale(vv, VisualizationConstants.SCALE_OUT, point);
     }
 
     public void setBackgroundImage(final File bgFile, final double x, final double y)
@@ -626,7 +626,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     {
         public ScalingCanvasPlugin(ScalingControl scaler, int modifiers)
         {
-            super(scaler, modifiers, VisualizationState.SCALE_OUT, VisualizationState.SCALE_IN);
+            super(scaler, modifiers, VisualizationConstants.SCALE_OUT, VisualizationConstants.SCALE_IN);
             setZoomAtMouse(false);
         }
 

@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 /**
  * Created by César on 13/12/2016.
  */
+@SuppressWarnings("unchecked")
 public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
 
     public static final int COLUMN_ID = 0;
