@@ -89,7 +89,7 @@ import edu.uci.ics.jung.visualization.util.ArrowFactory;
 @SuppressWarnings("unchecked")
 public final class JUNGCanvas implements ITopologyCanvas
 {
-	private final VisualizationState vs;
+    private final VisualizationState vs;
     private final Transformer<GUINode, Point2D> transformNetPlanCoordinatesToJungCoordinates;
 
     private final Graph<GUINode, GUILink> g;
@@ -107,50 +107,17 @@ public final class JUNGCanvas implements ITopologyCanvas
      */
     public JUNGCanvas(VisualizationState vs)
     {
-    	this.vs = vs;
+        this.vs = vs;
 
         transformNetPlanCoordinatesToJungCoordinates = vertex ->
         {
-//        	final Graphics2D g2d = getGraphics2DObject ();
-//        	final Layout graphLayout = getGraphLayout();
-//        	final Dimension sizeGraphLayout = graphLayout.getSize();
-//        	final MutableTransformer layoutTransformer = getLayoutTransformer();
-//        	final MutableTransformer viewTransformer = getViewTransformer();
-//        	final double scaleLayout = layoutTransformer.getScale();
-//        	final double scaleView = viewTransformer.getScale();
-//        	final double translateYView = viewTransformer.getTranslateY();
-//        	final double translateXView = viewTransformer.getTranslateX();
-//        	final Dimension size = getInternalVisualizationController().getSize();
-//        	final Node npNode = vertex.getAssociatedNetPlanNode();
-//        	final Point2D basePositionInNetPlanCoord = npNode.getXYPositionMap();
-//        	final Point2D basePositionInJungLayoutCoord = getJungLayoutCoordinateFromNetPlanCoordinate(basePositionInNetPlanCoord);
-//        	final Point2D basePositionInNetPlanCoordTransfLayoutAndInverse = getNetPlanCoordinatesFromJungLayoutCoordinate(basePositionInJungLayoutCoord);
-//        	final Point2D basePositionInJungViewCoordFromNp = getJungViewCoordinatesFromNetPlanCoordinates(basePositionInNetPlanCoord);
-//        	final Point2D affineViewTransformOfNpCoord = viewTransformer.getTransform().transform(basePositionInNetPlanCoord , null);
-//        	final Point2D basePositionInG2Coord = g2d.getTransform().transform(basePositionInNetPlanCoord , null);
-//        	final VisualizationLayer vl = vertex.getVisualizationLayer();
-//    		final int vlIndex = vl.getIndex();
-//    		final int interLayerSpacePixels = vl.getVisualizationState().getInterLayerDistanceInPixels();
-////    		final Point2D elevatedPositionInPixels = new Point2D.Double(basePositionInJungLayoutCoord.getX() , basePositionInJungLayoutCoord.getY() + (vlIndex * interLayerSpacePixels));
-////        	final Point2D elevatedPositionInNetPlanCoord = getNetPlanCoordinatesFromJungLayoutCoordinate(new Point2D.Double(basePositionInJungLayoutCoord.getX() , basePositionInJungLayoutCoord.getY() + (vlIndex * interLayerSpacePixels)));
-//    		final VisualizationViewer vv = (VisualizationViewer) getInternalVisualizationController();
-//    		final Rectangle viewLayoutBounds = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
-//    		final double verticalCoordEquivalentOfOnePixel = viewLayoutBounds.getHeight() / sizeGraphLayout.getHeight(); 
-//        	Point zeroPositionInNetPlan = new Point (0,0);
-//        	Point elevatedFromZeroPositionInNetPlan = new Point (0,interLayerSpacePixels);
-//        	SwingUtilities.convertPointFromScreen(zeroPositionInNetPlan , getInternalVisualizationController());
-//        	SwingUtilities.convertPointFromScreen(elevatedFromZeroPositionInNetPlan , getInternalVisualizationController());
-//        	final double interlayerDistanceInNpCoord = elevatedFromZeroPositionInNetPlan.getY() - zeroPositionInNetPlan.getY();
-//        	final Point2D elevatedPositionInNetPlanCoord = new Point2D.Double(basePositionInNetPlanCoord.getX() , basePositionInNetPlanCoord.getY() + (vlIndex * verticalCoordEquivalentOfOnePixel));
-//            return new Point2D.Double(elevatedPositionInNetPlanCoord.getX(), -elevatedPositionInNetPlanCoord.getY());
-
-    		final int vlIndex = vertex.getVisualizationOrderRemovingNonVisibleLayers();
+            final int vlIndex = vertex.getVisualizationOrderRemovingNonVisibleLayers();
             final double interLayerDistanceInNpCoord = vertex.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
-        	final Point2D basePositionInNetPlanCoord = vertex.getAssociatedNetPlanNode().getXYPositionMap();
+            final Point2D basePositionInNetPlanCoord = vertex.getAssociatedNetPlanNode().getXYPositionMap();
             return new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() + (vlIndex * interLayerDistanceInNpCoord)));
         };
 
-    	g = new DirectedOrderedSparseMultigraph<>();
+        g = new DirectedOrderedSparseMultigraph<>();
         l = new StaticLayout<>(g, transformNetPlanCoordinatesToJungCoordinates);
         vv = new VisualizationViewer<>(l);
 
@@ -261,7 +228,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     @Override
     public Point2D getScreenPixelCoordinateFromNetPlanCoordinate(Point2D screenPoint, Layer layer)
     {
-        return vv.getRenderContext().getMultiLayerTransformer().transform(layer, new Point2D.Double(screenPoint.getX() , -screenPoint.getY()));
+        return vv.getRenderContext().getMultiLayerTransformer().transform(layer, new Point2D.Double(screenPoint.getX(), -screenPoint.getY()));
     }
 
 
@@ -349,14 +316,14 @@ public final class JUNGCanvas implements ITopologyCanvas
     @Override
     public void rebuildTopologyAndRefresh()
     {
-    	for (GUILink gl : new ArrayList<>(g.getEdges()))
-    		g.removeEdge(gl);
-    	for (GUINode gn : new ArrayList<>(g.getVertices()))
-    		g.removeVertex(gn);
-    	for (GUINode gn : vs.getAllGUINodes()) g.addVertex(gn);
-    	for (GUILink gl : vs.getAllGUILinks(true , true))
-			g.addEdge(gl , gl.getOriginNode() , gl.getDestinationNode());
-    	refresh();
+        for (GUILink gl : new ArrayList<>(g.getEdges()))
+            g.removeEdge(gl);
+        for (GUINode gn : new ArrayList<>(g.getVertices()))
+            g.removeVertex(gn);
+        for (GUINode gn : vs.getAllGUINodes()) g.addVertex(gn);
+        for (GUILink gl : vs.getAllGUILinks(true, true))
+            g.addEdge(gl, gl.getOriginNode(), gl.getDestinationNode());
+        refresh();
     }
 
     @Override
@@ -367,7 +334,7 @@ public final class JUNGCanvas implements ITopologyCanvas
 
     public void frameTopology()
     {
-        final Set<GUINode> visibleGUINodes = g.getVertices().stream().filter(e->vs.isVisible(e)).collect(Collectors.toSet());
+        final Set<GUINode> visibleGUINodes = g.getVertices().stream().filter(e -> vs.isVisible(e)).collect(Collectors.toSet());
         if (visibleGUINodes.isEmpty()) return;
 
         double xmaxNpCoords = Double.NEGATIVE_INFINITY;
@@ -417,18 +384,14 @@ public final class JUNGCanvas implements ITopologyCanvas
     @Override
     public void updateNodeXYPosition(Node node)
     {
-    	for (GUINode gn : vs.getVerticallyStackedGUINodes(node))
-    		l.setLocation(gn, transformNetPlanCoordinatesToJungCoordinates.transform(gn));
+        for (GUINode gn : vs.getVerticallyStackedGUINodes(node))
+            l.setLocation(gn, transformNetPlanCoordinatesToJungCoordinates.transform(gn));
     }
 
-    public void moveNodeToXYPosition(Node npNode, Point2D point)
+    public void moveNodeToXYPosition(GUINode npNode, Point2D point)
     {
-    	for (GUINode guiNode : vs.getVerticallyStackedGUINodes(npNode))
-        {
-            final int vlIndex = guiNode.getVisualizationOrderRemovingNonVisibleLayers();
-            final double interLayerDistanceInNpCoord = vs.getInterLayerSpaceInNetPlanCoordinates();
-            l.setLocation(guiNode, new Point2D.Double(point.getX() , point.getY() + (vlIndex * interLayerDistanceInNpCoord)));
-        }
+        // Base node
+        l.setLocation(npNode, point);
     }
 
     public MutableTransformer getLayoutTransformer()
@@ -663,36 +626,39 @@ public final class JUNGCanvas implements ITopologyCanvas
         }
     }
 
-	@Override
-	public void setBackgroundOSMMapsActiveState(boolean activateMap)
-	{
-		if (activateMap)
-			OSMMapStateBuilder.getSingleton().setRunningState();
-		else
-			OSMMapStateBuilder.getSingleton().setStoppedState();
-	}
+    @Override
+    public void setBackgroundOSMMapsActiveState(boolean activateMap)
+    {
+        if (activateMap)
+            OSMMapStateBuilder.getSingleton().setRunningState();
+        else
+            OSMMapStateBuilder.getSingleton().setStoppedState();
+    }
 
-	@Override
-	public boolean getBackgroundOSMMapsActiveState()
-	{
-		return OSMMapStateBuilder.getSingleton().isMapActivated();
-	}
+    @Override
+    public boolean getBackgroundOSMMapsActiveState()
+    {
+        return OSMMapStateBuilder.getSingleton().isMapActivated();
+    }
 
-	@Override
-	public final Map<String, String> getCurrentOptions()
-	{
-		return CommandLineParser.getParameters(getParameters(), Configuration.getOptions());
-	}
+    @Override
+    public final Map<String, String> getCurrentOptions()
+    {
+        return CommandLineParser.getParameters(getParameters(), Configuration.getOptions());
+    }
 
-	@Override
-	public int getPriority() { return 0; }
+    @Override
+    public int getPriority()
+    {
+        return 0;
+    }
 
 
-	@Override
-	public void takeSnapshot()
-	{
-		OSMMapStateBuilder.getSingleton().takeSnapshot(this);
-	}
+    @Override
+    public void takeSnapshot()
+    {
+        OSMMapStateBuilder.getSingleton().takeSnapshot(this);
+    }
 
-	
+
 }

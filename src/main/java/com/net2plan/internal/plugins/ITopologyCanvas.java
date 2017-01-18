@@ -116,7 +116,7 @@ public interface ITopologyCanvas extends Plugin
 	 * @param npNode Node to move.
 	 * @param point  Point to which the node will be moved.
 	 */
-	void moveNodeToXYPosition(Node npNode, Point2D point);
+	void moveNodeToXYPosition(GUINode npNode, Point2D point);
 
 	/**
 	 * Removes a plugin from the canvas.
