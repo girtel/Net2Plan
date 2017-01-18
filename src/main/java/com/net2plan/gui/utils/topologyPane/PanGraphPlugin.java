@@ -47,7 +47,7 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
         this.callback = callback;
         this.canvas = canvas;
 
-        //originalCursor = this.canvas.getInternalVisualizationController().getCursor();
+        //originalCursor = this.canvas.getCanvasComponent().getCursor();
         originalCursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
         cursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
         down = null;
@@ -67,7 +67,7 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mouseDragged(MouseEvent e) {
         if (down != null) {
-            canvas.getInternalVisualizationController().setCursor(cursor);
+            canvas.getCanvasComponent().setCursor(cursor);
             canvas.panTo(down, e.getPoint());
             down = e.getPoint();
             e.consume();
@@ -77,12 +77,12 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mousePressed(MouseEvent e) {
         if (checkModifiers(e)) {
-            GUINode gn = canvas.getNode(e);
-            GUILink gl = canvas.getLink(e);
+            GUINode gn = canvas.getVertex(e);
+            GUILink gl = canvas.getEdge(e);
             if (gn == null && gl == null) {
                 down = e.getPoint();
                 initialPoint = e.getPoint();
-                canvas.getInternalVisualizationController().setCursor(cursor);
+                canvas.getCanvasComponent().setCursor(cursor);
                 e.consume();
             }
         }
@@ -95,13 +95,13 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
 
         down = null;
         initialPoint = null;
-        canvas.getInternalVisualizationController().setCursor(originalCursor);
+        canvas.getCanvasComponent().setCursor(originalCursor);
     }
 
 //    @Override
 //    public void setCanvas(ITopologyCanvas canvas) {
 //        this.canvas = canvas;
-//        originalCursor = this.canvas.getInternalVisualizationController().getCursor();
+//        originalCursor = this.canvas.getCanvasComponent().getCursor();
 //    }
 
     @Override

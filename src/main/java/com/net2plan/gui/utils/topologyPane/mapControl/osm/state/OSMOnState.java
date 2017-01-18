@@ -3,7 +3,6 @@ package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -11,7 +10,6 @@ import com.net2plan.internal.Constants;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.ImageUtils;
 import edu.uci.ics.jung.visualization.Layer;
-import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import org.jxmapviewer.viewer.GeoPosition;
 
 import javax.swing.*;
@@ -95,7 +93,7 @@ class OSMOnState implements OSMState
         if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
             return;
 
-        // canvas.moveNodeToXYPosition(node, new Point2D.Double(jungPoint.getX(), -jungPoint.getY()));
+        // canvas.moveVertexToXYPosition(node, new Point2D.Double(jungPoint.getX(), -jungPoint.getY()));
     }
 
     @Override
@@ -119,8 +117,7 @@ class OSMOnState implements OSMState
     private Point2D convertJungPointToMapSwing(final ITopologyCanvas canvas, final Point2D jungPoint)
     {
         // Compensating zoom, all movements must be done over a 1:1 ratio.
-        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getLayoutTransformer();
-        final double scale = layoutTransformer.getScale();
+        final double scale = canvas.getCurrentCanvasScale();
 
         return new Point2D.Double(jungPoint.getX() * scale, -jungPoint.getY() * scale);
     }

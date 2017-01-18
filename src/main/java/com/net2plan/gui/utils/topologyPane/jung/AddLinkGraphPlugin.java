@@ -107,13 +107,13 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
     @Override
     public void mouseClicked(MouseEvent e) {
         if (checkModifiers(e)) {
-            GUINode guiNode = canvas.getNode(e);
+            GUINode guiNode = canvas.getVertex(e);
             Node node = guiNode == null? null : guiNode.getAssociatedNetPlanNode();
             if (node != null) {
                 callback.pickNodeAndUpdateView(node);
                 e.consume();
             } else {
-                GUILink link = canvas.getLink(e);
+                GUILink link = canvas.getEdge(e);
                 if (link != null) 
                 {
                 	if (!link.isIntraNodeLink()) callback.pickLinkAndUpdateView(link.getAssociatedNetPlanLink());
@@ -140,7 +140,7 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
             startVertex = null;
             down = null;
 
-            GUINode guiNode = canvas.getNode(e);
+            GUINode guiNode = canvas.getVertex(e);
             Node node = guiNode == null? null : guiNode.getAssociatedNetPlanNode();
             if (node != null) {
                 final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) e.getSource();
@@ -163,7 +163,7 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
             vv.removePostRenderPaintable(edgePaintable);
             vv.removePostRenderPaintable(arrowPaintable);
 
-            final GUINode guiNode = canvas.getNode(e);
+            final GUINode guiNode = canvas.getVertex(e);
             final VisualizationState vs = guiNode.getVisualizationState();
             final Node node = guiNode == null? null : guiNode.getAssociatedNetPlanNode();
             if (node != null && startVertex.getAssociatedNetPlanNode() != node) 

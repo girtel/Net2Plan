@@ -55,6 +55,7 @@ import com.net2plan.utils.Triple;
  * @since 0.4.0
  */
 
+@SuppressWarnings("unchecked")
 public class Route extends NetworkElement
 {
 	final NetworkLayer layer;

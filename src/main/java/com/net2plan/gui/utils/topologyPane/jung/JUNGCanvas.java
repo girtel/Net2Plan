@@ -26,15 +26,13 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 
+import edu.uci.ics.jung.visualization.transform.AffineTransformer;
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.collections15.functors.ConstantTransformer;
 
@@ -205,6 +203,12 @@ public final class JUNGCanvas implements ITopologyCanvas
         gm.add(new GraphMousePluginAdapter(plugin));
     }
 
+    @Override
+    public void removePlugin(ITopologyCanvasPlugin plugin)
+    {
+        if (plugin instanceof GraphMousePlugin) gm.remove((GraphMousePlugin) plugin);
+    }
+
     /**
      * Converts a point from the SWING coordinates system into a point from the JUNG coordinates system.
      *
@@ -219,33 +223,27 @@ public final class JUNGCanvas implements ITopologyCanvas
         return layoutOrViewCoordinates;
     }
 
-    /**
-     * Converts a point from the JUNG coordinates system to the SWING coordinates system.
-     *
-     * @param netPlanCoord (@code Point2D) on the JUNG canvas.
-     * @return (@code Point2D) on the SWING canvas.
-     */
-    @Override
-    public Point2D getScreenPixelCoordinateFromNetPlanCoordinate(Point2D screenPoint, Layer layer)
-    {
-        return vv.getRenderContext().getMultiLayerTransformer().transform(layer, new Point2D.Double(screenPoint.getX(), -screenPoint.getY()));
-    }
-
-
     @Override
     public String getDescription()
     {
-        return null;
+        return "";
     }
 
     @Override
-    public JComponent getInternalVisualizationController()
+    public JComponent getCanvasComponent()
     {
         return vv;
     }
 
+
     @Override
-    public GUILink getLink(MouseEvent e)
+    public String getName()
+    {
+        return "JUNG Canvas";
+    }
+
+    @Override
+    public GUILink getEdge(MouseEvent e)
     {
         final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) e.getSource();
         GraphElementAccessor<GUINode, GUILink> pickSupport = vv.getPickSupport();
@@ -259,13 +257,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public String getName()
-    {
-        return "JUNG Canvas";
-    }
-
-    @Override
-    public GUINode getNode(MouseEvent e)
+    public GUINode getVertex(MouseEvent e)
     {
         final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) e.getSource();
         GraphElementAccessor<GUINode, GUILink> pickSupport = vv.getPickSupport();
@@ -280,15 +272,21 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public List<Triple<String, String, String>> getParameters()
+    public Set<GUINode> getGraphVertices()
     {
-        return null;
+        return Collections.unmodifiableSet(new HashSet<>(g.getVertices()));
     }
 
     @Override
-    public void panTo(Point2D initialPoint, Point2D currentPoint)
+    public Set<GUILink> getGraphEdges()
     {
-        OSMMapStateBuilder.getSingleton().panTo(initialPoint, currentPoint);
+        return Collections.unmodifiableSet(new HashSet<>(g.getEdges()));
+    }
+
+    @Override
+    public List<Triple<String, String, String>> getParameters()
+    {
+        return null;
     }
 
     @Override
@@ -296,14 +294,6 @@ public final class JUNGCanvas implements ITopologyCanvas
     {
         vv.repaint();
     }
-
-
-    @Override
-    public void removePlugin(ITopologyCanvasPlugin plugin)
-    {
-        if (plugin instanceof GraphMousePlugin) gm.remove((GraphMousePlugin) plugin);
-    }
-
 
     @Override
     public void resetPickedStateAndRefresh()
@@ -334,74 +324,33 @@ public final class JUNGCanvas implements ITopologyCanvas
 
     public void frameTopology()
     {
-        final Set<GUINode> visibleGUINodes = g.getVertices().stream().filter(e -> vs.isVisible(e)).collect(Collectors.toSet());
-        if (visibleGUINodes.isEmpty()) return;
 
-        double xmaxNpCoords = Double.NEGATIVE_INFINITY;
-        double xminNpCoords = Double.POSITIVE_INFINITY;
-        double ymaxNpCoords = Double.NEGATIVE_INFINITY;
-        double yminNpCoords = Double.POSITIVE_INFINITY;
-        double xmaxJungCoords = Double.NEGATIVE_INFINITY;
-        double xminJungCoords = Double.POSITIVE_INFINITY;
-        double ymaxJungCoords = Double.NEGATIVE_INFINITY;
-        double yminJungCoords = Double.POSITIVE_INFINITY;
-        for (GUINode node : visibleGUINodes)
-        {
-            Point2D nodeNpCoordinates = node.getAssociatedNetPlanNode().getXYPositionMap();
-            Point2D nodeJungCoordinates = getNetPlanCoordinatesFromScreenPixelCoordinate(nodeNpCoordinates, Layer.VIEW);
-            if (xmaxNpCoords < nodeNpCoordinates.getX()) xmaxNpCoords = nodeNpCoordinates.getX();
-            if (xminNpCoords > nodeNpCoordinates.getX()) xminNpCoords = nodeNpCoordinates.getX();
-            if (ymaxNpCoords < nodeNpCoordinates.getY()) ymaxNpCoords = nodeNpCoordinates.getY();
-            if (yminNpCoords > nodeNpCoordinates.getY()) yminNpCoords = nodeNpCoordinates.getY();
-            if (xmaxJungCoords < nodeJungCoordinates.getX()) xmaxJungCoords = nodeJungCoordinates.getX();
-            if (xminJungCoords > nodeJungCoordinates.getX()) xminJungCoords = nodeJungCoordinates.getX();
-            if (ymaxJungCoords < nodeJungCoordinates.getY()) ymaxJungCoords = nodeJungCoordinates.getY();
-            if (yminJungCoords > nodeJungCoordinates.getY()) yminJungCoords = nodeJungCoordinates.getY();
-        }
-
-        double PRECISION_FACTOR = 0.00001;
-
-        Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
-        float ratio_h = Math.abs(xmaxJungCoords - xminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getWidth() / (xmaxJungCoords - xminJungCoords));
-        float ratio_v = Math.abs(ymaxJungCoords - yminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getHeight() / (ymaxJungCoords - yminJungCoords));
-        float ratio = (float) (0.8 * Math.min(ratio_h, ratio_v));
-        scalingControl.scale(vv, ratio, vv.getCenter());
-
-//        Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
-//        float ratio_h = Math.abs(xmaxNpCoords - xminNpCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getWidth() / (xmaxNpCoords - xminNpCoords));
-//        float ratio_v = Math.abs(ymaxNpCoords - yminNpCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getHeight() / (ymaxNpCoords - yminNpCoords));
-//        float ratio = (float) (0.8 * Math.min(ratio_h, ratio_v));
-//        scalingControl.scale(vv, ratio, vv.getCenter());
-
-        Point2D topologyCenterJungCoord = new Point2D.Double((xminJungCoords + xmaxJungCoords) / 2, (yminJungCoords + ymaxJungCoords) / 2);
-        Point2D windowCenterJungCoord = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getCenter());
-        double dx = (windowCenterJungCoord.getX() - topologyCenterJungCoord.getX());
-        double dy = (windowCenterJungCoord.getY() - topologyCenterJungCoord.getY());
-
-        vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT).translate(dx, dy);
     }
 
     @Override
-    public void updateNodeXYPosition(Node node)
+    public void updateVertexXYPosition(GUINode guiNode)
     {
-        for (GUINode gn : vs.getVerticallyStackedGUINodes(node))
-            l.setLocation(gn, transformNetPlanCoordinatesToJungCoordinates.transform(gn));
+        l.setLocation(guiNode, transformNetPlanCoordinatesToJungCoordinates.transform(guiNode));
     }
 
-    public void moveNodeToXYPosition(GUINode npNode, Point2D point)
+
+    @Override
+    public void moveVertexToXYPosition(GUINode npNode, Point2D point)
     {
-        // Base node
         l.setLocation(npNode, point);
     }
 
-    public MutableTransformer getLayoutTransformer()
+    @Override
+    public void panTo(Point2D initialPoint, Point2D currentPoint)
     {
-        return vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+        OSMMapStateBuilder.getSingleton().panTo(initialPoint, currentPoint);
     }
 
-    public MutableTransformer getViewTransformer()
+    @Override
+    public void moveCanvasTo(Point2D destinationPoint)
     {
-        return vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.VIEW);
+        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
+        layoutTransformer.translate(destinationPoint.getX(), destinationPoint.getY());
     }
 
     @Override
@@ -416,19 +365,22 @@ public final class JUNGCanvas implements ITopologyCanvas
         OSMMapStateBuilder.getSingleton().zoomOut();
     }
 
-    public void zoom(float scale)
+    @Override
+    public void zoom(Point2D centerPoint, float scale)
     {
-        scalingControl.scale(vv, scale, vv.getCenter());
+        scalingControl.scale(vv, scale, centerPoint);
     }
 
-    public void zoomIn(Point2D point)
+    @Override
+    public double getCurrentCanvasScale()
     {
-        scalingControl.scale(vv, VisualizationConstants.SCALE_IN, point);
+        return vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT).getScale();
     }
 
-    public void zoomOut(Point2D point)
+    @Override
+    public Point2D getCanvasCenter()
     {
-        scalingControl.scale(vv, VisualizationConstants.SCALE_OUT, point);
+        return vv.getCenter();
     }
 
     public void setBackgroundImage(final File bgFile, final double x, final double y)
@@ -439,23 +391,15 @@ public final class JUNGCanvas implements ITopologyCanvas
         setBackgroundImage(bgFile, x1.intValue(), y1.intValue());
     }
 
-    public void setBackgroundImage(final ImageIcon image, final double x, final double y)
+    public void setBackgroundImage(final File bgFile, final int x, final int y)
     {
-        final Double x1 = x;
-        final Double y1 = y;
-
-        setBackgroundImage(image, x1.intValue(), y1.intValue());
+        final ImageIcon background = new ImageIcon(bgFile.getAbsolutePath());
+        updateBackgroundImage(background, x, y);
     }
 
     public void setBackgroundImage(final ImageIcon image, final int x, final int y)
     {
         updateBackgroundImage(image, x, y);
-    }
-
-    public void setBackgroundImage(final File bgFile, final int x, final int y)
-    {
-        final ImageIcon background = new ImageIcon(bgFile.getAbsolutePath());
-        updateBackgroundImage(background, x, y);
     }
 
     public void updateBackgroundImage(final ImageIcon icon)
@@ -494,6 +438,25 @@ public final class JUNGCanvas implements ITopologyCanvas
             };
             vv.addPreRenderPaintable(paintableAssociatedToBackgroundImage);
         }
+    }
+
+    @Override
+    public final Map<String, String> getCurrentOptions()
+    {
+        return CommandLineParser.getParameters(getParameters(), Configuration.getOptions());
+    }
+
+    @Override
+    public int getPriority()
+    {
+        return 0;
+    }
+
+
+    @Override
+    public void takeSnapshot()
+    {
+        OSMMapStateBuilder.getSingleton().takeSnapshot(this);
     }
 
     private class NodeLabelRenderer extends BasicVertexLabelRenderer<GUINode, GUILink>
@@ -625,40 +588,4 @@ public final class JUNGCanvas implements ITopologyCanvas
 
         }
     }
-
-    @Override
-    public void setBackgroundOSMMapsActiveState(boolean activateMap)
-    {
-        if (activateMap)
-            OSMMapStateBuilder.getSingleton().setRunningState();
-        else
-            OSMMapStateBuilder.getSingleton().setStoppedState();
-    }
-
-    @Override
-    public boolean getBackgroundOSMMapsActiveState()
-    {
-        return OSMMapStateBuilder.getSingleton().isMapActivated();
-    }
-
-    @Override
-    public final Map<String, String> getCurrentOptions()
-    {
-        return CommandLineParser.getParameters(getParameters(), Configuration.getOptions());
-    }
-
-    @Override
-    public int getPriority()
-    {
-        return 0;
-    }
-
-
-    @Override
-    public void takeSnapshot()
-    {
-        OSMMapStateBuilder.getSingleton().takeSnapshot(this);
-    }
-
-
 }

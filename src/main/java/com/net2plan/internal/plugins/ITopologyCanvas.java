@@ -21,8 +21,11 @@
 package com.net2plan.internal.plugins;
 
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.awt.image.AffineTransformOp;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.JComponent;
 
@@ -31,6 +34,8 @@ import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
 import com.net2plan.interfaces.networkDesign.Node;
 import edu.uci.ics.jung.visualization.Layer;
+import edu.uci.ics.jung.visualization.transform.AffineTransformer;
+import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 
 /**
  * Base class for topology canvas.
@@ -38,10 +43,6 @@ import edu.uci.ics.jung.visualization.Layer;
 public interface ITopologyCanvas extends Plugin
 {
 	Map<String, String> getCurrentOptions();
-
-	void setBackgroundOSMMapsActiveState (boolean activateMap);
-	
-	boolean getBackgroundOSMMapsActiveState ();
 
 	/**
 	 * Adds a new plugin to the canvas.
@@ -51,18 +52,15 @@ public interface ITopologyCanvas extends Plugin
 	 */
 	void addPlugin(ITopologyCanvasPlugin plugin);
 
-//    /**
-//     * Returns the set of actions to be added to the popup menu for the network
-//     * canvas, where no element (either node or link) is selected.
-//     *
-//     * @param pos Network coordinates where the popup action was triggered
-//     * @return List of actions to be shown for the canvas
-//     */
-//    List<JComponent> getCanvasActions(Point2D pos);
+	/**
+	 * Removes a plugin from the canvas.
+	 *
+	 * @param plugin Plugin
+	 * @since 0.3.0
+	 */
+	void removePlugin(ITopologyCanvasPlugin plugin);
 
 	Point2D getNetPlanCoordinatesFromScreenPixelCoordinate(Point2D screenPoint, Layer layer);
-
-	Point2D getScreenPixelCoordinateFromNetPlanCoordinate(Point2D screenPoint, Layer layer);
 
 	/**
 	 * Returns a reference to the internal component containing the canvas.
@@ -70,7 +68,7 @@ public interface ITopologyCanvas extends Plugin
 	 * @return Internal component containing the canvas
 	 * @since 0.3.0
 	 */
-	JComponent getInternalVisualizationController();
+	JComponent getCanvasComponent();
 
 	/**
 	 * Returns the identifier of a link associated to a mouse event, or -1 otherwise.
@@ -79,7 +77,7 @@ public interface ITopologyCanvas extends Plugin
 	 * @return Link identifier, or -1 if no link was clicked
 	 * @since 0.3.1
 	 */
-	GUILink getLink(MouseEvent e);
+	GUILink getEdge(MouseEvent e);
 
 	/**
 	 * Returns the identifier of a link associated to a mouse event, or -1 otherwise.
@@ -88,7 +86,7 @@ public interface ITopologyCanvas extends Plugin
 	 * @return Link identifier, or -1 if no link was clicked
 	 * @since 0.3.1
 	 */
-	GUINode getNode(MouseEvent e);
+	GUINode getVertex(MouseEvent e);
 
 	/**
 	 * Pans the graph to the .
@@ -99,6 +97,8 @@ public interface ITopologyCanvas extends Plugin
 	 */
 	void panTo(Point2D initialPoint, Point2D currentPoint);
 
+	void moveCanvasTo(Point2D destinationPoint);
+
 	/**
 	 * Refreshes the canvas.
 	 *
@@ -106,25 +106,21 @@ public interface ITopologyCanvas extends Plugin
 	 */
 	void refresh();
 
-	void updateNodeXYPosition(Node node);
+	/**
+	 * Updates the position of a GUI Node based on its associted node.
+	 * @param node
+	 */
+	void updateVertexXYPosition(GUINode node);
 
 	/**
-	 * Moves a node to the desired point.
+	 * Moves a GUI node to the desired point.
 	 * This method does not change the node's xy coordinates.
-	 * Have in mind that by using this methos, the xy coordinates from the table do not equal the coordinates from the topology.
+	 * Have in mind that by using this method, the xy coordinates from the table do not equal the coordinates from the topology.
 	 *
 	 * @param npNode Node to move.
 	 * @param point  Point to which the node will be moved.
 	 */
-	void moveNodeToXYPosition(GUINode npNode, Point2D point);
-
-	/**
-	 * Removes a plugin from the canvas.
-	 *
-	 * @param plugin Plugin
-	 * @since 0.3.0
-	 */
-	void removePlugin(ITopologyCanvasPlugin plugin);
+	void moveVertexToXYPosition(GUINode npNode, Point2D point);
 
 	/**
 	 * Resets the emphasized elements.
@@ -167,4 +163,14 @@ public interface ITopologyCanvas extends Plugin
 	 * @since 0.3.0
 	 */
 	void zoomOut();
+
+	void zoom(Point2D centerPoint, float scale);
+
+	double getCurrentCanvasScale();
+
+	Point2D getCanvasCenter();
+
+ 	Set<GUINode> getGraphVertices();
+
+	Set<GUILink> getGraphEdges();
 }

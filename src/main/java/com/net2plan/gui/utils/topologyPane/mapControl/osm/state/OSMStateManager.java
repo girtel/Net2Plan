@@ -32,7 +32,7 @@ public class OSMStateManager
         this.mapController = new OSMMapController();
 
         runningState = new OSMOnState(mapController);
-        stoppedState = new OSMOffState(canvas);
+        stoppedState = new OSMOffState(callback, canvas);
         currentState = stoppedState;
     }
 

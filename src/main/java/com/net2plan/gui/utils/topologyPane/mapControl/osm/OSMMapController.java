@@ -41,8 +41,6 @@ public class OSMMapController
     private Rectangle previousOSMViewportBounds;
     private int previousZoomLevel;
 
-    private int baseZoom;
-
     /**
      * Starts and runs the OSM map to its original state.
      * This method should be executed when the OSM map is not yet loaded.
@@ -64,13 +62,13 @@ public class OSMMapController
 
             if (!OSMMapUtils.isInsideBounds(x, y))
             {
-                String message = "Node: " + node.getName() + " is out of the accepted bounds.\n" +
-                        "All nodes must have their coordinates between the ranges: \n" +
-                        "x = [-180, 180]\n" +
-                        "y = [-90, 90]\n";
 
                 OSMMapStateBuilder.getSingleton().setStoppedState();
 
+                final String message = "Node: " + node.getName() + " is out of the accepted bounds.\n" +
+                        "All nodes must have their coordinates between the ranges: \n" +
+                        "x = [-180, 180]\n" +
+                        "y = [-90, 90]\n";
                 throw new OSMMapException(message);
             }
         }
@@ -98,10 +96,10 @@ public class OSMMapController
         final LayoutManager layout = new OverlayLayout(mapViewer);
         mapViewer.setLayout(layout);
 
-        topologyPanel.remove(canvas.getInternalVisualizationController());
+        topologyPanel.remove(canvas.getCanvasComponent());
 
         mapViewer.removeAll();
-        mapViewer.add(canvas.getInternalVisualizationController());
+        mapViewer.add(canvas.getCanvasComponent());
 
         topologyPanel.add(mapViewer, BorderLayout.CENTER);
 
@@ -121,8 +119,6 @@ public class OSMMapController
     {
         if (calculateMap) calculateMapPosition();
         alignTopologyToOSMMap();
-
-        this.baseZoom = mapViewer.getZoom();
     }
 
     /**
@@ -139,6 +135,8 @@ public class OSMMapController
         // Calculating OSM map center and zoom.
         mapViewer.zoomToBestFit(nodeToGeoPositionMap.isEmpty() ? Collections.singleton(mapViewer.getDefaultPosition()) : new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
         if (netPlan.getNumberOfNodes() <= 1) mapViewer.setZoom(16); // So that the map is not too close to the node.
+
+        mapViewer.setDefaultZoom(mapViewer.getZoom());
     }
 
     /**
@@ -152,7 +150,9 @@ public class OSMMapController
 
         final VisualizationState topologyVisualizationState = callback.getVisualizationState();
         //final double interlayerDistance = topologyVisualizationState.getInterLayerSpaceInNetPlanCoordinates();
-        final double interlayerDistance = 50 * Math.pow(2, (baseZoom - mapViewer.getZoom()));
+
+        // Using default zoom as the zoom where all nodes fit.
+        final double interlayerDistance = 50 * Math.pow(2, (mapViewer.getDefaultZoom() - mapViewer.getZoom()));
 
         // Moving the nodes to the position dictated by their geoposition.
         for (Map.Entry<Long, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
@@ -172,29 +172,28 @@ public class OSMMapController
 
                 // Moving GUI Nodes according to stack
                 final Point2D guiNodePosition = new Point2D.Double(realPosition.getX(), realPosition.getY() - (layerIndex * interlayerDistance)); // + = Downwards, - = Upwards
-                canvas.moveNodeToXYPosition(guiNode, guiNodePosition);
+                canvas.moveVertexToXYPosition(guiNode, guiNodePosition);
             }
         }
 
         @SuppressWarnings("unchecked")
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getInternalVisualizationController();
-        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getLayoutTransformer();
+        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getCanvasComponent();
 
         /* Rescale and pan JUNG layout so that it fits to OSM viewing */
-        ((JUNGCanvas) canvas).zoom((float) (1 / layoutTransformer.getScale()));
+        canvas.zoom(canvas.getCanvasCenter(), 1 / (float) canvas.getCurrentCanvasScale());
 
         Point2D q = mapViewer.getCenter();
-        Point2D lvc = layoutTransformer.inverseTransform(vv.getCenter());
+
+        Point2D aux = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(canvas.getCanvasCenter(), Layer.LAYOUT);
+        Point2D lvc = new Point2D.Double(aux.getX(), -aux.getY());
 
         double dx = (lvc.getX() - q.getX());
         double dy = (lvc.getY() - q.getY());
 
-        layoutTransformer.translate(dx, dy);
+        canvas.moveCanvasTo(new Point2D.Double(dx, dy));
 
         previousOSMViewportBounds = mapViewer.getViewportBounds();
         previousZoomLevel = mapViewer.getZoom();
-
-        System.out.println(mapViewer.getZoom());
 
         // Refresh swing components.
         canvas.refresh();
@@ -210,7 +209,7 @@ public class OSMMapController
 
         if (zoomChange != 0)
         {
-            ((JUNGCanvas) canvas).zoom((float) Math.pow(2, -zoomChange));
+            canvas.zoom(canvas.getCanvasCenter(), (float) Math.pow(2, -zoomChange));
         }
 
         previousZoomLevel = mapViewer.getZoom();
@@ -236,13 +235,13 @@ public class OSMMapController
 
         final Point2D previousOSMCenterJUNG = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double(preCenterX, preCenterY), Layer.LAYOUT);
 
-        final MutableTransformer layoutTransformer = ((JUNGCanvas) canvas).getLayoutTransformer();
-
         final double dx = (currentOSMCenterJUNG.getX() - previousOSMCenterJUNG.getX());
         final double dy = (currentOSMCenterJUNG.getY() - previousOSMCenterJUNG.getY());
 
         if (dx != 0 || dy != 0)
-            layoutTransformer.translate(-dx, dy);
+        {
+            canvas.moveCanvasTo(new Point2D.Double(-dx, dy));
+        }
 
         previousZoomLevel = mapViewer.getZoom();
         previousOSMViewportBounds = currentOSMViewportBounds;
@@ -268,12 +267,18 @@ public class OSMMapController
             mapViewer = null;
 
             // Repaint canvas on the topology panel
-            topologyPanel.add(canvas.getInternalVisualizationController(), BorderLayout.CENTER);
+            topologyPanel.add(canvas.getCanvasComponent(), BorderLayout.CENTER);
 
             // Reset nodes' original position
             for (Node node : callback.getDesign().getNodes())
             {
-                canvas.updateNodeXYPosition(node);
+                final List<GUINode> verticallyStackedGUINodes = callback.getVisualizationState().getVerticallyStackedGUINodes(node);
+
+                for (GUINode guiNode : verticallyStackedGUINodes)
+                {
+                    canvas.updateVertexXYPosition(guiNode);
+                }
+
                 canvas.zoomAll();
             }
 

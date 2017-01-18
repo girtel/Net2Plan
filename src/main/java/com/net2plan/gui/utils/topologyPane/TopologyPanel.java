@@ -22,6 +22,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import org.apache.commons.collections15.BidiMap;
 
 import com.google.common.collect.Sets;
@@ -170,7 +171,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         add(topPanel, BorderLayout.NORTH);
 
-        JComponent canvasComponent = canvas.getInternalVisualizationController();
+        JComponent canvasComponent = canvas.getCanvasComponent();
         canvasComponent.setBorder(LineBorder.createBlackLineBorder());
 
         add(canvasComponent, BorderLayout.CENTER);
@@ -218,9 +219,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         it_closeMap.addActionListener(e ->
         {
-        	if (canvas.getBackgroundOSMMapsActiveState())
+        	if (getOSMSupportState())
         	{
-	            canvas.setBackgroundOSMMapsActiveState(false);
+	            switchOSMSupport(false);
 	            it_osmMap.setEnabled(true);
 	            viewPopUp.remove(it_closeMap);
         	}
@@ -228,9 +229,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         it_osmMap.addActionListener(e ->
         {
-        	if (!canvas.getBackgroundOSMMapsActiveState())
+        	if (!getOSMSupportState())
         	{
-	            canvas.setBackgroundOSMMapsActiveState(true);
+	            switchOSMSupport(true);
 	            it_osmMap.setEnabled(false);
 	            viewPopUp.add(it_closeMap);
         	}
@@ -351,7 +352,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         if (ErrorHandling.isDebugEnabled())
         {
-            canvas.getInternalVisualizationController().addMouseMotionListener(new MouseMotionListener()
+            canvas.getCanvasComponent().addMouseMotionListener(new MouseMotionListener()
             {
                 @Override
                 public void mouseDragged(MouseEvent e)
@@ -766,5 +767,18 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     public void zoomOut()
     {
         canvas.zoomOut();
+    }
+
+    public void switchOSMSupport(final boolean doSwitch)
+    {
+        if (doSwitch)
+            OSMMapStateBuilder.getSingleton().setRunningState();
+        else
+            OSMMapStateBuilder.getSingleton().setStoppedState();
+    }
+
+    public boolean getOSMSupportState()
+    {
+        return OSMMapStateBuilder.getSingleton().isMapActivated();
     }
 }
