@@ -41,6 +41,7 @@ import org.apache.commons.collections15.functors.ConstantTransformer;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
+import com.net2plan.gui.utils.topologyPane.VisualizationConstants;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Configuration;

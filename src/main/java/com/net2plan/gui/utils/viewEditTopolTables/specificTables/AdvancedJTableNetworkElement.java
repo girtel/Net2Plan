@@ -214,7 +214,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             }
 
                         }
-                        callback.updateTables();
+                        callback.updateVisualizationJustTables();
                     }
                 }
             });
@@ -1022,7 +1022,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
         {
             if (attributesColumnsNames.size() > 0)
             {
-                callback.updateTables();
+                callback.updateVisualizationJustTables();
                 createDefaultColumnsFromModel();
                 removedColumns.clear();
                 removeNewColumn("Attributes");
@@ -1074,7 +1074,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
             if (attributesColumnsNames.size() > 0)
             {
 
-                callback.updateTables();
+                callback.updateVisualizationJustTables();
                 createDefaultColumnsFromModel();
                 removedColumns.clear();
                 for (String att : attributesColumnsNames)
@@ -1352,7 +1352,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                         try
                         {
-                        	callback.updateTables();
+                        	callback.updateVisualizationJustTables();
                         } catch (Throwable ex)
                         {
                             ErrorHandling.addErrorOrException(ex, getClass());
@@ -1429,7 +1429,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                     JDialog dialog = new AttributeEditor(callback, networkElementType, itemId);
                     dialog.setVisible(true);
-                    callback.updateTables();
+                    callback.updateVisualizationJustTables();
 
                 } catch (Throwable ex)
                 {
@@ -1536,7 +1536,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                     NetworkElement element = netPlan.getNetworkElement((long) itemId);
                     if (element == null) throw new RuntimeException("Bad");
                     element.removeAttribute(attributeToRemove);
-                    callback.updateTables();
+                    callback.updateVisualizationJustTables();
 
                 } catch (Throwable ex)
                 {
@@ -1633,7 +1633,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 
                             try
                             {
-                                callback.updateTables();
+                                callback.updateVisualizationJustTables();
                             } catch (Throwable ex)
                             {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add attribute to all nodes");
@@ -1660,7 +1660,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                     {
                         JDialog dialog = new AttributeEditor(callback, networkElementType);
                         dialog.setVisible(true);
-                        callback.updateTables();
+                        callback.updateVisualizationJustTables();
 
                     } catch (Throwable ex)
                     {
@@ -1801,7 +1801,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                                 throw new RuntimeException("Bad");
                         }
 
-                        callback.updateTables();
+                        callback.updateVisualizationJustTables();
 
                     } catch (Throwable ex)
                     {
@@ -1885,7 +1885,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
                             expandAttributes = false;
                             attributesItem.setSelected(false);
                         }
-                        callback.updateTables();
+                        callback.updateVisualizationJustTables();
                     } catch (Throwable ex)
                     {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attributes");

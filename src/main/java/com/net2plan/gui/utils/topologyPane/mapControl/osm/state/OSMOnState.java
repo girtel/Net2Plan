@@ -81,7 +81,7 @@ class OSMOnState implements OSMState
     public void removeNode(IVisualizationCallback callback, Node node)
     {
         node.remove();
-        callback.updateVisualizationAfterChanges(Sets.newHashSet(Constants.NetworkElementType.NODE));
+        callback.updateVisualizationAfterChanges(Sets.newHashSet(Constants.NetworkElementType.NODE) , null , null);
         mapController.restartMapState(false);
     }
 

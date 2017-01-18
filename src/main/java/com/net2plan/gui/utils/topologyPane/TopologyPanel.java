@@ -310,7 +310,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             public void actionPerformed(ActionEvent e)
             {
             	callback.getVisualizationState().increaseNodeSizeAll();
-            	callback.updateVisualizationJustTopologyCanvas ();
+            	canvas.refresh();
             }
         });
 
@@ -320,7 +320,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             public void actionPerformed(ActionEvent e)
             {
             	callback.getVisualizationState().decreaseNodeSizeAll();
-            	callback.updateVisualizationJustTopologyCanvas ();
+            	canvas.refresh();
             }
         });
 
@@ -330,7 +330,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             public void actionPerformed(ActionEvent e)
             {
             	callback.getVisualizationState().increaseFontSizeAll();
-            	callback.updateVisualizationJustTopologyCanvas ();
+            	canvas.refresh();
             }
         });
 
@@ -340,7 +340,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             public void actionPerformed(ActionEvent e)
             {
             	final boolean somethingChanged = callback.getVisualizationState().decreaseFontSizeAll();
-            	if (somethingChanged) callback.updateVisualizationJustTopologyCanvas ();
+            	if (somethingChanged) canvas.refresh();
             }
         });
 
@@ -428,15 +428,15 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         } else if (src == btn_showNodeNames)
         {
         	callback.getVisualizationState().setShowNodeNames(btn_showNodeNames.isSelected());
-        	callback.updateVisualizationJustTopologyCanvas();
+        	canvas.refresh();
         } else if (src == btn_showLinkIds)
         {
         	callback.getVisualizationState().setShowLinkLabels(btn_showLinkIds.isSelected());
-        	callback.updateVisualizationJustTopologyCanvas();
+        	canvas.refresh();
         } else if (src == btn_showNonConnectedNodes)
         {
         	callback.getVisualizationState().setShowNonConnectedNodes(btn_showNonConnectedNodes.isSelected());
-        	callback.updateVisualizationJustTopologyCanvas();
+        	canvas.refresh();
         } else if (src == btn_takeSnapshot)
         {
             takeSnapshot();

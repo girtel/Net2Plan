@@ -30,7 +30,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,7 +37,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -59,7 +57,6 @@ import javax.swing.border.LineBorder;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
-import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
@@ -364,18 +361,12 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
     @Override
-    public void loadDesign(NetPlan netPlan, boolean updateVisualization)
+    public void loadDesignDoNotUpdateVisualization(NetPlan netPlan)
     {
         netPlan.checkCachesConsistency();
         if (onlineSimulationPane != null) onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
         currentNetPlan = netPlan;
         netPlan.checkCachesConsistency();
-
-        // Saving original topology structure
-//        initialTopologySetting = new TopologyMap();
-//        currentNetPlan.getNodes().stream().forEach(node -> initialTopologySetting.addNodeLocation(node.getId(), node.getXYPositionMap()));
-
-        if (updateVisualization) updateVisualization(true);
     }
 
     private void resetButton()
@@ -397,10 +388,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                         break;
                 }
                 onlineSimulationPane.getSimKernel().reset();
-                loadDesign(onlineSimulationPane.getSimKernel().getCurrentNetPlan(), false);
+                loadDesignDoNotUpdateVisualization(onlineSimulationPane.getSimKernel().getCurrentNetPlan());
             } else
             {
-                loadDesign(new NetPlan(), false);
+                loadDesignDoNotUpdateVisualization(new NetPlan());
                 //algorithmSelector.reset();
                 executionPane.reset();
             }
@@ -732,7 +723,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     public void putColorInElementTopologyCanvas(Collection<? extends NetworkElement> linksAndNodes, Color color)
     {
         resetPickedStateAndUpdateView();
-        // TODO Auto-generated method stub
+        // TODO Auto-generated method stub	
     }
 
 	@Override
@@ -762,7 +753,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             updateWarnings();
         } else
         {
-            updateTables();
+            updateVisualizationJustTables();
             updateWarnings();
         }
     }
@@ -783,17 +774,21 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
     @Override
-    public void updateTables()
+    public void updateVisualizationJustTables()
     {
         viewEditTopTables.updateView();
     }
 
-    @Override
-    public void refreshTopologyCanvas(final boolean doZoomAll)
-    {
-        topologyPanel.updateLayerChooser();
-        topologyPanel.getCanvas().rebuildTopologyAndRefresh();
+	@Override
+	public void updateVisualizationAfterLinkNodeColorChanges()
+	{
+		topologyPanel.getCanvas().refresh();
+	}
 
-        if (doZoomAll) topologyPanel.getCanvas().zoomAll();
-    }
+	@Override
+	public void justApplyZoomAll()
+	{
+		topologyPanel.getCanvas().zoomAll();
+	}
+
 }

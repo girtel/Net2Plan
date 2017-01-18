@@ -1,12 +1,11 @@
 package com.net2plan.gui.utils.topologyPane;
 
-import java.awt.BasicStroke;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.awt.Color;
-import java.awt.Font;
-import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.Stroke;
-import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -20,8 +19,6 @@ import java.util.Set;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
-import static org.junit.Assert.*;
-
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.MulticastTree;
@@ -33,7 +30,6 @@ import com.net2plan.utils.Pair;
 
 public class VisualizationState
 {
-    private boolean showInterLayerLinks;
     private boolean showNodeNames;
 	private boolean showLinkLabels;
 	private boolean showLinksInNonActiveLayer;
@@ -426,14 +422,13 @@ public class VisualizationState
     {
         for (Node n : currentNp.getNodes())
         	for (GUINode gn : cache_mapNode2ListVerticallyStackedGUINodes.get(n))
-        		gn.setShapeSize(gn.getShapeSize() * SCALE_OUT);
+        		gn.setShapeSize(gn.getShapeSize() * VisualizationConstants.SCALE_OUT);
     }
 
     public void increaseNodeSizeAll()
     {
-        for (VisualizationLayer vl : vLayers)
-        	for (GUINode gn : vl.guiNodes)
-        		gn.setShapeSize(gn.getShapeSize() * SCALE_IN);
+    	for (GUINode gn : getAllGUINodes())
+    		gn.setShapeSize(gn.getShapeSize() * VisualizationConstants.SCALE_IN);
     }
 
 	public int getNumberOfVisibleLayers () { return cache_mapVisibleLayer2VisualizationOrderRemovingNonVisible.size(); }

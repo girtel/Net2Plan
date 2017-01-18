@@ -45,17 +45,13 @@ public interface IVisualizationCallback
 
     public void pickNodeAndUpdateView (Node node);
 
+    public void pickMulticastDemandAndUpdateView(MulticastDemand demand);
+    
+    public void pickForwardingRuleAndUpdateView(Pair<Demand, Link> demandLink);    
+    
     public void pickLinkAndUpdateView (Link link);
 
     public void pickDemandAndUpdateView (Demand demand);
-
-    public void pickMulticastDemandAndUpdateView (MulticastDemand demand);
-
-    public void pickForwardingRuleAndUpdateView (Pair<Demand, Link> demandLink);
-
-    void pickMulticastDemandAndUpdateView (MulticastDemand demand);
-
-    void pickForwardingRuleAndUpdateView (Pair<Demand, Link> demandLink);
 
     void pickRouteAndUpdateView (Route route);
 
@@ -64,8 +60,6 @@ public interface IVisualizationCallback
     void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg);
 
     void putColorInElementTopologyCanvas (Collection<? extends NetworkElement> linksAndNodes , Color color);
-
-	void updateVisualization(boolean doZoomAll);
 
 	public void updateVisualizationAfterLinkNodeColorChanges ();
 
@@ -77,10 +71,13 @@ public interface IVisualizationCallback
 
     public NetPlan getInitialDesign();
 
+	public void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade , BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder , List<Boolean> isLayerVisibleIndexedByLayerIndex);
+
 //    public void moveNodeXYPosition (Node node, Point2D pos , boolean updateView);
 
     public boolean inOnlineSimulationMode();
 
 	public void loadDesignDoNotUpdateVisualization(NetPlan netPlan);
 
+	public void justApplyZoomAll();
 }
