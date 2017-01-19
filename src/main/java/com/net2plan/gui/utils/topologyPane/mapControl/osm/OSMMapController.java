@@ -1,29 +1,36 @@
 package com.net2plan.gui.utils.topologyPane.mapControl.osm;
 
+import java.awt.BorderLayout;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
+import java.awt.geom.Point2D;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.swing.JComponent;
+import javax.swing.OverlayLayout;
+
+import org.jxmapviewer.viewer.GeoPosition;
+import org.jxmapviewer.viewer.TileFactory;
+
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.gui.utils.topologyPane.components.mapPanel.OSMMapPanel;
-import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.ITopologyCanvas;
+
 import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
-import edu.uci.ics.jung.visualization.transform.MutableTransformer;
-import org.jxmapviewer.viewer.*;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.Point2D;
-import java.util.*;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Jorge San Emeterio
@@ -146,22 +153,27 @@ public class OSMMapController
     private void alignTopologyToOSMMap()
     {
         final NetPlan netPlan = callback.getDesign();
-        final Map<Long, GeoPosition> nodeToGeoPositionMap = netPlan.getNodes().stream().collect(Collectors.toMap(Node::getId, node -> new GeoPosition(node.getXYPositionMap().getY(), node.getXYPositionMap().getX())));
+        final Map<Node, GeoPosition> nodeToGeoPositionMap = netPlan.getNodes().stream().collect(Collectors.toMap(node->node, node -> new GeoPosition(node.getXYPositionMap().getY(), node.getXYPositionMap().getX())));
 
         final VisualizationState topologyVisualizationState = callback.getVisualizationState();
-        //final double interlayerDistance = topologyVisualizationState.getInterLayerSpaceInNetPlanCoordinates();
-
+        final double interlayerDistanceNpCoordinates = topologyVisualizationState.getInterLayerSpaceInNetPlanCoordinates();
+        final GeoPosition geoPosition00 = new GeoPosition(0.0 , 0.0);
+        final GeoPosition geoPosition01 = new GeoPosition(1.0 , 0.0);
+        final Point2D osmCoordGeo00 = mapViewer.getTileFactory().geoToPixel(geoPosition00 , mapViewer.getZoom());
+        final Point2D osmCoordGeo01 = mapViewer.getTileFactory().geoToPixel(geoPosition01 , mapViewer.getZoom());
+        final double distanceInOsmCoordOfOneVerticalUnitNpCoordinates = Math.abs(osmCoordGeo00.getY() - osmCoordGeo01.getY());
+        final double interLayerDistanceOSMCoordinates = distanceInOsmCoordOfOneVerticalUnitNpCoordinates * interlayerDistanceNpCoordinates;
         // Using default zoom as the zoom where all nodes fit.
-        final double interlayerDistance = 50 * Math.pow(2, (mapViewer.getDefaultZoom() - mapViewer.getZoom()));
+        //final double interlayerDistance = 50 * Math.pow(2, (mapViewer.getDefaultZoom() - mapViewer.getZoom()));
 
         // Moving the nodes to the position dictated by their geoposition.
-        for (Map.Entry<Long, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
+        for (Map.Entry<Node, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
         {
-            final Node node = callback.getDesign().getNodeFromId(entry.getKey());
+            final Node node = entry.getKey();
             final GeoPosition geoPosition = entry.getValue();
 
             // The nodes' xy coordinates are not modified.
-            final Point2D realPosition = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
+            final Point2D realPositionOSMCoordinates = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
 
             // Having in mind GUI Node stack
             final List<GUINode> guiNodes = topologyVisualizationState.getVerticallyStackedGUINodes(node);
@@ -171,8 +183,8 @@ public class OSMMapController
                 final double layerIndex = guiNode.getVisualizationOrderRemovingNonVisibleLayers();
 
                 // Moving GUI Nodes according to stack
-                final Point2D guiNodePosition = new Point2D.Double(realPosition.getX(), realPosition.getY() - (layerIndex * interlayerDistance)); // + = Downwards, - = Upwards
-                canvas.moveVertexToXYPosition(guiNode, guiNodePosition);
+                final Point2D guiNodePositionOSMCoordinates = new Point2D.Double(realPositionOSMCoordinates.getX(), realPositionOSMCoordinates.getY() - (layerIndex * interLayerDistanceOSMCoordinates)); // + = Downwards, - = Upwards
+                canvas.moveVertexToXYPosition(guiNode, guiNodePositionOSMCoordinates);
             }
         }
 
