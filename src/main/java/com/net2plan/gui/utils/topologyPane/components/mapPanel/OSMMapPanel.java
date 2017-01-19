@@ -18,7 +18,7 @@ public class OSMMapPanel extends JXMapViewer
     private static final GeoPosition europe = new GeoPosition(47.20, 25.2);
 
     private final GeoPosition defaultPosition;
-    private int defaultZoom;
+    private final int defaultZoom;
 
     public OSMMapPanel()
     {
@@ -37,7 +37,6 @@ public class OSMMapPanel extends JXMapViewer
 
     public void moveToDefaultPosition()
     {
-        // Default position
         this.setCenterPosition(defaultPosition);
     }
 
@@ -54,10 +53,5 @@ public class OSMMapPanel extends JXMapViewer
     public int getDefaultZoom()
     {
         return defaultZoom;
-    }
-
-    public void setDefaultZoom(final int zoom)
-    {
-        this.defaultZoom = zoom;
     }
 }

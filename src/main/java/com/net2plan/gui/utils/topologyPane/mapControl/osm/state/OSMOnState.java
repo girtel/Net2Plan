@@ -75,7 +75,7 @@ class OSMOnState implements OSMState
         netPlan.addNode(geoPosition.getLongitude(), geoPosition.getLatitude(), "Node" + netPlan.getNumberOfNodes(), null);
 
         callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE) , null , null);
-        mapController.restartMapState(false);
+        mapController.refreshTopologyAlignment();
     }
 
     @Override
@@ -83,7 +83,7 @@ class OSMOnState implements OSMState
     {
         node.remove();
         callback.updateVisualizationAfterChanges(Sets.newHashSet(Constants.NetworkElementType.NODE) , null , null);
-        mapController.restartMapState(false);
+        mapController.refreshTopologyAlignment();
     }
 
     @Override
@@ -115,6 +115,12 @@ class OSMOnState implements OSMState
             File f = fc.getSelectedFile();
             ImageUtils.writeImageToFile(f, bi, ImageUtils.ImageType.PNG);
         }
+    }
+
+    @Override
+    public void updateNodeXYPositions()
+    {
+        mapController.refreshTopologyAlignment();
     }
 
     private Point2D convertJungPointToMapSwing(final ITopologyCanvas canvas, final Point2D jungPoint)

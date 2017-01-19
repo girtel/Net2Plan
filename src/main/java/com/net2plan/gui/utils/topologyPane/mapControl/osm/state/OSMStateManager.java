@@ -90,6 +90,11 @@ public class OSMStateManager
         currentState.takeSnapshot();
     }
 
+    public void updateNodesXYPosition()
+    {
+        currentState.updateNodeXYPositions();
+    }
+
     public boolean isMapActivated()
     {
         return currentState instanceof OSMOnState;

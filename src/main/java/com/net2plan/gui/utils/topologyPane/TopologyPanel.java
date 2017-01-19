@@ -478,17 +478,22 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         } else if (src == btn_increaseInterLayerDistance)
         {
         	if (callback.getVisualizationState().getNumberOfVisibleLayers() == 1) return;
+
         	final double currentInterLayerDistance = callback.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
         	final double newInterLayerDistance = currentInterLayerDistance * VisualizationConstants.SCALE_IN;
+
         	callback.getVisualizationState().setInterLayerSpaceInNetPlanCoordinates(newInterLayerDistance);
-        	canvas.updateAllVerticesPosition();
+        	OSMMapStateBuilder.getSingleton().updateNodesXYPosition();
+
         	canvas.refresh();
         } else if (src == btn_decreaseInterLayerDistance)
         {
         	if (callback.getVisualizationState().getNumberOfVisibleLayers() == 1) return;
+
         	final double currentInterLayerDistance = callback.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
         	callback.getVisualizationState().setInterLayerSpaceInNetPlanCoordinates(currentInterLayerDistance * VisualizationConstants.SCALE_OUT);
-            canvas.updateAllVerticesPosition();
+            OSMMapStateBuilder.getSingleton().updateNodesXYPosition();
+
         	canvas.refresh();
         }
         

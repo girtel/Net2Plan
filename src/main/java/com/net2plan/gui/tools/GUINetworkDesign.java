@@ -731,7 +731,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 	{
 		vs.rebuildVisualizationState(getDesign() , mapLayer2VisualizationOrder , isLayerVisibleIndexedByLayerIndex);
 		topologyPanel.updateLayerChooser();
-		topologyPanel.getCanvas().rebuildTopologyAndRefresh();
+		topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
 	    topologyPanel.getCanvas().zoomAll();
 	    viewEditTopTables.updateView();
 	    updateWarnings();
@@ -748,7 +748,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         if ((modificationsMade == null) ||  (modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE) || modificationsMade.contains(NetworkElementType.LAYER)))
         {
             vs.rebuildVisualizationState(getDesign() , mapLayer2VisualizationOrder , isLayerVisibleIndexedByLayerIndex);
-            topologyPanel.getCanvas().rebuildTopologyAndRefresh();
+            topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
             viewEditTopTables.updateView();
             updateWarnings();
         } else
@@ -788,7 +788,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 	@Override
 	public void updateVisualizationJustCanvasRebuildAndRefresh()
 	{
-		topologyPanel.getCanvas().rebuildTopologyAndRefresh();
+		topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
 	}
 
 	@Override

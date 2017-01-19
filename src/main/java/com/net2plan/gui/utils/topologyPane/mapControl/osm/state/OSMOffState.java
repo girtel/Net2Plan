@@ -64,7 +64,7 @@ class OSMOffState implements OSMState
     public void zoomAll()
     {
         final VisualizationState vs = callback.getVisualizationState();
-        final Set<GUINode> visibleGUINodes = canvas.getVertices().stream().filter(vs::isVisible).collect(Collectors.toSet());
+        final Set<GUINode> visibleGUINodes = canvas.getAllVertices().stream().filter(vs::isVisible).collect(Collectors.toSet());
         if (visibleGUINodes.isEmpty()) return;
 
         // Returns the canvas transformer to its original state, so that Layout = View.
@@ -139,6 +139,12 @@ class OSMOffState implements OSMState
             File f = fc.getSelectedFile();
             ImageUtils.writeImageToFile(f, bi, ImageUtils.ImageType.PNG);
         }
+    }
+
+    @Override
+    public void updateNodeXYPositions()
+    {
+        canvas.updateAllVerticesPosition();
     }
 }
 

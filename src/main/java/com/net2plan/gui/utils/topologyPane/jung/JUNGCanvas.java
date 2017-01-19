@@ -295,7 +295,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public Set<GUINode> getVertices()
+    public Set<GUINode> getAllVertices()
     {
         return Collections.unmodifiableSet(new HashSet<>(g.getVertices()));
     }
@@ -327,7 +327,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public void rebuildTopologyAndRefresh()
+    public void rebuildCanvasGraphAndRefresh()
     {
         for (GUILink gl : new ArrayList<>(g.getEdges()))
             g.removeEdge(gl);

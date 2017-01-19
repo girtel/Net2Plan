@@ -27,4 +27,6 @@ interface OSMState
     void moveNode(Node node, Point2D pos);
 
     void takeSnapshot();
+
+    void updateNodeXYPositions();
 }

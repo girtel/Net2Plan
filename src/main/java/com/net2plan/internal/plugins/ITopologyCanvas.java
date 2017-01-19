@@ -99,7 +99,7 @@ public interface ITopologyCanvas extends Plugin
 	 */
 	GUINode getVertex(MouseEvent e);
 
-	Set<GUINode> getVertices();
+	Set<GUINode> getAllVertices();
 
 	Set<GUILink> getAllEdges();
 
@@ -136,7 +136,7 @@ public interface ITopologyCanvas extends Plugin
 	 *
 	 * @since 0.3.0
 	 */
-	void rebuildTopologyAndRefresh();
+	void rebuildCanvasGraphAndRefresh();
 
 	/**
 	 * Takes a snapshot of the canvas.
