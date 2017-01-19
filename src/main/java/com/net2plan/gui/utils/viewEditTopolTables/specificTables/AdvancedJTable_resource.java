@@ -22,7 +22,8 @@ import java.util.stream.Collectors;
  * Created by César on 13/12/2016.
  */
 @SuppressWarnings("unchecked")
-public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
+public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
+{
 
     public static final int COLUMN_ID = 0;
     public static final int COLUMN_INDEX = 1;
@@ -258,9 +259,9 @@ public class AdvancedJTable_resource extends AdvancedJTableNetworkElement {
     public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
         if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
         else setAutoCreateRowSorter(true);
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NAME, new AdvancedJTableNetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_CAPACITY, new AdvancedJTableNetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INDEX, new AdvancedJTableNetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NAME, new AdvancedJTable_NetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_CAPACITY, new AdvancedJTable_NetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INDEX, new AdvancedJTable_NetworkElement.ColumnComparator());
     }
 
     @Override

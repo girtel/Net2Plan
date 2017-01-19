@@ -66,7 +66,6 @@ import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.VisualizationConstants;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
 import com.net2plan.gui.utils.viewEditWindows.utils.WindowUtils;
@@ -168,9 +167,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     	this.vs = new VisualizationState(currentNetPlan , mapLayer2VisualizationOrder , isLayerVisibleIndexedByLayerIndex);
 
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
-
-        // Running OSM state machine.
-        new OSMMapStateBuilder.SingletonBuilder(topologyPanel, this).build();
 
         leftPane = new JPanel(new BorderLayout());
         JPanel logSection = configureLeftBottomPanel();

@@ -1,9 +1,10 @@
-package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
+package com.net2plan.gui.utils.topologyPane.jung.osmSupport.state;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
+import com.net2plan.gui.utils.topologyPane.GUINode;
+import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMMapController;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
@@ -87,19 +88,6 @@ class OSMOnState implements OSMState
     }
 
     @Override
-    public void moveNode(final Node node, final Point2D positionInScreenPixels)
-    {
-        // Calculating JUNG Coordinates
-        final Point2D jungPoint = canvas.getCanvasPointFromNetPlanPoint(positionInScreenPixels);
-        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(convertJungPointToMapSwing(canvas, jungPoint));
-
-        if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
-            return;
-
-        // canvas.moveVertexToXYPosition(node, new Point2D.Double(jungPoint.getX(), -jungPoint.getY()));
-    }
-
-    @Override
     public void takeSnapshot()
     {
         final JFileChooser fc = new FileChooserConfirmOverwrite();
@@ -118,7 +106,7 @@ class OSMOnState implements OSMState
     }
 
     @Override
-    public void updateNodeXYPositions()
+    public void updateNodeXYPosition()
     {
         mapController.refreshTopologyAlignment();
     }

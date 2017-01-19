@@ -1,4 +1,4 @@
-package com.net2plan.gui.utils.topologyPane.components;
+package com.net2plan.gui.utils;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;

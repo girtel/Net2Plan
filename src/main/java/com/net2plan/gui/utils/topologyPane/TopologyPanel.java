@@ -22,17 +22,10 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
+import com.net2plan.gui.utils.*;
 import org.apache.commons.collections15.BidiMap;
 
 import com.google.common.collect.Sets;
-import com.net2plan.gui.utils.FileChooserNetworkDesign;
-import com.net2plan.gui.utils.FileDrop;
-import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.StringLabeller;
-import com.net2plan.gui.utils.SwingUtils;
-import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.gui.utils.topologyPane.components.MenuButton;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
@@ -121,7 +114,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         try
         {
-            canvas = canvasType.getDeclaredConstructor(VisualizationState.class).newInstance(callback.getVisualizationState());
+            canvas = canvasType.getDeclaredConstructor(IVisualizationCallback.class, TopologyPanel.class).newInstance(callback, this);
         } catch (Exception e)
         {
             throw new RuntimeException(e);
@@ -225,7 +218,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         it_closeMap.addActionListener(e ->
         {
-        	if (getOSMSupportState())
+        	if (canvas.isOSMRunning())
         	{
 	            switchOSMSupport(false);
 	            it_osmMap.setEnabled(true);
@@ -235,7 +228,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         it_osmMap.addActionListener(e ->
         {
-        	if (!getOSMSupportState())
+        	if (!canvas.isOSMRunning())
         	{
 	            switchOSMSupport(true);
 	            it_osmMap.setEnabled(false);
@@ -483,7 +476,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         	final double newInterLayerDistance = currentInterLayerDistance * VisualizationConstants.SCALE_IN;
 
         	callback.getVisualizationState().setInterLayerSpaceInNetPlanCoordinates(newInterLayerDistance);
-        	OSMMapStateBuilder.getSingleton().updateNodesXYPosition();
+        	canvas.updateAllVerticesXYPosition();
 
         	canvas.refresh();
         } else if (src == btn_decreaseInterLayerDistance)
@@ -492,7 +485,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         	final double currentInterLayerDistance = callback.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
         	callback.getVisualizationState().setInterLayerSpaceInNetPlanCoordinates(currentInterLayerDistance * VisualizationConstants.SCALE_OUT);
-            OSMMapStateBuilder.getSingleton().updateNodesXYPosition();
+            canvas.updateAllVerticesXYPosition();
 
         	canvas.refresh();
         }
@@ -808,16 +801,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         canvas.zoomOut();
     }
 
-    public void switchOSMSupport(final boolean doSwitch)
+    private  void switchOSMSupport(final boolean doSwitch)
     {
         if (doSwitch)
-            OSMMapStateBuilder.getSingleton().setRunningState();
+            canvas.runOSMSupport();
         else
-            OSMMapStateBuilder.getSingleton().setStoppedState();
-    }
-
-    public boolean getOSMSupportState()
-    {
-        return OSMMapStateBuilder.getSingleton().isMapActivated();
+            canvas.stopOSMSupport();
     }
 }

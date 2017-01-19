@@ -1,8 +1,9 @@
-package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
+package com.net2plan.gui.utils.topologyPane.jung.osmSupport.state;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
+import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMMapController;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
@@ -24,7 +25,7 @@ public class OSMStateManager
 
     private final OSMMapController mapController;
 
-    OSMStateManager(final IVisualizationCallback callback, final TopologyPanel topologyPanel, final ITopologyCanvas canvas)
+    public OSMStateManager(final IVisualizationCallback callback, final TopologyPanel topologyPanel, final ITopologyCanvas canvas)
     {
         this.callback = callback;
         this.topologyPanel = topologyPanel;
@@ -32,7 +33,9 @@ public class OSMStateManager
         this.mapController = new OSMMapController();
 
         runningState = new OSMOnState(callback, canvas, mapController);
-        stoppedState = new OSMOffState(callback, canvas);
+        // Using JUNG canvas off state.
+        stoppedState = new OSMJUNGOffState(callback, canvas);
+
         currentState = stoppedState;
     }
 
@@ -80,11 +83,6 @@ public class OSMStateManager
         currentState.removeNode(node);
     }
 
-    public void moveNode(final Node node, final Point2D pos)
-    {
-        currentState.moveNode(node, pos);
-    }
-
     public void takeSnapshot()
     {
         currentState.takeSnapshot();
@@ -92,7 +90,7 @@ public class OSMStateManager
 
     public void updateNodesXYPosition()
     {
-        currentState.updateNodeXYPositions();
+        currentState.updateNodeXYPosition();
     }
 
     public boolean isMapActivated()

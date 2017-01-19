@@ -77,7 +77,8 @@ import net.miginfocom.swing.MigLayout;
 /**
  */
 @SuppressWarnings("unchecked")
-public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
+public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
+{
     public static final int COLUMN_ID = 0;
     public static final int COLUMN_INDEX = 1;
     public static final int COLUMN_SHOWHIDE = 2;
@@ -474,12 +475,12 @@ public class AdvancedJTable_link extends AdvancedJTableNetworkElement {
     public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
         if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
         else setAutoCreateRowSorter(true);
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_ORIGINNODE, new AdvancedJTableNetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_DESTNODE, new AdvancedJTableNetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMROUTES, new AdvancedJTableNetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMSEGMENTS, new AdvancedJTableNetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMFORWRULES, new AdvancedJTableNetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMTREES, new AdvancedJTableNetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_ORIGINNODE, new AdvancedJTable_NetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_DESTNODE, new AdvancedJTable_NetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMROUTES, new AdvancedJTable_NetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMSEGMENTS, new AdvancedJTable_NetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMFORWRULES, new AdvancedJTable_NetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMTREES, new AdvancedJTable_NetworkElement.ColumnComparator());
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

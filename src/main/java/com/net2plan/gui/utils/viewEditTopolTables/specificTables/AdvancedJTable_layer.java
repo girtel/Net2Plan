@@ -42,7 +42,8 @@ import com.net2plan.utils.StringUtils;
 /**
  */
 @SuppressWarnings("unchecked")
-public class AdvancedJTable_layer extends AdvancedJTableNetworkElement {
+public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
+{
     public static final String netPlanViewTabName = "Layers";
     public static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Name", "Routing type", "Number of links",
             "Number of demands", "Number of multicast demands", "Number of routes", "Number of forwarding rules", "Number of backup routes",

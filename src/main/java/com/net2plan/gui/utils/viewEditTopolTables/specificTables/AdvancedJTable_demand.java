@@ -71,7 +71,8 @@ import net.miginfocom.swing.MigLayout;
 /**
  */
 @SuppressWarnings("unchecked")
-public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
+public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
+{
     private static final int COLUMN_ID = 0;
     private static final int COLUMN_INDEX = 1;
     private static final int COLUMN_INGRESSNODE = 2;
@@ -336,9 +337,9 @@ public class AdvancedJTable_demand extends AdvancedJTableNetworkElement {
     public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
         if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
         else setAutoCreateRowSorter(true);
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INGRESSNODE, new AdvancedJTableNetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_EGRESSNODE, new AdvancedJTableNetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMROUTES, new AdvancedJTableNetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INGRESSNODE, new AdvancedJTable_NetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_EGRESSNODE, new AdvancedJTable_NetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMROUTES, new AdvancedJTable_NetworkElement.ColumnComparator());
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

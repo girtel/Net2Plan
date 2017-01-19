@@ -77,7 +77,8 @@ import net.miginfocom.swing.MigLayout;
 /**
  */
 @SuppressWarnings("unchecked")
-public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
+public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
+{
     private static final int COLUMN_ID = 0;
     private static final int COLUMN_INDEX = 1;
     private static final int COLUMN_DEMAND = 2;

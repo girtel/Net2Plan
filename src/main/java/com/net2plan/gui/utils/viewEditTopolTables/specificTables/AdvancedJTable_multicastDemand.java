@@ -38,7 +38,8 @@ import com.net2plan.utils.StringUtils;
 /**
  */
 @SuppressWarnings("unchecked")
-public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement {
+public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElement
+{
     private static final int COLUMN_ID = 0;
     private static final int COLUMN_INDEX = 1;
     private static final int COLUMN_INGRESSNODE = 2;
@@ -270,9 +271,9 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTableNetworkElement
     {
         if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
         else setAutoCreateRowSorter(true);
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INGRESSNODE, new AdvancedJTableNetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_EGRESSNODES, new AdvancedJTableNetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMTREES, new AdvancedJTableNetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INGRESSNODE, new AdvancedJTable_NetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_EGRESSNODES, new AdvancedJTable_NetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMTREES, new AdvancedJTable_NetworkElement.ColumnComparator());
     }
 
     public int getNumFixedLeftColumnsInDecoration() 

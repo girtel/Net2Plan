@@ -47,7 +47,8 @@ import net.miginfocom.swing.MigLayout;
 /**
  */
 @SuppressWarnings("unchecked")
-public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement {
+public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
+{
     private static final String netPlanViewTabName = "Forwarding rules";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Node", "Demand", "Outgoing link", "Splitting ratio", "Carried traffic");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Node where the forwarding rule is installed", "Demand", "Outgoing link", "Percentage of the traffic entering the node going through the outgoing link", "Carried traffic in this link for the demand");
@@ -240,9 +241,9 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTableNetworkElement 
     public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
         if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
         else setAutoCreateRowSorter(true);
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NODE, new AdvancedJTableNetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_DEMAND, new AdvancedJTableNetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_OUTGOINGLINK, new AdvancedJTableNetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NODE, new AdvancedJTable_NetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_DEMAND, new AdvancedJTable_NetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_OUTGOINGLINK, new AdvancedJTable_NetworkElement.ColumnComparator());
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

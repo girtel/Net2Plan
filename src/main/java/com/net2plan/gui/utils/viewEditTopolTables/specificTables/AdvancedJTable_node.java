@@ -42,7 +42,8 @@ import net.miginfocom.swing.MigLayout;
 /**
  */
 @SuppressWarnings("unchecked")
-public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
+public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
+{
     public static final int COLUMN_ID = 0;
     public static final int COLUMN_INDEX = 1;
     public static final int COLUMN_SHOWHIDE = 2;
@@ -339,8 +340,8 @@ public class AdvancedJTable_node extends AdvancedJTableNetworkElement {
     public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
         if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
         else setAutoCreateRowSorter(true);
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_OUTLINKS, new AdvancedJTableNetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INLINKS, new AdvancedJTableNetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_OUTLINKS, new AdvancedJTable_NetworkElement.ColumnComparator());
+        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INLINKS, new AdvancedJTable_NetworkElement.ColumnComparator());
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

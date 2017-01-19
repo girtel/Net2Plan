@@ -1,13 +1,8 @@
-package com.net2plan.gui.utils.topologyPane.components.mapPanel;
+package com.net2plan.gui.utils.topologyPane.jung.osmSupport;
 
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.viewer.*;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Created by Jorge San Emeterio on 13/10/2016.

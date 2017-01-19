@@ -98,7 +98,7 @@ import com.net2plan.utils.StringUtils;
  * @since 0.2.0
  */
 @SuppressWarnings("unchecked")
-public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
+public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
     protected final TableModel model;
     protected final IVisualizationCallback callback;
     protected final NetworkElementType networkElementType;
@@ -131,7 +131,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      * @param networkElementType Network element type
      * @since 0.2.0
      */
-    public AdvancedJTableNetworkElement(TableModel model, final IVisualizationCallback networkViewer, NetworkElementType networkElementType, boolean canExpandAttributes)
+    public AdvancedJTable_NetworkElement(TableModel model, final IVisualizationCallback networkViewer, NetworkElementType networkElementType, boolean canExpandAttributes)
     {
         super(model);
         this.model = model;
@@ -780,7 +780,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      */
     private void loadTableState()
     {
-//        Map<NetworkElementType, AdvancedJTableNetworkElement> currentTables = callback.getTables();
+//        Map<NetworkElementType, AdvancedJTable_NetworkElement> currentTables = callback.getTables();
 //        HashMap<NetworkElementType, TableState> tStateMap = null;
 //        try
 //        {
@@ -789,7 +789,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
 //        {
 //            e.printStackTrace();
 //        }
-//        for (Map.Entry<NetworkElementType, AdvancedJTableNetworkElement> entry : currentTables.entrySet())
+//        for (Map.Entry<NetworkElementType, AdvancedJTable_NetworkElement> entry : currentTables.entrySet())
 //        {
 //            entry.getValue().updateTableFromTableState(tStateMap.get(entry.getValue().getNetworkElementType()));
 //        }
@@ -803,7 +803,7 @@ public abstract class AdvancedJTableNetworkElement extends AdvancedJTable {
      */
     private void saveTableState() throws XMLStreamException
     {
-//        Map<NetworkElementType, AdvancedJTableNetworkElement> currentTables = callback.getTables();
+//        Map<NetworkElementType, AdvancedJTable_NetworkElement> currentTables = callback.getTables();
 //        TableStateController.saveTableState(currentTables);
     }
 

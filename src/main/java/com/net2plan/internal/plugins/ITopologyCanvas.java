@@ -61,8 +61,6 @@ public interface ITopologyCanvas extends Plugin
 	 */
 	void removePlugin(ITopologyCanvasPlugin plugin);
 
-	void resetTransformer();
-
 	double getCurrentCanvasScale();
 
 	Point2D getCanvasCenter();
@@ -70,8 +68,6 @@ public interface ITopologyCanvas extends Plugin
 	Point2D getCanvasPointFromNetPlanPoint(Point2D screenPoint);
 
 	Point2D getCanvasPointFromScreenPoint(Point2D netPlanPoint);
-
-	Rectangle getCurrentCanvasViewWindow();
 
 	/**
 	 * Returns a reference to the internal component containing the canvas.
@@ -103,19 +99,31 @@ public interface ITopologyCanvas extends Plugin
 
 	Set<GUILink> getAllEdges();
 
+	void panTo(Point2D initialPoint, Point2D destinationPoint);
+
+	void addNode(Point2D position);
+
+	void removeNode(Node node);
+
+	void runOSMSupport();
+
+	void stopOSMSupport();
+
+	boolean isOSMRunning();
+
 	void moveCanvasTo(Point2D destinationPoint);
 
-    /**
+	void updateAllVerticesXYPosition();
+
+	/**
 	 * Moves a GUI node to the desired point.
-	 * This method does not change the node's xy coordinates.
+	 * Th#is method does not change the node's xy coordinates.
 	 * Have in mind that by using this method, the xy coordinates from the table do not equal the coordinates from the topology.
 	 *
 	 * @param npNode Node to move.
 	 * @param point  Point to which the node will be moved.
 	 */
 	void moveVertexToXYPosition(GUINode npNode, Point2D point);
-
-	void updateAllVerticesPosition();
 
 	/**
 	 * Resets the emphasized elements.

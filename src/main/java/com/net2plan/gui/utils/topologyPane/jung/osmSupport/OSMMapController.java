@@ -1,4 +1,4 @@
-package com.net2plan.gui.utils.topologyPane.mapControl.osm;
+package com.net2plan.gui.utils.topologyPane.jung.osmSupport;
 
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
@@ -17,19 +17,14 @@ import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactory;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
-import com.net2plan.gui.utils.topologyPane.components.mapPanel.OSMMapPanel;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.ITopologyCanvas;
-
-import edu.uci.ics.jung.visualization.VisualizationViewer;
 
 /**
  * @author Jorge San Emeterio
@@ -68,8 +63,7 @@ public class OSMMapController
 
             if (!OSMMapUtils.isInsideBounds(x, y))
             {
-
-                OSMMapStateBuilder.getSingleton().setStoppedState();
+                canvas.stopOSMSupport();
 
                 final String message = "Node: " + node.getName() + " is out of the accepted bounds.\n" +
                         "All nodes must have their coordinates between the ranges: \n" +
@@ -119,7 +113,7 @@ public class OSMMapController
     /**
      * Restarts the map to its original state. The one that showed up when first starting the map support.
      */
-    public void restartMap()
+    private void restartMap()
     {
         calculateMapPosition();
         alignTopologyToOSMMap();
@@ -192,9 +186,6 @@ public class OSMMapController
                 canvas.moveVertexToXYPosition(guiNode, guiNodePositionOSMCoordinates);
             }
         }
-
-        @SuppressWarnings("unchecked")
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getCanvasComponent();
 
         /* Rescale and pan JUNG layout so that it fits to OSM viewing */
         canvas.zoom(canvas.getCanvasCenter(), 1 / (float) canvas.getCurrentCanvasScale());
@@ -287,7 +278,7 @@ public class OSMMapController
             topologyPanel.add(canvas.getCanvasComponent(), BorderLayout.CENTER);
 
             // Reset nodes' original position
-            canvas.updateAllVerticesPosition();
+            canvas.updateAllVerticesXYPosition();
             canvas.zoomAll();
 
             topologyPanel.validate();
@@ -300,7 +291,7 @@ public class OSMMapController
      */
     public void zoomAll()
     {
-        if (isMapActivated())
+        if (canvas.isOSMRunning())
         {
             refreshTopologyAlignment();
         } else
@@ -317,7 +308,7 @@ public class OSMMapController
      */
     public void moveMap(final double dx, final double dy)
     {
-        if (isMapActivated())
+        if (canvas.isOSMRunning())
         {
             final TileFactory tileFactory = mapViewer.getTileFactory();
 
@@ -339,7 +330,7 @@ public class OSMMapController
      */
     public void zoomIn()
     {
-        if (isMapActivated())
+        if (canvas.isOSMRunning())
         {
             mapViewer.setZoom(mapViewer.getZoom() - 1);
 
@@ -356,7 +347,7 @@ public class OSMMapController
      */
     public void zoomOut()
     {
-        if (isMapActivated())
+        if (canvas.isOSMRunning())
         {
             mapViewer.setZoom(mapViewer.getZoom() + 1);
 
@@ -366,16 +357,6 @@ public class OSMMapController
         {
             throw new OSMMapException("Map is currently deactivated");
         }
-    }
-
-    /**
-     * Gets whether the OSM map component is activated or not.
-     *
-     * @return Map activation state.
-     */
-    private boolean isMapActivated()
-    {
-        return OSMMapStateBuilder.getSingleton().isMapActivated();
     }
 
     public JComponent getMapComponent()

@@ -1,8 +1,7 @@
-package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
+package com.net2plan.gui.utils.topologyPane.jung.osmSupport.state;
 
-import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.internal.plugins.ITopologyCanvas;
 
 import java.awt.geom.Point2D;
 
@@ -24,9 +23,7 @@ interface OSMState
 
     void removeNode(Node node);
 
-    void moveNode(Node node, Point2D pos);
-
     void takeSnapshot();
 
-    void updateNodeXYPositions();
+    void updateNodeXYPosition();
 }

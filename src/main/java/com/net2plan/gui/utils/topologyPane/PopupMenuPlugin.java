@@ -28,7 +28,6 @@ import javax.swing.JPopupMenu;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -226,7 +225,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
 //                for (Node node : callback.getDesign().getNodes())
 //                {
 //                    // This is supposed to be done with the OSM state manager, but that does not exactly do what is required here.
-//                    moveNode(node.getId(), initialTopologySetting.getNodeLocation(node));
+//                    getPointToMoveNode(node.getId(), initialTopologySetting.getNodeLocation(node));
 //                }
 //
 //                topologyPanel.zoomAll();
@@ -246,7 +245,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
                 	nodes.get(i).setXYPositionMap(new Point2D.Double(positionInNetPlanCoordinates.getX() + radius * Math.cos(Math.toRadians(angStep*i)) , positionInNetPlanCoordinates.getY() + radius * Math.sin(Math.toRadians(angStep*i))));
 //                for (Node node : nodes)
 //                {
-//                    OSMMapStateBuilder.getSingleton().moveNode(node, nodePosition.get(node.getId()));
+//                    OSMMapStateBuilder.getSingleton().getPointToMoveNode(node, nodePosition.get(node.getId()));
 //                }
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE), null , null);
                 callback.justApplyZoomAll();
@@ -273,7 +272,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         @Override
         public void actionPerformed(ActionEvent e)
         {
-        	OSMMapStateBuilder.getSingleton().removeNode(node);
+            canvas.removeNode(node);
         }
     }
 
@@ -290,7 +289,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            OSMMapStateBuilder.getSingleton().addNode(positionInNetPlanCoordinates);
+            canvas.addNode(positionInNetPlanCoordinates);
         }
     }
 

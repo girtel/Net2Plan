@@ -1,10 +1,11 @@
-package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
+package com.net2plan.gui.utils.topologyPane.jung.osmSupport.state;
 
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.VisualizationConstants;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.plugins.ITopologyCanvas;
@@ -12,29 +13,35 @@ import com.net2plan.utils.ImageUtils;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
-
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * @author Jorge San Emeterio
- * @date 01-Dec-16
+ * @date 19-Jan-17
  */
-class OSMOffState implements OSMState
+public class OSMJUNGOffState extends OSMOffState
 {
     private final IVisualizationCallback callback;
-    private final ITopologyCanvas canvas;
+    private final JUNGCanvas canvas;
 
     @SuppressWarnings("unchecked")
-    OSMOffState(final IVisualizationCallback callback, final ITopologyCanvas canvas)
+    OSMJUNGOffState(final IVisualizationCallback callback, final ITopologyCanvas canvas)
     {
         this.callback = callback;
-        this.canvas = canvas;
+
+        if (!(canvas instanceof JUNGCanvas))
+        {
+            throw new RuntimeException("Trying to use JUNG canvas state controller with another type of canvas.");
+        }
+
+        this.canvas = (JUNGCanvas) canvas;
     }
 
     @Override
@@ -103,22 +110,15 @@ class OSMOffState implements OSMState
     @Override
     public void addNode(Point2D pos)
     {
-        callback.getDesign().addNode(pos.getX() , pos.getY() , "Node" + callback.getDesign().getNumberOfNodes(), null);
-        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE) , null , null);
+        callback.getDesign().addNode(pos.getX(), pos.getY(), "Node" + callback.getDesign().getNumberOfNodes(), null);
+        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE), null, null);
     }
 
     @Override
     public void removeNode(Node node)
     {
         node.remove();
-        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE) ,null , null);
-    }
-
-    @Override
-    public void moveNode(Node node, Point2D screenPoint)
-    {
-        final Point2D jungPoint = canvas.getCanvasPointFromNetPlanPoint(screenPoint);
-        // canvas.moveVertexToXYPosition(node, new Point2D.Double(jungPoint.getX(), -jungPoint.getY()));
+        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE), null, null);
     }
 
     @Override
@@ -142,9 +142,11 @@ class OSMOffState implements OSMState
     }
 
     @Override
-    public void updateNodeXYPositions()
+    public void updateNodeXYPosition()
     {
-        canvas.updateAllVerticesPosition();
+        for (GUINode guiNode : canvas.getAllVertices())
+        {
+            canvas.getLayout().setLocation(guiNode, canvas.getTransformer().transform(guiNode));
+        }
     }
 }
-

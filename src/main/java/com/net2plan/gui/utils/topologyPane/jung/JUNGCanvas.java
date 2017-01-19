@@ -27,23 +27,19 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 
-import edu.uci.ics.jung.visualization.transform.AffineTransformer;
+import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.topologyPane.*;
+import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMMapController;
+import com.net2plan.gui.utils.topologyPane.jung.osmSupport.state.OSMStateManager;
+import com.net2plan.interfaces.networkDesign.Node;
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.collections15.functors.ConstantTransformer;
 
-import com.net2plan.gui.utils.topologyPane.GUILink;
-import com.net2plan.gui.utils.topologyPane.GUINode;
-import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
-import com.net2plan.gui.utils.topologyPane.VisualizationConstants;
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Configuration;
-import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.Triple;
@@ -98,15 +94,15 @@ public final class JUNGCanvas implements ITopologyCanvas
     private final Transformer<Context<Graph<GUINode, GUILink>, GUILink>, Shape> originalEdgeShapeTransformer;
     private VisualizationServer.Paintable paintableAssociatedToBackgroundImage;
 
+    private final OSMStateManager osmStateManager;
+
     /**
      * Default constructor.
      *
      * @since 0.2.3
      */
-    public JUNGCanvas(VisualizationState vs)
+    public JUNGCanvas(IVisualizationCallback callback, TopologyPanel topologyPanel)
     {
-        this.vs = vs;
-
         transformNetPlanCoordinatesToJungCoordinates = vertex ->
         {
             final int vlIndex = vertex.getVisualizationOrderRemovingNonVisibleLayers();
@@ -118,6 +114,10 @@ public final class JUNGCanvas implements ITopologyCanvas
         g = new DirectedOrderedSparseMultigraph<>();
         l = new StaticLayout<>(g, transformNetPlanCoordinatesToJungCoordinates);
         vv = new VisualizationViewer<>(l);
+
+        this.vs = callback.getVisualizationState();
+
+        osmStateManager = new OSMStateManager(callback, topologyPanel, this);
 
         originalEdgeShapeTransformer = new EdgeShape.QuadCurve<>();
         ((EdgeShape.QuadCurve<GUINode, GUILink>) originalEdgeShapeTransformer).setControlOffsetIncrement(10); // how much they separate from the direct line (default is 20)
@@ -228,7 +228,6 @@ public final class JUNGCanvas implements ITopologyCanvas
         return layoutOrViewCoordinates;
     }
 
-    @Override
     public void resetTransformer()
     {
         vv.getRenderContext().getMultiLayerTransformer().setToIdentity();
@@ -240,7 +239,6 @@ public final class JUNGCanvas implements ITopologyCanvas
         return vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, netPlanPoint);
     }
 
-    @Override
     public Rectangle getCurrentCanvasViewWindow()
     {
         return vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
@@ -306,6 +304,16 @@ public final class JUNGCanvas implements ITopologyCanvas
         return Collections.unmodifiableSet(new HashSet<>(g.getEdges()));
     }
 
+    public Layout<GUINode, GUILink> getLayout()
+    {
+        return l;
+    }
+
+    public Transformer<GUINode, Point2D> getTransformer()
+    {
+        return transformNetPlanCoordinatesToJungCoordinates;
+    }
+
     @Override
     public List<Triple<String, String, String>> getParameters()
     {
@@ -342,22 +350,55 @@ public final class JUNGCanvas implements ITopologyCanvas
     @Override
     public void zoomAll()
     {
-        OSMMapStateBuilder.getSingleton().zoomAll();
+        osmStateManager.zoomAll();
     }
 
     @Override
-    public void updateAllVerticesPosition()
+    public void updateAllVerticesXYPosition()
     {
-        for (GUINode guiNode : g.getVertices())
-        {
-            l.setLocation(guiNode, transformNetPlanCoordinatesToJungCoordinates.transform(guiNode));
-        }
+        osmStateManager.updateNodesXYPosition();
     }
 
     @Override
     public void moveVertexToXYPosition(GUINode npNode, Point2D point)
     {
         l.setLocation(npNode, point);
+    }
+
+    @Override
+    public void panTo(Point2D initialPoint, Point2D destinationPoint)
+    {
+        osmStateManager.panTo(initialPoint, destinationPoint);
+    }
+
+    @Override
+    public void addNode(Point2D position)
+    {
+        osmStateManager.addNode(position);
+    }
+
+    @Override
+    public void removeNode(Node node)
+    {
+        osmStateManager.removeNode(node);
+    }
+
+    @Override
+    public void runOSMSupport()
+    {
+        osmStateManager.setRunningState();
+    }
+
+    @Override
+    public void stopOSMSupport()
+    {
+        osmStateManager.setRunningState();
+    }
+
+    @Override
+    public boolean isOSMRunning()
+    {
+        return osmStateManager.isMapActivated();
     }
 
     @Override
@@ -370,13 +411,13 @@ public final class JUNGCanvas implements ITopologyCanvas
     @Override
     public void zoomIn()
     {
-        OSMMapStateBuilder.getSingleton().zoomIn();
+        osmStateManager.zoomIn();
     }
 
     @Override
     public void zoomOut()
     {
-        OSMMapStateBuilder.getSingleton().zoomOut();
+        osmStateManager.zoomOut();
     }
 
     @Override
@@ -470,7 +511,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     @Override
     public void takeSnapshot()
     {
-        OSMMapStateBuilder.getSingleton().takeSnapshot();
+        osmStateManager.takeSnapshot();
     }
 
     private class NodeLabelRenderer extends BasicVertexLabelRenderer<GUINode, GUILink>
@@ -563,7 +604,7 @@ public final class JUNGCanvas implements ITopologyCanvas
         }
     }
 
-    private static class ScalingCanvasPlugin extends ScalingGraphMousePlugin implements ITopologyCanvasPlugin
+    private class ScalingCanvasPlugin extends ScalingGraphMousePlugin implements ITopologyCanvasPlugin
     {
         public ScalingCanvasPlugin(ScalingControl scaler, int modifiers)
         {
@@ -583,17 +624,17 @@ public final class JUNGCanvas implements ITopologyCanvas
                 {
                     if (amount > 0)
                     {
-                        OSMMapStateBuilder.getSingleton().zoomOut();
+                        osmStateManager.zoomOut();
                     } else if (amount < 0)
                     {
-                        OSMMapStateBuilder.getSingleton().zoomIn();
+                        osmStateManager.zoomIn();
                     }
                 } else if (amount > 0)
                 {
-                    OSMMapStateBuilder.getSingleton().zoomOut();
+                    osmStateManager.zoomOut();
                 } else if (amount < 0)
                 {
-                    OSMMapStateBuilder.getSingleton().zoomIn();
+                    osmStateManager.zoomIn();
                 }
 
                 e.consume();
