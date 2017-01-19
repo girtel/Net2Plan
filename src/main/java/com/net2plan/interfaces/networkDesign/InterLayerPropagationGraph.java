@@ -25,6 +25,7 @@ public class InterLayerPropagationGraph
 			this.d = d;
 			this.e = e;
 			this.mdn = mdn;
+			if (mdn != null) if (!mdn.getFirst().getEgressNodes().contains(mdn.getSecond())) throw new Net2PlanException ("Bad egress node");
 		}
 		boolean isLink () { return e != null; }
 		boolean isDemand () { return d != null; }
@@ -32,6 +33,7 @@ public class InterLayerPropagationGraph
 		Demand getDemand () { return d; }
 		Link getLink () { return e;}
 		Pair<MulticastDemand,Node> getMulticastDemandAndNode () { return mdn; }
+		public String toString () { return "d: " + d  + ", e: " + e + ", MD: " + mdn; }
 	}
 
 	private final boolean assumeNonFailureState;
@@ -69,7 +71,8 @@ public class InterLayerPropagationGraph
 	private Map<Pair<MulticastDemand,Node>,IPGNode> mDemandAndNode2VertexMap;
 	private final boolean upWardsTrueDownwardsFalse;
 	private final DirectedAcyclicGraph<IPGNode, Object> interLayerPropagationGraph;
-	public InterLayerPropagationGraph (Set<Demand> initialDemands , Set<Link> initialLinks , Set<Pair<MulticastDemand,Node>> initialMDemands , boolean upWards , boolean assumeNonFailureState)
+	public InterLayerPropagationGraph (Set<Demand> initialDemands , Set<Link> initialLinks ,
+			Set<Pair<MulticastDemand,Node>> initialMDemands , boolean upWards , boolean assumeNonFailureState)
 	{
 		this.assumeNonFailureState = assumeNonFailureState;
 		this.interLayerPropagationGraph  = new DirectedAcyclicGraph<IPGNode, Object>(Object.class);
@@ -114,8 +117,12 @@ public class InterLayerPropagationGraph
 		{
 			final Link e = initialNode.getLink();
 			if (!e.isCoupled()) return;
-			final Demand downGraphNodeLink = e.getCoupledDemand();
-			addEdgeAddingNewVertexAndPropagatingIfNeeded(downGraphNodeLink, initialNode, this.upWardsTrueDownwardsFalse);
+			final Demand downGraphNodeDemand = e.getCoupledDemand();
+			final MulticastDemand downGraphNodeMulticastDemand = e.getCoupledMulticastDemand();
+			if (downGraphNodeDemand != null)
+				addEdgeAddingNewVertexAndPropagatingIfNeeded(downGraphNodeDemand, initialNode, this.upWardsTrueDownwardsFalse);
+			else
+				addEdgeAddingNewVertexAndPropagatingIfNeeded(Pair.of(downGraphNodeMulticastDemand , e.getDestinationNode()), initialNode, this.upWardsTrueDownwardsFalse);
 		}
 		else if (initialNode.isDemand())
 		{
@@ -131,7 +138,7 @@ public class InterLayerPropagationGraph
 			for (Link e : downGraphNodeLinks)
 				addEdgeAddingNewVertexAndPropagatingIfNeeded(e, initialNode, this.upWardsTrueDownwardsFalse);
 		}
-		else throw new RuntimeException();
+		else throw new RuntimeException("initialNode: " + initialNode);
 	}
 	private void addVertexAndEdgesToGraphFromInitialIPGUpwards (IPGNode initialNode) throws RuntimeException
 	{

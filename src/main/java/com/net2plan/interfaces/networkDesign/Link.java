@@ -446,7 +446,7 @@ public class Link extends NetworkElement
 		newDemandLayer.checkAttachedToNetPlanObject(this.netPlan);
 		if (this.layer.equals (newDemandLayer)) throw new Net2PlanException ("Cannot couple a link and a demand in the same layer");
 		Demand newDemand = netPlan.addDemand(originNode ,  destinationNode , capacity , null , newDemandLayer);
-		try { newDemand.coupleToUpperLayerLink(this); } catch (RuntimeException e) { newDemand.remove (); System.out.println ("************* Bad **********"); throw e; }
+		try { newDemand.coupleToUpperLayerLink(this); } catch (RuntimeException e) { newDemand.remove (); throw e; }
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		return newDemand;
 	}
@@ -557,15 +557,7 @@ public class Link extends NetworkElement
 		if (!isUp)
 		{
 			if (Math.abs(cache_carriedTraffic) > 1e-3)
-			{
-				System.out.println ("Link " + this + ", is down, and carried traffic is: " + cache_carriedTraffic);
-				System.out.println ("Traversing routes: " + cache_traversingRoutes);
-				for (Route r : cache_traversingRoutes.keySet())
-					System.out.println ("Route " + r + ", isDown? " + r.isDown() + ", carriedTraffic: " + r.getCarriedTraffic() + ", carried of all ok: " + r.currentCarriedTrafficIfNotFailing);
-				if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) System.out.println ("f_d for this link, all demands: " + layer.forwardingRulesNoFailureState_f_de.viewColumn(index));
-				if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) System.out.println ("x_d for this link, all demands: " + layer.forwardingRulesCurrentFailureState_x_de.viewColumn(index));
 				throw new RuntimeException ("Bad");
-			}
 			if (Math.abs(cache_occupiedCapacity) > 1e-3) throw new RuntimeException ("Bad");
 			for (Route r : cache_traversingRoutes.keySet()) if ((r.getCarriedTraffic() != 0) || (r.getOccupiedCapacity(this) != 0)) throw new RuntimeException ("Bad");
 			for (MulticastTree r : cache_traversingTrees) if ((r.getCarriedTraffic() != 0) || (r.getOccupiedLinkCapacity() != 0)) throw new RuntimeException ("Bad");
@@ -575,8 +567,6 @@ public class Link extends NetworkElement
 
 		if (layer.routingType == RoutingType.SOURCE_ROUTING)
 		{
-//			System.out.println ("The routes traversing link " + this + " in layer: " + layer + " are " + cache_traversingRoutes);
-//			for (Route r : cache_traversingRoutes.keySet()) System.out.println ("-- route: " + r + ", seq links real path: " + r.seqLinksRealPath);
 			for (Route route : layer.routes)
 			{
 				if (this.cache_traversingRoutes.containsKey(route) != route.cache_seqLinksRealPath.contains(this)) throw new RuntimeException ("Bad. link: " + this + ", route: " + route + ", this.cache_traversingRoutes: " + this.cache_traversingRoutes + ", route.seqLinksRealPath: "+  route.cache_seqLinksRealPath);
@@ -585,7 +575,6 @@ public class Link extends NetworkElement
 					int numPasses = 0; for (Link linkRoute : route.cache_seqLinksRealPath) if (linkRoute == this) numPasses ++; if (numPasses != this.cache_traversingRoutes.get(route)) throw new RuntimeException ("Bad");
 					check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += route.getCarriedTraffic();
 					check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += route.getOccupiedCapacity(this);
-//					System.out.println ("Route " + route + ", traverses this link (" + this + "), numPasses: " + this.cache_traversingRoutes.get(route) + ", its carried traffic is: " + route.carriedTraffic + " and thus accumlates a carried traffic of: " + (route.carriedTraffic * this.cache_traversingRoutes.get(route)));
 				}
 			}
 		}
@@ -607,11 +596,7 @@ public class Link extends NetworkElement
 		}
 
 		if (Math.abs(cache_carriedTraffic - check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) 
-		{
-			System.out.println ("Link "+ this + ", is Up: " + isUp + ", trav routes: " + cache_traversingRoutes);
-			for (Route r : cache_traversingRoutes.keySet()) System.out.println ("-- trav route: " + r + ", is down: " + r.isDown() + ", carried: " + r.getCarriedTraffic() + ", carried all ok: " + r.currentCarriedTrafficIfNotFailing + ", seqlinks real: " + r.cache_seqLinksRealPath);
 			throw new RuntimeException ("Bad: Link: " + this + ". carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + cache_carriedTraffic + ", check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
-		}
 		org.junit.Assert.assertEquals(cache_occupiedCapacity , check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments , 1E-3);
 		
 		if (coupledLowerLayerDemand != null)
@@ -636,7 +621,7 @@ public class Link extends NetworkElement
 		}
 	}
 
-	/** Returns the set of links in this layer carry the traffic that traverses this link, before and after traversing it,
+	/** Returns the set of links in this layer (including this) that carry the traffic that traverses this link, before and after traversing it,
 	 *  according to the routes/forwarding rules defined. 
 	 *  Potentially carrying traffic means that (i) in source routing, down routes are not included, but all up routes 
 	 *  are considered even if the carry zero traffic, 
@@ -645,7 +630,6 @@ public class Link extends NetworkElement
 	 * the other links (aside of this) that this link traffic also traverses, but are not part of backup routes, 
 	 * (ii) second map, the same as before, but only links belonging to backup routes, (iii) other links with multicast trees that traverse this 
 	 * node, being a key its associated multicast demands.
-	 * <p>Note: this link is not included in any set an any map </p>
 	 *  
 	 * @param assumeNoFailureState in this case, the links are computed as if all network link/nodes are in no-failure state
 	 * capacity in it
@@ -669,7 +653,6 @@ public class Link extends NetworkElement
 				resBackup.put(d ,  resThisDemand_backup);
 				
 				final int index_ad = d.getIngressNode().index;
-				if (d.getOfferedTraffic() == 0) continue;
 				DoubleMatrix1D f_e;// = layer.forwardingRulesNoFailureState_f_de.viewRow(d.index);
 				DoubleMatrix2D fundMatrix;
 				if (someLinksFailed && !assumeNoFailureState)
@@ -693,7 +676,6 @@ public class Link extends NetworkElement
 				/* See the links that carry traffic of this demand AND such traffic traversed BEFORE or AFTER this link */
 				for (Link candLink : layer.links)
 				{
-					if (candLink == this) continue; // do not add this link
 					/* Candidate link does not carry demand traffic => continue */
 					if (fundMatrix.get(index_ad, candLink.originNode.index) * f_e.get(candLink.index) == 0) continue; 
 					/* if the traffic outgoing cand link enters my link, include it */
@@ -710,7 +692,6 @@ public class Link extends NetworkElement
 				if (!assumeNoFailureState && r.isDown()) continue;
 				for (Link e : r.getSeqLinks())
 				{
-					if (e == this) continue; // do not add this link
 					if (r.isBackupRoute())
 					{
 						Set<Link> linksSoFar = resBackup.get(r.getDemand());

@@ -443,7 +443,7 @@ public class MulticastDemand extends NetworkElement
 	public Set<Link> getLinksThisLayerPotentiallyCarryingTraffic  (Node egressNode , boolean assumeNoFailureState)
 	{
 		checkAttachedToNetPlanObject();
-		if (this.egressNodes.contains(egressNode)) throw new Net2PlanException ("This is not an egress node of the multicast demand");
+		if (!this.egressNodes.contains(egressNode)) throw new Net2PlanException ("This is not an egress node of the multicast demand");
 		
 		Set<Link> res = new HashSet<> ();
 		for (MulticastTree t : cache_multicastTrees)
