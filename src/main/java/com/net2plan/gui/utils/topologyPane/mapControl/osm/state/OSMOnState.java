@@ -9,7 +9,6 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.ImageUtils;
-import edu.uci.ics.jung.visualization.Layer;
 import org.jxmapviewer.viewer.GeoPosition;
 
 import javax.swing.*;
@@ -91,7 +90,7 @@ class OSMOnState implements OSMState
     public void moveNode(final Node node, final Point2D positionInScreenPixels)
     {
         // Calculating JUNG Coordinates
-        final Point2D jungPoint = canvas.getNetPlanCoordinateFromScreenPixelCoordinate(positionInScreenPixels);
+        final Point2D jungPoint = canvas.getCanvasPointFromNetPlanPoint(positionInScreenPixels);
         final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(convertJungPointToMapSwing(canvas, jungPoint));
 
         if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))

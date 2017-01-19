@@ -61,13 +61,17 @@ public interface ITopologyCanvas extends Plugin
 	 */
 	void removePlugin(ITopologyCanvasPlugin plugin);
 
-	Point2D getNetPlanCoordinateFromScreenPixelCoordinate(Point2D screenPoint);
-
 	void resetTransformer();
 
-	Point2D getCanvasPointFromNetPlanPoint(Point2D netPlanPoint);
+	double getCurrentCanvasScale();
 
-	Rectangle getViewWindow();
+	Point2D getCanvasCenter();
+
+	Point2D getCanvasPointFromNetPlanPoint(Point2D screenPoint);
+
+	Point2D getCanvasPointFromScreenPoint(Point2D netPlanPoint);
+
+	Rectangle getCurrentCanvasViewWindow();
 
 	/**
 	 * Returns a reference to the internal component containing the canvas.
@@ -95,25 +99,11 @@ public interface ITopologyCanvas extends Plugin
 	 */
 	GUINode getVertex(MouseEvent e);
 
-	/**
-	 * Pans the graph to the .
-	 *
-	 * @param initialPoint Initial point where the mouse was pressed
-	 * @param currentPoint Current point where the mouse is
-	 * @since 0.3.1
-	 */
-	void panTo(Point2D initialPoint, Point2D currentPoint);
+	Set<GUINode> getVertices();
+
+	Set<GUILink> getAllEdges();
 
 	void moveCanvasTo(Point2D destinationPoint);
-
-	/**
-	 * Refreshes the canvas.
-	 *
-	 * @since 0.3.0
-	 */
-	void refresh();
-
-    void updateAllVerticesPosition();
 
     /**
 	 * Moves a GUI node to the desired point.
@@ -125,6 +115,8 @@ public interface ITopologyCanvas extends Plugin
 	 */
 	void moveVertexToXYPosition(GUINode npNode, Point2D point);
 
+	void updateAllVerticesPosition();
+
 	/**
 	 * Resets the emphasized elements.
 	 *
@@ -133,11 +125,11 @@ public interface ITopologyCanvas extends Plugin
 	void resetPickedStateAndRefresh();
 
 	/**
-	 * Takes a snapshot of the canvas.
+	 * Refreshes the canvas.
 	 *
 	 * @since 0.3.0
 	 */
-	void takeSnapshot();
+	void refresh();
 
 	/**
 	 * Refresh the canvas with the physical topology from the given network design.
@@ -145,6 +137,13 @@ public interface ITopologyCanvas extends Plugin
 	 * @since 0.3.0
 	 */
 	void rebuildTopologyAndRefresh();
+
+	/**
+	 * Takes a snapshot of the canvas.
+	 *
+	 * @since 0.3.0
+	 */
+	void takeSnapshot();
 
 	/**
 	 * Makes zoom-all from the center of the view.
@@ -168,12 +167,4 @@ public interface ITopologyCanvas extends Plugin
 	void zoomOut();
 
 	void zoom(Point2D centerPoint, float scale);
-
-	double getCurrentCanvasScale();
-
-	Point2D getCanvasCenter();
-
- 	Set<GUINode> getGraphVertices();
-
-	Set<GUILink> getGraphEdges();
 }

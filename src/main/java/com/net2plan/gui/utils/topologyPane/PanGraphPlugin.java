@@ -13,6 +13,7 @@
 package com.net2plan.gui.utils.topologyPane;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
 import java.awt.*;
@@ -68,7 +69,7 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     public void mouseDragged(MouseEvent e) {
         if (down != null) {
             canvas.getCanvasComponent().setCursor(cursor);
-            canvas.panTo(down, e.getPoint());
+            OSMMapStateBuilder.getSingleton().panTo(down, e.getPoint());
             down = e.getPoint();
             e.consume();
         }

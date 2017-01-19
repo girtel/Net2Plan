@@ -29,7 +29,6 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
-import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 
 /**
@@ -196,7 +195,7 @@ public class OSMMapController
 
         Point2D q = mapViewer.getCenter();
 
-        Point2D aux = canvas.getNetPlanCoordinateFromScreenPixelCoordinate(canvas.getCanvasCenter());
+        Point2D aux = canvas.getCanvasPointFromNetPlanPoint(canvas.getCanvasCenter());
         Point2D lvc = new Point2D.Double(aux.getX(), -aux.getY());
 
         double dx = (lvc.getX() - q.getX());
@@ -240,12 +239,12 @@ public class OSMMapController
         final double currentCenterX = currentOSMViewportBounds.getCenterX();
         final double currentCenterY = currentOSMViewportBounds.getCenterY();
 
-        final Point2D currentOSMCenterJUNG = canvas.getNetPlanCoordinateFromScreenPixelCoordinate(new Point2D.Double(currentCenterX, currentCenterY));
+        final Point2D currentOSMCenterJUNG = canvas.getCanvasPointFromNetPlanPoint(new Point2D.Double(currentCenterX, currentCenterY));
 
         final double preCenterX = previousOSMViewportBounds.getCenterX();
         final double preCenterY = previousOSMViewportBounds.getCenterY();
 
-        final Point2D previousOSMCenterJUNG = canvas.getNetPlanCoordinateFromScreenPixelCoordinate(new Point2D.Double(preCenterX, preCenterY));
+        final Point2D previousOSMCenterJUNG = canvas.getCanvasPointFromNetPlanPoint(new Point2D.Double(preCenterX, preCenterY));
 
         final double dx = (currentOSMCenterJUNG.getX() - previousOSMCenterJUNG.getX());
         final double dy = (currentOSMCenterJUNG.getY() - previousOSMCenterJUNG.getY());

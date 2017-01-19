@@ -217,7 +217,7 @@ public final class JUNGCanvas implements ITopologyCanvas
      */
     // NOTE: Do not know if it is the correct name
     @Override
-    public Point2D getNetPlanCoordinateFromScreenPixelCoordinate(Point2D screenPoint)
+    public Point2D getCanvasPointFromNetPlanPoint(Point2D screenPoint)
     {
         Point2D layoutOrViewCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, screenPoint);
         layoutOrViewCoordinates.setLocation(layoutOrViewCoordinates.getX(), -layoutOrViewCoordinates.getY());
@@ -235,13 +235,13 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public Point2D getCanvasPointFromNetPlanPoint(Point2D netPlanPoint)
+    public Point2D getCanvasPointFromScreenPoint(Point2D netPlanPoint)
     {
         return vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, netPlanPoint);
     }
 
     @Override
-    public Rectangle getViewWindow()
+    public Rectangle getCurrentCanvasViewWindow()
     {
         return vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
     }
@@ -295,13 +295,13 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public Set<GUINode> getGraphVertices()
+    public Set<GUINode> getVertices()
     {
         return Collections.unmodifiableSet(new HashSet<>(g.getVertices()));
     }
 
     @Override
-    public Set<GUILink> getGraphEdges()
+    public Set<GUILink> getAllEdges()
     {
         return Collections.unmodifiableSet(new HashSet<>(g.getEdges()));
     }
@@ -358,12 +358,6 @@ public final class JUNGCanvas implements ITopologyCanvas
     public void moveVertexToXYPosition(GUINode npNode, Point2D point)
     {
         l.setLocation(npNode, point);
-    }
-
-    @Override
-    public void panTo(Point2D initialPoint, Point2D currentPoint)
-    {
-        OSMMapStateBuilder.getSingleton().panTo(initialPoint, currentPoint);
     }
 
     @Override
