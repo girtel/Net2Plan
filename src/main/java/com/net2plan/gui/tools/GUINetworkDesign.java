@@ -780,9 +780,15 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
 	@Override
-	public void updateVisualizationAfterLinkNodeColorChanges()
+	public void updateVisualizationJustCanvasRefresh()
 	{
 		topologyPanel.getCanvas().refresh();
+	}
+
+	@Override
+	public void updateVisualizationJustCanvasRebuildAndRefresh()
+	{
+		topologyPanel.getCanvas().rebuildTopologyAndRefresh();
 	}
 
 	@Override

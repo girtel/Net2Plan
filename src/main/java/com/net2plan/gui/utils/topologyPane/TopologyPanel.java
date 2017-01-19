@@ -68,6 +68,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JPanel layerChooserPane;
     private final JComboBox layerChooser;
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
+    private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final MenuButton btn_view;
     private final JPopupMenu viewPopUp;
@@ -196,15 +197,22 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showLinkIds.setToolTipText("Show/hide link utilization, measured as the ratio between the total traffic in the link (including that in protection segments) and total link capacity (including that reserved by protection segments)");
         btn_showNonConnectedNodes = new JToggleButton();
         btn_showNonConnectedNodes.setToolTipText("Show/hide non-connected nodes");
-        JButton increaseNodeSize = new JButton();
-        increaseNodeSize.setToolTipText("Increase node size");
-        JButton decreaseNodeSize = new JButton();
-        decreaseNodeSize.setToolTipText("Decrease node size");
-        JButton increaseFontSize = new JButton();
-        increaseFontSize.setToolTipText("Increase font size");
-        JButton decreaseFontSize = new JButton();
-        decreaseFontSize.setToolTipText("Decrease font size");
-
+        JButton btn_increaseNodeSize = new JButton();
+        btn_increaseNodeSize.setToolTipText("Increase node size");
+        JButton btn_decreaseNodeSize = new JButton();
+        btn_decreaseNodeSize.setToolTipText("Decrease node size");
+        JButton btn_increaseFontSize = new JButton();
+        btn_increaseFontSize.setToolTipText("Increase font size");
+        JButton btn_decreaseFontSize = new JButton();
+        btn_decreaseFontSize.setToolTipText("Decrease font size");
+        /* Multilayer buttons */
+        btn_increaseInterLayerDistance = new JButton ("+LD");
+        btn_increaseInterLayerDistance.setToolTipText("Increase the distance between layers (when more than one layer is visible)");
+        btn_decreaseInterLayerDistance = new JButton ("-LD");
+        btn_decreaseInterLayerDistance.setToolTipText("Decrease the distance between layers (when more than one layer is visible)");
+        
+        
+        
         viewPopUp = new JPopupMenu();
 
         it_control = new JMenuItem("View control window");
@@ -258,11 +266,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_zoomOut.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/zoomOut.png")));
         btn_zoomAll.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/zoomAll.png")));
         btn_takeSnapshot.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/takeSnapshot.png")));
-        increaseNodeSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseNode.png")));
-        decreaseNodeSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseNode.png")));
-        increaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseFont.png")));
-        decreaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseFont.png")));
-
+        btn_increaseNodeSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseNode.png")));
+        btn_decreaseNodeSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseNode.png")));
+        btn_increaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseFont.png")));
+        btn_decreaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseFont.png")));
+        
         btn_load.addActionListener(this);
         btn_loadDemand.addActionListener(this);
         btn_save.addActionListener(this);
@@ -274,7 +282,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_zoomAll.addActionListener(this);
         btn_takeSnapshot.addActionListener(this);
         btn_reset.addActionListener(this);
+        btn_increaseInterLayerDistance.addActionListener(this);
+        btn_decreaseInterLayerDistance.addActionListener(this);
 
+        
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
         toolbar.add(btn_save);
@@ -288,14 +299,23 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(btn_showLinkIds);
         toolbar.add(btn_showNonConnectedNodes);
         toolbar.add(new JToolBar.Separator());
-        toolbar.add(increaseNodeSize);
-        toolbar.add(decreaseNodeSize);
-        toolbar.add(increaseFontSize);
-        toolbar.add(decreaseFontSize);
+        toolbar.add(btn_increaseNodeSize);
+        toolbar.add(btn_decreaseNodeSize);
+        toolbar.add(btn_increaseFontSize);
+        toolbar.add(btn_decreaseFontSize);
+        toolbar.add(new JToolBar.Separator());
+        toolbar.add(btn_increaseInterLayerDistance);
+        toolbar.add(btn_decreaseInterLayerDistance);
+        
+
+        
+        toolbar.add(new JToolBar.Separator());
         toolbar.add(Box.createHorizontalGlue());
         toolbar.add(btn_view);
         toolbar.add(btn_reset);
 
+        
+        
         this.addComponentListener(new ComponentAdapter()
         {
             @Override
@@ -305,7 +325,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             }
         });
 
-        increaseNodeSize.addActionListener(new ActionListener()
+        btn_increaseNodeSize.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
@@ -315,7 +335,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             }
         });
 
-        decreaseNodeSize.addActionListener(new ActionListener()
+        btn_decreaseNodeSize.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
@@ -325,7 +345,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             }
         });
 
-        increaseFontSize.addActionListener(new ActionListener()
+        btn_increaseFontSize.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
@@ -335,7 +355,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             }
         });
 
-        decreaseFontSize.addActionListener(new ActionListener()
+        btn_decreaseFontSize.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
@@ -457,7 +477,20 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             		(callback.getDesign() , false , true , false , true , null , null); // shown in topological order
         	callback.updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
             callback.resetPickedStateAndUpdateView();
+        } else if (src == btn_increaseInterLayerDistance)
+        {
+        	if (callback.getVisualizationState().getNumberOfVisibleLayers() == 1) return;
+        	final double currentInterLayerDistance = callback.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
+        	callback.getVisualizationState().setInterLayerSpaceInNetPlanCoordinates(currentInterLayerDistance * VisualizationConstants.SCALE_IN);
+        	callback.updateVisualizationJustCanvasRebuildAndRefresh();
+        } else if (src == btn_decreaseInterLayerDistance)
+        {
+        	if (callback.getVisualizationState().getNumberOfVisibleLayers() == 1) return;
+        	final double currentInterLayerDistance = callback.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
+        	callback.getVisualizationState().setInterLayerSpaceInNetPlanCoordinates(currentInterLayerDistance * VisualizationConstants.SCALE_OUT);
+        	callback.updateVisualizationJustCanvasRebuildAndRefresh();
         }
+        
     }
 
     /**

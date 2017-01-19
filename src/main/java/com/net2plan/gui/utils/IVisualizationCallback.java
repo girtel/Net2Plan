@@ -61,7 +61,7 @@ public interface IVisualizationCallback
 
     void putColorInElementTopologyCanvas (Collection<? extends NetworkElement> linksAndNodes , Color color);
 
-	public void updateVisualizationAfterLinkNodeColorChanges ();
+	public void updateVisualizationJustCanvasRefresh ();
 
 	public void updateVisualizationJustTables ();
 
@@ -80,4 +80,6 @@ public interface IVisualizationCallback
 	public void loadDesignDoNotUpdateVisualization(NetPlan netPlan);
 
 	public void justApplyZoomAll();
+
+	void updateVisualizationJustCanvasRebuildAndRefresh();
 }
