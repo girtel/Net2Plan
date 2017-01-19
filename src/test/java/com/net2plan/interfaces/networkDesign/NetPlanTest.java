@@ -1,11 +1,10 @@
 package com.net2plan.interfaces.networkDesign;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertTrue;
 
 import java.awt.geom.Point2D;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -14,17 +13,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableMap;
+import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
-
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
 
 public class NetPlanTest
 {
@@ -512,170 +509,216 @@ public class NetPlanTest
 	}
 
 
-//	@Test
-//	public void testAssignFrom()
-//	{
-//		NetPlan np2 = new NetPlan ();
-//		np2.assignFrom(np);
-//		assertTrue (np.isDeepCopy(np2));
-//		assertTrue (np2.isDeepCopy(np));
-//	}
-//
-//	@Test
-//	public void testCopy()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testCopyFrom()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testGetAttributesCollectionOfQextendsNetworkElementString()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testGetAttributeValues()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testGetDemandTrafficUnitsName()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testGetLinkCapacityUnitsName()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testGetNetworkDescription()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testGetNetworkElementByAttribute()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testGetNetworkName()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testGetNodeByName()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testGetNumberOfNodePairs()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testComputeRouteCostVector()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testComputeMulticastTreeCostVector()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testHasUnicastRoutingLoops()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testIsUp()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemoveNetworkLayer()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemoveAllDemands()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemoveAllForwardingRules()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemoveAllLinks()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemoveAllMulticastDemands()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemoveAllMulticastTrees()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemoveAllMulticastTreesUnused()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemoveAllNetworkLayers()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemoveAllNodes()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemoveAllRoutes()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemoveAllRoutesUnused()
-//	{
-//		fail("Not yet implemented");
-//	}
+	@Test
+	public void testAssignFrom()
+	{
+		NetPlan np2 = np.copy();
+		np.assignFrom(np2);
+		assertTrue (np.isDeepCopy(np2));
+		assertTrue (np2.isDeepCopy(np));
+	}
+
+	@Test
+	public void testCopy()
+	{
+		NetPlan np2 = np.copy();
+		assertTrue (np.isDeepCopy(np2));
+		assertTrue (np2.isDeepCopy(np));
+	}
+
+	@Test
+	public void testCopyFrom()
+	{
+		NetPlan np2 = np.copy();
+		np.copyFrom(np2);
+		assertTrue (np.isDeepCopy(np2));
+		assertTrue (np2.isDeepCopy(np));
+	}
+
+	@Test
+	public void testGetAttributesCollectionOfQextendsNetworkElementString()
+	{
+		n1.setAttribute("att" , "1");
+		n2.setAttribute("att" , "2");
+		assertEquals (NetPlan.getAttributes(Arrays.asList(n1,n2) , "att") , ImmutableMap.of(n1,"1",n2,"2"));
+	}
+
+	@Test
+	public void testGetAttributeValues()
+	{
+		n1.setAttribute("att" , "1");
+		n2.setAttribute("att" , "2");
+		assertTrue (Arrays.equals(NetPlan.getAttributeValues(Arrays.asList(n1,n2,n3) , "att" , 7).toArray() , new double [] {1.0 , 2.0 , 7.0}));
+	}
+
+	@Test
+	public void testGetDemandTrafficUnitsName()
+	{
+		assertEquals(np.getDemandTrafficUnitsName(lowerLayer) , "Mbps");
+	}
+
+	@Test
+	public void testGetLinkCapacityUnitsName()
+	{
+		np.setLinkCapacityUnitsName("name" , lowerLayer);
+		assertEquals(np.getLinkCapacityUnitsName(lowerLayer) , "name");
+	}
+
+	@Test
+	public void testGetNetworkDescription()
+	{
+		np.setNetworkDescription("bla");
+		assertEquals(np.getNetworkDescription() , "bla");
+	}
+
+	@Test
+	public void testGetNetworkElementByAttribute()
+	{
+		n1.setAttribute("att" , "1");
+		n2.setAttribute("att" , "2");
+		assertEquals (NetPlan.getNetworkElementByAttribute(Arrays.asList(n1,n2,n3) , "att" , "2") , n2);
+	}
+
+	@Test
+	public void testGetNetworkElementsByAttribute()
+	{
+		n1.setAttribute("att" , "1");
+		n2.setAttribute("att" , "2");
+		n3.setAttribute("att" , "2");
+		assertEquals (NetPlan.getNetworkElementsByAttribute(Arrays.asList(n1,n2,n3) , "att" , "2") , Arrays.asList(n2,n3));
+	}
+
+	@Test
+	public void testGetNetworkName()
+	{
+		np.setNetworkName("bla");
+		assertEquals (np.getNetworkName() , "bla");
+	}
+
+	@Test
+	public void testGetNodeByName()
+	{
+		n1.setName("1");
+		n2.setName("1");
+		n3.setName("3");
+		assertEquals (np.getNodeByName("1") , n1);
+	}
+
+	@Test
+	public void testGetNumberOfNodePairs()
+	{
+		assertEquals (np.getNumberOfNodePairs() , 2*3);
+	}
+
+	@Test
+	public void testComputeRouteCostVector()
+	{
+		assertTrue (Arrays.equals(np.computeRouteCostVector(null).toArray(), new double [] {1,2,2,2,1}));
+	}
+
+	@Test
+	public void testComputeMulticastTreeCostVector()
+	{
+		System.out.println(np.computeMulticastTreeCostVector(null));
+		assertTrue (Arrays.equals(np.computeMulticastTreeCostVector(null).toArray(), new double [] {2,2}));
+	}
+
+	@Test
+	public void testHasUnicastRoutingLoops()
+	{
+		assertTrue(!np.hasUnicastRoutingLoops());
+		Link link21 = np.addLink(n2,n1,0,0,1,null);
+		np.addRoute(d13 , 0 , 0 , Arrays.asList(link12, link21, link13) , null);
+		assertTrue(np.hasUnicastRoutingLoops());
+	}
+
+	@Test
+	public void testIsUp()
+	{
+		assertTrue(np.isUp(Arrays.asList(n1,n2,link12)));
+		n1.setFailureState(false);
+		assertTrue(!np.isUp(Arrays.asList(n2,link12)));
+	}
+
+	@Test
+	public void testRemoveNetworkLayer()
+	{
+		np.removeNetworkLayer(lowerLayer);
+		assertEquals(np.getNumberOfLayers() , 1);
+		try { np.removeNetworkLayer(upperLayer); fail (); } catch (Exception e) {}
+	}
+
+	@Test
+	public void testRemoveAllDemands()
+	{
+		np.removeAllDemands(lowerLayer);
+		assertEquals(np.getNumberOfDemands(lowerLayer) , 0);
+	}
+
+	@Test
+	public void testRemoveAllForwardingRules()
+	{
+		try { np.removeAllForwardingRules(upperLayer); fail (); } catch (Exception e) {}
+		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , upperLayer);
+		np.removeAllForwardingRules(upperLayer); 
+		assertEquals(np.getNumberOfForwardingRules(upperLayer) , 0);
+	}
+
+	@Test
+	public void testRemoveAllLinks()
+	{
+		np.removeAllLinks(lowerLayer);
+		assertEquals(np.getNumberOfLinks(lowerLayer) , 0);
+	}
+
+	@Test
+	public void testRemoveAllMulticastDemands()
+	{
+		np.removeAllMulticastDemands(lowerLayer);
+		assertEquals(np.getNumberOfMulticastDemands(lowerLayer) , 0);
+	}
+
+	@Test
+	public void testRemoveAllMulticastTrees()
+	{
+		np.removeAllMulticastTrees(lowerLayer);
+		assertEquals(np.getNumberOfMulticastTrees(lowerLayer) , 0);
+	}
+ 
+	@Test
+	public void testRemoveAllMulticastTreesUnused()
+	{
+		np.removeAllMulticastTreesUnused(0.1 , lowerLayer);
+		assertEquals(np.getNumberOfMulticastTrees(lowerLayer) , 2);
+	}
+
+	@Test
+	public void testRemoveAllNetworkLayers()
+	{
+		np.removeAllNetworkLayers();
+		assertEquals(np.getNumberOfLayers() , 1);
+	}
+
+	@Test
+	public void testRemoveAllNodes()
+	{
+		np.removeAllNodes();
+		assertEquals(np.getNumberOfNodes() , 0);
+	}
+
+	@Test
+	public void testRemoveAllRoutes()
+	{
+		np.removeAllRoutes();
+		assertEquals(np.getNumberOfRoutes() , 0);
+	}
+
+	@Test
+	public void testRemoveAllRoutesUnused()
+	{
+		np.removeAllRoutesUnused(0.1 , lowerLayer);
+		assertEquals(np.getNumberOfRoutes() , 5);
+	}
 //
 //	@Test
 //	public void testRemoveAllLinksUnused()

@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1359,9 +1360,11 @@ public class NetPlan extends NetworkElement
 	/**
 	 * <p>Assigns the information from the input {@code NetPlan}.</p>
 	 *
-	 * <p><b>Important</b>: A shadow copy is made, so changes in the input object will be reflected in this one. For deep copies use {@link #copyFrom(com.net2plan.interfaces.networkDesign.NetPlan) copyFrom()}</p>
+	 * <p><b>Important</b>: A shadow copy is made, an the object netPlan used as parameter cannot be longer used,
+	 * since all their nodes, links etc. are now assigned to the returned object.
+	 * For having a deep copy of a net2plan object use {@link #copyFrom(com.net2plan.interfaces.networkDesign.NetPlan) copyFrom()}</p>
 	 *
-	 * @param netPlan Network plan to be copied
+	 * @param netPlan Network plan to be assigned
 	 * @since 0.3.0
 	 */
 	public void assignFrom(NetPlan netPlan)
@@ -4131,8 +4134,9 @@ public class NetPlan extends NetworkElement
 	public DoubleMatrix1D computeMulticastTreeCostVector (double [] costs , NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		if (costs == null)  { costs = new double [layer.links.size()]; Arrays.fill(costs , 1.0); }
 		if (costs.length != layer.links.size()) throw new Net2PlanException ("The array of costs must have the same length as the number of links in the layer");
-		DoubleMatrix1D res = DoubleFactory1D.dense.make (layer.routes.size());
+		DoubleMatrix1D res = DoubleFactory1D.dense.make (layer.multicastTrees.size());
 		for (MulticastTree t : layer.multicastTrees) for (Link link : t.linkSet) res.set (t.index , res.get(t.index) + costs [link.index]);
 		return res;
 	}
