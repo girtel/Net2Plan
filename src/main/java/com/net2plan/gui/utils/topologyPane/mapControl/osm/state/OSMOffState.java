@@ -2,7 +2,6 @@ package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
 
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.VisualizationConstants;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
@@ -12,8 +11,6 @@ import com.net2plan.internal.Constants;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.ImageUtils;
 import edu.uci.ics.jung.visualization.Layer;
-import edu.uci.ics.jung.visualization.VisualizationViewer;
-import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -34,23 +31,19 @@ class OSMOffState implements OSMState
 {
     private final IVisualizationCallback callback;
     private final ITopologyCanvas canvas;
-    private final VisualizationViewer<GUINode, GUILink> vv;
 
     @SuppressWarnings("unchecked")
     OSMOffState(final IVisualizationCallback callback, final ITopologyCanvas canvas)
     {
         this.callback = callback;
         this.canvas = canvas;
-
-        this.vv = (VisualizationViewer<GUINode, GUILink>) canvas.getCanvasComponent();
     }
 
     @Override
     public void panTo(Point2D initialPoint, Point2D currentPoint)
     {
-        final MutableTransformer layoutTransformer = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT);
-        final Point2D q = layoutTransformer.inverseTransform(initialPoint);
-        final Point2D lvc = layoutTransformer.inverseTransform(currentPoint);
+        final Point2D q = canvas.getCanvasPointFromNetPlanPoint(initialPoint);
+        final Point2D lvc = canvas.getCanvasPointFromNetPlanPoint(currentPoint);
         final double dxJungCoord = (lvc.getX() - q.getX());
         final double dyJungCoord = (lvc.getY() - q.getY());
 
@@ -84,10 +77,12 @@ class OSMOffState implements OSMState
         double xminJungCoords = Double.POSITIVE_INFINITY;
         double ymaxJungCoords = Double.NEGATIVE_INFINITY;
         double yminJungCoords = Double.POSITIVE_INFINITY;
+
+        canvas.resetTransformer();
         for (GUINode node : visibleGUINodes)
         {
             Point2D nodeNpCoordinates = node.getAssociatedNetPlanNode().getXYPositionMap();
-            Point2D nodeJungCoordinates = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(nodeNpCoordinates, Layer.VIEW);
+            Point2D nodeJungCoordinates = canvas.getNetPlanCoordinateFromScreenPixelCoordinate(nodeNpCoordinates);
             if (xmaxNpCoords < nodeNpCoordinates.getX()) xmaxNpCoords = nodeNpCoordinates.getX();
             if (xminNpCoords > nodeNpCoordinates.getX()) xminNpCoords = nodeNpCoordinates.getX();
             if (ymaxNpCoords < nodeNpCoordinates.getY()) ymaxNpCoords = nodeNpCoordinates.getY();
@@ -100,52 +95,52 @@ class OSMOffState implements OSMState
 
         double PRECISION_FACTOR = 0.00001;
 
-        Rectangle viewInLayoutUnits = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
+        Rectangle viewInLayoutUnits = canvas.getViewWindow();
         float ratio_h = Math.abs(xmaxJungCoords - xminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getWidth() / (xmaxJungCoords - xminJungCoords));
         float ratio_v = Math.abs(ymaxJungCoords - yminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getHeight() / (ymaxJungCoords - yminJungCoords));
         float ratio = (float) (0.8 * Math.min(ratio_h, ratio_v));
         canvas.zoom(canvas.getCanvasCenter(), ratio);
 
         Point2D topologyCenterJungCoord = new Point2D.Double((xminJungCoords + xmaxJungCoords) / 2, (yminJungCoords + ymaxJungCoords) / 2);
-        Point2D windowCenterJungCoord = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getCenter());
+        Point2D windowCenterJungCoord = canvas.getCanvasPointFromNetPlanPoint(canvas.getCanvasCenter());
         double dx = (windowCenterJungCoord.getX() - topologyCenterJungCoord.getX());
         double dy = (windowCenterJungCoord.getY() - topologyCenterJungCoord.getY());
 
-        vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT).translate(dx, dy);
+        canvas.moveCanvasTo(new Point2D.Double(dx, dy));
     }
 
     @Override
-    public void addNode(IVisualizationCallback callback, ITopologyCanvas topologyPanel, Point2D pos)
+    public void addNode(Point2D pos)
     {
         callback.getDesign().addNode(pos.getX() , pos.getY() , "Node" + callback.getDesign().getNumberOfNodes(), null);
         callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE) , null , null);
     }
 
     @Override
-    public void removeNode(IVisualizationCallback callback, Node node)
+    public void removeNode(Node node)
     {
         node.remove();
         callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE) ,null , null);
     }
 
     @Override
-    public void moveNodeInVisualization(ITopologyCanvas canvas, Node node, Point2D positionInScreenPixels)
+    public void moveNode(Node node, Point2D screenPoint)
     {
-        final Point2D jungPoint = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(positionInScreenPixels, Layer.LAYOUT);
+        final Point2D jungPoint = canvas.getNetPlanCoordinateFromScreenPixelCoordinate(screenPoint);
         // canvas.moveVertexToXYPosition(node, new Point2D.Double(jungPoint.getX(), -jungPoint.getY()));
     }
 
     @Override
-    public void takeSnapshot(ITopologyCanvas canvas)
+    public void takeSnapshot()
     {
         final JFileChooser fc = new FileChooserConfirmOverwrite();
         FileNameExtensionFilter pngFilter = new FileNameExtensionFilter("PNG files", "png");
         fc.setFileFilter(pngFilter);
 
-        vv.setBackground(Color.WHITE);
+        canvas.getCanvasComponent().setBackground(Color.WHITE);
         JComponent component = canvas.getCanvasComponent();
         BufferedImage bi = ImageUtils.trim(ImageUtils.takeSnapshot(component));
-        vv.setBackground(new Color(212, 208, 200));
+        canvas.getCanvasComponent().setBackground(new Color(212, 208, 200));
 
         int s = fc.showSaveDialog(null);
         if (s == JFileChooser.APPROVE_OPTION)

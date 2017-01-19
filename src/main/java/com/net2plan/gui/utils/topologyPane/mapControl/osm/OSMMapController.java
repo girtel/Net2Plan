@@ -56,7 +56,7 @@ public class OSMMapController
      * @param canvas        The JUNG canvas.
      * @param callback      The interface to the NetPlan.
      */
-    public void startMap(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final IVisualizationCallback callback)
+    public void startMap(final IVisualizationCallback callback, final TopologyPanel topologyPanel, final ITopologyCanvas canvas)
     {
         // Checking if the nodes are valid for this operation.
         // They may not go outside the bounds: x: -180, 180: y: -90, 90
@@ -196,7 +196,7 @@ public class OSMMapController
 
         Point2D q = mapViewer.getCenter();
 
-        Point2D aux = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(canvas.getCanvasCenter(), Layer.LAYOUT);
+        Point2D aux = canvas.getNetPlanCoordinateFromScreenPixelCoordinate(canvas.getCanvasCenter());
         Point2D lvc = new Point2D.Double(aux.getX(), -aux.getY());
 
         double dx = (lvc.getX() - q.getX());
@@ -240,12 +240,12 @@ public class OSMMapController
         final double currentCenterX = currentOSMViewportBounds.getCenterX();
         final double currentCenterY = currentOSMViewportBounds.getCenterY();
 
-        final Point2D currentOSMCenterJUNG = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double(currentCenterX, currentCenterY), Layer.LAYOUT);
+        final Point2D currentOSMCenterJUNG = canvas.getNetPlanCoordinateFromScreenPixelCoordinate(new Point2D.Double(currentCenterX, currentCenterY));
 
         final double preCenterX = previousOSMViewportBounds.getCenterX();
         final double preCenterY = previousOSMViewportBounds.getCenterY();
 
-        final Point2D previousOSMCenterJUNG = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double(preCenterX, preCenterY), Layer.LAYOUT);
+        final Point2D previousOSMCenterJUNG = canvas.getNetPlanCoordinateFromScreenPixelCoordinate(new Point2D.Double(preCenterX, preCenterY));
 
         final double dx = (currentOSMCenterJUNG.getX() - previousOSMCenterJUNG.getX());
         final double dy = (currentOSMCenterJUNG.getY() - previousOSMCenterJUNG.getY());
@@ -282,17 +282,8 @@ public class OSMMapController
             topologyPanel.add(canvas.getCanvasComponent(), BorderLayout.CENTER);
 
             // Reset nodes' original position
-            for (Node node : callback.getDesign().getNodes())
-            {
-                final List<GUINode> verticallyStackedGUINodes = callback.getVisualizationState().getVerticallyStackedGUINodes(node);
-
-                for (GUINode guiNode : verticallyStackedGUINodes)
-                {
-                    canvas.updateVertexXYPosition(guiNode);
-                }
-
-                canvas.zoomAll();
-            }
+            canvas.updateAllVerticesPosition();
+            canvas.zoomAll();
 
             topologyPanel.validate();
             topologyPanel.repaint();

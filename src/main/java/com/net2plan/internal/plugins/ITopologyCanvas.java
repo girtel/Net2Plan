@@ -20,6 +20,7 @@
 
 package com.net2plan.internal.plugins;
 
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -60,7 +61,13 @@ public interface ITopologyCanvas extends Plugin
 	 */
 	void removePlugin(ITopologyCanvasPlugin plugin);
 
-	Point2D getNetPlanCoordinatesFromScreenPixelCoordinate(Point2D screenPoint, Layer layer);
+	Point2D getNetPlanCoordinateFromScreenPixelCoordinate(Point2D screenPoint);
+
+	void resetTransformer();
+
+	Point2D getCanvasPointFromNetPlanPoint(Point2D netPlanPoint);
+
+	Rectangle getViewWindow();
 
 	/**
 	 * Returns a reference to the internal component containing the canvas.
@@ -106,13 +113,9 @@ public interface ITopologyCanvas extends Plugin
 	 */
 	void refresh();
 
-	/**
-	 * Updates the position of a GUI Node based on its associted node.
-	 * @param node
-	 */
-	void updateVertexXYPosition(GUINode node);
+    void updateAllVerticesPosition();
 
-	/**
+    /**
 	 * Moves a GUI node to the desired point.
 	 * This method does not change the node's xy coordinates.
 	 * Have in mind that by using this method, the xy coordinates from the table do not equal the coordinates from the topology.

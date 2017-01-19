@@ -22,7 +22,7 @@ public enum OSMMapStateBuilder
         if (topologyPanel == null || topologyPanel.getCanvas() == null || callback == null)
             throw new Net2PlanException("GUI component not correctly initialized before running state machine.");
 
-        this.stateManager = new OSMStateManager(topologyPanel, topologyPanel.getCanvas(), callback);
+        this.stateManager = new OSMStateManager(callback, topologyPanel, topologyPanel.getCanvas());
     }
 
     public static OSMStateManager getSingleton()

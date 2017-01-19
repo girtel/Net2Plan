@@ -20,11 +20,11 @@ interface OSMState
 
     void zoomAll();
     
-    void addNode(IVisualizationCallback callback, ITopologyCanvas canvas, Point2D pos);
+    void addNode(Point2D pos);
 
-    void removeNode(IVisualizationCallback callback, Node node);
+    void removeNode(Node node);
 
-    void moveNodeInVisualization(ITopologyCanvas canvas, Node node, Point2D pos);
+    void moveNode(Node node, Point2D pos);
 
-    void takeSnapshot(ITopologyCanvas canvas);
+    void takeSnapshot();
 }

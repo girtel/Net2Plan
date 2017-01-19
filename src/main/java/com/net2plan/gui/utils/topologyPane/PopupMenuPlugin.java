@@ -35,7 +35,6 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.plugins.ITopologyCanvas;
-import edu.uci.ics.jung.visualization.Layer;
 
 /**
  * Plugin for the popup menu of the canvas.
@@ -80,7 +79,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
     {
         if (checkModifiers(e)) {
             final Point p = e.getPoint();
-            final Point2D positionInNetPlanCoordinates = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(p, Layer.LAYOUT);
+            final Point2D positionInNetPlanCoordinates = canvas.getNetPlanCoordinateFromScreenPixelCoordinate(p);
             final GUINode gn = canvas.getVertex(e);
             final Node node = gn == null ? null : gn.getAssociatedNetPlanNode();
             final GUILink gl = canvas.getEdge(e);
@@ -274,7 +273,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         @Override
         public void actionPerformed(ActionEvent e)
         {
-        	OSMMapStateBuilder.getSingleton().removeNode(callback, node);
+        	OSMMapStateBuilder.getSingleton().removeNode(node);
         }
     }
 
@@ -291,7 +290,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            OSMMapStateBuilder.getSingleton().addNode(callback, canvas, positionInNetPlanCoordinates);
+            OSMMapStateBuilder.getSingleton().addNode(positionInNetPlanCoordinates);
         }
     }
 

@@ -215,12 +215,35 @@ public final class JUNGCanvas implements ITopologyCanvas
      * @param jungLayoutCoord (@code Point2D) on the SWING canvas.
      * @return (@code Point2D) on the JUNG canvas.
      */
+    // NOTE: Do not know if it is the correct name
     @Override
-    public Point2D getNetPlanCoordinatesFromScreenPixelCoordinate(Point2D screenPoint, Layer layer)
+    public Point2D getNetPlanCoordinateFromScreenPixelCoordinate(Point2D screenPoint)
     {
-        Point2D layoutOrViewCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(layer, screenPoint);
+        Point2D layoutOrViewCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, screenPoint);
         layoutOrViewCoordinates.setLocation(layoutOrViewCoordinates.getX(), -layoutOrViewCoordinates.getY());
+
+        Point2D layoutOrViewCoordinates2 = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.VIEW, screenPoint);
+        layoutOrViewCoordinates2.setLocation(layoutOrViewCoordinates2.getX(), -layoutOrViewCoordinates2.getY());
+
         return layoutOrViewCoordinates;
+    }
+
+    @Override
+    public void resetTransformer()
+    {
+        vv.getRenderContext().getMultiLayerTransformer().setToIdentity();
+    }
+
+    @Override
+    public Point2D getCanvasPointFromNetPlanPoint(Point2D netPlanPoint)
+    {
+        return vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, netPlanPoint);
+    }
+
+    @Override
+    public Rectangle getViewWindow()
+    {
+        return vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
     }
 
     @Override
@@ -322,17 +345,14 @@ public final class JUNGCanvas implements ITopologyCanvas
         OSMMapStateBuilder.getSingleton().zoomAll();
     }
 
-    public void frameTopology()
-    {
-
-    }
-
     @Override
-    public void updateVertexXYPosition(GUINode guiNode)
+    public void updateAllVerticesPosition()
     {
-        l.setLocation(guiNode, transformNetPlanCoordinatesToJungCoordinates.transform(guiNode));
+        for (GUINode guiNode : g.getVertices())
+        {
+            l.setLocation(guiNode, transformNetPlanCoordinatesToJungCoordinates.transform(guiNode));
+        }
     }
-
 
     @Override
     public void moveVertexToXYPosition(GUINode npNode, Point2D point)
@@ -456,7 +476,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     @Override
     public void takeSnapshot()
     {
-        OSMMapStateBuilder.getSingleton().takeSnapshot(this);
+        OSMMapStateBuilder.getSingleton().takeSnapshot();
     }
 
     private class NodeLabelRenderer extends BasicVertexLabelRenderer<GUINode, GUILink>

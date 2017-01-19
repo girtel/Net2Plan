@@ -18,20 +18,20 @@ public class OSMStateManager
     private final OSMOnState runningState;
     private final OSMOffState stoppedState;
 
+    private final IVisualizationCallback callback;
     private final TopologyPanel topologyPanel;
     private final ITopologyCanvas canvas;
-    private final IVisualizationCallback callback;
 
     private final OSMMapController mapController;
 
-    OSMStateManager(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final IVisualizationCallback callback)
+    OSMStateManager(final IVisualizationCallback callback, final TopologyPanel topologyPanel, final ITopologyCanvas canvas)
     {
+        this.callback = callback;
         this.topologyPanel = topologyPanel;
         this.canvas = canvas;
-        this.callback = callback;
         this.mapController = new OSMMapController();
 
-        runningState = new OSMOnState(mapController);
+        runningState = new OSMOnState(callback, canvas, mapController);
         stoppedState = new OSMOffState(callback, canvas);
         currentState = stoppedState;
     }
@@ -40,7 +40,7 @@ public class OSMStateManager
     {
         if (currentState == runningState) return;
         currentState = runningState;
-        mapController.startMap(topologyPanel, canvas, callback);
+        mapController.startMap(callback, topologyPanel, canvas);
     }
 
     public void setStoppedState()
@@ -70,19 +70,24 @@ public class OSMStateManager
         currentState.zoomAll();
     }
 
-    public void addNode(final IVisualizationCallback callback, final ITopologyCanvas canvas, final Point2D pos)
+    public void addNode(final Point2D pos)
     {
-        currentState.addNode(callback, canvas, pos);
+        currentState.addNode(pos);
     }
 
-    public void removeNode(final IVisualizationCallback callback, final Node node)
+    public void removeNode(final Node node)
     {
-        currentState.removeNode(callback, node);
+        currentState.removeNode(node);
     }
 
     public void moveNode(final Node node, final Point2D pos)
     {
-        currentState.moveNodeInVisualization(canvas, node, pos);
+        currentState.moveNode(node, pos);
+    }
+
+    public void takeSnapshot()
+    {
+        currentState.takeSnapshot();
     }
 
     public boolean isMapActivated()
@@ -90,8 +95,4 @@ public class OSMStateManager
         return currentState instanceof OSMOnState;
     }
 
-    public void takeSnapshot(final ITopologyCanvas canvas)
-    {
-        currentState.takeSnapshot(canvas);
-    }
 }

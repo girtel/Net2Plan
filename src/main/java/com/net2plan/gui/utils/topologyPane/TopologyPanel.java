@@ -383,7 +383,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                 public void mouseMoved(MouseEvent e)
                 {
                     Point point = e.getPoint();
-                    position.setText("view = " + point + ", NetPlan coord = " + canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(point, Layer.LAYOUT));
+                    position.setText("view = " + point + ", NetPlan coord = " + canvas.getNetPlanCoordinateFromScreenPixelCoordinate(point));
                 }
             });
 
@@ -483,14 +483,14 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         	final double currentInterLayerDistance = callback.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
         	final double newInterLayerDistance = currentInterLayerDistance * VisualizationConstants.SCALE_IN;
         	callback.getVisualizationState().setInterLayerSpaceInNetPlanCoordinates(newInterLayerDistance);
-        	for (GUINode n : callback.getVisualizationState().getAllGUINodes()) canvas.updateVertexXYPosition(n);
+        	canvas.updateAllVerticesPosition();
         	canvas.refresh();
         } else if (src == btn_decreaseInterLayerDistance)
         {
         	if (callback.getVisualizationState().getNumberOfVisibleLayers() == 1) return;
         	final double currentInterLayerDistance = callback.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
         	callback.getVisualizationState().setInterLayerSpaceInNetPlanCoordinates(currentInterLayerDistance * VisualizationConstants.SCALE_OUT);
-        	for (GUINode n : callback.getVisualizationState().getAllGUINodes()) canvas.updateVertexXYPosition(n);
+            canvas.updateAllVerticesPosition();
         	canvas.refresh();
         }
         
