@@ -6,12 +6,11 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
 import com.net2plan.utils.StringUtils;
+import org.apache.commons.collections15.list.TreeList;
 
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Jorge San Emeterio
@@ -81,15 +80,14 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         final VisualizationState visualizationState = callback.getVisualizationState();
 
         final LinkedList<Object[]> allLayerData = new LinkedList<>();
-
-        // TODO: Have layer order in mind.
-
         for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
         {
-            final Object[] layerData = new Object[tableHeader.length];
+            if (!visualizationState.isLayerVisible(networkLayer)) continue;
 
             final boolean isActiveLayer = networkLayer == netPlan.getNetworkLayerDefault();
+            int layerOrder = visualizationState.getVisualizationOrderRemovingNonVisible(networkLayer);
 
+            final Object[] layerData = new Object[tableHeader.length];
             layerData[COLUMN_DOWN] = null;
             layerData[COLUMN_UP] = null;
             layerData[COLUMN_ID] = networkLayer.getId();
@@ -98,8 +96,9 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             layerData[COLUMN_LAYER_LINK_VISIBILITY] = null;
             layerData[COLUMN_IS_DEFAULT] = networkLayer == netPlan.getNetworkLayerDefault(); // NOTE: Should this go in the visualization state?
 
-            allLayerData.add(layerData);
+            allLayerData.add(layerOrder, layerData);
         }
+
         return allLayerData;
     }
 
