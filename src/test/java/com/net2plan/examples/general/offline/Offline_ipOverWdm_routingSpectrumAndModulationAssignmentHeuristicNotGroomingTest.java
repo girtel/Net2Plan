@@ -21,6 +21,7 @@ import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.WDMUtils;
 import com.net2plan.libraries.SRGUtils.SharedRiskModel;
 import com.net2plan.utils.CollectionUtils;
+import com.net2plan.utils.InputParameter;
 
 public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGroomingTest
 {
@@ -55,7 +56,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		testingParameters.put("ipLayerIndex" , Arrays.asList("1"));
 		testingParameters.put("networkRecoveryType" , Arrays.asList("not-fault-tolerant", "single-srg-tolerant-static-lp" , "1+1-srg-disjoint-lps"));
 		testingParameters.put("maxPropagationDelayMs" , Arrays.asList("-1"));
-		List<Map<String,String>> testsParam = CollectionUtils.getCartesianProductOfParameters (testingParameters);
+		List<Map<String,String>> testsParam = InputParameter.getCartesianProductOfParameters (testingParameters);
 		for (Map<String,String> params : testsParam)
 		{
 			System.out.println(params);

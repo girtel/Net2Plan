@@ -82,8 +82,7 @@ public class Report_availability implements IReport
 		if (algorithmFile.isEmpty() || algorithmName.isEmpty()) throw new Net2PlanException("A provisioning algorithm must be defined");
 		final double PRECISION_FACTOR_hd = Double.parseDouble(net2planParameters.get("precisionFactor"));
 		final double PRECISION_FACTOR_blocking = PRECISION_FACTOR_hd * PRECISION_FACTOR_hd;
-		
-		
+
 		Map<String, String> algorithmParameters = StringUtils.stringToMap(algorithmParam);
 		switch (failureModel.getString ())
 		{
@@ -121,7 +120,7 @@ public class Report_availability implements IReport
 		DoubleMatrix1D pi_s = SRGUtils.computeStateProbabilities(F_s , A_f);
 		final double sum_pi_s = pi_s.zSum();
 		
-		final double pi_s0 = pi_s.get(0); System.out.println ("Probability no failure state: " + pi_s0);
+		final double pi_s0 = pi_s.get(0); 
 		
 		pi_excess = 1 - sum_pi_s;
 
@@ -192,7 +191,6 @@ public class Report_availability implements IReport
 			availabilityWeightedNoFailure_lmd.add(availabilityWeighted_md);
 		}
 //		System.out.println ("Before any failure state: availabilityClassicTotal_ld: " + availabilityClassicTotal_ld);
-//		System.out.println ("Before any failure state: availabilityClassicNoFailure_ld: " + availabilityClassicNoFailure_ld);
 
 		
 		/* the up and oversubscribed links that were set as down, are set to up again */
@@ -233,32 +231,36 @@ public class Report_availability implements IReport
 			}
 			catch (Throwable e)
 			{
-				try { ((Closeable) algorithm.getClass().getClassLoader()).close(); }
-				catch (Throwable e1) { }					
+				try { ((Closeable) algorithm.getClass().getClassLoader()).close();  }
+				catch (Throwable e1) { e.printStackTrace();}					
 
 				throw (e);
 			}
 			
-			try { ((Closeable) algorithm.getClass().getClassLoader()).close(); }
-			catch (Throwable e1) { }					
-
+			/* Only close the class loader if it is a different one than this class. If problems: just do not close the class loader, and wait for garbage collection*/
+			if (!this.getClass().getClassLoader().equals(algorithm.getClass().getClassLoader()))
+			{
+				try { ((Closeable) algorithm.getClass().getClassLoader()).close();	} catch (Throwable e1) { }					
+			}
+			
 			for(NetworkLayer layer : auxNetPlan.getNetworkLayers ())
 			{
 				final DoubleMatrix1D h_d = auxNetPlan.getVectorDemandOfferedTraffic(layer);
 				final DoubleMatrix1D blocked_d = auxNetPlan.getVectorDemandBlockedTraffic(layer);
 				if (considerTrafficInOversubscribedLinksAsLost.getBoolean()) for (Demand d : auxNetPlan.getDemands (layer)) if (d.isTraversingOversubscribedLinks()) blocked_d.set (d.getIndex () , d.getOfferedTraffic());
+
 				if (maximumE2ELatencyMs.getDouble () > 0) for (Demand d : auxNetPlan.getDemands (layer)) if (d.getWorstCasePropagationTimeInMs() > maximumE2ELatencyMs.getDouble ()) blocked_d.set (d.getIndex () , d.getOfferedTraffic());
 				final DoubleMatrix1D h_md = auxNetPlan.getVectorMulticastDemandOfferedTraffic(layer);
 				final DoubleMatrix1D blocked_md = auxNetPlan.getVectorMulticastDemandBlockedTraffic(layer);
 				if (considerTrafficInOversubscribedLinksAsLost.getBoolean()) for (MulticastDemand d : auxNetPlan.getMulticastDemands (layer)) if (d.isTraversingOversubscribedLinks()) blocked_md.set (d.getIndex () , d.getOfferedTraffic());
+
 				if (maximumE2ELatencyMs.getDouble () > 0) for (MulticastDemand d : auxNetPlan.getMulticastDemands(layer)) if (d.getWorseCasePropagationTimeInMs() > maximumE2ELatencyMs.getDouble ()) blocked_md.set (d.getIndex () , d.getOfferedTraffic());
+
 				final DoubleMatrix1D availabilityClassic_d = blocked_d.copy ().assign (new DoubleFunction () { public double apply (double x) { return x > PRECISION_FACTOR_blocking? 0 : 1;  }  } );
 				final DoubleMatrix1D availabilityWeighted_d = blocked_d.copy ().assign (h_d , new DoubleDoubleFunction () { public double apply (double x , double y) { return y < PRECISION_FACTOR_hd? 1 : 1 - x/y; }  } );
 				final DoubleMatrix1D availabilityClassic_md = blocked_md.copy ().assign (new DoubleFunction () { public double apply (double x) { return x > PRECISION_FACTOR_blocking? 0 : 1;  }  } );
 				final DoubleMatrix1D availabilityWeighted_md = blocked_md.copy ().assign (h_md , new DoubleDoubleFunction () { public double apply (double x , double y) { return y < PRECISION_FACTOR_hd? 1 : 1 - x/y; }  } );
 
-//				System.out.println ("****** Failure: " + failureState + ", Layer  " + layer + ", blocked_d: " + blocked_d);
-				
 				availabilityClassicTotal_ld.get(layer.getIndex ()).assign (availabilityClassic_d , new DoubleDoubleFunction () { public double apply (double x , double y) { return x + pi_s_thisState * y; } } );
 				availabilityWeightedTotal_ld.get(layer.getIndex ()).assign (availabilityWeighted_d , new DoubleDoubleFunction () { public double apply (double x , double y) { return x + pi_s_thisState * y; } } );
 				availabilityClassicTotal_lmd.get(layer.getIndex ()).assign (availabilityClassic_md , new DoubleDoubleFunction () { public double apply (double x , double y) { return x + pi_s_thisState * y; } } );
@@ -267,12 +269,8 @@ public class Report_availability implements IReport
 //				System.out.println ("Failure " + failureState + ", availabilityClassicTotal_ld: " + availabilityClassicTotal_ld);
 			}
 			
-//			System.out.println ("4. failure state: " + failureState + ", auxNetPlan.getLinksDownAllLayers(): " + auxNetPlan.getLinksDownAllLayers() + ", auxNetPlan.getNodesDown(): " + auxNetPlan.getNodesDown() + ", linksToSetDown: " + linksToSetAsDown);
-			
 			failureInfo = new SimEvent.NodesAndLinksChangeFailureState(auxNetPlan.getNodes() , null , linksAllLayers , null);
 			algorithm.processEvent(auxNetPlan, new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR , -1 , failureInfo));
-
-//			System.out.println ("5. failure state: " + failureState + ", auxNetPlan.getLinksDownAllLayers(): " + auxNetPlan.getLinksDownAllLayers() + ", auxNetPlan.getNodesDown(): " + auxNetPlan.getNodesDown() + ", linksToSetDown: " + linksToSetAsDown);
 		}
 
 		return printReport(netPlan , reportParameters);

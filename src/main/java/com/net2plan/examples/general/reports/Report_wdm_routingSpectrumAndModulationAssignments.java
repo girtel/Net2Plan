@@ -18,7 +18,8 @@
 package com.net2plan.examples.general.reports;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -226,6 +227,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 			for (int s = 0; s < stat.maxNumberSlots ; s ++)
 			{
 				List<Route> lps = stat.slotOccupInfo.get(Pair.of(e,s)); 
+				if (lps == null) lps = new LinkedList<> ();
 //				List<Route> lps = lists == null? null : lists.getFirst();
 //				List<ProtectionSegment> lpProts = lists == null? null : lists.getSecond();
 				String color = "";
@@ -348,10 +350,10 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 			final int regenProtLp = lists == null? 0 : (int) lists.stream().filter(e -> e.isBackupRoute()).count();
 			int wcRegLp = 0; 
 			for (Route r : n.getAssociatedRoutes().stream().filter(e -> !e.isBackupRoute()).collect(Collectors.toSet())) 
-				for (Node nReg : stat.routeLpRSA.get(r.getIndex()).getNodesWithFrequencySlotConversion()) if (n == nReg) wcRegLp ++;
+				for (Node nReg : stat.mapRoute2RSA.get(r).getNodesWithFrequencySlotConversion()) if (n == nReg) wcRegLp ++;
 			int wcBackupLp = 0; 
 			for (Route r : n.getAssociatedRoutes().stream().filter(e -> e.isBackupRoute()).collect(Collectors.toSet()))
-				for (Node nReg : stat.backupLpRSA.get(r.getIndex()).getNodesWithFrequencySlotConversion()) if (n == nReg) wcBackupLp ++;
+				for (Node nReg : stat.mapRoute2RSA.get(r).getNodesWithFrequencySlotConversion()) if (n == nReg) wcBackupLp ++;
 			out.append("<tr>");
 			out.append("<td><a name=\"node" + n.getIndex() + "\">n" + n.getIndex() + " (" + n.getName() + ")" + "</a></td>");
 			out.append("<td>" + n.getIncomingLinks().size() + "</td>");
@@ -420,8 +422,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		private MinMaxAvCollector fiberCapacityOccupiedByBackupRoutes = new MinMaxAvCollector ();
 		private Map<Pair<Link,Integer>,List<Route>> slotOccupInfo = null;
 		private Map<Node,List<Route>> regOccupInfo = null;
-		private List<WDMUtils.RSA> routeLpRSA = new ArrayList<WDMUtils.RSA> ();
-		private List<WDMUtils.RSA> backupLpRSA = new ArrayList<WDMUtils.RSA> ();
+		private Map<Route,WDMUtils.RSA> mapRoute2RSA = new HashMap<> ();
 		
 		
 		private Statistics (NetPlan netPlan , NetworkLayer wdmLayer) 
@@ -463,13 +464,13 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 			{
 				WDMUtils.RSA rsa = new WDMUtils.RSA(lp , false);
 				numberOfWavelengthConversions += rsa.getNodesWithFrequencySlotConversion().size();
-				routeLpRSA.add(rsa);
+				mapRoute2RSA.put(lp , rsa);
 			}
 			for (Route lp : netPlan.getRoutesAreBackup())
 			{
 				WDMUtils.RSA rsa = new WDMUtils.RSA(lp , false);
 				numberOfWavelengthConversions += rsa.getNodesWithFrequencySlotConversion().size();
-				backupLpRSA.add(rsa);
+				mapRoute2RSA.put(lp , rsa);
 			}
 //			for (ProtectionSegment lp : netPlan.getProtectionSegments())
 //			{

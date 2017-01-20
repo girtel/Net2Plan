@@ -169,7 +169,7 @@ public class Online_evProc_wdm extends IEventProcessor
 			if (thisRouteRWA.hasFrequencySlotConversions()) throw new Net2PlanException ("Initial lightpaths must have route continuity");
 			WDMUtils.RSA segmentRWA = null;
 			if (r.getBackupRoutes().size () > 1) throw new Net2PlanException ("The number of protection segments of a route cannot be higher than one");
-			if ((r.getBackupRoutes().size () == 1) && (!isProtectionRecovery)) throw new Net2PlanException ("Initial routes have protection segments, which would be unused since the recovery type is not protection");
+			//if ((r.getBackupRoutes().size () == 1) && (!isProtectionRecovery)) System.out.println("Initial routes have protection segments, which would be unused since the recovery type is not protection");
 			if (r.getBackupRoutes().size () == 1)
 			{
 				segmentRWA = new WDMUtils.RSA (r.getBackupRoutes().get(0) , false); // its first backup route

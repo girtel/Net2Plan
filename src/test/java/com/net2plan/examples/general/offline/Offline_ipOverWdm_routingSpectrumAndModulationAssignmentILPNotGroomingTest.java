@@ -23,9 +23,10 @@ import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.SRGUtils.SharedRiskModel;
 import com.net2plan.libraries.WDMUtils;
-import com.net2plan.utils.CollectionUtils;
+import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Quadruple;
 
+import com.net2plan.utils.InputParameter;
 public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGroomingTest
 {
 	private NetPlan np;
@@ -65,10 +66,9 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGroom
 		testingParameters.put("optimizationTarget" , Arrays.asList("min-cost" , "maximin-fiber-number-idle-slots"));
 		testingParameters.put("bidirectionalTransponders" , Arrays.asList("true" , "false"));
 		testingParameters.put("maxPropagationDelayMs" , Arrays.asList("-1"));
-		List<Map<String,String>> testsParam = CollectionUtils.getCartesianProductOfParameters (testingParameters);
+		List<Map<String,String>> testsParam = InputParameter.getCartesianProductOfParameters (testingParameters);
 		for (Map<String,String> params : testsParam)
 		{
-			System.out.println(params);
 			final NetPlan npInput = np.copy ();
 			new Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGrooming ().executeAlgorithm(np , params , null);
 			checkValidity (npInput , np , params);
