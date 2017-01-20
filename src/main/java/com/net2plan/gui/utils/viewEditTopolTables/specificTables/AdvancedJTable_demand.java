@@ -291,7 +291,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                     switch (column) {
                         case COLUMN_OFFEREDTRAFFIC:
                         	demand.setOfferedTraffic(Double.parseDouble(newValue.toString()));
-                        	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND) , null , null);
+                        	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                         	callback.pickDemandAndUpdateView(demand);
                             break;
 
@@ -394,7 +394,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                             {
                             	final Demand demand = netPlan.getDemandFromId((long) itemId);
                             	demand.remove();
-                            	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND) ,null , null);
+                            	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -415,7 +415,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
 
                         try {
                         	netPlan.removeAllDemands();
-                        	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND) , null,null);
+                        	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -541,12 +541,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                 if (networkElementType == NetworkElementType.LINK) 
                 {
                 	final Link e = netPlan.addLink(originNode , destinationNode , 0 , 0 , 200000 , null);
-                	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK) , null , null);
+                	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
                 	callback.pickLinkAndUpdateView(e);
                 } else 
                 {
                 	final Demand d = netPlan.addDemand(originNode , destinationNode , 0 , null);
-                	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND) , null , null);
+                	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                 	callback.pickDemandAndUpdateView(d);
                 }
 
@@ -574,7 +574,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                     netPlan.addLinkBidirectional(n1,n2,0,0,200000,null,layer);
                 }
             }
-            callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK) , null , null);
+            callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
         }
     }
 
@@ -613,7 +613,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                 try 
                 {
                     for (Demand d : netPlan.getDemands()) d.setOfferedTraffic(h_d);
-                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND) , null , null);
+                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set offered traffic to all demands");
                 }
@@ -645,7 +645,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
 
                 try {
                     for (Demand d : netPlan.getDemands()) d.setOfferedTraffic(d.getOfferedTraffic() * scalingFactor);
-                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND) , null , null);
+                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to scale demand offered traffics");
                 }
@@ -728,7 +728,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                     	if (!d.getRoutes().isEmpty()) throw new Net2PlanException ("It is not possible to set the resource types traversed to demands with routes");
                     	d.setServiceChainSequenceOfTraversedResourceTypes(newTraversedResourcesTypes);
                     }
-                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND) , null , null);
+                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set traversed resource types");
                 }
@@ -746,7 +746,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                     public void actionPerformed(ActionEvent e) {
                         netPlan.getDemandFromId(demandId).decouple();
                         model.setValueAt("", row, 3);
-                        callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND) , null , null);
+                        callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                     }
                 });
 
@@ -781,7 +781,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                             try {
                                 long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
                                 netPlan.getDemandFromId(demandId).coupleToNewLinkCreated(netPlan.getNetworkLayerFromId(layerId));
-                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.LINK) , null , null);
+                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.LINK));
                                 break;
                             } catch (Throwable ex) {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating upper layer link from demand");
@@ -860,7 +860,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                                 }
 
                                 netPlan.getDemandFromId(demandId).coupleToUpperLayerLink(netPlan.getLinkFromId(linkId));
-                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.LINK) , null , null);
+                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.LINK));
                                 break;
                             } catch (Throwable ex) {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error coupling upper layer link to demand");
@@ -888,7 +888,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
 
                             int numRows = model.getRowCount();
                             for (int i = 0; i < numRows; i++) model.setValueAt("", i, 3);
-                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND) , null , null);
+                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND));
                         }
                     });
                 }
@@ -927,7 +927,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                                         if (!demand.isCoupled())
                                             demand.coupleToNewLinkCreated(layer);
 
-                                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.LINK) , null , null);
+                                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.LINK));
                                     break;
                                 } catch (Throwable ex) {
                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating upper layer links");

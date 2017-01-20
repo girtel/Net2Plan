@@ -75,7 +75,7 @@ class OSMOnState implements OSMState
         final NetPlan netPlan = callback.getDesign();
         netPlan.addNode(geoPosition.getLongitude(), geoPosition.getLatitude(), "Node" + netPlan.getNumberOfNodes(), null);
 
-        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE) , null , null);
+        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
         mapController.refreshTopologyAlignment();
     }
 
@@ -83,7 +83,7 @@ class OSMOnState implements OSMState
     public void removeNode(final Node node)
     {
         node.remove();
-        callback.updateVisualizationAfterChanges(Sets.newHashSet(Constants.NetworkElementType.NODE) , null , null);
+        callback.updateVisualizationAfterChanges(Sets.newHashSet(Constants.NetworkElementType.NODE));
         mapController.refreshTopologyAlignment();
     }
 

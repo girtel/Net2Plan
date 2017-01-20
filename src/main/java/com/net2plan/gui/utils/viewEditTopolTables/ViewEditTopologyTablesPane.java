@@ -5,6 +5,7 @@ import java.awt.Component;
 import java.awt.LayoutManager;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -105,7 +106,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
                         ((TableRowSorter) netPlanViewTable.get(elementType).getRowSorter()).setRowFilter(rowFilter);
                     }
-                    mainWindow.updateVisualizationAfterChanges(null , null , null);
+                    mainWindow.updateVisualizationAfterChanges(Collections.emptySet());
                 }
             });
 

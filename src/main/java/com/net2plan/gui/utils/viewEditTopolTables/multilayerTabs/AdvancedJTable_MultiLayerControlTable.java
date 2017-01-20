@@ -4,10 +4,12 @@ import com.net2plan.gui.utils.*;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.internal.Constants;
 import com.net2plan.utils.StringUtils;
 
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -24,7 +26,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 
     private static final int COLUMN_DOWN = 0;
     private static final int COLUMN_UP = 1;
-    private static final int COLUMN_INDEX = 2;
+    private static final int COLUMN_ID = 2;
     private static final int COLUMN_NAME = 3;
     private static final int COLUMN_SHOW_LAYER = 4;
     private static final int COLUMN_SHOW_LINK = 5;
@@ -85,11 +87,13 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         {
             final Object[] layerData = new Object[tableHeader.length];
 
+            final boolean isActiveLayer = networkLayer == netPlan.getNetworkLayerDefault();
+
             layerData[COLUMN_DOWN] = null;
             layerData[COLUMN_UP] = null;
-            layerData[COLUMN_INDEX] = networkLayer.getIndex();
+            layerData[COLUMN_ID] = networkLayer.getId();
             layerData[COLUMN_NAME] = networkLayer.getName();
-            layerData[COLUMN_SHOW_LAYER] = visualizationState.isLayerVisible(networkLayer);
+            layerData[COLUMN_SHOW_LAYER] = isActiveLayer || visualizationState.isLayerVisible(networkLayer);
             layerData[COLUMN_SHOW_LINK] = null;
             layerData[COLUMN_DEFAULT] = networkLayer == netPlan.getNetworkLayerDefault(); // NOTE: Should this go in the visualization state?
 
@@ -107,7 +111,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             {
                 switch (columnIndex)
                 {
-                    case COLUMN_INDEX:
+                    case COLUMN_ID:
                     case COLUMN_NAME:
                         return false;
                     default:
@@ -118,6 +122,28 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             @Override
             public void setValueAt(Object newValue, int row, int column)
             {
+                final Object oldValue = getValueAt(row, column);
+
+                final VisualizationState visualizationState = callback.getVisualizationState();
+
+                final NetworkLayer selectedLayer = netPlan.getNetworkLayerFromId(COLUMN_ID);
+
+                switch (column)
+                {
+                    case COLUMN_SHOW_LAYER:
+                        if (selectedLayer != netPlan.getNetworkLayerDefault())
+                        {
+                            visualizationState.setLayerVisibility(selectedLayer, (Boolean) newValue);
+                        }
+
+                        break;
+                    case COLUMN_DEFAULT:
+                        netPlan.setNetworkLayerDefault(selectedLayer);
+                        break;
+                }
+
+                updateTable();
+                callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
             }
         };
     }

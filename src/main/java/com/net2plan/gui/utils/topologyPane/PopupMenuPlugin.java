@@ -180,7 +180,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         public void actionPerformed(ActionEvent e)
         {
         	originNode.getNetPlan().addLink(originNode , destinationNode , 0 , 0 , 200000 , null , layer);
-            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE) , null , null);
+            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
         }
     }
 
@@ -202,7 +202,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         public void actionPerformed(ActionEvent e)
         {
         	originNode.getNetPlan().addLinkBidirectional(originNode , destinationNode , 0 , 0 , 200000 , null , layer);
-            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE) , null , null);
+            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
         }
 
     }
@@ -247,7 +247,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
 //                {
 //                    OSMMapStateBuilder.getSingleton().getPointToMoveNode(node, nodePosition.get(node.getId()));
 //                }
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE), null , null);
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                 callback.justApplyZoomAll();
             });
 
@@ -307,7 +307,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         public void actionPerformed(ActionEvent e)
         {
             link.remove();
-        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK), null , null);
+        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
         }
     }
 

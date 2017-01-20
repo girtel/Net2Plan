@@ -237,9 +237,8 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
 
                                 try {
                                     netPlan.removeNetworkLayer(netPlan.getNetworkLayerFromId((long) itemId));
-                                    final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
-                                    		(netPlan , false , true , false , true , null , null); // shown in topological order
-                                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER) , visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
+
+                                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                                 } catch (Throwable ex) {
                                     ErrorHandling.addErrorOrException(ex, getClass());
                                     ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -288,9 +287,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
 
                 try {
                     netPlan.addLayer("Layer " + netPlan.getNumberOfLayers(), null, null, null, null);
-                    final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
-                    		(netPlan , false , true , false , true , null , null); // shown in topological order
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER) , visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }

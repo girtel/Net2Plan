@@ -65,13 +65,13 @@ public interface IVisualizationCallback
 
 	void updateVisualizationJustTables ();
 
-	void updateVisualizationAfterNewTopology (BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder , List<Boolean> isLayerVisibleIndexedByLayerIndex);
+	void updateVisualizationAfterNewTopology ();
 
 	NetPlan getDesign();
 
     NetPlan getInitialDesign();
 
-	void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade , BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder , List<Boolean> isLayerVisibleIndexedByLayerIndex);
+	void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade);
 
 //    void moveNodeXYPosition (Node node, Point2D pos , boolean updateView);
 

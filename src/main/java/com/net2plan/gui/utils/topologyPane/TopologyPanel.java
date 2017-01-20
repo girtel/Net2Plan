@@ -152,9 +152,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 //				System.out.println ("Select layer: layerId " + layerId + ", layer: " + layer);
                 if (layer == null) throw new RuntimeException("Bad: " + newDefaultLayerId);
                 currentState.setNetworkLayerDefault(layer);
-                final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
-                		(currentState , false , true , false , true , null , null); // shown in topological order
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER) , visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
+
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
             }
         });
 
@@ -465,9 +464,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         } else if (src == btn_reset)
         {
         	callback.loadDesignDoNotUpdateVisualization(new NetPlan ());
-            final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
-            		(callback.getDesign() , false , true , false , true , null , null); // shown in topological order
-        	callback.updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
+        	callback.updateVisualizationAfterNewTopology();
             callback.resetPickedStateAndUpdateView();
         } else if (src == btn_increaseInterLayerDistance)
         {
@@ -580,9 +577,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             aux.checkCachesConsistency();
 
             callback.loadDesignDoNotUpdateVisualization(aux);
-            final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
-            		(callback.getDesign() , false , true , false , true , null , null); // shown in topological order
-            callback.updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
+            callback.updateVisualizationAfterNewTopology();
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
@@ -603,9 +598,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             fc_netPlan.setCurrentDirectory(file.getParentFile());
 
             callback.loadDesignDoNotUpdateVisualization(netPlan);
-            final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
-            		(callback.getDesign() , false , true , false , true , null , null); // shown in topological order
-            callback.updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
+            callback.updateVisualizationAfterNewTopology();
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
@@ -658,7 +651,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     netPlan.addMulticastDemand(netPlan.getNode(demand.getIngressNode().getIndex()), egressNodesThisNetPlan, demand.getOfferedTraffic(), demand.getAttributes());
                 }
 
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.MULTICAST_DEMAND) , null , null);
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.MULTICAST_DEMAND));
             } catch (Throwable ex)
             {
                 callback.getDesign().assignFrom(aux_netPlan);
