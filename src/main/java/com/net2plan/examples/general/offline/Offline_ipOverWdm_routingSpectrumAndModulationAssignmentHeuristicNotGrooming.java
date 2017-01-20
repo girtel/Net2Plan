@@ -339,7 +339,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		WDMUtils.checkResourceAllocationClashing(netPlan,true,true,wdmLayer);
 
 		String outMessage = "Total cost: " + totalCost + ". Num lps (not including 1+1 backup if any) " + netPlan.getNumberOfRoutes(wdmLayer);
-		System.out.println (outMessage);
+		//System.out.println (outMessage);
 		return "Ok! " + outMessage;
 	}
 

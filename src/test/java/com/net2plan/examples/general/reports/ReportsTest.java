@@ -82,7 +82,7 @@ public class ReportsTest
 		{
 			Map<String,String> paramsUsedToCall = InputParameter.getDefaultParameters(report.getParameters());
 			paramsUsedToCall.putAll(params); // so default parameters that are also in param, are replaced
-			System.out.println(paramsUsedToCall);
+			//System.out.println(paramsUsedToCall);
 			String result = report.executeReport(np , paramsUsedToCall , null);
 			assertTrue (result.length() > 100);
 		}
@@ -99,7 +99,7 @@ public class ReportsTest
 		{
 			Map<String,String> paramsUsedToCall = InputParameter.getDefaultParameters(report.getParameters());
 			paramsUsedToCall.putAll(params); // so default parameters that are also in param, are replaced
-			System.out.println(paramsUsedToCall);
+			//System.out.println(paramsUsedToCall);
 			String result = report.executeReport(np , paramsUsedToCall , null);
 			assertTrue (result.length() > 100);
 		}
@@ -117,7 +117,7 @@ public class ReportsTest
 			
 			/* input parameters of the event processor */
 			Map<String,String> provAlgorithmParam = InputParameter.getDefaultParameters(new Online_evProc_ipOverWdm().getParameters());
-			System.out.println(provAlgorithmParam);
+			//System.out.println(provAlgorithmParam);
 			provAlgorithmParam.put("ipOverWdmNetworkRecoveryType" , ipOverWdmEvProcessorRecoveryType);
 
 			/* input parameters of the report */
@@ -171,7 +171,7 @@ public class ReportsTest
 			
 			/* input parameters of the event processor */
 			Map<String,String> provAlgorithmParam = InputParameter.getDefaultParameters(new Online_evProc_ipOverWdm().getParameters());
-			System.out.println(provAlgorithmParam);
+			//System.out.println(provAlgorithmParam);
 			provAlgorithmParam.put("ipOverWdmNetworkRecoveryType" , ipOverWdmEvProcessorRecoveryType);
 
 			/* input parameters of the report */
