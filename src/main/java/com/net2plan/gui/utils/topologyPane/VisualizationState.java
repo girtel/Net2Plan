@@ -47,6 +47,7 @@ public class VisualizationState
     /* This only can be changed calling to rebuild */
     private BidiMap<NetworkLayer, Integer> mapLayer2VisualizationOrder; // as many entries as layers
     private Map<NetworkLayer, Boolean> mapLayerVisibility;
+    private Map<NetworkLayer, Boolean> mapShowLayerLinks;
 
     /* These need is recomputed inside a rebuild */
     private Map<Node, Set<GUILink>> cache_intraNodeGUILinks;
@@ -77,11 +78,7 @@ public class VisualizationState
         this.nonVisibleLinks = new HashSet<>();
         this.mapLayer2VisualizationOrder = mapLayer2VisualizationOrder;
         this.mapLayerVisibility = new HashMap<>();
-        // Fill layer visibility map
-        mapLayerVisibility = currentNp.getNetworkLayers().stream().collect(Collectors.toMap(layer -> layer, layer -> isLayerVisibleIndexedByLayerIndex.get(layer.getIndex())));
-
-		/* Default layer always visible */
-        this.mapLayerVisibility.put(currentNp.getNetworkLayerDefault(), true);
+        this.mapShowLayerLinks = new HashMap<>();
 
         rebuildVisualizationState(currentNp);
     }
@@ -306,10 +303,13 @@ public class VisualizationState
         this.mapLayer2VisualizationOrder = new DualHashBidiMap<>(mapLayer2VisualizationOrder);
 
         // Fill layer visibility map
-        mapLayerVisibility = currentNp.getNetworkLayers().stream().collect(Collectors.toMap(layer -> layer, layer -> isLayerVisibleIndexedByLayerIndex.get(layer.getIndex())));
+        this.mapLayerVisibility = currentNp.getNetworkLayers().stream().collect(Collectors.toMap(layer -> layer, layer -> isLayerVisibleIndexedByLayerIndex.get(layer.getIndex())));
 
 		/* Default layer always visible */
         this.mapLayerVisibility.put(currentNp.getNetworkLayerDefault(), true);
+
+        // TODO: Dummy
+        this.mapShowLayerLinks = currentNp.getNetworkLayers().stream().collect(Collectors.toMap(layer -> layer, layer -> true));
 
 		/* Update the interlayer space */
         this.interLayerSpaceInNetPlanCoordinates = getDefaultVerticalDistanceForInterLayers();
@@ -676,12 +676,19 @@ public class VisualizationState
         mapLayerVisibility.put(layer, isVisible);
     }
 
-    public boolean isLayerVisible(NetworkLayer layer)
+    public boolean isLayerVisible(final NetworkLayer layer)
     {
-        if (mapLayerVisibility == null)
-            throw new RuntimeException("Visualization state does not have layer visibility information");
-
         return mapLayerVisibility.get(layer);
+    }
+
+    public void showLayerLinks(final NetworkLayer layer, final boolean showLinks)
+    {
+        mapShowLayerLinks.put(layer, showLinks);
+    }
+
+    public boolean isLayerLinksShown(final NetworkLayer layer)
+    {
+        return mapShowLayerLinks.get(layer);
     }
 
     public NetworkLayer getNetworkLayerAtVisualizationOrderRemovingNonVisible(int trueVisualizationOrder)

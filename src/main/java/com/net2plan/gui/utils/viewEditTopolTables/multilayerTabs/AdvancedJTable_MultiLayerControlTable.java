@@ -6,7 +6,6 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
 import com.net2plan.utils.StringUtils;
-import org.apache.commons.collections15.list.TreeList;
 
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
@@ -84,7 +83,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         {
             if (!visualizationState.isLayerVisible(networkLayer)) continue;
 
-            final boolean isActiveLayer = networkLayer == netPlan.getNetworkLayerDefault();
+            final boolean isActiveLayer = isDefaultLayer(networkLayer);
             int layerOrder = visualizationState.getVisualizationOrderRemovingNonVisible(networkLayer);
 
             final Object[] layerData = new Object[tableHeader.length];
@@ -93,8 +92,8 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             layerData[COLUMN_ID] = networkLayer.getId();
             layerData[COLUMN_NAME] = networkLayer.getName();
             layerData[COLUMN_LAYER_VISIBILITY] = isActiveLayer || visualizationState.isLayerVisible(networkLayer);
-            layerData[COLUMN_LAYER_LINK_VISIBILITY] = null;
-            layerData[COLUMN_IS_DEFAULT] = networkLayer == netPlan.getNetworkLayerDefault(); // NOTE: Should this go in the visualization state?
+            layerData[COLUMN_LAYER_LINK_VISIBILITY] = visualizationState.isLayerLinksShown(networkLayer);
+            layerData[COLUMN_IS_DEFAULT] = isActiveLayer; // NOTE: Should this go in the visualization state?
 
             allLayerData.add(layerOrder, layerData);
         }
@@ -118,7 +117,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                     case COLUMN_LAYER_VISIBILITY:
                     case COLUMN_IS_DEFAULT:
                         final NetworkLayer selectedLayer = netPlan.getNetworkLayerFromId((long) this.getValueAt(rowIndex, COLUMN_ID));
-                        return !(selectedLayer == netPlan.getNetworkLayerDefault());
+                        return !(isDefaultLayer(selectedLayer));
                     default:
                         return true;
                 }
@@ -137,11 +136,15 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                 {
                     case COLUMN_LAYER_VISIBILITY:
                         visualizationState.setLayerVisibility(selectedLayer, (Boolean) newValue);
-
+                        break;
+                    case COLUMN_LAYER_LINK_VISIBILITY:
+                        visualizationState.showLayerLinks(selectedLayer, (Boolean) newValue);
                         break;
                     case COLUMN_IS_DEFAULT:
                         netPlan.setNetworkLayerDefault(selectedLayer);
                         visualizationState.setLayerVisibility(selectedLayer, true);
+                        break;
+                    default:
                         break;
                 }
 
@@ -176,5 +179,10 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         setDefaultRenderer(Long.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Integer.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(String.class, new CellRenderers.NonEditableCellRenderer());
+    }
+
+    private boolean isDefaultLayer(final NetworkLayer layer)
+    {
+        return netPlan.getNetworkLayerDefault() == layer;
     }
 }
