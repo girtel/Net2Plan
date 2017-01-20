@@ -28,14 +28,14 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
     private static final int COLUMN_UP = 1;
     private static final int COLUMN_ID = 2;
     private static final int COLUMN_NAME = 3;
-    private static final int COLUMN_SHOW_LAYER = 4;
-    private static final int COLUMN_SHOW_LINK = 5;
-    private static final int COLUMN_DEFAULT = 6;
+    private static final int COLUMN_LAYER_VISIBILITY = 4;
+    private static final int COLUMN_LAYER_LINK_VISIBILITY = 5;
+    private static final int COLUMN_IS_DEFAULT = 6;
 
     private static final String[] tableHeader = StringUtils.arrayOf(
             "Move up",
             "Move down",
-            "Index",
+            "ID",
             "Name",
             "Layer visibility",
             "Layer's link visibility",
@@ -94,9 +94,9 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             layerData[COLUMN_UP] = null;
             layerData[COLUMN_ID] = networkLayer.getId();
             layerData[COLUMN_NAME] = networkLayer.getName();
-            layerData[COLUMN_SHOW_LAYER] = isActiveLayer || visualizationState.isLayerVisible(networkLayer);
-            layerData[COLUMN_SHOW_LINK] = null;
-            layerData[COLUMN_DEFAULT] = networkLayer == netPlan.getNetworkLayerDefault(); // NOTE: Should this go in the visualization state?
+            layerData[COLUMN_LAYER_VISIBILITY] = isActiveLayer || visualizationState.isLayerVisible(networkLayer);
+            layerData[COLUMN_LAYER_LINK_VISIBILITY] = null;
+            layerData[COLUMN_IS_DEFAULT] = networkLayer == netPlan.getNetworkLayerDefault(); // NOTE: Should this go in the visualization state?
 
             allLayerData.add(layerData);
         }
@@ -110,11 +110,16 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex)
             {
+
                 switch (columnIndex)
                 {
                     case COLUMN_ID:
                     case COLUMN_NAME:
                         return false;
+                    case COLUMN_LAYER_VISIBILITY:
+                    case COLUMN_IS_DEFAULT:
+                        final NetworkLayer selectedLayer = netPlan.getNetworkLayerFromId((long) this.getValueAt(rowIndex, COLUMN_ID));
+                        return !(selectedLayer == netPlan.getNetworkLayerDefault());
                     default:
                         return true;
                 }
@@ -127,24 +132,24 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 
                 final VisualizationState visualizationState = callback.getVisualizationState();
 
-                final NetworkLayer selectedLayer = netPlan.getNetworkLayerFromId(COLUMN_ID);
+                final NetworkLayer selectedLayer = netPlan.getNetworkLayerFromId((long) this.getValueAt(row, COLUMN_ID));
 
                 switch (column)
                 {
-                    case COLUMN_SHOW_LAYER:
-                        if (selectedLayer != netPlan.getNetworkLayerDefault())
-                        {
-                            visualizationState.setLayerVisibility(selectedLayer, (Boolean) newValue);
-                        }
+                    case COLUMN_LAYER_VISIBILITY:
+                        visualizationState.setLayerVisibility(selectedLayer, (Boolean) newValue);
 
                         break;
-                    case COLUMN_DEFAULT:
+                    case COLUMN_IS_DEFAULT:
                         netPlan.setNetworkLayerDefault(selectedLayer);
+                        visualizationState.setLayerVisibility(selectedLayer, true);
                         break;
                 }
 
                 updateTable();
                 callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
+
+                super.setValueAt(newValue, row, column);
             }
         };
     }
@@ -158,6 +163,9 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             // Setting up values
             this.tableModel.setDataVector(layerData.toArray(new Object[layerData.size()][tableHeader.length]), tableHeader);
         }
+
+        this.revalidate();
+        this.repaint();
     }
 
     private void setDefaultCellRenders()
