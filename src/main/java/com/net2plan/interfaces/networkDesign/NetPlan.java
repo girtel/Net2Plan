@@ -26,14 +26,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import javax.xml.stream.FactoryConfigurationError;
@@ -47,6 +45,7 @@ import org.codehaus.stax2.XMLStreamReader2;
 import org.codehaus.stax2.XMLStreamWriter2;
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 
+import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.Version;
@@ -1946,15 +1945,14 @@ public class NetPlan extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns the splitting factor of the forwarding rule of the given demand and link. If no layer is provided, default layer is assumed.</p>
+	 * <p>Returns the splitting factor of the forwarding rule of the given demand and link, which must be of the same layer. </p>
 	 * @param demand Outgoing demand
 	 * @param link Link
-	 * @param optionalLayerParameter Network layer (optional)
 	 * @return The splitting factor
 	 */
-	public double getForwardingRuleSplittingFactor (Demand demand , Link link , NetworkLayer ... optionalLayerParameter)
+	public double getForwardingRuleSplittingFactor (Demand demand , Link link)
 	{
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		NetworkLayer layer = demand.layer; 
 		checkInThisNetPlanAndLayer(demand , layer);
 		checkInThisNetPlanAndLayer(link , layer);
 		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
@@ -5057,6 +5055,9 @@ public class NetPlan extends NetworkElement
 		if (nodesToSetAsDown != null) checkInThisNetPlan(nodesToSetAsDown);
 		Set<Link> affectedLinks = new HashSet<Link> ();
 
+		if (linksToSetAsDown != null && linksToSetAsUp != null) if (!Sets.intersection(new HashSet<>(linksToSetAsDown), new HashSet<>(linksToSetAsUp)).isEmpty()) throw new Net2PlanException ("A link is changed to up and to down state in the same call");
+		if (nodesToSetAsDown != null && nodesToSetAsUp != null) if (!Sets.intersection(new HashSet<>(nodesToSetAsDown), new HashSet<>(nodesToSetAsUp)).isEmpty()) throw new Net2PlanException ("A node is changed to up and to down state in the same call");
+		
 //		System.out.println ("setLinksAndNodesFailureState : links to up: " + linksToSetAsUp + ", links to down: " + linksToSetAsDown + ", nodes up: " + nodesToSetAsUp + ", nodes down: " + nodesToSetAsDown);
 
 		/* Take all the affected links, including the in/out links of nodes. Update their state up/down and the cache of links and nodes up down, but not the routes, trees etc. */
@@ -5121,20 +5122,8 @@ public class NetPlan extends NetworkElement
 			if (d.coupledUpperLayerLink != null)
 				if (!demandTrafficUnitsName.equals(layer.demandTrafficUnitsName))
 					throw new Net2PlanException("Demand traffic units name cannot be modified since there is some coupling with other layers");
-		} catch (Exception e) { e.printStackTrace(); throw e; }
+		} catch (Exception e) { throw e; }
 		layer.demandTrafficUnitsName = demandTrafficUnitsName;
-	}
-
-	/**
-	 * <p>Sets the layer description. If no layer is provided, default layer is used.</p>
-	 * @param description Layer description
-	 * @param optionalLayerParameter Network layer (optional)
-	 */
-	public void setDescription (String description , NetworkLayer ... optionalLayerParameter)
-	{
-		checkIsModifiable();
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		layer.description = description;
 	}
 
 	/**
@@ -5272,7 +5261,7 @@ public class NetPlan extends NetworkElement
 				{
 					throw new Net2PlanException("Link capacity units name cannot be modified since there is some coupling with other layers");
 				}
-		} catch (Exception e) { e.printStackTrace(); throw e; }
+		} catch (Exception e) { throw e; }
 		layer.linkCapacityUnitsName = name;
 	}
 

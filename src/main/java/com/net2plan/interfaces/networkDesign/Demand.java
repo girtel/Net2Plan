@@ -296,13 +296,16 @@ public class Demand extends NetworkElement
 	/** Sets the sequence of types of resources that the routes of this demand have to follow. This method is to make the demand become 
 	 * a request of service chains. This method can only be called if the routing type is SOURCE ROUTING, and the demand has no routes 
 	 * at the moment.
-	 * @param resourceTypesSequence the sequence of types of the resources that has to be traversed by all the routes of this demand
+	 * @param resourceTypesSequence the sequence of types of the resources that has to be traversed by all the routes of this demand. If null, an empty sequence is assumed
 	 */
 	public void setServiceChainSequenceOfTraversedResourceTypes (List<String> resourceTypesSequence)
 	{
 		if (layer.routingType != RoutingType.SOURCE_ROUTING) throw new Net2PlanException ("The routing type must be SOURCE ROUTING");
 		if (!cache_routes.isEmpty()) throw new Net2PlanException ("The demand must not have routes to execute this method");
-		this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> (resourceTypesSequence);
+		if (resourceTypesSequence == null)
+			this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> ();
+		else
+			this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> (resourceTypesSequence);
 	}
 	
 	/**

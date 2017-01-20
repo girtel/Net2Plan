@@ -1,7 +1,8 @@
 package com.net2plan.interfaces.networkDesign;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.awt.geom.Point2D;
 import java.io.File;
@@ -22,6 +23,9 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableMap;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
+
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 public class NetPlanTest
 {
@@ -619,7 +623,6 @@ public class NetPlanTest
 	@Test
 	public void testComputeMulticastTreeCostVector()
 	{
-		System.out.println(np.computeMulticastTreeCostVector(null));
 		assertTrue (Arrays.equals(np.computeMulticastTreeCostVector(null).toArray(), new double [] {2,2}));
 	}
 
@@ -719,131 +722,189 @@ public class NetPlanTest
 		np.removeAllRoutesUnused(0.1 , lowerLayer);
 		assertEquals(np.getNumberOfRoutes() , 5);
 	}
-//
-//	@Test
-//	public void testRemoveAllLinksUnused()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemoveAllUnicastRoutingInformation()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemoveAllSRGs()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testRemoveAllResources()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testReset()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
+
+	@Test
+	public void testRemoveAllLinksUnused()
+	{
+		np.removeAllLinksUnused(0.1 , lowerLayer);
+		assertEquals(np.getNumberOfLinks () , 3);
+		link12.setCapacity(0);
+		np.removeAllLinksUnused(0.1 , lowerLayer);
+		assertEquals(np.getNumberOfLinks () , 2);
+	}
+
+	@Test
+	public void testRemoveAllUnicastRoutingInformation()
+	{
+		np.removeAllUnicastRoutingInformation(lowerLayer);
+		assertEquals(np.getNumberOfLinks (lowerLayer) , 3);
+		assertEquals(np.getNumberOfRoutes (lowerLayer) , 0);
+		assertEquals(np.getNumberOfMulticastTrees(lowerLayer) , 2);
+	}
+
+	@Test
+	public void testRemoveAllSRGs()
+	{
+		np.addSRG(1,2,null);
+		assertEquals(np.getNumberOfSRGs() , 1);
+		np.removeAllSRGs();
+		assertEquals(np.getNumberOfSRGs() , 0);
+	}
+
+	@Test
+	public void testRemoveAllResources()
+	{
+		assertEquals(np.getNumberOfResources() , 2);
+		np.removeAllResources();
+		assertEquals(np.getNumberOfResources() , 0);
+	}
+
+	@Test
+	public void testReset()
+	{
+		np.reset();
+		NetPlan np2 = new NetPlan ();
+		assertTrue (np2.isDeepCopy(np));
+		assertTrue (np.isDeepCopy(np2));
+	}
+
+//	/* already in the NetPlan constructor test*/
 //	@Test
 //	public void testSaveToFile()
 //	{
-//		fail("Not yet implemented");
 //	}
-//
-//	@Test
-//	public void testSaveToOutputStream()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testSetAllLinksFailureState()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testSetAllNodesFailureState()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testSetLinksAndNodesFailureState()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testSetDemandTrafficUnitsName()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testSetDescription()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testSetForwardingRule()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testSetForwardingRulesCollectionOfDemandCollectionOfLinkCollectionOfDoubleBoolean()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testSetForwardingRulesDoubleMatrix2DNetworkLayerArray()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testSetLinkCapacityUnitsName()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testSetNetworkDescription()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testSetNetworkLayerDefault()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testSetNetworkName()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testSetRoutingType()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testSetTrafficMatrix()
-//	{
-//		fail("Not yet implemented");
-//	}
-//
+
+	@Test
+	public void testSetAllLinksFailureState()
+	{
+		np.setAllLinksFailureState(false, lowerLayer);
+		for (Link e : np.getLinks(lowerLayer))
+			assertTrue (e.isDown());
+		np.setAllLinksFailureState(true, lowerLayer);
+		for (Link e : np.getLinks(lowerLayer))
+			assertTrue (e.isUp());
+	}
+
+	@Test
+	public void testSetAllNodesFailureState()
+	{
+		np.setAllNodesFailureState(false);
+		for (Node n : np.getNodes())
+			assertTrue (n.isDown());
+		np.setAllNodesFailureState(true);
+		for (Node n : np.getNodes())
+			assertTrue (n.isUp());
+	}
+
+	@Test
+	public void testSetLinksAndNodesFailureState()
+	{
+		try { np.setLinksAndNodesFailureState(Arrays.asList(link12) , Arrays.asList(link12 , link13 , upperLink12), null, Arrays.asList(n1,n2)); fail (); } catch (Exception e) {} 
+		np.setLinksAndNodesFailureState(null , Arrays.asList(link12 , link13 , upperLink12), null, Arrays.asList(n1,n2));
+		assertTrue (!n1.isUp());
+		assertTrue (!n2.isUp());
+		assertTrue (n3.isUp());
+		assertTrue (!link12.isUp());
+		assertTrue (!link13.isUp());
+		assertTrue (!upperLink12.isUp());
+		np.setLinksAndNodesFailureState(Arrays.asList(link12 , link13 , upperLink12), null , Arrays.asList(n1,n2) , null);
+		assertTrue (n1.isUp());
+		assertTrue (n2.isUp());
+		assertTrue (n3.isUp());
+		assertTrue (link12.isUp());
+		assertTrue (link13.isUp());
+		assertTrue (upperLink12.isUp());
+	}
+
+	@Test
+	public void testSetDemandTrafficUnitsName()
+	{
+		try { np.setDemandTrafficUnitsName("bla", lowerLayer); fail (); } catch (Exception e) {}
+		np.setDemandTrafficUnitsName("bla", upperLayer);
+		assertEquals(np.getDemandTrafficUnitsName(upperLayer) , "bla");
+	}
+
+	@Test
+	public void testSetForwardingRule()
+	{
+		sc123.remove();
+		scd123.setServiceChainSequenceOfTraversedResourceTypes(null);
+		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		np.setForwardingRule(d12, link12 , 0.7); 
+		assertEquals(np.getForwardingRuleSplittingFactor(d12,   link12) , 0.7 , 0);
+		try { np.setForwardingRule(d12, link13 , 0.7); fail (); } catch (Exception e) {} 
+	}
+
+	@Test
+	public void testSetForwardingRulesCollectionOfDemandCollectionOfLinkCollectionOfDoubleBoolean()
+	{
+		sc123.remove();
+		scd123.setServiceChainSequenceOfTraversedResourceTypes(null);
+		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		np.setForwardingRules(Arrays.asList(d12 , d12), Arrays.asList(link12 , link13), Arrays.asList(0.7 , 0.1), true); 
+		assertEquals(np.getForwardingRuleSplittingFactor(d12,   link12) , 0.7 , 0);
+		assertEquals(np.getForwardingRuleSplittingFactor(d12,   link13) , 0.1 , 0);
+	}
+
+	@Test
+	public void testSetForwardingRulesDoubleMatrix2DNetworkLayerArray()
+	{
+		sc123.remove();
+		scd123.setServiceChainSequenceOfTraversedResourceTypes(null);
+		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		DoubleMatrix2D f_de = np.getMatrixDemandBasedForwardingRules(lowerLayer);
+		f_de.set(d12.getIndex(), link12.getIndex(), 0.7);
+		np.setForwardingRules(f_de , lowerLayer); 
+		assertEquals(np.getForwardingRuleSplittingFactor(d12,   link12) , 0.7 , 0);
+	}
+
+	@Test
+	public void testSetLinkCapacityUnitsName()
+	{
+		try { np.setLinkCapacityUnitsName("bla", upperLayer); fail (); } catch (Exception e) {}
+		np.setLinkCapacityUnitsName("bla", lowerLayer); 
+		assertEquals(np.getLinkCapacityUnitsName(lowerLayer) , "bla");
+	}
+
+	@Test
+	public void testSetNetworkDescription()
+	{
+		np.setNetworkDescription("bla"); 
+		assertEquals(np.getNetworkDescription() , "bla");
+	}
+
+	@Test
+	public void testSetNetworkLayerDefault()
+	{
+		np.setNetworkLayerDefault(upperLayer); 
+		assertEquals(np.getNetworkLayerDefault() , upperLayer);
+	}
+
+	@Test
+	public void testSetNetworkName()
+	{
+		np.setNetworkName("bla"); 
+		assertEquals(np.getNetworkName() , "bla");
+	}
+
+	@Test
+	public void testSetRoutingType()
+	{
+		sc123.remove();
+		scd123.setServiceChainSequenceOfTraversedResourceTypes(null);
+		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		assertEquals (np.getRoutingType(lowerLayer) , RoutingType.HOP_BY_HOP_ROUTING);
+		np.setRoutingType(RoutingType.SOURCE_ROUTING , lowerLayer);
+		assertEquals (np.getRoutingType(lowerLayer) , RoutingType.SOURCE_ROUTING);
+	}
+
+	@Test
+	public void testSetTrafficMatrix()
+	{
+		DoubleMatrix2D m = DoubleFactory2D.dense.make(np.getNumberOfNodes() , np.getNumberOfNodes() , 3.0);
+		np.setTrafficMatrix(m, lowerLayer);
+		for (Demand d : np.getDemands (lowerLayer))
+			assertEquals (d.getOfferedTraffic() , 3.0 , 0);
+	}
+
 }
