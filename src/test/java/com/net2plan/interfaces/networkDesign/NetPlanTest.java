@@ -892,10 +892,21 @@ public class NetPlanTest
 	{
 		sc123.remove();
 		scd123.setServiceChainSequenceOfTraversedResourceTypes(null);
+		r12.setCarriedTraffic(1,1);
+		r123a.setCarriedTraffic(2,2);
+		r123b.setCarriedTraffic(3,3);
+		d13.setOfferedTraffic(5);
+		d12.setOfferedTraffic(1);
+		NetPlan npSR = np.copy();
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		NetPlan npHR = np.copy ();
 		assertEquals (np.getRoutingType(lowerLayer) , RoutingType.HOP_BY_HOP_ROUTING);
 		np.setRoutingType(RoutingType.SOURCE_ROUTING , lowerLayer);
 		assertEquals (np.getRoutingType(lowerLayer) , RoutingType.SOURCE_ROUTING);
+		assertTrue (npSR.getVectorLinkCarriedTraffic(npSR.getNetworkLayer(lowerLayer.getIndex())).equals(np.getVectorLinkCarriedTraffic(lowerLayer)));
+		assertTrue (npSR.getVectorLinkCarriedTraffic(npSR.getNetworkLayer(upperLayer.getIndex())).equals(np.getVectorLinkCarriedTraffic(upperLayer)));
+		assertTrue (npHR.getVectorLinkCarriedTraffic(npHR.getNetworkLayer(lowerLayer.getIndex())).equals(np.getVectorLinkCarriedTraffic(lowerLayer)));
+		assertTrue (npHR.getVectorLinkCarriedTraffic(npHR.getNetworkLayer(upperLayer.getIndex())).equals(np.getVectorLinkCarriedTraffic(upperLayer)));
 	}
 
 	@Test

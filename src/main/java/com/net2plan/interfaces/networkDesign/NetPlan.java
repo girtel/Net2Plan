@@ -3736,7 +3736,7 @@ public class NetPlan extends NetworkElement
 	 * @param optionalLayerParameter Network layer (optional)
 	 * @return The vector with the total carried traffic per link
 	 */
-	public DoubleMatrix1D getVectorLinkTotalCarriedTraffic (NetworkLayer ... optionalLayerParameter)
+	public DoubleMatrix1D getVectorLinkCarriedTraffic (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
@@ -3748,9 +3748,9 @@ public class NetPlan extends NetworkElement
 	 * <p>Returns a vector with the total occupied capacity in the links, at the given layer.
 	 * i-th vector corresponds to i-th index of the element. If no layer is provided, the defaulf layer is assumed.</p>
 	 * @param optionalLayerParameter Network layer (optional)
-	 * @return The vector with the tootal occupied capacity per link
+	 * @return The vector with the total occupied capacity per link
 	 */
-	public DoubleMatrix1D getVectorLinkTotalOccupiedCapacity (NetworkLayer ... optionalLayerParameter)
+	public DoubleMatrix1D getVectorLinkOccupiedCapacity (NetworkLayer ... optionalLayerParameter)
 	{
 		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
@@ -5480,7 +5480,7 @@ public class NetPlan extends NetworkElement
 	 * can be lost (so a conversion back to SOURCE ROUTING will not produce the original network): 
 	 * the conversion uses the route carried traffics, and discards the information of the the 
 	 * routes occupied capacities in the links. A conversion back will put all the occupied capacities of the routes, 
-	 * equal to the carried traffics.</p>
+	 * equal to the carried traffics (so the original occupied links capacities would be lost, if different).</p>
 	 * @param optionalLayerParameter Network layer (optional)
 	 * @param newRoutingType {@link com.net2plan.utils.Constants.RoutingType RoutingType}
 	 */
@@ -5491,7 +5491,7 @@ public class NetPlan extends NetworkElement
 		if (layer.routingType == newRoutingType) return;
 		if (newRoutingType == RoutingType.HOP_BY_HOP_ROUTING) for (Demand d : layer.demands) if (d.isServiceChainRequest()) 
 			throw new Net2PlanException ("Cannot perform this operation with service chain demands, since the resource traversing information is lost");
-		
+		final int D = layer.demands.size();
 		switch(newRoutingType)
 		{
 			case HOP_BY_HOP_ROUTING:

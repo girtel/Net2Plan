@@ -181,7 +181,7 @@ public class Online_evProc_congestionControlPrimal extends IEventProcessor
 		this.stat_traceOf_maxLinkTraffic = new TimeTrace ();
 		this.stat_traceOf_hd.add(0 , this.currentNetPlan.getVectorDemandOfferedTraffic());
 		this.stat_traceOf_objFunction.add(0 , NetworkPerformanceMetrics.alphaUtility(currentNetPlan.getVectorDemandOfferedTraffic() , control_fairnessFactor.getDouble()));
-		this.stat_traceOf_maxLinkTraffic.add(0.0, this.currentNetPlan.getVectorLinkTotalCarriedTraffic().getMaxLocation() [0]);
+		this.stat_traceOf_maxLinkTraffic.add(0.0, this.currentNetPlan.getVectorLinkCarriedTraffic().getMaxLocation() [0]);
 	}
 
 	@Override
@@ -268,7 +268,7 @@ public class Online_evProc_congestionControlPrimal extends IEventProcessor
 
 			this.stat_traceOf_hd.add(t, this.currentNetPlan.getVectorDemandOfferedTraffic());
 			this.stat_traceOf_objFunction.add(t, NetworkPerformanceMetrics.alphaUtility(currentNetPlan.getVectorDemandOfferedTraffic() , control_fairnessFactor.getDouble()));
-			this.stat_traceOf_maxLinkTraffic.add(t, this.currentNetPlan.getVectorLinkTotalCarriedTraffic().getMaxLocation() [0]);
+			this.stat_traceOf_maxLinkTraffic.add(t, this.currentNetPlan.getVectorLinkCarriedTraffic().getMaxLocation() [0]);
 
 			if (t > this.simulation_maxNumberOfUpdateIntervals.getDouble() * this.update_averageInterUpdateTime.getDouble()) { this.endSimulation (); }
 			

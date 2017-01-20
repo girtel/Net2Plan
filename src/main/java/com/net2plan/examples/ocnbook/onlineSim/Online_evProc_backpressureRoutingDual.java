@@ -194,7 +194,7 @@ public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 		this.stat_traceOf_queueSizes = new TimeTrace ();
 		this.stat_traceOf_objFunction = new TimeTrace (); 
 		this.stat_traceOf_xp.add(0.0 , netPlanRouteCarriedTrafficMap (this.currentNetPlan));
-		this.stat_traceOf_ye.add(0.0, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+		this.stat_traceOf_ye.add(0.0, this.currentNetPlan.getVectorLinkCarriedTraffic());
 		this.stat_traceOf_queueSizes.add(0.0, copyOf(this.ctlNumPacketsQueue_nd));
 		this.stat_traceOf_objFunction.add(0.0, computeObjectiveFucntionFromNetPlan());
 		
@@ -220,7 +220,7 @@ public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 			
 			/* Update the traces */
 			this.stat_traceOf_xp.add(time, netPlanRouteCarriedTrafficMap(this.currentNetPlan));
-			this.stat_traceOf_ye.add(time, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+			this.stat_traceOf_ye.add(time, this.currentNetPlan.getVectorLinkCarriedTraffic());
 			this.stat_traceOf_objFunction.add(time, computeObjectiveFucntionFromNetPlan());
 			final double scaleFactorAccumNumQueuePacketsToAverageQueuedTraffic = this.routing_numTrafficUnitsOfOnePacket.getDouble() / this.routing_statNumSchedSlotBetweenN2PRecomputing.getInt();
 			/* We store the average queue sizes in traffic units */
@@ -403,11 +403,11 @@ public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 		if (simulation_outFileNameRoot.getString().equals("")) return null;
 		
 		/* Compute optimum solution and cost */
-		double optCost = optNetPlan.getVectorLinkTotalCarriedTraffic().zSum() / stat_totalOfferedTrafficConstant;
+		double optCost = optNetPlan.getVectorLinkCarriedTraffic().zSum() / stat_totalOfferedTrafficConstant;
 		
 		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_objFunc.txt"), optCost);
 		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_xp.txt"), optNetPlan.getVectorRouteCarriedTraffic());
-		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_ye.txt"), optNetPlan.getVectorLinkTotalCarriedTraffic());
+		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_ye.txt"), optNetPlan.getVectorLinkCarriedTraffic());
 		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_qnd.txt"), optQueueSizes_nd);
 		this.stat_traceOf_queueSizes.printToFile(new File (simulation_outFileNameRoot.getString() + "_qnd.txt"));
 		this.stat_traceOf_objFunction.printToFile(new File (simulation_outFileNameRoot.getString() + "_objFunc.txt"));
@@ -424,7 +424,7 @@ public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 	
 	private double computeObjectiveFucntionFromNetPlan ()
 	{
-		return this.currentNetPlan.getVectorLinkTotalCarriedTraffic().zSum () / this.stat_totalOfferedTrafficConstant;
+		return this.currentNetPlan.getVectorLinkCarriedTraffic().zSum () / this.stat_totalOfferedTrafficConstant;
 	}
 
 	private Pair<NetPlan,double [][]> computeOptimumSolution (boolean xdeVariablesAsFractionsOfTraffic)

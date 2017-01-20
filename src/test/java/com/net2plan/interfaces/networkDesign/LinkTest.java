@@ -17,7 +17,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import com.net2plan.utils.Pair;
+import com.net2plan.utils.Triple;
 import com.net2plan.utils.Constants.RoutingType;
 
 public class LinkTest 
@@ -439,5 +442,41 @@ public class LinkTest
 		upperLink12.setFailureState(true);
 		assertTrue (!upperLink12.isDown());
 	}
+	
+	@Test
+	public void testGetLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  ()
+	{
+		Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple;
+		triple = link12.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (false);
+		assertEquals (triple.getFirst() , ImmutableMap.of(d12 , Sets.newHashSet(link12) , d13 , Sets.newHashSet(link12 , link23)
+				, scd123 , Sets.newHashSet(link12 , link23)));
+		assertEquals (triple.getSecond() , ImmutableMap.of());
+		assertEquals (triple.getThird() , ImmutableMap.of(Pair.of(d123,n3) , Sets.newHashSet(link12 , link23) , Pair.of(d123,n2) , Sets.newHashSet(link12)  ));
+		
+		link23.setFailureState(false);
+		triple = link12.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (true);
+		assertEquals (triple.getFirst() , ImmutableMap.of(d12 , Sets.newHashSet(link12) , d13 , Sets.newHashSet(link12 , link23)
+				, scd123 , Sets.newHashSet(link12 , link23)));
+		assertEquals (triple.getSecond() , ImmutableMap.of());
+		assertEquals (triple.getThird() , ImmutableMap.of(Pair.of(d123,n3) , Sets.newHashSet(link12 , link23) , Pair.of(d123,n2) , Sets.newHashSet(link12)  ));
+		triple = link12.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (false);
+		assertEquals (triple.getFirst() , ImmutableMap.of(d12 , Sets.newHashSet(link12)));
+		assertEquals (triple.getSecond() , ImmutableMap.of());
+		assertEquals (triple.getThird() , ImmutableMap.of(Pair.of(d123,n2) , Sets.newHashSet(link12)  ));
+		
+		link23.setFailureState(true);
+		triple = link13.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (false);
+		assertEquals (triple.getFirst() , ImmutableMap.of());
+		assertEquals (triple.getSecond() , ImmutableMap.of(d13 , Sets.newHashSet(link13)));
+		assertEquals (triple.getThird() , ImmutableMap.of(Pair.of(d123,n3) , Sets.newHashSet(link13)));
+		link23.setFailureState(false);
+		triple = link13.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (false);
+		assertEquals (triple.getFirst() , ImmutableMap.of());
+		assertEquals (triple.getSecond() , ImmutableMap.of(d13 , Sets.newHashSet(link13)));
+		assertEquals (triple.getThird() , ImmutableMap.of(Pair.of(d123,n3) , Sets.newHashSet(link13)));
+		
+	}
+	
 
+	
 }

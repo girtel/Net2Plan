@@ -254,7 +254,7 @@ public class Online_evProc_congControlAndTransmissionPowerAssignmentDualDecomp e
 		this.traceOf_objFunction = new TimeTrace ();
 
 		this.traceOf_u_e.add(0.0, this.currentNetPlan.getVectorLinkCapacity());
-		this.traceOf_y_e.add(0.0, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+		this.traceOf_y_e.add(0.0, this.currentNetPlan.getVectorLinkCarriedTraffic());
 		this.traceOf_p_e.add(0.0, this.mac_transmissionPower_logu_e.copy ());
 		this.traceOf_pi_e.add(0.0, this.cc_price_e.copy ());
 		this.traceOf_h_d.add(0.0, this.currentNetPlan.getVectorDemandCarriedTraffic());
@@ -325,7 +325,7 @@ public class Online_evProc_congControlAndTransmissionPowerAssignmentDualDecomp e
 				e.setCapacity(Math.log(computeSINR_e (e)));
 
 			this.traceOf_u_e.add(t, this.currentNetPlan.getVectorLinkCapacity());
-			this.traceOf_y_e.add(t, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+			this.traceOf_y_e.add(t, this.currentNetPlan.getVectorLinkCarriedTraffic());
 			this.traceOf_p_e.add(t, this.mac_transmissionPower_logu_e.copy ());
 			this.traceOf_pi_e.add(t, this.cc_price_e.copy ());
 			this.traceOf_h_d.add(t, this.currentNetPlan.getVectorDemandCarriedTraffic());
@@ -415,7 +415,7 @@ public class Online_evProc_congControlAndTransmissionPowerAssignmentDualDecomp e
 		new Offline_cba_wirelessCongControlTransmissionPowerAssignment ().executeAlgorithm(copyInitialNetPlan , param , this.net2planParameters);
 		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_objFunc.txt") , NetworkPerformanceMetrics.alphaUtility(copyInitialNetPlan.getVectorDemandOfferedTraffic() , cc_fairnessFactor.getDouble()));
 		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_ue.txt") , copyInitialNetPlan.getVectorLinkCapacity());
-		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_ye.txt") , copyInitialNetPlan.getVectorLinkTotalCarriedTraffic());
+		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_ye.txt") , copyInitialNetPlan.getVectorLinkCarriedTraffic());
 		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_hd.txt") , copyInitialNetPlan.getVectorDemandCarriedTraffic());
 		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_pe.txt") , copyInitialNetPlan.getVectorAttributeValues(copyInitialNetPlan.getLinks () , "p_e"));
 		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_pie.txt") , copyInitialNetPlan.getVectorAttributeValues(copyInitialNetPlan.getLinks () , "pi_e"));

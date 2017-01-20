@@ -176,7 +176,7 @@ public class Online_evProc_congestionControlDual extends IEventProcessor
 
 		this.stat_traceOf_hd.add(0.0, this.currentNetPlan.getVectorDemandOfferedTraffic());
 		this.stat_traceOf_pie.add(0.0, this.congControl_price_e.copy ());
-		this.stat_traceOf_ye.add(0.0, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+		this.stat_traceOf_ye.add(0.0, this.currentNetPlan.getVectorLinkCarriedTraffic());
 		this.stat_traceOf_objFunction.add(0.0, NetworkPerformanceMetrics.alphaUtility(currentNetPlan.getVectorDemandOfferedTraffic() , control_fairnessFactor.getDouble()));
 
 	}
@@ -248,7 +248,7 @@ public class Online_evProc_congestionControlDual extends IEventProcessor
 
 			this.stat_traceOf_hd.add(t, this.currentNetPlan.getVectorDemandOfferedTraffic());
 			this.stat_traceOf_pie.add(t, this.congControl_price_e.copy ());
-			this.stat_traceOf_ye.add(t, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+			this.stat_traceOf_ye.add(t, this.currentNetPlan.getVectorLinkCarriedTraffic());
 			this.stat_traceOf_objFunction.add(t, NetworkPerformanceMetrics.alphaUtility(currentNetPlan.getVectorDemandOfferedTraffic() , control_fairnessFactor.getDouble()));
 
 			if (t > this.simulation_maxNumberOfUpdateIntervals.getDouble() * this.update_averageInterUpdateTime.getDouble()) { this.endSimulation (); }

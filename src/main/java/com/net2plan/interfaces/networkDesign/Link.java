@@ -719,7 +719,6 @@ public class Link extends NetworkElement
 				Set<Link> linksSoFar = resMCast.get(Pair.of(t.getMulticastDemand() , egressNode));
 				if (linksSoFar == null) { linksSoFar = new HashSet<> (); resMCast.put(Pair.of(t.getMulticastDemand() , egressNode), linksSoFar); }
 				linksSoFar.addAll(pathToEgressNode);
-				linksSoFar.remove(this);
 			}
 		}
 		return Triple.of(resPrimary,resBackup,resMCast);

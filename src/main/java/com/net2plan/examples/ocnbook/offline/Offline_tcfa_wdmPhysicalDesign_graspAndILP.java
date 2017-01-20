@@ -457,7 +457,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		{
 			System.out.println("np.getLinksOversubscribed(): " + np.getLinksOversubscribed());
 			System.out.println("np.getLinkCapacityMap(): " + np.getVectorLinkCapacity());
-			System.out.println("np.getLinkCarriedTrafficMap(): " + np.getVectorLinkTotalCarriedTraffic());
+			System.out.println("np.getLinkCarriedTrafficMap(): " + np.getVectorLinkCarriedTraffic());
 			throw new RuntimeException ("Bad");
 		}
 		

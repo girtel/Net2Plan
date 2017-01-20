@@ -192,7 +192,7 @@ public class Online_evProc_adaptiveRoutingDual extends IEventProcessor
 		this.stat_traceOf_objFunction = new TimeTrace (); 
 		this.stat_traceOf_xp.add(0.0, this.currentNetPlan.getVectorRouteCarriedTraffic());
 		this.stat_traceOf_pie.add(0.0, this.routing_price_e.copy ());
-		this.stat_traceOf_ye.add(0.0, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+		this.stat_traceOf_ye.add(0.0, this.currentNetPlan.getVectorLinkCarriedTraffic());
 		this.stat_traceOf_objFunction.add(0.0, computeObjectiveFucntionFromNetPlan());
 
 		/* */
@@ -269,7 +269,7 @@ public class Online_evProc_adaptiveRoutingDual extends IEventProcessor
 
 			this.stat_traceOf_xp.add(t, this.currentNetPlan.getVectorRouteCarriedTraffic());
 			this.stat_traceOf_pie.add(t, this.routing_price_e.copy ());
-			this.stat_traceOf_ye.add(t, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+			this.stat_traceOf_ye.add(t, this.currentNetPlan.getVectorLinkCarriedTraffic());
 			this.stat_traceOf_objFunction.add(t, computeObjectiveFucntionFromNetPlan());
 
 			if (t > this.simulation_maxNumberOfUpdateIntervals.getDouble() * this.update_averageInterUpdateTime.getDouble()) { this.endSimulation (); }

@@ -208,7 +208,7 @@ public class Online_evProc_congControlAndBackpressureRoutingDualDecomp extends I
 		this.stat_traceOf_objFunction = new TimeTrace (); 
 		this.stat_traceOf_hd = new TimeTrace ();
 		this.stat_traceOf_xp.add(0.0 , netPlanRouteCarriedTrafficMap (this.currentNetPlan));
-		this.stat_traceOf_ye.add(0.0, currentNetPlan.getVectorLinkTotalCarriedTraffic());
+		this.stat_traceOf_ye.add(0.0, currentNetPlan.getVectorLinkCarriedTraffic());
 		this.stat_traceOf_queueSizes.add(0.0, copyOf(this.ctlNumPacketsQueue_nd));
 		this.stat_traceOf_objFunction.add(0.0, computeObjectiveFunctionFromNetPlan(this.currentNetPlan));
 		this.stat_traceOf_hd.add(0.0, currentNetPlan.getVectorDemandOfferedTraffic());
@@ -247,7 +247,7 @@ public class Online_evProc_congControlAndBackpressureRoutingDualDecomp extends I
 			
 			/* Update the traces */
 			this.stat_traceOf_xp.add(time , netPlanRouteCarriedTrafficMap (this.currentNetPlan));
-			this.stat_traceOf_ye.add(time, currentNetPlan.getVectorLinkTotalCarriedTraffic());
+			this.stat_traceOf_ye.add(time, currentNetPlan.getVectorLinkCarriedTraffic());
 			this.stat_traceOf_objFunction.add(time, computeObjectiveFunctionFromNetPlan(this.currentNetPlan));
 			final double scaleFactorAccumNumQueuePacketsToAverageQueuedTraffic = this.routing_numTrafficUnitsOfOnePacket.getDouble() / this.routing_statNumSchedSlotBetweenN2PRecomputing.getInt ();
 			/* We store the average queue sizes in traffic units */
