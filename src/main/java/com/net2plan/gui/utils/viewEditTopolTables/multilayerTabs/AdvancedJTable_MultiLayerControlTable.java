@@ -62,6 +62,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         this.tableModel = createTableModel();
 
         this.setModel(tableModel);
+        this.setDefaultCellRenders();
 
         //Configure tips
         ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
@@ -148,10 +149,8 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         };
     }
 
-    public void updateTable()
+    private synchronized void updateTable()
     {
-        this.setEnabled(false);
-
         if (netPlan.getNumberOfLayers() > 0)
         {
             final List<Object[]> layerData = this.getAllData();
@@ -161,7 +160,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         }
     }
 
-    private void setDefaultCellRenderers()
+    private void setDefaultCellRenders()
     {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new CellRenderers.NumberCellRenderer());
