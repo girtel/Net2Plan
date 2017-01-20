@@ -89,17 +89,12 @@ public class AdvancedJTable extends JTable {
 
         setModel(model);
         this.getTableHeader().setReorderingAllowed(false);
-
-
-
     }
 
     @Override
     public void setModel(TableModel model){
         super.setModel(model);
     }
-
-
 
     @Override
     public void doLayout() {
