@@ -1,13 +1,14 @@
 package com.net2plan.gui.utils.viewEditTopolTables.multilayerTabs;
 
-import com.net2plan.gui.utils.AdvancedJTable;
-import com.net2plan.gui.utils.CellRenderers;
-import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.*;
+import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.utils.StringUtils;
 
-import javax.swing.table.TableModel;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -17,7 +18,9 @@ import java.util.List;
 public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 {
     private final IVisualizationCallback callback;
-    private final TableModel tableModel;
+    private final NetPlan netPlan;
+
+    private final DefaultTableModel tableModel;
 
     private static final int COLUMN_DOWN = 0;
     private static final int COLUMN_UP = 1;
@@ -52,24 +55,64 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         super();
 
         this.callback = callback;
+        this.netPlan = callback.getDesign();
+
         this.tableModel = createTableModel();
 
         this.setModel(tableModel);
+
+        //Configure tips
+        ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
+        for (int c = 0; c < tableHeader.length; c++)
+        {
+            TableColumn col = getColumnModel().getColumn(c);
+            tips.setToolTip(col, tableTips[c]);
+        }
+        this.getTableHeader().addMouseMotionListener(tips);
+
+        this.updateTable();
     }
 
-    public List<Object[]> getAllData(final NetPlan currentNetPlan)
+    public List<Object[]> getAllData()
     {
-        return null;
+        final VisualizationState visualizationState = callback.getVisualizationState();
+
+        final LinkedList<Object[]> allLayerData = new LinkedList<>();
+
+        // TODO: Have layer order in mind.
+
+        for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
+        {
+            final Object[] layerData = new Object[tableHeader.length];
+
+            layerData[COLUMN_DOWN] = null;
+            layerData[COLUMN_UP] = null;
+            layerData[COLUMN_INDEX] = networkLayer.getIndex();
+            layerData[COLUMN_NAME] = networkLayer.getName();
+            layerData[COLUMN_SHOW_LAYER] = visualizationState.isLayerVisible(networkLayer);
+            layerData[COLUMN_SHOW_LINK] = null;
+            layerData[COLUMN_DEFAULT] = networkLayer == netPlan.getNetworkLayerDefault(); // NOTE: Should this go in the visualization state?
+
+            allLayerData.add(layerData);
+        }
+        return allLayerData;
     }
 
-    private TableModel createTableModel()
+    private DefaultTableModel createTableModel()
     {
-        final TableModel multiLayerTableModel = new ClassAwareTableModel(new Object[1][tableHeader.length], tableHeader)
+        return new ClassAwareTableModel(new Object[1][tableHeader.length], tableHeader)
         {
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex)
             {
-                return false;
+                switch (columnIndex)
+                {
+                    case COLUMN_INDEX:
+                    case COLUMN_NAME:
+                        return false;
+                    default:
+                        return true;
+                }
             }
 
             @Override
@@ -77,8 +120,19 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             {
             }
         };
+    }
 
-        return multiLayerTableModel;
+    public void updateTable()
+    {
+        this.setEnabled(false);
+
+        if (netPlan.getNumberOfLayers() > 0)
+        {
+            final List<Object[]> layerData = this.getAllData();
+
+            // Setting up values
+            this.tableModel.setDataVector(layerData.toArray(new Object[layerData.size()][tableHeader.length]), tableHeader);
+        }
     }
 
     private void setDefaultCellRenderers()

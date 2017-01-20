@@ -60,6 +60,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JComboBox layerChooser;
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance;
+    private final JButton btn_multilayer;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final MenuButton btn_view;
     private final JPopupMenu viewPopUp;
@@ -201,9 +202,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_increaseInterLayerDistance.setToolTipText("Increase the distance between layers (when more than one layer is visible)");
         btn_decreaseInterLayerDistance = new JButton ("-LD");
         btn_decreaseInterLayerDistance.setToolTipText("Decrease the distance between layers (when more than one layer is visible)");
-        
-        
-        
+
+        btn_multilayer = new JButton("Debug");
+
         viewPopUp = new JPopupMenu();
 
         it_control = new JMenuItem("View control window");
@@ -213,8 +214,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             WindowController.showControlWindow();
         });
 
-        it_osmMap = new JMenuItem("Run OpenStreetMap map support");
-        it_closeMap = new JMenuItem("Shutdown OpenStreetMap map support");
+        it_osmMap = new JMenuItem("Run OpenStreetMap support");
+        it_closeMap = new JMenuItem("Shutdown OpenStreetMap support");
 
         it_closeMap.addActionListener(e ->
         {
@@ -275,6 +276,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_reset.addActionListener(this);
         btn_increaseInterLayerDistance.addActionListener(this);
         btn_decreaseInterLayerDistance.addActionListener(this);
+        btn_multilayer.addActionListener(this);
 
         
         toolbar.add(btn_load);
@@ -297,9 +299,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(new JToolBar.Separator());
         toolbar.add(btn_increaseInterLayerDistance);
         toolbar.add(btn_decreaseInterLayerDistance);
-        
-
-        
+        toolbar.add(new JToolBar.Separator());
+        toolbar.add(btn_multilayer);
         toolbar.add(new JToolBar.Separator());
         toolbar.add(Box.createHorizontalGlue());
         toolbar.add(btn_view);
@@ -488,6 +489,18 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             canvas.updateAllVerticesXYPosition();
 
         	canvas.refresh();
+        } else if (src == btn_multilayer)
+        {
+            final JFrame frame = new JFrame();
+            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            frame.setSize(new Dimension(800, 600));
+            frame.setLayout(new BorderLayout());
+
+            MultiLayerPanel panel = new MultiLayerPanel(callback);
+
+            frame.add(panel, BorderLayout.CENTER);
+
+            frame.setVisible(true);
         }
         
     }
