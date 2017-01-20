@@ -281,6 +281,16 @@ public class SharedRiskGroup extends NetworkElement
 	}
 	
 	/**
+	 * <p>Sets nodes and links associated to the  SRG as up (in case they are not yet). The network state is updated with the affected routes,
+	 * segments, trees and hop-by-hop routing associated to the new nodes/links down </p>
+	 */
+	public void setAsUp ()
+	{
+		checkAttachedToNetPlanObject();
+		netPlan.setLinksAndNodesFailureState (links , null , nodes , null);
+	}
+
+	/**
 	 * <p>Removes a link from the set of links of the SRG. If the link is not in the SRG, no action is taken</p>
 	 * @param e Link to be removed
 	 */

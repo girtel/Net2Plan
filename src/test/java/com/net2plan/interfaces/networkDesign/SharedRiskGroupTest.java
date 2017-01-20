@@ -242,6 +242,14 @@ public class SharedRiskGroupTest
 	}
 
 	@Test
+	public void testSetAsUp() 
+	{
+		link13.setFailureState(true);
+		srgL13.setAsUp();
+		assertTrue(!link13.isDown());
+	}
+
+	@Test
 	public void testRemoveLink() 
 	{
 		srgL13.removeLink(link12);

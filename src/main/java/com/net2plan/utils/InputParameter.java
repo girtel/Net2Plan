@@ -280,7 +280,8 @@ public class InputParameter
 	{
 		Class<?> c = o.getClass ();
 //		System.out.println ("Init c.getName (): " + c.getName ());
-		while (!c.getName().equals(className)) { c = c.getSuperclass(); System.out.println ("c.getName (): " + c.getName ()); if (c == new Object ().getClass ()) throw new RuntimeException ("Bad"); }
+		while (!c.getName().equals(className)) 
+		{ c = c.getSuperclass(); System.out.println ("c.getName (): " + c.getName ()); if (c == new Object ().getClass ()) throw new RuntimeException ("Bad"); }
 		
 //		System.out.println ("End c.getName (): " + c.getName ());
 		for (Field f : c.getDeclaredFields())
@@ -396,7 +397,7 @@ public class InputParameter
 			if (selectOccurrence != -1)
 			{
 				String [] options = StringUtils.split(defaultString.substring(selectOccurrence + "#select#".length()) , " ");
-				System.out.println ("InputParameter :" + this.memberName + ", default: " + this.defaultString + ", options: " + Arrays.toString (options));
+				//System.out.println ("InputParameter :" + this.memberName + ", default: " + this.defaultString + ", options: " + Arrays.toString (options));
 				boolean validOption = false; for (String option : options) if (valString.equals (option)) { validOption = true; break; }
 				if (!validOption) return false; //throw new Net2PlanException ("Input parameter " + this.memberName + " is initialized with vaule '" + val + "' which is not a valid option :" + Arrays.toString(options));
 			}

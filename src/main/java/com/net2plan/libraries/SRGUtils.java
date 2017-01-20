@@ -16,6 +16,8 @@ import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
+
+import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Pair;
@@ -518,4 +520,38 @@ public class SRGUtils
 
 		return Pair.of(percentageRouteSRGDisjointness_withEndNodes, percentageRouteSRGDisjointness_withoutEndNodes);
 	}
+	
+	/** Returns true if the two collection of links in path1 and paths (not necessarily a 
+	 * sequence of contiguous links forming a path), are srg disjoint
+	 * @param path1 the first collection of links
+	 * @param path2 the second collection of links
+	 * @return see above
+	 */
+	public static boolean isSRGDisjoint (Collection<Link> path1 , Collection<Link> path2)
+	{
+		final Set<SharedRiskGroup> srgs1 = SRGUtils.getAffectingSRGs(path1);
+		final Set<SharedRiskGroup> srgs2 = SRGUtils.getAffectingSRGs(path2);
+		return Sets.intersection(srgs1 , srgs2).isEmpty();
+	}
+	
+	/** Returns true if thegiven design is tolerant to single SRG failures at the given layer: that is, no traffic of any 
+	 * unicast not multicast demand is blocked when such SRG fails
+	 * @param np the design 
+	 * @param failureTolerantLayer the layer where we check tolerance
+	 * @return see above
+	 */
+	public static boolean isSingleSRGFailureTolerant (NetPlan np , NetworkLayer failureTolerantLayer)
+	{
+		final double precFactor = Configuration.precisionFactor;
+		if (failureTolerantLayer.getNetPlan() != np) throw new Net2PlanException ("The input layer does not belong to the input NetPlan");
+		for (SharedRiskGroup srg : np.getSRGs())
+		{
+			srg.setAsDown();
+			if (np.getVectorDemandBlockedTraffic(failureTolerantLayer).zSum() > precFactor) return false;
+			if (np.getVectorMulticastDemandBlockedTraffic(failureTolerantLayer).zSum() > precFactor) return false;
+			srg.setAsUp();
+		}
+		return true;
+	}
+	
 }

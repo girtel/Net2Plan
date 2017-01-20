@@ -18,6 +18,7 @@ import org.apache.commons.collections15.Transformer;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
  * <p>Provides extra functionality for the Java Collections Framework. For Java primitives check 
@@ -344,5 +345,37 @@ public class CollectionUtils
 		Map<K,Double> res = new HashMap<K,Double> ();
 		int counter = 0; for (K key : keys) res.put(key, vals.get(counter++)); 
 		return res;
+
 	}
+
+	/** Receives a map which assigns for each parameter name, a set of possible values, and returns a list with the cartesian 
+	 * product of all the maps combining the different parameter values
+	 * @param paramKeyValues
+	 * @return see above
+	 */
+	public static List<Map<String,String>> getCartesianProductOfParameters (Map<String,List<String>> paramKeyValues)
+	{
+		List<Map<String,String>> res = new LinkedList<> ();
+		
+		Map<String,String> firstParamSetting = paramKeyValues.entrySet().stream().collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue().get(0)));
+		res.add(firstParamSetting);
+		for (String key : paramKeyValues.keySet())
+		{
+			List<String> valuesThisKey = paramKeyValues.get(key);
+			List<Map<String,String>> copyCurrentResWithoutThisParam = res.stream().map(e->new HashMap<> (e)).collect(Collectors.toList()); 
+			res.clear();
+			for (String newValueParam : valuesThisKey)
+			{
+//				System.out.println("key: " + key + ", value: " + newValueParam);
+//				System.out.println(copyCurrentResWithoutThisParam);
+				for (Map<String,String> map : copyCurrentResWithoutThisParam)
+				{
+					final Map<String,String> mapCopy = new HashMap<> (map);
+					mapCopy.put (key , newValueParam); res.add(mapCopy);
+				}
+			}
+		}
+		return res;
+	}
+
 }

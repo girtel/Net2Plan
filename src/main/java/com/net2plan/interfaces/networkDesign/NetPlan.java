@@ -1153,8 +1153,8 @@ public class NetPlan extends NetworkElement
 		if (nodePairs == null)
 		{
 			nodePairs = new HashSet<> ();
-			for(Node n1 : netPlan.getNodes())
-				for(Node n2 : netPlan.getNodes())
+			for(Node n1 : nodes)
+				for(Node n2 : nodes)
 					if (n1 != n2) nodePairs.add(Pair.of(n1,n2));
 		}
 		for(Pair<Node,Node> pair : nodePairs)

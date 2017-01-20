@@ -136,7 +136,7 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
 public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGrooming implements IAlgorithm
 {
 	private InputParameter k = new InputParameter ("k", (int) 5 , "Maximum number of admissible paths per input-output node pair" , 1 , Integer.MAX_VALUE);
-	private InputParameter numFrequencySlotsPerFiber = new InputParameter ("numWavelengthsPerFiber", (int) 40 , "Number of wavelengths per link" , 1, Integer.MAX_VALUE);
+	private InputParameter numFrequencySlotsPerFiber = new InputParameter ("numFrequencySlotsPerFiber", (int) 40 , "Number of wavelengths per link" , 1, Integer.MAX_VALUE);
 	private InputParameter transponderTypesInfo = new InputParameter ("transponderTypesInfo", "10 1 1 9600 1" , "Transpoder types separated by \";\" . Each type is characterized by the space-separated values: (i) Line rate in Gbps, (ii) cost of the transponder, (iii) number of slots occupied in each traversed fiber, (iv) optical reach in km (a non-positive number means no reach limit), (v) cost of the optical signal regenerator (regenerators do NOT make wavelength conversion ; if negative, regeneration is not possible).");
 	private InputParameter ipLayerIndex = new InputParameter ("ipLayerIndex", (int) 1 , "Index of the IP layer (-1 means default layer)");
 	private InputParameter wdmLayerIndex = new InputParameter ("wdmLayerIndex", (int) 0 , "Index of the WDM layer (-1 means default layer)");
@@ -192,8 +192,9 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 		/* Remove all routes in current netPlan object. Initialize link capacities and attributes, and demand offered traffic */
 		/* WDM and IP layer are in source routing type */
-		netPlan.removeAllMulticastTrees(wdmLayer);
-		netPlan.removeAllUnicastRoutingInformation(wdmLayer);
+		netPlan.removeAllLinks (ipLayer);
+		netPlan.removeAllDemands (wdmLayer);
+		netPlan.removeAllMulticastDemands(wdmLayer);
 		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING , wdmLayer);
 		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING , ipLayer);
 
@@ -218,13 +219,13 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		List<int []> regPositions_p = new ArrayList<int []> (maximumNumberOfPaths);
 		List<int []> regPositions2_p = new ArrayList<int []> (maximumNumberOfPaths);
 		List<Demand> ipDemand_p = new ArrayList<Demand> (maximumNumberOfPaths);
-		Map<Demand,List<Integer>> demand2PathListMap = new HashMap<Demand,List<Integer>> (); 
+		Map<Demand,List<Integer>> ipDemand2WDMPathListMap = new HashMap<Demand,List<Integer>> (); 
 		for (Demand ipDemand : netPlan.getDemands(ipLayer))
 		{
 			final Pair<Node,Node> nodePair = Pair.of(ipDemand.getIngressNode() , ipDemand.getEgressNode());
 			boolean atLeastOnePathOrPathPair = false;
 			List<Integer> pathListThisDemand = new LinkedList<Integer> ();
-			demand2PathListMap.put(ipDemand , pathListThisDemand);
+			ipDemand2WDMPathListMap.put(ipDemand , pathListThisDemand);
 			for (int t = 0 ; t < T ; t ++)
 			{
 				final boolean isRegenerable = tpInfo.isOpticalRegenerationPossible(t);
@@ -261,22 +262,22 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		 * In each demand, try all possible path-transponder pairs, and take the best according to the performance metric:
 		 * avExtraTrafficCarried/transponderCost */
 		boolean atLeastOneLpAdded = false;
-		Set<Integer> demandIndexesNotToTry = new HashSet<Integer> ();
+		Set<Integer> ipDemandIndexesNotToTry = new HashSet<Integer> ();
 		double totalCost = 0;
 		do 
 		{
-			double [] b_d = getVectorDemandAverageAllStatesBlockedTraffic ();
-			int [] demandIndexes = DoubleUtils.sortIndexes(b_d , OrderingType.DESCENDING);
+			double [] b_d = getVectorIPDemandAverageAllStatesBlockedTraffic ();
+			int [] ipDemandIndexes = DoubleUtils.sortIndexes(b_d , OrderingType.DESCENDING);
 			atLeastOneLpAdded = false;
-			for (int demandIndex : demandIndexes)
+			for (int ipDemandIndex : ipDemandIndexes)
 			{
-				final Demand d = netPlan.getDemand(demandIndex , wdmLayer);
-
 				/* Not to try a demand if already fully satisfied or we tried and could not add a lp to it */
-				if (demandIndexesNotToTry.contains(demandIndex)) continue;
+				if (ipDemandIndexesNotToTry.contains(ipDemandIndex)) continue;
+
+				final Demand ipDemand = netPlan.getDemand(ipDemandIndex , ipLayer);
 
 				/* If the demand is already fully satisfied, skip it */
-				if (isDemandFullySatisfied(d)) { demandIndexesNotToTry.add(demandIndex); continue; } 
+				if (isDemandFullySatisfied(ipDemand)) { ipDemandIndexesNotToTry.add(ipDemandIndex); continue; } 
 				
 				/* Try all the possible routes and all the possible transpoder types. Take the solution with the best 
 				 * performance metric (average extra carried traffic / transponder cost) */
@@ -284,7 +285,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				WDMUtils.RSA best_rsa2 = null;
 				double best_performanceMetric = 0;
 				int best_pathIndex = -1;
-				for (int pathIndex : demand2PathListMap.get (d))
+				for (int pathIndex : ipDemand2WDMPathListMap.get (ipDemand))
 				{
 					List<Link> firstPath = seqLinks_p.get(pathIndex);
 					List<Link> secondPath = cpl11 == null? null : seqLinks2_p.get(pathIndex);
@@ -300,7 +301,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 					if (cpl11 != null) if (slotIds == null) continue;
 					
 					/* If the performance metric is better than existing, this is the best choice */
-					final double extraCarriedTraffic = getAverageAllStatesExtraCarriedTrafficAfterPotentialAllocation (d , lineRate_p.get(pathIndex) , seqLinks_p.get(pathIndex));
+					final double extraCarriedTraffic = getAverageAllStatesExtraCarriedTrafficAfterPotentialAllocation (ipDemand , lineRate_p.get(pathIndex) , seqLinks_p.get(pathIndex));
 					final double performanceIndicator = extraCarriedTraffic / cost_p.get(pathIndex); 
 					if (performanceIndicator > best_performanceMetric)
 					{
@@ -313,7 +314,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 
 				
 				/* No lp could be added to this demand, try with the next */
-				if (best_pathIndex == -1) { demandIndexesNotToTry.add(d.getIndex()); continue; }
+				if (best_pathIndex == -1) { ipDemandIndexesNotToTry.add(ipDemand.getIndex()); continue; }
 				
 				/* Add the lightpath to the design */
 				atLeastOneLpAdded = true;
@@ -321,12 +322,12 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				final Demand newWDMDemand = netPlan.addDemand(best_rsa.ingressNode , best_rsa.egressNode , lineRate_p.get(best_pathIndex) , null , wdmLayer);
 				final Route lp = WDMUtils.addLightpath(newWDMDemand , best_rsa , lineRate_p.get(best_pathIndex));
 				final Link ipLink = newWDMDemand.coupleToNewLinkCreated(ipLayer);
-				final double ipTrafficToCarry = Math.min(lineRate_p.get(best_pathIndex) , d.getBlockedTraffic());
-				netPlan.addRoute(d , ipTrafficToCarry , ipTrafficToCarry , Arrays.asList(ipLink), null);
+				final double ipTrafficToCarry = Math.min(lineRate_p.get(best_pathIndex) , ipDemand.getBlockedTraffic());
+				netPlan.addRoute(ipDemand , ipTrafficToCarry , ipTrafficToCarry , Arrays.asList(ipLink), null);
 				WDMUtils.allocateResources(best_rsa , frequencySlot2FiberOccupancy_se , null);
 				if (cpl11 != null)
 				{
-					final Route lpBackup = WDMUtils.addLightpath(d , best_rsa2 , 0);
+					final Route lpBackup = WDMUtils.addLightpath(newWDMDemand , best_rsa2 , 0);
 					WDMUtils.allocateResources(best_rsa2 , frequencySlot2FiberOccupancy_se , null);
 					lp.addBackupRoute(lpBackup);
 				}
@@ -337,7 +338,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		
 		WDMUtils.checkResourceAllocationClashing(netPlan,true,true,wdmLayer);
 
-		String outMessage = "Total cost: " + totalCost + ". Num lps (not including 1+1 backup if any) " + netPlan.getNumberOfRoutes();
+		String outMessage = "Total cost: " + totalCost + ". Num lps (not including 1+1 backup if any) " + netPlan.getNumberOfRoutes(wdmLayer);
 		System.out.println (outMessage);
 		return "Ok! " + outMessage;
 	}
@@ -358,7 +359,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	}
 	
 	/* A vector with the blocked traffic for each demand (in the single-SRG failure tolerance, is averaged for each state) */
-	private double [] getVectorDemandAverageAllStatesBlockedTraffic ()
+	private double [] getVectorIPDemandAverageAllStatesBlockedTraffic ()
 	{
 		double [] res = new double [Dip];
 		for (Demand d : netPlan.getDemands(ipLayer))
