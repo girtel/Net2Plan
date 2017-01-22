@@ -1,7 +1,6 @@
 package com.net2plan.examples.ocnbook.offline;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -22,17 +21,15 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.utils.InputParameter;
 
-public class Offline_ba_numFormulationsTest
+public class Offline_cba_wirelessCongControlTransmissionPowerAssignmentTest 
 {
 	private NetPlan np;
 	private File temporalDirectoryTests;
 
 	@Before
-	public void setUp() throws Exception
+	public void setUp() throws Exception 
 	{
-		this.np = new NetPlan (new File ("src/main/resources/data/networkTopologies/example4nodes.n2p"));
-		np.removeAllDemands();
-		for (Node n1 : np.getNodes ()) for (Node n2 : np.getNodes ()) if (n1 != n2) np.addDemand(n1, n2, 0, null);
+		this.np = new NetPlan (new File ("src/main/resources/data/networkTopologies/example6nodes.n2p"));
 		
 		/* Create the temporal directory for storing the test files */
 		this.temporalDirectoryTests = new File ("temporalDirectoryTests");
@@ -42,7 +39,7 @@ public class Offline_ba_numFormulationsTest
 	}
 
 	@After
-	public void tearDown() throws Exception
+	public void tearDown() throws Exception 
 	{
 		np.checkCachesConsistency();
 		Files.walk(Paths.get("temporalDirectoryTests")).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
@@ -50,12 +47,12 @@ public class Offline_ba_numFormulationsTest
 	}
 
 	@Test
-	public void testOffline_ba_numFormulationsTest()
+	public void test() 
 	{
-		final IAlgorithm algorithm = new Offline_ba_numFormulations ();
+		final IAlgorithm algorithm = new Offline_cba_wirelessCongControlTransmissionPowerAssignment();
 		Map<String,List<String>> testingParameters = new HashMap<> ();
-		testingParameters.put("utilityFunctionType" , Arrays.asList("alphaFairness" , "TCP-Reno" , "TCP-Vegas"));
 		List<Map<String,String>> testsParam = InputParameter.getCartesianProductOfParameters (testingParameters);
+		if (testsParam.isEmpty()) testsParam = Arrays.asList(InputParameter.getDefaultParameters(algorithm.getParameters()));
 		for (Map<String,String> params : testsParam)
 		{
 			Map<String,String> paramsUsedToCall = InputParameter.getDefaultParameters(algorithm.getParameters());
@@ -64,7 +61,6 @@ public class Offline_ba_numFormulationsTest
 			algorithm.executeAlgorithm(np , paramsUsedToCall , ImmutableMap.of("precisionFactor" , "0.0001"));
 			checkValidity (npInput , np , paramsUsedToCall);
 		}
-
 	}
 
 	private static void checkValidity (NetPlan npInput , NetPlan npOutput , Map<String,String> params)
