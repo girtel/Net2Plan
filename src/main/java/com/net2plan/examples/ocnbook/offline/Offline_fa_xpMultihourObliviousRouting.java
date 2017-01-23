@@ -93,10 +93,10 @@ public class Offline_fa_xpMultihourObliviousRouting implements IAlgorithm
 				NetPlan netPlanToAdd = netPlan.copy ();
 				for (Demand d : netPlanToAdd.getDemands()) d.setOfferedTraffic(thisIntervalTrafficMatrix.get (d.getIngressNode().getIndex() , d.getEgressNode().getIndex()));
 				netPlanFiles.add (netPlanToAdd);
-			} catch (Exception e) { e.printStackTrace();  break; }
+			} catch (Exception e) {  break; }
 		}
 		final int T = netPlanFiles.size();
-		System.out.println ("Number of traffic matrices loaded: " + netPlanFiles.size ());
+		//System.out.println ("Number of traffic matrices loaded: " + netPlanFiles.size ());
 
 		/* Create the optimization problem object (JOM library) */
 		OptimizationProblem op = new OptimizationProblem();

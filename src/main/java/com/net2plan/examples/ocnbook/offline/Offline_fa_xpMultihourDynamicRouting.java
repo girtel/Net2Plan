@@ -95,7 +95,7 @@ public class Offline_fa_xpMultihourDynamicRouting implements IAlgorithm
 				NetPlan netPlanToAdd = netPlan.copy ();
 				for (Demand d : netPlanToAdd.getDemands()) d.setOfferedTraffic(thisIntervalTrafficMatrix.get (d.getIngressNode().getIndex() , d.getEgressNode().getIndex()));
 				netPlanFiles.add (netPlanToAdd);
-			} catch (Exception e) { e.printStackTrace();  break; }
+			} catch (Exception e) {  break; }
 		}
 		final int T = netPlanFiles.size();
 
