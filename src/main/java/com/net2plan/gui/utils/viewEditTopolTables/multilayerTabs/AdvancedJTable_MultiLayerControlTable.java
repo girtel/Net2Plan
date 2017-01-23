@@ -1,12 +1,17 @@
 package com.net2plan.gui.utils.viewEditTopolTables.multilayerTabs;
 
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.EventObject;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
+import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
 import com.net2plan.gui.utils.AdvancedJTable;
@@ -18,7 +23,6 @@ import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
-import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
 /**
@@ -32,7 +36,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 
     private final DefaultTableModel tableModel;
 
-    private static final int COLUMN_UPDOWN = 0;
+    private static final int COLUMN_UP_DOWN = 0;
     private static final int COLUMN_INDEX = 1;
     private static final int COLUMN_NAME = 2;
     private static final int COLUMN_LAYER_VISIBILITY = 3;
@@ -69,7 +73,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         this.setModel(tableModel);
         this.setDefaultCellRenders();
 
-        //Configure tips
+        // Configure tips
         ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
         for (int c = 0; c < tableHeader.length; c++)
         {
@@ -92,12 +96,12 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             int layerOrder = visualizationState.getVisualizationOrderNotRemovingNonVisible(networkLayer);
 
             final Object[] layerData = new Object[tableHeader.length];
-            layerData[COLUMN_UPDOWN] = null;
+            layerData[COLUMN_UP_DOWN] = "";
             layerData[COLUMN_INDEX] = networkLayer.getIndex();
             layerData[COLUMN_NAME] = networkLayer.getName();
             layerData[COLUMN_LAYER_VISIBILITY] = isActiveLayer || visualizationState.isLayerVisible(networkLayer);
             layerData[COLUMN_LAYER_LINK_VISIBILITY] = visualizationState.isLayerLinksShown(networkLayer);
-            layerData[COLUMN_IS_DEFAULT] = netPlan.getNetworkLayerDefault() == networkLayer; // NOTE: Should this go in the visualization state?
+            layerData[COLUMN_IS_DEFAULT] = isDefaultLayer(networkLayer);
 
             allLayerData.add(layerOrder, layerData);
         }
@@ -170,6 +174,11 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             this.tableModel.setDataVector(layerData.toArray(new Object[layerData.size()][tableHeader.length]), tableHeader);
         }
 
+        // Adding buttons to the Move Up/Down Colummn
+        final TableColumn moveUpDownColumn = this.getColumn(tableHeader[COLUMN_UP_DOWN]);
+        moveUpDownColumn.setCellRenderer(new ButtonRenderer());
+        moveUpDownColumn.setCellEditor(new ButtonEditor());
+
         this.revalidate();
         this.repaint();
     }
@@ -188,5 +197,106 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
     private boolean isDefaultLayer(final NetworkLayer layer)
     {
         return netPlan.getNetworkLayerDefault() == layer;
+    }
+
+    /**
+     * @version 1.0 11/09/98
+     */
+
+    private static class ButtonEditor extends AbstractCellEditor implements TableCellEditor
+    {
+        private ButtonPanel buttonPanel;
+
+        public ButtonEditor()
+        {
+            buttonPanel = new ButtonPanel();
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column)
+        {
+            if (isSelected)
+            {
+                buttonPanel.setBackground(table.getSelectionBackground());
+            } else
+            {
+                buttonPanel.setBackground(table.getBackground());
+            }
+            return buttonPanel;
+        }
+
+        @Override
+        public Object getCellEditorValue()
+        {
+            return buttonPanel.getState();
+        }
+
+        @Override
+        public boolean isCellEditable(EventObject e)
+        {
+            return true;
+        }
+    }
+
+    private static class ButtonRenderer extends JButton implements TableCellRenderer
+    {
+        private ButtonPanel panel;
+
+        public ButtonRenderer()
+        {
+            panel = new ButtonPanel();
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                                                       boolean isSelected, boolean hasFocus, int row, int column)
+        {
+            if (isSelected)
+            {
+                panel.setBackground(table.getSelectionBackground());
+            } else
+            {
+                panel.setBackground(table.getBackground());
+            }
+            return panel;
+        }
+    }
+
+    private static class ButtonPanel extends JPanel implements ActionListener
+    {
+        private final JButton upButton, downButton;
+        private String state;
+
+        public ButtonPanel()
+        {
+            this.setLayout(new GridLayout(1, 2));
+            upButton = new JButton("\u2191");
+            downButton = new JButton("\u2193");
+            state = "";
+
+            this.add(upButton);
+            this.add(downButton);
+
+            upButton.addActionListener(this);
+            downButton.addActionListener(this);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            Object src = e.getSource();
+            if (src == upButton)
+            {
+                state = "Up";
+                
+            } else if (src == downButton)
+            {
+                state = "Down";
+            }
+        }
+
+        public String getState()
+        {
+            return state;
+        }
     }
 }
