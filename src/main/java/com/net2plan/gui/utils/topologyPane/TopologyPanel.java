@@ -22,17 +22,10 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
+import com.net2plan.gui.utils.*;
 import org.apache.commons.collections15.BidiMap;
 
 import com.google.common.collect.Sets;
-import com.net2plan.gui.utils.FileChooserNetworkDesign;
-import com.net2plan.gui.utils.FileDrop;
-import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.StringLabeller;
-import com.net2plan.gui.utils.SwingUtils;
-import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.gui.utils.topologyPane.components.MenuButton;
 import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
@@ -48,8 +41,6 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.Pair;
-
-import edu.uci.ics.jung.visualization.Layer;
 
 /**
  * <p>Wrapper class for the graph canvas.</p>
@@ -69,6 +60,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JComboBox layerChooser;
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance;
+    private final JButton btn_multilayer;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final MenuButton btn_view;
     private final JPopupMenu viewPopUp;
@@ -123,7 +115,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         try
         {
-            canvas = canvasType.getDeclaredConstructor(VisualizationState.class).newInstance(callback.getVisualizationState());
+            canvas = canvasType.getDeclaredConstructor(IVisualizationCallback.class, TopologyPanel.class).newInstance(callback, this);
         } catch (Exception e)
         {
             throw new RuntimeException(e);
@@ -160,9 +152,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 //				System.out.println ("Select layer: layerId " + layerId + ", layer: " + layer);
                 if (layer == null) throw new RuntimeException("Bad: " + newDefaultLayerId);
                 currentState.setNetworkLayerDefault(layer);
-                final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
-                		(currentState , false , true , false , true , null , null); // shown in topological order
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER) , visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
+
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
             }
         });
 
@@ -210,9 +201,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_increaseInterLayerDistance.setToolTipText("Increase the distance between layers (when more than one layer is visible)");
         btn_decreaseInterLayerDistance = new JButton ("-LD");
         btn_decreaseInterLayerDistance.setToolTipText("Decrease the distance between layers (when more than one layer is visible)");
-        
-        
-        
+
+        btn_multilayer = new JButton("Debug");
+
         viewPopUp = new JPopupMenu();
 
         it_control = new JMenuItem("View control window");
@@ -222,12 +213,12 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             WindowController.showControlWindow();
         });
 
-        it_osmMap = new JMenuItem("Run OpenStreetMap map support");
-        it_closeMap = new JMenuItem("Shutdown OpenStreetMap map support");
+        it_osmMap = new JMenuItem("Run OpenStreetMap support");
+        it_closeMap = new JMenuItem("Shutdown OpenStreetMap support");
 
         it_closeMap.addActionListener(e ->
         {
-        	if (getOSMSupportState())
+        	if (canvas.isOSMRunning())
         	{
 	            switchOSMSupport(false);
 	            it_osmMap.setEnabled(true);
@@ -237,7 +228,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         it_osmMap.addActionListener(e ->
         {
-        	if (!getOSMSupportState())
+        	if (!canvas.isOSMRunning())
         	{
 	            switchOSMSupport(true);
 	            it_osmMap.setEnabled(false);
@@ -284,6 +275,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_reset.addActionListener(this);
         btn_increaseInterLayerDistance.addActionListener(this);
         btn_decreaseInterLayerDistance.addActionListener(this);
+        btn_multilayer.addActionListener(this);
 
         
         toolbar.add(btn_load);
@@ -306,9 +298,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(new JToolBar.Separator());
         toolbar.add(btn_increaseInterLayerDistance);
         toolbar.add(btn_decreaseInterLayerDistance);
-        
-
-        
+        toolbar.add(new JToolBar.Separator());
+        toolbar.add(btn_multilayer);
         toolbar.add(new JToolBar.Separator());
         toolbar.add(Box.createHorizontalGlue());
         toolbar.add(btn_view);
@@ -383,7 +374,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                 public void mouseMoved(MouseEvent e)
                 {
                     Point point = e.getPoint();
-                    position.setText("view = " + point + ", NetPlan coord = " + canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(point, Layer.LAYOUT));
+                    position.setText("view = " + point + ", NetPlan coord = " + canvas.getCanvasPointFromNetPlanPoint(point));
                 }
             });
 
@@ -473,25 +464,40 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         } else if (src == btn_reset)
         {
         	callback.loadDesignDoNotUpdateVisualization(new NetPlan ());
-            final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
-            		(callback.getDesign() , false , true , false , true , null , null); // shown in topological order
-        	callback.updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
+        	callback.updateVisualizationAfterNewTopology();
             callback.resetPickedStateAndUpdateView();
         } else if (src == btn_increaseInterLayerDistance)
         {
         	if (callback.getVisualizationState().getNumberOfVisibleLayers() == 1) return;
+
         	final double currentInterLayerDistance = callback.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
         	final double newInterLayerDistance = currentInterLayerDistance * VisualizationConstants.SCALE_IN;
+
         	callback.getVisualizationState().setInterLayerSpaceInNetPlanCoordinates(newInterLayerDistance);
-        	for (GUINode n : callback.getVisualizationState().getAllGUINodes()) canvas.updateVertexXYPosition(n);
+        	canvas.updateAllVerticesXYPosition();
+
         	canvas.refresh();
         } else if (src == btn_decreaseInterLayerDistance)
         {
         	if (callback.getVisualizationState().getNumberOfVisibleLayers() == 1) return;
+
         	final double currentInterLayerDistance = callback.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
         	callback.getVisualizationState().setInterLayerSpaceInNetPlanCoordinates(currentInterLayerDistance * VisualizationConstants.SCALE_OUT);
-        	for (GUINode n : callback.getVisualizationState().getAllGUINodes()) canvas.updateVertexXYPosition(n);
+            canvas.updateAllVerticesXYPosition();
+
         	canvas.refresh();
+        } else if (src == btn_multilayer)
+        {
+            final JFrame frame = new JFrame();
+            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            frame.setSize(new Dimension(800, 600));
+            frame.setLayout(new BorderLayout());
+
+            MultiLayerPanel panel = new MultiLayerPanel(callback);
+
+            frame.add(panel, BorderLayout.CENTER);
+
+            frame.setVisible(true);
         }
         
     }
@@ -571,9 +577,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             aux.checkCachesConsistency();
 
             callback.loadDesignDoNotUpdateVisualization(aux);
-            final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
-            		(callback.getDesign() , false , true , false , true , null , null); // shown in topological order
-            callback.updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
+            callback.updateVisualizationAfterNewTopology();
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
@@ -594,9 +598,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             fc_netPlan.setCurrentDirectory(file.getParentFile());
 
             callback.loadDesignDoNotUpdateVisualization(netPlan);
-            final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
-            		(callback.getDesign() , false , true , false , true , null , null); // shown in topological order
-            callback.updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
+            callback.updateVisualizationAfterNewTopology();
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
@@ -649,7 +651,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     netPlan.addMulticastDemand(netPlan.getNode(demand.getIngressNode().getIndex()), egressNodesThisNetPlan, demand.getOfferedTraffic(), demand.getAttributes());
                 }
 
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.MULTICAST_DEMAND) , null , null);
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.MULTICAST_DEMAND));
             } catch (Throwable ex)
             {
                 callback.getDesign().assignFrom(aux_netPlan);
@@ -805,16 +807,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         canvas.zoomOut();
     }
 
-    public void switchOSMSupport(final boolean doSwitch)
+    private  void switchOSMSupport(final boolean doSwitch)
     {
         if (doSwitch)
-            OSMMapStateBuilder.getSingleton().setRunningState();
+            canvas.runOSMSupport();
         else
-            OSMMapStateBuilder.getSingleton().setStoppedState();
-    }
-
-    public boolean getOSMSupportState()
-    {
-        return OSMMapStateBuilder.getSingleton().isMapActivated();
+            canvas.stopOSMSupport();
     }
 }

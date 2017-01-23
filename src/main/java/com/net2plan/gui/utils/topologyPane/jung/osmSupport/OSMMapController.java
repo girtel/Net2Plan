@@ -1,4 +1,4 @@
-package com.net2plan.gui.utils.topologyPane.mapControl.osm;
+package com.net2plan.gui.utils.topologyPane.jung.osmSupport;
 
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
@@ -17,20 +17,14 @@ import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactory;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
-import com.net2plan.gui.utils.topologyPane.components.mapPanel.OSMMapPanel;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.ITopologyCanvas;
-
-import edu.uci.ics.jung.visualization.Layer;
-import edu.uci.ics.jung.visualization.VisualizationViewer;
 
 /**
  * @author Jorge San Emeterio
@@ -56,7 +50,7 @@ public class OSMMapController
      * @param canvas        The JUNG canvas.
      * @param callback      The interface to the NetPlan.
      */
-    public void startMap(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final IVisualizationCallback callback)
+    public void startMap(final IVisualizationCallback callback, final TopologyPanel topologyPanel, final ITopologyCanvas canvas)
     {
         // Checking if the nodes are valid for this operation.
         // They may not go outside the bounds: x: -180, 180: y: -90, 90
@@ -69,8 +63,7 @@ public class OSMMapController
 
             if (!OSMMapUtils.isInsideBounds(x, y))
             {
-
-                OSMMapStateBuilder.getSingleton().setStoppedState();
+                canvas.stopOSMSupport();
 
                 final String message = "Node: " + node.getName() + " is out of the accepted bounds.\n" +
                         "All nodes must have their coordinates between the ranges: \n" +
@@ -90,7 +83,7 @@ public class OSMMapController
         loadMapOntoTopologyPanel();
 
         // Making the relation between the OSM map and the topology
-        restartMapState(true);
+        restartMap();
     }
 
     /**
@@ -118,13 +111,19 @@ public class OSMMapController
     }
 
     /**
-     * Creates the starting state of the OSM map.
-     * This state is the one where all nodes are seen and they all fit their corresponding position on the OSM map.
-     * This method should only be executed when the OSM map is first run. From then on use {@link #zoomAll()}
+     * Restarts the map to its original state. The one that showed up when first starting the map support.
      */
-    public void restartMapState(final boolean calculateMap)
+    private void restartMap()
     {
-        if (calculateMap) calculateMapPosition();
+        calculateMapPosition();
+        alignTopologyToOSMMap();
+    }
+
+    /**
+     * Recalculates the position of each node over the map, so that they are all positioned over their correspondent geo-positions.
+     */
+    public void refreshTopologyAlignment()
+    {
         alignTopologyToOSMMap();
     }
 
@@ -142,8 +141,6 @@ public class OSMMapController
         // Calculating OSM map center and zoom.
         mapViewer.zoomToBestFit(nodeToGeoPositionMap.isEmpty() ? Collections.singleton(mapViewer.getDefaultPosition()) : new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
         if (netPlan.getNumberOfNodes() <= 1) mapViewer.setZoom(16); // So that the map is not too close to the node.
-
-        mapViewer.setDefaultZoom(mapViewer.getZoom());
     }
 
     /**
@@ -157,14 +154,16 @@ public class OSMMapController
 
         final VisualizationState topologyVisualizationState = callback.getVisualizationState();
         final double interlayerDistanceNpCoordinates = topologyVisualizationState.getInterLayerSpaceInNetPlanCoordinates();
+
+        // Transforming inter layer distance to OSM pixels.
         final GeoPosition geoPosition00 = new GeoPosition(0.0 , 0.0);
         final GeoPosition geoPosition01 = new GeoPosition(1.0 , 0.0);
+
         final Point2D osmCoordGeo00 = mapViewer.getTileFactory().geoToPixel(geoPosition00 , mapViewer.getZoom());
         final Point2D osmCoordGeo01 = mapViewer.getTileFactory().geoToPixel(geoPosition01 , mapViewer.getZoom());
         final double distanceInOsmCoordOfOneVerticalUnitNpCoordinates = Math.abs(osmCoordGeo00.getY() - osmCoordGeo01.getY());
+
         final double interLayerDistanceOSMCoordinates = distanceInOsmCoordOfOneVerticalUnitNpCoordinates * interlayerDistanceNpCoordinates;
-        // Using default zoom as the zoom where all nodes fit.
-        //final double interlayerDistance = 50 * Math.pow(2, (mapViewer.getDefaultZoom() - mapViewer.getZoom()));
 
         // Moving the nodes to the position dictated by their geoposition.
         for (Map.Entry<Node, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
@@ -188,15 +187,12 @@ public class OSMMapController
             }
         }
 
-        @SuppressWarnings("unchecked")
-        final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) canvas.getCanvasComponent();
-
         /* Rescale and pan JUNG layout so that it fits to OSM viewing */
         canvas.zoom(canvas.getCanvasCenter(), 1 / (float) canvas.getCurrentCanvasScale());
 
         Point2D q = mapViewer.getCenter();
 
-        Point2D aux = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(canvas.getCanvasCenter(), Layer.LAYOUT);
+        Point2D aux = canvas.getCanvasPointFromNetPlanPoint(canvas.getCanvasCenter());
         Point2D lvc = new Point2D.Double(aux.getX(), -aux.getY());
 
         double dx = (lvc.getX() - q.getX());
@@ -240,12 +236,12 @@ public class OSMMapController
         final double currentCenterX = currentOSMViewportBounds.getCenterX();
         final double currentCenterY = currentOSMViewportBounds.getCenterY();
 
-        final Point2D currentOSMCenterJUNG = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double(currentCenterX, currentCenterY), Layer.LAYOUT);
+        final Point2D currentOSMCenterJUNG = canvas.getCanvasPointFromNetPlanPoint(new Point2D.Double(currentCenterX, currentCenterY));
 
         final double preCenterX = previousOSMViewportBounds.getCenterX();
         final double preCenterY = previousOSMViewportBounds.getCenterY();
 
-        final Point2D previousOSMCenterJUNG = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(new Point2D.Double(preCenterX, preCenterY), Layer.LAYOUT);
+        final Point2D previousOSMCenterJUNG = canvas.getCanvasPointFromNetPlanPoint(new Point2D.Double(preCenterX, preCenterY));
 
         final double dx = (currentOSMCenterJUNG.getX() - previousOSMCenterJUNG.getX());
         final double dy = (currentOSMCenterJUNG.getY() - previousOSMCenterJUNG.getY());
@@ -282,17 +278,8 @@ public class OSMMapController
             topologyPanel.add(canvas.getCanvasComponent(), BorderLayout.CENTER);
 
             // Reset nodes' original position
-            for (Node node : callback.getDesign().getNodes())
-            {
-                final List<GUINode> verticallyStackedGUINodes = callback.getVisualizationState().getVerticallyStackedGUINodes(node);
-
-                for (GUINode guiNode : verticallyStackedGUINodes)
-                {
-                    canvas.updateVertexXYPosition(guiNode);
-                }
-
-                canvas.zoomAll();
-            }
+            canvas.updateAllVerticesXYPosition();
+            canvas.zoomAll();
 
             topologyPanel.validate();
             topologyPanel.repaint();
@@ -304,9 +291,9 @@ public class OSMMapController
      */
     public void zoomAll()
     {
-        if (isMapActivated())
+        if (canvas.isOSMRunning())
         {
-            restartMapState(true);
+            refreshTopologyAlignment();
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
@@ -321,7 +308,7 @@ public class OSMMapController
      */
     public void moveMap(final double dx, final double dy)
     {
-        if (isMapActivated())
+        if (canvas.isOSMRunning())
         {
             final TileFactory tileFactory = mapViewer.getTileFactory();
 
@@ -343,7 +330,7 @@ public class OSMMapController
      */
     public void zoomIn()
     {
-        if (isMapActivated())
+        if (canvas.isOSMRunning())
         {
             mapViewer.setZoom(mapViewer.getZoom() - 1);
 
@@ -360,7 +347,7 @@ public class OSMMapController
      */
     public void zoomOut()
     {
-        if (isMapActivated())
+        if (canvas.isOSMRunning())
         {
             mapViewer.setZoom(mapViewer.getZoom() + 1);
 
@@ -370,16 +357,6 @@ public class OSMMapController
         {
             throw new OSMMapException("Map is currently deactivated");
         }
-    }
-
-    /**
-     * Gets whether the OSM map component is activated or not.
-     *
-     * @return Map activation state.
-     */
-    private boolean isMapActivated()
-    {
-        return OSMMapStateBuilder.getSingleton().isMapActivated();
     }
 
     public JComponent getMapComponent()

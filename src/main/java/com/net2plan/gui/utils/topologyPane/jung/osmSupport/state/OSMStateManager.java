@@ -1,8 +1,9 @@
-package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
+package com.net2plan.gui.utils.topologyPane.jung.osmSupport.state;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
+import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMMapController;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
@@ -18,21 +19,23 @@ public class OSMStateManager
     private final OSMOnState runningState;
     private final OSMOffState stoppedState;
 
+    private final IVisualizationCallback callback;
     private final TopologyPanel topologyPanel;
     private final ITopologyCanvas canvas;
-    private final IVisualizationCallback callback;
 
     private final OSMMapController mapController;
 
-    OSMStateManager(final TopologyPanel topologyPanel, final ITopologyCanvas canvas, final IVisualizationCallback callback)
+    public OSMStateManager(final IVisualizationCallback callback, final TopologyPanel topologyPanel, final ITopologyCanvas canvas)
     {
+        this.callback = callback;
         this.topologyPanel = topologyPanel;
         this.canvas = canvas;
-        this.callback = callback;
         this.mapController = new OSMMapController();
 
-        runningState = new OSMOnState(mapController);
-        stoppedState = new OSMOffState(callback, canvas);
+        runningState = new OSMOnState(callback, canvas, mapController);
+        // Using JUNG canvas off state.
+        stoppedState = new OSMJUNGOffState(callback, canvas);
+
         currentState = stoppedState;
     }
 
@@ -40,7 +43,7 @@ public class OSMStateManager
     {
         if (currentState == runningState) return;
         currentState = runningState;
-        mapController.startMap(topologyPanel, canvas, callback);
+        mapController.startMap(callback, topologyPanel, canvas);
     }
 
     public void setStoppedState()
@@ -70,19 +73,24 @@ public class OSMStateManager
         currentState.zoomAll();
     }
 
-    public void addNode(final IVisualizationCallback callback, final ITopologyCanvas canvas, final Point2D pos)
+    public void addNode(final Point2D pos)
     {
-        currentState.addNode(callback, canvas, pos);
+        currentState.addNode(pos);
     }
 
-    public void removeNode(final IVisualizationCallback callback, final Node node)
+    public void removeNode(final Node node)
     {
-        currentState.removeNode(callback, node);
+        currentState.removeNode(node);
     }
 
-    public void moveNode(final Node node, final Point2D pos)
+    public void takeSnapshot()
     {
-        currentState.moveNodeInVisualization(canvas, node, pos);
+        currentState.takeSnapshot();
+    }
+
+    public void updateNodesXYPosition()
+    {
+        currentState.updateNodeXYPosition();
     }
 
     public boolean isMapActivated()
@@ -90,8 +98,4 @@ public class OSMStateManager
         return currentState instanceof OSMOnState;
     }
 
-    public void takeSnapshot(final ITopologyCanvas canvas)
-    {
-        currentState.takeSnapshot(canvas);
-    }
 }

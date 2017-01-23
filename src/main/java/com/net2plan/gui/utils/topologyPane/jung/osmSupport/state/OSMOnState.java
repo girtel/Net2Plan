@@ -1,15 +1,15 @@
-package com.net2plan.gui.utils.topologyPane.mapControl.osm.state;
+package com.net2plan.gui.utils.topologyPane.jung.osmSupport.state;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.OSMMapController;
+import com.net2plan.gui.utils.topologyPane.GUINode;
+import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMMapController;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.ImageUtils;
-import edu.uci.ics.jung.visualization.Layer;
 import org.jxmapviewer.viewer.GeoPosition;
 
 import javax.swing.*;
@@ -25,15 +25,19 @@ import java.util.Collections;
  */
 class OSMOnState implements OSMState
 {
+    private final IVisualizationCallback callback;
+    private final ITopologyCanvas canvas;
     private final OSMMapController mapController;
 
-    OSMOnState(final OSMMapController mapController)
+    OSMOnState(final IVisualizationCallback callback, final ITopologyCanvas canvas, final OSMMapController mapController)
     {
+        this.callback = callback;
+        this.canvas = canvas;
         this.mapController = mapController;
     }
 
     @Override
-    public void panTo(Point2D initialPoint, Point2D currentPoint)
+    public void panTo(final Point2D initialPoint, final Point2D currentPoint)
     {
         final double dxPanelPixelCoord = (currentPoint.getX() - initialPoint.getX());
         final double dyPanelPixelCoord = (currentPoint.getY() - initialPoint.getY());
@@ -60,7 +64,7 @@ class OSMOnState implements OSMState
     }
 
     @Override
-    public void addNode(IVisualizationCallback callback, ITopologyCanvas canvas, Point2D pos)
+    public void addNode(final Point2D pos)
     {
         final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(convertJungPointToMapSwing(canvas, pos));
         if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
@@ -71,33 +75,20 @@ class OSMOnState implements OSMState
         final NetPlan netPlan = callback.getDesign();
         netPlan.addNode(geoPosition.getLongitude(), geoPosition.getLatitude(), "Node" + netPlan.getNumberOfNodes(), null);
 
-        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE) , null , null);
-        mapController.restartMapState(false);
+        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
+        mapController.refreshTopologyAlignment();
     }
 
     @Override
-    public void removeNode(IVisualizationCallback callback, Node node)
+    public void removeNode(final Node node)
     {
         node.remove();
-        callback.updateVisualizationAfterChanges(Sets.newHashSet(Constants.NetworkElementType.NODE) , null , null);
-        mapController.restartMapState(false);
+        callback.updateVisualizationAfterChanges(Sets.newHashSet(Constants.NetworkElementType.NODE));
+        mapController.refreshTopologyAlignment();
     }
 
     @Override
-    public void moveNodeInVisualization(ITopologyCanvas canvas, Node node, Point2D positionInScreenPixels)
-    {
-        // Calculating JUNG Coordinates
-        final Point2D jungPoint = canvas.getNetPlanCoordinatesFromScreenPixelCoordinate(positionInScreenPixels, Layer.LAYOUT);
-        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(convertJungPointToMapSwing(canvas, jungPoint));
-
-        if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
-            return;
-
-        // canvas.moveVertexToXYPosition(node, new Point2D.Double(jungPoint.getX(), -jungPoint.getY()));
-    }
-
-    @Override
-    public void takeSnapshot(ITopologyCanvas canvas)
+    public void takeSnapshot()
     {
         final JFileChooser fc = new FileChooserConfirmOverwrite();
         FileNameExtensionFilter pngFilter = new FileNameExtensionFilter("PNG files", "png");
@@ -112,6 +103,12 @@ class OSMOnState implements OSMState
             File f = fc.getSelectedFile();
             ImageUtils.writeImageToFile(f, bi, ImageUtils.ImageType.PNG);
         }
+    }
+
+    @Override
+    public void updateNodeXYPosition()
+    {
+        mapController.refreshTopologyAlignment();
     }
 
     private Point2D convertJungPointToMapSwing(final ITopologyCanvas canvas, final Point2D jungPoint)

@@ -39,19 +39,19 @@ import com.net2plan.utils.Pair;
  */
 public interface IVisualizationCallback
 {
-	public VisualizationState getVisualizationState ();
+	VisualizationState getVisualizationState ();
 	
-	public void resetPickedStateAndUpdateView ();
+	void resetPickedStateAndUpdateView ();
 
-    public void pickNodeAndUpdateView (Node node);
+    void pickNodeAndUpdateView (Node node);
 
-    public void pickMulticastDemandAndUpdateView(MulticastDemand demand);
+    void pickMulticastDemandAndUpdateView(MulticastDemand demand);
     
-    public void pickForwardingRuleAndUpdateView(Pair<Demand, Link> demandLink);    
+    void pickForwardingRuleAndUpdateView(Pair<Demand, Link> demandLink);
     
-    public void pickLinkAndUpdateView (Link link);
+    void pickLinkAndUpdateView (Link link);
 
-    public void pickDemandAndUpdateView (Demand demand);
+    void pickDemandAndUpdateView (Demand demand);
 
     void pickRouteAndUpdateView (Route route);
 
@@ -61,25 +61,25 @@ public interface IVisualizationCallback
 
     void putColorInElementTopologyCanvas (Collection<? extends NetworkElement> linksAndNodes , Color color);
 
-	public void updateVisualizationJustCanvasRefresh ();
+	void updateVisualizationJustCanvasRefresh ();
 
-	public void updateVisualizationJustTables ();
+	void updateVisualizationJustTables ();
 
-	public void updateVisualizationAfterNewTopology (BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder , List<Boolean> isLayerVisibleIndexedByLayerIndex);
+	void updateVisualizationAfterNewTopology ();
 
-	public NetPlan getDesign();
+	NetPlan getDesign();
 
-    public NetPlan getInitialDesign();
+    NetPlan getInitialDesign();
 
-	public void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade , BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder , List<Boolean> isLayerVisibleIndexedByLayerIndex);
+	void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade);
 
-//    public void moveNodeXYPosition (Node node, Point2D pos , boolean updateView);
+//    void moveNodeXYPosition (Node node, Point2D pos , boolean updateView);
 
-    public boolean inOnlineSimulationMode();
+    boolean inOnlineSimulationMode();
 
-	public void loadDesignDoNotUpdateVisualization(NetPlan netPlan);
+	void loadDesignDoNotUpdateVisualization(NetPlan netPlan);
 
-	public void justApplyZoomAll();
+	void justApplyZoomAll();
 
 	void updateVisualizationJustCanvasRebuildAndRefresh();
 }

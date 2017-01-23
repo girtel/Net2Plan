@@ -20,6 +20,7 @@
 
 package com.net2plan.internal.plugins;
 
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -60,7 +61,13 @@ public interface ITopologyCanvas extends Plugin
 	 */
 	void removePlugin(ITopologyCanvasPlugin plugin);
 
-	Point2D getNetPlanCoordinatesFromScreenPixelCoordinate(Point2D screenPoint, Layer layer);
+	double getCurrentCanvasScale();
+
+	Point2D getCanvasCenter();
+
+	Point2D getCanvasPointFromNetPlanPoint(Point2D screenPoint);
+
+	Point2D getCanvasPointFromScreenPoint(Point2D netPlanPoint);
 
 	/**
 	 * Returns a reference to the internal component containing the canvas.
@@ -88,33 +95,29 @@ public interface ITopologyCanvas extends Plugin
 	 */
 	GUINode getVertex(MouseEvent e);
 
-	/**
-	 * Pans the graph to the .
-	 *
-	 * @param initialPoint Initial point where the mouse was pressed
-	 * @param currentPoint Current point where the mouse is
-	 * @since 0.3.1
-	 */
-	void panTo(Point2D initialPoint, Point2D currentPoint);
+	Set<GUINode> getAllVertices();
+
+	Set<GUILink> getAllEdges();
+
+	void panTo(Point2D initialPoint, Point2D destinationPoint);
+
+	void addNode(Point2D position);
+
+	void removeNode(Node node);
+
+	void runOSMSupport();
+
+	void stopOSMSupport();
+
+	boolean isOSMRunning();
 
 	void moveCanvasTo(Point2D destinationPoint);
 
-	/**
-	 * Refreshes the canvas.
-	 *
-	 * @since 0.3.0
-	 */
-	void refresh();
-
-	/**
-	 * Updates the position of a GUI Node based on its associted node.
-	 * @param node
-	 */
-	void updateVertexXYPosition(GUINode node);
+	void updateAllVerticesXYPosition();
 
 	/**
 	 * Moves a GUI node to the desired point.
-	 * This method does not change the node's xy coordinates.
+	 * Th#is method does not change the node's xy coordinates.
 	 * Have in mind that by using this method, the xy coordinates from the table do not equal the coordinates from the topology.
 	 *
 	 * @param npNode Node to move.
@@ -130,18 +133,25 @@ public interface ITopologyCanvas extends Plugin
 	void resetPickedStateAndRefresh();
 
 	/**
-	 * Takes a snapshot of the canvas.
+	 * Refreshes the canvas.
 	 *
 	 * @since 0.3.0
 	 */
-	void takeSnapshot();
+	void refresh();
 
 	/**
 	 * Refresh the canvas with the physical topology from the given network design.
 	 *
 	 * @since 0.3.0
 	 */
-	void rebuildTopologyAndRefresh();
+	void rebuildCanvasGraphAndRefresh();
+
+	/**
+	 * Takes a snapshot of the canvas.
+	 *
+	 * @since 0.3.0
+	 */
+	void takeSnapshot();
 
 	/**
 	 * Makes zoom-all from the center of the view.
@@ -165,12 +175,4 @@ public interface ITopologyCanvas extends Plugin
 	void zoomOut();
 
 	void zoom(Point2D centerPoint, float scale);
-
-	double getCurrentCanvasScale();
-
-	Point2D getCanvasCenter();
-
- 	Set<GUINode> getGraphVertices();
-
-	Set<GUILink> getGraphEdges();
 }

@@ -66,7 +66,6 @@ import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.VisualizationConstants;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
 import com.net2plan.gui.utils.viewEditWindows.utils.WindowUtils;
@@ -169,9 +168,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
 
-        // Running OSM state machine.
-        new OSMMapStateBuilder.SingletonBuilder(topologyPanel, this).build();
-
         leftPane = new JPanel(new BorderLayout());
         JPanel logSection = configureLeftBottomPanel();
         if (logSection == null)
@@ -196,9 +192,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
 
         loadDesignDoNotUpdateVisualization(currentNetPlan);
-        final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo (currentNetPlan , 
-        		false , true , false , true , null , null); // shown in topological order
-        updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
+        updateVisualizationAfterNewTopology();
         
         onlineSimulationPane = new OnlineSimulationPane(this);
         executionPane = new OfflineExecutionPanel(this);
@@ -403,10 +397,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             ErrorHandling.showErrorDialog("Unable to reset");
         }
         
-        final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
-        		(getDesign () , 
-        		false , true , false , true , null , null); // shown in topological order
-        updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
+        updateVisualizationAfterNewTopology();
     }
 
 
@@ -727,28 +718,28 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
 	@Override
-	public void updateVisualizationAfterNewTopology(BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder , List<Boolean> isLayerVisibleIndexedByLayerIndex)
+	public void updateVisualizationAfterNewTopology()
 	{
-		vs.rebuildVisualizationState(getDesign() , mapLayer2VisualizationOrder , isLayerVisibleIndexedByLayerIndex);
+		vs.rebuildVisualizationState(getDesign());
 		topologyPanel.updateLayerChooser();
-		topologyPanel.getCanvas().rebuildTopologyAndRefresh();
+		topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
 	    topologyPanel.getCanvas().zoomAll();
 	    viewEditTopTables.updateView();
 	    updateWarnings();
 	}
 
     @Override
-    public void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade , BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder , List<Boolean> isLayerVisibleIndexedByLayerIndex)
+    public void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade)
     {
         if (modificationsMade == null)
         {
             throw new RuntimeException("Unable to update non-existent network elements");
         }
 
-        if ((modificationsMade == null) ||  (modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE) || modificationsMade.contains(NetworkElementType.LAYER)))
+        if ((modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE) || modificationsMade.contains(NetworkElementType.LAYER)))
         {
-            vs.rebuildVisualizationState(getDesign() , mapLayer2VisualizationOrder , isLayerVisibleIndexedByLayerIndex);
-            topologyPanel.getCanvas().rebuildTopologyAndRefresh();
+            vs.rebuildVisualizationState(getDesign());
+            topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
             viewEditTopTables.updateView();
             updateWarnings();
         } else
@@ -788,7 +779,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 	@Override
 	public void updateVisualizationJustCanvasRebuildAndRefresh()
 	{
-		topologyPanel.getCanvas().rebuildTopologyAndRefresh();
+		topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
 	}
 
 	@Override

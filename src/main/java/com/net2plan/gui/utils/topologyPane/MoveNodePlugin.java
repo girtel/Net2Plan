@@ -13,7 +13,6 @@
 package com.net2plan.gui.utils.topologyPane;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.topologyPane.mapControl.osm.state.OSMMapStateBuilder;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
 import java.awt.*;
@@ -73,7 +72,7 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
         if (startVertex != null) {
             Point p = e.getPoint();
 
-            OSMMapStateBuilder.getSingleton().moveNode(startVertex.getAssociatedNetPlanNode(), p);
+            canvas.moveVertexToXYPosition(startVertex, p);
 
             e.consume();
         }

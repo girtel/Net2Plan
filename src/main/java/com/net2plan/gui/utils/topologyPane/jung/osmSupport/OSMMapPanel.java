@@ -1,13 +1,8 @@
-package com.net2plan.gui.utils.topologyPane.components.mapPanel;
+package com.net2plan.gui.utils.topologyPane.jung.osmSupport;
 
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.viewer.*;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Created by Jorge San Emeterio on 13/10/2016.
@@ -18,7 +13,7 @@ public class OSMMapPanel extends JXMapViewer
     private static final GeoPosition europe = new GeoPosition(47.20, 25.2);
 
     private final GeoPosition defaultPosition;
-    private int defaultZoom;
+    private final int defaultZoom;
 
     public OSMMapPanel()
     {
@@ -37,7 +32,6 @@ public class OSMMapPanel extends JXMapViewer
 
     public void moveToDefaultPosition()
     {
-        // Default position
         this.setCenterPosition(defaultPosition);
     }
 
@@ -54,10 +48,5 @@ public class OSMMapPanel extends JXMapViewer
     public int getDefaultZoom()
     {
         return defaultZoom;
-    }
-
-    public void setDefaultZoom(final int zoom)
-    {
-        this.defaultZoom = zoom;
     }
 }

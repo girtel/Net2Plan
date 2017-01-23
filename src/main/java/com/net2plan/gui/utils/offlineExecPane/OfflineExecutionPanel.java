@@ -102,9 +102,7 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
 	{
         try {
             double execTime = (System.nanoTime() - start) / 1e9;
-            final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
-            		(mainWindow.getDesign() , false , true , false , true , null , null); // shown in topological order
-            mainWindow.updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
+            mainWindow.updateVisualizationAfterNewTopology();
 
             String outMessage = String.format("Algorithm executed successfully%nExecution time: %.3g s%nExit message: %s", execTime, out);
             JOptionPane.showMessageDialog(null, outMessage, "Solve design", JOptionPane.PLAIN_MESSAGE);

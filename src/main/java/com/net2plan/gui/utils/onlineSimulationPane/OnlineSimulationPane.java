@@ -185,9 +185,7 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
                 simKernel.getSimCore().setSimulationState(SimState.STOPPED);
                 simKernel.reset();
                 mainWindow.loadDesignDoNotUpdateVisualization(simKernel.getInitialNetPlan());
-                final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
-                		(mainWindow.getDesign() , false , true , false , true , null , null); // shown in topological order
-                mainWindow.updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
+                mainWindow.updateVisualizationAfterNewTopology();
             } else if (src == btn_viewEventList) {
                 viewFutureEventList();
             } else if (src == btn_updateReport) {
@@ -321,9 +319,7 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
         if (simulationState == SimState.NOT_STARTED || simulationState == SimState.PAUSED || simulationState == SimState.STEP || simulationState == SimState.STOPPED) 
         {
             updateSimulationInfo();
-            final Pair<BidiMap<NetworkLayer,Integer> , List<Boolean>> visualizationConfiguration = VisualizationState.getVisualizationLayerInfo 
-            		(mainWindow.getDesign() , false , true , false , true , null , null); // shown in topological order
-            mainWindow.updateVisualizationAfterNewTopology(visualizationConfiguration.getFirst() , visualizationConfiguration.getSecond());
+            mainWindow.updateVisualizationAfterNewTopology();
             mainWindow.resetPickedStateAndUpdateView();
         }
 

@@ -77,7 +77,8 @@ import net.miginfocom.swing.MigLayout;
 /**
  */
 @SuppressWarnings("unchecked")
-public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
+public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
+{
     private static final int COLUMN_ID = 0;
     private static final int COLUMN_INDEX = 1;
     private static final int COLUMN_DEMAND = 2;
@@ -292,12 +293,12 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                     switch (column) {
                         case COLUMN_CARRIEDTRAFFIC:
                             route.setCarriedTraffic(Double.parseDouble(newValue.toString()), route.getOccupiedCapacity());
-                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE) , null , null);
+                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                             break;
 
                         case COLUMN_OCCUPIEDCAPACITY:
                             route.setCarriedTraffic(route.getCarriedTraffic(), Double.parseDouble(newValue.toString()));
-                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE) , null , null);
+                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                             break;
 
                         default:
@@ -391,7 +392,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                             NetPlan netPlan = callback.getDesign();
                             try {
                                 netPlan.getRouteFromId((long) itemId).remove();
-                            	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE) , null , null);
+                            	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -413,7 +414,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
 
                         try {
                             netPlan.removeAllRoutes();
-                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE) , null , null);
+                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -460,7 +461,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
 
                 try {
                     createRouteGUI(callback);
-                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE) , null , null);
+                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
@@ -832,7 +833,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                 for (Route r : addedRoutes) r.remove();
                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error adding routes and/or protection segments");
             }
-        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE) , null , null);
+        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
         }
     }
 
@@ -896,7 +897,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                 long backupRouteId = (Long) ((StringLabeller) selectedItem).getObject();
                 Route backupRoute = netPlan.getRouteFromId(backupRouteId);
                 route.addBackupRoute(backupRoute);
-            	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE) , null , null);
+            	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
 
                 backupRouteSelector.removeItem(selectedItem);
                 if (backupRouteSelector.getItemCount() == 0) addSegment_pnl.setVisible(false);
@@ -937,7 +938,7 @@ public class AdvancedJTable_route extends AdvancedJTableNetworkElement {
                     final long backupRouteId = (Long) table.getModel().getValueAt(modelRow, 0);
                     final Route backupRoute = netPlan.getRouteFromId(backupRouteId);
                     netPlan.getRouteFromId(routeId).removeBackupRoute(backupRoute);
-                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE) , null , null);
+                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
 
                     String segmentLabel = "Backup route id " + backupRouteId + 
                     		": path = " + getSequenceLinkResourceIndexes(backupRoute) + 
