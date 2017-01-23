@@ -134,7 +134,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 //
                 final VisualizationState visualizationState = callback.getVisualizationState();
 
-                final NetworkLayer selectedLayer = netPlan.getNetworkLayerFromId((long) this.getValueAt(row, COLUMN_INDEX));
+                final NetworkLayer selectedLayer = netPlan.getNetworkLayer((int) this.getValueAt(row, COLUMN_INDEX));
 
                 switch (column)
                 {

@@ -14,6 +14,8 @@ public final class VisualizationConstants
     public final static float SCALE_IN = 1.1f;
     public final static float SCALE_OUT = 1 / SCALE_IN;
 
+    public final static double INCREASENODESIZEFACTORACTIVE = 1.5;
+
     public final static Paint DEFAULT_GUINODE_DRAWCOLOR = java.awt.Color.BLACK;
     public final static Paint DEFAULT_GUINODE_FILLCOLOR = java.awt.Color.BLACK;
     public final static Paint DEFAULT_GUINODE_FILLCOLOR_PICKED = java.awt.Color.BLACK;

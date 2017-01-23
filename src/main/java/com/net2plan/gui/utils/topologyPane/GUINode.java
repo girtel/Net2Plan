@@ -15,9 +15,10 @@ package com.net2plan.gui.utils.topologyPane;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Paint;
+import java.awt.Rectangle;
 import java.awt.Shape;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
-import java.util.List;
 
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -39,8 +40,8 @@ public class GUINode
     //private Paint drawPaint, fillPaint, fillPaintIfPicked;
     private Paint drawPaint, fillPaint;
 //    private Shape shape, shapeIfPicked;
-    private Shape shape;
-    private double shapeSize;
+    private Shape shapeIfNotActive , shapeIfActive;
+    private double shapeSizeIfNotActive;
 //    private Color userDefinedColorOverridesTheRest;
 
     /**
@@ -59,12 +60,11 @@ public class GUINode
 		/* defaults */
         this.drawPaint = java.awt.Color.BLACK;
         this.fillPaint = java.awt.Color.BLACK;
-//        this.fillPaintIfPicked = java.awt.Color.BLACK;
         this.font = new Font("Helvetica", Font.BOLD, 11);
-        this.shapeSize = 30;
-        this.shape = new Ellipse2D.Double(-1 * shapeSize / 2, -1 * shapeSize / 2, 1 * shapeSize, 1 * shapeSize);
-//        this.shapeIfPicked = new Ellipse2D.Double(-1.2 * shapeSize / 2, -1.2 * shapeSize / 2, 1.2 * shapeSize, 1.2 * shapeSize);
-//        this.userDefinedColorOverridesTheRest = null;
+        this.shapeSizeIfNotActive = 30;
+        final double shapeSizeIfActive = shapeSizeIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE;
+        this.shapeIfNotActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfNotActive , shapeSizeIfNotActive);
+        this.shapeIfActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfActive , shapeSizeIfActive);
     }
     
     public NetworkLayer getLayer () { return layer; }
@@ -74,13 +74,15 @@ public class GUINode
     }
 
     public double getShapeSize() {
-        return shapeSize;
+        return npNode.getNetPlan().getNetworkLayerDefault() == layer? shapeSizeIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE : shapeSizeIfNotActive;
     }
 
-    public void setShapeSize(double size) {
-        this.shapeSize = size;
-        this.shape = new Ellipse2D.Double(-1 * shapeSize / 2, -1 * shapeSize / 2, 1 * shapeSize, 1 * shapeSize);
-//        this.shapeIfPicked = new Ellipse2D.Double(-1.2 * shapeSize / 2, -1.2 * shapeSize / 2, 1.2 * shapeSize, 1.2 * shapeSize);
+    public void setShapeSize (double size) 
+    {
+        this.shapeSizeIfNotActive = size;
+        final double shapeSizeIfActive = shapeSizeIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE;
+        this.shapeIfNotActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfNotActive , shapeSizeIfNotActive);
+        this.shapeIfActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfActive , shapeSizeIfActive);
     }
 
     public Paint getDrawPaint() {
@@ -106,12 +108,16 @@ public class GUINode
         return font;
     }
 
-    public Shape getShape() {
-        return shape;
+    public Shape getShape() 
+    {
+        return npNode.getNetPlan().getNetworkLayerDefault() == layer? shapeIfActive : shapeIfNotActive;
     }
 
-    public void setShape(Shape f) {
-        this.shape = f;
+    public void setShape(Shape f) 
+    {
+        final double shapeSizeIfActive = shapeSizeIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE;
+        this.shapeIfNotActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfNotActive , shapeSizeIfNotActive);
+        this.shapeIfActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfActive , shapeSizeIfActive);
     }
 
     public boolean decreaseFontSize() 
@@ -157,5 +163,13 @@ public class GUINode
     public VisualizationState getVisualizationState () { return vs; }
 
     public int getVisualizationOrderRemovingNonVisibleLayers () { return vs.getVisualizationOrderRemovingNonVisible(layer); }
-    
+
+    private static Shape adjustShapeToSize (Shape s , double size_x , double size_y)
+    {
+    	AffineTransform transf = new AffineTransform();
+    	final Rectangle currentShapeBounds = s.getBounds();
+    	transf.scale(size_x / currentShapeBounds.getWidth() , size_y / currentShapeBounds.getHeight());
+    	return transf.createTransformedShape(s);
+    	
+    }
 }
