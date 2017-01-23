@@ -18,7 +18,7 @@ public class MultiLayerPanel extends JPanel
     public MultiLayerPanel(final IVisualizationCallback callback)
     {
         this.callback = callback;
-        multiLayerTable = new AdvancedJTable_MultiLayerControlTable(callback);
+        this.multiLayerTable = new AdvancedJTable_MultiLayerControlTable(callback);
 
         this.setLayout(new BorderLayout());
 

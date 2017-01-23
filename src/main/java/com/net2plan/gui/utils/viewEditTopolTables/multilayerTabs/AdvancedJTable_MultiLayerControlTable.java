@@ -81,8 +81,6 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         final LinkedList<Object[]> allLayerData = new LinkedList<>();
         for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
         {
-            if (!visualizationState.isLayerVisible(networkLayer)) continue;
-
             final boolean isActiveLayer = isDefaultLayer(networkLayer);
             int layerOrder = visualizationState.getVisualizationOrderRemovingNonVisible(networkLayer);
 
