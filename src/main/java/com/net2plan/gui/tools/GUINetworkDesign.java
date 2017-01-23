@@ -32,7 +32,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -161,10 +161,13 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     	this.currentNetPlan = new NetPlan ();
     	
     	BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder = new DualHashBidiMap<>();
+    	Map<NetworkLayer,Boolean> layerVisibilityMap = new HashMap<>();
     	for (NetworkLayer layer : currentNetPlan.getNetworkLayers())
+    	{
     		mapLayer2VisualizationOrder.put(layer , mapLayer2VisualizationOrder.size());
-    	List<Boolean> isLayerVisibleIndexedByLayerIndex = Collections.nCopies(currentNetPlan.getNumberOfLayers() , true);
-    	this.vs = new VisualizationState(currentNetPlan , mapLayer2VisualizationOrder , isLayerVisibleIndexedByLayerIndex);
+    		layerVisibilityMap.put(layer,true);
+    	}
+    	this.vs = new VisualizationState(currentNetPlan , mapLayer2VisualizationOrder , layerVisibilityMap);
 
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
 
@@ -720,7 +723,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 	@Override
 	public void updateVisualizationAfterNewTopology()
 	{
-		vs.rebuildVisualizationState(getDesign());
+		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = VisualizationState.generateDefaultVisualizationLayerInfo(getDesign());
+		vs.setLayerVisibilityAndOrder(getDesign() , res.getFirst() , res.getSecond());
 		topologyPanel.updateLayerChooser();
 		topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
 	    topologyPanel.getCanvas().zoomAll();
@@ -738,7 +742,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         if ((modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE) || modificationsMade.contains(NetworkElementType.LAYER)))
         {
-            vs.rebuildVisualizationState(getDesign());
+    		vs.setLayerVisibilityAndOrder(getDesign());
             topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
             viewEditTopTables.updateView();
             updateWarnings();
