@@ -27,6 +27,7 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.utils.Pair;
 
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.*;
 
 public class VisualizationState
 {
@@ -74,7 +75,7 @@ public class VisualizationState
         this.showUpperLayerPropagation = false;
         this.nonVisibleNodes = new HashSet<>();
         this.nonVisibleLinks = new HashSet<>();
-        this.mapLayer2VisualizationOrder = mapLayer2VisualizationOrder;
+//        this.mapLayer2VisualizationOrder = mapLayer2VisualizationOrder;
 //        this.mapLayerVisibility = new HashMap<>();
         this.mapShowLayerLinks = new HashMap<>();
         setLayerVisibilityAndOrder(currentNp ,mapLayer2VisualizationOrder , layerVisibilityMap);
@@ -450,13 +451,13 @@ public class VisualizationState
     {
         for (Node n : currentNp.getNodes())
             for (GUINode gn : cache_mapNode2ListVerticallyStackedGUINodes.get(n))
-                gn.setShapeSize(gn.getShapeSize() * VisualizationConstants.SCALE_OUT);
+                gn.setShapeSize(gn.getShapeSize() * SCALE_OUT);
     }
 
     public void increaseNodeSizeAll()
     {
         for (GUINode gn : getAllGUINodes())
-            gn.setShapeSize(gn.getShapeSize() * VisualizationConstants.SCALE_IN);
+            gn.setShapeSize(gn.getShapeSize() * SCALE_IN);
     }
 
     public int getNumberOfVisibleLayers()
@@ -566,30 +567,30 @@ public class VisualizationState
     {
         for (GUINode n : getAllGUINodes())
         {
-            n.setFont(VisualizationConstants.DEFAULT_GUINODE_FONT);
-            n.setDrawPaint(VisualizationConstants.DEFAULT_GUINODE_DRAWCOLOR);
-            n.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_FILLCOLOR);
-            n.setShape(VisualizationConstants.DEFAULT_GUINODE_SHAPE);
-            n.setShapeSize(VisualizationConstants.DEFAULT_GUINODE_SHAPESIZE);
+            n.setFont(DEFAULT_GUINODE_FONT);
+            n.setDrawPaint(DEFAULT_GUINODE_DRAWCOLOR);
+            n.setFillPaint(DEFAULT_GUINODE_FILLCOLOR);
+            n.setShape(DEFAULT_GUINODE_SHAPE);
+            n.setShapeSize(DEFAULT_GUINODE_SHAPESIZE);
         }
         for (GUILink e : getAllGUILinks(true, false))
         {
-            e.setHasArrow(VisualizationConstants.DEFAULT_REGGUILINK_HASARROW);
-            e.setArrowStroke(VisualizationConstants.DEFAULT_REGGUILINK_ARROWSTROKE);
-            e.setEdgeStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGETROKE);
-            e.setArrowDrawPaint(VisualizationConstants.DEFAULT_REGGUILINK_ARROWDRAWCOLOR);
-            e.setArrowFillPaint(VisualizationConstants.DEFAULT_REGGUILINK_ARROWFILLCOLOR);
-            e.setEdgeDrawPaint(VisualizationConstants.DEFAULT_REGGUILINK_EDGEDRAWCOLOR);
+            e.setHasArrow(DEFAULT_REGGUILINK_HASARROW);
+            e.setArrowStroke(DEFAULT_REGGUILINK_ARROWSTROKE_ACTIVELAYER , DEFAULT_REGGUILINK_ARROWSTROKE_ACTIVELAYER);
+            e.setEdgeStroke(DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER , DEFAULT_REGGUILINK_EDGESTROKE);
+            e.setArrowDrawPaint(DEFAULT_REGGUILINK_ARROWDRAWCOLOR);
+            e.setArrowFillPaint(DEFAULT_REGGUILINK_ARROWFILLCOLOR);
+            e.setEdgeDrawPaint(DEFAULT_REGGUILINK_EDGEDRAWCOLOR);
             e.setShownSeparated(false);
         }
         for (GUILink e : getAllGUILinks(false, true))
         {
-            e.setHasArrow(VisualizationConstants.DEFAULT_INTRANODEGUILINK_HASARROW);
-            e.setArrowStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_ARROWSTROKE);
-            e.setEdgeStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGETROKE);
-            e.setArrowDrawPaint(VisualizationConstants.DEFAULT_INTRANODEGUILINK_ARROWDRAWCOLOR);
-            e.setArrowFillPaint(VisualizationConstants.DEFAULT_INTRANODEGUILINK_ARROWFILLCOLOR);
-            e.setEdgeDrawPaint(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
+            e.setHasArrow(DEFAULT_INTRANODEGUILINK_HASARROW);
+            e.setArrowStroke(DEFAULT_INTRANODEGUILINK_ARROWSTROKE_ACTIVE , DEFAULT_INTRANODEGUILINK_ARROWSTROKE);
+            e.setEdgeStroke(DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE , DEFAULT_INTRANODEGUILINK_EDGESTROKE);
+            e.setArrowDrawPaint(DEFAULT_INTRANODEGUILINK_ARROWDRAWCOLOR);
+            e.setArrowFillPaint(DEFAULT_INTRANODEGUILINK_ARROWFILLCOLOR);
+            e.setEdgeDrawPaint(DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
             e.setShownSeparated(false);
         }
     }
@@ -642,8 +643,8 @@ public class VisualizationState
             }
             if (stroke != null)
             {
-                e.setArrowStroke(stroke);
-                e.setEdgeStroke(stroke);
+                e.setArrowStroke(stroke , stroke);
+                e.setEdgeStroke(stroke , stroke);
             }
             if (hasArrows != null)
             {

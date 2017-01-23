@@ -170,6 +170,5 @@ public class GUINode
     	final Rectangle currentShapeBounds = s.getBounds();
     	transf.scale(size_x / currentShapeBounds.getWidth() , size_y / currentShapeBounds.getHeight());
     	return transf.createTransformedShape(s);
-    	
     }
 }

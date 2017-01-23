@@ -175,4 +175,7 @@ public interface ITopologyCanvas extends Plugin
 	void zoomOut();
 
 	void zoom(Point2D centerPoint, float scale);
+	
+	double getPixelToNpCoordinateFactor ();
+	
 }

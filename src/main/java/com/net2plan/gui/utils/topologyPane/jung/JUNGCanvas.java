@@ -96,6 +96,8 @@ public final class JUNGCanvas implements ITopologyCanvas
 
     private final OSMStateManager osmStateManager;
 
+    
+    public VisualizationViewer getVV () { return vv; }
     /**
      * Default constructor.
      *
@@ -105,6 +107,10 @@ public final class JUNGCanvas implements ITopologyCanvas
     {
         transformNetPlanCoordinatesToJungCoordinates = vertex ->
         {
+        	Rectangle viewInLayoutUnits = getCurrentCanvasViewWindow();
+        	Rectangle r = getVV ().getBounds();
+
+        	
             final int vlIndex = vertex.getVisualizationOrderRemovingNonVisibleLayers();
             final double interLayerDistanceInNpCoord = vertex.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
             final Point2D basePositionInNetPlanCoord = vertex.getAssociatedNetPlanNode().getXYPositionMap();
@@ -643,4 +649,11 @@ public final class JUNGCanvas implements ITopologyCanvas
 
         }
     }
+    @Override
+	public double getPixelToNpCoordinateFactor ()
+	{
+    	Rectangle viewInLayoutUnits = getCurrentCanvasViewWindow();
+    	Rectangle r = getVV ().getBounds();
+    	return viewInLayoutUnits.getHeight() / r.getHeight();
+	}
 }

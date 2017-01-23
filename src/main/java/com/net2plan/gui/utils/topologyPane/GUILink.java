@@ -19,6 +19,9 @@ import java.awt.Stroke;
 
 import com.net2plan.interfaces.networkDesign.Link;
 
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.*;
+
+
 /**
  * Class representing a link.
  *
@@ -35,7 +38,8 @@ public class GUILink
     /* New variables */
     private boolean hasArrow;
 //    private Stroke arrowStroke, arrowStrokeIfPicked, edgeStroke, edgeStrokeIfPicked;
-    private Stroke arrowStroke, edgeStroke;
+    private Stroke arrowStrokeIfActiveLayer, edgeStrokeIfActiveLayer;
+    private Stroke arrowStrokeIfNotActiveLayer, edgeStrokeIfNotActiveLayer;
     private Paint arrowDrawPaint, arrowFillPaint, edgeDrawPaint;
     private boolean shownSeparated;
 //    private Paint arrowDrawPaint, arrowDrawPaintIfPicked, arrowFillPaint, arrowFillPaintIfPicked, edgeDrawPaint, edgeDrawPaintIfPicked;
@@ -65,16 +69,37 @@ public class GUILink
         {
         	if (Math.abs(originNode.getVisualizationOrderRemovingNonVisibleLayers() - destinationNode.getVisualizationOrderRemovingNonVisibleLayers()) != 1) throw new RuntimeException ("Bad");
         }
-        this.hasArrow = true;
-        this.arrowStroke = new BasicStroke(1);
-//        this.arrowStrokeIfPicked = new BasicStroke(2);
-        this.edgeDrawPaint = Color.BLACK;
-//        this.edgeDrawPaintIfPicked = Color.BLUE;
-        this.arrowDrawPaint = Color.BLACK;
-//        this.arrowDrawPaintIfPicked = Color.BLUE;
-        this.arrowFillPaint = Color.BLACK;
-//        this.arrowFillPaintIfPicked = Color.BLUE;
-        this.edgeStroke = new BasicStroke(3);
+//        this.hasArrow = true;
+////        this.arrowStrokeIfPicked = new BasicStroke(2);
+//        this.edgeDrawPaint = Color.BLACK;
+////        this.edgeDrawPaintIfPicked = Color.BLUE;
+//        this.arrowDrawPaint = Color.BLACK;
+////        this.arrowDrawPaintIfPicked = Color.BLUE;
+//        this.arrowFillPaint = Color.BLACK;
+////        this.arrowFillPaintIfPicked = Color.BLUE;
+        if (this.isIntraNodeLink())
+        {
+            this.hasArrow = DEFAULT_INTRANODEGUILINK_HASARROW;
+            this.edgeDrawPaint = DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
+            this.arrowDrawPaint = DEFAULT_INTRANODEGUILINK_ARROWDRAWCOLOR;
+            this.arrowFillPaint = DEFAULT_INTRANODEGUILINK_ARROWFILLCOLOR;
+            this.edgeStrokeIfActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
+            this.edgeStrokeIfNotActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
+            this.arrowStrokeIfActiveLayer = DEFAULT_INTRANODEGUILINK_ARROWSTROKE_ACTIVE;
+            this.arrowStrokeIfNotActiveLayer = DEFAULT_INTRANODEGUILINK_ARROWSTROKE;
+        }
+        else
+        {
+            this.hasArrow = DEFAULT_REGGUILINK_HASARROW;
+            this.edgeDrawPaint = DEFAULT_REGGUILINK_EDGEDRAWCOLOR;
+            this.arrowDrawPaint = DEFAULT_REGGUILINK_ARROWDRAWCOLOR;
+            this.arrowFillPaint = DEFAULT_REGGUILINK_ARROWFILLCOLOR;
+            this.edgeStrokeIfActiveLayer = DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER;
+            this.edgeStrokeIfNotActiveLayer = DEFAULT_REGGUILINK_EDGESTROKE;
+            this.arrowStrokeIfActiveLayer = DEFAULT_REGGUILINK_ARROWSTROKE_ACTIVELAYER;
+            this.arrowStrokeIfNotActiveLayer = DEFAULT_REGGUILINK_ARROWSTROKE;
+        }
+        
         this.shownSeparated = false;
 //        this.edgeStrokeIfPicked = new BasicStroke(5);
 //        this.userDefinedColorOverridesTheRest = null;
@@ -95,12 +120,15 @@ public class GUILink
         this.hasArrow = hasArrow;
     }
 
-    public Stroke getArrowStroke() {
-        return arrowStroke;
+    public Stroke getArrowStroke() 
+    {
+        return npLink.getNetPlan().getNetworkLayerDefault() == npLink.getLayer()? arrowStrokeIfActiveLayer : arrowStrokeIfNotActiveLayer;
     }
 
-    public void setArrowStroke(Stroke arrowStroke) {
-        this.arrowStroke = arrowStroke;
+    public void setArrowStroke(Stroke arrowStrokeIfActiveLayer , Stroke arrowStrokeIfNotActiveLayer) 
+    {
+    	this.arrowStrokeIfActiveLayer = arrowStrokeIfActiveLayer;
+    	this.arrowStrokeIfNotActiveLayer = arrowStrokeIfNotActiveLayer;
     }
 
     public Paint getEdgeDrawPaint() 
@@ -135,12 +163,16 @@ public class GUILink
         this.arrowFillPaint = fillPaint;
     }
 
-    public Stroke getEdgeStroke() {
-        return edgeStroke;
+    public Stroke getEdgeStroke() 
+    {
+    	if (isIntraNodeLink()) return edgeStrokeIfNotActiveLayer;
+        return npLink.getNetPlan().getNetworkLayerDefault() == npLink.getLayer()? edgeStrokeIfActiveLayer : edgeStrokeIfNotActiveLayer;
     }
 
-    public void setEdgeStroke(Stroke edgeStroke) {
-        this.edgeStroke = edgeStroke;
+    public void setEdgeStroke(Stroke edgeStrokeIfActiveLayer , Stroke edgeStrokeIfNotActiveLayer) 
+    {
+    	this.edgeStrokeIfActiveLayer = edgeStrokeIfActiveLayer;
+    	this.edgeStrokeIfNotActiveLayer = edgeStrokeIfNotActiveLayer;
     }
 
     public String getToolTip() {
