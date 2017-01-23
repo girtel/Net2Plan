@@ -175,7 +175,7 @@ public class SharedRiskGroup extends NetworkElement
 	 * @param col the collection
 	 * @return see above
 	 */
-	public boolean affectsAnyOf (Collection<NetworkElement> col)
+	public boolean affectsAnyOf (Collection<? extends NetworkElement> col)
 	{
 		for (NetworkElement e : col)
 		{

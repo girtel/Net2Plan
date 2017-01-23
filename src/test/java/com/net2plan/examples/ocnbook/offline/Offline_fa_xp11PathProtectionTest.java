@@ -17,6 +17,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
+import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -26,7 +28,7 @@ import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.SRGUtils.SharedRiskModel;
 import com.net2plan.utils.InputParameter;
 
-public class Offline_fa_xde11PathProtectionTest 
+public class Offline_fa_xp11PathProtectionTest 
 {
 	private NetPlan np;
 
@@ -46,10 +48,10 @@ public class Offline_fa_xde11PathProtectionTest
 	@Test
 	public void test() 
 	{
-		final IAlgorithm algorithm = new Offline_fa_xde11PathProtection();
+		final IAlgorithm algorithm = new Offline_fa_xp11PathProtection();
 		Map<String,List<String>> testingParameters = new HashMap<> ();
 		testingParameters.put("solverName" , Arrays.asList("cplex"));
-		testingParameters.put("optimizationTarget" , Arrays.asList("min-av-num-hops" ,"minimax-link-utilization" , "maximin-link-idle-capacity"));
+		testingParameters.put("optimizationTarget" , Arrays.asList("min-av-num-hops" , "minimax-link-utilization" , "maximin-link-idle-capacity"));
 		testingParameters.put("type11" , Arrays.asList("linkDisjoint" , "srgDisjoint"));
 		List<Map<String,String>> testsParam = InputParameter.getCartesianProductOfParameters (testingParameters);
 		if (testsParam.isEmpty()) testsParam = Arrays.asList(InputParameter.getDefaultParameters(algorithm.getParameters()));
@@ -83,6 +85,7 @@ public class Offline_fa_xde11PathProtectionTest
 					assertTrue (SRGUtils.isSRGDisjoint(r.getSeqLinks() , r.getBackupRoutes().get(0).getSeqLinks()));
 				} else fail ();
 			}
+
 
 	}
 

@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -13,14 +14,15 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.libraries.SRGUtils;
-import com.net2plan.libraries.WDMUtils;
 import com.net2plan.libraries.SRGUtils.SharedRiskModel;
-import com.net2plan.utils.CollectionUtils;
+import com.net2plan.libraries.WDMUtils;
 import com.net2plan.utils.InputParameter;
 
 public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGroomingTest
@@ -82,7 +84,6 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		assertEquals(npOutput.getVectorDemandBlockedTraffic(ipOut).zSum() , 0 , 0.01);
 		if (params.get("networkRecoveryType").equals("1+1-srg-disjoint-lps"))
 		{
-			assertTrue (SRGUtils.isSingleSRGFailureTolerant (npOutput , ipOut));
 			for (Route r : npOutput.getRoutes(wdmOut))
 				if (!r.isBackupRoute())
 				{
@@ -91,7 +92,16 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				}
 		}else if (params.get("networkRecoveryType").equals("single-srg-tolerant-static-lp"))
 		{
-			assertTrue (SRGUtils.isSingleSRGFailureTolerant (npOutput , ipOut));
+			/* In any SRG, sum of rates of surviving lps is at least */
+			for (SharedRiskGroup srg : npOutput.getSRGs())
+				for (Demand ipDemand : npOutput.getDemands(ipOut))
+				{
+					final List<Route> associatedLps = new LinkedList<> ();
+					for (Route r : ipDemand.getRoutes())
+						associatedLps.addAll(r.getSeqLinks().get(0).getCoupledDemand().getRoutes());
+					final double sumLineRatesSurvivingLps = associatedLps.stream ().filter(r->!srg.affectsAnyOf(r.getSeqLinks())).mapToDouble(r->r.getCarriedTraffic()).sum();
+					assertTrue (sumLineRatesSurvivingLps >= ipDemand.getOfferedTraffic() - Configuration.precisionFactor);
+				}
 		}
 		
 	}

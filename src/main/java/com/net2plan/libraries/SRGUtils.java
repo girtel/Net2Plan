@@ -534,7 +534,7 @@ public class SRGUtils
 		return Sets.intersection(srgs1 , srgs2).isEmpty();
 	}
 	
-	/** Returns true if thegiven design is tolerant to single SRG failures at the given layer: that is, no traffic of any 
+	/** Returns true if the given design is tolerant to single SRG failures at the given layer: that is, no traffic of any 
 	 * unicast not multicast demand is blocked when such SRG fails
 	 * @param np the design 
 	 * @param failureTolerantLayer the layer where we check tolerance
@@ -542,19 +542,20 @@ public class SRGUtils
 	 */
 	public static boolean isSingleSRGFailureTolerant (NetPlan np , NetworkLayer failureTolerantLayer)
 	{
+		final Set<Node> originalNpFailingNodes = new HashSet<> (np.getNodesDown());
+		final Set<Link> originalNpFailingLinks = new HashSet<> (np.getLinksDownAllLayers());
+		np.setLinksAndNodesFailureState(originalNpFailingLinks , null , originalNpFailingNodes , null);
 		final double precFactor = Configuration.precisionFactor;
 		if (failureTolerantLayer.getNetPlan() != np) throw new Net2PlanException ("The input layer does not belong to the input NetPlan");
 		for (SharedRiskGroup srg : np.getSRGs())
 		{
-			System.out.println(srg);
-			System.out.println(srg.getLinksAllLayers());
-			System.out.println(srg.getNodes());
 			srg.setAsDown();
 			if (np.getVectorDemandBlockedTraffic(failureTolerantLayer).zSum() > precFactor) return false;
 			if (np.getVectorMulticastDemandBlockedTraffic(failureTolerantLayer).zSum() > precFactor) return false;
 			if (np.getVectorLinkOversubscribedTraffic(failureTolerantLayer).zSum() > precFactor) return false;
 			srg.setAsUp();
 		}
+		np.setLinksAndNodesFailureState(null, originalNpFailingLinks , null , originalNpFailingNodes);
 		return true;
 	}
 	

@@ -167,7 +167,7 @@ public class Offline_fa_xp11PathProtection implements IAlgorithm
 		if (!netPlan.getLinksOversubscribed().isEmpty()) throw new Net2PlanException("Bad - Some link is oversubscribed (constraint violated)");
 		if (!netPlan.getDemandsBlocked().isEmpty()) throw new Net2PlanException("Bad - Some demand is blocked (constraint violated)");
 
-		for (Route route : netPlan.getRoutes())
+		for (Route route : netPlan.getRoutesAreNotBackup())
 		{
 			if (route.getBackupRoutes().size () != 1) throw new RuntimeException("Bad");
 			

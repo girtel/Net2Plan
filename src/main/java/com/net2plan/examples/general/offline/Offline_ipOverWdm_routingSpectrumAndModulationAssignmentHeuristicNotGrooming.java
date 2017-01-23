@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.math3.genetics.NPointCrossover;
+
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -277,7 +279,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				final Demand ipDemand = netPlan.getDemand(ipDemandIndex , ipLayer);
 
 				/* If the demand is already fully satisfied, skip it */
-				if (isDemandFullySatisfied(ipDemand)) { ipDemandIndexesNotToTry.add(ipDemandIndex); continue; } 
+				if (isIpDemandFullySatisfied(ipDemand)) { ipDemandIndexesNotToTry.add(ipDemandIndex); continue; } 
 				
 				/* Try all the possible routes and all the possible transpoder types. Take the solution with the best 
 				 * performance metric (average extra carried traffic / transponder cost) */
@@ -362,43 +364,56 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	private double [] getVectorIPDemandAverageAllStatesBlockedTraffic ()
 	{
 		double [] res = new double [Dip];
-		for (Demand d : netPlan.getDemands(ipLayer))
+		for (Demand ipDemand : netPlan.getDemands(ipLayer))
 		{
-			res [d.getIndex()] = d.getBlockedTraffic();
+			res [ipDemand.getIndex()] = ipDemand.getBlockedTraffic();
 			if (singleSRGToleranceNot11Type)
 			{
 				for (SharedRiskGroup srg : netPlan.getSRGs())
 				{
-					Set<Route> affectedRoutes = srg.getAffectedRoutesAllLayers();
-					double carriedTrafficThisFailure = 0; for (Route r : d.getRoutes()) if (!affectedRoutes.contains(r)) carriedTrafficThisFailure += r.getCarriedTraffic();
-					res [d.getIndex()] += Math.max(0 , d.getOfferedTraffic() - carriedTrafficThisFailure);
+					Set<Route> affectedRoutes = srg.getAffectedRoutes(wdmLayer);
+					double carriedTrafficThisFailure = 0; 
+					for (Route ipRoute : ipDemand.getRoutes())
+					{
+						final Set<Route> wdmRoutes = ipRoute.getSeqLinks().get(0).getCoupledDemand().getRoutes();
+						for (Route r : wdmRoutes)
+							if (!affectedRoutes.contains(r)) carriedTrafficThisFailure += r.getCarriedTraffic();
+					}
+					res [ipDemand.getIndex()] += Math.max(0 , ipDemand.getOfferedTraffic() - carriedTrafficThisFailure);
 				}
 			}
-			res [d.getIndex()] /= (singleSRGToleranceNot11Type? (netPlan.getNumberOfSRGs() + 1) : 1);
+			res [ipDemand.getIndex()] /= (singleSRGToleranceNot11Type? (netPlan.getNumberOfSRGs() + 1) : 1);
 		}
 		return res;
 	}
 	
 	/* The average for all the states (no failure, and potentially one per SRG if single-SRG failure tolerance option is chosen), 
 	 * of all the blocked traffic */
-	private double getAverageAllStatesExtraCarriedTrafficAfterPotentialAllocation (Demand d , double lineRateGbps , List<Link> seqLinksIfSingleSRGToleranceIsNeeded)
+	private double getAverageAllStatesExtraCarriedTrafficAfterPotentialAllocation (Demand ipDemand , double lineRateGbps , List<Link> seqLinksIfSingleSRGToleranceIsNeeded)
 	{
-		double extraCarriedTraffic = Math.min(d.getBlockedTraffic() , lineRateGbps);
+		double extraCarriedTraffic = Math.min(ipDemand.getBlockedTraffic() , lineRateGbps);
 		if (singleSRGToleranceNot11Type)
 		{
 			for (SharedRiskGroup srg : netPlan.getSRGs())
 			{
-				if (isAffected(seqLinksIfSingleSRGToleranceIsNeeded , srg)) continue; // no extra carried traffic
+				if (srg.affectsAnyOf(seqLinksIfSingleSRGToleranceIsNeeded)) continue; // no extra carried traffic
 				Set<Route> affectedRoutes = srg.getAffectedRoutes(wdmLayer);
-				double carriedTrafficThisFailure = 0; for (Route r : d.getRoutes()) if (!affectedRoutes.contains(r)) carriedTrafficThisFailure += r.getCarriedTraffic();
-				extraCarriedTraffic += Math.min(lineRateGbps , Math.max(0 , d.getOfferedTraffic() - carriedTrafficThisFailure));
+				double carriedTrafficThisFailure = 0; 
+				for (Route ipRoute : ipDemand.getRoutes())
+				{
+					Set<Route> wdmRoutes = ipRoute.getSeqLinks().get(0).getCoupledDemand().getRoutes();
+					for (Route r : wdmRoutes)
+						if (!affectedRoutes.contains(r)) carriedTrafficThisFailure += r.getCarriedTraffic();
+				}
+				extraCarriedTraffic += Math.min(lineRateGbps , Math.max(0 , ipDemand.getOfferedTraffic() - carriedTrafficThisFailure));
 			}
 		}
+		
 		return extraCarriedTraffic / (singleSRGToleranceNot11Type? (netPlan.getNumberOfSRGs() + 1) : 1);
 	}
 
 	/* True if the demand is fully satisfied (in the single-SRG failure case, also in each SRG) */
-	private boolean isDemandFullySatisfied (Demand d)
+	private boolean isIpDemandFullySatisfied (Demand d)
 	{
 		if (d.getBlockedTraffic() > 1e-3) return false;
 		if (singleSRGToleranceNot11Type)
@@ -407,18 +422,15 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			{
 				Set<Route> affectedRoutes = srg.getAffectedRoutes(wdmLayer);
 				double carriedTrafficThisFailure = 0;
-				for (Route r : d.getRoutes()) if (!affectedRoutes.contains(r)) carriedTrafficThisFailure += r.getCarriedTraffic();
+				for (Route ipRoute : d.getRoutes())
+				{
+					final Set<Route> lps = ipRoute.getSeqLinks().get(0).getCoupledDemand().getRoutes();  
+					for (Route wdmRoute : lps) if (!affectedRoutes.contains(wdmRoute)) carriedTrafficThisFailure += wdmRoute.getCarriedTraffic();
+				}
 				if (carriedTrafficThisFailure + 1e-3 < d.getOfferedTraffic()) return false;
 			}
 		}
 		return true;
 	}
 	
-	/* True is a sequence of links is affected by a failure */
-	private boolean isAffected (List<Link> seqLinks , SharedRiskGroup srg)
-	{
-		Set<Link> affectedSeqLink = srg.getAffectedLinks(wdmLayer);
-		affectedSeqLink.retainAll(seqLinks);
-		return !affectedSeqLink.isEmpty();
-	}
 }

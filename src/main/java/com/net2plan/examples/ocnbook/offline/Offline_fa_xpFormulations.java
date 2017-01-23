@@ -138,11 +138,7 @@ public class Offline_fa_xpFormulations implements IAlgorithm
 		else throw new Net2PlanException ("Unknown optimization target " + optimizationTarget.getString());
 
 		
-		System.out.println ("solverLibraryName: " +  solverLibraryName.getString ());
 		op.solve(solverName.getString (), "solverLibraryName", solverLibraryName.getString () , "maxSolverTimeInSeconds" , maxSolverTimeInSeconds.getDouble ());
-		//op.solve(solverName.getString (), "maxSolverTimeInSeconds" , maxSolverTimeInSeconds.getDouble ());
-
-		System.out.println ("solverLibraryName: " +  solverLibraryName.getString ());
 
 		/* If no solution is found, quit */
 		if (op.feasibleSolutionDoesNotExist()) throw new Net2PlanException("The problem has no feasible solution");
