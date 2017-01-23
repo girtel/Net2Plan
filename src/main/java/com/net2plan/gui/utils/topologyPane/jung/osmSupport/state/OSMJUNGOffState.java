@@ -59,12 +59,16 @@ public class OSMJUNGOffState extends OSMOffState
     public void zoomIn()
     {
         canvas.zoom(canvas.getCanvasCenter(), VisualizationConstants.SCALE_IN);
+        canvas.updateInterLayerDistanceInNpCoordinates(callback.getVisualizationState().getInterLayerSpaceInPixels());
+    	canvas.updateAllVerticesXYPosition();
     }
 
     @Override
     public void zoomOut()
     {
         canvas.zoom(canvas.getCanvasCenter(), VisualizationConstants.SCALE_OUT);
+        canvas.updateInterLayerDistanceInNpCoordinates(callback.getVisualizationState().getInterLayerSpaceInPixels());
+    	canvas.updateAllVerticesXYPosition();
     }
 
     @Override
@@ -105,6 +109,8 @@ public class OSMJUNGOffState extends OSMOffState
         double dy = (windowCenterJungCoord.getY() - topologyCenterJungCoord.getY());
 
         canvas.moveCanvasTo(new Point2D.Double(dx, dy));
+        canvas.updateInterLayerDistanceInNpCoordinates(vs.getInterLayerSpaceInPixels());
+    	canvas.updateAllVerticesXYPosition();
     }
 
     @Override

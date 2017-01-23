@@ -470,10 +470,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         {
         	if (callback.getVisualizationState().getNumberOfVisibleLayers() == 1) return;
 
-        	final double currentInterLayerDistance = callback.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
-        	final double newInterLayerDistance = currentInterLayerDistance * VisualizationConstants.SCALE_IN;
+        	final int currentInterLayerDistance = callback.getVisualizationState().getInterLayerSpaceInPixels();
+        	final int newInterLayerDistance = currentInterLayerDistance + (int) Math.ceil(currentInterLayerDistance * (VisualizationConstants.SCALE_IN-1));
 
-        	callback.getVisualizationState().setInterLayerSpaceInNetPlanCoordinates(newInterLayerDistance);
+        	callback.getVisualizationState().setInterLayerSpaceInPixels(newInterLayerDistance);
+        	canvas.updateInterLayerDistanceInNpCoordinates (newInterLayerDistance);
         	canvas.updateAllVerticesXYPosition();
 
         	canvas.refresh();
@@ -481,9 +482,12 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         {
         	if (callback.getVisualizationState().getNumberOfVisibleLayers() == 1) return;
 
-        	final double currentInterLayerDistance = callback.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
-        	callback.getVisualizationState().setInterLayerSpaceInNetPlanCoordinates(currentInterLayerDistance * VisualizationConstants.SCALE_OUT);
-            canvas.updateAllVerticesXYPosition();
+        	final int currentInterLayerDistance = callback.getVisualizationState().getInterLayerSpaceInPixels();
+        	final int newInterLayerDistance = currentInterLayerDistance - (int) Math.ceil(currentInterLayerDistance * (1-VisualizationConstants.SCALE_OUT));
+
+        	callback.getVisualizationState().setInterLayerSpaceInPixels(newInterLayerDistance);
+        	canvas.updateInterLayerDistanceInNpCoordinates (newInterLayerDistance);
+        	canvas.updateAllVerticesXYPosition();
 
         	canvas.refresh();
         } else if (src == btn_multilayer)

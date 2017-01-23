@@ -38,7 +38,7 @@ public class VisualizationState
     private boolean showLowerLayerPropagation;
     private boolean showUpperLayerPropagation;
     private boolean showNonConnectedNodes;
-    private double interLayerSpaceInNetPlanCoordinates;
+    private int interLayerSpaceInPixels;
     private boolean isNetPlanEditable;
     private NetPlan currentNp;
     private Set<Node> nonVisibleNodes;
@@ -75,6 +75,8 @@ public class VisualizationState
         this.showUpperLayerPropagation = false;
         this.nonVisibleNodes = new HashSet<>();
         this.nonVisibleLinks = new HashSet<>();
+        this.interLayerSpaceInPixels = 50; 
+
 //        this.mapLayer2VisualizationOrder = mapLayer2VisualizationOrder;
 //        this.mapLayerVisibility = new HashMap<>();
         this.mapShowLayerLinks = new HashMap<>();
@@ -107,17 +109,17 @@ public class VisualizationState
     /**
      * @return the interLayerSpaceInNetPlanCoordinates
      */
-    public double getInterLayerSpaceInNetPlanCoordinates()
+    public int getInterLayerSpaceInPixels()
     {
-        return interLayerSpaceInNetPlanCoordinates;
+        return interLayerSpaceInPixels;
     }
 
     /**
      * @param interLayerSpaceInNetPlanCoordinates the interLayerSpaceInNetPlanCoordinates to set
      */
-    public void setInterLayerSpaceInNetPlanCoordinates(double interLayerSpaceInNetPlanCoordinates)
+    public void setInterLayerSpaceInPixels(int interLayerSpaceInPixels)
     {
-        this.interLayerSpaceInNetPlanCoordinates = interLayerSpaceInNetPlanCoordinates;
+        this.interLayerSpaceInPixels = interLayerSpaceInPixels;
     }
 
     /**
@@ -314,7 +316,7 @@ public class VisualizationState
         		this.mapShowLayerLinks.put(layer , true);
 
 		/* Update the interlayer space */
-        this.interLayerSpaceInNetPlanCoordinates = getDefaultVerticalDistanceForInterLayers();
+//        this.interLayerSpaceInPixels = 50; //getDefaultVerticalDistanceForInterLayers();
 
         if (netPlanChanged)
         {

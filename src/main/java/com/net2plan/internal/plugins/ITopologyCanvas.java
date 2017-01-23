@@ -176,6 +176,8 @@ public interface ITopologyCanvas extends Plugin
 
 	void zoom(Point2D centerPoint, float scale);
 	
-	double getPixelToNpCoordinateFactor ();
+	void updateInterLayerDistanceInNpCoordinates  (int interLayerDistanceInPixels);
+
+	double getInterLayerDistanceInNpCoordinates();
 	
 }

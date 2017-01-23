@@ -153,7 +153,9 @@ public class OSMMapController
         final Map<Node, GeoPosition> nodeToGeoPositionMap = netPlan.getNodes().stream().collect(Collectors.toMap(node->node, node -> new GeoPosition(node.getXYPositionMap().getY(), node.getXYPositionMap().getX())));
 
         final VisualizationState topologyVisualizationState = callback.getVisualizationState();
-        final double interlayerDistanceNpCoordinates = topologyVisualizationState.getInterLayerSpaceInNetPlanCoordinates();
+
+        //canvas.updateInterLayerDistanceInNpCoordinates(topologyVisualizationState.getInterLayerSpaceInPixels());
+        final double interlayerDistanceNpCoordinates = canvas.getInterLayerDistanceInNpCoordinates();
 
         // Transforming inter layer distance to OSM pixels.
         final GeoPosition geoPosition00 = new GeoPosition(0.0 , 0.0);

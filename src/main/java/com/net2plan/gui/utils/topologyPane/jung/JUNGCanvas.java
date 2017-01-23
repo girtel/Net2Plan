@@ -83,6 +83,7 @@ import edu.uci.ics.jung.visualization.util.ArrowFactory;
 @SuppressWarnings("unchecked")
 public final class JUNGCanvas implements ITopologyCanvas
 {
+	private double currentInterLayerDistanceInNpCoordinates;
     private final VisualizationState vs;
     private final Transformer<GUINode, Point2D> transformNetPlanCoordinatesToJungCoordinates;
 
@@ -112,7 +113,8 @@ public final class JUNGCanvas implements ITopologyCanvas
 
         	
             final int vlIndex = vertex.getVisualizationOrderRemovingNonVisibleLayers();
-            final double interLayerDistanceInNpCoord = vertex.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
+            //final double interLayerDistanceInNpCoord = vertex.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
+            final double interLayerDistanceInNpCoord = currentInterLayerDistanceInNpCoordinates;
             final Point2D basePositionInNetPlanCoord = vertex.getAssociatedNetPlanNode().getXYPositionMap();
             return new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() + (vlIndex * interLayerDistanceInNpCoord)));
         };
@@ -199,6 +201,8 @@ public final class JUNGCanvas implements ITopologyCanvas
 
         vv.setOpaque(false);
         vv.setBackground(new Color(0, 0, 0, 0));
+        
+        this.updateInterLayerDistanceInNpCoordinates(vs.getInterLayerSpaceInPixels());
 
 //        reset();
     }
@@ -649,11 +653,20 @@ public final class JUNGCanvas implements ITopologyCanvas
 
         }
     }
+    
     @Override
-	public double getPixelToNpCoordinateFactor ()
+	public void updateInterLayerDistanceInNpCoordinates  (int interLayerDistanceInPixels)
 	{
     	Rectangle viewInLayoutUnits = getCurrentCanvasViewWindow();
     	Rectangle r = getVV ().getBounds();
-    	return viewInLayoutUnits.getHeight() / r.getHeight();
+    	if (r.getHeight() == 0)
+    		this.currentInterLayerDistanceInNpCoordinates = interLayerDistanceInPixels;
+    	else
+    		this.currentInterLayerDistanceInNpCoordinates = interLayerDistanceInPixels * viewInLayoutUnits.getHeight() / r.getHeight();
+	}
+    @Override
+	public double getInterLayerDistanceInNpCoordinates  ()
+	{
+    	return currentInterLayerDistanceInNpCoordinates;
 	}
 }
