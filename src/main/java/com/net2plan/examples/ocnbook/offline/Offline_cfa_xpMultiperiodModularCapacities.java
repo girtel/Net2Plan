@@ -165,7 +165,7 @@ public class Offline_cfa_xpMultiperiodModularCapacities implements IAlgorithm
 			NetPlan thisNp = netPlanFiles.get(t);
 			final DoubleMatrix1D h_p = thisNp.getVectorRouteOfferedTrafficOfAssociatedDemand();
 			final DoubleMatrix1D x_p = xx_pt.viewColumn(t).copy().assign (h_p , DoubleFunctions.mult);
-			System.out.println ("h_p: " + h_p);
+			//System.out.println ("h_p: " + h_p);
 			thisNp.setVectorRouteCarriedTrafficAndOccupiedLinkCapacities(x_p , x_p);
 			for (Link link : thisNp.getLinks ())
 			{

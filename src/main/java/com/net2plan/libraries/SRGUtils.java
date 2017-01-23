@@ -546,9 +546,13 @@ public class SRGUtils
 		if (failureTolerantLayer.getNetPlan() != np) throw new Net2PlanException ("The input layer does not belong to the input NetPlan");
 		for (SharedRiskGroup srg : np.getSRGs())
 		{
+			System.out.println(srg);
+			System.out.println(srg.getLinksAllLayers());
+			System.out.println(srg.getNodes());
 			srg.setAsDown();
 			if (np.getVectorDemandBlockedTraffic(failureTolerantLayer).zSum() > precFactor) return false;
 			if (np.getVectorMulticastDemandBlockedTraffic(failureTolerantLayer).zSum() > precFactor) return false;
+			if (np.getVectorLinkOversubscribedTraffic(failureTolerantLayer).zSum() > precFactor) return false;
 			srg.setAsUp();
 		}
 		return true;

@@ -3447,7 +3447,7 @@ public class NetPlan extends NetworkElement
 	 */
 	public List<Route> getRoutesAreNotBackup (NetworkLayer ... optionalLayerParameter)
 	{
-		return getRoutes (optionalLayerParameter).stream().filter(e -> e.isBackupRoute()).collect(Collectors.toList());
+		return getRoutes (optionalLayerParameter).stream().filter(e -> !e.isBackupRoute()).collect(Collectors.toList());
 	}
 
 	/**
