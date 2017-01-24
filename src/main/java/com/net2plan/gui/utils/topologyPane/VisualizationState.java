@@ -942,6 +942,13 @@ public class VisualizationState
 
     }
 
+    private void drawDownPropagationInterLayerLinks (Set<Link> links , Paint color)
+    {
+    	for (Link link : links)
+    	{
+    		
+    	}
+    }
     private void drawColateralLinks (Set<Link> links , Paint colorIfNotFailedLink)
     {
 		for (Link link : links)
