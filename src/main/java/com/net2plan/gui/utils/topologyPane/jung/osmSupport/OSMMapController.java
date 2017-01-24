@@ -166,7 +166,10 @@ public class OSMMapController
         final Map<Node, GeoPosition> nodeToGeoPositionMap = netPlan.getNodes().stream().collect(Collectors.toMap(node->node, node -> new GeoPosition(node.getXYPositionMap().getY(), node.getXYPositionMap().getX())));
 
         final VisualizationState topologyVisualizationState = callback.getVisualizationState();
-        final double interLayerDistanceOSMCoordinates = this.interLayerDistanceFactor * canvas.getInterLayerDistanceInNpCoordinates();
+
+        // Getting interlayer distance for OSM coordinates
+        canvas.updateInterLayerDistanceInNpCoordinates(topologyVisualizationState.getInterLayerSpaceInPixels());
+        final double interLayerDistanceOSMCoordinates = canvas.getInterLayerDistanceInNpCoordinates();
 
         // Moving the nodes to the position dictated by their geoposition.
         for (Map.Entry<Node, GeoPosition> entry : nodeToGeoPositionMap.entrySet())

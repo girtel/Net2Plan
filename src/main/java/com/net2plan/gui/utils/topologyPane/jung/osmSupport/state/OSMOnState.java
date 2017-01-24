@@ -115,7 +115,7 @@ class OSMOnState implements OSMState
     @Override
     public double getInterLayerDistance(int interLayerDistanceInPixels)
     {
-        return -1;
+        return interLayerDistanceInPixels;
     }
 
     private Point2D convertJungPointToMapSwing(final ITopologyCanvas canvas, final Point2D jungPoint)
