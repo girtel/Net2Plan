@@ -422,12 +422,11 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     /**
      * Shows the tab corresponding associated to a network element.
      *
-     * @param layer  Layer identifier
      * @param type   Network element type
      * @param itemId Item identifier (if null, it will just show the tab)
      * @since 0.3.0
      */
-    private void selectNetPlanViewItem(long layer, NetworkElementType type, Object itemId)
+    private void selectNetPlanViewItem(NetworkElementType type, Object itemId)
     {
     	topologyPanel.updateLayerChooser();
         viewEditTopTables.selectViewItem(type, itemId);
@@ -615,7 +614,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         boolean includeThisLayerLinksCarryingThisTraffic = true;
         boolean includeDownLayerLinksCarryingThisTraffic = true;
         NetworkLayer layer = demand.getLayer();
-        selectNetPlanViewItem(layer.getId(), NetworkElementType.DEMAND, demand.getId());
+        selectNetPlanViewItem(NetworkElementType.DEMAND, demand.getId());
 
         vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getIngressNode(), layer)), COLOR_INITIALNODE, null, -1);
         vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getEgressNode(), layer)), COLOR_ENDNODE, null, -1);
@@ -648,7 +647,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     public void pickLinkAndUpdateView(Link link)
     {
         vs.pickElement(link);
-        selectNetPlanViewItem(link.getNetPlan().getNetworkLayerDefault().getId(), NetworkElementType.LINK, link.getId());
+        selectNetPlanViewItem(NetworkElementType.LINK, link.getId());
         topologyPanel.getCanvas().refresh();
     }
 
@@ -656,7 +655,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     public void pickNodeAndUpdateView(Node node)
     {
         vs.pickElement(node);
-        selectNetPlanViewItem(node.getNetPlan().getNetworkLayerDefault().getId(), NetworkElementType.NODE, node.getId());
+        selectNetPlanViewItem(NetworkElementType.NODE, node.getId());
         topologyPanel.getCanvas().refresh();
     }
 
@@ -755,23 +754,4 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     {
         viewEditTopTables.updateView();
     }
-
-	@Override
-	public void updateVisualizationJustCanvasRefresh()
-	{
-		topologyPanel.getCanvas().refresh();
-	}
-
-	@Override
-	public void updateVisualizationJustCanvasRebuildAndRefresh()
-	{
-		topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
-	}
-
-	@Override
-	public void justApplyZoomAll()
-	{
-		topologyPanel.getCanvas().zoomAll();
-	}
-
 }
