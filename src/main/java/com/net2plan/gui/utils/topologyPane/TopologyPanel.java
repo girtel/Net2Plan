@@ -56,8 +56,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final ITopologyCanvas canvas;
     private final ITopologyCanvasPlugin popupPlugin;
 
-    private final JPanel layerChooserPane;
-    private final JComboBox layerChooser;
+//    private final JPanel layerChooserPane;
+//    private final JComboBox layerChooser;
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance;
     private final JToggleButton btn_showLowerLayerInfo , btn_showUpperLayerInfo;
@@ -67,6 +67,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JPopupMenu viewPopUp;
     private final JMenuItem it_control, it_osmMap, it_closeMap;
     private final JLabel position;
+    private MultiLayerControlPanel multilayerControlPanel;
 
     private final File defaultDesignDirectory, defaultDemandDirectory;
 
@@ -134,33 +135,33 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.setOpaque(false);
         toolbar.setBorderPainted(false);
 
-        layerChooser = new WiderJComboBox();
-        layerChooserPane = new JPanel(new BorderLayout());
-        layerChooserPane.add(new JLabel("Select layer: "), BorderLayout.WEST);
-        layerChooserPane.add(layerChooser, BorderLayout.CENTER);
-        layerChooser.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                Object selectedItem = layerChooser.getSelectedItem();
-                if (!(selectedItem instanceof StringLabeller))
-                    ErrorHandling.showErrorDialog("Bad object", "Error selecting layer");
-
-                final long newDefaultLayerId = (Long) ((StringLabeller) selectedItem).getObject();
-                final NetPlan currentState = callback.getDesign();
-                final NetworkLayer layer = currentState.getNetworkLayerFromId(newDefaultLayerId);
-//				System.out.println ("Select layer: layerId " + layerId + ", layer: " + layer);
-                if (layer == null) throw new RuntimeException("Bad: " + newDefaultLayerId);
-                currentState.setNetworkLayerDefault(layer);
-
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
-            }
-        });
+//        layerChooser = new WiderJComboBox();
+//        layerChooserPane = new JPanel(new BorderLayout());
+//        layerChooserPane.add(new JLabel("Select layer: "), BorderLayout.WEST);
+//        layerChooserPane.add(layerChooser, BorderLayout.CENTER);
+//        layerChooser.addActionListener(new ActionListener()
+//        {
+//            @Override
+//            public void actionPerformed(ActionEvent e)
+//            {
+//                Object selectedItem = layerChooser.getSelectedItem();
+//                if (!(selectedItem instanceof StringLabeller))
+//                    ErrorHandling.showErrorDialog("Bad object", "Error selecting layer");
+//
+//                final long newDefaultLayerId = (Long) ((StringLabeller) selectedItem).getObject();
+//                final NetPlan currentState = callback.getDesign();
+//                final NetworkLayer layer = currentState.getNetworkLayerFromId(newDefaultLayerId);
+////				System.out.println ("Select layer: layerId " + layerId + ", layer: " + layer);
+//                if (layer == null) throw new RuntimeException("Bad: " + newDefaultLayerId);
+//                currentState.setNetworkLayerDefault(layer);
+//
+//                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+//            }
+//        });
 
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.add(toolbar, BorderLayout.NORTH);
-        topPanel.add(layerChooserPane, BorderLayout.SOUTH);
+//        topPanel.add(layerChooserPane, BorderLayout.SOUTH);
 
         add(topPanel, BorderLayout.NORTH);
 
@@ -210,6 +211,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showUpperLayerInfo.setSelected(getVisualizationState().isShowUpperLayerPropagation());
         
         btn_multilayer = new JButton("Debug");
+        this.multilayerControlPanel = new MultiLayerControlPanel(callback);
 
         viewPopUp = new JPopupMenu();
 
@@ -520,11 +522,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             frame.setSize(new Dimension(800, 600));
             frame.setLayout(new BorderLayout());
-
-            MultiLayerPanel panel = new MultiLayerPanel(callback);
-
-            frame.add(panel, BorderLayout.CENTER);
-
+            frame.add(multilayerControlPanel, BorderLayout.CENTER);
             frame.setVisible(true);
         }
 
@@ -574,17 +572,17 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         return canvas;
     }
 
-    private StringLabeller getLayerItem(long layerId)
-    {
-        int numLayers = layerChooser.getItemCount();
-        for (int l = 0; l < numLayers; l++)
-        {
-            StringLabeller item = (StringLabeller) layerChooser.getItemAt(l);
-            if (layerId == (Long) item.getObject()) return item;
-        }
-
-        throw new RuntimeException("Bad");
-    }
+//    private StringLabeller getLayerItem(long layerId)
+//    {
+//        int numLayers = layerChooser.getItemCount();
+//        for (int l = 0; l < numLayers; l++)
+//        {
+//            StringLabeller item = (StringLabeller) layerChooser.getItemAt(l);
+//            if (layerId == (Long) item.getObject()) return item;
+//        }
+//
+//        throw new RuntimeException("Bad");
+//    }
 
     /**
      * Loads a network design from a {@code .n2p} file.
@@ -704,11 +702,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      */
     public void refreshLayerName(long layerId)
     {
-        StringLabeller item = getLayerItem(layerId);
-        item.setLabel(createLayerName(layerId));
-
-        revalidate();
-        repaint();
+    	multilayerControlPanel.refreshTable();
     }
 
     /**
@@ -741,20 +735,20 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         }
     }
 
-    /**
-     * Allows setting the current layer.
-     *
-     * @param layer Layer identifier
-     * @since 0.3.1
-     */
-    public void selectLayer(long layer)
-    {
-        long currentLayerId = (Long) ((StringLabeller) layerChooser.getSelectedItem()).getObject();
-        if (layer == currentLayerId) return;
-
-        layerChooser.setSelectedItem(getLayerItem(layer));
-    }
-
+//    /**
+//     * Allows setting the current layer.
+//     *
+//     * @param layer Layer identifier
+//     * @since 0.3.1
+//     */
+//    public void selectLayer(long layer)
+//    {
+//        long currentLayerId = (Long) ((StringLabeller) layerChooser.getSelectedItem()).getObject();
+//        if (layer == currentLayerId) return;
+//
+//        layerChooser.setSelectedItem(getLayerItem(layer));
+//    }
+//
 //    /**
 //     * Configures the topology panel to allow (or not) loading of external traffic demand files.
 //     *
@@ -775,35 +769,40 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         canvas.takeSnapshot();
     }
 
-    /**
-     * Updates the layer chooser.
-     *
-     * @since 0.3.1
-     */
     public final void updateLayerChooser()
     {
-        ActionListener[] al = layerChooser.getActionListeners();
-        for (ActionListener a : al) layerChooser.removeActionListener(a);
-
-        layerChooser.removeAllItems();
-
-        NetPlan currentState = callback.getDesign();
-
-        Collection<Long> layerIds = currentState.getNetworkLayerIds();
-
-        if (ErrorHandling.isDebugEnabled()) currentState.checkCachesConsistency();
-
-        for (long layerId : layerIds)
-            layerChooser.addItem(StringLabeller.of(layerId, createLayerName(layerId)));
-
-        for (ActionListener a : al) layerChooser.addActionListener(a);
-
-        layerChooser.setSelectedIndex(currentState.getNetworkLayerDefault().getIndex()); // PABLO: AQUI SE PIERDEN LOS LINKS!!!!
-
-        layerChooserPane.setVisible(layerChooser.getItemCount() > 1);
-
-        revalidate();
+    	multilayerControlPanel.refreshTable();
     }
+    
+//    /**
+//     * Updates the layer chooser.
+//     *
+//     * @since 0.3.1
+//     */
+//    public final void updateLayerChooser()
+//    {
+//        ActionListener[] al = layerChooser.getActionListeners();
+//        for (ActionListener a : al) layerChooser.removeActionListener(a);
+//
+//        layerChooser.removeAllItems();
+//
+//        NetPlan currentState = callback.getDesign();
+//
+//        Collection<Long> layerIds = currentState.getNetworkLayerIds();
+//
+//        if (ErrorHandling.isDebugEnabled()) currentState.checkCachesConsistency();
+//
+//        for (long layerId : layerIds)
+//            layerChooser.addItem(StringLabeller.of(layerId, createLayerName(layerId)));
+//
+//        for (ActionListener a : al) layerChooser.addActionListener(a);
+//
+//        layerChooser.setSelectedIndex(currentState.getNetworkLayerDefault().getIndex()); // PABLO: AQUI SE PIERDEN LOS LINKS!!!!
+//
+//        layerChooserPane.setVisible(layerChooser.getItemCount() > 1);
+//
+//        revalidate();
+//    }
 
     /**
      * Makes zoom-all from the center of the view.

@@ -429,7 +429,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
      */
     private void selectNetPlanViewItem(long layer, NetworkElementType type, Object itemId)
     {
-        topologyPanel.selectLayer(layer);
+    	topologyPanel.updateLayerChooser();
         viewEditTopTables.selectViewItem(type, itemId);
     }
 

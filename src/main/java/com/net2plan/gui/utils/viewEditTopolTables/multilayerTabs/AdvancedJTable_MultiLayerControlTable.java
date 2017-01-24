@@ -160,7 +160,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         };
     }
 
-    private synchronized void updateTable()
+    public synchronized void updateTable()
     {
         if (netPlan.getNumberOfLayers() > 0)
         {

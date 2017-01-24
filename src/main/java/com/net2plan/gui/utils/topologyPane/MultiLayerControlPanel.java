@@ -10,12 +10,12 @@ import java.awt.*;
  * @author Jorge San Emeterio
  * @date 20-Jan-17
  */
-public class MultiLayerPanel extends JPanel
+public class MultiLayerControlPanel extends JPanel
 {
     private final IVisualizationCallback callback;
     private final AdvancedJTable_MultiLayerControlTable multiLayerTable;
 
-    public MultiLayerPanel(final IVisualizationCallback callback)
+    public MultiLayerControlPanel(final IVisualizationCallback callback)
     {
         this.callback = callback;
         this.multiLayerTable = new AdvancedJTable_MultiLayerControlTable(callback);
@@ -28,5 +28,9 @@ public class MultiLayerPanel extends JPanel
     private void fillPanel()
     {
         this.add(new JScrollPane(multiLayerTable), BorderLayout.CENTER);
+    }
+    public void refreshTable ()
+    {
+    	multiLayerTable.updateTable();
     }
 }
