@@ -391,7 +391,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     @Override
     public void stopOSMSupport()
     {
-        osmStateManager.setRunningState();
+        osmStateManager.setStoppedState();
     }
 
     @Override
