@@ -273,7 +273,9 @@ public class ViewEditTopologyTablesPane extends JPanel
             if (obj == null) continue;
 
             if (type == NetworkElementType.FORWARDING_RULE) {
-                obj = Pair.of(Integer.parseInt(model.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_DEMAND).toString().split(" ")[0]), Integer.parseInt(model.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK).toString().split(" ")[0]));
+                obj = Pair.of(
+                		Integer.parseInt(model.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_DEMAND).toString().split(" ")[0]), 
+                		Integer.parseInt(model.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK).toString().split(" ")[0]));
                 if (!obj.equals(itemId)) continue;
             } else if ((long) obj != (long) itemId) {
                 continue;

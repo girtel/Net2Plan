@@ -636,8 +636,8 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
     private static void viewEditSRGGUI(final IVisualizationCallback callback, final long srgId) {
         final NetPlan netPlan = callback.getDesign();
         final SharedRiskGroup srg = netPlan.getSRGFromId(srgId);
-        callback.putColorInElementTopologyCanvas(srg.getNodes() , Color.ORANGE);
-        callback.putColorInElementTopologyCanvas(srg.getLinksAllLayers() , Color.ORANGE);
+        callback.putTransientColorInElementTopologyCanvas(srg.getNodes() , Color.ORANGE);
+        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers() , Color.ORANGE);
 
         final int N = netPlan.getNumberOfNodes();
         final int E = netPlan.getNumberOfLinks();
@@ -688,13 +688,13 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                     if (value && !srg.getNodes().contains(node)) 
                     {
                         netPlan.getSRGFromId(srgId).addNode(node);
-                        callback.putColorInElementTopologyCanvas(srg.getNodes() , Color.ORANGE);
-                        callback.putColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes() , Color.ORANGE);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
                     } else if (!value && srg.getNodes().contains(node)) 
                     {
                         netPlan.getSRGFromId(srgId).removeNode(node);
-                        callback.putColorInElementTopologyCanvas(srg.getNodes() , Color.ORANGE);
-                        callback.putColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes() , Color.ORANGE);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
                     }
                 }
 
@@ -715,12 +715,12 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                     Link link = netPlan.getLinkFromId((long) getValueAt(row, 0));
                     if (value && !srg.getLinksAllLayers().contains(link)) {
                         srg.addLink(link);
-                        callback.putColorInElementTopologyCanvas(srg.getNodes() , Color.ORANGE);
-                        callback.putColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes() , Color.ORANGE);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
                     } else if (!value && srg.getLinksAllLayers().contains(link)) {
                         srg.removeLink(link);
-                        callback.putColorInElementTopologyCanvas(srg.getNodes() , Color.ORANGE);
-                        callback.putColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes() , Color.ORANGE);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
                     }
                 }
 

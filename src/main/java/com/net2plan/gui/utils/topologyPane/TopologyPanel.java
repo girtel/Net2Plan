@@ -60,7 +60,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 //    private final JComboBox layerChooser;
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance;
-    private final JToggleButton btn_showLowerLayerInfo , btn_showUpperLayerInfo;
+    private final JToggleButton btn_showLowerLayerInfo , btn_showUpperLayerInfo , btn_showThisLayerInfo;
     private final JButton btn_multilayer;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final MenuButton btn_view;
@@ -205,11 +205,14 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_decreaseInterLayerDistance.setToolTipText("Decrease the distance between layers (when more than one layer is visible)");
         btn_showLowerLayerInfo = new JToggleButton("Show lower propagation");
         btn_showLowerLayerInfo.setToolTipText("Shows the links in lower layers that carry traffic of the picked element");
+        btn_showLowerLayerInfo.setSelected(getVisualizationState().isShowLowerLayerPropagation());
         btn_showUpperLayerInfo = new JToggleButton("Show upper propagation");
         btn_showUpperLayerInfo.setToolTipText("Shows the links in upper layers that carry traffic that appears in the picked element");
-        btn_showLowerLayerInfo.setSelected(getVisualizationState().isShowLowerLayerPropagation());
         btn_showUpperLayerInfo.setSelected(getVisualizationState().isShowUpperLayerPropagation());
-        
+        btn_showThisLayerInfo = new JToggleButton("Show this propagation");
+        btn_showThisLayerInfo.setToolTipText("Shows the links in the same layer as the picked element, that carry traffic that appears in the picked element");
+        btn_showThisLayerInfo.setSelected(getVisualizationState().isShowUpperLayerPropagation());
+
         btn_multilayer = new JButton("Debug");
         this.multilayerControlPanel = new MultiLayerControlPanel(callback);
 
@@ -286,6 +289,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_decreaseInterLayerDistance.addActionListener(this);
         btn_showLowerLayerInfo.addActionListener(this);
         btn_showUpperLayerInfo.addActionListener(this);
+        btn_showThisLayerInfo.addActionListener(this);
         btn_multilayer.addActionListener(this);
 
 
@@ -311,6 +315,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(btn_decreaseInterLayerDistance);
         toolbar.add(btn_showLowerLayerInfo);
         toolbar.add(btn_showUpperLayerInfo);
+        toolbar.add(btn_showThisLayerInfo);
         toolbar.add(new JToolBar.Separator());
         toolbar.add(btn_multilayer);
         toolbar.add(new JToolBar.Separator());
@@ -508,13 +513,15 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         	canvas.refresh();
         } else if (src == btn_showLowerLayerInfo)
         {
-        	if (vs.getNumberOfVisibleLayers() == 1) return;
         	vs.setShowLowerLayerPropagation(btn_showLowerLayerInfo.isSelected());
         	canvas.refresh();
         } else if (src == btn_showUpperLayerInfo)
         {
-        	if (vs.getNumberOfVisibleLayers() == 1) return;
         	vs.setShowUpperLayerPropagation(btn_showUpperLayerInfo.isSelected());
+        	canvas.refresh();
+        } else if (src == btn_showThisLayerInfo)
+        {
+        	vs.setShowThisLayerPropagation(btn_showThisLayerInfo.isSelected());
         	canvas.refresh();
         } else if (src == btn_multilayer)
         {

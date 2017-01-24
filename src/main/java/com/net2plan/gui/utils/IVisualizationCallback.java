@@ -59,7 +59,7 @@ public interface IVisualizationCallback
 
     void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg);
 
-    void putColorInElementTopologyCanvas (Collection<? extends NetworkElement> linksAndNodes , Color color);
+    void putTransientColorInElementTopologyCanvas (Collection<? extends NetworkElement> linksAndNodes , Color color);
 
 	void updateVisualizationJustTables ();
 

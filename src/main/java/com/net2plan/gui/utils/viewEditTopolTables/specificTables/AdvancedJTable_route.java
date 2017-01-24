@@ -531,7 +531,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                         List<Link> seqLinks = new LinkedList<Link>();
                         for (JComboBox link : seqLinks_cmb) 
                             seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) link.getSelectedItem()).getObject()));
-                        callback.putColorInElementTopologyCanvas (seqLinks , Color.BLUE);
+                        callback.putTransientColorInElementTopologyCanvas (seqLinks , Color.BLUE);
                     }
                 });
 
@@ -581,7 +581,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                                 List<Link> seqLinks = new LinkedList<Link>();
                                 for (JComboBox link : seqLinks_cmb)
                                     seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) link.getSelectedItem()).getObject()));
-                                callback.putColorInElementTopologyCanvas (seqLinks , Color.BLUE);
+                                callback.putTransientColorInElementTopologyCanvas (seqLinks , Color.BLUE);
                             }
                         });
 
@@ -595,7 +595,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                         for (JComboBox auxLink : seqLinks_cmb) {
                             seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) auxLink.getSelectedItem()).getObject()));
                         }
-                        callback.putColorInElementTopologyCanvas (seqLinks , Color.BLUE);
+                        callback.putTransientColorInElementTopologyCanvas (seqLinks , Color.BLUE);
                     }
                 });
 
@@ -618,7 +618,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                         List<Link> seqLinks = new LinkedList<Link>();
                         for (JComboBox link : seqLinks_cmb)
                             seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) link.getSelectedItem()).getObject()));
-                        callback.putColorInElementTopologyCanvas (seqLinks , Color.BLUE);
+                        callback.putTransientColorInElementTopologyCanvas (seqLinks , Color.BLUE);
                     }
                 });
 
@@ -630,7 +630,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                 List<Link> seqLinks = new LinkedList<Link>();
                 for (JComboBox link : seqLinks_cmb)
                     seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) link.getSelectedItem()).getObject()));
-                callback.putColorInElementTopologyCanvas (seqLinks , Color.BLUE);
+                callback.putTransientColorInElementTopologyCanvas (seqLinks , Color.BLUE);
             }
         });
 
@@ -919,8 +919,8 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                 Object selectedItem = backupRouteSelector.getSelectedItem();
                 long backupRouteId = (Long) ((StringLabeller) selectedItem).getObject();
                 List<NetworkElement> backupRoutePath = netPlan.getRouteFromId(backupRouteId).getPath();
-                callback.putColorInElementTopologyCanvas(seqLinksAndResources , Color.ORANGE);
-                callback.putColorInElementTopologyCanvas(backupRoutePath , Color.ORANGE);
+                callback.putTransientColorInElementTopologyCanvas(seqLinksAndResources , Color.ORANGE);
+                callback.putTransientColorInElementTopologyCanvas(backupRoutePath , Color.ORANGE);
             }
         });
 
@@ -969,8 +969,8 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
 
                     final long backupRouteId = (Long) table.getModel().getValueAt(modelRow, 0);
                     final Route backupRoute = netPlan.getRouteFromId(backupRouteId);
-                    callback.putColorInElementTopologyCanvas(seqLinksAndResources , Color.ORANGE);
-                    callback.putColorInElementTopologyCanvas(backupRoute.getPath() , Color.ORANGE);
+                    callback.putTransientColorInElementTopologyCanvas(seqLinksAndResources , Color.ORANGE);
+                    callback.putTransientColorInElementTopologyCanvas(backupRoute.getPath() , Color.ORANGE);
                 } catch (Throwable e1) {
                 }
             }

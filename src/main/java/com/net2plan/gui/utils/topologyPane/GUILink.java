@@ -32,7 +32,7 @@ public class GUILink
 {
     private final GUINode originNode;
     private final GUINode destinationNode;
-    private Link npLink;
+    private final Link npLink;
     private final VisualizationState vs;
 
     /* New variables */
@@ -83,9 +83,9 @@ public class GUILink
             this.edgeDrawPaint = DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
             this.arrowDrawPaint = DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
             this.arrowFillPaint = DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
-            this.edgeStrokeIfActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE;
+            this.edgeStrokeIfActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
             this.edgeStrokeIfNotActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
-            this.arrowStrokeIfActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE;
+            this.arrowStrokeIfActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
             this.arrowStrokeIfNotActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
         }
         else
@@ -122,6 +122,7 @@ public class GUILink
 
     public Stroke getArrowStroke() 
     {
+    	if (npLink == null) return arrowStrokeIfNotActiveLayer; // interlayer link
         return npLink.getNetPlan().getNetworkLayerDefault() == npLink.getLayer()? arrowStrokeIfActiveLayer : arrowStrokeIfNotActiveLayer;
     }
 

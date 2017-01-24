@@ -30,10 +30,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,8 +60,8 @@ import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
 import com.net2plan.gui.utils.onlineSimulationPane.OnlineSimulationPane;
 import com.net2plan.gui.utils.topologyPane.GUILink;
+import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
-import com.net2plan.gui.utils.topologyPane.VisualizationConstants;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
@@ -608,45 +606,15 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @Override
     public void pickDemandAndUpdateView(Demand demand)
     {
-        resetPickedStateAndUpdateView();
-
-        boolean includeUpLayerLinksCarryingThisTraffic = true;
-        boolean includeThisLayerLinksCarryingThisTraffic = true;
-        boolean includeDownLayerLinksCarryingThisTraffic = true;
-        NetworkLayer layer = demand.getLayer();
+        vs.pickDemand(demand);
         selectNetPlanViewItem(NetworkElementType.DEMAND, demand.getId());
-
-        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getIngressNode(), layer)), COLOR_INITIALNODE, null, -1);
-        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(demand.getEgressNode(), layer)), COLOR_ENDNODE, null, -1);
-        Pair<Set<Link>, Set<Link>> linksOccupiedThisLayer = demand.getLinksThisLayerPotentiallyCarryingTraffic(true);
-        Set<GUILink> linksToShowPrimary = new HashSet<>();
-        Set<GUILink> linksToShowBackup = new HashSet<>();
-        for (Link e : linksOccupiedThisLayer.getFirst())
-        {
-            Pair<Set<GUILink>, Set<GUILink>> pairThisLink = vs.getAssociatedGUILinksIncludingCoupling(e, true);
-            linksToShowPrimary.addAll(pairThisLink.getFirst());
-            linksToShowBackup.addAll(pairThisLink.getSecond());
-        }
-        for (Link e : linksOccupiedThisLayer.getSecond())
-        {
-            Pair<Set<GUILink>, Set<GUILink>> pairThisLink = vs.getAssociatedGUILinksIncludingCoupling(e, false);
-            linksToShowPrimary.addAll(pairThisLink.getFirst());
-            linksToShowBackup.addAll(pairThisLink.getSecond());
-        }
-        vs.setLinkProperties(linksToShowPrimary,
-                Color.BLUE, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED,
-                true, true);
-        vs.setLinkProperties(linksToShowBackup,
-                Color.YELLOW, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_PICKED,
-                true, true);
-
         topologyPanel.getCanvas().refresh();
     }
 
     @Override
     public void pickLinkAndUpdateView(Link link)
     {
-        vs.pickElement(link);
+        vs.pickLink(link);
         selectNetPlanViewItem(NetworkElementType.LINK, link.getId());
         topologyPanel.getCanvas().refresh();
     }
@@ -654,7 +622,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @Override
     public void pickNodeAndUpdateView(Node node)
     {
-        vs.pickElement(node);
+        vs.pickNode(node);
         selectNetPlanViewItem(NetworkElementType.NODE, node.getId());
         topologyPanel.getCanvas().refresh();
     }
@@ -662,43 +630,68 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @Override
     public void pickMulticastDemandAndUpdateView(MulticastDemand demand)
     {
-        resetPickedStateAndUpdateView();
-        // TODO Auto-generated method stub
+        vs.pickMulticastDemand(demand);
+        selectNetPlanViewItem(NetworkElementType.MULTICAST_DEMAND, demand.getId());
+        topologyPanel.getCanvas().refresh();
     }
 
     @Override
     public void pickForwardingRuleAndUpdateView(Pair<Demand, Link> demandLink)
     {
-        resetPickedStateAndUpdateView();
-        // TODO Auto-generated method stub
+        vs.pickForwardingRule(demandLink);
+        selectNetPlanViewItem(NetworkElementType.FORWARDING_RULE, Pair.of(demandLink.getFirst().getIndex() , demandLink.getSecond().getIndex()));
+        topologyPanel.getCanvas().refresh();
     }
 
     @Override
     public void pickRouteAndUpdateView(Route route)
     {
-        resetPickedStateAndUpdateView();
-        // TODO Auto-generated method stub
+        vs.pickRoute(route);
+        selectNetPlanViewItem(NetworkElementType.ROUTE, route.getId());
+        topologyPanel.getCanvas().refresh();
     }
 
     @Override
     public void pickMulticastTreeAndUpdateView(MulticastTree tree)
     {
-        resetPickedStateAndUpdateView();
-        // TODO Auto-generated method stub
+        vs.pickMulticastTree(tree);
+        selectNetPlanViewItem(NetworkElementType.MULTICAST_TREE, tree.getId());
+        topologyPanel.getCanvas().refresh();
     }
 
     @Override
     public void pickSRGAndUpdateView(NetworkLayer layer, SharedRiskGroup srg)
     {
-        resetPickedStateAndUpdateView();
-        // TODO Auto-generated method stub
+        vs.pickSRG(srg);
+        selectNetPlanViewItem(NetworkElementType.SRG, srg.getId());
+        topologyPanel.getCanvas().refresh();
     }
 
     @Override
-    public void putColorInElementTopologyCanvas(Collection<? extends NetworkElement> linksAndNodes, Color color)
+    public void putTransientColorInElementTopologyCanvas(Collection<? extends NetworkElement> linksAndNodes, Color color)
     {
+    	for (NetworkElement e : linksAndNodes)
+    	{
+    		if (e instanceof Link)
+    		{
+    			final GUILink gl = vs.getAssociatedGUILink((Link) e);
+    			if (gl != null)
+    			{
+    				gl.setArrowDrawPaint(color);
+    				gl.setArrowFillPaint(color);
+    				gl.setEdgeDrawPaint(color);
+    			}
+    		} else if (e instanceof Node)
+    		{
+    			for (GUINode gn : vs.getVerticallyStackedGUINodes((Node) e))
+    			{
+    				gn.setDrawPaint(color);
+    				gn.setFillPaint(color);
+    			}
+    		} else throw new RuntimeException();
+    	}
+    		
         resetPickedStateAndUpdateView();
-        // TODO Auto-generated method stub	
     }
 
 	@Override

@@ -505,8 +505,8 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
             public void itemStateChanged(ItemEvent e) {
                 long originNodeId = (long) ((StringLabeller) originNodeSelector.getSelectedItem()).getObject();
                 long destinationNodeId = (long) ((StringLabeller) destinationNodeSelector.getSelectedItem()).getObject();
-                callback.putColorInElementTopologyCanvas(Arrays.asList(netPlan.getNodeFromId(originNodeId)), Color.GREEN);
-                callback.putColorInElementTopologyCanvas(Arrays.asList(netPlan.getNodeFromId(destinationNodeId)), Color.CYAN);
+                callback.putTransientColorInElementTopologyCanvas(Arrays.asList(netPlan.getNodeFromId(originNodeId)), Color.GREEN);
+                callback.putTransientColorInElementTopologyCanvas(Arrays.asList(netPlan.getNodeFromId(destinationNodeId)), Color.CYAN);
             }
         };
 

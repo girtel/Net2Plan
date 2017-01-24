@@ -18,7 +18,9 @@ public final class VisualizationConstants
     public final static float INCREASENODESIZEFACTORPICKED = 1.1f;
     public final static float INCREASELINKSTROKEFACTORACTIVE = 3f;
 
+    public final static Paint DEFAULT_GUINODE_COLOR_RESOURCE = java.awt.Color.DARK_GRAY;
     public final static Paint DEFAULT_GUINODE_COLOR_ORIGINFLOW = java.awt.Color.GREEN;
+    public final static Paint DEFAULT_GUINODE_COLOR_FAILED = java.awt.Color.RED;
     public final static Paint DEFAULT_GUINODE_COLOR_ENDFLOW = java.awt.Color.CYAN;
     public final static Paint DEFAULT_GUINODE_COLOR_PICK = java.awt.Color.BLUE;
     public final static Paint DEFAULT_GUINODE_COLOR = java.awt.Color.BLACK;
@@ -55,8 +57,7 @@ public final class VisualizationConstants
 //    public final static Stroke DEFAULT_INTRANODEGUILINK_ARROWSTROKE_ACTIVE = new BasicStroke(0.5f * INCREASELINKSTROKEFACTORACTIVE);
 //    public final static Stroke DEFAULT_INTRANODEGUILINK_ARROWSTROKE_PICKED = new BasicStroke(0.5f * INCREASELINKSTROKEFACTORACTIVE * INCREASELINKSTROKEFACTORACTIVE);
     public final static Stroke DEFAULT_INTRANODEGUILINK_EDGESTROKE = new BasicStroke(1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
-    public final static Stroke DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE = new BasicStroke(1 * INCREASELINKSTROKEFACTORACTIVE, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
-    public final static Stroke DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED = new BasicStroke(1 * INCREASELINKSTROKEFACTORACTIVE * INCREASELINKSTROKEFACTORACTIVE, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
+    public final static Stroke DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED = new BasicStroke(1 * INCREASELINKSTROKEFACTORACTIVE , BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
 //    public final static Stroke DEFAULT_REGGUILINK_INTRANODEGESTROKE_BACKUP = new BasicStroke(0.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
 //    public final static Stroke DEFAULT_REGGUILINK_INTRANODEGESTROKE_BACKUP_PICKED = new BasicStroke(1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
 //    public final static Paint DEFAULT_INTRANODEGUILINK_ARROWDRAWCOLOR = Color.BLACK;

@@ -1,17 +1,23 @@
 package com.net2plan.gui.utils.topologyPane;
 
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.*;
-import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR_PICK;
-import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR_PICK;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE;
-import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_INTRANODEGUILINK_HASARROW;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_BACKUP;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_BACKUPANDPRIMARY;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_FAILED;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALACTVELAYER;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALNONACTIVELAYER;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_HASARROW;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.SCALE_IN;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.SCALE_OUT;
@@ -46,6 +52,9 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
@@ -58,6 +67,8 @@ public class VisualizationState
     private boolean showInterLayerLinks;
     private boolean showLowerLayerPropagation;
     private boolean showUpperLayerPropagation;
+    private boolean showThisLayerPropagation;
+    
     private boolean showNonConnectedNodes;
     private int interLayerSpaceInPixels;
     private boolean isNetPlanEditable;
@@ -103,12 +114,13 @@ public class VisualizationState
 	 */
 	public void setShowLowerLayerPropagation(boolean showLowerLayerPropagation)
 	{
+		if (showLowerLayerPropagation == this.showLowerLayerPropagation) return;
 		this.showLowerLayerPropagation = showLowerLayerPropagation;
 		if (pickedElementType != null)
 			if (pickedElementNotFR != null)
 				this.pickElement(pickedElementNotFR);
 			else
-				this.pickElement(pickedElementFR);
+				this.pickForwardingRule(pickedElementFR);
 	}
 
 
@@ -121,6 +133,13 @@ public class VisualizationState
 		return showUpperLayerPropagation;
 	}
 
+	/**
+	 * @return the showThisLayerPropagation
+	 */
+	public boolean isShowThisLayerPropagation()
+	{
+		return showThisLayerPropagation;
+	}
 
 
 	/**
@@ -128,15 +147,28 @@ public class VisualizationState
 	 */
 	public void setShowUpperLayerPropagation(boolean showUpperLayerPropagation)
 	{
+		if (showUpperLayerPropagation == this.showUpperLayerPropagation) return;
 		this.showUpperLayerPropagation = showUpperLayerPropagation;
 		if (pickedElementType != null)
 			if (pickedElementNotFR != null)
 				this.pickElement(pickedElementNotFR);
 			else
-				this.pickElement(pickedElementFR);
+				this.pickForwardingRule(pickedElementFR);
 	}
 
-
+	/**
+	 * @param showThisLayerPropagation the showThisLayerPropagation to set
+	 */
+	public void setShowThisLayerPropagation(boolean showThisLayerPropagation)
+	{
+		if (showThisLayerPropagation == this.showThisLayerPropagation) return;
+		this.showThisLayerPropagation = showThisLayerPropagation;
+		if (pickedElementType != null)
+			if (pickedElementNotFR != null)
+				this.pickElement(pickedElementNotFR);
+			else
+				this.pickForwardingRule(pickedElementFR);
+	}
 
 	public VisualizationState(NetPlan currentNp, BidiMap<NetworkLayer, Integer> mapLayer2VisualizationOrder, Map<NetworkLayer,Boolean> layerVisibilityMap)
     {
@@ -830,56 +862,17 @@ public class VisualizationState
     	
     }
 
-    public void pickElement (NetworkElement e)
+    public void pickDemand (Demand pickedDemand)
     {
     	resetPickedState();
-    	this.pickedElementType = NetworkElementType.getType(e);
+    	this.pickedElementType = NetworkElementType.DEMAND;
     	this.pickedElementFR = null;
-    	this.pickedElementNotFR = e;
-    	if (e instanceof Node)
-    	{
-    		final Node ee = (Node) e;
-    		for (GUINode gn : getVerticallyStackedGUINodes(ee))
-    		{
-                gn.setDrawPaint(DEFAULT_GUINODE_COLOR_PICK);
-                gn.setFillPaint(DEFAULT_GUINODE_COLOR_PICK);
-    		}
-    	} else if (e instanceof Link)
-    	{
-    		final Link pickedLink = (Link) e;
-    		final GUILink gl = getAssociatedGUILink(pickedLink);
-    		if (gl == null) return; // this means the link layer is not visible
-    		final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
-    				pickedLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(false);
-    		final Set<Link> linksPrimary = triple.getFirst().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
-    		final Set<Link> linksBackup = triple.getSecond().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
-    		final Set<Link> linksMulticast = triple.getThird().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
-    		drawColateralLinks (Sets.union(Sets.union(linksPrimary , linksBackup) , linksMulticast) , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
-    		if (showLowerLayerPropagation)
-    		{
-    			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedLink) , null , false , false);
-    			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
-    		}
-    		if (showUpperLayerPropagation)
-    		{
-    			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedLink) , null , true , false);
-    			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
-    		}
-    		/* Picked link the last, so overrides the rest */
-    		gl.setHasArrow(true);
-			gl.setArrowStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
-			gl.setEdgeStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
-			final Paint color = pickedLink.isDown()? DEFAULT_REGGUILINK_EDGECOLOR_FAILED : DEFAULT_REGGUILINK_EDGECOLOR_PICKED;
-			gl.setArrowDrawPaint(color);
-			gl.setArrowFillPaint(color);
-			gl.setEdgeDrawPaint(color);
-			gl.setShownSeparated(true);
-    	} else if (e instanceof Demand)
-    	{
-    		final Demand pickedDemand = (Demand) e;
-    		final GUINode gnOrigin = getAssociatedGUINode(pickedDemand.getIngressNode() , pickedDemand.getLayer());
-    		if (gnOrigin == null) return; // not a visible layer
-    		final GUINode gnDestination = getAssociatedGUINode(pickedDemand.getEgressNode() , pickedDemand.getLayer());
+    	this.pickedElementNotFR = pickedDemand;
+		final GUINode gnOrigin = getAssociatedGUINode(pickedDemand.getIngressNode() , pickedDemand.getLayer());
+		if (gnOrigin == null) return; // not a visible layer
+		final GUINode gnDestination = getAssociatedGUINode(pickedDemand.getEgressNode() , pickedDemand.getLayer());
+		if (showThisLayerPropagation)
+		{
     		final Pair<Set<Link>,Set<Link>> pair = pickedDemand.getLinksThisLayerPotentiallyCarryingTraffic(false);
     		final Set<Link> linksPrimary = pair.getFirst();
     		final Set<Link> linksBackup = pair.getSecond();
@@ -887,23 +880,329 @@ public class VisualizationState
     		drawColateralLinks (Sets.difference(linksPrimary , linksPrimaryAndBackup) , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
     		drawColateralLinks (Sets.difference(linksBackup , linksPrimaryAndBackup) , DEFAULT_REGGUILINK_EDGECOLOR_BACKUP);
     		drawColateralLinks (linksPrimaryAndBackup , DEFAULT_REGGUILINK_EDGECOLOR_BACKUPANDPRIMARY);
-    		if (showLowerLayerPropagation)
-    		{
-    			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (Sets.newHashSet(pickedDemand) , null , null , false , false);
-    			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
-    		}
-    		if (showUpperLayerPropagation)
-    		{
-    			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (Sets.newHashSet(pickedDemand) , null , null , true , false);
-    			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
-    		}
-    		/* Picked link the last, so overrides the rest */
-            gnOrigin.setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
-            gnOrigin.setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
-            gnDestination.setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
-            gnDestination.setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
-    	} else throw new RuntimeException ("Bad");
+		}
+		if (showLowerLayerPropagation)
+		{
+			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (Sets.newHashSet(pickedDemand) , null , null , false , false);
+			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+		}
+		if (showUpperLayerPropagation)
+		{
+			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (Sets.newHashSet(pickedDemand) , null , null , true , false);
+			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+		}
+		/* Picked link the last, so overrides the rest */
+        gnOrigin.setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+        gnOrigin.setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+        gnDestination.setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+        gnDestination.setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+    }
+    
+    public void pickSRG (SharedRiskGroup pickedSRG)
+    {
+    	resetPickedState();
+    	this.pickedElementType = NetworkElementType.SRG;
+    	this.pickedElementFR = null;
+    	this.pickedElementNotFR = pickedSRG;
+    	final Set<Link> allAffectedtLinks = pickedSRG.getAffectedLinksAllLayers();
+		if (showThisLayerPropagation)
+		{
+			for (Link link : allAffectedtLinks)
+			{
+	    		final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
+	    				link.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(false);
+	    		final Set<Link> linksPrimary = triple.getFirst().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
+	    		final Set<Link> linksBackup = triple.getSecond().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
+	    		final Set<Link> linksMulticast = triple.getThird().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
+	    		drawColateralLinks (Sets.union(Sets.union(linksPrimary , linksBackup) , linksMulticast) , DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES);
+			}
+		}
+		if (showLowerLayerPropagation)
+		{
+			for (Link link : allAffectedtLinks)
+			{
+				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(link) , null , false , false);
+				drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES);
+				drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES);
+			}
+		}
+		if (showUpperLayerPropagation)
+		{
+			for (Link link : allAffectedtLinks)
+			{
+				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(link) , null , true , false);
+				drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES);
+				drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES);
+			}
+		}
+		/* Picked link the last, so overrides the rest */
+		for (Link link : allAffectedtLinks)
+		{
+			final GUILink gl = getAssociatedGUILink(link);
+			if (gl == null) continue;
+			gl.setHasArrow(true);
+			gl.setArrowStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
+			gl.setEdgeStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
+			final Paint color = link.isDown()? DEFAULT_REGGUILINK_EDGECOLOR_FAILED : DEFAULT_REGGUILINK_EDGECOLOR_FAILED;
+			gl.setArrowDrawPaint(color);
+			gl.setArrowFillPaint(color);
+			gl.setEdgeDrawPaint(color);
+			gl.setShownSeparated(true);
+		}
+		for (Node node : pickedSRG.getNodes())
+		{
+			for (GUINode gn : getVerticallyStackedGUINodes(node))
+			{
+				gn.setDrawPaint(DEFAULT_GUINODE_COLOR_FAILED);
+		        gn.setFillPaint(DEFAULT_GUINODE_COLOR_FAILED);
+			}
+		}
+    }
+
+    public void pickMulticastDemand (MulticastDemand pickedDemand)
+    {
+    	resetPickedState();
+    	this.pickedElementType = NetworkElementType.MULTICAST_DEMAND;
+    	this.pickedElementFR = null;
+    	this.pickedElementNotFR = pickedDemand;
+		final GUINode gnOrigin = getAssociatedGUINode(pickedDemand.getIngressNode() , pickedDemand.getLayer());
+		if (gnOrigin == null) return; // not a visible layer
+		for (Node egressNode : pickedDemand.getEgressNodes())
+		{
+			final GUINode gnDestination = getAssociatedGUINode(egressNode , pickedDemand.getLayer());
+			if (showThisLayerPropagation)
+			{
+	    		final Set<Link> linksPrimary = pickedDemand.getLinksThisLayerPotentiallyCarryingTraffic(egressNode , false);
+	    		drawColateralLinks (linksPrimary , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			}
+			if (showLowerLayerPropagation)
+			{
+				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , null , Sets.newHashSet(Pair.of(pickedDemand,egressNode)) , false , false);
+				drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+				drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			}
+			if (showUpperLayerPropagation)
+			{
+				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , null , Sets.newHashSet(Pair.of(pickedDemand,egressNode)) , true , false);
+				drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+				drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			}
+			/* Picked link the last, so overrides the rest */
+	        gnDestination.setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+	        gnDestination.setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+		}
+		/* Picked link the last, so overrides the rest */
+        gnOrigin.setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+        gnOrigin.setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+    }
+
+    public void pickRoute (Route pickedRoute)
+    {
+    	resetPickedState();
+    	this.pickedElementType = NetworkElementType.ROUTE;
+    	this.pickedElementFR = null;
+    	this.pickedElementNotFR = pickedRoute;
+		final GUINode gnOrigin = getAssociatedGUINode(pickedRoute.getIngressNode() , pickedRoute.getLayer());
+		if (gnOrigin == null) return; // not a visible layer
+		final GUINode gnDestination = getAssociatedGUINode(pickedRoute.getEgressNode() , pickedRoute.getLayer());
+		if (showThisLayerPropagation)
+		{
+    		final List<Link> linksPrimary = pickedRoute.getSeqLinks();
+    		drawColateralLinks (linksPrimary , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+		}
+		if (showLowerLayerPropagation)
+		{
+			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedRoute.getSeqLinks()) , null , false , false);
+			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+		}
+		if (showUpperLayerPropagation)
+		{
+			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (Sets.newHashSet(pickedRoute.getDemand()) , null , null , true , false);
+			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+		}
+		/* Picked link the last, so overrides the rest */
+        gnOrigin.setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+        gnOrigin.setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+        gnDestination.setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+        gnDestination.setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+    }
+
+    public void pickMulticastTree (MulticastTree pickedTree)
+    {
+    	resetPickedState();
+    	this.pickedElementType = NetworkElementType.MULTICAST_TREE;
+    	this.pickedElementFR = null;
+    	this.pickedElementNotFR = pickedTree;
+		final GUINode gnOrigin = getAssociatedGUINode(pickedTree.getIngressNode() , pickedTree.getLayer());
+		if (gnOrigin == null) return; // not a visible layer
+		for (Node egressNode : pickedTree.getEgressNodes())
+		{
+			final GUINode gnDestination = getAssociatedGUINode(egressNode , pickedTree.getLayer());
+			if (showThisLayerPropagation)
+			{
+	    		final List<Link> linksPrimary = pickedTree.getSeqLinksToEgressNode(egressNode);
+	    		drawColateralLinks (linksPrimary , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			}
+			if (showLowerLayerPropagation)
+			{
+				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedTree.getSeqLinksToEgressNode(egressNode)) , null , false , false);
+				drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+				drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			}
+			if (showUpperLayerPropagation)
+			{
+				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , null , Sets.newHashSet(Pair.of(pickedTree.getMulticastDemand() , egressNode)) , true , false);
+				drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+				drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			}
+	        gnDestination.setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+	        gnDestination.setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+		}
+		/* Picked link the last, so overrides the rest */
+        gnOrigin.setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+        gnOrigin.setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+    }
+
+    public void pickLink (Link pickedLink)
+    {
+    	resetPickedState();
+    	this.pickedElementType = NetworkElementType.LINK;
+    	this.pickedElementFR = null;
+    	this.pickedElementNotFR = pickedLink;
     	
+		final GUILink gl = getAssociatedGUILink(pickedLink);
+		if (gl == null) return; // this means the link layer is not visible
+		if (showThisLayerPropagation)
+		{
+    		final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
+    				pickedLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(false);
+    		final Set<Link> linksPrimary = triple.getFirst().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
+    		final Set<Link> linksBackup = triple.getSecond().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
+    		final Set<Link> linksMulticast = triple.getThird().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
+    		drawColateralLinks (Sets.union(Sets.union(linksPrimary , linksBackup) , linksMulticast) , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+		}
+		if (showLowerLayerPropagation)
+		{
+			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedLink) , null , false , false);
+			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+		}
+		if (showUpperLayerPropagation)
+		{
+			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedLink) , null , true , false);
+			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+		}
+		/* Picked link the last, so overrides the rest */
+		gl.setHasArrow(true);
+		gl.setArrowStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
+		gl.setEdgeStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
+		final Paint color = pickedLink.isDown()? DEFAULT_REGGUILINK_EDGECOLOR_FAILED : DEFAULT_REGGUILINK_EDGECOLOR_PICKED;
+		gl.setArrowDrawPaint(color);
+		gl.setArrowFillPaint(color);
+		gl.setEdgeDrawPaint(color);
+		gl.setShownSeparated(true);
+    }
+    
+    public void pickNode (Node pickedNode)
+    {
+    	resetPickedState();
+    	this.pickedElementType = NetworkElementType.NODE;
+    	this.pickedElementFR = null;
+    	this.pickedElementNotFR = pickedNode;
+		for (GUINode gn : getVerticallyStackedGUINodes(pickedNode))
+		{
+            gn.setDrawPaint(DEFAULT_GUINODE_COLOR_PICK);
+            gn.setFillPaint(DEFAULT_GUINODE_COLOR_PICK);
+		}
+		for (Link e : Sets.union(pickedNode.getOutgoingLinks(currentNp.getNetworkLayerDefault()) , pickedNode.getIncomingLinks(currentNp.getNetworkLayerDefault())))
+		{
+			final GUILink gl = getAssociatedGUILink(e);
+			gl.setShownSeparated(true);
+			gl.setHasArrow(true);
+		}
+    }
+    
+    public void pickResource (Resource pickedResource)
+    {
+    	resetPickedState();
+    	this.pickedElementType = NetworkElementType.RESOURCE;
+    	this.pickedElementFR = null;
+    	this.pickedElementNotFR = pickedResource;
+		for (GUINode gn : getVerticallyStackedGUINodes(pickedResource.getHostNode()))
+		{
+            gn.setDrawPaint(DEFAULT_GUINODE_COLOR_RESOURCE);
+            gn.setFillPaint(DEFAULT_GUINODE_COLOR_RESOURCE);
+		}
+    }
+
+    public void pickForwardingRule (Pair<Demand,Link> pickedFR)
+    {
+    	resetPickedState();
+    	this.pickedElementType = NetworkElementType.FORWARDING_RULE;
+    	this.pickedElementFR = pickedFR;
+    	this.pickedElementNotFR = null;
+    	final Demand pickedDemand = pickedFR.getFirst();
+    	final Link pickedLink = pickedFR.getSecond();
+    	
+		final GUILink gl = getAssociatedGUILink(pickedLink);
+		if (gl == null) return; // this means the link layer is not visible
+		if (showThisLayerPropagation)
+		{
+    		final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
+    				pickedLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(false);
+    		final Set<Link> linksPrimary = triple.getFirst().get(pickedDemand);
+    		final Set<Link> linksBackup = triple.getSecond().get(pickedDemand);
+    		drawColateralLinks (Sets.union(linksPrimary , linksBackup) , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+		}
+		if (showLowerLayerPropagation)
+		{
+			final InterLayerPropagationGraph ipgCausedByLink = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedLink) , null , false , false);
+			final InterLayerPropagationGraph ipgCausedByDemand = new InterLayerPropagationGraph (Sets.newHashSet(pickedDemand) , null , null , false , false);
+			final Set<Link> frPropagationLinks = Sets.intersection(ipgCausedByLink.getLinksInGraph() , ipgCausedByDemand.getLinksInGraph()); 
+			drawColateralLinks (frPropagationLinks , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			drawDownPropagationInterLayerLinks (frPropagationLinks , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+		}
+		if (showUpperLayerPropagation)
+		{
+			final InterLayerPropagationGraph ipgCausedByLink = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedLink) , null , true , false);
+			final InterLayerPropagationGraph ipgCausedByDemand = new InterLayerPropagationGraph (Sets.newHashSet(pickedDemand) , null , null , true , false);
+			final Set<Link> frPropagationLinks = Sets.intersection(ipgCausedByLink.getLinksInGraph() , ipgCausedByDemand.getLinksInGraph()); 
+			drawColateralLinks (frPropagationLinks , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			drawDownPropagationInterLayerLinks (frPropagationLinks , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+		}
+		/* Picked link the last, so overrides the rest */
+		gl.setHasArrow(true);
+		gl.setArrowStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
+		gl.setEdgeStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
+		final Paint color = pickedLink.isDown()? DEFAULT_REGGUILINK_EDGECOLOR_FAILED : DEFAULT_REGGUILINK_EDGECOLOR_PICKED;
+		gl.setArrowDrawPaint(color);
+		gl.setArrowFillPaint(color);
+		gl.setEdgeDrawPaint(color);
+		gl.setShownSeparated(true);
+		gl.getOriginNode().setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+		gl.getOriginNode().setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+		gl.getDestinationNode().setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+		gl.getDestinationNode().setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+    }
+
+    
+    private void pickElement (NetworkElement e)
+    {
+    	if (e instanceof Node) pickNode ((Node) e);
+    	else if (e instanceof Node) pickNode ((Node) e);
+    	else if (e instanceof Link) pickLink ((Link) e);
+    	else if (e instanceof Demand) pickDemand ((Demand) e);
+    	else if (e instanceof Route) pickRoute ((Route) e);
+    	else if (e instanceof MulticastDemand) pickMulticastDemand ((MulticastDemand) e);
+    	else if (e instanceof MulticastTree) pickMulticastTree ((MulticastTree) e);
+    	else if (e instanceof Resource) pickResource ((Resource) e);
+    	else if (e instanceof SharedRiskGroup) pickSRG ((SharedRiskGroup) e);
+    	else throw new RuntimeException();
     }
     
     public void resetPickedState ()
@@ -932,8 +1231,8 @@ public class VisualizationState
         for (GUILink e : getAllGUILinks(false, true))
         {
             e.setHasArrow(DEFAULT_INTRANODEGUILINK_HASARROW);
-            e.setArrowStroke(DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE , DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE);
-            e.setEdgeStroke(DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE , DEFAULT_INTRANODEGUILINK_EDGESTROKE);
+            e.setArrowStroke(DEFAULT_INTRANODEGUILINK_EDGESTROKE , DEFAULT_INTRANODEGUILINK_EDGESTROKE);
+            e.setEdgeStroke(DEFAULT_INTRANODEGUILINK_EDGESTROKE , DEFAULT_INTRANODEGUILINK_EDGESTROKE);
             e.setArrowDrawPaint(DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
             e.setArrowFillPaint(DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
             e.setEdgeDrawPaint(DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
@@ -946,10 +1245,36 @@ public class VisualizationState
     {
     	for (Link link : links)
     	{
-    		
+    		final GUILink gl = getAssociatedGUILink(link);
+    		if (gl == null) continue;
+    		if (!link.isCoupled()) continue;
+    		final boolean isCoupledToDemand = link.getCoupledDemand() != null;
+    		final NetworkLayer upperLayer = link.getLayer(); 
+    		final NetworkLayer lowerLayer = isCoupledToDemand? link.getCoupledDemand().getLayer() : link.getCoupledMulticastDemand().getLayer(); 
+    		if (!isLayerVisible(lowerLayer)) continue;
+    		for (GUILink interLayerLink : getIntraNodeGUILinkSequence(link.getOriginNode() , upperLayer , lowerLayer))
+    		{
+    			interLayerLink.setArrowStroke(DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED , DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED);
+    			interLayerLink.setEdgeStroke(DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED , DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED);
+    			interLayerLink.setArrowDrawPaint(color);
+    			interLayerLink.setArrowFillPaint(color);
+    			interLayerLink.setEdgeDrawPaint(color);
+    			interLayerLink.setShownSeparated(false);
+    			interLayerLink.setHasArrow(true);
+    		}
+    		for (GUILink interLayerLink : getIntraNodeGUILinkSequence(link.getDestinationNode() , lowerLayer , upperLayer))
+    		{
+    			interLayerLink.setArrowStroke(DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED , DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED);
+    			interLayerLink.setEdgeStroke(DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED , DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED);
+    			interLayerLink.setArrowDrawPaint(color);
+    			interLayerLink.setArrowFillPaint(color);
+    			interLayerLink.setEdgeDrawPaint(color);
+    			interLayerLink.setShownSeparated(false);
+    			interLayerLink.setHasArrow(true);
+    		}
     	}
     }
-    private void drawColateralLinks (Set<Link> links , Paint colorIfNotFailedLink)
+    private void drawColateralLinks (Collection<Link> links , Paint colorIfNotFailedLink)
     {
 		for (Link link : links)
 		{
@@ -957,7 +1282,7 @@ public class VisualizationState
 			if (glColateral == null) continue;
 			glColateral.setArrowStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALACTVELAYER , DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALNONACTIVELAYER);
 			glColateral.setEdgeStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALACTVELAYER , DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALNONACTIVELAYER);
-			final Paint color = link.isDown()? DEFAULT_REGGUILINK_EDGECOLOR_FAILED : DEFAULT_REGGUILINK_EDGECOLOR_PICKED;
+			final Paint color = link.isDown()? DEFAULT_REGGUILINK_EDGECOLOR_FAILED : colorIfNotFailedLink;
 			glColateral.setArrowDrawPaint(color);
 			glColateral.setArrowFillPaint(color);
 			glColateral.setEdgeDrawPaint(color);
