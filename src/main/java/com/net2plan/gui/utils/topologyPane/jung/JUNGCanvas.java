@@ -97,8 +97,6 @@ public final class JUNGCanvas implements ITopologyCanvas
 
     private final OSMStateManager osmStateManager;
 
-    
-    public VisualizationViewer getVV () { return vv; }
     /**
      * Default constructor.
      *
@@ -108,10 +106,6 @@ public final class JUNGCanvas implements ITopologyCanvas
     {
         transformNetPlanCoordinatesToJungCoordinates = vertex ->
         {
-        	Rectangle viewInLayoutUnits = getCurrentCanvasViewWindow();
-        	Rectangle r = getVV ().getBounds();
-
-        	
             final int vlIndex = vertex.getVisualizationOrderRemovingNonVisibleLayers();
             //final double interLayerDistanceInNpCoord = vertex.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
             final double interLayerDistanceInNpCoord = currentInterLayerDistanceInNpCoordinates;
@@ -657,13 +651,19 @@ public final class JUNGCanvas implements ITopologyCanvas
     @Override
 	public void updateInterLayerDistanceInNpCoordinates  (int interLayerDistanceInPixels)
 	{
-    	Rectangle viewInLayoutUnits = getCurrentCanvasViewWindow();
-    	Rectangle r = getVV ().getBounds();
+    	final Rectangle r = vv.getBounds();
+	    final double canvasScale = this.getCurrentCanvasScale();
     	if (r.getHeight() == 0)
+        {
     		this.currentInterLayerDistanceInNpCoordinates = interLayerDistanceInPixels;
-    	else
-    		this.currentInterLayerDistanceInNpCoordinates = interLayerDistanceInPixels * viewInLayoutUnits.getHeight() / r.getHeight();
-	}
+        } else
+        {
+//            final double JUNGWindowHeight = r.getHeight() / canvasScale;
+//            final double conversionFactor = JUNGWindowHeight / r.getHeight();
+            final double conversionFactor = 1 / canvasScale;
+    		this.currentInterLayerDistanceInNpCoordinates = interLayerDistanceInPixels * conversionFactor;
+        }
+    }
     @Override
 	public double getInterLayerDistanceInNpCoordinates  ()
 	{
