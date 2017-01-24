@@ -36,43 +36,43 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
 @SuppressWarnings("unchecked")
-public class ViewEditTopologyTablesPane extends JPanel
+public class ViewEditTopologyTablesPane3D extends JPanel
 {
-	private final IVisualizationCallback mainWindow;
+	private final IVisualizationCallback callback;
     private JTabbedPane netPlanView;
     private Map<NetworkElementType, AdvancedJTable_NetworkElement> netPlanViewTable;
     private Map<NetworkElementType, JComponent> netPlanViewTableComponent;
     private JCheckBox showInitialPlan;
 
-	public ViewEditTopologyTablesPane (IVisualizationCallback mainWindow , LayoutManager layout)
+	public ViewEditTopologyTablesPane3D (IVisualizationCallback callback , LayoutManager layout)
 	{
 		super (layout);
 		
-		this.mainWindow = mainWindow;
+		this.callback = callback;
 
         netPlanViewTable = new EnumMap<NetworkElementType, AdvancedJTable_NetworkElement>(NetworkElementType.class);
         netPlanViewTableComponent = new EnumMap<NetworkElementType, JComponent>(NetworkElementType.class);
 
 
 //        mainWindow.allowDocumentUpdate = mainWindow.isEditable();
-        netPlanViewTable.put(NetworkElementType.NODE, new AdvancedJTable_node(mainWindow));
-        netPlanViewTable.put(NetworkElementType.LINK, new AdvancedJTable_link(mainWindow));
-        netPlanViewTable.put(NetworkElementType.DEMAND, new AdvancedJTable_demand(mainWindow));
-        netPlanViewTable.put(NetworkElementType.ROUTE, new AdvancedJTable_route(mainWindow));
-        netPlanViewTable.put(NetworkElementType.FORWARDING_RULE, new AdvancedJTable_forwardingRule(mainWindow));
-        netPlanViewTable.put(NetworkElementType.MULTICAST_DEMAND, new AdvancedJTable_multicastDemand(mainWindow));
-        netPlanViewTable.put(NetworkElementType.MULTICAST_TREE, new AdvancedJTable_multicastTree(mainWindow));
-        netPlanViewTable.put(NetworkElementType.SRG, new AdvancedJTable_srg(mainWindow));
-        netPlanViewTable.put(NetworkElementType.RESOURCE, new AdvancedJTable_resource(mainWindow));
-        netPlanViewTable.put(NetworkElementType.LAYER, new AdvancedJTable_layer(mainWindow));
+        netPlanViewTable.put(NetworkElementType.NODE, new AdvancedJTable_node(callback));
+        netPlanViewTable.put(NetworkElementType.LINK, new AdvancedJTable_link(callback));
+        netPlanViewTable.put(NetworkElementType.DEMAND, new AdvancedJTable_demand(callback));
+        netPlanViewTable.put(NetworkElementType.ROUTE, new AdvancedJTable_route(callback));
+        netPlanViewTable.put(NetworkElementType.FORWARDING_RULE, new AdvancedJTable_forwardingRule(callback));
+        netPlanViewTable.put(NetworkElementType.MULTICAST_DEMAND, new AdvancedJTable_multicastDemand(callback));
+        netPlanViewTable.put(NetworkElementType.MULTICAST_TREE, new AdvancedJTable_multicastTree(callback));
+        netPlanViewTable.put(NetworkElementType.SRG, new AdvancedJTable_srg(callback));
+        netPlanViewTable.put(NetworkElementType.RESOURCE, new AdvancedJTable_resource(callback));
+        netPlanViewTable.put(NetworkElementType.LAYER, new AdvancedJTable_layer(callback));
 
         netPlanView = new JTabbedPane();
 
         for (NetworkElementType elementType : Constants.NetworkElementType.values()) {
             if (elementType == NetworkElementType.NETWORK) {
-                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_network(mainWindow, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
+                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_network(callback, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
             } else if (elementType == NetworkElementType.LAYER) {
-                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_layer(mainWindow, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
+                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_layer(callback, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
             } else {
                 JScrollPane scrollPane = netPlanViewTable.get(elementType).getScroll();
                 scrollPane.setLayout(new FullScrollPaneLayout());
@@ -84,7 +84,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         this.add(netPlanView, BorderLayout.CENTER);
 
-        if (mainWindow.inOnlineSimulationMode()) {
+        if (callback.inOnlineSimulationMode()) {
             showInitialPlan = new JCheckBox("Toggle show/hide planning information", true);
             showInitialPlan.addItemListener(new ItemListener() {
                 @Override
@@ -106,7 +106,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
                         ((TableRowSorter) netPlanViewTable.get(elementType).getRowSorter()).setRowFilter(rowFilter);
                     }
-                    mainWindow.updateVisualizationAfterChanges(Collections.emptySet());
+                    callback.updateVisualizationAfterChanges(Collections.emptySet());
                 }
             });
 
@@ -127,22 +127,22 @@ public class ViewEditTopologyTablesPane extends JPanel
         netPlanViewTable.clear();
         netPlanViewTableComponent.clear();
 
-        netPlanViewTable.put(NetworkElementType.NODE, new AdvancedJTable_node(mainWindow));
-        netPlanViewTable.put(NetworkElementType.LINK, new AdvancedJTable_link(mainWindow));
-        netPlanViewTable.put(NetworkElementType.DEMAND, new AdvancedJTable_demand(mainWindow));
-        netPlanViewTable.put(NetworkElementType.ROUTE, new AdvancedJTable_route(mainWindow));
-        netPlanViewTable.put(NetworkElementType.FORWARDING_RULE, new AdvancedJTable_forwardingRule(mainWindow));
-        netPlanViewTable.put(NetworkElementType.MULTICAST_DEMAND, new AdvancedJTable_multicastDemand(mainWindow));
-        netPlanViewTable.put(NetworkElementType.MULTICAST_TREE, new AdvancedJTable_multicastTree(mainWindow));
-        netPlanViewTable.put(NetworkElementType.SRG, new AdvancedJTable_srg(mainWindow));
-        netPlanViewTable.put(NetworkElementType.RESOURCE, new AdvancedJTable_resource(mainWindow));
-        netPlanViewTable.put(NetworkElementType.LAYER, new AdvancedJTable_layer(mainWindow));
+        netPlanViewTable.put(NetworkElementType.NODE, new AdvancedJTable_node(callback));
+        netPlanViewTable.put(NetworkElementType.LINK, new AdvancedJTable_link(callback));
+        netPlanViewTable.put(NetworkElementType.DEMAND, new AdvancedJTable_demand(callback));
+        netPlanViewTable.put(NetworkElementType.ROUTE, new AdvancedJTable_route(callback));
+        netPlanViewTable.put(NetworkElementType.FORWARDING_RULE, new AdvancedJTable_forwardingRule(callback));
+        netPlanViewTable.put(NetworkElementType.MULTICAST_DEMAND, new AdvancedJTable_multicastDemand(callback));
+        netPlanViewTable.put(NetworkElementType.MULTICAST_TREE, new AdvancedJTable_multicastTree(callback));
+        netPlanViewTable.put(NetworkElementType.SRG, new AdvancedJTable_srg(callback));
+        netPlanViewTable.put(NetworkElementType.RESOURCE, new AdvancedJTable_resource(callback));
+        netPlanViewTable.put(NetworkElementType.LAYER, new AdvancedJTable_layer(callback));
 
         for (NetworkElementType elementType : Constants.NetworkElementType.values()) {
             if (elementType == NetworkElementType.NETWORK) {
-                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_network(mainWindow, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
+                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_network(callback, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
             } else if (elementType == NetworkElementType.LAYER) {
-                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_layer(mainWindow, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
+                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_layer(callback, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
             } else {
                 JScrollPane scrollPane = new JScrollPane(netPlanViewTable.get(elementType));
                 scrollPane.setLayout(new FullScrollPaneLayout());
@@ -165,7 +165,7 @@ public class ViewEditTopologyTablesPane extends JPanel
             }
         }
 
-        if (mainWindow.inOnlineSimulationMode()) {
+        if (callback.inOnlineSimulationMode()) {
             showInitialPlan = new JCheckBox("Toggle show/hide planning information", true);
             showInitialPlan.addItemListener(new ItemListener() {
                 @Override
@@ -187,7 +187,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
                         ((TableRowSorter) netPlanViewTable.get(elementType).getRowSorter()).setRowFilter(rowFilter);
                     }
-                    mainWindow.updateVisualizationJustTables();
+                    callback.updateVisualizationJustTables();
                 }
             });
 
@@ -203,7 +203,7 @@ public class ViewEditTopologyTablesPane extends JPanel
     public void updateView ()
     {
 		/* Load current network state */
-        NetPlan currentState = mainWindow.getDesign();
+        NetPlan currentState = callback.getDesign();
         NetworkLayer layer = currentState.getNetworkLayerDefault();
         currentState.checkCachesConsistency();
 
@@ -227,9 +227,9 @@ public class ViewEditTopologyTablesPane extends JPanel
         }
 
         NetPlan initialState = null;
-        if (showInitialPlan != null && mainWindow.getInitialDesign().getNetworkLayerFromId(layer.getId()) != null)
+        if (showInitialPlan != null && callback.getInitialDesign().getNetworkLayerFromId(layer.getId()) != null)
         {
-            initialState = mainWindow.getInitialDesign();
+            initialState = callback.getInitialDesign();
             initialState.setNetworkLayerDefault(initialState.getNetworkLayerFromId(currentState.getNetworkLayerDefault().getId()));
         }
         currentState.checkCachesConsistency();

@@ -64,7 +64,7 @@ import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
+import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane3D;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
 import com.net2plan.gui.utils.viewEditWindows.utils.WindowUtils;
 import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
@@ -110,7 +110,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
     private JTextArea txt_netPlanLog;
 
-    private ViewEditTopologyTablesPane viewEditTopTables;
+    private ViewEditTopologyTablesPane3D viewEditTopTables;
     private ViewReportPane reportPane;
     private OfflineExecutionPanel executionPane;
     private OnlineSimulationPane onlineSimulationPane;
@@ -188,7 +188,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         }
         contentPane.add(leftPane, "grow");
 
-        viewEditTopTables = new ViewEditTopologyTablesPane(GUINetworkDesign.this, new BorderLayout());
+        viewEditTopTables = new ViewEditTopologyTablesPane3D(GUINetworkDesign.this, new BorderLayout());
 
         reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
 

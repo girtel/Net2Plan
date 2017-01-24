@@ -109,7 +109,7 @@ public class InterLayerPropagationGraph
 		{
 			if (upWardsTrueDownwardsFalse) addVertexAndEdgesToGraphFromInitialIPGUpwards (initialNode);
 			else addVertexAndEdgesToGraphFromInitialIPGDownwards (initialNode);
-		}	
+		}
 	}
 	private void addVertexAndEdgesToGraphFromInitialIPGDownwards (IPGNode initialNode)
 	{

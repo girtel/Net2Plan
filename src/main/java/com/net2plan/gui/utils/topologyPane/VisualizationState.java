@@ -29,6 +29,7 @@ import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,6 +42,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
+import org.apache.commons.math3.distribution.GeometricDistribution;
 
 import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -181,6 +183,7 @@ public class VisualizationState
         this.isNetPlanEditable = true;
         this.showLowerLayerPropagation = true;
         this.showUpperLayerPropagation = true;
+        this.showThisLayerPropagation = true;
         this.nodesToHideAsMandatedByuserInTable = new HashSet<>();
         this.linksToHideAsMandatedByUserInTable = new HashSet<>();
         this.interLayerSpaceInPixels = 50; 
@@ -857,11 +860,6 @@ public class VisualizationState
     
     public NetworkElementType getPickedElementType () { return pickedElementType; }
     
-    public void pickElement (Pair<Demand,Link> fr)
-    {
-    	
-    }
-
     public void pickDemand (Demand pickedDemand)
     {
     	resetPickedState();
@@ -871,25 +869,39 @@ public class VisualizationState
 		final GUINode gnOrigin = getAssociatedGUINode(pickedDemand.getIngressNode() , pickedDemand.getLayer());
 		if (gnOrigin == null) return; // not a visible layer
 		final GUINode gnDestination = getAssociatedGUINode(pickedDemand.getEgressNode() , pickedDemand.getLayer());
+		Pair<Set<Link>,Set<Link>> thisLayerPropagation = null;
 		if (showThisLayerPropagation)
 		{
-    		final Pair<Set<Link>,Set<Link>> pair = pickedDemand.getLinksThisLayerPotentiallyCarryingTraffic(false);
-    		final Set<Link> linksPrimary = pair.getFirst();
-    		final Set<Link> linksBackup = pair.getSecond();
+    		thisLayerPropagation = pickedDemand.getLinksThisLayerPotentiallyCarryingTraffic(false);
+    		final Set<Link> linksPrimary = thisLayerPropagation.getFirst();
+    		final Set<Link> linksBackup = thisLayerPropagation.getSecond();
     		final Set<Link> linksPrimaryAndBackup = Sets.intersection(linksPrimary , linksBackup);
     		drawColateralLinks (Sets.difference(linksPrimary , linksPrimaryAndBackup) , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
     		drawColateralLinks (Sets.difference(linksBackup , linksPrimaryAndBackup) , DEFAULT_REGGUILINK_EDGECOLOR_BACKUP);
     		drawColateralLinks (linksPrimaryAndBackup , DEFAULT_REGGUILINK_EDGECOLOR_BACKUPANDPRIMARY);
 		}
-		if (showLowerLayerPropagation)
+		if (showLowerLayerPropagation && (currentNp.getNumberOfLayers() > 1))
 		{
-			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (Sets.newHashSet(pickedDemand) , null , null , false , false);
-			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
-			drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			if (thisLayerPropagation == null) thisLayerPropagation = pickedDemand.getLinksThisLayerPotentiallyCarryingTraffic(false);
+			final Pair<Set<Demand>,Set<Pair<MulticastDemand,Node>>> downLayerInfoPrimary = getDownCoupling(thisLayerPropagation.getFirst()); 
+			final Pair<Set<Demand>,Set<Pair<MulticastDemand,Node>>> downLayerInfoBackup = getDownCoupling(thisLayerPropagation.getSecond()); 
+			final InterLayerPropagationGraph ipgPrimary = new InterLayerPropagationGraph (downLayerInfoPrimary.getFirst() , null , downLayerInfoPrimary.getSecond() , false , false);
+			final InterLayerPropagationGraph ipgBackup = new InterLayerPropagationGraph (downLayerInfoBackup.getFirst() , null , downLayerInfoBackup.getSecond() , false , false);
+			final Set<Link> linksPrimary = ipgPrimary.getLinksInGraph();
+			final Set<Link> linksBackup = ipgBackup.getLinksInGraph();
+			final Set<Link> linksPrimaryAndBackup = Sets.intersection(linksPrimary , linksBackup);
+			final Set<Link> linksOnlyPrimary = Sets.difference(linksPrimary , linksPrimaryAndBackup);
+			final Set<Link> linksOnlyBackup = Sets.difference(linksBackup , linksPrimaryAndBackup);
+			drawColateralLinks (linksOnlyPrimary , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			drawDownPropagationInterLayerLinks (linksOnlyPrimary , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			drawColateralLinks (linksOnlyBackup , DEFAULT_REGGUILINK_EDGECOLOR_BACKUP);
+			drawDownPropagationInterLayerLinks (linksOnlyBackup , DEFAULT_REGGUILINK_EDGECOLOR_BACKUP);
+			drawColateralLinks (linksPrimaryAndBackup , DEFAULT_REGGUILINK_EDGECOLOR_BACKUPANDPRIMARY);
+			drawDownPropagationInterLayerLinks (linksPrimaryAndBackup , DEFAULT_REGGUILINK_EDGECOLOR_BACKUPANDPRIMARY);
 		}
-		if (showUpperLayerPropagation)
+		if (showUpperLayerPropagation && (currentNp.getNumberOfLayers() > 1) && pickedDemand.isCoupled())
 		{
-			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (Sets.newHashSet(pickedDemand) , null , null , true , false);
+			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedDemand.getCoupledLink()) , null , true , false);
 			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 			drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 		}
@@ -906,39 +918,46 @@ public class VisualizationState
     	this.pickedElementType = NetworkElementType.SRG;
     	this.pickedElementFR = null;
     	this.pickedElementNotFR = pickedSRG;
-    	final Set<Link> allAffectedtLinks = pickedSRG.getAffectedLinksAllLayers();
+    	final Set<Link> allAffectedLinks = pickedSRG.getAffectedLinksAllLayers();
+    	Map<Link,Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>>> thisLayerPropInfo = new HashMap<> (); 
 		if (showThisLayerPropagation)
 		{
-			for (Link link : allAffectedtLinks)
+			for (Link link : allAffectedLinks)
 			{
-	    		final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
-	    				link.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(false);
-	    		final Set<Link> linksPrimary = triple.getFirst().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
-	    		final Set<Link> linksBackup = triple.getSecond().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
-	    		final Set<Link> linksMulticast = triple.getThird().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
+				thisLayerPropInfo.put(link , link.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(false));
+	    		final Set<Link> linksPrimary = thisLayerPropInfo.get(link).getFirst().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
+	    		final Set<Link> linksBackup = thisLayerPropInfo.get(link).getSecond().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
+	    		final Set<Link> linksMulticast = thisLayerPropInfo.get(link).getThird().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
 	    		drawColateralLinks (Sets.union(Sets.union(linksPrimary , linksBackup) , linksMulticast) , DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES);
 			}
 		}
-		if (showLowerLayerPropagation)
+		if (showLowerLayerPropagation && (currentNp.getNumberOfLayers() > 1))
 		{
-			for (Link link : allAffectedtLinks)
+			for (Link link : allAffectedLinks)
 			{
-				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(link) , null , false , false);
+				if (!link.isCoupled()) continue;
+				final Pair<Set<Demand>,Set<Pair<MulticastDemand,Node>>> couplingInfo = getDownCoupling(Sets.newHashSet(link));
+				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (couplingInfo.getFirst()  , null , couplingInfo.getSecond() , false , false);
 				drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES);
 				drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES);
 			}
 		}
-		if (showUpperLayerPropagation)
+		if (showUpperLayerPropagation && (currentNp.getNumberOfLayers() > 1))
 		{
-			for (Link link : allAffectedtLinks)
+			for (Link link : allAffectedLinks)
 			{
-				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(link) , null , true , false);
+				final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> thisLinkInfo = 
+						showThisLayerPropagation?  thisLayerPropInfo.get(link) : link.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(false);
+	    		final Set<Demand> demandsPrimaryAndBackup = Sets.union(thisLinkInfo.getFirst().keySet() , thisLinkInfo.getSecond().keySet());
+	    		final Set<Pair<MulticastDemand,Node>> demandsMulticast = thisLinkInfo.getThird().keySet();
+	    		final Set<Link> coupledUpperLinks = getUpCoupling(demandsPrimaryAndBackup , demandsMulticast);
+				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , coupledUpperLinks , null , true , false);
 				drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES);
 				drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES);
 			}
 		}
 		/* Picked link the last, so overrides the rest */
-		for (Link link : allAffectedtLinks)
+		for (Link link : allAffectedLinks)
 		{
 			final GUILink gl = getAssociatedGUILink(link);
 			if (gl == null) continue;
@@ -969,23 +988,28 @@ public class VisualizationState
     	this.pickedElementNotFR = pickedDemand;
 		final GUINode gnOrigin = getAssociatedGUINode(pickedDemand.getIngressNode() , pickedDemand.getLayer());
 		if (gnOrigin == null) return; // not a visible layer
+		Set<Link> linksThisLayer = null;
 		for (Node egressNode : pickedDemand.getEgressNodes())
 		{
 			final GUINode gnDestination = getAssociatedGUINode(egressNode , pickedDemand.getLayer());
 			if (showThisLayerPropagation)
 			{
-	    		final Set<Link> linksPrimary = pickedDemand.getLinksThisLayerPotentiallyCarryingTraffic(egressNode , false);
-	    		drawColateralLinks (linksPrimary , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+				linksThisLayer = pickedDemand.getLinksThisLayerPotentiallyCarryingTraffic(egressNode , false);
+	    		drawColateralLinks (linksThisLayer , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 			}
-			if (showLowerLayerPropagation)
+			if (showLowerLayerPropagation && (currentNp.getNumberOfLayers() > 1))
 			{
-				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , null , Sets.newHashSet(Pair.of(pickedDemand,egressNode)) , false , false);
-				drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
-				drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+				if (linksThisLayer == null) linksThisLayer = pickedDemand.getLinksThisLayerPotentiallyCarryingTraffic(egressNode , false);
+				final Pair<Set<Demand>,Set<Pair<MulticastDemand,Node>>> downLayerInfo = getDownCoupling(linksThisLayer); 
+				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (downLayerInfo.getFirst() , null , downLayerInfo.getSecond() , false , false);
+				final Set<Link> linksLowerLayers = ipg.getLinksInGraph();
+				drawColateralLinks (linksLowerLayers , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+				drawDownPropagationInterLayerLinks (linksLowerLayers , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 			}
-			if (showUpperLayerPropagation)
+			if (showUpperLayerPropagation && (currentNp.getNumberOfLayers() > 1) && pickedDemand.isCoupled())
 			{
-				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , null , Sets.newHashSet(Pair.of(pickedDemand,egressNode)) , true , false);
+				final Set<Link> upCoupledLink = getUpCoupling(null , Sets.newHashSet(Pair.of(pickedDemand,egressNode)));
+				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , upCoupledLink , null , true , false);
 				drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 				drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 			}
@@ -1010,17 +1034,18 @@ public class VisualizationState
 		if (showThisLayerPropagation)
 		{
     		final List<Link> linksPrimary = pickedRoute.getSeqLinks();
-    		drawColateralLinks (linksPrimary , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+    		drawColateralLinks (linksPrimary , pickedRoute.isBackupRoute()? DEFAULT_REGGUILINK_EDGECOLOR_BACKUP : DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 		}
-		if (showLowerLayerPropagation)
+		if (showLowerLayerPropagation && (currentNp.getNumberOfLayers() > 1))
 		{
-			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedRoute.getSeqLinks()) , null , false , false);
-			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
-			drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			final Pair<Set<Demand>,Set<Pair<MulticastDemand,Node>>> downInfo = getDownCoupling (pickedRoute.getSeqLinks());
+			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (downInfo.getFirst() , null , downInfo.getSecond() , false , false);
+			drawColateralLinks (ipg.getLinksInGraph() , pickedRoute.isBackupRoute()? DEFAULT_REGGUILINK_EDGECOLOR_BACKUP : DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+			drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , pickedRoute.isBackupRoute()? DEFAULT_REGGUILINK_EDGECOLOR_BACKUP : DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 		}
-		if (showUpperLayerPropagation)
+		if (showUpperLayerPropagation && (currentNp.getNumberOfLayers() > 1) && pickedRoute.getDemand().isCoupled())
 		{
-			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (Sets.newHashSet(pickedRoute.getDemand()) , null , null , true , false);
+			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedRoute.getDemand().getCoupledLink()) , null , true , false);
 			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 			drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 		}
@@ -1047,15 +1072,17 @@ public class VisualizationState
 	    		final List<Link> linksPrimary = pickedTree.getSeqLinksToEgressNode(egressNode);
 	    		drawColateralLinks (linksPrimary , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 			}
-			if (showLowerLayerPropagation)
+			if (showLowerLayerPropagation && (currentNp.getNumberOfLayers() > 1))
 			{
-				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedTree.getSeqLinksToEgressNode(egressNode)) , null , false , false);
+				final Pair<Set<Demand>,Set<Pair<MulticastDemand,Node>>> downInfo = getDownCoupling (pickedTree.getSeqLinksToEgressNode(egressNode));
+				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (downInfo.getFirst() , null , downInfo.getSecond() , false , false);
 				drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 				drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 			}
-			if (showUpperLayerPropagation)
+			if (showUpperLayerPropagation && (currentNp.getNumberOfLayers() > 1) && pickedTree.getMulticastDemand().isCoupled())
 			{
-				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , null , Sets.newHashSet(Pair.of(pickedTree.getMulticastDemand() , egressNode)) , true , false);
+				final Set<Link> upperCoupledLink = getUpCoupling(null , Arrays.asList(Pair.of(pickedTree.getMulticastDemand() , egressNode)));
+				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , upperCoupledLink , null , true , false);
 				drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 				drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 			}
@@ -1076,24 +1103,29 @@ public class VisualizationState
     	
 		final GUILink gl = getAssociatedGUILink(pickedLink);
 		if (gl == null) return; // this means the link layer is not visible
+		Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> thisLayerTraversalInfo = null;
 		if (showThisLayerPropagation)
 		{
-    		final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
-    				pickedLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(false);
-    		final Set<Link> linksPrimary = triple.getFirst().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
-    		final Set<Link> linksBackup = triple.getSecond().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
-    		final Set<Link> linksMulticast = triple.getThird().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
+    		thisLayerTraversalInfo = pickedLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(false);
+    		final Set<Link> linksPrimary = thisLayerTraversalInfo.getFirst().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
+    		final Set<Link> linksBackup = thisLayerTraversalInfo.getSecond().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
+    		final Set<Link> linksMulticast = thisLayerTraversalInfo.getThird().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
     		drawColateralLinks (Sets.union(Sets.union(linksPrimary , linksBackup) , linksMulticast) , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 		}
-		if (showLowerLayerPropagation)
+		if (showLowerLayerPropagation && (currentNp.getNumberOfLayers() > 1) && pickedLink.isCoupled())
 		{
-			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedLink) , null , false , false);
+			final Pair<Set<Demand>,Set<Pair<MulticastDemand,Node>>> downLayerInfo = getDownCoupling (Arrays.asList(pickedLink));
+			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (downLayerInfo.getFirst() , null , downLayerInfo.getSecond() , false , false);
 			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 			drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 		}
-		if (showUpperLayerPropagation)
+		if (showUpperLayerPropagation && (currentNp.getNumberOfLayers() > 1))
 		{
-			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedLink) , null , true , false);
+			if (thisLayerTraversalInfo == null) thisLayerTraversalInfo = pickedLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(false);
+    		final Set<Demand> demandsPrimaryAndBackup = Sets.union(thisLayerTraversalInfo.getFirst().keySet() , thisLayerTraversalInfo.getSecond().keySet());
+    		final Set<Pair<MulticastDemand,Node>> mDemands = thisLayerTraversalInfo.getThird().keySet();
+    		final Set<Link> initialUpperLinks = getUpCoupling(demandsPrimaryAndBackup , mDemands);
+			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(initialUpperLinks) , null , true , false);
 			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 			drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 		}
@@ -1159,19 +1191,18 @@ public class VisualizationState
     		final Set<Link> linksBackup = triple.getSecond().get(pickedDemand);
     		drawColateralLinks (Sets.union(linksPrimary , linksBackup) , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 		}
-		if (showLowerLayerPropagation)
+		if (showLowerLayerPropagation && (currentNp.getNumberOfLayers() > 1) && pickedLink.isCoupled())
 		{
-			final InterLayerPropagationGraph ipgCausedByLink = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedLink) , null , false , false);
-			final InterLayerPropagationGraph ipgCausedByDemand = new InterLayerPropagationGraph (Sets.newHashSet(pickedDemand) , null , null , false , false);
-			final Set<Link> frPropagationLinks = Sets.intersection(ipgCausedByLink.getLinksInGraph() , ipgCausedByDemand.getLinksInGraph()); 
+			final Pair<Set<Demand>,Set<Pair<MulticastDemand,Node>>> downLayerInfo = getDownCoupling (Arrays.asList(pickedLink));
+			final InterLayerPropagationGraph ipgCausedByLink = new InterLayerPropagationGraph (downLayerInfo.getFirst() , null , downLayerInfo.getSecond() , false , false);
+			final Set<Link> frPropagationLinks = ipgCausedByLink.getLinksInGraph(); 
 			drawColateralLinks (frPropagationLinks , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 			drawDownPropagationInterLayerLinks (frPropagationLinks , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 		}
-		if (showUpperLayerPropagation)
+		if (showUpperLayerPropagation && (currentNp.getNumberOfLayers() > 1) && pickedDemand.isCoupled())
 		{
-			final InterLayerPropagationGraph ipgCausedByLink = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedLink) , null , true , false);
-			final InterLayerPropagationGraph ipgCausedByDemand = new InterLayerPropagationGraph (Sets.newHashSet(pickedDemand) , null , null , true , false);
-			final Set<Link> frPropagationLinks = Sets.intersection(ipgCausedByLink.getLinksInGraph() , ipgCausedByDemand.getLinksInGraph()); 
+			final InterLayerPropagationGraph ipgCausedByDemand = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedDemand.getCoupledLink()) , null , true , false);
+			final Set<Link> frPropagationLinks = ipgCausedByDemand.getLinksInGraph(); 
 			drawColateralLinks (frPropagationLinks , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 			drawDownPropagationInterLayerLinks (frPropagationLinks , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 		}
@@ -1290,5 +1321,30 @@ public class VisualizationState
     		glColateral.setHasArrow(true);
 		}
     }
+
+    private Pair<Set<Demand>,Set<Pair<MulticastDemand,Node>>> getDownCoupling (Collection<Link> links)
+    {
+    	final Set<Demand> res_1 = new HashSet<> ();
+    	final Set<Pair<MulticastDemand,Node>> res_2 = new HashSet<> ();
+    	for (Link link : links)
+    	{
+    		if (link.getCoupledDemand() != null) res_1.add(link.getCoupledDemand());
+    		else if (link.getCoupledMulticastDemand() != null) res_2.add(Pair.of(link.getCoupledMulticastDemand() , link.getDestinationNode()));
+    	}
+    	return Pair.of(res_1 , res_2);
+    	
+    }
+    private Set<Link> getUpCoupling (Collection<Demand> demands , Collection<Pair<MulticastDemand,Node>> mDemands)
+    {
+    	final Set<Link> res = new HashSet<> ();
+    	if (demands != null)
+    		for (Demand d : demands)
+    			if (d.isCoupled()) res.add(d.getCoupledLink());
+    	if (mDemands != null)
+    		for (Pair<MulticastDemand,Node> md : mDemands)
+    			res.add(md.getFirst().getCoupledLinks().stream().filter (e->e.getDestinationNode() == md.getSecond()).findFirst().get());
+    	return res;
+    }
+
     
 }

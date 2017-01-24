@@ -211,7 +211,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showUpperLayerInfo.setSelected(getVisualizationState().isShowUpperLayerPropagation());
         btn_showThisLayerInfo = new JToggleButton("Show this propagation");
         btn_showThisLayerInfo.setToolTipText("Shows the links in the same layer as the picked element, that carry traffic that appears in the picked element");
-        btn_showThisLayerInfo.setSelected(getVisualizationState().isShowUpperLayerPropagation());
+        btn_showThisLayerInfo.setSelected(getVisualizationState().isShowThisLayerPropagation());
 
         btn_multilayer = new JButton("Debug");
         this.multilayerControlPanel = new MultiLayerControlPanel(callback);
