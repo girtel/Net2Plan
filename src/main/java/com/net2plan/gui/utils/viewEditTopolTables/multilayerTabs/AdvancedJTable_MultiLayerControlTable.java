@@ -3,9 +3,7 @@ package com.net2plan.gui.utils.viewEditTopolTables.multilayerTabs;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
-import java.util.EventObject;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
@@ -14,16 +12,23 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
+import com.google.common.base.Functions;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Ordering;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
-import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
 import com.net2plan.utils.StringUtils;
+import org.apache.commons.collections15.BidiMap;
+import org.apache.commons.collections15.MapUtils;
+import org.apache.commons.collections15.SortedBidiMap;
+import org.apache.commons.collections15.bidimap.DualHashBidiMap;
+import org.apache.commons.collections15.bidimap.UnmodifiableOrderedBidiMap;
 
 /**
  * @author Jorge San Emeterio
@@ -32,7 +37,6 @@ import com.net2plan.utils.StringUtils;
 public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 {
     private final IVisualizationCallback callback;
-    private final NetPlan netPlan;
 
     private final DefaultTableModel tableModel;
 
@@ -66,7 +70,6 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         super();
 
         this.callback = callback;
-        this.netPlan = callback.getDesign();
 
         this.tableModel = createTableModel();
 
@@ -90,10 +93,9 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         final VisualizationState visualizationState = callback.getVisualizationState();
 
         final LinkedList<Object[]> allLayerData = new LinkedList<>();
-        for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
+        for (NetworkLayer networkLayer : visualizationState.getLayersInVisualizationOrder(true))
         {
             final boolean isActiveLayer = isDefaultLayer(networkLayer);
-            int layerOrder = visualizationState.getVisualizationOrderNotRemovingNonVisible(networkLayer);
 
             final Object[] layerData = new Object[tableHeader.length];
             layerData[COLUMN_UP_DOWN] = "";
@@ -101,9 +103,9 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             layerData[COLUMN_NAME] = networkLayer.getName();
             layerData[COLUMN_LAYER_VISIBILITY] = isActiveLayer || visualizationState.isLayerVisible(networkLayer);
             layerData[COLUMN_LAYER_LINK_VISIBILITY] = visualizationState.isLayerLinksShown(networkLayer);
-            layerData[COLUMN_IS_DEFAULT] = isDefaultLayer(networkLayer);
+            layerData[COLUMN_IS_DEFAULT] = isActiveLayer;
 
-            allLayerData.add(layerOrder, layerData);
+            allLayerData.add(layerData);
         }
 
         return allLayerData;
@@ -124,7 +126,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                         return false;
                     case COLUMN_LAYER_VISIBILITY:
                     case COLUMN_IS_DEFAULT:
-                        final NetworkLayer selectedLayer = netPlan.getNetworkLayer((int) this.getValueAt(rowIndex, COLUMN_INDEX));
+                        final NetworkLayer selectedLayer = callback.getDesign().getNetworkLayer((int) this.getValueAt(rowIndex, COLUMN_INDEX));
                         return !(isDefaultLayer(selectedLayer));
                     default:
                         return true;
@@ -138,7 +140,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 
                 final VisualizationState visualizationState = callback.getVisualizationState();
 
-                final NetworkLayer selectedLayer = netPlan.getNetworkLayer((int) this.getValueAt(row, COLUMN_INDEX));
+                final NetworkLayer selectedLayer = callback.getDesign().getNetworkLayer((int) this.getValueAt(row, COLUMN_INDEX));
 
                 switch (column)
                 {
@@ -149,7 +151,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                         visualizationState.setLayerLinksVisibility(selectedLayer, (Boolean) newValue);
                         break;
                     case COLUMN_IS_DEFAULT:
-                        netPlan.setNetworkLayerDefault(selectedLayer);
+                        callback.getDesign().setNetworkLayerDefault(selectedLayer);
                         visualizationState.setLayerVisibility(selectedLayer, true);
                         break;
                     default:
@@ -166,7 +168,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 
     private synchronized void updateTable()
     {
-        if (netPlan.getNumberOfLayers() > 0)
+        if (callback.getDesign().getNumberOfLayers() > 0)
         {
             final List<Object[]> layerData = this.getAllData();
 
@@ -197,14 +199,14 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 
     private boolean isDefaultLayer(final NetworkLayer layer)
     {
-        return netPlan.getNetworkLayerDefault() == layer;
+        return callback.getDesign().getNetworkLayerDefault() == layer;
     }
 
     /**
      * @version 1.0 11/09/98
      */
 
-    private static class ButtonEditor extends AbstractCellEditor implements TableCellEditor
+    private class ButtonEditor extends AbstractCellEditor implements TableCellEditor
     {
         private ButtonPanel buttonPanel;
 
@@ -229,7 +231,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         @Override
         public Object getCellEditorValue()
         {
-            return buttonPanel.getState();
+            return "";
         }
 
         @Override
@@ -239,7 +241,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         }
     }
 
-    private static class ButtonRenderer extends JButton implements TableCellRenderer
+    private class ButtonRenderer extends JButton implements TableCellRenderer
     {
         private ButtonPanel panel;
 
@@ -262,17 +264,15 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         }
     }
 
-    private static class ButtonPanel extends JPanel implements ActionListener
+    private class ButtonPanel extends JPanel implements ActionListener
     {
         private final JButton upButton, downButton;
-        private String state;
 
         public ButtonPanel()
         {
             this.setLayout(new GridLayout(1, 2));
             upButton = new JButton("\u2191");
             downButton = new JButton("\u2193");
-            state = "";
 
             this.add(upButton);
             this.add(downButton);
@@ -284,20 +284,39 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            Object src = e.getSource();
+            final VisualizationState vs = callback.getVisualizationState();
+
+            final Object src = e.getSource();
             if (src == upButton)
             {
-                state = "Up";
-                
+                final BidiMap<NetworkLayer, Integer> layerOrderIndexMap = new DualHashBidiMap<>(vs.getLayerOrderIndexMap(true));
+                final NetworkLayer selectedLayer = callback.getDesign().getNetworkLayer((int) getValueAt(getSelectedRow(), COLUMN_INDEX));
+                final int currentOrderIndex = layerOrderIndexMap.get(selectedLayer);
+                final NetworkLayer neighbourLayer = layerOrderIndexMap.inverseBidiMap().get(currentOrderIndex - 1);
+
+                if  (layerOrderIndexMap.get(selectedLayer) == 0) return;
+
+                layerOrderIndexMap.put(selectedLayer, currentOrderIndex - 1);
+                layerOrderIndexMap.put(neighbourLayer, currentOrderIndex);
+
+                vs.updateLayerVisualizationState(callback.getDesign(), layerOrderIndexMap);
             } else if (src == downButton)
             {
-                state = "Down";
-            }
-        }
+                final BidiMap<NetworkLayer, Integer> layerOrderIndexMap = new DualHashBidiMap<>(vs.getLayerOrderIndexMap(true));
+                final NetworkLayer selectedLayer = callback.getDesign().getNetworkLayer((int) getValueAt(getSelectedRow(), COLUMN_INDEX));
+                final int currentOrderIndex = layerOrderIndexMap.get(selectedLayer);
+                final NetworkLayer neighbourLayer = layerOrderIndexMap.inverseBidiMap().get(currentOrderIndex + 1);
 
-        public String getState()
-        {
-            return state;
+                if  (layerOrderIndexMap.get(selectedLayer) == layerOrderIndexMap.size() - 1) return;
+
+                layerOrderIndexMap.put(selectedLayer, currentOrderIndex + 1);
+                layerOrderIndexMap.put(neighbourLayer, currentOrderIndex);
+
+                vs.updateLayerVisualizationState(callback.getDesign(), layerOrderIndexMap);
+            }
+
+            updateTable();
+            callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
         }
     }
 }

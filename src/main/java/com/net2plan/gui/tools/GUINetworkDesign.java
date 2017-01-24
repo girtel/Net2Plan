@@ -724,7 +724,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 	public void updateVisualizationAfterNewTopology()
 	{
 		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = VisualizationState.generateDefaultVisualizationLayerInfo(getDesign());
-		vs.setLayerVisibilityAndOrder(getDesign() , res.getFirst() , res.getSecond());
+		vs.updateLayerVisualizationState(getDesign() , res.getFirst() , res.getSecond());
 		topologyPanel.updateLayerChooser();
 		topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
 	    topologyPanel.getCanvas().zoomAll();
@@ -742,7 +742,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         if ((modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE) || modificationsMade.contains(NetworkElementType.LAYER)))
         {
-    		vs.setLayerVisibilityAndOrder(getDesign());
+    		vs.updateLayerVisualizationState(getDesign());
             topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
             viewEditTopTables.updateView();
             updateWarnings();
