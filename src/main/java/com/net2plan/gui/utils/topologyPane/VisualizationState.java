@@ -866,11 +866,11 @@ public class VisualizationState
     	this.pickedElementType = NetworkElementType.DEMAND;
     	this.pickedElementFR = null;
     	this.pickedElementNotFR = pickedDemand;
-		final GUINode gnOrigin = getAssociatedGUINode(pickedDemand.getIngressNode() , pickedDemand.getLayer());
-		if (gnOrigin == null) return; // not a visible layer
+		final boolean isDemandLayerVisibleInTheCanvas = isLayerVisible(pickedDemand.getLayer());
+    	final GUINode gnOrigin = getAssociatedGUINode(pickedDemand.getIngressNode() , pickedDemand.getLayer());
 		final GUINode gnDestination = getAssociatedGUINode(pickedDemand.getEgressNode() , pickedDemand.getLayer());
 		Pair<Set<Link>,Set<Link>> thisLayerPropagation = null;
-		if (showThisLayerPropagation)
+		if (showThisLayerPropagation && isDemandLayerVisibleInTheCanvas)
 		{
     		thisLayerPropagation = pickedDemand.getLinksThisLayerPotentiallyCarryingTraffic(false);
     		final Set<Link> linksPrimary = thisLayerPropagation.getFirst();
@@ -906,10 +906,13 @@ public class VisualizationState
 			drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 		}
 		/* Picked link the last, so overrides the rest */
-        gnOrigin.setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
-        gnOrigin.setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
-        gnDestination.setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
-        gnDestination.setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+		if (isDemandLayerVisibleInTheCanvas)
+		{
+	        gnOrigin.setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+	        gnOrigin.setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+	        gnDestination.setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+	        gnDestination.setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+		}
     }
     
     public void pickSRG (SharedRiskGroup pickedSRG)
@@ -986,13 +989,13 @@ public class VisualizationState
     	this.pickedElementType = NetworkElementType.MULTICAST_DEMAND;
     	this.pickedElementFR = null;
     	this.pickedElementNotFR = pickedDemand;
+		final boolean isDemandLayerVisibleInTheCanvas = isLayerVisible(pickedDemand.getLayer());
 		final GUINode gnOrigin = getAssociatedGUINode(pickedDemand.getIngressNode() , pickedDemand.getLayer());
-		if (gnOrigin == null) return; // not a visible layer
 		Set<Link> linksThisLayer = null;
 		for (Node egressNode : pickedDemand.getEgressNodes())
 		{
 			final GUINode gnDestination = getAssociatedGUINode(egressNode , pickedDemand.getLayer());
-			if (showThisLayerPropagation)
+			if (showThisLayerPropagation && isDemandLayerVisibleInTheCanvas)
 			{
 				linksThisLayer = pickedDemand.getLinksThisLayerPotentiallyCarryingTraffic(egressNode , false);
 	    		drawColateralLinks (linksThisLayer , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
@@ -1014,12 +1017,18 @@ public class VisualizationState
 				drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 			}
 			/* Picked link the last, so overrides the rest */
-	        gnDestination.setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
-	        gnDestination.setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+			if (isDemandLayerVisibleInTheCanvas)
+			{
+				gnDestination.setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+				gnDestination.setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+			}
 		}
 		/* Picked link the last, so overrides the rest */
-        gnOrigin.setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
-        gnOrigin.setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+		if (isDemandLayerVisibleInTheCanvas)
+		{
+			gnOrigin.setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+			gnOrigin.setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+		}
     }
 
     public void pickRoute (Route pickedRoute)
@@ -1028,10 +1037,8 @@ public class VisualizationState
     	this.pickedElementType = NetworkElementType.ROUTE;
     	this.pickedElementFR = null;
     	this.pickedElementNotFR = pickedRoute;
-		final GUINode gnOrigin = getAssociatedGUINode(pickedRoute.getIngressNode() , pickedRoute.getLayer());
-		if (gnOrigin == null) return; // not a visible layer
-		final GUINode gnDestination = getAssociatedGUINode(pickedRoute.getEgressNode() , pickedRoute.getLayer());
-		if (showThisLayerPropagation)
+		final boolean isRouteLayerVisibleInTheCanvas = isLayerVisible(pickedRoute.getLayer());
+		if (showThisLayerPropagation && isRouteLayerVisibleInTheCanvas)
 		{
     		final List<Link> linksPrimary = pickedRoute.getSeqLinks();
     		drawColateralLinks (linksPrimary , pickedRoute.isBackupRoute()? DEFAULT_REGGUILINK_EDGECOLOR_BACKUP : DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
@@ -1050,10 +1057,15 @@ public class VisualizationState
 			drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 		}
 		/* Picked link the last, so overrides the rest */
-        gnOrigin.setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
-        gnOrigin.setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
-        gnDestination.setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
-        gnDestination.setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+		if (isRouteLayerVisibleInTheCanvas)
+		{
+			final GUINode gnOrigin = getAssociatedGUINode(pickedRoute.getIngressNode() , pickedRoute.getLayer());
+			final GUINode gnDestination = getAssociatedGUINode(pickedRoute.getEgressNode() , pickedRoute.getLayer());
+	        gnOrigin.setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+	        gnOrigin.setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+	        gnDestination.setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+	        gnDestination.setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+		}
     }
 
     public void pickMulticastTree (MulticastTree pickedTree)
@@ -1062,12 +1074,12 @@ public class VisualizationState
     	this.pickedElementType = NetworkElementType.MULTICAST_TREE;
     	this.pickedElementFR = null;
     	this.pickedElementNotFR = pickedTree;
+		final boolean isTreeLayerVisibleInTheCanvas = isLayerVisible(pickedTree.getLayer());
 		final GUINode gnOrigin = getAssociatedGUINode(pickedTree.getIngressNode() , pickedTree.getLayer());
-		if (gnOrigin == null) return; // not a visible layer
 		for (Node egressNode : pickedTree.getEgressNodes())
 		{
 			final GUINode gnDestination = getAssociatedGUINode(egressNode , pickedTree.getLayer());
-			if (showThisLayerPropagation)
+			if (showThisLayerPropagation && isTreeLayerVisibleInTheCanvas)
 			{
 	    		final List<Link> linksPrimary = pickedTree.getSeqLinksToEgressNode(egressNode);
 	    		drawColateralLinks (linksPrimary , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
@@ -1086,12 +1098,18 @@ public class VisualizationState
 				drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 				drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 			}
-	        gnDestination.setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
-	        gnDestination.setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+			if (isTreeLayerVisibleInTheCanvas)
+			{
+		        gnDestination.setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+		        gnDestination.setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+			}
 		}
 		/* Picked link the last, so overrides the rest */
-        gnOrigin.setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
-        gnOrigin.setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+		if (isTreeLayerVisibleInTheCanvas)
+		{
+	        gnOrigin.setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+	        gnOrigin.setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+		}
     }
 
     public void pickLink (Link pickedLink)
@@ -1100,11 +1118,9 @@ public class VisualizationState
     	this.pickedElementType = NetworkElementType.LINK;
     	this.pickedElementFR = null;
     	this.pickedElementNotFR = pickedLink;
-    	
-		final GUILink gl = getAssociatedGUILink(pickedLink);
-		if (gl == null) return; // this means the link layer is not visible
+		final boolean isLinkLayerVisibleInTheCanvas = isLayerVisible(pickedLink.getLayer());
 		Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> thisLayerTraversalInfo = null;
-		if (showThisLayerPropagation)
+		if (showThisLayerPropagation && isLinkLayerVisibleInTheCanvas)
 		{
     		thisLayerTraversalInfo = pickedLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(false);
     		final Set<Link> linksPrimary = thisLayerTraversalInfo.getFirst().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
@@ -1130,14 +1146,18 @@ public class VisualizationState
 			drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 		}
 		/* Picked link the last, so overrides the rest */
-		gl.setHasArrow(true);
-		gl.setArrowStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
-		gl.setEdgeStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
-		final Paint color = pickedLink.isDown()? DEFAULT_REGGUILINK_EDGECOLOR_FAILED : DEFAULT_REGGUILINK_EDGECOLOR_PICKED;
-		gl.setArrowDrawPaint(color);
-		gl.setArrowFillPaint(color);
-		gl.setEdgeDrawPaint(color);
-		gl.setShownSeparated(true);
+		if (isLinkLayerVisibleInTheCanvas)
+		{
+			final GUILink gl = getAssociatedGUILink(pickedLink);
+			gl.setHasArrow(true);
+			gl.setArrowStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
+			gl.setEdgeStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
+			final Paint color = pickedLink.isDown()? DEFAULT_REGGUILINK_EDGECOLOR_FAILED : DEFAULT_REGGUILINK_EDGECOLOR_PICKED;
+			gl.setArrowDrawPaint(color);
+			gl.setArrowFillPaint(color);
+			gl.setEdgeDrawPaint(color);
+			gl.setShownSeparated(true);
+		}
     }
     
     public void pickNode (Node pickedNode)
@@ -1178,12 +1198,10 @@ public class VisualizationState
     	this.pickedElementType = NetworkElementType.FORWARDING_RULE;
     	this.pickedElementFR = pickedFR;
     	this.pickedElementNotFR = null;
+		final boolean isFRLayerVisibleInTheCanvas = isLayerVisible(pickedFR.getFirst().getLayer());
     	final Demand pickedDemand = pickedFR.getFirst();
     	final Link pickedLink = pickedFR.getSecond();
-    	
-		final GUILink gl = getAssociatedGUILink(pickedLink);
-		if (gl == null) return; // this means the link layer is not visible
-		if (showThisLayerPropagation)
+		if (showThisLayerPropagation && isFRLayerVisibleInTheCanvas)
 		{
     		final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
     				pickedLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(false);
@@ -1207,18 +1225,22 @@ public class VisualizationState
 			drawDownPropagationInterLayerLinks (frPropagationLinks , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 		}
 		/* Picked link the last, so overrides the rest */
-		gl.setHasArrow(true);
-		gl.setArrowStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
-		gl.setEdgeStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
-		final Paint color = pickedLink.isDown()? DEFAULT_REGGUILINK_EDGECOLOR_FAILED : DEFAULT_REGGUILINK_EDGECOLOR_PICKED;
-		gl.setArrowDrawPaint(color);
-		gl.setArrowFillPaint(color);
-		gl.setEdgeDrawPaint(color);
-		gl.setShownSeparated(true);
-		gl.getOriginNode().setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
-		gl.getOriginNode().setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
-		gl.getDestinationNode().setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
-		gl.getDestinationNode().setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+		if (isFRLayerVisibleInTheCanvas)
+		{
+			final GUILink gl = getAssociatedGUILink(pickedLink);
+			gl.setHasArrow(true);
+			gl.setArrowStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
+			gl.setEdgeStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
+			final Paint color = pickedLink.isDown()? DEFAULT_REGGUILINK_EDGECOLOR_FAILED : DEFAULT_REGGUILINK_EDGECOLOR_PICKED;
+			gl.setArrowDrawPaint(color);
+			gl.setArrowFillPaint(color);
+			gl.setEdgeDrawPaint(color);
+			gl.setShownSeparated(true);
+			gl.getOriginNode().setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+			gl.getOriginNode().setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+			gl.getDestinationNode().setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+			gl.getDestinationNode().setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+		}
     }
 
     
