@@ -156,6 +156,8 @@ public class OSMMapController
 
         //canvas.updateInterLayerDistanceInNpCoordinates(topologyVisualizationState.getInterLayerSpaceInPixels());
         final double interlayerDistanceNpCoordinates = canvas.getInterLayerDistanceInNpCoordinates();
+        
+        // PABLO: IDEA: WE GET HERE THE AMOUNT DIRECTLY IN OSM ACCORDING TO OSM ZOOM
 
         // Transforming inter layer distance to OSM pixels.
         final GeoPosition geoPosition00 = new GeoPosition(0.0 , 0.0);

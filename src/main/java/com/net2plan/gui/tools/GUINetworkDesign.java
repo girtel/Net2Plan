@@ -407,7 +407,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @Override
     public void resetPickedStateAndUpdateView()
     {
-        vs.resetColorAndShapeState();
+        vs.resetPickedState();
         topologyPanel.getCanvas().resetPickedStateAndRefresh();
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.DEMAND).clearSelection();
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.MULTICAST_DEMAND).clearSelection();
@@ -635,7 +635,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             linksToShowBackup.addAll(pairThisLink.getSecond());
         }
         vs.setLinkProperties(linksToShowPrimary,
-                Color.BLUE, VisualizationConstants.DEFAULT_REGGUILINK_ARROWSTROKE_PICKED,
+                Color.BLUE, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED,
                 true, true);
         vs.setLinkProperties(linksToShowBackup,
                 Color.YELLOW, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_PICKED,
@@ -647,34 +647,16 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @Override
     public void pickLinkAndUpdateView(Link link)
     {
-        resetPickedStateAndUpdateView();
-
-        boolean includeUpLayerLinksCarryingThisTraffic = true;
-        boolean includeThisLayerLinksCarryingThisTraffic = true;
-        boolean includeDownLayerLinksCarryingThisTraffic = true;
-        NetworkLayer layer = link.getLayer();
-        selectNetPlanViewItem(layer.getId(), NetworkElementType.LINK, link.getId());
-
-        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(link.getOriginNode(), layer)), COLOR_INITIALNODE, null, -1);
-        vs.setNodeProperties(Arrays.asList(vs.getAssociatedGUINode(link.getDestinationNode(), layer)), COLOR_ENDNODE, null, -1);
-        Pair<Set<GUILink>, Set<GUILink>> pairLinksToShow = vs.getAssociatedGUILinksIncludingCoupling(link, true);
-        vs.setLinkProperties(pairLinksToShow.getFirst(),
-                Color.BLUE, VisualizationConstants.DEFAULT_REGGUILINK_ARROWSTROKE_PICKED,
-                true, true);
-        vs.setLinkProperties(pairLinksToShow.getSecond(),
-                Color.YELLOW, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_PICKED,
-                true, true);
-
+        vs.pickElement(link);
+        selectNetPlanViewItem(link.getNetPlan().getNetworkLayerDefault().getId(), NetworkElementType.LINK, link.getId());
         topologyPanel.getCanvas().refresh();
     }
 
     @Override
     public void pickNodeAndUpdateView(Node node)
     {
-        resetPickedStateAndUpdateView();
+        vs.pickElement(node);
         selectNetPlanViewItem(node.getNetPlan().getNetworkLayerDefault().getId(), NetworkElementType.NODE, node.getId());
-        vs.setNodeProperties(vs.getVerticallyStackedGUINodes(node), Color.BLUE, null, -1);
-        topologyPanel.getCanvas().refresh();
         topologyPanel.getCanvas().refresh();
     }
 

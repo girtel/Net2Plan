@@ -81,23 +81,23 @@ public class GUILink
         {
             this.hasArrow = DEFAULT_INTRANODEGUILINK_HASARROW;
             this.edgeDrawPaint = DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
-            this.arrowDrawPaint = DEFAULT_INTRANODEGUILINK_ARROWDRAWCOLOR;
-            this.arrowFillPaint = DEFAULT_INTRANODEGUILINK_ARROWFILLCOLOR;
-            this.edgeStrokeIfActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
+            this.arrowDrawPaint = DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
+            this.arrowFillPaint = DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
+            this.edgeStrokeIfActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE;
             this.edgeStrokeIfNotActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
-            this.arrowStrokeIfActiveLayer = DEFAULT_INTRANODEGUILINK_ARROWSTROKE_ACTIVE;
-            this.arrowStrokeIfNotActiveLayer = DEFAULT_INTRANODEGUILINK_ARROWSTROKE;
+            this.arrowStrokeIfActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE;
+            this.arrowStrokeIfNotActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
         }
         else
         {
             this.hasArrow = DEFAULT_REGGUILINK_HASARROW;
-            this.edgeDrawPaint = DEFAULT_REGGUILINK_EDGEDRAWCOLOR;
-            this.arrowDrawPaint = DEFAULT_REGGUILINK_ARROWDRAWCOLOR;
-            this.arrowFillPaint = DEFAULT_REGGUILINK_ARROWFILLCOLOR;
+            this.edgeDrawPaint = DEFAULT_REGGUILINK_EDGECOLOR;
+            this.arrowDrawPaint = DEFAULT_REGGUILINK_EDGECOLOR;
+            this.arrowFillPaint = DEFAULT_REGGUILINK_EDGECOLOR;
             this.edgeStrokeIfActiveLayer = DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER;
             this.edgeStrokeIfNotActiveLayer = DEFAULT_REGGUILINK_EDGESTROKE;
-            this.arrowStrokeIfActiveLayer = DEFAULT_REGGUILINK_ARROWSTROKE_ACTIVELAYER;
-            this.arrowStrokeIfNotActiveLayer = DEFAULT_REGGUILINK_ARROWSTROKE;
+            this.arrowStrokeIfActiveLayer = DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER;
+            this.arrowStrokeIfNotActiveLayer = DEFAULT_REGGUILINK_EDGESTROKE;
         }
         
         this.shownSeparated = false;

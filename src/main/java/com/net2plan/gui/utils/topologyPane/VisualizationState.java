@@ -1,9 +1,25 @@
 package com.net2plan.gui.utils.topologyPane;
 
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.*;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR_PICK;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR_PICK;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_INTRANODEGUILINK_HASARROW;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_FAILED;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_HASARROW;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.SCALE_IN;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.SCALE_OUT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.awt.Color;
+import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.util.ArrayList;
@@ -15,19 +31,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
+import com.google.common.collect.Sets;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.InterLayerPropagationGraph;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.MulticastTree;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
-
-import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.*;
+import com.net2plan.utils.Triple;
 
 public class VisualizationState
 {
@@ -41,8 +62,8 @@ public class VisualizationState
     private int interLayerSpaceInPixels;
     private boolean isNetPlanEditable;
     private NetPlan currentNp;
-    private Set<Node> nonVisibleNodes;
-    private Set<Link> nonVisibleLinks;
+    private Set<Node> nodesToHideAsMandatedByuserInTable;
+    private Set<Link> linksToHideAsMandatedByUserInTable;
 
     /* This only can be changed calling to rebuild */
     private BidiMap<NetworkLayer, Integer> mapLayer2VisualizationOrder; // as many entries as layers
@@ -56,13 +77,68 @@ public class VisualizationState
     private Map<Node, Map<Pair<Integer, Integer>, GUILink>> cache_mapNode2IntraNodeGUILinkMap; // integers are orders of REAL VISIBLE LAYERS
     private Map<Node, List<GUINode>> cache_mapNode2ListVerticallyStackedGUINodes;
 
+    private NetworkElementType pickedElementType;
+    private NetworkElement pickedElementNotFR;
+    private Pair<Demand,Link> pickedElementFR;
 
     public NetPlan getNetPlan()
     {
         return currentNp;
     }
 
-    public VisualizationState(NetPlan currentNp, BidiMap<NetworkLayer, Integer> mapLayer2VisualizationOrder, Map<NetworkLayer,Boolean> layerVisibilityMap)
+    
+    
+    /**
+	 * @return the showLowerLayerPropagation
+	 */
+	public boolean isShowLowerLayerPropagation()
+	{
+		return showLowerLayerPropagation;
+	}
+
+
+
+	/**
+	 * @param showLowerLayerPropagation the showLowerLayerPropagation to set
+	 */
+	public void setShowLowerLayerPropagation(boolean showLowerLayerPropagation)
+	{
+		this.showLowerLayerPropagation = showLowerLayerPropagation;
+		if (pickedElementType != null)
+			if (pickedElementNotFR != null)
+				this.pickElement(pickedElementNotFR);
+			else
+				this.pickElement(pickedElementFR);
+	}
+
+
+
+	/**
+	 * @return the showUpperLayerPropagation
+	 */
+	public boolean isShowUpperLayerPropagation()
+	{
+		return showUpperLayerPropagation;
+	}
+
+
+
+	/**
+	 * @param showUpperLayerPropagation the showUpperLayerPropagation to set
+	 */
+	public void setShowUpperLayerPropagation(boolean showUpperLayerPropagation)
+	{
+		this.showUpperLayerPropagation = showUpperLayerPropagation;
+		if (pickedElementType != null)
+			if (pickedElementNotFR != null)
+				this.pickElement(pickedElementNotFR);
+			else
+				this.pickElement(pickedElementFR);
+	}
+
+
+
+	public VisualizationState(NetPlan currentNp, BidiMap<NetworkLayer, Integer> mapLayer2VisualizationOrder, Map<NetworkLayer,Boolean> layerVisibilityMap)
     {
         this.currentNp = currentNp;
         this.showNodeNames = false;
@@ -71,11 +147,14 @@ public class VisualizationState
         this.showInterLayerLinks = true;
         this.showNonConnectedNodes = true;
         this.isNetPlanEditable = true;
-        this.showLowerLayerPropagation = false;
-        this.showUpperLayerPropagation = false;
-        this.nonVisibleNodes = new HashSet<>();
-        this.nonVisibleLinks = new HashSet<>();
+        this.showLowerLayerPropagation = true;
+        this.showUpperLayerPropagation = true;
+        this.nodesToHideAsMandatedByuserInTable = new HashSet<>();
+        this.linksToHideAsMandatedByUserInTable = new HashSet<>();
         this.interLayerSpaceInPixels = 50; 
+        this.pickedElementType = null;
+        this.pickedElementNotFR = null;
+        this.pickedElementFR = null;
 
 //        this.mapLayer2VisualizationOrder = mapLayer2VisualizationOrder;
 //        this.mapLayerVisibility = new HashMap<>();
@@ -86,7 +165,7 @@ public class VisualizationState
     public boolean isVisible(GUINode gn)
     {
         final Node n = gn.getAssociatedNetPlanNode();
-        if (nonVisibleNodes.contains(n)) return false;
+        if (nodesToHideAsMandatedByuserInTable.contains(n)) return false;
         if (showNonConnectedNodes) return true;
         if (showInterLayerLinks && (getNumberOfVisibleLayers() > 1)) return true;
         if (n.getOutgoingLinks(gn.getLayer()).size() > 0) return true;
@@ -100,7 +179,7 @@ public class VisualizationState
         final Link e = gl.getAssociatedNetPlanLink();
 
         if (!mapShowLayerLinks.get(e.getLayer())) return false;
-        if (nonVisibleLinks.contains(e)) return false;
+        if (linksToHideAsMandatedByUserInTable.contains(e)) return false;
         final boolean inActiveLayer = e.getLayer() == currentNp.getNetworkLayerDefault();
         if (!showLinksInNonActiveLayer && !inActiveLayer) return false;
         return true;
@@ -320,8 +399,8 @@ public class VisualizationState
 
         if (netPlanChanged)
         {
-            nonVisibleNodes = new HashSet<>();
-            nonVisibleLinks = new HashSet<>();
+            nodesToHideAsMandatedByuserInTable = new HashSet<>();
+            linksToHideAsMandatedByUserInTable = new HashSet<>();
         }
         this.cache_intraNodeGUILinks = new HashMap<>();
         this.cache_regularLinkMap = new HashMap<>();
@@ -544,58 +623,58 @@ public class VisualizationState
 
     public void setVisibilityState(Node n, boolean isVisible)
     {
-        if (isVisible) nonVisibleNodes.remove(n);
-        else nonVisibleNodes.add(n);
+        if (isVisible) nodesToHideAsMandatedByuserInTable.remove(n);
+        else nodesToHideAsMandatedByuserInTable.add(n);
     }
 
     public boolean isVisible(Node n)
     {
-        return !nonVisibleNodes.contains(n);
+        return !nodesToHideAsMandatedByuserInTable.contains(n);
     }
 
     public void setVisibilityState(Link e, boolean isVisible)
     {
-        if (isVisible) nonVisibleLinks.remove(e);
-        else nonVisibleLinks.add(e);
+        if (isVisible) linksToHideAsMandatedByUserInTable.remove(e);
+        else linksToHideAsMandatedByUserInTable.add(e);
     }
 
     public boolean isVisible(Link e)
     {
-        return !nonVisibleLinks.contains(e);
+        return !linksToHideAsMandatedByUserInTable.contains(e);
     }
 
     /* Everything to its default color, shape. Separated nodes, are set together again. Visibility state is unchanged */
-    public void resetColorAndShapeState()
-    {
-        for (GUINode n : getAllGUINodes())
-        {
-            n.setFont(DEFAULT_GUINODE_FONT);
-            n.setDrawPaint(DEFAULT_GUINODE_DRAWCOLOR);
-            n.setFillPaint(DEFAULT_GUINODE_FILLCOLOR);
-            n.setShape(DEFAULT_GUINODE_SHAPE);
-            n.setShapeSize(DEFAULT_GUINODE_SHAPESIZE);
-        }
-        for (GUILink e : getAllGUILinks(true, false))
-        {
-            e.setHasArrow(DEFAULT_REGGUILINK_HASARROW);
-            e.setArrowStroke(DEFAULT_REGGUILINK_ARROWSTROKE_ACTIVELAYER , DEFAULT_REGGUILINK_ARROWSTROKE_ACTIVELAYER);
-            e.setEdgeStroke(DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER , DEFAULT_REGGUILINK_EDGESTROKE);
-            e.setArrowDrawPaint(DEFAULT_REGGUILINK_ARROWDRAWCOLOR);
-            e.setArrowFillPaint(DEFAULT_REGGUILINK_ARROWFILLCOLOR);
-            e.setEdgeDrawPaint(DEFAULT_REGGUILINK_EDGEDRAWCOLOR);
-            e.setShownSeparated(false);
-        }
-        for (GUILink e : getAllGUILinks(false, true))
-        {
-            e.setHasArrow(DEFAULT_INTRANODEGUILINK_HASARROW);
-            e.setArrowStroke(DEFAULT_INTRANODEGUILINK_ARROWSTROKE_ACTIVE , DEFAULT_INTRANODEGUILINK_ARROWSTROKE);
-            e.setEdgeStroke(DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE , DEFAULT_INTRANODEGUILINK_EDGESTROKE);
-            e.setArrowDrawPaint(DEFAULT_INTRANODEGUILINK_ARROWDRAWCOLOR);
-            e.setArrowFillPaint(DEFAULT_INTRANODEGUILINK_ARROWFILLCOLOR);
-            e.setEdgeDrawPaint(DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
-            e.setShownSeparated(false);
-        }
-    }
+//    public void resetColorAndShapeState()
+//    {
+//        for (GUINode n : getAllGUINodes())
+//        {
+//            n.setFont(DEFAULT_GUINODE_FONT);
+//            n.setDrawPaint(DEFAULT_GUINODE_DRAWCOLOR);
+//            n.setFillPaint(DEFAULT_GUINODE_FILLCOLOR);
+//            n.setShape(DEFAULT_GUINODE_SHAPE);
+//            n.setShapeSize(DEFAULT_GUINODE_SHAPESIZE);
+//        }
+//        for (GUILink e : getAllGUILinks(true, false))
+//        {
+//            e.setHasArrow(DEFAULT_REGGUILINK_HASARROW);
+//            e.setArrowStroke(DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER , DEFAULT_REGGUILINK_EDGESTROKE);
+//            e.setEdgeStroke(DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER , DEFAULT_REGGUILINK_EDGESTROKE);
+//            e.setArrowDrawPaint(DEFAULT_REGGUILINK_EDGECOLOR);
+//            e.setArrowFillPaint(DEFAULT_REGGUILINK_EDGECOLOR);
+//            e.setEdgeDrawPaint(DEFAULT_REGGUILINK_EDGECOLOR);
+//            e.setShownSeparated(false);
+//        }
+//        for (GUILink e : getAllGUILinks(false, true))
+//        {
+//            e.setHasArrow(DEFAULT_INTRANODEGUILINK_HASARROW);
+//            e.setArrowStroke(DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE , DEFAULT_INTRANODEGUILINK_EDGESTROKE);
+//            e.setEdgeStroke(DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE , DEFAULT_INTRANODEGUILINK_EDGESTROKE);
+//            e.setArrowDrawPaint(DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
+//            e.setArrowFillPaint(DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
+//            e.setEdgeDrawPaint(DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
+//            e.setShownSeparated(false);
+//        }
+//    }
 
     public Set<GUILink> getAllGUILinks(boolean includeRegularLinks, boolean includeInterLayerLinks)
     {
@@ -742,4 +821,142 @@ public class VisualizationState
         return Pair.of(res_1, res_2);
     }
 
+    public boolean isPickedElement () { return pickedElementType != null; }
+    
+    public NetworkElementType getPickedElementType () { return pickedElementType; }
+    
+    public void pickElement (Pair<Demand,Link> fr)
+    {
+    	
+    }
+
+    public void pickElement (NetworkElement e)
+    {
+    	resetPickedState();
+    	this.pickedElementType = NetworkElementType.getType(e);
+    	this.pickedElementFR = null;
+    	this.pickedElementNotFR = e;
+    	if (e instanceof Node)
+    	{
+    		final Node ee = (Node) e;
+    		for (GUINode gn : getVerticallyStackedGUINodes(ee))
+    		{
+                gn.setDrawPaint(DEFAULT_GUINODE_COLOR_PICK);
+                gn.setFillPaint(DEFAULT_GUINODE_COLOR_PICK);
+    		}
+    	} else if (e instanceof Link)
+    	{
+    		final Link pickedLink = (Link) e;
+    		final GUILink gl = getAssociatedGUILink(pickedLink);
+    		if (gl == null) return; // this means the link layer is not visible
+    		final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
+    				pickedLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(false);
+    		final Set<Link> linksPrimary = triple.getFirst().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
+    		final Set<Link> linksBackup = triple.getSecond().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
+    		final Set<Link> linksMulticast = triple.getThird().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet());
+    		drawColateralLinks (Sets.union(Sets.union(linksPrimary , linksBackup) , linksMulticast) , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+    		if (showLowerLayerPropagation)
+    		{
+    			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedLink) , null , false , false);
+    			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+    		}
+    		if (showUpperLayerPropagation)
+    		{
+    			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(pickedLink) , null , true , false);
+    			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+    		}
+    		/* Picked link the last, so overrides the rest */
+    		gl.setHasArrow(true);
+			gl.setArrowStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
+			gl.setEdgeStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED , DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
+			final Paint color = pickedLink.isDown()? DEFAULT_REGGUILINK_EDGECOLOR_FAILED : DEFAULT_REGGUILINK_EDGECOLOR_PICKED;
+			gl.setArrowDrawPaint(color);
+			gl.setArrowFillPaint(color);
+			gl.setEdgeDrawPaint(color);
+			gl.setShownSeparated(true);
+    	} else if (e instanceof Demand)
+    	{
+    		final Demand pickedDemand = (Demand) e;
+    		final GUINode gnOrigin = getAssociatedGUINode(pickedDemand.getIngressNode() , pickedDemand.getLayer());
+    		if (gnOrigin == null) return; // not a visible layer
+    		final GUINode gnDestination = getAssociatedGUINode(pickedDemand.getEgressNode() , pickedDemand.getLayer());
+    		final Pair<Set<Link>,Set<Link>> pair = pickedDemand.getLinksThisLayerPotentiallyCarryingTraffic(false);
+    		final Set<Link> linksPrimary = pair.getFirst();
+    		final Set<Link> linksBackup = pair.getSecond();
+    		final Set<Link> linksPrimaryAndBackup = Sets.intersection(linksPrimary , linksBackup);
+    		drawColateralLinks (Sets.difference(linksPrimary , linksPrimaryAndBackup) , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+    		drawColateralLinks (Sets.difference(linksBackup , linksPrimaryAndBackup) , DEFAULT_REGGUILINK_EDGECOLOR_BACKUP);
+    		drawColateralLinks (linksPrimaryAndBackup , DEFAULT_REGGUILINK_EDGECOLOR_BACKUPANDPRIMARY);
+    		if (showLowerLayerPropagation)
+    		{
+    			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (Sets.newHashSet(pickedDemand) , null , null , false , false);
+    			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+    		}
+    		if (showUpperLayerPropagation)
+    		{
+    			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (Sets.newHashSet(pickedDemand) , null , null , true , false);
+    			drawColateralLinks (ipg.getLinksInGraph() , DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+    		}
+    		/* Picked link the last, so overrides the rest */
+            gnOrigin.setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+            gnOrigin.setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+            gnDestination.setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+            gnDestination.setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
+    	} else throw new RuntimeException ("Bad");
+    	
+    }
+    
+    public void resetPickedState ()
+    {
+    	this.pickedElementType = null;
+    	this.pickedElementFR = null;
+    	this.pickedElementNotFR = null;
+
+        for (GUINode n : getAllGUINodes())
+        {
+            n.setDrawPaint(DEFAULT_GUINODE_COLOR);
+            n.setFillPaint(DEFAULT_GUINODE_COLOR);
+        }
+        for (GUILink e : getAllGUILinks(true, false))
+        {
+            e.setHasArrow(DEFAULT_REGGUILINK_HASARROW);
+            e.setArrowStroke(DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER , DEFAULT_REGGUILINK_EDGESTROKE);
+            e.setEdgeStroke(DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER , DEFAULT_REGGUILINK_EDGESTROKE);
+            final boolean isDown = e.getAssociatedNetPlanLink().isDown(); 
+            final Paint color = isDown? DEFAULT_REGGUILINK_EDGECOLOR_FAILED : DEFAULT_REGGUILINK_EDGECOLOR; 
+            e.setArrowDrawPaint(color);
+            e.setArrowFillPaint(color);
+            e.setEdgeDrawPaint(color);
+            e.setShownSeparated(isDown);
+        }
+        for (GUILink e : getAllGUILinks(false, true))
+        {
+            e.setHasArrow(DEFAULT_INTRANODEGUILINK_HASARROW);
+            e.setArrowStroke(DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE , DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE);
+            e.setEdgeStroke(DEFAULT_INTRANODEGUILINK_EDGESTROKE_ACTIVE , DEFAULT_INTRANODEGUILINK_EDGESTROKE);
+            e.setArrowDrawPaint(DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
+            e.setArrowFillPaint(DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
+            e.setEdgeDrawPaint(DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
+            e.setShownSeparated(false);
+        }
+
+    }
+
+    private void drawColateralLinks (Set<Link> links , Paint colorIfNotFailedLink)
+    {
+		for (Link link : links)
+		{
+			final GUILink glColateral = getAssociatedGUILink(link);
+			if (glColateral == null) continue;
+			glColateral.setArrowStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALACTVELAYER , DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALNONACTIVELAYER);
+			glColateral.setEdgeStroke(DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALACTVELAYER , DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALNONACTIVELAYER);
+			final Paint color = link.isDown()? DEFAULT_REGGUILINK_EDGECOLOR_FAILED : DEFAULT_REGGUILINK_EDGECOLOR_PICKED;
+			glColateral.setArrowDrawPaint(color);
+			glColateral.setArrowFillPaint(color);
+			glColateral.setEdgeDrawPaint(color);
+			glColateral.setShownSeparated(true);
+    		glColateral.setHasArrow(true);
+		}
+    }
+    
 }
