@@ -36,7 +36,7 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
 @SuppressWarnings("unchecked")
-public class ViewEditTopologyTablesPane3D extends JPanel
+public class ViewEditTopologyTablesPane extends JPanel
 {
 	private final IVisualizationCallback callback;
     private JTabbedPane netPlanView;
@@ -44,7 +44,7 @@ public class ViewEditTopologyTablesPane3D extends JPanel
     private Map<NetworkElementType, JComponent> netPlanViewTableComponent;
     private JCheckBox showInitialPlan;
 
-	public ViewEditTopologyTablesPane3D (IVisualizationCallback callback , LayoutManager layout)
+	public ViewEditTopologyTablesPane (IVisualizationCallback callback , LayoutManager layout)
 	{
 		super (layout);
 		

@@ -55,6 +55,7 @@ import javax.swing.border.LineBorder;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
+import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
@@ -64,7 +65,7 @@ import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane3D;
+import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
 import com.net2plan.gui.utils.viewEditWindows.utils.WindowUtils;
 import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
@@ -110,7 +111,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
     private JTextArea txt_netPlanLog;
 
-    private ViewEditTopologyTablesPane3D viewEditTopTables;
+    private ViewEditTopologyTablesPane viewEditTopTables;
     private ViewReportPane reportPane;
     private OfflineExecutionPanel executionPane;
     private OnlineSimulationPane onlineSimulationPane;
@@ -188,7 +189,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         }
         contentPane.add(leftPane, "grow");
 
-        viewEditTopTables = new ViewEditTopologyTablesPane3D(GUINetworkDesign.this, new BorderLayout());
+        viewEditTopTables = new ViewEditTopologyTablesPane(GUINetworkDesign.this, new BorderLayout());
 
         reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
 
@@ -426,6 +427,19 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
      */
     private void selectNetPlanViewItem(NetworkElementType type, Object itemId)
     {
+    	NetworkLayer elementLayer = null;
+    	if (type.equals(NetworkElementType.LINK)) elementLayer = getDesign().getLinkFromId ((long) itemId).getLayer();
+    	else if (type.equals(NetworkElementType.DEMAND)) elementLayer = getDesign().getDemandFromId ((long) itemId).getLayer();
+    	else if (type.equals(NetworkElementType.FORWARDING_RULE)) elementLayer = getDesign().getDemand (((Pair<Integer,Integer>) itemId).getFirst()).getLayer();
+    	else if (type.equals(NetworkElementType.MULTICAST_DEMAND)) elementLayer = getDesign().getMulticastDemandFromId((long) itemId).getLayer();
+    	else if (type.equals(NetworkElementType.MULTICAST_TREE)) elementLayer = getDesign().getMulticastTreeFromId ((long) itemId).getLayer();
+    	else if (type.equals(NetworkElementType.ROUTE)) elementLayer = getDesign().getRouteFromId ((long) itemId).getLayer();
+    	if (elementLayer != null)
+    		if (elementLayer != getDesign().getNetworkLayerDefault())
+    		{
+    			getDesign ().setNetworkLayerDefault(elementLayer);
+    			viewEditTopTables.updateView();
+    		}
     	topologyPanel.updateLayerChooser();
         viewEditTopTables.selectViewItem(type, itemId);
     }
