@@ -1,7 +1,6 @@
 package com.net2plan.gui.utils.topologyPane.jung.osmSupport.state;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
 import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMMapController;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -93,9 +92,13 @@ public class OSMStateManager
         currentState.updateNodeXYPosition();
     }
 
+    public double getCanvasInterlayerDistance(int interLayerDistanceInPixels)
+    {
+        return currentState.getInterLayerDistance(interLayerDistanceInPixels);
+    }
+
     public boolean isMapActivated()
     {
         return currentState instanceof OSMOnState;
     }
-
 }

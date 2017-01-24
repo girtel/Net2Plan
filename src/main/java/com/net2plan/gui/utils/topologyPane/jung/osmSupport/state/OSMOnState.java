@@ -14,6 +14,7 @@ import org.jxmapviewer.viewer.GeoPosition;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -109,6 +110,12 @@ class OSMOnState implements OSMState
     public void updateNodeXYPosition()
     {
         mapController.refreshTopologyAlignment();
+    }
+
+    @Override
+    public double getInterLayerDistance(int interLayerDistanceInPixels)
+    {
+        return interLayerDistanceInPixels;
     }
 
     private Point2D convertJungPointToMapSwing(final ITopologyCanvas canvas, final Point2D jungPoint)

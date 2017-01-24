@@ -4,6 +4,11 @@ import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.viewer.*;
 
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+import java.util.Set;
+
 /**
  * Created by Jorge San Emeterio on 13/10/2016.
  */

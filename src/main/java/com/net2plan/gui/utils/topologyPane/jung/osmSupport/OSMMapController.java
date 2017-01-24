@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import javax.swing.JComponent;
 import javax.swing.OverlayLayout;
 
+import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactory;
 
@@ -41,6 +42,8 @@ public class OSMMapController
     // Previous OSM map state
     private Rectangle previousOSMViewportBounds;
     private int previousZoomLevel;
+
+    private double interLayerDistanceFactor;
 
     /**
      * Starts and runs the OSM map to its original state.
@@ -141,6 +144,16 @@ public class OSMMapController
         // Calculating OSM map center and zoom.
         mapViewer.zoomToBestFit(nodeToGeoPositionMap.isEmpty() ? Collections.singleton(mapViewer.getDefaultPosition()) : new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
         if (netPlan.getNumberOfNodes() <= 1) mapViewer.setZoom(16); // So that the map is not too close to the node.
+
+        // Calculate interLayer distance factor
+        // Transforming inter layer distance to OSM pixels.
+        final GeoPosition geoPosition00 = new GeoPosition(0.0 , 0.0);
+        final GeoPosition geoPosition01 = new GeoPosition(1.0 , 0.0);
+
+        final Point2D osmCoordGeo00 = mapViewer.getTileFactory().geoToPixel(geoPosition00, mapViewer.getZoom());
+        final Point2D osmCoordGeo01 = mapViewer.getTileFactory().geoToPixel(geoPosition01, mapViewer.getZoom());
+
+        this.interLayerDistanceFactor = Math.abs(osmCoordGeo00.getY() - osmCoordGeo01.getY());
     }
 
     /**
@@ -154,20 +167,9 @@ public class OSMMapController
 
         final VisualizationState topologyVisualizationState = callback.getVisualizationState();
 
-        //canvas.updateInterLayerDistanceInNpCoordinates(topologyVisualizationState.getInterLayerSpaceInPixels());
-        final double interlayerDistanceNpCoordinates = canvas.getInterLayerDistanceInNpCoordinates();
-        
-        // PABLO: IDEA: WE GET HERE THE AMOUNT DIRECTLY IN OSM ACCORDING TO OSM ZOOM
-
-        // Transforming inter layer distance to OSM pixels.
-        final GeoPosition geoPosition00 = new GeoPosition(0.0 , 0.0);
-        final GeoPosition geoPosition01 = new GeoPosition(1.0 , 0.0);
-
-        final Point2D osmCoordGeo00 = mapViewer.getTileFactory().geoToPixel(geoPosition00 , mapViewer.getZoom());
-        final Point2D osmCoordGeo01 = mapViewer.getTileFactory().geoToPixel(geoPosition01 , mapViewer.getZoom());
-        final double distanceInOsmCoordOfOneVerticalUnitNpCoordinates = Math.abs(osmCoordGeo00.getY() - osmCoordGeo01.getY());
-
-        final double interLayerDistanceOSMCoordinates = distanceInOsmCoordOfOneVerticalUnitNpCoordinates * interlayerDistanceNpCoordinates;
+        // Getting interlayer distance for OSM coordinates
+        canvas.updateInterLayerDistanceInNpCoordinates(topologyVisualizationState.getInterLayerSpaceInPixels());
+        final double interLayerDistanceOSMCoordinates = canvas.getInterLayerDistanceInNpCoordinates();
 
         // Moving the nodes to the position dictated by their geoposition.
         for (Map.Entry<Node, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
@@ -191,16 +193,17 @@ public class OSMMapController
             }
         }
 
-        /* Rescale and pan JUNG layout so that it fits to OSM viewing */
-        canvas.zoom(canvas.getCanvasCenter(), 1 / (float) canvas.getCurrentCanvasScale());
+        // Removing canvas zoom so that OSM coordinates and JUNG Coordinates align
+        canvas.zoom(canvas.getCanvasCenter(), (float) (1 / canvas.getCurrentCanvasScale()));
 
-        Point2D q = mapViewer.getCenter();
+        // Moving the canvas to the center of the map
+        final Point2D q = mapViewer.getCenter();
 
-        Point2D aux = canvas.getCanvasPointFromNetPlanPoint(canvas.getCanvasCenter());
-        Point2D lvc = new Point2D.Double(aux.getX(), -aux.getY());
+        final Point2D aux = canvas.getCanvasPointFromNetPlanPoint(canvas.getCanvasCenter());
+        final Point2D lvc = new Point2D.Double(aux.getX(), -aux.getY());
 
-        double dx = (lvc.getX() - q.getX());
-        double dy = (lvc.getY() - q.getY());
+        final double dx = (lvc.getX() - q.getX());
+        final double dy = (lvc.getY() - q.getY());
 
         canvas.moveCanvasTo(new Point2D.Double(dx, dy));
 
@@ -297,7 +300,7 @@ public class OSMMapController
     {
         if (canvas.isOSMRunning())
         {
-            refreshTopologyAlignment();
+            restartMap();
         } else
         {
             throw new OSMMapException("Map is currently deactivated");

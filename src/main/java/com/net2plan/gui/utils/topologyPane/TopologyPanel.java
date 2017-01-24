@@ -198,9 +198,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         JButton btn_decreaseFontSize = new JButton();
         btn_decreaseFontSize.setToolTipText("Decrease font size");
         /* Multilayer buttons */
-        btn_increaseInterLayerDistance = new JButton ("+LD");
+        btn_increaseInterLayerDistance = new JButton("+LD");
         btn_increaseInterLayerDistance.setToolTipText("Increase the distance between layers (when more than one layer is visible)");
-        btn_decreaseInterLayerDistance = new JButton ("-LD");
+        btn_decreaseInterLayerDistance = new JButton("-LD");
         btn_decreaseInterLayerDistance.setToolTipText("Decrease the distance between layers (when more than one layer is visible)");
         btn_showLowerLayerInfo = new JToggleButton("Show lower propagation");
         btn_showLowerLayerInfo.setToolTipText("Shows the links in lower layers that carry traffic of the picked element");
@@ -225,23 +225,23 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         it_closeMap.addActionListener(e ->
         {
-        	if (canvas.isOSMRunning())
-        	{
-	            switchOSMSupport(false);
-	            it_osmMap.setEnabled(true);
-	            viewPopUp.remove(it_closeMap);
-        	}
+            if (canvas.isOSMRunning())
+            {
+                switchOSMSupport(false);
+                it_osmMap.setEnabled(true);
+                viewPopUp.remove(it_closeMap);
+            }
         });
 
         it_osmMap.addActionListener(e ->
         {
-        	if (!canvas.isOSMRunning())
-        	{
-	            switchOSMSupport(true);
-	            it_osmMap.setEnabled(false);
-	            viewPopUp.add(it_closeMap);
-        	}
-       	});
+            if (!canvas.isOSMRunning())
+            {
+                switchOSMSupport(true);
+                it_osmMap.setEnabled(false);
+                viewPopUp.add(it_closeMap);
+            }
+        });
 
         viewPopUp.add(it_control);
         viewPopUp.add(new JPopupMenu.Separator());
@@ -268,7 +268,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_decreaseNodeSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseNode.png")));
         btn_increaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseFont.png")));
         btn_decreaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseFont.png")));
-        
+
         btn_load.addActionListener(this);
         btn_loadDemand.addActionListener(this);
         btn_save.addActionListener(this);
@@ -286,7 +286,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showUpperLayerInfo.addActionListener(this);
         btn_multilayer.addActionListener(this);
 
-        
+
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
         toolbar.add(btn_save);
@@ -316,8 +316,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(btn_view);
         toolbar.add(btn_reset);
 
-        
-        
+
         this.addComponentListener(new ComponentAdapter()
         {
             @Override
@@ -332,8 +331,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void actionPerformed(ActionEvent e)
             {
-            	callback.getVisualizationState().increaseNodeSizeAll();
-            	canvas.refresh();
+                callback.getVisualizationState().increaseNodeSizeAll();
+                canvas.refresh();
             }
         });
 
@@ -342,8 +341,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void actionPerformed(ActionEvent e)
             {
-            	callback.getVisualizationState().decreaseNodeSizeAll();
-            	canvas.refresh();
+                callback.getVisualizationState().decreaseNodeSizeAll();
+                canvas.refresh();
             }
         });
 
@@ -352,8 +351,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void actionPerformed(ActionEvent e)
             {
-            	callback.getVisualizationState().increaseFontSizeAll();
-            	canvas.refresh();
+                callback.getVisualizationState().increaseFontSizeAll();
+                canvas.refresh();
             }
         });
 
@@ -362,8 +361,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void actionPerformed(ActionEvent e)
             {
-            	final boolean somethingChanged = callback.getVisualizationState().decreaseFontSizeAll();
-            	if (somethingChanged) canvas.refresh();
+                final boolean somethingChanged = callback.getVisualizationState().decreaseFontSizeAll();
+                if (somethingChanged) canvas.refresh();
             }
         });
 
@@ -420,20 +419,23 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showLinkIds.setSelected(false);
         btn_showNonConnectedNodes.setSelected(true);
 
-        popupPlugin = new PopupMenuPlugin(callback , this.canvas);
-        addPlugin(new PanGraphPlugin(callback, canvas , MouseEvent.BUTTON1_MASK));
+        popupPlugin = new PopupMenuPlugin(callback, this.canvas);
+        addPlugin(new PanGraphPlugin(callback, canvas, MouseEvent.BUTTON1_MASK));
         if (callback.getVisualizationState().isNetPlanEditable() && getCanvas() instanceof JUNGCanvas)
-            addPlugin(new AddLinkGraphPlugin(callback, canvas , MouseEvent.BUTTON1_MASK, MouseEvent.BUTTON1_MASK | MouseEvent.SHIFT_MASK));
+            addPlugin(new AddLinkGraphPlugin(callback, canvas, MouseEvent.BUTTON1_MASK, MouseEvent.BUTTON1_MASK | MouseEvent.SHIFT_MASK));
         addPlugin(popupPlugin);
         if (callback.getVisualizationState().isNetPlanEditable())
-            addPlugin(new MoveNodePlugin(callback, canvas , MouseEvent.BUTTON1_MASK | MouseEvent.CTRL_MASK));
+            addPlugin(new MoveNodePlugin(callback, canvas, MouseEvent.BUTTON1_MASK | MouseEvent.CTRL_MASK));
 
         setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Network topology"));
 //        setAllowLoadTrafficDemand(callback.allowLoadTrafficDemands());
     }
 
-    public VisualizationState getVisualizationState () { return callback.getVisualizationState(); }
-    
+    public VisualizationState getVisualizationState()
+    {
+        return callback.getVisualizationState();
+    }
+
     @Override
     public void actionPerformed(ActionEvent e)
     {
@@ -475,8 +477,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             zoomAll();
         } else if (src == btn_reset)
         {
-        	callback.loadDesignDoNotUpdateVisualization(new NetPlan ());
-        	callback.updateVisualizationAfterNewTopology();
+            callback.loadDesignDoNotUpdateVisualization(new NetPlan());
+            callback.updateVisualizationAfterNewTopology();
             callback.resetPickedStateAndUpdateView();
         } else if (src == btn_increaseInterLayerDistance)
         {
@@ -489,7 +491,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         	canvas.updateInterLayerDistanceInNpCoordinates (newInterLayerDistance);
         	canvas.updateAllVerticesXYPosition();
 
-        	canvas.refresh();
+            canvas.refresh();
         } else if (src == btn_decreaseInterLayerDistance)
         {
         	if (vs.getNumberOfVisibleLayers() == 1) return;
@@ -525,7 +527,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             frame.setVisible(true);
         }
-        
+
     }
 
     /**
@@ -651,7 +653,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             if (rc != JFileChooser.APPROVE_OPTION) return;
 
             NetPlan demands = fc_demands.readDemands();
-            
+
             if (!demands.hasDemands() && !demands.hasMulticastDemands())
                 throw new Net2PlanException("Selected file doesn't contain a demand set");
 
@@ -677,7 +679,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     netPlan.addMulticastDemand(netPlan.getNode(demand.getIngressNode().getIndex()), egressNodesThisNetPlan, demand.getOfferedTraffic(), demand.getAttributes());
                 }
 
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.MULTICAST_DEMAND));
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND, NetworkElementType.MULTICAST_DEMAND));
             } catch (Throwable ex)
             {
                 callback.getDesign().assignFrom(aux_netPlan);
@@ -833,7 +835,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         canvas.zoomOut();
     }
 
-    private  void switchOSMSupport(final boolean doSwitch)
+    private void switchOSMSupport(final boolean doSwitch)
     {
         if (doSwitch)
             canvas.runOSMSupport();
