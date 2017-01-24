@@ -135,7 +135,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             public void setValueAt(Object newValue, int row, int column)
             {
 //                final Object oldValue = getValueAt(row, column);
-//
+
                 final VisualizationState visualizationState = callback.getVisualizationState();
 
                 final NetworkLayer selectedLayer = netPlan.getNetworkLayer((int) this.getValueAt(row, COLUMN_INDEX));
@@ -174,6 +174,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             this.tableModel.setDataVector(layerData.toArray(new Object[layerData.size()][tableHeader.length]), tableHeader);
         }
 
+        // NOTE: Why do we have to update this every time?
         // Adding buttons to the Move Up/Down Colummn
         final TableColumn moveUpDownColumn = this.getColumn(tableHeader[COLUMN_UP_DOWN]);
         moveUpDownColumn.setCellRenderer(new ButtonRenderer());
