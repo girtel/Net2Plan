@@ -33,7 +33,6 @@ import javax.swing.JComponent;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.*;
-import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMMapController;
 import com.net2plan.gui.utils.topologyPane.jung.osmSupport.state.OSMStateManager;
 import com.net2plan.interfaces.networkDesign.Node;
 import org.apache.commons.collections15.Transformer;
@@ -83,7 +82,7 @@ import edu.uci.ics.jung.visualization.util.ArrowFactory;
 @SuppressWarnings("unchecked")
 public final class JUNGCanvas implements ITopologyCanvas
 {
-	private double currentInterLayerDistanceInNpCoordinates;
+    private double currentInterLayerDistanceInNpCoordinates;
     private final VisualizationState vs;
     private final Transformer<GUINode, Point2D> transformNetPlanCoordinatesToJungCoordinates;
 
@@ -195,7 +194,7 @@ public final class JUNGCanvas implements ITopologyCanvas
 
         vv.setOpaque(false);
         vv.setBackground(new Color(0, 0, 0, 0));
-        
+
         this.updateInterLayerDistanceInNpCoordinates(vs.getInterLayerSpaceInPixels());
 
 //        reset();
@@ -219,15 +218,11 @@ public final class JUNGCanvas implements ITopologyCanvas
      * @param jungLayoutCoord (@code Point2D) on the SWING canvas.
      * @return (@code Point2D) on the JUNG canvas.
      */
-    // NOTE: Do not know if it is the correct name
     @Override
     public Point2D getCanvasPointFromNetPlanPoint(Point2D screenPoint)
     {
         Point2D layoutOrViewCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, screenPoint);
         layoutOrViewCoordinates.setLocation(layoutOrViewCoordinates.getX(), -layoutOrViewCoordinates.getY());
-
-        Point2D layoutOrViewCoordinates2 = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.VIEW, screenPoint);
-        layoutOrViewCoordinates2.setLocation(layoutOrViewCoordinates2.getX(), -layoutOrViewCoordinates2.getY());
 
         return layoutOrViewCoordinates;
     }
@@ -308,14 +303,14 @@ public final class JUNGCanvas implements ITopologyCanvas
         return Collections.unmodifiableSet(new HashSet<>(g.getEdges()));
     }
 
-    public Layout<GUINode, GUILink> getLayout()
-    {
-        return l;
-    }
-
     public Transformer<GUINode, Point2D> getTransformer()
     {
         return transformNetPlanCoordinatesToJungCoordinates;
+    }
+
+    public Layout<GUINode, GUILink> getLayout()
+    {
+        return l;
     }
 
     @Override
@@ -647,26 +642,16 @@ public final class JUNGCanvas implements ITopologyCanvas
 
         }
     }
-    
+
     @Override
-	public void updateInterLayerDistanceInNpCoordinates  (int interLayerDistanceInPixels)
-	{
-    	final Rectangle r = vv.getBounds();
-	    final double canvasScale = this.getCurrentCanvasScale();
-    	if (r.getHeight() == 0)
-        {
-    		this.currentInterLayerDistanceInNpCoordinates = interLayerDistanceInPixels;
-        } else
-        {
-//            final double JUNGWindowHeight = r.getHeight() / canvasScale;
-//            final double conversionFactor = JUNGWindowHeight / r.getHeight();
-            final double conversionFactor = 1 / canvasScale;
-    		this.currentInterLayerDistanceInNpCoordinates = interLayerDistanceInPixels * conversionFactor;
-        }
+    public void updateInterLayerDistanceInNpCoordinates(int interLayerDistanceInPixels)
+    {
+        this.currentInterLayerDistanceInNpCoordinates = osmStateManager.getCanvasInterlayerDistance(interLayerDistanceInPixels);
     }
+
     @Override
-	public double getInterLayerDistanceInNpCoordinates  ()
-	{
-    	return currentInterLayerDistanceInNpCoordinates;
-	}
+    public double getInterLayerDistanceInNpCoordinates()
+    {
+        return currentInterLayerDistanceInNpCoordinates;
+    }
 }

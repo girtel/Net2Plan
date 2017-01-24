@@ -60,7 +60,7 @@ public class OSMJUNGOffState extends OSMOffState
     {
         canvas.zoom(canvas.getCanvasCenter(), VisualizationConstants.SCALE_IN);
         canvas.updateInterLayerDistanceInNpCoordinates(callback.getVisualizationState().getInterLayerSpaceInPixels());
-    	canvas.updateAllVerticesXYPosition();
+        canvas.updateAllVerticesXYPosition();
     }
 
     @Override
@@ -68,7 +68,7 @@ public class OSMJUNGOffState extends OSMOffState
     {
         canvas.zoom(canvas.getCanvasCenter(), VisualizationConstants.SCALE_OUT);
         canvas.updateInterLayerDistanceInNpCoordinates(callback.getVisualizationState().getInterLayerSpaceInPixels());
-    	canvas.updateAllVerticesXYPosition();
+        canvas.updateAllVerticesXYPosition();
     }
 
     @Override
@@ -110,7 +110,7 @@ public class OSMJUNGOffState extends OSMOffState
 
         canvas.moveCanvasTo(new Point2D.Double(dx, dy));
         canvas.updateInterLayerDistanceInNpCoordinates(vs.getInterLayerSpaceInPixels());
-    	canvas.updateAllVerticesXYPosition();
+        canvas.updateAllVerticesXYPosition();
     }
 
     @Override
@@ -154,5 +154,22 @@ public class OSMJUNGOffState extends OSMOffState
         {
             canvas.getLayout().setLocation(guiNode, canvas.getTransformer().transform(guiNode));
         }
+    }
+
+    @Override
+    public double getInterLayerDistance(int interLayerDistanceInPixels)
+    {
+        final double currentInterLayerDistanceInNpCoordinates;
+
+        final Rectangle r = canvas.getCanvasComponent().getBounds();
+        if (r.getHeight() == 0)
+        {
+            currentInterLayerDistanceInNpCoordinates = interLayerDistanceInPixels;
+        } else
+        {
+            currentInterLayerDistanceInNpCoordinates = interLayerDistanceInPixels / canvas.getCurrentCanvasScale();
+        }
+
+        return currentInterLayerDistanceInNpCoordinates;
     }
 }

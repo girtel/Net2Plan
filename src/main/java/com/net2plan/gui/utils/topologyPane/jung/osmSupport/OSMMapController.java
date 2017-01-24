@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import javax.swing.JComponent;
 import javax.swing.OverlayLayout;
 
+import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactory;
 
@@ -189,16 +190,17 @@ public class OSMMapController
             }
         }
 
-        /* Rescale and pan JUNG layout so that it fits to OSM viewing */
-        canvas.zoom(canvas.getCanvasCenter(), 1 / (float) canvas.getCurrentCanvasScale());
+        // Removing canvas zoom so that OSM coordinates and JUNG Coordinates align
+        canvas.zoom(canvas.getCanvasCenter(), (float) (1 / canvas.getCurrentCanvasScale()));
 
-        Point2D q = mapViewer.getCenter();
+        // Moving the canvas to the center of the map
+        final Point2D q = mapViewer.getCenter();
 
-        Point2D aux = canvas.getCanvasPointFromNetPlanPoint(canvas.getCanvasCenter());
-        Point2D lvc = new Point2D.Double(aux.getX(), -aux.getY());
+        final Point2D aux = canvas.getCanvasPointFromNetPlanPoint(canvas.getCanvasCenter());
+        final Point2D lvc = new Point2D.Double(aux.getX(), -aux.getY());
 
-        double dx = (lvc.getX() - q.getX());
-        double dy = (lvc.getY() - q.getY());
+        final double dx = (lvc.getX() - q.getX());
+        final double dy = (lvc.getY() - q.getY());
 
         canvas.moveCanvasTo(new Point2D.Double(dx, dy));
 

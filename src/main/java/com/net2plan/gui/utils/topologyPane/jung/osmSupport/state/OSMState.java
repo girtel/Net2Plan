@@ -26,4 +26,6 @@ interface OSMState
     void takeSnapshot();
 
     void updateNodeXYPosition();
+
+    double getInterLayerDistance(int interLayerDistanceInPixels);
 }
