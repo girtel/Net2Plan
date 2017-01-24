@@ -42,6 +42,8 @@ public class OSMMapController
     private Rectangle previousOSMViewportBounds;
     private int previousZoomLevel;
 
+    private double interLayerDistanceFactor;
+
     /**
      * Starts and runs the OSM map to its original state.
      * This method should be executed when the OSM map is not yet loaded.
@@ -141,6 +143,16 @@ public class OSMMapController
         // Calculating OSM map center and zoom.
         mapViewer.zoomToBestFit(nodeToGeoPositionMap.isEmpty() ? Collections.singleton(mapViewer.getDefaultPosition()) : new HashSet<>(nodeToGeoPositionMap.values()), zoomRatio);
         if (netPlan.getNumberOfNodes() <= 1) mapViewer.setZoom(16); // So that the map is not too close to the node.
+
+        // Calculate interLayer distance factor
+        // Transforming inter layer distance to OSM pixels.
+        final GeoPosition geoPosition00 = new GeoPosition(0.0 , 0.0);
+        final GeoPosition geoPosition01 = new GeoPosition(1.0 , 0.0);
+
+        final Point2D osmCoordGeo00 = mapViewer.getTileFactory().geoToPixel(geoPosition00, mapViewer.getZoom());
+        final Point2D osmCoordGeo01 = mapViewer.getTileFactory().geoToPixel(geoPosition01, mapViewer.getZoom());
+
+        this.interLayerDistanceFactor = Math.abs(osmCoordGeo00.getY() - osmCoordGeo01.getY());
     }
 
     /**
@@ -153,19 +165,7 @@ public class OSMMapController
         final Map<Node, GeoPosition> nodeToGeoPositionMap = netPlan.getNodes().stream().collect(Collectors.toMap(node->node, node -> new GeoPosition(node.getXYPositionMap().getY(), node.getXYPositionMap().getX())));
 
         final VisualizationState topologyVisualizationState = callback.getVisualizationState();
-
-        //canvas.updateInterLayerDistanceInNpCoordinates(topologyVisualizationState.getInterLayerSpaceInPixels());
-        final double interlayerDistanceNpCoordinates = canvas.getInterLayerDistanceInNpCoordinates();
-
-        // Transforming inter layer distance to OSM pixels.
-        final GeoPosition geoPosition00 = new GeoPosition(0.0 , 0.0);
-        final GeoPosition geoPosition01 = new GeoPosition(1.0 , 0.0);
-
-        final Point2D osmCoordGeo00 = mapViewer.getTileFactory().geoToPixel(geoPosition00 , mapViewer.getZoom());
-        final Point2D osmCoordGeo01 = mapViewer.getTileFactory().geoToPixel(geoPosition01 , mapViewer.getZoom());
-        final double distanceInOsmCoordOfOneVerticalUnitNpCoordinates = Math.abs(osmCoordGeo00.getY() - osmCoordGeo01.getY());
-
-        final double interLayerDistanceOSMCoordinates = distanceInOsmCoordOfOneVerticalUnitNpCoordinates * interlayerDistanceNpCoordinates;
+        final double interLayerDistanceOSMCoordinates = this.interLayerDistanceFactor * canvas.getInterLayerDistanceInNpCoordinates();
 
         // Moving the nodes to the position dictated by their geoposition.
         for (Map.Entry<Node, GeoPosition> entry : nodeToGeoPositionMap.entrySet())
@@ -295,7 +295,7 @@ public class OSMMapController
     {
         if (canvas.isOSMRunning())
         {
-            refreshTopologyAlignment();
+            restartMap();
         } else
         {
             throw new OSMMapException("Map is currently deactivated");
