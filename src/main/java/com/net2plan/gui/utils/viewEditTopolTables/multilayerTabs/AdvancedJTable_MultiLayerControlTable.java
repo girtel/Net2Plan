@@ -15,10 +15,8 @@ import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
-import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
-import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
 /**
@@ -28,7 +26,6 @@ import com.net2plan.utils.StringUtils;
 public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 {
     private final IVisualizationCallback callback;
-    private final NetPlan netPlan;
 
     private final DefaultTableModel tableModel;
 
@@ -62,7 +59,6 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         super();
 
         this.callback = callback;
-        this.netPlan = callback.getDesign();
 
         this.tableModel = createTableModel();
 
@@ -86,7 +82,8 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         final VisualizationState visualizationState = callback.getVisualizationState();
 
         final LinkedList<Object[]> allLayerData = new LinkedList<>();
-        for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
+
+        for (NetworkLayer networkLayer : callback.getDesign().getNetworkLayers())
         {
             final boolean isActiveLayer = isDefaultLayer(networkLayer);
             int layerOrder = visualizationState.getVisualizationOrderNotRemovingNonVisible(networkLayer);
@@ -97,7 +94,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             layerData[COLUMN_NAME] = networkLayer.getName();
             layerData[COLUMN_LAYER_VISIBILITY] = isActiveLayer || visualizationState.isLayerVisible(networkLayer);
             layerData[COLUMN_LAYER_LINK_VISIBILITY] = visualizationState.isLayerLinksShown(networkLayer);
-            layerData[COLUMN_IS_DEFAULT] = netPlan.getNetworkLayerDefault() == networkLayer; // NOTE: Should this go in the visualization state?
+            layerData[COLUMN_IS_DEFAULT] = callback.getDesign().getNetworkLayerDefault() == networkLayer; // NOTE: Should this go in the visualization state?
 
             allLayerData.add(layerOrder, layerData);
         }
@@ -120,7 +117,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                         return false;
                     case COLUMN_LAYER_VISIBILITY:
                     case COLUMN_IS_DEFAULT:
-                        final NetworkLayer selectedLayer = netPlan.getNetworkLayer((int) this.getValueAt(rowIndex, COLUMN_INDEX));
+                        final NetworkLayer selectedLayer = callback.getDesign().getNetworkLayer((int) this.getValueAt(rowIndex, COLUMN_INDEX));
                         return !(isDefaultLayer(selectedLayer));
                     default:
                         return true;
@@ -134,7 +131,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 //
                 final VisualizationState visualizationState = callback.getVisualizationState();
 
-                final NetworkLayer selectedLayer = netPlan.getNetworkLayer((int) this.getValueAt(row, COLUMN_INDEX));
+                final NetworkLayer selectedLayer = callback.getDesign().getNetworkLayer((int) this.getValueAt(row, COLUMN_INDEX));
 
                 switch (column)
                 {
@@ -145,7 +142,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                         visualizationState.setLayerLinksVisibility(selectedLayer, (Boolean) newValue);
                         break;
                     case COLUMN_IS_DEFAULT:
-                        netPlan.setNetworkLayerDefault(selectedLayer);
+                        callback.getDesign().setNetworkLayerDefault(selectedLayer);
                         visualizationState.setLayerVisibility(selectedLayer, true);
                         break;
                     default:
@@ -162,7 +159,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 
     public synchronized void updateTable()
     {
-        if (netPlan.getNumberOfLayers() > 0)
+        if (callback.getDesign().getNumberOfLayers() > 0)
         {
             final List<Object[]> layerData = this.getAllData();
 
@@ -187,6 +184,6 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 
     private boolean isDefaultLayer(final NetworkLayer layer)
     {
-        return netPlan.getNetworkLayerDefault() == layer;
+        return callback.getDesign().getNetworkLayerDefault() == layer;
     }
 }

@@ -248,7 +248,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
 //                    OSMMapStateBuilder.getSingleton().getPointToMoveNode(node, nodePosition.get(node.getId()));
 //                }
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                callback.justApplyZoomAll();
+                //callback.justApplyZoomAll();
             });
 
             topologySettingMenu.add(circularSetting);
