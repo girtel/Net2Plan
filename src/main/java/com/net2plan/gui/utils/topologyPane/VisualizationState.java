@@ -267,11 +267,11 @@ public class VisualizationState
         return res;
     }
 
-    public LinkedList<NetworkLayer> getLayersInVisualizationOrder(boolean includeInvisibleLayers)
+    public List<NetworkLayer> getLayersInVisualizationOrder(boolean includeInvisibleLayers)
     {
         final Map<Integer, NetworkLayer> layerToOrderMap = MapUtils.invertMap(includeInvisibleLayers ? mapLayer2VisualizationOrder : cache_mapVisibleLayer2VisualizationOrder);
 
-        final LinkedList<NetworkLayer> orderedNetworkLayers = new LinkedList<>();
+        final List<NetworkLayer> orderedNetworkLayers = new ArrayList<>();
         for (int i = 0; i < layerToOrderMap.size(); i++)
         {
             orderedNetworkLayers.add(layerToOrderMap.get(i));
@@ -280,24 +280,24 @@ public class VisualizationState
         return orderedNetworkLayers;
     }
 
-    public void updateLayerVisualizationState(NetPlan newCurrentNetPlan)
+    public void updateLayerVisualizationState(NetPlan netPlan)
     {
-        updateLayerVisualizationState(newCurrentNetPlan, this.mapLayer2VisualizationOrder, this.mapLayer2Visibility);
+        updateLayerVisualizationState(netPlan, this.mapLayer2VisualizationOrder, this.mapLayer2Visibility);
     }
 
-    public void updateLayerVisualizationState(NetPlan currentNetPlan, Map<NetworkLayer, Integer> layerVisibilityOrderMap)
+    public void updateLayerVisualizationState(NetPlan netPlan, Map<NetworkLayer, Integer> layerVisibilityOrderMap)
     {
-        updateLayerVisualizationState(currentNetPlan, layerVisibilityOrderMap, this.mapLayer2Visibility);
+        updateLayerVisualizationState(netPlan, layerVisibilityOrderMap, this.mapLayer2Visibility);
     }
 
-    public void updateLayerVisualizationState(NetPlan newCurrentNetPlan, Map<NetworkLayer, Integer> layerVisibilityOrderMap,
+    public void updateLayerVisualizationState(NetPlan newNetPlan, Map<NetworkLayer, Integer> layerVisibilityOrderMap,
                                               Map<NetworkLayer, Boolean> mapLayerVisibility)
     {
-        if (newCurrentNetPlan == null) throw new RuntimeException("Trying to update an empty topology");
+        if (newNetPlan == null) throw new RuntimeException("Trying to update an empty topology");
 
-        final boolean netPlanChanged = this.currentNp != newCurrentNetPlan;
+        final boolean netPlanChanged = this.currentNp != newNetPlan;
 
-        this.currentNp = newCurrentNetPlan;
+        this.currentNp = newNetPlan;
         this.mapLayer2VisualizationOrder = layerVisibilityOrderMap;
         this.mapLayer2Visibility = new HashMap<>(mapLayerVisibility);
 

@@ -7,10 +7,7 @@ import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
+import javax.swing.table.*;
 
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.CellRenderers;
@@ -85,13 +82,13 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
     {
         final VisualizationState visualizationState = callback.getVisualizationState();
 
-        final LinkedList<Object[]> allLayerData = new LinkedList<>();
+        final List<Object[]> allLayerData = new ArrayList<>();
         for (NetworkLayer networkLayer : visualizationState.getLayersInVisualizationOrder(true))
         {
-            final boolean isActiveLayer = isDefaultLayer(networkLayer);
+            final boolean isActiveLayer = callback.getDesign().getNetworkLayerDefault() == networkLayer;
 
             final Object[] layerData = new Object[tableHeader.length];
-            layerData[COLUMN_UP_DOWN] = "";
+            layerData[COLUMN_UP_DOWN] = new Object();
             layerData[COLUMN_INDEX] = networkLayer.getIndex();
             layerData[COLUMN_NAME] = networkLayer.getName();
             layerData[COLUMN_LAYER_VISIBILITY] = isActiveLayer || visualizationState.isLayerVisible(networkLayer);
@@ -120,7 +117,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                     case COLUMN_LAYER_VISIBILITY:
                     case COLUMN_IS_DEFAULT:
                         final NetworkLayer selectedLayer = callback.getDesign().getNetworkLayer((int) this.getValueAt(rowIndex, COLUMN_INDEX));
-                        return !(isDefaultLayer(selectedLayer));
+                        return !(callback.getDesign().getNetworkLayerDefault() == selectedLayer);
                     default:
                         return true;
                 }
@@ -138,10 +135,11 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                 switch (column)
                 {
                     case COLUMN_LAYER_VISIBILITY:
-                        visualizationState.setLayerVisibility(selectedLayer, (Boolean) newValue);
+                        final boolean state = (boolean) newValue;
+                        visualizationState.setLayerVisibility(selectedLayer, state);
                         break;
                     case COLUMN_LAYER_LINK_VISIBILITY:
-                        visualizationState.setLayerLinksVisibility(selectedLayer, (Boolean) newValue);
+                        visualizationState.setLayerLinksVisibility(selectedLayer, (boolean) newValue);
                         break;
                     case COLUMN_IS_DEFAULT:
                         callback.getDesign().setNetworkLayerDefault(selectedLayer);
@@ -159,7 +157,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         };
     }
 
-    private synchronized void updateTable()
+    public synchronized void updateTable()
     {
         if (callback.getDesign().getNumberOfLayers() > 0)
         {
@@ -169,12 +167,6 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             this.tableModel.setDataVector(layerData.toArray(new Object[layerData.size()][tableHeader.length]), tableHeader);
         }
 
-        // NOTE: Why do we have to update this every time?
-        // Adding buttons to the Move Up/Down Colummn
-        final TableColumn moveUpDownColumn = this.getColumn(tableHeader[COLUMN_UP_DOWN]);
-        moveUpDownColumn.setCellRenderer(new ButtonRenderer());
-        moveUpDownColumn.setCellEditor(new ButtonEditor());
-
         this.revalidate();
         this.repaint();
     }
@@ -183,16 +175,14 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
     {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new CellRenderers.NumberCellRenderer());
-        setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
         setDefaultRenderer(Float.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Long.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Integer.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(String.class, new CellRenderers.NonEditableCellRenderer());
-    }
 
-    private boolean isDefaultLayer(final NetworkLayer layer)
-    {
-        return callback.getDesign().getNetworkLayerDefault() == layer;
+        // Using Object class for button cell
+        setDefaultRenderer(Object.class, new ButtonRenderer());
+        setDefaultEditor(Object.class, new ButtonEditor());
     }
 
     /**
@@ -223,7 +213,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         @Override
         public Object getCellEditorValue()
         {
-            return "";
+            return null;
         }
 
         @Override
@@ -258,19 +248,19 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 
     private class ButtonPanel extends JPanel implements ActionListener
     {
-        private final JButton upButton, downButton;
+        private final JButton btn_up, btn_down;
 
         private ButtonPanel()
         {
             this.setLayout(new GridLayout(1, 2));
-            upButton = new JButton("\u2191");
-            downButton = new JButton("\u2193");
+            btn_up = new JButton("\u2191");
+            btn_down = new JButton("\u2193");
 
-            this.add(upButton);
-            this.add(downButton);
+            this.add(btn_up);
+            this.add(btn_down);
 
-            upButton.addActionListener(this);
-            downButton.addActionListener(this);
+            btn_up.addActionListener(this);
+            btn_down.addActionListener(this);
         }
 
         @Override
@@ -279,7 +269,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             final VisualizationState vs = callback.getVisualizationState();
 
             final Object src = e.getSource();
-            if (src == upButton)
+            if (src == btn_up)
             {
                 if (getSelectedRow() == 0) return;
 
@@ -294,7 +284,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                 this.swap(layerOrderMap, selectedLayer, neighbourLayer);
 
                 vs.updateLayerVisualizationState(callback.getDesign(), layerOrderMap);
-            } else if (src == downButton)
+            } else if (src == btn_down)
             {
                 if (getSelectedRow() == getRowCount() - 1) return;
 
