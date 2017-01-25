@@ -9,10 +9,6 @@ import java.awt.Stroke;
 import java.util.*;
 import java.util.Map.Entry;
 
-import org.apache.commons.collections15.BidiMap;
-import org.apache.commons.collections15.MapUtils;
-import org.apache.commons.collections15.bidimap.DualHashBidiMap;
-
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.MulticastTree;
@@ -20,6 +16,7 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.utils.Pair;
+import org.apache.commons.collections15.MapUtils;
 
 
 public class VisualizationState
@@ -301,7 +298,7 @@ public class VisualizationState
         final boolean netPlanChanged = this.currentNp != newCurrentNetPlan;
 
         this.currentNp = newCurrentNetPlan;
-        this.mapLayer2VisualizationOrder = new DualHashBidiMap<>(layerVisibilityOrderMap);
+        this.mapLayer2VisualizationOrder = layerVisibilityOrderMap;
         this.mapLayer2Visibility = new HashMap<>(mapLayerVisibility);
 
         if (!mapLayer2VisualizationOrder.keySet().equals(new HashSet<>(currentNp.getNetworkLayers())) || !mapLayerVisibility.keySet().equals(new HashSet<>(currentNp.getNetworkLayers())))
@@ -324,7 +321,7 @@ public class VisualizationState
         }
         this.cache_intraNodeGUILinks = new HashMap<>();
         this.cache_regularLinkMap = new HashMap<>();
-        this.cache_mapVisibleLayer2VisualizationOrder = new DualHashBidiMap<>();
+        this.cache_mapVisibleLayer2VisualizationOrder = new HashMap<>(  );
         this.cache_mapNode2IntraNodeGUILinkMap = new HashMap<>();
         this.cache_mapNode2ListVerticallyStackedGUINodes = new HashMap<>();
         for (int layerIndex = 0; layerIndex < currentNp.getNumberOfLayers(); layerIndex++)
@@ -655,7 +652,7 @@ public class VisualizationState
     public void setLayerVisibility(final NetworkLayer layer, final boolean isVisible)
     {
         if (!this.currentNp.getNetworkLayers().contains(layer)) throw new RuntimeException();
-        BidiMap<NetworkLayer, Integer> new_layerVisiblityOrderMap = new DualHashBidiMap<>(this.mapLayer2VisualizationOrder);
+        Map<NetworkLayer, Integer> new_layerVisiblityOrderMap = this.mapLayer2VisualizationOrder;
         Map<NetworkLayer, Boolean> new_layerVisibilityMap = new HashMap<>(this.mapLayer2Visibility);
         new_layerVisibilityMap.put(layer, isVisible);
         updateLayerVisualizationState(this.currentNp, new_layerVisiblityOrderMap, new_layerVisibilityMap);
@@ -711,10 +708,10 @@ public class VisualizationState
         return includeInvisibleLayers ? mapLayer2VisualizationOrder : cache_mapVisibleLayer2VisualizationOrder;
     }
 
-    public static Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> generateDefaultVisualizationLayerInfo(NetPlan np)
+    public static Pair<Map<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> generateDefaultVisualizationLayerInfo(NetPlan np)
     {
         final int L = np.getNumberOfLayers();
-        final BidiMap<NetworkLayer, Integer> res_1 = new DualHashBidiMap<>();
+        final Map<NetworkLayer, Integer> res_1 = new HashMap<>();
         final Map<NetworkLayer, Boolean> res_2 = new HashMap<>(L);
 
         for (NetworkLayer layer : np.getNetworkLayers())

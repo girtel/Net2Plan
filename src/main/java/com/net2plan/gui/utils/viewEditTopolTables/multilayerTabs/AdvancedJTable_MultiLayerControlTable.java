@@ -12,23 +12,16 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
-import com.google.common.base.Functions;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.Ordering;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
 import com.net2plan.utils.StringUtils;
-import org.apache.commons.collections15.BidiMap;
-import org.apache.commons.collections15.MapUtils;
-import org.apache.commons.collections15.SortedBidiMap;
-import org.apache.commons.collections15.bidimap.DualHashBidiMap;
-import org.apache.commons.collections15.bidimap.UnmodifiableOrderedBidiMap;
 
 /**
  * @author Jorge San Emeterio
@@ -203,14 +196,13 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
     }
 
     /**
-     * @version 1.0 11/09/98
+     * Credits to user "MadProgrammer" from stack overflow for his <a href="http://stackoverflow.com/questions/17565169/unable-to-add-two-buttons-in-a-single-cell-in-a-jtable">ButtonEditor</a>.
      */
-
     private class ButtonEditor extends AbstractCellEditor implements TableCellEditor
     {
         private ButtonPanel buttonPanel;
 
-        public ButtonEditor()
+        private ButtonEditor()
         {
             buttonPanel = new ButtonPanel();
         }
@@ -245,7 +237,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
     {
         private ButtonPanel panel;
 
-        public ButtonRenderer()
+        private ButtonRenderer()
         {
             panel = new ButtonPanel();
         }
@@ -268,7 +260,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
     {
         private final JButton upButton, downButton;
 
-        public ButtonPanel()
+        private ButtonPanel()
         {
             this.setLayout(new GridLayout(1, 2));
             upButton = new JButton("\u2191");
@@ -289,34 +281,58 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             final Object src = e.getSource();
             if (src == upButton)
             {
-                final BidiMap<NetworkLayer, Integer> layerOrderIndexMap = new DualHashBidiMap<>(vs.getLayerOrderIndexMap(true));
-                final NetworkLayer selectedLayer = callback.getDesign().getNetworkLayer((int) getValueAt(getSelectedRow(), COLUMN_INDEX));
-                final int currentOrderIndex = layerOrderIndexMap.get(selectedLayer);
-                final NetworkLayer neighbourLayer = layerOrderIndexMap.inverseBidiMap().get(currentOrderIndex - 1);
+                final NetPlan netPlan = callback.getDesign();
 
-                if  (layerOrderIndexMap.get(selectedLayer) == 0) return;
+                final NetworkLayer selectedLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow(), COLUMN_INDEX));
+                final NetworkLayer neighbourLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow() - 1, COLUMN_INDEX));
 
-                layerOrderIndexMap.put(selectedLayer, currentOrderIndex - 1);
-                layerOrderIndexMap.put(neighbourLayer, currentOrderIndex);
+                final Map<NetworkLayer, Integer> layerOrderMap = vs.getLayerOrderIndexMap(true);
 
-                vs.updateLayerVisualizationState(callback.getDesign(), layerOrderIndexMap);
+                if (layerOrderMap.get(selectedLayer) == 0) return;
+
+                // Swap the selected layer with the one on top of it.
+                this.swap(layerOrderMap, selectedLayer, neighbourLayer);
+
+                vs.updateLayerVisualizationState(callback.getDesign(), layerOrderMap);
             } else if (src == downButton)
             {
-                final BidiMap<NetworkLayer, Integer> layerOrderIndexMap = new DualHashBidiMap<>(vs.getLayerOrderIndexMap(true));
-                final NetworkLayer selectedLayer = callback.getDesign().getNetworkLayer((int) getValueAt(getSelectedRow(), COLUMN_INDEX));
-                final int currentOrderIndex = layerOrderIndexMap.get(selectedLayer);
-                final NetworkLayer neighbourLayer = layerOrderIndexMap.inverseBidiMap().get(currentOrderIndex + 1);
+                final NetPlan netPlan = callback.getDesign();
 
-                if  (layerOrderIndexMap.get(selectedLayer) == layerOrderIndexMap.size() - 1) return;
+                final NetworkLayer selectedLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow(), COLUMN_INDEX));
+                final NetworkLayer neighbourLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow() + 1, COLUMN_INDEX));
 
-                layerOrderIndexMap.put(selectedLayer, currentOrderIndex + 1);
-                layerOrderIndexMap.put(neighbourLayer, currentOrderIndex);
+                final Map<NetworkLayer, Integer> layerOrderMap = vs.getLayerOrderIndexMap(true);
 
-                vs.updateLayerVisualizationState(callback.getDesign(), layerOrderIndexMap);
+                if (layerOrderMap.get(selectedLayer) == layerOrderMap.size() - 1) return;
+
+                // Swap the selected layer with the one on top of it.
+                this.swap(layerOrderMap, selectedLayer, neighbourLayer);
+
+                vs.updateLayerVisualizationState(callback.getDesign(), layerOrderMap);
             }
 
             updateTable();
             callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
+        }
+
+        /**
+         * Credits to user "Laurence Gonsalves" from stack overflow for his <a href="http://stackoverflow.com/questions/4698143/how-to-swap-two-keys-in-a-map">swap map function</a>.
+         */
+        private <K, V> void swap(Map<K, V> map, K k1, K k2)
+        {
+            if (map.containsKey(k1))
+            {
+                if (map.containsKey(k2))
+                {
+                    map.put(k1, map.put(k2, map.get(k1)));
+                } else
+                {
+                    map.put(k2, map.remove(k1));
+                }
+            } else if (map.containsKey(k2))
+            {
+                map.put(k1, map.remove(k2));
+            }
         }
     }
 }
