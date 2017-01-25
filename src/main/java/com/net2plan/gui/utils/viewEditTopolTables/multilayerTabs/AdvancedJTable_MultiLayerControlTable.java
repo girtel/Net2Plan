@@ -1,20 +1,34 @@
 package com.net2plan.gui.utils.viewEditTopolTables.multilayerTabs;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EventObject;
 import java.util.List;
+import java.util.Map;
 
-import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.AbstractCellEditor;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 
+import org.apache.commons.collections15.BidiMap;
+
+import com.google.common.collect.Lists;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
 import com.net2plan.utils.StringUtils;
@@ -82,7 +96,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         final VisualizationState visualizationState = callback.getVisualizationState();
 
         final List<Object[]> allLayerData = new ArrayList<>();
-        for (NetworkLayer networkLayer : visualizationState.getLayersInVisualizationOrder(true))
+        for (NetworkLayer networkLayer : Lists.reverse(visualizationState.getLayersInVisualizationOrder(true)))
         {
             final boolean isActiveLayer = callback.getDesign().getNetworkLayerDefault() == networkLayer;
 
@@ -96,7 +110,6 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 
             allLayerData.add(layerData);
         }
-
         return allLayerData;
     }
 
@@ -277,12 +290,12 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                 final NetworkLayer selectedLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow(), COLUMN_INDEX));
                 final NetworkLayer neighbourLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow() - 1, COLUMN_INDEX));
 
-                final Map<NetworkLayer, Integer> layerOrderMap = vs.getLayerOrderIndexMap(true);
+                final BidiMap<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = vs.getLayerOrderIndexMap(true);
 
                 // Swap the selected layer with the one on top of it.
-                this.swap(layerOrderMap, selectedLayer, neighbourLayer);
+                this.swap(layerOrderMapConsideringNonVisible, selectedLayer, neighbourLayer);
 
-                vs.updateLayerVisualizationState(callback.getDesign(), layerOrderMap);
+                vs.setLayerVisibilityAndOrder(callback.getDesign(), layerOrderMapConsideringNonVisible , null);
             } else if (src == btn_down)
             {
                 if (getSelectedRow() == getRowCount() - 1) return;
@@ -292,36 +305,27 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                 final NetworkLayer selectedLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow(), COLUMN_INDEX));
                 final NetworkLayer neighbourLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow() + 1, COLUMN_INDEX));
 
-                final Map<NetworkLayer, Integer> layerOrderMap = vs.getLayerOrderIndexMap(true);
+                final BidiMap<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = vs.getLayerOrderIndexMap(true);
 
                 // Swap the selected layer with the one on top of it.
-                this.swap(layerOrderMap, selectedLayer, neighbourLayer);
+                this.swap(layerOrderMapConsideringNonVisible, selectedLayer, neighbourLayer);
 
-                vs.updateLayerVisualizationState(callback.getDesign(), layerOrderMap);
+                vs.setLayerVisibilityAndOrder (callback.getDesign(), layerOrderMapConsideringNonVisible , null);
             }
 
             updateTable();
             callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
         }
 
-        /**
-         * Credits to user "Laurence Gonsalves" from stack overflow for his <a href="http://stackoverflow.com/questions/4698143/how-to-swap-two-keys-in-a-map">swap map function</a>.
-         */
-        private <K, V> void swap(Map<K, V> map, K k1, K k2)
+        private <K, V> void swap(BidiMap<K, V> map, K k1, K k2)
         {
-            if (map.containsKey(k1))
-            {
-                if (map.containsKey(k2))
-                {
-                    map.put(k1, map.put(k2, map.get(k1)));
-                } else
-                {
-                    map.put(k2, map.remove(k1));
-                }
-            } else if (map.containsKey(k2))
-            {
-                map.put(k1, map.remove(k2));
-            }
+        	final V value1 = map.get(k1);
+        	final V value2 = map.get(k2);
+        	if ((value1 == null) || (value2 == null)) throw new RuntimeException();
+        	map.remove(k1);
+        	map.remove(k2);
+        	map.put(k1,value2);
+        	map.put(k2,value1);
         }
     }
 }

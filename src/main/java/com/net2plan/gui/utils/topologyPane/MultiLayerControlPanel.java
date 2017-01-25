@@ -1,18 +1,25 @@
 package com.net2plan.gui.utils.topologyPane;
 
-import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.viewEditTopolTables.multilayerTabs.AdvancedJTable_MultiLayerControlTable;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.internal.Constants;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+
+import org.apache.commons.collections15.BidiMap;
+import org.apache.commons.collections15.bidimap.DualHashBidiMap;
+
+import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.viewEditTopolTables.multilayerTabs.AdvancedJTable_MultiLayerControlTable;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.internal.Constants;
 
 /**
  * @author Jorge San Emeterio
@@ -39,11 +46,6 @@ public class MultiLayerControlPanel extends JPanel
     {
         this.add(new JScrollPane(multiLayerTable), BorderLayout.CENTER);
         this.add(buttonPanel, BorderLayout.SOUTH);
-    }
-
-    public void refreshTable()
-    {
-        multiLayerTable.updateTable();
     }
 
     private class MultiLayerButtonPanel extends JPanel implements ActionListener
@@ -89,57 +91,57 @@ public class MultiLayerControlPanel extends JPanel
 
             if (src == btn_showAllLayers)
             {
+            	Map<NetworkLayer,Boolean> visibilityInfo = new HashMap <>();
                 for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
+                	visibilityInfo.put(networkLayer , true);
+                if (!visibilityInfo.equals(vs.getLayerVisibilityMap()))
                 {
-                    if (callback.getDesign().getNetworkLayerDefault() == networkLayer) continue;
-
-                    // NOTE: This one is going to update the vs for each layer. Bad performance.
-                    vs.setLayerVisibility(networkLayer, true);
+                	vs.setLayerVisibilityAndOrder(netPlan , null , visibilityInfo);
+                    callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
                 }
             } else if (src == btn_hideAllLayers)
             {
+            	Map<NetworkLayer,Boolean> visibilityInfo = new HashMap <>();
                 for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
+                	visibilityInfo.put(networkLayer , networkLayer.equals(netPlan.getNetworkLayerDefault()));
+                if (!visibilityInfo.equals(vs.getLayerVisibilityMap()))
                 {
-                    if (callback.getDesign().getNetworkLayerDefault() == networkLayer) continue;
-
-                    vs.setLayerVisibility(networkLayer, false);
+                	vs.setLayerVisibilityAndOrder(netPlan , null , visibilityInfo);
+                    callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
                 }
             } else if (src == btn_sortLayerByIndex)
             {
-                final Map<NetworkLayer, Integer> layerIndexOrderMap = new HashMap<>();
-
+                final BidiMap<NetworkLayer, Integer> layerIndexOrderMap = new DualHashBidiMap<>();
                 for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
-                {
                     layerIndexOrderMap.put(networkLayer, networkLayer.getIndex());
+                if (!layerIndexOrderMap.equals(vs.getLayerOrderIndexMap(true)))
+                {
+                    vs.setLayerVisibilityAndOrder(netPlan, layerIndexOrderMap , null);
+                    callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
                 }
-
-                vs.updateLayerVisualizationState(netPlan, layerIndexOrderMap);
             } else if (src == btn_sortLayersByTopology)
             {
-                final Map<NetworkLayer, Integer> layerIndexOrderMap = new HashMap<>();
-
+                final BidiMap<NetworkLayer, Integer> layerIndexOrderMap = new DualHashBidiMap<>();
                 for (NetworkLayer networkLayer : netPlan.getNetworkLayerInTopologicalOrder())
-                {
                     layerIndexOrderMap.put(networkLayer, networkLayer.getIndex());
+                if (!layerIndexOrderMap.equals(vs.getLayerOrderIndexMap(true)))
+                {
+                    vs.setLayerVisibilityAndOrder(netPlan, layerIndexOrderMap , null);
+                    callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
                 }
-
-                vs.updateLayerVisualizationState(netPlan, layerIndexOrderMap);
             } else if (src == btn_showAllLayerLinks)
             {
                 for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
-                {
                     vs.setLayerLinksVisibility(networkLayer, true);
-                }
+                callback.updateVisualizationJustCanvasLinkNodeVisibilityOrColor ();
             } else if (src == btn_hideAllLayerLinks)
             {
                 for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
-                {
                     vs.setLayerLinksVisibility(networkLayer, false);
-                }
+                callback.updateVisualizationJustCanvasLinkNodeVisibilityOrColor ();
             }
 
             refreshTable();
-            callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
         }
     }
     public void refreshTable ()

@@ -162,7 +162,7 @@ public class GUINode
     
     public VisualizationState getVisualizationState () { return vs; }
 
-    public int getVisualizationOrderRemovingNonVisibleLayers () { return vs.getLayerOrderIndex(layer, false); }
+    public int getVisualizationOrderRemovingNonVisibleLayers () { return vs.getVisualizationOrderRemovingNonVisible(layer); }
 
     private static Shape adjustShapeToSize (Shape s , double size_x , double size_y)
     {

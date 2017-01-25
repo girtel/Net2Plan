@@ -63,6 +63,8 @@ public interface IVisualizationCallback
 
 	void updateVisualizationJustTables ();
 
+	void updateVisualizationJustCanvasLinkNodeVisibilityOrColor ();
+
 	void updateVisualizationAfterNewTopology ();
 
 	NetPlan getDesign();

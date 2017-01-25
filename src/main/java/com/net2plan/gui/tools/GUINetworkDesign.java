@@ -440,7 +440,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     			getDesign ().setNetworkLayerDefault(elementLayer);
     			viewEditTopTables.updateView();
     		}
-    	topologyPanel.updateLayerChooser();
+    	topologyPanel.updateMultilayerVisibilityAndOrderPanel();
         viewEditTopTables.selectViewItem(type, itemId);
     }
 
@@ -711,13 +711,19 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 	@Override
 	public void updateVisualizationAfterNewTopology()
 	{
-		Pair<Map<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = VisualizationState.generateDefaultVisualizationLayerInfo(getDesign());
-		vs.updateLayerVisualizationState(getDesign() , res.getFirst() , res.getSecond());
-		topologyPanel.updateLayerChooser();
+		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = VisualizationState.generateDefaultVisualizationLayerInfo(getDesign());
+		vs.setLayerVisibilityAndOrder(getDesign() , res.getFirst() , res.getSecond());
+		topologyPanel.updateMultilayerVisibilityAndOrderPanel();
 		topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
 	    topologyPanel.getCanvas().zoomAll();
 	    viewEditTopTables.updateView();
 	    updateWarnings();
+	}
+
+    @Override
+	public void updateVisualizationJustCanvasLinkNodeVisibilityOrColor ()
+	{
+		topologyPanel.getCanvas().refresh();
 	}
 
     @Override
@@ -730,7 +736,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         if ((modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE) || modificationsMade.contains(NetworkElementType.LAYER)))
         {
-    		vs.updateLayerVisualizationState(getDesign());
+    		vs.setLayerVisibilityAndOrder(getDesign() , null , null);
             topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
             viewEditTopTables.updateView();
             updateWarnings();

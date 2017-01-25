@@ -776,7 +776,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         canvas.takeSnapshot();
     }
 
-    public final void updateLayerChooser()
+    public final void updateMultilayerVisibilityAndOrderPanel()
     {
     	multilayerControlPanel.refreshTable();
     }
