@@ -48,7 +48,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
     private static final int COLUMN_NAME = 2;
     private static final int COLUMN_LAYER_VISIBILITY = 3;
     private static final int COLUMN_LAYER_LINK_VISIBILITY = 4;
-    private static final int COLUMN_IS_DEFAULT = 5;
+    private static final int COLUMN_IS_ACTIVE = 5;
 
     private static final String[] tableHeader = StringUtils.arrayOf(
             "Move up/down",
@@ -56,7 +56,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             "Name",
             "Layer visibility",
             "Layer's link visibility",
-            "Layer default"
+            "Active layer"
     );
 
     private static final String[] tableTips = StringUtils.arrayOf(
@@ -106,7 +106,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             layerData[COLUMN_NAME] = networkLayer.getName();
             layerData[COLUMN_LAYER_VISIBILITY] = isActiveLayer || visualizationState.isLayerVisible(networkLayer);
             layerData[COLUMN_LAYER_LINK_VISIBILITY] = visualizationState.isLayerLinksShown(networkLayer);
-            layerData[COLUMN_IS_DEFAULT] = isActiveLayer;
+            layerData[COLUMN_IS_ACTIVE] = isActiveLayer;
 
             allLayerData.add(layerData);
         }
@@ -127,7 +127,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                     case COLUMN_NAME:
                         return false;
                     case COLUMN_LAYER_VISIBILITY:
-                    case COLUMN_IS_DEFAULT:
+                    case COLUMN_IS_ACTIVE:
                         final NetworkLayer selectedLayer = callback.getDesign().getNetworkLayer((int) this.getValueAt(rowIndex, COLUMN_INDEX));
                         return !(callback.getDesign().getNetworkLayerDefault() == selectedLayer);
                     default:
@@ -153,7 +153,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                     case COLUMN_LAYER_LINK_VISIBILITY:
                         visualizationState.setLayerLinksVisibility(selectedLayer, (boolean) newValue);
                         break;
-                    case COLUMN_IS_DEFAULT:
+                    case COLUMN_IS_ACTIVE:
                         callback.getDesign().setNetworkLayerDefault(selectedLayer);
                         visualizationState.setLayerVisibility(selectedLayer, true);
                         break;

@@ -32,6 +32,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,7 +56,6 @@ import javax.swing.border.LineBorder;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
-import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
@@ -291,7 +291,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         // Building windows
         WindowController.buildControlWindow(tabPane);
-
+        WindowController.showControlWindow();
+        
         addAllKeyCombinationActions();
     }
 
@@ -734,7 +735,19 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             throw new RuntimeException("Unable to update non-existent network elements");
         }
 
-        if ((modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE) || modificationsMade.contains(NetworkElementType.LAYER)))
+        if (modificationsMade.contains(NetworkElementType.LAYER))
+        {
+//        	final Set<NetworkLayer> currentNetworkLayers = new HashSet<> (getDesign().getNetworkLayers());
+//        	final BidiMap<NetworkLayer,Integer> 
+//        	for (NetworkLayer oldLayer : vs.getN)
+//        	for (Network)
+//        	if (currentNetPlan.getNetworkLayers())
+    		vs.setLayerVisibilityAndOrder(getDesign() , null , null);
+            topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
+            viewEditTopTables.updateView();
+            updateWarnings();
+        }
+        else if ((modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE) || modificationsMade.contains(NetworkElementType.LAYER)))
         {
     		vs.setLayerVisibilityAndOrder(getDesign() , null , null);
             topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();

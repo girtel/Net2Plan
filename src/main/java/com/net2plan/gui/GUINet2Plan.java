@@ -61,6 +61,7 @@ import com.net2plan.gui.utils.ClassPathEditor;
 import com.net2plan.gui.utils.ColumnFitAdapter;
 import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.viewEditWindows.utils.WindowUtils;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants.UserInterface;
 import com.net2plan.internal.ErrorHandling;
@@ -139,7 +140,10 @@ public class GUINet2Plan extends JFrame implements ActionListener {
                 loadExamples();
             } else {
                 Object object = itemObject.get(item);
-
+                
+                WindowUtils.clearFloatingWindows();
+                WindowUtils.setWindowLeftSide(instance);
+                
                 if (object != null) {
                     if (object instanceof Class) {
                         Object classInstance = ((Class) object).newInstance();

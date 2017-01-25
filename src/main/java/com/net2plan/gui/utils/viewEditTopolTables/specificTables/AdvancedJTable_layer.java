@@ -289,6 +289,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
                     netPlan.addLayer("Layer " + netPlan.getNumberOfLayers(), null, null, null, null);
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                 } catch (Throwable ex) {
+                	ex.printStackTrace();
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
             }
