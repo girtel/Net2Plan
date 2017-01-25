@@ -8,6 +8,7 @@ import java.awt.event.ItemListener;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -26,8 +27,17 @@ import com.net2plan.gui.utils.FullScrollPaneLayout;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.*;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_demand;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_forwardingRule;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_layer;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_link;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_multicastDemand;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_multicastTree;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_node;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_resource;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_route;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_srg;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
@@ -203,18 +213,19 @@ public class ViewEditTopologyTablesPane extends JPanel
     public void updateView ()
     {
 		/* Load current network state */
-        NetPlan currentState = callback.getDesign();
-        NetworkLayer layer = currentState.getNetworkLayerDefault();
+        final NetPlan currentState = callback.getDesign();
+        final NetworkLayer layer = currentState.getNetworkLayerDefault();
+        final RoutingType routingType = currentState.getRoutingType();
+        final boolean isSourceRouting = routingType == RoutingType.SOURCE_ROUTING;
         currentState.checkCachesConsistency();
 
-        final RoutingType routingType = currentState.getRoutingType();
         Component selectedTab = netPlanView.getSelectedComponent();
         netPlanView.removeAll();
         for (NetworkElementType elementType : Constants.NetworkElementType.values()) 
         {
-            if (routingType == RoutingType.SOURCE_ROUTING && elementType == NetworkElementType.FORWARDING_RULE)
+            if (isSourceRouting && elementType == NetworkElementType.FORWARDING_RULE)
                 continue;
-            if (routingType == RoutingType.HOP_BY_HOP_ROUTING && (elementType == NetworkElementType.ROUTE))
+            if (!isSourceRouting && (elementType == NetworkElementType.ROUTE))
                 continue;
             netPlanView.addTab(elementType == NetworkElementType.NETWORK ? "Network" : netPlanViewTable.get(elementType).getTabName(), netPlanViewTableComponent.get(elementType));
         }
@@ -233,10 +244,14 @@ public class ViewEditTopologyTablesPane extends JPanel
             initialState.setNetworkLayerDefault(initialState.getNetworkLayerFromId(currentState.getNetworkLayerDefault().getId()));
         }
         currentState.checkCachesConsistency();
-
-        for (AdvancedJTable_NetworkElement table : netPlanViewTable.values())
-            table.updateView(currentState, initialState);
-
+        
+        /* update the required tables */
+        for (Entry<NetworkElementType,AdvancedJTable_NetworkElement> entry : netPlanViewTable.entrySet())
+        {
+            if (isSourceRouting && entry.getKey() == NetworkElementType.FORWARDING_RULE) continue;
+            if (!isSourceRouting && (entry.getKey() == NetworkElementType.ROUTE)) continue;
+            entry.getValue().updateView(currentState, initialState);
+        }
         ((NetPlanViewTableComponent_layer) netPlanViewTableComponent.get(NetworkElementType.LAYER)).updateNetPlanView(currentState);
         ((NetPlanViewTableComponent_network) netPlanViewTableComponent.get(NetworkElementType.NETWORK)).updateNetPlanView(currentState);
     }
