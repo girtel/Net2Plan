@@ -56,6 +56,7 @@ import javax.swing.border.LineBorder;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
+import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
@@ -737,12 +738,29 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         if (modificationsMade.contains(NetworkElementType.LAYER))
         {
-//        	final Set<NetworkLayer> currentNetworkLayers = new HashSet<> (getDesign().getNetworkLayers());
-//        	final BidiMap<NetworkLayer,Integer> 
-//        	for (NetworkLayer oldLayer : vs.getN)
-//        	for (Network)
-//        	if (currentNetPlan.getNetworkLayers())
-    		vs.setLayerVisibilityAndOrder(getDesign() , null , null);
+        	/* Some layers could be removed or added */
+        	final Set<NetworkLayer> currentNetworkLayers = new HashSet<> (getDesign().getNetworkLayers());
+        	final Map<NetworkLayer,Boolean> oldLayerVisibilityMap = vs.getLayerVisibilityMap();
+        	final BidiMap<NetworkLayer,Integer> oldLayerOrderMap = vs.getLayerOrderIndexMap(true);
+        	final Map<NetworkLayer,Boolean> newLayerVisibilityMap = new HashMap<> ();
+        	final BidiMap<NetworkLayer,Integer> newLayerOrderMap = new DualHashBidiMap<>();
+        	for (int oldVisibilityOrderIndex = 0; oldVisibilityOrderIndex < oldLayerOrderMap.size() ; oldVisibilityOrderIndex ++)
+        	{
+        		final NetworkLayer oldLayer = oldLayerOrderMap.inverseBidiMap().get(oldVisibilityOrderIndex);
+        		if (currentNetworkLayers.contains(oldLayer))
+        		{
+        			newLayerOrderMap.put(oldLayer , newLayerVisibilityMap.size());
+        			newLayerVisibilityMap.put(oldLayer , oldLayerVisibilityMap.get(oldLayer));
+        		}
+        	}
+        	final Set<NetworkLayer> newLayers = Sets.difference(currentNetworkLayers , oldLayerVisibilityMap.keySet());
+        	for (NetworkLayer newLayer : newLayers)
+        	{
+    			newLayerOrderMap.put(newLayer , newLayerVisibilityMap.size());
+    			newLayerVisibilityMap.put(newLayer , true); // new layers always visible
+        	}
+    		vs.setLayerVisibilityAndOrder(getDesign() , newLayerOrderMap , newLayerVisibilityMap);
+    		topologyPanel.updateMultilayerVisibilityAndOrderPanel();
             topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
             viewEditTopTables.updateView();
             updateWarnings();
