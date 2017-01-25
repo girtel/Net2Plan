@@ -18,7 +18,6 @@ import java.awt.Paint;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Ellipse2D;
 
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -163,7 +162,7 @@ public class GUINode
     
     public VisualizationState getVisualizationState () { return vs; }
 
-    public int getVisualizationOrderRemovingNonVisibleLayers () { return vs.getVisualizationOrderRemovingNonVisible(layer); }
+    public int getVisualizationOrderRemovingNonVisibleLayers () { return vs.getLayerOrderIndex(layer, false); }
 
     private static Shape adjustShapeToSize (Shape s , double size_x , double size_y)
     {
