@@ -281,6 +281,8 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             final Object src = e.getSource();
             if (src == upButton)
             {
+                if (getSelectedRow() == 0) return;
+
                 final NetPlan netPlan = callback.getDesign();
 
                 final NetworkLayer selectedLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow(), COLUMN_INDEX));
@@ -288,22 +290,20 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 
                 final Map<NetworkLayer, Integer> layerOrderMap = vs.getLayerOrderIndexMap(true);
 
-                if (layerOrderMap.get(selectedLayer) == 0) return;
-
                 // Swap the selected layer with the one on top of it.
                 this.swap(layerOrderMap, selectedLayer, neighbourLayer);
 
                 vs.updateLayerVisualizationState(callback.getDesign(), layerOrderMap);
             } else if (src == downButton)
             {
+                if (getSelectedRow() == getRowCount() - 1) return;
+
                 final NetPlan netPlan = callback.getDesign();
 
                 final NetworkLayer selectedLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow(), COLUMN_INDEX));
                 final NetworkLayer neighbourLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow() + 1, COLUMN_INDEX));
 
                 final Map<NetworkLayer, Integer> layerOrderMap = vs.getLayerOrderIndexMap(true);
-
-                if (layerOrderMap.get(selectedLayer) == layerOrderMap.size() - 1) return;
 
                 // Swap the selected layer with the one on top of it.
                 this.swap(layerOrderMap, selectedLayer, neighbourLayer);

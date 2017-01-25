@@ -723,7 +723,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 	@Override
 	public void updateVisualizationAfterNewTopology()
 	{
-		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = VisualizationState.generateDefaultVisualizationLayerInfo(getDesign());
+		Pair<Map<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = VisualizationState.generateDefaultVisualizationLayerInfo(getDesign());
 		vs.updateLayerVisualizationState(getDesign() , res.getFirst() , res.getSecond());
 		topologyPanel.updateLayerChooser();
 		topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
