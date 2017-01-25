@@ -1,14 +1,17 @@
 package com.net2plan.gui.utils.topologyPane;
 
-import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.*;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR_FAILED;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR_PICK;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR_RESOURCE;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_INTRANODEGUILINK_HASARROW;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_BACKUP;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_BACKUPANDPRIMARY;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_FAILED;
@@ -42,7 +45,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
-import org.apache.commons.math3.distribution.GeometricDistribution;
 
 import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -201,23 +203,56 @@ public class VisualizationState
     {
         final Node n = gn.getAssociatedNetPlanNode();
         if (nodesToHideAsMandatedByuserInTable.contains(n)) return false;
-        if (showNonConnectedNodes) return true;
-        if (showInterLayerLinks && (getNumberOfVisibleLayers() > 1)) return true;
-        if (n.getOutgoingLinks(gn.getLayer()).size() > 0) return true;
-        if (n.getIncomingLinks(gn.getLayer()).size() > 0) return true;
-        return false;
+        if (!showNonConnectedNodes) 
+        {
+            final NetworkLayer layer = gn.getLayer();
+        	if (n.getOutgoingLinks(layer).isEmpty() && n.getIncomingLinks(layer).isEmpty()
+        			&& n.getOutgoingDemands(layer).isEmpty() && n.getIncomingDemands(layer).isEmpty()
+        			&& n.getOutgoingMulticastDemands(layer).isEmpty() && n.getIncomingMulticastDemands(layer).isEmpty())
+        		return false;
+        }
+        return true;
     }
 
     public boolean isVisible(GUILink gl)
     {
-        if (gl.isIntraNodeLink()) return showInterLayerLinks;
-        final Link e = gl.getAssociatedNetPlanLink();
+        if (gl.isIntraNodeLink())
+        {
+        	final Node node = gl.getOriginNode().getAssociatedNetPlanNode();
+        	final NetworkLayer originLayer = gl.getOriginNode().getLayer();
+        	final NetworkLayer destinationLayer = gl.getDestinationNode().getLayer();
+        	final int originIndexInVisualization = getVisualizationOrderRemovingNonVisible(originLayer);
+        	final int destinationIndexInVisualization = getVisualizationOrderRemovingNonVisible(destinationLayer);
+        	final int lowerVIndex = originIndexInVisualization < destinationIndexInVisualization? originIndexInVisualization  : destinationIndexInVisualization;  
+        	final int upperVIndex = originIndexInVisualization > destinationIndexInVisualization? originIndexInVisualization  : destinationIndexInVisualization;  
+        	cache_mapVisibleLayer2VisualizationOrderRemovingNonVisible.get(gl.getOriginNode());
+        	boolean atLeastOneLowerLayerVisible = false;
+        	for (int vIndex = 0 ; vIndex <= lowerVIndex ; vIndex ++)
+        		if (isVisible(getAssociatedGUINode(node , getNetworkLayerAtVisualizationOrderRemovingNonVisible(vIndex)))) 
+        		{
+        			atLeastOneLowerLayerVisible = true;
+        			break;
+        		}
+        	if (!atLeastOneLowerLayerVisible) return false;
+        	boolean atLeastOneUpperLayerVisible = false;
+        	for (int vIndex = upperVIndex ; vIndex < getNumberOfVisibleLayers() ; vIndex ++)
+        		if (isVisible(getAssociatedGUINode(node , getNetworkLayerAtVisualizationOrderRemovingNonVisible(vIndex)))) 
+        		{
+        			atLeastOneUpperLayerVisible = true;
+        			break;
+        		}
+        	return atLeastOneUpperLayerVisible;
+        }
+        else
+        {
+            final Link e = gl.getAssociatedNetPlanLink();
 
-        if (!mapShowLayerLinks.get(e.getLayer())) return false;
-        if (linksToHideAsMandatedByUserInTable.contains(e)) return false;
-        final boolean inActiveLayer = e.getLayer() == currentNp.getNetworkLayerDefault();
-        if (!showLinksInNonActiveLayer && !inActiveLayer) return false;
-        return true;
+            if (!mapShowLayerLinks.get(e.getLayer())) return false;
+            if (linksToHideAsMandatedByUserInTable.contains(e)) return false;
+            final boolean inActiveLayer = e.getLayer() == currentNp.getNetworkLayerDefault();
+            if (!showLinksInNonActiveLayer && !inActiveLayer) return false;
+            return true;
+        }
     }
 
     /**
@@ -550,30 +585,27 @@ public class VisualizationState
     public boolean decreaseFontSizeAll()
     {
         boolean changedSize = false;
-        for (Node n : currentNp.getNodes())
-            for (GUINode gn : cache_mapNode2ListVerticallyStackedGUINodes.get(n))
+        for (GUINode gn : getAllGUINodes())
                 changedSize |= gn.decreaseFontSize();
         return changedSize;
     }
 
     public void increaseFontSizeAll()
     {
-        for (Node n : currentNp.getNodes())
-            for (GUINode gn : cache_mapNode2ListVerticallyStackedGUINodes.get(n))
+        for (GUINode gn : getAllGUINodes())
                 gn.increaseFontSize();
     }
 
     public void decreaseNodeSizeAll()
     {
-        for (Node n : currentNp.getNodes())
-            for (GUINode gn : cache_mapNode2ListVerticallyStackedGUINodes.get(n))
-                gn.setShapeSize(gn.getShapeSize() * SCALE_OUT);
+        for (GUINode gn : getAllGUINodes())
+                gn.setShapeSizeInNonActiveLayer(gn.getShapeInNotActiveLayerSize() * SCALE_OUT);
     }
 
     public void increaseNodeSizeAll()
     {
         for (GUINode gn : getAllGUINodes())
-            gn.setShapeSize(gn.getShapeSize() * SCALE_IN);
+            gn.setShapeSizeInNonActiveLayer(gn.getShapeInNotActiveLayerSize() * SCALE_IN);
     }
 
     public int getNumberOfVisibleLayers()
@@ -742,7 +774,7 @@ public class VisualizationState
             }
             if (shapeSize > 0)
             {
-                n.setShapeSize(shapeSize);
+                n.setShapeSizeInNonActiveLayer(shapeSize);
             }
         }
     }

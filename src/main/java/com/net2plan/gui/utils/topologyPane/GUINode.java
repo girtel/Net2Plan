@@ -73,13 +73,14 @@ public class GUINode
         return npNode;
     }
 
-    public double getShapeSize() {
-        return npNode.getNetPlan().getNetworkLayerDefault() == layer? shapeSizeIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE : shapeSizeIfNotActive;
+    public double getShapeInNotActiveLayerSize() 
+    {
+        return shapeSizeIfNotActive;
     }
 
-    public void setShapeSize (double size) 
+    public void setShapeSizeInNonActiveLayer (double sizeNonActiveLayer) 
     {
-        this.shapeSizeIfNotActive = size;
+        this.shapeSizeIfNotActive = sizeNonActiveLayer;
         final double shapeSizeIfActive = shapeSizeIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE;
         this.shapeIfNotActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfNotActive , shapeSizeIfNotActive);
         this.shapeIfActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfActive , shapeSizeIfActive);

@@ -422,9 +422,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             }
         });
 
-        btn_showNodeNames.setSelected(false);
-        btn_showLinkIds.setSelected(false);
-        btn_showNonConnectedNodes.setSelected(true);
+        btn_showNodeNames.setSelected(getVisualizationState().isShowNodeNames());
+        btn_showLinkIds.setSelected(getVisualizationState().isShowLinkLabels());
+        btn_showNonConnectedNodes.setSelected(getVisualizationState().isShowNonConnectedNodes());
 
         popupPlugin = new PopupMenuPlugin(callback, this.canvas);
         addPlugin(new PanGraphPlugin(callback, canvas, MouseEvent.BUTTON1_MASK));
