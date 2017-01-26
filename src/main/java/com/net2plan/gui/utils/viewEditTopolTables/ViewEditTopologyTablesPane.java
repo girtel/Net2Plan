@@ -116,7 +116,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
                         ((TableRowSorter) netPlanViewTable.get(elementType).getRowSorter()).setRowFilter(rowFilter);
                     }
-                    callback.updateVisualizationAfterChanges(Collections.emptySet());
+                    callback.updateVisualizationJustTables();
                 }
             });
 

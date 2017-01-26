@@ -276,17 +276,20 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                             if (newValue == null) return;
                         	callback.getVisualizationState().setVisibilityState(node , (Boolean) newValue);
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                            callback.pickNodeAndUpdateView(node);
                             break;
 
                         case COLUMN_NAME:
                         	node.setName(newValue.toString());
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                            callback.pickNodeAndUpdateView(node);
                             break;
 
                         case COLUMN_STATE:
                             boolean isNodeUp = (Boolean) newValue;
                         	node.setFailureState(isNodeUp);
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                            callback.pickNodeAndUpdateView(node);
                             break;
 
                         case COLUMN_XCOORD:
@@ -296,6 +299,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                             		new Point2D.Double(node.getXYPositionMap().getX(), Double.parseDouble(newValue.toString()));
                             node.setXYPositionMap(newPosition);
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                            callback.pickNodeAndUpdateView(node);
                             break;
 
                         default:
@@ -372,6 +376,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                             try
                             {
                             	callback.getDesign().getNodeFromId((long) itemId).remove();
+                                callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
@@ -392,6 +397,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
 
                         try {
                             netPlan.removeAllNodes();
+                            callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                         } catch (Throwable ex) {
                             ex.printStackTrace();
@@ -440,6 +446,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
 
                 try {
                     Node node = netPlan.addNode(0, 0, "Node " + netPlan.getNumberOfNodes(), null);
+                    callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                 	callback.pickNodeAndUpdateView(node);
                 } catch (Throwable ex) {

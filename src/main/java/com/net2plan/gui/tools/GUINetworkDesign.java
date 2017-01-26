@@ -80,6 +80,7 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -195,8 +196,9 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
 
         loadDesignDoNotUpdateVisualization(currentNetPlan);
-        updateVisualizationAfterNewTopology();
-        
+		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = VisualizationState.generateDefaultVisualizationLayerInfo(getDesign());
+		vs.setLayerVisibilityAndOrder(getDesign() , res.getFirst() , res.getSecond());
+
         onlineSimulationPane = new OnlineSimulationPane(this);
         executionPane = new OfflineExecutionPanel(this);
 
@@ -295,6 +297,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         WindowController.showControlWindow();
         
         addAllKeyCombinationActions();
+        updateVisualizationAfterNewTopology();
     }
 
 
@@ -400,7 +403,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             ErrorHandling.addErrorOrException(ex, GUINetworkDesign.class);
             ErrorHandling.showErrorDialog("Unable to reset");
         }
-        
+        Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>>  res = VisualizationState.generateDefaultVisualizationLayerInfo(getDesign());
+        vs.setLayerVisibilityAndOrder(getDesign() , res.getFirst() , res.getSecond());
         updateVisualizationAfterNewTopology();
     }
 
@@ -628,6 +632,14 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
     @Override
+    public void pickResourceAndUpdateView(Resource res)
+    {
+        vs.pickResource(res);
+        selectNetPlanViewItem(NetworkElementType.RESOURCE, res.getId());
+        topologyPanel.getCanvas().refresh();
+    }
+
+    @Override
     public void pickLinkAndUpdateView(Link link)
     {
         vs.pickLink(link);
@@ -713,8 +725,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 	@Override
 	public void updateVisualizationAfterNewTopology()
 	{
-		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = VisualizationState.generateDefaultVisualizationLayerInfo(getDesign());
-		vs.setLayerVisibilityAndOrder(getDesign() , res.getFirst() , res.getSecond());
 		topologyPanel.updateMultilayerVisibilityAndOrderPanel();
 		topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
 	    topologyPanel.getCanvas().zoomAll();
@@ -738,28 +748,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         if (modificationsMade.contains(NetworkElementType.LAYER))
         {
-        	/* Some layers could be removed or added */
-        	final Set<NetworkLayer> currentNetworkLayers = new HashSet<> (getDesign().getNetworkLayers());
-        	final Map<NetworkLayer,Boolean> oldLayerVisibilityMap = vs.getLayerVisibilityMap();
-        	final BidiMap<NetworkLayer,Integer> oldLayerOrderMap = vs.getLayerOrderIndexMap(true);
-        	final Map<NetworkLayer,Boolean> newLayerVisibilityMap = new HashMap<> ();
-        	final BidiMap<NetworkLayer,Integer> newLayerOrderMap = new DualHashBidiMap<>();
-        	for (int oldVisibilityOrderIndex = 0; oldVisibilityOrderIndex < oldLayerOrderMap.size() ; oldVisibilityOrderIndex ++)
-        	{
-        		final NetworkLayer oldLayer = oldLayerOrderMap.inverseBidiMap().get(oldVisibilityOrderIndex);
-        		if (currentNetworkLayers.contains(oldLayer))
-        		{
-        			newLayerOrderMap.put(oldLayer , newLayerVisibilityMap.size());
-        			newLayerVisibilityMap.put(oldLayer , oldLayerVisibilityMap.get(oldLayer));
-        		}
-        	}
-        	final Set<NetworkLayer> newLayers = Sets.difference(currentNetworkLayers , oldLayerVisibilityMap.keySet());
-        	for (NetworkLayer newLayer : newLayers)
-        	{
-    			newLayerOrderMap.put(newLayer , newLayerVisibilityMap.size());
-    			newLayerVisibilityMap.put(newLayer , true); // new layers always visible
-        	}
-    		vs.setLayerVisibilityAndOrder(getDesign() , newLayerOrderMap , newLayerVisibilityMap);
     		topologyPanel.updateMultilayerVisibilityAndOrderPanel();
             topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
             viewEditTopTables.updateView();
@@ -767,13 +755,12 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         }
         else if ((modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE) || modificationsMade.contains(NetworkElementType.LAYER)))
         {
-    		vs.setLayerVisibilityAndOrder(getDesign() , null , null);
             topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
             viewEditTopTables.updateView();
             updateWarnings();
         } else
         {
-            updateVisualizationJustTables();
+            viewEditTopTables.updateView();
             updateWarnings();
         }
     }

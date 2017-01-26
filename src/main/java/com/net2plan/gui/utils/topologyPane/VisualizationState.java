@@ -431,6 +431,11 @@ public class VisualizationState
         return res;
     }
 
+    /** Implicitly it produces a reset of the picked state
+     * @param newCurrentNetPlan
+     * @param newLayerVisiblityOrderMap
+     * @param newLayerVisibilityMap
+     */
     public void setLayerVisibilityAndOrder (NetPlan newCurrentNetPlan , BidiMap<NetworkLayer,Integer> newLayerVisiblityOrderMap,
             Map<NetworkLayer,Boolean> newLayerVisibilityMap)
     {
@@ -439,6 +444,12 @@ public class VisualizationState
 
         this.currentNp = newCurrentNetPlan;
 
+        /* implicitly we restart the picking state */
+        this.pickedElementType = null;
+        this.pickedElementNotFR = null;
+        this.pickedElementFR = null;
+
+        
         if (newLayerVisiblityOrderMap != null)
         	this.mapLayer2VisualizationOrder = new DualHashBidiMap<>(newLayerVisiblityOrderMap);
         if (newLayerVisibilityMap != null)
@@ -820,6 +831,15 @@ public class VisualizationState
         return (maxY - minY) / (30 * numVisibleLayers);
     }
 
+    
+    /** To call when the topology has new/has removed any link or node, but keeping the same layers. 
+     * The topology is remade, which involves implicitly a reset of the view
+     */
+    public void recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals ()
+    {
+    	this.setLayerVisibilityAndOrder(this.currentNp , null , null);
+    }
+    
     public void setLayerVisibility(final NetworkLayer layer, final boolean isVisible)
     {
     	if (!this.currentNp.getNetworkLayers().contains(layer)) throw new RuntimeException ();
@@ -885,6 +905,30 @@ public class VisualizationState
         	res_2.put (layer , true);
         }
         return Pair.of(res_1, res_2);
+    }
+
+    public Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> suggestUpdatedVisualizationLayerInfoForNewDesign (Set<NetworkLayer> newNetworkLayers)
+    {
+    	final Map<NetworkLayer,Boolean> oldLayerVisibilityMap = getLayerVisibilityMap();
+    	final BidiMap<NetworkLayer,Integer> oldLayerOrderMap = getLayerOrderIndexMap(true);
+    	final Map<NetworkLayer,Boolean> newLayerVisibilityMap = new HashMap<> ();
+    	final BidiMap<NetworkLayer,Integer> newLayerOrderMap = new DualHashBidiMap<>();
+    	for (int oldVisibilityOrderIndex = 0; oldVisibilityOrderIndex < oldLayerOrderMap.size() ; oldVisibilityOrderIndex ++)
+    	{
+    		final NetworkLayer oldLayer = oldLayerOrderMap.inverseBidiMap().get(oldVisibilityOrderIndex);
+    		if (newNetworkLayers.contains(oldLayer))
+    		{
+    			newLayerOrderMap.put(oldLayer , newLayerVisibilityMap.size());
+    			newLayerVisibilityMap.put(oldLayer , oldLayerVisibilityMap.get(oldLayer));
+    		}
+    	}
+    	final Set<NetworkLayer> newLayersNotExistingBefore = Sets.difference(newNetworkLayers , oldLayerVisibilityMap.keySet());
+    	for (NetworkLayer newLayer : newLayersNotExistingBefore)
+    	{
+			newLayerOrderMap.put(newLayer , newLayerVisibilityMap.size());
+			newLayerVisibilityMap.put(newLayer , true); // new layers always visible
+    	}
+    	return Pair.of(newLayerOrderMap , newLayerVisibilityMap);
     }
 
     public boolean isPickedElement () { return pickedElementType != null; }

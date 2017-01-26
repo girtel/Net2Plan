@@ -16,8 +16,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
@@ -238,6 +240,10 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
                                 try {
                                     netPlan.removeNetworkLayer(netPlan.getNetworkLayerFromId((long) itemId));
 
+                                    final VisualizationState vs = callback.getVisualizationState();
+                            		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+                    				vs.suggestUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
+                    		vs.setLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
                                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                                 } catch (Throwable ex) {
                                     ErrorHandling.addErrorOrException(ex, getClass());
@@ -287,6 +293,10 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
 
                 try {
                     netPlan.addLayer("Layer " + netPlan.getNumberOfLayers(), null, null, null, null);
+                    final VisualizationState vs = callback.getVisualizationState();
+            		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+            				vs.suggestUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
+            		vs.setLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                 } catch (Throwable ex) {
                 	ex.printStackTrace();

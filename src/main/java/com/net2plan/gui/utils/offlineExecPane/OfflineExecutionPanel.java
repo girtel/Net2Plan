@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.Closeable;
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -102,6 +103,10 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
 	{
         try {
             double execTime = (System.nanoTime() - start) / 1e9;
+            final VisualizationState vs = mainWindow.getVisualizationState();
+    		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+    				vs.suggestUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
+    		vs.setLayerVisibilityAndOrder(mainWindow.getDesign() , res.getFirst() , res.getSecond());
             mainWindow.updateVisualizationAfterNewTopology();
 
             String outMessage = String.format("Algorithm executed successfully%nExecution time: %.3g s%nExit message: %s", execTime, out);

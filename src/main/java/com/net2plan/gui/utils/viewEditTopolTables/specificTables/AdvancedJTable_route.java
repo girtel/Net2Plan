@@ -294,11 +294,13 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                         case COLUMN_CARRIEDTRAFFIC:
                             route.setCarriedTraffic(Double.parseDouble(newValue.toString()), route.getOccupiedCapacity());
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
+                            callback.pickRouteAndUpdateView(route);
                             break;
 
                         case COLUMN_OCCUPIEDCAPACITY:
                             route.setCarriedTraffic(route.getCarriedTraffic(), Double.parseDouble(newValue.toString()));
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
+                            callback.pickRouteAndUpdateView(route);
                             break;
 
                         default:
@@ -392,6 +394,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                             NetPlan netPlan = callback.getDesign();
                             try {
                                 netPlan.getRouteFromId((long) itemId).remove();
+                                callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
@@ -414,6 +417,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
 
                         try {
                             netPlan.removeAllRoutes();
+                            callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                         } catch (Throwable ex) {
                             ex.printStackTrace();
@@ -461,6 +465,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
 
                 try {
                     createRouteGUI(callback);
+                    callback.getVisualizationState().resetPickedState();
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
@@ -833,6 +838,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                 for (Route r : addedRoutes) r.remove();
                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error adding routes and/or protection segments");
             }
+            callback.getVisualizationState().resetPickedState();
         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
         }
     }
@@ -897,6 +903,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                 long backupRouteId = (Long) ((StringLabeller) selectedItem).getObject();
                 Route backupRoute = netPlan.getRouteFromId(backupRouteId);
                 route.addBackupRoute(backupRoute);
+                callback.getVisualizationState().resetPickedState();
             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
 
                 backupRouteSelector.removeItem(selectedItem);
@@ -938,6 +945,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                     final long backupRouteId = (Long) table.getModel().getValueAt(modelRow, 0);
                     final Route backupRoute = netPlan.getRouteFromId(backupRouteId);
                     netPlan.getRouteFromId(routeId).removeBackupRoute(backupRoute);
+                    callback.getVisualizationState().resetPickedState();
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
 
                     String segmentLabel = "Backup route id " + backupRouteId + 

@@ -97,6 +97,7 @@ public class MultiLayerControlPanel extends JPanel
                 if (!visibilityInfo.equals(vs.getLayerVisibilityMap()))
                 {
                 	vs.setLayerVisibilityAndOrder(netPlan , null , visibilityInfo);
+                	callback.getVisualizationState().resetPickedState();
                     callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
                 }
             } else if (src == btn_hideAllLayers)

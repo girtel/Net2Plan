@@ -246,10 +246,12 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
                         case COLUMN_CARRIEDTRAFFIC:
                             tree.setCarriedTraffic(Double.parseDouble(newValue.toString()), tree.getOccupiedLinkCapacity());
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
+                            callback.pickMulticastTreeAndUpdateView(tree);
                             break;
 
                         case COLUMN_OCCUPIEDCAPACITY:
                             tree.setCarriedTraffic(tree.getCarriedTraffic(), Double.parseDouble(newValue.toString()));
+                            callback.pickMulticastTreeAndUpdateView(tree);
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
                             break;
 
@@ -343,6 +345,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
                             NetPlan netPlan = callback.getDesign();
                             try {
                                 netPlan.getMulticastTreeFromId((long) itemId).remove();
+                                callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
@@ -365,6 +368,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
 
                         try {
                             netPlan.removeAllMulticastTrees();
+                            callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
                         } catch (Throwable ex) {
                             ex.printStackTrace();
@@ -411,6 +415,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
 
                 try {
                     createMulticastTreeGUI(callback);
+                    callback.getVisualizationState().resetPickedState();
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
@@ -529,6 +534,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
                 for (MulticastTree t : addedTrees) t.remove();
                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error adding multicast trees. No tree was created.");
             }
+            callback.getVisualizationState().resetPickedState();
         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
         }
     }

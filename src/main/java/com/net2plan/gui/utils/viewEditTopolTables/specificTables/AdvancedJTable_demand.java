@@ -394,6 +394,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                             {
                             	final Demand demand = netPlan.getDemandFromId((long) itemId);
                             	demand.remove();
+                            	callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
@@ -415,6 +416,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
 
                         try {
                         	netPlan.removeAllDemands();
+                        	callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                         } catch (Throwable ex) {
                             ex.printStackTrace();
@@ -541,6 +543,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                 if (networkElementType == NetworkElementType.LINK) 
                 {
                 	final Link e = netPlan.addLink(originNode , destinationNode , 0 , 0 , 200000 , null);
+                	callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                 	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
                 	callback.pickLinkAndUpdateView(e);
                 } else 
@@ -567,14 +570,14 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
             if (result == JOptionPane.CLOSED_OPTION) return;
             else if (result == JOptionPane.YES_OPTION) netPlan.removeAllDemands();
 
-            final int N = netPlan.getNumberOfNodes();
             for (Node n1 : netPlan.getNodes()) {
                 for (Node n2 : netPlan.getNodes()) {
                     if (n1.getIndex() >= n2.getIndex()) continue;
-                    netPlan.addLinkBidirectional(n1,n2,0,0,200000,null,layer);
+                    netPlan.addDemandBidirectional(n1,n2,0,null,layer);
                 }
             }
-            callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
+        	callback.getVisualizationState().resetPickedState();
+            callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
         }
     }
 
@@ -613,6 +616,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                 try 
                 {
                     for (Demand d : netPlan.getDemands()) d.setOfferedTraffic(h_d);
+                	callback.getVisualizationState().resetPickedState();
                     callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set offered traffic to all demands");
@@ -645,6 +649,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
 
                 try {
                     for (Demand d : netPlan.getDemands()) d.setOfferedTraffic(d.getOfferedTraffic() * scalingFactor);
+                    callback.getVisualizationState().resetPickedState();
                     callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to scale demand offered traffics");
@@ -728,6 +733,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                     	if (!d.getRoutes().isEmpty()) throw new Net2PlanException ("It is not possible to set the resource types traversed to demands with routes");
                     	d.setServiceChainSequenceOfTraversedResourceTypes(newTraversedResourcesTypes);
                     }
+                    callback.getVisualizationState().resetPickedState();
                     callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set traversed resource types");
@@ -746,6 +752,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                     public void actionPerformed(ActionEvent e) {
                         netPlan.getDemandFromId(demandId).decouple();
                         model.setValueAt("", row, 3);
+                    	callback.getVisualizationState().resetPickedState();
                         callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                     }
                 });
@@ -781,6 +788,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                             try {
                                 long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
                                 netPlan.getDemandFromId(demandId).coupleToNewLinkCreated(netPlan.getNetworkLayerFromId(layerId));
+                            	callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.LINK));
                                 break;
                             } catch (Throwable ex) {
@@ -860,6 +868,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                                 }
 
                                 netPlan.getDemandFromId(demandId).coupleToUpperLayerLink(netPlan.getLinkFromId(linkId));
+                            	callback.getVisualizationState().resetPickedState();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.LINK));
                                 break;
                             } catch (Throwable ex) {
@@ -888,6 +897,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
 
                             int numRows = model.getRowCount();
                             for (int i = 0; i < numRows; i++) model.setValueAt("", i, 3);
+                        	callback.getVisualizationState().resetPickedState();
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND));
                         }
                     });
@@ -927,6 +937,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                                         if (!demand.isCoupled())
                                             demand.coupleToNewLinkCreated(layer);
 
+                                    callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.LINK));
                                     break;
                                 } catch (Throwable ex) {

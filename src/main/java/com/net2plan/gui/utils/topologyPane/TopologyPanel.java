@@ -448,7 +448,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     {
         Object src = e.getSource();
         final VisualizationState vs = callback.getVisualizationState();
-
+        final NetPlan np = callback.getDesign(); 
         if (src == btn_load)
         {
             loadDesign();
@@ -485,8 +485,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         } else if (src == btn_reset)
         {
             callback.loadDesignDoNotUpdateVisualization(new NetPlan());
+    		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+    				vs.suggestUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
+    		vs.setLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
             callback.updateVisualizationAfterNewTopology();
-            callback.resetPickedStateAndUpdateView();
         } else if (src == btn_increaseInterLayerDistance)
         {
         	if (vs.getNumberOfVisibleLayers() == 1) return;
@@ -497,7 +499,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         	vs.setInterLayerSpaceInPixels(newInterLayerDistance);
         	canvas.updateInterLayerDistanceInNpCoordinates (newInterLayerDistance);
         	canvas.updateAllVerticesXYPosition();
-
             canvas.refresh();
         } else if (src == btn_decreaseInterLayerDistance)
         {
@@ -610,6 +611,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             aux.checkCachesConsistency();
 
             callback.loadDesignDoNotUpdateVisualization(aux);
+            final VisualizationState vs = callback.getVisualizationState();
+    		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+    				vs.suggestUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
+    		vs.setLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
             callback.updateVisualizationAfterNewTopology();
         } catch (Net2PlanException ex)
         {
@@ -631,6 +636,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             fc_netPlan.setCurrentDirectory(file.getParentFile());
 
             callback.loadDesignDoNotUpdateVisualization(netPlan);
+            final VisualizationState vs = callback.getVisualizationState();
+    		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+    				vs.suggestUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
+    		vs.setLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
             callback.updateVisualizationAfterNewTopology();
         } catch (Net2PlanException ex)
         {
@@ -683,7 +692,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     for (Node n : demand.getEgressNodes()) egressNodesThisNetPlan.add(netPlan.getNode(n.getIndex()));
                     netPlan.addMulticastDemand(netPlan.getNode(demand.getIngressNode().getIndex()), egressNodesThisNetPlan, demand.getOfferedTraffic(), demand.getAttributes());
                 }
-
+                callback.getVisualizationState().resetPickedState();
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND, NetworkElementType.MULTICAST_DEMAND));
             } catch (Throwable ex)
             {

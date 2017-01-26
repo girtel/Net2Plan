@@ -117,6 +117,7 @@ public class OSMJUNGOffState extends OSMOffState
     public void addNode(Point2D pos)
     {
         callback.getDesign().addNode(pos.getX(), pos.getY(), "Node" + callback.getDesign().getNumberOfNodes(), null);
+        callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
     }
 
@@ -124,6 +125,7 @@ public class OSMJUNGOffState extends OSMOffState
     public void removeNode(Node node)
     {
         node.remove();
+        callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
     }
 

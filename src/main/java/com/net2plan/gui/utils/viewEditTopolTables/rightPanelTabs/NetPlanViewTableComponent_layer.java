@@ -106,13 +106,19 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                     if (button == sourceRoutingActivated && state == ItemEvent.SELECTED) {
                         netPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
                         if (previousRoutingType != RoutingType.SOURCE_ROUTING)
+                        {
+                        	networkViewer.getVisualizationState().resetPickedState();
                             networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+                        }
                     }
 
                     if (button == hopByHopRoutingActivated && state == ItemEvent.SELECTED) {
                         netPlan.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
                         if (previousRoutingType != RoutingType.HOP_BY_HOP_ROUTING)
+                        {
+                        	networkViewer.getVisualizationState().resetPickedState();
                             networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+                        }
                     }
                 }
             };

@@ -234,6 +234,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                         case COLUMN_OFFEREDTRAFFIC:
                             demand.setOfferedTraffic(Double.parseDouble(newValue.toString()));
                         	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
+                            callback.pickMulticastDemandAndUpdateView(demand);
                             break;
 
                         default:
@@ -331,6 +332,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
 
                                 try {
                                     netPlan.getMulticastDemandFromId((long) itemId).remove();
+                                    callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
                                 } catch (Throwable ex) {
                                     ErrorHandling.addErrorOrException(ex, getClass());
@@ -353,6 +355,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                             NetPlan netPlan = callback.getDesign();
                             try {
                                 netPlan.removeAllMulticastDemands();
+                                callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                             	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
                             } catch (Throwable ex) {
                                 ex.printStackTrace();
@@ -444,6 +447,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                     egressNodes.add(node);
                 }
                 netPlan.addMulticastDemand(netPlan.getNodeFromId(ingressNode), egressNodes, 0, null);
+                callback.getVisualizationState().resetPickedState();
             	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
                 break;
             } catch (Throwable ex) {
@@ -516,6 +520,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                     public void actionPerformed(ActionEvent e) {
                         demand.decouple();
                         model.setValueAt("", row, COLUMN_COUPLEDTOLINKS);
+                        callback.getVisualizationState().resetPickedState();
                     	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_DEMAND , NetworkElementType.LINK));
                     }
                 });
@@ -536,6 +541,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                             for (MulticastDemand d : new HashSet<MulticastDemand>(coupledDemands)) d.decouple();
                             int numRows = model.getRowCount();
                             for (int i = 0; i < numRows; i++) model.setValueAt("", i, COLUMN_COUPLEDTOLINKS);
+                            callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_DEMAND , NetworkElementType.LINK));
                         }
                     });
@@ -574,6 +580,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                                     for (MulticastDemand demand : netPlan.getMulticastDemands())
                                         if (!demand.isCoupled())
                                             demand.coupleToNewLinksCreated(layer);
+                                    callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_DEMAND , NetworkElementType.LINK));
                                     break;
                                 } catch (Throwable ex) {
@@ -617,6 +624,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                 egressNodes.remove(ingressNode);
                 netPlan.addMulticastDemand(ingressNode, egressNodes, 0, null);
             }
+            callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_DEMAND , NetworkElementType.LINK));
         }
     }
@@ -639,6 +647,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                 if (egressNodes.isEmpty()) egressNodes.add(netPlan.getNode(ingressNode.getIndex() == 0 ? 1 : 0));
                 netPlan.addMulticastDemand(ingressNode, egressNodes, 0, null);
             }
+            callback.getVisualizationState().resetPickedState();
         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_DEMAND , NetworkElementType.LINK));
         }
     }

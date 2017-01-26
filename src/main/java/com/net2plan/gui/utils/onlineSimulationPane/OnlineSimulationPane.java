@@ -22,7 +22,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.PriorityQueue;
 
@@ -50,7 +50,6 @@ import javax.swing.text.DefaultCaret;
 
 import org.apache.commons.collections15.BidiMap;
 
-import com.google.common.collect.Sets;
 import com.jom.JOMException;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.CellRenderers;
@@ -70,7 +69,6 @@ import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.IExternal;
 import com.net2plan.internal.SystemUtils;
-import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.sim.EndSimulationException;
 import com.net2plan.internal.sim.IGUISimulationListener;
@@ -185,7 +183,12 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
                 simKernel.getSimCore().setSimulationState(SimState.STOPPED);
                 simKernel.reset();
                 mainWindow.loadDesignDoNotUpdateVisualization(simKernel.getInitialNetPlan());
+                final VisualizationState vs = mainWindow.getVisualizationState();
+        		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+        				vs.suggestUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
+        		vs.setLayerVisibilityAndOrder(mainWindow.getDesign() , res.getFirst() , res.getSecond());
                 mainWindow.updateVisualizationAfterNewTopology();
+
             } else if (src == btn_viewEventList) {
                 viewFutureEventList();
             } else if (src == btn_updateReport) {

@@ -29,6 +29,7 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -78,4 +79,6 @@ public interface IVisualizationCallback
     boolean inOnlineSimulationMode();
 
 	void loadDesignDoNotUpdateVisualization(NetPlan netPlan);
+
+	void pickResourceAndUpdateView(Resource res);
 }
