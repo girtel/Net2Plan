@@ -19,6 +19,7 @@ import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 
+import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 
@@ -135,11 +136,28 @@ public class GUINode
 
     public String getToolTip() {
         StringBuilder temp = new StringBuilder();
+        final NetPlan np = npNode.getNetPlan();
+		final String capUnits = np.getLinkCapacityUnitsName(layer);
+		final String trafUnits = np.getDemandTrafficUnitsName(layer);
+		final double inLinkOccup = npNode.getIncomingLinks(layer).stream().mapToDouble(e->e.getOccupiedCapacity()).sum(); 
+		final double outLinkOccup = npNode.getOutgoingLinks(layer).stream().mapToDouble(e->e.getOccupiedCapacity()).sum(); 
+		final double inLinkCapacity = npNode.getIncomingLinks(layer).stream().mapToDouble(e->e.getCapacity()).sum(); 
+		final double outLinkCapacity = npNode.getOutgoingLinks(layer).stream().mapToDouble(e->e.getCapacity()).sum(); 
+		final double inOfferedUnicast = npNode.getIncomingDemands(layer).stream().mapToDouble(e->e.getOfferedTraffic()).sum(); 
+		final double outOfferedUnicast = npNode.getOutgoingDemands(layer).stream().mapToDouble(e->e.getOfferedTraffic()).sum(); 
+		final double inOfferedMulticast = npNode.getIncomingMulticastDemands(layer).stream().mapToDouble(e->e.getOfferedTraffic()).sum(); 
+		final double outOfferedMulticast = npNode.getOutgoingMulticastDemands(layer).stream().mapToDouble(e->e.getOfferedTraffic()).sum();
         temp.append("<html>");
         temp.append("<table>");
-        temp.append("<tr><td>Name:</td><td>" + getLabel() + "</td></tr>");
-        temp.append("<tr><td>Index:</td><td>" + getAssociatedNetPlanNode().getIndex() + "</td></tr>");
-        temp.append("<tr><td>Id:</td><td>" + getAssociatedNetPlanNode().getId() + "</td></tr>");
+        temp.append("<tr><td>Name:</td><td>" + npNode.getName() + "</td></tr>");
+        temp.append("<tr><td>Total offered unicast traffic (in / out):</td>");
+        temp.append("<td>" + String.format("%.2f" , inOfferedUnicast) +  "  / " + String.format("%.2f" , outOfferedUnicast) + " " + trafUnits + "</td></tr>");
+        temp.append("<tr><td>Total offered multicast traffic (in / out):</td>");
+        temp.append("<td>" + String.format("%.2f" , inOfferedMulticast) +  "  / " + String.format("%.2f" , outOfferedMulticast) + " " + trafUnits + "</td></tr>");
+        temp.append("<tr><td>Total link capacities (in / out):</td>");
+        temp.append("<td>" + String.format("%.2f" , inLinkCapacity) +  "  / " + String.format("%.2f" , outLinkCapacity) + " " + capUnits + "</td></tr>");
+        temp.append("<tr><td>Total link occupation (in / out):</td>");
+        temp.append("<td>" + String.format("%.2f" , inLinkOccup) +  "  / " + String.format("%.2f" , outLinkOccup) + " " + capUnits + "</td></tr>");
         temp.append("</table>");
         temp.append("</html>");
         return temp.toString();

@@ -141,8 +141,8 @@ public class GUINet2Plan extends JFrame implements ActionListener {
             } else {
                 Object object = itemObject.get(item);
                 
-                WindowUtils.clearFloatingWindows();
-                WindowUtils.setWindowLeftSide(instance);
+//                WindowUtils.clearFloatingWindows();
+//                WindowUtils.setWindowLeftSide(instance);
                 
                 if (object != null) {
                     if (object instanceof Class) {

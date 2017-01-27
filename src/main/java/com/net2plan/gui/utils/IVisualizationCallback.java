@@ -44,21 +44,23 @@ public interface IVisualizationCallback
 	
 	void resetPickedStateAndUpdateView ();
 
-    void pickNodeAndUpdateView (Node node);
-
-    void pickMulticastDemandAndUpdateView(MulticastDemand demand);
-    
-    void pickForwardingRuleAndUpdateView(Pair<Demand, Link> demandLink);
-    
-    void pickLinkAndUpdateView (Link link);
-
-    void pickDemandAndUpdateView (Demand demand);
-
-    void pickRouteAndUpdateView (Route route);
-
-    void pickMulticastTreeAndUpdateView (MulticastTree tree);
-
-    void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg);
+//    void pickNodeAndUpdateView (Node node);
+//
+//    void pickMulticastDemandAndUpdateView(MulticastDemand demand);
+//    
+//    void pickForwardingRuleAndUpdateView(Pair<Demand, Link> demandLink);
+//    
+//    void pickLinkAndUpdateView (Link link);
+//
+//    void pickDemandAndUpdateView (Demand demand);
+//
+//    void pickRouteAndUpdateView (Route route);
+//
+//    void pickMulticastTreeAndUpdateView (MulticastTree tree);
+//
+//    void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg);
+//
+//    void pickLayerAndUpdateView (NetworkLayer layer);
 
     void putTransientColorInElementTopologyCanvas (Collection<? extends NetworkElement> linksAndNodes , Color color);
 
@@ -80,5 +82,5 @@ public interface IVisualizationCallback
 
 	void loadDesignDoNotUpdateVisualization(NetPlan netPlan);
 
-	void pickResourceAndUpdateView(Resource res);
+	void updateVisualizationAfterPick();
 }

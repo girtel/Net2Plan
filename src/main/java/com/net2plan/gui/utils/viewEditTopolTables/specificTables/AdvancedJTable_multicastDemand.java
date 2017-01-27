@@ -234,7 +234,8 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                         case COLUMN_OFFEREDTRAFFIC:
                             demand.setOfferedTraffic(Double.parseDouble(newValue.toString()));
                         	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
-                            callback.pickMulticastDemandAndUpdateView(demand);
+                            callback.getVisualizationState ().pickMulticastDemand(demand);
+                            callback.updateVisualizationAfterPick();
                             break;
 
                         default:
@@ -387,7 +388,8 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
     public void showInCanvas(MouseEvent e, Object itemId) 
     {
         if (isTableEmpty()) return;
-        callback.pickMulticastDemandAndUpdateView(callback.getDesign().getMulticastDemandFromId((long) itemId));
+        callback.getVisualizationState ().pickMulticastDemand(callback.getDesign().getMulticastDemandFromId((long) itemId));
+        callback.updateVisualizationAfterPick();
     }
 
     private boolean isTableEmpty() {

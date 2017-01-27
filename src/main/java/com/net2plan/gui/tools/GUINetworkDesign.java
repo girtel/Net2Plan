@@ -32,7 +32,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,9 +55,9 @@ import javax.swing.border.LineBorder;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
-import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
+import com.net2plan.gui.utils.focusPane.FocusPane;
 import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
 import com.net2plan.gui.utils.onlineSimulationPane.OnlineSimulationPane;
 import com.net2plan.gui.utils.topologyPane.GUILink;
@@ -111,7 +110,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
     private TopologyPanel topologyPanel;
 
-    private JTextArea txt_netPlanLog;
+    private FocusPane focusPanel;
 
     private ViewEditTopologyTablesPane viewEditTopTables;
     private ViewReportPane reportPane;
@@ -303,11 +302,11 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
     private JPanel configureLeftBottomPanel()
     {
-        txt_netPlanLog = new JTextArea();
-        txt_netPlanLog.setFont(new JLabel().getFont());
+    	focusPanel = new FocusPane(this);// = new JTextArea();
+//        txt_netPlanLog.setFont(new JLabel().getFont());
         JPanel pane = new JPanel(new MigLayout("fill, insets 0 0 0 0"));
-        pane.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Warnings"));
-        pane.add(new JScrollPane(txt_netPlanLog), "grow");
+        pane.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Focus panel"));
+        pane.add(new JScrollPane(focusPanel), "grow");
         return pane;
     }
 
@@ -623,76 +622,22 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         return vs;
     }
 
-    @Override
-    public void pickDemandAndUpdateView(Demand demand)
-    {
-        vs.pickDemand(demand);
-        selectNetPlanViewItem(NetworkElementType.DEMAND, demand.getId());
-        topologyPanel.getCanvas().refresh();
-    }
 
     @Override
-    public void pickResourceAndUpdateView(Resource res)
+    public void updateVisualizationAfterPick ()
     {
-        vs.pickResource(res);
-        selectNetPlanViewItem(NetworkElementType.RESOURCE, res.getId());
-        topologyPanel.getCanvas().refresh();
-    }
-
-    @Override
-    public void pickLinkAndUpdateView(Link link)
-    {
-        vs.pickLink(link);
-        selectNetPlanViewItem(NetworkElementType.LINK, link.getId());
-        topologyPanel.getCanvas().refresh();
-    }
-
-    @Override
-    public void pickNodeAndUpdateView(Node node)
-    {
-        vs.pickNode(node);
-        selectNetPlanViewItem(NetworkElementType.NODE, node.getId());
-        topologyPanel.getCanvas().refresh();
-    }
-
-    @Override
-    public void pickMulticastDemandAndUpdateView(MulticastDemand demand)
-    {
-        vs.pickMulticastDemand(demand);
-        selectNetPlanViewItem(NetworkElementType.MULTICAST_DEMAND, demand.getId());
-        topologyPanel.getCanvas().refresh();
-    }
-
-    @Override
-    public void pickForwardingRuleAndUpdateView(Pair<Demand, Link> demandLink)
-    {
-        vs.pickForwardingRule(demandLink);
-        selectNetPlanViewItem(NetworkElementType.FORWARDING_RULE, Pair.of(demandLink.getFirst().getIndex() , demandLink.getSecond().getIndex()));
-        topologyPanel.getCanvas().refresh();
-    }
-
-    @Override
-    public void pickRouteAndUpdateView(Route route)
-    {
-        vs.pickRoute(route);
-        selectNetPlanViewItem(NetworkElementType.ROUTE, route.getId());
-        topologyPanel.getCanvas().refresh();
-    }
-
-    @Override
-    public void pickMulticastTreeAndUpdateView(MulticastTree tree)
-    {
-        vs.pickMulticastTree(tree);
-        selectNetPlanViewItem(NetworkElementType.MULTICAST_TREE, tree.getId());
-        topologyPanel.getCanvas().refresh();
-    }
-
-    @Override
-    public void pickSRGAndUpdateView(NetworkLayer layer, SharedRiskGroup srg)
-    {
-        vs.pickSRG(srg);
-        selectNetPlanViewItem(NetworkElementType.SRG, srg.getId());
-        topologyPanel.getCanvas().refresh();
+    	if (vs.getPickedElementType() != null) // can be null if picked a resource type
+    	{
+    		if (vs.getPickedNetworkElement() != null)
+    			selectNetPlanViewItem(vs.getPickedElementType(), vs.getPickedNetworkElement().getId());
+    		else
+    		{
+    			final Pair<Demand,Link> fr = vs.getPickedForwardingRule();
+    			selectNetPlanViewItem(vs.getPickedElementType(), Pair.of(fr.getFirst().getIndex() , fr.getSecond().getIndex()));
+    		}
+            topologyPanel.getCanvas().refresh();
+    	}
+        focusPanel.updateView();
     }
 
     @Override
@@ -729,7 +674,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 		topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
 	    topologyPanel.getCanvas().zoomAll();
 	    viewEditTopTables.updateView();
-	    updateWarnings();
+        focusPanel.updateView();
 	}
 
     @Override
@@ -751,34 +696,29 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     		topologyPanel.updateMultilayerVisibilityAndOrderPanel();
             topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
             viewEditTopTables.updateView();
-            updateWarnings();
+            focusPanel.updateView();
         }
         else if ((modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE) || modificationsMade.contains(NetworkElementType.LAYER)))
         {
             topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
             viewEditTopTables.updateView();
-            updateWarnings();
+            focusPanel.updateView();
         } else
         {
             viewEditTopTables.updateView();
-            updateWarnings();
+            focusPanel.updateView();
         }
     }
 
-    private void updateLog(String text)
-    {
-        txt_netPlanLog.setText(null);
-        txt_netPlanLog.setText(text);
-        txt_netPlanLog.setCaretPosition(0);
-    }
-
-    public void updateWarnings()
-    {
-        Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
-        List<String> warnings = NetworkPerformanceMetrics.checkNetworkState(getDesign(), net2planParameters);
-        String warningMsg = warnings.isEmpty() ? "Design is successfully completed!" : StringUtils.join(warnings, StringUtils.getLineSeparator());
-        updateLog(warningMsg);
-    }
+//    public void updateWarnings()
+//    {
+//        Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
+//        List<String> warnings = NetworkPerformanceMetrics.checkNetworkState(getDesign(), net2planParameters);
+//        String warningMsg = warnings.isEmpty() ? "Design is successfully completed!" : StringUtils.join(warnings, StringUtils.getLineSeparator());
+//        txt_netPlanLog.setText(null);
+//        txt_netPlanLog.setText(warningMsg);
+//        txt_netPlanLog.setCaretPosition(0);
+//    }
 
     @Override
     public void updateVisualizationJustTables()

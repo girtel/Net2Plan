@@ -200,7 +200,8 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
                         case COLUMN_SPLITTINGRATIO:
                             netPlan.setForwardingRule(demand, link, Double.parseDouble(newValue.toString()));
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.FORWARDING_RULE));
-                            callback.pickForwardingRuleAndUpdateView(Pair.of(demand,link));
+                            callback.getVisualizationState ().pickForwardingRule(Pair.of(demand,link));
+                            callback.updateVisualizationAfterPick();
                             break;
 
                         default:
@@ -262,7 +263,8 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
     {
     	final NetPlan np = callback.getDesign();
     	Pair<Integer, Integer> pair = (Pair<Integer, Integer>) itemId;
-    	callback.pickForwardingRuleAndUpdateView(Pair.of(np.getDemand(pair.getFirst()) , np.getLink(pair.getSecond())));
+    	callback.getVisualizationState ().pickForwardingRule(Pair.of(np.getDemand(pair.getFirst()) , np.getLink(pair.getSecond())));
+        callback.updateVisualizationAfterPick();
     }
 
     public void doPopup(final MouseEvent e, final int row, final Object itemId) {

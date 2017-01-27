@@ -376,14 +376,16 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                             boolean visible = (Boolean) newValue;
                             vs.setVisibilityState(link , visible);
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                            callback.pickLinkAndUpdateView(link);
+                            callback.getVisualizationState ().pickLink(link);
+                            callback.updateVisualizationAfterPick();
                             break;
 
                         case COLUMN_STATE:
                             boolean isLinkUp = (Boolean) newValue;
                             link.setFailureState(isLinkUp);
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                            callback.pickLinkAndUpdateView(link);
+                            callback.getVisualizationState ().pickLink(link);
+                            callback.updateVisualizationAfterPick();
                             break;
 
                         case COLUMN_CAPACITY:
@@ -391,19 +393,22 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                             link.setCapacity(text.equalsIgnoreCase("inf") ? Double.MAX_VALUE : Double.parseDouble(text));
                             newValue = link.getCapacity();
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                            callback.pickLinkAndUpdateView(link);
+                            callback.getVisualizationState ().pickLink(link);
+                            callback.updateVisualizationAfterPick();
                             break;
 
                         case COLUMN_LENGTH:
                             link.setLengthInKm(Double.parseDouble(newValue.toString()));
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                            callback.pickLinkAndUpdateView(link);
+                            callback.getVisualizationState ().pickLink(link);
+                            callback.updateVisualizationAfterPick();
                             break;
 
                         case COLUMN_PROPSPEED:
                             link.setPropagationSpeedInKmPerSecond(Double.parseDouble(newValue.toString()));
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                            callback.pickLinkAndUpdateView(link);
+                            callback.getVisualizationState ().pickLink(link);
+                            callback.updateVisualizationAfterPick();
                             break;
 
                         default:
@@ -596,7 +601,8 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
     {
         if (isTableEmpty()) return;
         final Link link = callback.getDesign().getLinkFromId((long) itemId);
-        callback.pickLinkAndUpdateView(link);
+        callback.getVisualizationState ().pickLink(link);
+        callback.updateVisualizationAfterPick();
     }
 
     private boolean isTableEmpty() {

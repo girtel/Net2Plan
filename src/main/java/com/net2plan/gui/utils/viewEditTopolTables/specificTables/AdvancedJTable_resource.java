@@ -213,7 +213,8 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                         case COLUMN_NAME:
                             res.setName(newValue.toString());
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            callback.pickResourceAndUpdateView(res);
+                        	callback.getVisualizationState ().pickResource(res);
+                            callback.updateVisualizationAfterPick();
 
                             break;
 
@@ -221,14 +222,16 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                             if (newValue == null) return;
                             res.setCapacity((Double)newValue,  netPlan.getResourceFromId(resId).getCapacityOccupiedInBaseResourcesMap());
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            callback.pickResourceAndUpdateView(res);
+                        	callback.getVisualizationState ().pickResource(res);
+                            callback.updateVisualizationAfterPick();
                             break;
 
                         case COLUMN_PROCESSINGTIME:
                             if(newValue == null) return;
                             res.setProcessingTimeToTraversingTrafficInMs((Double)newValue);
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            callback.pickResourceAndUpdateView(res);
+                        	callback.getVisualizationState ().pickResource(res);
+                            callback.updateVisualizationAfterPick();
                             break;
 
                         default:

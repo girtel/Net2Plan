@@ -246,13 +246,15 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
                         case COLUMN_CARRIEDTRAFFIC:
                             tree.setCarriedTraffic(Double.parseDouble(newValue.toString()), tree.getOccupiedLinkCapacity());
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
-                            callback.pickMulticastTreeAndUpdateView(tree);
+                        	callback.getVisualizationState ().pickMulticastTree(tree);
+                            callback.updateVisualizationAfterPick();
                             break;
 
                         case COLUMN_OCCUPIEDCAPACITY:
                             tree.setCarriedTraffic(tree.getCarriedTraffic(), Double.parseDouble(newValue.toString()));
-                            callback.pickMulticastTreeAndUpdateView(tree);
+                            callback.getVisualizationState ().pickMulticastTree(tree);
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
+                            callback.updateVisualizationAfterPick();
                             break;
 
                         default:
@@ -399,7 +401,8 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
     @Override
     public void showInCanvas(MouseEvent e, Object itemId) {
         if (isTableEmpty()) return;
-        callback.pickMulticastTreeAndUpdateView(callback.getDesign().getMulticastTreeFromId((long) itemId));
+        callback.getVisualizationState ().pickMulticastTree(callback.getDesign().getMulticastTreeFromId((long) itemId));
+        callback.updateVisualizationAfterPick();
     }
 
     private boolean isTableEmpty() {

@@ -294,13 +294,15 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                         case COLUMN_CARRIEDTRAFFIC:
                             route.setCarriedTraffic(Double.parseDouble(newValue.toString()), route.getOccupiedCapacity());
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                            callback.pickRouteAndUpdateView(route);
+                        	callback.getVisualizationState ().pickRoute(route);
+                            callback.updateVisualizationAfterPick();
                             break;
 
                         case COLUMN_OCCUPIEDCAPACITY:
                             route.setCarriedTraffic(route.getCarriedTraffic(), Double.parseDouble(newValue.toString()));
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                            callback.pickRouteAndUpdateView(route);
+                        	callback.getVisualizationState ().pickRoute(route);
+                            callback.updateVisualizationAfterPick();
                             break;
 
                         default:
@@ -449,7 +451,8 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
     public void showInCanvas(MouseEvent e, Object itemId) 
     {
         if (isTableEmpty()) return;
-        callback.pickRouteAndUpdateView(callback.getDesign().getRouteFromId((long) itemId));
+    	callback.getVisualizationState ().pickRoute(callback.getDesign().getRouteFromId((long) itemId));
+        callback.updateVisualizationAfterPick();
     }
 
     private boolean isTableEmpty() {

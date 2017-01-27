@@ -292,7 +292,8 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                         case COLUMN_OFFEREDTRAFFIC:
                         	demand.setOfferedTraffic(Double.parseDouble(newValue.toString()));
                         	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                        	callback.pickDemandAndUpdateView(demand);
+                        	callback.getVisualizationState().pickDemand(demand);
+                            callback.updateVisualizationAfterPick();
                             break;
 
                         default:
@@ -446,7 +447,8 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
 
     public void showInCanvas(MouseEvent e, Object itemId) 
     {
-        callback.pickDemandAndUpdateView(callback.getDesign().getDemandFromId((long)itemId));
+    	callback.getVisualizationState ().pickDemand(callback.getDesign().getDemandFromId((long)itemId));
+        callback.updateVisualizationAfterPick();
     }
 
     private List<JComponent> getExtraAddOptions() {
@@ -545,12 +547,14 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                 	final Link e = netPlan.addLink(originNode , destinationNode , 0 , 0 , 200000 , null);
                 	callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                 	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
-                	callback.pickLinkAndUpdateView(e);
+                	callback.getVisualizationState ().pickLink(e);
+                    callback.updateVisualizationAfterPick();
                 } else 
                 {
                 	final Demand d = netPlan.addDemand(originNode , destinationNode , 0 , null);
                 	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                	callback.pickDemandAndUpdateView(d);
+                	callback.getVisualizationState ().pickDemand(d);
+                    callback.updateVisualizationAfterPick();
                 }
 
                 break;

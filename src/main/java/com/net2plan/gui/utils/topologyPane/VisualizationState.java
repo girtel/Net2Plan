@@ -97,6 +97,9 @@ public class VisualizationState
     private NetworkElement pickedElementNotFR;
     private Pair<Demand,Link> pickedElementFR;
 
+    public Pair<Demand,Link> getPickedForwardingRule () { return pickedElementFR; }
+    public NetworkElement getPickedNetworkElement () { return pickedElementNotFR; }
+    
     public NetPlan getNetPlan()
     {
         return currentNp;
@@ -934,6 +937,14 @@ public class VisualizationState
     public boolean isPickedElement () { return pickedElementType != null; }
     
     public NetworkElementType getPickedElementType () { return pickedElementType; }
+    
+    public void pickLayer (NetworkLayer pickedLayer)
+    {
+    	resetPickedState();
+    	this.pickedElementType = NetworkElementType.LAYER;
+    	this.pickedElementFR = null;
+    	this.pickedElementNotFR = pickedLayer;
+    }
     
     public void pickDemand (Demand pickedDemand)
     {

@@ -418,7 +418,8 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
     {
         if (isTableEmpty()) return;
         final SharedRiskGroup srg = callback.getDesign().getSRGFromId((long) itemId);
-        callback.pickSRGAndUpdateView(callback.getDesign().getNetworkLayerDefault() , srg);
+        callback.getVisualizationState ().pickSRG(srg);
+        callback.updateVisualizationAfterPick();
     }
 
     private boolean isTableEmpty() {

@@ -605,7 +605,7 @@ public class Node extends NetworkElement
 		return (Set<SharedRiskGroup>) Collections.unmodifiableSet(cache_nodeSRGs);
 	}
 
-	/** Returns the set of resources that this node hosts. If no resource, an empty set is returned. If one ore more optional parameters type are given, 
+	/** Returns the set of resources that this node hosts. If no resource is provided, all the resources of all types are provided. If one ore more optional parameters type are given, 
 	 * a set with the hosted resources of any of those types is returned (or an empty set if none)
 	 * @param type one or more optional types (optional)
 	 * @return the set
