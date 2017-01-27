@@ -135,6 +135,56 @@ public final class JUNGCanvas implements ITopologyCanvas
         /* If shapes, comment this line */
         //vv.getRenderContext().setVertexIconTransformer(new Transformer<GUINode,Icon> () {} ... )
 
+        /* Convert shape to Icon: http://stackoverflow.com/questions/5449633/convert-shape-object-to-image-object-in-java */
+        /* then use only icons. modify the icon to have one with two circles around when selected? the circles are red if the node is failed */
+
+// https://java.net/projects/snat/sources/reposit/content/test/UnicodeLabelDemo.java        
+//        ojo!!
+//        VertexIconShapeTransformer<Integer> vertexIconShapeFunction =
+//        079.
+//        new VertexIconShapeTransformer<Integer>(new EllipseVertexShapeTransformer<Integer>());
+//        080.
+//        DefaultVertexIconTransformer<Integer> vertexIconFunction = new DefaultVertexIconTransformer<Integer>();
+//        081.
+//        vv.getRenderContext().setVertexShapeTransformer(vertexIconShapeFunction);
+//        082.
+//        vv.getRenderContext().setVertexIconTransformer(vertexIconFunction);
+        
+        //http://jung.sourceforge.net/site/jung-samples/xref/edu/uci/ics/jung/samples/DrawnIconVertexDemo.html
+        //        vv.getRenderContext().setVertexIconTransformer(new Transformer<Integer,Icon>() {
+//        	77  
+//        	78          	/*
+//        	79          	 * Implements the Icon interface to draw an Icon with background color and
+//        	80          	 * a text label
+//        	81          	 */
+//        	82  			public Icon transform(final Integer v) {
+//        	83  				return new Icon() {
+//        	84  
+//        	85  					public int getIconHeight() {
+//        	86  						return 20;
+//        	87  					}
+//        	88  
+//        	89  					public int getIconWidth() {
+//        	90  						return 20;
+//        	91  					}
+//        	92  
+//        	93  					public void paintIcon(Component c, Graphics g,
+//        	94  							int x, int y) {
+//        	95  						if(vv.getPickedVertexState().isPicked(v)) {
+//        	96  							g.setColor(Color.yellow);
+//        	97  						} else {
+//        	98  							g.setColor(Color.red);
+//        	99  						}
+//        	100 						g.fillOval(x, y, 20, 20);
+//        	101 						if(vv.getPickedVertexState().isPicked(v)) {
+//        	102 							g.setColor(Color.black);
+//        	103 						} else {
+//        	104 							g.setColor(Color.white);
+//        	105 						}
+//        	106 						g.drawString(""+v, x+6, y+15);
+//        	107 						
+//        	108 					}};
+//        	109 			}});
         vv.getRenderContext().setVertexIncludePredicate(guiNodeContext -> vs.isVisible(guiNodeContext.element));
         vv.getRenderer().setVertexLabelRenderer(new NodeLabelRenderer());
         vv.setVertexToolTipTransformer(node -> node.getToolTip());

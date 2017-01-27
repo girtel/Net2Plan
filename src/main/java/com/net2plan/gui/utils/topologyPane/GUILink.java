@@ -18,6 +18,10 @@ import java.awt.Paint;
 import java.awt.Stroke;
 
 import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
 
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.*;
 
@@ -178,13 +182,33 @@ public class GUILink
 
     public String getToolTip() {
         StringBuilder temp = new StringBuilder();
-        temp.append("<html>");
-        temp.append("<table>");
-        temp.append("<tr><td>Index:</td><td>" + getAssociatedNetPlanLink().getIndex() + "</td></tr>");
-        temp.append("<tr><td>Id:</td><td>" + getAssociatedNetPlanLink().getId() + "</td></tr>");
-        temp.append("<tr><td>Utilization:</td><td>" + getLabel() + "</td></tr>");
-        temp.append("</table>");
-        temp.append("</html>");
+        if (isIntraNodeLink())
+        {
+            temp.append("<html>");
+            temp.append("<p>Internal link in the node, between two layers</p>");
+            temp.append("<table border=\"0\">");
+            temp.append("<tr><td>Origin layer:</td><td>" + getLayerName(originNode.getLayer()) + "</td></tr>");
+            temp.append("<tr><td>Destination layer:</td><td>" + getLayerName(destinationNode.getLayer()) + "</td></tr>");
+            temp.append("</table>");
+            temp.append("</html>");
+        }
+        else
+        {
+            final NetPlan np = npLink.getNetPlan();
+        	final NetworkLayer layer = npLink.getLayer();
+    		final String capUnits = np.getLinkCapacityUnitsName(layer);
+    		final String trafUnits = np.getDemandTrafficUnitsName(layer);
+            temp.append("<html>");
+            temp.append("<table border=\"0\">");
+            temp.append("<tr><td>Link carried traffic:</td><td>" + String.format("%.2f" , npLink.getCarriedTraffic()) + " " + trafUnits + "</td></tr>");
+            temp.append("<tr><td>Link occupied capacity:</td><td>" + String.format("%.2f" , npLink.getOccupiedCapacity()) + " " + capUnits + "</td></tr>");
+            temp.append("<tr><td>Link capacity:</td><td>" + String.format("%.2f" , npLink.getCapacity()) + " " + capUnits + "</td></tr>");
+            temp.append("<tr><td>Link utilization:</td><td>" + String.format("%.2f" , npLink.getUtilization()) + "</td></tr>");
+            temp.append("<tr><td>Destination layer:</td><td>" + getLayerName(destinationNode.getLayer()) + "</td></tr>");
+            temp.append("<tr><td>Link length:</td><td>" + String.format("%.2f" , npLink.getLengthInKm()) + " km (" + String.format("%.2f" , npLink.getPropagationDelayInMs()) + " ms)" + "</td></tr>");
+            temp.append("</table>");
+            temp.append("</html>");
+        }
         return temp.toString();
     }
 
@@ -229,4 +253,9 @@ public class GUILink
     public GUINode getOriginNode() {
         return originNode;
     }
+
+	private String getNodeName (Node n) { return "Node " + n.getIndex() + " (" + (n.getName().length() == 0? "No name" : n.getName()) + ")"; }
+	private String getResourceName (Resource e) { return "Resource " + e.getIndex() + " (" + (e.getName().length() == 0? "No name" : e.getName()) + "). Type: " + e.getType(); }
+	private String getLayerName (NetworkLayer e) { return "Layer " + e.getIndex() + " (" + (e.getName().length() == 0? "No name" : e.getName()) + ")"; }
+
 }

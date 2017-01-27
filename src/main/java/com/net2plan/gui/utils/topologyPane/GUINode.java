@@ -22,6 +22,7 @@ import java.awt.geom.AffineTransform;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
 
 /**
  * Class representing a node.
@@ -148,7 +149,7 @@ public class GUINode
 		final double inOfferedMulticast = npNode.getIncomingMulticastDemands(layer).stream().mapToDouble(e->e.getOfferedTraffic()).sum(); 
 		final double outOfferedMulticast = npNode.getOutgoingMulticastDemands(layer).stream().mapToDouble(e->e.getOfferedTraffic()).sum();
         temp.append("<html>");
-        temp.append("<table>");
+        temp.append("<table border=\"0\">");
         temp.append("<tr><td>Name:</td><td>" + npNode.getName() + "</td></tr>");
         temp.append("<tr><td>Total offered unicast traffic (in / out):</td>");
         temp.append("<td>" + String.format("%.2f" , inOfferedUnicast) +  "  / " + String.format("%.2f" , outOfferedUnicast) + " " + trafUnits + "</td></tr>");
@@ -158,6 +159,11 @@ public class GUINode
         temp.append("<td>" + String.format("%.2f" , inLinkCapacity) +  "  / " + String.format("%.2f" , outLinkCapacity) + " " + capUnits + "</td></tr>");
         temp.append("<tr><td>Total link occupation (in / out):</td>");
         temp.append("<td>" + String.format("%.2f" , inLinkOccup) +  "  / " + String.format("%.2f" , outLinkOccup) + " " + capUnits + "</td></tr>");
+        for (Resource r : npNode.getResources())
+        {
+        	temp.append("<tr><td>Resource " + getResourceName(r) + "</td>");
+        	temp.append("<td>Capacity (occupp. / avail.): " + String.format("%.2f" , r.getOccupiedCapacity()) +  "  / " + String.format("%.2f" , r.getCapacity()) + " " + r.getCapacityMeasurementUnits() + "</td></tr>");
+        }
         temp.append("</table>");
         temp.append("</html>");
         return temp.toString();
@@ -189,4 +195,5 @@ public class GUINode
     	transf.scale(size_x / currentShapeBounds.getWidth() , size_y / currentShapeBounds.getHeight());
     	return transf.createTransformedShape(s);
     }
+	private String getResourceName (Resource e) { return "Resource " + e.getIndex() + " (" + (e.getName().length() == 0? "No name" : e.getName()) + "). Type: " + e.getType(); }
 }
