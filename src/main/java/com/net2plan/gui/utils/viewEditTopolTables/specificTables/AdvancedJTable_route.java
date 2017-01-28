@@ -51,7 +51,6 @@ import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.CellRenderers.UnfocusableCellRenderer;
 import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.SwingUtils;
@@ -116,7 +115,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
         super(createTableModel(callback), callback, NetworkElementType.ROUTE, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSorting(callback.inOnlineSimulationMode());
+        setColumnRowSorting();
         fixedTable.setRowSorter(this.getRowSorter());
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
@@ -130,8 +129,8 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
     }
 
 
-    public List<Object[]> getAllData(NetPlan currentState,NetPlan initialState, ArrayList<String> attributesColumns) {
-        final boolean sameRoutingType = initialState != null && initialState.getRoutingType() == currentState.getRoutingType();
+    public List<Object[]> getAllData(NetPlan currentState,ArrayList<String> attributesColumns) 
+    {
         List<Object[]> allRouteData = new LinkedList<Object[]>();
         for (Route route : currentState.getRoutes()) {
             Demand demand = route.getDemand();
@@ -172,47 +171,6 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
             }
 
             allRouteData.add(routeData);
-
-            if (initialState != null && sameRoutingType && initialState.getRouteFromId(route.getId()) != null) {
-                route = initialState.getRouteFromId(route.getId());
-                demand = route.getDemand();
-                maxUtilization = 0;
-                for (Link e : route.getSeqLinks())
-                    maxUtilization = Math.max(maxUtilization, e.getOccupiedCapacity() / e.getCapacity());
-                ingressNode = route.getDemand().getIngressNode();
-                egressNode = route.getDemand().getEgressNode();
-                ingressNodeName = ingressNode.getName();
-                egressNodeName = egressNode.getName();
-
-                Object[] routeData_initialNetPlan = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
-                routeData_initialNetPlan[COLUMN_ID] = null;
-                routeData_initialNetPlan[COLUMN_INDEX] = null;
-                routeData_initialNetPlan[COLUMN_DEMAND] = null;
-                routeData_initialNetPlan[COLUMN_INGRESSNODE] = null;
-                routeData_initialNetPlan[COLUMN_EGRESSNODE] = null;
-                routeData_initialNetPlan[COLUMN_DEMANDOFFEREDTRAFFIC] = demand.getOfferedTraffic();
-                routeData_initialNetPlan[COLUMN_CARRIEDTRAFFIC] = route.getCarriedTraffic();
-                routeData_initialNetPlan[COLUMN_OCCUPIEDCAPACITY] = getSequenceOccupiedCapacities (route);
-                routeData_initialNetPlan[COLUMN_SEQUENCEOFLINKSANDRESOURCES] = this.getSequenceLinkResourceIndexes (route);
-                routeData_initialNetPlan[COLUMN_SEQUENCEOFNODES] = getSequenceNodeIndexesWithResourceInfo (route);
-                routeData_initialNetPlan[COLUMN_NUMHOPS] = route.getNumberOfHops();
-                routeData_initialNetPlan[COLUMN_LENGTH] = route.getLengthInKm();
-                routeData_initialNetPlan[COLUMN_PROPDELAY] = route.getPropagationDelayInMiliseconds();
-                routeData_initialNetPlan[COLUMN_BOTTLENECKUTILIZATION] = maxUtilization;
-                routeData_initialNetPlan[COLUMN_ISBACKUP] = (route.isBackupRoute()? "yes (" + (CollectionUtils.join(NetPlan.getIndexes(route.getRoutesIAmBackup()) , ", ") ) +")" : "no");
-                routeData_initialNetPlan[COLUMN_HASBACKUPROUTES] = (route.hasBackupRoutes()? "yes (" + (CollectionUtils.join(NetPlan.getIndexes(route.getBackupRoutes()) , ", ") ) +")" : "no");
-                routeData_initialNetPlan[COLUMN_ATTRIBUTES] = StringUtils.mapToString(route.getAttributes());
-
-                for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
-                {
-                    if(route.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
-                    {
-                        routeData_initialNetPlan[i] = route.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
-                    }
-                }
-
-                allRouteData.add(routeData_initialNetPlan);
-            }
         }
 
         return allRouteData;
@@ -341,9 +299,8 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
     private void setSpecificCellRenderers() {
     }
 
-    public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
-        if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
-        else setAutoCreateRowSorter(true);
+    public void setColumnRowSorting() {
+        setAutoCreateRowSorter(true);
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

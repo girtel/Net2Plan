@@ -51,7 +51,6 @@ import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.CellRenderers.UnfocusableCellRenderer;
 import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -101,7 +100,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         super(createTableModel(callback), callback, NetworkElementType.SRG, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSorting(callback.inOnlineSimulationMode());
+        setColumnRowSorting();
         fixedTable.setRowSorter(this.getRowSorter());
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
@@ -113,7 +112,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         fixedTable.getTableHeader().setDefaultRenderer(new CellRenderers.FixedTableHeaderRenderer());
     }
 
-    public List<Object[]> getAllData(NetPlan currentState, NetPlan initialState, ArrayList<String> attributesColumns) {
+    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) {
         NetworkLayer layer = currentState.getNetworkLayerDefault();
         List<Object[]> allSRGData = new LinkedList<Object[]>();
         for (SharedRiskGroup srg : currentState.getSRGs()) {
@@ -150,43 +149,6 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
 
             allSRGData.add(srgData);
 
-            if (initialState != null && initialState.getSRGFromId(srg.getId()) != null) {
-                layer = initialState.getNetworkLayerDefault();
-                srg = initialState.getSRGFromId(srg.getId());
-                routeIds_thisSRG = initialState.getRoutingType() == RoutingType.SOURCE_ROUTING ? srg.getAffectedRoutes(layer) : new LinkedHashSet<Route>();
-                segmentIds_thisSRG = initialState.getRoutingType() == RoutingType.SOURCE_ROUTING ? srg.getAffectedRoutes(layer).stream().filter(e->e.isBackupRoute()).collect(Collectors.toSet()) : new LinkedHashSet<Route>();
-                treeIds_thisSRG = initialState.getRoutingType() == RoutingType.SOURCE_ROUTING ? srg.getAffectedMulticastTrees(layer) : new LinkedHashSet<MulticastTree>();
-                numRoutes = routeIds_thisSRG.size();
-                numSegments = segmentIds_thisSRG.size();
-                numMulticastTrees = treeIds_thisSRG.size();
-                nodeIds_thisSRG = srg.getNodes();
-                linkIds_thisSRG = srg.getLinks(layer);
-
-
-                Object[] srgData_initialNetPlan = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
-                srgData_initialNetPlan[0] = null;
-                srgData_initialNetPlan[1] = null;
-                srgData_initialNetPlan[2] = srg.getMeanTimeToFailInHours();
-                srgData_initialNetPlan[3] = srg.getMeanTimeToRepairInHours();
-                srgData_initialNetPlan[4] = srg.getAvailability();
-                srgData_initialNetPlan[5] = nodeIds_thisSRG.isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(nodeIds_thisSRG), ", ");
-                srgData_initialNetPlan[6] = linkIds_thisSRG.isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(srg.getLinksAllLayers()), ", ");
-                srgData_initialNetPlan[7] = srg.getLinks(layer).isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(srg.getLinks(layer)), ", ");
-                srgData_initialNetPlan[8] = numRoutes == 0 ? "none" : numRoutes + " (" + CollectionUtils.join(NetPlan.getIndexes(routeIds_thisSRG), ", ") + ")";
-                srgData_initialNetPlan[9] = numSegments == 0 ? "none" : numSegments + " (" + CollectionUtils.join(NetPlan.getIndexes(segmentIds_thisSRG), ", ") + ")";
-                srgData_initialNetPlan[10] = numMulticastTrees == 0 ? "none" : numMulticastTrees + " (" + CollectionUtils.join(NetPlan.getIndexes(treeIds_thisSRG), ", ") + ")";
-                srgData_initialNetPlan[11] = StringUtils.mapToString(srg.getAttributes());
-
-                for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
-                {
-                    if(srg.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
-                    {
-                        srgData_initialNetPlan[i] = srg.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
-                    }
-                }
-
-                allSRGData.add(srgData_initialNetPlan);
-            }
         }
 
         return allSRGData;
@@ -308,9 +270,8 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         getColumnModel().getColumn(convertColumnIndexToView(COLUMN_AVAILABILITY)).setCellRenderer(new CellRenderers.NumberCellRenderer(MAXNUMDECIMALSINAVAILABILITY));
     }
 
-    public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
-        if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
-        else setAutoCreateRowSorter(true);
+    public void setColumnRowSorting() {
+        setAutoCreateRowSorter(true);
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_AFFECTEDROUTES, new AdvancedJTable_NetworkElement.ColumnComparator());
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_AFFECTEDBACKUPROUTES, new AdvancedJTable_NetworkElement.ColumnComparator());
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_AFFECTEDTREES, new AdvancedJTable_NetworkElement.ColumnComparator());

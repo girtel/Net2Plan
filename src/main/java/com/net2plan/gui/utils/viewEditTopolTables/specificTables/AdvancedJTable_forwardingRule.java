@@ -17,17 +17,27 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.DefaultRowSorter;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JTextField;
 import javax.swing.table.TableModel;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
@@ -62,7 +72,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
         super(createTableModel(callback), callback, NetworkElementType.FORWARDING_RULE, false);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSorting(callback.inOnlineSimulationMode());
+        setColumnRowSorting();
         fixedTable.setRowSorter(this.getRowSorter());
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
@@ -74,8 +84,8 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
         fixedTable.getTableHeader().setDefaultRenderer(new CellRenderers.FixedTableHeaderRenderer());
     }
 
-    public List<Object[]> getAllData(NetPlan currentState, NetPlan initialState, ArrayList<String> attributesColumns) {
-        final boolean sameRoutingType = initialState != null && initialState.getRoutingType() == currentState.getRoutingType();
+    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) 
+    {
         Map<Pair<Demand, Link>, Double> forwardingRules = currentState.getForwardingRules();
         Set<Pair<Demand, Link>> demandLinkPairs = forwardingRules.keySet();
         List<Object[]> allForwardingRuleData = new LinkedList<Object[]>();
@@ -100,27 +110,6 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
             forwardingRuleData[COLUMN_CARRIEDTRAFFIC] = currentState.getForwardingRuleCarriedTraffic(demand, link);
 
             allForwardingRuleData.add(forwardingRuleData);
-
-            if (initialState != null && sameRoutingType && initialState.getDemandFromId(demand.getId()) != null && initialState.getLinkFromId(link.getId()) != null) {
-                demand = initialState.getDemandFromId(demand.getId());
-                link = initialState.getLinkFromId(link.getId());
-                ingressNode = demand.getIngressNode();
-                egressNode = demand.getEgressNode();
-                ingressNodeName = ingressNode.getName();
-                egressNodeName = egressNode.getName();
-                originNode = link.getOriginNode();
-                destinationNode = link.getDestinationNode();
-                originNodeName = originNode.getName();
-
-                Object[] forwardingRuleData_initialNetPlan = new Object[netPlanViewTableHeader.length];
-                forwardingRuleData_initialNetPlan[COLUMN_NODE] = null;
-                forwardingRuleData_initialNetPlan[COLUMN_DEMAND] = null;
-                forwardingRuleData_initialNetPlan[COLUMN_OUTGOINGLINK] = null;
-                forwardingRuleData_initialNetPlan[COLUMN_SPLITTINGRATIO] = currentState.getForwardingRuleSplittingFactor(demand, link);
-                forwardingRuleData_initialNetPlan[COLUMN_CARRIEDTRAFFIC] = currentState.getForwardingRuleCarriedTraffic(demand, link);
-
-                allForwardingRuleData.add(forwardingRuleData_initialNetPlan);
-            }
         }
         return allForwardingRuleData;
     }
@@ -240,9 +229,8 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
     private void setSpecificCellRenderers() {
     }
 
-    public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
-        if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
-        else setAutoCreateRowSorter(true);
+    public void setColumnRowSorting() {
+        setAutoCreateRowSorter(true);
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NODE, new AdvancedJTable_NetworkElement.ColumnComparator());
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_DEMAND, new AdvancedJTable_NetworkElement.ColumnComparator());
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_OUTGOINGLINK, new AdvancedJTable_NetworkElement.ColumnComparator());

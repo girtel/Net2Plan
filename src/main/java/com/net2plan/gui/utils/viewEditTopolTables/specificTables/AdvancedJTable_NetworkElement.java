@@ -1161,7 +1161,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
         return fixedTable;
     }
 
-    public abstract List<Object[]> getAllData(NetPlan currentState, NetPlan initialState, ArrayList<String> attributesTitles);
+    public abstract List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesTitles);
 
     public abstract String getTabName();
 
@@ -1177,7 +1177,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
 
     public abstract int[] getColumnsOfSpecialComparatorForSorting();
 
-    public abstract void setColumnRowSorting(boolean allowShowInitialNetPlan);
+    public abstract void setColumnRowSorting();
 
     public abstract int getNumFixedLeftColumnsInDecoration();
 
@@ -1188,7 +1188,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
     public abstract void showInCanvas(MouseEvent e, Object itemId);
 
 
-    public void updateView(NetPlan currentState, NetPlan initialState)
+    public void updateView(NetPlan currentState)
     {
         saveColumnsPositions();
         setEnabled(false);
@@ -1203,7 +1203,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
         {
             String[] tableHeaders = getCurrentTableHeaders();
             ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
-            List<Object[]> allData = getAllData(currentState, initialState, attColumnsHeaders);
+            List<Object[]> allData = getAllData(currentState, attColumnsHeaders);
             setEnabled(true);
             ((DefaultTableModel) getModel()).setDataVector(allData.toArray(new Object[allData.size()][tableHeaders.length]), tableHeaders);
             if (attColumnsHeaders != null && networkElementType != NetworkElementType.FORWARDING_RULE)

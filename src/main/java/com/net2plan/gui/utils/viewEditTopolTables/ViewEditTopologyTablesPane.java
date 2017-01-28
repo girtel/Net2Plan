@@ -3,26 +3,20 @@ package com.net2plan.gui.utils.viewEditTopolTables;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.LayoutManager;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JViewport;
-import javax.swing.RowFilter;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
 
-import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter.CurrentAndPlannedStateTableCellValue;
 import com.net2plan.gui.utils.FullScrollPaneLayout;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
@@ -52,7 +46,6 @@ public class ViewEditTopologyTablesPane extends JPanel
     private JTabbedPane netPlanView;
     private Map<NetworkElementType, AdvancedJTable_NetworkElement> netPlanViewTable;
     private Map<NetworkElementType, JComponent> netPlanViewTableComponent;
-    private JCheckBox showInitialPlan;
 
 	public ViewEditTopologyTablesPane (IVisualizationCallback callback , LayoutManager layout)
 	{
@@ -94,35 +87,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         this.add(netPlanView, BorderLayout.CENTER);
 
-        if (callback.inOnlineSimulationMode()) {
-            showInitialPlan = new JCheckBox("Toggle show/hide planning information", true);
-            showInitialPlan.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    RowFilter<TableModel, Integer> rowFilter = e.getStateChange() == ItemEvent.SELECTED ? null : new RowFilter<TableModel, Integer>() {
-                        @Override
-                        public boolean include(RowFilter.Entry<? extends TableModel, ? extends Integer> entry) {
-                            if (entry.getIdentifier() == 0) return true;
-
-                            if (entry.getValue(0) instanceof CurrentAndPlannedStateTableCellValue)
-                                return ((CurrentAndPlannedStateTableCellValue) entry.getValue(0)).value != null;
-                            else
-                                return entry.getValue(0) != null;
-                        }
-                    };
-
-                    for (NetworkElementType elementType : Constants.NetworkElementType.values()) {
-                        if (elementType == NetworkElementType.NETWORK) continue;
-
-                        ((TableRowSorter) netPlanViewTable.get(elementType).getRowSorter()).setRowFilter(rowFilter);
-                    }
-                    callback.updateVisualizationJustTables();
-                }
-            });
-
-            showInitialPlan.setSelected(false);
-            add(showInitialPlan, BorderLayout.NORTH);
-        }
+        this.add(new JLabel ("Number of entries"), BorderLayout.NORTH);
         
         
 	}
@@ -175,41 +140,12 @@ public class ViewEditTopologyTablesPane extends JPanel
             }
         }
 
-        if (callback.inOnlineSimulationMode()) {
-            showInitialPlan = new JCheckBox("Toggle show/hide planning information", true);
-            showInitialPlan.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    RowFilter<TableModel, Integer> rowFilter = e.getStateChange() == ItemEvent.SELECTED ? null : new RowFilter<TableModel, Integer>() {
-                        @Override
-                        public boolean include(RowFilter.Entry<? extends TableModel, ? extends Integer> entry) {
-                            if (entry.getIdentifier() == 0) return true;
-
-                            if (entry.getValue(0) instanceof CurrentAndPlannedStateTableCellValue)
-                                return ((CurrentAndPlannedStateTableCellValue) entry.getValue(0)).value != null;
-                            else
-                                return entry.getValue(0) != null;
-                        }
-                    };
-
-                    for (NetworkElementType elementType : Constants.NetworkElementType.values()) {
-                        if (elementType == NetworkElementType.NETWORK) continue;
-
-                        ((TableRowSorter) netPlanViewTable.get(elementType).getRowSorter()).setRowFilter(rowFilter);
-                    }
-                    callback.updateVisualizationJustTables();
-                }
-            });
-
-    }
     }
 
 	public JTabbedPane getNetPlanView () { return netPlanView; }
 	
     public Map<NetworkElementType, AdvancedJTable_NetworkElement> getNetPlanViewTable () { return netPlanViewTable; }
 
-    public boolean isInitialNetPlanShown () { return (showInitialPlan != null) && showInitialPlan.isSelected(); } 
-    
     public void updateView ()
     {
 		/* Load current network state */
@@ -237,12 +173,6 @@ public class ViewEditTopologyTablesPane extends JPanel
             }
         }
 
-        NetPlan initialState = null;
-        if (showInitialPlan != null && callback.getInitialDesign().getNetworkLayerFromId(layer.getId()) != null)
-        {
-            initialState = callback.getInitialDesign();
-            initialState.setNetworkLayerDefault(initialState.getNetworkLayerFromId(currentState.getNetworkLayerDefault().getId()));
-        }
         currentState.checkCachesConsistency();
         
         /* update the required tables */
@@ -250,7 +180,7 @@ public class ViewEditTopologyTablesPane extends JPanel
         {
             if (isSourceRouting && entry.getKey() == NetworkElementType.FORWARDING_RULE) continue;
             if (!isSourceRouting && (entry.getKey() == NetworkElementType.ROUTE)) continue;
-            entry.getValue().updateView(currentState, initialState);
+            entry.getValue().updateView(currentState);
         }
         ((NetPlanViewTableComponent_layer) netPlanViewTableComponent.get(NetworkElementType.LAYER)).updateNetPlanView(currentState);
         ((NetPlanViewTableComponent_network) netPlanViewTableComponent.get(NetworkElementType.NETWORK)).updateNetPlanView(currentState);

@@ -30,7 +30,6 @@ import org.apache.commons.collections15.BidiMap;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -74,12 +73,11 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
         setSpecificCellRenderers();
         this.getTableHeader().setReorderingAllowed(false);
 
-        if (networkViewer.inOnlineSimulationMode()) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
-        else setAutoCreateRowSorter(true);
+        setAutoCreateRowSorter(true);
     }
 
 
-    public List<Object[]> getAllData(NetPlan currentState, NetPlan initialState, ArrayList<String> attributesColumns) {
+    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) {
         NetworkLayer layer = currentState.getNetworkLayerDefault();
         List<Object[]> allLayerData = new LinkedList<Object[]>();
         for (NetworkLayer auxLayer : currentState.getNetworkLayers()) {
@@ -101,28 +99,6 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
             layerData[13] = currentState.getDemandTrafficUnitsName(auxLayer);
             layerData[14] = StringUtils.mapToString(auxLayer.getAttributes());
             allLayerData.add(layerData);
-
-            if (initialState != null && initialState.getNetworkLayerFromId(auxLayer.getId()) != null) {
-                auxLayer = initialState.getNetworkLayerFromId(auxLayer.getId());
-                RoutingType routingType_thisLayer_initialNetPlan = initialState.getRoutingType(auxLayer);
-                Object[] layerData_initialNetPlan = new Object[netPlanViewTableHeader.length];
-                layerData_initialNetPlan[0] = null;
-                layerData_initialNetPlan[1] = null;
-                layerData_initialNetPlan[2] = auxLayer.getName();
-                layerData_initialNetPlan[3] = initialState.getRoutingType(auxLayer);
-                layerData_initialNetPlan[4] = initialState.getNumberOfLinks(auxLayer);
-                layerData_initialNetPlan[5] = initialState.getNumberOfDemands(auxLayer);
-                layerData_initialNetPlan[6] = initialState.getNumberOfMulticastDemands(auxLayer);
-                layerData_initialNetPlan[7] = routingType_thisLayer_initialNetPlan == RoutingType.SOURCE_ROUTING ? initialState.getNumberOfRoutes(auxLayer) : 0;
-                layerData_initialNetPlan[8] = routingType_thisLayer_initialNetPlan == RoutingType.HOP_BY_HOP_ROUTING ? initialState.getNumberOfForwardingRules(auxLayer) : 0;
-                layerData_initialNetPlan[9] = routingType_thisLayer_initialNetPlan == RoutingType.SOURCE_ROUTING ? initialState.getRoutesAreBackup(auxLayer).size() : 0;
-                layerData_initialNetPlan[10] = initialState.getNumberOfMulticastTrees(auxLayer);
-                layerData_initialNetPlan[11] = auxLayer.getDescription();
-                layerData_initialNetPlan[12] = initialState.getLinkCapacityUnitsName(auxLayer);
-                layerData_initialNetPlan[13] = initialState.getDemandTrafficUnitsName(auxLayer);
-                layerData_initialNetPlan[14] = StringUtils.mapToString(auxLayer.getAttributes());
-                allLayerData.add(layerData_initialNetPlan);
-            }
         }
         return allLayerData;
     }
@@ -198,7 +174,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
     private void setSpecificCellRenderers() {
     }
 
-    public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
+    public void setColumnRowSorting() {
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

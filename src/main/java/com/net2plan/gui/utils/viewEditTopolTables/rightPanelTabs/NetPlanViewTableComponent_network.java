@@ -97,8 +97,7 @@ public class NetPlanViewTableComponent_network extends JPanel {
 //			tips1.setToolTip(layerTable.getColumnModel().getColumn(c), layerTable.getTableTips() [c]);
 //		layerTable.getTableHeader().addMouseMotionListener(tips1);
 
-//		if (networkViewer.allowShowInitialNetPlan()) layerTable.setRowSorter(new CurrentAndPlannedStateTableSorter(layerTable.getModel()));
-//		else layerTable.setAutoCreateRowSorter(true);
+//		layerTable.setAutoCreateRowSorter(true);
 
         JScrollPane scrollPane1 = new JScrollPane(layerTable);
         ScrollPaneLayout layout1 = new FullScrollPaneLayout();

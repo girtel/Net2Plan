@@ -50,7 +50,6 @@ import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
@@ -121,7 +120,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
         super(createTableModel(callback), callback, NetworkElementType.DEMAND, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSorting(callback.inOnlineSimulationMode());
+        setColumnRowSorting();
         fixedTable.setRowSorter(this.getRowSorter());
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
@@ -138,12 +137,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
     }
 
 
-    public List<Object[]> getAllData(NetPlan currentState, NetPlan initialState, ArrayList<String> attributesColumns) 
+    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) 
     {
     	boolean isSourceRouting = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING;
         List<Object[]> allDemandData = new LinkedList<Object[]>();
-        int counter = 0;
-        for (Demand demand : currentState.getDemands()) {
+        for (Demand demand : currentState.getDemands()) 
+        {
             Set<Route> routes_thisDemand = isSourceRouting ? demand.getRoutes() : new LinkedHashSet<Route>();
             Link coupledLink = demand.getCoupledLink();
             Node ingressNode = demand.getIngressNode();
@@ -174,45 +173,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                     demandData[i] = demand.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                 }
             }
-
             allDemandData.add(demandData);
-
-            if (initialState != null && initialState.getDemandFromId(demand.getId()) != null) 
-            {
-            	isSourceRouting = initialState.getRoutingType() == RoutingType.SOURCE_ROUTING;
-                demand = initialState.getDemandFromId(demand.getId());
-                routes_thisDemand = initialState.getRoutingType() == RoutingType.SOURCE_ROUTING ? demand.getRoutes() : new LinkedHashSet<Route>();
-                coupledLink = demand.getCoupledLink();
-                ingressNode = demand.getIngressNode();
-                egressNode = demand.getEgressNode();
-                h_d = demand.getOfferedTraffic();
-
-                Object[] demandData_initialNetPlan = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
-                demandData_initialNetPlan[0] = null;
-                demandData_initialNetPlan[1] = null;
-                demandData_initialNetPlan[2] = null;
-                demandData_initialNetPlan[3] = null;
-                demandData_initialNetPlan[5] = h_d;
-                demandData_initialNetPlan[6] = demand.getCarriedTraffic();
-                demandData_initialNetPlan[7] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d;
-                demandData_initialNetPlan[8] = demand.isServiceChainRequest();
-                demandData_initialNetPlan[9] = isSourceRouting? joinTraversedResourcesTypes(demand) : "";
-                demandData_initialNetPlan[10] = demand.getRoutingCycleType();
-                demandData_initialNetPlan[11] = !isSourceRouting ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
-                demandData_initialNetPlan[12] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + routes_thisDemand.stream().filter(e->e.isBackupRoute()).count() + ")";
-                demandData_initialNetPlan[13] = demand.getWorstCasePropagationTimeInMs();
-                demandData_initialNetPlan[14] = StringUtils.mapToString(demand.getAttributes());
-
-                for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
-                {
-                    if(demand.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
-                    {
-                        demandData_initialNetPlan[i] = demand.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
-                    }
-                }
-
-                allDemandData.add(demandData_initialNetPlan);
-            }
         }
 
         return allDemandData;
@@ -335,9 +296,9 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
         getColumnModel().getColumn(this.convertColumnIndexToView(COLUMN_LOSTTRAFFIC)).setCellRenderer(new CellRenderers.LostTrafficCellRenderer(null, COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
     }
 
-    public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
-        if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
-        else setAutoCreateRowSorter(true);
+    public void setColumnRowSorting() 
+    {
+        setAutoCreateRowSorter(true);
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INGRESSNODE, new AdvancedJTable_NetworkElement.ColumnComparator());
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_EGRESSNODE, new AdvancedJTable_NetworkElement.ColumnComparator());
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMROUTES, new AdvancedJTable_NetworkElement.ColumnComparator());

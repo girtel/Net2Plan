@@ -47,7 +47,6 @@ import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
@@ -110,7 +109,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
         super(createTableModel(callback), callback, NetworkElementType.LINK, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSorting(callback.inOnlineSimulationMode());
+        setColumnRowSorting();
         fixedTable.setRowSorter(this.getRowSorter());
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
@@ -124,15 +123,12 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
 
 
 
-    public List<Object[]> getAllData(NetPlan currentState, NetPlan initialState, ArrayList<String> attributesColumns) 
+    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) 
     {
     	final boolean isSourceRouting = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING;
         double max_rho_e = 0;
         for (Link link : currentState.getLinks())
             max_rho_e = Math.max(max_rho_e, link.getOccupiedCapacity() / link.getCapacity());
-        double max_rho_e_initialNetPlan = -1;
-        if (initialState != null) for (Link link : initialState.getLinks())
-            max_rho_e_initialNetPlan = Math.max(max_rho_e_initialNetPlan, link.getOccupiedCapacity() / link.getCapacity());
         List<Object[]> allLinkData = new LinkedList<Object[]>();
         for (Link link : currentState.getLinks()) {
             Set<SharedRiskGroup> srgIds_thisLink = link.getSRGs();
@@ -190,73 +186,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                     linkData[i] = link.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
                 }
             }
-
             allLinkData.add(linkData);
-
-
-            if (initialState != null && initialState.getLinkFromId(link.getId()) != null) {
-                link = initialState.getLinkFromId(link.getId());
-                srgIds_thisLink = link.getSRGs();
-                traversingRoutes = initialState.getRoutingType() == RoutingType.SOURCE_ROUTING ? link.getTraversingRoutes() : new LinkedHashSet<Route>();
-                traversingBURoutes = initialState.getRoutingType() == RoutingType.SOURCE_ROUTING ? link.getTraversingBackupRoutes() : new LinkedHashSet<Route>();
-                traversingMulticastTrees = link.getTraversingTrees();
-                forwardingRules = initialState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING ? currentState.getMatrixDemandBasedForwardingRules().viewColumn(link.getIndex()).copy() : DoubleFactory1D.sparse.make(initialState.getNumberOfDemands(), 0);
-                numRoutes = traversingRoutes.size();
-                numSegments = traversingBURoutes.size();
-                numForwardingRules = 0;
-                for (int d = 0; d < forwardingRules.size(); d++) if (forwardingRules.get(d) != 0) numForwardingRules++;
-                numMulticastTrees = traversingMulticastTrees.size();
-
-                routesString = numRoutes + (numRoutes > 0 ? " (" + CollectionUtils.join(NetPlan.getIndexes(traversingRoutes), ", ") + ")" : "");
-                segmentsString = numSegments + (numSegments > 0 ? " (" + CollectionUtils.join(NetPlan.getIndexes(traversingBURoutes), ", ") + ")" : "");
-                multicastTreesString = numMulticastTrees + (numMulticastTrees > 0 ? " (" + CollectionUtils.join(NetPlan.getIndexes(traversingMulticastTrees), ", ") + ")" : "");
-                forwardingRulesString = new StringBuilder(Integer.toString(numForwardingRules));
-
-                coupledDemand = link.getCoupledDemand();
-                coupledMulticastDemand = link.getCoupledMulticastDemand();
-
-                originNode = link.getOriginNode();
-                destinationNode = link.getDestinationNode();
-                originNodeName = originNode.getName();
-                destinationNodeName = destinationNode.getName();
-
-                rho_e = link.getOccupiedCapacity() == 0 ? 0 : link.getCapacity() == 0 ? Double.MAX_VALUE : link.getOccupiedCapacity() / link.getCapacity();
-
-                Object[] linkData_initialNetPlan = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
-                linkData_initialNetPlan[COLUMN_ID] = null;
-                linkData_initialNetPlan[COLUMN_INDEX] = null;
-                linkData_initialNetPlan[COLUMN_SHOWHIDE] = null;
-                linkData_initialNetPlan[COLUMN_ORIGINNODE] = null;
-                linkData_initialNetPlan[COLUMN_DESTNODE] = null;
-                linkData_initialNetPlan[COLUMN_STATE] = !link.isDown();
-                linkData_initialNetPlan[COLUMN_CAPACITY] = link.getCapacity();
-                linkData_initialNetPlan[COLUMN_CARRIEDTRAFFIC] = link.getCarriedTraffic();
-                final Link linkCopy2 = link; linkData_initialNetPlan[COLUMN_TRAFFICRESERVEDFORPROTECTION] = link.getTraversingBackupRoutes().stream ().mapToDouble(e -> e.getOccupiedCapacity(linkCopy2)).sum();
-                linkData_initialNetPlan[COLUMN_UTILIZATION] = rho_e;
-                linkData_initialNetPlan[COLUMN_ISBOTTLENECK] = DoubleUtils.isEqualWithinRelativeTolerance(max_rho_e, rho_e, Configuration.precisionFactor);
-                linkData_initialNetPlan[COLUMN_LENGTH] = link.getLengthInKm();
-                linkData_initialNetPlan[COLUMN_PROPSPEED] = link.getPropagationSpeedInKmPerSecond();
-                linkData_initialNetPlan[COLUMN_PROPDELAYMS] = 1000 * link.getPropagationDelayInMs();
-                linkData_initialNetPlan[COLUMN_NUMROUTES] = routesString;
-                linkData_initialNetPlan[COLUMN_NUMSEGMENTS] = segmentsString;
-                linkData_initialNetPlan[COLUMN_NUMFORWRULES] = forwardingRulesString.toString();
-                linkData_initialNetPlan[COLUMN_NUMTREES] = multicastTreesString.toString();
-                linkData_initialNetPlan[COLUMN_SRGS] = srgIds_thisLink.isEmpty() ? "none" : srgIds_thisLink.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(srgIds_thisLink), ", ") + ")";
-                linkData_initialNetPlan[COLUMN_COUPLEDTODEMAND] = coupledDemand != null ? "d" + coupledDemand.getIndex() + " (layer " + coupledDemand.getLayer() + ")" : (coupledMulticastDemand == null ? "" : "d" + coupledMulticastDemand.getIndex() + " (layer " + coupledMulticastDemand.getLayer() + ")");
-                linkData_initialNetPlan[COLUMN_ATTRIBUTES] = StringUtils.mapToString(link.getAttributes());
-
-                for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
-                {
-                    if(link.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
-                    {
-                        linkData_initialNetPlan[i] = link.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
-                    }
-                }
-
-                allLinkData.add(linkData_initialNetPlan);
-
-
-            }
         }
 
         return allLinkData;
@@ -482,9 +412,8 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
         }
     }
 
-    public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
-        if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
-        else setAutoCreateRowSorter(true);
+    public void setColumnRowSorting() {
+        setAutoCreateRowSorter(true);
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_ORIGINNODE, new AdvancedJTable_NetworkElement.ColumnComparator());
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_DESTNODE, new AdvancedJTable_NetworkElement.ColumnComparator());
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMROUTES, new AdvancedJTable_NetworkElement.ColumnComparator());

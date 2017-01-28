@@ -16,17 +16,29 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.DefaultRowSorter;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.table.TableModel;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -79,7 +91,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
         super(createTableModel(callback), callback, NetworkElementType.NODE, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSorting(callback.inOnlineSimulationMode());
+        setColumnRowSorting();
         fixedTable.setRowSorter(this.getRowSorter());
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
@@ -94,7 +106,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
 
 
 
-    public List<Object[]> getAllData(NetPlan currentState, NetPlan initialState, ArrayList<String> attributesTitles) {
+    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesTitles) {
         List<Object[]> allNodeData = new LinkedList<Object[]>();
 
 
@@ -129,42 +141,6 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
             }
 
             allNodeData.add(nodeData);
-
-
-            if (initialState != null && initialState.getNodeFromId(node.getId()) != null) {
-                node = initialState.getNodeFromId(node.getId());
-                outgoingLinks = node.getOutgoingLinks();
-                incomingLinks = node.getIncomingLinks();
-
-                Object[] nodeData_initialNetPlan = new Object[netPlanViewTableHeader.length + attributesTitles.size()];
-                nodeData_initialNetPlan[0] = null;
-                nodeData_initialNetPlan[1] = null;
-                nodeData_initialNetPlan[2] = null;
-                nodeData_initialNetPlan[3] = node.getName();
-                nodeData_initialNetPlan[4] = node.isUp();
-                nodeData_initialNetPlan[5] = node.getXYPositionMap().getX();
-                nodeData_initialNetPlan[6] = node.getXYPositionMap().getY();
-                nodeData_initialNetPlan[7] = outgoingLinks.isEmpty() ? "none" : outgoingLinks.size() + " (" + CollectionUtils.join(outgoingLinks, ", ") + ")";
-                nodeData_initialNetPlan[8] = incomingLinks.isEmpty() ? "none" : incomingLinks.size() + " (" + CollectionUtils.join(incomingLinks, ", ") + ")";
-                nodeData_initialNetPlan[9] = node.getIngressOfferedTraffic();
-                nodeData_initialNetPlan[10] = node.getEgressOfferedTraffic();
-                nodeData_initialNetPlan[11] = node.getEgressOfferedTraffic() - node.getIngressOfferedTraffic();
-                nodeData_initialNetPlan[12] = node.getIngressOfferedMulticastTraffic();
-                nodeData_initialNetPlan[13] = node.getEgressOfferedMulticastTraffic();
-                nodeData_initialNetPlan[14] = node.getSRGs().isEmpty() ? "none" : node.getSRGs().size() + " (" + CollectionUtils.join(currentState.getIndexes(node.getSRGs()), ", ") + ")";
-                nodeData_initialNetPlan[15] = StringUtils.mapToString(node.getAttributes());
-
-                for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesTitles.size();i++)
-                {
-                    if(node.getAttributes().containsKey(attributesTitles.get(i-netPlanViewTableHeader.length)))
-                    {
-                        nodeData_initialNetPlan[i] = node.getAttribute(attributesTitles.get(i - netPlanViewTableHeader.length));
-                    }
-
-                }
-
-                allNodeData.add(nodeData_initialNetPlan);
-            }
         }
         return allNodeData;
     }
@@ -345,9 +321,8 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
     private void setSpecificCellRenderers() {
     }
 
-    public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
-        if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
-        else setAutoCreateRowSorter(true);
+    public void setColumnRowSorting() {
+        setAutoCreateRowSorter(true);
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_OUTLINKS, new AdvancedJTable_NetworkElement.ColumnComparator());
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INLINKS, new AdvancedJTable_NetworkElement.ColumnComparator());
     }

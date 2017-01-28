@@ -1,22 +1,53 @@
 package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 
-import com.google.common.collect.Sets;
-import com.net2plan.gui.utils.*;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.internal.Constants;
-import com.net2plan.internal.ErrorHandling;
-import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.utils.StringUtils;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.DefaultCellEditor;
+import javax.swing.DefaultRowSorter;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
-import java.util.List;
-import java.util.stream.Collectors;
+
+import com.google.common.collect.Sets;
+import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.CellRenderers;
+import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.StringLabeller;
+import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.internal.Constants;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.internal.ErrorHandling;
+import com.net2plan.utils.StringUtils;
 
 /**
  * Created by César on 13/12/2016.
@@ -50,7 +81,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
         super(createTableModel(callback), callback, Constants.NetworkElementType.RESOURCE, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSorting(callback.inOnlineSimulationMode());
+        setColumnRowSorting();
         fixedTable.setRowSorter(this.getRowSorter());
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
@@ -65,7 +96,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
 
 
     @Override
-    public List<Object[]> getAllData(NetPlan currentState, NetPlan initialState, ArrayList<String> attributesTitles) {
+    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesTitles) {
         List<Object[]> allResourceData = new LinkedList<Object[]>();
         for (Resource res : currentState.getResources()) {
 
@@ -95,35 +126,6 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
 
             allResourceData.add(resData);
 
-            if (initialState != null && initialState.getNodeFromId(res.getId()) != null) {
-                res = initialState.getResourceFromId(res.getId());
-
-                Object[] resData_initialNetPlan = new Object[netPlanViewTableHeader.length + attributesTitles.size()];
-                resData_initialNetPlan[0] = null;
-                resData_initialNetPlan[1] = null;
-                resData_initialNetPlan[2] = null;
-                resData_initialNetPlan[3] = res.getType();
-                resData_initialNetPlan[4] = res.getHostNode();
-                resData_initialNetPlan[5] = res.getCapacity();
-                resData_initialNetPlan[6] = res.getCapacityMeasurementUnits();
-                resData_initialNetPlan[7] = res.getOccupiedCapacity();
-                resData_initialNetPlan[8] = joinTraversingRoutesWithTheirCapacities(res);
-                resData_initialNetPlan[9] = joinUpperResourcesWithTheirCapacities(res);
-                resData_initialNetPlan[10] = joinBaseResourcesWithTheirCapacities(res);
-                resData_initialNetPlan[11] = res.getProcessingTimeToTraversingTrafficInMs();
-                resData_initialNetPlan[12] = StringUtils.mapToString(res.getAttributes());
-
-                for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesTitles.size();i++)
-                {
-                    if(res.getAttributes().containsKey(attributesTitles.get(i-netPlanViewTableHeader.length)))
-                    {
-                        resData_initialNetPlan[i] = res.getAttribute(attributesTitles.get(i - netPlanViewTableHeader.length));
-                    }
-
-                }
-
-                allResourceData.add(resData_initialNetPlan);
-            }
         }
         return allResourceData;
     }
@@ -263,9 +265,8 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
         setDefaultRenderer(String.class, new CellRenderers.NonEditableCellRenderer());
     }
     @Override
-    public void setColumnRowSorting(boolean allowShowInitialNetPlan) {
-        if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
-        else setAutoCreateRowSorter(true);
+    public void setColumnRowSorting() {
+        setAutoCreateRowSorter(true);
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NAME, new AdvancedJTable_NetworkElement.ColumnComparator());
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_CAPACITY, new AdvancedJTable_NetworkElement.ColumnComparator());
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INDEX, new AdvancedJTable_NetworkElement.ColumnComparator());

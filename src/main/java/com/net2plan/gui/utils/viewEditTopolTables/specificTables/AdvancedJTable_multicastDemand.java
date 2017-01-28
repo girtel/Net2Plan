@@ -15,21 +15,41 @@ package com.net2plan.gui.utils.viewEditTopolTables.specificTables;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.DefaultRowSorter;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JTextField;
 import javax.swing.table.TableModel;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.CurrentAndPlannedStateTableSorter;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.CollectionUtils;
@@ -65,7 +85,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
         super(createTableModel(callback), callback, NetworkElementType.MULTICAST_DEMAND, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSorting(callback.inOnlineSimulationMode());
+        setColumnRowSorting();
         fixedTable.setRowSorter(this.getRowSorter());
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
@@ -78,7 +98,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
 
     }
 
-    public List<Object[]> getAllData(NetPlan currentState, NetPlan initialState, ArrayList<String> attributesColumns) {
+    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) {
         List<Object[]> allDemandData = new LinkedList<Object[]>();
         for (MulticastDemand demand : currentState.getMulticastDemands()) {
             Set<MulticastTree> multicastTreeIds_thisDemand = demand.getMulticastTrees();
@@ -115,44 +135,6 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
             }
 
             allDemandData.add(demandData);
-
-            if (initialState != null && initialState.getMulticastDemandFromId(demand.getId()) != null) {
-                demand = initialState.getMulticastDemandFromId(demand.getId());
-                multicastTreeIds_thisDemand = demand.getMulticastTrees();
-                coupledLinks = demand.getCoupledLinks();
-                ingressNode = demand.getIngressNode();
-                egressNodes = demand.getEgressNodes();
-                ingressNodeName = ingressNode.getName();
-                egressNodesString = "";
-                for (Node n : egressNodes) egressNodesString += n.getId() + "(" + n.getName() + ") ";
-
-                h_d = demand.getOfferedTraffic();
-                lostTraffic_d = demand.getBlockedTraffic();
-
-                Object[] demandData_initialNetPlan = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
-                demandData_initialNetPlan[0] = null;
-                demandData_initialNetPlan[1] = null;
-                demandData_initialNetPlan[2] = null;
-                demandData_initialNetPlan[3] = null;
-                demandData_initialNetPlan[4] = coupledLinks.isEmpty() ? "" : "link ids " + CollectionUtils.join(NetPlan.getIndexes(coupledLinks), ",") + " layer " + coupledLinks.iterator().next().getLayer().getIndex() + "";
-                demandData_initialNetPlan[5] = h_d;
-                demandData_initialNetPlan[6] = demand.getCarriedTraffic();
-                demandData_initialNetPlan[7] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d;
-                demandData_initialNetPlan[8] = "Loopless by definition";
-                demandData_initialNetPlan[9] = demand.isBifurcated() ? String.format("Yes (%d)", demand.getMulticastTrees().size()) : "No";
-                demandData_initialNetPlan[10] = multicastTreeIds_thisDemand.isEmpty() ? "none" : multicastTreeIds_thisDemand.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(multicastTreeIds_thisDemand), ",") + ")";
-                demandData_initialNetPlan[11] = demand.getWorseCasePropagationTimeInMs();
-                demandData_initialNetPlan[12] = StringUtils.mapToString(demand.getAttributes());
-                for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
-                {
-                    if(demand.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
-                    {
-                        demandData_initialNetPlan[i] = demand.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
-                    }
-                }
-
-                allDemandData.add(demandData_initialNetPlan);
-            }
         }
 
         return allDemandData;
@@ -269,10 +251,9 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
         getColumnModel().getColumn(this.convertColumnIndexToView(COLUMN_LOSTTRAFFIC)).setCellRenderer(new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(Double.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
     }
 
-    public void setColumnRowSorting(boolean allowShowInitialNetPlan) 
+    public void setColumnRowSorting() 
     {
-        if (allowShowInitialNetPlan) setRowSorter(new CurrentAndPlannedStateTableSorter(getModel()));
-        else setAutoCreateRowSorter(true);
+        setAutoCreateRowSorter(true);
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INGRESSNODE, new AdvancedJTable_NetworkElement.ColumnComparator());
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_EGRESSNODES, new AdvancedJTable_NetworkElement.ColumnComparator());
         ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMTREES, new AdvancedJTable_NetworkElement.ColumnComparator());
