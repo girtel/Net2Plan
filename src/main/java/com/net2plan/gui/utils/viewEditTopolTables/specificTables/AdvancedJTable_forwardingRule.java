@@ -163,9 +163,11 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
             private static final long serialVersionUID = 1L;
 
             @Override
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
+            public boolean isCellEditable(int rowIndex, int columnIndex) 
+            {
                 if (!callback.getVisualizationState().isNetPlanEditable()) return false;
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
+                if (rowIndex == getRowCount()) return false; // the last row is for the aggergated info
 
                 return columnIndex == COLUMN_SPLITTINGRATIO || columnIndex >= netPlanViewTableHeader.length;
             }

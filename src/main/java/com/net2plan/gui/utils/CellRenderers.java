@@ -234,11 +234,19 @@ public class CellRenderers {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             Component c = null;
+            if (row == table.getRowCount() - 1)
+            {
+            	c = new LastRowAggregatingInfoCellRenderer().getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                c.setForeground(UIManager.getColor(isSelected ? "Table.selectionForeground" : "Table.foreground"));
+                c.setBackground(isSelected ? UIManager.getColor("Table.selectionBackground") : bgColorNonEditable);
+            	return c;
+            }
             if(tcr != null)
                 c = tcr.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             else{
                 c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             }
+            System.out.println("row: " + row + ", table.getRowCount: " + table.getRowCount());
             if (!isSelected && value != null) {
                 int demandId = table.convertRowIndexToModel(row);
                 double lostTraffic = (Double) table.getModel().getValueAt(demandId, lostTrafficColumnModelIndex);
@@ -310,6 +318,19 @@ public class CellRenderers {
         }
     }
 
+    public static class LastRowAggregatingInfoCellRenderer extends DefaultTableCellRenderer 
+    {
+        private final static Color bgColorNonEditable = new Color(245, 245, 245);
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) 
+        {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            c.setForeground(UIManager.getColor(isSelected ? "Table.selectionForeground" : "Table.foreground"));
+            c.setBackground(isSelected ? UIManager.getColor("Table.selectionBackground") : bgColorNonEditable);
+            return c;
+        }
+    }
+
     public static class FixedTableHeaderRenderer extends DefaultTableCellHeaderRenderer {
         /**
          * Background color for Fixed Table Columns.
@@ -360,7 +381,8 @@ public class CellRenderers {
         }
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) 
+        {
             if (value instanceof Number) {
                 double doubleValue = ((Number) value).doubleValue();
                 if (doubleValue == Double.MAX_VALUE) doubleValue = Double.POSITIVE_INFINITY;

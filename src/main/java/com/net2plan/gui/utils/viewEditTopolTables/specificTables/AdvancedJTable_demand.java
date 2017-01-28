@@ -129,6 +129,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
         fixedTable.setDefaultRenderer(Long.class, this.getDefaultRenderer(Long.class));
         fixedTable.setDefaultRenderer(Integer.class, this.getDefaultRenderer(Integer.class));
         fixedTable.setDefaultRenderer(String.class, this.getDefaultRenderer(String.class));
+        fixedTable.setDefaultRenderer(LastRowAggregatedValue.class, new CellRenderers.LastRowAggregatingInfoCellRenderer());
         fixedTable.getTableHeader().setDefaultRenderer(new CellRenderers.FixedTableHeaderRenderer());
     }
 
@@ -141,6 +142,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
     {
     	boolean isSourceRouting = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING;
         List<Object[]> allDemandData = new LinkedList<Object[]>();
+        double accum_hd = 0; 
+        double accum_carriedTraffic = 0;
+        double accum_lostTraffic = 0;
+        int accum_numSCs = 0;
+        int accum_numRoutes = 0; int accum_numBackupRoutes = 0;  
+        double accum_worstCasePropDelayMs = 0;
         for (Demand demand : currentState.getDemands()) 
         {
             Set<Route> routes_thisDemand = isSourceRouting ? demand.getRoutes() : new LinkedHashSet<Route>();
@@ -150,21 +157,22 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
             double h_d = demand.getOfferedTraffic();
             double lostTraffic_d = demand.getBlockedTraffic();
             Object[] demandData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
-            demandData[0] = demand.getId();
-            demandData[1] = demand.getIndex();
-            demandData[2] = ingressNode.getIndex() + (ingressNode.getName().isEmpty() ? "" : " (" + ingressNode.getName() + ")");
-            demandData[3] = egressNode.getIndex() + (egressNode.getName().isEmpty() ? "" : " (" + egressNode.getName() + ")");
-            demandData[4] = coupledLink == null ? "" : "e" + coupledLink.getIndex() + " (layer " + coupledLink.getLayer() + ")";
-            demandData[5] = h_d;
-            demandData[6] = demand.getCarriedTraffic();
-            demandData[7] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d;
-            demandData[8] = demand.isServiceChainRequest();
-            demandData[9] = isSourceRouting? joinTraversedResourcesTypes(demand) : "";
-            demandData[10] = demand.getRoutingCycleType();
-            demandData[11] = !isSourceRouting ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
-            demandData[12] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + routes_thisDemand.stream().filter(e->e.isBackupRoute()).count() + ")";
-            demandData[13] = demand.getWorstCasePropagationTimeInMs();
-            demandData[14] = StringUtils.mapToString(demand.getAttributes());
+            demandData[COLUMN_ID] = demand.getId();
+            demandData[COLUMN_INDEX] = demand.getIndex();
+            demandData[COLUMN_INGRESSNODE] = ingressNode.getIndex() + (ingressNode.getName().isEmpty() ? "" : " (" + ingressNode.getName() + ")");
+            demandData[COLUMN_EGRESSNODE] = egressNode.getIndex() + (egressNode.getName().isEmpty() ? "" : " (" + egressNode.getName() + ")");
+            demandData[COLUMN_COUPLEDTOLINK] = coupledLink == null ? "" : "e" + coupledLink.getIndex() + " (layer " + coupledLink.getLayer() + ")";
+            demandData[COLUMN_OFFEREDTRAFFIC] = h_d; accum_hd += h_d;
+            demandData[COLUMN_CARRIEDTRAFFIC] = demand.getCarriedTraffic(); accum_carriedTraffic += demand.getCarriedTraffic();
+            demandData[COLUMN_LOSTTRAFFIC] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d; accum_lostTraffic += (Double) demandData [COLUMN_LOSTTRAFFIC];
+            demandData[COLUMN_ISSERVICECHAIN] = demand.isServiceChainRequest(); accum_numSCs += demand.isServiceChainRequest()? 1 : 0;
+            demandData[COLUMN_TRAVERSEDRESOURCESTYPES] = isSourceRouting? joinTraversedResourcesTypes(demand) : "";
+            demandData[COLUMN_ROUTINGCYCLES] = demand.getRoutingCycleType();
+            demandData[COLUMN_BIFURCATED] = !isSourceRouting ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
+            if (isSourceRouting) { accum_numRoutes += routes_thisDemand.size(); accum_numBackupRoutes += routes_thisDemand.stream().filter(e->e.isBackupRoute()).count(); }
+            demandData[COLUMN_NUMROUTES] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + routes_thisDemand.stream().filter(e->e.isBackupRoute()).count() + ")";
+            demandData[COLUMN_MAXE2ELATENCY] = demand.getWorstCasePropagationTimeInMs(); accum_worstCasePropDelayMs = Math.max(accum_worstCasePropDelayMs, demand.getWorstCasePropagationTimeInMs());
+            demandData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(demand.getAttributes());
 
             for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
             {
@@ -175,7 +183,16 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
             }
             allDemandData.add(demandData);
         }
-
+        final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue [netPlanViewTableHeader.length + attributesColumns.size()];
+        Arrays.fill(aggregatedData, new LastRowAggregatedValue());
+        aggregatedData [COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(accum_hd);
+        aggregatedData [COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(accum_carriedTraffic);
+        aggregatedData [COLUMN_LOSTTRAFFIC] = new LastRowAggregatedValue(accum_lostTraffic);
+        aggregatedData [COLUMN_ISSERVICECHAIN] = new LastRowAggregatedValue(accum_numSCs);
+        aggregatedData [COLUMN_NUMROUTES] = new LastRowAggregatedValue(accum_numRoutes + "(" + accum_numBackupRoutes + ")");
+        aggregatedData [COLUMN_MAXE2ELATENCY] = new LastRowAggregatedValue(accum_worstCasePropDelayMs);
+        allDemandData.add(aggregatedData);
+        
         return allDemandData;
     }
 
@@ -229,6 +246,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
             {
                 if (!callback.getVisualizationState().isNetPlanEditable()) return false;
                 if (columnIndex >= netPlanViewTableHeader.length) return true;
+                if (rowIndex == getRowCount()) return false; // the last row is for the aggergated info
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
 
                 return columnIndex == COLUMN_OFFEREDTRAFFIC;
@@ -274,26 +292,19 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
 
     private void setDefaultCellRenderers(final IVisualizationCallback callback)
     {
-        setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
-        setDefaultRenderer(Double.class, new NumberCellRenderer());
-        setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
-        setDefaultRenderer(Float.class, new NumberCellRenderer());
-        setDefaultRenderer(Long.class, new CellRenderers.NumberCellRenderer());
-        setDefaultRenderer(Integer.class, new CellRenderers.NumberCellRenderer());
-        setDefaultRenderer(String.class, new CellRenderers.NonEditableCellRenderer());
-
-
-        setDefaultRenderer(Boolean.class, new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(Boolean.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Double.class, new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(Double.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Object.class, new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(Object.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Float.class, new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(Float.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Long.class, new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(Long.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Integer.class, new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(Integer.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(String.class, new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(String.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Boolean.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.CheckBoxRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Double.class, new CellRenderers.LostTrafficCellRenderer(new NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Object.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.NonEditableCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Float.class, new CellRenderers.LostTrafficCellRenderer(new NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Long.class, new CellRenderers.LostTrafficCellRenderer(new NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Integer.class, new CellRenderers.LostTrafficCellRenderer(new NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(String.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.NonEditableCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(LastRowAggregatedValue.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.LastRowAggregatingInfoCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
     }
 
-    private void setSpecificCellRenderers() {
-        getColumnModel().getColumn(this.convertColumnIndexToView(COLUMN_LOSTTRAFFIC)).setCellRenderer(new CellRenderers.LostTrafficCellRenderer(null, COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+    private void setSpecificCellRenderers() 
+    {
+        getColumnModel().getColumn(this.convertColumnIndexToView(COLUMN_LOSTTRAFFIC)).setCellRenderer(new CellRenderers.LostTrafficCellRenderer(new CellRenderers.LastRowAggregatingInfoCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
     }
 
     public void setColumnRowSorting() 

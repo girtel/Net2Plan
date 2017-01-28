@@ -1948,4 +1948,15 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
 
         }
     }
+
+    static class LastRowAggregatedValue
+    {
+    	private String value;
+    	LastRowAggregatedValue () { value = "---"; }
+    	LastRowAggregatedValue (int val) { value = "" + val; }
+    	LastRowAggregatedValue (double val) { value = String.format("%.2f", val); }
+    	LastRowAggregatedValue (String value) { this.value = value; }
+    	String getValue () { return value; }
+    }
+    
 }
