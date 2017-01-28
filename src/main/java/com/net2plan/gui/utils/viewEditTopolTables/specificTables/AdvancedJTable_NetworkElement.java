@@ -1249,6 +1249,9 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
             for (int columnId : getColumnsOfSpecialComparatorForSorting())
                 ((DefaultRowSorter) getRowSorter()).setComparator(columnId, new ColumnComparator());
         }
+        
+        // here update the number of entries label
+        
     }
 
     public class PopupMenuAdapter extends MouseAdapter

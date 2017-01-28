@@ -46,6 +46,7 @@ public class ViewEditTopologyTablesPane extends JPanel
     private JTabbedPane netPlanView;
     private Map<NetworkElementType, AdvancedJTable_NetworkElement> netPlanViewTable;
     private Map<NetworkElementType, JComponent> netPlanViewTableComponent;
+    private Map<NetworkElementType, JLabel> netPlanViewTableNumEntriesLabel;
 
 	public ViewEditTopologyTablesPane (IVisualizationCallback callback , LayoutManager layout)
 	{
@@ -55,7 +56,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         netPlanViewTable = new EnumMap<NetworkElementType, AdvancedJTable_NetworkElement>(NetworkElementType.class);
         netPlanViewTableComponent = new EnumMap<NetworkElementType, JComponent>(NetworkElementType.class);
-
+        netPlanViewTableNumEntriesLabel = new EnumMap<NetworkElementType, JLabel>(NetworkElementType.class);
 
 //        mainWindow.allowDocumentUpdate = mainWindow.isEditable();
         netPlanViewTable.put(NetworkElementType.NODE, new AdvancedJTable_node(callback));
@@ -69,6 +70,17 @@ public class ViewEditTopologyTablesPane extends JPanel
         netPlanViewTable.put(NetworkElementType.RESOURCE, new AdvancedJTable_resource(callback));
         netPlanViewTable.put(NetworkElementType.LAYER, new AdvancedJTable_layer(callback));
 
+        netPlanViewTableNumEntriesLabel.put(NetworkElementType.NODE, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(NetworkElementType.LINK, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(NetworkElementType.DEMAND, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(NetworkElementType.ROUTE, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(NetworkElementType.FORWARDING_RULE, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(NetworkElementType.MULTICAST_DEMAND, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(NetworkElementType.MULTICAST_TREE, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(NetworkElementType.SRG, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(NetworkElementType.RESOURCE, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(NetworkElementType.LAYER, new JLabel ("Number of entries: "));
+        
         netPlanView = new JTabbedPane();
 
         for (NetworkElementType elementType : Constants.NetworkElementType.values()) {
@@ -81,13 +93,17 @@ public class ViewEditTopologyTablesPane extends JPanel
                 scrollPane.setLayout(new FullScrollPaneLayout());
                 scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
                 netPlanViewTable.get(elementType).getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
-                netPlanViewTableComponent.put(elementType, scrollPane);
+                final JPanel panel = new JPanel ();
+                panel.setLayout(new BorderLayout());
+                panel.add(netPlanViewTableNumEntriesLabel.get(elementType), BorderLayout.NORTH);
+                panel.add(scrollPane, BorderLayout.CENTER);
+                netPlanViewTableComponent.put(elementType, panel);
             }
         }
 
         this.add(netPlanView, BorderLayout.CENTER);
 
-        this.add(new JLabel ("Number of entries"), BorderLayout.NORTH);
+//        this.add(new JLabel ("Number of entries"), BorderLayout.NORTH);
         
         
 	}
