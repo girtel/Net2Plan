@@ -20,6 +20,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -51,6 +52,7 @@ import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement.LastRowAggregatedValue;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -109,8 +111,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
         super(createTableModel(callback), callback, NetworkElementType.LINK, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSorting();
-        fixedTable.setRowSorter(this.getRowSorter());
+        setColumnRowSortingFixedAndNonFixedTable();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -130,7 +131,8 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
         for (Link link : currentState.getLinks())
             max_rho_e = Math.max(max_rho_e, link.getOccupiedCapacity() / link.getCapacity());
         List<Object[]> allLinkData = new LinkedList<Object[]>();
-        for (Link link : currentState.getLinks()) {
+        for (Link link : currentState.getLinks()) 
+        {
             Set<SharedRiskGroup> srgIds_thisLink = link.getSRGs();
             Set<Route> traversingRoutes = isSourceRouting ? link.getTraversingRoutes() : new LinkedHashSet<Route>();
             Set<Route> traversingBURoutes = isSourceRouting ? link.getTraversingBackupRoutes() : new LinkedHashSet<Route>();
@@ -188,7 +190,31 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
             }
             allLinkData.add(linkData);
         }
+        
+        /* Add the aggregation row with the aggregated statistics */
+        final double aggCapacity = currentState.getLinks().stream().mapToDouble(e->e.getCapacity()).sum();
+        final double aggCarried = currentState.getLinks().stream().mapToDouble(e->e.getCarriedTraffic()).sum();
+        final double aggLengthKm = currentState.getLinks().stream().mapToDouble(e->e.getLengthInKm()).sum();
+        final double aggPropDelayMs = currentState.getLinks().stream().mapToDouble(e->e.getPropagationDelayInMs()).max().orElse(0);
+        final int aggNumRoutes = isSourceRouting? currentState.getLinks().stream().mapToInt(e->e.getTraversingRoutes().size()).sum() : 0;
+        final int aggNumBackupRoutes = isSourceRouting? currentState.getLinks().stream().mapToInt(e->e.getTraversingBackupRoutes().size()).sum() : 0;
+        final int aggNumTrees = currentState.getLinks().stream().mapToInt(e->e.getTraversingTrees().size()).sum();
+        final int aggNumSRGs = currentState.getLinks().stream().mapToInt(e->e.getSRGs().size()).sum();
+        final int aggNumCouplings = (int) currentState.getLinks().stream().filter(e->e.isCoupled()).count();
+        final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue [netPlanViewTableHeader.length + attributesColumns.size()];
+        Arrays.fill(aggregatedData, new LastRowAggregatedValue());
+        aggregatedData [COLUMN_CAPACITY] = new LastRowAggregatedValue(aggCapacity);
+        aggregatedData [COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried);
+        aggregatedData [COLUMN_LENGTH] = new LastRowAggregatedValue(aggLengthKm);
+        aggregatedData [COLUMN_PROPDELAYMS] = new LastRowAggregatedValue(aggPropDelayMs);
+        aggregatedData [COLUMN_NUMROUTES] = new LastRowAggregatedValue(aggNumRoutes);
+        aggregatedData [COLUMN_NUMSEGMENTS] = new LastRowAggregatedValue(aggNumBackupRoutes);
+        aggregatedData [COLUMN_NUMTREES] = new LastRowAggregatedValue(aggNumTrees);
+        aggregatedData [COLUMN_SRGS] = new LastRowAggregatedValue(aggNumSRGs);
+        aggregatedData [COLUMN_COUPLEDTODEMAND] = new LastRowAggregatedValue(aggNumCouplings);
+        allLinkData.add(aggregatedData);
 
+        
         return allLinkData;
     }
 
@@ -412,12 +438,19 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
         }
     }
 
-    public void setColumnRowSorting() {
+    @Override
+    public void setColumnRowSortingFixedAndNonFixedTable() 
+    {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_ORIGINNODE , COLUMN_DESTNODE , COLUMN_NUMROUTES , COLUMN_NUMSEGMENTS , COLUMN_NUMFORWRULES , COLUMN_NUMTREES);
-        final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
+        DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
         for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
-        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(columnsWithDoubleAndThenParenthesis.contains(col)));
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
+        fixedTable.setAutoCreateRowSorter(true);
+        fixedTable.setRowSorter(this.getRowSorter());
+        rowSorter = ((DefaultRowSorter) fixedTable.getRowSorter());
+        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

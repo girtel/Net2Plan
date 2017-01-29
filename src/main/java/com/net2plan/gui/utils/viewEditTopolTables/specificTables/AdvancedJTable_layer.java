@@ -74,7 +74,6 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         this.getTableHeader().setReorderingAllowed(false);
-
         setAutoCreateRowSorter(true);
     }
 
@@ -176,12 +175,12 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
     private void setSpecificCellRenderers() {
     }
 
-    public void setColumnRowSorting() 
+    public void setColumnRowSortingFixedAndNonFixedTable() 
     {
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet();
         final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
         for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
-        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(columnsWithDoubleAndThenParenthesis.contains(col)));
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

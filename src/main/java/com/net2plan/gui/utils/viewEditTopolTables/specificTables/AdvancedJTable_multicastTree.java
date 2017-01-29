@@ -16,6 +16,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -25,6 +26,7 @@ import java.util.Random;
 import java.util.Set;
 
 import javax.swing.Box;
+import javax.swing.DefaultRowSorter;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -37,6 +39,7 @@ import javax.swing.table.TableModel;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement.LastRowAggregatedValue;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.Configuration;
@@ -90,8 +93,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
         super(createTableModel(callback), callback, NetworkElementType.MULTICAST_TREE, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSorting();
-        fixedTable.setRowSorter(this.getRowSorter());
+        setColumnRowSortingFixedAndNonFixedTable();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -118,22 +120,22 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
             for (Node n : egressNodes) egressNodesString += n + "(" + (n.getName().isEmpty() ? "" : n.getName()) + ") ";
 
             Object[] treeData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
-            treeData[0] = tree.getId();
-            treeData[1] = tree.getIndex();
-            treeData[2] = demand.getIndex();
-            treeData[3] = ingressNode.getIndex() + (ingressNodeName.isEmpty() ? "" : " (" + ingressNodeName + ")");
-            treeData[4] = egressNodesString;
-            treeData[5] = demand.getOfferedTraffic();
-            treeData[6] = demand.getCarriedTraffic();
-            treeData[7] = tree.getOccupiedLinkCapacity();
-            treeData[8] = CollectionUtils.join(NetPlan.getIndexes(tree.getLinkSet()), " ; ");
-            treeData[9] = tree.getLinkSet().size();
-            treeData[10] = CollectionUtils.join(NetPlan.getIndexes(tree.getNodeSet()), " ; ");
-            treeData[11] = tree.getTreeMaximumPathLengthInHops();
-            treeData[12] = tree.getTreeMaximumPathLengthInKm();
-            treeData[13] = tree.getTreeMaximumPropagationDelayInMs();
-            treeData[14] = maxUtilization;
-            treeData[15] = StringUtils.mapToString(tree.getAttributes());
+            treeData[COLUMN_ID] = tree.getId();
+            treeData[COLUMN_INDEX] = tree.getIndex();
+            treeData[COLUMN_MULTICASTDEMAND] = demand.getIndex();
+            treeData[COLUMN_INGRESSNODE] = ingressNode.getIndex() + (ingressNodeName.isEmpty() ? "" : " (" + ingressNodeName + ")");
+            treeData[COLUMN_EGRESSNODES] = egressNodesString;
+            treeData[COLUMN_OFFEREDTRAFFIC] = demand.getOfferedTraffic();
+            treeData[COLUMN_CARRIEDTRAFFIC] = demand.getCarriedTraffic();
+            treeData[COLUMN_OCCUPIEDCAPACITY] = tree.getOccupiedLinkCapacity();
+            treeData[COLUMN_SETOFLINKS] = CollectionUtils.join(NetPlan.getIndexes(tree.getLinkSet()), " ; ");
+            treeData[COLUMN_NUMLINKS] = tree.getLinkSet().size();
+            treeData[COLUMN_SETOFNODES] = CollectionUtils.join(NetPlan.getIndexes(tree.getNodeSet()), " ; ");
+            treeData[COLUMN_WORSECASENUMHOPS] = tree.getTreeMaximumPathLengthInHops();
+            treeData[COLUMN_WORSECASELENGTH] = tree.getTreeMaximumPathLengthInKm();
+            treeData[COLUMN_WORSECASEPROPDELAY] = tree.getTreeMaximumPropagationDelayInMs();
+            treeData[COLUMN_BOTTLENECKUTILIZATION] = maxUtilization;
+            treeData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(tree.getAttributes());
 
             for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
             {
@@ -145,6 +147,24 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
 
             allTreeData.add(treeData);
         }
+        
+        /* Add the aggregation row with the aggregated statistics */
+        final double aggOffered = currentState.getMulticastTrees().stream().map(e->e.getMulticastDemand()).mapToDouble(e->e.getOfferedTraffic()).sum();
+        final double aggCarried = currentState.getMulticastTrees().stream().mapToDouble(e->e.getCarriedTraffic()).sum();
+        final double aggOccupiedCap = currentState.getMulticastTrees().stream().mapToDouble(e->e.getOccupiedLinkCapacity()).sum();
+        final int aggWCNumHops = currentState.getMulticastTrees().stream().mapToInt(e->e.getTreeMaximumPathLengthInHops()).max().orElse(0);
+        final double aggWCLength = currentState.getMulticastTrees().stream().mapToDouble(e->e.getTreeMaximumPathLengthInKm()).max().orElse(0);
+        final double aggWCPropDelay = currentState.getMulticastTrees().stream().mapToDouble(e->e.getTreeMaximumPropagationDelayInMs()).max().orElse(0);
+        final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue [netPlanViewTableHeader.length + attributesColumns.size()];
+        Arrays.fill(aggregatedData, new LastRowAggregatedValue());
+        aggregatedData [COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(aggOffered);
+        aggregatedData [COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried);
+        aggregatedData [COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(aggOccupiedCap);
+        aggregatedData [COLUMN_WORSECASENUMHOPS] = new LastRowAggregatedValue(aggWCNumHops);
+        aggregatedData [COLUMN_WORSECASELENGTH] = new LastRowAggregatedValue(aggWCLength);
+        aggregatedData [COLUMN_WORSECASEPROPDELAY] = new LastRowAggregatedValue(aggWCPropDelay);
+        allTreeData.add(aggregatedData);
+
         return allTreeData;
     }
 
@@ -270,9 +290,19 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
     private void setSpecificCellRenderers() {
     }
 
-    public void setColumnRowSorting() 
+    @Override
+    public void setColumnRowSortingFixedAndNonFixedTable() 
     {
         setAutoCreateRowSorter(true);
+        final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet();
+        DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
+        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
+        fixedTable.setAutoCreateRowSorter(true);
+        fixedTable.setRowSorter(this.getRowSorter());
+        rowSorter = ((DefaultRowSorter) fixedTable.getRowSorter());
+        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

@@ -159,6 +159,33 @@ public class Node extends NetworkElement
 		return accum;
 	}
 
+
+	/** Returns the total carried in the links of te given layer entering the node.
+	 * If no layer is provided, the default layer is assumed
+	 * @param optionalLayerParameter Network layer (optional)
+	 * @return see above
+	 */
+	public double getIncomingLinksTraffic (NetworkLayer ... optionalLayerParameter)
+	{
+		checkAttachedToNetPlanObject();
+		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		double accum = 0; for (Link e : cache_nodeIncomingLinks) if (e.layer.equals (layer)) accum += e.cache_carriedTraffic;
+		return accum;
+	}
+
+	/** Returns the total carried in the links of te given layer entering the node.
+	 * If no layer is provided, the default layer is assumed
+	 * @param optionalLayerParameter Network layer (optional)
+	 * @return see above
+	 */
+	public double getOutgoingLinksTraffic (NetworkLayer ... optionalLayerParameter)
+	{
+		checkAttachedToNetPlanObject();
+		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		double accum = 0; for (Link e : cache_nodeOutgoingLinks) if (e.layer.equals (layer)) accum += e.cache_carriedTraffic;
+		return accum;
+	}
+
 	/**
 	 * <p>Returns the total unicast offered traffic initited in the node, counting the demands at the given layer.
 	 * If no layer is provided, the default layer is assumed.</p>

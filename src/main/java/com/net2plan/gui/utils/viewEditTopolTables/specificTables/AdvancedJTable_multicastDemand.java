@@ -16,6 +16,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -39,6 +40,7 @@ import javax.swing.table.TableModel;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement.LastRowAggregatedValue;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.StringLabeller;
@@ -85,8 +87,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
         super(createTableModel(callback), callback, NetworkElementType.MULTICAST_DEMAND, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSorting();
-        fixedTable.setRowSorter(this.getRowSorter());
+        setColumnRowSortingFixedAndNonFixedTable();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -112,20 +113,19 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
             double h_d = demand.getOfferedTraffic();
             double lostTraffic_d = demand.getBlockedTraffic();
             Object[] demandData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
-            demandData[0] = demand.getId();
-            demandData[1] = demand.getIndex();
-            demandData[2] = ingressNode.getIndex() + (ingressNodeName.isEmpty() ? "" : " (" + ingressNodeName + ")");
-            demandData[3] = egressNodesString;
-            demandData[4] = coupledLinks.isEmpty() ? "" : "link ids " + CollectionUtils.join(NetPlan.getIndexes(coupledLinks), ",") + " layer " + coupledLinks.iterator().next().getLayer().getIndex() + "";
-            demandData[5] = h_d;
-            demandData[6] = demand.getCarriedTraffic();
-            demandData[7] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d;
-            demandData[8] = "Loopless by definition";
-            demandData[9] = demand.isBifurcated() ? String.format("Yes (%d)", demand.getMulticastTrees().size()) : "No";
-            demandData[10] = multicastTreeIds_thisDemand.isEmpty() ? "none" : multicastTreeIds_thisDemand.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(multicastTreeIds_thisDemand), ",") + ")";
-            demandData[11] = demand.getWorseCasePropagationTimeInMs();
-            demandData[12] = StringUtils.mapToString(demand.getAttributes());
-
+            demandData[COLUMN_ID] = demand.getId();
+            demandData[COLUMN_INDEX] = demand.getIndex();
+            demandData[COLUMN_INGRESSNODE] = ingressNode.getIndex() + (ingressNodeName.isEmpty() ? "" : " (" + ingressNodeName + ")");
+            demandData[COLUMN_EGRESSNODES] = egressNodesString;
+            demandData[COLUMN_COUPLEDTOLINKS] = coupledLinks.isEmpty() ? "" : "link ids " + CollectionUtils.join(NetPlan.getIndexes(coupledLinks), ",") + " layer " + coupledLinks.iterator().next().getLayer().getIndex() + "";
+            demandData[COLUMN_OFFEREDTRAFFIC] = h_d;
+            demandData[COLUMN_CARRIEDTRAFFIC] = demand.getCarriedTraffic();
+            demandData[COLUMN_LOSTTRAFFIC] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d;
+            demandData[COLUMN_ROUTINGCYCLES] = "Loopless by definition";
+            demandData[COLUMN_BIFURCATED] = demand.isBifurcated() ? String.format("Yes (%d)", demand.getMulticastTrees().size()) : "No";
+            demandData[COLUMN_NUMTREES] = multicastTreeIds_thisDemand.isEmpty() ? "none" : multicastTreeIds_thisDemand.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(multicastTreeIds_thisDemand), ",") + ")";
+            demandData[COLUMN_MAXE2ELATENCY] = demand.getWorseCasePropagationTimeInMs();
+            demandData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(demand.getAttributes());
             for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
             {
                 if(demand.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
@@ -136,6 +136,24 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
 
             allDemandData.add(demandData);
         }
+        
+        /* Add the aggregation row with the aggregated statistics */
+        final int aggNumCouplings = (int) currentState.getMulticastDemands().stream().filter(e->e.isCoupled()).count();
+        final double aggOffered = currentState.getMulticastDemands().stream().mapToDouble(e->e.getOfferedTraffic()).sum();
+        final double aggCarried = currentState.getMulticastDemands().stream().mapToDouble(e->e.getCarriedTraffic()).sum();
+        final double aggLost = currentState.getMulticastDemands().stream().mapToDouble(e->e.getBlockedTraffic()).sum();
+        final int aggNumTrees = currentState.getMulticastDemands().stream().mapToInt(e->e.getMulticastTrees().size()).sum();
+        final double aggMaxLatency = currentState.getMulticastDemands().stream().mapToDouble(e->e.getWorseCasePropagationTimeInMs()).sum();
+        final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue [netPlanViewTableHeader.length + attributesColumns.size()];
+        Arrays.fill(aggregatedData, new LastRowAggregatedValue());
+        aggregatedData [COLUMN_COUPLEDTOLINKS] = new LastRowAggregatedValue(aggNumCouplings);
+        aggregatedData [COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(aggOffered);
+        aggregatedData [COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried);
+        aggregatedData [COLUMN_LOSTTRAFFIC] = new LastRowAggregatedValue(aggLost);
+        aggregatedData [COLUMN_NUMTREES] = new LastRowAggregatedValue(aggNumTrees);
+        aggregatedData [COLUMN_MAXE2ELATENCY] = new LastRowAggregatedValue(aggMaxLatency);
+        allDemandData.add(aggregatedData);
+
 
         return allDemandData;
     }
@@ -251,13 +269,19 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
         getColumnModel().getColumn(this.convertColumnIndexToView(COLUMN_LOSTTRAFFIC)).setCellRenderer(new CellRenderers.LostTrafficCellRenderer(getDefaultRenderer(Double.class), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
     }
 
-    public void setColumnRowSorting() 
+    @Override
+    public void setColumnRowSortingFixedAndNonFixedTable() 
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_INGRESSNODE , COLUMN_EGRESSNODES , COLUMN_NUMTREES);
-        final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
+        DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
         for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
-        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(columnsWithDoubleAndThenParenthesis.contains(col)));
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
+        fixedTable.setAutoCreateRowSorter(true);
+        fixedTable.setRowSorter(this.getRowSorter());
+        rowSorter = ((DefaultRowSorter) fixedTable.getRowSorter());
+        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumFixedLeftColumnsInDecoration() 

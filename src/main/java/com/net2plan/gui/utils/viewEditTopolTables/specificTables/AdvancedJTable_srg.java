@@ -20,6 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -50,6 +51,7 @@ import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.CellRenderers.UnfocusableCellRenderer;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement.LastRowAggregatedValue;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.SwingUtils;
@@ -76,9 +78,10 @@ import net.miginfocom.swing.MigLayout;
 public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
 {
     private static final String netPlanViewTabName = "Shared-risk groups";
-    private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "MTTF (hours)", "MTTR (hours)", "Availability",
+    private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "MTTF (days)", "MTTR (days)", "Availability",
             "Nodes", "Links", "Links (other layers)", "# Affected routes", "# Affected backup routes", "# Affected multicast trees", "Attributes");
-    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Mean time to fail", "Mean time to repair", "Expected availability", "Nodes included into the shared-risk group", "Links (in this layer) included into the shared-risk group", "Links (in other layers) included into the shared-risk group", "# Affected routes (primary or backup)", "# Affected routes that are designated as backup routes", "# Affected multicast trees", "Attributes");
+    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", 
+    		"Index (consecutive integer starting in zero)", "Mean time to fail", "Mean time to repair", "Expected availability", "Nodes included into the shared-risk group", "Links (in this layer) included into the shared-risk group", "Links (in other layers) included into the shared-risk group", "# Affected routes (primary or backup)", "# Affected routes that are designated as backup routes", "# Affected multicast trees", "Attributes");
     private static final int COLUMN_ID = 0;
     private static final int COLUMN_INDEX = 1;
     private static final int COLUMN_MTTF = 2;
@@ -100,8 +103,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         super(createTableModel(callback), callback, NetworkElementType.SRG, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSorting();
-        fixedTable.setRowSorter(this.getRowSorter());
+        setColumnRowSortingFixedAndNonFixedTable();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -112,8 +114,9 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         fixedTable.getTableHeader().setDefaultRenderer(new CellRenderers.FixedTableHeaderRenderer());
     }
 
-    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) {
-        NetworkLayer layer = currentState.getNetworkLayerDefault();
+    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) 
+    {
+        final NetworkLayer layer = currentState.getNetworkLayerDefault();
         List<Object[]> allSRGData = new LinkedList<Object[]>();
         for (SharedRiskGroup srg : currentState.getSRGs()) {
             Set<Route> routeIds_thisSRG = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING ? srg.getAffectedRoutes(layer) : new LinkedHashSet<Route>();
@@ -126,18 +129,18 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
             Set<Link> linkIds_thisSRG = srg.getLinks(layer);
 
             Object[] srgData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
-            srgData[0] = srg.getId();
-            srgData[1] = srg.getIndex();
-            srgData[2] = srg.getMeanTimeToFailInHours();
-            srgData[3] = srg.getMeanTimeToRepairInHours();
-            srgData[4] = srg.getAvailability();
-            srgData[5] = nodeIds_thisSRG.isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(nodeIds_thisSRG), ", ");
-            srgData[6] = linkIds_thisSRG.isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(srg.getLinksAllLayers()), ", ");
-            srgData[7] = srg.getLinks(layer).isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(srg.getLinks(layer)), ", ");
-            srgData[8] = numRoutes == 0 ? "none" : numRoutes + " (" + CollectionUtils.join(NetPlan.getIndexes(routeIds_thisSRG), ", ") + ")";
-            srgData[9] = numSegments == 0 ? "none" : numSegments + " (" + CollectionUtils.join(NetPlan.getIndexes(segmentIds_thisSRG), ", ") + ")";
-            srgData[10] = numMulticastTrees == 0 ? "none" : numMulticastTrees + " (" + CollectionUtils.join(NetPlan.getIndexes(treeIds_thisSRG), ", ") + ")";
-            srgData[11] = StringUtils.mapToString(srg.getAttributes());
+            srgData[COLUMN_ID] = srg.getId();
+            srgData[COLUMN_INDEX] = srg.getIndex();
+            srgData[COLUMN_MTTF] = srg.getMeanTimeToFailInHours() / 24;
+            srgData[COLUMN_MTTR] = srg.getMeanTimeToRepairInHours() / 24;
+            srgData[COLUMN_AVAILABILITY] = srg.getAvailability();
+            srgData[COLUMN_NODES] = nodeIds_thisSRG.isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(nodeIds_thisSRG), ", ");
+            srgData[COLUMN_LINKS] = linkIds_thisSRG.isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(srg.getLinksAllLayers()), ", ");
+            srgData[COLUMN_LINKSOTHERLAYERS] = srg.getLinks(layer).isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(srg.getLinks(layer)), ", ");
+            srgData[COLUMN_AFFECTEDROUTES] = numRoutes == 0 ? "none" : numRoutes + " (" + CollectionUtils.join(NetPlan.getIndexes(routeIds_thisSRG), ", ") + ")";
+            srgData[COLUMN_AFFECTEDBACKUPROUTES] = numSegments == 0 ? "none" : numSegments + " (" + CollectionUtils.join(NetPlan.getIndexes(segmentIds_thisSRG), ", ") + ")";
+            srgData[COLUMN_AFFECTEDTREES] = numMulticastTrees == 0 ? "none" : numMulticastTrees + " (" + CollectionUtils.join(NetPlan.getIndexes(treeIds_thisSRG), ", ") + ")";
+            srgData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(srg.getAttributes());
 
             for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
             {
@@ -150,6 +153,22 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
             allSRGData.add(srgData);
 
         }
+
+        /* Add the aggregation row with the aggregated statistics */
+        final int aggNumNodes = currentState.getSRGs().stream().mapToInt(e->e.getNodes().size()).sum();
+        final int aggNumLinks = currentState.getSRGs().stream().mapToInt(e->e.getLinks(layer).size()).sum();
+        final int aggNumLinksOtherLayers = currentState.getSRGs().stream().mapToInt(e->e.getLinksAllLayers().size()).sum();
+        final int aggNumAffectedRoutes = currentState.getSRGs().stream().mapToInt(e->(int) e.getAffectedRoutes(layer).stream().filter(ee->ee.isBackupRoute()).count()).sum();
+        final int aggNumAffectedTrees = currentState.getSRGs().stream().mapToInt(e->(int) e.getAffectedMulticastTrees(layer).size()).sum();
+        final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue [netPlanViewTableHeader.length + attributesColumns.size()];
+        Arrays.fill(aggregatedData, new LastRowAggregatedValue());
+        aggregatedData [COLUMN_NODES] = new LastRowAggregatedValue(aggNumNodes);
+        aggregatedData [COLUMN_LINKS] = new LastRowAggregatedValue(aggNumLinks);
+        aggregatedData [COLUMN_LINKSOTHERLAYERS] = new LastRowAggregatedValue(aggNumLinksOtherLayers);
+        aggregatedData [COLUMN_AFFECTEDROUTES] = new LastRowAggregatedValue(aggNumAffectedRoutes);
+        aggregatedData [COLUMN_AFFECTEDBACKUPROUTES] = new LastRowAggregatedValue(aggNumAffectedRoutes);
+        aggregatedData [COLUMN_AFFECTEDTREES] = new LastRowAggregatedValue(aggNumAffectedTrees);
+        allSRGData.add(aggregatedData);
 
         return allSRGData;
     }
@@ -270,12 +289,19 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         getColumnModel().getColumn(convertColumnIndexToView(COLUMN_AVAILABILITY)).setCellRenderer(new CellRenderers.NumberCellRenderer(MAXNUMDECIMALSINAVAILABILITY));
     }
 
-    public void setColumnRowSorting() {
+    @Override
+    public void setColumnRowSortingFixedAndNonFixedTable() 
+    {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_AFFECTEDROUTES , COLUMN_AFFECTEDBACKUPROUTES , COLUMN_AFFECTEDTREES);
-        final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
+        DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
         for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
-        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(columnsWithDoubleAndThenParenthesis.contains(col)));
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
+        fixedTable.setAutoCreateRowSorter(true);
+        fixedTable.setRowSorter(this.getRowSorter());
+        rowSorter = ((DefaultRowSorter) fixedTable.getRowSorter());
+        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

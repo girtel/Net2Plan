@@ -40,6 +40,7 @@ import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement.LastRowAggregatedValue;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
@@ -81,8 +82,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
         super(createTableModel(callback), callback, Constants.NetworkElementType.RESOURCE, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSorting();
-        fixedTable.setRowSorter(this.getRowSorter());
+        setColumnRowSortingFixedAndNonFixedTable();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -96,25 +96,25 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
 
 
     @Override
-    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesTitles) {
+    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesTitles) 
+    {
         List<Object[]> allResourceData = new LinkedList<Object[]>();
-        for (Resource res : currentState.getResources()) {
-
-
+        for (Resource res : currentState.getResources()) 
+        {
             Object[] resData = new Object[netPlanViewTableHeader.length + attributesTitles.size()];
-            resData[0] = res.getId();
-            resData[1] = res.getIndex();
-            resData[2] = res.getName();
-            resData[3] = res.getType();
-            resData[4] = res.getHostNode();
-            resData[5] = res.getCapacity();
-            resData[6] = res.getCapacityMeasurementUnits();
-            resData[7] = res.getOccupiedCapacity();
-            resData[8] = joinTraversingRoutesWithTheirCapacities(res);
-            resData[9] = joinUpperResourcesWithTheirCapacities(res);
-            resData[10] = joinBaseResourcesWithTheirCapacities(res);
-            resData[11] = res.getProcessingTimeToTraversingTrafficInMs();
-            resData[12] = StringUtils.mapToString(res.getAttributes());
+            resData[COLUMN_ID] = res.getId();
+            resData[COLUMN_INDEX] = res.getIndex();
+            resData[COLUMN_NAME] = res.getName();
+            resData[COLUMN_TYPE] = res.getType();
+            resData[COLUMN_HOSTNODE] = res.getHostNode();
+            resData[COLUMN_CAPACITY] = res.getCapacity();
+            resData[COLUMN_CAPACITYMUNITS] = res.getCapacityMeasurementUnits();
+            resData[COLUMN_OCCUPIEDCAPACITY] = res.getOccupiedCapacity();
+            resData[COLUMN_TRAVERSINGROUTES] = joinTraversingRoutesWithTheirCapacities(res);
+            resData[COLUMN_UPPERRESOURCES] = joinUpperResourcesWithTheirCapacities(res);
+            resData[COLUMN_BASERESOURCES] = joinBaseResourcesWithTheirCapacities(res);
+            resData[COLUMN_PROCESSINGTIME] = res.getProcessingTimeToTraversingTrafficInMs();
+            resData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(res.getAttributes());
 
             for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesTitles.size();i++)
             {
@@ -127,6 +127,20 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
             allResourceData.add(resData);
 
         }
+
+        /* Add the aggregation row with the aggregated statistics */
+        final double aggCapacity = currentState.getResources().stream().mapToDouble(e->e.getCapacity()).sum();
+        final double aggOccupiedCapacity = currentState.getResources().stream().mapToDouble(e->e.getOccupiedCapacity()).sum();
+        final int aggTravSCs = currentState.getResources().stream().mapToInt(e->e.getTraversingRoutes().size()).sum();
+        final double aggMaxProcTime = currentState.getResources().stream().mapToDouble(e->e.getProcessingTimeToTraversingTrafficInMs()).max().orElse(0);
+        final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue [netPlanViewTableHeader.length + attributesTitles.size()];
+        Arrays.fill(aggregatedData, new LastRowAggregatedValue());
+        aggregatedData [COLUMN_CAPACITY] = new LastRowAggregatedValue(aggCapacity);
+        aggregatedData [COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(aggOccupiedCapacity);
+        aggregatedData [COLUMN_TRAVERSINGROUTES] = new LastRowAggregatedValue(aggTravSCs);
+        aggregatedData [COLUMN_PROCESSINGTIME] = new LastRowAggregatedValue(aggMaxProcTime);
+        allResourceData.add(aggregatedData);
+
         return allResourceData;
     }
 
@@ -264,13 +278,20 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
         setDefaultRenderer(Integer.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(String.class, new CellRenderers.NonEditableCellRenderer());
     }
+    
     @Override
-    public void setColumnRowSorting() {
+    public void setColumnRowSortingFixedAndNonFixedTable() 
+    {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_CAPACITY);
-        final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
+        DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
         for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
-        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(columnsWithDoubleAndThenParenthesis.contains(col)));
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
+        fixedTable.setAutoCreateRowSorter(true);
+        fixedTable.setRowSorter(this.getRowSorter());
+        rowSorter = ((DefaultRowSorter) fixedTable.getRowSorter());
+        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     @Override

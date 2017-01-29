@@ -13,6 +13,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -116,8 +117,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
         super(createTableModel(callback), callback, NetworkElementType.ROUTE, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSorting();
-        fixedTable.setRowSorter(this.getRowSorter());
+        setColumnRowSortingFixedAndNonFixedTable();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -174,6 +174,27 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
             allRouteData.add(routeData);
         }
 
+        /* Add the aggregation row with the aggregated statistics */
+        final double aggDemandOffered = currentState.getRoutes().stream().mapToDouble(e->e.getDemand().getOfferedTraffic()).sum();
+        final double aggCarried = currentState.getRoutes().stream().mapToDouble(e->e.getCarriedTraffic()).sum();
+        final double aggLinkOccupied = currentState.getRoutes().stream().mapToDouble(e->e.isDown()? 0 : e.getSeqOccupiedCapacitiesIfNotFailing().stream().mapToDouble(ee->ee).sum()).sum();
+        final int aggMaxNumHops = currentState.getRoutes().stream().mapToInt(e->e.getNumberOfHops()).sum();
+        final double aggMaxLength = currentState.getRoutes().stream().mapToDouble(e->e.getLengthInKm()).sum();
+        final double aggMaxPropDelay = currentState.getRoutes().stream().mapToDouble(e->e.getPropagationDelayInMiliseconds()).sum();
+        final int aggIsBackup = (int) currentState.getRoutes().stream().filter(e->e.isBackupRoute()).count();
+        final int aggHasBackup = (int) currentState.getRoutes().stream().filter(e->e.hasBackupRoutes()).count();
+        final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue [netPlanViewTableHeader.length + attributesColumns.size()];
+        Arrays.fill(aggregatedData, new LastRowAggregatedValue());
+        aggregatedData [COLUMN_DEMANDOFFEREDTRAFFIC] = new LastRowAggregatedValue(aggDemandOffered);
+        aggregatedData [COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried);
+        aggregatedData [COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(aggLinkOccupied);
+        aggregatedData [COLUMN_NUMHOPS] = new LastRowAggregatedValue(aggMaxNumHops);
+        aggregatedData [COLUMN_LENGTH] = new LastRowAggregatedValue(aggMaxLength);
+        aggregatedData [COLUMN_PROPDELAY] = new LastRowAggregatedValue(aggMaxPropDelay);
+        aggregatedData [COLUMN_ISBACKUP] = new LastRowAggregatedValue(aggIsBackup);
+        aggregatedData [COLUMN_HASBACKUPROUTES] = new LastRowAggregatedValue(aggHasBackup);
+        allRouteData.add(aggregatedData);
+        
         return allRouteData;
     }
 
@@ -300,14 +321,19 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
     private void setSpecificCellRenderers() {
     }
 
-    public void setColumnRowSorting() {
-        setAutoCreateRowSorter(true); 
+    @Override
+    public void setColumnRowSortingFixedAndNonFixedTable() 
+    {
+        setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet();
-        final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
+        DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
         for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
-        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(columnsWithDoubleAndThenParenthesis.contains(col)));
-
-        
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
+        fixedTable.setAutoCreateRowSorter(true);
+        fixedTable.setRowSorter(this.getRowSorter());
+        rowSorter = ((DefaultRowSorter) fixedTable.getRowSorter());
+        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

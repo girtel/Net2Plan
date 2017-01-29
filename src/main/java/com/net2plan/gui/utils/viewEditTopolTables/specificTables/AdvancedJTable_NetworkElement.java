@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.swing.Box;
-import javax.swing.DefaultRowSorter;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -40,6 +39,9 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
+import javax.swing.RowSorter.SortKey;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
@@ -1177,7 +1179,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
 
 //    public abstract int[] getColumnsOfSpecialComparatorForSorting();
 
-    public abstract void setColumnRowSorting();
+    public abstract void setColumnRowSortingFixedAndNonFixedTable();
 
     public abstract int getNumFixedLeftColumnsInDecoration();
 
@@ -1246,7 +1248,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
                     }
                 }
             }
-            setColumnRowSorting();
+            setColumnRowSortingFixedAndNonFixedTable();
 //            for (int columnId : getColumnsOfSpecialComparatorForSorting())
 //                ((DefaultRowSorter) getRowSorter()).setComparator(columnId, new ColumnComparator());
         }
@@ -1906,12 +1908,22 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
     static class ColumnComparator implements Comparator<Object>
     {
     	private final boolean isDoubleWithParenthesis;
-    	public ColumnComparator(boolean isDoubleWithParenthesis) { this.isDoubleWithParenthesis = isDoubleWithParenthesis; }
+    	private final RowSorter rs;
+    	public ColumnComparator(RowSorter rs , boolean isDoubleWithParenthesis) { this.rs = rs; this.isDoubleWithParenthesis = isDoubleWithParenthesis; }
         @Override
         public int compare(Object o1, Object o2)
         {
-        	if (o1 instanceof LastRowAggregatedValue) return -1;
-        	if (o2 instanceof LastRowAggregatedValue) return 1;
+        	
+        	if (o1 instanceof LastRowAggregatedValue) 
+        	{
+        		final boolean ascending = ((List<? extends SortKey>) rs.getSortKeys()).get(0).getSortOrder() == SortOrder.ASCENDING;
+        		return ascending? 1 : -1;
+        	}
+        	if (o2 instanceof LastRowAggregatedValue) 
+        	{
+        		final boolean ascending = ((List<? extends SortKey>) rs.getSortKeys()).get(0).getSortOrder() == SortOrder.ASCENDING;
+        		return ascending? -1 : 1;
+        	}
         	if (o1 instanceof Boolean)
         	{
                 final Boolean oo1 = (Boolean) o1;
