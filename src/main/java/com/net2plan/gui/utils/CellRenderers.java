@@ -12,22 +12,32 @@
 
 package com.net2plan.gui.utils;
 
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_link;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_route;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.utils.DoubleUtils;
-import com.net2plan.utils.Pair;
-
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.swing.JCheckBox;
+import javax.swing.JTable;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_link;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_route;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.utils.DoubleUtils;
+import com.net2plan.utils.Pair;
 
 /**
  * Set of several cell renderers used into the GUI.
@@ -42,11 +52,18 @@ public class CellRenderers {
      *
      * @since 0.2.0
      */
+	public static final long IDINDICATIONFORAGGREGATIONROW = -1000;
+    public static final Color bgColorLastRow = new Color(230, 230, 230);
+    public static final Color fgColorLastRow = new Color(0, 0, 0);
+
     public static class CheckBoxRenderer extends NonEditableCellRenderer {
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) 
+        {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             if (value == null) return c;
+            if (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue)
+        		{ c.setBackground(bgColorLastRow); c.setForeground(fgColorLastRow); return c; }
 
             Color oldColor = (Color) UIManager.get("CheckBox.interiorBackground");
             UIManager.put("CheckBox.interiorBackground", bgColorNonEditable);
@@ -94,8 +111,12 @@ public class CellRenderers {
         }
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) 
+        {
             Component c = cellRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+            if (value != null && value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue)
+            	{ c.setBackground(bgColorLastRow); c.setForeground(fgColorLastRow); return c; }
 
             if (!isSelected && row != -1 && column != -1) {
                 row = table.convertRowIndexToModel(row);
@@ -165,8 +186,12 @@ public class CellRenderers {
         }
 
         @Override
-        public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected) {
-            NetPlan currentNetPlan = callback.getDesign();
+        public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected) 
+        {
+            if (itemId != null && itemId instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue)
+        		{ c.setBackground(bgColorLastRow); c.setForeground(fgColorLastRow); return; }
+
+        	NetPlan currentNetPlan = callback.getDesign();
 
             long linkId = (long) itemId;
             long originNodeId = currentNetPlan.getLinkFromId(linkId).getOriginNode().getId();
@@ -234,19 +259,16 @@ public class CellRenderers {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             Component c = null;
-            if (row == table.getRowCount() - 1)
-            {
-            	c = new LastRowAggregatingInfoCellRenderer().getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                c.setForeground(UIManager.getColor(isSelected ? "Table.selectionForeground" : "Table.foreground"));
-                c.setBackground(isSelected ? UIManager.getColor("Table.selectionBackground") : bgColorNonEditable);
-            	return c;
-            }
             if(tcr != null)
                 c = tcr.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            else{
+            else
                 c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if ((value != null) && (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            {
+                c.setForeground(fgColorLastRow);
+                c.setBackground(bgColorLastRow);
+            	return c;
             }
-            System.out.println("row: " + row + ", table.getRowCount: " + table.getRowCount());
             if (!isSelected && value != null) {
                 int demandId = table.convertRowIndexToModel(row);
                 double lostTraffic = (Double) table.getModel().getValueAt(demandId, lostTrafficColumnModelIndex);
@@ -291,6 +313,12 @@ public class CellRenderers {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if ((value != null) && (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            {
+                c.setForeground(fgColorLastRow);
+                c.setBackground(bgColorLastRow);
+            	return c;
+            }
 
 			/*
              * When you call setForeground() or setBackground(), the selected colors stay
@@ -320,13 +348,13 @@ public class CellRenderers {
 
     public static class LastRowAggregatingInfoCellRenderer extends DefaultTableCellRenderer 
     {
-        private final static Color bgColorNonEditable = new Color(245, 245, 245);
+        private final static Color bgColorNonEditable = new Color(230, 230, 230);
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) 
         {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            c.setForeground(UIManager.getColor(isSelected ? "Table.selectionForeground" : "Table.foreground"));
-            c.setBackground(isSelected ? UIManager.getColor("Table.selectionBackground") : bgColorNonEditable);
+            c.setForeground(UIManager.getColor("Table.foreground"));
+            c.setBackground(bgColorNonEditable);
             return c;
         }
     }
@@ -341,11 +369,13 @@ public class CellRenderers {
 
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) 
+        {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-			c.setBackground(bgColorFixedTable);
-
+            if (value != null  && value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue)
+        		{ c.setBackground(bgColorLastRow); c.setForeground(fgColorLastRow); }
+            else
+            	c.setBackground(bgColorFixedTable);
             return c;
         }
     }
@@ -392,6 +422,12 @@ public class CellRenderers {
             }
 
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if ((value != null) && (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            {
+                c.setForeground(fgColorLastRow);
+                c.setBackground(bgColorLastRow);
+            	return c;
+            }
             return c;
         }
     }
@@ -435,7 +471,14 @@ public class CellRenderers {
         }
 
         @Override
-        public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected) {
+        public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected) 
+        {
+            if ((itemId != null) && (itemId instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            {
+                c.setForeground(fgColorLastRow);
+                c.setBackground(bgColorLastRow);
+            	return;
+            }
             NetPlan currentNetPlan = callback.getDesign();
             NetPlan initialNetPlan = callback.getInitialDesign();
 
@@ -488,7 +531,15 @@ public class CellRenderers {
         }
 
         @Override
-        public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected) {
+        public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected) 
+        {
+            if ((itemId != null) && (itemId instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            {
+                c.setForeground(fgColorLastRow);
+                c.setBackground(bgColorLastRow);
+            	return;
+            }
+
             NetPlan currentNetPlan = callback.getDesign();
             NetPlan initialNetPlan = callback.getInitialDesign();
 
@@ -558,7 +609,15 @@ public class CellRenderers {
         }
 
         @Override
-        public void setCurrentState(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected) {
+        public void setCurrentState(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected) 
+        {
+            if ((itemId != null) && (itemId instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            {
+                c.setForeground(fgColorLastRow);
+                c.setBackground(bgColorLastRow);
+            	return;
+            }
+
             NetPlan currentNetPlan = callback.getDesign();
             boolean isDown = false;
 
@@ -621,8 +680,15 @@ public class CellRenderers {
      */
     public static class UnfocusableCellRenderer extends DefaultTableCellRenderer {
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            return super.getTableCellRendererComponent(table, value, isSelected, false, row, column);
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) 
+        {
+            final Component c = super.getTableCellRendererComponent(table, value, isSelected, false, row, column);
+            if ((value != null) && (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            {
+                c.setForeground(fgColorLastRow);
+                c.setBackground(bgColorLastRow);
+            }
+            return c;
         }
     }
 }

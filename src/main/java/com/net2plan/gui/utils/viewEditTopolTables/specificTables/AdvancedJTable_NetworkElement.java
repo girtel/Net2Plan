@@ -1270,7 +1270,9 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
                     row = table.convertRowIndexToModel(row);
                     if (table.getModel().getValueAt(row, 0) == null)
                         row = row - 1;
-                    if (networkElementType == NetworkElementType.FORWARDING_RULE)
+                    if (table.getModel().getValueAt(row, 0) instanceof LastRowAggregatedValue)
+                    	auxItemId = null;
+                    else if (networkElementType == NetworkElementType.FORWARDING_RULE)
                         auxItemId = Pair.of(Integer.parseInt(model.getValueAt(row, 1).toString().split(" ")[0]), Integer.parseInt(model.getValueAt(row, 2).toString().split(" ")[0]));
                     else
                         auxItemId = (Long) model.getValueAt(row, 0);
@@ -1949,7 +1951,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
         }
     }
 
-    static class LastRowAggregatedValue
+    public static class LastRowAggregatedValue
     {
     	private String value;
     	LastRowAggregatedValue () { value = "---"; }
@@ -1957,6 +1959,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
     	LastRowAggregatedValue (double val) { value = String.format("%.2f", val); }
     	LastRowAggregatedValue (String value) { this.value = value; }
     	String getValue () { return value; }
+    	public String toString () { return value; }
     }
     
 }

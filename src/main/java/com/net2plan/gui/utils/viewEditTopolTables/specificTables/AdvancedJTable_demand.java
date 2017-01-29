@@ -299,12 +299,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
         setDefaultRenderer(Long.class, new CellRenderers.LostTrafficCellRenderer(new NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
         setDefaultRenderer(Integer.class, new CellRenderers.LostTrafficCellRenderer(new NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
         setDefaultRenderer(String.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.NonEditableCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(LastRowAggregatedValue.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.LastRowAggregatingInfoCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        //setDefaultRenderer(LastRowAggregatedValue.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.LastRowAggregatingInfoCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
     }
 
     private void setSpecificCellRenderers() 
     {
-        getColumnModel().getColumn(this.convertColumnIndexToView(COLUMN_LOSTTRAFFIC)).setCellRenderer(new CellRenderers.LostTrafficCellRenderer(new CellRenderers.LastRowAggregatingInfoCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        getColumnModel().getColumn(this.convertColumnIndexToView(COLUMN_LOSTTRAFFIC)).setCellRenderer(new CellRenderers.LostTrafficCellRenderer(new NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
     }
 
     public void setColumnRowSorting() 
