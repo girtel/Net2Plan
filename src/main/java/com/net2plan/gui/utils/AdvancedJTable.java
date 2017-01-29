@@ -144,21 +144,10 @@ public class AdvancedJTable extends JTable {
     @Override
     public TableCellRenderer getCellRenderer(int row, int column) 
     {
-//    	if (row == getRowCount() - 1)
-//    	{
-//    		System.out.println("Last row: getCellRendered: row " + row + ", col:  " + column);
-//    		return new CellRenderers.LastRowAggregatingInfoCellRenderer ();
-//    	}
         if (cellRendererMap.containsKey(Pair.of(row, column)))
-        {
-        	System.out.println("Cell renderer in map: row " + row + ", col:  " + column);
         	return cellRendererMap.get(Pair.of(row, column));
-        }
         else 
-        {
-        	System.out.println("Cell renderer NOT in map: row " + row + ", col:  " + column);
         	return super.getCellRenderer(row, column);
-        }
     }
 
     @Override

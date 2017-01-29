@@ -180,9 +180,9 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
         return COLUMN_ATTRIBUTES;
     }
 
-    public int[] getColumnsOfSpecialComparatorForSorting() {
-        return new int[]{3, 4, 5, 9, 10};
-    }
+//    public int[] getColumnsOfSpecialComparatorForSorting() {
+//        return new int[]{3, 4, 5, 9, 10};
+//    }
 
     private static TableModel createTableModel(final IVisualizationCallback callback) {
         TableModel multicastDemandTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
@@ -254,9 +254,10 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
     public void setColumnRowSorting() 
     {
         setAutoCreateRowSorter(true);
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INGRESSNODE, new AdvancedJTable_NetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_EGRESSNODES, new AdvancedJTable_NetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMTREES, new AdvancedJTable_NetworkElement.ColumnComparator());
+        final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_INGRESSNODE , COLUMN_EGRESSNODES , COLUMN_NUMTREES);
+        final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
+        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumFixedLeftColumnsInDecoration() 

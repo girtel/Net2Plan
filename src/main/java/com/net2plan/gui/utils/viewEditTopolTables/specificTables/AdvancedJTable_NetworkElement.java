@@ -1175,7 +1175,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
 
     public abstract int getAttributesColumnIndex();
 
-    public abstract int[] getColumnsOfSpecialComparatorForSorting();
+//    public abstract int[] getColumnsOfSpecialComparatorForSorting();
 
     public abstract void setColumnRowSorting();
 
@@ -1246,8 +1246,9 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
                     }
                 }
             }
-            for (int columnId : getColumnsOfSpecialComparatorForSorting())
-                ((DefaultRowSorter) getRowSorter()).setComparator(columnId, new ColumnComparator());
+            setColumnRowSorting();
+//            for (int columnId : getColumnsOfSpecialComparatorForSorting())
+//                ((DefaultRowSorter) getRowSorter()).setComparator(columnId, new ColumnComparator());
         }
         
         // here update the number of entries label
@@ -1902,43 +1903,48 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
         }
     }
 
-    static class ColumnComparator implements Comparator<String>
+    static class ColumnComparator implements Comparator<Object>
     {
+    	private final boolean isDoubleWithParenthesis;
+    	public ColumnComparator(boolean isDoubleWithParenthesis) { this.isDoubleWithParenthesis = isDoubleWithParenthesis; }
         @Override
-        public int compare(String o1, String o2)
+        public int compare(Object o1, Object o2)
         {
-            String oo1 = o1;
-            String oo2 = o2;
-
+        	if (o1 instanceof LastRowAggregatedValue) return -1;
+        	if (o2 instanceof LastRowAggregatedValue) return 1;
+        	if (o1 instanceof Boolean)
+        	{
+                final Boolean oo1 = (Boolean) o1;
+                final Boolean oo2 = (Boolean) o2;
+                return oo1.compareTo(oo2);
+        	}
+        	if (o1 instanceof Number)
+        	{
+                final Number oo1 = (Number) o1;
+                final Number oo2 = (Number) o2;
+                return new Double(oo1.doubleValue()).compareTo(new Double (oo2.doubleValue()));
+        	}
+            String oo1 = (String) o1;
+            String oo2 = (String) o2;
+            if (!isDoubleWithParenthesis)
+            	return oo1.compareTo(oo2);
+            
             int pos1 = oo1.indexOf(" (");
             if (pos1 != -1) oo1 = oo1.substring(0, pos1);
 
             int pos2 = oo2.indexOf(" (");
             if (pos2 != -1) oo2 = oo2.substring(0, pos2);
 
-            double d1 = Double.MAX_VALUE;
             try
             {
+                Double d1, d2;
                 d1 = Double.parseDouble(oo1);
-            } catch (Throwable e)
-            {
-            }
-
-            double d2 = Double.MAX_VALUE;
-            try
-            {
                 d2 = Double.parseDouble(oo2);
+                return d1.compareTo(d2);
             } catch (Throwable e)
             {
+            	return oo1.compareTo(oo2);
             }
-
-            if (d1 != Double.MAX_VALUE && d2 != Double.MAX_VALUE)
-            {
-                int out = Double.compare(d1, d2);
-                if (out != 0) return out;
-            }
-
-            return o1.compareTo(o2);
         }
     }
 
@@ -1951,7 +1957,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
         }
     }
 
-    public static class LastRowAggregatedValue
+    public static class LastRowAggregatedValue implements Comparable
     {
     	private String value;
     	LastRowAggregatedValue () { value = "---"; }
@@ -1960,6 +1966,11 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
     	LastRowAggregatedValue (String value) { this.value = value; }
     	String getValue () { return value; }
     	public String toString () { return value; }
+		@Override
+		public int compareTo(Object arg0) 
+		{
+			return -1;
+		}
     }
     
 }

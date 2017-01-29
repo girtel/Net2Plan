@@ -232,9 +232,9 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
         return COLUMN_ATTRIBUTES;
     }
 
-    public int[] getColumnsOfSpecialComparatorForSorting() {
-        return new int[]{3, 4, 16, 17, 18, 19};
-    } //{ return new int [] { 3,4,6,16,17,18,19 }; }
+//    public int[] getColumnsOfSpecialComparatorForSorting() {
+//        return new int[]{3, 4, 16, 17, 18, 19};
+//    } //{ return new int [] { 3,4,6,16,17,18,19 }; }
 
     private static TableModel createTableModel(final IVisualizationCallback callback) {
 //    	final TopologyPanel topologyPanel = callback.getTopologyPanel();
@@ -414,12 +414,10 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
 
     public void setColumnRowSorting() {
         setAutoCreateRowSorter(true);
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_ORIGINNODE, new AdvancedJTable_NetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_DESTNODE, new AdvancedJTable_NetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMROUTES, new AdvancedJTable_NetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMSEGMENTS, new AdvancedJTable_NetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMFORWRULES, new AdvancedJTable_NetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMTREES, new AdvancedJTable_NetworkElement.ColumnComparator());
+        final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_ORIGINNODE , COLUMN_DESTNODE , COLUMN_NUMROUTES , COLUMN_NUMSEGMENTS , COLUMN_NUMFORWRULES , COLUMN_NUMTREES);
+        final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
+        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

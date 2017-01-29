@@ -115,23 +115,22 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
             Set<Link> incomingLinks = node.getIncomingLinks();
 
             Object[] nodeData = new Object[netPlanViewTableHeader.length + attributesTitles.size()];
-            nodeData[0] = node.getId();
-            nodeData[1] = node.getIndex();
-            nodeData[2] = callback.getVisualizationState().isVisible(node);
-            nodeData[3] = node.getName();
-            nodeData[4] = node.isUp();
-            nodeData[5] = node.getXYPositionMap().getX();
-            nodeData[6] = node.getXYPositionMap().getY();
-            nodeData[7] = outgoingLinks.isEmpty() ? "none" : outgoingLinks.size() + " (" + CollectionUtils.join(outgoingLinks, ", ") + ")";
-            nodeData[8] = incomingLinks.isEmpty() ? "none" : incomingLinks.size() + " (" + CollectionUtils.join(incomingLinks, ", ") + ")";
-            nodeData[9] = node.getIngressOfferedTraffic();
-            nodeData[10] = node.getEgressOfferedTraffic();
-            nodeData[11] = node.getEgressOfferedTraffic() - node.getIngressOfferedTraffic();
-            nodeData[12] = node.getIngressOfferedMulticastTraffic();
-            nodeData[13] = node.getEgressOfferedMulticastTraffic();
-            nodeData[14] = node.getSRGs().isEmpty() ? "none" : node.getSRGs().size() + " (" + CollectionUtils.join(currentState.getIndexes(node.getSRGs()), ", ") + ")";
-            nodeData[15] = StringUtils.mapToString(node.getAttributes());
-
+            nodeData[COLUMN_ID] = node.getId();
+            nodeData[COLUMN_INDEX] = node.getIndex();
+            nodeData[COLUMN_SHOWHIDE] = callback.getVisualizationState().isVisible(node);
+            nodeData[COLUMN_NAME] = node.getName();
+            nodeData[COLUMN_STATE] = node.isUp();
+            nodeData[COLUMN_XCOORD] = node.getXYPositionMap().getX();
+            nodeData[COLUMN_YCOORD] = node.getXYPositionMap().getY();
+            nodeData[COLUMN_OUTLINKS] = outgoingLinks.isEmpty() ? "none" : outgoingLinks.size() + " (" + CollectionUtils.join(outgoingLinks, ", ") + ")";
+            nodeData[COLUMN_INLINKS] = incomingLinks.isEmpty() ? "none" : incomingLinks.size() + " (" + CollectionUtils.join(incomingLinks, ", ") + ")";
+            nodeData[COLUMN_INGRESSTRAFFIC] = node.getIngressOfferedTraffic();
+            nodeData[COLUMN_EGRESSTRAFFIC] = node.getEgressOfferedTraffic();
+            nodeData[COLUMN_TRAVERSINGTRAFFIC] = node.getEgressOfferedTraffic() - node.getIngressOfferedTraffic();
+            nodeData[COLUMN_INGRESSMULTICASTTRAFFIC] = node.getIngressOfferedMulticastTraffic();
+            nodeData[COLUMN_EGRESSMULTICASTTRAFFIC] = node.getEgressOfferedMulticastTraffic();
+            nodeData[COLUMN_SRGS] = node.getSRGs().isEmpty() ? "none" : node.getSRGs().size() + " (" + CollectionUtils.join(currentState.getIndexes(node.getSRGs()), ", ") + ")";
+            nodeData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(node.getAttributes());
             for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesTitles.size();i++)
             {
                 if(node.getAttributes().containsKey(attributesTitles.get(i-netPlanViewTableHeader.length)))
@@ -210,9 +209,9 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
         return attColumnsHeaders;
     }
 
-    public int[] getColumnsOfSpecialComparatorForSorting() {
-        return new int[]{7, 8};
-    }
+//    public int[] getColumnsOfSpecialComparatorForSorting() {
+//        return new int[]{7, 8};
+//    }
 
 
     private static TableModel createTableModel(final IVisualizationCallback callback)
@@ -323,8 +322,10 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
 
     public void setColumnRowSorting() {
         setAutoCreateRowSorter(true);
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_OUTLINKS, new AdvancedJTable_NetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INLINKS, new AdvancedJTable_NetworkElement.ColumnComparator());
+        final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_OUTLINKS , COLUMN_INLINKS);
+        final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
+        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

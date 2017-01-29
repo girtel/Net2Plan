@@ -154,9 +154,9 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
         return 0;
     }
 
-    public int[] getColumnsOfSpecialComparatorForSorting() {
-        return new int[]{0, 1, 2};
-    }
+//    public int[] getColumnsOfSpecialComparatorForSorting() {
+//        return new int[]{0, 1, 2};
+//    }
 
     private static TableModel createTableModel(final IVisualizationCallback callback) {
         TableModel forwardingRuleTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
@@ -233,9 +233,10 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
 
     public void setColumnRowSorting() {
         setAutoCreateRowSorter(true);
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NODE, new AdvancedJTable_NetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_DEMAND, new AdvancedJTable_NetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_OUTGOINGLINK, new AdvancedJTable_NetworkElement.ColumnComparator());
+        final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_NODE , COLUMN_DEMAND , COLUMN_OUTGOINGLINK);
+        final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
+        for (int col = 0; col <= COLUMN_CARRIEDTRAFFIC ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

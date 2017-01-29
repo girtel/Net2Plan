@@ -26,6 +26,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.DefaultRowSorter;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -216,9 +217,9 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
         return COLUMN_ATTRIBUTES;
     }
 
-    public int[] getColumnsOfSpecialComparatorForSorting() {
-        return new int[]{};
-    }
+//    public int[] getColumnsOfSpecialComparatorForSorting() {
+//        return new int[]{};
+//    }
 
     private static TableModel createTableModel(final IVisualizationCallback callback)
     {
@@ -300,7 +301,13 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
     }
 
     public void setColumnRowSorting() {
-        setAutoCreateRowSorter(true);
+        setAutoCreateRowSorter(true); 
+        final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet();
+        final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
+        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(columnsWithDoubleAndThenParenthesis.contains(col)));
+
+        
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

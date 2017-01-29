@@ -42,6 +42,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.RowSorter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
@@ -121,7 +122,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
         setColumnRowSorting();
-        fixedTable.setRowSorter(this.getRowSorter());
+        //fixedTable.setRowSorter(this.getRowSorter());
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -232,9 +233,9 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
         return np.hasDemands();
     }
 
-    public int[] getColumnsOfSpecialComparatorForSorting() {
-        return new int[]{COLUMN_INGRESSNODE, COLUMN_EGRESSNODE, COLUMN_COUPLEDTOLINK, COLUMN_BIFURCATED, COLUMN_NUMROUTES};
-    } //{ return new int [] { 3,4,5,9,10 }; }
+//    public int[] getColumnsOfSpecialComparatorForSorting() {
+//        return new int[]{COLUMN_INGRESSNODE, COLUMN_EGRESSNODE, COLUMN_COUPLEDTOLINK, COLUMN_BIFURCATED, COLUMN_NUMROUTES};
+//    } //{ return new int [] { 3,4,5,9,10 }; }
 
     private static TableModel createTableModel(final IVisualizationCallback callback)
     {
@@ -310,9 +311,15 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
     public void setColumnRowSorting() 
     {
         setAutoCreateRowSorter(true);
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INGRESSNODE, new AdvancedJTable_NetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_EGRESSNODE, new AdvancedJTable_NetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NUMROUTES, new AdvancedJTable_NetworkElement.ColumnComparator());
+        final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_INGRESSNODE , COLUMN_EGRESSNODE , COLUMN_NUMROUTES);
+        DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
+        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(columnsWithDoubleAndThenParenthesis.contains(col)));
+        fixedTable.setAutoCreateRowSorter(true);
+        fixedTable.setRowSorter(this.getRowSorter());
+        rowSorter = ((DefaultRowSorter) fixedTable.getRowSorter());
+        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

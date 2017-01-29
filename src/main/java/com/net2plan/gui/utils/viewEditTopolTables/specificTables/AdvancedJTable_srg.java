@@ -197,9 +197,9 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         return COLUMN_ATTRIBUTES;
     }
 
-    public int[] getColumnsOfSpecialComparatorForSorting() {
-        return new int[]{8, 9};
-    }
+//    public int[] getColumnsOfSpecialComparatorForSorting() {
+//        return new int[]{8, 9};
+//    }
 
     private static TableModel createTableModel(final IVisualizationCallback callback) {
         TableModel srgTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
@@ -272,9 +272,10 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
 
     public void setColumnRowSorting() {
         setAutoCreateRowSorter(true);
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_AFFECTEDROUTES, new AdvancedJTable_NetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_AFFECTEDBACKUPROUTES, new AdvancedJTable_NetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_AFFECTEDTREES, new AdvancedJTable_NetworkElement.ColumnComparator());
+        final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_AFFECTEDROUTES , COLUMN_AFFECTEDBACKUPROUTES , COLUMN_AFFECTEDTREES);
+        final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
+        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

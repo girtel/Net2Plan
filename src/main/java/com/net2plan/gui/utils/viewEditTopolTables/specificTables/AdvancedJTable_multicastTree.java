@@ -188,9 +188,9 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
         return COLUMN_ATTRIBUTES;
     }
 
-    public int[] getColumnsOfSpecialComparatorForSorting() {
-        return new int[]{};
-    }
+//    public int[] getColumnsOfSpecialComparatorForSorting() {
+//        return new int[]{};
+//    }
 
     private static TableModel createTableModel(final IVisualizationCallback callback) {
         TableModel treeTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {

@@ -20,7 +20,9 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import javax.swing.DefaultRowSorter;
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -142,9 +144,9 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
         return COLUMN_ATTRIBUTES;
     }
 
-    public int[] getColumnsOfSpecialComparatorForSorting() {
-        return new int[]{};
-    }
+//    public int[] getColumnsOfSpecialComparatorForSorting() {
+//        return new int[]{};
+//    }
 
     private static TableModel createTableModel(final IVisualizationCallback networkViewer) {
         TableModel layerTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
@@ -174,7 +176,12 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
     private void setSpecificCellRenderers() {
     }
 
-    public void setColumnRowSorting() {
+    public void setColumnRowSorting() 
+    {
+        final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet();
+        final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
+        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumFixedLeftColumnsInDecoration() {

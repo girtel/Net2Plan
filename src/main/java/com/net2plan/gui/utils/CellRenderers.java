@@ -53,7 +53,7 @@ public class CellRenderers {
      * @since 0.2.0
      */
 	public static final long IDINDICATIONFORAGGREGATIONROW = -1000;
-    public static final Color bgColorLastRow = new Color(230, 230, 230);
+    public static final Color bgColorLastRow = new Color(200, 200, 200);
     public static final Color fgColorLastRow = new Color(0, 0, 0);
 
     public static class CheckBoxRenderer extends NonEditableCellRenderer {

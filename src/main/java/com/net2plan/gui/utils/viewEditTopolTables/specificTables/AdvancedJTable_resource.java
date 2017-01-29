@@ -178,10 +178,10 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
         return COLUMN_ATTRIBUTES;
     }
 
-    @Override
-    public int[] getColumnsOfSpecialComparatorForSorting() {
-        return new int[]{5};
-    }
+//    @Override
+//    public int[] getColumnsOfSpecialComparatorForSorting() {
+//        return new int[]{5};
+//    }
 
     private static TableModel createTableModel(final IVisualizationCallback callback)
     {
@@ -267,9 +267,10 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
     @Override
     public void setColumnRowSorting() {
         setAutoCreateRowSorter(true);
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_NAME, new AdvancedJTable_NetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_CAPACITY, new AdvancedJTable_NetworkElement.ColumnComparator());
-        ((DefaultRowSorter) getRowSorter()).setComparator(COLUMN_INDEX, new AdvancedJTable_NetworkElement.ColumnComparator());
+        final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_CAPACITY);
+        final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
+        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
+        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     @Override
