@@ -132,6 +132,7 @@ public final class JUNGCanvas implements ITopologyCanvas
 		
 		/* If icons => comment this line */
         vv.getRenderContext().setVertexShapeTransformer(n -> n.getShape());
+        
         /* If shapes, comment this line */
         //vv.getRenderContext().setVertexIconTransformer(new Transformer<GUINode,Icon> () {} ... )
 
@@ -141,13 +142,9 @@ public final class JUNGCanvas implements ITopologyCanvas
 // https://java.net/projects/snat/sources/reposit/content/test/UnicodeLabelDemo.java        
 //        ojo!!
 //        VertexIconShapeTransformer<Integer> vertexIconShapeFunction =
-//        079.
 //        new VertexIconShapeTransformer<Integer>(new EllipseVertexShapeTransformer<Integer>());
-//        080.
 //        DefaultVertexIconTransformer<Integer> vertexIconFunction = new DefaultVertexIconTransformer<Integer>();
-//        081.
 //        vv.getRenderContext().setVertexShapeTransformer(vertexIconShapeFunction);
-//        082.
 //        vv.getRenderContext().setVertexIconTransformer(vertexIconFunction);
         
         //http://jung.sourceforge.net/site/jung-samples/xref/edu/uci/ics/jung/samples/DrawnIconVertexDemo.html
