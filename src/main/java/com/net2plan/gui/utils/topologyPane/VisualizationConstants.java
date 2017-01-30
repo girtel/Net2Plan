@@ -25,7 +25,10 @@ public final class VisualizationConstants
     		ImmutableMap.of("WDM" , GUINet2Plan.class.getResource("/resources/gui/figs/OpticalTransport.png") , 
     						"IP" , GUINet2Plan.class.getResource("/resources/gui/figs/Router.png") , 
     						"WIRELESS" , GUINet2Plan.class.getResource("/resources/gui/figs/WirelessRouter.png"));
-    public final static Map<String,URL> DEFAULT_RESPOURCETYPE2ICONURLMAP = ImmutableMap.of("HD" , GUINet2Plan.class.getResource("/resources/gui/figs/HD.png"));
+    public final static Map<String,URL> DEFAULT_RESPOURCETYPE2ICONURLMAP = ImmutableMap.of(
+    		"CPU" , GUINet2Plan.class.getResource("/resources/gui/figs/CPU.png") , 
+    		"RAM" , GUINet2Plan.class.getResource("/resources/gui/figs/RAM.png") , 
+    		"HD" , GUINet2Plan.class.getResource("/resources/gui/figs/HD.png"));
     
     public final static float SCALE_IN = 1.1f;
     public final static float SCALE_OUT = 1 / SCALE_IN;
