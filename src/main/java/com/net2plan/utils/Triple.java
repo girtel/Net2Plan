@@ -88,7 +88,22 @@ public class Triple<A, B, C>
 		if (!(o instanceof Triple)) return false;
 
 		Triple p = (Triple) o;
-		return getFirst().equals(p.getFirst()) && getSecond().equals(p.getSecond()) && getThird().equals(p.getThird());
+		if (a != null)
+		{
+			if (p.getFirst() == null) return false;
+			if (!a.equals(p.getFirst())) return false;
+		} else { if (p.getFirst() != null) return false; }
+		if (b != null)
+		{
+			if (p.getSecond() == null) return false;
+			if (!b.equals(p.getSecond())) return false;
+		} else { if (p.getSecond() != null) return false; }
+		if (c != null)
+		{
+			if (p.getThird() == null) return false;
+			if (!c.equals(p.getThird())) return false;
+		} else { if (p.getThird() != null) return false; }
+		return true;
 	}
 
 	/**
@@ -116,7 +131,7 @@ public class Triple<A, B, C>
 	@Override
 	public String toString()
 	{
-		return "(" + getFirst() + ", " + getSecond() + ", " + getThird() + ")";
+		return "(" + a + ", " + b + ", " + c + ")";
 	}
 
 	private void checkIsModifiable()

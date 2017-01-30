@@ -104,7 +104,32 @@ public class Quintuple<A, B, C, D, E>
 		if (!(o instanceof Quintuple)) return false;
 
 		Quintuple p = (Quintuple) o;
-		return getFirst().equals(p.getFirst()) && getSecond().equals(p.getSecond()) && getThird().equals(p.getThird()) && getFourth().equals(p.getFourth()) && getFifth().equals(p.getFifth());
+		if (a != null)
+		{
+			if (p.getFirst() == null) return false;
+			if (!a.equals(p.getFirst())) return false;
+		} else { if (p.getFirst() != null) return false; }
+		if (b != null)
+		{
+			if (p.getSecond() == null) return false;
+			if (!b.equals(p.getSecond())) return false;
+		} else { if (p.getSecond() != null) return false; }
+		if (c != null)
+		{
+			if (p.getThird() == null) return false;
+			if (!c.equals(p.getThird())) return false;
+		} else { if (p.getThird() != null) return false; }
+		if (d != null)
+		{
+			if (p.getFourth() == null) return false;
+			if (!d.equals(p.getFourth())) return false;
+		} else { if (p.getFourth() != null) return false; }
+		if (e != null)
+		{
+			if (p.getFifth() == null) return false;
+			if (!e.equals(p.getFifth())) return false;
+		} else { if (p.getFifth() != null) return false; }
+		return true;
 	}
 
 	/**
@@ -134,7 +159,7 @@ public class Quintuple<A, B, C, D, E>
 	@Override
 	public String toString()
 	{
-		return "(" + getFirst() + ", " + getSecond() + ", " + getThird() + ", " + getFourth() + ", " + getFifth() + ")";
+		return "(" + a + ", " + b + ", " + c + ", " + d + ", " + e + ")";
 	}
 	
 	private void checkIsModifiable()
