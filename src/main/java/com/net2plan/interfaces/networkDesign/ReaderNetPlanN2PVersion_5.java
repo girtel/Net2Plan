@@ -328,6 +328,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final String layerDescription = getString ("description");
 		final String layerName = getString ("name");
 		final String linkCapacityUnitsName = getString ("linkCapacityUnitsName");
+		final String defaultNodeIconURL = getString ("defaultNodeIconURL");
 		final boolean isDefaultLayer = getBoolean ("isDefaultLayer");
 		
 		NetworkLayer newLayer;
@@ -337,7 +338,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 			if (netPlan.layers.get (0).id != layerId)
 			{
 				// the Id of first layer is different => create a new one and remove the existing
-				newLayer = netPlan.addLayer(layerId , layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, null);
+				newLayer = netPlan.addLayer(layerId , layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, defaultNodeIconURL , null);
 				netPlan.removeNetworkLayer(netPlan.layers.get (0));
 			}
 			else
@@ -352,7 +353,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		}
 		else
 		{
-			newLayer = netPlan.addLayer(layerId , layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, null);
+			newLayer = netPlan.addLayer(layerId , layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, defaultNodeIconURL , null);
 		}
 
 		if (isDefaultLayer) netPlan.setNetworkLayerDefault(newLayer);

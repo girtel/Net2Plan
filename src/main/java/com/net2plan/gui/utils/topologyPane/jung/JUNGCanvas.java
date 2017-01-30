@@ -134,7 +134,7 @@ public final class JUNGCanvas implements ITopologyCanvas
         vv.getRenderContext().setVertexShapeTransformer(n -> n.getShape());
         
         /* If shapes, comment this line */
-        //vv.getRenderContext().setVertexIconTransformer(new Transformer<GUINode,Icon> () {} ... )
+        vv.getRenderContext().setVertexIconTransformer(gn->gn.getIcon ());
 
         /* Convert shape to Icon: http://stackoverflow.com/questions/5449633/convert-shape-object-to-image-object-in-java */
         /* then use only icons. modify the icon to have one with two circles around when selected? the circles are red if the node is failed */
@@ -566,48 +566,45 @@ public final class JUNGCanvas implements ITopologyCanvas
         public void labelVertex(RenderContext<GUINode, GUILink> rc, Layout<GUINode, GUILink> layout, GUINode v, String label)
         {
             Graph<GUINode, GUILink> graph = layout.getGraph();
-            if (rc.getVertexIncludePredicate().evaluate(Context.getInstance(graph, v)) == false)
-            {
-                return;
-            }
+            if (!vs.isVisible(v)) return;
 
             Point2D pt = layout.transform(v);
             pt = rc.getMultiLayerTransformer().transform(Layer.LAYOUT, pt);
 
-            float x = (float) pt.getX();
-            float y = (float) pt.getY();
-
-            Component component = prepareRenderer(rc, rc.getVertexLabelRenderer(), "<html><font color='white'>" + v.getAssociatedNetPlanNode().getIndex() + "</font></html>", rc.getPickedVertexState().isPicked(v), v);
-            GraphicsDecorator g = rc.getGraphicsContext();
-            Dimension d = component.getPreferredSize();
-            AffineTransform xform = AffineTransform.getTranslateInstance(x, y);
-
-            Shape shape = rc.getVertexShapeTransformer().transform(v);
-            shape = xform.createTransformedShape(shape);
-            GraphicsDecorator gd = rc.getGraphicsContext();
-            if (gd instanceof TransformingGraphics)
-            {
-                BidirectionalTransformer transformer = ((TransformingGraphics) gd).getTransformer();
-                if (transformer instanceof ShapeTransformer)
-                {
-                    ShapeTransformer shapeTransformer = (ShapeTransformer) transformer;
-                    shape = shapeTransformer.transform(shape);
-                }
-            }
-
-            Rectangle2D bounds = shape.getBounds2D();
-
-            Point p = getAnchorPoint(bounds, d, Renderer.VertexLabel.Position.CNTR);
-            g.draw(component, rc.getRendererPane(), p.x, p.y, d.width, d.height, true);
+            final float x = (float) pt.getX();
+            final float y = (float) pt.getY();
+//
+//            final Component component = prepareRenderer(rc, rc.getVertexLabelRenderer(), "<html><font color='white'>" + v.getAssociatedNetPlanNode().getIndex() + "</font></html>", rc.getPickedVertexState().isPicked(v), v);
+//            final GraphicsDecorator g = rc.getGraphicsContext();
+//            final Dimension d = component.getPreferredSize();
+//            final AffineTransform xform = AffineTransform.getTranslateInstance(x, y);
+//
+//            Shape shape = rc.getVertexShapeTransformer().transform(v);
+//            shape = xform.createTransformedShape(shape);
+//            final GraphicsDecorator gd = rc.getGraphicsContext();
+//            if (gd instanceof TransformingGraphics)
+//            {
+//                BidirectionalTransformer transformer = ((TransformingGraphics) gd).getTransformer();
+//                if (transformer instanceof ShapeTransformer)
+//                {
+//                    ShapeTransformer shapeTransformer = (ShapeTransformer) transformer;
+//                    shape = shapeTransformer.transform(shape);
+//                }
+//            }
+//
+//            Rectangle2D bounds = shape.getBounds2D();
+//
+//            Point p = getAnchorPoint(bounds, d, Renderer.VertexLabel.Position.CNTR);
+//            g.draw(component, rc.getRendererPane(), p.x, p.y, d.width, d.height, true);
 
             if (vs.isShowNodeNames())
             {
-                component = prepareRenderer(rc, rc.getVertexLabelRenderer(), "<html><font color='black'>" + v.getLabel() + "</font></html>", rc.getPickedVertexState().isPicked(v), v);
-                g = rc.getGraphicsContext();
-                d = component.getPreferredSize();
-                xform = AffineTransform.getTranslateInstance(x, y);
+                final Component component = prepareRenderer(rc, rc.getVertexLabelRenderer(), "<html><font color='black'>" + v.getLabel() + "</font></html>", rc.getPickedVertexState().isPicked(v), v);
+                final GraphicsDecorator g = rc.getGraphicsContext();
+                final Dimension d = component.getPreferredSize();
+                final AffineTransform xform = AffineTransform.getTranslateInstance(x, y);
 
-                shape = rc.getVertexShapeTransformer().transform(v);
+                Shape shape = rc.getVertexShapeTransformer().transform(v);
                 shape = xform.createTransformedShape(shape);
                 if (rc.getGraphicsContext() instanceof TransformingGraphics)
                 {
@@ -619,9 +616,9 @@ public final class JUNGCanvas implements ITopologyCanvas
                     }
                 }
 
-                bounds = shape.getBounds2D();
+                final Rectangle2D bounds = shape.getBounds2D();
 
-                p = getAnchorPoint(bounds, d, Renderer.VertexLabel.Position.NE);
+                final Point p = getAnchorPoint(bounds, d, Renderer.VertexLabel.Position.NE);
                 g.draw(component, rc.getRendererPane(), p.x, p.y, d.width, d.height, true);
             }
         }

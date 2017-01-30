@@ -126,7 +126,7 @@ class ReaderNetPlanN2PVersion_2 implements IReaderNetPlan
 		}
 		else
 		{
-			newLayer = netPlan.addLayer(layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, null);
+			newLayer = netPlan.addLayer(layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, null , null);
 		}
 		mapOldId2Layer.put (layerId , newLayer);
 		

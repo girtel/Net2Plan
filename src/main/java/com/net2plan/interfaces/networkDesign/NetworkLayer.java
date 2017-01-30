@@ -59,14 +59,16 @@ public class NetworkLayer extends NetworkElement
 	
 	Set<Route> cache_routesDown;
 	Set<MulticastTree> cache_multicastTreesDown;
+	String defaultNodeIconURL;
 
-	NetworkLayer(NetPlan netPlan, long id, int index , String demandTrafficUnitsName, String description, String name, String linkCapacityUnitsName, AttributeMap attributes)
+	NetworkLayer(NetPlan netPlan, long id, int index , String demandTrafficUnitsName, String description, String name, String linkCapacityUnitsName, String defaultNodeIconURL , AttributeMap attributes)
 	{
 		super(netPlan, id , index , attributes);
 		this.demandTrafficUnitsName = (demandTrafficUnitsName == null)? "" : demandTrafficUnitsName;
 		this.description =  (description == null)? "" : description;
 		this.name =  (name == null)? "" : name;
 		this.linkCapacityUnitsName =  (linkCapacityUnitsName == null)? "" : linkCapacityUnitsName;
+		this.defaultNodeIconURL = defaultNodeIconURL == null? "" : defaultNodeIconURL;
 		this.routingType = RoutingType.SOURCE_ROUTING;
 
 		this.links = new ArrayList<Link> ();
@@ -95,6 +97,7 @@ public class NetworkLayer extends NetworkElement
 
 		this.demandTrafficUnitsName = origin.demandTrafficUnitsName;
 		this.description = origin.description;
+		this.defaultNodeIconURL = origin.defaultNodeIconURL;
 		this.name = origin.name;
 		this.linkCapacityUnitsName = origin.linkCapacityUnitsName;
 		this.routingType = origin.routingType;
@@ -138,6 +141,7 @@ public class NetworkLayer extends NetworkElement
 		if (!super.isDeepCopy(e2)) return false;
 		if (!this.demandTrafficUnitsName.equals(e2.demandTrafficUnitsName)) return false;
 		if (!this.description.equals(e2.description)) return false;
+		if (!this.defaultNodeIconURL.equals(e2.defaultNodeIconURL)) return false;
 		if (!this.name.equals(e2.name)) return false;
 		if (!this.linkCapacityUnitsName.equals(e2.linkCapacityUnitsName)) return false;
 		if (this.routingType != e2.routingType) return false;
@@ -179,6 +183,15 @@ public class NetworkLayer extends NetworkElement
 	}
 
 	/**
+	 * <p>Returns the user-defined URL of the default icon to represent the nodes at this layer.</p>
+	 * @return see above
+	 */
+	public String getDefaultNodeIconURL() 
+	{
+		return defaultNodeIconURL;
+	}
+
+	/**
 	 * <p>Sets the user-defined layer description</p>
 	 * @param description The description message
 	 */
@@ -187,6 +200,14 @@ public class NetworkLayer extends NetworkElement
 		this.description = description;
 	}
 
+	/**
+	 * <p>Sets the user-defined URL of the default icon to represent the nodes at this layer.</p>
+	 * @param defaultNodeIconURL see above
+	 */
+	public void setDefaultNodeIconURL(String defaultNodeIconURL) 
+	{
+		this.defaultNodeIconURL = defaultNodeIconURL;
+	}
 
 	/**
 	 * <p>Returns the layer name. It does not have to be unique among layers</p>

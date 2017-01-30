@@ -200,7 +200,7 @@ public class NetPlan extends NetworkElement
 
 		interLayerCoupling = new DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping>(DemandLinkMapping.class);
 
-		defaultLayer = addLayer("Layer 0", null, null, null, null);
+		defaultLayer = addLayer("Layer 0", null, null, null, null , null);
 	}
 
 
@@ -508,11 +508,11 @@ public class NetPlan extends NetworkElement
 	 * @return The newly created layer object
 	 * @see com.net2plan.interfaces.networkDesign.NetworkLayer
 	 */
-	public NetworkLayer addLayer(String name, String description, String linkCapacityUnitsName, String demandTrafficUnitsName, Map<String, String> attributes)
+	public NetworkLayer addLayer(String name, String description, String linkCapacityUnitsName, String demandTrafficUnitsName, String defaultNodeIconURL , Map<String, String> attributes)
 	{
-		return addLayer(null , name, description, linkCapacityUnitsName, demandTrafficUnitsName, attributes);
+		return addLayer(null , name, description, linkCapacityUnitsName, demandTrafficUnitsName, defaultNodeIconURL, attributes);
 	}
-	NetworkLayer addLayer(Long id , String name, String description, String linkCapacityUnitsName, String demandTrafficUnitsName, Map<String, String> attributes)
+	NetworkLayer addLayer(Long id , String name, String description, String linkCapacityUnitsName, String demandTrafficUnitsName, String defaultNodeIconURL , Map<String, String> attributes)
 	{
 		checkIsModifiable();
 		if (name == null) name = "";
@@ -522,7 +522,7 @@ public class NetPlan extends NetworkElement
 
 		if (id == null)  { id = nextElementId.longValue(); nextElementId.increment(); }
 
-		NetworkLayer layer = new NetworkLayer (this , id, layers.size() , demandTrafficUnitsName, description, name, linkCapacityUnitsName, new AttributeMap (attributes));
+		NetworkLayer layer = new NetworkLayer (this , id, layers.size() , demandTrafficUnitsName, description, name, linkCapacityUnitsName, defaultNodeIconURL , new AttributeMap (attributes));
 
 		interLayerCoupling.addVertex(layer);
 		cache_id2LayerMap.put (id , layer);
@@ -550,7 +550,7 @@ public class NetPlan extends NetworkElement
 		ArrayList<Node> originNodes = origin.netPlan.nodes;
 		if (originNodes.size () != nodes.size ()) throw new Net2PlanException ("The number of nodes in the origin design and this design must be the same");
 
-		NetworkLayer newLayer = addLayer(origin.name, origin.description, origin.linkCapacityUnitsName, origin.demandTrafficUnitsName, origin.getAttributes());
+		NetworkLayer newLayer = addLayer(origin.name, origin.description, origin.linkCapacityUnitsName, origin.demandTrafficUnitsName, origin.defaultNodeIconURL , origin.getAttributes());
 
 		for (Link originLink : origin.links)
 			this.addLink(nodes.get(originLink.originNode.index) , nodes.get(originLink.destinationNode.index) , originLink.capacity , originLink.lengthInKm , originLink.propagationSpeedInKmPerSecond , originLink.attributes , newLayer);
@@ -1722,7 +1722,7 @@ public class NetPlan extends NetworkElement
 		}
 		for (NetworkLayer originLayer : originNetPlan.layers)
 		{
-			NetworkLayer newLayer = new NetworkLayer (this , originLayer.id , originLayer.index , originLayer.demandTrafficUnitsName , originLayer.description , originLayer.name , originLayer.linkCapacityUnitsName , originLayer.attributes);
+			NetworkLayer newLayer = new NetworkLayer (this , originLayer.id , originLayer.index , originLayer.demandTrafficUnitsName , originLayer.description , originLayer.name , originLayer.linkCapacityUnitsName , originLayer.defaultNodeIconURL , originLayer.attributes);
 			cache_id2LayerMap.put(originLayer.id, newLayer);
 			layers.add (newLayer);
 			if (originLayer.id == originNetPlan.defaultLayer.id)
@@ -4728,6 +4728,7 @@ public class NetPlan extends NetworkElement
 				writer.writeAttribute("isDefaultLayer", Boolean.toString(defaultLayer == layer));
 				writer.writeAttribute("linkCapacityUnitsName", layer.linkCapacityUnitsName);
 				writer.writeAttribute("demandTrafficUnitsName", layer.demandTrafficUnitsName);
+				writer.writeAttribute("defaultNodeIconURL", layer.defaultNodeIconURL);
 
 				for(Link link : layer.links)
 				{

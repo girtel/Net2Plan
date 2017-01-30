@@ -19,10 +19,14 @@ public class IconCreator {
 
 	public static void main(String[] args) throws Exception 
 	{
-		//Pair<Image,Shape> pair = new IconCreator ().getImage ("src/main/resources/resources/icons/router.jpg" , 50);
+//		Pair<Image,Shape> pair = new IconCreator ().getImage ("src/main/resources/resources/icons/router.jpg" , 50);
+		Pair<Image,Shape> pair = new IconCreator ().getImage ("src/main/resources/resources/icons/router.png" , 50);
 //		Pair<Image,Shape> pair = new IconCreator ().getImage ("src/main/resources/resources/icons/googlelogo_color_120x44dp.png" , 50);
 
-		BufferedImage img = ImageIO.read(new File("src/main/resources/resources/icons/googlelogo_color_120x44dp.png")); 
+		//BufferedImage img = ImageIO.read(new File("src/main/resources/resources/icons/googlelogo_color_120x44dp.png")); 
+		BufferedImage img = ImageIO.read(new File("src/main/resources/resources/icons/imagen1.png"));
+		
+		
 		
 		
 		JFrame frame = new JFrame("Example");

@@ -18,6 +18,12 @@ import java.awt.Paint;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
+import java.io.File;
+
+import javax.imageio.ImageIO;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -44,6 +50,7 @@ public class GUINode
     private Shape shapeIfNotActive , shapeIfActive;
     private double shapeSizeIfNotActive;
 //    private Color userDefinedColorOverridesTheRest;
+    
 
     /**
      * Constructor that allows to set a node label.
@@ -74,6 +81,8 @@ public class GUINode
         return npNode;
     }
 
+    
+    
     public double getShapeInNotActiveLayerSize() 
     {
         return shapeSizeIfNotActive;
@@ -110,6 +119,16 @@ public class GUINode
         return font;
     }
 
+    public Icon getIcon ()
+    {
+    	try 
+    	{ 
+	    	final BufferedImage img = ImageIO.read(new File("src/main/resources/resources/icons/imagen1.png"));
+	    	final ImageIcon icon = new ImageIcon(img);
+	    	return icon;
+    	} catch (Exception e) { e.printStackTrace();return null; } 
+    }
+    
     public Shape getShape() 
     {
         return npNode.getNetPlan().getNetworkLayerDefault() == layer? shapeIfActive : shapeIfNotActive;

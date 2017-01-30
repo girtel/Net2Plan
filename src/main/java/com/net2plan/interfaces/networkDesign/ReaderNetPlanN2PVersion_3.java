@@ -54,7 +54,7 @@ class ReaderNetPlanN2PVersion_3 extends ReaderNetPlanN2PVersion_2
 		}
 		else
 		{
-			newLayer = netPlan.addLayer(layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, null);
+			newLayer = netPlan.addLayer(layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, null , null);
 		}
 
 		mapOldId2Layer.put (layerId , newLayer);
