@@ -51,7 +51,7 @@ public class LinkTest
 		this.np = new NetPlan ();
 		this.lowerLayer = np.getNetworkLayerDefault();
 		np.setDemandTrafficUnitsName("Mbps" , lowerLayer);
-		this.upperLayer = np.addLayer("upperLayer" , "description" , "Mbps" , "upperTrafficUnits" , null);
+		this.upperLayer = np.addLayer("upperLayer" , "description" , "Mbps" , "upperTrafficUnits" , null , null);
 		this.n1 = this.np.addNode(0 , 0 , "node1" , null);
 		this.n2 = np.addNode(0 , 0 , "node2" , null);
 		this.n3 = np.addNode(0 , 0 , "node3" , null);

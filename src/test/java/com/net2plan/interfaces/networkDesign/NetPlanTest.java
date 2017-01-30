@@ -6,6 +6,7 @@ import static org.junit.Assert.fail;
 
 import java.awt.geom.Point2D;
 import java.io.File;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -71,10 +72,11 @@ public class NetPlanTest
 		this.np = new NetPlan ();
 		this.lowerLayer = np.getNetworkLayerDefault();
 		np.setDemandTrafficUnitsName("Mbps" , lowerLayer);
-		this.upperLayer = np.addLayer("upperLayer" , "description" , "Mbps" , "upperTrafficUnits" , null);
+		this.upperLayer = np.addLayer("upperLayer" , "description" , "Mbps" , "upperTrafficUnits" , new URL ("file:/upperIcon") , null);
 		this.n1 = this.np.addNode(0 , 0 , "node1" , null);
 		this.n2 = np.addNode(0 , 0 , "node2" , null);
 		this.n3 = np.addNode(0 , 0 , "node3" , null);
+		this.n1.setUrlNodeIcon(lowerLayer , new URL ("file:/lowerIcon"));
 		this.link12 = np.addLink(n1,n2,100,100,1,null,lowerLayer);
 		this.link23 = np.addLink(n2,n3,100,100,1,null,lowerLayer);
 		this.link13 = np.addLink(n1,n3,100,100,1,null,lowerLayer);
@@ -190,7 +192,7 @@ public class NetPlanTest
 	@Test
 	public void testAddLayerStringStringStringStringMapOfStringString()
 	{
-		NetworkLayer layer = np.addLayer("name" , "description" , "linkCapUnits" , "demandCapUnits",null);
+		NetworkLayer layer = np.addLayer("name" , "description" , "linkCapUnits" , "demandCapUnits",null , null);
 		assertEquals(np.getNumberOfLayers() , 3);
 		assertEquals(np.getNetworkLayer("name") , layer);
 	}

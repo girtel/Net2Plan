@@ -26,19 +26,30 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 
-import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.topologyPane.*;
-import com.net2plan.gui.utils.topologyPane.jung.osmSupport.state.OSMStateManager;
-import com.net2plan.interfaces.networkDesign.Node;
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.collections15.functors.ConstantTransformer;
 
+import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.topologyPane.GUILink;
+import com.net2plan.gui.utils.topologyPane.GUINode;
+import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
+import com.net2plan.gui.utils.topologyPane.TopologyPanel;
+import com.net2plan.gui.utils.topologyPane.VisualizationConstants;
+import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.gui.utils.topologyPane.jung.osmSupport.state.OSMStateManager;
 import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.Triple;
@@ -75,9 +86,7 @@ import edu.uci.ics.jung.visualization.util.ArrowFactory;
 /**
  * Topology canvas using JUNG library [<a href='#jung'>JUNG</a>].
  *
- * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @see <a name='jung'></a><a href='http://jung.sourceforge.net/'>Java Universal Network/Graph Framework (JUNG) website</a>
- * @since 0.2.3
  */
 @SuppressWarnings("unchecked")
 public final class JUNGCanvas implements ITopologyCanvas
@@ -131,7 +140,7 @@ public final class JUNGCanvas implements ITopologyCanvas
 
 		
 		/* If icons => comment this line */
-        vv.getRenderContext().setVertexShapeTransformer(n -> n.getShape());
+//        vv.getRenderContext().setVertexShapeTransformer(gn -> gn.getShape());
         
         /* If shapes, comment this line */
         vv.getRenderContext().setVertexIconTransformer(gn->gn.getIcon ());
@@ -565,61 +574,18 @@ public final class JUNGCanvas implements ITopologyCanvas
         @Override
         public void labelVertex(RenderContext<GUINode, GUILink> rc, Layout<GUINode, GUILink> layout, GUINode v, String label)
         {
-            Graph<GUINode, GUILink> graph = layout.getGraph();
             if (!vs.isVisible(v)) return;
-
-            Point2D pt = layout.transform(v);
-            pt = rc.getMultiLayerTransformer().transform(Layer.LAYOUT, pt);
-
-            final float x = (float) pt.getX();
-            final float y = (float) pt.getY();
-//
-//            final Component component = prepareRenderer(rc, rc.getVertexLabelRenderer(), "<html><font color='white'>" + v.getAssociatedNetPlanNode().getIndex() + "</font></html>", rc.getPickedVertexState().isPicked(v), v);
-//            final GraphicsDecorator g = rc.getGraphicsContext();
-//            final Dimension d = component.getPreferredSize();
-//            final AffineTransform xform = AffineTransform.getTranslateInstance(x, y);
-//
-//            Shape shape = rc.getVertexShapeTransformer().transform(v);
-//            shape = xform.createTransformedShape(shape);
-//            final GraphicsDecorator gd = rc.getGraphicsContext();
-//            if (gd instanceof TransformingGraphics)
-//            {
-//                BidirectionalTransformer transformer = ((TransformingGraphics) gd).getTransformer();
-//                if (transformer instanceof ShapeTransformer)
-//                {
-//                    ShapeTransformer shapeTransformer = (ShapeTransformer) transformer;
-//                    shape = shapeTransformer.transform(shape);
-//                }
-//            }
-//
-//            Rectangle2D bounds = shape.getBounds2D();
-//
-//            Point p = getAnchorPoint(bounds, d, Renderer.VertexLabel.Position.CNTR);
-//            g.draw(component, rc.getRendererPane(), p.x, p.y, d.width, d.height, true);
-
-            if (vs.isShowNodeNames())
+            if (vs.isShowNodeNames() && v.getLayer().isDefaultLayer())
             {
+                Point2D vertexPositionInPixels = layout.transform(v);
+                vertexPositionInPixels = rc.getMultiLayerTransformer().transform(Layer.LAYOUT, vertexPositionInPixels);
                 final Component component = prepareRenderer(rc, rc.getVertexLabelRenderer(), "<html><font color='black'>" + v.getLabel() + "</font></html>", rc.getPickedVertexState().isPicked(v), v);
                 final GraphicsDecorator g = rc.getGraphicsContext();
-                final Dimension d = component.getPreferredSize();
-                final AffineTransform xform = AffineTransform.getTranslateInstance(x, y);
-
-                Shape shape = rc.getVertexShapeTransformer().transform(v);
-                shape = xform.createTransformedShape(shape);
-                if (rc.getGraphicsContext() instanceof TransformingGraphics)
-                {
-                    BidirectionalTransformer transformer = ((TransformingGraphics) rc.getGraphicsContext()).getTransformer();
-                    if (transformer instanceof ShapeTransformer)
-                    {
-                        ShapeTransformer shapeTransformer = (ShapeTransformer) transformer;
-                        shape = shapeTransformer.transform(shape);
-                    }
-                }
-
-                final Rectangle2D bounds = shape.getBounds2D();
-
-                final Point p = getAnchorPoint(bounds, d, Renderer.VertexLabel.Position.NE);
-                g.draw(component, rc.getRendererPane(), p.x, p.y, d.width, d.height, true);
+                final Dimension dimensionMessage = component.getPreferredSize();
+                final Icon vertexIcon = v.getIcon(); 
+                final Rectangle2D boundsVertex = new Rectangle2D.Double(vertexPositionInPixels.getX() - vertexIcon.getIconWidth() / 2 , vertexPositionInPixels.getY() - vertexIcon.getIconHeight() / 2, vertexIcon.getIconWidth() , vertexIcon.getIconHeight());
+                final Point anchorPointInPixels = getAnchorPoint(boundsVertex, dimensionMessage, Renderer.VertexLabel.Position.NE);
+                g.draw(component, rc.getRendererPane(), anchorPointInPixels.x, anchorPointInPixels.y, dimensionMessage.width, dimensionMessage.height, true);
             }
         }
 
@@ -628,7 +594,7 @@ public final class JUNGCanvas implements ITopologyCanvas
         {
             double x;
             double y;
-            int offset = 5;
+            int offset = 0;
             switch (position)
             {
                 case NE:

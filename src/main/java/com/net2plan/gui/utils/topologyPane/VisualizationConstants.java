@@ -1,7 +1,15 @@
 package com.net2plan.gui.utils.topologyPane;
 
-import java.awt.*;
-import java.awt.geom.Ellipse2D;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Paint;
+import java.awt.Stroke;
+import java.net.URL;
+import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
+import com.net2plan.gui.GUINet2Plan;
 
 /**
  * @author Jorge San Emeterio
@@ -11,6 +19,14 @@ public final class VisualizationConstants
 {
     private VisualizationConstants() {}
 
+    //public final static String DEFAULT_NODEICONURL = "src/main/resources/resources/icons/imagen1.png";
+    public final static int DEFAULT_ICONBORDERSIZEINPIXELS = 4;
+    public final static Map<String,URL> DEFAULT_LAYERNAME2ICONURLMAP = 
+    		ImmutableMap.of("WDM" , GUINet2Plan.class.getResource("/resources/gui/figs/OpticalTransport.png") , 
+    						"IP" , GUINet2Plan.class.getResource("/resources/gui/figs/Router.png") , 
+    						"WIRELESS" , GUINet2Plan.class.getResource("/resources/gui/figs/WirelessRouter.png"));
+    public final static Map<String,URL> DEFAULT_RESPOURCETYPE2ICONURLMAP = ImmutableMap.of("HD" , GUINet2Plan.class.getResource("/resources/gui/figs/HD.png"));
+    
     public final static float SCALE_IN = 1.1f;
     public final static float SCALE_OUT = 1 / SCALE_IN;
 
@@ -26,7 +42,7 @@ public final class VisualizationConstants
     public final static Paint DEFAULT_GUINODE_COLOR = java.awt.Color.BLACK;
     public final static Font DEFAULT_GUINODE_FONT = new Font("Helvetica", Font.BOLD, 11);
     public final static int DEFAULT_GUINODE_SHAPESIZE = 30;
-    public final static Shape DEFAULT_GUINODE_SHAPE = new Ellipse2D.Double(-1 * DEFAULT_GUINODE_SHAPESIZE / 2, -1 * DEFAULT_GUINODE_SHAPESIZE / 2, 1 * DEFAULT_GUINODE_SHAPESIZE, 1 * DEFAULT_GUINODE_SHAPESIZE);
+//    public final static Shape DEFAULT_GUINODE_SHAPE = new Ellipse2D.Double(-1 * DEFAULT_GUINODE_SHAPESIZE / 2, -1 * DEFAULT_GUINODE_SHAPESIZE / 2, 1 * DEFAULT_GUINODE_SHAPESIZE, 1 * DEFAULT_GUINODE_SHAPESIZE);
 
     public final static boolean DEFAULT_REGGUILINK_HASARROW = false;
 //    public final static Stroke DEFAULT_REGGUILINK_ARROWSTROKE = new BasicStroke(1);

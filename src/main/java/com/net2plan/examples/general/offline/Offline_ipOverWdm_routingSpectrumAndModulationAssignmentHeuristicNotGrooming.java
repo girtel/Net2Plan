@@ -168,7 +168,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			this.wdmLayer = netPlan.getNetworkLayerDefault();
 			this.netPlan.setDemandTrafficUnitsName("Gbps");
 			this.netPlan.setLinkCapacityUnitsName("Frequency slots");
-			this.ipLayer = netPlan.addLayer("IP" , "IP layer" , "Gbps" , "Gbps" , null);
+			this.ipLayer = netPlan.addLayer("IP" , "IP layer" , "Gbps" , "Gbps" , null , null);
 			for (Demand wdmDemand : netPlan.getDemands(wdmLayer))
 				netPlan.addDemand(wdmDemand.getIngressNode(), wdmDemand.getEgressNode() , wdmDemand.getOfferedTraffic() , wdmDemand.getAttributes() , ipLayer);
 		}

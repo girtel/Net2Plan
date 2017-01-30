@@ -19,6 +19,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -99,8 +100,6 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
  * any method that can potentially change the network (e.g. add/set/remove methods) 
  * throws an {@code UnsupportedOperationException}.</p>
  *
- * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
- * @since 0.2.0
  */
 @SuppressWarnings("unchecked")
 public class NetPlan extends NetworkElement
@@ -508,11 +507,11 @@ public class NetPlan extends NetworkElement
 	 * @return The newly created layer object
 	 * @see com.net2plan.interfaces.networkDesign.NetworkLayer
 	 */
-	public NetworkLayer addLayer(String name, String description, String linkCapacityUnitsName, String demandTrafficUnitsName, String defaultNodeIconURL , Map<String, String> attributes)
+	public NetworkLayer addLayer(String name, String description, String linkCapacityUnitsName, String demandTrafficUnitsName, URL defaultNodeIconURL , Map<String, String> attributes)
 	{
 		return addLayer(null , name, description, linkCapacityUnitsName, demandTrafficUnitsName, defaultNodeIconURL, attributes);
 	}
-	NetworkLayer addLayer(Long id , String name, String description, String linkCapacityUnitsName, String demandTrafficUnitsName, String defaultNodeIconURL , Map<String, String> attributes)
+	NetworkLayer addLayer(Long id , String name, String description, String linkCapacityUnitsName, String demandTrafficUnitsName, URL defaultNodeIconURL , Map<String, String> attributes)
 	{
 		checkIsModifiable();
 		if (name == null) name = "";
@@ -4367,7 +4366,7 @@ public class NetPlan extends NetworkElement
 	public void removeNetworkLayer (NetworkLayer ... optionalLayerParameter)
 	{
 		checkIsModifiable();
-		NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		if (netPlan.layers.size () == 1) throw new Net2PlanException("At least one layer must exist");
@@ -4377,7 +4376,8 @@ public class NetPlan extends NetworkElement
 		for (Link link : new LinkedList<Link> (layer.links)) link.remove ();
 		for (Demand demand : new LinkedList<Demand> (layer.demands)) demand.remove ();
 		for (MulticastDemand demand : new LinkedList<MulticastDemand> (layer.multicastDemands)) demand.remove ();
-
+		for (Node node : nodes) node.removeUrlNodeIcon(layer);
+			
 		netPlan.interLayerCoupling.removeVertex(layer);
 		netPlan.cache_id2LayerMap.remove(layer.id);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.layers , layer.index);
@@ -4667,6 +4667,12 @@ public class NetPlan extends NetworkElement
 				writer.writeAttribute("yCoord", Double.toString(position.getY()));
 				writer.writeAttribute("name", node.name);
 				writer.writeAttribute("isUp", Boolean.toString (node.isUp));
+				final Set<NetworkLayer> layersWithIcons = layers.stream().filter(l->node.getUrlNodeIcon(l) != null).collect(Collectors.toSet());
+				final List<Long> idsLayersWithIcons = layersWithIcons.stream().map(l->l.getId()).collect(Collectors.toList());
+				writer.writeAttribute("layersWithIconsDefined", CollectionUtils.join(idsLayersWithIcons , " "));
+				for (NetworkLayer layer : layersWithIcons)
+					if (node.getUrlNodeIcon(layer) != null)
+						writer.writeAttribute("nodeIconURLLayer_" + layer.getId() , node.getUrlNodeIcon(layer).toString());
 
 				for (Entry<String, String> entry : node.attributes.entrySet())
 				{
@@ -4728,7 +4734,8 @@ public class NetPlan extends NetworkElement
 				writer.writeAttribute("isDefaultLayer", Boolean.toString(defaultLayer == layer));
 				writer.writeAttribute("linkCapacityUnitsName", layer.linkCapacityUnitsName);
 				writer.writeAttribute("demandTrafficUnitsName", layer.demandTrafficUnitsName);
-				writer.writeAttribute("defaultNodeIconURL", layer.defaultNodeIconURL);
+				if (layer.defaultNodeIconURL != null)
+					writer.writeAttribute("defaultNodeIconURL", layer.defaultNodeIconURL.toString());
 
 				for(Link link : layer.links)
 				{

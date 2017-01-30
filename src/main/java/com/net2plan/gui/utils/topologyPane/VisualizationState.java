@@ -6,6 +6,7 @@ import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR_PICK;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR_RESOURCE;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_ICONBORDERSIZEINPIXELS;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE;
 import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED;
@@ -31,6 +32,9 @@ import java.awt.Color;
 import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -43,6 +47,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import javax.imageio.ImageIO;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
@@ -61,11 +69,15 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
+import edu.uci.ics.jung.visualization.FourPassImageShaper;
+
 public class VisualizationState
 {
+	private static Map<Triple<URL,Integer,Color>,Pair<Icon,Shape>> databaseOfAlreadyReadIcons = new HashMap<> (); // for each url, height, and border color, an image  
     private boolean showNodeNames;
     private boolean showLinkLabels;
     private boolean showLinksInNonActiveLayer;
@@ -612,13 +624,13 @@ public class VisualizationState
     public void decreaseNodeSizeAll()
     {
         for (GUINode gn : getAllGUINodes())
-                gn.setShapeSizeInNonActiveLayer(gn.getShapeInNotActiveLayerSize() * SCALE_OUT);
+                gn.setIconHeightInNonActiveLayer(gn.getIconHeightInNotActiveLayer() * SCALE_OUT);
     }
 
     public void increaseNodeSizeAll()
     {
         for (GUINode gn : getAllGUINodes())
-            gn.setShapeSizeInNonActiveLayer(gn.getShapeInNotActiveLayerSize() * SCALE_IN);
+            gn.setIconHeightInNonActiveLayer(gn.getIconHeightInNotActiveLayer() * SCALE_IN);
     }
 
     public int getNumberOfVisibleLayers()
@@ -772,7 +784,7 @@ public class VisualizationState
     }
 
 
-    public void setNodeProperties(Collection<GUINode> nodes, Color color, Shape shape, double shapeSize)
+    public void setNodeProperties(Collection<GUINode> nodes, Color color, double height)
     {
         for (GUINode n : nodes)
         {
@@ -781,13 +793,9 @@ public class VisualizationState
                 n.setDrawPaint(color);
                 n.setFillPaint(color);
             }
-            if (shape != null)
+            if (height > 0)
             {
-                n.setShape(shape);
-            }
-            if (shapeSize > 0)
-            {
-                n.setShapeSizeInNonActiveLayer(shapeSize);
+                n.setIconHeightInNonActiveLayer(height);
             }
         }
     }
@@ -1474,4 +1482,44 @@ public class VisualizationState
     }
 
     public Map<NetworkLayer,Boolean> getLayerVisibilityMap () { return Collections.unmodifiableMap(this.layerVisibilityMap); }
+    
+    public static Pair<Icon,Shape> getIcon (URL url , int height , Color borderColor)
+    {
+    	final Pair<Icon,Shape> iconShapeInfo = databaseOfAlreadyReadIcons.get(Triple.of(url , height , borderColor));
+    	if (iconShapeInfo != null) return iconShapeInfo;
+		if (url == null)
+		{
+			BufferedImage img = ImageUtils.createCircle(height , (Color) DEFAULT_GUINODE_COLOR);
+			if (img.getHeight() != height) throw new RuntimeException();
+			final Shape shapeNoBorder = FourPassImageShaper.getShape(img); 
+			if (borderColor.getAlpha() != 0)
+				img = ImageUtils.addBorder(img , DEFAULT_ICONBORDERSIZEINPIXELS , borderColor);
+			final Icon icon = new ImageIcon (img);
+			final Pair<Icon,Shape> res = Pair.of(icon , shapeNoBorder);
+			databaseOfAlreadyReadIcons.put(Triple.of(null , icon.getIconHeight() , borderColor) , res);
+			return res;
+		}
+		try
+		{
+    		/* Read the base buffered image */
+			BufferedImage img = ImageIO.read(url);
+			if (img.getHeight() != height)
+				img = ImageUtils.resize(img , (int) (img.getWidth() * height / (double) img.getHeight()) , height);
+			if (img.getHeight() != height) throw new RuntimeException();
+			final Shape shapeNoBorder = FourPassImageShaper.getShape(img); 
+			if (borderColor.getAlpha() != 0)
+				img = ImageUtils.addBorder(img , DEFAULT_ICONBORDERSIZEINPIXELS , borderColor);
+			final Icon icon = new ImageIcon (img);
+			final Pair<Icon,Shape> res = Pair.of(icon , shapeNoBorder);
+			databaseOfAlreadyReadIcons.put(Triple.of(url , icon.getIconHeight() , borderColor) , res);
+			return res;
+		} catch (Exception e)
+		{
+			System.out.println("URL: **" + url + "**");
+			System.out.println(url);
+			/* Use the default image, whose URL is the one given */
+			e.printStackTrace();
+			return getIcon (null , height , borderColor);
+		}
+    }
 }

@@ -12,18 +12,18 @@
 
 package com.net2plan.gui.utils.topologyPane;
 
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP;
+import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.INCREASENODESIZEFACTORACTIVE;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Paint;
-import java.awt.Rectangle;
 import java.awt.Shape;
-import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
-import java.io.File;
+import java.net.URL;
+import java.util.Random;
 
-import javax.imageio.ImageIO;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -38,6 +38,8 @@ import com.net2plan.interfaces.networkDesign.Resource;
  */
 public class GUINode 
 {
+	private static Color TRANSPARENTCOLOR = new Color (0,0,0,0);
+	private static Random rng = new Random (0);
     private final Node npNode;
     private final NetworkLayer layer;
     private final VisualizationState vs;
@@ -47,8 +49,8 @@ public class GUINode
     //private Paint drawPaint, fillPaint, fillPaintIfPicked;
     private Paint drawPaint, fillPaint;
 //    private Shape shape, shapeIfPicked;
-    private Shape shapeIfNotActive , shapeIfActive;
-    private double shapeSizeIfNotActive;
+//    private Shape shapeIfNotActive , shapeIfActive;
+    private double iconHeightIfNotActive;
 //    private Color userDefinedColorOverridesTheRest;
     
 
@@ -66,13 +68,13 @@ public class GUINode
         if (!vs.isLayerVisible(layer)) throw new RuntimeException ("Bad");
 
 		/* defaults */
-        this.drawPaint = java.awt.Color.BLACK;
-        this.fillPaint = java.awt.Color.BLACK;
+        this.drawPaint = DEFAULT_GUINODE_COLOR;
+        this.fillPaint = DEFAULT_GUINODE_COLOR;
         this.font = new Font("Helvetica", Font.BOLD, 11);
-        this.shapeSizeIfNotActive = 30;
-        final double shapeSizeIfActive = shapeSizeIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE;
-        this.shapeIfNotActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfNotActive , shapeSizeIfNotActive);
-        this.shapeIfActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfActive , shapeSizeIfActive);
+        this.iconHeightIfNotActive = 30;
+//        final double shapeSizeIfActive = iconHeightIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE;
+//        this.shapeIfNotActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfNotActive , shapeSizeIfNotActive);
+//        this.shapeIfActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfActive , shapeSizeIfActive);
     }
     
     public NetworkLayer getLayer () { return layer; }
@@ -83,17 +85,17 @@ public class GUINode
 
     
     
-    public double getShapeInNotActiveLayerSize() 
+    public double getIconHeightInNotActiveLayer() 
     {
-        return shapeSizeIfNotActive;
+        return iconHeightIfNotActive;
     }
 
-    public void setShapeSizeInNonActiveLayer (double sizeNonActiveLayer) 
+    public void setIconHeightInNonActiveLayer (double sizeNonActiveLayer) 
     {
-        this.shapeSizeIfNotActive = sizeNonActiveLayer;
-        final double shapeSizeIfActive = shapeSizeIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE;
-        this.shapeIfNotActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfNotActive , shapeSizeIfNotActive);
-        this.shapeIfActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfActive , shapeSizeIfActive);
+        this.iconHeightIfNotActive = sizeNonActiveLayer;
+//        final double shapeSizeIfActive = shapeSizeIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE;
+//        this.shapeIfNotActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfNotActive , shapeSizeIfNotActive);
+//        this.shapeIfActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfActive , shapeSizeIfActive);
     }
 
     public Paint getDrawPaint() {
@@ -104,8 +106,9 @@ public class GUINode
         this.drawPaint = p;
     }
 
-    public Paint getFillPaint() {
-        return fillPaint;
+    public Paint getFillPaint() 
+    {
+        return npNode.isUp() ? fillPaint : Color.RED;
     }
 
     public void setFillPaint(Paint p) {
@@ -119,27 +122,39 @@ public class GUINode
         return font;
     }
 
-    public Icon getIcon ()
-    {
-    	try 
-    	{ 
-	    	final BufferedImage img = ImageIO.read(new File("src/main/resources/resources/icons/imagen1.png"));
-	    	final ImageIcon icon = new ImageIcon(img);
-	    	return icon;
-    	} catch (Exception e) { e.printStackTrace();return null; } 
-    }
+//    public Icon getIcon ()
+//    {
+//    	try 
+//    	{ 
+//	    	final BufferedImage img = ImageIO.read(new File("src/main/resources/resources/icons/imagen1.png"));
+//	    	final ImageIcon icon = new ImageIcon(img);
+//	    	return icon;
+//    	} catch (Exception e) { e.printStackTrace();return null; } 
+//    }
     
-    public Shape getShape() 
-    {
-        return npNode.getNetPlan().getNetworkLayerDefault() == layer? shapeIfActive : shapeIfNotActive;
-    }
+//    public Shape getShape() 
+//    {
+//        return npNode.getNetPlan().getNetworkLayerDefault() == layer? shapeIfActive : shapeIfNotActive;
+//    }
 
-    public void setShape(Shape f) 
-    {
-        final double shapeSizeIfActive = shapeSizeIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE;
-        this.shapeIfNotActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfNotActive , shapeSizeIfNotActive);
-        this.shapeIfActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfActive , shapeSizeIfActive);
-    }
+//    public void setShape(Shape f) 
+//    {
+//        final double shapeSizeIfActive = shapeSizeIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE;
+//        this.shapeIfNotActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfNotActive , shapeSizeIfNotActive);
+//        this.shapeIfActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfActive , shapeSizeIfActive);
+//    }
+
+	  public Shape getShape() 
+	  {
+    	URL url = npNode.getUrlNodeIcon(layer);
+    	if (url == null) url = layer.getDefaultNodeIconURL();
+    	if (url == null) url = DEFAULT_LAYERNAME2ICONURLMAP.get(layer.getName());
+    	final int height = layer.isDefaultLayer()? (int) (iconHeightIfNotActive*INCREASENODESIZEFACTORACTIVE) : (int) iconHeightIfNotActive;
+    	final Color borderColor = getDrawPaint() == DEFAULT_GUINODE_COLOR? TRANSPARENTCOLOR : (Color) getDrawPaint();
+    	final Shape shape = VisualizationState.getIcon(url , height , borderColor).getSecond();
+    	//final Shape shape = new Ellipse2D.Double(-1 * 30 / 2, -1 * 30 / 2, 1 * 30, 1 * 30);
+    	return shape;
+	  }
 
     public boolean decreaseFontSize() 
     {
@@ -199,20 +214,34 @@ public class GUINode
      * @return Node label
      * @since 0.2.0
      */
-    public String getLabel() {
-        return npNode.getName() + " - L" + layer.getIndex() + ", VL" + getVisualizationOrderRemovingNonVisibleLayers();
+    public String getLabel() 
+    {
+    	return npNode.getName().equals("")? "Node " + npNode.getIndex() : npNode.getName();
+//        return npNode.getName() + " - L" + layer.getIndex() + ", VL" + getVisualizationOrderRemovingNonVisibleLayers();
+    }
+    
+    public Icon getIcon ()
+    {
+    	URL url = npNode.getUrlNodeIcon(layer);
+    	if (url == null) url = layer.getDefaultNodeIconURL();
+    	if (url == null) url = DEFAULT_LAYERNAME2ICONURLMAP.get(layer.getName());
+//   		url = "figs/Router.png";
+    	final int height = layer.isDefaultLayer()? (int) (iconHeightIfNotActive*INCREASENODESIZEFACTORACTIVE) : (int) iconHeightIfNotActive;
+    	final Color borderColor = getDrawPaint() == DEFAULT_GUINODE_COLOR? TRANSPARENTCOLOR : (Color) getDrawPaint();
+    	final Icon icon = VisualizationState.getIcon(url , height , borderColor).getFirst();
+    	return icon;
     }
     
     public VisualizationState getVisualizationState () { return vs; }
 
     public int getVisualizationOrderRemovingNonVisibleLayers () { return vs.getVisualizationOrderRemovingNonVisible(layer); }
 
-    private static Shape adjustShapeToSize (Shape s , double size_x , double size_y)
-    {
-    	AffineTransform transf = new AffineTransform();
-    	final Rectangle currentShapeBounds = s.getBounds();
-    	transf.scale(size_x / currentShapeBounds.getWidth() , size_y / currentShapeBounds.getHeight());
-    	return transf.createTransformedShape(s);
-    }
+//    private static Shape adjustShapeToSize (Shape s , double size_x , double size_y)
+//    {
+//    	AffineTransform transf = new AffineTransform();
+//    	final Rectangle currentShapeBounds = s.getBounds();
+//    	transf.scale(size_x / currentShapeBounds.getWidth() , size_y / currentShapeBounds.getHeight());
+//    	return transf.createTransformedShape(s);
+//    }
 	private String getResourceName (Resource e) { return "Resource " + e.getIndex() + " (" + (e.getName().length() == 0? "No name" : e.getName()) + "). Type: " + e.getType(); }
 }

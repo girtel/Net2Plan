@@ -274,7 +274,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
                 NetPlan netPlan = callback.getDesign();
 
                 try {
-                    netPlan.addLayer("Layer " + netPlan.getNumberOfLayers(), null, null, null, null);
+                    netPlan.addLayer("Layer " + netPlan.getNumberOfLayers(), null, null, null, null , null);
                     final VisualizationState vs = callback.getVisualizationState();
             		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
             				vs.suggestUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));

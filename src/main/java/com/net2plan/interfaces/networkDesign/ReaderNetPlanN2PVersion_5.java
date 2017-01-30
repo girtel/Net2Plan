@@ -20,6 +20,7 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -40,18 +41,22 @@ import org.codehaus.stax2.XMLStreamReader2;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.LongUtils;
+import com.net2plan.utils.Pair;
 
 class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanFormat_v3
 {
 	private boolean hasAlreadyReadOneLayer;
 	private XMLStreamReader2 xmlStreamReader;
 	private Map<Route,List<Long>> backupRouteIdsMap;
+	private Map<Long , List<Pair<Node,URL>>> nodeAndLayerToIconURLMap;
+	
 	
 	public void create(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
 	{
 		this.hasAlreadyReadOneLayer = false;
 		this.xmlStreamReader = xmlStreamReader;
 		this.backupRouteIdsMap = new HashMap<Route,List<Long>> ();
+		this.nodeAndLayerToIconURLMap = new HashMap<> ();
 		parseNetwork(netPlan);
 
 //		System.out.println ("End ReaderNetPlan_v5: " + netPlan + " ----------- ");
@@ -144,6 +149,15 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		//netPlan.nextNodeId = new MutableLong(nodeId);
 		Node newNode = netPlan.addNode(nodeId , xCoord, yCoord, nodeName, null);
 		newNode.setFailureState(isUp);
+
+		/* read the icons information and put it in a map for later (layers are not created yet!) */
+		for (long layerId : getListLong("layersWithIconsDefined"))
+		{
+			List<Pair<Node,URL>> iconsThisLayerSoFar = nodeAndLayerToIconURLMap.get (layerId);
+			if (iconsThisLayerSoFar == null) { iconsThisLayerSoFar = new LinkedList<> (); nodeAndLayerToIconURLMap.put(layerId , iconsThisLayerSoFar); }
+			URL url = null; try { url = new URL (getString ("nodeIconURLLayer_" + layerId)); } catch (Exception e) {}
+			iconsThisLayerSoFar.add(Pair.of(newNode , url));
+		}
 		readAndAddAttributesToEnd(newNode, "node");
 	}
 
@@ -328,7 +342,8 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final String layerDescription = getString ("description");
 		final String layerName = getString ("name");
 		final String linkCapacityUnitsName = getString ("linkCapacityUnitsName");
-		final String defaultNodeIconURL = getString ("defaultNodeIconURL");
+		URL defaultNodeIconURL = null;
+		try { defaultNodeIconURL = new URL (getString ("defaultNodeIconURL")); } catch (Exception e) {}
 		final boolean isDefaultLayer = getBoolean ("isDefaultLayer");
 		
 		NetworkLayer newLayer;
@@ -356,6 +371,11 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 			newLayer = netPlan.addLayer(layerId , layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, defaultNodeIconURL , null);
 		}
 
+		/* write the node icons information, that is already there */
+		if (nodeAndLayerToIconURLMap.containsKey(newLayer.getId()))
+			for (Pair<Node,URL> iconInfo : nodeAndLayerToIconURLMap.get(newLayer.getId()))
+				iconInfo.getFirst().setUrlNodeIcon(newLayer , iconInfo.getSecond());
+		
 		if (isDefaultLayer) netPlan.setNetworkLayerDefault(newLayer);
 
 		while(xmlStreamReader.hasNext())

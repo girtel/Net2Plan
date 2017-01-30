@@ -12,17 +12,19 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Quadruple;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 /** <p>This class contains a representation of a network layer. This is an structure which contains a set of demands, multicast demands and links. 
  * It also is characterized by a routing type, which can be {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, or
@@ -59,16 +61,16 @@ public class NetworkLayer extends NetworkElement
 	
 	Set<Route> cache_routesDown;
 	Set<MulticastTree> cache_multicastTreesDown;
-	String defaultNodeIconURL;
+	URL defaultNodeIconURL;
 
-	NetworkLayer(NetPlan netPlan, long id, int index , String demandTrafficUnitsName, String description, String name, String linkCapacityUnitsName, String defaultNodeIconURL , AttributeMap attributes)
+	NetworkLayer(NetPlan netPlan, long id, int index , String demandTrafficUnitsName, String description, String name, String linkCapacityUnitsName, URL defaultNodeIconURL , AttributeMap attributes)
 	{
 		super(netPlan, id , index , attributes);
 		this.demandTrafficUnitsName = (demandTrafficUnitsName == null)? "" : demandTrafficUnitsName;
 		this.description =  (description == null)? "" : description;
 		this.name =  (name == null)? "" : name;
 		this.linkCapacityUnitsName =  (linkCapacityUnitsName == null)? "" : linkCapacityUnitsName;
-		this.defaultNodeIconURL = defaultNodeIconURL == null? "" : defaultNodeIconURL;
+		this.defaultNodeIconURL = defaultNodeIconURL;
 		this.routingType = RoutingType.SOURCE_ROUTING;
 
 		this.links = new ArrayList<Link> ();
@@ -135,13 +137,28 @@ public class NetworkLayer extends NetworkElement
 		for (Route r : origin.routes) this.routes.get(r.index).copyFrom(r);
 		for (MulticastTree t : origin.multicastTrees) this.multicastTrees.get(t.index).copyFrom(t);
 	}
+
+	/** Returns true if this layer is the default netowrk layer
+	 * @return see above
+	 */
+	public boolean isDefaultLayer () { return netPlan.getNetworkLayerDefault() == this; }
+
+	/** Returns true if the routing type in this layer is of the type source routing
+	 * @return see above
+	 */
+	public boolean isSourceRoutin () { return routingType == RoutingType.SOURCE_ROUTING; }
 	
+	/** Returns true if the provided network layer is a deep copy of this
+	 * @param e2 the other element
+	 * @return see above
+	 */
 	public boolean isDeepCopy (NetworkLayer e2)
 	{
 		if (!super.isDeepCopy(e2)) return false;
 		if (!this.demandTrafficUnitsName.equals(e2.demandTrafficUnitsName)) return false;
 		if (!this.description.equals(e2.description)) return false;
-		if (!this.defaultNodeIconURL.equals(e2.defaultNodeIconURL)) return false;
+		if ((this.defaultNodeIconURL == null) != (e2.defaultNodeIconURL == null)) return false;
+		if (this.defaultNodeIconURL != null) if (!this.defaultNodeIconURL.equals(e2.defaultNodeIconURL)) return false;
 		if (!this.name.equals(e2.name)) return false;
 		if (!this.linkCapacityUnitsName.equals(e2.linkCapacityUnitsName)) return false;
 		if (this.routingType != e2.routingType) return false;
@@ -186,7 +203,7 @@ public class NetworkLayer extends NetworkElement
 	 * <p>Returns the user-defined URL of the default icon to represent the nodes at this layer.</p>
 	 * @return see above
 	 */
-	public String getDefaultNodeIconURL() 
+	public URL getDefaultNodeIconURL() 
 	{
 		return defaultNodeIconURL;
 	}
@@ -201,10 +218,10 @@ public class NetworkLayer extends NetworkElement
 	}
 
 	/**
-	 * <p>Sets the user-defined URL of the default icon to represent the nodes at this layer.</p>
-	 * @param defaultNodeIconURL see above
+	 * <p>Sets the user-defined URL of the default icon to represent the nodes at this layer. </p>
+	 * @param defaultNodeIconURL see above. 
 	 */
-	public void setDefaultNodeIconURL(String defaultNodeIconURL) 
+	public void setDefaultNodeIconURL(URL defaultNodeIconURL) 
 	{
 		this.defaultNodeIconURL = defaultNodeIconURL;
 	}

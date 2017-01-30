@@ -59,8 +59,8 @@ public class InterLayerPropagationGraphTest
 	{
 		this.np = new NetPlan ();
 		this.layer0 = np.getNetworkLayerDefault(); np.setDemandTrafficUnitsName("Mbps" , layer0);
-		this.layer1 = np.addLayer("l1" , "description" , "Mbps" , "Mbps" , null);
-		this.layer2 = np.addLayer("l2" , "description" , "Mbps" , "Mbps" , null);
+		this.layer1 = np.addLayer("l1" , "description" , "Mbps" , "Mbps" , null , null);
+		this.layer2 = np.addLayer("l2" , "description" , "Mbps" , "Mbps" , null , null);
 		this.n1 = this.np.addNode(0 , 0 , "node1" , null);
 		this.n2 = np.addNode(0 , 0 , "node2" , null);
 		this.n3 = np.addNode(0 , 0 , "node3" , null);

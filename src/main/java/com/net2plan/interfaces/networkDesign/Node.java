@@ -12,17 +12,25 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import cern.colt.list.tdouble.DoubleArrayList;
-import cern.colt.list.tint.IntArrayList;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
+import java.awt.geom.Point2D;
+import java.net.URL;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.UnmodifiablePoint2D;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
-import java.awt.geom.Point2D;
-import java.util.*;
+import cern.colt.list.tdouble.DoubleArrayList;
+import cern.colt.list.tint.IntArrayList;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
 
 
 /** <p>This class contains a representation of a node.
@@ -51,6 +59,7 @@ public class Node extends NetworkElement
 	Set<Route> cache_nodeAssociatedRoutes;
 	Set<MulticastTree> cache_nodeAssociatedulticastTrees;
 	Set<Resource> cache_nodeResources;
+	Map<NetworkLayer,URL> mapLayer2URLSpecificIcon;
 
 
 	/**
@@ -83,8 +92,7 @@ public class Node extends NetworkElement
 		this.cache_nodeResources = new HashSet<Resource> ();
 		this.cache_nodeAssociatedRoutes = new HashSet<Route> ();
 		this.cache_nodeAssociatedulticastTrees = new HashSet<MulticastTree> ();
-
-	
+		this.mapLayer2URLSpecificIcon = new HashMap <> ();
 	}
 	
 	void copyFrom (Node origin)
@@ -94,6 +102,7 @@ public class Node extends NetworkElement
 		this.name = origin.name;
 		this.nodeXYPositionMap = new UnmodifiablePoint2D(origin.nodeXYPositionMap.getX() , origin.nodeXYPositionMap.getY());
 		this.isUp = origin.isUp;
+		this.mapLayer2URLSpecificIcon.clear(); for (NetworkLayer l : origin.mapLayer2URLSpecificIcon.keySet()) this.mapLayer2URLSpecificIcon.put(this.netPlan.getNetworkLayerFromId(l.getId()) , origin.mapLayer2URLSpecificIcon.get(l));
 		this.cache_nodeIncomingLinks.clear (); for (Link e : origin.cache_nodeIncomingLinks) this.cache_nodeIncomingLinks.add(this.netPlan.getLinkFromId (e.id));
 		this.cache_nodeOutgoingLinks.clear (); for (Link e : origin.cache_nodeOutgoingLinks) this.cache_nodeOutgoingLinks.add(this.netPlan.getLinkFromId (e.id));
 		this.cache_nodeIncomingDemands.clear (); for (Demand d : origin.cache_nodeIncomingDemands) this.cache_nodeIncomingDemands.add(this.netPlan.getDemandFromId (d.id));
@@ -112,6 +121,8 @@ public class Node extends NetworkElement
 		if (!this.name.equals(e2.name)) return false;
 		if (!this.nodeXYPositionMap.equals(e2.nodeXYPositionMap)) return false;
 		if (this.isUp != e2.isUp) return false;
+		
+		if (!NetPlan.isDeepCopy(this.mapLayer2URLSpecificIcon , e2.mapLayer2URLSpecificIcon)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_nodeIncomingLinks , e2.cache_nodeIncomingLinks)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_nodeOutgoingLinks , e2.cache_nodeOutgoingLinks)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_nodeIncomingDemands , e2.cache_nodeIncomingDemands)) return false;
@@ -724,6 +735,33 @@ public class Node extends NetworkElement
 		return res;
 	}
 	
+	
+	/** Returns the url of the icon specified by the user to represent this node at the given layer, or null if none
+	 * @param layer the layer
+	 * @return the url
+	 */
+	public URL getUrlNodeIcon (NetworkLayer layer)
+	{
+		return mapLayer2URLSpecificIcon.get(layer);
+	}
+	
+	/** Sets the url of the icon specified by the user to represent this node at the given layer. Previous url for this layer (if any) will be removed
+	 * @param layer the layer
+	 * @param url the url
+	 */
+	public void setUrlNodeIcon (NetworkLayer layer , URL url)
+	{
+		mapLayer2URLSpecificIcon.put(layer , url);
+	}
+
+	/** Removes any previous url of the node icon for this layer (if any)
+	 * @param layer the layer
+	 */
+	public void removeUrlNodeIcon (NetworkLayer layer)
+	{
+		mapLayer2URLSpecificIcon.remove(layer);
+	}
+
 	void checkCachesConsistency ()
 	{
 		if (isUp && netPlan.cache_nodesDown.contains(this)) throw new RuntimeException ("Bad");

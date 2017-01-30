@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.awt.geom.Point2D;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -58,7 +59,7 @@ public class NodeTest
 		this.np = new NetPlan ();
 		this.lowerLayer = np.getNetworkLayerDefault();
 		np.setDemandTrafficUnitsName("Mbps" , lowerLayer);
-		this.upperLayer = np.addLayer("upperLayer" , "description" , "Mbps" , "upperTrafficUnits" , null);
+		this.upperLayer = np.addLayer("upperLayer" , "description" , "Mbps" , "upperTrafficUnits" , null , null);
 		this.n1 = this.np.addNode(0 , 0 , "node1" , null);
 		this.n2 = np.addNode(0 , 0 , "node2" , null);
 		this.n3 = np.addNode(0 , 0 , "node3" , null);
@@ -108,6 +109,18 @@ public class NodeTest
 		assertEquals(n3.getName() , "node3");
 	}
 
+	
+
+	@Test
+	public void testSetUrlNodeIcon() throws Exception
+	{
+		n1.setUrlNodeIcon(np.getNetworkLayerDefault() , new URL ("file:/icon"));
+		assertEquals(n1.getUrlNodeIcon(np.getNetworkLayerDefault()) , new URL ("file:/icon"));
+		n1.removeUrlNodeIcon(np.getNetworkLayerDefault());
+		assertEquals(n1.getUrlNodeIcon(np.getNetworkLayerDefault()) , null);
+	}
+
+	
 	@Test
 	public void testSetName() 
 	{
