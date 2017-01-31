@@ -221,9 +221,10 @@ public class VisualizationState
 
 	public ITableRowFilter getTableRowFilter () { return tableRowFilter; }
 	
-	public void setTableRowFilter (ITableRowFilter tableRowFilter) 
+	public void updateTableRowFilter (ITableRowFilter tableRowFilter) 
 	{  
-		this.tableRowFilter = tableRowFilter; 
+		if (tableRowFilter == null) { this.tableRowFilter = null; return; }
+		this.tableRowFilter.recomputeApplyingShowIf_ThisAndThat(tableRowFilter);
 	}
 	
     public boolean isVisibleInCanvas(GUINode gn)

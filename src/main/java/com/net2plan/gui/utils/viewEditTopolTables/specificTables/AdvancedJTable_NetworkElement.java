@@ -19,6 +19,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.swing.Box;
 import javax.swing.JCheckBoxMenuItem;
@@ -40,8 +42,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.RowSorter;
-import javax.swing.SortOrder;
 import javax.swing.RowSorter.SortKey;
+import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
@@ -1984,5 +1986,47 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
 			return -1;
 		}
     }
+
+    /** Gets the selected elements in this table. 
+     * @return
+     */
+    public Pair<List<NetworkElement>,List<Pair<Demand,Link>>> getSelectedElements ()
+    {
+    	final int [] rowIndexes = getSelectedRows();
+    	final List<NetworkElement> elementList = new ArrayList<> ();
+    	final List<Pair<Demand,Link>> frList = new ArrayList<> ();
+    	final NetPlan np = callback.getDesign();
+    	
+    	if (rowIndexes.length == 0) return Pair.of(elementList , frList);
+    	final int maxValidRowCount = model.getRowCount() - 1 - (hasAggregationRow()? 1 : 0);
+    	final List<Integer> validRows = new ArrayList<Integer> (); 
+    	for (int a : rowIndexes) if (a >= 0 && a <= maxValidRowCount) validRows.add(a);
+    	
+    	if (networkElementType == NetworkElementType.FORWARDING_RULE)
+    	{
+    		for (int rowIndex : rowIndexes)
+    		{
+    			final int demandIndex = (int) getValueAt (rowIndex , AdvancedJTable_forwardingRule.COLUMN_DEMAND);
+    			final int linkIndex = (int) getValueAt (rowIndex , AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK);
+    			frList.add(Pair.of(np.getDemand(demandIndex), np.getLink(linkIndex)));
+    		}
+    	}
+    	else
+    	{
+    		for (int rowIndex : rowIndexes)
+    		{
+    			final long id = (long) getValueAt (rowIndex , 0);
+    			elementList.add(np.getNetworkElement(id));
+    		}
+    	}
+    	return Pair.of(elementList , frList);
+    }
+
     
+    public boolean hasAggregationRow ()
+    {
+    	if (networkElementType.equals(networkElementType.LAYER)) return false;
+    	if (networkElementType.equals(networkElementType.NETWORK)) return false;
+    	return true;
+    }
 }

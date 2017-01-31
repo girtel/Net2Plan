@@ -117,36 +117,7 @@ public class ViewEditTopologyTablesPane extends JPanel
     					@Override
     					public void actionPerformed(ActionEvent e)
     					{
-    						callback.getVisualizationState().setTableRowFilter(null);
-    						callback.updateVisualizationJustTables();
-    						callback.resetPickedStateAndUpdateView();
-    					}
-    				});
-                    final JButton applyIntersectFilter = new JButton ("AND filter");
-                    buttonsPanel.add(applyIntersectFilter , BorderLayout.CENTER);
-                    applyIntersectFilter.addActionListener(new ActionListener()
-    				{
-    					@Override
-    					public void actionPerformed(ActionEvent e)
-    					{
-    						final AdvancedJTable_NetworkElement table = netPlanViewTable.get(elementType);
-    						final int  [] selectedElements = table.getSelectedRows();
-    						if (selectedElements.length == 0) return;
-    						if (selectedElements.length > 1) throw new RuntimeException("MULTIPLE SELECTIONS NOT IMPLEMENTED");
-    						if (elementType != NetworkElementType.FORWARDING_RULE)
-    						{
-    							final List<NetworkElement> selectedNetElements = new LinkedList<NetworkElement> ();
-    							for (int row : selectedElements) selectedNetElements.add(callback.getDesign().getNetworkElement((long) table.getValueAt(row , 0)));
-
-
-    							PABLO: HACER EL FILTRO GENERICO QUE LO LLAMAS SIN SABER DE DONDE ES LA TABLA, CON EL UP DOWN Y TODA LA HISTORIA
-    						}
-    						
-    						ITableRowFilter filter = callback.getVisualizationState().getTableRowFilter();
-    						if (filter == null)
-    							filter = new TBFToFromCarriedTraffic(pickedDemand , showInCanvasThisLayerPropagation , showInCanvasLowerLayerPropagation , showInCanvasUpperLayerPropagation);
-    						
-    						callback.getVisualizationState().setTableRowFilter(null);
+    						callback.getVisualizationState().updateTableRowFilter(null);
     						callback.updateVisualizationJustTables();
     						callback.resetPickedStateAndUpdateView();
     					}
@@ -328,3 +299,34 @@ public class ViewEditTopologyTablesPane extends JPanel
     }
 
 }
+
+
+//final JButton applyIntersectFilter = new JButton ("AND filter");
+//buttonsPanel.add(applyIntersectFilter , BorderLayout.CENTER);
+//applyIntersectFilter.addActionListener(new ActionListener()
+//{
+//	@Override
+//	public void actionPerformed(ActionEvent e)
+//	{
+//		final AdvancedJTable_NetworkElement table = netPlanViewTable.get(elementType);
+//		final int  [] selectedElements = table.getSelectedRows();
+//		if (selectedElements.length == 0) return;
+//		if (selectedElements.length > 1) throw new RuntimeException("MULTIPLE SELECTIONS NOT IMPLEMENTED");
+//		if (elementType != NetworkElementType.FORWARDING_RULE)
+//		{
+//			final List<NetworkElement> selectedNetElements = new LinkedList<NetworkElement> ();
+//			for (int row : selectedElements) selectedNetElements.add(callback.getDesign().getNetworkElement((long) table.getValueAt(row , 0)));
+//
+//
+//			PABLO: HACER EL FILTRO GENERICO QUE LO LLAMAS SIN SABER DE DONDE ES LA TABLA, CON EL UP DOWN Y TODA LA HISTORIA
+//		}
+//		
+//		ITableRowFilter filter = callback.getVisualizationState().getTableRowFilter();
+//		if (filter == null)
+//			filter = new TBFToFromCarriedTraffic(pickedDemand , showInCanvasThisLayerPropagation , showInCanvasLowerLayerPropagation , showInCanvasUpperLayerPropagation);
+//		
+//		callback.getVisualizationState().setTableRowFilter(null);
+//		callback.updateVisualizationJustTables();
+//		callback.resetPickedStateAndUpdateView();
+//	}
+//});
