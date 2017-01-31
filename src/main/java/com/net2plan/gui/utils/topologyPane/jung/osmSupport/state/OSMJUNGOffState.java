@@ -75,7 +75,7 @@ public class OSMJUNGOffState extends OSMOffState
     public void zoomAll()
     {
         final VisualizationState vs = callback.getVisualizationState();
-        final Set<GUINode> visibleGUINodes = canvas.getAllVertices().stream().filter(vs::isVisible).collect(Collectors.toSet());
+        final Set<GUINode> visibleGUINodes = canvas.getAllVertices().stream().filter(vs::isVisibleInCanvas).collect(Collectors.toSet());
         if (visibleGUINodes.isEmpty()) return;
 
         // Returns the canvas transformer to its original state, so that Layout = View.
@@ -117,7 +117,7 @@ public class OSMJUNGOffState extends OSMOffState
     public void addNode(Point2D pos)
     {
         callback.getDesign().addNode(pos.getX(), pos.getY(), "Node" + callback.getDesign().getNumberOfNodes(), null);
-        callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+        callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
     }
 
@@ -125,7 +125,7 @@ public class OSMJUNGOffState extends OSMOffState
     public void removeNode(Node node)
     {
         node.remove();
-        callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+        callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
     }
 

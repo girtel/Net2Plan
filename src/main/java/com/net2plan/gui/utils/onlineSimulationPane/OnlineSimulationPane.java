@@ -185,8 +185,8 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
                 mainWindow.loadDesignDoNotUpdateVisualization(simKernel.getInitialNetPlan());
                 final VisualizationState vs = mainWindow.getVisualizationState();
         		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
-        				vs.suggestUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
-        		vs.setLayerVisibilityAndOrder(mainWindow.getDesign() , res.getFirst() , res.getSecond());
+        				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
+        		vs.setCanvasLayerVisibilityAndOrder(mainWindow.getDesign() , res.getFirst() , res.getSecond());
                 mainWindow.updateVisualizationAfterNewTopology();
 
             } else if (src == btn_viewEventList) {

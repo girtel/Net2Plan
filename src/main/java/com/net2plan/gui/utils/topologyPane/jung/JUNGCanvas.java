@@ -191,13 +191,13 @@ public final class JUNGCanvas implements ITopologyCanvas
 //        	107 						
 //        	108 					}};
 //        	109 			}});
-        vv.getRenderContext().setVertexIncludePredicate(guiNodeContext -> vs.isVisible(guiNodeContext.element));
+        vv.getRenderContext().setVertexIncludePredicate(guiNodeContext -> vs.isVisibleInCanvas(guiNodeContext.element));
         vv.getRenderer().setVertexLabelRenderer(new NodeLabelRenderer());
         vv.setVertexToolTipTransformer(node -> node.getToolTip());
 
 
-        vv.getRenderContext().setEdgeIncludePredicate(context -> vs.isVisible(context.element));
-        vv.getRenderContext().setEdgeArrowPredicate(context -> vs.isVisible(context.element) && context.element.getHasArrow());
+        vv.getRenderContext().setEdgeIncludePredicate(context -> vs.isVisibleInCanvas(context.element));
+        vv.getRenderContext().setEdgeArrowPredicate(context -> vs.isVisibleInCanvas(context.element) && context.element.getHasArrow());
         vv.getRenderContext().setEdgeArrowStrokeTransformer(i -> i.getArrowStroke());
         vv.getRenderContext().setEdgeArrowTransformer(new ConstantTransformer(ArrowFactory.getNotchedArrow(7, 10, 5)));
         vv.getRenderContext().setEdgeLabelClosenessTransformer(new ConstantDirectionalEdgeValueTransformer(.6, .6));
@@ -212,7 +212,7 @@ public final class JUNGCanvas implements ITopologyCanvas
         {
             public void labelEdge(RenderContext<GUINode, GUILink> rc, Layout<GUINode, GUILink> layout, GUILink e, String label)
             {
-                if (vs.isShowLinkLabels()) super.labelEdge(rc, layout, e, e.getLabel());
+                if (vs.isCanvasShowLinkLabels()) super.labelEdge(rc, layout, e, e.getLabel());
             }
         });
         vv.setEdgeToolTipTransformer(link -> link.getToolTip());
@@ -396,8 +396,8 @@ public final class JUNGCanvas implements ITopologyCanvas
             g.removeEdge(gl);
         for (GUINode gn : new ArrayList<>(g.getVertices()))
             g.removeVertex(gn);
-        for (GUINode gn : vs.getAllGUINodes()) g.addVertex(gn);
-        for (GUILink gl : vs.getAllGUILinks(true, true))
+        for (GUINode gn : vs.getCanvasAllGUINodes()) g.addVertex(gn);
+        for (GUILink gl : vs.getCanvasAllGUILinks(true, true))
             g.addEdge(gl, gl.getOriginNode(), gl.getDestinationNode());
         refresh();
     }
@@ -574,8 +574,8 @@ public final class JUNGCanvas implements ITopologyCanvas
         @Override
         public void labelVertex(RenderContext<GUINode, GUILink> rc, Layout<GUINode, GUILink> layout, GUINode v, String label)
         {
-            if (!vs.isVisible(v)) return;
-            if (vs.isShowNodeNames() && v.getLayer().isDefaultLayer())
+            if (!vs.isVisibleInCanvas(v)) return;
+            if (vs.isCanvasShowNodeNames() && v.getLayer().isDefaultLayer())
             {
                 Point2D vertexPositionInPixels = layout.transform(v);
                 vertexPositionInPixels = rc.getMultiLayerTransformer().transform(Layer.LAYOUT, vertexPositionInPixels);

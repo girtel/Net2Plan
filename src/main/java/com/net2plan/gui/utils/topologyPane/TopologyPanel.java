@@ -205,13 +205,13 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_decreaseInterLayerDistance.setToolTipText("Decrease the distance between layers (when more than one layer is visible)");
         btn_showLowerLayerInfo = new JToggleButton("Show lower propagation");
         btn_showLowerLayerInfo.setToolTipText("Shows the links in lower layers that carry traffic of the picked element");
-        btn_showLowerLayerInfo.setSelected(getVisualizationState().isShowLowerLayerPropagation());
+        btn_showLowerLayerInfo.setSelected(getVisualizationState().isShowInCanvasLowerLayerPropagation());
         btn_showUpperLayerInfo = new JToggleButton("Show upper propagation");
         btn_showUpperLayerInfo.setToolTipText("Shows the links in upper layers that carry traffic that appears in the picked element");
-        btn_showUpperLayerInfo.setSelected(getVisualizationState().isShowUpperLayerPropagation());
+        btn_showUpperLayerInfo.setSelected(getVisualizationState().isShowInCanvasUpperLayerPropagation());
         btn_showThisLayerInfo = new JToggleButton("Show this propagation");
         btn_showThisLayerInfo.setToolTipText("Shows the links in the same layer as the picked element, that carry traffic that appears in the picked element");
-        btn_showThisLayerInfo.setSelected(getVisualizationState().isShowThisLayerPropagation());
+        btn_showThisLayerInfo.setSelected(getVisualizationState().isShowInCanvasThisLayerPropagation());
 
         btn_multilayer = new JButton("Debug");
         this.multilayerControlPanel = new MultiLayerControlPanel(callback);
@@ -338,7 +338,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                callback.getVisualizationState().increaseNodeSizeAll();
+                callback.getVisualizationState().increaseCanvasNodeSizeAll();
                 canvas.refresh();
             }
         });
@@ -348,7 +348,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                callback.getVisualizationState().decreaseNodeSizeAll();
+                callback.getVisualizationState().decreaseCanvasNodeSizeAll();
                 canvas.refresh();
             }
         });
@@ -358,7 +358,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                callback.getVisualizationState().increaseFontSizeAll();
+                callback.getVisualizationState().increaseCanvasFontSizeAll();
                 canvas.refresh();
             }
         });
@@ -368,7 +368,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                final boolean somethingChanged = callback.getVisualizationState().decreaseFontSizeAll();
+                final boolean somethingChanged = callback.getVisualizationState().decreaseCanvasFontSizeAll();
                 if (somethingChanged) canvas.refresh();
             }
         });
@@ -422,9 +422,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             }
         });
 
-        btn_showNodeNames.setSelected(getVisualizationState().isShowNodeNames());
-        btn_showLinkIds.setSelected(getVisualizationState().isShowLinkLabels());
-        btn_showNonConnectedNodes.setSelected(getVisualizationState().isShowNonConnectedNodes());
+        btn_showNodeNames.setSelected(getVisualizationState().isCanvasShowNodeNames());
+        btn_showLinkIds.setSelected(getVisualizationState().isCanvasShowLinkLabels());
+        btn_showNonConnectedNodes.setSelected(getVisualizationState().isCanvasShowNonConnectedNodes());
 
         popupPlugin = new PopupMenuPlugin(callback, this.canvas);
         addPlugin(new PanGraphPlugin(callback, canvas, MouseEvent.BUTTON1_MASK));
@@ -460,15 +460,15 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             saveDesign();
         } else if (src == btn_showNodeNames)
         {
-        	vs.setShowNodeNames(btn_showNodeNames.isSelected());
+        	vs.setCanvasShowNodeNames(btn_showNodeNames.isSelected());
         	canvas.refresh();
         } else if (src == btn_showLinkIds)
         {
-        	vs.setShowLinkLabels(btn_showLinkIds.isSelected());
+        	vs.setCanvasShowLinkLabels(btn_showLinkIds.isSelected());
         	canvas.refresh();
         } else if (src == btn_showNonConnectedNodes)
         {
-        	vs.setShowNonConnectedNodes(btn_showNonConnectedNodes.isSelected());
+        	vs.setCanvasShowNonConnectedNodes(btn_showNonConnectedNodes.isSelected());
         	canvas.refresh();
         } else if (src == btn_takeSnapshot)
         {
@@ -486,12 +486,12 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         {
             callback.loadDesignDoNotUpdateVisualization(new NetPlan());
     		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
-    				vs.suggestUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
-    		vs.setLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
+    				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
+    		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
             callback.updateVisualizationAfterNewTopology();
         } else if (src == btn_increaseInterLayerDistance)
         {
-        	if (vs.getNumberOfVisibleLayers() == 1) return;
+        	if (vs.getCanvasNumberOfVisibleLayers() == 1) return;
 
         	final int currentInterLayerDistance = vs.getInterLayerSpaceInPixels();
         	final int newInterLayerDistance = currentInterLayerDistance + (int) Math.ceil(currentInterLayerDistance * (VisualizationConstants.SCALE_IN-1));
@@ -502,7 +502,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             canvas.refresh();
         } else if (src == btn_decreaseInterLayerDistance)
         {
-        	if (vs.getNumberOfVisibleLayers() == 1) return;
+        	if (vs.getCanvasNumberOfVisibleLayers() == 1) return;
 
         	final int currentInterLayerDistance = vs.getInterLayerSpaceInPixels();
         	final int newInterLayerDistance = currentInterLayerDistance - (int) Math.ceil(currentInterLayerDistance * (1-VisualizationConstants.SCALE_OUT));
@@ -514,15 +514,15 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         	canvas.refresh();
         } else if (src == btn_showLowerLayerInfo)
         {
-        	vs.setShowLowerLayerPropagation(btn_showLowerLayerInfo.isSelected());
+        	vs.setShowInCanvasLowerLayerPropagation(btn_showLowerLayerInfo.isSelected());
         	canvas.refresh();
         } else if (src == btn_showUpperLayerInfo)
         {
-        	vs.setShowUpperLayerPropagation(btn_showUpperLayerInfo.isSelected());
+        	vs.setShowInCanvasUpperLayerPropagation(btn_showUpperLayerInfo.isSelected());
         	canvas.refresh();
         } else if (src == btn_showThisLayerInfo)
         {
-        	vs.setShowThisLayerPropagation(btn_showThisLayerInfo.isSelected());
+        	vs.setShowInCanvasThisLayerPropagation(btn_showThisLayerInfo.isSelected());
         	canvas.refresh();
         } else if (src == btn_multilayer)
         {
@@ -613,8 +613,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             callback.loadDesignDoNotUpdateVisualization(aux);
             final VisualizationState vs = callback.getVisualizationState();
     		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
-    				vs.suggestUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
-    		vs.setLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
+    				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
+    		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
             callback.updateVisualizationAfterNewTopology();
         } catch (Net2PlanException ex)
         {
@@ -638,8 +638,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             callback.loadDesignDoNotUpdateVisualization(netPlan);
             final VisualizationState vs = callback.getVisualizationState();
     		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
-    				vs.suggestUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
-    		vs.setLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
+    				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
+    		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
             callback.updateVisualizationAfterNewTopology();
         } catch (Net2PlanException ex)
         {

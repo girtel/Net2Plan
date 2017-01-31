@@ -1173,7 +1173,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
 
     public abstract String[] getTableTips();
 
-    public abstract boolean hasElements(NetPlan np);
+    public abstract boolean hasElements();
 
     public abstract int getAttributesColumnIndex();
 
@@ -1201,7 +1201,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
             return;
         if (currentState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING && (networkElementType.equals(NetworkElementType.ROUTE)))
             return;
-        if (hasElements(currentState))
+        if (hasElements())
         {
             String[] tableHeaders = getCurrentTableHeaders();
             ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
@@ -1264,7 +1264,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
         {
             Object auxItemId = null;
             int row = -1;
-            if (hasElements(callback.getDesign()))
+            if (hasElements())
             {
                 JTable table = getTable(e);
                 row = table.rowAtPoint(e.getPoint());

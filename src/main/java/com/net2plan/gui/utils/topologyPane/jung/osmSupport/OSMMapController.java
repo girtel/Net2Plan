@@ -169,7 +169,7 @@ public class OSMMapController
             final Point2D realPositionOSMCoordinates = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
 
             // Having in mind GUI Node stack
-            final List<GUINode> guiNodes = topologyVisualizationState.getVerticallyStackedGUINodes(node);
+            final List<GUINode> guiNodes = topologyVisualizationState.getCanvasVerticallyStackedGUINodes(node);
 
             for (GUINode guiNode : guiNodes)
             {

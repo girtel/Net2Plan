@@ -1,12 +1,19 @@
 package com.net2plan.gui.utils.viewEditTopolTables;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.LayoutManager;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.EnumMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -32,7 +39,9 @@ import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_resource;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_route;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_srg;
+import com.net2plan.gui.utils.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -95,7 +104,58 @@ public class ViewEditTopologyTablesPane extends JPanel
                 netPlanViewTable.get(elementType).getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
                 final JPanel panel = new JPanel ();
                 panel.setLayout(new BorderLayout());
-                panel.add(netPlanViewTableNumEntriesLabel.get(elementType), BorderLayout.NORTH);
+                JPanel labelsPanel = new JPanel (); labelsPanel.setLayout(new BorderLayout());
+                labelsPanel.setBackground(Color.YELLOW);
+                labelsPanel.setForeground(Color.BLACK);
+                labelsPanel.add(netPlanViewTableNumEntriesLabel.get(elementType), BorderLayout.CENTER);
+                {
+                	final JPanel buttonsPanel = new JPanel ();
+                    final JButton resetTableRowFilters = new JButton ("Reset VFs");
+                    buttonsPanel.add(resetTableRowFilters , BorderLayout.EAST);
+                    resetTableRowFilters.addActionListener(new ActionListener()
+    				{
+    					@Override
+    					public void actionPerformed(ActionEvent e)
+    					{
+    						callback.getVisualizationState().setTableRowFilter(null);
+    						callback.updateVisualizationJustTables();
+    						callback.resetPickedStateAndUpdateView();
+    					}
+    				});
+                    final JButton applyIntersectFilter = new JButton ("AND filter");
+                    buttonsPanel.add(applyIntersectFilter , BorderLayout.CENTER);
+                    applyIntersectFilter.addActionListener(new ActionListener()
+    				{
+    					@Override
+    					public void actionPerformed(ActionEvent e)
+    					{
+    						final AdvancedJTable_NetworkElement table = netPlanViewTable.get(elementType);
+    						final int  [] selectedElements = table.getSelectedRows();
+    						if (selectedElements.length == 0) return;
+    						if (selectedElements.length > 1) throw new RuntimeException("MULTIPLE SELECTIONS NOT IMPLEMENTED");
+    						if (elementType != NetworkElementType.FORWARDING_RULE)
+    						{
+    							final List<NetworkElement> selectedNetElements = new LinkedList<NetworkElement> ();
+    							for (int row : selectedElements) selectedNetElements.add(callback.getDesign().getNetworkElement((long) table.getValueAt(row , 0)));
+
+
+    							PABLO: HACER EL FILTRO GENERICO QUE LO LLAMAS SIN SABER DE DONDE ES LA TABLA, CON EL UP DOWN Y TODA LA HISTORIA
+    						}
+    						
+    						ITableRowFilter filter = callback.getVisualizationState().getTableRowFilter();
+    						if (filter == null)
+    							filter = new TBFToFromCarriedTraffic(pickedDemand , showInCanvasThisLayerPropagation , showInCanvasLowerLayerPropagation , showInCanvasUpperLayerPropagation);
+    						
+    						callback.getVisualizationState().setTableRowFilter(null);
+    						callback.updateVisualizationJustTables();
+    						callback.resetPickedStateAndUpdateView();
+    					}
+    				});
+                    labelsPanel.add(buttonsPanel , BorderLayout.EAST);
+                }
+                
+                labelsPanel.setBorder(BorderFactory.createEmptyBorder(3 , 0 , 3 , 0));
+                panel.add(labelsPanel , BorderLayout.NORTH);
                 panel.add(scrollPane, BorderLayout.CENTER);
                 netPlanViewTableComponent.put(elementType, panel);
             }
@@ -196,7 +256,18 @@ public class ViewEditTopologyTablesPane extends JPanel
         {
             if (isSourceRouting && entry.getKey() == NetworkElementType.FORWARDING_RULE) continue;
             if (!isSourceRouting && (entry.getKey() == NetworkElementType.ROUTE)) continue;
-            entry.getValue().updateView(currentState);
+            final AdvancedJTable_NetworkElement table = entry.getValue();
+            table.updateView(currentState);
+            final JLabel label = netPlanViewTableNumEntriesLabel.get(entry.getKey());
+            if (label != null)
+            {
+            	final int numEntries = table.getModel().getRowCount() - 1; // last colums is for the aggregation
+            	if (callback.getVisualizationState().getTableRowFilter() != null)
+            		label.setText("Number of entries: " + numEntries + ", FILTERED VIEW: " + callback.getVisualizationState().getTableRowFilter().getDescription());
+            	else
+            		label.setText("Number of entries: " + numEntries);
+            }
+            
         }
         ((NetPlanViewTableComponent_layer) netPlanViewTableComponent.get(NetworkElementType.LAYER)).updateNetPlanView(currentState);
         ((NetPlanViewTableComponent_network) netPlanViewTableComponent.get(NetworkElementType.NETWORK)).updateNetPlanView(currentState);

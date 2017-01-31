@@ -96,7 +96,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         final VisualizationState visualizationState = callback.getVisualizationState();
 
         final List<Object[]> allLayerData = new ArrayList<>();
-        for (NetworkLayer networkLayer : Lists.reverse(visualizationState.getLayersInVisualizationOrder(true)))
+        for (NetworkLayer networkLayer : Lists.reverse(visualizationState.getCanvasLayersInVisualizationOrder(true)))
         {
             final boolean isActiveLayer = callback.getDesign().getNetworkLayerDefault() == networkLayer;
 
@@ -104,8 +104,8 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             layerData[COLUMN_UP_DOWN] = new Object();
             layerData[COLUMN_INDEX] = networkLayer.getIndex();
             layerData[COLUMN_NAME] = networkLayer.getName();
-            layerData[COLUMN_LAYER_VISIBILITY] = isActiveLayer || visualizationState.isLayerVisible(networkLayer);
-            layerData[COLUMN_LAYER_LINK_VISIBILITY] = visualizationState.isLayerLinksShown(networkLayer);
+            layerData[COLUMN_LAYER_VISIBILITY] = isActiveLayer || visualizationState.isLayerVisibleInCanvas(networkLayer);
+            layerData[COLUMN_LAYER_LINK_VISIBILITY] = visualizationState.isCanvasLayerLinksShown(networkLayer);
             layerData[COLUMN_IS_ACTIVE] = isActiveLayer;
 
             allLayerData.add(layerData);
@@ -148,14 +148,14 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                 {
                     case COLUMN_LAYER_VISIBILITY:
                         final boolean state = (boolean) newValue;
-                        visualizationState.setLayerVisibility(selectedLayer, state);
+                        visualizationState.setCanvasLayerVisibility(selectedLayer, state);
                         break;
                     case COLUMN_LAYER_LINK_VISIBILITY:
-                        visualizationState.setLayerLinksVisibility(selectedLayer, (boolean) newValue);
+                        visualizationState.setLayerLinksVisibilityInCanvas(selectedLayer, (boolean) newValue);
                         break;
                     case COLUMN_IS_ACTIVE:
                         callback.getDesign().setNetworkLayerDefault(selectedLayer);
-                        visualizationState.setLayerVisibility(selectedLayer, true);
+                        visualizationState.setCanvasLayerVisibility(selectedLayer, true);
                         break;
                     default:
                         break;
@@ -290,12 +290,12 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                 final NetworkLayer selectedLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow(), COLUMN_INDEX));
                 final NetworkLayer neighbourLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow() - 1, COLUMN_INDEX));
 
-                final BidiMap<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = vs.getLayerOrderIndexMap(true);
+                final BidiMap<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = vs.getCanvasLayerOrderIndexMap(true);
 
                 // Swap the selected layer with the one on top of it.
                 this.swap(layerOrderMapConsideringNonVisible, selectedLayer, neighbourLayer);
 
-                vs.setLayerVisibilityAndOrder(callback.getDesign(), layerOrderMapConsideringNonVisible , null);
+                vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), layerOrderMapConsideringNonVisible , null);
             } else if (src == btn_down)
             {
                 if (getSelectedRow() == getRowCount() - 1) return;
@@ -305,12 +305,12 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                 final NetworkLayer selectedLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow(), COLUMN_INDEX));
                 final NetworkLayer neighbourLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow() + 1, COLUMN_INDEX));
 
-                final BidiMap<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = vs.getLayerOrderIndexMap(true);
+                final BidiMap<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = vs.getCanvasLayerOrderIndexMap(true);
 
                 // Swap the selected layer with the one on top of it.
                 this.swap(layerOrderMapConsideringNonVisible, selectedLayer, neighbourLayer);
 
-                vs.setLayerVisibilityAndOrder (callback.getDesign(), layerOrderMapConsideringNonVisible , null);
+                vs.setCanvasLayerVisibilityAndOrder (callback.getDesign(), layerOrderMapConsideringNonVisible , null);
             }
 
             updateTable();

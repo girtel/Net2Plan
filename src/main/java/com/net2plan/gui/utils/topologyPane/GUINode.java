@@ -65,7 +65,7 @@ public class GUINode
     	this.layer = layer;
         this.npNode = npNode;
         this.vs = vs;
-        if (!vs.isLayerVisible(layer)) throw new RuntimeException ("Bad");
+        if (!vs.isLayerVisibleInCanvas(layer)) throw new RuntimeException ("Bad");
 
 		/* defaults */
         this.drawPaint = DEFAULT_GUINODE_COLOR;
@@ -234,7 +234,7 @@ public class GUINode
     
     public VisualizationState getVisualizationState () { return vs; }
 
-    public int getVisualizationOrderRemovingNonVisibleLayers () { return vs.getVisualizationOrderRemovingNonVisible(layer); }
+    public int getVisualizationOrderRemovingNonVisibleLayers () { return vs.getCanvasVisualizationOrderRemovingNonVisible(layer); }
 
 //    private static Shape adjustShapeToSize (Shape s , double size_x , double size_y)
 //    {

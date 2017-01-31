@@ -40,8 +40,11 @@ import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement.LastRowAggregatedValue;
+import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
@@ -73,8 +76,6 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
     private static final String netPlanViewTabName = "Resources";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique Identifier","Index","Name","Type","Host Node","Capacity","Cap. Units","Ocuppied capacity","Traversing Routes","Upper Resources","Base Resources","Processing Time","Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique Identifier","Index","Name","Type","Host Node","Capacity","Cap. Units","Ocuppied capacity","Traversing Routes","Upper Resources","Base Resources","Processing Time","Attributes");
-    private List<Resource> currentResources = new LinkedList<>();
-    private NetPlan currentTopology = null;
 //    private final String[] resourceTypes = StringUtils.arrayOf("Firewall","NAT","CPU","RAM");
 
     public AdvancedJTable_resource(final IVisualizationCallback callback)
@@ -98,8 +99,9 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
     @Override
     public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesTitles) 
     {
-        List<Object[]> allResourceData = new LinkedList<Object[]>();
-        for (Resource res : currentState.getResources()) 
+        final List<Object[]> allResourceData = new LinkedList<Object[]>();
+    	final List<Resource> rowVisibleResources = getVisibleElementsInTable ();
+        for (Resource res : rowVisibleResources) 
         {
             Object[] resData = new Object[netPlanViewTableHeader.length + attributesTitles.size()];
             resData[COLUMN_ID] = res.getId();
@@ -129,10 +131,10 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
         }
 
         /* Add the aggregation row with the aggregated statistics */
-        final double aggCapacity = currentState.getResources().stream().mapToDouble(e->e.getCapacity()).sum();
-        final double aggOccupiedCapacity = currentState.getResources().stream().mapToDouble(e->e.getOccupiedCapacity()).sum();
-        final int aggTravSCs = currentState.getResources().stream().mapToInt(e->e.getTraversingRoutes().size()).sum();
-        final double aggMaxProcTime = currentState.getResources().stream().mapToDouble(e->e.getProcessingTimeToTraversingTrafficInMs()).max().orElse(0);
+        final double aggCapacity = rowVisibleResources.stream().mapToDouble(e->e.getCapacity()).sum();
+        final double aggOccupiedCapacity = rowVisibleResources.stream().mapToDouble(e->e.getOccupiedCapacity()).sum();
+        final int aggTravSCs = rowVisibleResources.stream().mapToInt(e->e.getTraversingRoutes().size()).sum();
+        final double aggMaxProcTime = rowVisibleResources.stream().mapToDouble(e->e.getProcessingTimeToTraversingTrafficInMs()).max().orElse(0);
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue [netPlanViewTableHeader.length + attributesTitles.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
         aggregatedData [COLUMN_CAPACITY] = new LastRowAggregatedValue(aggCapacity);
@@ -179,12 +181,11 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
     }
 
     @Override
-    public boolean hasElements(NetPlan np) {
-        return callback.getDesign().hasResources();
-    }
-
-    public boolean isTableEmpty(){
-        return !callback.getDesign().hasResources();
+    public boolean hasElements()
+    {
+    	final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+    	final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
+    	return rf == null? callback.getDesign().hasResources() : rf.hasResources(layer);
     }
 
     @Override
@@ -302,9 +303,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
     @Override
     public ArrayList<String> getAttributesColumnsHeaders() {
         ArrayList<String> attColumnsHeaders = new ArrayList<>();
-        currentTopology = callback.getDesign();
-        currentResources = currentTopology.getResources();
-        for(Resource res : currentResources)
+        for(Resource res : getVisibleElementsInTable())
         {
 
             for (Map.Entry<String, String> entry : res.getAttributes().entrySet())
@@ -379,6 +378,8 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
     public void doPopup(MouseEvent e, int row, Object itemId) {
 
         JPopupMenu popup = new JPopupMenu();
+        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+        final List<Resource> rowsInTheTable = getVisibleElementsInTable();
 
         if (callback.getVisualizationState().isNetPlanEditable()) {
             popup.add(getAddOption());
@@ -386,7 +387,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                 popup.add(item);
         }
 
-        if (!isTableEmpty()) 
+        if (!rowsInTheTable.isEmpty()) 
         {
             if (callback.getVisualizationState().isNetPlanEditable()) {
                 if (row != -1) {
@@ -395,8 +396,8 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                     JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
                     removeItem.addActionListener(new ActionListener() {
                         @Override
-                        public void actionPerformed(ActionEvent e) {
-                            NetPlan netPlan = callback.getDesign();
+                        public void actionPerformed(ActionEvent e) 
+                        {
                             try {
                                 callback.getDesign().getResourceFromId((Long)itemId).remove();
                                 callback.getVisualizationState().resetPickedState();
@@ -411,13 +412,13 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                     popup.add(removeItem);
                     addPopupMenuAttributeOptions(e, row, itemId, popup);
                 }
-                JMenuItem removeItemsOfAType = new JMenuItem("Remove all "+networkElementType+"s of a type");
+                JMenuItem removeItemsOfAType = new JMenuItem("Remove all table "+networkElementType+"s of a type");
                 removeItemsOfAType.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         NetPlan netPlan = callback.getDesign();
                         JComboBox typeSelector = new WiderJComboBox();
-                        final Set<String> resourceTypes = netPlan.getResources().stream().map(ee->ee.getType()).collect(Collectors.toSet());
+                        final Set<String> resourceTypes = rowsInTheTable.stream().map(ee->ee.getType()).collect(Collectors.toSet());
                         for(String type : resourceTypes)
                             typeSelector.addItem(type);
                         try{
@@ -427,20 +428,12 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                             while (true) {
                                 int result = JOptionPane.showConfirmDialog(null, pane, "Please choose the type of "+ networkElementType+" to remove", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                                 if (result != JOptionPane.OK_OPTION) return;
-                                    String typeToRemove = typeSelector.getSelectedItem().toString();
-                                    List<Resource> resourcesToRemove = new LinkedList<Resource>();
-                                    for(Resource res : netPlan.getResources())
-                                    {
-                                        if(res.getType().equals(typeToRemove))
-                                            resourcesToRemove.add(res);
-                                    }
-
-                                    for(Resource res : resourcesToRemove)
-                                    {
-                                        res.remove();
-                                    }
-                                    callback.getVisualizationState().resetPickedState();
-                                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
+                                final String typeToRemove = typeSelector.getSelectedItem().toString();
+                                final List<Resource> resourcesToRemove = rowsInTheTable.stream().filter(r->r.getType().equals(typeToRemove)).collect(Collectors.toList());
+                                for(Resource res : resourcesToRemove)
+                                    res.remove();
+                                callback.getVisualizationState().resetPickedState();
+                            	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
                                 break;
                             }
                         }catch (Throwable ex) {
@@ -451,7 +444,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                     }
                 });
                 popup.add(removeItemsOfAType);
-                JMenuItem removeItems = new JMenuItem("Remove all " + networkElementType + "s");
+                JMenuItem removeItems = new JMenuItem("Remove all table " + networkElementType + "s");
 
                 removeItems.addActionListener(new ActionListener() 
                 {
@@ -459,8 +452,12 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                     public void actionPerformed(ActionEvent e) {
                         NetPlan netPlan = callback.getDesign();
 
-                        try {
-                            netPlan.removeAllResources();
+                        try 
+                        {
+                        	if (rf == null)
+                        		netPlan.removeAllResources();
+                        	else
+                        		for (Resource r : rowsInTheTable) r.remove();
                             callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
                         } catch (Throwable ex) {
@@ -592,8 +589,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
 
     private List<JComponent> getExtraOptions(final int row, final Object itemId) {
         List<JComponent> options = new LinkedList<JComponent>();
-        final int numRows = model.getRowCount();
-        final NetPlan netPlan = callback.getDesign();
+        final List<Resource> rowsInTheTable = getVisibleElementsInTable();
 
         JMenuItem capacityInBaseResources = new JMenuItem("Set capacity to base resources");
         capacityInBaseResources.addActionListener(new ActionListener() {
@@ -654,7 +650,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                 NetPlan netPlan = callback.getDesign();
                 double cap;
                 while (true) {
-                    String str = JOptionPane.showInputDialog(null, "Capacity value", "Set capacity to all resources", JOptionPane.QUESTION_MESSAGE);
+                    String str = JOptionPane.showInputDialog(null, "Capacity value", "Set capacity to all table resources", JOptionPane.QUESTION_MESSAGE);
                     if (str == null) return;
 
                     try {
@@ -668,7 +664,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                 }
 
                 try {
-                    for(Resource r : netPlan.getResources())
+                    for(Resource r : rowsInTheTable)
                     		r.setCapacity(cap , null);
                     callback.getVisualizationState().resetPickedState();
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
@@ -679,7 +675,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
         });
         options.add(setCapacityToAll);
 
-        JMenuItem setTraversingTimeToAll = new JMenuItem("Set processing time to all");
+        JMenuItem setTraversingTimeToAll = new JMenuItem("Set processing time to all table resources");
         setTraversingTimeToAll.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -700,7 +696,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                 }
 
                 try {
-                    for(Resource r : netPlan.getResources())
+                    for(Resource r : rowsInTheTable)
                     		r.setProcessingTimeToTraversingTrafficInMs(procTime);
                     callback.getVisualizationState().resetPickedState();
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
@@ -788,4 +784,10 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
         }
     }
 
+    private List<Resource> getVisibleElementsInTable ()
+    {
+    	final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+    	final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
+    	return rf == null? callback.getDesign().getResources() : rf.getVisibleResources(layer);
+    }
 }

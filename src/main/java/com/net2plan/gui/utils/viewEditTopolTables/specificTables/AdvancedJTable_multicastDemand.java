@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.swing.Box;
 import javax.swing.DefaultRowSorter;
@@ -40,11 +41,13 @@ import javax.swing.table.TableModel;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
+import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement.LastRowAggregatedValue;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.MulticastTree;
@@ -80,9 +83,6 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
             "Offered traffic", "Carried traffic", "% Lost traffic", "Routing cycles", "Bifurcated", "# Multicast trees", "Max e2e latency (ms)", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Ingress node", "Egress nodes", "Indicates the coupled upper layer links, if any, or empty", "Offered traffic by the multicast demand", "Carried traffic by multicast trees carrying demand traffic", "Percentage of lost traffic from the offered", "Indicates whether there are routing cycles: always loopless since we always deal with multicast trees", "Indicates whether the demand has more than one associated multicast tree carrying traffic", "Number of associated multicast trees", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", "Multicast demand-specific attributes");
 
-    private NetPlan currentTopology = null;
-    private List<MulticastDemand> currentMulticastDemands = new LinkedList<>();
-
     public AdvancedJTable_multicastDemand(final IVisualizationCallback callback) {
         super(createTableModel(callback), callback, NetworkElementType.MULTICAST_DEMAND, true);
         setDefaultCellRenderers(callback);
@@ -99,9 +99,12 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
 
     }
 
-    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) {
+    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) 
+    {
         List<Object[]> allDemandData = new LinkedList<Object[]>();
-        for (MulticastDemand demand : currentState.getMulticastDemands()) {
+    	final List<MulticastDemand> rowVisibleDemands = getVisibleElementsInTable ();
+    	for (MulticastDemand demand : rowVisibleDemands) 
+    	{
             Set<MulticastTree> multicastTreeIds_thisDemand = demand.getMulticastTrees();
             Set<Link> coupledLinks = demand.getCoupledLinks();
             Node ingressNode = demand.getIngressNode();
@@ -138,12 +141,12 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
         }
         
         /* Add the aggregation row with the aggregated statistics */
-        final int aggNumCouplings = (int) currentState.getMulticastDemands().stream().filter(e->e.isCoupled()).count();
-        final double aggOffered = currentState.getMulticastDemands().stream().mapToDouble(e->e.getOfferedTraffic()).sum();
-        final double aggCarried = currentState.getMulticastDemands().stream().mapToDouble(e->e.getCarriedTraffic()).sum();
-        final double aggLost = currentState.getMulticastDemands().stream().mapToDouble(e->e.getBlockedTraffic()).sum();
-        final int aggNumTrees = currentState.getMulticastDemands().stream().mapToInt(e->e.getMulticastTrees().size()).sum();
-        final double aggMaxLatency = currentState.getMulticastDemands().stream().mapToDouble(e->e.getWorseCasePropagationTimeInMs()).sum();
+        final int aggNumCouplings = (int) rowVisibleDemands.stream().filter(e->e.isCoupled()).count();
+        final double aggOffered = rowVisibleDemands.stream().mapToDouble(e->e.getOfferedTraffic()).sum();
+        final double aggCarried = rowVisibleDemands.stream().mapToDouble(e->e.getCarriedTraffic()).sum();
+        final double aggLost = rowVisibleDemands.stream().mapToDouble(e->e.getBlockedTraffic()).sum();
+        final int aggNumTrees = rowVisibleDemands.stream().mapToInt(e->e.getMulticastTrees().size()).sum();
+        final double aggMaxLatency = rowVisibleDemands.stream().mapToDouble(e->e.getWorseCasePropagationTimeInMs()).sum();
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue [netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
         aggregatedData [COLUMN_COUPLEDTOLINKS] = new LastRowAggregatedValue(aggNumCouplings);
@@ -188,8 +191,11 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
         return netPlanViewTableTips;
     }
 
-    public boolean hasElements(NetPlan np) {
-        return np.hasMulticastDemands();
+    public boolean hasElements() 
+    {
+    	final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+    	final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
+    	return rf == null? callback.getDesign().hasMulticastDemands(layer) : rf.hasMulticastDemands(layer);
     }
 
     @Override
@@ -293,28 +299,19 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
     public ArrayList<String> getAttributesColumnsHeaders()
     {
         ArrayList<String> attColumnsHeaders = new ArrayList<>();
-        currentTopology = callback.getDesign();
-        currentMulticastDemands = currentTopology.getMulticastDemands();
-        for(MulticastDemand mDemand : currentMulticastDemands)
-        {
-
+        for(MulticastDemand mDemand : getVisibleElementsInTable())
             for (Map.Entry<String, String> entry : mDemand.getAttributes().entrySet())
-            {
                 if(attColumnsHeaders.contains(entry.getKey()) == false)
-                {
                     attColumnsHeaders.add(entry.getKey());
-                }
-
-            }
-
-        }
-
         return attColumnsHeaders;
     }
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, final Object itemId) {
+    public void doPopup(final MouseEvent e, final int row, final Object itemId) 
+    {
         JPopupMenu popup = new JPopupMenu();
+        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+        final List<MulticastDemand> demandRowsInTheTable = getVisibleElementsInTable();
 
         if (callback.getVisualizationState().isNetPlanEditable()) {
             popup.add(getAddOption());
@@ -322,7 +319,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                 popup.add(item);
         }
 
-        if (!isTableEmpty()) {
+        if (!demandRowsInTheTable.isEmpty()) {
             if (callback.getVisualizationState().isNetPlanEditable()) {
                 if (row != -1) {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
@@ -339,7 +336,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
 
                                 try {
                                     netPlan.getMulticastDemandFromId((long) itemId).remove();
-                                    callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                                    callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
                                 } catch (Throwable ex) {
                                     ErrorHandling.addErrorOrException(ex, getClass());
@@ -354,15 +351,18 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                     addPopupMenuAttributeOptions(e, row, itemId, popup);
                 }
                 if (networkElementType != NetworkElementType.LAYER) {
-                    JMenuItem removeItems = new JMenuItem("Remove all " + networkElementType + "s");
+                    JMenuItem removeItems = new JMenuItem("Remove all " + networkElementType + "s in table");
 
                     removeItems.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             NetPlan netPlan = callback.getDesign();
                             try {
-                                netPlan.removeAllMulticastDemands();
-                                callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                            	if (rf == null) 
+                            		netPlan.removeAllMulticastDemands();
+                            	else
+                            		for (MulticastDemand d : demandRowsInTheTable) d.remove();
+                                callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                             	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
                             } catch (Throwable ex) {
                                 ex.printStackTrace();
@@ -393,13 +393,9 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
     @Override
     public void showInCanvas(MouseEvent e, Object itemId) 
     {
-        if (isTableEmpty()) return;
+        if (getVisibleElementsInTable().isEmpty()) return;
         callback.getVisualizationState ().pickMulticastDemand(callback.getDesign().getMulticastDemandFromId((long) itemId));
         callback.updateVisualizationAfterPick();
-    }
-
-    private boolean isTableEmpty() {
-        return !callback.getDesign().hasMulticastDemands();
     }
 
     private JMenuItem getAddOption() {
@@ -479,12 +475,14 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
         return options;
     }
 
-    private List<JComponent> getExtraOptions(final int row, final Object itemId) {
+    private List<JComponent> getExtraOptions(final int row, final Object itemId) 
+    {
         List<JComponent> options = new LinkedList<JComponent>();
 
         final int numRows = model.getRowCount();
         final NetPlan netPlan = callback.getDesign();
-
+        final List<MulticastDemand> visibleRows = getVisibleElementsInTable();
+        
         JMenuItem offeredTrafficToAll = new JMenuItem("Set offered traffic to all");
         offeredTrafficToAll.addActionListener(new ActionListener() {
             @Override
@@ -492,7 +490,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                 double h_d;
 
                 while (true) {
-                    String str = JOptionPane.showInputDialog(null, "Offered traffic volume", "Set traffic value to all multicast demands", JOptionPane.QUESTION_MESSAGE);
+                    String str = JOptionPane.showInputDialog(null, "Offered traffic volume", "Set traffic value to all table multicast demands", JOptionPane.QUESTION_MESSAGE);
                     if (str == null) return;
 
                     try {
@@ -505,10 +503,8 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                     }
                 }
 
-                NetPlan netPlan = callback.getDesign();
-
                 try {
-                    for (MulticastDemand demand : netPlan.getMulticastDemands()) demand.setOfferedTraffic(h_d);
+                    for (MulticastDemand demand : visibleRows) demand.setOfferedTraffic(h_d);
                 	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set offered traffic to all multicast demands");
@@ -539,14 +535,13 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                 JMenuItem decoupleAllDemandsItem = null;
                 JMenuItem createUpperLayerLinksFromDemandsItem = null;
 
-                final Set<MulticastDemand> coupledDemands = new HashSet<MulticastDemand>();
-                for (MulticastDemand d : netPlan.getMulticastDemands()) if (d.isCoupled()) coupledDemands.add(d);
+                final Set<MulticastDemand> coupledDemands = visibleRows.stream().filter(e->e.isCoupled()).collect(Collectors.toSet());
                 if (!coupledDemands.isEmpty()) {
-                    decoupleAllDemandsItem = new JMenuItem("Decouple all demands");
+                    decoupleAllDemandsItem = new JMenuItem("Decouple all table demands");
                     decoupleAllDemandsItem.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            for (MulticastDemand d : new HashSet<MulticastDemand>(coupledDemands)) d.decouple();
+                            for (MulticastDemand d : coupledDemands) d.decouple();
                             int numRows = model.getRowCount();
                             for (int i = 0; i < numRows; i++) model.setValueAt("", i, COLUMN_COUPLEDTOLINKS);
                             callback.getVisualizationState().resetPickedState();
@@ -555,7 +550,8 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                     });
                 }
 
-                if (coupledDemands.size() < netPlan.getNumberOfDemands()) {
+                if (coupledDemands.size() < visibleRows.size())
+                {
                     createUpperLayerLinksFromDemandsItem = new JMenuItem("Create upper layer links from uncoupled demands");
                     createUpperLayerLinksFromDemandsItem.addActionListener(new ActionListener() {
                         @Override
@@ -582,13 +578,14 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                                 int result = JOptionPane.showConfirmDialog(null, pane, "Please select the upper layer to create links", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                                 if (result != JOptionPane.OK_OPTION) return;
 
-                                try {
+                                try 
+                                {
                                     long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
                                     NetworkLayer layer = netPlan.getNetworkLayerFromId(layerId);
-                                    for (MulticastDemand demand : netPlan.getMulticastDemands())
+                                    for (MulticastDemand demand : visibleRows)
                                         if (!demand.isCoupled())
                                             demand.coupleToNewLinksCreated(layer);
-                                    callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                                    callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_DEMAND , NetworkElementType.LINK));
                                     break;
                                 } catch (Throwable ex) {
@@ -632,7 +629,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                 egressNodes.remove(ingressNode);
                 netPlan.addMulticastDemand(ingressNode, egressNodes, 0, null);
             }
-            callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+            callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_DEMAND , NetworkElementType.LINK));
         }
     }
@@ -660,4 +657,10 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
         }
     }
 
+    private List<MulticastDemand> getVisibleElementsInTable ()
+    {
+    	final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+    	final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
+    	return rf == null? callback.getDesign().getMulticastDemands(layer) : rf.getVisibleMulticastDemands(layer);
+    }
 }

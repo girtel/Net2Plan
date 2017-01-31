@@ -22,7 +22,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 import javax.swing.Box;
@@ -39,15 +38,16 @@ import javax.swing.table.TableModel;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement.LastRowAggregatedValue;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.MulticastTree;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -86,9 +86,6 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
             "Worse case length (km)", "Worse case propagation delay (ms)", "Bottleneck utilization", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Multicast demand", "Ingress node", "Egress nodes", "Multicast demand offered traffic", "This multicast tree carried traffic", "Capacity occupied in the links (typically same as the carried traffic)", "Set of links in the tree", "Number of links in the tree (equal to the number of traversed nodes minus one)", "Set of traversed nodes (including ingress and egress ndoes)", "Number of hops of the longest path (in number of hops) to any egress node", "Length (km) of the longest path (in km) to any egress node", "Propagation demay (ms) of the longest path (in ms) to any egress node", "Highest utilization among all traversed links", "Multicast tree specific attributes");
 
-    private NetPlan currentTopology = null;
-    private List<MulticastTree> currentMulticastTrees = new LinkedList<>();
-
     public AdvancedJTable_multicastTree(final IVisualizationCallback callback) {
         super(createTableModel(callback), callback, NetworkElementType.MULTICAST_TREE, true);
         setDefaultCellRenderers(callback);
@@ -106,16 +103,17 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
     }
 
 
-    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) {
+    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) 
+    {    	
+    	final List<MulticastTree> rowVisibleTrees = getVisibleElementsInTable ();
         List<Object[]> allTreeData = new LinkedList<Object[]>();
-        for (MulticastTree tree : currentState.getMulticastTrees()) {
-            MulticastDemand demand = tree.getMulticastDemand();
-            double maxUtilization = 0;
-            for (Link e : tree.getLinkSet())
-                maxUtilization = Math.max(maxUtilization, e.getOccupiedCapacity() / e.getCapacity());
-            Node ingressNode = tree.getIngressNode();
-            Set<Node> egressNodes = tree.getEgressNodes();
-            String ingressNodeName = ingressNode.getName();
+        for (MulticastTree tree : rowVisibleTrees)
+        {
+            final MulticastDemand demand = tree.getMulticastDemand();
+            final double maxUtilization = tree.getLinkSet().stream().mapToDouble(e->e.getUtilization()).max().orElse(0);
+            final Node ingressNode = tree.getIngressNode();
+            final Set<Node> egressNodes = tree.getEgressNodes();
+            final String ingressNodeName = ingressNode.getName();
             String egressNodesString = "";
             for (Node n : egressNodes) egressNodesString += n + "(" + (n.getName().isEmpty() ? "" : n.getName()) + ") ";
 
@@ -149,12 +147,12 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
         }
         
         /* Add the aggregation row with the aggregated statistics */
-        final double aggOffered = currentState.getMulticastTrees().stream().map(e->e.getMulticastDemand()).mapToDouble(e->e.getOfferedTraffic()).sum();
-        final double aggCarried = currentState.getMulticastTrees().stream().mapToDouble(e->e.getCarriedTraffic()).sum();
-        final double aggOccupiedCap = currentState.getMulticastTrees().stream().mapToDouble(e->e.getOccupiedLinkCapacity()).sum();
-        final int aggWCNumHops = currentState.getMulticastTrees().stream().mapToInt(e->e.getTreeMaximumPathLengthInHops()).max().orElse(0);
-        final double aggWCLength = currentState.getMulticastTrees().stream().mapToDouble(e->e.getTreeMaximumPathLengthInKm()).max().orElse(0);
-        final double aggWCPropDelay = currentState.getMulticastTrees().stream().mapToDouble(e->e.getTreeMaximumPropagationDelayInMs()).max().orElse(0);
+        final double aggOffered = rowVisibleTrees.stream().map(e->e.getMulticastDemand()).mapToDouble(e->e.getOfferedTraffic()).sum();
+        final double aggCarried = rowVisibleTrees.stream().mapToDouble(e->e.getCarriedTraffic()).sum();
+        final double aggOccupiedCap = rowVisibleTrees.stream().mapToDouble(e->e.getOccupiedLinkCapacity()).sum();
+        final int aggWCNumHops = rowVisibleTrees.stream().mapToInt(e->e.getTreeMaximumPathLengthInHops()).max().orElse(0);
+        final double aggWCLength = rowVisibleTrees.stream().mapToDouble(e->e.getTreeMaximumPathLengthInKm()).max().orElse(0);
+        final double aggWCPropDelay = rowVisibleTrees.stream().mapToDouble(e->e.getTreeMaximumPropagationDelayInMs()).max().orElse(0);
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue [netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
         aggregatedData [COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(aggOffered);
@@ -198,9 +196,12 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
         return netPlanViewTableTips;
     }
 
-    public boolean hasElements(NetPlan np) {
-        return np.hasMulticastTrees();
-    }
+    public boolean hasElements() 
+    {
+    	final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+    	final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
+    	return rf == null? callback.getDesign().hasMulticastTrees(layer) : rf.hasMulticastTrees(layer);
+}
 
     @Override
     public int getAttributesColumnIndex()
@@ -313,28 +314,19 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
     public ArrayList<String> getAttributesColumnsHeaders()
     {
         ArrayList<String> attColumnsHeaders = new ArrayList<>();
-        currentTopology = callback.getDesign();
-        currentMulticastTrees = currentTopology.getMulticastTrees();
-        for(MulticastTree mTree : currentMulticastTrees)
-        {
-
+        for(MulticastTree mTree : getVisibleElementsInTable())
             for (Map.Entry<String, String> entry : mTree.getAttributes().entrySet())
-            {
                 if(attColumnsHeaders.contains(entry.getKey()) == false)
-                {
                     attColumnsHeaders.add(entry.getKey());
-                }
-
-            }
-
-        }
-
         return attColumnsHeaders;
     }
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, final Object itemId) {
+    public void doPopup(final MouseEvent e, final int row, final Object itemId) 
+    {
         JPopupMenu popup = new JPopupMenu();
+        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+        final List<MulticastTree> rowsInTheTable = getVisibleElementsInTable();
 
         if (callback.getVisualizationState().isNetPlanEditable()) {
             popup.add(getAddOption());
@@ -342,7 +334,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
                 popup.add(item);
         }
 
-        if (!isTableEmpty()) {
+        if (!rowsInTheTable.isEmpty()) {
             if (callback.getVisualizationState().isNetPlanEditable()) {
                 if (row != -1) {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
@@ -368,7 +360,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
                     addPopupMenuAttributeOptions(e, row, itemId, popup);
                 }
 
-                JMenuItem removeItems = new JMenuItem("Remove all " + networkElementType + "s");
+                JMenuItem removeItems = new JMenuItem("Remove all " + networkElementType + "s in the table");
 
                 removeItems.addActionListener(new ActionListener() {
                     @Override
@@ -376,7 +368,10 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
                         NetPlan netPlan = callback.getDesign();
 
                         try {
-                            netPlan.removeAllMulticastTrees();
+                        	if (rf == null)
+                        		netPlan.removeAllMulticastTrees();
+                        	else
+                        		for (MulticastTree t : rowsInTheTable) t.remove();
                             callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
                         } catch (Throwable ex) {
@@ -407,13 +402,9 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
 
     @Override
     public void showInCanvas(MouseEvent e, Object itemId) {
-        if (isTableEmpty()) return;
+        if (getVisibleElementsInTable().isEmpty()) return;
         callback.getVisualizationState ().pickMulticastTree(callback.getDesign().getMulticastTreeFromId((long) itemId));
         callback.updateVisualizationAfterPick();
-    }
-
-    private boolean isTableEmpty() {
-        return !callback.getDesign().hasMulticastTrees();
     }
 
     private JMenuItem getAddOption() {
@@ -421,8 +412,6 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
         addItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                NetPlan netPlan = callback.getDesign();
-
                 try {
                     createMulticastTreeGUI(callback);
                     callback.getVisualizationState().resetPickedState();
@@ -504,8 +493,8 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
-            Random rng = new Random();
+        public void actionPerformed(ActionEvent e) 
+        {
             NetPlan netPlan = callback.getDesign();
             List<Link> links = netPlan.getLinks();
             final int E = links.size();
@@ -555,5 +544,11 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
 
     private List<JComponent> getForcedOptions() {
         return new LinkedList<JComponent>();
+    }
+    private List<MulticastTree> getVisibleElementsInTable ()
+    {
+    	final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+    	final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
+    	return rf == null? callback.getDesign().getMulticastTrees(layer) : rf.getVisibleMulticastTrees(layer);
     }
 }

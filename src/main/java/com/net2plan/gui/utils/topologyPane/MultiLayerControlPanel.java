@@ -94,9 +94,9 @@ public class MultiLayerControlPanel extends JPanel
             	Map<NetworkLayer,Boolean> visibilityInfo = new HashMap <>();
                 for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
                 	visibilityInfo.put(networkLayer , true);
-                if (!visibilityInfo.equals(vs.getLayerVisibilityMap()))
+                if (!visibilityInfo.equals(vs.getCanvasLayerVisibilityMap()))
                 {
-                	vs.setLayerVisibilityAndOrder(netPlan , null , visibilityInfo);
+                	vs.setCanvasLayerVisibilityAndOrder(netPlan , null , visibilityInfo);
                 	callback.getVisualizationState().resetPickedState();
                     callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
                 }
@@ -105,9 +105,9 @@ public class MultiLayerControlPanel extends JPanel
             	Map<NetworkLayer,Boolean> visibilityInfo = new HashMap <>();
                 for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
                 	visibilityInfo.put(networkLayer , networkLayer.equals(netPlan.getNetworkLayerDefault()));
-                if (!visibilityInfo.equals(vs.getLayerVisibilityMap()))
+                if (!visibilityInfo.equals(vs.getCanvasLayerVisibilityMap()))
                 {
-                	vs.setLayerVisibilityAndOrder(netPlan , null , visibilityInfo);
+                	vs.setCanvasLayerVisibilityAndOrder(netPlan , null , visibilityInfo);
                     callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
                 }
             } else if (src == btn_sortLayerByIndex)
@@ -115,9 +115,9 @@ public class MultiLayerControlPanel extends JPanel
                 final BidiMap<NetworkLayer, Integer> layerIndexOrderMap = new DualHashBidiMap<>();
                 for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
                     layerIndexOrderMap.put(networkLayer, networkLayer.getIndex());
-                if (!layerIndexOrderMap.equals(vs.getLayerOrderIndexMap(true)))
+                if (!layerIndexOrderMap.equals(vs.getCanvasLayerOrderIndexMap(true)))
                 {
-                    vs.setLayerVisibilityAndOrder(netPlan, layerIndexOrderMap , null);
+                    vs.setCanvasLayerVisibilityAndOrder(netPlan, layerIndexOrderMap , null);
                     callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
                 }
             } else if (src == btn_sortLayersByTopology)
@@ -125,20 +125,20 @@ public class MultiLayerControlPanel extends JPanel
                 final BidiMap<NetworkLayer, Integer> layerIndexOrderMap = new DualHashBidiMap<>();
                 for (NetworkLayer networkLayer : netPlan.getNetworkLayerInTopologicalOrder())
                     layerIndexOrderMap.put(networkLayer, networkLayer.getIndex());
-                if (!layerIndexOrderMap.equals(vs.getLayerOrderIndexMap(true)))
+                if (!layerIndexOrderMap.equals(vs.getCanvasLayerOrderIndexMap(true)))
                 {
-                    vs.setLayerVisibilityAndOrder(netPlan, layerIndexOrderMap , null);
+                    vs.setCanvasLayerVisibilityAndOrder(netPlan, layerIndexOrderMap , null);
                     callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
                 }
             } else if (src == btn_showAllLayerLinks)
             {
                 for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
-                    vs.setLayerLinksVisibility(networkLayer, true);
+                    vs.setLayerLinksVisibilityInCanvas(networkLayer, true);
                 callback.updateVisualizationJustCanvasLinkNodeVisibilityOrColor ();
             } else if (src == btn_hideAllLayerLinks)
             {
                 for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
-                    vs.setLayerLinksVisibility(networkLayer, false);
+                    vs.setLayerLinksVisibilityInCanvas(networkLayer, false);
                 callback.updateVisualizationJustCanvasLinkNodeVisibilityOrColor ();
             }
 

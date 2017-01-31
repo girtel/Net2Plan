@@ -146,7 +146,7 @@ public class NetworkLayer extends NetworkElement
 	/** Returns true if the routing type in this layer is of the type source routing
 	 * @return see above
 	 */
-	public boolean isSourceRoutin () { return routingType == RoutingType.SOURCE_ROUTING; }
+	public boolean isSourceRouting () { return routingType == RoutingType.SOURCE_ROUTING; }
 	
 	/** Returns true if the provided network layer is a deep copy of this
 	 * @param e2 the other element

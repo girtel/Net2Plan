@@ -133,7 +133,8 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
         return netPlanViewTableTips;
     }
 
-    public boolean hasElements(NetPlan np) {
+    public boolean hasElements() 
+    {
         return true;
     }
 
@@ -224,8 +225,8 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
 
                                     final VisualizationState vs = callback.getVisualizationState();
                             		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
-                    				vs.suggestUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
-                    		vs.setLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
+                    				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
+                    		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
                                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                                 } catch (Throwable ex) {
                                     ErrorHandling.addErrorOrException(ex, getClass());
@@ -277,8 +278,8 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
                     netPlan.addLayer("Layer " + netPlan.getNumberOfLayers(), null, null, null, null , null);
                     final VisualizationState vs = callback.getVisualizationState();
             		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
-            				vs.suggestUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
-            		vs.setLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
+            				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
+            		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                 } catch (Throwable ex) {
                 	ex.printStackTrace();

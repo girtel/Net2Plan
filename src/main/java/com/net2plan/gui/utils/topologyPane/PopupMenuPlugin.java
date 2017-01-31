@@ -180,7 +180,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         public void actionPerformed(ActionEvent e)
         {
         	originNode.getNetPlan().addLink(originNode , destinationNode , 0 , 0 , 200000 , null , layer);
-        	callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+        	callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
         }
     }
@@ -203,7 +203,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         public void actionPerformed(ActionEvent e)
         {
         	originNode.getNetPlan().addLinkBidirectional(originNode , destinationNode , 0 , 0 , 200000 , null , layer);
-        	callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+        	callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
         }
 
@@ -245,7 +245,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
             	final double radius = 10; // PABLO: THIS SHOUD BE SET IN OTHER COORDINATES?
                 for (int i = 0; i < nodes.size(); i++)
                 	nodes.get(i).setXYPositionMap(new Point2D.Double(positionInNetPlanCoordinates.getX() + radius * Math.cos(Math.toRadians(angStep*i)) , positionInNetPlanCoordinates.getY() + radius * Math.sin(Math.toRadians(angStep*i))));
-            	callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+            	callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
             });
 
@@ -305,7 +305,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         public void actionPerformed(ActionEvent e)
         {
             link.remove();
-        	callback.getVisualizationState().recomputeTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+        	callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
         }
     }

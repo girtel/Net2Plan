@@ -195,8 +195,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
 
         loadDesignDoNotUpdateVisualization(currentNetPlan);
-		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = VisualizationState.generateDefaultVisualizationLayerInfo(getDesign());
-		vs.setLayerVisibilityAndOrder(getDesign() , res.getFirst() , res.getSecond());
+		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = VisualizationState.generateCanvasDefaultVisualizationLayerInfo(getDesign());
+		vs.setCanvasLayerVisibilityAndOrder(getDesign() , res.getFirst() , res.getSecond());
 
         onlineSimulationPane = new OnlineSimulationPane(this);
         executionPane = new OfflineExecutionPanel(this);
@@ -403,8 +403,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             ErrorHandling.addErrorOrException(ex, GUINetworkDesign.class);
             ErrorHandling.showErrorDialog("Unable to reset");
         }
-        Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>>  res = VisualizationState.generateDefaultVisualizationLayerInfo(getDesign());
-        vs.setLayerVisibilityAndOrder(getDesign() , res.getFirst() , res.getSecond());
+        Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>>  res = VisualizationState.generateCanvasDefaultVisualizationLayerInfo(getDesign());
+        vs.setCanvasLayerVisibilityAndOrder(getDesign() , res.getFirst() , res.getSecond());
         updateVisualizationAfterNewTopology();
     }
 
@@ -648,7 +648,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     	{
     		if (e instanceof Link)
     		{
-    			final GUILink gl = vs.getAssociatedGUILink((Link) e);
+    			final GUILink gl = vs.getCanvasAssociatedGUILink((Link) e);
     			if (gl != null)
     			{
     				gl.setArrowDrawPaint(color);
@@ -657,7 +657,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     			}
     		} else if (e instanceof Node)
     		{
-    			for (GUINode gn : vs.getVerticallyStackedGUINodes((Node) e))
+    			for (GUINode gn : vs.getCanvasVerticallyStackedGUINodes((Node) e))
     			{
     				gn.setDrawPaint(color);
     				gn.setFillPaint(color);
