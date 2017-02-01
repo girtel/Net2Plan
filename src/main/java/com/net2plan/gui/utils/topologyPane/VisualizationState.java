@@ -32,8 +32,8 @@ import java.awt.Color;
 import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,7 +57,6 @@ import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
-import com.net2plan.gui.utils.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.InterLayerPropagationGraph;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -1497,10 +1496,11 @@ public class VisualizationState
 			BufferedImage img = ImageUtils.createCircle(height , (Color) DEFAULT_GUINODE_COLOR);
 			if (img.getHeight() != height) throw new RuntimeException();
 			final Shape shapeNoBorder = FourPassImageShaper.getShape(img); 
+			 final AffineTransform translateShape = AffineTransform.getTranslateInstance(-img.getWidth()/2 , -img.getHeight()/2);
 			if (borderColor.getAlpha() != 0)
 				img = ImageUtils.addBorder(img , DEFAULT_ICONBORDERSIZEINPIXELS , borderColor);
 			final Icon icon = new ImageIcon (img);
-			final Pair<Icon,Shape> res = Pair.of(icon , shapeNoBorder);
+			final Pair<Icon,Shape> res = Pair.of(icon , translateShape.createTransformedShape(shapeNoBorder));
 			databaseOfAlreadyReadIcons.put(Triple.of(null , icon.getIconHeight() , borderColor) , res);
 			return res;
 		}

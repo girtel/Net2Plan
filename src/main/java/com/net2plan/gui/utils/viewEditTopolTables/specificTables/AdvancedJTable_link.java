@@ -637,12 +637,11 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
         return options;
     }
 
-    private List<JComponent> getExtraOptions(final int row, final Object itemId) {
+    private List<JComponent> getExtraOptions(final int row, final Object itemId) 
+    {
         List<JComponent> options = new LinkedList<JComponent>();
 
         final List<Link> rowVisibleLinks = getVisibleElementsInTable();
-        final int numRows = model.getRowCount();
-        if (rowVisibleLinks.size() != numRows) throw new RuntimeException();
         final NetPlan netPlan = callback.getDesign();
 
         if (itemId != null) {
@@ -845,7 +844,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
             }
         }
 
-        if (numRows > 1) {
+        if (rowVisibleLinks.size() > 1) {
             if (!options.isEmpty()) options.add(new JPopupMenu.Separator());
 
             JMenuItem caFixValue = new JMenuItem("Set capacity to all");

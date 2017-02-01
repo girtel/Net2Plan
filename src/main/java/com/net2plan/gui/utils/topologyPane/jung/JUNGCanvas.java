@@ -140,7 +140,7 @@ public final class JUNGCanvas implements ITopologyCanvas
 
 		
 		/* If icons => comment this line */
-//        vv.getRenderContext().setVertexShapeTransformer(gn -> gn.getShape());
+        vv.getRenderContext().setVertexShapeTransformer(gn -> gn.getShape());
         
         /* If shapes, comment this line */
         vv.getRenderContext().setVertexIconTransformer(gn->gn.getIcon ());
