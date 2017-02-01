@@ -138,59 +138,9 @@ public final class JUNGCanvas implements ITopologyCanvas
         vv.getRenderContext().setVertexFillPaintTransformer(n -> n.getFillPaint());
         vv.getRenderContext().setVertexFontTransformer(n -> n.getFont());
 
-		
-		/* If icons => comment this line */
-//        vv.getRenderContext().setVertexShapeTransformer(gn -> gn.getShape());
-        
-        /* If shapes, comment this line */
-        vv.getRenderContext().setVertexIconTransformer(gn->gn.getIcon ());
+        vv.getRenderContext().setVertexShapeTransformer(gn -> gn.getShape());
+        vv.getRenderContext().setVertexIconTransformer(gn -> gn.getIcon());
 
-        /* Convert shape to Icon: http://stackoverflow.com/questions/5449633/convert-shape-object-to-image-object-in-java */
-        /* then use only icons. modify the icon to have one with two circles around when selected? the circles are red if the node is failed */
-
-// https://java.net/projects/snat/sources/reposit/content/test/UnicodeLabelDemo.java        
-//        ojo!!
-//        VertexIconShapeTransformer<Integer> vertexIconShapeFunction =
-//        new VertexIconShapeTransformer<Integer>(new EllipseVertexShapeTransformer<Integer>());
-//        DefaultVertexIconTransformer<Integer> vertexIconFunction = new DefaultVertexIconTransformer<Integer>();
-//        vv.getRenderContext().setVertexShapeTransformer(vertexIconShapeFunction);
-//        vv.getRenderContext().setVertexIconTransformer(vertexIconFunction);
-        
-        //http://jung.sourceforge.net/site/jung-samples/xref/edu/uci/ics/jung/samples/DrawnIconVertexDemo.html
-        //        vv.getRenderContext().setVertexIconTransformer(new Transformer<Integer,Icon>() {
-//        	77  
-//        	78          	/*
-//        	79          	 * Implements the Icon interface to draw an Icon with background color and
-//        	80          	 * a text label
-//        	81          	 */
-//        	82  			public Icon transform(final Integer v) {
-//        	83  				return new Icon() {
-//        	84  
-//        	85  					public int getIconHeight() {
-//        	86  						return 20;
-//        	87  					}
-//        	88  
-//        	89  					public int getIconWidth() {
-//        	90  						return 20;
-//        	91  					}
-//        	92  
-//        	93  					public void paintIcon(Component c, Graphics g,
-//        	94  							int x, int y) {
-//        	95  						if(vv.getPickedVertexState().isPicked(v)) {
-//        	96  							g.setColor(Color.yellow);
-//        	97  						} else {
-//        	98  							g.setColor(Color.red);
-//        	99  						}
-//        	100 						g.fillOval(x, y, 20, 20);
-//        	101 						if(vv.getPickedVertexState().isPicked(v)) {
-//        	102 							g.setColor(Color.black);
-//        	103 						} else {
-//        	104 							g.setColor(Color.white);
-//        	105 						}
-//        	106 						g.drawString(""+v, x+6, y+15);
-//        	107 						
-//        	108 					}};
-//        	109 			}});
         vv.getRenderContext().setVertexIncludePredicate(guiNodeContext -> vs.isVisibleInCanvas(guiNodeContext.element));
         vv.getRenderer().setVertexLabelRenderer(new NodeLabelRenderer());
         vv.setVertexToolTipTransformer(node -> node.getToolTip());
@@ -588,8 +538,8 @@ public final class JUNGCanvas implements ITopologyCanvas
                 final Component component = prepareRenderer(rc, rc.getVertexLabelRenderer(), "<html><font color='black'>" + v.getLabel() + "</font></html>", rc.getPickedVertexState().isPicked(v), v);
                 final GraphicsDecorator g = rc.getGraphicsContext();
                 final Dimension dimensionMessage = component.getPreferredSize();
-                final Icon vertexIcon = v.getIcon(); 
-                final Rectangle2D boundsVertex = new Rectangle2D.Double(vertexPositionInPixels.getX() - vertexIcon.getIconWidth() / 2 , vertexPositionInPixels.getY() - vertexIcon.getIconHeight() / 2, vertexIcon.getIconWidth() , vertexIcon.getIconHeight());
+                final Icon vertexIcon = v.getIcon();
+                final Rectangle2D boundsVertex = new Rectangle2D.Double(vertexPositionInPixels.getX() - vertexIcon.getIconWidth() / 2, vertexPositionInPixels.getY() - vertexIcon.getIconHeight() / 2, vertexIcon.getIconWidth(), vertexIcon.getIconHeight());
                 final Point anchorPointInPixels = getAnchorPoint(boundsVertex, dimensionMessage, Renderer.VertexLabel.Position.NE);
                 g.draw(component, rc.getRendererPane(), anchorPointInPixels.x, anchorPointInPixels.y, dimensionMessage.width, dimensionMessage.height, true);
             }

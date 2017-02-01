@@ -32,6 +32,7 @@ import java.awt.Color;
 import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.URL;
@@ -52,6 +53,7 @@ import javax.imageio.ImageIO;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import javafx.scene.transform.Affine;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
@@ -1496,11 +1498,12 @@ public class VisualizationState
 		{
 			BufferedImage img = ImageUtils.createCircle(height , (Color) DEFAULT_GUINODE_COLOR);
 			if (img.getHeight() != height) throw new RuntimeException();
-			final Shape shapeNoBorder = FourPassImageShaper.getShape(img); 
+			final Shape shapeNoBorder = FourPassImageShaper.getShape(img);
 			if (borderColor.getAlpha() != 0)
 				img = ImageUtils.addBorder(img , DEFAULT_ICONBORDERSIZEINPIXELS , borderColor);
 			final Icon icon = new ImageIcon (img);
-			final Pair<Icon,Shape> res = Pair.of(icon , shapeNoBorder);
+            final AffineTransform translateTransform = AffineTransform.getTranslateInstance(-icon.getIconWidth()/2, -icon.getIconHeight()/2);
+			final Pair<Icon,Shape> res = Pair.of(icon , translateTransform.createTransformedShape(shapeNoBorder));
 			databaseOfAlreadyReadIcons.put(Triple.of(null , icon.getIconHeight() , borderColor) , res);
 			return res;
 		}
@@ -1515,7 +1518,8 @@ public class VisualizationState
 			if (borderColor.getAlpha() != 0)
 				img = ImageUtils.addBorder(img , DEFAULT_ICONBORDERSIZEINPIXELS , borderColor);
 			final Icon icon = new ImageIcon (img);
-			final Pair<Icon,Shape> res = Pair.of(icon , shapeNoBorder);
+            final AffineTransform translateTransform = AffineTransform.getTranslateInstance(-icon.getIconWidth()/2, -icon.getIconHeight()/2);
+            final Pair<Icon,Shape> res = Pair.of(icon , translateTransform.createTransformedShape(shapeNoBorder));
 			databaseOfAlreadyReadIcons.put(Triple.of(url , icon.getIconHeight() , borderColor) , res);
 			return res;
 		} catch (Exception e)
