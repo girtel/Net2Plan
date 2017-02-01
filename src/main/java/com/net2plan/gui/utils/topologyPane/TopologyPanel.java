@@ -60,9 +60,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance;
     private final JToggleButton btn_showLowerLayerInfo , btn_showUpperLayerInfo , btn_showThisLayerInfo;
-    private final JButton btn_multilayer;
+    private final JDialogButton btn_multilayer;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
-    private final JMenuButton btn_view;
+    private final JPopUpButton btn_view;
     private final JPopupMenu viewPopUp;
     private final JMenuItem it_control, it_osmMap, it_closeMap;
     private final JLabel position;
@@ -114,6 +114,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         this.callback = callback;
         this.defaultDesignDirectory = defaultDesignDirectory == null ? new File(currentDir + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "data" + SystemUtils.getDirectorySeparator() + "networkTopologies") : defaultDesignDirectory;
         this.defaultDemandDirectory = defaultDemandDirectory == null ? new File(currentDir + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "data" + SystemUtils.getDirectorySeparator() + "trafficMatrices") : defaultDemandDirectory;
+        this.multilayerControlPanel = new MultiLayerControlPanel(callback);
 
         try
         {
@@ -223,9 +224,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showThisLayerInfo.setToolTipText("Shows the links in the same layer as the picked element, that carry traffic that appears in the picked element");
         btn_showThisLayerInfo.setSelected(getVisualizationState().isShowInCanvasThisLayerPropagation());
 
-        btn_multilayer = new JButton("Debug");
-        this.multilayerControlPanel = new MultiLayerControlPanel(callback);
-
         viewPopUp = new JPopupMenu();
 
         it_control = new JMenuItem("View control window");
@@ -262,12 +260,14 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         viewPopUp.add(new JPopupMenu.Separator());
         viewPopUp.add(it_osmMap);
 
-        btn_view = new JMenuButton("View", viewPopUp);
+        btn_view = new JPopUpButton("View", viewPopUp);
         btn_view.setMnemonic(KeyEvent.VK_V);
 
         btn_reset = new JButton("Reset");
         btn_reset.setToolTipText("Reset the user interface");
         btn_reset.setMnemonic(KeyEvent.VK_R);
+
+        btn_multilayer = new JDialogButton("Debug", multilayerControlPanel);
 
         btn_load.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDesign.png")));
         btn_loadDemand.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDemand.png")));
@@ -301,7 +301,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showUpperLayerInfo.addActionListener(this);
         btn_showThisLayerInfo.addActionListener(this);
         btn_multilayer.addActionListener(this);
-
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
@@ -532,16 +531,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         {
         	vs.setShowInCanvasThisLayerPropagation(btn_showThisLayerInfo.isSelected());
         	canvas.refresh();
-        } else if (src == btn_multilayer)
-        {
-            final JFrame frame = new JFrame();
-            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            frame.setSize(new Dimension(800, 600));
-            frame.setLayout(new BorderLayout());
-            frame.add(multilayerControlPanel, BorderLayout.CENTER);
-            frame.setVisible(true);
         }
-
     }
 
     /**
