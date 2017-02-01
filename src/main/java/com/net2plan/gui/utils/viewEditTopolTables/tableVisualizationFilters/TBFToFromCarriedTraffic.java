@@ -15,23 +15,22 @@ import com.net2plan.interfaces.networkDesign.InterLayerPropagationGraph;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.utils.Pair;
 
 public class TBFToFromCarriedTraffic extends ITableRowFilter
 {
-	private final boolean upWards , downWards , sameLayer;
+	private final boolean onlyThisLayer;
 	private final NetworkElement initialElement;
 	private final Pair<Demand,Link> initialFR;
 	
-	public TBFToFromCarriedTraffic (Demand demand , boolean downWards , boolean upWards , boolean sameLayer)
+	public TBFToFromCarriedTraffic (Demand demand , boolean onlyThisLayer)
 	{
 		super (demand.getNetPlan());
 		
 		this.initialElement = demand;
-		this.upWards = upWards;
-		this.downWards = downWards;
-		this.sameLayer = sameLayer;
+		this.onlyThisLayer = onlyThisLayer;
 		this.initialFR = null;
 
 		final Set<Link> linksAllLayers = new HashSet<> ();
@@ -40,16 +39,12 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 
 		demandsAllLayers.add(demand);
 		
-		Pair<Set<Link>,Set<Link>> thisLayerPropagation = null;
-		if (sameLayer)
+		final Pair<Set<Link>,Set<Link>> thisLayerPropagation = demand.getLinksThisLayerPotentiallyCarryingTraffic(false);
+		linksAllLayers.addAll(thisLayerPropagation.getFirst());
+		linksAllLayers.addAll(thisLayerPropagation.getSecond());
+
+		if (!onlyThisLayer && (netPlan.getNumberOfLayers() > 1))
 		{
-    		thisLayerPropagation = demand.getLinksThisLayerPotentiallyCarryingTraffic(false);
-    		linksAllLayers.addAll(thisLayerPropagation.getFirst());
-    		linksAllLayers.addAll(thisLayerPropagation.getSecond());
-		}
-		if (downWards && (netPlan.getNumberOfLayers() > 1))
-		{
-			if (thisLayerPropagation == null) thisLayerPropagation = demand.getLinksThisLayerPotentiallyCarryingTraffic(false);
 			final Pair<Set<Demand>,Set<Pair<MulticastDemand,Node>>> downLayerInfo = getDownCoupling(thisLayerPropagation.getFirst()); 
 			final Pair<Set<Demand>,Set<Pair<MulticastDemand,Node>>> downLayerInfoBackup = getDownCoupling(thisLayerPropagation.getSecond()); 
 			downLayerInfo.getFirst().addAll(downLayerInfoBackup.getFirst());
@@ -62,7 +57,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 			demandsAllLayers.addAll(demands);
 			mDemandsAllLayers.addAll(mDemands);
 		}
-		if (upWards && (netPlan.getNumberOfLayers() > 1) && demand.isCoupled())
+		if (!onlyThisLayer && (netPlan.getNumberOfLayers() > 1) && demand.isCoupled())
 		{
 			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , Sets.newHashSet(demand.getCoupledLink()) , null , true , false);
 			final Set<Link> links = ipg.getLinksInGraph();
@@ -73,20 +68,20 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 			mDemandsAllLayers.addAll(mDemands);
 		}
 
-		updateAllButLinksDemandsMDemandsUsingExistingInfo (linksAllLayers , demandsAllLayers , mDemandsAllLayers);
+		final Set<NetworkLayer> layersToKeepAllElements = onlyThisLayer? Sets.difference(new HashSet<>(netPlan.getNetworkLayers ()), Sets.newHashSet(demand.getLayer())): new HashSet<> ();
+		updateAllButLinksDemandsMDemandsUsingExistingInfo (linksAllLayers , demandsAllLayers , mDemandsAllLayers , layersToKeepAllElements);
 	}
 
     
 	public String getDescription () 
 	{ 
+		final Demand d = (Demand) initialElement;
 		StringBuffer st = new StringBuffer();
-		st.append("Elements associated to demand " + initialElement.getIndex() + "(");
-		List<String> messages = new LinkedList<> (); 
-		if (sameLayer) messages.add("this layer");
-		if (upWards) messages.add("from upper layers");
-		if (downWards) messages.add("to lower layers");
-		st.append(StringUtils.join(messages , ",") + ")");
+		st.append(onlyThisLayer? "(Affecting to layer " +  getLayerName(d.getLayer()) + ") " : "(Affecting to all layers). ");
+		st.append("Elements associated to demand " + initialElement.getIndex() + " in layer " + getLayerName (((Demand) initialElement).getLayer()));
 		return st.toString();
 	} 
 
+	
+	private static String getLayerName (NetworkLayer layer) { return layer.getName().equals("")? "Layer " + layer.getIndex() : layer.getName(); } 
 }

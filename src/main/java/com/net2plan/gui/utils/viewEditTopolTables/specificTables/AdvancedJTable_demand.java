@@ -361,15 +361,28 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
         if (!selectedDemands.isEmpty()) 
         {
         	final JMenu submenuFilters = new JMenu ("Filters");
-            final JMenuItem filterKeepElementsAffectedUpDownThisLayer = new JMenuItem("Keep elements in any layer associated to the traffic of this demand");
-            submenuFilters.add(filterKeepElementsAffectedUpDownThisLayer);
-            filterKeepElementsAffectedUpDownThisLayer.addActionListener(new ActionListener() 
+            final JMenuItem filterKeepElementsAffectedThisLayer = new JMenuItem("This layer: Keep elements associated to this demand traffic");
+            final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this demand traffic");
+            submenuFilters.add(filterKeepElementsAffectedThisLayer);
+            submenuFilters.add(filterKeepElementsAffectedAllLayers);
+            filterKeepElementsAffectedThisLayer.addActionListener(new ActionListener() 
             {
 				@Override
 				public void actionPerformed(ActionEvent e) 
 				{
 					if (selectedDemands.size() > 1) throw new RuntimeException ();
-					TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedDemands.get(0), true , true,  true);
+					TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedDemands.get(0), true);
+					callback.getVisualizationState().updateTableRowFilter(filter);
+					callback.updateVisualizationJustTables();
+				}
+			});
+            filterKeepElementsAffectedAllLayers.addActionListener(new ActionListener() 
+            {
+				@Override
+				public void actionPerformed(ActionEvent e) 
+				{
+					if (selectedDemands.size() > 1) throw new RuntimeException ();
+					TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedDemands.get(0), false);
 					callback.getVisualizationState().updateTableRowFilter(filter);
 					callback.updateVisualizationJustTables();
 				}

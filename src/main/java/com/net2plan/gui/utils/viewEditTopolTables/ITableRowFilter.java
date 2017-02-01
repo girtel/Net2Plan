@@ -140,12 +140,28 @@ public abstract class ITableRowFilter
 		return res;
 	}
 	
-	protected void updateAllButLinksDemandsMDemandsUsingExistingInfo (Set<Link> linksAllLayers , Set<Demand> demandsAllLayers , Set<MulticastDemand> mDemandsAllLayers)
+	protected void updateAllButLinksDemandsMDemandsUsingExistingInfo (Set<Link> linksAllLayers , Set<Demand> demandsAllLayers , Set<MulticastDemand> mDemandsAllLayers , Set<NetworkLayer> layersToKeepAllElements)
 	{
 		/* update the rest according to this */
 		for (NetworkLayer layer : netPlan.getNetworkLayers())
 		{
 			final boolean isSourceRouting = layer.isSourceRouting();
+			if (layersToKeepAllElements.contains (layer))
+			{
+				/* keep this layer unchanged */
+				vDemands.put(layer , netPlan.getDemands(layer));
+				if (!isSourceRouting) vFRs.put(layer , new ArrayList<> (netPlan.getForwardingRules(layer).keySet()));
+				if (isSourceRouting) vRoutes.put(layer , netPlan.getRoutes(layer));
+				vLinks.put(layer ,netPlan.getLinks(layer));
+				vMDemands.put(layer , netPlan.getMulticastDemands(layer));
+				vTrees.put(layer , netPlan.getMulticastTrees(layer));
+				vNodes.put(layer , netPlan.getNodes());
+				vResources.put(layer , netPlan.getResources());
+				vSRGs.put(layer , netPlan.getSRGs());
+				continue;
+			}
+				
+			/* Here if we filter out by this layer */
 			final Set<Link> links = linksAllLayers.stream().filter(e->e.getLayer().equals(layer)).collect(Collectors.toSet());
 			final Set<Demand> demands = demandsAllLayers.stream().filter(e->e.getLayer().equals(layer)).collect(Collectors.toSet());
 			final Set<MulticastDemand> mDemands = mDemandsAllLayers.stream().filter(e->e.getLayer().equals(layer)).collect(Collectors.toSet());
@@ -166,7 +182,7 @@ public abstract class ITableRowFilter
 			if (isSourceRouting)
 				for (Link e : links)
 					for (Route r : e.getTraversingRoutes()) 
-						if (demands.contains(r))
+						if (demands.contains(r.getDemand()))
 						{
 							routes.add(r);
 							resources.addAll(r.getSeqResourcesTraversed());
@@ -175,7 +191,7 @@ public abstract class ITableRowFilter
 			/* The multicast trees: the ones in the multicast demands AND also traverse involved links */
 			for (Link e : links)
 				for (MulticastTree t : e.getTraversingTrees()) 
-					if (mDemands.contains(t))
+					if (mDemands.contains(t.getMulticastDemand()))
 						trees.add(t);
 
 			/* The nodes: the ones in any link */

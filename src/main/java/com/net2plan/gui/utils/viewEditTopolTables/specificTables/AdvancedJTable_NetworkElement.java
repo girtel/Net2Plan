@@ -1998,13 +1998,15 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
     	final NetPlan np = callback.getDesign();
     	
     	if (rowIndexes.length == 0) return Pair.of(elementList , frList);
-    	final int maxValidRowCount = model.getRowCount() - 1 - (hasAggregationRow()? 1 : 0);
+    	final int maxValidRowIndex = model.getRowCount() - 1 - (hasAggregationRow()? 1 : 0);
     	final List<Integer> validRows = new ArrayList<Integer> (); 
-    	for (int a : rowIndexes) if (a >= 0 && a <= maxValidRowCount) validRows.add(a);
+    	for (int a : rowIndexes) if ((a >= 0) && (a <= maxValidRowIndex)) validRows.add(a);
+    	System.out.println("rows selected: " + Arrays.toString(rowIndexes));
+    	System.out.println("valid: " + validRows);
     	
     	if (networkElementType == NetworkElementType.FORWARDING_RULE)
     	{
-    		for (int rowIndex : rowIndexes)
+    		for (int rowIndex : validRows)
     		{
     			final int demandIndex = (int) getValueAt (rowIndex , AdvancedJTable_forwardingRule.COLUMN_DEMAND);
     			final int linkIndex = (int) getValueAt (rowIndex , AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK);
@@ -2013,9 +2015,9 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
     	}
     	else
     	{
-    		for (int rowIndex : rowIndexes)
+    		for (int rowIndex : validRows)
     		{
-    			final long id = (long) getValueAt (rowIndex , 0);
+    	    	final long id = (long) ((DefaultTableModel) getModel()).getValueAt(rowIndex, 0);
     			elementList.add(np.getNetworkElement(id));
     		}
     	}

@@ -221,10 +221,11 @@ public class VisualizationState
 
 	public ITableRowFilter getTableRowFilter () { return tableRowFilter; }
 	
-	public void updateTableRowFilter (ITableRowFilter tableRowFilter) 
+	public void updateTableRowFilter (ITableRowFilter tableRowFilterToApply) 
 	{  
-		if (tableRowFilter == null) { this.tableRowFilter = null; return; }
-		this.tableRowFilter.recomputeApplyingShowIf_ThisAndThat(tableRowFilter);
+		if (tableRowFilterToApply == null) { this.tableRowFilter = null; return; }
+		if (this.tableRowFilter == null) { this.tableRowFilter = tableRowFilterToApply; return; }
+		this.tableRowFilter.recomputeApplyingShowIf_ThisAndThat(tableRowFilterToApply);
 	}
 	
     public boolean isVisibleInCanvas(GUINode gn)
@@ -973,8 +974,6 @@ public class VisualizationState
     	this.pickedElementType = NetworkElementType.DEMAND;
     	this.pickedElementFR = null;
     	this.pickedElementNotFR = pickedDemand;
-    	
-    	this.tableRowFilter = new TBFToFromCarriedTraffic(pickedDemand , showInCanvasThisLayerPropagation , showInCanvasLowerLayerPropagation , showInCanvasUpperLayerPropagation);
     	
 		final boolean isDemandLayerVisibleInTheCanvas = isLayerVisibleInCanvas(pickedDemand.getLayer());
     	final GUINode gnOrigin = getCanvasAssociatedGUINode(pickedDemand.getIngressNode() , pickedDemand.getLayer());
