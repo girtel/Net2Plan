@@ -184,6 +184,7 @@ public class GUINode
 		final double outOfferedMulticast = npNode.getOutgoingMulticastDemands(layer).stream().mapToDouble(e->e.getOfferedTraffic()).sum();
         temp.append("<html>");
         temp.append("<table border=\"0\">");
+        temp.append("<tr><td colspan=\"2\"><strong>Node index " + npNode.getIndex() + " (id: " + npNode.getId() + ") - Layer " + getLayerName(layer) + "</strong></td></tr>");
         temp.append("<tr><td>Name:</td><td>" + npNode.getName() + "</td></tr>");
         temp.append("<tr><td>Total offered unicast traffic (in / out):</td>");
         temp.append("<td>" + String.format("%.2f" , inOfferedUnicast) +  "  / " + String.format("%.2f" , outOfferedUnicast) + " " + trafUnits + "</td></tr>");
@@ -244,4 +245,5 @@ public class GUINode
 //    	return transf.createTransformedShape(s);
 //    }
 	private String getResourceName (Resource e) { return "Resource " + e.getIndex() + " (" + (e.getName().length() == 0? "No name" : e.getName()) + "). Type: " + e.getType(); }
+	private String getLayerName (NetworkLayer e) { return "Layer " + e.getIndex() + " (" + (e.getName().length() == 0? "No name" : e.getName()) + ")"; }
 }

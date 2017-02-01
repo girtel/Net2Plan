@@ -27,11 +27,14 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -61,6 +64,8 @@ import edu.uci.ics.jung.graph.DirectedOrderedSparseMultigraph;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.Context;
 import edu.uci.ics.jung.graph.util.DefaultParallelEdgeIndexFunction;
+import edu.uci.ics.jung.graph.util.EdgeIndexFunction;
+import edu.uci.ics.jung.graph.util.Pair;
 import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.RenderContext;
 import edu.uci.ics.jung.visualization.VisualizationServer;
@@ -131,8 +136,28 @@ public final class JUNGCanvas implements ITopologyCanvas
 
         originalEdgeShapeTransformer = new EdgeShape.QuadCurve<>();
         ((EdgeShape.QuadCurve<GUINode, GUILink>) originalEdgeShapeTransformer).setControlOffsetIncrement(10); // how much they separate from the direct line (default is 20)
-        ((EdgeShape.QuadCurve<GUINode, GUILink>) originalEdgeShapeTransformer).setEdgeIndexFunction(DefaultParallelEdgeIndexFunction.<GUINode, GUILink>getInstance()); // how much they separate from the direct line (default is 20)
-
+        //((EdgeShape.QuadCurve<GUINode, GUILink>) originalEdgeShapeTransformer).setEdgeIndexFunction(DefaultParallelEdgeIndexFunction.<GUINode, GUILink>getInstance()); // how much they separate from the direct line (default is 20)
+        /* This functions gives an index to the links to show separate (curved): the order among the parallel links (BUT NOW only among the separated ones among them) */
+        ((EdgeShape.QuadCurve<GUINode, GUILink>) originalEdgeShapeTransformer).setEdgeIndexFunction(new EdgeIndexFunction<GUINode,GUILink>()
+		{
+        	public void reset(Graph<GUINode,GUILink> graph, GUILink e) {}
+        	public void reset() {}
+        	public int getIndex(Graph<GUINode,GUILink> graph, GUILink e) 
+        	{
+        		final GUINode u = e.getOriginNode();
+        		final GUINode v = e.getDestinationNode();
+            	final HashSet<GUILink> commonEdgeSet = new HashSet<>(graph.getInEdges(v));
+            	commonEdgeSet.retainAll(graph.getOutEdges(u));
+            	commonEdgeSet.removeIf(ee->!ee.isShownSeparated());
+            	int count=0;
+            	for(GUILink other : commonEdgeSet) 
+            		if (other == e)
+            			return count;
+            		else
+            			count ++;
+            	throw new RuntimeException();
+        	}
+		});
 		/* Customize the graph */
         vv.getRenderContext().setVertexDrawPaintTransformer(n -> n.getDrawPaint());
         vv.getRenderContext().setVertexFillPaintTransformer(n -> n.getFillPaint());
