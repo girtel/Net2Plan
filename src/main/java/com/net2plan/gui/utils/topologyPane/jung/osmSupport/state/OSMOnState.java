@@ -125,12 +125,9 @@ class OSMOnState implements OSMState
     @Override
     public Point2D getCanvasPoint(Point2D pos)
     {
-        final Point2D jungPoint = canvas.getCanvasPointFromNetPlanPoint(pos);
+        final Point2D jungPoint = canvas.getCanvasPointFromScreenPoint(pos);
 
-        final double scale = canvas.getCurrentCanvasScale();
-        final Point2D.Double swingPoint = new Point2D.Double(jungPoint.getX() * scale, -jungPoint.getY() * scale);
-
-        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(swingPoint);
+        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(jungPoint);
 
         if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
         {

@@ -275,9 +275,9 @@ public final class JUNGCanvas implements ITopologyCanvas
      * @return (@code Point2D) on the JUNG canvas.
      */
     @Override
-    public Point2D getCanvasPointFromNetPlanPoint(Point2D screenPoint)
+    public Point2D getCanvasPointFromNetPlanPoint(Point2D npCoord)
     {
-        Point2D layoutOrViewCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, screenPoint);
+        Point2D layoutOrViewCoordinates = vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, npCoord);
         layoutOrViewCoordinates.setLocation(layoutOrViewCoordinates.getX(), -layoutOrViewCoordinates.getY());
 
         return layoutOrViewCoordinates;
@@ -289,9 +289,9 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public Point2D getCanvasPointFromScreenPoint(Point2D netPlanPoint)
+    public Point2D getCanvasPointFromScreenPoint(Point2D screenPoint)
     {
-        return vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, netPlanPoint);
+        return vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, screenPoint);
     }
 
     public Rectangle getCurrentCanvasViewWindow()
@@ -421,7 +421,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public Point2D getVertexCenter(final Point2D point)
+    public Point2D getCanvasPointFromMovement(final Point2D point)
     {
         return osmStateManager.getCanvasCoordinateFromScreenPoint(point);
     }
