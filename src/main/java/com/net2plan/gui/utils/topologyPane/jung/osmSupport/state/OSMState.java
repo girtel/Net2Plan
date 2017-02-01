@@ -28,4 +28,6 @@ interface OSMState
     void updateNodesXYPosition();
 
     double getInterLayerDistance(int interLayerDistanceInPixels);
+
+    Point2D getCanvasPoint(final Point2D pos);
 }

@@ -174,4 +174,10 @@ public class OSMJUNGOffState implements OSMState
 
         return currentInterLayerDistanceInNpCoordinates;
     }
+
+    @Override
+    public Point2D getCanvasPoint(Point2D pos)
+    {
+        return canvas.getCanvasPointFromNetPlanPoint(pos);
+    }
 }

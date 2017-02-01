@@ -68,9 +68,9 @@ class OSMOnState implements OSMState
     public void addNode(final Point2D pos)
     {
         final double scale = canvas.getCurrentCanvasScale();
-        final Point2D.Double jungPoint = new Point2D.Double(pos.getX() * scale, -pos.getY() * scale);
+        final Point2D swingPoint = new Point2D.Double(pos.getX() * scale, -pos.getY() * scale);
 
-        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(jungPoint);
+        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(swingPoint);
         if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
         {
             throw new OSMMapController.OSMMapException("The node is out of the map's bounds", "Problem while adding node");
@@ -120,5 +120,23 @@ class OSMOnState implements OSMState
     public double getInterLayerDistance(int interLayerDistanceInPixels)
     {
         return interLayerDistanceInPixels;
+    }
+
+    @Override
+    public Point2D getCanvasPoint(Point2D pos)
+    {
+        final Point2D jungPoint = canvas.getCanvasPointFromNetPlanPoint(pos);
+
+        final double scale = canvas.getCurrentCanvasScale();
+        final Point2D.Double swingPoint = new Point2D.Double(jungPoint.getX() * scale, -jungPoint.getY() * scale);
+
+        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(swingPoint);
+
+        if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
+        {
+            return null;
+        }
+
+        return new Point2D.Double(geoPosition.getLongitude(), geoPosition.getLatitude());
     }
 }

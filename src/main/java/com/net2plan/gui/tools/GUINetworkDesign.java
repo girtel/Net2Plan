@@ -737,9 +737,13 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         final ITopologyCanvas canvas = topologyPanel.getCanvas();
         final Node node = guiNode.getAssociatedNetPlanNode();
 
-        node.setXYPositionMap(canvas.getCanvasPointFromNetPlanPoint(toPoint));
+        final Point2D netPlanPoint = canvas.getVertexCenter(toPoint);
+        if (netPlanPoint == null) return;
 
-        // TODO: Could we recycle one of the updated on this one?
+        final Point2D jungPoint = canvas.getCanvasPointFromNetPlanPoint(toPoint);
+
+        node.setXYPositionMap(netPlanPoint);
+
         viewEditTopTables.updateView();
 
         // Updating GUINodes position having in mind the selected layer.
@@ -750,19 +754,18 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         {
             final int vlIndex = stackedGUINode.getVisualizationOrderRemovingNonVisibleLayers();
             final double interLayerDistanceInNpCoord = canvas.getInterLayerDistanceInNpCoordinates();
-            final Point2D basePositionInNetPlanCoord = node.getXYPositionMap();
 
             if (vlIndex > selectedLayerVisualizationOrder)
             {
                 final int layerDistance = vlIndex - selectedLayerVisualizationOrder;
-                canvas.moveVertexToXYPosition(stackedGUINode, new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() + (layerDistance * interLayerDistanceInNpCoord))));
+                canvas.moveVertexToXYPosition(stackedGUINode, new Point2D.Double(jungPoint.getX(), -(jungPoint.getY() + (layerDistance * interLayerDistanceInNpCoord))));
             } else if (vlIndex == selectedLayerVisualizationOrder)
             {
-                canvas.moveVertexToXYPosition(stackedGUINode, new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY())));
+                canvas.moveVertexToXYPosition(stackedGUINode, new Point2D.Double(jungPoint.getX(), -(jungPoint.getY())));
             } else
             {
                 final int layerDistance = selectedLayerVisualizationOrder - vlIndex;
-                canvas.moveVertexToXYPosition(stackedGUINode, new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() - (layerDistance * interLayerDistanceInNpCoord))));
+                canvas.moveVertexToXYPosition(stackedGUINode, new Point2D.Double(jungPoint.getX(), -(jungPoint.getY() - (layerDistance * interLayerDistanceInNpCoord))));
             }
         }
 

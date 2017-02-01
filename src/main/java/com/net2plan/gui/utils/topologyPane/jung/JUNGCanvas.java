@@ -421,6 +421,12 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
+    public Point2D getVertexCenter(final Point2D point)
+    {
+        return osmStateManager.getCanvasCoordinateFromScreenPoint(point);
+    }
+
+    @Override
     public void panTo(Point2D initialPoint, Point2D destinationPoint)
     {
         osmStateManager.panTo(initialPoint, destinationPoint);
