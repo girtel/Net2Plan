@@ -364,7 +364,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
             final JMenuItem filterKeepElementsAffectedThisLayer = new JMenuItem("This layer: Keep elements associated to this demand traffic");
             final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this demand traffic");
             submenuFilters.add(filterKeepElementsAffectedThisLayer);
-            submenuFilters.add(filterKeepElementsAffectedAllLayers);
+            if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
             filterKeepElementsAffectedThisLayer.addActionListener(new ActionListener() 
             {
 				@Override
