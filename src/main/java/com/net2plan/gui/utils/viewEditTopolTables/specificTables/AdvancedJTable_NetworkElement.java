@@ -2001,8 +2001,6 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
     	final int maxValidRowIndex = model.getRowCount() - 1 - (hasAggregationRow()? 1 : 0);
     	final List<Integer> validRows = new ArrayList<Integer> (); 
     	for (int a : rowIndexes) if ((a >= 0) && (a <= maxValidRowIndex)) validRows.add(a);
-    	System.out.println("rows selected: " + Arrays.toString(rowIndexes));
-    	System.out.println("valid: " + validRows);
     	
     	if (networkElementType == NetworkElementType.FORWARDING_RULE)
     	{

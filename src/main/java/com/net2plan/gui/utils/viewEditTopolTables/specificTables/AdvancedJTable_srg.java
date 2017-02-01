@@ -55,11 +55,13 @@ import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
+import com.net2plan.gui.utils.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastTree;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -324,6 +326,30 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         JPopupMenu popup = new JPopupMenu();
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final List<SharedRiskGroup> rowsInTheTable = getVisibleElementsInTable();
+        
+        /* Add the popup menu option of the filters */
+        final List<SharedRiskGroup> selectedSRGs = (List<SharedRiskGroup>) (List<?>) getSelectedElements().getFirst();
+        if (!selectedSRGs.isEmpty()) 
+        {
+        	final JMenu submenuFilters = new JMenu ("Filters");
+            final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements affected by this SRG");
+            if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
+            filterKeepElementsAffectedAllLayers.addActionListener(new ActionListener() 
+            {
+				@Override
+				public void actionPerformed(ActionEvent e) 
+				{
+					if (selectedSRGs.size() > 1) throw new RuntimeException ();
+					TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedSRGs.get(0));
+					callback.getVisualizationState().updateTableRowFilter(filter);
+					callback.updateVisualizationJustTables();
+				}
+			});
+            popup.add(submenuFilters);
+            popup.addSeparator();
+        }
+
+        
         if (callback.getVisualizationState().isNetPlanEditable()) {
             popup.add(getAddOption());
             for (JComponent item : getExtraAddOptions())

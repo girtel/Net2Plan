@@ -350,12 +350,6 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final List<Demand> demandRowsInTheTable = getVisibleElementsInTable();
 
-        if (callback.getVisualizationState().isNetPlanEditable()) {
-            popup.add(getAddOption());
-            for (JComponent item : getExtraAddOptions())
-                popup.add(item);
-        }
-
         /* Add the popup menu option of the filters */
         final List<Demand> selectedDemands = (List<Demand>) (List<?>) getSelectedElements().getFirst();
         if (!selectedDemands.isEmpty()) 
@@ -388,7 +382,15 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
 				}
 			});
             popup.add(submenuFilters);
+            popup.addSeparator();
         }
+
+        if (callback.getVisualizationState().isNetPlanEditable()) {
+            popup.add(getAddOption());
+            for (JComponent item : getExtraAddOptions())
+                popup.add(item);
+        }
+
 
         if (!demandRowsInTheTable.isEmpty()) 
         {

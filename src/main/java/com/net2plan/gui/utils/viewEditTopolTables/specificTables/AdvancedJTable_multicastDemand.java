@@ -31,6 +31,7 @@ import javax.swing.DefaultRowSorter;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -43,6 +44,7 @@ import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement.LastRowAggregatedValue;
+import com.net2plan.gui.utils.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.StringLabeller;
@@ -313,6 +315,42 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final List<MulticastDemand> demandRowsInTheTable = getVisibleElementsInTable();
 
+        /* Add the popup menu option of the filters */
+        final List<MulticastDemand> selectedDemands = (List<MulticastDemand>) (List<?>) getSelectedElements().getFirst();
+        if (!selectedDemands.isEmpty()) 
+        {
+        	final JMenu submenuFilters = new JMenu ("Filters");
+            final JMenuItem filterKeepElementsAffectedThisLayer = new JMenuItem("This layer: Keep elements associated to this demand traffic");
+            final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this demand traffic");
+            submenuFilters.add(filterKeepElementsAffectedThisLayer);
+            if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
+            filterKeepElementsAffectedThisLayer.addActionListener(new ActionListener() 
+            {
+				@Override
+				public void actionPerformed(ActionEvent e) 
+				{
+					if (selectedDemands.size() > 1) throw new RuntimeException ();
+					TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedDemands.get(0), true);
+					callback.getVisualizationState().updateTableRowFilter(filter);
+					callback.updateVisualizationJustTables();
+				}
+			});
+            filterKeepElementsAffectedAllLayers.addActionListener(new ActionListener() 
+            {
+				@Override
+				public void actionPerformed(ActionEvent e) 
+				{
+					if (selectedDemands.size() > 1) throw new RuntimeException ();
+					TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedDemands.get(0), false);
+					callback.getVisualizationState().updateTableRowFilter(filter);
+					callback.updateVisualizationJustTables();
+				}
+			});
+            popup.add(submenuFilters);
+            popup.addSeparator();
+        }
+
+        
         if (callback.getVisualizationState().isNetPlanEditable()) {
             popup.add(getAddOption());
             for (JComponent item : getExtraAddOptions())
