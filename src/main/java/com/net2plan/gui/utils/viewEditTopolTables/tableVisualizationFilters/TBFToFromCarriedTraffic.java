@@ -17,7 +17,9 @@ import com.net2plan.interfaces.networkDesign.MulticastTree;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
@@ -119,6 +121,30 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 		updateAllButLinksDemandsMDemandsUsingExistingInfo (linksAllLayers , demandsAllLayers , mDemandsAllLayers , layersToKeepAllElements);
 	}
 
+	public TBFToFromCarriedTraffic (Resource resource , NetworkLayer layer , boolean onlyThisLayer)
+	{
+		super (resource.getNetPlan());
+		
+		this.initialElement = resource;
+		this.onlyThisLayer = onlyThisLayer;
+		this.initialFR = null;
+
+		final Set<Link> linksAllLayers = new HashSet<> ();
+		final Set<Demand> demandsAllLayers = new HashSet<> ();
+		final Set<MulticastDemand> mDemandsAllLayers = new HashSet<> ();
+
+		for (Route r : resource.getTraversingRoutes())
+		{
+			if (r.getLayer() != layer) continue;
+			linksAllLayers.addAll(r.getSeqLinks());
+			demandsAllLayers.add(r.getDemand());
+		}
+		if (!onlyThisLayer) updatePropagationDownWards (linksAllLayers , linksAllLayers , demandsAllLayers , mDemandsAllLayers);
+		if (!onlyThisLayer) updatePropagationUpWards (demandsAllLayers , mDemandsAllLayers , linksAllLayers , demandsAllLayers , mDemandsAllLayers);
+		final Set<NetworkLayer> layersToKeepAllElements = onlyThisLayer? Sets.difference(new HashSet<>(netPlan.getNetworkLayers ()), Sets.newHashSet(layer)): new HashSet<> ();
+		updateAllButLinksDemandsMDemandsUsingExistingInfo (linksAllLayers , demandsAllLayers , mDemandsAllLayers , layersToKeepAllElements);
+	}
+
 	public TBFToFromCarriedTraffic (Node node , NetworkLayer layer , boolean onlyThisLayer)
 	{
 		super (node.getNetPlan());
@@ -142,6 +168,30 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 		if (!onlyThisLayer) updatePropagationUpWards (demandsAllLayers , mDemandsAllLayers , linksAllLayers , demandsAllLayers , mDemandsAllLayers);
 		final Set<NetworkLayer> layersToKeepAllElements = onlyThisLayer? Sets.difference(new HashSet<>(netPlan.getNetworkLayers ()), Sets.newHashSet(layer)): new HashSet<> ();
 		updateAllButLinksDemandsMDemandsUsingExistingInfo (linksAllLayers , demandsAllLayers , mDemandsAllLayers , layersToKeepAllElements);
+	}
+
+	public TBFToFromCarriedTraffic (SharedRiskGroup srg)
+	{
+		super (srg.getNetPlan());
+		
+		this.initialElement = srg;
+		this.onlyThisLayer = false;
+		this.initialFR = null;
+
+		final Set<Link> linksAllLayers = new HashSet<> ();
+		final Set<Demand> demandsAllLayers = new HashSet<> ();
+		final Set<MulticastDemand> mDemandsAllLayers = new HashSet<> ();
+
+		for (Link affectedLink : srg.getAffectedLinksAllLayers())
+		{
+			final TBFToFromCarriedTraffic affectedThisLink = new TBFToFromCarriedTraffic(affectedLink , false);
+			for (NetworkLayer layer : netPlan.getNetworkLayers())
+			{
+				linksAllLayers.addAll(affectedThisLink.getVisibleLinks(layer));
+				demandsAllLayers.addAll(affectedThisLink.getVisibleDemands(layer));
+				mDemandsAllLayers.addAll(affectedThisLink.getVisibleMulticastDemands(layer));
+			}
+		}
 	}
 
 	public TBFToFromCarriedTraffic (Pair<Demand,Link> fr , boolean onlyThisLayer)
