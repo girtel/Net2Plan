@@ -850,14 +850,17 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
             JMenuItem caFixValue = new JMenuItem("Set capacity to all");
             caFixValue.addActionListener(new ActionListener() {
                 @Override
-                public void actionPerformed(ActionEvent e) {
+                public void actionPerformed(ActionEvent e) 
+                {
                     double u_e;
 
-                    while (true) {
+                    while (true) 
+                    {
                         String str = JOptionPane.showInputDialog(null, "Capacity value", "Set capacity to all table links", JOptionPane.QUESTION_MESSAGE);
                         if (str == null) return;
 
-                        try {
+                        try 
+                        {
                             u_e = Double.parseDouble(str);
                             if (u_e < 0) throw new NumberFormatException();
 

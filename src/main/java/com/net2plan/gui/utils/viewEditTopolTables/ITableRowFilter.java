@@ -39,6 +39,7 @@ public abstract class ITableRowFilter
 	protected final Map<NetworkLayer,List<Route>> vRoutes;
 	protected final Map<NetworkLayer,List<SharedRiskGroup>> vSRGs;
 	protected final NetPlan netPlan;
+	protected List<String> chainOfDescriptionsPreviousFiltersComposingThis;
 	
 	/* Baseline constructor: everything is filtered out */
 	public ITableRowFilter (NetPlan netPlan)
@@ -53,6 +54,7 @@ public abstract class ITableRowFilter
 		this.vResources = new HashMap<> ();
 		this.vRoutes = new HashMap<> ();
 		this.vSRGs = new HashMap<> ();
+		this.chainOfDescriptionsPreviousFiltersComposingThis = new LinkedList<> ();
 		for (NetworkLayer layer : netPlan.getNetworkLayers())
 		{
 			this.vDemands.put(layer , new ArrayList<> ());
@@ -115,6 +117,7 @@ public abstract class ITableRowFilter
 			vRoutes.put(layer , (List<Route>) filterAnd(this.vRoutes.get(layer) , that.vRoutes.get(layer)));
 			vSRGs.put(layer , (List<SharedRiskGroup>) filterAnd(this.vSRGs.get(layer) , that.vSRGs.get(layer)));
 		}
+		chainOfDescriptionsPreviousFiltersComposingThis.add(that.getDescription());
 	}
 	
 	private final List<? extends Object> filterAnd (List<? extends Object> l1 , List<? extends Object> l2)

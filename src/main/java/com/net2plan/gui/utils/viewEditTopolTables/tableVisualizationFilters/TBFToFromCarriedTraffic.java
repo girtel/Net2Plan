@@ -28,6 +28,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 	private final boolean onlyThisLayer;
 	private final NetworkElement initialElement;
 	private final Pair<Demand,Link> initialFR;
+	private final NetworkLayer auxLayerInNodes;
 
 	public TBFToFromCarriedTraffic (Demand demand , boolean onlyThisLayer)
 	{
@@ -36,6 +37,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 		this.initialElement = demand;
 		this.onlyThisLayer = onlyThisLayer;
 		this.initialFR = null;
+		this.auxLayerInNodes = null;
 
 		final Set<Link> linksAllLayers = new HashSet<> ();
 		final Set<Demand> demandsAllLayers = new HashSet<> ();
@@ -59,6 +61,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 		this.initialElement = link;
 		this.onlyThisLayer = onlyThisLayer;
 		this.initialFR = null;
+		this.auxLayerInNodes = null;
 
 		final Set<Link> linksAllLayers = new HashSet<> ();
 		final Set<Demand> demandsAllLayers = new HashSet<> ();
@@ -87,6 +90,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 		this.initialElement = tree;
 		this.onlyThisLayer = onlyThisLayer;
 		this.initialFR = null;
+		this.auxLayerInNodes = null;
 
 		final Set<Link> linksAllLayers = new HashSet<> ();
 		final Set<Demand> demandsAllLayers = new HashSet<> ();
@@ -107,6 +111,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 		this.initialElement = route;
 		this.onlyThisLayer = onlyThisLayer;
 		this.initialFR = null;
+		this.auxLayerInNodes = null;
 
 		final Set<Link> linksAllLayers = new HashSet<> ();
 		final Set<Demand> demandsAllLayers = new HashSet<> ();
@@ -128,11 +133,13 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 		this.initialElement = resource;
 		this.onlyThisLayer = onlyThisLayer;
 		this.initialFR = null;
+		this.auxLayerInNodes = layer;
 
 		final Set<Link> linksAllLayers = new HashSet<> ();
 		final Set<Demand> demandsAllLayers = new HashSet<> ();
 		final Set<MulticastDemand> mDemandsAllLayers = new HashSet<> ();
 
+		// if the resource is not used => does not appear anywhere
 		for (Route r : resource.getTraversingRoutes())
 		{
 			if (r.getLayer() != layer) continue;
@@ -143,6 +150,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 		if (!onlyThisLayer) updatePropagationUpWards (demandsAllLayers , mDemandsAllLayers , linksAllLayers , demandsAllLayers , mDemandsAllLayers);
 		final Set<NetworkLayer> layersToKeepAllElements = onlyThisLayer? Sets.difference(new HashSet<>(netPlan.getNetworkLayers ()), Sets.newHashSet(layer)): new HashSet<> ();
 		updateAllButLinksDemandsMDemandsUsingExistingInfo (linksAllLayers , demandsAllLayers , mDemandsAllLayers , layersToKeepAllElements);
+		if (!this.vResources.get(layer).contains(resource)) this.vResources.get(layer).add(resource); // add the resource if not there
 	}
 
 	public TBFToFromCarriedTraffic (Node node , NetworkLayer layer , boolean onlyThisLayer)
@@ -152,6 +160,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 		this.initialElement = node;
 		this.onlyThisLayer = onlyThisLayer;
 		this.initialFR = null;
+		this.auxLayerInNodes = layer;
 
 		final Set<Link> linksAllLayers = new HashSet<> ();
 		final Set<Demand> demandsAllLayers = new HashSet<> ();
@@ -177,6 +186,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 		this.initialElement = srg;
 		this.onlyThisLayer = false;
 		this.initialFR = null;
+		this.auxLayerInNodes = null;
 
 		final Set<Link> linksAllLayers = new HashSet<> ();
 		final Set<Demand> demandsAllLayers = new HashSet<> ();
@@ -192,6 +202,8 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 				mDemandsAllLayers.addAll(affectedThisLink.getVisibleMulticastDemands(layer));
 			}
 		}
+		final Set<NetworkLayer> layersToKeepAllElements = new HashSet<> ();
+		updateAllButLinksDemandsMDemandsUsingExistingInfo (linksAllLayers , demandsAllLayers , mDemandsAllLayers , layersToKeepAllElements);
 	}
 
 	public TBFToFromCarriedTraffic (Pair<Demand,Link> fr , boolean onlyThisLayer)
@@ -201,6 +213,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 		this.initialElement = null;
 		this.onlyThisLayer = onlyThisLayer;
 		this.initialFR = fr;
+		this.auxLayerInNodes = null;
 		
 		final Demand frDemand = fr.getFirst();
 		final Link frLink = fr.getSecond();
@@ -226,6 +239,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 		this.initialElement = demand;
 		this.onlyThisLayer = onlyThisLayer;
 		this.initialFR = null;
+		this.auxLayerInNodes = null;
 
 		final Set<Link> linksAllLayers = new HashSet<> ();
 		final Set<Demand> demandsAllLayers = new HashSet<> ();
@@ -248,10 +262,65 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
     
 	public String getDescription () 
 	{ 
-		final Demand d = (Demand) initialElement;
+		if (!chainOfDescriptionsPreviousFiltersComposingThis.isEmpty()) return "Multiple chained filters (" + (chainOfDescriptionsPreviousFiltersComposingThis.size() + 1) + ")";
+		
 		StringBuffer st = new StringBuffer();
-		st.append(onlyThisLayer? "(Affecting to layer " +  getLayerName(d.getLayer()) + ") " : "(Affecting to all layers). ");
-		st.append("Elements associated to demand " + initialElement.getIndex() + " in layer " + getLayerName (((Demand) initialElement).getLayer()));
+		if (initialFR != null)
+		{
+			st.append(onlyThisLayer? "(Affecting to layer " +  getLayerName(initialFR.getFirst().getLayer()) + ") " : "(Affecting to all layers). ");
+			st.append("Elements associated to forwarding rule (" + initialFR.getFirst().getIndex() + "," + initialFR.getSecond().getIndex() + ") in layer " + getLayerName (initialFR.getFirst().getLayer()));
+		}
+		else
+		{
+			if (initialElement instanceof Demand)
+			{
+				final Demand e = (Demand) initialElement;
+				st.append(onlyThisLayer? "(Affecting to layer " +  getLayerName(e.getLayer()) + ") " : "(Affecting to all layers). ");
+				st.append("Elements associated to demand " + e.getIndex() + " in layer " + getLayerName (e.getLayer()));
+			}
+			else if (initialElement instanceof Link)
+			{
+				final Link e = (Link) initialElement;
+				st.append(onlyThisLayer? "(Affecting to layer " +  getLayerName(e.getLayer()) + ") " : "(Affecting to all layers). ");
+				st.append("Elements associated to link " + e.getIndex() + " in layer " + getLayerName (e.getLayer()));
+			}
+			else if (initialElement instanceof MulticastDemand)
+			{
+				final MulticastDemand e = (MulticastDemand) initialElement;
+				st.append(onlyThisLayer? "(Affecting to layer " +  getLayerName(e.getLayer()) + ") " : "(Affecting to all layers). ");
+				st.append("Elements associated to multicast demand " + e.getIndex() + " in layer " + getLayerName (e.getLayer()));
+			}
+			else if (initialElement instanceof MulticastTree)
+			{
+				final MulticastTree e = (MulticastTree) initialElement;
+				st.append(onlyThisLayer? "(Affecting to layer " +  getLayerName(e.getLayer()) + ") " : "(Affecting to all layers). ");
+				st.append("Elements associated to multicast tree " + e.getIndex() + " in layer " + getLayerName (e.getLayer()));
+			}
+			else if (initialElement instanceof Node)
+			{
+				final Node e = (Node) initialElement;
+				st.append(onlyThisLayer? "(Affecting to layer " +  getLayerName(this.auxLayerInNodes) + ") " : "(Affecting to all layers). ");
+				st.append("Elements associated to node " + getNodeName(e) + " in layer " + getLayerName (this.auxLayerInNodes));
+			}
+			else if (initialElement instanceof Resource)
+			{
+				final Resource e = (Resource) initialElement;
+				st.append(onlyThisLayer? "(Affecting to layer " +  getLayerName(this.auxLayerInNodes) + ") " : "(Affecting to all layers). ");
+				st.append("Elements associated to node " + getResourceName(e) + " in layer " + getLayerName (this.auxLayerInNodes));
+				
+			}
+			else if (initialElement instanceof Route)
+			{
+				final Route e = (Route) initialElement;
+				st.append(onlyThisLayer? "(Affecting to layer " +  getLayerName(e.getLayer()) + ") " : "(Affecting to all layers). ");
+				st.append("Elements associated to route " + e.getIndex() + " in layer " + getLayerName (e.getLayer()));
+			}
+			else if (initialElement instanceof SharedRiskGroup)
+			{
+				final SharedRiskGroup e = (SharedRiskGroup) initialElement;
+				st.append("Elements in all layers affected by failure in SRG " + e.getIndex());
+			}
+		}
 		return st.toString();
 	} 
 
@@ -290,4 +359,6 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 	}
 	
 	private static String getLayerName (NetworkLayer layer) { return layer.getName().equals("")? "Layer " + layer.getIndex() : layer.getName(); } 
+	private static String getNodeName (Node n) { return n.getName().equals("")? "Node " + n.getIndex() : n.getName(); } 
+	private static String getResourceName (Resource r) { return r.getName().equals("")? "Resource " + r.getIndex() : r.getName(); } 
 }

@@ -288,7 +288,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
         final List<Pair<Demand,Link>> frRowsInTheTable = getVisibleElementsInTable();
         
         /* Add the popup menu option of the filters */
-        final List<Pair<Demand,Link>> selectedFRs = (List<Pair<Demand,Link>>) (List<?>) getSelectedElements().getFirst();
+        final List<Pair<Demand,Link>> selectedFRs = (List<Pair<Demand,Link>>) (List<?>) getSelectedElements().getSecond();
         if (!selectedFRs.isEmpty()) 
         {
         	final JMenu submenuFilters = new JMenu ("Filters");

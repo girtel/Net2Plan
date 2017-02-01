@@ -2006,8 +2006,10 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
     	{
     		for (int rowIndex : validRows)
     		{
-    			final int demandIndex = (int) getValueAt (rowIndex , AdvancedJTable_forwardingRule.COLUMN_DEMAND);
-    			final int linkIndex = (int) getValueAt (rowIndex , AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK);
+    			final String demandInfo = (String) ((DefaultTableModel) getModel()).getValueAt (rowIndex , AdvancedJTable_forwardingRule.COLUMN_DEMAND);
+    			final String linkInfo = (String) ((DefaultTableModel) getModel()).getValueAt (rowIndex , AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK);
+    			final int demandIndex = Integer.parseInt(demandInfo.substring(0 , demandInfo.indexOf("(")).trim());
+    			final int linkIndex = Integer.parseInt(linkInfo.substring(0 , linkInfo.indexOf("(")).trim());
     			frList.add(Pair.of(np.getDemand(demandIndex), np.getLink(linkIndex)));
     		}
     	}
