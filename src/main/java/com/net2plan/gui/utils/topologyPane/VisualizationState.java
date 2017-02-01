@@ -319,7 +319,7 @@ public class VisualizationState
      */
     public boolean isNetPlanEditable()
     {
-        return true;
+        return currentNp.isModifiable();
     }
 
     public List<GUINode> getCanvasVerticallyStackedGUINodes(Node n)
