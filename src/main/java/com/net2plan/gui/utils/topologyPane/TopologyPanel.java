@@ -54,20 +54,20 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 {
     private final IVisualizationCallback callback;
     private final ITopologyCanvas canvas;
-    private final ITopologyCanvasPlugin popupPlugin;
 
-//    private final JPanel layerChooserPane;
+    //    private final JPanel layerChooserPane;
 //    private final JComboBox layerChooser;
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance;
     private final JToggleButton btn_showLowerLayerInfo , btn_showUpperLayerInfo , btn_showThisLayerInfo;
     private final JButton btn_multilayer;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
-    private final MenuButton btn_view;
+    private final JMenuButton btn_view;
     private final JPopupMenu viewPopUp;
     private final JMenuItem it_control, it_osmMap, it_closeMap;
     private final JLabel position;
-    private MultiLayerControlPanel multilayerControlPanel;
+    private final JPanel canvasPanel;
+    private final MultiLayerControlPanel multilayerControlPanel;
 
     private final File defaultDesignDirectory, defaultDemandDirectory;
 
@@ -166,9 +166,19 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         add(topPanel, BorderLayout.NORTH);
 
         JComponent canvasComponent = canvas.getCanvasComponent();
-        canvasComponent.setBorder(LineBorder.createBlackLineBorder());
 
-        add(canvasComponent, BorderLayout.CENTER);
+        canvasPanel = new JPanel(new BorderLayout());
+        canvasPanel.setBorder(LineBorder.createBlackLineBorder());
+
+        JToolBar multiLayerToolbar = new JToolBar(JToolBar.VERTICAL);
+        multiLayerToolbar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.BLACK));
+        multiLayerToolbar.setRollover(true);
+        multiLayerToolbar.setFloatable(false);
+        multiLayerToolbar.setOpaque(false);
+
+        canvasPanel.add(canvasComponent, BorderLayout.CENTER);
+        canvasPanel.add(multiLayerToolbar, BorderLayout.WEST);
+        add(canvasPanel, BorderLayout.CENTER);
 
         btn_load = new JButton();
         btn_load.setToolTipText("Load a network design");
@@ -203,13 +213,13 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_increaseInterLayerDistance.setToolTipText("Increase the distance between layers (when more than one layer is visible)");
         btn_decreaseInterLayerDistance = new JButton("-LD");
         btn_decreaseInterLayerDistance.setToolTipText("Decrease the distance between layers (when more than one layer is visible)");
-        btn_showLowerLayerInfo = new JToggleButton("Show lower propagation");
+        btn_showLowerLayerInfo = new JToggleButton("Show LP");
         btn_showLowerLayerInfo.setToolTipText("Shows the links in lower layers that carry traffic of the picked element");
         btn_showLowerLayerInfo.setSelected(getVisualizationState().isShowInCanvasLowerLayerPropagation());
-        btn_showUpperLayerInfo = new JToggleButton("Show upper propagation");
+        btn_showUpperLayerInfo = new JToggleButton("Show UP");
         btn_showUpperLayerInfo.setToolTipText("Shows the links in upper layers that carry traffic that appears in the picked element");
         btn_showUpperLayerInfo.setSelected(getVisualizationState().isShowInCanvasUpperLayerPropagation());
-        btn_showThisLayerInfo = new JToggleButton("Show this propagation");
+        btn_showThisLayerInfo = new JToggleButton("Show TP");
         btn_showThisLayerInfo.setToolTipText("Shows the links in the same layer as the picked element, that carry traffic that appears in the picked element");
         btn_showThisLayerInfo.setSelected(getVisualizationState().isShowInCanvasThisLayerPropagation());
 
@@ -252,7 +262,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         viewPopUp.add(new JPopupMenu.Separator());
         viewPopUp.add(it_osmMap);
 
-        btn_view = new MenuButton("View", viewPopUp);
+        btn_view = new JMenuButton("View", viewPopUp);
         btn_view.setMnemonic(KeyEvent.VK_V);
 
         btn_reset = new JButton("Reset");
@@ -311,18 +321,16 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(btn_increaseFontSize);
         toolbar.add(btn_decreaseFontSize);
         toolbar.add(new JToolBar.Separator());
-        toolbar.add(btn_increaseInterLayerDistance);
-        toolbar.add(btn_decreaseInterLayerDistance);
-        toolbar.add(btn_showLowerLayerInfo);
-        toolbar.add(btn_showUpperLayerInfo);
-        toolbar.add(btn_showThisLayerInfo);
-        toolbar.add(new JToolBar.Separator());
-        toolbar.add(btn_multilayer);
-        toolbar.add(new JToolBar.Separator());
         toolbar.add(Box.createHorizontalGlue());
         toolbar.add(btn_view);
         toolbar.add(btn_reset);
 
+        multiLayerToolbar.add(btn_increaseInterLayerDistance);
+        multiLayerToolbar.add(btn_decreaseInterLayerDistance);
+        multiLayerToolbar.add(btn_showLowerLayerInfo);
+        multiLayerToolbar.add(btn_showUpperLayerInfo);
+        multiLayerToolbar.add(btn_showThisLayerInfo);
+        multiLayerToolbar.add(btn_multilayer);
 
         this.addComponentListener(new ComponentAdapter()
         {
@@ -426,7 +434,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showLinkIds.setSelected(getVisualizationState().isCanvasShowLinkLabels());
         btn_showNonConnectedNodes.setSelected(getVisualizationState().isCanvasShowNonConnectedNodes());
 
-        popupPlugin = new PopupMenuPlugin(callback, this.canvas);
+        final ITopologyCanvasPlugin popupPlugin = new PopupMenuPlugin(callback, this.canvas);
         addPlugin(new PanGraphPlugin(callback, canvas, MouseEvent.BUTTON1_MASK));
         if (callback.getVisualizationState().isNetPlanEditable() && getCanvas() instanceof JUNGCanvas)
             addPlugin(new AddLinkGraphPlugin(callback, canvas, MouseEvent.BUTTON1_MASK, MouseEvent.BUTTON1_MASK | MouseEvent.SHIFT_MASK));

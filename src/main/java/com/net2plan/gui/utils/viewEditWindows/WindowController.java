@@ -19,7 +19,7 @@ public class WindowController
     private static GUIWindow onlineWindow;
 
     // WindowToTab.network must always be the first one.
-    private static WindowToTab[] tabCorrectOrder = {WindowToTab.network, WindowToTab.offline, WindowToTab.online, WindowToTab.report};
+    private final static WindowToTab[] tabCorrectOrder = {WindowToTab.network, WindowToTab.offline, WindowToTab.online, WindowToTab.report};
 
     public static void buildControlWindow(final JComponent component)
     {

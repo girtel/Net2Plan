@@ -7,13 +7,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * Credits to user luca from stack overflow for his <a href="http://stackoverflow.com/questions/1692677/how-to-create-a-jbutton-with-a-menu">MenuButton</a>.
+ * Credits to user luca from stack overflow for his <a href="http://stackoverflow.com/questions/1692677/how-to-create-a-jbutton-with-a-menu">JMenuButton</a>.
  */
-public class MenuButton extends JToggleButton
+public class JMenuButton extends JToggleButton
 {
     final JPopupMenu popup;
 
-    public MenuButton(String name, JPopupMenu menu)
+    public JMenuButton(String name, JPopupMenu menu)
     {
         super(name);
         this.popup = menu;
@@ -22,7 +22,7 @@ public class MenuButton extends JToggleButton
             @Override
             public void actionPerformed(ActionEvent ev)
             {
-                JToggleButton b = MenuButton.this;
+                JToggleButton b = JMenuButton.this;
                 if (b.isSelected())
                 {
                     popup.show(b, 0, b.getBounds().height);
@@ -43,7 +43,7 @@ public class MenuButton extends JToggleButton
             @Override
             public void popupMenuWillBecomeInvisible(PopupMenuEvent e)
             {
-                MenuButton.this.setSelected(false);
+                JMenuButton.this.setSelected(false);
             }
 
             @Override
