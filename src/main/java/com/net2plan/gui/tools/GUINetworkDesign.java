@@ -30,16 +30,12 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.awt.geom.Point2D;
+import java.util.*;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -47,11 +43,11 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 
+import com.net2plan.internal.plugins.ITopologyCanvas;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
@@ -69,26 +65,18 @@ import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
 import com.net2plan.gui.utils.viewEditWindows.utils.WindowUtils;
 import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
-import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.MulticastDemand;
-import com.net2plan.interfaces.networkDesign.MulticastTree;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Resource;
-import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.sim.SimCore.SimState;
-import com.net2plan.libraries.NetworkPerformanceMetrics;
 import com.net2plan.utils.Pair;
-import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
 
 import net.miginfocom.swing.MigLayout;
@@ -158,16 +146,16 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @Override
     public void configure(JPanel contentPane)
     {
-    	this.currentNetPlan = new NetPlan ();
-    	
-    	BidiMap<NetworkLayer,Integer> mapLayer2VisualizationOrder = new DualHashBidiMap<>();
-    	Map<NetworkLayer,Boolean> layerVisibilityMap = new HashMap<>();
-    	for (NetworkLayer layer : currentNetPlan.getNetworkLayers())
-    	{
-    		mapLayer2VisualizationOrder.put(layer , mapLayer2VisualizationOrder.size());
-    		layerVisibilityMap.put(layer,true);
-    	}
-    	this.vs = new VisualizationState(currentNetPlan , mapLayer2VisualizationOrder , layerVisibilityMap);
+        this.currentNetPlan = new NetPlan();
+
+        BidiMap<NetworkLayer, Integer> mapLayer2VisualizationOrder = new DualHashBidiMap<>();
+        Map<NetworkLayer, Boolean> layerVisibilityMap = new HashMap<>();
+        for (NetworkLayer layer : currentNetPlan.getNetworkLayers())
+        {
+            mapLayer2VisualizationOrder.put(layer, mapLayer2VisualizationOrder.size());
+            layerVisibilityMap.put(layer, true);
+        }
+        this.vs = new VisualizationState(currentNetPlan, mapLayer2VisualizationOrder, layerVisibilityMap);
 
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
 
@@ -195,8 +183,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
 
         loadDesignDoNotUpdateVisualization(currentNetPlan);
-		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = VisualizationState.generateCanvasDefaultVisualizationLayerInfo(getDesign());
-		vs.setCanvasLayerVisibilityAndOrder(getDesign() , res.getFirst() , res.getSecond());
+        Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res = VisualizationState.generateCanvasDefaultVisualizationLayerInfo(getDesign());
+        vs.setCanvasLayerVisibilityAndOrder(getDesign(), res.getFirst(), res.getSecond());
 
         onlineSimulationPane = new OnlineSimulationPane(this);
         executionPane = new OfflineExecutionPanel(this);
@@ -294,7 +282,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         // Building windows
         WindowController.buildControlWindow(tabPane);
         WindowController.showControlWindow();
-        
+
         addAllKeyCombinationActions();
         updateVisualizationAfterNewTopology();
     }
@@ -302,7 +290,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
     private JPanel configureLeftBottomPanel()
     {
-    	focusPanel = new FocusPane(this);// = new JTextArea();
+        focusPanel = new FocusPane(this);// = new JTextArea();
 //        txt_netPlanLog.setFont(new JLabel().getFont());
         JPanel pane = new JPanel(new MigLayout("fill, insets 0 0 0 0"));
         pane.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Focus panel"));
@@ -403,8 +391,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             ErrorHandling.addErrorOrException(ex, GUINetworkDesign.class);
             ErrorHandling.showErrorDialog("Unable to reset");
         }
-        Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>>  res = VisualizationState.generateCanvasDefaultVisualizationLayerInfo(getDesign());
-        vs.setCanvasLayerVisibilityAndOrder(getDesign() , res.getFirst() , res.getSecond());
+        Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res = VisualizationState.generateCanvasDefaultVisualizationLayerInfo(getDesign());
+        vs.setCanvasLayerVisibilityAndOrder(getDesign(), res.getFirst(), res.getSecond());
         updateVisualizationAfterNewTopology();
     }
 
@@ -433,20 +421,25 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
      */
     private void selectNetPlanViewItem(NetworkElementType type, Object itemId)
     {
-    	NetworkLayer elementLayer = null;
-    	if (type.equals(NetworkElementType.LINK)) elementLayer = getDesign().getLinkFromId ((long) itemId).getLayer();
-    	else if (type.equals(NetworkElementType.DEMAND)) elementLayer = getDesign().getDemandFromId ((long) itemId).getLayer();
-    	else if (type.equals(NetworkElementType.FORWARDING_RULE)) elementLayer = getDesign().getDemand (((Pair<Integer,Integer>) itemId).getFirst()).getLayer();
-    	else if (type.equals(NetworkElementType.MULTICAST_DEMAND)) elementLayer = getDesign().getMulticastDemandFromId((long) itemId).getLayer();
-    	else if (type.equals(NetworkElementType.MULTICAST_TREE)) elementLayer = getDesign().getMulticastTreeFromId ((long) itemId).getLayer();
-    	else if (type.equals(NetworkElementType.ROUTE)) elementLayer = getDesign().getRouteFromId ((long) itemId).getLayer();
-    	if (elementLayer != null)
-    		if (elementLayer != getDesign().getNetworkLayerDefault())
-    		{
-    			getDesign ().setNetworkLayerDefault(elementLayer);
-    			viewEditTopTables.updateView();
-    		}
-    	topologyPanel.updateMultilayerVisibilityAndOrderPanel();
+        NetworkLayer elementLayer = null;
+        if (type.equals(NetworkElementType.LINK)) elementLayer = getDesign().getLinkFromId((long) itemId).getLayer();
+        else if (type.equals(NetworkElementType.DEMAND))
+            elementLayer = getDesign().getDemandFromId((long) itemId).getLayer();
+        else if (type.equals(NetworkElementType.FORWARDING_RULE))
+            elementLayer = getDesign().getDemand(((Pair<Integer, Integer>) itemId).getFirst()).getLayer();
+        else if (type.equals(NetworkElementType.MULTICAST_DEMAND))
+            elementLayer = getDesign().getMulticastDemandFromId((long) itemId).getLayer();
+        else if (type.equals(NetworkElementType.MULTICAST_TREE))
+            elementLayer = getDesign().getMulticastTreeFromId((long) itemId).getLayer();
+        else if (type.equals(NetworkElementType.ROUTE))
+            elementLayer = getDesign().getRouteFromId((long) itemId).getLayer();
+        if (elementLayer != null)
+            if (elementLayer != getDesign().getNetworkLayerDefault())
+            {
+                getDesign().setNetworkLayerDefault(elementLayer);
+                viewEditTopTables.updateView();
+            }
+        topologyPanel.updateMultilayerVisibilityAndOrderPanel();
         viewEditTopTables.selectViewItem(type, itemId);
     }
 
@@ -625,67 +618,67 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
 
     @Override
-    public void updateVisualizationAfterPick ()
+    public void updateVisualizationAfterPick()
     {
-    	if (vs.getPickedElementType() != null) // can be null if picked a resource type
-    	{
-    		if (vs.getPickedNetworkElement() != null)
-    			selectNetPlanViewItem(vs.getPickedElementType(), vs.getPickedNetworkElement().getId());
-    		else
-    		{
-    			final Pair<Demand,Link> fr = vs.getPickedForwardingRule();
-    			selectNetPlanViewItem(vs.getPickedElementType(), Pair.of(fr.getFirst().getIndex() , fr.getSecond().getIndex()));
-    		}
+        if (vs.getPickedElementType() != null) // can be null if picked a resource type
+        {
+            if (vs.getPickedNetworkElement() != null)
+                selectNetPlanViewItem(vs.getPickedElementType(), vs.getPickedNetworkElement().getId());
+            else
+            {
+                final Pair<Demand, Link> fr = vs.getPickedForwardingRule();
+                selectNetPlanViewItem(vs.getPickedElementType(), Pair.of(fr.getFirst().getIndex(), fr.getSecond().getIndex()));
+            }
             topologyPanel.getCanvas().refresh();
-    	}
+        }
         focusPanel.updateView();
     }
 
     @Override
     public void putTransientColorInElementTopologyCanvas(Collection<? extends NetworkElement> linksAndNodes, Color color)
     {
-    	for (NetworkElement e : linksAndNodes)
-    	{
-    		if (e instanceof Link)
-    		{
-    			final GUILink gl = vs.getCanvasAssociatedGUILink((Link) e);
-    			if (gl != null)
-    			{
-    				gl.setArrowDrawPaint(color);
-    				gl.setArrowFillPaint(color);
-    				gl.setEdgeDrawPaint(color);
-    			}
-    		} else if (e instanceof Node)
-    		{
-    			for (GUINode gn : vs.getCanvasVerticallyStackedGUINodes((Node) e))
-    			{
-    				gn.setDrawPaint(color);
-    				gn.setFillPaint(color);
-    			}
-    		} else throw new RuntimeException();
-    	}
-    		
+        for (NetworkElement e : linksAndNodes)
+        {
+            if (e instanceof Link)
+            {
+                final GUILink gl = vs.getCanvasAssociatedGUILink((Link) e);
+                if (gl != null)
+                {
+                    gl.setArrowDrawPaint(color);
+                    gl.setArrowFillPaint(color);
+                    gl.setEdgeDrawPaint(color);
+                }
+            } else if (e instanceof Node)
+            {
+                for (GUINode gn : vs.getCanvasVerticallyStackedGUINodes((Node) e))
+                {
+                    gn.setDrawPaint(color);
+                    gn.setFillPaint(color);
+                }
+            } else throw new RuntimeException();
+        }
+
         resetPickedStateAndUpdateView();
     }
 
-	@Override
-	public void updateVisualizationAfterNewTopology()
-	{
-		topologyPanel.updateMultilayerVisibilityAndOrderPanel();
-		topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
-	    topologyPanel.getCanvas().zoomAll();
-	    viewEditTopTables.updateView();
+    @Override
+    public void updateVisualizationAfterNewTopology()
+    {
+        topologyPanel.updateMultilayerVisibilityAndOrderPanel();
+        topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
+        topologyPanel.getCanvas().zoomAll();
+        viewEditTopTables.updateView();
         focusPanel.updateView();
-	}
+    }
 
     @Override
-	public void updateVisualizationJustCanvasLinkNodeVisibilityOrColor ()
-	{
-		topologyPanel.getCanvas().refresh();
-	}
+    public void updateVisualizationJustCanvasLinkNodeVisibilityOrColor()
+    {
+        topologyPanel.getCanvas().refresh();
+    }
 
     @Override
-    public void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade)
+    public void updateVisualizationAfterChanges(Set<NetworkElementType> modificationsMade)
     {
         if (modificationsMade == null)
         {
@@ -694,12 +687,11 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         if (modificationsMade.contains(NetworkElementType.LAYER))
         {
-    		topologyPanel.updateMultilayerVisibilityAndOrderPanel();
+            topologyPanel.updateMultilayerVisibilityAndOrderPanel();
             topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
             viewEditTopTables.updateView();
             focusPanel.updateView();
-        }
-        else if ((modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE) || modificationsMade.contains(NetworkElementType.LAYER)))
+        } else if ((modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE) || modificationsMade.contains(NetworkElementType.LAYER)))
         {
             topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
             viewEditTopTables.updateView();
@@ -725,5 +717,48 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     public void updateVisualizationJustTables()
     {
         viewEditTopTables.updateView();
+    }
+
+    @Override
+    public void moveNodeTo(final GUINode guiNode, final Point2D toPoint)
+    {
+        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("NetPlan is not editable");
+
+        final ITopologyCanvas canvas = topologyPanel.getCanvas();
+        final Node node = guiNode.getAssociatedNetPlanNode();
+
+        final Point2D netPlanPoint = canvas.getCanvasPointFromMovement(toPoint);
+        if (netPlanPoint == null) return;
+
+        final Point2D jungPoint = canvas.getCanvasPointFromNetPlanPoint(toPoint);
+
+        node.setXYPositionMap(netPlanPoint);
+
+        viewEditTopTables.updateView();
+
+        // Updating GUINodes position having in mind the selected layer.
+        final List<GUINode> guiNodes = vs.getCanvasVerticallyStackedGUINodes(node);
+        final int selectedLayerVisualizationOrder = guiNode.getVisualizationOrderRemovingNonVisibleLayers();
+
+        for (GUINode stackedGUINode : guiNodes)
+        {
+            final int vlIndex = stackedGUINode.getVisualizationOrderRemovingNonVisibleLayers();
+            final double interLayerDistanceInNpCoord = canvas.getInterLayerDistanceInNpCoordinates();
+
+            if (vlIndex > selectedLayerVisualizationOrder)
+            {
+                final int layerDistance = vlIndex - selectedLayerVisualizationOrder;
+                canvas.moveVertexToXYPosition(stackedGUINode, new Point2D.Double(jungPoint.getX(), -(jungPoint.getY() + (layerDistance * interLayerDistanceInNpCoord))));
+            } else if (vlIndex == selectedLayerVisualizationOrder)
+            {
+                canvas.moveVertexToXYPosition(stackedGUINode, new Point2D.Double(jungPoint.getX(), -(jungPoint.getY())));
+            } else
+            {
+                final int layerDistance = selectedLayerVisualizationOrder - vlIndex;
+                canvas.moveVertexToXYPosition(stackedGUINode, new Point2D.Double(jungPoint.getX(), -(jungPoint.getY() - (layerDistance * interLayerDistanceInNpCoord))));
+            }
+        }
+
+        canvas.refresh();
     }
 }

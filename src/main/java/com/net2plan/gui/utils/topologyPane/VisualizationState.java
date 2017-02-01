@@ -91,7 +91,6 @@ public class VisualizationState
  
     private boolean showInCanvasNonConnectedNodes;
     private int interLayerSpaceInPixels;
-    private boolean isNetPlanEditable;
     private NetPlan currentNp;
     private Set<Node> nodesToHideInCanvasAsMandatedByUserInTable;
     private Set<Link> linksToHideInCanvasAsMandatedByUserInTable;
@@ -201,7 +200,6 @@ public class VisualizationState
         this.showInCanvasLinksInNonActiveLayer = true;
         this.showInCanvasInterLayerLinks = true;
         this.showInCanvasNonConnectedNodes = true;
-        this.isNetPlanEditable = true;
         this.showInCanvasLowerLayerPropagation = true;
         this.showInCanvasUpperLayerPropagation = true;
         this.showInCanvasThisLayerPropagation = true;
@@ -321,15 +319,7 @@ public class VisualizationState
      */
     public boolean isNetPlanEditable()
     {
-        return isNetPlanEditable;
-    }
-
-    /**
-     * @param isNetPlanEditable the isNetPlanEditable to set
-     */
-    public void setNetPlanEditable(boolean isNetPlanEditable)
-    {
-        this.isNetPlanEditable = isNetPlanEditable;
+        return true;
     }
 
     public List<GUINode> getCanvasVerticallyStackedGUINodes(Node n)

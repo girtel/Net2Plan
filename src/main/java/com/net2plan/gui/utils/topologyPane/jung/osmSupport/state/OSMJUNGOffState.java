@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * @author Jorge San Emeterio
  * @date 19-Jan-17
  */
-public class OSMJUNGOffState extends OSMOffState
+public class OSMJUNGOffState implements OSMState
 {
     private final IVisualizationCallback callback;
     private final JUNGCanvas canvas;
@@ -150,7 +150,7 @@ public class OSMJUNGOffState extends OSMOffState
     }
 
     @Override
-    public void updateNodeXYPosition()
+    public void updateNodesXYPosition()
     {
         for (GUINode guiNode : canvas.getAllVertices())
         {
@@ -173,5 +173,11 @@ public class OSMJUNGOffState extends OSMOffState
         }
 
         return currentInterLayerDistanceInNpCoordinates;
+    }
+
+    @Override
+    public Point2D getCanvasPoint(Point2D pos)
+    {
+        return canvas.getCanvasPointFromNetPlanPoint(pos);
     }
 }

@@ -16,7 +16,7 @@ public class OSMStateManager
 {
     private OSMState currentState;
     private final OSMOnState runningState;
-    private final OSMOffState stoppedState;
+    private final OSMJUNGOffState stoppedState;
 
     private final IVisualizationCallback callback;
     private final TopologyPanel topologyPanel;
@@ -89,12 +89,17 @@ public class OSMStateManager
 
     public void updateNodesXYPosition()
     {
-        currentState.updateNodeXYPosition();
+        currentState.updateNodesXYPosition();
     }
 
-    public double getCanvasInterlayerDistance(int interLayerDistanceInPixels)
+    public double getCanvasInterlayerDistance(final int interLayerDistanceInPixels)
     {
         return currentState.getInterLayerDistance(interLayerDistanceInPixels);
+    }
+
+    public Point2D getCanvasCoordinateFromScreenPoint(final Point2D pos)
+    {
+        return currentState.getCanvasPoint(pos);
     }
 
     public boolean isMapActivated()

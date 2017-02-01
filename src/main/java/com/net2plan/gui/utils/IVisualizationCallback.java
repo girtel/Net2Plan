@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import com.net2plan.gui.utils.topologyPane.GUINode;
 import org.apache.commons.collections15.BidiMap;
 
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
@@ -83,4 +84,6 @@ public interface IVisualizationCallback
 	void loadDesignDoNotUpdateVisualization(NetPlan netPlan);
 
 	void updateVisualizationAfterPick();
+
+	void moveNodeTo(GUINode guiNode, Point2D toPoint);
 }

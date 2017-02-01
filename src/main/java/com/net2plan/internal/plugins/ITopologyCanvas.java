@@ -99,6 +99,8 @@ public interface ITopologyCanvas extends Plugin
 
 	Set<GUILink> getAllEdges();
 
+	Point2D getCanvasPointFromMovement(Point2D point);
+
 	void panTo(Point2D initialPoint, Point2D destinationPoint);
 
 	void addNode(Point2D position);
