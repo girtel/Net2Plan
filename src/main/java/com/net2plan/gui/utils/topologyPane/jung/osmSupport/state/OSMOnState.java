@@ -67,7 +67,10 @@ class OSMOnState implements OSMState
     @Override
     public void addNode(final Point2D pos)
     {
-        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(convertJungPointToMapSwing(canvas, pos));
+        final double scale = canvas.getCurrentCanvasScale();
+        final Point2D.Double jungPoint = new Point2D.Double(pos.getX() * scale, -pos.getY() * scale);
+
+        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(jungPoint);
         if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
         {
             throw new OSMMapController.OSMMapException("The node is out of the map's bounds", "Problem while adding node");
@@ -108,7 +111,7 @@ class OSMOnState implements OSMState
     }
 
     @Override
-    public void updateNodeXYPosition()
+    public void updateNodesXYPosition()
     {
         mapController.refreshTopologyAlignment();
     }
@@ -117,13 +120,5 @@ class OSMOnState implements OSMState
     public double getInterLayerDistance(int interLayerDistanceInPixels)
     {
         return interLayerDistanceInPixels;
-    }
-
-    private Point2D convertJungPointToMapSwing(final ITopologyCanvas canvas, final Point2D jungPoint)
-    {
-        // Compensating zoom, all movements must be done over a 1:1 ratio.
-        final double scale = canvas.getCurrentCanvasScale();
-
-        return new Point2D.Double(jungPoint.getX() * scale, -jungPoint.getY() * scale);
     }
 }

@@ -18,6 +18,7 @@ import com.net2plan.internal.plugins.ITopologyCanvas;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
 
 /**
  * Plugin that enables to move nodes.
@@ -68,11 +69,10 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        //System.out.println("mouseDragged: " + e + ", startVertex: " + startVertex);
         if (startVertex != null) {
-            Point p = e.getPoint();
+            final Point p = e.getPoint();
 
-            canvas.moveVertexToXYPosition(startVertex, p);
+            callback.moveNodeTo(startVertex, p);
 
             e.consume();
         }

@@ -89,7 +89,7 @@ public class OSMStateManager
 
     public void updateNodesXYPosition()
     {
-        currentState.updateNodeXYPosition();
+        currentState.updateNodesXYPosition();
     }
 
     public double getCanvasInterlayerDistance(int interLayerDistanceInPixels)
