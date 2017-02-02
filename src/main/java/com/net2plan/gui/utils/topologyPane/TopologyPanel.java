@@ -210,9 +210,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_decreaseFontSize = new JButton();
         btn_decreaseFontSize.setToolTipText("Decrease font size");
         /* Multilayer buttons */
-        btn_increaseInterLayerDistance = new JButton("+LD");
+        btn_increaseInterLayerDistance = new JButton();
         btn_increaseInterLayerDistance.setToolTipText("Increase the distance between layers (when more than one layer is visible)");
-        btn_decreaseInterLayerDistance = new JButton("-LD");
+        btn_decreaseInterLayerDistance = new JButton();
         btn_decreaseInterLayerDistance.setToolTipText("Decrease the distance between layers (when more than one layer is visible)");
         btn_showLowerLayerInfo = new JToggleButton("Show LP");
         btn_showLowerLayerInfo.setToolTipText("Shows the links in lower layers that carry traffic of the picked element");
@@ -262,6 +262,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_decreaseNodeSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseNode.png")));
         btn_increaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseFont.png")));
         btn_decreaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseFont.png")));
+        btn_increaseInterLayerDistance.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseLayerDistance.png")));
+        btn_decreaseInterLayerDistance.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseLayerDistance.png")));
 
         btn_load.addActionListener(this);
         btn_loadDemand.addActionListener(this);
