@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.swing.JComponent;
-import javax.swing.OverlayLayout;
+import javax.swing.*;
 
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import org.jxmapviewer.viewer.GeoPosition;
@@ -97,15 +96,20 @@ public class OSMMapController
         final LayoutManager layout = new OverlayLayout(mapViewer);
         mapViewer.setLayout(layout);
 
-        topologyPanel.remove(canvas.getCanvasComponent());
+        final JPanel canvasPanel = topologyPanel.getCanvasPanel();
+
+        canvasPanel.remove(canvas.getCanvasComponent());
 
         mapViewer.removeAll();
         mapViewer.add(canvas.getCanvasComponent());
 
-        topologyPanel.add(mapViewer, BorderLayout.CENTER);
+        canvasPanel.add(mapViewer, BorderLayout.CENTER);
 
         mapViewer.validate();
         mapViewer.repaint();
+
+        canvasPanel.validate();
+        canvasPanel.repaint();
 
         topologyPanel.validate();
         topologyPanel.repaint();

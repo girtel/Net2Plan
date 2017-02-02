@@ -549,6 +549,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         return "Layer " + layer.getIndex() + (layer.getName().isEmpty() ? "" : ": " + layer.getName());
     }
 
+    public JPanel getCanvasPanel()
+    {
+        return canvasPanel;
+    }
+
     /**
      * Returns a reference to the topology canvas.
      *
