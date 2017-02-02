@@ -5,17 +5,28 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
 /**
- * @author Jorge San Emeterio
- * @date 01-Feb-17
+ * Credits to user luca from stack overflow for his <a href="http://stackoverflow.com/questions/1692677/how-to-create-a-jbutton-with-a-menu">JMenuButton</a>.
  */
-public class JPopUpButton extends JComponentButton
+public class JPopUpButton extends JToggleButton
 {
     private final JPopupMenu popup;
 
     public JPopUpButton(String name, JPopupMenu menu)
     {
-        super(name, menu);
-        this.popup = (JPopupMenu) innerComponent;
+        super(name);
+        this.popup = menu;
+
+        addActionListener(ev ->
+        {
+            JToggleButton b = JPopUpButton.this;
+            if (b.isSelected())
+            {
+                popup.show(b, 0, b.getBounds().height);
+            } else
+            {
+                popup.setVisible(false);
+            }
+        });
 
         popup.addPopupMenuListener(new PopupMenuListener()
         {
@@ -31,11 +42,6 @@ public class JPopUpButton extends JComponentButton
             @Override
             public void popupMenuCanceled(PopupMenuEvent e) {}
         });
-    }
 
-    @Override
-    void doToggle()
-    {
-        popup.show(this, 0, this.getBounds().height);
     }
 }
