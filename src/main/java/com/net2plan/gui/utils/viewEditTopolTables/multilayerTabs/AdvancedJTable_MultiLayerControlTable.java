@@ -196,6 +196,8 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         setDefaultEditor(Object.class, new ButtonEditor());
     }
 
+    // <-----Custom cell----->
+
     /**
      * Credits to user "MadProgrammer" from stack overflow for his <a href="http://stackoverflow.com/questions/17565169/unable-to-add-two-buttons-in-a-single-cell-in-a-jtable">ButtonEditor</a>.
      */

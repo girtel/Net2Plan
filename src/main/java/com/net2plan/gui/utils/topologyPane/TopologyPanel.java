@@ -59,10 +59,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 //    private final JComboBox layerChooser;
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance;
+    private final JButton btn_increaseNodeSize, btn_decreaseNodeSize, btn_increaseFontSize, btn_decreaseFontSize;
     private final JToggleButton btn_showLowerLayerInfo, btn_showUpperLayerInfo, btn_showThisLayerInfo;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final JPopUpButton btn_view, btn_multilayer;
-    private final JPopupMenu viewPopUp;
+    private final JPopupMenu viewPopUp, multiLayerPopUp;
     private final JMenuItem it_control, it_osmMap, it_closeMap;
     private final JLabel position;
     private final JPanel canvasPanel;
@@ -200,13 +201,13 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showLinkIds.setToolTipText("Show/hide link utilization, measured as the ratio between the total traffic in the link (including that in protection segments) and total link capacity (including that reserved by protection segments)");
         btn_showNonConnectedNodes = new JToggleButton();
         btn_showNonConnectedNodes.setToolTipText("Show/hide non-connected nodes");
-        JButton btn_increaseNodeSize = new JButton();
+        btn_increaseNodeSize = new JButton();
         btn_increaseNodeSize.setToolTipText("Increase node size");
-        JButton btn_decreaseNodeSize = new JButton();
+        btn_decreaseNodeSize = new JButton();
         btn_decreaseNodeSize.setToolTipText("Decrease node size");
-        JButton btn_increaseFontSize = new JButton();
+        btn_increaseFontSize = new JButton();
         btn_increaseFontSize.setToolTipText("Increase font size");
-        JButton btn_decreaseFontSize = new JButton();
+        btn_decreaseFontSize = new JButton();
         btn_decreaseFontSize.setToolTipText("Decrease font size");
         /* Multilayer buttons */
         btn_increaseInterLayerDistance = new JButton("+LD");
@@ -223,56 +224,29 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showThisLayerInfo.setToolTipText("Shows the links in the same layer as the picked element, that carry traffic that appears in the picked element");
         btn_showThisLayerInfo.setSelected(getVisualizationState().isShowInCanvasThisLayerPropagation());
 
-        viewPopUp = new JPopupMenu();
-
+        // OSM Buttons
         it_control = new JMenuItem("View control window");
         it_control.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
-        it_control.addActionListener(e ->
-        {
-            WindowController.showControlWindow();
-        });
 
         it_osmMap = new JMenuItem("Run OpenStreetMap support");
         it_closeMap = new JMenuItem("Shutdown OpenStreetMap support");
 
-        it_closeMap.addActionListener(e ->
-        {
-            if (canvas.isOSMRunning())
-            {
-                switchOSMSupport(false);
-                it_osmMap.setEnabled(true);
-                viewPopUp.remove(it_closeMap);
-            }
-        });
-
-        it_osmMap.addActionListener(e ->
-        {
-            if (!canvas.isOSMRunning())
-            {
-                switchOSMSupport(true);
-                it_osmMap.setEnabled(false);
-                viewPopUp.add(it_closeMap);
-            }
-        });
-
+        // "View" toggle pop-up
+        viewPopUp = new JPopupMenu();
         viewPopUp.add(it_control);
         viewPopUp.add(new JPopupMenu.Separator());
         viewPopUp.add(it_osmMap);
-
         btn_view = new JPopUpButton("View", viewPopUp);
         btn_view.setMnemonic(KeyEvent.VK_V);
+
+        // MultiLayer control window
+        multiLayerPopUp = new JPopupMenu();
+        multiLayerPopUp.add(multilayerControlPanel);
+        btn_multilayer = new JPopUpButton("Debug", multiLayerPopUp);
 
         btn_reset = new JButton("Reset");
         btn_reset.setToolTipText("Reset the user interface");
         btn_reset.setMnemonic(KeyEvent.VK_R);
-
-
-        final JPopupMenu multiLayerPopUp = new JPopupMenu();
-
-        multiLayerPopUp.setLayout(new BorderLayout());
-        multiLayerPopUp.add(multilayerControlPanel, BorderLayout.CENTER);
-
-        btn_multilayer = new JPopUpButton("Debug", multiLayerPopUp);
 
         btn_load.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDesign.png")));
         btn_loadDemand.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDemand.png")));
@@ -305,6 +279,13 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showLowerLayerInfo.addActionListener(this);
         btn_showUpperLayerInfo.addActionListener(this);
         btn_showThisLayerInfo.addActionListener(this);
+        btn_increaseNodeSize.addActionListener(this);
+        btn_decreaseNodeSize.addActionListener(this);
+        btn_increaseFontSize.addActionListener(this);
+        btn_decreaseFontSize.addActionListener(this);
+        it_control.addActionListener(this);
+        it_closeMap.addActionListener(this);
+        it_osmMap.addActionListener(this);
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
@@ -341,46 +322,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             public void componentResized(ComponentEvent e)
             {
                 zoomAll();
-            }
-        });
-
-        btn_increaseNodeSize.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                callback.getVisualizationState().increaseCanvasNodeSizeAll();
-                canvas.refresh();
-            }
-        });
-
-        btn_decreaseNodeSize.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                callback.getVisualizationState().decreaseCanvasNodeSizeAll();
-                canvas.refresh();
-            }
-        });
-
-        btn_increaseFontSize.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                callback.getVisualizationState().increaseCanvasFontSizeAll();
-                canvas.refresh();
-            }
-        });
-
-        btn_decreaseFontSize.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final boolean somethingChanged = callback.getVisualizationState().decreaseCanvasFontSizeAll();
-                if (somethingChanged) canvas.refresh();
             }
         });
 
@@ -534,6 +475,41 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         {
             vs.setShowInCanvasThisLayerPropagation(btn_showThisLayerInfo.isSelected());
             canvas.refresh();
+        } else if (src == it_closeMap)
+        {
+            if (canvas.isOSMRunning())
+            {
+                switchOSMSupport(false);
+                it_osmMap.setEnabled(true);
+                viewPopUp.remove(it_closeMap);
+            }
+        } else if (src == it_osmMap)
+        {
+            if (!canvas.isOSMRunning())
+            {
+                switchOSMSupport(true);
+                it_osmMap.setEnabled(false);
+                viewPopUp.add(it_closeMap);
+            }
+        } else if (src == it_control)
+        {
+            WindowController.showControlWindow();
+        } else if (src == btn_increaseNodeSize)
+        {
+            callback.getVisualizationState().increaseCanvasNodeSizeAll();
+            canvas.refresh();
+        } else if (src == btn_decreaseNodeSize)
+        {
+            callback.getVisualizationState().decreaseCanvasNodeSizeAll();
+            canvas.refresh();
+        } else if (src == btn_increaseFontSize)
+        {
+            callback.getVisualizationState().increaseCanvasFontSizeAll();
+            canvas.refresh();
+        } else if (src == btn_decreaseFontSize)
+        {
+            final boolean somethingChanged = callback.getVisualizationState().decreaseCanvasFontSizeAll();
+            if (somethingChanged) canvas.refresh();
         }
     }
 
