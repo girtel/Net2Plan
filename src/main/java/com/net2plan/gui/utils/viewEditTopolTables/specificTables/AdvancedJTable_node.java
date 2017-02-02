@@ -18,7 +18,6 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -41,14 +40,11 @@ import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement.LastRowAggregatedValue;
 import com.net2plan.gui.utils.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -138,7 +134,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
             Object[] nodeData = new Object[netPlanViewTableHeader.length + attributesTitles.size()];
             nodeData[COLUMN_ID] = node.getId();
             nodeData[COLUMN_INDEX] = node.getIndex();
-            nodeData[COLUMN_SHOWHIDE] = !callback.getVisualizationState().isMandatedByTheUserToBeHidenInCanvas(node);
+            nodeData[COLUMN_SHOWHIDE] = !callback.getVisualizationState().isMandatedByTheUserToBeHiddenInCanvas(node);
             nodeData[COLUMN_NAME] = node.getName();
             nodeData[COLUMN_STATE] = node.isUp();
             nodeData[COLUMN_XCOORD] = node.getXYPositionMap().getX();
@@ -275,7 +271,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                     switch (column) {
                         case COLUMN_SHOWHIDE:
                             if (newValue == null) return;
-                        	callback.getVisualizationState().setMandatedByTheuserToBeHidenInCanvas(node , (Boolean) newValue);
+                        	callback.getVisualizationState().setMandatedByTheUserToBeHiddenInCanvas(node , !((Boolean) newValue));
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                         	callback.getVisualizationState ().pickNode(node);
                             callback.updateVisualizationAfterPick();
