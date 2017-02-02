@@ -169,10 +169,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         JComponent canvasComponent = canvas.getCanvasComponent();
 
         canvasPanel = new JPanel(new BorderLayout());
-        canvasPanel.setBorder(LineBorder.createBlackLineBorder());
+        canvasComponent.setBorder(LineBorder.createBlackLineBorder());
 
         JToolBar multiLayerToolbar = new JToolBar(JToolBar.VERTICAL);
-        multiLayerToolbar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.BLACK));
         multiLayerToolbar.setRollover(true);
         multiLayerToolbar.setFloatable(false);
         multiLayerToolbar.setOpaque(false);
@@ -311,6 +310,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(btn_view);
         toolbar.add(btn_reset);
 
+        multiLayerToolbar.add(new JToolBar.Separator());
         multiLayerToolbar.add(btn_increaseInterLayerDistance);
         multiLayerToolbar.add(btn_decreaseInterLayerDistance);
         multiLayerToolbar.add(btn_showLowerLayerInfo);

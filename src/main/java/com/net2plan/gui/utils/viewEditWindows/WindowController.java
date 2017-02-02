@@ -40,9 +40,15 @@ public class WindowController
     {
         if (controlWindow != null)
         {
-            if (!gainFocus) controlWindow.setFocusableWindowState(false);
-            controlWindow.showWindow();
-            controlWindow.setFocusableWindowState(true);
+            if (gainFocus)
+            {
+                controlWindow.showWindow();
+            } else
+            {
+                controlWindow.setFocusableWindowState(false);
+                controlWindow.showWindow();
+                controlWindow.setFocusableWindowState(true);
+            }
         }
     }
 
