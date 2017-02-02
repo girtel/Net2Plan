@@ -60,9 +60,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance;
     private final JToggleButton btn_showLowerLayerInfo, btn_showUpperLayerInfo, btn_showThisLayerInfo;
-    private final JButton btn_multilayer;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
-    private final JPopUpButton btn_view;
+    private final JPopUpButton btn_view, btn_multilayer;
     private final JPopupMenu viewPopUp;
     private final JMenuItem it_control, it_osmMap, it_closeMap;
     private final JLabel position;
@@ -267,7 +266,13 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_reset.setToolTipText("Reset the user interface");
         btn_reset.setMnemonic(KeyEvent.VK_R);
 
-        btn_multilayer = new JButton("Debug");
+
+        final JPopupMenu multiLayerPopUp = new JPopupMenu();
+
+        multiLayerPopUp.setLayout(new BorderLayout());
+        multiLayerPopUp.add(multilayerControlPanel, BorderLayout.CENTER);
+
+        btn_multilayer = new JPopUpButton("Debug", multiLayerPopUp);
 
         btn_load.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDesign.png")));
         btn_loadDemand.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDemand.png")));
@@ -300,7 +305,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showLowerLayerInfo.addActionListener(this);
         btn_showUpperLayerInfo.addActionListener(this);
         btn_showThisLayerInfo.addActionListener(this);
-        btn_multilayer.addActionListener(this);
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
@@ -455,7 +459,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     {
         Object src = e.getSource();
         final VisualizationState vs = callback.getVisualizationState();
-        final NetPlan np = callback.getDesign();
         if (src == btn_load)
         {
             loadDesign();
@@ -531,14 +534,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         {
             vs.setShowInCanvasThisLayerPropagation(btn_showThisLayerInfo.isSelected());
             canvas.refresh();
-        } else if (src == btn_multilayer)
-        {
-            final JFrame frame = new JFrame();
-            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            frame.setSize(new Dimension(800, 600));
-            frame.setLayout(new BorderLayout());
-            frame.add(multilayerControlPanel, BorderLayout.CENTER);
-            frame.setVisible(true);
         }
     }
 
