@@ -281,7 +281,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         // Building windows
         WindowController.buildControlWindow(tabPane);
-        WindowController.showControlWindow();
+        WindowController.showControlWindow(false);
 
         addAllKeyCombinationActions();
         updateVisualizationAfterNewTopology();
@@ -419,6 +419,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
      * @param itemId Item identifier (if null, it will just show the tab)
      * @since 0.3.0
      */
+    @SuppressWarnings("unchecked")
     private void selectNetPlanViewItem(NetworkElementType type, Object itemId)
     {
         NetworkLayer elementLayer = null;
@@ -605,7 +606,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                WindowController.showControlWindow();
+                WindowController.showControlWindow(true);
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
     }

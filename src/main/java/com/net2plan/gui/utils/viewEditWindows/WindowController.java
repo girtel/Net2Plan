@@ -36,11 +36,13 @@ public class WindowController
         controlWindow.buildWindow(component);
     }
 
-    public static void showControlWindow()
+    public static void showControlWindow(final boolean gainFocus)
     {
         if (controlWindow != null)
         {
+            if (!gainFocus) controlWindow.setFocusableWindowState(false);
             controlWindow.showWindow();
+            controlWindow.setFocusableWindowState(true);
         }
     }
 

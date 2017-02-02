@@ -495,7 +495,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             }
         } else if (src == it_control)
         {
-            WindowController.showControlWindow();
+            WindowController.showControlWindow(true);
         } else if (src == btn_increaseNodeSize)
         {
             callback.getVisualizationState().increaseCanvasNodeSizeAll();
