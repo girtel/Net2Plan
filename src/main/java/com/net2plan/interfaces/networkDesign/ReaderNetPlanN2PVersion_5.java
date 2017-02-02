@@ -327,10 +327,12 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final String capacityMeasurementUnits = getString ("capacityMeasurementUnits");
 		final double processingTimeToTraversingTrafficInMs = getDouble ("processingTimeToTraversingTrafficInMs");
 		final double capacity = getDouble ("capacity");
+		URL urlIcon = null; try { urlIcon = new URL (getString ("urlIcon")); } catch (Exception e) {}
 		final List<Double> baseResourceAndOccupiedCapacitiesMap = getListDouble("baseResourceAndOccupiedCapacitiesMap");
 		Map<Resource,Double> occupiedCapacitiesInBaseResources = getResourceOccupationMap(netPlan, baseResourceAndOccupiedCapacitiesMap); 
 		Resource newResource = netPlan.addResource(resId , type , name , netPlan.getNodeFromId(hostNodeId) , capacity , capacityMeasurementUnits , 
 				occupiedCapacitiesInBaseResources , processingTimeToTraversingTrafficInMs , null);
+		newResource.setUrlIcon(urlIcon);
 		readAndAddAttributesToEnd(newResource, "resource");
 	}
 	

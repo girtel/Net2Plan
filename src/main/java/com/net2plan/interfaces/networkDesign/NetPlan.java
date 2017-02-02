@@ -5425,6 +5425,8 @@ public class NetPlan extends NetworkElement
                 writer.writeAttribute("capacityMeasurementUnits", res.capacityMeasurementUnits);
                 writer.writeAttribute("processingTimeToTraversingTrafficInMs", Double.toString(res.processingTimeToTraversingTrafficInMs));
                 writer.writeAttribute("capacity", Double.toString(res.capacity));
+                if (res.urlIcon != null) writer.writeAttribute("urlIcon", res.urlIcon.toString());
+                
                 List<Double> baseResourceAndOccupiedCapacitiesMap = new LinkedList<Double>();
                 for (Entry<Resource, Double> br : res.capacityIOccupyInBaseResource.entrySet())
                 {

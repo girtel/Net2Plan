@@ -25,6 +25,7 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,7 +46,8 @@ public class Resource extends NetworkElement
 	String capacityMeasurementUnits; // never changes after created, but with copyFrom
 	String type; // never changes after created, but with copyFrom
 	double processingTimeToTraversingTrafficInMs;
-
+	URL urlIcon;
+	
 	/* this information can change after creation */
 	String name; // descriptive name of the resource. Can change.
 	Map<Resource,Double> capacityUpperResourcesOccupyInMe;
@@ -80,6 +82,7 @@ public class Resource extends NetworkElement
 		this.processingTimeToTraversingTrafficInMs = processingTimeToTraversingTraffic;
 		this.capacityUpperResourcesOccupyInMe = new HashMap<Resource,Double> ();
 		this.capacityIOccupyInBaseResource = new HashMap<Resource,Double> (capacityIOccupyInBaseResource);
+		this.urlIcon = null;
 		for (Entry<Resource,Double> entry : this.capacityIOccupyInBaseResource.entrySet())
 		{		
 			entry.getKey().capacityUpperResourcesOccupyInMe.put(this , entry.getValue());
@@ -99,6 +102,7 @@ public class Resource extends NetworkElement
 		this.capacity = origin.capacity;
 		this.cache_totalOccupiedCapacity = origin.cache_totalOccupiedCapacity;
 		this.processingTimeToTraversingTrafficInMs = origin.processingTimeToTraversingTrafficInMs;
+		this.urlIcon = origin.urlIcon;
 		this.capacityUpperResourcesOccupyInMe = new HashMap<Resource,Double> ();
 		for (Entry<Resource,Double> entry : origin.capacityUpperResourcesOccupyInMe.entrySet())
 		{
@@ -131,6 +135,8 @@ public class Resource extends NetworkElement
 		if (!this.name.equals(r2.name)) return false;
 		if (this.processingTimeToTraversingTrafficInMs != r2.processingTimeToTraversingTrafficInMs) return false;
 		if (this.capacity != r2.capacity) return false;
+		if  ((this.urlIcon == null) != (r2.urlIcon == null)) return false;
+		if (this.urlIcon != null) if (!this.urlIcon.equals(r2.urlIcon)) return false;
 		if (!NetPlan.isDeepCopy(this.capacityIOccupyInBaseResource , r2.capacityIOccupyInBaseResource)) return false;
 		if (!NetPlan.isDeepCopy(this.capacityUpperResourcesOccupyInMe , r2.capacityUpperResourcesOccupyInMe)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute , r2.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute)) return false;
@@ -163,7 +169,22 @@ public class Resource extends NetworkElement
 		this.processingTimeToTraversingTrafficInMs = time;
 	}
 
+	/** Returns the url of the icon specified by the user to represent this resource, or null if none
+	 * @return the url
+	 */
+	public URL getUrlIcon ()
+	{
+		return urlIcon;
+	}
 	
+	/** Sets the url of the icon specified by the user to represent this resource. A null value removes current URL
+	 * @param url the url
+	 */
+	public void setUrlIcon (URL url)
+	{
+		this.urlIcon = url;
+	}
+
 	/** Returns the String describing the type of the node
 	 * @return the type
 	 */

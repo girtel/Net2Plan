@@ -295,8 +295,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         JPanel pane = new JPanel(new MigLayout("fill, insets 0 0 0 0"));
         pane.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Focus panel"));
         pane.add(new JScrollPane(focusPanel), "grow");
-        //return pane;
-        return null;
+        return pane;
     }
 
     @Override

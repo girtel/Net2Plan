@@ -79,7 +79,7 @@ import edu.uci.ics.jung.visualization.FourPassImageShaper;
 
 public class VisualizationState
 {
-	private static Map<Triple<URL,Integer,Color>,Pair<Icon,Shape>> databaseOfAlreadyReadIcons = new HashMap<> (); // for each url, height, and border color, an image  
+	private static Map<Triple<URL,Integer,Color>,Pair<ImageIcon,Shape>> databaseOfAlreadyReadIcons = new HashMap<> (); // for each url, height, and border color, an image  
     private boolean showInCanvasNodeNames;
     private boolean showInCanvasLinkLabels;
     private boolean showInCanvasLinksInNonActiveLayer;
@@ -1488,9 +1488,9 @@ public class VisualizationState
 
     public Map<NetworkLayer,Boolean> getCanvasLayerVisibilityMap () { return Collections.unmodifiableMap(this.layerVisibilityInCanvasMap); }
     
-    public static Pair<Icon,Shape> getIcon (URL url , int height , Color borderColor)
+    public static Pair<ImageIcon,Shape> getIcon (URL url , int height , Color borderColor)
     {
-    	final Pair<Icon,Shape> iconShapeInfo = databaseOfAlreadyReadIcons.get(Triple.of(url , height , borderColor));
+    	final Pair<ImageIcon,Shape> iconShapeInfo = databaseOfAlreadyReadIcons.get(Triple.of(url , height , borderColor));
     	if (iconShapeInfo != null) return iconShapeInfo;
 		if (url == null)
 		{
@@ -1499,8 +1499,8 @@ public class VisualizationState
 			final Shape shapeNoBorder = FourPassImageShaper.getShape(img);
 			if (borderColor.getAlpha() != 0)
 				img = ImageUtils.addBorder(img , DEFAULT_ICONBORDERSIZEINPIXELS , borderColor);
-			final Icon icon = new ImageIcon (img);
-			final Pair<Icon,Shape> res = Pair.of(icon , shapeNoBorder);
+			final ImageIcon icon = new ImageIcon (img);
+			final Pair<ImageIcon,Shape> res = Pair.of(icon , shapeNoBorder);
 			databaseOfAlreadyReadIcons.put(Triple.of(null , icon.getIconHeight() , borderColor) , res);
 			return res;
 		}
@@ -1514,9 +1514,9 @@ public class VisualizationState
 			final Shape shapeNoBorder = FourPassImageShaper.getShape(img); 
 			if (borderColor.getAlpha() != 0)
 				img = ImageUtils.addBorder(img , DEFAULT_ICONBORDERSIZEINPIXELS , borderColor);
-			final Icon icon = new ImageIcon (img);
+			final ImageIcon icon = new ImageIcon (img);
             final AffineTransform translateTransform = AffineTransform.getTranslateInstance(-icon.getIconWidth()/2, -icon.getIconHeight()/2);
-            final Pair<Icon,Shape> res = Pair.of(icon , translateTransform.createTransformedShape(shapeNoBorder));
+            final Pair<ImageIcon,Shape> res = Pair.of(icon , translateTransform.createTransformedShape(shapeNoBorder));
 			databaseOfAlreadyReadIcons.put(Triple.of(url , icon.getIconHeight() , borderColor) , res);
 			return res;
 		} catch (Exception e)

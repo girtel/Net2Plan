@@ -14,21 +14,15 @@ import static com.net2plan.gui.utils.focusPane.FocusPanelHyperLinkListener.PREFI
 import static com.net2plan.gui.utils.focusPane.FocusPanelHyperLinkListener.PREFIXSRG;
 import static com.net2plan.gui.utils.focusPane.FocusPanelHyperLinkListener.SEPARATOR;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.JEditorPane;
+import javax.swing.text.Document;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
@@ -45,95 +39,107 @@ import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
-import com.net2plan.utils.Triple;
 
-public class FocusPane extends JPanel
+public class FocusPane2 extends JEditorPane
 {
+	private final StyleSheet styleSheet;
+	private final HTMLEditorKit kit;	
 	private final IVisualizationCallback callback;
-	private LinkedList<Pair<NetworkElement,Pair<Demand,Link>>> pastShownInformation;
-	private final static int maxSizeNavigationList = 50;
+	private NetworkElement currentlyShown_ne;
+	private Pair<Demand,Link> currentlyShown_fr;
+	private String currentlyShown_resourceType;
 	
-	public FocusPane (IVisualizationCallback callback)
+	
+	
+	public FocusPane2 (IVisualizationCallback callback)
 	{
 		super ();
         
 		this.callback = callback;
-		this.pastShownInformation = new LinkedList<> ();
+		this.currentlyShown_ne = null;
+		this.currentlyShown_fr = null;
+		this.currentlyShown_resourceType = null;
 		
+        // make it read-only --> this allowes hyperlinks to show ok
+        this.setEditable(false);
         this.setVisible(true);
-        this.setLayout(new BorderLayout());
-
+        
+        // add an html editor kit
+        this.kit = new HTMLEditorKit();
+        this.setEditorKit(kit);
+        
         // add some styles to the html
-//        this.styleSheet = kit.getStyleSheet();
-//        this.styleSheet.addRule("body {color:#000; font-family:times; margin: 2px; font-size: 9px}");
-//        this.styleSheet.addRule("h1 {text-align: left; color: black; font-size: 12px ; font-weight: bold; margin: none none none none}");
-//        this.styleSheet.addRule("h2 {text-align: left; color: black; font-size: 11px ; font-weight: bold; margin: none none none none}");
-//        this.styleSheet.addRule("h3 {text-align: left; color: black; font-size: 10px ; font-weight: bold; margin: none none none none}");
-//        this.styleSheet.addRule("h4 {text-align: left; color: black; font-size: 9px ; font-weight: bold; margin: none none none none}");
-//        this.styleSheet.addRule("p {text-align: left; color: black; font-size: 9px ; margin: none none none none}");
-//        this.styleSheet.addRule("table { border-collapse: collapse; border: 2px solid black; padding: 0px;}");
-//        this.styleSheet.addRule("th, td { border-collapse: collapse; border: 2px solid black; padding: 0px;}");
-//        this.styleSheet.addRule("nth-child(even){background-color: #f2f2f2}");
-//        this.styleSheet.addRule("pre {font : xx-small monaco; color : black; background-color : #fafafa; }");
-//        this.styleSheet.addRule("div.my {text-align: left; color: black; font-size: 9px}");
-	}
+        this.styleSheet = kit.getStyleSheet();
+        this.styleSheet.addRule("body {color:#000; font-family:times; margin: 2px; font-size: 9px}");
+        this.styleSheet.addRule("h1 {text-align: left; color: black; font-size: 12px ; font-weight: bold; margin: none none none none}");
+        this.styleSheet.addRule("h2 {text-align: left; color: black; font-size: 11px ; font-weight: bold; margin: none none none none}");
+        this.styleSheet.addRule("h3 {text-align: left; color: black; font-size: 10px ; font-weight: bold; margin: none none none none}");
+        this.styleSheet.addRule("h4 {text-align: left; color: black; font-size: 9px ; font-weight: bold; margin: none none none none}");
+        this.styleSheet.addRule("p {text-align: left; color: black; font-size: 9px ; margin: none none none none}");
+        this.styleSheet.addRule("table { border-collapse: collapse; border: 2px solid black; padding: 0px;}");
+        this.styleSheet.addRule("th, td { border-collapse: collapse; border: 2px solid black; padding: 0px;}");
+        this.styleSheet.addRule("nth-child(even){background-color: #f2f2f2}");
+        this.styleSheet.addRule("pre {font : xx-small monaco; color : black; background-color : #fafafa; }");
+        this.styleSheet.addRule("div.my {text-align: left; color: black; font-size: 9px}");
+        
 
-	@Override
-	public Dimension getPreferredSize ()
-	{
-		return new Dimension (600 , 300);
+        this.addHyperlinkListener(new FocusPanelHyperLinkListener(callback , this));
 	}
 	
 	public void updateView () 
 	{
 		final VisualizationState vs = callback.getVisualizationState();
 		final NetworkElementType elementType = vs.getPickedElementType();
+		
+		/* If nothing to show, keep the same document as now */
+		if (elementType == null && currentlyShown_resourceType == null) return; 
 
-		/* Check if remove everything */
-		if (elementType == null) { this.removeAll(); this.revalidate(); this.repaint(); return; }
-
-		/* Check if nothing to do */
-		if (elementType.equals(NetworkElementType.FORWARDING_RULE))
-		{
-			if (!pastShownInformation.isEmpty() && pastShownInformation.getLast().getSecond().equals(vs.getPickedForwardingRule()))
-				return;
-			pastShownInformation.add(Pair.of(null , vs.getPickedForwardingRule()));
-			if (pastShownInformation.size() > maxSizeNavigationList) pastShownInformation.removeFirst();
-		}
-		else if (elementType.equals(NetworkElementType.FORWARDING_RULE))
-		{
-			if (!pastShownInformation.isEmpty() && pastShownInformation.getLast().getFirst().equals(vs.getPickedNetworkElement()))
-				return;
-			pastShownInformation.add(Pair.of(vs.getPickedNetworkElement() , null));
-			if (pastShownInformation.size() > maxSizeNavigationList) pastShownInformation.removeFirst();
-		}
-
-		
-		this.setLayout(new BorderLayout());
-		
-		/* Here if there is something new to show */
-		if (elementType == NetworkElementType.ROUTE)
-		{
-			final Route r = (Route) vs.getPickedNetworkElement();
-			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
-			this.add(fig , BorderLayout.CENTER);
-			final JPanel tablePanel = new JPanel ();
-			tablePanel.setLayout(new GridLayout(0 , 1));
-			this.add(new JLabel ("Some things") , BorderLayout.EAST);
-			for (Triple<String,String,String> info : getRouteInfoAllButAttributes(r))
-				tablePanel.add(new LabelWithLink(info));
-			this.add(tablePanel);
-		}
-		
-		this.revalidate(); 
-		this.repaint ();
-		
+		final boolean isResourceType = currentlyShown_resourceType != null; 
+		final boolean isNetworkElement = isResourceType? false : !elementType.equals(NetworkElementType.FORWARDING_RULE); 
 		StringBuffer sb = new StringBuffer();
 		sb.append("<html lang=\"en\">");
 		sb.append("<head><title>Focus pane</title></head>");
 		sb.append("<body>");
+		
+		
+		if (isNetworkElement)
+		{
+			final NetworkElement e = vs.getPickedNetworkElement();
+			if (e instanceof Node) addNodeInfo((Node) e , sb);
+			else if (e instanceof Node) addNodeInfo((Node) e , sb);
+			else if (e instanceof Link) addLinkInfo((Link) e , sb);
+			else if (e instanceof Demand) addDemandInfo((Demand) e , sb);
+			else if (e instanceof MulticastDemand) addMulticastDemandInfo((MulticastDemand) e , sb);
+			else if (e instanceof Route) addRouteInfo((Route) e , sb);
+			else if (e instanceof MulticastTree) addMulticastTreeInfo((MulticastTree) e , sb);
+			else if (e instanceof Resource) addResourceInfo((Resource) e , sb);
+			else if (e instanceof SharedRiskGroup) addSRGInfo((SharedRiskGroup) e , sb);
+			else if (e instanceof NetworkLayer) addLayerInfo((NetworkLayer) e , sb);
+			else throw new RuntimeException();
+			this.currentlyShown_ne = e;
+			this.currentlyShown_fr = null;
+			this.currentlyShown_resourceType = null;
+		}
+		else if (isResourceType)
+		{
+			addResourceTypeInfo (this.currentlyShown_resourceType , sb);
+			this.currentlyShown_ne = null;
+			this.currentlyShown_fr = null;
+		} else
+		{
+			final Pair<Demand,Link> fr = vs.getPickedForwardingRule();
+			addFRInfo (fr , sb);
+			this.currentlyShown_ne = null;
+			this.currentlyShown_fr = fr;
+			this.currentlyShown_resourceType = null;
+		}
 		sb.append("</body>");
 		sb.append("</html>");
+		
+		final Document doc = kit.createDefaultDocument();
+      
+		this.setDocument(doc);
+		this.setText(sb.toString());
 	}
 	
 	private void addNodeInfo (Node n , StringBuffer sb)
@@ -219,28 +225,9 @@ public class FocusPane extends JPanel
 	{
 		sb.append(d);
 	}
-	private List<Triple<String,String,String>> getRouteInfoAllButAttributes (Route r)
+	private void addRouteInfo (Route r , StringBuffer sb)
 	{
-		final DecimalFormat df = new DecimalFormat("###.##");
-		final NetPlan np = r.getNetPlan();
-		final List<Triple<String,String,String>> res = new ArrayList <> ();
-		res.add(Triple.of("Demand" , "" + r.getDemand().getIndex() , "demand" + r.getDemand().getId()));
-		res.add(Triple.of("Demand offered traffic" , "" + r.getDemand().getOfferedTraffic() , ""));
-		res.add(Triple.of("Route carried traffic" , "" + df.format(r.getCarriedTraffic()) , ""));
-		res.add(Triple.of("Is up?" , "" + np.isUp(r.getPath()), ""));
-		res.add(Triple.of("Is service chain?" , "" + r.getDemand().isServiceChainRequest(), ""));
-		res.add(Triple.of("Route length (km)" , "" + df.format(r.getLengthInKm()) + " km", ""));
-		res.add(Triple.of("Route length (ms)" , "" + df.format(r.getPropagationDelayInMiliseconds()) + " ms", ""));
-		res.add(Triple.of("Is backup route?" , "" + r.isBackupRoute(), ""));
-		for (Route pr : r.getRoutesIAmBackup())
-			res.add(Triple.of("-- Primary route" , "Route " + pr.getIndex() , "route" + pr.getId()));
-		res.add(Triple.of("Has backup routes?" , "" + r.hasBackupRoutes(), ""));
-		for (Route br : r.getBackupRoutes())
-			res.add(Triple.of("-- Backup route" , "Route " + br.getIndex() , "route" + br.getId()));
-		res.add(Triple.of("Has backup route?" , "" + r.isBackupRoute(), ""));
-		for (Route br : r.getBackupRoutes())
-			res.add(Triple.of("-- Backup route" , "Route " + br.getIndex() , "route" + br.getId()));
-		return res;
+		sb.append(r);
 	}
 	private void addMulticastTreeInfo (MulticastTree t , StringBuffer sb)
 	{
@@ -388,71 +375,5 @@ public class FocusPane extends JPanel
 			for (String s : strings) sb.append("<li>" + s + "</li>");
 		sb.append("</ul>");
 		return sb.toString();
-	}
-	
-	class LabelWithLink extends JLabel implements MouseListener
-	{
-		private final String internalLink;
-		private final FocusPane parentPane;
-		public LabelWithLink(Triple<String,String,String> t , FocusPane parentPane)
-		{
-			super ("<html><body><strong>" + t.getFirst() + ":</strong>" + t.getSecond() + "</body></html>");
-			this.internalLink = t.getThird();
-			this.parentPane = parentPane;
-		}
-		@Override
-		public void mouseClicked(MouseEvent arg0)
-		{
-			final NetPlan np = callback.getDesign();
-			final VisualizationState vs = callback.getVisualizationState();
-			
-			if (internalLink.equals("")) return;
-			if (internalLink.startsWith("demand"))
-			{
-				final long id = Long.parseLong(internalLink.substring((int) "demand".length()));
-				final Demand e = np.getDemandFromId(id);
-				callback.getVisualizationState().pickDemand(e);
-				callback.updateVisualizationAfterPick();
-			} else if (internalLink.startsWith("route"))
-			{
-				final long id = Long.parseLong(internalLink.substring((int) "route".length()));
-				final Route e = np.getRouteFromId(id);
-				callback.getVisualizationState().pickRoute(e);
-				callback.updateVisualizationAfterPick();
-			} else if (internalLink.startsWith("node"))
-			{
-				final long id = Long.parseLong(internalLink.substring((int) "node".length()));
-				final Node e = np.getNodeFromId(id);
-				callback.getVisualizationState().pickNode(e);
-				callback.updateVisualizationAfterPick();
-			} else if (internalLink.startsWith("multicastDemand"))
-			{
-				final long id = Long.parseLong(internalLink.substring((int) "multicastDemand".length()));
-				final MulticastDemand e = np.getMulticastDemandFromId(id);
-				callback.getVisualizationState().pickMulticastDemand(e);
-				callback.updateVisualizationAfterPick();
-			} else if (internalLink.startsWith("multicastTree"))
-			{
-				final long id = Long.parseLong(internalLink.substring((int) "multicastTree".length()));
-				final MulticastDemand e = np.getMulticastDemandFromId(id);
-				callback.getVisualizationState().pickMulticastDemand(e);
-				callback.updateVisualizationAfterPick();
-		}
-		@Override
-		public void mouseEntered(MouseEvent arg0)
-		{
-		}
-		@Override
-		public void mouseExited(MouseEvent arg0)
-		{
-		}
-		@Override
-		public void mousePressed(MouseEvent arg0)
-		{
-		}
-		@Override
-		public void mouseReleased(MouseEvent arg0)
-		{
-		}
 	}
 }

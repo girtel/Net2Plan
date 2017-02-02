@@ -38,7 +38,6 @@ import com.net2plan.interfaces.networkDesign.Resource;
  */
 public class GUINode 
 {
-	private static Color TRANSPARENTCOLOR = new Color (0,0,0,0);
 	private static Random rng = new Random (0);
     private final Node npNode;
     private final NetworkLayer layer;
@@ -150,7 +149,7 @@ public class GUINode
     	if (url == null) url = layer.getDefaultNodeIconURL();
     	if (url == null) url = DEFAULT_LAYERNAME2ICONURLMAP.get(layer.getName());
     	final int height = layer.isDefaultLayer()? (int) (iconHeightIfNotActive*INCREASENODESIZEFACTORACTIVE) : (int) iconHeightIfNotActive;
-    	final Color borderColor = getDrawPaint() == DEFAULT_GUINODE_COLOR? TRANSPARENTCOLOR : (Color) getDrawPaint();
+    	final Color borderColor = getDrawPaint() == DEFAULT_GUINODE_COLOR? VisualizationConstants.TRANSPARENTCOLOR : (Color) getDrawPaint();
     	final Shape shape = VisualizationState.getIcon(url , height , borderColor).getSecond();
     	//final Shape shape = new Ellipse2D.Double(-1 * 30 / 2, -1 * 30 / 2, 1 * 30, 1 * 30);
     	return shape;
@@ -228,7 +227,7 @@ public class GUINode
     	if (url == null) url = DEFAULT_LAYERNAME2ICONURLMAP.get(layer.getName());
 //   		url = "figs/Router.png";
     	final int height = layer.isDefaultLayer()? (int) (iconHeightIfNotActive*INCREASENODESIZEFACTORACTIVE) : (int) iconHeightIfNotActive;
-    	final Color borderColor = getDrawPaint() == DEFAULT_GUINODE_COLOR? TRANSPARENTCOLOR : (Color) getDrawPaint();
+    	final Color borderColor = getDrawPaint() == DEFAULT_GUINODE_COLOR? VisualizationConstants.TRANSPARENTCOLOR : (Color) getDrawPaint();
     	final Icon icon = VisualizationState.getIcon(url , height , borderColor).getFirst();
     	return icon;
     }

@@ -20,6 +20,7 @@ public final class VisualizationConstants
     private VisualizationConstants() {}
 
     //public final static String DEFAULT_NODEICONURL = "src/main/resources/resources/icons/imagen1.png";
+	public static Color TRANSPARENTCOLOR = new Color (0,0,0,0);
     public final static int DEFAULT_ICONBORDERSIZEINPIXELS = 4;
     public final static Map<String,URL> DEFAULT_LAYERNAME2ICONURLMAP = 
     		ImmutableMap.of("WDM" , GUINet2Plan.class.getResource("/resources/gui/figs/OpticalTransport.png") , 
