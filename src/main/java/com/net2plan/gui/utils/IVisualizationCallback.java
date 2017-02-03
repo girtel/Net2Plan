@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.net2plan.gui.utils.topologyPane.GUINode;
+import com.net2plan.internal.plugins.ITopologyCanvas;
 import org.apache.commons.collections15.BidiMap;
 
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
@@ -45,24 +46,6 @@ public interface IVisualizationCallback
 	
 	void resetPickedStateAndUpdateView ();
 
-//    void pickNodeAndUpdateView (Node node);
-//
-//    void pickMulticastDemandAndUpdateView(MulticastDemand demand);
-//    
-//    void pickForwardingRuleAndUpdateView(Pair<Demand, Link> demandLink);
-//    
-//    void pickLinkAndUpdateView (Link link);
-//
-//    void pickDemandAndUpdateView (Demand demand);
-//
-//    void pickRouteAndUpdateView (Route route);
-//
-//    void pickMulticastTreeAndUpdateView (MulticastTree tree);
-//
-//    void pickSRGAndUpdateView (NetworkLayer layer , SharedRiskGroup srg);
-//
-//    void pickLayerAndUpdateView (NetworkLayer layer);
-
     void putTransientColorInElementTopologyCanvas (Collection<? extends NetworkElement> linksAndNodes , Color color);
 
 	void updateVisualizationJustTables ();
@@ -77,8 +60,6 @@ public interface IVisualizationCallback
 
 	void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade);
 
-//    void moveNodeXYPosition (Node node, Point2D pos , boolean updateView);
-
     boolean inOnlineSimulationMode();
 
 	void loadDesignDoNotUpdateVisualization(NetPlan netPlan);
@@ -86,4 +67,7 @@ public interface IVisualizationCallback
 	void updateVisualizationAfterPick();
 
 	void moveNodeTo(GUINode guiNode, Point2D toPoint);
+
+
+	void runCanvasOperation(ITopologyCanvas.CanvasOperation... canvasOperation);
 }

@@ -43,6 +43,8 @@ import edu.uci.ics.jung.visualization.transform.MutableTransformer;
  */
 public interface ITopologyCanvas extends Plugin
 {
+	public enum CanvasOperation { ZOOM_ALL, ZOOM_IN, ZOOM_OUT};
+
 	Map<String, String> getCurrentOptions();
 
 	/**

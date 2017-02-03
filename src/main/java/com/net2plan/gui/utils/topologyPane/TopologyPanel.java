@@ -327,7 +327,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void componentResized(ComponentEvent e)
             {
-                zoomAll();
+                canvas.zoomAll();
             }
         });
 
@@ -432,13 +432,13 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             takeSnapshot();
         } else if (src == btn_zoomIn)
         {
-            zoomIn();
+            canvas.zoomIn();
         } else if (src == btn_zoomOut)
         {
-            zoomOut();
+            canvas.zoomOut();
         } else if (src == btn_zoomAll)
         {
-            zoomAll();
+            canvas.zoomAll();
         } else if (src == btn_reset)
         {
             callback.loadDesignDoNotUpdateVisualization(new NetPlan());
@@ -808,36 +808,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 //
 //        revalidate();
 //    }
-
-    /**
-     * Makes zoom-all from the center of the view.
-     *
-     * @since 0.3.0
-     */
-    public void zoomAll()
-    {
-        canvas.zoomAll();
-    }
-
-    /**
-     * Makes zoom-in from the center of the view.
-     *
-     * @since 0.3.0
-     */
-    public void zoomIn()
-    {
-        canvas.zoomIn();
-    }
-
-    /**
-     * Makes zoom-out from the center of the view.
-     *
-     * @since 0.3.0
-     */
-    public void zoomOut()
-    {
-        canvas.zoomOut();
-    }
 
     private void switchOSMSupport(final boolean doSwitch)
     {

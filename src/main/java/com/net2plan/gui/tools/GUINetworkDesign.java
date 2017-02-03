@@ -91,9 +91,6 @@ import net.miginfocom.swing.MigLayout;
  */
 public class GUINetworkDesign extends IGUIModule implements IVisualizationCallback
 {
-    public static Color COLOR_INITIALNODE = new Color(0, 153, 51);
-    public static Color COLOR_ENDNODE = new Color(0, 162, 215);
-
     private final static String TITLE = "Offline network design & Online network simulation";
 
     private TopologyPanel topologyPanel;
@@ -106,16 +103,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     private OnlineSimulationPane onlineSimulationPane;
     private VisualizationState vs;
 
-    /**
-     * Reference to the popup menu in the topology panel.
-     *
-     * @since 0.3.0
-     */
-    private JPanel leftPane;
     private NetPlan currentNetPlan;
-
-//    private TopologyMap initialTopologySetting;
-//    private ITopologyDistribution circularTopologySetting;
 
     /**
      * Default constructor.
@@ -159,7 +147,11 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
 
-        leftPane = new JPanel(new BorderLayout());
+        /*
+      Reference to the popup menu in the topology panel.
+
+      */
+        JPanel leftPane = new JPanel(new BorderLayout());
         JPanel logSection = configureLeftBottomPanel();
         if (logSection == null)
         {
@@ -515,7 +507,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                topologyPanel.zoomIn();
+                topologyPanel.getCanvas().zoomIn();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK));
 
@@ -524,7 +516,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                topologyPanel.zoomOut();
+                topologyPanel.getCanvas().zoomOut();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK));
 
@@ -533,7 +525,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                topologyPanel.zoomAll();
+                topologyPanel.getCanvas().zoomAll();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_MULTIPLY, InputEvent.CTRL_DOWN_MASK));
 
@@ -761,5 +753,26 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         }
 
         canvas.refresh();
+    }
+
+    @Override
+    public void runCanvasOperation(ITopologyCanvas.CanvasOperation... canvasOperation)
+    {
+        // NOTE: The operations should executed in the same order as their are brought.
+        for (ITopologyCanvas.CanvasOperation operation : canvasOperation)
+        {
+            switch (operation)
+            {
+                case ZOOM_ALL:
+                    topologyPanel.getCanvas().zoomAll();
+                    break;
+                case ZOOM_IN:
+                    topologyPanel.getCanvas().zoomIn();
+                    break;
+                case ZOOM_OUT:
+                    topologyPanel.getCanvas().zoomOut();
+                    break;
+            }
+        }
     }
 }
