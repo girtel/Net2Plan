@@ -55,7 +55,6 @@ import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement.LastRowAggregatedValue;
 import com.net2plan.gui.utils.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -78,7 +77,6 @@ import com.net2plan.utils.StringUtils;
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import net.miginfocom.swing.MigLayout;
-import sun.tools.jstat.RowClosure;
 
 /**
  */
@@ -163,7 +161,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
             Object[] linkData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
             linkData[COLUMN_ID] = link.getId();
             linkData[COLUMN_INDEX] = link.getIndex();
-            linkData[COLUMN_SHOWHIDE] = !callback.getVisualizationState().isMandatedByTheUserToBeHidenInCanvas(link);
+            linkData[COLUMN_SHOWHIDE] = !callback.getVisualizationState().isMandatedByTheUserToBeHiddenInCanvas(link);
             linkData[COLUMN_ORIGINNODE] = originNode.getIndex() + (originNodeName.isEmpty() ? "" : " (" + originNodeName + ")");
             linkData[COLUMN_DESTNODE] = destinationNode.getIndex() + (destinationNodeName.isEmpty() ? "" : " (" + destinationNodeName + ")");
             linkData[COLUMN_STATE] = !link.isDown();
@@ -335,7 +333,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                         case COLUMN_SHOWHIDE:
                             if (newValue == null) return;
                             final boolean shouldBeHiden = ! ((Boolean) newValue);
-                            vs.setMandatedByTheUserToBeHidenInCanvas(link , !shouldBeHiden);
+                            vs.setMandatedByTheUserToBeHiddenInCanvas(link , !shouldBeHiden);
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                             callback.getVisualizationState ().pickLink(link);
                             callback.updateVisualizationAfterPick();

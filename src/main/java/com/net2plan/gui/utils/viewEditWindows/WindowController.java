@@ -19,7 +19,7 @@ public class WindowController
     private static GUIWindow onlineWindow;
 
     // WindowToTab.network must always be the first one.
-    private static WindowToTab[] tabCorrectOrder = {WindowToTab.network, WindowToTab.offline, WindowToTab.online, WindowToTab.report};
+    private final static WindowToTab[] tabCorrectOrder = {WindowToTab.network, WindowToTab.offline, WindowToTab.online, WindowToTab.report};
 
     public static void buildControlWindow(final JComponent component)
     {
@@ -36,11 +36,19 @@ public class WindowController
         controlWindow.buildWindow(component);
     }
 
-    public static void showControlWindow()
+    public static void showControlWindow(final boolean gainFocus)
     {
         if (controlWindow != null)
         {
-            controlWindow.showWindow();
+            if (gainFocus)
+            {
+                controlWindow.showWindow();
+            } else
+            {
+                controlWindow.setFocusableWindowState(false);
+                controlWindow.showWindow();
+                controlWindow.setFocusableWindowState(true);
+            }
         }
     }
 

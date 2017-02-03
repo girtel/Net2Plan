@@ -8,9 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
+import javax.swing.*;
 
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
@@ -45,10 +43,10 @@ public class MultiLayerControlPanel extends JPanel
     private void fillPanel()
     {
         this.add(new JScrollPane(multiLayerTable), BorderLayout.CENTER);
-        this.add(buttonPanel, BorderLayout.SOUTH);
+        this.add(buttonPanel, BorderLayout.WEST);
     }
 
-    private class MultiLayerButtonPanel extends JPanel implements ActionListener
+    private class MultiLayerButtonPanel extends JToolBar implements ActionListener
     {
         private final JButton btn_showAllLayers, btn_hideAllLayers;
         private final JButton btn_sortLayerByIndex, btn_sortLayersByTopology;
@@ -56,8 +54,12 @@ public class MultiLayerControlPanel extends JPanel
 
         private MultiLayerButtonPanel()
         {
-            // NOTE: Grid layout for the time being.
-            this.setLayout(new GridLayout(3,2));
+            super();
+            this.setOrientation(JToolBar.VERTICAL);
+            this.setRollover(true);
+            this.setFloatable(false);
+            this.setOpaque(false);
+            this.setBorderPainted(false);
 
             btn_showAllLayers = new JButton("Show all layers");
             btn_hideAllLayers = new JButton("Hide all layers");

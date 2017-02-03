@@ -247,6 +247,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
                 	nodes.get(i).setXYPositionMap(new Point2D.Double(positionInNetPlanCoordinates.getX() + radius * Math.cos(Math.toRadians(angStep*i)) , positionInNetPlanCoordinates.getY() + radius * Math.sin(Math.toRadians(angStep*i))));
             	callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
             });
 
             topologySettingMenu.add(circularSetting);

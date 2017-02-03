@@ -96,15 +96,17 @@ import edu.uci.ics.jung.visualization.util.ArrowFactory;
 @SuppressWarnings("unchecked")
 public final class JUNGCanvas implements ITopologyCanvas
 {
-    private double currentInterLayerDistanceInNpCoordinates;
     private final VisualizationState vs;
-    private final Transformer<GUINode, Point2D> transformNetPlanCoordinatesToJungCoordinates;
+
+    private double currentInterLayerDistanceInNpCoordinates;
+
 
     private final Graph<GUINode, GUILink> g;
     private final Layout<GUINode, GUILink> l;
     private final VisualizationViewer<GUINode, GUILink> vv;
     private final PluggableGraphMouse gm;
     private final ScalingControl scalingControl;
+    private final Transformer<GUINode, Point2D> transformNetPlanCoordinatesToJungCoordinates;
     private final Transformer<Context<Graph<GUINode, GUILink>, GUILink>, Shape> originalEdgeShapeTransformer;
     private VisualizationServer.Paintable paintableAssociatedToBackgroundImage;
 
@@ -374,6 +376,8 @@ public final class JUNGCanvas implements ITopologyCanvas
         for (GUINode gn : vs.getCanvasAllGUINodes()) g.addVertex(gn);
         for (GUILink gl : vs.getCanvasAllGUILinks(true, true))
             g.addEdge(gl, gl.getOriginNode(), gl.getDestinationNode());
+
+        updateAllVerticesXYPosition();
         refresh();
     }
 

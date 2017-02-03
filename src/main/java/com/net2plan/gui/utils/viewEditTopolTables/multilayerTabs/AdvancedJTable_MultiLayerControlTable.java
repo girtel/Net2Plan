@@ -1,7 +1,6 @@
 package com.net2plan.gui.utils.viewEditTopolTables.multilayerTabs;
 
-import java.awt.Component;
-import java.awt.GridLayout;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -14,19 +13,12 @@ import javax.swing.AbstractCellEditor;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
+import javax.swing.table.*;
 
+import com.net2plan.gui.utils.*;
 import org.apache.commons.collections15.BidiMap;
 
 import com.google.common.collect.Lists;
-import com.net2plan.gui.utils.AdvancedJTable;
-import com.net2plan.gui.utils.CellRenderers;
-import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.ColumnHeaderToolTips;
-import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -78,6 +70,12 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 
         this.setModel(tableModel);
         this.setDefaultCellRenders();
+
+        // Removing column reordering
+        this.getTableHeader().setReorderingAllowed(false);
+
+        // Removing column resizing
+        this.getTableHeader().setResizingAllowed(false);
 
         // Configure tips
         ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
@@ -138,8 +136,6 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             @Override
             public void setValueAt(Object newValue, int row, int column)
             {
-//                final Object oldValue = getValueAt(row, column);
-
                 final VisualizationState visualizationState = callback.getVisualizationState();
 
                 final NetworkLayer selectedLayer = callback.getDesign().getNetworkLayer((int) this.getValueAt(row, COLUMN_INDEX));
@@ -179,6 +175,9 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             this.tableModel.setDataVector(layerData.toArray(new Object[layerData.size()][tableHeader.length]), tableHeader);
         }
 
+        // Calculating column width to new values
+        ColumnsAutoSizer.sizeColumnsToFit(this);
+
         this.revalidate();
         this.repaint();
     }
@@ -196,6 +195,8 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         setDefaultRenderer(Object.class, new ButtonRenderer());
         setDefaultEditor(Object.class, new ButtonEditor());
     }
+
+    // <-----Custom cell----->
 
     /**
      * Credits to user "MadProgrammer" from stack overflow for his <a href="http://stackoverflow.com/questions/17565169/unable-to-add-two-buttons-in-a-single-cell-in-a-jtable">ButtonEditor</a>.
@@ -295,7 +296,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                 // Swap the selected layer with the one on top of it.
                 this.swap(layerOrderMapConsideringNonVisible, selectedLayer, neighbourLayer);
 
-                vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), layerOrderMapConsideringNonVisible , null);
+                vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), layerOrderMapConsideringNonVisible, null);
             } else if (src == btn_down)
             {
                 if (getSelectedRow() == getRowCount() - 1) return;
@@ -310,7 +311,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                 // Swap the selected layer with the one on top of it.
                 this.swap(layerOrderMapConsideringNonVisible, selectedLayer, neighbourLayer);
 
-                vs.setCanvasLayerVisibilityAndOrder (callback.getDesign(), layerOrderMapConsideringNonVisible , null);
+                vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), layerOrderMapConsideringNonVisible, null);
             }
 
             updateTable();
@@ -319,13 +320,13 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 
         private <K, V> void swap(BidiMap<K, V> map, K k1, K k2)
         {
-        	final V value1 = map.get(k1);
-        	final V value2 = map.get(k2);
-        	if ((value1 == null) || (value2 == null)) throw new RuntimeException();
-        	map.remove(k1);
-        	map.remove(k2);
-        	map.put(k1,value2);
-        	map.put(k2,value1);
+            final V value1 = map.get(k1);
+            final V value2 = map.get(k2);
+            if ((value1 == null) || (value2 == null)) throw new RuntimeException();
+            map.remove(k1);
+            map.remove(k2);
+            map.put(k1, value2);
+            map.put(k2, value1);
         }
     }
 }

@@ -54,20 +54,20 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 {
     private final IVisualizationCallback callback;
     private final ITopologyCanvas canvas;
-    private final ITopologyCanvasPlugin popupPlugin;
 
-//    private final JPanel layerChooserPane;
+    //    private final JPanel layerChooserPane;
 //    private final JComboBox layerChooser;
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance;
-    private final JToggleButton btn_showLowerLayerInfo , btn_showUpperLayerInfo , btn_showThisLayerInfo;
-    private final JButton btn_multilayer;
+    private final JButton btn_increaseNodeSize, btn_decreaseNodeSize, btn_increaseFontSize, btn_decreaseFontSize;
+    private final JToggleButton btn_showLowerLayerInfo, btn_showUpperLayerInfo, btn_showThisLayerInfo;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
-    private final MenuButton btn_view;
-    private final JPopupMenu viewPopUp;
+    private final JPopUpButton btn_view, btn_multilayer;
+    private final JPopupMenu viewPopUp, multiLayerPopUp;
     private final JMenuItem it_control, it_osmMap, it_closeMap;
     private final JLabel position;
-    private MultiLayerControlPanel multilayerControlPanel;
+    private final JPanel canvasPanel;
+    private final MultiLayerControlPanel multilayerControlPanel;
 
     private final File defaultDesignDirectory, defaultDemandDirectory;
 
@@ -114,6 +114,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         this.callback = callback;
         this.defaultDesignDirectory = defaultDesignDirectory == null ? new File(currentDir + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "data" + SystemUtils.getDirectorySeparator() + "networkTopologies") : defaultDesignDirectory;
         this.defaultDemandDirectory = defaultDemandDirectory == null ? new File(currentDir + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "data" + SystemUtils.getDirectorySeparator() + "trafficMatrices") : defaultDemandDirectory;
+        this.multilayerControlPanel = new MultiLayerControlPanel(callback);
 
         try
         {
@@ -166,9 +167,18 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         add(topPanel, BorderLayout.NORTH);
 
         JComponent canvasComponent = canvas.getCanvasComponent();
+
+        canvasPanel = new JPanel(new BorderLayout());
         canvasComponent.setBorder(LineBorder.createBlackLineBorder());
 
-        add(canvasComponent, BorderLayout.CENTER);
+        JToolBar multiLayerToolbar = new JToolBar(JToolBar.VERTICAL);
+        multiLayerToolbar.setRollover(true);
+        multiLayerToolbar.setFloatable(false);
+        multiLayerToolbar.setOpaque(false);
+
+        canvasPanel.add(canvasComponent, BorderLayout.CENTER);
+        canvasPanel.add(multiLayerToolbar, BorderLayout.WEST);
+        add(canvasPanel, BorderLayout.CENTER);
 
         btn_load = new JButton();
         btn_load.setToolTipText("Load a network design");
@@ -190,70 +200,48 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showLinkIds.setToolTipText("Show/hide link utilization, measured as the ratio between the total traffic in the link (including that in protection segments) and total link capacity (including that reserved by protection segments)");
         btn_showNonConnectedNodes = new JToggleButton();
         btn_showNonConnectedNodes.setToolTipText("Show/hide non-connected nodes");
-        JButton btn_increaseNodeSize = new JButton();
+        btn_increaseNodeSize = new JButton();
         btn_increaseNodeSize.setToolTipText("Increase node size");
-        JButton btn_decreaseNodeSize = new JButton();
+        btn_decreaseNodeSize = new JButton();
         btn_decreaseNodeSize.setToolTipText("Decrease node size");
-        JButton btn_increaseFontSize = new JButton();
+        btn_increaseFontSize = new JButton();
         btn_increaseFontSize.setToolTipText("Increase font size");
-        JButton btn_decreaseFontSize = new JButton();
+        btn_decreaseFontSize = new JButton();
         btn_decreaseFontSize.setToolTipText("Decrease font size");
         /* Multilayer buttons */
-        btn_increaseInterLayerDistance = new JButton("+LD");
+        btn_increaseInterLayerDistance = new JButton();
         btn_increaseInterLayerDistance.setToolTipText("Increase the distance between layers (when more than one layer is visible)");
-        btn_decreaseInterLayerDistance = new JButton("-LD");
+        btn_decreaseInterLayerDistance = new JButton();
         btn_decreaseInterLayerDistance.setToolTipText("Decrease the distance between layers (when more than one layer is visible)");
-        btn_showLowerLayerInfo = new JToggleButton("Show lower propagation");
+        btn_showLowerLayerInfo = new JToggleButton("Show LP");
         btn_showLowerLayerInfo.setToolTipText("Shows the links in lower layers that carry traffic of the picked element");
         btn_showLowerLayerInfo.setSelected(getVisualizationState().isShowInCanvasLowerLayerPropagation());
-        btn_showUpperLayerInfo = new JToggleButton("Show upper propagation");
+        btn_showUpperLayerInfo = new JToggleButton("Show UP");
         btn_showUpperLayerInfo.setToolTipText("Shows the links in upper layers that carry traffic that appears in the picked element");
         btn_showUpperLayerInfo.setSelected(getVisualizationState().isShowInCanvasUpperLayerPropagation());
-        btn_showThisLayerInfo = new JToggleButton("Show this propagation");
+        btn_showThisLayerInfo = new JToggleButton("Show TP");
         btn_showThisLayerInfo.setToolTipText("Shows the links in the same layer as the picked element, that carry traffic that appears in the picked element");
         btn_showThisLayerInfo.setSelected(getVisualizationState().isShowInCanvasThisLayerPropagation());
 
-        btn_multilayer = new JButton("Debug");
-        this.multilayerControlPanel = new MultiLayerControlPanel(callback);
-
-        viewPopUp = new JPopupMenu();
-
+        // OSM Buttons
         it_control = new JMenuItem("View control window");
         it_control.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
-        it_control.addActionListener(e ->
-        {
-            WindowController.showControlWindow();
-        });
 
         it_osmMap = new JMenuItem("Run OpenStreetMap support");
         it_closeMap = new JMenuItem("Shutdown OpenStreetMap support");
 
-        it_closeMap.addActionListener(e ->
-        {
-            if (canvas.isOSMRunning())
-            {
-                switchOSMSupport(false);
-                it_osmMap.setEnabled(true);
-                viewPopUp.remove(it_closeMap);
-            }
-        });
-
-        it_osmMap.addActionListener(e ->
-        {
-            if (!canvas.isOSMRunning())
-            {
-                switchOSMSupport(true);
-                it_osmMap.setEnabled(false);
-                viewPopUp.add(it_closeMap);
-            }
-        });
-
+        // "View" toggle pop-up
+        viewPopUp = new JPopupMenu();
         viewPopUp.add(it_control);
         viewPopUp.add(new JPopupMenu.Separator());
         viewPopUp.add(it_osmMap);
-
-        btn_view = new MenuButton("View", viewPopUp);
+        btn_view = new JPopUpButton("View", viewPopUp);
         btn_view.setMnemonic(KeyEvent.VK_V);
+
+        // MultiLayer control window
+        multiLayerPopUp = new JPopupMenu();
+        multiLayerPopUp.add(multilayerControlPanel);
+        btn_multilayer = new JPopUpButton("Debug", multiLayerPopUp);
 
         btn_reset = new JButton("Reset");
         btn_reset.setToolTipText("Reset the user interface");
@@ -273,6 +261,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_decreaseNodeSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseNode.png")));
         btn_increaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseFont.png")));
         btn_decreaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseFont.png")));
+        btn_increaseInterLayerDistance.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseLayerDistance.png")));
+        btn_decreaseInterLayerDistance.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseLayerDistance.png")));
 
         btn_load.addActionListener(this);
         btn_loadDemand.addActionListener(this);
@@ -290,8 +280,17 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showLowerLayerInfo.addActionListener(this);
         btn_showUpperLayerInfo.addActionListener(this);
         btn_showThisLayerInfo.addActionListener(this);
-        btn_multilayer.addActionListener(this);
+        btn_increaseNodeSize.addActionListener(this);
+        btn_decreaseNodeSize.addActionListener(this);
+        btn_increaseFontSize.addActionListener(this);
+        btn_decreaseFontSize.addActionListener(this);
+        it_control.addActionListener(this);
+        it_closeMap.addActionListener(this);
+        it_osmMap.addActionListener(this);
 
+        // Disabling font controls
+        btn_increaseFontSize.setEnabled(false);
+        btn_decreaseFontSize.setEnabled(false);
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
@@ -311,65 +310,24 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(btn_increaseFontSize);
         toolbar.add(btn_decreaseFontSize);
         toolbar.add(new JToolBar.Separator());
-        toolbar.add(btn_increaseInterLayerDistance);
-        toolbar.add(btn_decreaseInterLayerDistance);
-        toolbar.add(btn_showLowerLayerInfo);
-        toolbar.add(btn_showUpperLayerInfo);
-        toolbar.add(btn_showThisLayerInfo);
-        toolbar.add(new JToolBar.Separator());
-        toolbar.add(btn_multilayer);
-        toolbar.add(new JToolBar.Separator());
         toolbar.add(Box.createHorizontalGlue());
         toolbar.add(btn_view);
         toolbar.add(btn_reset);
 
+        multiLayerToolbar.add(new JToolBar.Separator());
+        multiLayerToolbar.add(btn_increaseInterLayerDistance);
+        multiLayerToolbar.add(btn_decreaseInterLayerDistance);
+        multiLayerToolbar.add(btn_showLowerLayerInfo);
+        multiLayerToolbar.add(btn_showUpperLayerInfo);
+        multiLayerToolbar.add(btn_showThisLayerInfo);
+        multiLayerToolbar.add(btn_multilayer);
 
         this.addComponentListener(new ComponentAdapter()
         {
             @Override
             public void componentResized(ComponentEvent e)
             {
-                zoomAll();
-            }
-        });
-
-        btn_increaseNodeSize.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                callback.getVisualizationState().increaseCanvasNodeSizeAll();
-                canvas.refresh();
-            }
-        });
-
-        btn_decreaseNodeSize.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                callback.getVisualizationState().decreaseCanvasNodeSizeAll();
-                canvas.refresh();
-            }
-        });
-
-        btn_increaseFontSize.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                callback.getVisualizationState().increaseCanvasFontSizeAll();
-                canvas.refresh();
-            }
-        });
-
-        btn_decreaseFontSize.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final boolean somethingChanged = callback.getVisualizationState().decreaseCanvasFontSizeAll();
-                if (somethingChanged) canvas.refresh();
+                canvas.zoomAll();
             }
         });
 
@@ -426,7 +384,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showLinkIds.setSelected(getVisualizationState().isCanvasShowLinkLabels());
         btn_showNonConnectedNodes.setSelected(getVisualizationState().isCanvasShowNonConnectedNodes());
 
-        popupPlugin = new PopupMenuPlugin(callback, this.canvas);
+        final ITopologyCanvasPlugin popupPlugin = new PopupMenuPlugin(callback, this.canvas);
         addPlugin(new PanGraphPlugin(callback, canvas, MouseEvent.BUTTON1_MASK));
         if (callback.getVisualizationState().isNetPlanEditable() && getCanvas() instanceof JUNGCanvas)
             addPlugin(new AddLinkGraphPlugin(callback, canvas, MouseEvent.BUTTON1_MASK, MouseEvent.BUTTON1_MASK | MouseEvent.SHIFT_MASK));
@@ -448,7 +406,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     {
         Object src = e.getSource();
         final VisualizationState vs = callback.getVisualizationState();
-        final NetPlan np = callback.getDesign(); 
         if (src == btn_load)
         {
             loadDesign();
@@ -460,80 +417,106 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             saveDesign();
         } else if (src == btn_showNodeNames)
         {
-        	vs.setCanvasShowNodeNames(btn_showNodeNames.isSelected());
-        	canvas.refresh();
+            vs.setCanvasShowNodeNames(btn_showNodeNames.isSelected());
+            canvas.refresh();
         } else if (src == btn_showLinkIds)
         {
-        	vs.setCanvasShowLinkLabels(btn_showLinkIds.isSelected());
-        	canvas.refresh();
+            vs.setCanvasShowLinkLabels(btn_showLinkIds.isSelected());
+            canvas.refresh();
         } else if (src == btn_showNonConnectedNodes)
         {
-        	vs.setCanvasShowNonConnectedNodes(btn_showNonConnectedNodes.isSelected());
-        	canvas.refresh();
+            vs.setCanvasShowNonConnectedNodes(btn_showNonConnectedNodes.isSelected());
+            canvas.refresh();
         } else if (src == btn_takeSnapshot)
         {
             takeSnapshot();
         } else if (src == btn_zoomIn)
         {
-            zoomIn();
+            canvas.zoomIn();
         } else if (src == btn_zoomOut)
         {
-            zoomOut();
+            canvas.zoomOut();
         } else if (src == btn_zoomAll)
         {
-            zoomAll();
+            canvas.zoomAll();
         } else if (src == btn_reset)
         {
             callback.loadDesignDoNotUpdateVisualization(new NetPlan());
-    		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
-    				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
-    		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
+            Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+                    vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
+            vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
         } else if (src == btn_increaseInterLayerDistance)
         {
-        	if (vs.getCanvasNumberOfVisibleLayers() == 1) return;
+            if (vs.getCanvasNumberOfVisibleLayers() == 1) return;
 
-        	final int currentInterLayerDistance = vs.getInterLayerSpaceInPixels();
-        	final int newInterLayerDistance = currentInterLayerDistance + (int) Math.ceil(currentInterLayerDistance * (VisualizationConstants.SCALE_IN-1));
+            final int currentInterLayerDistance = vs.getInterLayerSpaceInPixels();
+            final int newInterLayerDistance = currentInterLayerDistance + (int) Math.ceil(currentInterLayerDistance * (VisualizationConstants.SCALE_IN - 1));
 
-        	vs.setInterLayerSpaceInPixels(newInterLayerDistance);
-        	canvas.updateInterLayerDistanceInNpCoordinates (newInterLayerDistance);
-        	canvas.updateAllVerticesXYPosition();
+            vs.setInterLayerSpaceInPixels(newInterLayerDistance);
+            canvas.updateInterLayerDistanceInNpCoordinates(newInterLayerDistance);
+            canvas.updateAllVerticesXYPosition();
             canvas.refresh();
         } else if (src == btn_decreaseInterLayerDistance)
         {
-        	if (vs.getCanvasNumberOfVisibleLayers() == 1) return;
+            if (vs.getCanvasNumberOfVisibleLayers() == 1) return;
 
-        	final int currentInterLayerDistance = vs.getInterLayerSpaceInPixels();
-        	final int newInterLayerDistance = currentInterLayerDistance - (int) Math.ceil(currentInterLayerDistance * (1-VisualizationConstants.SCALE_OUT));
+            final int currentInterLayerDistance = vs.getInterLayerSpaceInPixels();
+            final int newInterLayerDistance = currentInterLayerDistance - (int) Math.ceil(currentInterLayerDistance * (1 - VisualizationConstants.SCALE_OUT));
 
-        	vs.setInterLayerSpaceInPixels(newInterLayerDistance);
-        	canvas.updateInterLayerDistanceInNpCoordinates (newInterLayerDistance);
-        	canvas.updateAllVerticesXYPosition();
+            vs.setInterLayerSpaceInPixels(newInterLayerDistance);
+            canvas.updateInterLayerDistanceInNpCoordinates(newInterLayerDistance);
+            canvas.updateAllVerticesXYPosition();
 
-        	canvas.refresh();
+            canvas.refresh();
         } else if (src == btn_showLowerLayerInfo)
         {
-        	vs.setShowInCanvasLowerLayerPropagation(btn_showLowerLayerInfo.isSelected());
-        	canvas.refresh();
+            vs.setShowInCanvasLowerLayerPropagation(btn_showLowerLayerInfo.isSelected());
+            canvas.refresh();
         } else if (src == btn_showUpperLayerInfo)
         {
-        	vs.setShowInCanvasUpperLayerPropagation(btn_showUpperLayerInfo.isSelected());
-        	canvas.refresh();
+            vs.setShowInCanvasUpperLayerPropagation(btn_showUpperLayerInfo.isSelected());
+            canvas.refresh();
         } else if (src == btn_showThisLayerInfo)
         {
-        	vs.setShowInCanvasThisLayerPropagation(btn_showThisLayerInfo.isSelected());
-        	canvas.refresh();
-        } else if (src == btn_multilayer)
+            vs.setShowInCanvasThisLayerPropagation(btn_showThisLayerInfo.isSelected());
+            canvas.refresh();
+        } else if (src == it_closeMap)
         {
-            final JFrame frame = new JFrame();
-            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            frame.setSize(new Dimension(800, 600));
-            frame.setLayout(new BorderLayout());
-            frame.add(multilayerControlPanel, BorderLayout.CENTER);
-            frame.setVisible(true);
+            if (canvas.isOSMRunning())
+            {
+                switchOSMSupport(false);
+                it_osmMap.setEnabled(true);
+                viewPopUp.remove(it_closeMap);
+            }
+        } else if (src == it_osmMap)
+        {
+            if (!canvas.isOSMRunning())
+            {
+                switchOSMSupport(true);
+                it_osmMap.setEnabled(false);
+                viewPopUp.add(it_closeMap);
+            }
+        } else if (src == it_control)
+        {
+            WindowController.showControlWindow(true);
+        } else if (src == btn_increaseNodeSize)
+        {
+            callback.getVisualizationState().increaseCanvasNodeSizeAll();
+            canvas.refresh();
+        } else if (src == btn_decreaseNodeSize)
+        {
+            callback.getVisualizationState().decreaseCanvasNodeSizeAll();
+            canvas.refresh();
+        } else if (src == btn_increaseFontSize)
+        {
+            callback.getVisualizationState().increaseCanvasFontSizeAll();
+            canvas.refresh();
+        } else if (src == btn_decreaseFontSize)
+        {
+            final boolean somethingChanged = callback.getVisualizationState().decreaseCanvasFontSizeAll();
+            if (somethingChanged) canvas.refresh();
         }
-
     }
 
     /**
@@ -542,6 +525,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param plugin Plugin to be added
      * @since 0.3.0
      */
+
     public void addPlugin(ITopologyCanvasPlugin plugin)
     {
         canvas.addPlugin(plugin);
@@ -567,6 +551,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     {
         final NetworkLayer layer = callback.getDesign().getNetworkLayerFromId(layerId);
         return "Layer " + layer.getIndex() + (layer.getName().isEmpty() ? "" : ": " + layer.getName());
+    }
+
+    public JPanel getCanvasPanel()
+    {
+        return canvasPanel;
     }
 
     /**
@@ -612,9 +601,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             callback.loadDesignDoNotUpdateVisualization(aux);
             final VisualizationState vs = callback.getVisualizationState();
-    		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
-    				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
-    		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
+            Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+                    vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
+            vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
         } catch (Net2PlanException ex)
         {
@@ -637,9 +626,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             callback.loadDesignDoNotUpdateVisualization(netPlan);
             final VisualizationState vs = callback.getVisualizationState();
-    		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
-    				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
-    		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
+            Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+                    vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
+            vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
         } catch (Net2PlanException ex)
         {
@@ -718,7 +707,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      */
     public void refreshLayerName(long layerId)
     {
-    	multilayerControlPanel.refreshTable();
+        multilayerControlPanel.refreshTable();
     }
 
     /**
@@ -787,9 +776,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
     public final void updateMultilayerVisibilityAndOrderPanel()
     {
-    	multilayerControlPanel.refreshTable();
+        multilayerControlPanel.refreshTable();
     }
-    
+
 //    /**
 //     * Updates the layer chooser.
 //     *
@@ -819,36 +808,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 //
 //        revalidate();
 //    }
-
-    /**
-     * Makes zoom-all from the center of the view.
-     *
-     * @since 0.3.0
-     */
-    public void zoomAll()
-    {
-        canvas.zoomAll();
-    }
-
-    /**
-     * Makes zoom-in from the center of the view.
-     *
-     * @since 0.3.0
-     */
-    public void zoomIn()
-    {
-        canvas.zoomIn();
-    }
-
-    /**
-     * Makes zoom-out from the center of the view.
-     *
-     * @since 0.3.0
-     */
-    public void zoomOut()
-    {
-        canvas.zoomOut();
-    }
 
     private void switchOSMSupport(final boolean doSwitch)
     {
