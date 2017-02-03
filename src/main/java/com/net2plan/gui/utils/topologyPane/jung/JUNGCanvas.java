@@ -349,6 +349,9 @@ public final class JUNGCanvas implements ITopologyCanvas
         for (GUINode gn : vs.getCanvasAllGUINodes()) g.addVertex(gn);
         for (GUILink gl : vs.getCanvasAllGUILinks(true, true))
             g.addEdge(gl, gl.getOriginNode(), gl.getDestinationNode());
+
+        // NOTE: Why does adding the GUI node anew not update the vertex position?
+        updateAllVerticesXYPosition();
         refresh();
     }
 
