@@ -213,13 +213,13 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_increaseInterLayerDistance.setToolTipText("Increase the distance between layers (when more than one layer is visible)");
         btn_decreaseInterLayerDistance = new JButton();
         btn_decreaseInterLayerDistance.setToolTipText("Decrease the distance between layers (when more than one layer is visible)");
-        btn_showLowerLayerInfo = new JToggleButton("Show LP");
+        btn_showLowerLayerInfo = new JToggleButton();
         btn_showLowerLayerInfo.setToolTipText("Shows the links in lower layers that carry traffic of the picked element");
         btn_showLowerLayerInfo.setSelected(getVisualizationState().isShowInCanvasLowerLayerPropagation());
-        btn_showUpperLayerInfo = new JToggleButton("Show UP");
+        btn_showUpperLayerInfo = new JToggleButton();
         btn_showUpperLayerInfo.setToolTipText("Shows the links in upper layers that carry traffic that appears in the picked element");
         btn_showUpperLayerInfo.setSelected(getVisualizationState().isShowInCanvasUpperLayerPropagation());
-        btn_showThisLayerInfo = new JToggleButton("Show TP");
+        btn_showThisLayerInfo = new JToggleButton();
         btn_showThisLayerInfo.setToolTipText("Shows the links in the same layer as the picked element, that carry traffic that appears in the picked element");
         btn_showThisLayerInfo.setSelected(getVisualizationState().isShowInCanvasThisLayerPropagation());
 
@@ -241,7 +241,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         // MultiLayer control window
         multiLayerPopUp = new JPopupMenu();
         multiLayerPopUp.add(multilayerControlPanel);
-        btn_multilayer = new JPopUpButton("Debug", multiLayerPopUp);
+        btn_multilayer = new JPopUpButton("", multiLayerPopUp);
 
         btn_reset = new JButton("Reset");
         btn_reset.setToolTipText("Reset the user interface");
@@ -263,6 +263,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_decreaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseFont.png")));
         btn_increaseInterLayerDistance.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseLayerDistance.png")));
         btn_decreaseInterLayerDistance.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseLayerDistance.png")));
+        btn_multilayer.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLayerControl.png")));
+        btn_showThisLayerInfo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLayerPropagation.png")));
+        btn_showUpperLayerInfo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLayerUpperPropagation.png")));
+        btn_showLowerLayerInfo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLayerLowerPropagation.png")));
 
         btn_load.addActionListener(this);
         btn_loadDemand.addActionListener(this);
