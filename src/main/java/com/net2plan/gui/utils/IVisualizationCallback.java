@@ -68,6 +68,5 @@ public interface IVisualizationCallback
 
 	void moveNodeTo(GUINode guiNode, Point2D toPoint);
 
-
 	void runCanvasOperation(ITopologyCanvas.CanvasOperation... canvasOperation);
 }
