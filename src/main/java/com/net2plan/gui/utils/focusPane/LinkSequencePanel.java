@@ -34,6 +34,7 @@ public class LinkSequencePanel extends JPanel
 	private List<String> generalMessage; 
 	private NetworkLayer layer;
     private NetPlan np;
+    private Dimension preferredSize;
     
     public LinkSequencePanel(List<? extends NetworkElement> path , NetworkLayer layer , List<Double> occupationsPerElement , String titleMessage , double carriedTraffic) 
     {
@@ -46,6 +47,7 @@ public class LinkSequencePanel extends JPanel
     		this.generalMessage = Arrays.asList(titleMessage , "Carried trafffic: " + String.format("%.2f " , carriedTraffic) + " " + np.getDemandTrafficUnitsName(layer));
     	else
     		this.generalMessage = Arrays.asList(titleMessage);
+    	this.preferredSize = null;
         addMouseListener(new MouseAdapterFocusPanel() );
     }
 
@@ -135,7 +137,8 @@ public class LinkSequencePanel extends JPanel
     }
 
     @Override
-    public Dimension getPreferredSize() {
+    public Dimension getPreferredSize() 
+    {
         return new Dimension(600,600);
     }
 

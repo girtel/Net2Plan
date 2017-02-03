@@ -1,17 +1,22 @@
 package com.net2plan.gui.utils.focusPane;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.GridLayout;
+import java.awt.Font;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
@@ -26,8 +31,12 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.libraries.GraphUtils;
+import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
+
+import net.miginfocom.swing.MigLayout;
 
 public class FocusPane extends JPanel
 {
@@ -44,19 +53,6 @@ public class FocusPane extends JPanel
 		
         this.setVisible(true);
         this.setLayout(new BorderLayout(0,0));
-        // add some styles to the html
-//        this.styleSheet = kit.getStyleSheet();
-//        this.styleSheet.addRule("body {color:#000; font-family:times; margin: 2px; font-size: 9px}");
-//        this.styleSheet.addRule("h1 {text-align: left; color: black; font-size: 12px ; font-weight: bold; margin: none none none none}");
-//        this.styleSheet.addRule("h2 {text-align: left; color: black; font-size: 11px ; font-weight: bold; margin: none none none none}");
-//        this.styleSheet.addRule("h3 {text-align: left; color: black; font-size: 10px ; font-weight: bold; margin: none none none none}");
-//        this.styleSheet.addRule("h4 {text-align: left; color: black; font-size: 9px ; font-weight: bold; margin: none none none none}");
-//        this.styleSheet.addRule("p {text-align: left; color: black; font-size: 9px ; margin: none none none none}");
-//        this.styleSheet.addRule("table { border-collapse: collapse; border: 2px solid black; padding: 0px;}");
-//        this.styleSheet.addRule("th, td { border-collapse: collapse; border: 2px solid black; padding: 0px;}");
-//        this.styleSheet.addRule("nth-child(even){background-color: #f2f2f2}");
-//        this.styleSheet.addRule("pre {font : xx-small monaco; color : black; background-color : #fafafa; }");
-//        this.styleSheet.addRule("div.my {text-align: left; color: black; font-size: 9px}");
 	}
 
 	@Override
@@ -89,11 +85,14 @@ public class FocusPane extends JPanel
 			final Route r = (Route) vs.getPickedNetworkElement();
 			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
 			this.add(fig , BorderLayout.WEST);
-			final JPanel tablePanel = new JPanel ();
-			tablePanel.setLayout(new GridLayout(0 , 1));
-			for (Triple<String,String,String> info : getRouteInfoAllButAttributes(r))
-				tablePanel.add(new LabelWithLink(info , this));
-			this.add(tablePanel , BorderLayout.CENTER);
+			this.add(createPanelInfo(getRouteInfoTables(r), r) , BorderLayout.CENTER);
+		}
+		else if (elementType == NetworkElementType.DEMAND)
+		{
+			final Demand d = (Demand) vs.getPickedNetworkElement();
+//			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
+//			this.add(fig , BorderLayout.WEST);
+			this.add(createPanelInfo(getDemandInfoTables(d), d) , BorderLayout.CENTER);
 		}
 		
 		this.revalidate(); 
@@ -183,14 +182,17 @@ public class FocusPane extends JPanel
 	{
 		sb.append(d);
 	}
-	private List<Triple<String,String,String>> getRouteInfoAllButAttributes (Route r)
+	private List<Triple<String,String,String>> getRouteInfoTables (Route r)
 	{
 		final DecimalFormat df = new DecimalFormat("###.##");
 		final NetPlan np = r.getNetPlan();
 		final List<Triple<String,String,String>> res = new ArrayList <> ();
-		res.add(Triple.of("Demand" , "" + r.getDemand().getIndex() , "demand" + r.getDemand().getId()));
-		res.add(Triple.of("Demand offered traffic" , "" + r.getDemand().getOfferedTraffic() , ""));
-		res.add(Triple.of("Route carried traffic" , "" + df.format(r.getCarriedTraffic()) , ""));
+		res.add(Triple.of("Route index/id" , "Route " + r.getIndex() + " (id " + r.getId() + ")", "route" + r.getId()));
+		res.add(Triple.of("Layer" , "" + getLayerName(r.getLayer()) , "layer" + r.getLayer().getId()));
+		res.add(Triple.of("Route demand index/id" , "" + r.getDemand().getIndex() + " (id " + r.getDemand().getId() + ")" , "demand" + r.getDemand().getId()));
+		res.add(Triple.of("Demand offered traffic" , "" + df.format(r.getDemand().getOfferedTraffic()) + " " + np.getDemandTrafficUnitsName(r.getLayer()) , ""));
+		res.add(Triple.of("Demand carried traffic" , "" + df.format(r.getDemand().getCarriedTraffic()) + " " + np.getDemandTrafficUnitsName(r.getLayer()) , ""));
+		res.add(Triple.of("Route carried traffic" , "" + df.format(r.getCarriedTraffic()) + " " + np.getDemandTrafficUnitsName(r.getLayer()), ""));
 		res.add(Triple.of("Is up?" , "" + np.isUp(r.getPath()), ""));
 		res.add(Triple.of("Is service chain?" , "" + r.getDemand().isServiceChainRequest(), ""));
 		res.add(Triple.of("Route length (km)" , "" + df.format(r.getLengthInKm()) + " km", ""));
@@ -201,9 +203,33 @@ public class FocusPane extends JPanel
 		res.add(Triple.of("Has backup routes?" , "" + r.hasBackupRoutes(), ""));
 		for (Route br : r.getBackupRoutes())
 			res.add(Triple.of("-- Backup route" , "Route " + br.getIndex() , "route" + br.getId()));
-		res.add(Triple.of("Has backup route?" , "" + r.isBackupRoute(), ""));
-		for (Route br : r.getBackupRoutes())
-			res.add(Triple.of("-- Backup route" , "Route " + br.getIndex() , "route" + br.getId()));
+		return res;
+	}
+	private List<Triple<String,String,String>> getDemandInfoTables (Demand d)
+	{
+		final DecimalFormat df = new DecimalFormat("###.##");
+		final NetPlan np = d.getNetPlan();
+		final NetworkLayer layer = d.getLayer();
+		final List<Triple<String,String,String>> res = new ArrayList <> ();
+		final RoutingCycleType cycleType = d.getRoutingCycleType();
+		final boolean isLoopless = cycleType.equals(RoutingCycleType.LOOPLESS);
+		res.add(Triple.of("Demand index/id" , "Route " + d.getIndex() + " (id " + d.getId() + ")", "demand" + d.getId()));
+		res.add(Triple.of("Layer" , "" + getLayerName(layer) , "layer" + layer.getId()));
+		res.add(Triple.of("Offered traffic" , "" + df.format(d.getOfferedTraffic()) , ""));
+		res.add(Triple.of("Carried traffic" , "" + df.format(d.getCarriedTraffic()) , ""));
+		res.add(Triple.of("Lost traffic" , "" + df.format(d.getBlockedTraffic()) , ""));
+		res.add(Triple.of("Is service chain?" , "" + d.isServiceChainRequest(), ""));
+		if (d.isServiceChainRequest())
+			res.add(Triple.of("- Seq. resource types" , StringUtils.join(d.getServiceChainSequenceOfTraversedResourceTypes(),","), ""));
+		res.add(Triple.of("Has loops?" , isLoopless? "No" : cycleType.equals(RoutingCycleType.CLOSED_CYCLES)? "Yes (closed loops)" : "Yes (open loops)", ""));
+		res.add(Triple.of("Routing type" , layer.isSourceRouting()? "Source routing" : "Hop by hop", ""));
+		if (layer.isSourceRouting())
+		{
+			res.add(Triple.of("Num. routes (total/backup)" , "" + d.getRoutes().size() + "/" + d.getRoutesAreBackup().size(), ""));
+			for (Route r : d.getRoutes())
+				res.add(Triple.of("Route index/id" , "Route " + r.getIndex() + " (id " + r.getId() + ")" + (r.isBackupRoute()? " [backup]" : ""), "route" + r.getId()));
+		}
+		res.add(Triple.of("Worst case e2e latency" , df.format(d.getWorstCasePropagationTimeInMs()) + " ms", ""));
 		return res;
 	}
 
@@ -214,12 +240,12 @@ public class FocusPane extends JPanel
 	class LabelWithLink extends JLabel implements MouseListener
 	{
 		private final String internalLink;
-		private final FocusPane parentPane;
-		public LabelWithLink(Triple<String,String,String> t , FocusPane parentPane)
+		public LabelWithLink(Pair<String,String> t , boolean bold)
 		{
-			super ("<html><body><strong>" + t.getFirst() + ":</strong>" + t.getSecond() + "</body></html>");
-			this.internalLink = t.getThird();
-			this.parentPane = parentPane;
+			super (t.getFirst());
+			if (bold) this.setFont(new Font(getFont().getName(), Font.BOLD, getFont().getSize()));
+			this.internalLink = t.getSecond();
+			if (!internalLink.equals("")) this.setForeground(Color.BLUE);
 		}
 		@Override
 		public void mouseClicked(MouseEvent arg0)
@@ -307,5 +333,29 @@ public class FocusPane extends JPanel
 		public void mouseReleased(MouseEvent arg0)
 		{
 		}
+	}
+	
+	
+	private JPanel createPanelInfo (List<Triple<String,String,String>> infoRows , NetworkElement e)
+	{
+		final JPanel tablePanel = new JPanel ();
+		tablePanel.setLayout(new MigLayout("gap rel 0"));
+		tablePanel.add(new LabelWithLink(Pair.of("Information table" ,  ""), true) , "newline, gaptop 0 , gapbottom 0");
+		tablePanel.add(new JLabel ("────────────────") , "newline, gaptop 0, gapbottom 2");
+		for (Triple<String,String,String> info : infoRows)
+		{
+			tablePanel.add(new LabelWithLink(Pair.of(info.getFirst() + ":" ,  info.getThird()), true) , "newline, gaptop 0, gapright 5");
+			tablePanel.add(new LabelWithLink(Pair.of(info.getSecond() ,  info.getThird()), false) , "gaptop 0");
+		}
+		tablePanel.add(new LabelWithLink(Pair.of("User-defined attributes" ,  ""), true) , "newline, gaptop 15 , gapbottom 0");
+		tablePanel.add(new JLabel ("────────────────────") , "newline, gaptop 0, gapbottom 2");
+		if (e.getAttributes().isEmpty())
+			tablePanel.add(new LabelWithLink(Pair.of("No attributes defined", "") , false) , "newline, gaptop 0, gapright 5");
+		for (Entry<String,String> entry : e.getAttributes().entrySet())
+		{
+			tablePanel.add(new LabelWithLink(Pair.of(entry.getKey() + ":" ,  ""), true) , "newline, gaptop 0, gapright 5");
+			tablePanel.add(new LabelWithLink(Pair.of(entry.getValue() ,  "") , false) , "gaptop 0");
+		}
+		return tablePanel;
 	}
 }
