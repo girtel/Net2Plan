@@ -56,14 +56,15 @@ public class FocusPane extends JPanel
 		this.pastShownInformation = new LinkedList<> ();
 		
         this.setVisible(true);
+        this.setMinimumSize(new Dimension (400,250));
         this.setLayout(new BorderLayout(0,0));
 	}
 
-	@Override
-	public Dimension getPreferredSize ()
-	{
-		return new Dimension (600 , 300);
-	}
+//	@Override
+//	public Dimension getPreferredSize ()
+//	{
+//		return new Dimension (600 , 300);
+//	}
 	
 	public void updateView () 
 	{

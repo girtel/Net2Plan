@@ -161,8 +161,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             JSplitPane splitPaneTopology = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
             splitPaneTopology.setTopComponent(topologyPanel);
             splitPaneTopology.setBottomComponent(logSection);
-            splitPaneTopology.setResizeWeight(0.8);
-            splitPaneTopology.addPropertyChangeListener(new ProportionalResizeJSplitPaneListener());
+            splitPaneTopology.setResizeWeight(1);
+            splitPaneTopology.setDividerLocation(0.5);
+            splitPaneTopology.setDividerSize((int) (splitPaneTopology.getHeight() * 0.7));
+            //splitPaneTopology.addPropertyChangeListener(new ProportionalResizeJSplitPaneListener());
             splitPaneTopology.setBorder(new LineBorder(contentPane.getBackground()));
             splitPaneTopology.setOneTouchExpandable(true);
             splitPaneTopology.setDividerSize(7);
@@ -286,7 +288,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 //        txt_netPlanLog.setFont(new JLabel().getFont());
         JPanel pane = new JPanel(new MigLayout("fill, insets 0 0 0 0"));
         pane.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Focus panel"));
-        pane.add(new JScrollPane(focusPanel), "grow");
+        final JScrollPane scPane = new JScrollPane(focusPanel , JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED , JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        scPane.getVerticalScrollBar().setUnitIncrement(20);
+        scPane.getHorizontalScrollBar().setUnitIncrement(20);
+        pane.add(scPane, "grow");
         return pane;
     }
 
