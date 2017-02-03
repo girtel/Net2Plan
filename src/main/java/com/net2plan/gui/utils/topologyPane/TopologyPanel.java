@@ -311,12 +311,12 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(btn_reset);
 
         multiLayerToolbar.add(new JToolBar.Separator());
+        multiLayerToolbar.add(btn_multilayer);
         multiLayerToolbar.add(btn_increaseInterLayerDistance);
         multiLayerToolbar.add(btn_decreaseInterLayerDistance);
         multiLayerToolbar.add(btn_showLowerLayerInfo);
         multiLayerToolbar.add(btn_showUpperLayerInfo);
         multiLayerToolbar.add(btn_showThisLayerInfo);
-        multiLayerToolbar.add(btn_multilayer);
 
         this.addComponentListener(new ComponentAdapter()
         {
