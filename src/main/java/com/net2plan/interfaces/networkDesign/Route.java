@@ -144,6 +144,13 @@ public class Route extends NetworkElement
 		for (Entry<NetworkElement,Double> e : origin.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.entrySet()) this.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.put(getInThisNetPlan (e.getKey()) , e.getValue());
 	}
 
+	
+	/** Indicates if the route is a serivce chain: traverses resources
+	 * @return see above
+	 */
+	public boolean isServiceChain () { return demand.isServiceChainRequest(); }
+			
+
 	/** Return the set of routes that this route is a designated as a backup for them  
 	 * @return The initial sequence of links as an unmodifiable list
 	 */

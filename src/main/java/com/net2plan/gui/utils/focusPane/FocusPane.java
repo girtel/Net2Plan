@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -20,9 +21,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -31,8 +34,9 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.libraries.GraphUtils;
+import com.net2plan.libraries.SRGUtils;
 import com.net2plan.utils.Constants.RoutingCycleType;
+import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
@@ -99,88 +103,69 @@ public class FocusPane extends JPanel
 		this.repaint ();
 	}
 	
-//	private void addNodeInfo (Node n , StringBuffer sb)
-//	{
-//		final NetPlan np = n.getNetPlan();
-//		sb.append("<h1>" + getNodeName(n) + "</h1>");
-//		sb.append("<table>");
-//		sb.append("<tr><td>Resources</td>");
-//		final Set<String> resourceTypes = n.getResources().stream().map(e->e.getType()).collect(Collectors.toSet());
-//		sb.append("<td><ul>");
-//		sb.append("<li>Num: " + getInternalHL ("resources" , "" + n.getSRGs().size()) + "</li>");
-//		if (!resourceTypes.isEmpty())
-//			sb.append("<li>Types: " + String.join(", " , resourceTypes) + "</li>");
-//		sb.append("</ul></td></tr>");
-//		sb.append("<tr><td>SRGs</td>");
-//		sb.append("<td><ul>");
-//		sb.append("<li>Num: " + getInternalHL ("srgs" , "" + n.getSRGs().size()) + "</li>");
-//		sb.append("</ul></td></tr>");
-//		for (NetworkLayer layer : np.getNetworkLayers())
-//		{
-//			sb.append("<th>" + getRichString(layer) + "</th>");
-//			final String capUnits = np.getLinkCapacityUnitsName(layer);
-//			final String trafUnits = np.getDemandTrafficUnitsName(layer);
-//			final int numLinksIn = n.getIncomingLinks(layer).size(); 
-//			final int numDemandsIn = n.getIncomingDemands(layer).size(); 
-//			final int numMDemandsIn = n.getIncomingMulticastDemands(layer).size();
-//			final int numLinksOut = n.getOutgoingLinks(layer).size(); 
-//			final int numDemandsOut = n.getOutgoingDemands(layer).size(); 
-//			final int numMDemandsOut = n.getOutgoingMulticastDemands(layer).size();
-//			final double inLinkCapacity = n.getIncomingLinks(layer).stream().mapToDouble(e->e.getCapacity()).sum(); 
-//			final double outLinkCapacity = n.getOutgoingLinks(layer).stream().mapToDouble(e->e.getCapacity()).sum(); 
-//			final double inOfferedUnicast = n.getIncomingDemands(layer).stream().mapToDouble(e->e.getOfferedTraffic()).sum(); 
-//			final double outOfferedUnicast = n.getOutgoingDemands(layer).stream().mapToDouble(e->e.getOfferedTraffic()).sum(); 
-//			final double inOfferedMulticast = n.getIncomingMulticastDemands(layer).stream().mapToDouble(e->e.getOfferedTraffic()).sum(); 
-//			final double outOfferedMulticast = n.getOutgoingMulticastDemands(layer).stream().mapToDouble(e->e.getOfferedTraffic()).sum();
-//			sb.append("<tr><td>");
-//			sb.append("<table border=\"0\">");
-//			sb.append("<tr>");
-//			sb.append ("<td>Links (in/out)</td>");
-//			sb.append ("<td>" + getInternalHL ("linksLayer" + layer.getIndex() , "<p>Num: " + numLinksIn + "/" + numLinksOut + "</p><p>Agg. capacity (" + capUnits + "):" + String.format("%.2f" , inLinkCapacity) + "/" + String.format("%.2f" , outLinkCapacity)) + "</p></td>");
-//			sb.append("</tr>");
-//			sb.append("<tr>");
-//			sb.append ("<td>Demands (in/out)</td>");
-//			sb.append ("<td>" + getInternalHL ("demandsLayer" + layer.getIndex() , "<p>Num: " + numDemandsIn + "/" + numDemandsOut + "</p><p>Agg. offered traffic (" + trafUnits + "): " + String.format("%.2f" , inOfferedUnicast) + "/" + String.format("%.2f" , outOfferedUnicast)) + "</p></td>");
-//			sb.append("</tr>");
-//			sb.append("<tr>");
-//			sb.append ("<td>Multicast demands (in/out)</td>");
-//			sb.append ("<td>" + getInternalHL ("multicastDemandsLayer" + layer.getIndex() , "<p>Num: " + numMDemandsIn + "/" + numMDemandsOut + "</p><p>Agg. offered traffic (" + trafUnits + "): " + String.format("%.2f" , inOfferedMulticast) + "/" + String.format("%.2f" , outOfferedMulticast)) + "</p></td>");
-//			sb.append("</tr>");
-//			sb.append("</table>");
-//			sb.append("</td></tr>");
-//		}
-//		sb.append("</table>");
-//		for (NetworkLayer layer :  np.getNetworkLayers())
-//		{
-//			final Set<Link> inLinks = n.getIncomingLinks(layer);
-//			final Set<Link> outLinks = n.getOutgoingLinks(layer);
-//			final Set<Demand> inDemands = n.getIncomingDemands(layer);
-//			final Set<Demand> outDemands = n.getOutgoingDemands(layer);
-//			final Set<MulticastDemand> inMDemands = n.getIncomingMulticastDemands(layer);
-//			final Set<MulticastDemand> outMDemands = n.getOutgoingMulticastDemands(layer);
-//			sb.append("<h2>" + getRichString(layer) + "</h2>");
-//			sb.append("<a name='linksLayer'" + layer.getIndex() + "><h3>Links</h3>");
-//			sb.append (getEnumerationString(inLinks.stream().map(e->getRichString(e)).collect (Collectors.toList())));
-//			sb.append (getEnumerationString(outLinks.stream().map(e->getRichString(e)).collect (Collectors.toList())));
-//			sb.append("<a name='demandsLayer'" + layer.getIndex() + "><h3>Unicast traffic demands</h3>");
-//			sb.append (getEnumerationString(inDemands.stream().map(e->getRichString(e)).collect (Collectors.toList())));
-//			sb.append (getEnumerationString(outDemands.stream().map(e->getRichString(e)).collect (Collectors.toList())));
-//			sb.append("<a name='multicastDemandsLayer'" + layer.getIndex() + "><h3>Multicast traffic demands</h3>");
-//			sb.append (getEnumerationString(inMDemands.stream().map(e->getRichString(e)).collect (Collectors.toList())));
-//			sb.append (getEnumerationString(outMDemands.stream().map(e->getRichString(e)).collect (Collectors.toList())));
-//		}
-//	}
-	private void addLinkInfo (Link e , StringBuffer sb)
+	private List<Triple<String,String,String>> getNodeInfoTables (Node n , NetworkLayer layer)
 	{
-		sb.append(e);
+		final DecimalFormat df = new DecimalFormat("###.##");
+		final NetPlan np = n.getNetPlan();
+		final List<Triple<String,String,String>> res = new ArrayList <> ();
+		final String trafUnits = np.getDemandTrafficUnitsName(layer);
+		res.add(Triple.of("Node index/id" , "Node " + n.getIndex() + " (id " + n.getId() + ")", "node" + n.getId()));
+		res.add(Triple.of("Name" , n.getName().equals("")? "No name" : n.getName(), ""));
+		res.add(Triple.of("Coordinates (x,y)" , "(" + n.getXYPositionMap().getX() + "," + n.getXYPositionMap().getY() + ")" , ""));
+		res.add(Triple.of("Is up?", "" + n.isUp() , ""));
+		res.add(Triple.of("Information at layer" , getLayerName(layer) , ""));
+		res.add(Triple.of("# output links", "" + n.getOutgoingLinks(layer).size() , ""));
+		res.add(Triple.of("# input links" , "" + n.getIncomingLinks(layer).size() , ""));
+		res.add(Triple.of("Output traffic" , "" + df.format(n.getOutgoingLinks(layer).stream().mapToDouble(e->e.getCarriedTraffic()).sum()) + " " + trafUnits , ""));
+		res.add(Triple.of("Input traffic" , df.format(n.getIncomingLinks(layer).stream().mapToDouble(e->e.getCarriedTraffic()).sum())  + " " + trafUnits , ""));
+		res.add(Triple.of("# SRGs" , n.getSRGs().isEmpty() ? "none" : ""+n.getSRGs().size()  , ""));
+		for (SharedRiskGroup srg : n.getSRGs())
+			res.add(Triple.of("- Sh. risk group index/id" , "" + srg.getIndex() + " (id " + srg.getId() + ")" , "srg" + srg.getId()));
+		return res;
 	}
-	private void addDemandInfo (Demand d , StringBuffer sb)
+	private List<Triple<String,String,String>> getLinkInfoTables (Link e)
 	{
-		sb.append(d);
-	}
-	private void addMulticastDemandInfo (MulticastDemand d , StringBuffer sb)
-	{
-		sb.append(d);
+		final DecimalFormat df = new DecimalFormat("###.##");
+		final NetPlan np = e.getNetPlan();
+		final List<Triple<String,String,String>> res = new ArrayList <> ();
+		final NetworkLayer layer = e.getLayer();
+		final String trafUnits = np.getDemandTrafficUnitsName(layer);
+		final String capUnits = np.getLinkCapacityUnitsName(layer);
+		final double max_rho_e = np.getLinks(layer).stream().mapToDouble(ee->ee.getUtilization()).max().orElse(0);
+		res.add(Triple.of("Link index/id" , "Link " + e.getIndex() + " (id " + e.getId() + ")", "link" + e.getId()));
+		res.add(Triple.of("Is up?", "" + e.isUp() , ""));
+		res.add(Triple.of("Is coupled to lower layer?", e.isCoupled() + "" , ""));
+		if (e.isCoupled())
+		{
+			final NetworkLayer lowerLayer = e.getCoupledDemand() == null? e.getCoupledMulticastDemand().getLayer() : e.getCoupledDemand().getLayer();
+			res.add(Triple.of("- Lower layer coupled to",  getLayerName(lowerLayer) , ""));
+			if (e.getCoupledDemand() == null)
+			{
+				final MulticastDemand md = e.getCoupledMulticastDemand();
+				res.add(Triple.of("- Coupled to",  "Multicast demand " + md.getIndex() + " (id " + md.getId() + ")" , "multicastDemand" + md.getId()));
+			}
+			else
+			{
+				final Demand d = e.getCoupledDemand();
+				res.add(Triple.of("- Coupled to",  "Demand " + d.getIndex() + " (id " + d.getId() + ")" , "demand" + d.getId()));
+			}
+		}
+		res.add(Triple.of("Carried traffic", "" + df.format(e.getCarriedTraffic()) + " " + trafUnits , ""));
+		res.add(Triple.of("Capacity occupied / total", "" + df.format(e.getOccupiedCapacity()) + " / " + df.format(e.getCapacity()) + " " + capUnits , ""));
+		res.add(Triple.of("Utilization", "" + df.format(e.getUtilization()) , ""));
+		res.add(Triple.of("Is bottleneck?", "" + DoubleUtils.isEqualWithinRelativeTolerance(max_rho_e, e.getUtilization(), Configuration.precisionFactor) , ""));
+		res.add(Triple.of("Length (km)", "" + df.format(e.getLengthInKm()) + " km" , ""));
+		res.add(Triple.of("Length (ms)", "" + df.format(e.getPropagationDelayInMs()) + " ms" , ""));
+		if (layer.isSourceRouting())
+			res.add(Triple.of("# routes (total / backup)", "" + e.getTraversingRoutes().size() + " / " + e.getTraversingBackupRoutes().size(), ""));
+		else
+			res.add(Triple.of("# forw. rules", "" + e.getForwardingRules().size(), ""));
+		res.add(Triple.of("# multicast trees", "" + e.getTraversingTrees().size() , ""));
+		final Set<SharedRiskGroup> affectingSRGs = SRGUtils.getAffectingSRGs(Arrays.asList(e));
+		res.add(Triple.of("# Affecting SRGs", "" + affectingSRGs.size() , ""));
+		for (SharedRiskGroup srg : affectingSRGs)
+			res.add(Triple.of("- Sh. risk group index/id" , "" + srg.getIndex() + " (id " + srg.getId() + ")" , "srg" + srg.getId()));
+		return res;
 	}
 	private List<Triple<String,String,String>> getRouteInfoTables (Route r)
 	{
@@ -194,6 +179,9 @@ public class FocusPane extends JPanel
 		res.add(Triple.of("Demand carried traffic" , "" + df.format(r.getDemand().getCarriedTraffic()) + " " + np.getDemandTrafficUnitsName(r.getLayer()) , ""));
 		res.add(Triple.of("Route carried traffic" , "" + df.format(r.getCarriedTraffic()) + " " + np.getDemandTrafficUnitsName(r.getLayer()), ""));
 		res.add(Triple.of("Is up?" , "" + np.isUp(r.getPath()), ""));
+		res.add(Triple.of("Worst link utilization" , "" + df.format(r.getSeqLinks().stream().mapToDouble(e->e.getUtilization()).max().orElse(0)), ""));
+		if (r.isServiceChain())
+			res.add(Triple.of("Worst resource utilization" , "" + df.format(r.getSeqResourcesTraversed().stream().mapToDouble(e->e.getUtilization()).max().orElse(0)), ""));
 		res.add(Triple.of("Is service chain?" , "" + r.getDemand().isServiceChainRequest(), ""));
 		res.add(Triple.of("Route length (km)" , "" + df.format(r.getLengthInKm()) + " km", ""));
 		res.add(Triple.of("Route length (ms)" , "" + df.format(r.getPropagationDelayInMiliseconds()) + " ms", ""));
@@ -205,6 +193,24 @@ public class FocusPane extends JPanel
 			res.add(Triple.of("-- Backup route" , "Route " + br.getIndex() , "route" + br.getId()));
 		return res;
 	}
+	private List<Triple<String,String,String>> getMulticastTreeInfoTables (MulticastTree t)
+	{
+		final DecimalFormat df = new DecimalFormat("###.##");
+		final NetPlan np = t.getNetPlan();
+		final List<Triple<String,String,String>> res = new ArrayList <> ();
+		res.add(Triple.of("Tree index/id" , "Tree " + t.getIndex() + " (id " + t.getId() + ")", "multicastTre" + t.getId()));
+		res.add(Triple.of("Layer" , "" + getLayerName(t.getLayer()) , "layer" + t.getLayer().getId()));
+		res.add(Triple.of("Tree mult. demand index/id" , "" + t.getMulticastDemand().getIndex() + " (id " + t.getMulticastDemand().getId() + ")" , "multicatsDemand" + t.getMulticastDemand().getId()));
+		res.add(Triple.of("M. Demand offered traffic" , "" + df.format(t.getMulticastDemand().getOfferedTraffic()) + " " + np.getDemandTrafficUnitsName(t.getLayer()) , ""));
+		res.add(Triple.of("M. Demand carried traffic" , "" + df.format(t.getMulticastDemand().getCarriedTraffic()) + " " + np.getDemandTrafficUnitsName(t.getLayer()) , ""));
+		res.add(Triple.of("Tree carried traffic" , "" + df.format(t.getCarriedTraffic()) + " " + np.getDemandTrafficUnitsName(t.getLayer()), ""));
+		res.add(Triple.of("Is up?" , "" + !t.isDown(), ""));
+		res.add(Triple.of("Worst link utilization" , "" + df.format(t.getLinkSet().stream().mapToDouble(e->e.getUtilization()).max().orElse(0)), ""));
+		res.add(Triple.of("E2E num. hops (av / max)" , "" + df.format(t.getTreeAveragePathLengthInHops()) + " / " + df.format(t.getTreeMaximumPathLengthInHops()) , ""));
+		res.add(Triple.of("E2E length in km (av / max)" , "" + df.format(t.getTreeAveragePathLengthInHops()) + " / " + df.format(t.getTreeMaximumPathLengthInKm()) + " km", ""));
+		res.add(Triple.of("E2E length in ms (av / max)" , "" + df.format(t.getTreeAveragePropagationDelayInMs()) + " / " + df.format(t.getTreeMaximumPropagationDelayInMs()) + " ms", ""));
+		return res;
+	}
 	private List<Triple<String,String,String>> getDemandInfoTables (Demand d)
 	{
 		final DecimalFormat df = new DecimalFormat("###.##");
@@ -213,11 +219,18 @@ public class FocusPane extends JPanel
 		final List<Triple<String,String,String>> res = new ArrayList <> ();
 		final RoutingCycleType cycleType = d.getRoutingCycleType();
 		final boolean isLoopless = cycleType.equals(RoutingCycleType.LOOPLESS);
-		res.add(Triple.of("Demand index/id" , "Route " + d.getIndex() + " (id " + d.getId() + ")", "demand" + d.getId()));
+		res.add(Triple.of("Demand index/id" , "Demand " + d.getIndex() + " (id " + d.getId() + ")", "demand" + d.getId()));
 		res.add(Triple.of("Layer" , "" + getLayerName(layer) , "layer" + layer.getId()));
 		res.add(Triple.of("Offered traffic" , "" + df.format(d.getOfferedTraffic()) , ""));
 		res.add(Triple.of("Carried traffic" , "" + df.format(d.getCarriedTraffic()) , ""));
 		res.add(Triple.of("Lost traffic" , "" + df.format(d.getBlockedTraffic()) , ""));
+		res.add(Triple.of("Is coupled?" , "" + df.format(d.isCoupled()) , ""));
+		if (d.isCoupled())
+		{
+			final Link coupledLink = d.getCoupledLink();
+			res.add(Triple.of("- Upper layer coupled to",  getLayerName(coupledLink.getLayer()) , ""));
+			res.add(Triple.of("- Coupled to",  "Link " + coupledLink.getIndex() + " (id " + coupledLink.getId() + ")" , "link" + coupledLink.getId()));
+		}
 		res.add(Triple.of("Is service chain?" , "" + d.isServiceChainRequest(), ""));
 		if (d.isServiceChainRequest())
 			res.add(Triple.of("- Seq. resource types" , StringUtils.join(d.getServiceChainSequenceOfTraversedResourceTypes(),","), ""));
@@ -230,6 +243,31 @@ public class FocusPane extends JPanel
 				res.add(Triple.of("Route index/id" , "Route " + r.getIndex() + " (id " + r.getId() + ")" + (r.isBackupRoute()? " [backup]" : ""), "route" + r.getId()));
 		}
 		res.add(Triple.of("Worst case e2e latency" , df.format(d.getWorstCasePropagationTimeInMs()) + " ms", ""));
+		return res;
+	}
+	private List<Triple<String,String,String>> getMulticastDemandInfoTables (MulticastDemand md)
+	{
+		final DecimalFormat df = new DecimalFormat("###.##");
+		final NetPlan np = md.getNetPlan();
+		final NetworkLayer layer = md.getLayer();
+		final List<Triple<String,String,String>> res = new ArrayList <> ();
+		res.add(Triple.of("Demand index/id" , "M. demand " + md.getIndex() + " (id " + md.getId() + ")", "multicastDemand" + md.getId()));
+		res.add(Triple.of("Layer" , "" + getLayerName(layer) , "layer" + layer.getId()));
+		res.add(Triple.of("Offered traffic" , "" + df.format(md.getOfferedTraffic()) , ""));
+		res.add(Triple.of("Carried traffic" , "" + df.format(md.getCarriedTraffic()) , ""));
+		res.add(Triple.of("Lost traffic" , "" + df.format(md.getBlockedTraffic()) , ""));
+		if (md.isCoupled())
+		{
+			final Set<Link> coupledLinks = md.getCoupledLinks();
+			final NetworkLayer upperLayer = coupledLinks.iterator().next().getLayer(); 
+			res.add(Triple.of("- Upper layer coupled to",  getLayerName(upperLayer) , "layer" + upperLayer.getId()));
+			for (Link c : coupledLinks)
+				res.add(Triple.of("- Coupled to",  "Link " + c.getIndex() + " (id " + c.getId() + ")" , "link" + c.getId()));
+		}
+		res.add(Triple.of("Num. trees" , "" + md.getMulticastTrees().size() , ""));
+//		for (MulticastTree t : md.getMulticastTrees())
+//			res.add(Triple.of("Multicast tree index/id" , "Multicast tree " + t.getIndex() + " (id " + t.getId() + ")" , "multicastTree" + t.getId()));
+		res.add(Triple.of("Worst case e2e latency" , df.format(md.getWorseCasePropagationTimeInMs()) + " ms", ""));
 		return res;
 	}
 

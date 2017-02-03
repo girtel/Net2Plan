@@ -143,6 +143,16 @@ public class Resource extends NetworkElement
 		return true;
 	}
 	
+	/**
+	 * <p>Returns resource link utilization, measured as the ratio between the total occupied capacity in the total capacity.</p>
+	 * @return The utilization as described above. If the resource has zero capacity and strictly positive occupied capacity, Double.POSITIVE_INFINITY is returned 
+	 * */
+	public double getUtilization()
+	{
+		if ((capacity == 0) && (cache_totalOccupiedCapacity > 0)) return Double.POSITIVE_INFINITY;
+		return capacity == 0? 0 : cache_totalOccupiedCapacity / capacity;
+	}
+
 	/** Returns true if the occupied capacity of the resource exceeds its capacity
 	 * @return See above
 	 */
