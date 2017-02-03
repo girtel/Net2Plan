@@ -159,7 +159,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 
                 updateTable();
                 callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
-
+                callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
                 super.setValueAt(newValue, row, column);
             }
         };
@@ -316,6 +316,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 
             updateTable();
             callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
+            callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
         }
 
         private <K, V> void swap(BidiMap<K, V> map, K k1, K k2)

@@ -94,7 +94,7 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
         } catch (Throwable e) {
         }
         netPlan.setNetworkLayerDefault(netPlan.getNetworkLayer((int) 0));
-        mainWindow.getDesign().assignFrom(netPlan);
+        mainWindow.getDesign().assignFrom(netPlan); // do not update undo/redo here -> the visualization state should be updated before
         return out;
 	}
 
@@ -108,7 +108,7 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
     				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
     		vs.setCanvasLayerVisibilityAndOrder(mainWindow.getDesign() , res.getFirst() , res.getSecond());
             mainWindow.updateVisualizationAfterNewTopology();
-
+            mainWindow.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
             String outMessage = String.format("Algorithm executed successfully%nExecution time: %.3g s%nExit message: %s", execTime, out);
             JOptionPane.showMessageDialog(null, outMessage, "Solve design", JOptionPane.PLAIN_MESSAGE);
         } catch (Throwable ex) {

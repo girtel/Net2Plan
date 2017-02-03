@@ -16,12 +16,21 @@ import java.util.stream.Collectors;
 
 import javax.swing.JPanel;
 
+import com.google.common.collect.Sets;
+import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.utils.Pair;
 
 public class LinkSequencePanel extends JPanel 
 {
@@ -35,9 +44,11 @@ public class LinkSequencePanel extends JPanel
 	private NetworkLayer layer;
     private NetPlan np;
     private Dimension preferredSize;
+    private IVisualizationCallback callback;
     
-    public LinkSequencePanel(List<? extends NetworkElement> path , NetworkLayer layer , List<Double> occupationsPerElement , String titleMessage , double carriedTraffic) 
+    public LinkSequencePanel(IVisualizationCallback callback , List<? extends NetworkElement> path , NetworkLayer layer , List<Double> occupationsPerElement , String titleMessage , double carriedTraffic) 
     {
+    	this.callback = callback;
     	this.np = layer.getNetPlan();
     	this.layer = layer;
     	this.path = path;
@@ -154,24 +165,18 @@ public class LinkSequencePanel extends JPanel
             {
                 if (dn.shapeIconToSetByPainter.contains(me.getPoint())) { System.out.println("shape icon clicked node: " + dn.toString()); }            	
                 for (int labelIndex = 0; labelIndex < dn.labels.size() ; labelIndex ++)
-                {
                 	if (dn.shapesLabelsToCreateByPainter.get(labelIndex).contains(me.getPoint())) 
-                		{ System.out.println("shape text clicked node: " + dn.toString() + ", label: " + dn.labels.get(labelIndex)); }	
-                }
+                		FocusPane.processMouseClickInternalLink (dn.urlsLabels.get(labelIndex) , callback);
             }                
             for (DrawLine dl : drawnLines)
             {
                 if (dl.shapeLineToCreateByPainter.contains(me.getPoint())) { System.out.println("shape clicked line: " + dl.toString()); }            	
                 for (int labelIndex = 0; labelIndex < dl.labels.size() ; labelIndex ++)
-                {
                 	if (dl.shapesLabelstoCreateByPainter.get(labelIndex).contains(me.getPoint())) 
-                		{ System.out.println("shape text clicked line: " + dl.toString() + ", label: " + dl.labels.get(labelIndex)); }	
-                }
+                		FocusPane.processMouseClickInternalLink (dl.urlsLabels.get(labelIndex) , callback);
             }                
         }
     }
-
-    
 
     
 }

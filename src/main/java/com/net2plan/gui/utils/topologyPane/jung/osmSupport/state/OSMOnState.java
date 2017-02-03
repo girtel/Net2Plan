@@ -81,6 +81,7 @@ class OSMOnState implements OSMState
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
         mapController.refreshTopologyAlignment();
+        callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
     }
 
     @Override
@@ -90,6 +91,7 @@ class OSMOnState implements OSMState
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         callback.updateVisualizationAfterChanges(Sets.newHashSet(Constants.NetworkElementType.NODE));
         mapController.refreshTopologyAlignment();
+        callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
     }
 
     @Override

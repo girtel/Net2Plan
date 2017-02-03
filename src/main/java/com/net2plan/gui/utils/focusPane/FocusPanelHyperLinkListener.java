@@ -88,6 +88,8 @@ public class FocusPanelHyperLinkListener implements HyperlinkListener
         	else throw new RuntimeException ();
         	
         	callback.updateVisualizationAfterPick();
+            callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
+
         	
             System.out.println("Hyperlink clicked");
             System.out.println(e.getDescription()); // --> this is what I need to retrieve what is inside href, but may not be an URL

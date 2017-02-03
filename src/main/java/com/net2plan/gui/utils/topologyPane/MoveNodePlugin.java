@@ -85,6 +85,7 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
             if (node != null) {
                 callback.getVisualizationState().pickNode(node.getAssociatedNetPlanNode());
                 callback.updateVisualizationAfterPick();
+                callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
                 startVertex = node;
                 e.consume();
             } else {

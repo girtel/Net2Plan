@@ -31,7 +31,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -47,12 +52,11 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 
-import com.net2plan.internal.plugins.ITopologyCanvas;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
+import com.net2plan.gui.utils.UndoRedoManager;
 import com.net2plan.gui.utils.focusPane.FocusPane;
 import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
 import com.net2plan.gui.utils.onlineSimulationPane.OnlineSimulationPane;
@@ -75,6 +79,7 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
+import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
@@ -89,6 +94,10 @@ import net.miginfocom.swing.MigLayout;
  * using the open-source Java Optimization Modeler library, to interface
  * to a number of external solvers such as GPLK, CPLEX or IPOPT.
  */
+/**
+ * @author Pablo
+ *
+ */
 public class GUINetworkDesign extends IGUIModule implements IVisualizationCallback
 {
     private final static String TITLE = "Offline network design & Online network simulation";
@@ -102,6 +111,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     private OfflineExecutionPanel executionPane;
     private OnlineSimulationPane onlineSimulationPane;
     private VisualizationState vs;
+    private UndoRedoManager undoRedoManager;
 
     private NetPlan currentNetPlan;
 
@@ -132,6 +142,37 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 //    }
 
     @Override
+    public UndoRedoManager getUndoRedoNavigationManager () { return undoRedoManager; }
+    
+    @Override
+    public void undoRequested ()
+    { 
+        if (inOnlineSimulationMode()) return;
+    	final Pair<NetPlan,VisualizationState> back = undoRedoManager.getNavigationBackElement();
+    	if (back == null) return;
+    	if (back.getFirst() != null) this.currentNetPlan = back.getFirst();
+    	this.vs = back.getSecond();
+    	if (back.getFirst() != null) 
+    		updateVisualizationAfterNewTopology();
+    	else
+    		updateVisualizationAfterPick();
+    }
+
+    @Override
+    public void redoRequested ()
+    { 
+        if (inOnlineSimulationMode()) return;
+    	final Pair<NetPlan,VisualizationState> back = undoRedoManager.getNavigationForwardElement();
+    	if (back == null) return;
+    	if (back.getFirst() != null) this.currentNetPlan = back.getFirst();
+    	this.vs = back.getSecond();
+    	if (back.getFirst() != null) 
+    		updateVisualizationAfterNewTopology();
+    	else
+    		updateVisualizationAfterPick();
+    }
+
+    @Override
     public void configure(JPanel contentPane)
     {
         this.currentNetPlan = new NetPlan();
@@ -147,10 +188,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
 
-        /*
-      Reference to the popup menu in the topology panel.
-
-      */
         JPanel leftPane = new JPanel(new BorderLayout());
         JPanel logSection = configureLeftBottomPanel();
         if (logSection == null)
@@ -179,6 +216,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         loadDesignDoNotUpdateVisualization(currentNetPlan);
         Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res = VisualizationState.generateCanvasDefaultVisualizationLayerInfo(getDesign());
         vs.setCanvasLayerVisibilityAndOrder(getDesign(), res.getFirst(), res.getSecond());
+
+        /* Initialize the undo/redo manager, and set its initial design */
+        this.undoRedoManager = new UndoRedoManager(this , 50);
+        this.undoRedoManager.updateNavigationInformation_newNetPlanChange();
 
         onlineSimulationPane = new OnlineSimulationPane(this);
         executionPane = new OfflineExecutionPanel(this);
@@ -279,6 +320,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         addAllKeyCombinationActions();
         updateVisualizationAfterNewTopology();
+        
     }
 
 
@@ -310,6 +352,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @Override
     public String getMenu()
     {
+   	
         return "Tools|" + TITLE;
     }
 
@@ -390,6 +433,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res = VisualizationState.generateCanvasDefaultVisualizationLayerInfo(getDesign());
         vs.setCanvasLayerVisibilityAndOrder(getDesign(), res.getFirst(), res.getSecond());
         updateVisualizationAfterNewTopology();
+        undoRedoManager.updateNavigationInformation_newNetPlanChange();
     }
 
 
@@ -779,4 +823,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             }
         }
     }
+    
+    
+    
 }

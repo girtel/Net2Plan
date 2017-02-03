@@ -244,6 +244,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                         	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
                             callback.getVisualizationState ().pickMulticastDemand(demand);
                             callback.updateVisualizationAfterPick();
+                            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                             break;
 
                         default:
@@ -376,6 +377,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                                     netPlan.getMulticastDemandFromId((long) itemId).remove();
                                     callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
+                                	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                                 } catch (Throwable ex) {
                                     ErrorHandling.addErrorOrException(ex, getClass());
                                     ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -402,6 +404,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                             		for (MulticastDemand d : demandRowsInTheTable) d.remove();
                                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                             	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
+                            	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                             } catch (Throwable ex) {
                                 ex.printStackTrace();
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -434,6 +437,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
         if (getVisibleElementsInTable().isEmpty()) return;
         callback.getVisualizationState ().pickMulticastDemand(callback.getDesign().getMulticastDemandFromId((long) itemId));
         callback.updateVisualizationAfterPick();
+        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
     }
 
     private JMenuItem getAddOption() {
@@ -491,6 +495,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                 netPlan.addMulticastDemand(netPlan.getNodeFromId(ingressNode), egressNodes, 0, null);
                 callback.getVisualizationState().resetPickedState();
             	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
+            	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                 break;
             } catch (Throwable ex) {
                 ErrorHandling.addErrorOrException(ex, AdvancedJTable_multicastDemand.class);
@@ -544,6 +549,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                 try {
                     for (MulticastDemand demand : visibleRows) demand.setOfferedTraffic(h_d);
                 	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
+                	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set offered traffic to all multicast demands");
                 }
@@ -564,6 +570,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                         model.setValueAt("", row, COLUMN_COUPLEDTOLINKS);
                         callback.getVisualizationState().resetPickedState();
                     	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_DEMAND , NetworkElementType.LINK));
+                    	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                     }
                 });
 
@@ -584,6 +591,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                             for (int i = 0; i < numRows; i++) model.setValueAt("", i, COLUMN_COUPLEDTOLINKS);
                             callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_DEMAND , NetworkElementType.LINK));
+                        	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                         }
                     });
                 }
@@ -625,6 +633,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                                             demand.coupleToNewLinksCreated(layer);
                                     callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_DEMAND , NetworkElementType.LINK));
+                                	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                                     break;
                                 } catch (Throwable ex) {
                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating upper layer links");
@@ -669,6 +678,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
             }
             callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_DEMAND , NetworkElementType.LINK));
+        	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
         }
     }
 
@@ -692,6 +702,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
             }
             callback.getVisualizationState().resetPickedState();
         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_DEMAND , NetworkElementType.LINK));
+        	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
         }
     }
 

@@ -30,9 +30,11 @@ import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
 import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.DialogType;
@@ -60,6 +62,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance;
     private final JButton btn_increaseNodeSize, btn_decreaseNodeSize, btn_increaseFontSize, btn_decreaseFontSize;
+    private final JButton btn_navigationUndo, btn_navigationRedo;
     private final JToggleButton btn_showLowerLayerInfo, btn_showUpperLayerInfo, btn_showThisLayerInfo;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final JPopUpButton btn_view, btn_multilayer;
@@ -222,6 +225,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showThisLayerInfo = new JToggleButton("Show TP");
         btn_showThisLayerInfo.setToolTipText("Shows the links in the same layer as the picked element, that carry traffic that appears in the picked element");
         btn_showThisLayerInfo.setSelected(getVisualizationState().isShowInCanvasThisLayerPropagation());
+        btn_navigationUndo = new JButton ("Undo");
+        btn_navigationUndo.setToolTipText("Navigate back to the previous state");
+        btn_navigationRedo = new JButton ("Redo");
+        btn_navigationRedo.setToolTipText("Navigate forward to the next state");
 
         // OSM Buttons
         it_control = new JMenuItem("View control window");
@@ -287,7 +294,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         it_control.addActionListener(this);
         it_closeMap.addActionListener(this);
         it_osmMap.addActionListener(this);
-
+        btn_navigationUndo.addActionListener(this);
+        btn_navigationRedo.addActionListener(this);
+        
         // Disabling font controls
         btn_increaseFontSize.setEnabled(false);
         btn_decreaseFontSize.setEnabled(false);
@@ -321,6 +330,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         multiLayerToolbar.add(btn_showUpperLayerInfo);
         multiLayerToolbar.add(btn_showThisLayerInfo);
         multiLayerToolbar.add(btn_multilayer);
+        multiLayerToolbar.add(btn_navigationUndo);
+        multiLayerToolbar.add(btn_navigationRedo);
+        
 
         this.addComponentListener(new ComponentAdapter()
         {
@@ -446,6 +458,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
+            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
         } else if (src == btn_increaseInterLayerDistance)
         {
             if (vs.getCanvasNumberOfVisibleLayers() == 1) return;
@@ -481,6 +494,12 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         {
             vs.setShowInCanvasThisLayerPropagation(btn_showThisLayerInfo.isSelected());
             canvas.refresh();
+        } else if (src == btn_navigationUndo)
+        {
+        	callback.undoRequested();
+        } else if (src == btn_navigationRedo)
+        {
+        	callback.redoRequested();
         } else if (src == it_closeMap)
         {
             if (canvas.isOSMRunning())
@@ -605,6 +624,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
+            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
@@ -630,6 +650,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
+            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
@@ -683,6 +704,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                 }
                 callback.getVisualizationState().resetPickedState();
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND, NetworkElementType.MULTICAST_DEMAND));
+                callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
             } catch (Throwable ex)
             {
                 callback.getDesign().assignFrom(aux_netPlan);

@@ -228,6 +228,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
                     				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
                     		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
                                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+                                    callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                                 } catch (Throwable ex) {
                                     ErrorHandling.addErrorOrException(ex, getClass());
                                     ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -281,6 +282,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
             				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
             		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+                    callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                 } catch (Throwable ex) {
                 	ex.printStackTrace();
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);

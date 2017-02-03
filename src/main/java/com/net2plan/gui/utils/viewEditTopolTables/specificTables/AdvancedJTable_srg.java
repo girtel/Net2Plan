@@ -370,6 +370,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                                 netPlan.getSRGFromId((long) itemId).remove();
                                 callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                            	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -394,6 +395,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                         		for (SharedRiskGroup srg : rowsInTheTable) srg.remove();
                             callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                        	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -427,6 +429,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         final SharedRiskGroup srg = callback.getDesign().getSRGFromId((long) itemId);
         callback.getVisualizationState ().pickSRG(srg);
         callback.updateVisualizationAfterPick();
+        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
     }
 
     private JMenuItem getAddOption() 
@@ -442,6 +445,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                     netPlan.addSRG(8748, 12, null);
                     callback.getVisualizationState().resetPickedState();
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
@@ -526,6 +530,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                     SRGUtils.configureSRGs(netPlan, mttf, mttr, srgModel, removeExistingSRGs);
                     callback.getVisualizationState().resetPickedState();
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add SRGs from model");
                 }
@@ -558,6 +563,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                         viewEditSRGGUI(callback, (long) itemId);
                         callback.getVisualizationState().resetPickedState();
                     	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                    	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Error viewing/editing SRG");
                     }
@@ -594,6 +600,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                         for (SharedRiskGroup srg : rowsInTheTable) srg.setMeanTimeToFailInHours(mttf);
                         callback.getVisualizationState().resetPickedState();
                     	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                    	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set MTTF to all SRGs");
                     }
@@ -628,6 +635,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                         for (SharedRiskGroup srg : rowsInTheTable) srg.setMeanTimeToRepairInHours(mttr);
                         callback.getVisualizationState().resetPickedState();
                     	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                    	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set MTTR to all SRGs");
                     }
