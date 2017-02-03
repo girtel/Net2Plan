@@ -267,18 +267,22 @@ public class OSMMapController
             // First, remove any canvas from the top of the OSM map viewer.
             mapViewer.removeAll();
 
+            final JPanel canvasPanel = topologyPanel.getCanvasPanel();
             // Then remove the OSM map from the topology panel.
-            topologyPanel.remove(mapViewer);
+            canvasPanel.remove(mapViewer);
 
             // Deleting the map component
             mapViewer = null;
 
             // Repaint canvas on the topology panel
-            topologyPanel.add(canvas.getCanvasComponent(), BorderLayout.CENTER);
+            canvasPanel.add(canvas.getCanvasComponent(), BorderLayout.CENTER);
 
             // Reset nodes' original position
             canvas.updateAllVerticesXYPosition();
             canvas.zoomAll();
+
+            canvasPanel.validate();
+            canvasPanel.repaint();
 
             topologyPanel.validate();
             topologyPanel.repaint();
