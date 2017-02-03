@@ -62,9 +62,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JButton btn_increaseNodeSize, btn_decreaseNodeSize, btn_increaseFontSize, btn_decreaseFontSize;
     private final JToggleButton btn_showLowerLayerInfo, btn_showUpperLayerInfo, btn_showThisLayerInfo;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
-    private final JPopUpButton btn_view, btn_multilayer;
-    private final JPopupMenu viewPopUp, multiLayerPopUp;
-    private final JMenuItem it_control, it_osmMap, it_closeMap;
+    private final JPopUpButton btn_multilayer;
+    private final JPopupMenu multiLayerPopUp;
+    private final JButton btn_control;
+    private final JToggleButton btn_osmMap;
     private final JLabel position;
     private final JPanel canvasPanel;
     private final MultiLayerControlPanel multilayerControlPanel;
@@ -222,21 +223,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showThisLayerInfo = new JToggleButton();
         btn_showThisLayerInfo.setToolTipText("Shows the links in the same layer as the picked element, that carry traffic that appears in the picked element");
         btn_showThisLayerInfo.setSelected(getVisualizationState().isShowInCanvasThisLayerPropagation());
-
-        // OSM Buttons
-        it_control = new JMenuItem("View control window");
-        it_control.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
-
-        it_osmMap = new JMenuItem("Run OpenStreetMap support");
-        it_closeMap = new JMenuItem("Shutdown OpenStreetMap support");
-
-        // "View" toggle pop-up
-        viewPopUp = new JPopupMenu();
-        viewPopUp.add(it_control);
-        viewPopUp.add(new JPopupMenu.Separator());
-        viewPopUp.add(it_osmMap);
-        btn_view = new JPopUpButton("View", viewPopUp);
-        btn_view.setMnemonic(KeyEvent.VK_V);
+        // Upper left buttons
+        btn_control = new JButton();
+        btn_osmMap = new JToggleButton();
 
         // MultiLayer control window
         multiLayerPopUp = new JPopupMenu();
@@ -267,6 +256,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showThisLayerInfo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLayerPropagation.png")));
         btn_showUpperLayerInfo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLayerUpperPropagation.png")));
         btn_showLowerLayerInfo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLayerLowerPropagation.png")));
+        btn_control.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showControl.png")));
+        btn_osmMap.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showOSM.png")));
 
         btn_load.addActionListener(this);
         btn_loadDemand.addActionListener(this);
@@ -288,9 +279,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_decreaseNodeSize.addActionListener(this);
         btn_increaseFontSize.addActionListener(this);
         btn_decreaseFontSize.addActionListener(this);
-        it_control.addActionListener(this);
-        it_closeMap.addActionListener(this);
-        it_osmMap.addActionListener(this);
+        btn_control.addActionListener(this);
+        btn_osmMap.addActionListener(this);
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
@@ -311,7 +301,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(btn_decreaseFontSize);
         toolbar.add(new JToolBar.Separator());
         toolbar.add(Box.createHorizontalGlue());
-        toolbar.add(btn_view);
+        toolbar.add(btn_osmMap);
+        toolbar.add(btn_control);
         toolbar.add(btn_reset);
 
         multiLayerToolbar.add(new JToolBar.Separator());
@@ -481,25 +472,18 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         {
             vs.setShowInCanvasThisLayerPropagation(btn_showThisLayerInfo.isSelected());
             canvas.refresh();
-        } else if (src == it_closeMap)
-        {
-            if (canvas.isOSMRunning())
-            {
-                switchOSMSupport(false);
-                it_osmMap.setEnabled(true);
-                viewPopUp.remove(it_closeMap);
-            }
-        } else if (src == it_osmMap)
-        {
-            if (!canvas.isOSMRunning())
-            {
-                switchOSMSupport(true);
-                it_osmMap.setEnabled(false);
-                viewPopUp.add(it_closeMap);
-            }
-        } else if (src == it_control)
+        } else if (src == btn_control)
         {
             WindowController.showControlWindow(true);
+        } else if (src == btn_osmMap)
+        {
+            if (btn_osmMap.isSelected())
+            {
+                switchOSMSupport(true);
+            } else if (!btn_osmMap.isSelected())
+            {
+                switchOSMSupport(false);
+            }
         } else if (src == btn_increaseNodeSize)
         {
             callback.getVisualizationState().increaseCanvasNodeSizeAll();
