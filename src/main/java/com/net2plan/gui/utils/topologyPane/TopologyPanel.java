@@ -289,6 +289,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         it_closeMap.addActionListener(this);
         it_osmMap.addActionListener(this);
 
+        // Disabling font controls
+        btn_increaseFontSize.setEnabled(false);
+        btn_decreaseFontSize.setEnabled(false);
+
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
         toolbar.add(btn_save);
