@@ -225,7 +225,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showThisLayerInfo.setSelected(getVisualizationState().isShowInCanvasThisLayerPropagation());
         // Upper left buttons
         btn_control = new JButton();
+        btn_control.setToolTipText("Show the network topology control window.");
+
         btn_osmMap = new JToggleButton();
+        btn_osmMap.setToolTipText("Toggle between on/off the OSM support. An internet connection is required in order for this to work.");
 
         // MultiLayer control window
         multiLayerPopUp = new JPopupMenu();
