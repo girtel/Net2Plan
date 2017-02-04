@@ -96,7 +96,7 @@ import edu.uci.ics.jung.visualization.util.ArrowFactory;
 @SuppressWarnings("unchecked")
 public final class JUNGCanvas implements ITopologyCanvas
 {
-    private final VisualizationState vs;
+    private final IVisualizationCallback callback;
 
     private double currentInterLayerDistanceInNpCoordinates;
 
@@ -119,20 +119,20 @@ public final class JUNGCanvas implements ITopologyCanvas
      */
     public JUNGCanvas(IVisualizationCallback callback, TopologyPanel topologyPanel)
     {
-        transformNetPlanCoordinatesToJungCoordinates = vertex ->
+        this.callback = callback;
+
+    	transformNetPlanCoordinatesToJungCoordinates = vertex ->
         {
-            final int vlIndex = vertex.getVisualizationOrderRemovingNonVisibleLayers();
-            //final double interLayerDistanceInNpCoord = vertex.getVisualizationState().getInterLayerSpaceInNetPlanCoordinates();
+            final int vlIndex = this.callback.getVisualizationState().getCanvasVisualizationOrderRemovingNonVisible(vertex.getLayer());
             final double interLayerDistanceInNpCoord = currentInterLayerDistanceInNpCoordinates;
             final Point2D basePositionInNetPlanCoord = vertex.getAssociatedNetPlanNode().getXYPositionMap();
             return new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() + (vlIndex * interLayerDistanceInNpCoord)));
         };
 
         g = new DirectedOrderedSparseMultigraph<>();
-        l = new StaticLayout<>(g, transformNetPlanCoordinatesToJungCoordinates);
+        l = new StaticLayout<>(g, transformNetPlanCoordinatesToJungCoordinates); 
         vv = new VisualizationViewer<>(l);
 
-        this.vs = callback.getVisualizationState();
 
         osmStateManager = new OSMStateManager(callback, topologyPanel, this);
 
@@ -168,13 +168,13 @@ public final class JUNGCanvas implements ITopologyCanvas
         vv.getRenderContext().setVertexShapeTransformer(gn -> gn.getShape());
         vv.getRenderContext().setVertexIconTransformer(gn -> gn.getIcon());
 
-        vv.getRenderContext().setVertexIncludePredicate(guiNodeContext -> vs.isVisibleInCanvas(guiNodeContext.element));
+        vv.getRenderContext().setVertexIncludePredicate(guiNodeContext -> callback.getVisualizationState().isVisibleInCanvas(guiNodeContext.element));
         vv.getRenderer().setVertexLabelRenderer(new NodeLabelRenderer());
         vv.setVertexToolTipTransformer(node -> node.getToolTip());
 
 
-        vv.getRenderContext().setEdgeIncludePredicate(context -> vs.isVisibleInCanvas(context.element));
-        vv.getRenderContext().setEdgeArrowPredicate(context -> vs.isVisibleInCanvas(context.element) && context.element.getHasArrow());
+        vv.getRenderContext().setEdgeIncludePredicate(context -> callback.getVisualizationState().isVisibleInCanvas(context.element));
+        vv.getRenderContext().setEdgeArrowPredicate(context -> callback.getVisualizationState().isVisibleInCanvas(context.element) && context.element.getHasArrow());
         vv.getRenderContext().setEdgeArrowStrokeTransformer(i -> i.getArrowStroke());
         vv.getRenderContext().setEdgeArrowTransformer(new ConstantTransformer(ArrowFactory.getNotchedArrow(7, 10, 5)));
         vv.getRenderContext().setEdgeLabelClosenessTransformer(new ConstantDirectionalEdgeValueTransformer(.6, .6));
@@ -189,7 +189,7 @@ public final class JUNGCanvas implements ITopologyCanvas
         {
             public void labelEdge(RenderContext<GUINode, GUILink> rc, Layout<GUINode, GUILink> layout, GUILink e, String label)
             {
-                if (vs.isCanvasShowLinkLabels()) super.labelEdge(rc, layout, e, e.getLabel());
+                if (callback.getVisualizationState().isCanvasShowLinkLabels()) super.labelEdge(rc, layout, e, e.getLabel());
             }
         });
         vv.setEdgeToolTipTransformer(link -> link.getToolTip());
@@ -228,7 +228,7 @@ public final class JUNGCanvas implements ITopologyCanvas
         vv.setOpaque(false);
         vv.setBackground(new Color(0, 0, 0, 0));
 
-        this.updateInterLayerDistanceInNpCoordinates(vs.getInterLayerSpaceInPixels());
+        this.updateInterLayerDistanceInNpCoordinates(callback.getVisualizationState().getInterLayerSpaceInPixels());
 
 //        reset();
     }
@@ -373,8 +373,8 @@ public final class JUNGCanvas implements ITopologyCanvas
             g.removeEdge(gl);
         for (GUINode gn : new ArrayList<>(g.getVertices()))
             g.removeVertex(gn);
-        for (GUINode gn : vs.getCanvasAllGUINodes()) g.addVertex(gn);
-        for (GUILink gl : vs.getCanvasAllGUILinks(true, true))
+        for (GUINode gn : callback.getVisualizationState().getCanvasAllGUINodes()) g.addVertex(gn);
+        for (GUILink gl : callback.getVisualizationState().getCanvasAllGUILinks(true, true))
             g.addEdge(gl, gl.getOriginNode(), gl.getDestinationNode());
 
         updateAllVerticesXYPosition();
@@ -559,8 +559,8 @@ public final class JUNGCanvas implements ITopologyCanvas
         @Override
         public void labelVertex(RenderContext<GUINode, GUILink> rc, Layout<GUINode, GUILink> layout, GUINode v, String label)
         {
-            if (!vs.isVisibleInCanvas(v)) return;
-            if (vs.isCanvasShowNodeNames() && v.getLayer().isDefaultLayer())
+            if (!callback.getVisualizationState().isVisibleInCanvas(v)) return;
+            if (callback.getVisualizationState().isCanvasShowNodeNames() && v.getLayer().isDefaultLayer())
             {
                 Point2D vertexPositionInPixels = layout.transform(v);
                 vertexPositionInPixels = rc.getMultiLayerTransformer().transform(Layer.LAYOUT, vertexPositionInPixels);

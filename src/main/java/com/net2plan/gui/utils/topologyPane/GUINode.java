@@ -25,6 +25,7 @@ import java.util.Random;
 
 import javax.swing.Icon;
 
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -40,8 +41,8 @@ public class GUINode
 {
     private final Node npNode;
     private final NetworkLayer layer;
-    private final VisualizationState vs;
-
+    
+    
     /* New variables */
     private Font font;
     private Paint drawPaint, fillPaint;
@@ -61,11 +62,11 @@ public class GUINode
     	{
     		final Node tNpNode = translateToThisNp.getNode(this.npNode.getIndex());
     		final NetworkLayer tLayer = translateToThisNp.getNetworkLayer(this.layer.getIndex());
-    		copyGn = new GUINode (tNpNode , tLayer , translateToThisVs);
+    		copyGn = new GUINode (tNpNode , tLayer);
     	}
     	else
     	{
-    		copyGn = new GUINode (this.npNode , this.layer , this.vs);
+    		copyGn = new GUINode (this.npNode , this.layer);
     	}
     	copyGn.font = this.font;
     	copyGn.drawPaint = this.drawPaint;
@@ -81,21 +82,17 @@ public class GUINode
      * @param npNode    Node identifier
      * @since 0.3.0
      */
-    public GUINode(Node npNode , NetworkLayer layer , VisualizationState vs)
+    public GUINode(Node npNode , NetworkLayer layer)
     {
     	this.layer = layer;
         this.npNode = npNode;
-        this.vs = vs;
-        if (!vs.isLayerVisibleInCanvas(layer)) throw new RuntimeException ("Bad");
+//        if (!callback.getVisualizationState().isLayerVisibleInCanvas(layer)) throw new RuntimeException ("Bad");
 
 		/* defaults */
         this.drawPaint = DEFAULT_GUINODE_COLOR;
         this.fillPaint = DEFAULT_GUINODE_COLOR;
         this.font = new Font("Helvetica", Font.BOLD, 11);
         this.iconHeightIfNotActive = 30;
-//        final double shapeSizeIfActive = iconHeightIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE;
-//        this.shapeIfNotActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfNotActive , shapeSizeIfNotActive);
-//        this.shapeIfActive = adjustShapeToSize(VisualizationConstants.DEFAULT_GUINODE_SHAPE , shapeSizeIfActive , shapeSizeIfActive);
     }
     
     public NetworkLayer getLayer () { return layer; }
@@ -254,10 +251,6 @@ public class GUINode
     	return icon;
     }
     
-    public VisualizationState getVisualizationState () { return vs; }
-
-    public int getVisualizationOrderRemovingNonVisibleLayers () { return vs.getCanvasVisualizationOrderRemovingNonVisible(layer); }
-
 //    private static Shape adjustShapeToSize (Shape s , double size_x , double size_y)
 //    {
 //    	AffineTransform transf = new AffineTransform();

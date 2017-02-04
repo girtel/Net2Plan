@@ -56,6 +56,7 @@ import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
 import com.google.common.collect.Sets;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.InterLayerPropagationGraph;
@@ -451,7 +452,7 @@ public class VisualizationState
             for (int trueVisualizationOrderIndex = 0; trueVisualizationOrderIndex < cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.size(); trueVisualizationOrderIndex++)
             {
                 final NetworkLayer newLayer = cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.inverseBidiMap().get(trueVisualizationOrderIndex);
-                final GUINode gn = new GUINode(n, newLayer, this);
+                final GUINode gn = new GUINode(n, newLayer);
                 guiNodesThisNode.add(gn);
                 if (trueVisualizationOrderIndex > 0)
                 {
@@ -497,8 +498,8 @@ public class VisualizationState
                 final GUILink gl = entry.getValue();
                 assertTrue(gl.isIntraNodeLink());
                 assertTrue(gl.getOriginNode().getAssociatedNetPlanNode() == n);
-                assertTrue(gl.getOriginNode().getVisualizationOrderRemovingNonVisibleLayers() == fromLayer);
-                assertTrue(gl.getDestinationNode().getVisualizationOrderRemovingNonVisibleLayers() == toLayer);
+                assertTrue(getCanvasVisualizationOrderRemovingNonVisible(gl.getOriginNode().getLayer()) == fromLayer);
+                assertTrue(getCanvasVisualizationOrderRemovingNonVisible(gl.getDestinationNode().getLayer()) == toLayer);
             }
             assertEquals(new HashSet<>(cache_mapNode2IntraNodeCanvasGUILinkMap.get(n).values()), cache_canvasIntraNodeGUILinks.get(n));
             for (GUILink gl : cache_canvasIntraNodeGUILinks.get(n))
@@ -512,7 +513,7 @@ public class VisualizationState
             for (GUINode gn : cache_mapNode2ListVerticallyStackedGUINodes.get(n))
             {
                 assertEquals(gn.getLayer(), cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.inverseBidiMap().get(indexLayer));
-                assertEquals(gn.getVisualizationOrderRemovingNonVisibleLayers(), indexLayer++);
+                assertEquals(getCanvasVisualizationOrderRemovingNonVisible(gn.getLayer()), indexLayer++);
                 assertEquals(gn.getAssociatedNetPlanNode(), n);
             }
         }
@@ -1582,10 +1583,11 @@ public class VisualizationState
     	copyVs.showInCanvasThisLayerPropagation = this.showInCanvasThisLayerPropagation;
     	copyVs.showInCanvasNonConnectedNodes = this.showInCanvasNonConnectedNodes;
     	copyVs.interLayerSpaceInPixels = this.interLayerSpaceInPixels;
-    	copyVs.currentNp = translateGUINodesLinksAndNpElements? translateToThisNp : this.currentNp;
     	copyVs.pickedElementType = this.pickedElementType;
     	if (translateGUINodesLinksAndNpElements)
     	{
+        	copyVs.currentNp = translateToThisNp;
+        	copyVs.tableRowFilter = null; // the row filter is not copied when the netPlan object changes
     		copyVs.pickedElementNotFR = this.pickedElementNotFR == null? null : translateToThisNp.getNetworkElement(this.pickedElementNotFR.getId());
     		copyVs.pickedElementFR = this.pickedElementFR == null? null : Pair.of(translateToThisNp.getDemandFromId(this.pickedElementFR.getFirst().getId()), translateToThisNp.getLinkFromId(this.pickedElementFR.getSecond().getId()));
     		
@@ -1652,6 +1654,7 @@ public class VisualizationState
     	}
     	else
     	{
+        	copyVs.currentNp = this.currentNp;
         	copyVs.nodesToHideInCanvasAsMandatedByUserInTable = new HashSet<> (this.nodesToHideInCanvasAsMandatedByUserInTable);
         	copyVs.linksToHideInCanvasAsMandatedByUserInTable = new HashSet<> (this.linksToHideInCanvasAsMandatedByUserInTable);
         	copyVs.mapLayer2VisualizationOrderInCanvas = new DualHashBidiMap<>(this.mapLayer2VisualizationOrderInCanvas);
@@ -1660,7 +1663,7 @@ public class VisualizationState
         	copyVs.cache_canvasRegularLinkMap = new HashMap<> (this.cache_canvasRegularLinkMap);
         	copyVs.pickedElementNotFR = this.pickedElementNotFR;
         	copyVs.pickedElementFR = this.pickedElementFR;
-        	copyVs.tableRowFilter = this.tableRowFilter;
+        	copyVs.tableRowFilter = this.tableRowFilter; // we keep the row filter since we have the same netPlan object
         	copyVs.cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible = new DualHashBidiMap<>(this.cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible);
 
         	copyVs.cache_canvasIntraNodeGUILinks = new HashMap<> ();
@@ -1698,7 +1701,7 @@ public class VisualizationState
 	
 	public static void checkNpToVsConsistency (VisualizationState vs , NetPlan np)
 	{
-		if (vs.currentNp != np) throw new RuntimeException ();
+		if (vs.currentNp != np) throw new RuntimeException ("inputVs.currentNp:" + vs.currentNp.hashCode() + ", inputNp: " + np.hashCode());
 		for (Node n : vs.nodesToHideInCanvasAsMandatedByUserInTable) if (n.getNetPlan() != np) throw new RuntimeException (); 
 		for (Link e : vs.linksToHideInCanvasAsMandatedByUserInTable) if (e.getNetPlan() != np) throw new RuntimeException (); 
 		for (NetworkLayer e : vs.mapLayer2VisualizationOrderInCanvas.keySet()) if (e.getNetPlan() != np) throw new RuntimeException (); 

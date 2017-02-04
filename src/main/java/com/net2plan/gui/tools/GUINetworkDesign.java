@@ -148,33 +148,53 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     public void undoRequested ()
     { 
         if (inOnlineSimulationMode()) return;
-    	final Pair<NetPlan,VisualizationState> back = undoRedoManager.getNavigationBackElement();
-    	if (back == null) return;
-    	if (back.getFirst() != null) this.currentNetPlan = back.getFirst();
-    	this.vs = back.getSecond();
-    	System.out.println("Back np is: " + (back.getFirst() == null? "null" : back.getFirst().hashCode()));
-    	System.out.println("Back VS - np is: " + back.getSecond().getNetPlan().hashCode());
-		VisualizationState.checkNpToVsConsistency(this.vs , this.currentNetPlan);
+    	System.out.println("Before undo New VS: pickedElement " + vs.getPickedNetworkElement());
 
-    	if (back.getFirst() != null) 
+        final Pair<VisualizationState,Boolean> back = undoRedoManager.getNavigationBackElement();
+    	if (back == null) return;
+    	System.out.println("Undo requested. BEFORE Current np : " + currentNetPlan.hashCode());
+
+    	this.vs = back.getFirst();
+    	this.currentNetPlan = this.vs.getNetPlan();
+    	final boolean needToUpdateTopology = back.getSecond();
+    	System.out.println("Undo requested. AFTER Current np : " + currentNetPlan.hashCode() + ", needToUpdateTopology: " + needToUpdateTopology);
+		VisualizationState.checkNpToVsConsistency(this.vs , this.currentNetPlan);
+    	if (needToUpdateTopology) 
     		updateVisualizationAfterNewTopology();
     	else
-    		updateVisualizationAfterPick();
+    	{
+    		updateVisualizationAfterNewTopology();
+//    		topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
+//    		focusPanel.updateView();
+//    		updateVisualizationAfterPick();
+    	}
+    	System.out.println("After undo New VS: pickedElement " + vs.getPickedNetworkElement());
+    	
     }
 
     @Override
     public void redoRequested ()
     { 
+    	System.out.println("Before redo New VS: pickedElement " + vs.getPickedNetworkElement());
         if (inOnlineSimulationMode()) return;
-    	final Pair<NetPlan,VisualizationState> back = undoRedoManager.getNavigationForwardElement();
+    	final Pair<VisualizationState,Boolean> back = undoRedoManager.getNavigationForwardElement();
     	if (back == null) return;
-    	if (back.getFirst() != null) this.currentNetPlan = back.getFirst();
-    	this.vs = back.getSecond();
+    	System.out.println("Redo requested. BEFORE Current np : " + currentNetPlan.hashCode());
+
+    	this.vs = back.getFirst();
+    	this.currentNetPlan = this.vs.getNetPlan();
+    	final boolean needToUpdateTopology = back.getSecond();
+    	System.out.println("Redo requested. AFTER Current np : " + currentNetPlan.hashCode() + ", needToUpdateTopology: " + needToUpdateTopology);
 		VisualizationState.checkNpToVsConsistency(this.vs , this.currentNetPlan);
-    	if (back.getFirst() != null) 
+    	if (needToUpdateTopology) 
     		updateVisualizationAfterNewTopology();
     	else
-    		updateVisualizationAfterPick();
+    	{
+    		updateVisualizationAfterNewTopology();
+    		//updateVisualizationAfterPick();
+    	}
+    	System.out.println("After redo New VS: pickedElement " + vs.getPickedNetworkElement());
+    	
     }
 
     @Override
@@ -325,7 +345,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         addAllKeyCombinationActions();
         updateVisualizationAfterNewTopology();
-        
+        System.out.println("End configure");
     }
 
 
@@ -784,11 +804,11 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         // Updating GUINodes position having in mind the selected layer.
         final List<GUINode> guiNodes = vs.getCanvasVerticallyStackedGUINodes(node);
-        final int selectedLayerVisualizationOrder = guiNode.getVisualizationOrderRemovingNonVisibleLayers();
+        final int selectedLayerVisualizationOrder = vs.getCanvasVisualizationOrderRemovingNonVisible(guiNode.getLayer());
 
         for (GUINode stackedGUINode : guiNodes)
         {
-            final int vlIndex = stackedGUINode.getVisualizationOrderRemovingNonVisibleLayers();
+            final int vlIndex = vs.getCanvasVisualizationOrderRemovingNonVisible(stackedGUINode.getLayer());
             final double interLayerDistanceInNpCoord = canvas.getInterLayerDistanceInNpCoordinates();
 
             if (vlIndex > selectedLayerVisualizationOrder)

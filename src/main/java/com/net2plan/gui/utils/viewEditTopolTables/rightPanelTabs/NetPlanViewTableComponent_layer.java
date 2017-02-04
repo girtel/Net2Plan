@@ -73,7 +73,8 @@ public class NetPlanViewTableComponent_layer extends JPanel {
     private ParamValueTable[] layerSummaryTables;
     private JButton forceUpdate;
     private final AdvancedJTable_layer layerTable;
-
+    private boolean insideUpdateView;
+    
     private final IVisualizationCallback networkViewer;
 
     public NetPlanViewTableComponent_layer(final IVisualizationCallback networkViewer, final AdvancedJTable_layer layerTable) {
@@ -149,8 +150,11 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                         if ((Long) model.getValueAt(row, AdvancedJTable_layer.COLUMN_ID) == layer.getId()) {
                             layer.setName(text);
                             model.setValueAt(text, row, AdvancedJTable_layer.COLUMN_NAME);
-                            networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
-                            networkViewer.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            if (!insideUpdateView)
+                            {
+                            	networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+                            	networkViewer.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            }
                         }
                     }
 //					allowDocumentUpdate = isEditable();
@@ -327,7 +331,9 @@ public class NetPlanViewTableComponent_layer extends JPanel {
     }
 
 
-    public void updateNetPlanView(NetPlan currentState) {
+    public void updateNetPlanView(NetPlan currentState) 
+    {
+    	this.insideUpdateView = true;
         layerAttributeTable.setEnabled(false);
         ((DefaultTableModel) layerAttributeTable.getModel()).setDataVector(new Object[1][attributeTableHeader.length], attributeTableHeader);
 
@@ -355,6 +361,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
 
         boolean hardComputations = currentState.getNumberOfNodes() <= 100;
         updateLayerMetrics(currentState, hardComputations);
+    	this.insideUpdateView = false;
     }
 
     private void updateLayerMetrics(NetPlan netPlan, boolean applyHardComputations) {

@@ -174,7 +174,6 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
             vv.removePostRenderPaintable(arrowPaintable);
 
             final GUINode guiNode = canvas.getVertex(e);
-            final VisualizationState vs = guiNode.getVisualizationState();
             final Node node = guiNode == null? null : guiNode.getAssociatedNetPlanNode();
             if (node != null && startVertex.getAssociatedNetPlanNode() != node) 
             {

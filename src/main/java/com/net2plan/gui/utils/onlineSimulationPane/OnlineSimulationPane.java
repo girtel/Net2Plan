@@ -188,7 +188,6 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
         				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
         		vs.setCanvasLayerVisibilityAndOrder(mainWindow.getDesign() , res.getFirst() , res.getSecond());
                 mainWindow.updateVisualizationAfterNewTopology();
-                mainWindow.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
             } else if (src == btn_viewEventList) {
                 viewFutureEventList();
             } else if (src == btn_updateReport) {
@@ -324,7 +323,6 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
             updateSimulationInfo();
             mainWindow.updateVisualizationAfterNewTopology();
             mainWindow.resetPickedStateAndUpdateView();
-            mainWindow.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
         }
 
         if (reason == null) return;

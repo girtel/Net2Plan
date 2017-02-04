@@ -177,7 +177,7 @@ public class OSMMapController
 
             for (GUINode guiNode : guiNodes)
             {
-                final double layerIndex = guiNode.getVisualizationOrderRemovingNonVisibleLayers();
+                final double layerIndex = topologyVisualizationState.getCanvasVisualizationOrderRemovingNonVisible(guiNode.getLayer());
 
                 // Moving GUI Nodes according to stack
                 final Point2D guiNodePositionOSMCoordinates = new Point2D.Double(realPositionOSMCoordinates.getX(), realPositionOSMCoordinates.getY() - (layerIndex * interLayerDistanceOSMCoordinates)); // + = Downwards, - = Upwards

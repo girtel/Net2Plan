@@ -37,7 +37,7 @@ public class GUILink
     private final GUINode originNode;
     private final GUINode destinationNode;
     private final Link npLink;
-    private final VisualizationState vs;
+//    private final VisualizationState vs;
 
     /* New variables */
     private boolean hasArrow;
@@ -82,7 +82,7 @@ public class GUILink
      */
     public GUILink(Link npLink, GUINode originNode, GUINode destinationNode) 
     {
-    	this.vs = originNode.getVisualizationState();
+//    	this.vs = originNode.getVisualizationState();
         this.npLink = npLink;
         this.originNode = originNode;
         this.destinationNode = destinationNode;
@@ -93,7 +93,7 @@ public class GUILink
         }
         else
         {
-        	if (Math.abs(originNode.getVisualizationOrderRemovingNonVisibleLayers() - destinationNode.getVisualizationOrderRemovingNonVisibleLayers()) != 1) throw new RuntimeException ("Bad");
+        	//if (Math.abs(originNode.getVisualizationOrderRemovingNonVisibleLayers() - destinationNode.getVisualizationOrderRemovingNonVisibleLayers()) != 1) throw new RuntimeException ("Bad");
         }
 //        this.hasArrow = true;
 ////        this.arrowStrokeIfPicked = new BasicStroke(2);
