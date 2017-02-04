@@ -41,7 +41,12 @@ public class UndoRedoManager
     public void updateNavigationInformation_onlyVisualizationChange ()
     {
         if (callback.inOnlineSimulationMode()) return;
-		pastShownInformation.add(Pair.of(null , callback.getVisualizationState().copy(null)));
+        /* first remove everything after the cursor */
+    	while (pastShownInformation.size() > pastShownInformationCursor+1) pastShownInformation.remove(pastShownInformationCursor+1);
+        final VisualizationState vsCopy = callback.getVisualizationState().copy(null);
+       	pastShownInformation.add(Pair.of(null , vsCopy));
+		System.out.println("Introduced only visualization change index " + (pastShownInformation.size()-1) + ". Np: null (currentNp " + callback.getDesign().hashCode() + ") VS-np: " + vsCopy.getNetPlan().hashCode());
+		VisualizationState.checkNpToVsConsistency(vsCopy , callback.getDesign());
 		if (pastShownInformation.size() > maxSizeUndoList)
 		{
 			final NetPlan originNp = pastShownInformation.get(0).getFirst();
@@ -56,9 +61,13 @@ public class UndoRedoManager
     public void updateNavigationInformation_newNetPlanChange ()
     {
         if (callback.inOnlineSimulationMode()) return;
+        /* first remove everything after the cursor */
+    	while (pastShownInformation.size() > pastShownInformationCursor+1) pastShownInformation.remove(pastShownInformationCursor+1);
         final NetPlan npCopy = callback.getDesign().copy();
         final VisualizationState vsCopyLinkedToNpCopy = callback.getVisualizationState().copy(npCopy);
+		VisualizationState.checkNpToVsConsistency(vsCopyLinkedToNpCopy , npCopy);
 		pastShownInformation.add(Pair.of(npCopy, vsCopyLinkedToNpCopy));
+		System.out.println("Introduced NP change index " + (pastShownInformation.size()-1) + ". Np: " + npCopy.hashCode() + ") VS-np: " + vsCopyLinkedToNpCopy.getNetPlan().hashCode());
 		if (pastShownInformation.size() > maxSizeUndoList)
 		{
 			final NetPlan originNp = pastShownInformation.get(0).getFirst();
@@ -78,9 +87,10 @@ public class UndoRedoManager
     {
         if (callback.inOnlineSimulationMode()) return null;
     	if (pastShownInformationCursor == 0) return null;
+		final int originalCursor = pastShownInformationCursor;
 		final int newCursor = pastShownInformationCursor - 1;
 		final VisualizationState backVS = pastShownInformation.get(newCursor).getSecond();
-		final boolean notChangedNp = (pastShownInformation.get(pastShownInformationCursor).getFirst() == null);
+		final boolean notChangedNp = (pastShownInformation.get(originalCursor).getFirst() == null);
 		if (notChangedNp)
 		{
 			this.pastShownInformationCursor = newCursor;

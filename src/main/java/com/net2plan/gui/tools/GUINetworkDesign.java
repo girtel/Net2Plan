@@ -152,6 +152,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     	if (back == null) return;
     	if (back.getFirst() != null) this.currentNetPlan = back.getFirst();
     	this.vs = back.getSecond();
+    	System.out.println("Back np is: " + (back.getFirst() == null? "null" : back.getFirst().hashCode()));
+    	System.out.println("Back VS - np is: " + back.getSecond().getNetPlan().hashCode());
+		VisualizationState.checkNpToVsConsistency(this.vs , this.currentNetPlan);
+
     	if (back.getFirst() != null) 
     		updateVisualizationAfterNewTopology();
     	else
@@ -166,6 +170,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     	if (back == null) return;
     	if (back.getFirst() != null) this.currentNetPlan = back.getFirst();
     	this.vs = back.getSecond();
+		VisualizationState.checkNpToVsConsistency(this.vs , this.currentNetPlan);
     	if (back.getFirst() != null) 
     		updateVisualizationAfterNewTopology();
     	else

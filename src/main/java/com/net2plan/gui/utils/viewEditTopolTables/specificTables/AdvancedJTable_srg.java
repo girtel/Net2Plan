@@ -241,7 +241,6 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                 if (newValue.equals(oldValue)) return;
 
                 NetPlan netPlan = callback.getDesign();
-                NetPlan aux_netPlan = netPlan.copy();
 
                 if (getValueAt(row, 0) == null) row = row - 1;
                 final long srgId = (Long) getValueAt(row, 0);
@@ -264,7 +263,6 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                             break;
                     }
                 } catch (Throwable ex) {
-                    callback.getDesign().assignFrom(aux_netPlan);
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying SRG");
                     return;
                 }

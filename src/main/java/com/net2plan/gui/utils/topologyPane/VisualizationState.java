@@ -113,86 +113,10 @@ public class VisualizationState
 
     public Pair<Demand,Link> getPickedForwardingRule () { return pickedElementFR; }
     public NetworkElement getPickedNetworkElement () { return pickedElementNotFR; }
-    
-    public NetPlan getNetPlan()
-    {
-        return currentNp;
-    }
+    public NetPlan getNetPlan() { return currentNp; }
 
     
     
-    /**
-	 * @return the showLowerLayerPropagation
-	 */
-	public boolean isShowInCanvasLowerLayerPropagation()
-	{
-		return showInCanvasLowerLayerPropagation;
-	}
-
-
-
-	/**
-	 * @param showLowerLayerPropagation the showLowerLayerPropagation to set
-	 */
-	public void setShowInCanvasLowerLayerPropagation(boolean showLowerLayerPropagation)
-	{
-		if (showLowerLayerPropagation == this.showInCanvasLowerLayerPropagation) return;
-		this.showInCanvasLowerLayerPropagation = showLowerLayerPropagation;
-		if (pickedElementType != null)
-			if (pickedElementNotFR != null)
-				this.pickElement(pickedElementNotFR);
-			else
-				this.pickForwardingRule(pickedElementFR);
-	}
-
-
-
-	/**
-	 * @return the showUpperLayerPropagation
-	 */
-	public boolean isShowInCanvasUpperLayerPropagation()
-	{
-		return showInCanvasUpperLayerPropagation;
-	}
-
-	/**
-	 * @return the showThisLayerPropagation
-	 */
-	public boolean isShowInCanvasThisLayerPropagation()
-	{
-		return showInCanvasThisLayerPropagation;
-	}
-
-
-	/**
-	 * @param showUpperLayerPropagation the showUpperLayerPropagation to set
-	 */
-	public void setShowInCanvasUpperLayerPropagation(boolean showUpperLayerPropagation)
-	{
-		if (showUpperLayerPropagation == this.showInCanvasUpperLayerPropagation) return;
-		this.showInCanvasUpperLayerPropagation = showUpperLayerPropagation;
-		if (pickedElementType != null)
-			if (pickedElementNotFR != null)
-				this.pickElement(pickedElementNotFR);
-			else
-				this.pickForwardingRule(pickedElementFR);
-	}
-
-	/**
-	 * @param showThisLayerPropagation the showThisLayerPropagation to set
-	 */
-	public void setShowInCanvasThisLayerPropagation(boolean showThisLayerPropagation)
-	{
-		if (showThisLayerPropagation == this.showInCanvasThisLayerPropagation) return;
-		this.showInCanvasThisLayerPropagation = showThisLayerPropagation;
-		if (pickedElementType != null)
-			if (pickedElementNotFR != null)
-				this.pickElement(pickedElementNotFR);
-			else
-				this.pickForwardingRule(pickedElementFR);
-	}
-
-
 	public VisualizationState(NetPlan currentNp, BidiMap<NetworkLayer, Integer> mapLayer2VisualizationOrder, Map<NetworkLayer,Boolean> layerVisibilityMap)
     {
         this.currentNp = currentNp;
@@ -214,7 +138,6 @@ public class VisualizationState
         
 //        this.mapLayer2VisualizationOrder = mapLayer2VisualizationOrder;
 //        this.mapLayerVisibility = new HashMap<>();
-        this.mapShowInCanvasLayerLinks = new HashMap<>();
         setCanvasLayerVisibilityAndOrder(currentNp ,mapLayer2VisualizationOrder , layerVisibilityMap);
     }
 
@@ -222,9 +145,13 @@ public class VisualizationState
 	
 	public void updateTableRowFilter (ITableRowFilter tableRowFilterToApply) 
 	{  
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
 		if (tableRowFilterToApply == null) { this.tableRowFilter = null; return; }
 		if (this.tableRowFilter == null) { this.tableRowFilter = tableRowFilterToApply; return; }
 		this.tableRowFilter.recomputeApplyingShowIf_ThisAndThat(tableRowFilterToApply);
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
 	}
 	
     public boolean isVisibleInCanvas(GUINode gn)
@@ -468,7 +395,6 @@ public class VisualizationState
         this.pickedElementNotFR = null;
         this.pickedElementFR = null;
 
-        
         if (newLayerVisiblityOrderMap != null)
         	this.mapLayer2VisualizationOrderInCanvas = new DualHashBidiMap<>(newLayerVisiblityOrderMap);
         if (newLayerVisibilityMap != null)
@@ -483,12 +409,14 @@ public class VisualizationState
 //        
 //        if (mapLayer2VisualizationOrder == null) mapLayer2VisualizationOrder = this.mapLayer2VisualizationOrder;
 
+
         if (!mapLayer2VisualizationOrderInCanvas.keySet().equals(new HashSet<>(currentNp.getNetworkLayers())))
             throw new RuntimeException();
         if (!this.layerVisibilityInCanvasMap.keySet().equals(new HashSet<>(currentNp.getNetworkLayers())))
             throw new RuntimeException();
 
         /* Just in case the layers have changed */
+        this.mapShowInCanvasLayerLinks = new HashMap<>();
         for (NetworkLayer layer : currentNp.getNetworkLayers())
         	if (!mapShowInCanvasLayerLinks.keySet().contains(layer))
         		this.mapShowInCanvasLayerLinks.put(layer , true);
@@ -552,6 +480,7 @@ public class VisualizationState
         }
 
         checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     }
 
     private void checkCacheConsistency()
@@ -720,8 +649,12 @@ public class VisualizationState
 
     public void setMandatedByTheUserToBeHiddenInCanvas(Node n, boolean shouldBeHidden)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
         if (shouldBeHidden) nodesToHideInCanvasAsMandatedByUserInTable.add(n);
         else nodesToHideInCanvasAsMandatedByUserInTable.remove(n);
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     }
 
     public boolean isMandatedByTheUserToBeHiddenInCanvas(Node n)
@@ -731,8 +664,12 @@ public class VisualizationState
 
     public void setMandatedByTheUserToBeHiddenInCanvas(Link e, boolean shouldBeHiden)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
         if (shouldBeHiden) linksToHideInCanvasAsMandatedByUserInTable.add(e);
         else linksToHideInCanvasAsMandatedByUserInTable.remove(e);
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     }
 
     public boolean isMandatedByTheUserToBeHiddenInCanvas(Link e)
@@ -789,47 +726,6 @@ public class VisualizationState
     }
 
 
-    public void setCanvasGUINodeProperties(Collection<GUINode> nodes, Color color, double height)
-    {
-        for (GUINode n : nodes)
-        {
-            if (color != null)
-            {
-                n.setDrawPaint(color);
-                n.setFillPaint(color);
-            }
-            if (height > 0)
-            {
-                n.setIconHeightInNonActiveLayer(height);
-            }
-        }
-    }
-
-    public void setCanvasGUILinkProperties(Collection<GUILink> links, Color color, Stroke stroke, Boolean hasArrows, Boolean shownSeparated)
-    {
-        for (GUILink e : links)
-        {
-            if (color != null)
-            {
-                e.setArrowDrawPaint(color);
-                e.setArrowFillPaint(color);
-                e.setEdgeDrawPaint(color);
-            }
-            if (stroke != null)
-            {
-                e.setArrowStroke(stroke , stroke);
-                e.setEdgeStroke(stroke , stroke);
-            }
-            if (hasArrows != null)
-            {
-                e.setHasArrow(hasArrows);
-            }
-            if (shownSeparated != null)
-            {
-                e.setShownSeparated(shownSeparated);
-            }
-        }
-    }
 
     public double getCanvasDefaultVerticalDistanceForInterLayers()
     {
@@ -853,16 +749,24 @@ public class VisualizationState
      */
     public void recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals ()
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	this.setCanvasLayerVisibilityAndOrder(this.currentNp , null , null);
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     }
     
     public void setCanvasLayerVisibility(final NetworkLayer layer, final boolean isVisible)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	if (!this.currentNp.getNetworkLayers().contains(layer)) throw new RuntimeException ();
     	BidiMap<NetworkLayer,Integer> new_layerVisiblityOrderMap = new DualHashBidiMap<> (this.mapLayer2VisualizationOrderInCanvas);
     	Map<NetworkLayer,Boolean> new_layerVisibilityMap = new HashMap<> (this.layerVisibilityInCanvasMap);
     	new_layerVisibilityMap.put(layer,isVisible);
     	setCanvasLayerVisibilityAndOrder(this.currentNp , new_layerVisiblityOrderMap , new_layerVisibilityMap);
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     }
 
     public boolean isLayerVisibleInCanvas(final NetworkLayer layer)
@@ -872,8 +776,12 @@ public class VisualizationState
 
     public void setLayerLinksVisibilityInCanvas(final NetworkLayer layer, final boolean showLinks)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	if (!this.currentNp.getNetworkLayers().contains(layer)) throw new RuntimeException ();
         mapShowInCanvasLayerLinks.put(layer, showLinks);
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     }
 
     public boolean isCanvasLayerLinksShown(final NetworkLayer layer)
@@ -925,6 +833,8 @@ public class VisualizationState
 
     public Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> suggestCanvasUpdatedVisualizationLayerInfoForNewDesign (Set<NetworkLayer> newNetworkLayers)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	final Map<NetworkLayer,Boolean> oldLayerVisibilityMap = getCanvasLayerVisibilityMap();
     	final BidiMap<NetworkLayer,Integer> oldLayerOrderMap = getCanvasLayerOrderIndexMap(true);
     	final Map<NetworkLayer,Boolean> newLayerVisibilityMap = new HashMap<> ();
@@ -953,14 +863,20 @@ public class VisualizationState
     
     public void pickLayer (NetworkLayer pickedLayer)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	resetPickedState();
     	this.pickedElementType = NetworkElementType.LAYER;
     	this.pickedElementFR = null;
     	this.pickedElementNotFR = pickedLayer;
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
    	}
     
     public void pickDemand (Demand pickedDemand)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	resetPickedState();
     	this.pickedElementType = NetworkElementType.DEMAND;
     	this.pickedElementFR = null;
@@ -1013,10 +929,14 @@ public class VisualizationState
 	        gnDestination.setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
 	        gnDestination.setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
 		}
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     }
     
     public void pickSRG (SharedRiskGroup pickedSRG)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	resetPickedState();
     	this.pickedElementType = NetworkElementType.SRG;
     	this.pickedElementFR = null;
@@ -1082,10 +1002,14 @@ public class VisualizationState
 		        gn.setFillPaint(DEFAULT_GUINODE_COLOR_FAILED);
 			}
 		}
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     }
 
     public void pickMulticastDemand (MulticastDemand pickedDemand)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	resetPickedState();
     	this.pickedElementType = NetworkElementType.MULTICAST_DEMAND;
     	this.pickedElementFR = null;
@@ -1131,10 +1055,14 @@ public class VisualizationState
 			gnOrigin.setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
 			gnOrigin.setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
 		}
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     }
 
     public void pickRoute (Route pickedRoute)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	resetPickedState();
     	this.pickedElementType = NetworkElementType.ROUTE;
     	this.pickedElementFR = null;
@@ -1169,10 +1097,14 @@ public class VisualizationState
 	        gnDestination.setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
 	        gnDestination.setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
 		}
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     }
 
     public void pickMulticastTree (MulticastTree pickedTree)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	resetPickedState();
     	this.pickedElementType = NetworkElementType.MULTICAST_TREE;
     	this.pickedElementFR = null;
@@ -1214,10 +1146,14 @@ public class VisualizationState
 	        gnOrigin.setDrawPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
 	        gnOrigin.setFillPaint(DEFAULT_GUINODE_COLOR_ORIGINFLOW);
 		}
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     }
 
     public void pickLink (Link pickedLink)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	resetPickedState();
     	this.pickedElementType = NetworkElementType.LINK;
     	this.pickedElementFR = null;
@@ -1263,10 +1199,14 @@ public class VisualizationState
 			gl.setEdgeDrawPaint(color);
 			gl.setShownSeparated(true);
 		}
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     }
     
     public void pickNode (Node pickedNode)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	resetPickedState();
     	this.pickedElementType = NetworkElementType.NODE;
     	this.pickedElementFR = null;
@@ -1283,10 +1223,14 @@ public class VisualizationState
 			gl.setShownSeparated(true);
 			gl.setHasArrow(true);
 		}
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     }
     
     public void pickResource (Resource pickedResource)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	resetPickedState();
     	this.pickedElementType = NetworkElementType.RESOURCE;
     	this.pickedElementFR = null;
@@ -1297,10 +1241,14 @@ public class VisualizationState
             gn.setDrawPaint(DEFAULT_GUINODE_COLOR_RESOURCE);
             gn.setFillPaint(DEFAULT_GUINODE_COLOR_RESOURCE);
 		}
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     }
 
     public void pickForwardingRule (Pair<Demand,Link> pickedFR)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	resetPickedState();
     	this.pickedElementType = NetworkElementType.FORWARDING_RULE;
     	this.pickedElementFR = pickedFR;
@@ -1349,11 +1297,15 @@ public class VisualizationState
 			gl.getDestinationNode().setDrawPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
 			gl.getDestinationNode().setFillPaint(DEFAULT_GUINODE_COLOR_ENDFLOW);
 		}
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     }
 
     
     private void pickElement (NetworkElement e)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	if (e instanceof Node) pickNode ((Node) e);
     	else if (e instanceof Node) pickNode ((Node) e);
     	else if (e instanceof Link) pickLink ((Link) e);
@@ -1368,6 +1320,8 @@ public class VisualizationState
     
     public void resetPickedState ()
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	this.pickedElementType = null;
     	this.pickedElementFR = null;
     	this.pickedElementNotFR = null;
@@ -1399,6 +1353,8 @@ public class VisualizationState
             e.setEdgeDrawPaint(DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
             e.setShownSeparated(false);
         }
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
 
     }
 
@@ -1495,7 +1451,80 @@ public class VisualizationState
     	return considerNonVisible? mapLayer2VisualizationOrderInCanvas : cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible;
     }
 
-    public Map<NetworkLayer,Boolean> getCanvasLayerVisibilityMap () { return Collections.unmodifiableMap(this.layerVisibilityInCanvasMap); }
+    /**
+	 * @return the showLowerLayerPropagation
+	 */
+	public boolean isShowInCanvasLowerLayerPropagation()
+	{
+		return showInCanvasLowerLayerPropagation;
+	}
+
+
+
+	/**
+	 * @param showLowerLayerPropagation the showLowerLayerPropagation to set
+	 */
+	public void setShowInCanvasLowerLayerPropagation(boolean showLowerLayerPropagation)
+	{
+		if (showLowerLayerPropagation == this.showInCanvasLowerLayerPropagation) return;
+		this.showInCanvasLowerLayerPropagation = showLowerLayerPropagation;
+		if (pickedElementType != null)
+			if (pickedElementNotFR != null)
+				this.pickElement(pickedElementNotFR);
+			else
+				this.pickForwardingRule(pickedElementFR);
+	}
+
+
+
+	/**
+	 * @return the showUpperLayerPropagation
+	 */
+	public boolean isShowInCanvasUpperLayerPropagation()
+	{
+		return showInCanvasUpperLayerPropagation;
+	}
+
+	/**
+	 * @return the showThisLayerPropagation
+	 */
+	public boolean isShowInCanvasThisLayerPropagation()
+	{
+		return showInCanvasThisLayerPropagation;
+	}
+
+
+	/**
+	 * @param showUpperLayerPropagation the showUpperLayerPropagation to set
+	 */
+	public void setShowInCanvasUpperLayerPropagation(boolean showUpperLayerPropagation)
+	{
+		if (showUpperLayerPropagation == this.showInCanvasUpperLayerPropagation) return;
+		this.showInCanvasUpperLayerPropagation = showUpperLayerPropagation;
+		if (pickedElementType != null)
+			if (pickedElementNotFR != null)
+				this.pickElement(pickedElementNotFR);
+			else
+				this.pickForwardingRule(pickedElementFR);
+	}
+
+	/**
+	 * @param showThisLayerPropagation the showThisLayerPropagation to set
+	 */
+	public void setShowInCanvasThisLayerPropagation(boolean showThisLayerPropagation)
+	{
+		if (showThisLayerPropagation == this.showInCanvasThisLayerPropagation) return;
+		this.showInCanvasThisLayerPropagation = showThisLayerPropagation;
+		if (pickedElementType != null)
+			if (pickedElementNotFR != null)
+				this.pickElement(pickedElementNotFR);
+			else
+				this.pickForwardingRule(pickedElementFR);
+	}
+
+
+
+	public Map<NetworkLayer,Boolean> getCanvasLayerVisibilityMap () { return Collections.unmodifiableMap(this.layerVisibilityInCanvasMap); }
     
     public static Pair<ImageIcon,Shape> getIcon (URL url , int height , Color borderColor)
     {
@@ -1540,6 +1569,8 @@ public class VisualizationState
 
     public VisualizationState copy (NetPlan translateToThisNp)
     {
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
     	final boolean translateGUINodesLinksAndNpElements = translateToThisNp != null;
     	final VisualizationState copyVs = new VisualizationState();
     	copyVs.showInCanvasNodeNames = this.showInCanvasNodeNames;
@@ -1625,7 +1656,7 @@ public class VisualizationState
         	copyVs.linksToHideInCanvasAsMandatedByUserInTable = new HashSet<> (this.linksToHideInCanvasAsMandatedByUserInTable);
         	copyVs.mapLayer2VisualizationOrderInCanvas = new DualHashBidiMap<>(this.mapLayer2VisualizationOrderInCanvas);
         	copyVs.layerVisibilityInCanvasMap = new HashMap<> (this.layerVisibilityInCanvasMap);
-        	copyVs.mapShowInCanvasLayerLinks = new HashMap<> (mapShowInCanvasLayerLinks);
+        	copyVs.mapShowInCanvasLayerLinks = new HashMap<> (this.mapShowInCanvasLayerLinks);
         	copyVs.cache_canvasRegularLinkMap = new HashMap<> (this.cache_canvasRegularLinkMap);
         	copyVs.pickedElementNotFR = this.pickedElementNotFR;
         	copyVs.pickedElementFR = this.pickedElementFR;
@@ -1642,6 +1673,14 @@ public class VisualizationState
         	for (Entry<Node, Map<Pair<Integer, Integer>, GUILink>> entry : this.cache_mapNode2IntraNodeCanvasGUILinkMap.entrySet())
         		copyVs.cache_mapNode2IntraNodeCanvasGUILinkMap.put(entry.getKey() , new HashMap<> (entry.getValue()));
     	}
+    	copyVs.checkCacheConsistency();
+    	if (translateToThisNp == null) System.out.println("translateToThisNp: null");
+    	
+        checkCacheConsistency();
+    	checkNpToVsConsistency (this , this.currentNp);
+
+    	checkNpToVsConsistency(copyVs , translateToThisNp == null? this.currentNp : translateToThisNp);
+    	copyVs.checkCacheConsistency();
     	return copyVs;
     }
 
@@ -1655,5 +1694,29 @@ public class VisualizationState
 	private static Set<Node> getTranslatedNodeSet (NetPlan np , Collection<Node> nodes) 
 	{
 		Set<Node> res = new HashSet<Node> (); for (Node oldNode: nodes) res.add(np.getNodeFromId(oldNode.getId())); return res; 
+	}
+	
+	public static void checkNpToVsConsistency (VisualizationState vs , NetPlan np)
+	{
+		if (vs.currentNp != np) throw new RuntimeException ();
+		for (Node n : vs.nodesToHideInCanvasAsMandatedByUserInTable) if (n.getNetPlan() != np) throw new RuntimeException (); 
+		for (Link e : vs.linksToHideInCanvasAsMandatedByUserInTable) if (e.getNetPlan() != np) throw new RuntimeException (); 
+		for (NetworkLayer e : vs.mapLayer2VisualizationOrderInCanvas.keySet()) if (e.getNetPlan() != np) throw new RuntimeException (); 
+		for (NetworkLayer e : vs.layerVisibilityInCanvasMap.keySet()) if (e.getNetPlan() != np) throw new RuntimeException (); 
+		for (NetworkLayer e : vs.mapShowInCanvasLayerLinks.keySet()) if (e.getNetPlan() != np) throw new RuntimeException (); 
+		for (Node e : vs.cache_canvasIntraNodeGUILinks.keySet()) if (e.getNetPlan() != np) throw new RuntimeException (); 
+		for (Set<GUILink> s : vs.cache_canvasIntraNodeGUILinks.values()) for (GUILink e : s) if (e.getOriginNode().getAssociatedNetPlanNode().getNetPlan() != np) throw new RuntimeException ();
+		for (Set<GUILink> s : vs.cache_canvasIntraNodeGUILinks.values()) for (GUILink e : s) if (e.getDestinationNode().getAssociatedNetPlanNode().getNetPlan() != np) throw new RuntimeException ();
+		for (Link e : vs.cache_canvasRegularLinkMap.keySet()) if (e.getNetPlan() != np) throw new RuntimeException (); 
+		for (GUILink e : vs.cache_canvasRegularLinkMap.values()) if (e.getAssociatedNetPlanLink().getNetPlan() != np) throw new RuntimeException (); 
+		for (NetworkLayer e : vs.cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.keySet()) if (e.getNetPlan() != np) throw new RuntimeException (); 
+		for (Node e : vs.cache_mapNode2IntraNodeCanvasGUILinkMap.keySet()) if (e.getNetPlan() != np) throw new RuntimeException (); 
+		for (Map<Pair<Integer, Integer>, GUILink> map : vs.cache_mapNode2IntraNodeCanvasGUILinkMap.values()) for (GUILink gl : map.values()) if (gl.getOriginNode().getAssociatedNetPlanNode().getNetPlan() != np) throw new RuntimeException (); 
+		for (Map<Pair<Integer, Integer>, GUILink> map : vs.cache_mapNode2IntraNodeCanvasGUILinkMap.values()) for (GUILink gl : map.values()) if (gl.getDestinationNode().getAssociatedNetPlanNode().getNetPlan() != np) throw new RuntimeException (); 
+		for (Node e : vs.cache_mapNode2ListVerticallyStackedGUINodes.keySet()) if (e.getNetPlan() != np) throw new RuntimeException (); 
+		for (List<GUINode> list : vs.cache_mapNode2ListVerticallyStackedGUINodes.values()) for (GUINode gn : list) if (gn.getAssociatedNetPlanNode().getNetPlan() != np) throw new RuntimeException (); 
+		if (vs.pickedElementNotFR != null) if (vs.pickedElementNotFR.getNetPlan() != np) throw new RuntimeException ();
+		if (vs.pickedElementFR != null) if (vs.pickedElementFR.getFirst ().getNetPlan() != np) throw new RuntimeException ();
+		if (vs.pickedElementFR != null) if (vs.pickedElementFR.getSecond ().getNetPlan() != np) throw new RuntimeException ();
 	}
 }
