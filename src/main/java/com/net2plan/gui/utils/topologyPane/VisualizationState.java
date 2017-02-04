@@ -62,6 +62,7 @@ import com.net2plan.interfaces.networkDesign.InterLayerPropagationGraph;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -1537,83 +1538,122 @@ public class VisualizationState
 		}
     }
 
-    public VisualizationState copy ()
+    public VisualizationState copy (NetPlan translateToThisNp)
     {
-    	final VisualizationState vs = new VisualizationState();
-    	vs.showInCanvasNodeNames = this.showInCanvasNodeNames;
-    	vs.showInCanvasLinkLabels = this.showInCanvasLinkLabels;
-    	vs.showInCanvasLinksInNonActiveLayer = this.showInCanvasLinksInNonActiveLayer;
-    	vs.showInCanvasInterLayerLinks = this.showInCanvasInterLayerLinks;
-    	vs.showInCanvasLowerLayerPropagation = this.showInCanvasLowerLayerPropagation;
-    	vs.showInCanvasUpperLayerPropagation = this.showInCanvasUpperLayerPropagation;
-    	vs.showInCanvasThisLayerPropagation = this.showInCanvasThisLayerPropagation;
-    	vs.showInCanvasNonConnectedNodes = this.showInCanvasNonConnectedNodes;
-    	vs.interLayerSpaceInPixels = this.interLayerSpaceInPixels;
-    	vs.currentNp = this.currentNp;
-    	vs.nodesToHideInCanvasAsMandatedByUserInTable = new HashSet<> (this.nodesToHideInCanvasAsMandatedByUserInTable);
-    	vs.linksToHideInCanvasAsMandatedByUserInTable = new HashSet<> (this.linksToHideInCanvasAsMandatedByUserInTable);
+    	final boolean translateGUINodesLinksAndNpElements = translateToThisNp != null;
+    	final VisualizationState copyVs = new VisualizationState();
+    	copyVs.showInCanvasNodeNames = this.showInCanvasNodeNames;
+    	copyVs.showInCanvasLinkLabels = this.showInCanvasLinkLabels;
+    	copyVs.showInCanvasLinksInNonActiveLayer = this.showInCanvasLinksInNonActiveLayer;
+    	copyVs.showInCanvasInterLayerLinks = this.showInCanvasInterLayerLinks;
+    	copyVs.showInCanvasLowerLayerPropagation = this.showInCanvasLowerLayerPropagation;
+    	copyVs.showInCanvasUpperLayerPropagation = this.showInCanvasUpperLayerPropagation;
+    	copyVs.showInCanvasThisLayerPropagation = this.showInCanvasThisLayerPropagation;
+    	copyVs.showInCanvasNonConnectedNodes = this.showInCanvasNonConnectedNodes;
+    	copyVs.interLayerSpaceInPixels = this.interLayerSpaceInPixels;
+    	copyVs.currentNp = translateGUINodesLinksAndNpElements? translateToThisNp : this.currentNp;
+    	copyVs.pickedElementType = this.pickedElementType;
+    	if (translateGUINodesLinksAndNpElements)
+    	{
+    		copyVs.pickedElementNotFR = this.pickedElementNotFR == null? null : translateToThisNp.getNetworkElement(this.pickedElementNotFR.getId());
+    		copyVs.pickedElementFR = this.pickedElementFR == null? null : Pair.of(translateToThisNp.getDemandFromId(this.pickedElementFR.getFirst().getId()), translateToThisNp.getLinkFromId(this.pickedElementFR.getSecond().getId()));
+    		
+    		copyVs.nodesToHideInCanvasAsMandatedByUserInTable = getTranslatedNodeSet(translateToThisNp, this.nodesToHideInCanvasAsMandatedByUserInTable);
+    		copyVs.linksToHideInCanvasAsMandatedByUserInTable = getTranslatedLinkSet(translateToThisNp, this.linksToHideInCanvasAsMandatedByUserInTable);
+    		copyVs.mapLayer2VisualizationOrderInCanvas = new DualHashBidiMap<>(); 
+    		for (Entry<NetworkLayer,Integer> entry : this.mapLayer2VisualizationOrderInCanvas.entrySet()) 
+    			copyVs.mapLayer2VisualizationOrderInCanvas.put(translateToThisNp.getNetworkLayer(entry.getKey().getIndex()), entry.getValue());
+    		copyVs.layerVisibilityInCanvasMap = new HashMap<>(); 
+    		copyVs.cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible = new DualHashBidiMap<>();
+    		for (Entry<NetworkLayer,Integer> entry : this.cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.entrySet()) 
+    			copyVs.cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.put(translateToThisNp.getNetworkLayer(entry.getKey().getIndex()), entry.getValue());
+    		for (Entry<NetworkLayer,Boolean> entry : this.layerVisibilityInCanvasMap.entrySet()) 
+    			copyVs.layerVisibilityInCanvasMap.put(translateToThisNp.getNetworkLayer(entry.getKey().getIndex()), entry.getValue());
+    		copyVs.mapShowInCanvasLayerLinks = new HashMap<>(); 
+    		for (Entry<NetworkLayer,Boolean> entry : this.mapShowInCanvasLayerLinks.entrySet()) 
+    			copyVs.mapShowInCanvasLayerLinks.put(translateToThisNp.getNetworkLayer(entry.getKey().getIndex()), entry.getValue());
 
-    	vs.mapLayer2VisualizationOrderInCanvas = new DualHashBidiMap<>(this.mapLayer2VisualizationOrderInCanvas);
-    	vs.layerVisibilityInCanvasMap = new HashMap<> (this.layerVisibilityInCanvasMap);
-    	vs.mapShowInCanvasLayerLinks = new HashMap<> (mapShowInCanvasLayerLinks);
-    	vs.cache_canvasRegularLinkMap = new HashMap<> (this.cache_canvasRegularLinkMap);
-    	vs.pickedElementType = this.pickedElementType;
-    	vs.pickedElementNotFR = this.pickedElementNotFR;
-    	vs.pickedElementFR = this.pickedElementFR;
-    	vs.tableRowFilter = this.tableRowFilter;
-    	vs.cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible = new DualHashBidiMap<>(this.cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible);
+    		/* translate the guinodes and its info */
+    		copyVs.cache_mapNode2ListVerticallyStackedGUINodes = new HashMap<> ();
+    		for (Entry<Node,List<GUINode>> entry : this.cache_mapNode2ListVerticallyStackedGUINodes.entrySet())
+    		{
+    			final Node tNode = translateToThisNp.getNode(entry.getKey().getIndex());
+    			final List<GUINode> tList = new ArrayList<> (entry.getValue().size());
+    			for (GUINode gn : entry.getValue())
+    				tList.add(gn.copy(translateToThisNp, copyVs));
+    			copyVs.cache_mapNode2ListVerticallyStackedGUINodes.put(tNode ,  tList);
+    		}
+    		copyVs.cache_canvasRegularLinkMap = new HashMap <> ();
+    		for (Entry<Link,GUILink> entry : this.cache_canvasRegularLinkMap.entrySet())
+    		{
+    			final Link tLink = translateToThisNp.getLinkFromId(entry.getKey().getId());
+    			final GUILink originalGl = entry.getValue();
+    			final Node tOriginNode = translateToThisNp.getNode(originalGl.getOriginNode().getAssociatedNetPlanNode().getIndex());
+    			final Node tDestinationNode = translateToThisNp.getNode(originalGl.getDestinationNode().getAssociatedNetPlanNode().getIndex());
+    			final NetworkLayer tLayer = translateToThisNp.getNetworkLayer(originalGl.getAssociatedNetPlanLink().getLayer().getIndex());
+    			final GUINode tOriginGn = copyVs.getCanvasAssociatedGUINode(tOriginNode, tLayer);
+    			final GUINode tDestinationGn = copyVs.getCanvasAssociatedGUINode(tDestinationNode, tLayer);
+    			copyVs.cache_canvasRegularLinkMap.put(tLink, entry.getValue().copy(tLink, tOriginGn, tDestinationGn));
+    		}
+    		copyVs.cache_canvasIntraNodeGUILinks = new HashMap<> ();
+    		copyVs.cache_mapNode2IntraNodeCanvasGUILinkMap = new HashMap<> ();
+    		for (Node thisNode : this.cache_canvasIntraNodeGUILinks.keySet())
+    		{
+    			final Node tNode = translateToThisNp.getNode(thisNode.getIndex());
+    			final Set<GUILink> tSetIntraLinks = new HashSet<> ();
+    			final Map<Pair<Integer,Integer>,GUILink> tMapIntraLinks = new HashMap<> ();
+    			for (Entry<Pair<Integer,Integer>,GUILink> entry : this.cache_mapNode2IntraNodeCanvasGUILinkMap.get(thisNode).entrySet())
+    			{
+    				final GUILink originalGl = entry.getValue();
+        			final Node tOriginNode = translateToThisNp.getNode(originalGl.getOriginNode().getAssociatedNetPlanNode().getIndex());
+        			final Node tDestinationNode = translateToThisNp.getNode(originalGl.getDestinationNode().getAssociatedNetPlanNode().getIndex());
+        			final NetworkLayer tOriginLayer = translateToThisNp.getNetworkLayer(originalGl.getOriginNode().getLayer().getIndex());
+        			final NetworkLayer tDestinationLayer = translateToThisNp.getNetworkLayer(originalGl.getDestinationNode().getLayer().getIndex());
+        			final GUINode tOriginGn = copyVs.getCanvasAssociatedGUINode(tOriginNode, tOriginLayer);
+        			final GUINode tDestinationGn = copyVs.getCanvasAssociatedGUINode(tDestinationNode, tDestinationLayer);
+    				final GUILink tGl = originalGl.copy(null, tOriginGn, tDestinationGn);
+    				tSetIntraLinks.add(tGl);
+    				tMapIntraLinks.put(entry.getKey(), tGl);
+    			}
+    			copyVs.cache_canvasIntraNodeGUILinks.put(tNode , tSetIntraLinks);
+    			copyVs.cache_mapNode2IntraNodeCanvasGUILinkMap.put(tNode, tMapIntraLinks);
+    		}
+    	}
+    	else
+    	{
+        	copyVs.nodesToHideInCanvasAsMandatedByUserInTable = new HashSet<> (this.nodesToHideInCanvasAsMandatedByUserInTable);
+        	copyVs.linksToHideInCanvasAsMandatedByUserInTable = new HashSet<> (this.linksToHideInCanvasAsMandatedByUserInTable);
+        	copyVs.mapLayer2VisualizationOrderInCanvas = new DualHashBidiMap<>(this.mapLayer2VisualizationOrderInCanvas);
+        	copyVs.layerVisibilityInCanvasMap = new HashMap<> (this.layerVisibilityInCanvasMap);
+        	copyVs.mapShowInCanvasLayerLinks = new HashMap<> (mapShowInCanvasLayerLinks);
+        	copyVs.cache_canvasRegularLinkMap = new HashMap<> (this.cache_canvasRegularLinkMap);
+        	copyVs.pickedElementNotFR = this.pickedElementNotFR;
+        	copyVs.pickedElementFR = this.pickedElementFR;
+        	copyVs.tableRowFilter = this.tableRowFilter;
+        	copyVs.cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible = new DualHashBidiMap<>(this.cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible);
 
-    	vs.cache_canvasIntraNodeGUILinks = new HashMap<> ();
-    	for (Entry<Node, Set<GUILink>> entry : this.cache_canvasIntraNodeGUILinks.entrySet())
-    		vs.cache_canvasIntraNodeGUILinks.put(entry.getKey() , new HashSet<> (entry.getValue()));
-    	vs.cache_mapNode2ListVerticallyStackedGUINodes = new HashMap<> ();
-    	for (Entry<Node, List<GUINode>> entry : this.cache_mapNode2ListVerticallyStackedGUINodes.entrySet())
-    		vs.cache_mapNode2ListVerticallyStackedGUINodes.put(entry.getKey() , new ArrayList<> (entry.getValue()));
-    	vs.cache_mapNode2IntraNodeCanvasGUILinkMap = new HashMap<> ();
-    	for (Entry<Node, Map<Pair<Integer, Integer>, GUILink>> entry : this.cache_mapNode2IntraNodeCanvasGUILinkMap.entrySet())
-    		vs.cache_mapNode2IntraNodeCanvasGUILinkMap.put(entry.getKey() , new HashMap<> (entry.getValue()));
-    	return vs;
+        	copyVs.cache_canvasIntraNodeGUILinks = new HashMap<> ();
+        	for (Entry<Node, Set<GUILink>> entry : this.cache_canvasIntraNodeGUILinks.entrySet())
+        		copyVs.cache_canvasIntraNodeGUILinks.put(entry.getKey() , new HashSet<> (entry.getValue()));
+        	copyVs.cache_mapNode2ListVerticallyStackedGUINodes = new HashMap<> ();
+        	for (Entry<Node, List<GUINode>> entry : this.cache_mapNode2ListVerticallyStackedGUINodes.entrySet())
+        		copyVs.cache_mapNode2ListVerticallyStackedGUINodes.put(entry.getKey() , new ArrayList<> (entry.getValue()));
+        	copyVs.cache_mapNode2IntraNodeCanvasGUILinkMap = new HashMap<> ();
+        	for (Entry<Node, Map<Pair<Integer, Integer>, GUILink>> entry : this.cache_mapNode2IntraNodeCanvasGUILinkMap.entrySet())
+        		copyVs.cache_mapNode2IntraNodeCanvasGUILinkMap.put(entry.getKey() , new HashMap<> (entry.getValue()));
+    	}
+    	return copyVs;
     }
 
-    // TODO
-    public VisualizationState copyAndAdapt (NetPlan newNp)
-    {
-    	final VisualizationState vs = new VisualizationState();
-    	vs.showInCanvasNodeNames = this.showInCanvasNodeNames;
-    	vs.showInCanvasLinkLabels = this.showInCanvasLinkLabels;
-    	vs.showInCanvasLinksInNonActiveLayer = this.showInCanvasLinksInNonActiveLayer;
-    	vs.showInCanvasInterLayerLinks = this.showInCanvasInterLayerLinks;
-    	vs.showInCanvasLowerLayerPropagation = this.showInCanvasLowerLayerPropagation;
-    	vs.showInCanvasUpperLayerPropagation = this.showInCanvasUpperLayerPropagation;
-    	vs.showInCanvasThisLayerPropagation = this.showInCanvasThisLayerPropagation;
-    	vs.showInCanvasNonConnectedNodes = this.showInCanvasNonConnectedNodes;
-    	vs.interLayerSpaceInPixels = this.interLayerSpaceInPixels;
-    	vs.currentNp = this.currentNp;
-    	vs.nodesToHideInCanvasAsMandatedByUserInTable = new HashSet<> (this.nodesToHideInCanvasAsMandatedByUserInTable);
-    	vs.linksToHideInCanvasAsMandatedByUserInTable = new HashSet<> (this.linksToHideInCanvasAsMandatedByUserInTable);
-
-    	vs.mapLayer2VisualizationOrderInCanvas = new DualHashBidiMap<>(this.mapLayer2VisualizationOrderInCanvas);
-    	vs.layerVisibilityInCanvasMap = new HashMap<> (this.layerVisibilityInCanvasMap);
-    	vs.mapShowInCanvasLayerLinks = new HashMap<> (mapShowInCanvasLayerLinks);
-    	vs.cache_canvasRegularLinkMap = new HashMap<> (this.cache_canvasRegularLinkMap);
-    	vs.pickedElementType = this.pickedElementType;
-    	vs.pickedElementNotFR = this.pickedElementNotFR;
-    	vs.pickedElementFR = this.pickedElementFR;
-    	vs.tableRowFilter = this.tableRowFilter;
-    	vs.cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible = new DualHashBidiMap<>(this.cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible);
-
-    	vs.cache_canvasIntraNodeGUILinks = new HashMap<> ();
-    	for (Entry<Node, Set<GUILink>> entry : this.cache_canvasIntraNodeGUILinks.entrySet())
-    		vs.cache_canvasIntraNodeGUILinks.put(entry.getKey() , new HashSet<> (entry.getValue()));
-    	vs.cache_mapNode2ListVerticallyStackedGUINodes = new HashMap<> ();
-    	for (Entry<Node, List<GUINode>> entry : this.cache_mapNode2ListVerticallyStackedGUINodes.entrySet())
-    		vs.cache_mapNode2ListVerticallyStackedGUINodes.put(entry.getKey() , new ArrayList<> (entry.getValue()));
-    	vs.cache_mapNode2IntraNodeCanvasGUILinkMap = new HashMap<> ();
-    	for (Entry<Node, Map<Pair<Integer, Integer>, GUILink>> entry : this.cache_mapNode2IntraNodeCanvasGUILinkMap.entrySet())
-    		vs.cache_mapNode2IntraNodeCanvasGUILinkMap.put(entry.getKey() , new HashMap<> (entry.getValue()));
-    	return vs;
-    }
 	private VisualizationState() 	{ }
 
 
+	private static Set<Link> getTranslatedLinkSet (NetPlan np , Collection<Link> links) 
+	{
+		Set<Link> res = new HashSet<Link> (); for (Link oldLink : links) res.add(np.getLinkFromId(oldLink.getId())); return res; 
+	}
+	private static Set<Node> getTranslatedNodeSet (NetPlan np , Collection<Node> nodes) 
+	{
+		Set<Node> res = new HashSet<Node> (); for (Node oldNode: nodes) res.add(np.getNodeFromId(oldNode.getId())); return res; 
+	}
 }

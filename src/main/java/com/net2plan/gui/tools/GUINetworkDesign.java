@@ -670,8 +670,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                 final Pair<Demand, Link> fr = vs.getPickedForwardingRule();
                 selectNetPlanViewItem(vs.getPickedElementType(), Pair.of(fr.getFirst().getIndex(), fr.getSecond().getIndex()));
             }
-            topologyPanel.getCanvas().refresh();
         }
+        topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
         focusPanel.updateView();
     }
 

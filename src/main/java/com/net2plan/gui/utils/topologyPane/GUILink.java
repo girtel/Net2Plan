@@ -50,6 +50,28 @@ public class GUILink
 //    private Color userDefinedColorOverridesTheRest;
 //    private Stroke userDefinedEdgeStrokeOverridesTheRest;
 
+    
+    
+    /** Creates a copy of this GUINode. Used by undo/redo
+     * @param translateToThisNp if not null, translate elements to this np. This is null iff translateToThisVs should be also null
+     * @param translateToThisVs if not null, translate elements to this np. This is null iff translateToThisNp should be also null
+     * @return
+     */
+    public GUILink copy (Link npLink , GUINode originNode , GUINode destinationNode)
+    {
+    	GUILink copy = new GUILink (npLink , originNode , destinationNode);
+    	copy.arrowStrokeIfActiveLayer = this.arrowStrokeIfActiveLayer;
+    	copy.edgeStrokeIfActiveLayer = this.edgeStrokeIfActiveLayer;
+    	copy.arrowStrokeIfNotActiveLayer = this.arrowStrokeIfNotActiveLayer;
+    	copy.edgeStrokeIfNotActiveLayer = this.edgeStrokeIfNotActiveLayer;
+    	copy.arrowDrawPaint = this.arrowDrawPaint;
+    	copy.arrowFillPaint = this.arrowFillPaint;
+    	copy.edgeDrawPaint = this.edgeDrawPaint;
+    	copy.shownSeparated = this.shownSeparated;
+    	return copy;
+    }
+
+    
     /**
      * Default constructor.
      *

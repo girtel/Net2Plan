@@ -41,7 +41,7 @@ public class UndoRedoManager
     public void updateNavigationInformation_onlyVisualizationChange ()
     {
         if (callback.inOnlineSimulationMode()) return;
-		pastShownInformation.add(Pair.of(null , callback.getVisualizationState().copy()));
+		pastShownInformation.add(Pair.of(null , callback.getVisualizationState().copy(null)));
 		if (pastShownInformation.size() > maxSizeUndoList)
 		{
 			final NetPlan originNp = pastShownInformation.get(0).getFirst();
@@ -57,9 +57,8 @@ public class UndoRedoManager
     {
         if (callback.inOnlineSimulationMode()) return;
         final NetPlan npCopy = callback.getDesign().copy();
-        final VisualizationState vsCopyLinkedToNpCopy = callback.getVisualizationState().copyAndAdapt(npCopy);
-        final Pair<NetPlan,VisualizationState> pair = Pair.of(npCopy, vsCopyLinkedToNpCopy);
-		pastShownInformation.add(pair);
+        final VisualizationState vsCopyLinkedToNpCopy = callback.getVisualizationState().copy(npCopy);
+		pastShownInformation.add(Pair.of(npCopy, vsCopyLinkedToNpCopy));
 		if (pastShownInformation.size() > maxSizeUndoList)
 		{
 			final NetPlan originNp = pastShownInformation.get(0).getFirst();
@@ -81,9 +80,12 @@ public class UndoRedoManager
     	if (pastShownInformationCursor == 0) return null;
 		final int newCursor = pastShownInformationCursor - 1;
 		final VisualizationState backVS = pastShownInformation.get(newCursor).getSecond();
-		final boolean notChangedNp = (pastShownInformation.get(newCursor).getFirst() == null) && (pastShownInformation.get(pastShownInformationCursor).getFirst() == null);
+		final boolean notChangedNp = (pastShownInformation.get(pastShownInformationCursor).getFirst() == null);
 		if (notChangedNp)
+		{
+			this.pastShownInformationCursor = newCursor;
 			return Pair.of(null , backVS);
+		}
 		NetPlan backNp = null;
 		for (int index = newCursor; index >= 0 ; index --)
 			if (pastShownInformation.get(index).getFirst() != null)
@@ -92,6 +94,7 @@ public class UndoRedoManager
 				break;
 			}
 		if (backNp == null) throw new RuntimeException ();
+		this.pastShownInformationCursor = newCursor;
 		return Pair.of(backNp , backVS);
     }
     
@@ -106,47 +109,8 @@ public class UndoRedoManager
 		final int newCursor = pastShownInformationCursor + 1;
 		final NetPlan nextNp = pastShownInformation.get(newCursor).getFirst();
 		final VisualizationState nextVS = pastShownInformation.get(newCursor).getSecond();
-		return Pair.of(nextNp == null? callback.getDesign() : nextNp , nextVS);
+		this.pastShownInformationCursor = newCursor;
+		return Pair.of(nextNp , nextVS);
     }
-
-    
-	private static Set<Link> getLinkSetFromIds (NetPlan np , Collection<Long> ids) 
-	{
-		Set<Link> res = new HashSet<Link> (); for (long id : ids) res.add(np.getLinkFromId(id)); return res; 
-	}
-	private static Set<Node> getNodeSetFromIds (NetPlan np , Collection<Long> ids) 
-	{
-		Set<Node> res = new HashSet<Node> (); for (long id : ids) res.add(np.getNodeFromId(id)); return res; 
-	}
-	private static List<Link> getLinkListFromIds (NetPlan np , Collection<Long> ids) 
-	{
-		List<Link> res = new LinkedList<Link> (); for (long id : ids) res.add(np.getLinkFromId(id)); return res; 
-	}
-	private static List<NetworkElement> getLinkAndResorceListFromIds (NetPlan np , Collection<Long> ids) 
-	{
-		List<NetworkElement> res = new LinkedList<NetworkElement> (); 
-		for (long id : ids)
-		{
-			NetworkElement e = np.getLinkFromId(id);
-			if (e == null) e = np.getResourceFromId(id);
-			if (e == null) throw new Net2PlanException ("Unknown id in the list");
-			res.add(e); 
-		}
-		return res;
-	}
-	private static Map<Resource,Double> getResourceOccupationMap (NetPlan np , List<Double> resAndOccList)
-	{
-		Map<Resource,Double> res = new HashMap<Resource,Double> ();
-		Iterator<Double> it = resAndOccList.iterator();
-		while (it.hasNext())
-		{
-			final long id = (long) (double) it.next();
-			if (!it.hasNext()) throw new Net2PlanException ("Wrong array size");
-			final double val = it.next();
-			final Resource r = np.getResourceFromId(id); if (r == null) throw new Net2PlanException ("Unknown resource id");
-			res.put(r, val);
-		}
-		return res;
-	}
 
 }

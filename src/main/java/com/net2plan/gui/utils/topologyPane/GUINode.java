@@ -38,21 +38,43 @@ import com.net2plan.interfaces.networkDesign.Resource;
  */
 public class GUINode 
 {
-	private static Random rng = new Random (0);
     private final Node npNode;
     private final NetworkLayer layer;
     private final VisualizationState vs;
 
     /* New variables */
     private Font font;
-    //private Paint drawPaint, fillPaint, fillPaintIfPicked;
     private Paint drawPaint, fillPaint;
-//    private Shape shape, shapeIfPicked;
-//    private Shape shapeIfNotActive , shapeIfActive;
     private double iconHeightIfNotActive;
-//    private Color userDefinedColorOverridesTheRest;
     
 
+    /** Creates a copy of this GUINode. Used by undo/redo
+     * @param translateToThisNp if not null, translate elements to this np. This is null iff translateToThisVs should be also null
+     * @param translateToThisVs if not null, translate elements to this np. This is null iff translateToThisNp should be also null
+     * @return
+     */
+    public GUINode copy (NetPlan translateToThisNp , VisualizationState translateToThisVs)
+    {
+    	if ((translateToThisNp == null != (translateToThisVs == null))) throw new RuntimeException ();
+    	GUINode copyGn = null;
+    	if (translateToThisNp != null)
+    	{
+    		final Node tNpNode = translateToThisNp.getNode(this.npNode.getIndex());
+    		final NetworkLayer tLayer = translateToThisNp.getNetworkLayer(this.layer.getIndex());
+    		copyGn = new GUINode (tNpNode , tLayer , translateToThisVs);
+    	}
+    	else
+    	{
+    		copyGn = new GUINode (this.npNode , this.layer , this.vs);
+    	}
+    	copyGn.font = this.font;
+    	copyGn.drawPaint = this.drawPaint;
+    	copyGn.fillPaint = this.fillPaint;
+    	copyGn.iconHeightIfNotActive = this.iconHeightIfNotActive;
+    	return copyGn;
+    }
+    
+    
     /**
      * Constructor that allows to set a node label.
      *
