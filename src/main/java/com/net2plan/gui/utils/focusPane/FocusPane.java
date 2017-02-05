@@ -80,7 +80,7 @@ public class FocusPane extends JPanel
 		if (elementType == NetworkElementType.ROUTE)
 		{
 			final Route r = (Route) vs.getPickedNetworkElement();
-			final LinkSequencePanel fig = new LinkSequencePanel(callback , r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
+			final FigureLinkSequencePanel fig = new FigureLinkSequencePanel(callback , r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
 			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getRouteInfoTables(r), r) , BorderLayout.CENTER);
 		}
@@ -108,8 +108,8 @@ public class FocusPane extends JPanel
 		else if (elementType == NetworkElementType.LINK)
 		{
 			final Link e = (Link) vs.getPickedNetworkElement();
-//			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
-//			this.add(fig , BorderLayout.WEST);
+			final FigureLinkSequencePanel fig = new FigureLinkSequencePanel(callback , Arrays.asList(e) , e.getLayer() , Arrays.asList(e.getOccupiedCapacity()) , "Link " + e.getIndex() , e.getCarriedTraffic());
+			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getLinkInfoTables(e), e) , BorderLayout.CENTER);
 		}
 		else if (elementType == NetworkElementType.MULTICAST_DEMAND)
@@ -129,8 +129,8 @@ public class FocusPane extends JPanel
 		else if (elementType == NetworkElementType.NODE)
 		{
 			final Node n = (Node) vs.getPickedNetworkElement();
-//			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
-//			this.add(fig , BorderLayout.WEST);
+			final FigureNodeSequencePanel fig = new FigureNodeSequencePanel(callback , n , n.getNetPlan().getNetworkLayerDefault() , "Node " + n.getIndex());
+			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getNodeInfoTables(n , n.getNetPlan().getNetworkLayerDefault()), n) , BorderLayout.CENTER);
 		}
 		else if (elementType == NetworkElementType.RESOURCE)
@@ -191,6 +191,9 @@ public class FocusPane extends JPanel
 		res.add(Triple.of("Name" , n.getName().equals("")? "No name" : n.getName(), ""));
 		res.add(Triple.of("Coordinates (x,y)" , "(" + n.getXYPositionMap().getX() + "," + n.getXYPositionMap().getY() + ")" , ""));
 		res.add(Triple.of("Is up?", "" + n.isUp() , ""));
+		res.add(Triple.of("# Resources" , n.getResources().isEmpty() ? "none" : ""+n.getResources().size()  , ""));
+		for (Resource r : n.getResources())
+			res.add(Triple.of("- " + getResourceName(r) , "" , "resource" + r.getId()));
 		res.add(Triple.of("Information at layer" , getLayerName(layer) , ""));
 		res.add(Triple.of("# output links", "" + n.getOutgoingLinks(layer).size() , ""));
 		res.add(Triple.of("# input links" , "" + n.getIncomingLinks(layer).size() , ""));

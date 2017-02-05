@@ -32,32 +32,23 @@ import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
 
-public class LinkSequencePanel extends JPanel 
+public class FigureLinkPanel extends JPanel 
 {
 	
 	private List<DrawNode> drawnNodes;
-	private List<DrawLine> drawnLines;
-	private List<? extends NetworkElement> path;
-	private List<Double> occupationsPerElement;
-	private List<Double> capacitiesPerElement;
+	private DrawLine dl;
+	private Link link;
 	private List<String> generalMessage; 
-	private NetworkLayer layer;
     private NetPlan np;
     private Dimension preferredSize;
     private IVisualizationCallback callback;
     
-    public LinkSequencePanel(IVisualizationCallback callback , List<? extends NetworkElement> path , NetworkLayer layer , List<Double> occupationsPerElement , String titleMessage , double carriedTraffic) 
+    public FigureLinkPanel(IVisualizationCallback callback , Link link , String titleMessage) 
     {
     	this.callback = callback;
-    	this.np = layer.getNetPlan();
-    	this.layer = layer;
-    	this.path = path;
-    	this.occupationsPerElement = occupationsPerElement;
-    	this.capacitiesPerElement = path.stream().map(e->(e instanceof Link)? ((Link)e).getCapacity() : ((Resource)e).getCapacity()).collect (Collectors.toList());
-    	if (carriedTraffic >= 0)
-    		this.generalMessage = Arrays.asList(titleMessage , "Carried trafffic: " + String.format("%.2f " , carriedTraffic) + " " + np.getDemandTrafficUnitsName(layer));
-    	else
-    		this.generalMessage = Arrays.asList(titleMessage);
+    	this.np = link.getNetPlan();
+    	this.link = link;
+   		this.generalMessage = Arrays.asList(titleMessage);
     	this.preferredSize = null;
         addMouseListener(new MouseAdapterFocusPanel() );
     }
@@ -86,7 +77,6 @@ public class LinkSequencePanel extends JPanel
     	final FontMetrics fontMetrics = g2d.getFontMetrics();
     	final int regularInterlineSpacePixels = fontMetrics.getHeight();
     	this.drawnNodes = new ArrayList<> ();
-    	this.drawnLines = new ArrayList<> ();
 
     	final int topCoordinateLineNodes = maxHeightOrSizeIcon + (generalMessage.size() * fontHeightTitle) + (maxNumberOfTagsPerNodeNorResource * regularInterlineSpacePixels);
     	final int topCoordinateLineResources = topCoordinateLineNodes + maxHeightOrSizeIcon * 4;

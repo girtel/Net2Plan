@@ -63,7 +63,7 @@ public class FocusPaneImgCreator {
 		frame.getContentPane().setLayout(new FlowLayout());
 		frame.setPreferredSize(new Dimension (600,600));
 
-		frame.add(new LinkSequencePanel(r.getPath() , layer , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic()));
+		frame.add(new FigureLinkSequencePanel(r.getPath() , layer , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic()));
 
 		frame.pack();
 	    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
