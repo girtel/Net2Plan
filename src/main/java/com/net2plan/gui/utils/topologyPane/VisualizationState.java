@@ -31,7 +31,6 @@ import static org.junit.Assert.assertTrue;
 import java.awt.Color;
 import java.awt.Paint;
 import java.awt.Shape;
-import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.net.URL;
@@ -41,7 +40,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -56,14 +54,12 @@ import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
 import com.google.common.collect.Sets;
-import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.InterLayerPropagationGraph;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.MulticastTree;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -81,6 +77,12 @@ import edu.uci.ics.jung.visualization.FourPassImageShaper;
 public class VisualizationState
 {
 	private static Map<Triple<URL,Integer,Color>,Pair<ImageIcon,Shape>> databaseOfAlreadyReadIcons = new HashMap<> (); // for each url, height, and border color, an image  
+	
+	private List<Pair<NetworkElement,Pair<Demand,Link>>> pastPickedElements;
+	private int pastPickedElementsCursor;
+	private int maxSizePickUndoList;
+	
+	
     private boolean showInCanvasNodeNames;
     private boolean showInCanvasLinkLabels;
     private boolean showInCanvasLinksInNonActiveLayer;
@@ -118,7 +120,7 @@ public class VisualizationState
 
     
     
-	public VisualizationState(NetPlan currentNp, BidiMap<NetworkLayer, Integer> mapLayer2VisualizationOrder, Map<NetworkLayer,Boolean> layerVisibilityMap)
+	public VisualizationState(NetPlan currentNp, BidiMap<NetworkLayer, Integer> mapLayer2VisualizationOrder, Map<NetworkLayer,Boolean> layerVisibilityMap , int maxSizePickUndoList)
     {
         this.currentNp = currentNp;
         this.showInCanvasNodeNames = false;
@@ -136,10 +138,11 @@ public class VisualizationState
         this.pickedElementNotFR = null;
         this.pickedElementFR = null;
         this.tableRowFilter = null;
-        
-//        this.mapLayer2VisualizationOrder = mapLayer2VisualizationOrder;
-//        this.mapLayerVisibility = new HashMap<>();
-        setCanvasLayerVisibilityAndOrder(currentNp ,mapLayer2VisualizationOrder , layerVisibilityMap);
+    	this.pastPickedElements = new ArrayList<> (maxSizePickUndoList + 1);
+    	this.pastPickedElementsCursor = -1;
+    	this.maxSizePickUndoList = maxSizePickUndoList;
+    	updatePickUndoList_newPickOrPickReset (); // add a no pick, this is never removed
+    	setCanvasLayerVisibilityAndOrder(currentNp ,mapLayer2VisualizationOrder , layerVisibilityMap);
     }
 
 	public ITableRowFilter getTableRowFilter () { return tableRowFilter; }
@@ -391,7 +394,13 @@ public class VisualizationState
 
         this.currentNp = newCurrentNetPlan;
 
-        if (netPlanChanged) tableRowFilter = null;
+        if (netPlanChanged)
+        {
+        	tableRowFilter = null;
+        	this.pastPickedElements.clear();
+        	this.pastPickedElementsCursor = -1;
+        	updatePickUndoList_newPickOrPickReset (); // add a no pick, this is never removed
+        }
         
         /* implicitly we restart the picking state */
         this.pickedElementType = null;
@@ -1295,7 +1304,7 @@ public class VisualizationState
     }
 
     
-    private void pickElement (NetworkElement e)
+    public void pickElement (NetworkElement e)
     {
         checkCacheConsistency();
     	checkNpToVsConsistency (this , this.currentNp);
@@ -1714,4 +1723,39 @@ public class VisualizationState
 		if (vs.pickedElementFR != null) if (vs.pickedElementFR.getFirst ().getNetPlan() != np) throw new RuntimeException ();
 		if (vs.pickedElementFR != null) if (vs.pickedElementFR.getSecond ().getNetPlan() != np) throw new RuntimeException ();
 	}
+	
+    private void updatePickUndoList_newPickOrPickReset ()
+    {
+        if (this.maxSizePickUndoList <= 1) return; // nothing is stored since nothing will be retrieved
+        /* If the same element picked as the last one, do not add */
+        if (!pastPickedElements.isEmpty())
+        	if (Pair.of(this.pickedElementNotFR , pickedElementFR).equals(pastPickedElements.get(pastPickedElements.size() - 1)))
+        		return;
+        /* first remove everything after the cursor */
+        while (this.pastPickedElements.size() > pastPickedElementsCursor + 1) this.pastPickedElements.remove(pastPickedElements.size()-1);
+        pastPickedElements.add(Pair.of(pickedElementNotFR , pickedElementFR));
+		while (pastPickedElements.size() > maxSizePickUndoList)
+			pastPickedElements.remove(0);
+		pastPickedElementsCursor = pastPickedElements.size()-1;
+		System.out.println("AFTER PICK ADD: pastPickedElementsCursor: " + pastPickedElementsCursor + ", pastPickedElements: "+  pastPickedElements);
+    }
+
+    public Pair<NetworkElement,Pair<Demand,Link>> getPickNavigationBackElement ()
+    {
+        if (this.maxSizePickUndoList <= 1) return null; // nothing is stored since nothing will be retrieved
+    	if (pastPickedElementsCursor == 0) return null;
+		this.pastPickedElementsCursor --;
+		System.out.println("AFTER PICK BACK: pastPickedElementsCursor: " + pastPickedElementsCursor + ", pastPickedElements: "+  pastPickedElements);
+		return pastPickedElements.get(this.pastPickedElementsCursor);
+    }
+
+    public Pair<NetworkElement,Pair<Demand,Link>> getPickNavigationForwardElement ()
+    {
+        if (this.maxSizePickUndoList <= 1) return null; // nothing is stored since nothing will be retrieved
+    	if (pastPickedElementsCursor == 0) return null;
+		this.pastPickedElementsCursor ++;
+		System.out.println("AFTER PICK FORWARD pastPickedElementsCursor: " + pastPickedElementsCursor + ", pastPickedElements: "+  pastPickedElements);
+		return pastPickedElements.get(this.pastPickedElementsCursor);
+    }
+
 }

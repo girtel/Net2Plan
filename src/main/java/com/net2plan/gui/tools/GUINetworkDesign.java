@@ -101,7 +101,9 @@ import net.miginfocom.swing.MigLayout;
 public class GUINetworkDesign extends IGUIModule implements IVisualizationCallback
 {
     private final static String TITLE = "Offline network design & Online network simulation";
-
+    private final static int MAXSIZEUNDOLISTCHANGES = 10;
+    private final static int MAXSIZEUNDOLISTPICK = 10;
+    
     private TopologyPanel topologyPanel;
 
     private FocusPane focusPanel;
@@ -191,7 +193,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             mapLayer2VisualizationOrder.put(layer, mapLayer2VisualizationOrder.size());
             layerVisibilityMap.put(layer, true);
         }
-        this.vs = new VisualizationState(currentNetPlan, mapLayer2VisualizationOrder, layerVisibilityMap);
+        this.vs = new VisualizationState(currentNetPlan, mapLayer2VisualizationOrder, layerVisibilityMap , MAXSIZEUNDOLISTPICK);
 
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
 
@@ -225,7 +227,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         vs.setCanvasLayerVisibilityAndOrder(getDesign(), res.getFirst(), res.getSecond());
 
         /* Initialize the undo/redo manager, and set its initial design */
-        this.undoRedoManager = new UndoRedoManager(this , 50);
+        this.undoRedoManager = new UndoRedoManager(this , MAXSIZEUNDOLISTCHANGES);
         this.undoRedoManager.updateNavigationInformation_newNetPlanChange();
 
         onlineSimulationPane = new OnlineSimulationPane(this);

@@ -43,6 +43,7 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.Pair;
+import com.net2plan.utils.Triple;
 
 /**
  * <p>Wrapper class for the graph canvas.</p>
@@ -509,14 +510,40 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         } else if (src == btn_npChangeRedo)
         {
         	callback.redoRequested();
-        } else if (src == btn_pickNavigationUndo)
+        } else if ((src == btn_pickNavigationUndo) || (src == btn_pickNavigationRedo))
         {
         	// TODO
-        	callback.redoRequested();
-        } else if (src == btn_pickNavigationRedo)
-        {
-        	// TODO
-        	callback.redoRequested();
+        	Pair<NetworkElement,Pair<Demand,Link>> backOrForward = null;
+        	do
+        	{
+        		backOrForward = (src == btn_pickNavigationUndo)? callback.getVisualizationState().getPickNavigationBackElement() : callback.getVisualizationState().getPickNavigationForwardElement();
+        		if (backOrForward == null) break;
+        		final NetworkElement ne = backOrForward.getFirst();
+        		final Pair<Demand,Link> fr = backOrForward.getSecond();
+	        	if (ne != null)
+	        	{
+	        		if (ne.getNetPlan() != callback.getDesign()) continue;
+	        		if (ne.getNetPlan() == null) continue;
+	        		break;
+	        	}
+	        	else if (fr != null)
+	        	{
+	        		if (fr.getFirst().getNetPlan() != callback.getDesign()) continue;
+	        		if (fr.getFirst().getNetPlan() == null) continue;
+	        		if (fr.getSecond().getNetPlan() != callback.getDesign()) continue;
+	        		if (fr.getSecond().getNetPlan() == null) continue;
+	        		break;
+	        	}
+	        	else break; // null,null => reset picked state
+        	} while (true);
+    		System.out.println("Picked undo/redo pressed: " + backOrForward);
+        	if (backOrForward != null)
+        	{
+        		if (backOrForward.getFirst() != null) callback.getVisualizationState().pickElement(backOrForward.getFirst());
+        		else if (backOrForward.getSecond() != null) callback.getVisualizationState().pickForwardingRule(backOrForward.getSecond());
+        		else callback.getVisualizationState().resetPickedState();
+        		callback.updateVisualizationAfterPick();
+        	}
         } else if (src == it_closeMap)
         {
             if (canvas.isOSMRunning())
