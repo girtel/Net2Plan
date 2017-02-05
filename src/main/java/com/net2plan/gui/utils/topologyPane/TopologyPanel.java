@@ -62,7 +62,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance;
     private final JButton btn_increaseNodeSize, btn_decreaseNodeSize, btn_increaseFontSize, btn_decreaseFontSize;
-    private final JButton btn_navigationUndo, btn_navigationRedo;
+    private final JButton btn_npChangeUndo, btn_npChangeRedo;
+    private final JButton btn_pickNavigationUndo, btn_pickNavigationRedo;
     private final JToggleButton btn_showLowerLayerInfo, btn_showUpperLayerInfo, btn_showThisLayerInfo;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final JPopUpButton btn_view, btn_multilayer;
@@ -225,10 +226,14 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showThisLayerInfo = new JToggleButton("Show TP");
         btn_showThisLayerInfo.setToolTipText("Shows the links in the same layer as the picked element, that carry traffic that appears in the picked element");
         btn_showThisLayerInfo.setSelected(getVisualizationState().isShowInCanvasThisLayerPropagation());
-        btn_navigationUndo = new JButton ("Undo");
-        btn_navigationUndo.setToolTipText("Navigate back to the previous state");
-        btn_navigationRedo = new JButton ("Redo");
-        btn_navigationRedo.setToolTipText("Navigate forward to the next state");
+        btn_npChangeUndo = new JButton ("Undo");
+        btn_npChangeUndo.setToolTipText("Navigate back to the previous state of the network (last time the network design was changed)");
+        btn_npChangeRedo = new JButton ("Redo");
+        btn_npChangeRedo.setToolTipText("Navigate forward to the next state of the network (when network design was changed");
+        btn_pickNavigationUndo = new JButton ("Pick Undo");
+        btn_pickNavigationUndo.setToolTipText("Navigate back to the previous element picked");
+        btn_pickNavigationRedo = new JButton ("Pick Redo");
+        btn_pickNavigationRedo.setToolTipText("Navigate forward to the next element picked");
 
         // OSM Buttons
         it_control = new JMenuItem("View control window");
@@ -294,8 +299,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         it_control.addActionListener(this);
         it_closeMap.addActionListener(this);
         it_osmMap.addActionListener(this);
-        btn_navigationUndo.addActionListener(this);
-        btn_navigationRedo.addActionListener(this);
+        btn_npChangeUndo.addActionListener(this);
+        btn_npChangeRedo.addActionListener(this);
+        btn_pickNavigationUndo.addActionListener(this);
+        btn_pickNavigationRedo.addActionListener(this);
         
         // Disabling font controls
         btn_increaseFontSize.setEnabled(false);
@@ -330,8 +337,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         multiLayerToolbar.add(btn_showUpperLayerInfo);
         multiLayerToolbar.add(btn_showThisLayerInfo);
         multiLayerToolbar.add(btn_multilayer);
-        multiLayerToolbar.add(btn_navigationUndo);
-        multiLayerToolbar.add(btn_navigationRedo);
+        multiLayerToolbar.add(btn_npChangeUndo);
+        multiLayerToolbar.add(btn_npChangeRedo);
+        multiLayerToolbar.add(btn_pickNavigationUndo);
+        multiLayerToolbar.add(btn_pickNavigationRedo);
         
 
         this.addComponentListener(new ComponentAdapter()
@@ -494,11 +503,19 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         {
             vs.setShowInCanvasThisLayerPropagation(btn_showThisLayerInfo.isSelected());
             canvas.refresh();
-        } else if (src == btn_navigationUndo)
+        } else if (src == btn_npChangeUndo)
         {
         	callback.undoRequested();
-        } else if (src == btn_navigationRedo)
+        } else if (src == btn_npChangeRedo)
         {
+        	callback.redoRequested();
+        } else if (src == btn_pickNavigationUndo)
+        {
+        	// TODO
+        	callback.redoRequested();
+        } else if (src == btn_pickNavigationRedo)
+        {
+        	// TODO
         	callback.redoRequested();
         } else if (src == it_closeMap)
         {

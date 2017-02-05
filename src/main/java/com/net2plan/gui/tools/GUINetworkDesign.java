@@ -148,52 +148,34 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     public void undoRequested ()
     { 
         if (inOnlineSimulationMode()) return;
-    	System.out.println("Before undo New VS: pickedElement " + vs.getPickedNetworkElement());
+//    	System.out.println("Before undo New VS: pickedElement " + vs.getPickedNetworkElement());
 
-        final Pair<VisualizationState,Boolean> back = undoRedoManager.getNavigationBackElement();
+        final Triple<NetPlan,BidiMap<NetworkLayer, Integer>  , Map<NetworkLayer, Boolean>> back = undoRedoManager.getNavigationBackElement();
     	if (back == null) return;
-    	System.out.println("Undo requested. BEFORE Current np : " + currentNetPlan.hashCode());
+//    	System.out.println("Undo requested. BEFORE Current np : " + currentNetPlan.hashCode());
 
-    	this.vs = back.getFirst();
-    	this.currentNetPlan = this.vs.getNetPlan();
-    	final boolean needToUpdateTopology = back.getSecond();
-    	System.out.println("Undo requested. AFTER Current np : " + currentNetPlan.hashCode() + ", needToUpdateTopology: " + needToUpdateTopology);
-		VisualizationState.checkNpToVsConsistency(this.vs , this.currentNetPlan);
-    	if (needToUpdateTopology) 
-    		updateVisualizationAfterNewTopology();
-    	else
-    	{
-    		updateVisualizationAfterNewTopology();
-//    		topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
-//    		focusPanel.updateView();
-//    		updateVisualizationAfterPick();
-    	}
-    	System.out.println("After undo New VS: pickedElement " + vs.getPickedNetworkElement());
+    	this.currentNetPlan = back.getFirst();
+    	this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, back.getSecond(), back.getThird());
+		updateVisualizationAfterNewTopology();
+//    	System.out.println("Undo requested. AFTER Current np : " + currentNetPlan.hashCode());
+//    	System.out.println("After undo New VS: pickedElement " + vs.getPickedNetworkElement());
     	
     }
 
     @Override
     public void redoRequested ()
     { 
-    	System.out.println("Before redo New VS: pickedElement " + vs.getPickedNetworkElement());
+//    	System.out.println("Before redo New VS: pickedElement " + vs.getPickedNetworkElement());
         if (inOnlineSimulationMode()) return;
-    	final Pair<VisualizationState,Boolean> back = undoRedoManager.getNavigationForwardElement();
-    	if (back == null) return;
-    	System.out.println("Redo requested. BEFORE Current np : " + currentNetPlan.hashCode());
 
-    	this.vs = back.getFirst();
-    	this.currentNetPlan = this.vs.getNetPlan();
-    	final boolean needToUpdateTopology = back.getSecond();
-    	System.out.println("Redo requested. AFTER Current np : " + currentNetPlan.hashCode() + ", needToUpdateTopology: " + needToUpdateTopology);
-		VisualizationState.checkNpToVsConsistency(this.vs , this.currentNetPlan);
-    	if (needToUpdateTopology) 
-    		updateVisualizationAfterNewTopology();
-    	else
-    	{
-    		updateVisualizationAfterNewTopology();
-    		//updateVisualizationAfterPick();
-    	}
-    	System.out.println("After redo New VS: pickedElement " + vs.getPickedNetworkElement());
+        final Triple<NetPlan,BidiMap<NetworkLayer, Integer>  , Map<NetworkLayer, Boolean>> forward = undoRedoManager.getNavigationForwardElement();
+    	if (forward == null) return;
+//    	System.out.println("Redo requested. BEFORE Current np : " + currentNetPlan.hashCode());
+    	this.currentNetPlan = forward.getFirst();
+    	this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, forward.getSecond(), forward.getThird());
+		updateVisualizationAfterNewTopology();
+//    	System.out.println("Redo requested. AFTER Current np : " + currentNetPlan.hashCode());
+//    	System.out.println("After redo New VS: pickedElement " + vs.getPickedNetworkElement());
     	
     }
 
