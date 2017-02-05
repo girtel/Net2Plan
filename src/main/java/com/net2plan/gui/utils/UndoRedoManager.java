@@ -52,15 +52,11 @@ public class UndoRedoManager
 
     public void updateNavigationInformation_newNetPlanChange ()
     {
-		printUndoList("BEFORE NEWCHANGE");
         if (this.maxSizeUndoList <= 1) return; // nothing is stored since nothing will be retrieved
         if (callback.inOnlineSimulationMode()) return;
         /* first remove everything after the cursor */
         while (this.pastInfoVsNewNp.size() > pastInfoVsNewNpCursor + 1) this.pastInfoVsNewNp.remove(pastInfoVsNewNp.size()-1);
-//        if (pastInfoVsNewNpCursor != pastInfoVsNewNp.size() - 1)
-//        	this.pastInfoVsNewNp = this.pastInfoVsNewNp.subList(0 , pastInfoVsNewNpCursor+1);
         final NetPlan npCopy = callback.getDesign().copy();
-//        final VisualizationState vsCopyLinkedToNpCopy = callback.getVisualizationState().copy(npCopy);
         
         final BidiMap<NetworkLayer, Integer> cp_mapLayer2VisualizationOrder = new DualHashBidiMap<>();
 		for (NetworkLayer cpLayer : npCopy.getNetworkLayers()) 
@@ -68,17 +64,10 @@ public class UndoRedoManager
         final Map<NetworkLayer, Boolean> cp_layerVisibilityMap = new HashMap<>();
 		for (NetworkLayer cpLayer : npCopy.getNetworkLayers()) 
 			cp_layerVisibilityMap.put(cpLayer, callback.getVisualizationState().isLayerVisibleInCanvas(callback.getDesign().getNetworkLayer(cpLayer.getIndex())));
-//        final VisualizationState vsCopyLinkedToNpCopy = new VisualizationState(npCopy, cp_mapLayer2VisualizationOrder, cp_layerVisibilityMap);
-
-//        System.out.println("*** The VS copied in undo list has pickedEleent: " + vsCopyLinkedToNpCopy.getPickedNetworkElement());
-        
-//        VisualizationState.checkNpToVsConsistency(vsCopyLinkedToNpCopy , npCopy);
 		pastInfoVsNewNp.add(Triple.of(npCopy , cp_mapLayer2VisualizationOrder , cp_layerVisibilityMap));
 		while (pastInfoVsNewNp.size() > maxSizeUndoList)
 			pastInfoVsNewNp.remove(0);
 		pastInfoVsNewNpCursor = pastInfoVsNewNp.size()-1;
-//		System.out.println("Introduced NP change index " + (pastInfoVsNewNp.size()-1) + ". Callback currentNp: " + callback.getDesign().hashCode() + ") VS-np: " + vsCopyLinkedToNpCopy.getNetPlan().hashCode());
-		printUndoList("AFTER NEWCHANGE");
     }
 
     /** Returns the undo info in the navigation. Returns null if we are already in the first element. The NetPlan object returned is null if
@@ -87,16 +76,10 @@ public class UndoRedoManager
      */
     public Triple<NetPlan,BidiMap<NetworkLayer, Integer>  , Map<NetworkLayer, Boolean>> getNavigationBackElement ()
     {
-		printUndoList("BEFORE BACK");
         if (this.maxSizeUndoList <= 1) return null; // nothing is stored since nothing will be retrieved
         if (callback.inOnlineSimulationMode()) return null;
     	if (pastInfoVsNewNpCursor == 0) return null;
-//		final int originalCursor = pastInfoVsNewNpCursor;
-//		final int newCursor = pastInfoVsNewNpCursor - 1;
-//		final VisualizationState backVS = pastInfoVsNewNp.get(newCursor).getFirst();
-//		final boolean changedNp = (pastInfoVsNewNp.get(originalCursor).getSecond());
 		this.pastInfoVsNewNpCursor --;
-		printUndoList("AFTER BACK");
 		return pastInfoVsNewNp.get(this.pastInfoVsNewNpCursor);
     }
     
@@ -106,16 +89,10 @@ public class UndoRedoManager
      */
     public Triple<NetPlan,BidiMap<NetworkLayer, Integer>  , Map<NetworkLayer, Boolean>>  getNavigationForwardElement ()
     {
-		printUndoList("BEFORE FORWARD");
-
         if (this.maxSizeUndoList <= 1) return null; // nothing is stored since nothing will be retrieved
         if (callback.inOnlineSimulationMode()) return null;
 		if (pastInfoVsNewNpCursor == pastInfoVsNewNp.size()-1) return null;
-//		final int newCursor = pastInfoVsNewNpCursor + 1;
-//		final VisualizationState nextVS = pastInfoVsNewNp.get(newCursor).getFirst();
-//		final boolean changedNp = (pastInfoVsNewNp.get(newCursor).getSecond());
 		this.pastInfoVsNewNpCursor ++;
-		printUndoList("AFTER FORWARD");
 		return pastInfoVsNewNp.get(this.pastInfoVsNewNpCursor);
     }
 

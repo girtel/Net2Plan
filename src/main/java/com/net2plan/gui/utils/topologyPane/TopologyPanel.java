@@ -512,7 +512,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         	callback.redoRequested();
         } else if ((src == btn_pickNavigationUndo) || (src == btn_pickNavigationRedo))
         {
-        	// TODO
         	Pair<NetworkElement,Pair<Demand,Link>> backOrForward = null;
         	do
         	{
@@ -536,7 +535,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 	        	}
 	        	else break; // null,null => reset picked state
         	} while (true);
-    		System.out.println("Picked undo/redo pressed: " + backOrForward);
         	if (backOrForward != null)
         	{
         		if (backOrForward.getFirst() != null) callback.getVisualizationState().pickElement(backOrForward.getFirst());

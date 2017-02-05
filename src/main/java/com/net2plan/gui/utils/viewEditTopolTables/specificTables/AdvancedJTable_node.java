@@ -273,17 +273,15 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                         case COLUMN_SHOWHIDE:
                             if (newValue == null) return;
                         	callback.getVisualizationState().setMandatedByTheUserToBeHiddenInCanvas(node , !((Boolean) newValue));
-                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                         	callback.getVisualizationState ().pickNode(node);
-                            callback.updateVisualizationAfterPick();
+                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                             callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                             break;
 
                         case COLUMN_NAME:
                         	node.setName(newValue.toString());
-                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                         	callback.getVisualizationState ().pickNode(node);
-                            callback.updateVisualizationAfterPick();
+                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                             callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
                             break;
 
@@ -502,9 +500,8 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                 try {
                     Node node = netPlan.addNode(0, 0, "Node " + netPlan.getNumberOfNodes(), null);
                     callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                 	callback.getVisualizationState ().pickNode(node);
-                    callback.updateVisualizationAfterPick();
+                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                     callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
 
                     if  (networkElementType == NetworkElementType.NODE) callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);

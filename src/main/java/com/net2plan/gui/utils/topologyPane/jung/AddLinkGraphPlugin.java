@@ -113,8 +113,6 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
                 callback.getVisualizationState().pickNode(node);
                 callback.updateVisualizationAfterPick();
                 callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
-
-
                 e.consume();
             } else {
                 GUILink link = canvas.getEdge(e);
@@ -167,8 +165,10 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {
-        if (startVertex != null) {
+    public void mouseReleased(MouseEvent e) 
+    {
+    	if (startVertex != null) 
+        {
             final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) e.getSource();
             vv.removePostRenderPaintable(edgePaintable);
             vv.removePostRenderPaintable(arrowPaintable);
@@ -179,20 +179,19 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
             {
             	if (guiNode.getLayer() == startVertex.getLayer ())
     			{
-            		final NetworkLayer layer = guiNode.getLayer();
         			boolean bidirectional = (e.getModifiersEx() & MouseEvent.SHIFT_DOWN_MASK) == MouseEvent.SHIFT_DOWN_MASK;
                     if (bidirectional) node.getNetPlan().addLinkBidirectional(startVertex.getAssociatedNetPlanNode(), node,0,0,200000,null);
                     else node.getNetPlan().addLink(startVertex.getAssociatedNetPlanNode(), node,0,0,200000,null);
-                    callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                    callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals(); // implies a reset picked
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                     callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
     			}
+                //if (node == startVertex.getAssociatedNetPlanNode()) callback.resetPickedStateAndUpdateView();
             }
 
             startVertex = null;
             down = null;
-
-            callback.resetPickedStateAndUpdateView();
+            //callback.resetPickedStateAndUpdateView();
             vv.repaint();
         }
     }
