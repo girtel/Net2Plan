@@ -62,19 +62,19 @@ public class FigureMultiCastDemandSequencePanel extends FigureSequencePanel
 
         final int topCoordinateLineNodes = maxIconSize + (generalMessage.size() * fontHeightTitle) + (maxNumberOfTagsPerNodeNorResource * regularInterlineSpacePixels);
         final Point initialDnTopLeftPosition = new Point(maxIconSize, topCoordinateLineNodes);
-        final int xSeparationDnCenters = maxIconSize * 3;
-        final int ySeparationDnCenters = maxIconSize * 2;
+        final int xSeparationDnCenters = maxIconSize * 2;
+        final int ySeparationDnCenters = maxIconSize * 3;
 
     	/* Initial dn */
-        DrawNode.addNodeToGraphics(g2d, ingressNode, new Point(initialDnTopLeftPosition.x, initialDnTopLeftPosition.y + (ySeparationDnCenters * (egressNodes.size() / 2))), fontMetrics, regularInterlineSpacePixels);
+        DrawNode.addNodeToGraphics(g2d, ingressNode, new Point(initialDnTopLeftPosition.x + ((xSeparationDnCenters * (egressNodes.size() / 2)) - xSeparationDnCenters/2), initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels);
         drawnNodes.add(ingressNode);
 
         for (int i = 0; i < egressNodes.size(); i++)
         {
             final DrawNode egressNode = egressNodes.get(i);
-            DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + xSeparationDnCenters, initialDnTopLeftPosition.y + (i * ySeparationDnCenters)), fontMetrics, regularInterlineSpacePixels);
+            DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + (i * xSeparationDnCenters), initialDnTopLeftPosition.y + ySeparationDnCenters), fontMetrics, regularInterlineSpacePixels);
             final DrawLine link = new DrawLine(ingressNode, egressNode);
-            DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels, lineStroke);
+            DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels, DrawLine.Orientation.VERTICAL, lineStroke);
 
             drawnNodes.add(egressNode);
             drawnLines.add(link);

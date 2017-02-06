@@ -107,7 +107,7 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
 
     			/* create link from previous dn (resource of node) to here: no URL */
                 final DrawLine dlNoURL = new DrawLine(drawnNodes.get(drawnNodes.size() - 2), drawnNodes.get(drawnNodes.size() - 1));
-                DrawLine.addLineToGraphics(g2d, dlNoURL, fontMetrics, regularInterlineSpacePixels);
+                DrawLine.addLineToGraphics(g2d, dlNoURL, fontMetrics, regularInterlineSpacePixels, DrawLine.Orientation.HORIZONTAL);
                 drawnLines.add(dlNoURL);
             } else if (e instanceof Link)
             {
@@ -127,7 +127,7 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
                 {
     				/* Add a link to the last resource to its host node */
                     final DrawLine dlNoURL = new DrawLine(drawnNodes.get(drawnNodes.size() - 1), lastNodeElement);
-                    DrawLine.addLineToGraphics(g2d, dlNoURL, fontMetrics, regularInterlineSpacePixels);
+                    DrawLine.addLineToGraphics(g2d, dlNoURL, fontMetrics, regularInterlineSpacePixels, DrawLine.Orientation.HORIZONTAL);
                     drawnLines.add(dlNoURL);
                 }
     			
@@ -139,7 +139,7 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
     			/* if the last element was a resource, add two links (res -> node [No URL], node->nextNode [URL]).
     			 * If not create just one link [URL] */
                 final DrawLine dlLink = new DrawLine(lastNodeElement, drawnNodes.get(drawnNodes.size() - 1), link, occup);
-                DrawLine.addLineToGraphics(g2d, dlLink, fontMetrics, regularInterlineSpacePixels);
+                DrawLine.addLineToGraphics(g2d, dlLink, fontMetrics, regularInterlineSpacePixels, DrawLine.Orientation.HORIZONTAL);
                 drawnLines.add(dlLink);
             } else throw new RuntimeException();
         }
