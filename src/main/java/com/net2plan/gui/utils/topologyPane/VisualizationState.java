@@ -1672,14 +1672,26 @@ public class VisualizationState
     private void updatePickUndoList_newPickOrPickReset ()
     {
         if (this.maxSizePickUndoList <= 1) return; // nothing is stored since nothing will be retrieved
+        
+        /* Eliminate repeated continuous elements in the list, and everuthing after the cursor */
+        final List<Pair<NetworkElement,Pair<Demand,Link>>> newList = new ArrayList<> ();
+        for (int index = 0 ; index <= pastPickedElementsCursor ; index ++)
+        {
+        	if ((index  > 0) && (pastPickedElements.get(index).equals(pastPickedElements.get(index-1)))) continue;
+        	newList.add(pastPickedElements.get(index));
+        }
+        this.pastPickedElements = newList;
+
         /* If the same element picked as the last one, do not add */
         if (!pastPickedElements.isEmpty())
         	if (Pair.of(this.pickedElementNotFR , pickedElementFR).equals(pastPickedElements.get(pastPickedElements.size() - 1)))
         		return;
-        /* first remove everything after the cursor */
-        while (this.pastPickedElements.size() > pastPickedElementsCursor + 1) this.pastPickedElements.remove(pastPickedElements.size()-1);
+
+        /* Add the elements at the end of the list */
         pastPickedElements.add(Pair.of(pickedElementNotFR , pickedElementFR));
-		while (pastPickedElements.size() > maxSizePickUndoList)
+
+        /* Check list size */
+        while (pastPickedElements.size() > maxSizePickUndoList)
 			pastPickedElements.remove(0);
 		pastPickedElementsCursor = pastPickedElements.size()-1;
     }
