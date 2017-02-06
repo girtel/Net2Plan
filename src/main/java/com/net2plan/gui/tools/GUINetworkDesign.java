@@ -24,12 +24,7 @@ package com.net2plan.gui.tools;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.util.Collection;
 import java.util.HashMap;
@@ -328,26 +323,25 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         btn_pickNavigationRedo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/redoPick.png")));
         btn_pickNavigationRedo.setToolTipText("Navigate forward to the next element picked");
 
-        btn_pickNavigationUndo.addActionListener(e ->
+        final ActionListener action = e ->
         {
-            Pair<NetworkElement, Pair<Demand, Link>> backOrForward = null;
+            Pair<NetworkElement, Pair<Demand, Link>> backOrForward;
             do
             {
-                backOrForward = this.getVisualizationState().getPickNavigationBackElement();
+                backOrForward = (e.getSource() == btn_pickNavigationUndo) ? GUINetworkDesign.this.getVisualizationState().getPickNavigationBackElement() : GUINetworkDesign.this.getVisualizationState().getPickNavigationForwardElement();
                 if (backOrForward == null) break;
-
                 final NetworkElement ne = backOrForward.getFirst();
                 final Pair<Demand, Link> fr = backOrForward.getSecond();
                 if (ne != null)
                 {
-                    if (ne.getNetPlan() != this.getDesign()) continue;
+                    if (ne.getNetPlan() != GUINetworkDesign.this.getDesign()) continue;
                     if (ne.getNetPlan() == null) continue;
                     break;
                 } else if (fr != null)
                 {
-                    if (fr.getFirst().getNetPlan() != this.getDesign()) continue;
+                    if (fr.getFirst().getNetPlan() != GUINetworkDesign.this.getDesign()) continue;
                     if (fr.getFirst().getNetPlan() == null) continue;
-                    if (fr.getSecond().getNetPlan() != this.getDesign()) continue;
+                    if (fr.getSecond().getNetPlan() != GUINetworkDesign.this.getDesign()) continue;
                     if (fr.getSecond().getNetPlan() == null) continue;
                     break;
                 } else break; // null,null => reset picked state
@@ -355,48 +349,16 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             if (backOrForward != null)
             {
                 if (backOrForward.getFirst() != null)
-                    this.getVisualizationState().pickElement(backOrForward.getFirst());
+                    GUINetworkDesign.this.getVisualizationState().pickElement(backOrForward.getFirst());
                 else if (backOrForward.getSecond() != null)
-                    this.getVisualizationState().pickForwardingRule(backOrForward.getSecond());
-                else this.getVisualizationState().resetPickedState();
-                this.updateVisualizationAfterPick();
+                    GUINetworkDesign.this.getVisualizationState().pickForwardingRule(backOrForward.getSecond());
+                else GUINetworkDesign.this.getVisualizationState().resetPickedState();
+                GUINetworkDesign.this.updateVisualizationAfterPick();
             }
-        });
+        };
 
-        btn_pickNavigationRedo.addActionListener(e ->
-        {
-            Pair<NetworkElement, Pair<Demand, Link>> backOrForward = null;
-            do
-            {
-                backOrForward = this.getVisualizationState().getPickNavigationForwardElement();
-                if (backOrForward == null) break;
-
-                final NetworkElement ne = backOrForward.getFirst();
-                final Pair<Demand, Link> fr = backOrForward.getSecond();
-                if (ne != null)
-                {
-                    if (ne.getNetPlan() != this.getDesign()) continue;
-                    if (ne.getNetPlan() == null) continue;
-                    break;
-                } else if (fr != null)
-                {
-                    if (fr.getFirst().getNetPlan() != this.getDesign()) continue;
-                    if (fr.getFirst().getNetPlan() == null) continue;
-                    if (fr.getSecond().getNetPlan() != this.getDesign()) continue;
-                    if (fr.getSecond().getNetPlan() == null) continue;
-                    break;
-                } else break; // null,null => reset picked state
-            } while (true);
-            if (backOrForward != null)
-            {
-                if (backOrForward.getFirst() != null)
-                    this.getVisualizationState().pickElement(backOrForward.getFirst());
-                else if (backOrForward.getSecond() != null)
-                    this.getVisualizationState().pickForwardingRule(backOrForward.getSecond());
-                else this.getVisualizationState().resetPickedState();
-                this.updateVisualizationAfterPick();
-            }
-        });
+        btn_pickNavigationUndo.addActionListener(action);
+        btn_pickNavigationRedo.addActionListener(action);
 
         navigationToolbar.add(btn_pickNavigationUndo);
         navigationToolbar.add(btn_pickNavigationRedo);
