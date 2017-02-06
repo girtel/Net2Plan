@@ -24,12 +24,7 @@ package com.net2plan.gui.tools;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.util.Collection;
 import java.util.HashMap;
@@ -37,18 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
-import javax.swing.JComponent;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.border.LineBorder;
 
 import org.apache.commons.collections15.BidiMap;
@@ -94,16 +78,16 @@ import net.miginfocom.swing.MigLayout;
  * using the open-source Java Optimization Modeler library, to interface
  * to a number of external solvers such as GPLK, CPLEX or IPOPT.
  */
+
 /**
  * @author Pablo
- *
  */
 public class GUINetworkDesign extends IGUIModule implements IVisualizationCallback
 {
     private final static String TITLE = "Offline network design & Online network simulation";
     private final static int MAXSIZEUNDOLISTCHANGES = 10;
     private final static int MAXSIZEUNDOLISTPICK = 10;
-    
+
     private TopologyPanel topologyPanel;
 
     private FocusPane focusPanel;
@@ -144,30 +128,33 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 //    }
 
     @Override
-    public UndoRedoManager getUndoRedoNavigationManager () { return undoRedoManager; }
-    
-    @Override
-    public void undoRequested ()
-    { 
-        if (inOnlineSimulationMode()) return;
-
-        final Triple<NetPlan,BidiMap<NetworkLayer, Integer>  , Map<NetworkLayer, Boolean>> back = undoRedoManager.getNavigationBackElement();
-    	if (back == null) return;
-
-    	this.currentNetPlan = back.getFirst();
-    	this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, back.getSecond(), back.getThird());
-		updateVisualizationAfterNewTopology();
+    public UndoRedoManager getUndoRedoNavigationManager()
+    {
+        return undoRedoManager;
     }
 
     @Override
-    public void redoRequested ()
-    { 
+    public void undoRequested()
+    {
         if (inOnlineSimulationMode()) return;
 
-        final Triple<NetPlan,BidiMap<NetworkLayer, Integer>  , Map<NetworkLayer, Boolean>> forward = undoRedoManager.getNavigationForwardElement();
-    	if (forward == null) return;
-    	this.currentNetPlan = forward.getFirst();
-    	this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, forward.getSecond(), forward.getThird());
+        final Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> back = undoRedoManager.getNavigationBackElement();
+        if (back == null) return;
+
+        this.currentNetPlan = back.getFirst();
+        this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, back.getSecond(), back.getThird());
+        updateVisualizationAfterNewTopology();
+    }
+
+    @Override
+    public void redoRequested()
+    {
+        if (inOnlineSimulationMode()) return;
+
+        final Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> forward = undoRedoManager.getNavigationForwardElement();
+        if (forward == null) return;
+        this.currentNetPlan = forward.getFirst();
+        this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, forward.getSecond(), forward.getThird());
     }
 
     @Override
@@ -182,7 +169,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             mapLayer2VisualizationOrder.put(layer, mapLayer2VisualizationOrder.size());
             layerVisibilityMap.put(layer, true);
         }
-        this.vs = new VisualizationState(currentNetPlan, mapLayer2VisualizationOrder, layerVisibilityMap , MAXSIZEUNDOLISTPICK);
+        this.vs = new VisualizationState(currentNetPlan, mapLayer2VisualizationOrder, layerVisibilityMap, MAXSIZEUNDOLISTPICK);
 
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
 
@@ -213,7 +200,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         vs.setCanvasLayerVisibilityAndOrder(getDesign(), res.getFirst(), res.getSecond());
 
         /* Initialize the undo/redo manager, and set its initial design */
-        this.undoRedoManager = new UndoRedoManager(this , MAXSIZEUNDOLISTCHANGES);
+        this.undoRedoManager = new UndoRedoManager(this, MAXSIZEUNDOLISTCHANGES);
         this.undoRedoManager.updateNavigationInformation_newNetPlanChange();
 
         onlineSimulationPane = new OnlineSimulationPane(this);
@@ -310,7 +297,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         });
 
         // Building windows
-        WindowController.buildControlWindow(tabPane);
+        WindowController.buildTableControlWindow(tabPane);
         WindowController.showTablesWindow(false);
 
         addAllKeyCombinationActions();
@@ -321,10 +308,67 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     private JPanel configureLeftBottomPanel()
     {
         focusPanel = new FocusPane(this);// = new JTextArea();
-//        txt_netPlanLog.setFont(new JLabel().getFont());
+        final JPanel auxPanel = new JPanel(new BorderLayout());
+        final JToolBar navigationToolbar = new JToolBar(JToolBar.VERTICAL);
+        navigationToolbar.setRollover(true);
+        navigationToolbar.setFloatable(false);
+        navigationToolbar.setOpaque(false);
+
+        final JButton btn_pickNavigationUndo, btn_pickNavigationRedo;
+
+        btn_pickNavigationUndo = new JButton("");
+        btn_pickNavigationUndo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/undoPick.png")));
+        btn_pickNavigationUndo.setToolTipText("Navigate back to the previous element picked");
+        btn_pickNavigationRedo = new JButton("");
+        btn_pickNavigationRedo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/redoPick.png")));
+        btn_pickNavigationRedo.setToolTipText("Navigate forward to the next element picked");
+
+        final ActionListener action = e ->
+        {
+            Pair<NetworkElement, Pair<Demand, Link>> backOrForward;
+            do
+            {
+                backOrForward = (e.getSource() == btn_pickNavigationUndo) ? GUINetworkDesign.this.getVisualizationState().getPickNavigationBackElement() : GUINetworkDesign.this.getVisualizationState().getPickNavigationForwardElement();
+                if (backOrForward == null) break;
+                final NetworkElement ne = backOrForward.getFirst();
+                final Pair<Demand, Link> fr = backOrForward.getSecond();
+                if (ne != null)
+                {
+                    if (ne.getNetPlan() != GUINetworkDesign.this.getDesign()) continue;
+                    if (ne.getNetPlan() == null) continue;
+                    break;
+                } else if (fr != null)
+                {
+                    if (fr.getFirst().getNetPlan() != GUINetworkDesign.this.getDesign()) continue;
+                    if (fr.getFirst().getNetPlan() == null) continue;
+                    if (fr.getSecond().getNetPlan() != GUINetworkDesign.this.getDesign()) continue;
+                    if (fr.getSecond().getNetPlan() == null) continue;
+                    break;
+                } else break; // null,null => reset picked state
+            } while (true);
+            if (backOrForward != null)
+            {
+                if (backOrForward.getFirst() != null)
+                    GUINetworkDesign.this.getVisualizationState().pickElement(backOrForward.getFirst());
+                else if (backOrForward.getSecond() != null)
+                    GUINetworkDesign.this.getVisualizationState().pickForwardingRule(backOrForward.getSecond());
+                else GUINetworkDesign.this.getVisualizationState().resetPickedState();
+                GUINetworkDesign.this.updateVisualizationAfterPick();
+            }
+        };
+
+        btn_pickNavigationUndo.addActionListener(action);
+        btn_pickNavigationRedo.addActionListener(action);
+
+        navigationToolbar.add(btn_pickNavigationUndo);
+        navigationToolbar.add(btn_pickNavigationRedo);
+
+        auxPanel.add(navigationToolbar, BorderLayout.WEST);
+        auxPanel.add(focusPanel, BorderLayout.CENTER);
+
         JPanel pane = new JPanel(new MigLayout("fill, insets 0 0 0 0"));
         pane.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Focus panel"));
-        final JScrollPane scPane = new JScrollPane(focusPanel , JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED , JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        final JScrollPane scPane = new JScrollPane(auxPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         scPane.getVerticalScrollBar().setUnitIncrement(20);
         scPane.getHorizontalScrollBar().setUnitIncrement(20);
         pane.add(scPane, "grow");
@@ -346,7 +390,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @Override
     public String getMenu()
     {
-   	
+
         return "Tools|" + TITLE;
     }
 
@@ -817,7 +861,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             }
         }
     }
-    
-    
-    
+
+
 }
