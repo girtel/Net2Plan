@@ -62,17 +62,7 @@ public class DrawNode
 	List<Rectangle2D> shapesLabelsToCreateByPainter;
 
 	Point posCenter () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) , posTopLeftCornerToSetByPainter.y + (icon.getHeight(null) / 2)); }
-	public String toString () { return "node: " + associatedElement; } 
-
-	public Image getIcon()
-	{
-		return icon;
-	}
-
-	public Shape getShape()
-	{
-		return shapeIconToSetByPainter;
-	}
+	public String toString () { return "node: " + associatedElement; }
 
     private Pair<ImageIcon,Shape> getNodeIcon (Node n , NetworkLayer layer , int maxHeightOrSizeIcon)
     {

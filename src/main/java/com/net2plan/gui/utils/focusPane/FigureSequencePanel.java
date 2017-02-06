@@ -46,7 +46,7 @@ public abstract class FigureSequencePanel extends JPanel
         {
             for (DrawNode drawnNode : drawnNodes)
             {
-                if (drawnNode.getShape().contains(e.getPoint()))
+                if (drawnNode.shapeIconToSetByPainter.contains(e.getPoint()))
                 {
                     FigureSequencePanel.this.setCursor(new Cursor(Cursor.HAND_CURSOR));
                     return;
