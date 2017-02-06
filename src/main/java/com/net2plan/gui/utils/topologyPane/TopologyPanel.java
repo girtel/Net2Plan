@@ -220,9 +220,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showThisLayerInfo = new JToggleButton();
         btn_showThisLayerInfo.setToolTipText("Shows the links in the same layer as the picked element, that carry traffic that appears in the picked element");
         btn_showThisLayerInfo.setSelected(getVisualizationState().isShowInCanvasThisLayerPropagation());
-        btn_npChangeUndo = new JButton ("Undo");
+        btn_npChangeUndo = new JButton ();
         btn_npChangeUndo.setToolTipText("Navigate back to the previous state of the network (last time the network design was changed)");
-        btn_npChangeRedo = new JButton ("Redo");
+        btn_npChangeRedo = new JButton ();
         btn_npChangeRedo.setToolTipText("Navigate forward to the next state of the network (when network design was changed");
         btn_pickNavigationUndo = new JButton ("Pick Undo");
         btn_pickNavigationUndo.setToolTipText("Navigate back to the previous element picked");
@@ -265,6 +265,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showLowerLayerInfo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLayerLowerPropagation.png")));
         btn_tableControlWindow.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showControl.png")));
         btn_osmMap.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showOSM.png")));
+        btn_npChangeUndo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/undoButton.png")));
+        btn_npChangeRedo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/redoButton.png")));
 
         btn_load.addActionListener(this);
         btn_loadDemand.addActionListener(this);
@@ -322,11 +324,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         multiLayerToolbar.add(btn_showUpperLayerInfo);
         multiLayerToolbar.add(btn_showThisLayerInfo);
         multiLayerToolbar.add(btn_multilayer);
+        multiLayerToolbar.add(Box.createVerticalGlue());
         multiLayerToolbar.add(btn_npChangeUndo);
         multiLayerToolbar.add(btn_npChangeRedo);
         multiLayerToolbar.add(btn_pickNavigationUndo);
         multiLayerToolbar.add(btn_pickNavigationRedo);
-        
 
         this.addComponentListener(new ComponentAdapter()
         {
