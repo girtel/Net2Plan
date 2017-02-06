@@ -56,7 +56,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance;
     private final JButton btn_increaseNodeSize, btn_decreaseNodeSize, btn_increaseFontSize, btn_decreaseFontSize;
     private final JButton btn_npChangeUndo, btn_npChangeRedo;
-    private final JButton btn_pickNavigationUndo, btn_pickNavigationRedo;
     private final JToggleButton btn_showLowerLayerInfo, btn_showUpperLayerInfo, btn_showThisLayerInfo;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final JPopUpButton btn_multilayer;
@@ -224,10 +223,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_npChangeUndo.setToolTipText("Navigate back to the previous state of the network (last time the network design was changed)");
         btn_npChangeRedo = new JButton ();
         btn_npChangeRedo.setToolTipText("Navigate forward to the next state of the network (when network design was changed");
-        btn_pickNavigationUndo = new JButton ("Pick Undo");
-        btn_pickNavigationUndo.setToolTipText("Navigate back to the previous element picked");
-        btn_pickNavigationRedo = new JButton ("Pick Redo");
-        btn_pickNavigationRedo.setToolTipText("Navigate forward to the next element picked");
+
 
         btn_osmMap = new JToggleButton();
         btn_osmMap.setToolTipText("Toggle between on/off the OSM support. An internet connection is required in order for this to work.");
@@ -290,8 +286,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_decreaseFontSize.addActionListener(this);
         btn_npChangeUndo.addActionListener(this);
         btn_npChangeRedo.addActionListener(this);
-        btn_pickNavigationUndo.addActionListener(this);
-        btn_pickNavigationRedo.addActionListener(this);
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
@@ -323,12 +317,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         multiLayerToolbar.add(btn_showLowerLayerInfo);
         multiLayerToolbar.add(btn_showUpperLayerInfo);
         multiLayerToolbar.add(btn_showThisLayerInfo);
-        multiLayerToolbar.add(btn_multilayer);
         multiLayerToolbar.add(Box.createVerticalGlue());
         multiLayerToolbar.add(btn_npChangeUndo);
         multiLayerToolbar.add(btn_npChangeRedo);
-        multiLayerToolbar.add(btn_pickNavigationUndo);
-        multiLayerToolbar.add(btn_pickNavigationRedo);
 
         this.addComponentListener(new ComponentAdapter()
         {
@@ -496,38 +487,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         } else if (src == btn_npChangeRedo)
         {
         	callback.redoRequested();
-        } else if ((src == btn_pickNavigationUndo) || (src == btn_pickNavigationRedo))
-        {
-        	Pair<NetworkElement,Pair<Demand,Link>> backOrForward = null;
-        	do
-        	{
-        		backOrForward = (src == btn_pickNavigationUndo)? callback.getVisualizationState().getPickNavigationBackElement() : callback.getVisualizationState().getPickNavigationForwardElement();
-        		if (backOrForward == null) break;
-        		final NetworkElement ne = backOrForward.getFirst();
-        		final Pair<Demand,Link> fr = backOrForward.getSecond();
-	        	if (ne != null)
-	        	{
-	        		if (ne.getNetPlan() != callback.getDesign()) continue;
-	        		if (ne.getNetPlan() == null) continue;
-	        		break;
-	        	}
-	        	else if (fr != null)
-	        	{
-	        		if (fr.getFirst().getNetPlan() != callback.getDesign()) continue;
-	        		if (fr.getFirst().getNetPlan() == null) continue;
-	        		if (fr.getSecond().getNetPlan() != callback.getDesign()) continue;
-	        		if (fr.getSecond().getNetPlan() == null) continue;
-	        		break;
-	        	}
-	        	else break; // null,null => reset picked state
-        	} while (true);
-        	if (backOrForward != null)
-        	{
-        		if (backOrForward.getFirst() != null) callback.getVisualizationState().pickElement(backOrForward.getFirst());
-        		else if (backOrForward.getSecond() != null) callback.getVisualizationState().pickForwardingRule(backOrForward.getSecond());
-        		else callback.getVisualizationState().resetPickedState();
-        		callback.updateVisualizationAfterPick();
-        	}
         } else if (src == btn_tableControlWindow)
         {
             WindowController.showTablesWindow(true);
