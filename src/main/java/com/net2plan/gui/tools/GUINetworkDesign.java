@@ -196,10 +196,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             JSplitPane splitPaneTopology = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
             splitPaneTopology.setTopComponent(topologyPanel);
             splitPaneTopology.setBottomComponent(logSection);
-            splitPaneTopology.setResizeWeight(1);
-            splitPaneTopology.setDividerLocation(0.5);
-            splitPaneTopology.setDividerSize((int) (splitPaneTopology.getHeight() * 0.7));
-            //splitPaneTopology.addPropertyChangeListener(new ProportionalResizeJSplitPaneListener());
+            splitPaneTopology.addPropertyChangeListener(new ProportionalResizeJSplitPaneListener());
             splitPaneTopology.setBorder(new LineBorder(contentPane.getBackground()));
             splitPaneTopology.setOneTouchExpandable(true);
             splitPaneTopology.setDividerSize(7);
