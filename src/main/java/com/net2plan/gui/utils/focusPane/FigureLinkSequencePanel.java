@@ -163,14 +163,16 @@ public class FigureLinkSequencePanel extends JPanel
             super.mouseClicked(me);
             for (DrawNode dn : drawnNodes)
             {
-                if (dn.shapeIconToSetByPainter.contains(me.getPoint())) { System.out.println("shape icon clicked node: " + dn.toString()); }            	
+                if (dn.shapeIconToSetByPainter.contains(me.getPoint())) 
+                	FocusPane.processMouseClickInternalLink ("node" + dn.associatedElement.getId() , callback);
                 for (int labelIndex = 0; labelIndex < dn.labels.size() ; labelIndex ++)
                 	if (dn.shapesLabelsToCreateByPainter.get(labelIndex).contains(me.getPoint())) 
                 		FocusPane.processMouseClickInternalLink (dn.urlsLabels.get(labelIndex) , callback);
             }                
             for (DrawLine dl : drawnLines)
             {
-                if (dl.shapeLineToCreateByPainter.contains(me.getPoint())) { System.out.println("shape clicked line: " + dl.toString()); }            	
+                if (dl.shapeLineToCreateByPainter.contains(me.getPoint())) 
+                	FocusPane.processMouseClickInternalLink ("link" + dl.associatedElement.getId() , callback);
                 for (int labelIndex = 0; labelIndex < dl.labels.size() ; labelIndex ++)
                 	if (dl.shapesLabelstoCreateByPainter.get(labelIndex).contains(me.getPoint())) 
                 		FocusPane.processMouseClickInternalLink (dl.urlsLabels.get(labelIndex) , callback);

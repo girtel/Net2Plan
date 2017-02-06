@@ -1090,9 +1090,8 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
     	StringBuffer buf = new StringBuffer ();
     	buf.append("N" + r.getIngressNode().getIndex());
     	for (NetworkElement e : r.getPath())
-    		if (e instanceof Link) buf.append("N" + ((Link) e).getDestinationNode().getIndex() + ",");
-    		else if (e instanceof Resource) buf.append("(R" + e.getIndex() + "),");
-    	buf.setLength(buf.length()-1);
+    		if (e instanceof Link) buf.append(",N" + ((Link) e).getDestinationNode().getIndex());
+    		else if (e instanceof Resource) buf.append(",(R" + e.getIndex() + ")");
     	return buf.toString();
     }
     

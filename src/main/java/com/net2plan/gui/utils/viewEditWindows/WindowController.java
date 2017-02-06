@@ -13,7 +13,7 @@ import java.util.*;
  */
 public class WindowController
 {
-    private static GUIWindow controlWindow;
+    private static GUIWindow tablesAndControlWindow;
     private static GUIWindow reportWindow;
     private static GUIWindow offlineWindow;
     private static GUIWindow onlineWindow;
@@ -24,37 +24,37 @@ public class WindowController
     public static void buildControlWindow(final JComponent component)
     {
         // Control window != Network state tab.
-        controlWindow = new GUIWindow()
+        tablesAndControlWindow = new GUIWindow()
         {
             @Override
             public String getTitle()
             {
-                return "Net2Plan - Control window";
+                return "Net2Plan - Design tables and control window";
             }
         };
 
-        controlWindow.buildWindow(component);
+        tablesAndControlWindow.buildWindow(component);
     }
 
-    public static void showControlWindow(final boolean gainFocus)
+    public static void showTablesWindow(final boolean gainFocus)
     {
-        if (controlWindow != null)
+        if (tablesAndControlWindow != null)
         {
             if (gainFocus)
             {
-                controlWindow.showWindow();
+                tablesAndControlWindow.showWindow();
             } else
             {
-                controlWindow.setFocusableWindowState(false);
-                controlWindow.showWindow();
-                controlWindow.setFocusableWindowState(true);
+                tablesAndControlWindow.setFocusableWindowState(false);
+                tablesAndControlWindow.showWindow();
+                tablesAndControlWindow.setFocusableWindowState(true);
             }
         }
     }
 
     public static void addTabToControlWindow(final String newTabName, final JComponent newTabComponent)
     {
-        final JTabbedPane tabPane = (JTabbedPane) controlWindow.getComponent();
+        final JTabbedPane tabPane = (JTabbedPane) tablesAndControlWindow.getComponent();
 
         final Map<String, Component> toSortTabs = new HashMap<>();
         toSortTabs.put(newTabName, newTabComponent);

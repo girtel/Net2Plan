@@ -31,7 +31,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -56,6 +55,7 @@ import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.UndoRedoManager;
 import com.net2plan.gui.utils.focusPane.FocusPane;
 import com.net2plan.gui.utils.offlineExecPane.OfflineExecutionPanel;
@@ -311,7 +311,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         // Building windows
         WindowController.buildControlWindow(tabPane);
-        WindowController.showControlWindow(false);
+        WindowController.showTablesWindow(false);
 
         addAllKeyCombinationActions();
         updateVisualizationAfterNewTopology();
@@ -640,7 +640,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                WindowController.showControlWindow(true);
+                WindowController.showTablesWindow(true);
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
     }

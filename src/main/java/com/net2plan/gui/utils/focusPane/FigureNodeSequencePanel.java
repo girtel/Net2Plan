@@ -60,7 +60,7 @@ public class FigureNodeSequencePanel extends JPanel
         g2d.setColor(Color.black);
         
     	int currentXYStartOfText = 40;
-    	final int maxHeightOrSizeIcon = 100;
+    	final int maxHeightOrSizeIcon = 60;
     	final int maxNumberOfTagsPerNodeNorResource = 1;
     	
     	/* Initial messages */
@@ -101,7 +101,8 @@ public class FigureNodeSequencePanel extends JPanel
         public void mouseClicked(MouseEvent me) 
         {
             super.mouseClicked(me);
-            if (dn.shapeIconToSetByPainter.contains(me.getPoint())) { System.out.println("shape icon clicked node: " + dn.toString()); }            	
+            if (dn.shapeIconToSetByPainter.contains(me.getPoint())) 
+            	FocusPane.processMouseClickInternalLink ("node" + dn.associatedElement.getId() , callback);
             for (int labelIndex = 0; labelIndex < dn.labels.size() ; labelIndex ++)
             	if (dn.shapesLabelsToCreateByPainter.get(labelIndex).contains(me.getPoint())) 
             		FocusPane.processMouseClickInternalLink (dn.urlsLabels.get(labelIndex) , callback);
