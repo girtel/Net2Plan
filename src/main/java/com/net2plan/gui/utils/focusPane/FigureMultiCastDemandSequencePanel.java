@@ -1,26 +1,30 @@
 package com.net2plan.gui.utils.focusPane;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.Node;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 
 /**
  * @author Jorge San Emeterio
  * @date 06-Feb-17
  */
-public class FigureDemandSequencePanel extends FigureSequencePanel
+public class FigureMultiCastDemandSequencePanel extends FigureSequencePanel
 {
     private final List<String> generalMessage;
-    private final Demand demand;
+    private final MulticastDemand multicastDemand;
     private final BasicStroke lineStroke;
 
-    public FigureDemandSequencePanel(final IVisualizationCallback callback, final Demand demand, final String... titleMessage)
+    public FigureMultiCastDemandSequencePanel(final IVisualizationCallback callback, final MulticastDemand multicastDemand, final String... titleMessage)
     {
         super(callback);
-        this.demand = demand;
+
+        this.multicastDemand = multicastDemand;
         this.generalMessage = Arrays.asList(titleMessage);
         this.lineStroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, new float[]{10.0f}, 0.0f);
     }
@@ -47,23 +51,33 @@ public class FigureDemandSequencePanel extends FigureSequencePanel
         final FontMetrics fontMetrics = g2d.getFontMetrics();
         final int regularInterlineSpacePixels = fontMetrics.getHeight();
 
-        final DrawNode ingressNode = new DrawNode(demand.getIngressNode(), demand.getLayer(), maxIconSize);
-        final DrawNode egressNode = new DrawNode(demand.getEgressNode(), demand.getLayer(), maxIconSize);
+        final DrawNode ingressNode = new DrawNode(multicastDemand.getIngressNode(), multicastDemand.getLayer(), maxIconSize);
+
+        final List<DrawNode> egressNodes = new ArrayList<>();
+        for (Node node : multicastDemand.getEgressNodes())
+        {
+            final DrawNode egressNode = new DrawNode(node, multicastDemand.getLayer(), maxIconSize);
+            egressNodes.add(egressNode);
+        }
 
         final int topCoordinateLineNodes = maxIconSize + (generalMessage.size() * fontHeightTitle) + (maxNumberOfTagsPerNodeNorResource * regularInterlineSpacePixels);
         final Point initialDnTopLeftPosition = new Point(maxIconSize, topCoordinateLineNodes);
         final int xSeparationDnCenters = maxIconSize * 3;
+        final int ySeparationDnCenters = maxIconSize * 2;
 
     	/* Initial dn */
-        DrawNode.addNodeToGraphics(g2d, ingressNode, initialDnTopLeftPosition, fontMetrics, regularInterlineSpacePixels);
-        DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + xSeparationDnCenters, initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels);
-
+        DrawNode.addNodeToGraphics(g2d, ingressNode, new Point(initialDnTopLeftPosition.x, initialDnTopLeftPosition.y + (ySeparationDnCenters * (egressNodes.size() / 2))), fontMetrics, regularInterlineSpacePixels);
         drawnNodes.add(ingressNode);
-        drawnNodes.add(egressNode);
 
-        final DrawLine link = new DrawLine(ingressNode, egressNode);
-        DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels, lineStroke);
+        for (int i = 0; i < egressNodes.size(); i++)
+        {
+            final DrawNode egressNode = egressNodes.get(i);
+            DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + xSeparationDnCenters, initialDnTopLeftPosition.y + (i * ySeparationDnCenters)), fontMetrics, regularInterlineSpacePixels);
+            final DrawLine link = new DrawLine(ingressNode, egressNode);
+            DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels, lineStroke);
 
-        drawnLines.add(link);
+            drawnNodes.add(egressNode);
+            drawnLines.add(link);
+        }
     }
 }

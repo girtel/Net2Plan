@@ -115,8 +115,8 @@ public class FocusPane extends JPanel
 		else if (elementType == NetworkElementType.MULTICAST_DEMAND)
 		{
 			final MulticastDemand md = (MulticastDemand) vs.getPickedNetworkElement();
-//			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
-//			this.add(fig , BorderLayout.WEST);
+			final FigureMultiCastDemandSequencePanel fig = new FigureMultiCastDemandSequencePanel(callback, md, "Multicast demand " + md.getIndex());
+			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getMulticastDemandInfoTables(md), md) , BorderLayout.CENTER);
 		}
 		else if (elementType == NetworkElementType.MULTICAST_TREE)

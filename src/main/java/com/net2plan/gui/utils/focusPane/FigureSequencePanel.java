@@ -36,7 +36,10 @@ public abstract class FigureSequencePanel extends JPanel
         return new Dimension(600, 600);
     }
 
-    class MouseMotionFocusPanel extends MouseMotionAdapter
+    @Override
+    protected abstract void paintComponent(Graphics graphics);
+
+    private class MouseMotionFocusPanel extends MouseMotionAdapter
     {
         @Override
         public void mouseMoved(MouseEvent e)
@@ -54,7 +57,7 @@ public abstract class FigureSequencePanel extends JPanel
         }
     }
 
-    class MouseAdapterFocusPanel extends MouseAdapter
+    private class MouseAdapterFocusPanel extends MouseAdapter
     {
         @Override
         public void mouseClicked(MouseEvent me)

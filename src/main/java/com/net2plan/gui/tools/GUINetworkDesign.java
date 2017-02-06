@@ -360,6 +360,9 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         btn_pickNavigationUndo.addActionListener(action);
         btn_pickNavigationRedo.addActionListener(action);
 
+        btn_pickNavigationRedo.setFocusable(false);
+        btn_pickNavigationUndo.setFocusable(false);
+
         navigationToolbar.add(btn_pickNavigationUndo);
         navigationToolbar.add(btn_pickNavigationRedo);
 

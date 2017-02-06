@@ -60,7 +60,6 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
     @Override
     protected void paintComponent(Graphics grphcs)
     {
-        super.paintComponent(grphcs);
         final Graphics2D g2d = (Graphics2D) grphcs;
         g2d.setColor(Color.black);
 
