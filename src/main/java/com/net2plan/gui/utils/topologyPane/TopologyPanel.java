@@ -43,7 +43,6 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.Pair;
-import com.net2plan.utils.Triple;
 
 @SuppressWarnings("unchecked")
 public class TopologyPanel extends JPanel implements ActionListener//FrequentisBackgroundPanel implements ActionListener//JPanel implements ActionListener
@@ -62,7 +61,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final JPopUpButton btn_multilayer;
     private final JPopupMenu multiLayerPopUp;
-    private final JButton btn_triggerViewEditTables;
+    private final JButton btn_tableControlWindow;
     private final JToggleButton btn_osmMap;
     private final JLabel position;
     private final JPanel canvasPanel;
@@ -232,8 +231,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         btn_osmMap = new JToggleButton();
         btn_osmMap.setToolTipText("Toggle between on/off the OSM support. An internet connection is required in order for this to work.");
-        btn_triggerViewEditTables = new JButton();
-        btn_triggerViewEditTables.setToolTipText("Show the network topology control window.");
+        btn_tableControlWindow = new JButton();
+        btn_tableControlWindow.setToolTipText("Show the network topology control window.");
 
         // MultiLayer control window
         multiLayerPopUp = new JPopupMenu();
@@ -264,7 +263,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showThisLayerInfo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLayerPropagation.png")));
         btn_showUpperLayerInfo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLayerUpperPropagation.png")));
         btn_showLowerLayerInfo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLayerLowerPropagation.png")));
-        btn_triggerViewEditTables.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showControl.png")));
+        btn_tableControlWindow.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showControl.png")));
         btn_osmMap.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showOSM.png")));
 
         btn_load.addActionListener(this);
@@ -291,10 +290,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_npChangeRedo.addActionListener(this);
         btn_pickNavigationUndo.addActionListener(this);
         btn_pickNavigationRedo.addActionListener(this);
-        
-        // Disabling font controls
-        btn_increaseFontSize.setEnabled(false);
-        btn_decreaseFontSize.setEnabled(false);
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
@@ -316,7 +311,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(new JToolBar.Separator());
         toolbar.add(Box.createHorizontalGlue());
         toolbar.add(btn_osmMap);
-        toolbar.add(btn_triggerViewEditTables);
+        toolbar.add(btn_tableControlWindow);
         toolbar.add(btn_reset);
 
         multiLayerToolbar.add(new JToolBar.Separator());
@@ -531,7 +526,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         		else callback.getVisualizationState().resetPickedState();
         		callback.updateVisualizationAfterPick();
         	}
-        } else if (src == btn_triggerViewEditTables)
+        } else if (src == btn_tableControlWindow)
         {
             WindowController.showTablesWindow(true);
         } else if (src == btn_osmMap)

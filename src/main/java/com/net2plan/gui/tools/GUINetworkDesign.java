@@ -310,7 +310,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         });
 
         // Building windows
-        WindowController.buildControlWindow(tabPane);
+        WindowController.buildTableControlWindow(tabPane);
         WindowController.showTablesWindow(false);
 
         addAllKeyCombinationActions();

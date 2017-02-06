@@ -13,7 +13,7 @@ import java.util.*;
  */
 public class WindowController
 {
-    private static GUIWindow tablesAndControlWindow;
+    private static GUIWindow tableControlWindow;
     private static GUIWindow reportWindow;
     private static GUIWindow offlineWindow;
     private static GUIWindow onlineWindow;
@@ -21,10 +21,10 @@ public class WindowController
     // WindowToTab.network must always be the first one.
     private final static WindowToTab[] tabCorrectOrder = {WindowToTab.network, WindowToTab.offline, WindowToTab.online, WindowToTab.report};
 
-    public static void buildControlWindow(final JComponent component)
+    public static void buildTableControlWindow(final JComponent component)
     {
         // Control window != Network state tab.
-        tablesAndControlWindow = new GUIWindow()
+        tableControlWindow = new GUIWindow()
         {
             @Override
             public String getTitle()
@@ -33,28 +33,28 @@ public class WindowController
             }
         };
 
-        tablesAndControlWindow.buildWindow(component);
+        tableControlWindow.buildWindow(component);
     }
 
     public static void showTablesWindow(final boolean gainFocus)
     {
-        if (tablesAndControlWindow != null)
+        if (tableControlWindow != null)
         {
             if (gainFocus)
             {
-                tablesAndControlWindow.showWindow();
+                tableControlWindow.showWindow();
             } else
             {
-                tablesAndControlWindow.setFocusableWindowState(false);
-                tablesAndControlWindow.showWindow();
-                tablesAndControlWindow.setFocusableWindowState(true);
+                tableControlWindow.setFocusableWindowState(false);
+                tableControlWindow.showWindow();
+                tableControlWindow.setFocusableWindowState(true);
             }
         }
     }
 
     public static void addTabToControlWindow(final String newTabName, final JComponent newTabComponent)
     {
-        final JTabbedPane tabPane = (JTabbedPane) tablesAndControlWindow.getComponent();
+        final JTabbedPane tabPane = (JTabbedPane) tableControlWindow.getComponent();
 
         final Map<String, Component> toSortTabs = new HashMap<>();
         toSortTabs.put(newTabName, newTabComponent);
