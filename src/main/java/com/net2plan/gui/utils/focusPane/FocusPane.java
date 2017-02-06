@@ -87,8 +87,8 @@ public class FocusPane extends JPanel
 		else if (elementType == NetworkElementType.DEMAND)
 		{
 			final Demand d = (Demand) vs.getPickedNetworkElement();
-//			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
-//			this.add(fig , BorderLayout.WEST);
+			final FigureDemandSequencePanel fig = new FigureDemandSequencePanel(callback, d, "Demand " + d.getIndex());
+			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getDemandInfoTables(d), d) , BorderLayout.CENTER);
 		}
 		else if (elementType == NetworkElementType.FORWARDING_RULE)

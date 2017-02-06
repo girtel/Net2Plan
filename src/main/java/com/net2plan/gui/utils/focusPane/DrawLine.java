@@ -65,9 +65,12 @@ class DrawLine
 		this.associatedElement = e;
 	}
 
+	static void addLineToGraphics (Graphics2D g2d , DrawLine dl , FontMetrics fontMetrics , int interlineSpacePixels)
+	{
+		addLineToGraphics(g2d, dl, fontMetrics, interlineSpacePixels, null);
+	}
 
-    static void addLineToGraphics (Graphics2D g2d , DrawLine dl , 
-    		FontMetrics fontMetrics , int interlineSpacePixels)
+	static void addLineToGraphics (Graphics2D g2d , DrawLine dl , FontMetrics fontMetrics , int interlineSpacePixels, Stroke stroke)
     {
     	final int margin = 3;
     	int x1,y1,x2,y2;
@@ -97,11 +100,17 @@ class DrawLine
         	y2 = dl.to.posCenter().y  + (dl.to.icon.getHeight(null) / 2);
     	}
     	else throw new RuntimeException();
-    	
-    	if (dl.associatedElement instanceof Link)
-    		g2d.setStroke(STROKE_LINKSREGULAR);
-    	else
-    		g2d.setStroke(STROKE_LINKSNOURL);
+
+    	if (stroke == null)
+		{
+			if (dl.associatedElement != null)
+				g2d.setStroke(STROKE_LINKSREGULAR);
+			else
+				g2d.setStroke(STROKE_LINKSNOURL);
+		} else
+		{
+			g2d.setStroke(stroke);
+		}
         g2d.drawLine(x1 , y1 , x2 , y2);
         int xPoints[] = { x1 - margin, x1 + margin, x2 + margin, x2 - margin };
         int yPoints[] = { y1 + margin, y1 - margin, y2 - margin, y2 + margin };
