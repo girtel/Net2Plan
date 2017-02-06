@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.*;
 
 import com.net2plan.gui.utils.topologyPane.VisualizationConstants;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
@@ -64,6 +64,15 @@ public class DrawNode
 	Point posCenter () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) , posTopLeftCornerToSetByPainter.y + (icon.getHeight(null) / 2)); }
 	public String toString () { return "node: " + associatedElement; } 
 
+	public Image getIcon()
+	{
+		return icon;
+	}
+
+	public Shape getShape()
+	{
+		return shapeIconToSetByPainter;
+	}
 
     private Pair<ImageIcon,Shape> getNodeIcon (Node n , NetworkLayer layer , int maxHeightOrSizeIcon)
     {

@@ -12,16 +12,15 @@ import java.util.List;
  * @author Jorge San Emeterio
  * @date 06-Feb-17
  */
-public class FigureDemandSequencePanel extends JPanel
+public class FigureDemandSequencePanel extends FigureSequencePanel
 {
     private final List<String> generalMessage;
-    private final IVisualizationCallback callback;
     private final Demand demand;
     final BasicStroke lineStroke;
 
     public FigureDemandSequencePanel(final IVisualizationCallback callback, final Demand demand, final String titleMessage)
     {
-        this.callback = callback;
+        super(callback);
         this.demand = demand;
         this.generalMessage = Arrays.asList(titleMessage);
         this.lineStroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, new float[]{10.0f}, 0.0f);
@@ -60,10 +59,16 @@ public class FigureDemandSequencePanel extends JPanel
 
     	/* Initial dn */
         DrawNode.addNodeToGraphics(g2d, ingressNode, initialDnTopLeftPosition, fontMetrics, regularInterlineSpacePixels);
-        DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + (xSeparationDnCenters * 2), initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels);
+        DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + xSeparationDnCenters, initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels);
+
+        drawnNodes.add(ingressNode);
+        drawnNodes.add(egressNode);
 
         // NOTE: Resources?
-        DrawLine.addLineToGraphics(g2d, new DrawLine(ingressNode, egressNode), fontMetrics, regularInterlineSpacePixels, lineStroke);
+        final DrawLine link = new DrawLine(ingressNode, egressNode);
+        DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels, lineStroke);
+
+        drawnLines.add(link);
     }
 
     @Override
