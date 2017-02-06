@@ -12,10 +12,7 @@
 
 package com.net2plan.gui;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dialog;
-import java.awt.Dimension;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -140,7 +137,9 @@ public class GUINet2Plan extends JFrame implements ActionListener {
                 loadExamples();
             } else {
                 Object object = itemObject.get(item);
-                
+
+                WindowUtils.setWindowLeftSide(instance);
+
                 if (object != null) {
                     if (object instanceof Class) {
                         Object classInstance = ((Class) object).newInstance();

@@ -68,9 +68,9 @@ public final class WindowUtils
         final Rectangle winSize = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
         final int taskBarHeight = screenSize.height - winSize.height;
 
-        final int width = screenSize.width / 2;
+        final int width = (int) (screenSize.width  * 0.505);
         final int height = screenSize.height - taskBarHeight;
 
-        frame.setSize(new Dimension(width, height));
+        frame.setSize(width, height);
     }
 }
