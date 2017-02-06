@@ -84,7 +84,7 @@ public class FigureNodeSequencePanel extends JPanel
 
     	/* Initial dn */
     	dn = new DrawNode(node , layer , maxHeightOrSizeIcon);
-    	DrawNode.addNodeToGraphics(g2d , dn , initialDnTopLeftPosition , fontMetrics , regularInterlineSpacePixels);
+    	DrawNode.addNodeToGraphics(g2d , dn , initialDnTopLeftPosition , fontMetrics , regularInterlineSpacePixels , null);
     }
 
     @Override

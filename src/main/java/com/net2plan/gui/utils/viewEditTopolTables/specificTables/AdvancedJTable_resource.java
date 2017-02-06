@@ -762,8 +762,12 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
 
 
     @Override
-    public void showInCanvas(MouseEvent e, Object itemId) {
-
+    public void showInCanvas(MouseEvent e, Object itemId) 
+    {
+        if (getVisibleElementsInTable().isEmpty()) return;
+    	callback.getVisualizationState ().pickResource(callback.getDesign().getResourceFromId((long) itemId));
+        callback.updateVisualizationAfterPick();
+        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
     }
 
     private class ClassAwareTableModelImpl extends ClassAwareTableModel

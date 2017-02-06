@@ -27,7 +27,7 @@ class DrawLine
 	
 	DrawNode from , to;
 	Polygon shapeLineToCreateByPainter;
-
+	Point pFrom , pTo;
 	List<String> labels;
 	List<String> urlsLabels;
 	List<Rectangle2D> shapesLabelstoCreateByPainter;
@@ -36,16 +36,20 @@ class DrawLine
 	Point posCenter (Point posTopLeftCorner) { return new Point (posTopLeftCorner.x + (int) (shapeLineToCreateByPainter.getBounds2D().getWidth() / 2) , posTopLeftCorner.y + (int) (shapeLineToCreateByPainter.getBounds2D().getHeight())); }
 	public String toString () { return "line from: " + from + ", to: " + to + ", element: " + associatedElement; }
 	
-	DrawLine (DrawNode from , DrawNode to)
+	DrawLine (DrawNode from , DrawNode to , Point pFrom , Point pTo)
 	{
 		this.from = from; this.to = to; 
 		this.labels = new ArrayList<> (); this.urlsLabels = new ArrayList<> (); 
-		this.associatedElement = null; 
+		this.associatedElement = null;
+		this.pFrom = pFrom;
+		this.pTo = pTo;
 	}
-	DrawLine (DrawNode from , DrawNode to , Link e , double occupiedToShow)
+	DrawLine (DrawNode from , DrawNode to , Link e , Point pFrom , Point pTo , double occupiedToShow)
 	{
 		final String capUnits = e.getNetPlan().getLinkCapacityUnitsName(e.getLayer());
 		this.from = from; this.to = to; 
+		this.pFrom = pFrom;
+		this.pTo = pTo;
 		this.labels = Arrays.asList(
 				"Link " + e.getIndex() , 
 				String.format("%.1f" , e.getLengthInKm()) + " km (" + String.format("%.2f" , e.getPropagationDelayInMs()) + " ms)" , 
@@ -70,33 +74,8 @@ class DrawLine
     		FontMetrics fontMetrics , int interlineSpacePixels)
     {
     	final int margin = 3;
-    	int x1,y1,x2,y2;
-    	if  ( ((dl.from.associatedElement instanceof Node) && (dl.to.associatedElement instanceof Node)) || 
-    			((dl.from.associatedElement instanceof Resource) && (dl.to.associatedElement instanceof Resource)))
-    	{
-        	/* from node to node or from resource to resource => left to right  */
-        	x1 = dl.from.posCenter().x + dl.from.icon.getWidth(null) / 2; 
-        	y1 = dl.from.posCenter().y;
-        	x2 = dl.to.posCenter().x - (dl.to.icon.getWidth(null) / 2);
-        	y2 = dl.to.posCenter().y;
-    	}
-    	else if  ((dl.from.associatedElement instanceof Node) && (dl.to.associatedElement instanceof Resource)) 
-    	{
-        	/* from node to resource (diagonal down) */
-        	x1 = dl.from.posCenter().x - 5; 
-        	y1 = dl.from.posCenter().y + dl.from.icon.getHeight(null) / 2;
-        	x2 = dl.to.posCenter().x - 5;
-        	y2 = dl.to.posCenter().y  - (dl.to.icon.getHeight(null) / 2);
-    	}
-    	else if  ((dl.from.associatedElement instanceof Resource) && (dl.to.associatedElement instanceof Node)) 
-    	{
-        	/* from resource to node (diagonal up) */
-        	x1 = dl.from.posCenter().x + 5; 
-        	y1 = dl.from.posCenter().y - dl.from.icon.getHeight(null) / 2;
-        	x2 = dl.to.posCenter().x + 5;
-        	y2 = dl.to.posCenter().y  + (dl.to.icon.getHeight(null) / 2);
-    	}
-    	else throw new RuntimeException();
+    	final int x1 = dl.pFrom.x; final int y1 = dl.pFrom.y;
+    	final int x2 = dl.pTo.x; final int y2 = dl.pTo.y;
     	
     	if (dl.associatedElement instanceof Link)
     		g2d.setStroke(STROKE_LINKSREGULAR);

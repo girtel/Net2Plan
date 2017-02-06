@@ -39,7 +39,7 @@ public class FigureLinkSequencePanel extends JPanel
 	private List<DrawLine> drawnLines;
 	private List<? extends NetworkElement> path;
 	private List<Double> occupationsPerElement;
-	private List<Double> capacitiesPerElement;
+//	private List<Double> capacitiesPerElement;
 	private List<String> generalMessage; 
 	private NetworkLayer layer;
     private NetPlan np;
@@ -53,7 +53,7 @@ public class FigureLinkSequencePanel extends JPanel
     	this.layer = layer;
     	this.path = path;
     	this.occupationsPerElement = occupationsPerElement;
-    	this.capacitiesPerElement = path.stream().map(e->(e instanceof Link)? ((Link)e).getCapacity() : ((Resource)e).getCapacity()).collect (Collectors.toList());
+//    	this.capacitiesPerElement = path.stream().map(e->(e instanceof Link)? ((Link)e).getCapacity() : ((Resource)e).getCapacity()).collect (Collectors.toList());
     	if (carriedTraffic >= 0)
     		this.generalMessage = Arrays.asList(titleMessage , "Carried trafffic: " + String.format("%.2f " , carriedTraffic) + " " + np.getDemandTrafficUnitsName(layer));
     	else
@@ -96,23 +96,27 @@ public class FigureLinkSequencePanel extends JPanel
     	/* Initial dn */
     	final Node firstNode = path.get(0) instanceof Resource? ((Resource) path.get(0)).getHostNode() : ((Link) path.get(0)).getOriginNode();
     	this.drawnNodes.add(new DrawNode(firstNode , layer , maxHeightOrSizeIcon));
-    	DrawNode.addNodeToGraphics(g2d , drawnNodes.get(0) , initialDnTopLeftPosition , fontMetrics , regularInterlineSpacePixels);
+    	DrawNode.addNodeToGraphics(g2d , drawnNodes.get(0) , initialDnTopLeftPosition , fontMetrics , regularInterlineSpacePixels , null);
         for (int indexElementInPath = 0; indexElementInPath < path.size() ; indexElementInPath ++)
     	{
         	final NetworkElement e = path.get(indexElementInPath);
 			final double occup = occupationsPerElement.get(indexElementInPath);
-			final double capacity = capacitiesPerElement.get(indexElementInPath);
+//			final double capacity = capacitiesPerElement.get(indexElementInPath);
         	if (e instanceof Resource)
     		{
     			/* Draw the resource, there always are a previous node */
     			final Resource r = (Resource) e;
     			/* create resource node,with URL  */
-    			final DrawNode dnResource = new DrawNode (r , maxHeightOrSizeIcon , occup , capacity);
-    			DrawNode.addNodeToGraphics(g2d , dnResource , new Point (initialDnTopLeftPosition.x + (xSeparationDnCenters * drawnNodes.size()) , topCoordinateLineResources) , fontMetrics , regularInterlineSpacePixels);
+    			final DrawNode dnResource = new DrawNode (r , maxHeightOrSizeIcon , occup);
+    			DrawNode.addNodeToGraphics(g2d , dnResource , new Point (initialDnTopLeftPosition.x + (xSeparationDnCenters * drawnNodes.size()) , topCoordinateLineResources) , fontMetrics , regularInterlineSpacePixels , null);
     			drawnNodes.add(dnResource);
 
     			/* create link from previous dn (resource of node) to here: no URL */
-    			final DrawLine dlNoURL = new DrawLine (drawnNodes.get(drawnNodes.size()-2) , drawnNodes.get(drawnNodes.size()-1));
+    			final DrawNode dnOrigin = drawnNodes.get(drawnNodes.size()-2);
+    			final DrawNode dnDestination = drawnNodes.get(drawnNodes.size()-1);
+    			final Point initialPoint = dnOrigin.associatedElement instanceof Resource? dnOrigin.posEast() : dnOrigin.posSouthSomeWest();
+    			final Point endPoint = dnOrigin.associatedElement instanceof Resource? dnDestination.posWest() : dnDestination.posNorthSomeWest();
+    			final DrawLine dlNoURL = new DrawLine (dnOrigin , dnDestination , initialPoint , endPoint);
     			DrawLine.addLineToGraphics(g2d , dlNoURL , fontMetrics , regularInterlineSpacePixels);
     			drawnLines.add(dlNoURL);
     		}
@@ -121,26 +125,30 @@ public class FigureLinkSequencePanel extends JPanel
     			final Link link = (Link) e;
 
     			DrawNode lastNodeElement = null;
-    			for (int index = drawnNodes.size()-1 ; index >= 0 ; index --) if (drawnNodes.get(index).associatedElement instanceof Node) { lastNodeElement = drawnNodes.get(index); break; }
+    			for (int index = drawnNodes.size()-1 ; index >= 0 ; index --) 
+    				if (drawnNodes.get(index).associatedElement instanceof Node) { lastNodeElement = drawnNodes.get(index); break; }
     			if (lastNodeElement == null) throw new RuntimeException();
 
     			/* Get the previous node element added */
-    			if (drawnNodes.get(drawnNodes.size()-1).associatedElement instanceof Resource)
+    			final DrawNode lastGn = drawnNodes.get(drawnNodes.size()-1);
+    			if (lastGn.associatedElement instanceof Resource)
     			{
     				/* Add a link to the last resource to its host node */
-        			final DrawLine dlNoURL = new DrawLine (drawnNodes.get(drawnNodes.size()-1) , lastNodeElement);
+    				final Point initialPoint = new Point (lastGn.posNorth().x + 5 , lastGn.posNorth().y);
+    				final Point endPoint = lastNodeElement.posSouthSomeEast();
+        			final DrawLine dlNoURL = new DrawLine (drawnNodes.get(drawnNodes.size()-1) , lastNodeElement , initialPoint , endPoint);
         			DrawLine.addLineToGraphics(g2d , dlNoURL , fontMetrics , regularInterlineSpacePixels);
         			drawnLines.add(dlNoURL);
     			}
     			
     			/* create node for link end node, with URL  */
     			final DrawNode dnNode = new DrawNode (link.getDestinationNode() , layer , maxHeightOrSizeIcon);
-    			DrawNode.addNodeToGraphics(g2d , dnNode , new Point (initialDnTopLeftPosition.x + (xSeparationDnCenters * drawnNodes.size()) , topCoordinateLineNodes) , fontMetrics , regularInterlineSpacePixels);
+    			DrawNode.addNodeToGraphics(g2d , dnNode , new Point (initialDnTopLeftPosition.x + (xSeparationDnCenters * drawnNodes.size()) , topCoordinateLineNodes) , fontMetrics , regularInterlineSpacePixels , null);
     			drawnNodes.add(dnNode);
     			
     			/* if the last element was a resource, add two links (res -> node [No URL], node->nextNode [URL]).
     			 * If not create just one link [URL] */
-    			final DrawLine dlLink = new DrawLine (lastNodeElement , drawnNodes.get(drawnNodes.size()-1) , link , occup);
+    			final DrawLine dlLink = new DrawLine (lastNodeElement , dnNode , link , lastNodeElement.posEast() , dnNode.posWest() , occup);
     			DrawLine.addLineToGraphics(g2d , dlLink , fontMetrics , regularInterlineSpacePixels);
     			drawnLines.add(dlLink);
     		} else throw new RuntimeException();

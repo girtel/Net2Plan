@@ -49,6 +49,7 @@ public class FigureResourcePanel extends JPanel
     	this.np = resource.getNetPlan();
    		this.generalMessage = Arrays.asList(titleMessage);
     	this.preferredSize = null;
+    	this.resource = resource;
         addMouseListener(new MouseAdapterFocusPanel() );
     }
 
@@ -60,7 +61,8 @@ public class FigureResourcePanel extends JPanel
         g2d.setColor(Color.black);
 
         final int maxHeightOrSizeIcon = 40;
-        final int initialYTile = 20;
+        final int initialXTitle = 20;
+        final int initialYTitle = 20;
 
     	/* Initial messages */
         g2d.setFont(new Font("Arial", Font.BOLD, 12));
@@ -68,81 +70,62 @@ public class FigureResourcePanel extends JPanel
     	for (int indexMessage =0 ; indexMessage < generalMessage.size() ; indexMessage ++)
     	{
     		final String m = generalMessage.get(indexMessage);
-        	g2d.drawString (m , maxHeightOrSizeIcon , maxHeightOrSizeIcon + (indexMessage * fontHeightTitle));
+        	g2d.drawString (m , initialXTitle , initialYTitle + (indexMessage * fontHeightTitle));
     	}
-
-    	final int maxNumberOfTagsPerResource = 3;
-        final int initialYOfUpperResources = maxHeightOrSizeIcon;
-
-        final int numBaseResources = resource.getBaseResources().size();
-        final int numUpperResources = resource.getUpperResources().size();
-        final int initialYOfThisResource = numUpperResources == 0? initialYOfUpperResources : initialYOfUpperResources + ;
-        
-        
-    	
 
         g2d.setFont(new Font("Arial", Font.PLAIN, 10));
     	final FontMetrics fontMetrics = g2d.getFontMetrics();
     	final int regularInterlineSpacePixels = fontMetrics.getHeight();
+    	final int maxNumberOfTagsPerResource = 4;
+        final int numBaseResources = resource.getBaseResources().size();
+        final int numUpperResources = resource.getUpperResources().size();
+        final int initialTopYOfUpperResources = initialYTitle + (generalMessage.size() * fontHeightTitle) + 20; 
+        final int initialTopYOfThisResource = numUpperResources == 0? initialTopYOfUpperResources : initialTopYOfUpperResources + maxHeightOrSizeIcon + regularInterlineSpacePixels * maxNumberOfTagsPerResource + 20;
+        final int initialTopYOfBaseResource = initialTopYOfThisResource + maxHeightOrSizeIcon + regularInterlineSpacePixels * maxNumberOfTagsPerResource + 20;
+
     	this.drawnNodes = new ArrayList<> ();
     	this.drawnLines = new ArrayList<> ();
 
-    	final int topCoordinateLineNodes = maxHeightOrSizeIcon + (generalMessage.size() * fontHeightTitle) + (maxNumberOfTagsPerNodeNorResource * regularInterlineSpacePixels);
-    	final int topCoordinateLineResources = topCoordinateLineNodes + maxHeightOrSizeIcon * 4;
-    	final Point initialDnTopLeftPosition = new Point (maxHeightOrSizeIcon , topCoordinateLineNodes);
+    	/* First I draw the resource itself */
     	final int xSeparationDnCenters = maxHeightOrSizeIcon * 3;
-
-    	/* Initial dn */
-    	final Node firstNode = path.get(0) instanceof Resource? ((Resource) path.get(0)).getHostNode() : ((Link) path.get(0)).getOriginNode();
-    	this.drawnNodes.add(new DrawNode(firstNode , layer , maxHeightOrSizeIcon));
-    	DrawNode.addNodeToGraphics(g2d , drawnNodes.get(0) , initialDnTopLeftPosition , fontMetrics , regularInterlineSpacePixels);
-        for (int indexElementInPath = 0; indexElementInPath < path.size() ; indexElementInPath ++)
+    	final int thisResourceLeftPosition = initialXTitle + xSeparationDnCenters * (int) (Math.max(0.0 , Math.max(numBaseResources - 1 , numUpperResources - 1))/ 2.0);
+    	final Point dnResourceTopLeftPosition = new Point (thisResourceLeftPosition , initialTopYOfThisResource);
+    	final DrawNode dnResource = new DrawNode(resource , maxHeightOrSizeIcon , -1);
+    	this.drawnNodes.add(dnResource);
+    	DrawNode.addNodeToGraphics(g2d , dnResource , dnResourceTopLeftPosition , fontMetrics , regularInterlineSpacePixels , null);
+    	
+    	/* Now the upper resource and the links to the resource */
+    	int xPositionResource = initialXTitle;
+    	for (Resource upperResource : resource.getUpperResources())
     	{
-        	final NetworkElement e = path.get(indexElementInPath);
-			final double occup = occupationsPerElement.get(indexElementInPath);
-			final double capacity = capacitiesPerElement.get(indexElementInPath);
-        	if (e instanceof Resource)
-    		{
-    			/* Draw the resource, there always are a previous node */
-    			final Resource r = (Resource) e;
-    			/* create resource node,with URL  */
-    			final DrawNode dnResource = new DrawNode (r , maxHeightOrSizeIcon , occup , capacity);
-    			DrawNode.addNodeToGraphics(g2d , dnResource , new Point (initialDnTopLeftPosition.x + (xSeparationDnCenters * drawnNodes.size()) , topCoordinateLineResources) , fontMetrics , regularInterlineSpacePixels);
-    			drawnNodes.add(dnResource);
+    		/* Add the gn */
+        	final Point dnTopLeftPosition = new Point (xPositionResource , initialTopYOfUpperResources);
+        	final DrawNode dn = new DrawNode(upperResource , maxHeightOrSizeIcon , resource.getCapacityOccupiedByUpperResource(upperResource));
+        	this.drawnNodes.add(dn);
+        	DrawNode.addNodeToGraphics(g2d , dn , dnTopLeftPosition , fontMetrics , regularInterlineSpacePixels , null);
+        	xPositionResource += xSeparationDnCenters;
 
-    			/* create link from previous dn (resource of node) to here: no URL */
-    			final DrawLine dlNoURL = new DrawLine (drawnNodes.get(drawnNodes.size()-2) , drawnNodes.get(drawnNodes.size()-1));
-    			DrawLine.addLineToGraphics(g2d , dlNoURL , fontMetrics , regularInterlineSpacePixels);
-    			drawnLines.add(dlNoURL);
-    		}
-    		else if (e instanceof Link)
-    		{
-    			final Link link = (Link) e;
+    		/* Add the glink */
+			final DrawLine dlNoURL = new DrawLine (dn , dnResource , dn.posSouth() , dnResource.posNorth());
+			DrawLine.addLineToGraphics(g2d , dlNoURL , fontMetrics , regularInterlineSpacePixels);
+			drawnLines.add(dlNoURL);
+    	}
 
-    			DrawNode lastNodeElement = null;
-    			for (int index = drawnNodes.size()-1 ; index >= 0 ; index --) if (drawnNodes.get(index).associatedElement instanceof Node) { lastNodeElement = drawnNodes.get(index); break; }
-    			if (lastNodeElement == null) throw new RuntimeException();
+    	/* Now the base resource and the links from the resource */
+    	xPositionResource = initialXTitle;
+    	for (Resource baseResource : resource.getBaseResources())
+    	{
+    		/* Add the gn */
+        	final Point dnTopLeftPosition = new Point (xPositionResource , initialTopYOfBaseResource);
+        	final DrawNode dn = new DrawNode(baseResource , maxHeightOrSizeIcon , resource.getCapacityOccupiedInBaseResource(baseResource));
+        	this.drawnNodes.add(dn);
+        	DrawNode.addNodeToGraphics(g2d , dn , dnTopLeftPosition , fontMetrics , regularInterlineSpacePixels , null);
+        	xPositionResource += xSeparationDnCenters;
 
-    			/* Get the previous node element added */
-    			if (drawnNodes.get(drawnNodes.size()-1).associatedElement instanceof Resource)
-    			{
-    				/* Add a link to the last resource to its host node */
-        			final DrawLine dlNoURL = new DrawLine (drawnNodes.get(drawnNodes.size()-1) , lastNodeElement);
-        			DrawLine.addLineToGraphics(g2d , dlNoURL , fontMetrics , regularInterlineSpacePixels);
-        			drawnLines.add(dlNoURL);
-    			}
-    			
-    			/* create node for link end node, with URL  */
-    			final DrawNode dnNode = new DrawNode (link.getDestinationNode() , layer , maxHeightOrSizeIcon);
-    			DrawNode.addNodeToGraphics(g2d , dnNode , new Point (initialDnTopLeftPosition.x + (xSeparationDnCenters * drawnNodes.size()) , topCoordinateLineNodes) , fontMetrics , regularInterlineSpacePixels);
-    			drawnNodes.add(dnNode);
-    			
-    			/* if the last element was a resource, add two links (res -> node [No URL], node->nextNode [URL]).
-    			 * If not create just one link [URL] */
-    			final DrawLine dlLink = new DrawLine (lastNodeElement , drawnNodes.get(drawnNodes.size()-1) , link , occup);
-    			DrawLine.addLineToGraphics(g2d , dlLink , fontMetrics , regularInterlineSpacePixels);
-    			drawnLines.add(dlLink);
-    		} else throw new RuntimeException();
+    		/* Add the glink */
+			final DrawLine dlNoURL = new DrawLine (dnResource , dn , dnResource.posSouth() , dn.posNorth());
+			DrawLine.addLineToGraphics(g2d , dlNoURL , fontMetrics , regularInterlineSpacePixels);
+			drawnLines.add(dlNoURL);
     	}
     }
 

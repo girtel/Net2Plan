@@ -122,8 +122,8 @@ public class FocusPane extends JPanel
 		else if (elementType == NetworkElementType.MULTICAST_TREE)
 		{
 			final MulticastTree t = (MulticastTree) vs.getPickedNetworkElement();
-//			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
-//			this.add(fig , BorderLayout.WEST);
+			final FigureMulticastTreePanel fig = new FigureMulticastTreePanel(callback , t , "Multicast tree " + t.getIndex() , t.getCarriedTraffic());
+			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getMulticastTreeInfoTables(t), t) , BorderLayout.CENTER);
 		}
 		else if (elementType == NetworkElementType.NODE)
@@ -136,8 +136,8 @@ public class FocusPane extends JPanel
 		else if (elementType == NetworkElementType.RESOURCE)
 		{
 			final Resource r = (Resource) vs.getPickedNetworkElement();
-//			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
-//			this.add(fig , BorderLayout.WEST);
+			final FigureResourcePanel fig = new FigureResourcePanel(callback , r , getResourceName(r));
+			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getResourceInfoTables(r), r) , BorderLayout.CENTER);
 		}
 		else if (elementType == NetworkElementType.SRG)
@@ -219,10 +219,10 @@ public class FocusPane extends JPanel
 		res.add(Triple.of("Is up?", "" + r.getHostNode().isUp() , ""));
 		res.add(Triple.of("# base resources", "" + r.getBaseResources().size() , ""));
 		for (Resource br : r.getBaseResources())
-			res.add(Triple.of(getResourceName(br) + " (" + br.getType() + ")" , "Occup: " + df.format(r.getCapacityOccupiedInBaseResource(br)) + " " + br.getCapacityMeasurementUnits() , ""));
+			res.add(Triple.of(getResourceName(br) + " (" + br.getType() + ")" , "Occup: " + df.format(r.getCapacityOccupiedInBaseResource(br)) + " " + br.getCapacityMeasurementUnits() , "resource" + br.getId()));
 		res.add(Triple.of("# upper resources", "" + r.getUpperResources().size() , ""));
 		for (Resource ur : r.getUpperResources())
-			res.add(Triple.of(getResourceName(ur) + " (" + ur.getType() + ")" , "Occup: " + df.format(r.getCapacityOccupiedByUpperResource(ur)) + " " + resCapUnits , ""));
+			res.add(Triple.of(getResourceName(ur) + " (" + ur.getType() + ")" , "Occup: " + df.format(r.getCapacityOccupiedByUpperResource(ur)) + " " + resCapUnits , "resource" + ur.getId()));
 		res.add(Triple.of("# Traversing routes", "" + r.getTraversingRoutes().size() , ""));
 		for (Route route : r.getTraversingRoutes())
 			res.add(Triple.of("- Route " + route.getIndex() + " (" + getLayerName(route.getLayer()) + ")", "Occup: " + df.format(r.getTraversingRouteOccupiedCapacity(route)) + " " + resCapUnits   + r.getTraversingRoutes().size() , "route" + route.getId()));
