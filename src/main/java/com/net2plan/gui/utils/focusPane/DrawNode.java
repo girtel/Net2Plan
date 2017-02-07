@@ -75,8 +75,8 @@ public class DrawNode
 	Point posSouthSomeWest () { return new Point (posTopLeftCornerToSetByPainter.x  + (icon.getWidth(null) / 2) - 5, posTopLeftCornerToSetByPainter.y + icon.getWidth(null)); }
 	Point posSouthSomeEast () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) + 5, posTopLeftCornerToSetByPainter.y + icon.getWidth(null)); }
 
-	Point posWest () { return new Point (posTopLeftCornerToSetByPainter.x , posTopLeftCornerToSetByPainter.y + (icon.getWidth(null) / 2)); }
-	Point posEast () { return new Point (posTopLeftCornerToSetByPainter.x + icon.getWidth(null) , posTopLeftCornerToSetByPainter.y + (icon.getWidth(null) / 2)); }
+	Point posWest () { return new Point (posTopLeftCornerToSetByPainter.x , posTopLeftCornerToSetByPainter.y + (icon.getHeight(null) / 2)); }
+	Point posEast () { return new Point (posTopLeftCornerToSetByPainter.x + icon.getWidth(null) , posTopLeftCornerToSetByPainter.y + (icon.getHeight(null) / 2)); }
 	Point posSouth () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) , posTopLeftCornerToSetByPainter.y + icon.getWidth(null)); }
 	Point posNorth () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) , posTopLeftCornerToSetByPainter.y); }
 	Point posCenter () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) , posTopLeftCornerToSetByPainter.y + (icon.getHeight(null) / 2)); }

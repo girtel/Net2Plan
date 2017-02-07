@@ -53,10 +53,8 @@ public class FocusPane extends JPanel
 		super ();
 
 		this.callback = callback;
-//		this.pastShownInformation = new LinkedList<> ();
 
         this.setVisible(true);
-        this.setMinimumSize(new Dimension (400,250));
         this.setLayout(new BorderLayout(0,0));
 	}
 
