@@ -39,7 +39,7 @@ public class DrawNode
     	this.labels = Arrays.asList(n.getName().equals("")? "Node " + n.getIndex() : n.getName());
     	this.urlsLabels = Arrays.asList("node" + n.getId());
 	}
-	DrawNode (Resource r , int maxHeightOrSizeIcon , double capacity , double occupiedCapacity)
+	DrawNode (Resource r , int maxHeightOrSizeIcon , double occupiedCapacity)
 	{
     	Pair<ImageIcon,Shape> getIconAndShape = getResourceIcon(r , maxHeightOrSizeIcon);
     	this.associatedElement = r;
@@ -47,9 +47,18 @@ public class DrawNode
     	this.shapeIconToSetByPainter = getIconAndShape.getSecond();
     	final String l1 = r.getName().equals("")? "Resource " + r.getIndex() : r.getName();
     	final String l2 = "Type: " + r.getType();
-    	final String l3 = "Occup: " + String.format("%.2f" , occupiedCapacity) + "/" + String.format("%.2f" , capacity) + r.getCapacityMeasurementUnits();
-    	this.labels = Arrays.asList(l1,l2,l3);
-    	this.urlsLabels = Arrays.asList("resource" + r.getId() , "resource" + r.getId() , "resource" + r.getId());
+		final String l3 = "Total occup: " + String.format("%.2f" , r.getOccupiedCapacity()) +  " / " + String.format("%.2f" , r.getCapacity()) + " " + r.getCapacityMeasurementUnits();
+		if (occupiedCapacity < 0)
+		{
+	    	this.labels = Arrays.asList(l1,l2,l3);
+	    	this.urlsLabels = Arrays.asList("resource" + r.getId() , "" , "");
+		}
+		else
+		{
+			final String l4 = "This occup: " + String.format("%.2f" , occupiedCapacity) + " " + r.getCapacityMeasurementUnits();
+	    	this.labels = Arrays.asList(l1,l2,l3,l4);
+	    	this.urlsLabels = Arrays.asList("resource" + r.getId() , "" , "" , "");
+		}
 	}
 	
 	Image icon;
@@ -61,6 +70,15 @@ public class DrawNode
 	List<String> urlsLabels;
 	List<Rectangle2D> shapesLabelsToCreateByPainter;
 
+	Point posNorthSomeWest () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) - 5 , posTopLeftCornerToSetByPainter.y); }
+	Point posNorthSomeEast () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) + 5 , posTopLeftCornerToSetByPainter.y); }
+	Point posSouthSomeWest () { return new Point (posTopLeftCornerToSetByPainter.x  + (icon.getWidth(null) / 2) - 5, posTopLeftCornerToSetByPainter.y + icon.getWidth(null)); }
+	Point posSouthSomeEast () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) + 5, posTopLeftCornerToSetByPainter.y + icon.getWidth(null)); }
+
+	Point posWest () { return new Point (posTopLeftCornerToSetByPainter.x , posTopLeftCornerToSetByPainter.y + (icon.getWidth(null) / 2)); }
+	Point posEast () { return new Point (posTopLeftCornerToSetByPainter.x + icon.getWidth(null) , posTopLeftCornerToSetByPainter.y + (icon.getWidth(null) / 2)); }
+	Point posSouth () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) , posTopLeftCornerToSetByPainter.y + icon.getWidth(null)); }
+	Point posNorth () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) , posTopLeftCornerToSetByPainter.y); }
 	Point posCenter () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) , posTopLeftCornerToSetByPainter.y + (icon.getHeight(null) / 2)); }
 	public String toString () { return "node: " + associatedElement; }
 
@@ -98,14 +116,17 @@ public class DrawNode
      * @param interlineSpacePixels
      */
     static void addNodeToGraphics (Graphics2D g2d , DrawNode dn , 
-    		Point topLeftPosition , FontMetrics fontMetrics , int interlineSpacePixels)
+    		Point topLeftPosition , FontMetrics fontMetrics , int interlineSpacePixels , Color rectangleColor)
     {
 		/* create resource node,with URL  */
     	g2d.drawImage (dn.icon , topLeftPosition.x , topLeftPosition.y , null);
     	final Point nodeCenter = new Point (topLeftPosition.x + dn.icon.getWidth(null) / 2 , topLeftPosition.y + dn.icon.getHeight(null) / 2);
     	dn.shapeIconToSetByPainter = new Rectangle2D.Double(topLeftPosition.x , topLeftPosition.y , dn.icon.getWidth(null) , dn.icon.getHeight(null));
     	g2d.setStroke(STROKE_ROUNDICONS);
+    	if (rectangleColor != null) g2d.setColor(rectangleColor);
+    	g2d.setStroke(STROKE_ROUNDICONS);
     	g2d.draw (dn.shapeIconToSetByPainter);
+    	if (rectangleColor != null) g2d.setColor(Color.black);
     	
     	dn.shapesLabelsToCreateByPainter = new ArrayList<> (dn.labels.size());
     	dn.posTopLeftCornerToSetByPainter = topLeftPosition;
