@@ -47,14 +47,14 @@ import net.miginfocom.swing.MigLayout;
 public class FocusPane extends JPanel
 {
 	private final IVisualizationCallback callback;
-	
+
 	public FocusPane (IVisualizationCallback callback)
 	{
 		super ();
-        
+
 		this.callback = callback;
 //		this.pastShownInformation = new LinkedList<> ();
-		
+
         this.setVisible(true);
         this.setMinimumSize(new Dimension (400,250));
         this.setLayout(new BorderLayout(0,0));
@@ -65,8 +65,8 @@ public class FocusPane extends JPanel
 //	{
 //		return new Dimension (600 , 300);
 //	}
-	
-	public void updateView () 
+
+	public void updateView ()
 	{
 		final VisualizationState vs = callback.getVisualizationState();
 		final NetworkElementType elementType = vs.getPickedElementType();
@@ -74,13 +74,13 @@ public class FocusPane extends JPanel
 		/* Check if remove everything */
 		if (elementType == null) { this.removeAll(); this.revalidate(); this.repaint(); return; }
 
-		this.removeAll(); this.revalidate(); this.repaint(); 
+		this.removeAll(); this.revalidate(); this.repaint();
 
 		/* Here if there is something new to show */
 		if (elementType == NetworkElementType.ROUTE)
 		{
 			final Route r = (Route) vs.getPickedNetworkElement();
-			final FigureLinkSequencePanel fig = new FigureLinkSequencePanel(callback , r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
+			final FigureLinkSequencePanel fig = new FigureLinkSequencePanel(callback , r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing(), r.getCarriedTraffic(), "Route " + r.getIndex() );
 			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getRouteInfoTables(r), r) , BorderLayout.CENTER);
 		}
@@ -108,7 +108,7 @@ public class FocusPane extends JPanel
 		else if (elementType == NetworkElementType.LINK)
 		{
 			final Link e = (Link) vs.getPickedNetworkElement();
-			final FigureLinkSequencePanel fig = new FigureLinkSequencePanel(callback , Arrays.asList(e) , e.getLayer() , Arrays.asList(e.getOccupiedCapacity()) , "Link " + e.getIndex() , e.getCarriedTraffic());
+			final FigureLinkSequencePanel fig = new FigureLinkSequencePanel(callback , Arrays.asList(e) , e.getLayer() , Arrays.asList(e.getOccupiedCapacity()), e.getCarriedTraffic(), "Link " + e.getIndex());
 			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getLinkInfoTables(e), e) , BorderLayout.CENTER);
 		}
@@ -143,15 +143,15 @@ public class FocusPane extends JPanel
 		else if (elementType == NetworkElementType.SRG)
 		{
 			final SharedRiskGroup srg = (SharedRiskGroup) vs.getPickedNetworkElement();
-//			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
-//			this.add(fig , BorderLayout.WEST);
+			final FigureSRGSequencePanel fig = new FigureSRGSequencePanel(callback, srg, "Shared risk group " + srg.getIndex());
+			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getSRGInfoTables(srg), srg) , BorderLayout.CENTER);
 		} else throw new RuntimeException();
-		
-		this.revalidate(); 
+
+		this.revalidate();
 		this.repaint ();
 	}
-	
+
 	private List<Triple<String,String,String>> getLayerInfoTables (NetworkLayer layer)
 	{
 		final DecimalFormat df = new DecimalFormat("###.##");
@@ -245,7 +245,7 @@ public class FocusPane extends JPanel
 		{
 			final Set<Link> linksThisLayer = srg.getLinks(layer);
 			if (linksThisLayer.isEmpty()) continue;
-			for (Link link : linksThisLayer) 
+			for (Link link : linksThisLayer)
 				res.add(Triple.of("Link " + getNodeName(link.getOriginNode()) + " -> " + getNodeName(link.getDestinationNode()) , "Link " + link.getIndex() +" (id " + link.getId() + ")" , "link" + link.getId()));
 		}
 		return res;
@@ -402,7 +402,7 @@ public class FocusPane extends JPanel
 		if (md.isCoupled())
 		{
 			final Set<Link> coupledLinks = md.getCoupledLinks();
-			final NetworkLayer upperLayer = coupledLinks.iterator().next().getLayer(); 
+			final NetworkLayer upperLayer = coupledLinks.iterator().next().getLayer();
 			res.add(Triple.of("- Upper layer coupled to",  getLayerName(upperLayer) , "layer" + upperLayer.getId()));
 			for (Link c : coupledLinks)
 				res.add(Triple.of("- Coupled to",  "Link " + c.getIndex() + " (id " + c.getId() + ")" , "link" + c.getId()));
@@ -451,8 +451,8 @@ public class FocusPane extends JPanel
 		{
 		}
 	}
-	
-	
+
+
 	private JPanel createPanelInfo (List<Triple<String,String,String>> infoRows , NetworkElement e)
 	{
 		final JPanel tablePanel = new JPanel ();
@@ -469,7 +469,7 @@ public class FocusPane extends JPanel
 
 		/* If forwarding rule => no attributes */
 		if (e == null) return tablePanel;
-		
+
 		if (e.getAttributes().isEmpty())
 			tablePanel.add(new LabelWithLink(Pair.of("No attributes defined", "") , false) , "newline, gaptop 0, gapright 5");
 		for (Entry<String,String> entry : e.getAttributes().entrySet())

@@ -40,7 +40,7 @@ public class FigureNodeSequencePanel extends FigureSequencePanel
     private NetworkLayer layer;
     private Dimension preferredSize;
 
-    public FigureNodeSequencePanel(IVisualizationCallback callback, Node node, NetworkLayer layer, String titleMessage)
+    public FigureNodeSequencePanel(IVisualizationCallback callback, Node node, NetworkLayer layer, String... titleMessage)
     {
         super(callback);
         this.layer = layer;

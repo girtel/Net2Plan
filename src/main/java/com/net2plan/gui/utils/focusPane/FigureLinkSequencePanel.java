@@ -42,7 +42,7 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
     private NetPlan np;
     private Dimension preferredSize;
 
-    public FigureLinkSequencePanel(IVisualizationCallback callback, List<? extends NetworkElement> path, NetworkLayer layer, List<Double> occupationsPerElement, String titleMessage, double carriedTraffic)
+    public FigureLinkSequencePanel(IVisualizationCallback callback, List<? extends NetworkElement> path, NetworkLayer layer, List<Double> occupationsPerElement, double carriedTraffic, String... titleMessage)
     {
         super(callback);
         this.np = layer.getNetPlan();
@@ -51,9 +51,14 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
         this.occupationsPerElement = occupationsPerElement;
         this.capacitiesPerElement = path.stream().map(e -> (e instanceof Link) ? ((Link) e).getCapacity() : ((Resource) e).getCapacity()).collect(Collectors.toList());
         if (carriedTraffic >= 0)
-            this.generalMessage = Arrays.asList(titleMessage, "Carried trafffic: " + String.format("%.2f ", carriedTraffic) + " " + np.getDemandTrafficUnitsName(layer));
-        else
+        {
+            this.generalMessage = new ArrayList<>();
+            this.generalMessage.addAll(Arrays.asList(titleMessage));
+            this.generalMessage.add("Carried trafffic: " + String.format("%.2f ", carriedTraffic) + " " + np.getDemandTrafficUnitsName(layer));
+        } else
+        {
             this.generalMessage = Arrays.asList(titleMessage);
+        }
         this.preferredSize = null;
     }
 
@@ -98,9 +103,9 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
             final double capacity = capacitiesPerElement.get(indexElementInPath);
             if (e instanceof Resource)
             {
-    			/* Draw the resource, there always are a previous node */
+                /* Draw the resource, there always are a previous node */
                 final Resource r = (Resource) e;
-    			/* create resource node,with URL  */
+                /* create resource node,with URL  */
                 final DrawNode dnResource = new DrawNode(r, maxHeightOrSizeIcon, occup, capacity);
                 DrawNode.addNodeToGraphics(g2d, dnResource, new Point(initialDnTopLeftPosition.x + (xSeparationDnCenters * drawnNodes.size()), topCoordinateLineResources), fontMetrics, regularInterlineSpacePixels);
                 drawnNodes.add(dnResource);
