@@ -340,13 +340,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         if (ErrorHandling.isDebugEnabled())
         {
-            canvas.getCanvasComponent().addMouseMotionListener(new MouseMotionListener()
+            canvas.getCanvasComponent().addMouseMotionListener(new MouseMotionAdapter()
             {
-                @Override
-                public void mouseDragged(MouseEvent e)
-                {
-                }
-
                 @Override
                 public void mouseMoved(MouseEvent e)
                 {
