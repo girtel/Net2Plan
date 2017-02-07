@@ -8,10 +8,8 @@ import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 
 import javax.sound.sampled.Line;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 
 /**
@@ -99,6 +97,7 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
 
         // Drawing each layer
         // NOTE: Random order
+
         for (NetworkLayer layer : layers)
         {
             final Set<Link> links = riskGroup.getLinks(layer);
@@ -111,8 +110,12 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
 
             // One row below the text
             iconRow = addLineJump(iconRow);
-            for (Link link : links)
+            int column = 0;
+
+            final Iterator<Link> iterator = links.iterator();
+            while (iterator.hasNext())
             {
+                final Link link = iterator.next();
                 final DrawNode ingressNode = new DrawNode(link.getOriginNode(), layer, maxIconSize);
                 final DrawNode egressNode = new DrawNode(link.getDestinationNode(), layer, maxIconSize);
 
@@ -120,8 +123,8 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
                 initialDnTopLeftPosition = new Point(maxIconSize, topCoordinateLineNodes);
                 xSeparationDnCenters = maxIconSize * 3;
 
-                DrawNode.addNodeToGraphics(g2d, ingressNode, new Point(new Point(initialDnTopLeftPosition.x, initialDnTopLeftPosition.y)), fontMetrics, regularInterlineSpacePixels, null);
-                DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + (xSeparationDnCenters), initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
+                DrawNode.addNodeToGraphics(g2d, ingressNode, new Point(new Point(initialDnTopLeftPosition.x + (xSeparationDnCenters * 2 * column), initialDnTopLeftPosition.y)), fontMetrics, regularInterlineSpacePixels, null);
+                DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + (xSeparationDnCenters) + (xSeparationDnCenters * 2 * column), initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
 
                 drawnNodes.add(ingressNode);
                 drawnNodes.add(egressNode);
@@ -131,7 +134,26 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
 
                 drawnLines.add(drawLine);
 
-                iconRow = addIconJump(iconRow);
+                if (!iterator.hasNext())
+                {
+                    // Create the space for the next layer.
+                    iconRow = addIconJump(iconRow);
+                    iconRow = addIconJump(iconRow);
+
+                    break;
+                }
+
+                if (column < 1)
+                {
+                    // Next column
+                    column++;
+                } else
+                {
+                    // Next row
+                    iconRow = addIconJump(iconRow);
+                    iconRow = addIconJump(iconRow);
+                    column = 0;
+                }
             }
 
             textRow = removeIconJump(iconRow);

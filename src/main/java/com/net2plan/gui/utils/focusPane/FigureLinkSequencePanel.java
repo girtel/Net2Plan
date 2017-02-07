@@ -113,8 +113,8 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
     			/* create link from previous dn (resource of node) to here: no URL */
     			final DrawNode dnOrigin = drawnNodes.get(drawnNodes.size()-2);
     			final DrawNode dnDestination = drawnNodes.get(drawnNodes.size()-1);
-    			final Point initialPoint = dnOrigin.associatedElement instanceof Resource? dnOrigin.posEast() : dnOrigin.posSouthSomeWest();
-    			final Point endPoint = dnOrigin.associatedElement instanceof Resource? dnDestination.posWest() : dnDestination.posNorthSomeWest();
+    			final Point initialPoint = dnOrigin.getAssociatedElement() instanceof Resource? dnOrigin.posEast() : dnOrigin.posSouthSomeWest();
+    			final Point endPoint = dnOrigin.getAssociatedElement() instanceof Resource? dnDestination.posWest() : dnDestination.posNorthSomeWest();
     			final DrawLine dlNoURL = new DrawLine (dnOrigin , dnDestination , initialPoint , endPoint);
     			DrawLine.addLineToGraphics(g2d , dlNoURL , fontMetrics , regularInterlineSpacePixels);
     			drawnLines.add(dlNoURL);
@@ -125,12 +125,12 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
 
     			DrawNode lastNodeElement = null;
     			for (int index = drawnNodes.size()-1 ; index >= 0 ; index --) 
-    				if (drawnNodes.get(index).associatedElement instanceof Node) { lastNodeElement = drawnNodes.get(index); break; }
+    				if (drawnNodes.get(index).getAssociatedElement() instanceof Node) { lastNodeElement = drawnNodes.get(index); break; }
     			if (lastNodeElement == null) throw new RuntimeException();
 
     			/* Get the previous node element added */
     			final DrawNode lastGn = drawnNodes.get(drawnNodes.size()-1);
-    			if (lastGn.associatedElement instanceof Resource)
+    			if (lastGn.getAssociatedElement() instanceof Resource)
     			{
     				/* Add a link to the last resource to its host node */
     				final Point initialPoint = new Point (lastGn.posNorth().x + 5 , lastGn.posNorth().y);

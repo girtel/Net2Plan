@@ -35,7 +35,7 @@ class DrawLine
     private List<String> urlsLabels;
     private List<Rectangle2D> shapesLabelstoCreateByPainter;
 
-    public Point posCenter(Point posTopLeftCorner)
+    Point posCenter(Point posTopLeftCorner)
     {
         return new Point(posTopLeftCorner.x + (int) (shapeLineToCreateByPainter.getBounds2D().getWidth() / 2), posTopLeftCorner.y + (int) (shapeLineToCreateByPainter.getBounds2D().getHeight()));
     }
@@ -72,7 +72,7 @@ class DrawLine
                 "Occup: " + String.format("%.1f" , occupiedToShow) + " " + capUnits,
                 "Total: " + String.format("%.1f" , e.getOccupiedCapacity()) + "/" + String.format("%.1f" , e.getCapacity()) + " " + capUnits ));
         this.urlsLabels.addAll(Arrays.asList("link" + e.getId(), "", "", ""));
-        
+
         if (e.getCoupledDemand() != null)
         {
             labels.add("Coupled: Demand " + e.getCoupledDemand().getIndex() + ", " + getLayerName(e.getCoupledDemand().getLayer()));

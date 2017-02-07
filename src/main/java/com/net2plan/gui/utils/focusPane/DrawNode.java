@@ -61,14 +61,14 @@ public class DrawNode
 		}
 	}
 	
-	Image icon;
-	Shape shapeIconToSetByPainter;
-	Point posTopLeftCornerToSetByPainter;
-	NetworkElement associatedElement;
+	private Image icon;
+	private Shape shapeIconToSetByPainter;
+	private Point posTopLeftCornerToSetByPainter;
+	private NetworkElement associatedElement;
 
-	List<String> labels;
-	List<String> urlsLabels;
-	List<Rectangle2D> shapesLabelsToCreateByPainter;
+	private List<String> labels;
+	private List<String> urlsLabels;
+	private List<Rectangle2D> shapesLabelsToCreateByPainter;
 
 	Point posNorthSomeWest () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) - 5 , posTopLeftCornerToSetByPainter.y); }
 	Point posNorthSomeEast () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) + 5 , posTopLeftCornerToSetByPainter.y); }
@@ -153,5 +153,39 @@ public class DrawNode
     	}
     }
 
+	public Image getIcon()
+	{
+		return icon;
+	}
+
+	public Shape getShapeIconToSetByPainter()
+	{
+		return shapeIconToSetByPainter;
+	}
+
+	public Point getPosTopLeftCornerToSetByPainter()
+	{
+		return posTopLeftCornerToSetByPainter;
+	}
+
+	public NetworkElement getAssociatedElement()
+	{
+		return associatedElement;
+	}
+
+	public List<String> getLabels()
+	{
+		return labels;
+	}
+
+	public List<String> getUrlsLabels()
+	{
+		return urlsLabels;
+	}
+
+	public List<Rectangle2D> getShapesLabelsToCreateByPainter()
+	{
+		return shapesLabelsToCreateByPainter;
+	}
 }
 

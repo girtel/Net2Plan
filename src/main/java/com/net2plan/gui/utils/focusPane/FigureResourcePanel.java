@@ -145,11 +145,11 @@ public class FigureResourcePanel extends JPanel
             super.mouseClicked(me);
             for (DrawNode dn : drawnNodes)
             {
-                if (dn.shapeIconToSetByPainter.contains(me.getPoint())) 
-                	FocusPane.processMouseClickInternalLink ("node" + dn.associatedElement.getId() , callback);
-                for (int labelIndex = 0; labelIndex < dn.labels.size() ; labelIndex ++)
-                	if (dn.shapesLabelsToCreateByPainter.get(labelIndex).contains(me.getPoint())) 
-                		FocusPane.processMouseClickInternalLink (dn.urlsLabels.get(labelIndex) , callback);
+                if (dn.getShapeIconToSetByPainter().contains(me.getPoint()))
+                	FocusPane.processMouseClickInternalLink ("node" + dn.getAssociatedElement().getId() , callback);
+                for (int labelIndex = 0; labelIndex < dn.getLabels().size() ; labelIndex ++)
+                	if (dn.getShapesLabelsToCreateByPainter().get(labelIndex).contains(me.getPoint()))
+                		FocusPane.processMouseClickInternalLink (dn.getUrlsLabels().get(labelIndex) , callback);
             }                
             for (DrawLine dl : drawnLines)
             {
