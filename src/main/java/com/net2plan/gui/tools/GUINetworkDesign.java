@@ -604,7 +604,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                topologyPanel.getCanvas().zoomIn();
+                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0) topologyPanel.getCanvas().zoomIn();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK));
 
@@ -613,7 +613,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                topologyPanel.getCanvas().zoomOut();
+                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0) topologyPanel.getCanvas().zoomOut();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK));
 
@@ -622,7 +622,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                topologyPanel.getCanvas().zoomAll();
+                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0) topologyPanel.getCanvas().zoomAll();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_MULTIPLY, InputEvent.CTRL_DOWN_MASK));
 
