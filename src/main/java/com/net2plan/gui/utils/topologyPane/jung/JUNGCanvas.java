@@ -165,7 +165,6 @@ public final class JUNGCanvas implements ITopologyCanvas
         vv.getRenderContext().setVertexFillPaintTransformer(n -> n.getFillPaint());
         vv.getRenderContext().setVertexFontTransformer(n -> n.getFont());
 
-        vv.getRenderContext().setVertexShapeTransformer(gn -> gn.getShape());
         vv.getRenderContext().setVertexIconTransformer(gn -> gn.getIcon());
 
         vv.getRenderContext().setVertexIncludePredicate(guiNodeContext -> callback.getVisualizationState().isVisibleInCanvas(guiNodeContext.element));
