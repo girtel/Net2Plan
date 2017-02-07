@@ -58,12 +58,6 @@ public class FocusPane extends JPanel
         this.setLayout(new BorderLayout(0,0));
 	}
 
-//	@Override
-//	public Dimension getPreferredSize ()
-//	{
-//		return new Dimension (600 , 300);
-//	}
-
 	public void updateView ()
 	{
 		final VisualizationState vs = callback.getVisualizationState();

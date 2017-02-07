@@ -374,6 +374,15 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         final JScrollPane scPane = new JScrollPane(auxPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         scPane.getVerticalScrollBar().setUnitIncrement(20);
         scPane.getHorizontalScrollBar().setUnitIncrement(20);
+
+        // Control the scroll
+        scPane.getHorizontalScrollBar().addAdjustmentListener(e ->
+        {
+            // Repaints the panel each time the horizontal scroll bar is moves, in order to avoid ghosting.
+            auxPanel.revalidate();
+            auxPanel.repaint();
+        });
+
         pane.add(scPane, "grow");
         return pane;
     }
