@@ -144,11 +144,11 @@ public class FigureMulticastTreePanel extends JPanel
             }                
             for (DrawLine dl : drawnLines)
             {
-                if (dl.shapeLineToCreateByPainter.contains(me.getPoint())) 
-                	FocusPane.processMouseClickInternalLink ("link" + dl.associatedElement.getId() , callback);
-                for (int labelIndex = 0; labelIndex < dl.labels.size() ; labelIndex ++)
-                	if (dl.shapesLabelstoCreateByPainter.get(labelIndex).contains(me.getPoint())) 
-                		FocusPane.processMouseClickInternalLink (dl.urlsLabels.get(labelIndex) , callback);
+                if (dl.getShapeLineToCreateByPainter().contains(me.getPoint()))
+                	FocusPane.processMouseClickInternalLink ("link" + dl.getAssociatedElement().getId() , callback);
+                for (int labelIndex = 0; labelIndex < dl.getLabels().size() ; labelIndex ++)
+                	if (dl.getShapesLabelstoCreateByPainter().get(labelIndex).contains(me.getPoint()))
+                		FocusPane.processMouseClickInternalLink (dl.getUrlsLabels().get(labelIndex) , callback);
             }                
         }
     }

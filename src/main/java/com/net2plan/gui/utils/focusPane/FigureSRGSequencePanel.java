@@ -126,7 +126,7 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
                 drawnNodes.add(ingressNode);
                 drawnNodes.add(egressNode);
 
-                final DrawLine drawLine = new DrawLine(ingressNode, egressNode, ingressNode.posEast(), egressNode.posWest());
+                final DrawLine drawLine = new DrawLine(ingressNode, egressNode, link, ingressNode.posEast(), egressNode.posWest(), 0.0d);
                 DrawLine.addLineToGraphics(g2d, drawLine, fontMetrics, regularInterlineSpacePixels);
 
                 drawnLines.add(drawLine);
