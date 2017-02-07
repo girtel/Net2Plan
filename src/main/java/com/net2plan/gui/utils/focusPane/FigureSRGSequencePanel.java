@@ -92,8 +92,11 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
         }
 
         textRow = addIconJump(textRow);
+
+        // Icons two rows below the text
         iconRow = addLineJump(textRow);
         iconRow = addLineJump(iconRow);
+
         // Drawing each layer
         // NOTE: Random order
         for (NetworkLayer layer : layers)
@@ -106,6 +109,7 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
             g2d.drawString("Links, layer " + layer.getName(), maxIconSize, maxIconSize + (textRow * fontHeightTitle));
             g2d.setFont(plainFont);
 
+            // One row below the text
             iconRow = addLineJump(iconRow);
             for (Link link : links)
             {
