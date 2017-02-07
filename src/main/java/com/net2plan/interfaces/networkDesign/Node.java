@@ -613,6 +613,7 @@ public class Node extends NetworkElement
 	{
 		checkAttachedToNetPlanObject();
 		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		Set<Route> res = new HashSet<Route> (); 
 		for (Link e : cache_nodeIncomingLinks) if (e.layer.equals (layer)) res.addAll (e.cache_traversingRoutes.keySet()); 
 		for (Link e : cache_nodeOutgoingLinks) if (e.layer.equals (layer)) res.addAll (e.cache_traversingRoutes.keySet()); 

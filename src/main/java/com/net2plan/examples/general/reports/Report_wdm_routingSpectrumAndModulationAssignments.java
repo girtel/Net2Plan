@@ -59,7 +59,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 {
 	/* Input parameters */
 	private NetPlan netPlan;
-	private NetworkLayer originalDefaultLayer;
+	private NetworkLayer wdmLayer;
 	private Map<String, String> reportParameters;
 	private Statistics stat;
 	private InputParameter wdmLayerIndex = new InputParameter ("wdmLayerIndex", (int) 0 , "Index of the WDM layer (-1 means default layer)");
@@ -73,8 +73,8 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		/* Input parameters */
 		this.netPlan = netPlan;
 		this.reportParameters = reportParameters;
-		this.originalDefaultLayer = netPlan.getNetworkLayerDefault();
-		final NetworkLayer wdmLayer = wdmLayerIndex.getInt () == -1? netPlan.getNetworkLayerDefault() : netPlan.getNetworkLayer(wdmLayerIndex.getInt ());
+		final NetworkLayer originalDefaultLayer = netPlan.getNetworkLayerDefault();
+		this.wdmLayer = wdmLayerIndex.getInt () == -1? netPlan.getNetworkLayerDefault() : netPlan.getNetworkLayer(wdmLayerIndex.getInt ());
 		this.netPlan.setNetworkLayerDefault(wdmLayer);
 
 		//Map<Link, LinkedList<String>> warnings_e = new LinkedHashMap<Link, LinkedList<String>>();
@@ -155,7 +155,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		out.append("<table border='1'>");
 		out.append("<tr><th align=\"left\"><b>Format errors</b></th></tr>");
 		for (Link e : netPlan.getLinks()) if (!WDMUtils.isWDMFormatCorrect(e)) { correctFormat = false ; out.append("<tr><td>Fiber " + e.getIndex() + ": incorrect format</td></tr>"); }
-		for (Route r : netPlan.getRoutes()) if (!WDMUtils.isWDMFormatCorrect(r)) { correctFormat = false ; out.append("<tr><td>Route " + r.getIndex() + ": incorrect format. Is backup route: " + r.isBackupRoute() + "</td></tr>"); }
+		for (Route r : netPlan.getRoutes(wdmLayer)) if (!WDMUtils.isWDMFormatCorrect(r)) { correctFormat = false ; out.append("<tr><td>Route " + r.getIndex() + ": incorrect format. Is backup route: " + r.isBackupRoute() + "</td></tr>"); }
 		if (correctFormat) out.append("<tr><td bgcolor=\"PaleGreen\">No format errors!!!</td></tr>"); 
 		out.append("</table>");
 		if (!correctFormat) return out.toString();
@@ -261,7 +261,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 				+ "<th><b>Line rate (Gbps)</b></th><th><b>Num. slots</b></th><th><b>Occupied slots</b></th>"
 				+ "<th><b>Wavelength conversion?</b></th><th><b>Wavelength contiguity?</b></th></th>"
 				+ "<th><b>Num. regenerators (reg. nodes)</b></th><b>Backup routes assigned</b></th></tr><th><b>Ok?</b></th></tr>");
-		for (Route r : netPlan.getRoutesAreNotBackup())
+		for (Route r : netPlan.getRoutesAreNotBackup(wdmLayer))
 		{
 			WDMUtils.RSA rsa = new WDMUtils.RSA(r , false);
 			out.append("<tr>");
@@ -300,7 +300,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 				+ "<th><b>Num. slots</b></th><th><b>Occupied slots</b></th>"
 				+ "<th><b>Wavelength conversion?</b></th><th><b>Wavelength contiguity?</b></th></th>"
 				+ "<th><b>Num. regenerators (reg. nodes)</b></th><th><b>Ok?</b></th></tr>");
-		for (Route segment : netPlan.getRoutesAreBackup())
+		for (Route segment : netPlan.getRoutesAreBackup(wdmLayer))
 		{
 			WDMUtils.RSA rsa = new WDMUtils.RSA(segment , false);
 			out.append("<tr>");
@@ -432,19 +432,19 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 				nodeInDegree.add(n.getIncomingLinks(wdmLayer).size());
 				nodeOutDegree.add(n.getOutgoingLinks(wdmLayer).size());
 			}
-			bidirectionalLinks = GraphUtils.isWeightedBidirectional(netPlan.getNodes() , netPlan.getLinks() , netPlan.getVectorLinkCapacity());
-			bidirectionalDemands = GraphUtils.isWeightedBidirectional(netPlan.getNodes() , netPlan.getDemands() , netPlan.getVectorDemandOfferedTraffic());
-			bidirectionalRoutes = GraphUtils.isWeightedBidirectional(netPlan.getNodes() , netPlan.getRoutes () , netPlan.getVectorRouteCarriedTraffic());
-			for (Link e : netPlan.getLinks())
+			bidirectionalLinks = GraphUtils.isWeightedBidirectional(netPlan.getNodes() , netPlan.getLinks(wdmLayer) , netPlan.getVectorLinkCapacity(wdmLayer));
+			bidirectionalDemands = GraphUtils.isWeightedBidirectional(netPlan.getNodes() , netPlan.getDemands(wdmLayer) , netPlan.getVectorDemandOfferedTraffic(wdmLayer));
+			bidirectionalRoutes = GraphUtils.isWeightedBidirectional(netPlan.getNodes() , netPlan.getRoutes (wdmLayer) , netPlan.getVectorRouteCarriedTraffic(wdmLayer));
+			for (Link e : netPlan.getLinks(wdmLayer))
 			{
 				numberFrequencySlotsPerLink.add((double) WDMUtils.getFiberNumFrequencySlots(e));
 				linkUtilization.add(e.getOccupiedCapacity());
 				fiberCapacityOccupiedByBackupRoutes.add(e.getOccupiedCapacityOnlyBackupRoutes());
 			}
 			unicastRoutingBifurcated = false;
-			for (Demand d : netPlan.getDemands())
+			for (Demand d : netPlan.getDemands(wdmLayer))
 				if (d.getRoutes().size() > 1) { unicastRoutingBifurcated = false; break; }
-			for (Route r : netPlan.getRoutes())
+			for (Route r : netPlan.getRoutes(wdmLayer))
 			{
 				lpLengthHops.add(r.getNumberOfHops());
 				lpLengthKm.add(r.getLengthInKm());
@@ -460,13 +460,13 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 				numberOfSignalRegenerators += (lists == null? 0 : lists.size());
 			}	
 					
-			for (Route lp : netPlan.getRoutesAreNotBackup())
+			for (Route lp : netPlan.getRoutesAreNotBackup(wdmLayer))
 			{
 				WDMUtils.RSA rsa = new WDMUtils.RSA(lp , false);
 				numberOfWavelengthConversions += rsa.getNodesWithFrequencySlotConversion().size();
 				mapRoute2RSA.put(lp , rsa);
 			}
-			for (Route lp : netPlan.getRoutesAreBackup())
+			for (Route lp : netPlan.getRoutesAreBackup(wdmLayer))
 			{
 				WDMUtils.RSA rsa = new WDMUtils.RSA(lp , false);
 				numberOfWavelengthConversions += rsa.getNodesWithFrequencySlotConversion().size();
