@@ -24,7 +24,7 @@ class DrawLine
 	private static final Stroke STROKE_LINKSREGULAR = new BasicStroke(3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
 	private static final Stroke STROKE_LINKSNOURL = new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
 
-	
+
 	DrawNode from , to;
 	Polygon shapeLineToCreateByPainter;
 	Point pFrom , pTo;
@@ -35,11 +35,11 @@ class DrawLine
 
 	Point posCenter (Point posTopLeftCorner) { return new Point (posTopLeftCorner.x + (int) (shapeLineToCreateByPainter.getBounds2D().getWidth() / 2) , posTopLeftCorner.y + (int) (shapeLineToCreateByPainter.getBounds2D().getHeight())); }
 	public String toString () { return "line from: " + from + ", to: " + to + ", element: " + associatedElement; }
-	
+
 	DrawLine (DrawNode from , DrawNode to , Point pFrom , Point pTo)
 	{
-		this.from = from; this.to = to; 
-		this.labels = new ArrayList<> (); this.urlsLabels = new ArrayList<> (); 
+		this.from = from; this.to = to;
+		this.labels = new ArrayList<> (); this.urlsLabels = new ArrayList<> ();
 		this.associatedElement = null;
 		this.pFrom = pFrom;
 		this.pTo = pTo;
@@ -47,15 +47,15 @@ class DrawLine
 	DrawLine (DrawNode from , DrawNode to , Link e , Point pFrom , Point pTo , double occupiedToShow)
 	{
 		final String capUnits = e.getNetPlan().getLinkCapacityUnitsName(e.getLayer());
-		this.from = from; this.to = to; 
+		this.from = from; this.to = to;
 		this.pFrom = pFrom;
 		this.pTo = pTo;
 		this.labels = Arrays.asList(
-				"Link " + e.getIndex() , 
-				String.format("%.1f" , e.getLengthInKm()) + " km (" + String.format("%.2f" , e.getPropagationDelayInMs()) + " ms)" , 
-				"Occup: " + String.format("%.1f" , occupiedToShow) + " " + capUnits, 
+				"Link " + e.getIndex() ,
+				String.format("%.1f" , e.getLengthInKm()) + " km (" + String.format("%.2f" , e.getPropagationDelayInMs()) + " ms)" ,
+				"Occup: " + String.format("%.1f" , occupiedToShow) + " " + capUnits,
 				"Total: " + String.format("%.1f" , e.getOccupiedCapacity()) + "/" + String.format("%.1f" , e.getCapacity()) + " " + capUnits );
-		this.urlsLabels = Arrays.asList("link" + e.getId() , "" , "" , ""); 
+		this.urlsLabels = Arrays.asList("link" + e.getId() , "" , "" , "");
 		if (e.getCoupledDemand() != null)
 		{
 			labels.add ("Coupled: Demand " + e.getCoupledDemand().getIndex() + ", " + getLayerName (e.getCoupledDemand().getLayer()));
@@ -69,26 +69,37 @@ class DrawLine
 		this.associatedElement = e;
 	}
 
+	static void addLineToGraphics (Graphics2D g2d , DrawLine dl ,
+								   FontMetrics fontMetrics , int interlineSpacePixels)
+	{
+		addLineToGraphics(g2d, dl, fontMetrics, interlineSpacePixels, null);
+	}
 
-    static void addLineToGraphics (Graphics2D g2d , DrawLine dl , 
-    		FontMetrics fontMetrics , int interlineSpacePixels)
+    static void addLineToGraphics (Graphics2D g2d , DrawLine dl ,
+    		FontMetrics fontMetrics , int interlineSpacePixels, Stroke stroke)
     {
     	final int margin = 3;
     	final int x1 = dl.pFrom.x; final int y1 = dl.pFrom.y;
     	final int x2 = dl.pTo.x; final int y2 = dl.pTo.y;
-    	
-    	if (dl.associatedElement instanceof Link)
-    		g2d.setStroke(STROKE_LINKSREGULAR);
-    	else
-    		g2d.setStroke(STROKE_LINKSNOURL);
+
+    	if (stroke == null)
+        {
+            if (dl.associatedElement instanceof Link)
+                g2d.setStroke(STROKE_LINKSREGULAR);
+            else
+                g2d.setStroke(STROKE_LINKSNOURL);
+        } else
+        {
+            g2d.setStroke(stroke);
+        }
         g2d.drawLine(x1 , y1 , x2 , y2);
         int xPoints[] = { x1 - margin, x1 + margin, x2 + margin, x2 - margin };
         int yPoints[] = { y1 + margin, y1 - margin, y2 - margin, y2 + margin };
         dl.shapeLineToCreateByPainter = new Polygon(xPoints, yPoints, yPoints.length);
     	dl.shapesLabelstoCreateByPainter = new ArrayList<> (dl.labels.size());
-    	
+
     	drawArrowHead (g2d , x1,y1,x2,y2);
-    	
+
     	for (int lineIndex = 0; lineIndex < dl.labels.size() ; lineIndex ++)
     	{
     		final String label = dl.labels.get(lineIndex);
@@ -96,9 +107,9 @@ class DrawLine
     		final int xTopLeftCorner = (x1+x2)/2 - (fontMetrics.stringWidth(label))/2;
     		final int yTopLeftCorner = (y1+y2)/2 + 10 + interlineSpacePixels * (lineIndex + 1);
     		final Color defaultColor = g2d.getColor();
-    		if (hasUrl) g2d.setColor(Color.blue); 
+    		if (hasUrl) g2d.setColor(Color.blue);
         	g2d.drawString (label , xTopLeftCorner, yTopLeftCorner);
-    		if (hasUrl) g2d.setColor(defaultColor); 
+    		if (hasUrl) g2d.setColor(defaultColor);
         	/* create rectangle of the text for links, draw it and store it */
         	final Rectangle2D shapeText = fontMetrics.getStringBounds(label, g2d);
         	shapeText.setRect(xTopLeftCorner , yTopLeftCorner - g2d.getFontMetrics().getAscent(), shapeText.getWidth(), shapeText.getHeight());
@@ -106,7 +117,7 @@ class DrawLine
     	}
     }
 
-    private static void drawArrowHead(Graphics g1, int x1, int y1, int x2, int y2) 
+    private static void drawArrowHead(Graphics g1, int x1, int y1, int x2, int y2)
     {
     	final int ARR_SIZE = 4;
         Graphics2D g = (Graphics2D) g1.create();

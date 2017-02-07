@@ -80,7 +80,7 @@ public class FigureNodeSequencePanel extends FigureSequencePanel
 
     	/* Initial dn */
         dn = new DrawNode(node, layer, maxHeightOrSizeIcon);
-        DrawNode.addNodeToGraphics(g2d, dn, initialDnTopLeftPosition, fontMetrics, regularInterlineSpacePixels);
+        DrawNode.addNodeToGraphics(g2d , dn , initialDnTopLeftPosition , fontMetrics , regularInterlineSpacePixels , null);
         drawnNodes.add(dn);
     }
 }

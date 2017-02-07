@@ -66,15 +66,15 @@ public class FigureMultiCastDemandSequencePanel extends FigureSequencePanel
         final int ySeparationDnCenters = maxIconSize * 3;
 
     	/* Initial dn */
-        DrawNode.addNodeToGraphics(g2d, ingressNode, new Point(initialDnTopLeftPosition.x + ((xSeparationDnCenters * (egressNodes.size() / 2)) - xSeparationDnCenters/2), initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels);
+        DrawNode.addNodeToGraphics(g2d, ingressNode, new Point(initialDnTopLeftPosition.x + ((xSeparationDnCenters * (egressNodes.size() / 2)) - xSeparationDnCenters/2), initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
         drawnNodes.add(ingressNode);
 
         for (int i = 0; i < egressNodes.size(); i++)
         {
             final DrawNode egressNode = egressNodes.get(i);
-            DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + (i * xSeparationDnCenters), initialDnTopLeftPosition.y + ySeparationDnCenters), fontMetrics, regularInterlineSpacePixels);
-            final DrawLine link = new DrawLine(ingressNode, egressNode);
-            DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels, DrawLine.Orientation.VERTICAL, lineStroke);
+            DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + (i * xSeparationDnCenters), initialDnTopLeftPosition.y + ySeparationDnCenters), fontMetrics, regularInterlineSpacePixels, null);
+            final DrawLine link = new DrawLine(ingressNode, egressNode, ingressNode.posSouth(), egressNode.posNorth());
+            DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels, lineStroke);
 
             drawnNodes.add(egressNode);
             drawnLines.add(link);

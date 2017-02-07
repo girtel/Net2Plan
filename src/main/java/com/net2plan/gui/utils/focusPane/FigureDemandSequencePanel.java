@@ -55,14 +55,14 @@ public class FigureDemandSequencePanel extends FigureSequencePanel
         final int xSeparationDnCenters = maxIconSize * 3;
 
     	/* Initial dn */
-        DrawNode.addNodeToGraphics(g2d, ingressNode, initialDnTopLeftPosition, fontMetrics, regularInterlineSpacePixels);
-        DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + xSeparationDnCenters, initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels);
+        DrawNode.addNodeToGraphics(g2d, ingressNode, initialDnTopLeftPosition, fontMetrics, regularInterlineSpacePixels, null);
+        DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + xSeparationDnCenters, initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
 
         drawnNodes.add(ingressNode);
         drawnNodes.add(egressNode);
 
-        final DrawLine link = new DrawLine(ingressNode, egressNode);
-        DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels, DrawLine.Orientation.HORIZONTAL, lineStroke);
+        final DrawLine link = new DrawLine(ingressNode, egressNode, ingressNode.posEast(), egressNode.posWest());
+        DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels,lineStroke);
 
         drawnLines.add(link);
     }
