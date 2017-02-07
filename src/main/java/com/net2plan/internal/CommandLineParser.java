@@ -56,7 +56,7 @@ public class CommandLineParser extends PosixParser
 		boolean hasOption = this.getOptions().hasOption(arg);
 		if (!hasOption) return;
 
-		try { processOption(arg, iter); }
+		try { super.processOption(arg, iter); }
 		catch(Throwable e) { throw new RuntimeException(e); }
 	}
 
