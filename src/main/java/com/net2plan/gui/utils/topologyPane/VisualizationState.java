@@ -141,6 +141,8 @@ public class VisualizationState
     	this.pastPickedElements = new ArrayList<> (maxSizePickUndoList + 1);
     	this.pastPickedElementsCursor = -1;
     	this.maxSizePickUndoList = maxSizePickUndoList;
+        this.mapShowInCanvasLayerLinks = currentNp.getNetworkLayers().stream().collect(Collectors.toMap(layer -> layer, layer -> true));
+
     	updatePickUndoList_newPickOrPickReset (); // add a no pick, this is never removed
     	setCanvasLayerVisibilityAndOrder(currentNp ,mapLayer2VisualizationOrder , layerVisibilityMap);
     }
@@ -413,12 +415,6 @@ public class VisualizationState
         if (!this.layerVisibilityInCanvasMap.keySet().equals(new HashSet<>(currentNp.getNetworkLayers())))
             throw new RuntimeException();
 
-        /* Just in case the layers have changed */
-        this.mapShowInCanvasLayerLinks = new HashMap<>();
-        for (NetworkLayer layer : currentNp.getNetworkLayers())
-        	if (!mapShowInCanvasLayerLinks.keySet().contains(layer))
-        		this.mapShowInCanvasLayerLinks.put(layer , true);
-
 		/* Update the interlayer space */
 //        this.interLayerSpaceInPixels = 50; //getDefaultVerticalDistanceForInterLayers();
 
@@ -426,6 +422,9 @@ public class VisualizationState
         {
             nodesToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
             linksToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
+
+            // Set all layer links as visible when loading a new topology.
+            this.mapShowInCanvasLayerLinks = currentNp.getNetworkLayers().stream().collect(Collectors.toMap(layer -> layer, layer -> true));
         }
         this.cache_canvasIntraNodeGUILinks = new HashMap<>();
         this.cache_canvasRegularLinkMap = new HashMap<>();
