@@ -13,6 +13,8 @@
 package com.net2plan.gui.utils.topologyPane;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
 import java.awt.*;
@@ -75,6 +77,27 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     }
 
     @Override
+    public void mouseClicked(MouseEvent e)
+    {
+        if (e.getClickCount() == 2)
+        {
+            final GUINode gn = canvas.getVertex(e);
+
+            if (gn != null)
+            {
+                final NetworkLayer layer = gn.getLayer();
+                final NetPlan netPlan = callback.getDesign();
+
+                if (netPlan.getNetworkLayerDefault() != layer)
+                {
+                    netPlan.setNetworkLayerDefault(layer);
+                    callback.getVisualizationState().setCanvasLayerVisibility(layer, true);
+                }
+            }
+        }
+    }
+
+    @Override
     public void mousePressed(MouseEvent e) {
         if (checkModifiers(e)) {
             GUINode gn = canvas.getVertex(e);
@@ -97,12 +120,6 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
         initialPoint = null;
         canvas.getCanvasComponent().setCursor(originalCursor);
     }
-
-//    @Override
-//    public void setCanvas(ITopologyCanvas canvas) {
-//        this.canvas = canvas;
-//        originalCursor = this.canvas.getCanvasComponent().getCursor();
-//    }
 
     @Override
     public void setModifiers(int modifiers) {
