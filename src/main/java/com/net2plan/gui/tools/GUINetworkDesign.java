@@ -22,8 +22,7 @@
 
 package com.net2plan.gui.tools;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
+import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.util.Collection;
@@ -307,8 +306,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
     private JPanel configureLeftBottomPanel()
     {
-        focusPanel = new FocusPane(this);// = new JTextArea();
-        final JPanel auxPanel = new JPanel(new BorderLayout());
+        focusPanel = new FocusPane(this);
+        final JPanel focusPanelContainer = new JPanel(new BorderLayout());
         final JToolBar navigationToolbar = new JToolBar(JToolBar.VERTICAL);
         navigationToolbar.setRollover(true);
         navigationToolbar.setFloatable(false);
@@ -366,14 +365,23 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         navigationToolbar.add(btn_pickNavigationUndo);
         navigationToolbar.add(btn_pickNavigationRedo);
 
-        auxPanel.add(navigationToolbar, BorderLayout.WEST);
-        auxPanel.add(focusPanel, BorderLayout.CENTER);
+        focusPanelContainer.add(navigationToolbar, BorderLayout.WEST);
+        focusPanelContainer.add(focusPanel, BorderLayout.CENTER);
 
         JPanel pane = new JPanel(new MigLayout("fill, insets 0 0 0 0"));
         pane.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Focus panel"));
-        final JScrollPane scPane = new JScrollPane(auxPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        final JScrollPane scPane = new JScrollPane(focusPanelContainer, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scPane.getVerticalScrollBar().setUnitIncrement(20);
         scPane.getHorizontalScrollBar().setUnitIncrement(20);
+
+        // Control the scroll
+        scPane.getHorizontalScrollBar().addAdjustmentListener(e ->
+        {
+            // Repaints the panel each time the horizontal scroll bar is moves, in order to avoid ghosting.
+            focusPanelContainer.revalidate();
+            focusPanelContainer.repaint();
+        });
+
         pane.add(scPane, "grow");
         return pane;
     }
@@ -596,7 +604,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                topologyPanel.getCanvas().zoomIn();
+                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0) topologyPanel.getCanvas().zoomIn();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK));
 
@@ -605,7 +613,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                topologyPanel.getCanvas().zoomOut();
+                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0) topologyPanel.getCanvas().zoomOut();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK));
 
@@ -614,7 +622,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                topologyPanel.getCanvas().zoomAll();
+                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0) topologyPanel.getCanvas().zoomAll();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_MULTIPLY, InputEvent.CTRL_DOWN_MASK));
 

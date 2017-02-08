@@ -286,6 +286,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_decreaseFontSize.addActionListener(this);
         btn_npChangeUndo.addActionListener(this);
         btn_npChangeRedo.addActionListener(this);
+        btn_osmMap.addActionListener(this);
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
@@ -326,7 +327,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             @Override
             public void componentResized(ComponentEvent e)
             {
-                canvas.zoomAll();
+                if (e.getComponent().getSize().getHeight() != 0 && e.getComponent().getSize().getWidth() != 0)
+                {
+                    canvas.zoomAll();
+                }
             }
         });
 
@@ -337,13 +341,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         if (ErrorHandling.isDebugEnabled())
         {
-            canvas.getCanvasComponent().addMouseMotionListener(new MouseMotionListener()
+            canvas.getCanvasComponent().addMouseMotionListener(new MouseMotionAdapter()
             {
-                @Override
-                public void mouseDragged(MouseEvent e)
-                {
-                }
-
                 @Override
                 public void mouseMoved(MouseEvent e)
                 {

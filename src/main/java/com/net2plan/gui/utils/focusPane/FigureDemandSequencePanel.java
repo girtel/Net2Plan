@@ -63,7 +63,5 @@ public class FigureDemandSequencePanel extends FigureSequencePanel
 
         final DrawLine link = new DrawLine(ingressNode, egressNode, ingressNode.posEast(), egressNode.posWest());
         DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels,lineStroke);
-
-        drawnLines.add(link);
     }
 }
