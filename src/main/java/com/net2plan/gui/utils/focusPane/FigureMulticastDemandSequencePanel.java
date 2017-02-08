@@ -30,6 +30,12 @@ public class FigureMulticastDemandSequencePanel extends FigureSequencePanel
     }
 
     @Override
+    public Dimension getPreferredSize()
+    {
+        return new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+    }
+
+    @Override
     protected void paintComponent(Graphics graphics)
     {
         final Graphics2D g2d = (Graphics2D) graphics;

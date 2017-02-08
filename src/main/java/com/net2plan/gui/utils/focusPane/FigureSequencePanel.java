@@ -20,6 +20,8 @@ public abstract class FigureSequencePanel extends JPanel
     protected List<DrawNode> drawnNodes;
     protected List<DrawLine> drawnLines;
 
+    protected final int DEFAULT_WIDTH = 600, DEFAULT_HEIGHT = 600;
+
     public FigureSequencePanel(IVisualizationCallback callback)
     {
         this.callback = callback;
@@ -31,10 +33,7 @@ public abstract class FigureSequencePanel extends JPanel
     }
 
     @Override
-    public Dimension getPreferredSize()
-    {
-        return new Dimension(600, 600);
-    }
+    public abstract Dimension getPreferredSize();
 
     @Override
     protected abstract void paintComponent(Graphics graphics);

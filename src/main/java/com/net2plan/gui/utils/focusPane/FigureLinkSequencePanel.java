@@ -63,6 +63,12 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
     }
 
     @Override
+    public Dimension getPreferredSize()
+    {
+        return new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+    }
+
+    @Override
     protected void paintComponent(Graphics grphcs)
     {
         final Graphics2D g2d = (Graphics2D) grphcs;

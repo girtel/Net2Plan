@@ -6,7 +6,6 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 
-import javax.sound.sampled.Line;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -22,17 +21,28 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
     private final List<String> generalMessage;
 
     private final Font headerFont, plainFont;
-
     private final int ICON_JUMP = 5;
     private final int LINE_JUMP = 1;
+
+    private int panelWidth, panelHeight;
 
     public FigureSRGSequencePanel(final IVisualizationCallback callback, final SharedRiskGroup srg, final String... titleMessage)
     {
         super(callback);
         this.riskGroup = srg;
         this.generalMessage = Arrays.asList(titleMessage);
+
+        this.panelWidth = DEFAULT_WIDTH;
+        this.panelHeight = DEFAULT_HEIGHT;
+
         this.plainFont = new Font("Arial", Font.PLAIN, 10);
         this.headerFont = new Font("Arial", Font.BOLD, 12);
+    }
+
+    @Override
+    public Dimension getPreferredSize()
+    {
+        return new Dimension(panelWidth, panelHeight);
     }
 
     @Override
@@ -95,9 +105,11 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
         iconRow = addLineJump(textRow);
         iconRow = addLineJump(iconRow);
 
+        int maxWidth = 0;
+        int maxHeight = 0;
+
         // Drawing each layer
         // NOTE: Random order
-
         for (NetworkLayer layer : layers)
         {
             final Set<Link> links = riskGroup.getLinks(layer);
@@ -123,8 +135,11 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
                 initialDnTopLeftPosition = new Point(maxIconSize, topCoordinateLineNodes);
                 xSeparationDnCenters = maxIconSize * 3;
 
-                DrawNode.addNodeToGraphics(g2d, ingressNode, new Point(new Point(initialDnTopLeftPosition.x + (xSeparationDnCenters * 2 * column), initialDnTopLeftPosition.y)), fontMetrics, regularInterlineSpacePixels, null);
-                DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + (xSeparationDnCenters) + (xSeparationDnCenters * 2 * column), initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
+                final Point rightPos = new Point(initialDnTopLeftPosition.x + (xSeparationDnCenters * 2 * column), initialDnTopLeftPosition.y);
+                final Point leftPos = new Point(initialDnTopLeftPosition.x + (xSeparationDnCenters) + (xSeparationDnCenters * 2 * column), initialDnTopLeftPosition.y);
+
+                DrawNode.addNodeToGraphics(g2d, ingressNode, rightPos, fontMetrics, regularInterlineSpacePixels, null);
+                DrawNode.addNodeToGraphics(g2d, egressNode, leftPos, fontMetrics, regularInterlineSpacePixels, null);
 
                 drawnNodes.add(ingressNode);
                 drawnNodes.add(egressNode);
@@ -139,6 +154,9 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
                     // Create the space for the next layer.
                     iconRow = addIconJump(iconRow);
                     iconRow = addIconJump(iconRow);
+
+                    if (maxWidth < leftPos.x) maxWidth = leftPos.x;
+                    if (maxHeight < leftPos.y) maxHeight = leftPos.y;
 
                     break;
                 }
@@ -159,6 +177,9 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
             textRow = removeIconJump(iconRow);
             iconRow = addLineJump(iconRow);
         }
+
+        this.panelWidth = maxWidth < DEFAULT_WIDTH ? DEFAULT_WIDTH : maxWidth + (maxIconSize * 3);
+        this.panelHeight = maxHeight < DEFAULT_HEIGHT ? DEFAULT_HEIGHT : maxHeight + (maxIconSize * 3);
     }
 
     private int addIconJump(int graphicsRow)
