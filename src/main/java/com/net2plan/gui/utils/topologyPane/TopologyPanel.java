@@ -465,10 +465,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         {
             if (btn_osmMap.isSelected())
             {
-                switchOSMSupport(true);
+                setOSMSupportTo(true);
             } else if (!btn_osmMap.isSelected())
             {
-                switchOSMSupport(false);
+                setOSMSupportTo(false);
             }
         } else if (src == btn_increaseNodeSize)
         {
@@ -539,18 +539,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         return canvas;
     }
 
-//    private StringLabeller getLayerItem(long layerId)
-//    {
-//        int numLayers = layerChooser.getItemCount();
-//        for (int l = 0; l < numLayers; l++)
-//        {
-//            StringLabeller item = (StringLabeller) layerChooser.getItemAt(l);
-//            if (layerId == (Long) item.getObject()) return item;
-//        }
-//
-//        throw new RuntimeException("Bad");
-//    }
-
     /**
      * Loads a network design from a {@code .n2p} file.
      *
@@ -566,6 +554,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             if (rc != JFileChooser.APPROVE_OPTION) return;
 
             NetPlan aux = fc_netPlan.readNetPlan();
+            
+            btn_osmMap.setSelected(false);
+            setOSMSupportTo(false);
 
             aux.checkCachesConsistency();
 
@@ -713,29 +704,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         }
     }
 
-//    /**
-//     * Allows setting the current layer.
-//     *
-//     * @param layer Layer identifier
-//     * @since 0.3.1
-//     */
-//    public void selectLayer(long layer)
-//    {
-//        long currentLayerId = (Long) ((StringLabeller) layerChooser.getSelectedItem()).getObject();
-//        if (layer == currentLayerId) return;
-//
-//        layerChooser.setSelectedItem(getLayerItem(layer));
-//    }
-//
-//    /**
-//     * Configures the topology panel to allow (or not) loading of external traffic demand files.
-//     *
-//     * @param isAllowed Indicates whether or not it is allowed to load traffic demand files.
-//     * @since 0.3.0
-//     */
-//    public void setAllowLoadTrafficDemand(boolean isAllowed) {
-//        btn_loadDemand.setVisible(isAllowed);
-//    }
 
     /**
      * Take a snapshot of the canvas.
@@ -752,37 +720,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         multilayerControlPanel.refreshTable();
     }
 
-//    /**
-//     * Updates the layer chooser.
-//     *
-//     * @since 0.3.1
-//     */
-//    public final void updateLayerChooser()
-//    {
-//        ActionListener[] al = layerChooser.getActionListeners();
-//        for (ActionListener a : al) layerChooser.removeActionListener(a);
-//
-//        layerChooser.removeAllItems();
-//
-//        NetPlan currentState = callback.getDesign();
-//
-//        Collection<Long> layerIds = currentState.getNetworkLayerIds();
-//
-//        if (ErrorHandling.isDebugEnabled()) currentState.checkCachesConsistency();
-//
-//        for (long layerId : layerIds)
-//            layerChooser.addItem(StringLabeller.of(layerId, createLayerName(layerId)));
-//
-//        for (ActionListener a : al) layerChooser.addActionListener(a);
-//
-//        layerChooser.setSelectedIndex(currentState.getNetworkLayerDefault().getIndex()); // PABLO: AQUI SE PIERDEN LOS LINKS!!!!
-//
-//        layerChooserPane.setVisible(layerChooser.getItemCount() > 1);
-//
-//        revalidate();
-//    }
-
-    private void switchOSMSupport(final boolean doSwitch)
+    private void setOSMSupportTo(final boolean doSwitch)
     {
         if (doSwitch)
             canvas.runOSMSupport();
