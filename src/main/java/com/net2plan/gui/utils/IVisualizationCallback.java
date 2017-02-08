@@ -62,7 +62,7 @@ public interface IVisualizationCallback
 
     boolean inOnlineSimulationMode();
 
-	void loadDesignDoNotUpdateVisualization(NetPlan netPlan);
+	void setCurrentNetPlanDoNotUpdateVisualization(NetPlan netPlan);
 
 	void updateVisualizationAfterPick();
 

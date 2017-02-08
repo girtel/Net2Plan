@@ -439,7 +439,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             canvas.zoomAll();
         } else if (src == btn_reset)
         {
-            callback.loadDesignDoNotUpdateVisualization(new NetPlan());
+        	if (callback.inOnlineSimulationMode()) return;
+        	
+            callback.setCurrentNetPlanDoNotUpdateVisualization(new NetPlan());
             Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
@@ -586,6 +588,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      */
     public void loadDesign()
     {
+    	if (callback.inOnlineSimulationMode()) return;
+    	
         try
         {
             checkNetPlanFileChooser();
@@ -597,7 +601,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             aux.checkCachesConsistency();
 
-            callback.loadDesignDoNotUpdateVisualization(aux);
+            callback.setCurrentNetPlanDoNotUpdateVisualization(aux);
             final VisualizationState vs = callback.getVisualizationState();
             Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
@@ -623,7 +627,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             checkNetPlanFileChooser();
             fc_netPlan.setCurrentDirectory(file.getParentFile());
 
-            callback.loadDesignDoNotUpdateVisualization(netPlan);
+            callback.setCurrentNetPlanDoNotUpdateVisualization(netPlan);
             final VisualizationState vs = callback.getVisualizationState();
             Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));

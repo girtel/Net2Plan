@@ -52,10 +52,10 @@ import com.net2plan.utils.Pair;
 public class ViewEditTopologyTablesPane extends JPanel
 {
 	private final IVisualizationCallback callback;
-    private JTabbedPane netPlanView;
-    private Map<NetworkElementType, AdvancedJTable_NetworkElement> netPlanViewTable;
-    private Map<NetworkElementType, JComponent> netPlanViewTableComponent;
-    private Map<NetworkElementType, JLabel> netPlanViewTableNumEntriesLabel;
+    private final JTabbedPane netPlanView;
+    private final Map<NetworkElementType, AdvancedJTable_NetworkElement> netPlanViewTable;
+    private final Map<NetworkElementType, JComponent> netPlanViewTableComponent;
+    private final Map<NetworkElementType, JLabel> netPlanViewTableNumEntriesLabel;
 
 	public ViewEditTopologyTablesPane (IVisualizationCallback callback , LayoutManager layout)
 	{
@@ -198,35 +198,35 @@ public class ViewEditTopologyTablesPane extends JPanel
 		/* Load current network state */
         final NetPlan currentState = callback.getDesign();
         final NetworkLayer layer = currentState.getNetworkLayerDefault();
-        final RoutingType routingType = currentState.getRoutingType();
-        final boolean isSourceRouting = routingType == RoutingType.SOURCE_ROUTING;
         currentState.checkCachesConsistency();
 
-        Component selectedTab = netPlanView.getSelectedComponent();
+        final int selectedTabIndex = netPlanView.getSelectedIndex();
         netPlanView.removeAll();
         for (NetworkElementType elementType : Constants.NetworkElementType.values()) 
         {
-            if (isSourceRouting && elementType == NetworkElementType.FORWARDING_RULE)
+            if (layer.isSourceRouting() && elementType == NetworkElementType.FORWARDING_RULE)
                 continue;
-            if (!isSourceRouting && (elementType == NetworkElementType.ROUTE))
+            if (!layer.isSourceRouting() && (elementType == NetworkElementType.ROUTE))
                 continue;
             netPlanView.addTab(elementType == NetworkElementType.NETWORK ? "Network" : netPlanViewTable.get(elementType).getTabName(), netPlanViewTableComponent.get(elementType));
         }
-
-        for (int tabId = 0; tabId < netPlanView.getTabCount(); tabId++) {
-            if (netPlanView.getComponentAt(tabId).equals(selectedTab)) {
-                netPlanView.setSelectedIndex(tabId);
-                break;
-            }
-        }
+        if ((selectedTabIndex < netPlanView.getTabCount()) && (selectedTabIndex >= 0))
+            netPlanView.setSelectedIndex(selectedTabIndex);
+//        
+//        for (int tabId = 0; tabId < netPlanView.getTabCount(); tabId++) {
+//            if (netPlanView.getComponentAt(tabId).equals(selectedTab)) {
+//                netPlanView.setSelectedIndex(tabId);
+//                break;
+//            }
+//        }
 
         currentState.checkCachesConsistency();
         
         /* update the required tables */
         for (Entry<NetworkElementType,AdvancedJTable_NetworkElement> entry : netPlanViewTable.entrySet())
         {
-            if (isSourceRouting && entry.getKey() == NetworkElementType.FORWARDING_RULE) continue;
-            if (!isSourceRouting && (entry.getKey() == NetworkElementType.ROUTE)) continue;
+            if (layer.isSourceRouting() && entry.getKey() == NetworkElementType.FORWARDING_RULE) continue;
+            if (!layer.isSourceRouting() && (entry.getKey() == NetworkElementType.ROUTE)) continue;
             final AdvancedJTable_NetworkElement table = entry.getValue();
             table.updateView(currentState);
             final JLabel label = netPlanViewTableNumEntriesLabel.get(entry.getKey());

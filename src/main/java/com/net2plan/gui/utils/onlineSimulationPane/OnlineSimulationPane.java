@@ -182,7 +182,8 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
             }else if (src == btn_reset) {
                 simKernel.getSimCore().setSimulationState(SimState.STOPPED);
                 simKernel.reset();
-                mainWindow.loadDesignDoNotUpdateVisualization(simKernel.getInitialNetPlan());
+                simKernel.setNetPlan(simKernel.getInitialNetPlan());
+                mainWindow.setCurrentNetPlanDoNotUpdateVisualization(simKernel.getInitialNetPlan());
                 final VisualizationState vs = mainWindow.getVisualizationState();
         		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
         				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
@@ -321,8 +322,12 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
         if (simulationState == SimState.NOT_STARTED || simulationState == SimState.PAUSED || simulationState == SimState.STEP || simulationState == SimState.STOPPED) 
         {
             updateSimulationInfo();
+            mainWindow.setCurrentNetPlanDoNotUpdateVisualization(simKernel.getCurrentNetPlan());
+            final VisualizationState vs = mainWindow.getVisualizationState();
+    		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+    				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
+    		vs.setCanvasLayerVisibilityAndOrder(mainWindow.getDesign() , res.getFirst() , res.getSecond());
             mainWindow.updateVisualizationAfterNewTopology();
-            mainWindow.resetPickedStateAndUpdateView();
         }
 
         if (reason == null) return;

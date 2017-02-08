@@ -74,7 +74,7 @@ public class SimStats
 	private Map<Long, Map<Long, Integer>> previousState_nodeInDegree, previousState_nodeOutDegree, maxNodeInDegree, maxNodeOutDegree, minNodeInDegree, minNodeOutDegree;
 	
 	/* Link information */
-	private Map<Long, Map<Long, Double>> previousState_linkLengthInKm, previousState_linkCapacity, previousState_linkOccupiedCapacity, previousState_linkReservedBandwidth;
+	private Map<Long, Map<Long, Double>> previousState_linkLengthInKm, previousState_linkCapacity, previousState_linkOccupiedCapacity;
 	private Map<Long, Map<Long, MutableDouble>> accum_avgLinkLengthInKm, minLinkLengthInKm, maxLinkLengthInKm;
 	private Map<Long, Map<Long, MutableDouble>> accum_avgCapacity, minCapacity, maxCapacity;
 	private Map<Long, Map<Long, MutableDouble>> accum_avgLinkOccupiedCapacity, minLinkOccupiedCapacity, maxLinkOccupiedCapacity;
@@ -385,14 +385,12 @@ public class SimStats
 					Set<Long> previousState_linkDownIds_thisLayer = previousState_linkDownIds.get(layerId);
 					Map<Long, Double> previousState_linkCapacity_thisLayer = previousState_linkCapacity.get(layerId);
 					Map<Long, Double> previousState_linkOccupiedCapacity_thisLayer = previousState_linkOccupiedCapacity.get(layerId);
-					Map<Long, Double> previousState_linkReservedBandwidth_thisLayer = previousState_linkReservedBandwidth.get(layerId);
 					Map<Long, Double> previousState_linkLengthInKm_thisLayer = previousState_linkLengthInKm.get(layerId);
 					for(long linkId : previousState_linkIds_thisLayer)
 					{
 						double u_e = previousState_linkCapacity_thisLayer.get(linkId);
 						double y_e = previousState_linkOccupiedCapacity_thisLayer.get(linkId);
-						double r_e = previousState_linkReservedBandwidth_thisLayer.get(linkId);
-						double rho_e = y_e + r_e == 0 ? 0 : Math.max((y_e + r_e) / u_e, 0);
+						double rho_e = y_e == 0 ? 0 : Math.max(y_e / u_e, 0);
 						
 						totalCapacityInstalled += u_e;
 						congestion = Math.max(congestion, rho_e);
@@ -402,8 +400,7 @@ public class SimStats
 						if (netState.getLinkFromId (linkId) != null)
 						{
 							double l_e = previousState_linkLengthInKm_thisLayer.get(linkId);
-							double rho_e_withoutReservedBandwidth = y_e == 0 ? 0 : Math.max(y_e / u_e, 0);
-							double oversubscribedCapacity = y_e + r_e - u_e; if (oversubscribedCapacity < precisionFactor) oversubscribedCapacity = 0;
+							double oversubscribedCapacity = y_e - u_e; if (oversubscribedCapacity < precisionFactor) oversubscribedCapacity = 0;
 
 							accum_avgLinkLengthInKm.get(layerId).get(linkId).add(l_e * timeInterval);
 							minLinkLengthInKm.get(layerId).get(linkId).setValue(Math.min(minLinkLengthInKm.get(layerId).get(linkId).doubleValue(), l_e));
@@ -629,7 +626,6 @@ public class SimStats
 		previousState_linkLengthInKm = new LinkedHashMap<Long, Map<Long, Double>>();
 		previousState_linkCapacity = new LinkedHashMap<Long, Map<Long, Double>>();
 		previousState_linkOccupiedCapacity = new LinkedHashMap<Long, Map<Long, Double>>();
-		previousState_linkReservedBandwidth = new LinkedHashMap<Long, Map<Long, Double>>();
 		previousState_demandIds = new LinkedHashMap<Long, Set<Long>>();
 		previousState_demandOfferedTraffic = new LinkedHashMap<Long, Map<Long, Double>>();
 		previousState_demandCarriedTraffic = new LinkedHashMap<Long, Map<Long, Double>>();
@@ -655,7 +651,6 @@ public class SimStats
 			previousState_linkDownIds.put(layerId, new LinkedHashSet<Long>(NetPlan.getIds (netState.getLinksDown(netStateLayer))));
 			previousState_linkCapacity.put(layerId, new LinkedHashMap<Long, Double>());
 			previousState_linkOccupiedCapacity.put(layerId, new LinkedHashMap<Long, Double>());
-			previousState_linkReservedBandwidth.put(layerId, new LinkedHashMap<Long, Double>());
 			previousState_linkLengthInKm.put(layerId, new LinkedHashMap<Long, Double>());
 			for(long linkId : previousState_linkIds.get(layerId))
 			{

@@ -194,7 +194,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
 
-        loadDesignDoNotUpdateVisualization(currentNetPlan);
+        setCurrentNetPlanDoNotUpdateVisualization(currentNetPlan);
         Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res = VisualizationState.generateCanvasDefaultVisualizationLayerInfo(getDesign());
         vs.setCanvasLayerVisibilityAndOrder(getDesign(), res.getFirst(), res.getSecond());
 
@@ -438,12 +438,12 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
     @Override
-    public void loadDesignDoNotUpdateVisualization(NetPlan netPlan)
+    public void setCurrentNetPlanDoNotUpdateVisualization(NetPlan netPlan)
     {
         netPlan.checkCachesConsistency();
-        if (onlineSimulationPane != null) onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
+//        if (onlineSimulationPane != null) onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
         currentNetPlan = netPlan;
-        netPlan.checkCachesConsistency();
+//        netPlan.checkCachesConsistency();
     }
 
     private void resetButton()
@@ -465,10 +465,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                         break;
                 }
                 onlineSimulationPane.getSimKernel().reset();
-                loadDesignDoNotUpdateVisualization(onlineSimulationPane.getSimKernel().getCurrentNetPlan());
+                setCurrentNetPlanDoNotUpdateVisualization(onlineSimulationPane.getSimKernel().getCurrentNetPlan());
             } else
             {
-                loadDesignDoNotUpdateVisualization(new NetPlan());
+                setCurrentNetPlanDoNotUpdateVisualization(new NetPlan());
                 //algorithmSelector.reset();
                 executionPane.reset();
             }
