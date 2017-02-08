@@ -435,8 +435,11 @@ public class MulticastDemand extends NetworkElement
 
 	
 	/** Returns the set of links in this layer that could potentially carry traffic of this multicast demand, 
-	 * according to the multicast trees defined. These are the links that are part of any path from demand ingress, the given egress node 
-	 * defined, in any multicast tree. If one of these paths contains a failed link, none of these links of such multicast tree are considered.
+	 * when flowing from the origin node to the given egress node, according to the multicast trees defined. 
+	 * These are the links that are part of any path from demand ingress, the given egress node 
+	 * defined, in any multicast tree. If one of these paths contains a failed link, none of these 
+	 * links of such multicast tree are considered.
+	 * @param egressNode the egress node
 	 * @param assumeNoFailureState in this case, the links are computed as if all network link/nodes are in no-failure state
 	 * @return see above
 	 */

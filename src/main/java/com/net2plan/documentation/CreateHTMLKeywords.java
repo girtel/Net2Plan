@@ -140,7 +140,9 @@ public class CreateHTMLKeywords
 		{
 			final ClassDoc javaClass = classes [i];
 			final String className = javaClass.qualifiedName();
-			final String firstSentenceThisClass = javaClass.firstSentenceTags() [0].text ();
+			final Tag [] firstSentenceTags = javaClass.firstSentenceTags();
+			if (firstSentenceTags.length == 0) System.out.println("A class without first sentence!!: " + className);
+			final String firstSentenceThisClass = (firstSentenceTags.length == 0)? "" : javaClass.firstSentenceTags() [0].text ();
 			algorithmToFirstSentence.put (className , firstSentenceThisClass);
 			algorithmToKeywordsMap.put (className , new LinkedList<String> ());
 			String keywordsString = ""; for (Tag tag : javaClass.tags()) {  if (tag.name().equals ("@"+tagName)) keywordsString += " " + tag.text () + " "; }

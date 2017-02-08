@@ -78,7 +78,6 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
  * will be applied to the default layer (by default it is first defined layer),
  * which can be modified using the {@link #setNetworkLayerDefault(NetworkLayer)} setNetworkLayerDefault())}
  * method.</p>
- * <p>
  * <p>Internal representation of the {@code NetPlan} object is based on:</p>
  * <ul>
  * <li>{@link com.net2plan.interfaces.networkDesign.NetworkLayer NetworkLayer} objects.</li>
@@ -88,12 +87,10 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
  * <li>{@link com.net2plan.interfaces.networkDesign.Demand Unicast} or {@link com.net2plan.interfaces.networkDesign.MulticastDemand Multicast} demand objects. </li>
  * <li>{@link com.net2plan.interfaces.networkDesign.SharedRiskGroup Shared Risk Group} objects</li>
  * </ul>
- * <p>
  * <p>Each element has a unique identifier (represented as {@code long}) assigned the moment they are created, and two elements
  * (irregardless of their type) cannot share this identifier. This id is incremental (but not necessarily consecutive) and perpetual (i.e after removing an element identifiers are no renumbered).</p>
  * <p>Also, elements have an index number that identify them among their own type (nodes, links, etc.). Indexes are renumbered when an element is removed and are zero base, that is the first
  * element of its type is always 0 and the last is N-1 (where N is the total number of elements of the same type).</p>
- * <p>
  * <p>An instance of a NetPlan object can be set as unmodifiable through the
  * {@link NetPlan#setModifiableState(boolean)} setModifiableState())} method. The instance will work
  * transparently as {@code NetPlan} object unless you try to change it. Calling
@@ -433,16 +430,13 @@ public class NetPlan extends NetworkElement
 
     /**
      * <p>Adds a new traffic demand.</p>
-     * <p>
      * <p><b>Important</b>: Self-demands are not allowed.</p>
-     *
-     * @param optionalLayerParameter Network layer to which add the demand (optional)
      * @param ingressNode            Ingress node
      * @param egressNode             Egress node
      * @param offeredTraffic         Offered traffic by this demand. It must be greater or equal than zero
      * @param attributes             Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
+     * @param optionalLayerParameter Network layer to which add the demand (optional)
      * @return The newly added demand object
-     * @see com.net2plan.interfaces.networkDesign.Demand
      */
     public Demand addDemand(Node ingressNode, Node egressNode, double offeredTraffic, Map<String, String> attributes, NetworkLayer... optionalLayerParameter)
     {
@@ -483,7 +477,6 @@ public class NetPlan extends NetworkElement
 
     /**
      * <p>Adds two demands, one in each direction,.</p>
-     * <p>
      * <p><b>Important</b>: Self-demands are not allowed.</p>
      *
      * @param ingressNode            Identifier of the ingress node
@@ -520,9 +513,9 @@ public class NetPlan extends NetworkElement
      * @param description            Layer description ({@code null} means empty)
      * @param linkCapacityUnitsName  Textual description of link capacity units ({@code null} means empty)
      * @param demandTrafficUnitsName Textual description of demand traffic units ({@code null} means empty)
+     * @param defaultNodeIconURL The URL of the default icon for the layer nodes
      * @param attributes             Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
      * @return The newly created layer object
-     * @see com.net2plan.interfaces.networkDesign.NetworkLayer
      */
     public NetworkLayer addLayer(String name, String description, String linkCapacityUnitsName, String demandTrafficUnitsName, URL defaultNodeIconURL, Map<String, String> attributes)
     {
@@ -616,7 +609,6 @@ public class NetPlan extends NetworkElement
 
     /**
      * <p>Adds a new link.</p>
-     * <p>
      * <p><b>Important</b>: Self-links are not allowed.</p>
      *
      * @param originNode                    Link origin node
@@ -768,7 +760,6 @@ public class NetPlan extends NetworkElement
 
     /**
      * <p>Adds a new traffic multicast tree.</p>
-     * <p>
      * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}.</p>
      *
      * @param demand               Multi cast demand to be associated with the tree
@@ -924,7 +915,6 @@ public class NetPlan extends NetworkElement
 
     /**
      * <p>Adds a new traffic route </p>
-     * <p>
      * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}.</p>
      *
      * @param demand               Demand associated to the route
@@ -944,7 +934,6 @@ public class NetPlan extends NetworkElement
 
     /**
      * <p>Adds a new traffic service chain, which is a route which also traverses and occupied resources.  </p>
-     * <p>
      * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}.</p>
      *
      * @param demand                            Demand associated to the route
@@ -1364,13 +1353,11 @@ public class NetPlan extends NetworkElement
 
     /**
      * <p>Adds multicast trees specified by those trees that satisfy the options described below. Existing multicast trees will not be removed.</p>
-     * <p>
      * <p>The candidate tree list elaborated contains a set of multicast trees (each one is a set of links) computed for each multicast demand
      * in the network. To compute it, a ILP formulation is solved for each new multicast tree. In general, for every multicast demand k
      * trees are computed ranked according to its cost (weight) according to some link weights.</p>
      * <p>The computation of paths can be configured via {@code "parameter=value"} options. There are several options to
      * configure, which can be combined:</p>
-     * <p>
      * <ul>
      * <li>{@code K}: Number of desired multicast trees per demand (default: 3). If <i>K'&lt;</i>{@code K} different trees are found for the multicast demand, then only <i>K'</i> are
      * included in the candidate list</li>
@@ -1519,7 +1506,6 @@ public class NetPlan extends NetworkElement
 
     /**
      * <p>Assigns the information from the input {@code NetPlan}.</p>
-     * <p>
      * <p><b>Important</b>: A shadow copy is made, an the object netPlan used as parameter cannot be longer used,
      * since all their nodes, links etc. are now assigned to the returned object.
      * For having a deep copy of a net2plan object use {@link #copyFrom(com.net2plan.interfaces.networkDesign.NetPlan) copyFrom()}</p>
@@ -2217,7 +2203,6 @@ public class NetPlan extends NetworkElement
 
     /**
      * <p>Returns the traffic that is carried using a forwarding rule, in the given layer. If no layer is provided, the default layer is assumed.</p>
-     * <p>
      * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#HOP_BY_HOP_ROUTING HOP_BY_HOP_ROUTING}.</p>
      *
      * @param demand Outgoing demand
@@ -2234,9 +2219,7 @@ public class NetPlan extends NetworkElement
 
     /**
      * <p>Returns the forwarding rules for the given layer. If no layer is provided, the default layer is assumed.</p>
-     * <p>
      * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#HOP_BY_HOP_ROUTING HOP_BY_HOP_ROUTING}.</p>
-     *
      * @param optionalLayerParameter Network layer (optional)
      * @return The forwarding rules as a map of splitting factor (value) per demand and link (key)
      * @see com.net2plan.utils.Pair
@@ -2638,7 +2621,6 @@ public class NetPlan extends NetworkElement
     /**
      * <p>Returns the demand-link incidence matrix (<i>D</i>x<i>E</i> in which an element <i>&delta;<sub>de</sub></i> is equal to the amount of traffic of each demand carried in each link). Rows
      * and columns are in increasing order of demand and link identifiers, respectively. If no layer is provided, the default layer is assumed</p>
-     * <p>
      * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#HOP_BY_HOP_ROUTING HOP_BY_HOP_ROUTING}.</p>
      *
      * @param optionalLayerParameter Network layer (optional)
@@ -2845,7 +2827,6 @@ public class NetPlan extends NetworkElement
      * <p>Returns the multicast demand-link incidence matrix (<i>D</i>x<i>E</i> in which an element <i>&delta;<sub>de</sub></i> is equal to the amount of traffic of
      * each multicast demand carried in each link). Rows
      * and columns are in increasing order of demand and link identifiers, respectively. If no layer is provided, the default layer is assumed</p>
-     * <p>
      * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#HOP_BY_HOP_ROUTING HOP_BY_HOP_ROUTING}.</p>
      *
      * @param optionalLayerParameter Network layer (optional)
@@ -5904,7 +5885,6 @@ public class NetPlan extends NetworkElement
 
     /**
      * <p>Adds a new forwarding rule (or override an existing one), to the layer of the demand and link (must be in the same layer).</p>
-     * <p>
      * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#HOP_BY_HOP_ROUTING HOP_BY_HOP_ROUTING}.</p>
      *
      * @param demand         Demand
@@ -5947,7 +5927,6 @@ public class NetPlan extends NetworkElement
 
     /**
      * <p>Adds a set of forwarding rules (or override existing ones). Demands, links and ratio are processed sequentially. All the elements must be in the same layer.</p>
-     * <p>
      * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#HOP_BY_HOP_ROUTING HOP_BY_HOP_ROUTING}.</p>
      *
      * @param demands            Demands
@@ -6386,7 +6365,6 @@ public class NetPlan extends NetworkElement
     /**
      * <p>Sets the traffic demands at the given layer from a given traffic matrix, removing any previous
      * demand. If no layer is provided, default layer is assumed.</p>
-     * <p>
      * <p><b>Important</b>: Matrix values must be strictly non-negative and matrix size have to be <i>N</i>x<i>N</i> (where <i>N</i> is the number of nodes)
      *
      * @param optionalLayerParameter Network layer (optional

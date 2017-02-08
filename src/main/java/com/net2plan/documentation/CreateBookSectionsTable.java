@@ -113,7 +113,9 @@ public class CreateBookSectionsTable
 		{
 			final ClassDoc javaClass = classes [i];
 			final String className = javaClass.qualifiedName();
-			final String firstSentenceThisClass = javaClass.firstSentenceTags() [0].text ();
+			final Tag [] firstSentenceTags = javaClass.firstSentenceTags();
+			if (firstSentenceTags.length == 0) System.out.println("Create book sections: a class without first sentence class: " + className);
+			final String firstSentenceThisClass = (firstSentenceTags.length == 0)? "" : javaClass.firstSentenceTags() [0].text ();
 			algorithmToFirstSentence.put (className , firstSentenceThisClass);
 			algorithmToSectionsMap.put (className , new LinkedList<String> ());
 			algorithmToExercisesMap.put (className , new LinkedList<String> ());

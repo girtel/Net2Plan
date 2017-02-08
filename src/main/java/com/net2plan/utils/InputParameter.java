@@ -423,7 +423,7 @@ public class InputParameter
 
 	/** Receives a map which assigns for each parameter name, a set of possible values, and returns a list with the cartesian 
 	 * product of all the maps combining the different parameter values
-	 * @param paramKeyValues
+	 * @param paramKeyValues the input param-key values 
 	 * @return see above
 	 */
 	public static List<Map<String,String>> getCartesianProductOfParameters (Map<String,List<String>> paramKeyValues)

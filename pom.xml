@@ -597,7 +597,7 @@
                                     <splitindex>true</splitindex>
                                     <use>true</use>
                                     <version>true</version>
-                                    <overview>${project.basedir}/src/main/resources/javadoc/overview-examples.html
+                                    <overview>${project.basedir}/src/main/resources/javadoc/overview-mainJavadoc.html
                                     </overview>
                                     <additionalparam>-d ${project.build.directory}/site/apidocs/api
                                     </additionalparam>
@@ -637,7 +637,7 @@
                                     <noqualifier>
                                         java.lang:java.util:java.io:java.awt:java.net:java.awt.geom:javax.swing:cern.colt.matrix.tdouble
                                     </noqualifier>
-                                    <overview>${project.basedir}/src/main/resources/javadoc/overview-examples.html
+                                    <overview>${project.basedir}/src/main/resources/javadoc/overview-examplesJavadoc.html
                                     </overview>
                                     <links>
                                         <link>../parallelcolt</link>

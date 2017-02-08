@@ -307,8 +307,9 @@ public class ImageUtils
         return image;
     }
 
-    /** Creates an image of a circle of the goven color, the rest is transparent
-     * @param s the shape
+    /** Creates an image of a filled circle of the given color, the rest is transparent
+     * @param iconHeight the height and width of the created image, and the diameter of the circle 
+     * @param fillColor the color to fill the circle
      * @return the image
      */
     public static BufferedImage createCircle (int iconHeight , Color fillColor) 
