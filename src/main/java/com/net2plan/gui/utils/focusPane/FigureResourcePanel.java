@@ -32,31 +32,26 @@ import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
 
-public class FigureResourcePanel extends JPanel 
+public class FigureResourcePanel extends FigureSequencePanel
 {
 	
-	private List<DrawNode> drawnNodes;
-	private List<DrawLine> drawnLines;
 	private Resource resource;
 	private List<String> generalMessage; 
     private NetPlan np;
     private Dimension preferredSize;
-    private IVisualizationCallback callback;
-    
+
     public FigureResourcePanel(IVisualizationCallback callback , Resource resource , String titleMessage) 
     {
-    	this.callback = callback;
+    	super(callback);
     	this.np = resource.getNetPlan();
    		this.generalMessage = Arrays.asList(titleMessage);
     	this.preferredSize = null;
     	this.resource = resource;
-        addMouseListener(new MouseAdapterFocusPanel() );
     }
 
     @Override
     protected void paintComponent(Graphics grphcs) 
     {
-        super.paintComponent(grphcs);
         final Graphics2D g2d = (Graphics2D) grphcs;
         g2d.setColor(Color.black);
 
@@ -128,40 +123,5 @@ public class FigureResourcePanel extends JPanel
 			drawnLines.add(dlNoURL);
     	}
     }
-
-    @Override
-    public Dimension getPreferredSize() 
-    {
-        return new Dimension(600,600);
-    }
-
-    
-
-    class MouseAdapterFocusPanel extends MouseAdapter
-    {
-        @Override
-        public void mouseClicked(MouseEvent me) 
-        {
-            super.mouseClicked(me);
-            for (DrawNode dn : drawnNodes)
-            {
-                if (dn.getShapeIconToSetByPainter().contains(me.getPoint()))
-                	FocusPane.processMouseClickInternalLink ("node" + dn.getAssociatedElement().getId() , callback);
-                for (int labelIndex = 0; labelIndex < dn.getLabels().size() ; labelIndex ++)
-                	if (dn.getShapesLabelsToCreateByPainter().get(labelIndex).contains(me.getPoint()))
-                		FocusPane.processMouseClickInternalLink (dn.getUrlsLabels().get(labelIndex) , callback);
-            }                
-            for (DrawLine dl : drawnLines)
-            {
-                if (dl.getShapeLineToCreateByPainter().contains(me.getPoint()))
-                	FocusPane.processMouseClickInternalLink ("link" + dl.getAssociatedElement().getId() , callback);
-                for (int labelIndex = 0; labelIndex < dl.getLabels().size() ; labelIndex ++)
-                	if (dl.getShapesLabelstoCreateByPainter().get(labelIndex).contains(me.getPoint()))
-                		FocusPane.processMouseClickInternalLink (dl.getUrlsLabels().get(labelIndex) , callback);
-            }                
-        }
-    }
-
-    
 }
 

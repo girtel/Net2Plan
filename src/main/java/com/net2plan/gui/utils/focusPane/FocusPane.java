@@ -2,21 +2,18 @@ package com.net2plan.gui.utils.focusPane;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JToolBar;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -107,7 +104,7 @@ public class FocusPane extends JPanel
 		else if (elementType == NetworkElementType.MULTICAST_DEMAND)
 		{
 			final MulticastDemand md = (MulticastDemand) vs.getPickedNetworkElement();
-			final FigureMultiCastDemandSequencePanel fig = new FigureMultiCastDemandSequencePanel(callback, md, "Multicast demand " + md.getIndex());
+			final FigureMulticastDemandSequencePanel fig = new FigureMulticastDemandSequencePanel(callback, md, "Multicast demand " + md.getIndex());
 			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getMulticastDemandInfoTables(md), md) , BorderLayout.CENTER);
 		}

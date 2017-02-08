@@ -14,13 +14,13 @@ import java.util.List;
  * @author Jorge San Emeterio
  * @date 06-Feb-17
  */
-public class FigureMultiCastDemandSequencePanel extends FigureSequencePanel
+public class FigureMulticastDemandSequencePanel extends FigureSequencePanel
 {
     private final List<String> generalMessage;
     private final MulticastDemand multicastDemand;
     private final BasicStroke lineStroke;
 
-    public FigureMultiCastDemandSequencePanel(final IVisualizationCallback callback, final MulticastDemand multicastDemand, final String... titleMessage)
+    public FigureMulticastDemandSequencePanel(final IVisualizationCallback callback, final MulticastDemand multicastDemand, final String... titleMessage)
     {
         super(callback);
 

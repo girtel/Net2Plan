@@ -27,31 +27,26 @@ import com.net2plan.interfaces.networkDesign.MulticastTree;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 
-public class FigureMulticastTreePanel extends JPanel 
+public class FigureMulticastTreePanel extends FigureSequencePanel
 {
 	
-	private List<DrawNode> drawnNodes;
-	private List<DrawLine> drawnLines;
 	private MulticastTree tree;
 	private List<String> generalMessage; 
     private NetPlan np;
     private Dimension preferredSize;
-    private IVisualizationCallback callback;
-    
+
     public FigureMulticastTreePanel(IVisualizationCallback callback , MulticastTree tree , String titleMessage , double carriedTraffic) 
     {
-    	this.callback = callback;
+    	super(callback);
     	this.np = tree.getNetPlan();
 		this.generalMessage = Arrays.asList(titleMessage , "Carried trafffic: " + String.format("%.2f " , carriedTraffic) + " " + np.getDemandTrafficUnitsName(tree.getLayer()));
     	this.preferredSize = null;
     	this.tree = tree;
-        addMouseListener(new MouseAdapterFocusPanel() );
     }
 
     @Override
     protected void paintComponent(Graphics grphcs) 
     {
-        super.paintComponent(grphcs);
         final Graphics2D g2d = (Graphics2D) grphcs;
         g2d.setColor(Color.black);
 
@@ -119,40 +114,5 @@ public class FigureMulticastTreePanel extends JPanel
         }
         
     }
-
-    @Override
-    public Dimension getPreferredSize() 
-    {
-        return new Dimension(600,600);
-    }
-
-    
-
-    class MouseAdapterFocusPanel extends MouseAdapter
-    {
-        @Override
-        public void mouseClicked(MouseEvent me) 
-        {
-            super.mouseClicked(me);
-            for (DrawNode dn : drawnNodes)
-            {
-                if (dn.getShapeIconToSetByPainter().contains(me.getPoint()))
-                	FocusPane.processMouseClickInternalLink ("node" + dn.getAssociatedElement().getId() , callback);
-                for (int labelIndex = 0; labelIndex < dn.getLabels().size() ; labelIndex ++)
-                	if (dn.getShapesLabelsToCreateByPainter().get(labelIndex).contains(me.getPoint()))
-                		FocusPane.processMouseClickInternalLink (dn.getUrlsLabels().get(labelIndex) , callback);
-            }                
-            for (DrawLine dl : drawnLines)
-            {
-                if (dl.getShapeLineToCreateByPainter().contains(me.getPoint()))
-                	FocusPane.processMouseClickInternalLink ("link" + dl.getAssociatedElement().getId() , callback);
-                for (int labelIndex = 0; labelIndex < dl.getLabels().size() ; labelIndex ++)
-                	if (dl.getShapesLabelstoCreateByPainter().get(labelIndex).contains(me.getPoint()))
-                		FocusPane.processMouseClickInternalLink (dl.getUrlsLabels().get(labelIndex) , callback);
-            }                
-        }
-    }
-
-    
 }
 
