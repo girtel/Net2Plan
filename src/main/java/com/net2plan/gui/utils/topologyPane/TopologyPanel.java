@@ -133,33 +133,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.setOpaque(false);
         toolbar.setBorderPainted(false);
 
-//        layerChooser = new WiderJComboBox();
-//        layerChooserPane = new JPanel(new BorderLayout());
-//        layerChooserPane.add(new JLabel("Select layer: "), BorderLayout.WEST);
-//        layerChooserPane.add(layerChooser, BorderLayout.CENTER);
-//        layerChooser.addActionListener(new ActionListener()
-//        {
-//            @Override
-//            public void actionPerformed(ActionEvent e)
-//            {
-//                Object selectedItem = layerChooser.getSelectedItem();
-//                if (!(selectedItem instanceof StringLabeller))
-//                    ErrorHandling.showErrorDialog("Bad object", "Error selecting layer");
-//
-//                final long newDefaultLayerId = (Long) ((StringLabeller) selectedItem).getObject();
-//                final NetPlan currentState = callback.getDesign();
-//                final NetworkLayer layer = currentState.getNetworkLayerFromId(newDefaultLayerId);
-////				System.out.println ("Select layer: layerId " + layerId + ", layer: " + layer);
-//                if (layer == null) throw new RuntimeException("Bad: " + newDefaultLayerId);
-//                currentState.setNetworkLayerDefault(layer);
-//
-//                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
-//            }
-//        });
-
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.add(toolbar, BorderLayout.NORTH);
-//        topPanel.add(layerChooserPane, BorderLayout.SOUTH);
 
         add(topPanel, BorderLayout.NORTH);
 
@@ -287,6 +262,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_npChangeUndo.addActionListener(this);
         btn_npChangeRedo.addActionListener(this);
         btn_osmMap.addActionListener(this);
+        btn_tableControlWindow.addActionListener(this);
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
