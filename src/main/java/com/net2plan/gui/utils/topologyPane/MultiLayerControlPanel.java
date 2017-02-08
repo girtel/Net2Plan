@@ -42,7 +42,11 @@ public class MultiLayerControlPanel extends JPanel
 
     private void fillPanel()
     {
-        this.add(new JScrollPane(multiLayerTable), BorderLayout.CENTER);
+        final JPanel auxPanel = new JPanel(new BorderLayout());
+        auxPanel.add(multiLayerTable);
+        auxPanel.add(multiLayerTable.getTableHeader(), BorderLayout.NORTH);
+
+        this.add(auxPanel, BorderLayout.CENTER);
         this.add(buttonPanel, BorderLayout.WEST);
     }
 

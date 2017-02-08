@@ -178,6 +178,9 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         // Calculating column width to new values
         ColumnsAutoSizer.sizeColumnsToFit(this);
 
+        // Adding more space for the buttons column
+        this.getColumnModel().getColumn(COLUMN_UP_DOWN).setPreferredWidth(100);
+
         this.revalidate();
         this.repaint();
     }
@@ -266,8 +269,8 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
         private ButtonPanel()
         {
             this.setLayout(new GridLayout(1, 2));
-            btn_up = new JButton("\u2191");
-            btn_down = new JButton("\u2193");
+            btn_up = new JButton("\u25B2");
+            btn_down = new JButton("\u25BC");
 
             this.add(btn_up);
             this.add(btn_down);
