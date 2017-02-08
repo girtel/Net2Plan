@@ -371,7 +371,7 @@ public class OSMMapController
     {
         public OSMMapException(final String message)
         {
-            ErrorHandling.showErrorDialog(message, "Could not display OSM Map");
+            ErrorHandling.showErrorDialog(message, "Could not display OSM");
         }
 
         public OSMMapException(final String message, final String title)

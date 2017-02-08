@@ -23,6 +23,7 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 
 import com.net2plan.gui.utils.*;
+import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMMapController;
 import org.apache.commons.collections15.BidiMap;
 
 import com.google.common.collect.Sets;
@@ -465,7 +466,13 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         {
             if (btn_osmMap.isSelected())
             {
-                setOSMSupportTo(true);
+                try
+                {
+                    setOSMSupportTo(true);
+                } catch (OSMMapController.OSMMapException ex)
+                {
+                    btn_osmMap.setSelected(false);
+                }
             } else if (!btn_osmMap.isSelected())
             {
                 setOSMSupportTo(false);
@@ -553,10 +560,11 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             int rc = fc_netPlan.showOpenDialog(null);
             if (rc != JFileChooser.APPROVE_OPTION) return;
 
+            // Disable OSM while loading the new topology
+            boolean isOSMRunning = canvas.isOSMRunning();
+            if (isOSMRunning) setOSMSupportTo(false);
+
             NetPlan aux = fc_netPlan.readNetPlan();
-            
-            btn_osmMap.setSelected(false);
-            setOSMSupportTo(false);
 
             aux.checkCachesConsistency();
 
@@ -567,6 +575,18 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
             callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+
+            // Reactivating the OSM Support
+            if  (isOSMRunning)
+            {
+                try
+                {
+                    setOSMSupportTo(true);
+                } catch (OSMMapController.OSMMapException ex)
+                {
+                    btn_osmMap.setSelected(false);
+                }
+            }
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
