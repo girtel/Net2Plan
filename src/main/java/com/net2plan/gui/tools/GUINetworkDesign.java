@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
 import org.apache.commons.collections15.BidiMap;
@@ -306,7 +307,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
     private JPanel configureLeftBottomPanel()
     {
-        focusPanel = new FocusPane(this);
+        this.focusPanel = new FocusPane(this);
         final JPanel focusPanelContainer = new JPanel(new BorderLayout());
         final JToolBar navigationToolbar = new JToolBar(JToolBar.VERTICAL);
         navigationToolbar.setRollover(true);
@@ -365,14 +366,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         navigationToolbar.add(btn_pickNavigationUndo);
         navigationToolbar.add(btn_pickNavigationRedo);
 
-        focusPanelContainer.add(navigationToolbar, BorderLayout.WEST);
-        focusPanelContainer.add(focusPanel, BorderLayout.CENTER);
-
-        JPanel pane = new JPanel(new MigLayout("fill, insets 0 0 0 0"));
-        pane.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Focus panel"));
-        final JScrollPane scPane = new JScrollPane(focusPanelContainer, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        final JScrollPane scPane = new JScrollPane(focusPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scPane.getVerticalScrollBar().setUnitIncrement(20);
         scPane.getHorizontalScrollBar().setUnitIncrement(20);
+        scPane.setBorder(BorderFactory.createEmptyBorder());
 
         // Control the scroll
         scPane.getHorizontalScrollBar().addAdjustmentListener(e ->
@@ -382,7 +379,13 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             focusPanelContainer.repaint();
         });
 
-        pane.add(scPane, "grow");
+        focusPanelContainer.add(navigationToolbar, BorderLayout.WEST);
+        focusPanelContainer.add(scPane, BorderLayout.CENTER);
+
+        JPanel pane = new JPanel(new MigLayout("fill, insets 0 0 0 0"));
+        pane.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Focus panel"));
+
+        pane.add(focusPanelContainer, "grow");
         return pane;
     }
 
