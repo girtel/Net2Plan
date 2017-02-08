@@ -77,7 +77,6 @@ public class FigureMultiCastDemandSequencePanel extends FigureSequencePanel
             DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels, lineStroke);
 
             drawnNodes.add(egressNode);
-            drawnLines.add(link);
         }
     }
 }
