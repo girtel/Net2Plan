@@ -72,7 +72,7 @@ public interface IVisualizationCallback
 
 	UndoRedoManager getUndoRedoNavigationManager();
 
-	void undoRequested();
+	void requestUndoAction();
 
-	void redoRequested();
+	void requestRedoAction();
 }

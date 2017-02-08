@@ -134,7 +134,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
     @Override
-    public void undoRequested()
+    public void requestUndoAction()
     {
         if (inOnlineSimulationMode()) return;
 
@@ -147,7 +147,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
     @Override
-    public void redoRequested()
+    public void requestRedoAction()
     {
         if (inOnlineSimulationMode()) return;
 
@@ -330,8 +330,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             {
                 backOrForward = (e.getSource() == btn_pickNavigationUndo) ? GUINetworkDesign.this.getVisualizationState().getPickNavigationBackElement() : GUINetworkDesign.this.getVisualizationState().getPickNavigationForwardElement();
                 if (backOrForward == null) break;
-                final NetworkElement ne = backOrForward.getFirst();
-                final Pair<Demand, Link> fr = backOrForward.getSecond();
+                final NetworkElement ne = backOrForward.getFirst(); // For network elements
+                final Pair<Demand, Link> fr = backOrForward.getSecond(); // For forwarding rules
                 if (ne != null)
                 {
                     if (ne.getNetPlan() != GUINetworkDesign.this.getDesign()) continue;

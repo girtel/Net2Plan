@@ -30,11 +30,9 @@ import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
 import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.DialogType;
@@ -58,10 +56,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JButton btn_npChangeUndo, btn_npChangeRedo;
     private final JToggleButton btn_showLowerLayerInfo, btn_showUpperLayerInfo, btn_showThisLayerInfo;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
-    private final JPopUpButton btn_multilayer;
-    private final JPopupMenu multiLayerPopUp;
-    private final JButton btn_tableControlWindow;
     private final JToggleButton btn_osmMap;
+    private final JButton btn_tableControlWindow;
     private final JLabel position;
     private final JPanel canvasPanel;
     private final MultiLayerControlPanel multilayerControlPanel;
@@ -206,9 +202,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_tableControlWindow.setToolTipText("Show the network topology control window.");
 
         // MultiLayer control window
-        multiLayerPopUp = new JPopupMenu();
+        JPopupMenu multiLayerPopUp = new JPopupMenu();
         multiLayerPopUp.add(multilayerControlPanel);
-        btn_multilayer = new JPopUpButton("", multiLayerPopUp);
+        JPopUpButton btn_multilayer = new JPopUpButton("", multiLayerPopUp);
 
         btn_reset = new JButton("Reset");
         btn_reset.setToolTipText("Reset the user interface");
@@ -458,10 +454,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             canvas.refresh();
         } else if (src == btn_npChangeUndo)
         {
-            callback.undoRequested();
+            callback.requestUndoAction();
         } else if (src == btn_npChangeRedo)
         {
-            callback.redoRequested();
+            callback.requestRedoAction();
         } else if (src == btn_tableControlWindow)
         {
             WindowController.showTablesWindow(true);

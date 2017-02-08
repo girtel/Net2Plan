@@ -192,26 +192,6 @@ public final class JUNGCanvas implements ITopologyCanvas
             }
         });
         vv.setEdgeToolTipTransformer(link -> link.getToolTip());
-//        vv.getRenderContext().setEdgeShapeTransformer(c ->
-//                {
-//                    final GUINode origin = c.element.getOriginNode();
-//                    final GUINode destination = c.element.getDestinationNode();
-//                    boolean separateTheLinks = vv.getPickedVertexState().isPicked(origin) || vv.getPickedVertexState().isPicked(destination);
-//                    if (!separateTheLinks)
-//                    {
-//                        Set<GUILink> linksNodePair = new HashSet<>(c.graph.getIncidentEdges(destination));
-//                        linksNodePair.retainAll(c.graph.getIncidentEdges(origin));
-//                        for (GUILink e : linksNodePair)
-//                            if (vv.getPickedEdgeState().isPicked(e) || !e.getAssociatedNetPlanLink().isUp())
-//                            {
-//                                separateTheLinks = true;
-//                                break;
-//                            }
-//                    }
-//                    return separateTheLinks ? originalEdgeShapeTransformer.transform(c) : new Line2D.Float(0.0f, 0.0f, 1.0f, 0.0f);
-//                }
-//        );
-
         vv.getRenderContext().setEdgeShapeTransformer(c -> c.element.isShownSeparated() ? originalEdgeShapeTransformer.transform(c) : new Line2D.Float(0.0f, 0.0f, 1.0f, 0.0f));
 
         // Background controller
