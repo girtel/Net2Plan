@@ -32,83 +32,56 @@ import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
 
-public class FigureNodeSequencePanel extends JPanel 
+public class FigureNodeSequencePanel extends FigureSequencePanel
 {
-	
-	private DrawNode dn;
-	private List<String> generalMessage; 
-	private Node node;
-	private NetworkLayer layer;
+    private DrawNode dn;
+    private List<String> generalMessage;
+    private Node node;
+    private NetworkLayer layer;
     private Dimension preferredSize;
-    private IVisualizationCallback callback;
-    
-    public FigureNodeSequencePanel(IVisualizationCallback callback , Node node , NetworkLayer layer , String titleMessage) 
+
+    public FigureNodeSequencePanel(IVisualizationCallback callback, Node node, NetworkLayer layer, String... titleMessage)
     {
-    	this.callback = callback;
-    	this.layer = layer;
-    	this.node = node;
-   		this.generalMessage = Arrays.asList(titleMessage);
-    	this.preferredSize = null;
-        addMouseListener(new MouseAdapterFocusPanel() );
+        super(callback);
+        this.layer = layer;
+        this.node = node;
+        this.generalMessage = Arrays.asList(titleMessage);
+        this.preferredSize = null;
     }
 
     @Override
-    protected void paintComponent(Graphics grphcs) 
+    protected void paintComponent(Graphics grphcs)
     {
-        super.paintComponent(grphcs);
         final Graphics2D g2d = (Graphics2D) grphcs;
         g2d.setColor(Color.black);
-        
-    	int currentXYStartOfText = 40;
-    	final int maxHeightOrSizeIcon = 60;
-    	final int maxNumberOfTagsPerNodeNorResource = 1;
-    	
+
+        int currentXYStartOfText = 40;
+        final int maxHeightOrSizeIcon = 60;
+        final int maxNumberOfTagsPerNodeNorResource = 1;
+
     	/* Initial messages */
         g2d.setFont(new Font("Arial", Font.BOLD, 12));
-    	final int fontHeightTitle = g2d.getFontMetrics().getHeight();
-    	for (int indexMessage =0 ; indexMessage < generalMessage.size() ; indexMessage ++)
-    	{
-    		final String m = generalMessage.get(indexMessage);
-        	g2d.drawString (m , currentXYStartOfText , currentXYStartOfText);
-        	currentXYStartOfText += fontHeightTitle;
-    	}
+        final int fontHeightTitle = g2d.getFontMetrics().getHeight();
+        for (int indexMessage = 0; indexMessage < generalMessage.size(); indexMessage++)
+        {
+            final String m = generalMessage.get(indexMessage);
+            g2d.drawString(m, currentXYStartOfText, currentXYStartOfText);
+            currentXYStartOfText += fontHeightTitle;
+        }
 
-    	currentXYStartOfText += 15; // separation main message to first info nodes
-    	
+        currentXYStartOfText += 15; // separation main message to first info nodes
+
         g2d.setFont(new Font("Arial", Font.PLAIN, 10));
-    	final FontMetrics fontMetrics = g2d.getFontMetrics();
-    	final int regularInterlineSpacePixels = fontMetrics.getHeight();
+        final FontMetrics fontMetrics = g2d.getFontMetrics();
+        final int regularInterlineSpacePixels = fontMetrics.getHeight();
 
-    	final int topCoordinateLineNodes = currentXYStartOfText + (maxNumberOfTagsPerNodeNorResource * regularInterlineSpacePixels);
-    	final Point initialDnTopLeftPosition = new Point (maxHeightOrSizeIcon , topCoordinateLineNodes);
+        final int topCoordinateLineNodes = currentXYStartOfText + (maxNumberOfTagsPerNodeNorResource * regularInterlineSpacePixels);
+        final Point initialDnTopLeftPosition = new Point(maxHeightOrSizeIcon, topCoordinateLineNodes);
 
     	/* Initial dn */
-    	dn = new DrawNode(node , layer , maxHeightOrSizeIcon);
-    	DrawNode.addNodeToGraphics(g2d , dn , initialDnTopLeftPosition , fontMetrics , regularInterlineSpacePixels , null);
+        dn = new DrawNode(node, layer, maxHeightOrSizeIcon);
+        DrawNode.addNodeToGraphics(g2d , dn , initialDnTopLeftPosition , fontMetrics , regularInterlineSpacePixels , null);
+        drawnNodes.add(dn);
     }
-
-    @Override
-    public Dimension getPreferredSize() 
-    {
-        return new Dimension(600,600);
-    }
-
-    
-
-    class MouseAdapterFocusPanel extends MouseAdapter
-    {
-        @Override
-        public void mouseClicked(MouseEvent me) 
-        {
-            super.mouseClicked(me);
-            if (dn.shapeIconToSetByPainter.contains(me.getPoint())) 
-            	FocusPane.processMouseClickInternalLink ("node" + dn.associatedElement.getId() , callback);
-            for (int labelIndex = 0; labelIndex < dn.labels.size() ; labelIndex ++)
-            	if (dn.shapesLabelsToCreateByPainter.get(labelIndex).contains(me.getPoint())) 
-            		FocusPane.processMouseClickInternalLink (dn.urlsLabels.get(labelIndex) , callback);
-        }
-    }
-
-    
 }
 

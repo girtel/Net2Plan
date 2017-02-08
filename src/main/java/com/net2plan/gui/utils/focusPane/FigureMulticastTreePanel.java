@@ -98,7 +98,7 @@ public class FigureMulticastTreePanel extends JPanel
         	
         	int yPositionTopDn = initialTopYOfFirstLineOfNodes;
         	List<Link> sortedListUpToDown = linksThisHopIndex.stream().sorted((e1,e2)->
-        		{ return Integer.compare(nodesToDnMap.get(e1.getOriginNode()).posTopLeftCornerToSetByPainter.y ,nodesToDnMap.get(e2.getOriginNode()).posTopLeftCornerToSetByPainter.y); }).collect(Collectors.toList());
+        		{ return Integer.compare(nodesToDnMap.get(e1.getOriginNode()).getPosTopLeftCornerToSetByPainter().y ,nodesToDnMap.get(e2.getOriginNode()).getPosTopLeftCornerToSetByPainter().y); }).collect(Collectors.toList());
         	for (Link e : sortedListUpToDown)
         	{
         		final Node n = e.getDestinationNode();
@@ -136,19 +136,19 @@ public class FigureMulticastTreePanel extends JPanel
             super.mouseClicked(me);
             for (DrawNode dn : drawnNodes)
             {
-                if (dn.shapeIconToSetByPainter.contains(me.getPoint())) 
-                	FocusPane.processMouseClickInternalLink ("node" + dn.associatedElement.getId() , callback);
-                for (int labelIndex = 0; labelIndex < dn.labels.size() ; labelIndex ++)
-                	if (dn.shapesLabelsToCreateByPainter.get(labelIndex).contains(me.getPoint())) 
-                		FocusPane.processMouseClickInternalLink (dn.urlsLabels.get(labelIndex) , callback);
+                if (dn.getShapeIconToSetByPainter().contains(me.getPoint()))
+                	FocusPane.processMouseClickInternalLink ("node" + dn.getAssociatedElement().getId() , callback);
+                for (int labelIndex = 0; labelIndex < dn.getLabels().size() ; labelIndex ++)
+                	if (dn.getShapesLabelsToCreateByPainter().get(labelIndex).contains(me.getPoint()))
+                		FocusPane.processMouseClickInternalLink (dn.getUrlsLabels().get(labelIndex) , callback);
             }                
             for (DrawLine dl : drawnLines)
             {
-                if (dl.shapeLineToCreateByPainter.contains(me.getPoint())) 
-                	FocusPane.processMouseClickInternalLink ("link" + dl.associatedElement.getId() , callback);
-                for (int labelIndex = 0; labelIndex < dl.labels.size() ; labelIndex ++)
-                	if (dl.shapesLabelstoCreateByPainter.get(labelIndex).contains(me.getPoint())) 
-                		FocusPane.processMouseClickInternalLink (dl.urlsLabels.get(labelIndex) , callback);
+                if (dl.getShapeLineToCreateByPainter().contains(me.getPoint()))
+                	FocusPane.processMouseClickInternalLink ("link" + dl.getAssociatedElement().getId() , callback);
+                for (int labelIndex = 0; labelIndex < dl.getLabels().size() ; labelIndex ++)
+                	if (dl.getShapesLabelstoCreateByPainter().get(labelIndex).contains(me.getPoint()))
+                		FocusPane.processMouseClickInternalLink (dl.getUrlsLabels().get(labelIndex) , callback);
             }                
         }
     }

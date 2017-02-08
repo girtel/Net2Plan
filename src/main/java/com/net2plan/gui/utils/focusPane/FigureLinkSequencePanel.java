@@ -32,66 +32,65 @@ import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
 
-public class FigureLinkSequencePanel extends JPanel 
+public class FigureLinkSequencePanel extends FigureSequencePanel
 {
-	
-	private List<DrawNode> drawnNodes;
-	private List<DrawLine> drawnLines;
-	private List<? extends NetworkElement> path;
-	private List<Double> occupationsPerElement;
-//	private List<Double> capacitiesPerElement;
-	private List<String> generalMessage; 
-	private NetworkLayer layer;
+    private List<? extends NetworkElement> path;
+    private List<Double> occupationsPerElement;
+    private List<Double> capacitiesPerElement;
+    private List<String> generalMessage;
+    private NetworkLayer layer;
     private NetPlan np;
     private Dimension preferredSize;
-    private IVisualizationCallback callback;
-    
-    public FigureLinkSequencePanel(IVisualizationCallback callback , List<? extends NetworkElement> path , NetworkLayer layer , List<Double> occupationsPerElement , String titleMessage , double carriedTraffic) 
+
+    public FigureLinkSequencePanel(IVisualizationCallback callback, List<? extends NetworkElement> path, NetworkLayer layer, List<Double> occupationsPerElement, double carriedTraffic, String... titleMessage)
     {
-    	this.callback = callback;
-    	this.np = layer.getNetPlan();
-    	this.layer = layer;
-    	this.path = path;
-    	this.occupationsPerElement = occupationsPerElement;
-//    	this.capacitiesPerElement = path.stream().map(e->(e instanceof Link)? ((Link)e).getCapacity() : ((Resource)e).getCapacity()).collect (Collectors.toList());
-    	if (carriedTraffic >= 0)
-    		this.generalMessage = Arrays.asList(titleMessage , "Carried trafffic: " + String.format("%.2f " , carriedTraffic) + " " + np.getDemandTrafficUnitsName(layer));
-    	else
-    		this.generalMessage = Arrays.asList(titleMessage);
-    	this.preferredSize = null;
-        addMouseListener(new MouseAdapterFocusPanel() );
+        super(callback);
+        this.np = layer.getNetPlan();
+        this.layer = layer;
+        this.path = path;
+        this.occupationsPerElement = occupationsPerElement;
+        this.capacitiesPerElement = path.stream().map(e -> (e instanceof Link) ? ((Link) e).getCapacity() : ((Resource) e).getCapacity()).collect(Collectors.toList());
+        if (carriedTraffic >= 0)
+        {
+            this.generalMessage = new ArrayList<>();
+            this.generalMessage.addAll(Arrays.asList(titleMessage));
+            this.generalMessage.add("Carried trafffic: " + String.format("%.2f ", carriedTraffic) + " " + np.getDemandTrafficUnitsName(layer));
+        } else
+        {
+            this.generalMessage = Arrays.asList(titleMessage);
+        }
+        this.preferredSize = null;
     }
 
     @Override
-    protected void paintComponent(Graphics grphcs) 
+    protected void paintComponent(Graphics grphcs)
     {
-        super.paintComponent(grphcs);
         final Graphics2D g2d = (Graphics2D) grphcs;
         g2d.setColor(Color.black);
-        
-    	
-    	final int maxHeightOrSizeIcon = 40;
-    	final int maxNumberOfTagsPerNodeNorResource = 1;
-    	
+
+
+        final int maxHeightOrSizeIcon = 40;
+        final int maxNumberOfTagsPerNodeNorResource = 1;
+
     	/* Initial messages */
         g2d.setFont(new Font("Arial", Font.BOLD, 12));
-    	final int fontHeightTitle = g2d.getFontMetrics().getHeight();
-    	for (int indexMessage =0 ; indexMessage < generalMessage.size() ; indexMessage ++)
-    	{
-    		final String m = generalMessage.get(indexMessage);
-        	g2d.drawString (m , maxHeightOrSizeIcon , maxHeightOrSizeIcon + (indexMessage * fontHeightTitle));
-    	}
+        final int fontHeightTitle = g2d.getFontMetrics().getHeight();
+        for (int indexMessage = 0; indexMessage < generalMessage.size(); indexMessage++)
+        {
+            final String m = generalMessage.get(indexMessage);
+            g2d.drawString(m, maxHeightOrSizeIcon, maxHeightOrSizeIcon + (indexMessage * fontHeightTitle));
+        }
 
         g2d.setFont(new Font("Arial", Font.PLAIN, 10));
-    	final FontMetrics fontMetrics = g2d.getFontMetrics();
-    	final int regularInterlineSpacePixels = fontMetrics.getHeight();
-    	this.drawnNodes = new ArrayList<> ();
-    	this.drawnLines = new ArrayList<> ();
+        final FontMetrics fontMetrics = g2d.getFontMetrics();
+        final int regularInterlineSpacePixels = fontMetrics.getHeight();
+        this.drawnNodes = new ArrayList<>();
+        this.drawnLines = new ArrayList<>();
 
-    	final int topCoordinateLineNodes = maxHeightOrSizeIcon + (generalMessage.size() * fontHeightTitle) + (maxNumberOfTagsPerNodeNorResource * regularInterlineSpacePixels);
-    	final int topCoordinateLineResources = topCoordinateLineNodes + maxHeightOrSizeIcon * 4;
-    	final Point initialDnTopLeftPosition = new Point (maxHeightOrSizeIcon , topCoordinateLineNodes);
-    	final int xSeparationDnCenters = maxHeightOrSizeIcon * 3;
+        final int topCoordinateLineNodes = maxHeightOrSizeIcon + (generalMessage.size() * fontHeightTitle) + (maxNumberOfTagsPerNodeNorResource * regularInterlineSpacePixels);
+        final int topCoordinateLineResources = topCoordinateLineNodes + maxHeightOrSizeIcon * 4;
+        final Point initialDnTopLeftPosition = new Point(maxHeightOrSizeIcon, topCoordinateLineNodes);
+        final int xSeparationDnCenters = maxHeightOrSizeIcon * 3;
 
     	/* Initial dn */
     	final Node firstNode = path.get(0) instanceof Resource? ((Resource) path.get(0)).getHostNode() : ((Link) path.get(0)).getOriginNode();
@@ -114,8 +113,8 @@ public class FigureLinkSequencePanel extends JPanel
     			/* create link from previous dn (resource of node) to here: no URL */
     			final DrawNode dnOrigin = drawnNodes.get(drawnNodes.size()-2);
     			final DrawNode dnDestination = drawnNodes.get(drawnNodes.size()-1);
-    			final Point initialPoint = dnOrigin.associatedElement instanceof Resource? dnOrigin.posEast() : dnOrigin.posSouthSomeWest();
-    			final Point endPoint = dnOrigin.associatedElement instanceof Resource? dnDestination.posWest() : dnDestination.posNorthSomeWest();
+    			final Point initialPoint = dnOrigin.getAssociatedElement() instanceof Resource? dnOrigin.posEast() : dnOrigin.posSouthSomeWest();
+    			final Point endPoint = dnOrigin.getAssociatedElement() instanceof Resource? dnDestination.posWest() : dnDestination.posNorthSomeWest();
     			final DrawLine dlNoURL = new DrawLine (dnOrigin , dnDestination , initialPoint , endPoint);
     			DrawLine.addLineToGraphics(g2d , dlNoURL , fontMetrics , regularInterlineSpacePixels);
     			drawnLines.add(dlNoURL);
@@ -126,12 +125,12 @@ public class FigureLinkSequencePanel extends JPanel
 
     			DrawNode lastNodeElement = null;
     			for (int index = drawnNodes.size()-1 ; index >= 0 ; index --) 
-    				if (drawnNodes.get(index).associatedElement instanceof Node) { lastNodeElement = drawnNodes.get(index); break; }
+    				if (drawnNodes.get(index).getAssociatedElement() instanceof Node) { lastNodeElement = drawnNodes.get(index); break; }
     			if (lastNodeElement == null) throw new RuntimeException();
 
     			/* Get the previous node element added */
     			final DrawNode lastGn = drawnNodes.get(drawnNodes.size()-1);
-    			if (lastGn.associatedElement instanceof Resource)
+    			if (lastGn.getAssociatedElement() instanceof Resource)
     			{
     				/* Add a link to the last resource to its host node */
     				final Point initialPoint = new Point (lastGn.posNorth().x + 5 , lastGn.posNorth().y);
@@ -154,40 +153,5 @@ public class FigureLinkSequencePanel extends JPanel
     		} else throw new RuntimeException();
     	}
     }
-
-    @Override
-    public Dimension getPreferredSize() 
-    {
-        return new Dimension(600,600);
-    }
-
-    
-
-    class MouseAdapterFocusPanel extends MouseAdapter
-    {
-        @Override
-        public void mouseClicked(MouseEvent me) 
-        {
-            super.mouseClicked(me);
-            for (DrawNode dn : drawnNodes)
-            {
-                if (dn.shapeIconToSetByPainter.contains(me.getPoint())) 
-                	FocusPane.processMouseClickInternalLink ("node" + dn.associatedElement.getId() , callback);
-                for (int labelIndex = 0; labelIndex < dn.labels.size() ; labelIndex ++)
-                	if (dn.shapesLabelsToCreateByPainter.get(labelIndex).contains(me.getPoint())) 
-                		FocusPane.processMouseClickInternalLink (dn.urlsLabels.get(labelIndex) , callback);
-            }                
-            for (DrawLine dl : drawnLines)
-            {
-                if (dl.shapeLineToCreateByPainter.contains(me.getPoint())) 
-                	FocusPane.processMouseClickInternalLink ("link" + dl.associatedElement.getId() , callback);
-                for (int labelIndex = 0; labelIndex < dl.labels.size() ; labelIndex ++)
-                	if (dl.shapesLabelstoCreateByPainter.get(labelIndex).contains(me.getPoint())) 
-                		FocusPane.processMouseClickInternalLink (dl.urlsLabels.get(labelIndex) , callback);
-            }                
-        }
-    }
-
-    
 }
 

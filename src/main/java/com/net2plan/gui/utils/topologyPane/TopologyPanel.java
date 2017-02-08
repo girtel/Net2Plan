@@ -219,9 +219,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showThisLayerInfo = new JToggleButton();
         btn_showThisLayerInfo.setToolTipText("Shows the links in the same layer as the picked element, that carry traffic that appears in the picked element");
         btn_showThisLayerInfo.setSelected(getVisualizationState().isShowInCanvasThisLayerPropagation());
-        btn_npChangeUndo = new JButton ();
+        btn_npChangeUndo = new JButton();
         btn_npChangeUndo.setToolTipText("Navigate back to the previous state of the network (last time the network design was changed)");
-        btn_npChangeRedo = new JButton ();
+        btn_npChangeRedo = new JButton();
         btn_npChangeRedo.setToolTipText("Navigate forward to the next state of the network (when network design was changed");
 
 
@@ -483,10 +483,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             canvas.refresh();
         } else if (src == btn_npChangeUndo)
         {
-        	callback.undoRequested();
+            callback.undoRequested();
         } else if (src == btn_npChangeRedo)
         {
-        	callback.redoRequested();
+            callback.redoRequested();
         } else if (src == btn_tableControlWindow)
         {
             WindowController.showTablesWindow(true);

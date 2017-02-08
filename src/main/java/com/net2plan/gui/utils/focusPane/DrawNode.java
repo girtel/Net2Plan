@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.*;
 
 import com.net2plan.gui.utils.topologyPane.VisualizationConstants;
 import com.net2plan.gui.utils.topologyPane.VisualizationState;
@@ -61,27 +61,26 @@ public class DrawNode
 		}
 	}
 	
-	Image icon;
-	Shape shapeIconToSetByPainter;
-	Point posTopLeftCornerToSetByPainter;
-	NetworkElement associatedElement;
+	private Image icon;
+	private Shape shapeIconToSetByPainter;
+	private Point posTopLeftCornerToSetByPainter;
+	private NetworkElement associatedElement;
 
-	List<String> labels;
-	List<String> urlsLabels;
-	List<Rectangle2D> shapesLabelsToCreateByPainter;
+	private List<String> labels;
+	private List<String> urlsLabels;
+	private List<Rectangle2D> shapesLabelsToCreateByPainter;
 
 	Point posNorthSomeWest () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) - 5 , posTopLeftCornerToSetByPainter.y); }
 	Point posNorthSomeEast () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) + 5 , posTopLeftCornerToSetByPainter.y); }
 	Point posSouthSomeWest () { return new Point (posTopLeftCornerToSetByPainter.x  + (icon.getWidth(null) / 2) - 5, posTopLeftCornerToSetByPainter.y + icon.getWidth(null)); }
 	Point posSouthSomeEast () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) + 5, posTopLeftCornerToSetByPainter.y + icon.getWidth(null)); }
 
-	Point posWest () { return new Point (posTopLeftCornerToSetByPainter.x , posTopLeftCornerToSetByPainter.y + (icon.getWidth(null) / 2)); }
-	Point posEast () { return new Point (posTopLeftCornerToSetByPainter.x + icon.getWidth(null) , posTopLeftCornerToSetByPainter.y + (icon.getWidth(null) / 2)); }
+	Point posWest () { return new Point (posTopLeftCornerToSetByPainter.x , posTopLeftCornerToSetByPainter.y + (icon.getHeight(null) / 2)); }
+	Point posEast () { return new Point (posTopLeftCornerToSetByPainter.x + icon.getWidth(null) , posTopLeftCornerToSetByPainter.y + (icon.getHeight(null) / 2)); }
 	Point posSouth () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) , posTopLeftCornerToSetByPainter.y + icon.getWidth(null)); }
 	Point posNorth () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) , posTopLeftCornerToSetByPainter.y); }
 	Point posCenter () { return new Point (posTopLeftCornerToSetByPainter.x + (icon.getWidth(null) / 2) , posTopLeftCornerToSetByPainter.y + (icon.getHeight(null) / 2)); }
-	public String toString () { return "node: " + associatedElement; } 
-
+	public String toString () { return "node: " + associatedElement; }
 
     private Pair<ImageIcon,Shape> getNodeIcon (Node n , NetworkLayer layer , int maxHeightOrSizeIcon)
     {
@@ -154,5 +153,39 @@ public class DrawNode
     	}
     }
 
+	public Image getIcon()
+	{
+		return icon;
+	}
+
+	public Shape getShapeIconToSetByPainter()
+	{
+		return shapeIconToSetByPainter;
+	}
+
+	public Point getPosTopLeftCornerToSetByPainter()
+	{
+		return posTopLeftCornerToSetByPainter;
+	}
+
+	public NetworkElement getAssociatedElement()
+	{
+		return associatedElement;
+	}
+
+	public List<String> getLabels()
+	{
+		return labels;
+	}
+
+	public List<String> getUrlsLabels()
+	{
+		return urlsLabels;
+	}
+
+	public List<Rectangle2D> getShapesLabelsToCreateByPainter()
+	{
+		return shapesLabelsToCreateByPainter;
+	}
 }
 
