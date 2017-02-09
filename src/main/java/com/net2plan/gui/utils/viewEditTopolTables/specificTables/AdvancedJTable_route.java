@@ -799,6 +799,11 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
             final int E = links.size();
             Map<Link, Double> linkCostMap = new HashMap<Link, Double>();
             List<Route> addedRoutes = new LinkedList<Route>();
+
+            // Ask for current element removal
+            final int answer = JOptionPane.showConfirmDialog(null, "Remove all existing routes?", "", JOptionPane.YES_NO_OPTION);
+            if (answer == JOptionPane.OK_OPTION) netPlan.removeAllRoutes(netPlan.getNetworkLayerDefault());
+
             for (Link link : netPlan.getLinks())
             {
                 linkCostMap.put(link, isMinHops ? 1 : link.getLengthInKm());

@@ -544,7 +544,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
             List<MulticastTree> addedTrees = new LinkedList<MulticastTree>();
 
             // Ask for current element removal
-            final int answer = JOptionPane.showConfirmDialog(null, "Remove all multicast trees?", "", JOptionPane.YES_NO_OPTION);
+            final int answer = JOptionPane.showConfirmDialog(null, "Remove all existing multicast trees?", "", JOptionPane.YES_NO_OPTION);
             if (answer == JOptionPane.OK_OPTION) netPlan.removeAllMulticastTrees(netPlan.getNetworkLayerDefault());
 
             try {
