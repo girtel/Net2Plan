@@ -16,6 +16,7 @@ public class FigureDemandSequencePanel extends FigureSequencePanel
     private final List<String> generalMessage;
     private final Demand demand;
     private final BasicStroke lineStroke;
+    private Dimension preferredSize;
 
     public FigureDemandSequencePanel(final IVisualizationCallback callback, final Demand demand, final String... titleMessage)
     {
@@ -23,12 +24,13 @@ public class FigureDemandSequencePanel extends FigureSequencePanel
         this.demand = demand;
         this.generalMessage = Arrays.asList(titleMessage);
         this.lineStroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, new float[]{10.0f}, 0.0f);
+        this.preferredSize = null;
     }
 
     @Override
     public Dimension getPreferredSize()
     {
-        return new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+        return preferredSize == null? new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT) : preferredSize;
     }
 
     @Override
@@ -61,13 +63,22 @@ public class FigureDemandSequencePanel extends FigureSequencePanel
         final int xSeparationDnCenters = maxIconSize * 3;
 
     	/* Initial dn */
-        DrawNode.addNodeToGraphics(g2d, ingressNode, initialDnTopLeftPosition, fontMetrics, regularInterlineSpacePixels, null);
-        DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + xSeparationDnCenters, initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
+        Point auxPoint;
+        Point southEastPoint = new Point (0,0);
+        auxPoint = DrawNode.addNodeToGraphics(g2d, ingressNode, initialDnTopLeftPosition, fontMetrics, regularInterlineSpacePixels, null);
+        southEastPoint = southEastPoint(southEastPoint , auxPoint);
+        auxPoint = DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + xSeparationDnCenters, initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
+        southEastPoint = southEastPoint(southEastPoint , auxPoint);
 
         drawnNodes.add(ingressNode);
         drawnNodes.add(egressNode);
 
         final DrawLine link = new DrawLine(ingressNode, egressNode, ingressNode.posEast(), egressNode.posWest());
-        DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels,lineStroke);
+        auxPoint = DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels,lineStroke);
+        southEastPoint = southEastPoint(southEastPoint , auxPoint);
+        preferredSize = new Dimension (southEastPoint.x + XYMARGIN , southEastPoint.y + XYMARGIN);
     }
+    
+    private static Point southEastPoint (Point a , Point b) { return new Point (Math.max(a.x , b.x), Math.max(a.y,b.y)); }
+    
 }

@@ -115,11 +115,13 @@ public class DrawNode
      * @param fontMetrics
      * @param interlineSpacePixels
      */
-    static void addNodeToGraphics (Graphics2D g2d , DrawNode dn , 
+    static Point addNodeToGraphics (Graphics2D g2d , DrawNode dn , 
     		Point topLeftPosition , FontMetrics fontMetrics , int interlineSpacePixels , Color rectangleColor)
     {
 		/* create resource node,with URL  */
     	g2d.drawImage (dn.icon , topLeftPosition.x , topLeftPosition.y , null);
+    	Point bottomRightPoint = new Point (topLeftPosition.x + dn.icon.getWidth(null) , topLeftPosition.y + dn.icon.getHeight(null));
+    	
     	final Point nodeCenter = new Point (topLeftPosition.x + dn.icon.getWidth(null) / 2 , topLeftPosition.y + dn.icon.getHeight(null) / 2);
     	dn.shapeIconToSetByPainter = new Rectangle2D.Double(topLeftPosition.x , topLeftPosition.y , dn.icon.getWidth(null) , dn.icon.getHeight(null));
     	g2d.setStroke(STROKE_ROUNDICONS);
@@ -150,7 +152,11 @@ public class DrawNode
         	final Rectangle2D shapeText = g2d.getFontMetrics().getStringBounds(label, g2d);
         	shapeText.setRect(xTopLeftCornerString , yTopLeftCornerString - g2d.getFontMetrics().getAscent(), shapeText.getWidth(), shapeText.getHeight());
         	dn.shapesLabelsToCreateByPainter.add (shapeText);
+        	final int maxX = (int) Math.max(bottomRightPoint.x , xTopLeftCornerString + shapeText.getWidth());
+        	final int maxY = (int) Math.max(bottomRightPoint.y , yTopLeftCornerString - g2d.getFontMetrics().getAscent() + shapeText.getHeight());
+        	bottomRightPoint = new Point (maxX , maxY);
     	}
+    	return bottomRightPoint;
     }
 
 	public Image getIcon()

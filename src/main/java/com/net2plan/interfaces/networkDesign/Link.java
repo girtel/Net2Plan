@@ -609,10 +609,19 @@ public class Link extends NetworkElement
 	{
 		this.cache_carriedTraffic = 0;
 		this.cache_occupiedCapacity = 0;
-		for (Entry<Route,Integer> entry : cache_traversingRoutes.entrySet())
+		if (layer.isSourceRouting())
 		{
-			this.cache_carriedTraffic += entry.getKey().getCarriedTraffic();
-			this.cache_occupiedCapacity += entry.getKey().getOccupiedCapacity(this);
+			for (Entry<Route,Integer> entry : cache_traversingRoutes.entrySet())
+			{
+				this.cache_carriedTraffic += entry.getKey().getCarriedTraffic();
+				this.cache_occupiedCapacity += entry.getKey().getOccupiedCapacity(this);
+			}
+		}
+		else
+		{
+			final double traffic = layer.forwardingRulesCurrentFailureState_x_de.viewColumn(index).zSum(); 
+			this.cache_carriedTraffic += traffic; 
+			this.cache_occupiedCapacity += traffic; 
 		}
 		for (MulticastTree t : cache_traversingTrees)
 		{

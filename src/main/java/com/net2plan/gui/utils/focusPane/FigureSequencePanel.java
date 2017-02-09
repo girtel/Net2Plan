@@ -21,6 +21,7 @@ public abstract class FigureSequencePanel extends JPanel
     protected List<DrawLine> drawnLines;
 
     protected final int DEFAULT_WIDTH = 600, DEFAULT_HEIGHT = 600;
+    protected final int XYMARGIN = 100;
 
     public FigureSequencePanel(IVisualizationCallback callback)
     {

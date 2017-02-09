@@ -85,13 +85,13 @@ class DrawLine
         this.associatedElement = e;
     }
 
-    static void addLineToGraphics(Graphics2D g2d, DrawLine dl,
+    static Point addLineToGraphics(Graphics2D g2d, DrawLine dl,
                                   FontMetrics fontMetrics, int interlineSpacePixels)
     {
-        addLineToGraphics(g2d, dl, fontMetrics, interlineSpacePixels, null);
+        return addLineToGraphics(g2d, dl, fontMetrics, interlineSpacePixels, null);
     }
 
-    static void addLineToGraphics(Graphics2D g2d, DrawLine dl,
+    static Point addLineToGraphics(Graphics2D g2d, DrawLine dl,
                                   FontMetrics fontMetrics, int interlineSpacePixels, Stroke stroke)
     {
         final int margin = 3;
@@ -115,7 +115,8 @@ class DrawLine
         int yPoints[] = {y1 + margin, y1 - margin, y2 - margin, y2 + margin};
         dl.shapeLineToCreateByPainter = new Polygon(xPoints, yPoints, yPoints.length);
         dl.shapesLabelstoCreateByPainter = new ArrayList<>(dl.labels.size());
-
+    	Point bottomRightPoint = new Point (dl.shapeLineToCreateByPainter.getBounds().getLocation().x + dl.shapeLineToCreateByPainter.getBounds().width , dl.shapeLineToCreateByPainter.getBounds().getLocation().y + dl.shapeLineToCreateByPainter.getBounds().height);
+        
         drawArrowHead(g2d, x1, y1, x2, y2);
 
         for (int lineIndex = 0; lineIndex < dl.labels.size(); lineIndex++)
@@ -133,7 +134,11 @@ class DrawLine
             final Rectangle2D shapeText = fontMetrics.getStringBounds(label, g2d);
             shapeText.setRect(xTopLeftCorner, yTopLeftCorner - g2d.getFontMetrics().getAscent(), shapeText.getWidth(), shapeText.getHeight());
             dl.shapesLabelstoCreateByPainter.add(shapeText);
+        	final int maxX = (int) Math.max(bottomRightPoint.x , xTopLeftCorner + shapeText.getWidth());
+        	final int maxY = (int) Math.max(bottomRightPoint.y , yTopLeftCorner - g2d.getFontMetrics().getAscent() + shapeText.getHeight());
+        	bottomRightPoint = new Point (maxX , maxY);
         }
+        return bottomRightPoint;
     }
 
     private static void drawArrowHead(Graphics g1, int x1, int y1, int x2, int y2)
