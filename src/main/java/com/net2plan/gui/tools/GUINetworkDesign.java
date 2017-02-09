@@ -347,11 +347,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             } while (true);
             if (backOrForward != null)
             {
-                if (backOrForward.getFirst() != null)
-                    GUINetworkDesign.this.getVisualizationState().pickElement(backOrForward.getFirst());
-                else if (backOrForward.getSecond() != null)
-                    GUINetworkDesign.this.getVisualizationState().pickForwardingRule(backOrForward.getSecond());
+                if (backOrForward.getFirst() != null) GUINetworkDesign.this.getVisualizationState().pickElement(backOrForward.getFirst());
+                else if (backOrForward.getSecond() != null) GUINetworkDesign.this.getVisualizationState().pickForwardingRule(backOrForward.getSecond());
                 else GUINetworkDesign.this.getVisualizationState().resetPickedState();
+
                 GUINetworkDesign.this.updateVisualizationAfterPick();
             }
         };

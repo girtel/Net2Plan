@@ -1,7 +1,6 @@
 package com.net2plan.gui.utils.topologyPane.visualizationControl;
 
 import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.internal.Constants;
 import com.net2plan.utils.Pair;
 
 import java.util.ArrayList;
@@ -11,28 +10,41 @@ import java.util.List;
  * @author Jorge San Emeterio
  * @date 09-Feb-17
  */
-public class PickTimeLineManager
+class PickTimeLineManager
 {
     private NetPlan netPlan;
 
-    private List<Pair<NetworkElement, Pair<Demand, Link>>> pastPickedElements;
-    private int pastPickedElementsCursor;
-    private int pickListSize;
+    private List<Pair<NetworkElement, Pair<Demand, Link>>> timeLine;
+    private int currentElementInTimelineCursor;
+    private int timelineMaxSize;
 
     private NetworkElement pickedNetworkElement;
     private Pair<Demand, Link> pickedForwardingRule;
 
-    PickTimeLineManager(final int pickListSize)
+    PickTimeLineManager()
     {
-        this.pastPickedElements = new ArrayList<>(pickListSize + 1);
-        this.pastPickedElementsCursor = -1;
-        this.pickListSize = pickListSize;
+        this.timeLine = new ArrayList<>(timelineMaxSize + 1);
+        this.currentElementInTimelineCursor = -1;
+        this.timelineMaxSize = 10;
 
         this.pickedNetworkElement = null;
         this.pickedForwardingRule = null;
     }
 
-    void updatePickUndoList_newPickOrPickReset(final NetPlan currentNp)
+    void resetTimeLine(final NetPlan currentNp)
+    {
+        this.pickedNetworkElement = null;
+        this.pickedForwardingRule = null;
+
+        updateTimeline(currentNp);
+    }
+
+    /**
+     * Update timeline after new pick or reset
+     *
+     * @param currentNp
+     */
+    private void updateTimeline(final NetPlan currentNp)
     {
         // Updating netPlan
         if (netPlan == null) this.netPlan = currentNp;
@@ -40,125 +52,146 @@ public class PickTimeLineManager
         {
             this.netPlan = currentNp;
 
-            this.pastPickedElements.clear();
-            this.pastPickedElementsCursor = -1;
-            updatePickUndoList_newPickOrPickReset(netPlan); // add a no pick, this is never removed
+            this.timeLine.clear();
+            this.currentElementInTimelineCursor = -1;
+            updateTimeline(netPlan); // add a no pick, this is never removed
         }
 
-        if (this.pickListSize <= 1) return; // nothing is stored since nothing will be retrieved
+        if (this.timelineMaxSize <= 1) return; // nothing is stored since nothing will be retrieved
         if ((pickedForwardingRule == null) && (pickedNetworkElement == null)) return;
 
-        /* Eliminate repeated continuous elements in the list, and everything after the cursor */
-        final List<Pair<NetworkElement, Pair<Demand, Link>>> newList = new ArrayList<>();
-        for (int index = 0; index <= pastPickedElementsCursor; index++)
-        {
-            final NetworkElement ne = pastPickedElements.get(index).getFirst();
-            final Pair<Demand, Link> fr = pastPickedElements.get(index).getSecond();
-            if ((index > 0) && (pastPickedElements.get(index).equals(pastPickedElements.get(index - 1)))) continue;
-            if (ne != null) if (ne.getNetPlan() != netPlan) continue;
-            if (fr != null)
-                if ((fr.getFirst().getNetPlan() != netPlan) || (fr.getSecond().getNetPlan() != netPlan)) continue;
-            newList.add(pastPickedElements.get(index));
-        }
-        this.pastPickedElements = newList;
+        // If the new element if different from what is stored, remove all the elements that were stored
+//        if (!timeLine.isEmpty() && currentElementInTimelineCursor != timeLine.size() - 1)
+//        {
+//            final Pair<NetworkElement, Pair<Demand, Link>> nextTimelineElement = timeLine.get(currentElementInTimelineCursor + 1);
+//            if (nextTimelineElement.getFirst() != pickedNetworkElement || nextTimelineElement.getSecond() != pickedForwardingRule)
+//            {
+//                timeLine.subList(currentElementInTimelineCursor, timeLine.size()).clear();
+//            }
+//        }
 
-        /* If the same element picked as the last one, do not add */
-        if (!pastPickedElements.isEmpty())
-            if (Pair.of(this.pickedNetworkElement, pickedForwardingRule).equals(pastPickedElements.get(pastPickedElements.size() - 1)))
+        final List<Pair<NetworkElement, Pair<Demand, Link>>> newTimeLine = new ArrayList<>();
+        for (int index = 0; index < timeLine.size(); index++)
+        {
+            final NetworkElement ne = timeLine.get(index).getFirst();
+            final Pair<Demand, Link> fr = timeLine.get(index).getSecond();
+
+            // Do not add this pick if the last if the same as this one.
+            if ((index > 0) && (timeLine.get(index).equals(timeLine.get(index - 1)))) continue;
+
+            // This element does not belong to this NetPlan
+            if (ne != null && ne.getNetPlan() != netPlan) continue;
+            if (fr != null && ((fr.getFirst().getNetPlan() != netPlan) || (fr.getSecond().getNetPlan() != netPlan)))
+                continue;
+            newTimeLine.add(timeLine.get(index));
+        }
+        this.timeLine = new ArrayList<>(newTimeLine);
+
+        // Do not add the same element that is currently be clicked upon.
+        if (!timeLine.isEmpty())
+        {
+            if (Pair.unmodifiableOf(this.pickedNetworkElement, pickedForwardingRule).equals(timeLine.get(currentElementInTimelineCursor)))
+            {
                 return;
+            }
+        }
 
         /* Add the elements at the end of the list */
-        pastPickedElements.add(Pair.of(pickedNetworkElement, pickedForwardingRule));
+        timeLine.add(Pair.of(pickedNetworkElement, pickedForwardingRule));
 
-        /* Check list size */
-        while (pastPickedElements.size() > pickListSize)
-            pastPickedElements.remove(0);
-        pastPickedElementsCursor = pastPickedElements.size() - 1;
+        // Remove the oldest pick if the list get too big.
+        while (timeLine.size() > timelineMaxSize)
+        {
+            timeLine.remove(0);
+        }
+
+        // NOTE: The cursor does not depend on the timeline, which may cause them to desynchronize.
+        currentElementInTimelineCursor++;
     }
 
     Pair<NetworkElement, Pair<Demand, Link>> getPickNavigationBackElement()
     {
-        if (this.pickListSize <= 1) return null; // nothing is stored since nothing will be retrieved
-        if (pastPickedElementsCursor == 0) return null;
-        this.pastPickedElementsCursor--;
-        return pastPickedElements.get(this.pastPickedElementsCursor);
+        if (this.timelineMaxSize <= 1) return null; // Empty timeline, nothing can be returned
+        if (currentElementInTimelineCursor == 0) return null; // End of the timeline, there is no more past.
+        this.currentElementInTimelineCursor--; // Retrieving prior element
+        return timeLine.get(this.currentElementInTimelineCursor);
     }
 
     Pair<NetworkElement, Pair<Demand, Link>> getPickNavigationForwardElement()
     {
-        if (this.pickListSize <= 1) return null; // nothing is stored since nothing will be retrieved
-        if (pastPickedElementsCursor >= pastPickedElements.size() - 1) return null;
-        this.pastPickedElementsCursor++;
-        return pastPickedElements.get(this.pastPickedElementsCursor);
+        if (this.timelineMaxSize <= 1) return null; // nothing is stored since nothing will be retrieved
+        if (currentElementInTimelineCursor >= timeLine.size() - 1) return null;
+        this.currentElementInTimelineCursor++;
+        return timeLine.get(this.currentElementInTimelineCursor);
     }
 
-    void pickLayer(final NetPlan currentNp, final NetworkLayer pickedLayer)
+    void addLayer(final NetPlan currentNp, final NetworkLayer pickedLayer)
     {
         this.pickedForwardingRule = null;
         this.pickedNetworkElement = pickedLayer;
-        updatePickUndoList_newPickOrPickReset(currentNp);
+        updateTimeline(currentNp);
     }
 
-    void pickDemand(final NetPlan currentNp, final Demand pickedDemand)
+    void addDemand(final NetPlan currentNp, final Demand pickedDemand)
     {
         this.pickedNetworkElement = pickedDemand;
         this.pickedForwardingRule = null;
-        updatePickUndoList_newPickOrPickReset(currentNp);
+        updateTimeline(currentNp);
     }
 
-    void pickSRG(final NetPlan currentNp, final SharedRiskGroup pickedSRG)
+    void addSRG(final NetPlan currentNp, final SharedRiskGroup pickedSRG)
     {
         this.pickedNetworkElement = pickedSRG;
         this.pickedForwardingRule = null;
-        updatePickUndoList_newPickOrPickReset(currentNp);
+        updateTimeline(currentNp);
     }
 
-    void pickMulticastDemand(final NetPlan currentNp, final MulticastDemand pickedDemand)
+    void addMulticastDemand(final NetPlan currentNp, final MulticastDemand pickedDemand)
     {
         this.pickedNetworkElement = pickedDemand;
         this.pickedForwardingRule = null;
-        updatePickUndoList_newPickOrPickReset(currentNp);
+        updateTimeline(currentNp);
     }
 
-    void pickRoute(final NetPlan currentNp, final Route pickedRoute)
+    void addRoute(final NetPlan currentNp, final Route pickedRoute)
     {
         this.pickedNetworkElement = pickedRoute;
         this.pickedForwardingRule = null;
-        updatePickUndoList_newPickOrPickReset(currentNp);
+        updateTimeline(currentNp);
     }
 
-    void pickMulticastTree(final NetPlan currentNp, final MulticastTree pickedTree)
+    void addMulticastTree(final NetPlan currentNp, final MulticastTree pickedTree)
     {
         this.pickedNetworkElement = pickedTree;
         this.pickedForwardingRule = null;
-        updatePickUndoList_newPickOrPickReset(currentNp);
+        updateTimeline(currentNp);
     }
 
-    void pickLink(final NetPlan currentNp, final Link pickedLink)
+    void addLink(final NetPlan currentNp, final Link pickedLink)
     {
         this.pickedNetworkElement = pickedLink;
         this.pickedForwardingRule = null;
-        updatePickUndoList_newPickOrPickReset(currentNp);
+        updateTimeline(currentNp);
     }
 
-    void pickNode(final NetPlan currentNp, final Node pickedNode)
+    void addNode(final NetPlan currentNp, final Node pickedNode)
     {
         this.pickedNetworkElement = pickedNode;
         this.pickedForwardingRule = null;
-        updatePickUndoList_newPickOrPickReset(currentNp);
+        updateTimeline(currentNp);
     }
 
-    void pickResource(final NetPlan currentNp, final Resource pickedResource)
+    void addResource(final NetPlan currentNp, final Resource pickedResource)
     {
         this.pickedNetworkElement = pickedResource;
         this.pickedForwardingRule = null;
-        updatePickUndoList_newPickOrPickReset(currentNp);
+        updateTimeline(currentNp);
     }
 
-    void pickForwardingRule(final NetPlan currentNp, final Pair<Demand, Link> pickedFR)
+    void addForwardingRule(final NetPlan currentNp, final Pair<Demand, Link> pickedFR)
     {
         this.pickedForwardingRule = pickedFR;
         this.pickedNetworkElement = null;
-        updatePickUndoList_newPickOrPickReset(currentNp);
+        updateTimeline(currentNp);
     }
 }

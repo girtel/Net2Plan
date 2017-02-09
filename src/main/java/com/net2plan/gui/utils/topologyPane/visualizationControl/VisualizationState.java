@@ -56,7 +56,6 @@ public class VisualizationState
 	private static Map<Triple<URL,Integer,Color>,Pair<ImageIcon,Shape>> databaseOfAlreadyReadIcons = new HashMap<> (); // for each url, height, and border color, an image
 
     private PickTimeLineManager pickTimeLineManager;
-	private boolean auxTemporalVariable_doNoAddResetPickInUndo;
 
     private NetworkElementType pickedElementType;
     private NetworkElement pickedElementNotFR;
@@ -106,11 +105,13 @@ public class VisualizationState
         this.linksToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
         this.interLayerSpaceInPixels = 50;
         this.tableRowFilter = null;
-        this.pickTimeLineManager = new PickTimeLineManager(maxSizePickUndoList);
+        this.pickTimeLineManager = new PickTimeLineManager();
         this.mapShowInCanvasLayerLinks = currentNp.getNetworkLayers().stream().collect(Collectors.toMap(layer -> layer, layer -> true));
+        this.pickedElementNotFR = null;
+        this.pickedElementFR = null;
 
-    	pickTimeLineManager.updatePickUndoList_newPickOrPickReset (currentNp); // add a no pick, this is never removed
-    	setCanvasLayerVisibilityAndOrder(currentNp ,mapLayer2VisualizationOrder , layerVisibilityMap);
+    	this.pickTimeLineManager.resetTimeLine(currentNp); // add a no pick, this is never removed
+    	this.setCanvasLayerVisibilityAndOrder(currentNp ,mapLayer2VisualizationOrder , layerVisibilityMap);
     }
 
 	public ITableRowFilter getTableRowFilter () { return tableRowFilter; }
@@ -806,24 +807,20 @@ public class VisualizationState
     
     public void pickLayer (NetworkLayer pickedLayer)
     {
-    	auxTemporalVariable_doNoAddResetPickInUndo = true;
    		resetPickedState();
-    	auxTemporalVariable_doNoAddResetPickInUndo = false;
         this.pickedElementType = NetworkElementType.LAYER;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedLayer;
-    	pickTimeLineManager.pickLayer(currentNp, pickedLayer);
+    	pickTimeLineManager.addLayer(currentNp, pickedLayer);
    	}
     
     public void pickDemand (Demand pickedDemand)
     {
-    	auxTemporalVariable_doNoAddResetPickInUndo = true;
    		resetPickedState();
-    	auxTemporalVariable_doNoAddResetPickInUndo = false;
         this.pickedElementType = NetworkElementType.DEMAND;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedDemand;
-        pickTimeLineManager.pickDemand(currentNp, pickedDemand);
+        pickTimeLineManager.addDemand(currentNp, pickedDemand);
 
 		final boolean isDemandLayerVisibleInTheCanvas = isLayerVisibleInCanvas(pickedDemand.getLayer());
     	final GUINode gnOrigin = getCanvasAssociatedGUINode(pickedDemand.getIngressNode() , pickedDemand.getLayer());
@@ -876,13 +873,11 @@ public class VisualizationState
     
     public void pickSRG (SharedRiskGroup pickedSRG)
     {
-    	auxTemporalVariable_doNoAddResetPickInUndo = true;
    		resetPickedState();
-    	auxTemporalVariable_doNoAddResetPickInUndo = false;
         this.pickedElementType = NetworkElementType.SRG;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedSRG;
-    	pickTimeLineManager.pickSRG(currentNp, pickedSRG);
+    	pickTimeLineManager.addSRG(currentNp, pickedSRG);
 
     	final Set<Link> allAffectedLinks = pickedSRG.getAffectedLinksAllLayers();
     	Map<Link,Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>>> thisLayerPropInfo = new HashMap<> (); 
@@ -948,13 +943,11 @@ public class VisualizationState
 
     public void pickMulticastDemand (MulticastDemand pickedDemand)
     {
-    	auxTemporalVariable_doNoAddResetPickInUndo = true;
    		resetPickedState();
-    	auxTemporalVariable_doNoAddResetPickInUndo = false;
         this.pickedElementType = NetworkElementType.MULTICAST_DEMAND;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedDemand;
-    	pickTimeLineManager.pickMulticastDemand(currentNp, pickedDemand);
+    	pickTimeLineManager.addMulticastDemand(currentNp, pickedDemand);
 
     	final boolean isDemandLayerVisibleInTheCanvas = isLayerVisibleInCanvas(pickedDemand.getLayer());
 		final GUINode gnOrigin = getCanvasAssociatedGUINode(pickedDemand.getIngressNode() , pickedDemand.getLayer());
@@ -978,7 +971,7 @@ public class VisualizationState
 			}
 			if (showInCanvasUpperLayerPropagation && (currentNp.getNumberOfLayers() > 1) && pickedDemand.isCoupled())
 			{
-				final Set<Link> upCoupledLink = getUpCoupling(null , Sets.newHashSet(Pair.of(pickedDemand,egressNode)));
+				final Set<Link> upCoupledLink = getUpCoupling(null , Collections.singleton(Pair.of(pickedDemand,egressNode)));
 				final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , upCoupledLink , null , true , false);
 				drawColateralLinks (ipg.getLinksInGraph() , VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
 				drawDownPropagationInterLayerLinks (ipg.getLinksInGraph() , VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
@@ -1000,13 +993,11 @@ public class VisualizationState
 
     public void pickRoute (Route pickedRoute)
     {
-    	auxTemporalVariable_doNoAddResetPickInUndo = true;
    		resetPickedState();
-    	auxTemporalVariable_doNoAddResetPickInUndo = false;
         this.pickedElementType = NetworkElementType.ROUTE;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedRoute;
-    	pickTimeLineManager.pickRoute(currentNp, pickedRoute);
+    	pickTimeLineManager.addRoute(currentNp, pickedRoute);
 
     	final boolean isRouteLayerVisibleInTheCanvas = isLayerVisibleInCanvas(pickedRoute.getLayer());
 		if (showInCanvasThisLayerPropagation && isRouteLayerVisibleInTheCanvas)
@@ -1041,13 +1032,11 @@ public class VisualizationState
 
     public void pickMulticastTree (MulticastTree pickedTree)
     {
-    	auxTemporalVariable_doNoAddResetPickInUndo = true;
    		resetPickedState();
-    	auxTemporalVariable_doNoAddResetPickInUndo = false;
         this.pickedElementType = NetworkElementType.MULTICAST_TREE;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedTree;
-    	pickTimeLineManager.pickMulticastTree(currentNp, pickedTree);
+    	pickTimeLineManager.addMulticastTree(currentNp, pickedTree);
 
 		final boolean isTreeLayerVisibleInTheCanvas = isLayerVisibleInCanvas(pickedTree.getLayer());
 		final GUINode gnOrigin = getCanvasAssociatedGUINode(pickedTree.getIngressNode() , pickedTree.getLayer());
@@ -1089,13 +1078,11 @@ public class VisualizationState
 
     public void pickLink (Link pickedLink)
     {
-    	auxTemporalVariable_doNoAddResetPickInUndo = true;
    		resetPickedState();
-    	auxTemporalVariable_doNoAddResetPickInUndo = false;
         this.pickedElementType = NetworkElementType.LINK;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedLink;
-    	pickTimeLineManager.pickLink(currentNp, pickedLink);
+    	pickTimeLineManager.addLink(currentNp, pickedLink);
 
 		final boolean isLinkLayerVisibleInTheCanvas = isLayerVisibleInCanvas(pickedLink.getLayer());
 		Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> thisLayerTraversalInfo = null;
@@ -1141,13 +1128,11 @@ public class VisualizationState
     
     public void pickNode (Node pickedNode)
     {
-    	auxTemporalVariable_doNoAddResetPickInUndo = true;
    		resetPickedState();
-    	auxTemporalVariable_doNoAddResetPickInUndo = false;
         this.pickedElementType = NetworkElementType.NODE;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedNode;
-    	pickTimeLineManager.pickNode(currentNp, pickedNode);
+    	pickTimeLineManager.addNode(currentNp, pickedNode);
 
 		for (GUINode gn : getCanvasVerticallyStackedGUINodes(pickedNode))
 		{
@@ -1164,13 +1149,11 @@ public class VisualizationState
     
     public void pickResource (Resource pickedResource)
     {
-    	auxTemporalVariable_doNoAddResetPickInUndo = true;
    		resetPickedState();
-    	auxTemporalVariable_doNoAddResetPickInUndo = false;
         this.pickedElementType = NetworkElementType.RESOURCE;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedResource;
-    	pickTimeLineManager.pickResource(currentNp, pickedResource);
+    	pickTimeLineManager.addResource(currentNp, pickedResource);
 
     	for (GUINode gn : getCanvasVerticallyStackedGUINodes(pickedResource.getHostNode()))
 		{
@@ -1181,13 +1164,11 @@ public class VisualizationState
 
     public void pickForwardingRule (Pair<Demand,Link> pickedFR)
     {
-    	auxTemporalVariable_doNoAddResetPickInUndo = true;
    		resetPickedState();
-    	auxTemporalVariable_doNoAddResetPickInUndo = false;
         this.pickedElementType = NetworkElementType.FORWARDING_RULE;
         this.pickedElementFR = pickedFR;
         this.pickedElementNotFR = null;
-    	pickTimeLineManager.pickForwardingRule(currentNp, pickedFR);
+    	pickTimeLineManager.addForwardingRule(currentNp, pickedFR);
 
     	final boolean isFRLayerVisibleInTheCanvas = isLayerVisibleInCanvas(pickedFR.getFirst().getLayer());
     	final Demand pickedDemand = pickedFR.getFirst();
@@ -1234,11 +1215,9 @@ public class VisualizationState
 		}
     }
 
-    
     public void pickElement (NetworkElement e)
     {
     	if (e instanceof Node) pickNode ((Node) e);
-    	else if (e instanceof Node) pickNode ((Node) e);
     	else if (e instanceof Link) pickLink ((Link) e);
     	else if (e instanceof Demand) pickDemand ((Demand) e);
     	else if (e instanceof Route) pickRoute ((Route) e);
@@ -1254,7 +1233,7 @@ public class VisualizationState
         this.pickedElementType = null;
         this.pickedElementNotFR = null;
         this.pickedElementFR = null;
-    	if (!auxTemporalVariable_doNoAddResetPickInUndo) pickTimeLineManager.updatePickUndoList_newPickOrPickReset(currentNp);
+    	pickTimeLineManager.resetTimeLine(currentNp);
 
         for (GUINode n : getCanvasAllGUINodes())
         {
