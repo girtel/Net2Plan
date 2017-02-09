@@ -60,15 +60,25 @@ class PickTimeLineManager
         if (this.timelineMaxSize <= 1) return; // nothing is stored since nothing will be retrieved
         if ((pickedForwardingRule == null) && (pickedNetworkElement == null)) return;
 
-        // If the new element if different from what is stored, remove all the elements that were stored
-//        if (!timeLine.isEmpty() && currentElementInTimelineCursor != timeLine.size() - 1)
-//        {
-//            final Pair<NetworkElement, Pair<Demand, Link>> nextTimelineElement = timeLine.get(currentElementInTimelineCursor + 1);
-//            if (nextTimelineElement.getFirst() != pickedNetworkElement || nextTimelineElement.getSecond() != pickedForwardingRule)
-//            {
-//                timeLine.subList(currentElementInTimelineCursor, timeLine.size()).clear();
-//            }
-//        }
+        if (!timeLine.isEmpty())
+        {
+            // Do not add the same element that is currently be clicked upon.
+            if (Pair.unmodifiableOf(this.pickedNetworkElement, pickedForwardingRule).equals(timeLine.get(currentElementInTimelineCursor)))
+            {
+                return;
+            }
+
+            // If the new element if different from what is stored, remove all the elements that were stored
+            if (currentElementInTimelineCursor != timeLine.size() - 1)
+            {
+                final int nextElementCursorIndex = currentElementInTimelineCursor + 1;
+                final Pair<NetworkElement, Pair<Demand, Link>> nextTimelineElement = timeLine.get(nextElementCursorIndex);
+                if (nextTimelineElement.getFirst() != pickedNetworkElement || nextTimelineElement.getSecond() != pickedForwardingRule)
+                {
+                    timeLine.subList(nextElementCursorIndex, timeLine.size()).clear();
+                }
+            }
+        }
 
         final List<Pair<NetworkElement, Pair<Demand, Link>>> newTimeLine = new ArrayList<>();
         for (int index = 0; index < timeLine.size(); index++)
@@ -86,15 +96,6 @@ class PickTimeLineManager
             newTimeLine.add(timeLine.get(index));
         }
         this.timeLine = new ArrayList<>(newTimeLine);
-
-        // Do not add the same element that is currently be clicked upon.
-        if (!timeLine.isEmpty())
-        {
-            if (Pair.unmodifiableOf(this.pickedNetworkElement, pickedForwardingRule).equals(timeLine.get(currentElementInTimelineCursor)))
-            {
-                return;
-            }
-        }
 
         /* Add the elements at the end of the list */
         timeLine.add(Pair.of(pickedNetworkElement, pickedForwardingRule));
