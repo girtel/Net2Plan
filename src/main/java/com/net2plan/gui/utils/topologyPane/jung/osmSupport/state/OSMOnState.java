@@ -3,7 +3,6 @@ package com.net2plan.gui.utils.topologyPane.jung.osmSupport.state;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMMapController;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -14,7 +13,6 @@ import org.jxmapviewer.viewer.GeoPosition;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -73,7 +71,7 @@ class OSMOnState implements OSMState
         final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(swingPoint);
         if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
         {
-            throw new OSMMapController.OSMMapException("The node is out of the map's bounds", "Problem while adding node");
+            throw new OSMException("The node is out of the map's bounds", "Problem while adding node");
         }
 
         final NetPlan netPlan = callback.getDesign();

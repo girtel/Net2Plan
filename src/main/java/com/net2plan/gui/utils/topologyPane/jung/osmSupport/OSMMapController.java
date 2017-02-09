@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.*;
 
-import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.topologyPane.jung.osmSupport.state.OSMException;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactory;
 
@@ -69,7 +69,7 @@ public class OSMMapController
                         "All nodes must have their coordinates between the ranges: \n" +
                         "x = [-180, 180]\n" +
                         "y = [-90, 90]\n";
-                throw new OSMMapException(message);
+                throw new OSMException(message);
             }
         }
 
@@ -299,7 +299,7 @@ public class OSMMapController
             restartMap();
         } else
         {
-            throw new OSMMapException("Map is currently deactivated");
+            throw new OSMException("Map is currently deactivated");
         }
     }
 
@@ -324,7 +324,7 @@ public class OSMMapController
             alignPanJUNGToOSMMap();
         } else
         {
-            throw new OSMMapException("Map is currently deactivated");
+            throw new OSMException("Map is currently deactivated");
         }
     }
 
@@ -341,7 +341,7 @@ public class OSMMapController
             alignZoomJUNGToOSMMap();
         } else
         {
-            throw new OSMMapException("Map is currently deactivated");
+            throw new OSMException("Map is currently deactivated");
         }
     }
 
@@ -358,26 +358,13 @@ public class OSMMapController
             alignZoomJUNGToOSMMap();
         } else
         {
-            throw new OSMMapException("Map is currently deactivated");
+            throw new OSMException("Map is currently deactivated");
         }
     }
 
     public JComponent getMapComponent()
     {
         return mapViewer;
-    }
-
-    public static class OSMMapException extends Net2PlanException
-    {
-        public OSMMapException(final String message)
-        {
-            ErrorHandling.showErrorDialog(message, "Could not display OSM");
-        }
-
-        public OSMMapException(final String message, final String title)
-        {
-            ErrorHandling.showErrorDialog(message, title);
-        }
     }
 
     public static class OSMMapUtils

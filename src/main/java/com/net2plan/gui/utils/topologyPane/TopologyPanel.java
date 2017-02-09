@@ -24,6 +24,7 @@ import javax.swing.border.LineBorder;
 
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMMapController;
+import com.net2plan.gui.utils.topologyPane.jung.osmSupport.state.OSMException;
 import org.apache.commons.collections15.BidiMap;
 
 import com.google.common.collect.Sets;
@@ -469,7 +470,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                 try
                 {
                     setOSMSupportTo(true);
-                } catch (OSMMapController.OSMMapException ex)
+                } catch (OSMException ex)
                 {
                     btn_osmMap.setSelected(false);
                 }
@@ -582,7 +583,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                 try
                 {
                     setOSMSupportTo(true);
-                } catch (OSMMapController.OSMMapException ex)
+                } catch (OSMException ex)
                 {
                     btn_osmMap.setSelected(false);
                 }
