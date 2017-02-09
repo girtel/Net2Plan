@@ -8,10 +8,8 @@ import java.util.Map;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
 /** Manages the undo/redo information, tracking the current netPlan and the visualization state

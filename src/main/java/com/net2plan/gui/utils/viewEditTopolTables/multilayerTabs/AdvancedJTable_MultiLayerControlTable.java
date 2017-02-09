@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.AbstractCellEditor;
 import javax.swing.JButton;
@@ -19,7 +18,7 @@ import com.net2plan.gui.utils.*;
 import org.apache.commons.collections15.BidiMap;
 
 import com.google.common.collect.Lists;
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;

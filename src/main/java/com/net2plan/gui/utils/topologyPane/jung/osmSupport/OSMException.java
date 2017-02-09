@@ -1,4 +1,4 @@
-package com.net2plan.gui.utils.topologyPane.jung.osmSupport.state;
+package com.net2plan.gui.utils.topologyPane.jung.osmSupport;
 
 import com.net2plan.internal.ErrorHandling;
 

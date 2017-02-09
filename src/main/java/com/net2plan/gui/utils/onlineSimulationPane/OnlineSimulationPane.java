@@ -61,7 +61,7 @@ import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.ReportBrowser;
 import com.net2plan.gui.utils.RunnableSelector;
 import com.net2plan.gui.utils.SwingUtils;
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;

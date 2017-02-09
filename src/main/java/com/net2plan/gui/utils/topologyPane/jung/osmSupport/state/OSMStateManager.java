@@ -2,7 +2,7 @@ package com.net2plan.gui.utils.topologyPane.jung.osmSupport.state;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
-import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMMapController;
+import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMController;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
@@ -22,14 +22,14 @@ public class OSMStateManager
     private final TopologyPanel topologyPanel;
     private final ITopologyCanvas canvas;
 
-    private final OSMMapController mapController;
+    private final OSMController mapController;
 
     public OSMStateManager(final IVisualizationCallback callback, final TopologyPanel topologyPanel, final ITopologyCanvas canvas)
     {
         this.callback = callback;
         this.topologyPanel = topologyPanel;
         this.canvas = canvas;
-        this.mapController = new OSMMapController();
+        this.mapController = new OSMController();
 
         runningState = new OSMOnState(callback, canvas, mapController);
         // Using JUNG canvas off state.

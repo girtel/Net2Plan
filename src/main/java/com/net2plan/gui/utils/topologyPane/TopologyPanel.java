@@ -23,8 +23,9 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 
 import com.net2plan.gui.utils.*;
-import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMMapController;
-import com.net2plan.gui.utils.topologyPane.jung.osmSupport.state.OSMException;
+import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMException;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationConstants;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import org.apache.commons.collections15.BidiMap;
 
 import com.google.common.collect.Sets;

@@ -28,8 +28,6 @@ import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.plugins.ITopologyCanvas;

@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
 import org.apache.commons.collections15.BidiMap;
@@ -47,7 +46,7 @@ import com.net2plan.gui.utils.onlineSimulationPane.OnlineSimulationPane;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;

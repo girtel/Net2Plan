@@ -1,7 +1,6 @@
 package com.net2plan.gui.utils.topologyPane;
 
 import java.awt.BorderLayout;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
@@ -10,6 +9,7 @@ import java.util.Map;
 
 import javax.swing.*;
 
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 

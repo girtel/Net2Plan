@@ -12,27 +12,24 @@ import java.util.stream.Collectors;
 
 import javax.swing.*;
 
-import com.net2plan.gui.utils.topologyPane.jung.osmSupport.state.OSMException;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactory;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
 /**
  * @author Jorge San Emeterio
  * @date 03/11/2016
  */
-public class OSMMapController
+public class OSMController
 {
-    private static OSMMapPanel mapViewer;
+    private static OSMPanel mapViewer;
 
     private TopologyPanel topologyPanel;
     private ITopologyCanvas canvas;
@@ -77,7 +74,7 @@ public class OSMMapController
         this.canvas = canvas;
         this.callback = callback;
 
-        mapViewer = new OSMMapPanel();
+        mapViewer = new OSMPanel();
 
         // Activating maps on the canvas
         loadMapOntoTopologyPanel();

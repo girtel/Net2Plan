@@ -19,7 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
