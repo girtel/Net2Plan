@@ -29,25 +29,6 @@ public class UndoRedoManager
 		this.maxSizeUndoList = maxSizeUndoList;
 	}
 
-    /** Update the navigation with the new picked element, but no change in netPlan
-     */
-    public void updateNavigationInformation_onlyVisualizationChange ()
-    {
-    	return;
-//    	if (this.maxSizeUndoList <= 1) return; // nothing is stored since nothing will be retrieved
-//        if (callback.inOnlineSimulationMode()) return;
-//        /* first remove everything after the cursor */
-//        if (pastInfoVsNewNpCursor != pastInfoVsNewNp.size() - 1)
-//        	this.pastInfoVsNewNp = this.pastInfoVsNewNp.subList(0 , pastInfoVsNewNpCursor+1);
-//        final VisualizationState vsCopy = callback.getVisualizationState().copy(null);
-//       	pastInfoVsNewNp.add(Pair.of(vsCopy , false));
-//		VisualizationState.checkNpToVsConsistency(vsCopy , callback.getDesign());
-//		while (pastInfoVsNewNp.size() > maxSizeUndoList)
-//			pastInfoVsNewNp.remove(0);
-//		pastInfoVsNewNpCursor = pastInfoVsNewNp.size()-1;
-//		System.out.println("Introduced only visualization change index " + (pastInfoVsNewNp.size()-1) + ". Callback currentNp: " + callback.getDesign().hashCode() + ") VS-np: " + vsCopy.getNetPlan().hashCode());
-    }
-
     public void updateNavigationInformation_newNetPlanChange ()
     {
         if (this.maxSizeUndoList <= 1) return; // nothing is stored since nothing will be retrieved

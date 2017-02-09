@@ -486,7 +486,6 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
         if (getVisibleElementsInTable().isEmpty()) return;
     	callback.getVisualizationState ().pickNode(callback.getDesign().getNodeFromId((long) itemId));
         callback.updateVisualizationAfterPick();
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
     }
 
     private JMenuItem getAddOption()

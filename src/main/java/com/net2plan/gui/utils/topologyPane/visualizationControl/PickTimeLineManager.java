@@ -31,14 +31,6 @@ class PickTimeLineManager
         this.pickedForwardingRule = null;
     }
 
-    void resetTimeLine(final NetPlan currentNp)
-    {
-        this.pickedNetworkElement = null;
-        this.pickedForwardingRule = null;
-
-        updateTimeline(currentNp);
-    }
-
     /**
      * Update timeline after new pick or reset
      *
@@ -54,7 +46,6 @@ class PickTimeLineManager
 
             this.timeLine.clear();
             this.currentElementInTimelineCursor = -1;
-            updateTimeline(netPlan); // add a no pick, this is never removed
         }
 
         if (this.timelineMaxSize <= 1) return; // nothing is stored since nothing will be retrieved
@@ -80,6 +71,7 @@ class PickTimeLineManager
             }
         }
 
+        // Cleaning duty
         final List<Pair<NetworkElement, Pair<Demand, Link>>> newTimeLine = new ArrayList<>();
         for (int index = 0; index < timeLine.size(); index++)
         {
@@ -112,6 +104,7 @@ class PickTimeLineManager
 
     Pair<NetworkElement, Pair<Demand, Link>> getPickNavigationBackElement()
     {
+        if (timeLine.isEmpty()) return null;
         if (this.timelineMaxSize <= 1) return null; // Empty timeline, nothing can be returned
         if (currentElementInTimelineCursor == 0) return null; // End of the timeline, there is no more past.
         this.currentElementInTimelineCursor--; // Retrieving prior element
@@ -120,78 +113,23 @@ class PickTimeLineManager
 
     Pair<NetworkElement, Pair<Demand, Link>> getPickNavigationForwardElement()
     {
+        if (timeLine.isEmpty()) return null;
         if (this.timelineMaxSize <= 1) return null; // nothing is stored since nothing will be retrieved
         if (currentElementInTimelineCursor >= timeLine.size() - 1) return null;
         this.currentElementInTimelineCursor++;
         return timeLine.get(this.currentElementInTimelineCursor);
     }
 
-    void addLayer(final NetPlan currentNp, final NetworkLayer pickedLayer)
+    void addElement(final NetPlan currentNp, final NetworkElement element)
     {
         this.pickedForwardingRule = null;
-        this.pickedNetworkElement = pickedLayer;
+        this.pickedNetworkElement = element;
         updateTimeline(currentNp);
     }
 
-    void addDemand(final NetPlan currentNp, final Demand pickedDemand)
+    void addElement(final NetPlan currentNp, final Pair<Demand, Link> forwardingRule)
     {
-        this.pickedNetworkElement = pickedDemand;
-        this.pickedForwardingRule = null;
-        updateTimeline(currentNp);
-    }
-
-    void addSRG(final NetPlan currentNp, final SharedRiskGroup pickedSRG)
-    {
-        this.pickedNetworkElement = pickedSRG;
-        this.pickedForwardingRule = null;
-        updateTimeline(currentNp);
-    }
-
-    void addMulticastDemand(final NetPlan currentNp, final MulticastDemand pickedDemand)
-    {
-        this.pickedNetworkElement = pickedDemand;
-        this.pickedForwardingRule = null;
-        updateTimeline(currentNp);
-    }
-
-    void addRoute(final NetPlan currentNp, final Route pickedRoute)
-    {
-        this.pickedNetworkElement = pickedRoute;
-        this.pickedForwardingRule = null;
-        updateTimeline(currentNp);
-    }
-
-    void addMulticastTree(final NetPlan currentNp, final MulticastTree pickedTree)
-    {
-        this.pickedNetworkElement = pickedTree;
-        this.pickedForwardingRule = null;
-        updateTimeline(currentNp);
-    }
-
-    void addLink(final NetPlan currentNp, final Link pickedLink)
-    {
-        this.pickedNetworkElement = pickedLink;
-        this.pickedForwardingRule = null;
-        updateTimeline(currentNp);
-    }
-
-    void addNode(final NetPlan currentNp, final Node pickedNode)
-    {
-        this.pickedNetworkElement = pickedNode;
-        this.pickedForwardingRule = null;
-        updateTimeline(currentNp);
-    }
-
-    void addResource(final NetPlan currentNp, final Resource pickedResource)
-    {
-        this.pickedNetworkElement = pickedResource;
-        this.pickedForwardingRule = null;
-        updateTimeline(currentNp);
-    }
-
-    void addForwardingRule(final NetPlan currentNp, final Pair<Demand, Link> pickedFR)
-    {
-        this.pickedForwardingRule = pickedFR;
+        this.pickedForwardingRule = forwardingRule;
         this.pickedNetworkElement = null;
         updateTimeline(currentNp);
     }

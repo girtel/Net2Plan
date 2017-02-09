@@ -598,7 +598,6 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
         final Link link = callback.getDesign().getLinkFromId((long) itemId);
         callback.getVisualizationState ().pickLink(link);
         callback.updateVisualizationAfterPick();
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
     }
 
     private JMenuItem getAddOption() {

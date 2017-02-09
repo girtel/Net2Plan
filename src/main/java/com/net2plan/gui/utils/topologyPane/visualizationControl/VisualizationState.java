@@ -110,7 +110,6 @@ public class VisualizationState
         this.pickedElementNotFR = null;
         this.pickedElementFR = null;
 
-    	this.pickTimeLineManager.resetTimeLine(currentNp); // add a no pick, this is never removed
     	this.setCanvasLayerVisibilityAndOrder(currentNp ,mapLayer2VisualizationOrder , layerVisibilityMap);
     }
 
@@ -811,7 +810,7 @@ public class VisualizationState
         this.pickedElementType = NetworkElementType.LAYER;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedLayer;
-    	pickTimeLineManager.addLayer(currentNp, pickedLayer);
+    	pickTimeLineManager.addElement(currentNp, pickedLayer);
    	}
     
     public void pickDemand (Demand pickedDemand)
@@ -820,7 +819,7 @@ public class VisualizationState
         this.pickedElementType = NetworkElementType.DEMAND;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedDemand;
-        pickTimeLineManager.addDemand(currentNp, pickedDemand);
+        pickTimeLineManager.addElement(currentNp, pickedDemand);
 
 		final boolean isDemandLayerVisibleInTheCanvas = isLayerVisibleInCanvas(pickedDemand.getLayer());
     	final GUINode gnOrigin = getCanvasAssociatedGUINode(pickedDemand.getIngressNode() , pickedDemand.getLayer());
@@ -877,7 +876,7 @@ public class VisualizationState
         this.pickedElementType = NetworkElementType.SRG;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedSRG;
-    	pickTimeLineManager.addSRG(currentNp, pickedSRG);
+    	pickTimeLineManager.addElement(currentNp, pickedSRG);
 
     	final Set<Link> allAffectedLinks = pickedSRG.getAffectedLinksAllLayers();
     	Map<Link,Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>>> thisLayerPropInfo = new HashMap<> (); 
@@ -947,7 +946,7 @@ public class VisualizationState
         this.pickedElementType = NetworkElementType.MULTICAST_DEMAND;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedDemand;
-    	pickTimeLineManager.addMulticastDemand(currentNp, pickedDemand);
+    	pickTimeLineManager.addElement(currentNp, pickedDemand);
 
     	final boolean isDemandLayerVisibleInTheCanvas = isLayerVisibleInCanvas(pickedDemand.getLayer());
 		final GUINode gnOrigin = getCanvasAssociatedGUINode(pickedDemand.getIngressNode() , pickedDemand.getLayer());
@@ -997,7 +996,7 @@ public class VisualizationState
         this.pickedElementType = NetworkElementType.ROUTE;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedRoute;
-    	pickTimeLineManager.addRoute(currentNp, pickedRoute);
+    	pickTimeLineManager.addElement(currentNp, pickedRoute);
 
     	final boolean isRouteLayerVisibleInTheCanvas = isLayerVisibleInCanvas(pickedRoute.getLayer());
 		if (showInCanvasThisLayerPropagation && isRouteLayerVisibleInTheCanvas)
@@ -1036,7 +1035,7 @@ public class VisualizationState
         this.pickedElementType = NetworkElementType.MULTICAST_TREE;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedTree;
-    	pickTimeLineManager.addMulticastTree(currentNp, pickedTree);
+    	pickTimeLineManager.addElement(currentNp, pickedTree);
 
 		final boolean isTreeLayerVisibleInTheCanvas = isLayerVisibleInCanvas(pickedTree.getLayer());
 		final GUINode gnOrigin = getCanvasAssociatedGUINode(pickedTree.getIngressNode() , pickedTree.getLayer());
@@ -1082,7 +1081,7 @@ public class VisualizationState
         this.pickedElementType = NetworkElementType.LINK;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedLink;
-    	pickTimeLineManager.addLink(currentNp, pickedLink);
+    	pickTimeLineManager.addElement(currentNp, pickedLink);
 
 		final boolean isLinkLayerVisibleInTheCanvas = isLayerVisibleInCanvas(pickedLink.getLayer());
 		Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> thisLayerTraversalInfo = null;
@@ -1132,7 +1131,7 @@ public class VisualizationState
         this.pickedElementType = NetworkElementType.NODE;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedNode;
-    	pickTimeLineManager.addNode(currentNp, pickedNode);
+    	pickTimeLineManager.addElement(currentNp, pickedNode);
 
 		for (GUINode gn : getCanvasVerticallyStackedGUINodes(pickedNode))
 		{
@@ -1153,7 +1152,7 @@ public class VisualizationState
         this.pickedElementType = NetworkElementType.RESOURCE;
         this.pickedElementFR = null;
         this.pickedElementNotFR = pickedResource;
-    	pickTimeLineManager.addResource(currentNp, pickedResource);
+    	pickTimeLineManager.addElement(currentNp, pickedResource);
 
     	for (GUINode gn : getCanvasVerticallyStackedGUINodes(pickedResource.getHostNode()))
 		{
@@ -1168,7 +1167,7 @@ public class VisualizationState
         this.pickedElementType = NetworkElementType.FORWARDING_RULE;
         this.pickedElementFR = pickedFR;
         this.pickedElementNotFR = null;
-    	pickTimeLineManager.addForwardingRule(currentNp, pickedFR);
+    	pickTimeLineManager.addElement(currentNp, pickedFR);
 
     	final boolean isFRLayerVisibleInTheCanvas = isLayerVisibleInCanvas(pickedFR.getFirst().getLayer());
     	final Demand pickedDemand = pickedFR.getFirst();
@@ -1233,7 +1232,6 @@ public class VisualizationState
         this.pickedElementType = null;
         this.pickedElementNotFR = null;
         this.pickedElementFR = null;
-    	pickTimeLineManager.resetTimeLine(currentNp);
 
         for (GUINode n : getCanvasAllGUINodes())
         {

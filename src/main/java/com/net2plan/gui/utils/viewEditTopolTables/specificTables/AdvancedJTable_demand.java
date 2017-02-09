@@ -472,7 +472,6 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
     {
     	callback.getVisualizationState ().pickDemand(callback.getDesign().getDemandFromId((long)itemId));
         callback.updateVisualizationAfterPick();
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
     }
 
     private List<JComponent> getExtraAddOptions() {

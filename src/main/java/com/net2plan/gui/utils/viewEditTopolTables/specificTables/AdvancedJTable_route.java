@@ -479,7 +479,6 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
         if (getVisibleElementsInTable().isEmpty()) return;
     	callback.getVisualizationState ().pickRoute(callback.getDesign().getRouteFromId((long) itemId));
         callback.updateVisualizationAfterPick();
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
     }
 
     private JMenuItem getAddOption() {

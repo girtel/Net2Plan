@@ -88,7 +88,6 @@ public class FocusPanelHyperLinkListener implements HyperlinkListener
         	else throw new RuntimeException ();
         	
         	callback.updateVisualizationAfterPick();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
 
         	
             System.out.println("Hyperlink clicked");

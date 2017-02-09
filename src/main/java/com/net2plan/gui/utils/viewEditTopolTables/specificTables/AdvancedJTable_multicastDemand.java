@@ -437,7 +437,6 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
         if (getVisibleElementsInTable().isEmpty()) return;
         callback.getVisualizationState ().pickMulticastDemand(callback.getDesign().getMulticastDemandFromId((long) itemId));
         callback.updateVisualizationAfterPick();
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
     }
 
     private JMenuItem getAddOption() {

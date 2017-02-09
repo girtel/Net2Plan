@@ -105,7 +105,6 @@ public class MultiLayerControlPanel extends JPanel
                 	vs.setCanvasLayerVisibilityAndOrder(netPlan , null , visibilityInfo);
                 	callback.getVisualizationState().resetPickedState();
                     callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
                 }
             } else if (src == btn_hideAllLayers)
             {
@@ -116,7 +115,6 @@ public class MultiLayerControlPanel extends JPanel
                 {
                 	vs.setCanvasLayerVisibilityAndOrder(netPlan , null , visibilityInfo);
                     callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
                 }
             } else if (src == btn_sortLayerByIndex)
             {
@@ -127,7 +125,6 @@ public class MultiLayerControlPanel extends JPanel
                 {
                     vs.setCanvasLayerVisibilityAndOrder(netPlan, layerIndexOrderMap , null);
                     callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
                 }
             } else if (src == btn_sortLayersByTopology)
             {
@@ -138,20 +135,17 @@ public class MultiLayerControlPanel extends JPanel
                 {
                     vs.setCanvasLayerVisibilityAndOrder(netPlan, layerIndexOrderMap , null);
                     callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
                 }
             } else if (src == btn_showAllLayerLinks)
             {
                 for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
                     vs.setLayerLinksVisibilityInCanvas(networkLayer, true);
                 callback.updateVisualizationJustCanvasLinkNodeVisibilityOrColor ();
-                callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
             } else if (src == btn_hideAllLayerLinks)
             {
                 for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
                     vs.setLayerLinksVisibilityInCanvas(networkLayer, false);
                 callback.updateVisualizationJustCanvasLinkNodeVisibilityOrColor ();
-                callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
             }
 
             refreshTable();

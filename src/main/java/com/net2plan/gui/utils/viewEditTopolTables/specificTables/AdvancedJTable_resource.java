@@ -767,7 +767,6 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
         if (getVisibleElementsInTable().isEmpty()) return;
     	callback.getVisualizationState ().pickResource(callback.getDesign().getResourceFromId((long) itemId));
         callback.updateVisualizationAfterPick();
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
     }
 
     private class ClassAwareTableModelImpl extends ClassAwareTableModel

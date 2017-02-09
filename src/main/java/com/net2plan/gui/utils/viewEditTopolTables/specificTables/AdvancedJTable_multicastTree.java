@@ -446,7 +446,6 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
         if (getVisibleElementsInTable().isEmpty()) return;
         callback.getVisualizationState ().pickMulticastTree(callback.getDesign().getMulticastTreeFromId((long) itemId));
         callback.updateVisualizationAfterPick();
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
     }
 
     private JMenuItem getAddOption() {

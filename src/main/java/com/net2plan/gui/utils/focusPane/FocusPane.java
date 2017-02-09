@@ -481,7 +481,6 @@ public class FocusPane extends JPanel
 			final Demand e = np.getDemandFromId(id);
 			vs.pickDemand(e);
 			callback.updateVisualizationAfterPick();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
 
 		} else if (internalLink.startsWith("route"))
 		{
@@ -489,35 +488,30 @@ public class FocusPane extends JPanel
 			final Route e = np.getRouteFromId(id);
 			vs.pickRoute(e);
 			callback.updateVisualizationAfterPick();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
 		} else if (internalLink.startsWith("node"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "node".length()));
 			final Node e = np.getNodeFromId(id);
 			vs.pickNode(e);
 			callback.updateVisualizationAfterPick();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
 		} else if (internalLink.startsWith("multicastDemand"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "multicastDemand".length()));
 			final MulticastDemand e = np.getMulticastDemandFromId(id);
 			vs.pickMulticastDemand(e);
 			callback.updateVisualizationAfterPick();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
 		} else if (internalLink.startsWith("multicastTree"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "multicastTree".length()));
 			final MulticastDemand e = np.getMulticastDemandFromId(id);
 			vs.pickMulticastDemand(e);
 			callback.updateVisualizationAfterPick();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
 		} else if (internalLink.startsWith("link"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "link".length()));
 			final Link e = np.getLinkFromId(id);
 			vs.pickLink(e);
 			callback.updateVisualizationAfterPick();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
 		} else if (internalLink.startsWith("forwardingRule"))
 		{
 			final long demandId = Long.parseLong(internalLink.substring((int) "forwardingRule".length() , internalLink.indexOf(",")));
@@ -525,21 +519,18 @@ public class FocusPane extends JPanel
 			final Pair<Demand,Link> e = Pair.of(np.getDemandFromId(demandId) , np.getLinkFromId(linkId));
 			vs.pickForwardingRule(e);
 			callback.updateVisualizationAfterPick();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
 		} else if (internalLink.startsWith("resource"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "resource".length()));
 			final Resource e = np.getResourceFromId(id);
 			vs.pickResource(e);
 			callback.updateVisualizationAfterPick();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
 		} else if (internalLink.startsWith("srg"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "srg".length()));
 			final SharedRiskGroup e = np.getSRGFromId(id);
 			vs.pickSRG(e);
 			callback.updateVisualizationAfterPick();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
 		} else if (internalLink.startsWith("layer"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "layer".length()));

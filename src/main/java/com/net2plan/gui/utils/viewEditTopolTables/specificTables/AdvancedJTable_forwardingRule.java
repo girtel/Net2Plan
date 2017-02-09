@@ -281,7 +281,6 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
     	Pair<Integer, Integer> pair = (Pair<Integer, Integer>) itemId;
     	callback.getVisualizationState ().pickForwardingRule(Pair.of(np.getDemand(pair.getFirst()) , np.getLink(pair.getSecond())));
         callback.updateVisualizationAfterPick();
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
     }
 
     public void doPopup(final MouseEvent e, final int row, final Object itemId) {

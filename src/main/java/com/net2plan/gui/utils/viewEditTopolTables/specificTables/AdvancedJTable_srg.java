@@ -427,7 +427,6 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         final SharedRiskGroup srg = callback.getDesign().getSRGFromId((long) itemId);
         callback.getVisualizationState ().pickSRG(srg);
         callback.updateVisualizationAfterPick();
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
     }
 
     private JMenuItem getAddOption() 
