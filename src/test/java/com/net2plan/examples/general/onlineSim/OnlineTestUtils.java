@@ -20,6 +20,9 @@ public class OnlineTestUtils implements IGUISimulationListener
 {
 	private SimKernel simKernel;
 	private Thread simThread;
+	private boolean simulationEndedWithInternalEndSimulation;
+	private Thread mainThread;
+
 	
 	public void runSimulation (NetPlan np , IExternal eventGenerator , IExternal eventProcessor , 
 			Map<String,String> simulationParameters , Map<String,String> net2planParameters , 
@@ -37,14 +40,30 @@ public class OnlineTestUtils implements IGUISimulationListener
         simKernel.configureSimulation(simulationParameters, net2planParameters, eventGenerator, eventGeneratorParameters, eventProcessor, eventProcessorParameters);
         simKernel.initialize();
         simKernel.getSimCore().setSimulationState(SimCore.SimState.RUNNING);
-
+        this.simulationEndedWithInternalEndSimulation = false;
+        
         simThread = new Thread(simKernel.getSimCore());
         simThread.start();
-        try { Thread.currentThread().sleep((long) (simTimeSeconds * 1000)); } catch (Exception e) { e.printStackTrace(); fail (); }
         
-        simKernel.getSimCore().setSimulationState(SimState.STOPPED);
+        this.mainThread = Thread.currentThread();
         
-        assertEquals(simThread , null);
+        try
+        {
+	        try 
+	        { 
+	        	mainThread.sleep((long) ((simTimeSeconds < 0)? 5000 : simTimeSeconds * 1000)); 
+	        	simKernel.getSimCore().setSimulationState(SimState.STOPPED);
+	        	np.assignFrom(simKernel.getCurrentNetPlan());
+	            assertEquals(simThread , null);
+	        	System.out.println("Simulation ended by tester");
+	        } catch (InterruptedException ee) 
+	        {
+	        	if (!simulationEndedWithInternalEndSimulation) fail ();
+	        	System.out.println("Simulation ended internally");
+	        	np.assignFrom(simKernel.getCurrentNetPlan());
+	        }
+        } catch (Exception e) { e.printStackTrace(); fail (); }
+        
 	}
 
 	@Override
@@ -66,6 +85,11 @@ public class OnlineTestUtils implements IGUISimulationListener
         if (reason == null) return;
         if (reason instanceof EndSimulationException) 
         {
+//        	reason.printStackTrace();
+        	/* Simulation ended internally (calling endSimulation) */
+        	this.simulationEndedWithInternalEndSimulation = true;
+        	mainThread.interrupt();
+        	
         } else if (reason instanceof Net2PlanException || reason instanceof JOMException) 
         {
         	reason.printStackTrace();

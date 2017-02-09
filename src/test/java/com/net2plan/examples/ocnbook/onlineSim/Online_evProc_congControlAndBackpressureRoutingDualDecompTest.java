@@ -24,7 +24,7 @@ import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.utils.InputParameter;
 
-public class Online_evProc_adaptiveRoutingDualTest
+public class Online_evProc_congControlAndBackpressureRoutingDualDecompTest
 {
 	private NetPlan np;
 	private File temporalDirectoryTests;
@@ -55,7 +55,7 @@ public class Online_evProc_adaptiveRoutingDualTest
 	public void test()
 	{
 		final IEventGenerator generator = new Online_evGen_doNothing();
-		final IEventProcessor processor = new Online_evProc_adaptiveRoutingDual();
+		final IEventProcessor processor = new Online_evProc_congControlAndBackpressureRoutingDualDecomp();
 
 		final Map<String,String> simulationParameters = new HashMap<> ();
 		simulationParameters.put("disableStatistics" , "false");
@@ -97,8 +97,8 @@ public class Online_evProc_adaptiveRoutingDualTest
 	{
 		assertTrue (npOutput.getVectorDemandOfferedTraffic().zSum() > 1);
 		assertTrue (npOutput.getVectorLinkCapacity().zSum() > 1);
-		assertEquals (npOutput.getVectorDemandBlockedTraffic().zSum() , 0 , 0.01);
-		assertEquals (npOutput.getVectorLinkOversubscribedTraffic().zSum() , 0 , 0.1);
+		assertEquals (npOutput.getVectorDemandBlockedTraffic().zSum() , 0 , 2.5);
+		assertEquals (npOutput.getVectorLinkOversubscribedTraffic().zSum() , 0 , 3);
 		assertTrue (npOutput.getVectorDemandOfferedTraffic().zSum() > 1);
 	}
 }

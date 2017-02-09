@@ -24,7 +24,7 @@ import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.utils.InputParameter;
 
-public class Online_evProc_adaptiveRoutingDualTest
+public class Online_evProc_adaptiveRoutingPrimalTest
 {
 	private NetPlan np;
 	private File temporalDirectoryTests;
@@ -55,7 +55,7 @@ public class Online_evProc_adaptiveRoutingDualTest
 	public void test()
 	{
 		final IEventGenerator generator = new Online_evGen_doNothing();
-		final IEventProcessor processor = new Online_evProc_adaptiveRoutingDual();
+		final IEventProcessor processor = new Online_evProc_adaptiveRoutingPrimal();
 
 		final Map<String,String> simulationParameters = new HashMap<> ();
 		simulationParameters.put("disableStatistics" , "false");
