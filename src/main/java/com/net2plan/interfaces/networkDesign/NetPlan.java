@@ -251,7 +251,7 @@ public class NetPlan extends NetworkElement
                         int index = xmlStreamReader.getAttributeIndex(null, "version");
                         if (index == -1)
                         {
-                            System.out.println("Version 1");
+//                            System.out.println("Version 1");
                             netPlanFormat = new ReaderNetPlanN2PVersion_1();
                         } else
                         {
@@ -259,22 +259,22 @@ public class NetPlan extends NetworkElement
                             switch (version)
                             {
                                 case 2:
-                                    System.out.println("Version 2");
+//                                    System.out.println("Version 2");
                                     netPlanFormat = new ReaderNetPlanN2PVersion_2();
                                     break;
 
                                 case 3:
-                                    System.out.println("Version 3");
+//                                    System.out.println("Version 3");
                                     netPlanFormat = new ReaderNetPlanN2PVersion_3();
                                     break;
 
                                 case 4:
-                                    System.out.println("Version 4");
+//                                    System.out.println("Version 4");
                                     netPlanFormat = new ReaderNetPlanN2PVersion_4();
                                     break;
 
                                 case 5:
-                                    System.out.println("Version 5");
+//                                    System.out.println("Version 5");
                                     netPlanFormat = new ReaderNetPlanN2PVersion_5();
                                     break;
 
@@ -1034,41 +1034,21 @@ public class NetPlan extends NetworkElement
                 for (int secondPathIndex = firstPathIndex + 1; secondPathIndex < P_d; secondPathIndex++)
                 {
                     //List<Link> secondPath = paths.get(secondPathIndex);
-                    final List<Link> secondPathSeqLinks = paths.get(secondPathIndex).stream().filter(e -> e instanceof Link).map(e -> (Link) e).collect(Collectors.toList());
+                    final List<Link> secondPathSeqLinks = paths.get(secondPathIndex); //.stream().filter(e -> e instanceof Link).map(e -> (Link) e).collect(Collectors.toList());
                     boolean disjoint = true;
-                    boolean firstLink = true;
                     if (linkDisjoint)
                     {
-                        for (Link e : secondPathSeqLinks)
-                            if (firstPathLinks.contains(e))
-                            {
-                                disjoint = false;
-                                break;
-                            }
+                    	disjoint = Sets.intersection(firstPathLinks , new HashSet<> (secondPathSeqLinks)).isEmpty();
                     } else if (linkAndNodeDisjoint)
                     {
-                        for (Link e : secondPathSeqLinks)
-                        {
-                            if (firstPathLinks.contains(e))
-                            {
-                                disjoint = false;
-                                break;
-                            }
-                            if (firstLink) firstLink = false;
-                            else
-                            {
-                                if (firstPathNodesButLastAndFirst.contains(e.originNode)) disjoint = false;
-                                break;
-                            }
-                        }
+                        Set<Node> secondPathNodes = new HashSet<Node> (GraphUtils.convertSequenceOfLinksToSequenceOfNodes(secondPathSeqLinks));
+                        secondPathNodes.remove(nodePair.getFirst());
+                        secondPathNodes.remove(nodePair.getSecond());
+                    	disjoint = Sets.intersection(firstPathLinks , new HashSet<> (secondPathSeqLinks)).isEmpty() && 
+                    			Sets.intersection(firstPathNodesButLastAndFirst , secondPathNodes).isEmpty();
                     } else if (srgDisjoint)
                     {
-                        for (SharedRiskGroup srg : SRGUtils.getAffectingSRGs(secondPathSeqLinks))
-                            if (firstPathSRGs.contains(srg))
-                            {
-                                disjoint = false;
-                                break;
-                            }
+                    	disjoint = Sets.intersection(firstPathSRGs , SRGUtils.getAffectingSRGs(secondPathSeqLinks)).isEmpty();
                     }
                     if (disjoint)
                     {

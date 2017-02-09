@@ -157,7 +157,7 @@ public class Online_evProc_wdm extends IEventProcessor
 		this.cplWdm = initialNetPlan.computeUnicastCandidatePathList(initialNetPlan.getVectorLinkLengthInKm(wdmLayer) , 
 				wdmK.getInt(), tpInfo.getMaxOpticalReachKm(), wdmMaxLightpathNumHops.getInt(), -1, -1,-1, -1, null, wdmLayer);		
 		this.protectionTypeCode = wdmProtectionTypeToNewRoutes.getString ().equals("1+1-srg-disjoint") ? 0 : wdmProtectionTypeToNewRoutes.getString ().equals("1+1-node-disjoint")? 1 : 2;
-		this.cplWdm11 = newRoutesHave11Protection? NetPlan.computeUnicastCandidate11PathList(cplWdm , protectionTypeCode): null;		
+		this.cplWdm11 = newRoutesHave11Protection? NetPlan.computeUnicastCandidate11PathList(cplWdm , protectionTypeCode): null;
 		
 		this.wavelengthFiberOccupancy = WDMUtils.getNetworkSlotAndRegeneratorOcupancy(initialNetPlan, true , wdmLayer).getFirst();
 		if (DEBUG) checkClashing (initialNetPlan); 

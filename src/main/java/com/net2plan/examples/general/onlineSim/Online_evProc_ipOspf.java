@@ -117,7 +117,6 @@ public class Online_evProc_ipOspf extends IEventProcessor
 				d.setOfferedTraffic(d.getOfferedTraffic() + ev.offeredTraffic);
 			else
 				d.setOfferedTraffic(ev.offeredTraffic);
-			System.out.println (" new demand offered: " + d.getOfferedTraffic());
 		} else if (event.getEventObject () instanceof SimEvent.LinkAdd)
 		{
 			SimEvent.LinkAdd ev = (SimEvent.LinkAdd) event.getEventObject ();

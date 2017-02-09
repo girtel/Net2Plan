@@ -69,6 +69,7 @@ public class CreateHTMLKeywords
 		keywordDescriptionMap.put ("Transmission power optimization" , Pair.of ("An example where the links are wireless links, and its transmission power is optimized." , "transmissionPower"));
 		keywordDescriptionMap.put ("Wireless" , Pair.of ("An example focused on the design of a wireless network" , "wireless"));
 		keywordDescriptionMap.put ("WDM" , Pair.of ("An example where Wavelength Division Multiplexing (WDM) technology is used" , "wdm"));
+		keywordDescriptionMap.put ("NFV" , Pair.of ("An example in the context of Network Function Virtualizatin (NFV)" , "nfv"));
 	}
 	static
 	{
@@ -156,9 +157,6 @@ public class CreateHTMLKeywords
 				algorithmToKeywordsMap.get (className).add (keywordName);
 			}
 		}
-		System.out.println ("keywordsToAlgorithmsMap: " + keywordsToAlgorithmsMap);
-		System.out.println ("algorithmToKeywordsMap: " + algorithmToKeywordsMap);
-		System.out.println ("keywords: " + keywordsToAlgorithmsMap.keySet());
 		
 		String htmlFile = createHtml(keywordsToAlgorithmsMap , algorithmToKeywordsMap , algorithmToFirstSentence , outputFolder);
 		try 

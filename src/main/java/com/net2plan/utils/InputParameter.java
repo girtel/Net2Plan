@@ -283,7 +283,7 @@ public class InputParameter
 		Class<?> c = o.getClass ();
 //		System.out.println ("Init c.getName (): " + c.getName ());
 		while (!c.getName().equals(className)) 
-		{ c = c.getSuperclass(); System.out.println ("c.getName (): " + c.getName ()); if (c == new Object ().getClass ()) throw new RuntimeException ("Bad"); }
+		{ c = c.getSuperclass(); /*System.out.println ("c.getName (): " + c.getName ()); */ if (c == new Object ().getClass ()) throw new RuntimeException ("Bad"); }
 		
 //		System.out.println ("End c.getName (): " + c.getName ());
 		for (Field f : c.getDeclaredFields())
@@ -324,7 +324,11 @@ public class InputParameter
 	{
 		Class<?> c = o.getClass ();
 //		System.out.println ("Init c.getName (): " + c.getName ());
-		while (!c.getName().equals(className)) { c = c.getSuperclass(); System.out.println ("c.getName (): " + c.getName ()); if (c == new Object ().getClass ()) throw new RuntimeException ("Bad"); }
+		while (!c.getName().equals(className)) 
+		{ 
+			c = c.getSuperclass(); /* System.out.println ("c.getName (): " + c.getName ()); */ 
+			if (c == new Object ().getClass ()) throw new RuntimeException ("Bad"); 
+		}
 
 		List<Triple<String, String, String>> algorithmParameters = new LinkedList<Triple<String, String, String>>();
 		/* Return the information of the input parameters defined with InputParameter classes. 

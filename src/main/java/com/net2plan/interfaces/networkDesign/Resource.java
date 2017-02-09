@@ -26,6 +26,7 @@
 package com.net2plan.interfaces.networkDesign;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -429,9 +430,9 @@ public class Resource extends NetworkElement
 	{
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
-		for (Route r : cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet()) r.remove();
-		for (Resource upperResource : capacityUpperResourcesOccupyInMe.keySet()) upperResource.remove();
-		for (Resource baseResource : capacityIOccupyInBaseResource.keySet()) baseResource.removeUpperResourceOccupation(this);
+		for (Route r : new ArrayList<> (cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet())) r.remove();
+		for (Resource upperResource : new ArrayList<> (capacityUpperResourcesOccupyInMe.keySet())) upperResource.remove();
+		for (Resource baseResource : new ArrayList<> (capacityIOccupyInBaseResource.keySet())) baseResource.removeUpperResourceOccupation(this);
 		netPlan.cache_id2ResourceMap.remove (id);
 		Set<Resource> resourcesThisType = netPlan.cache_type2Resources.get(type);
 		if (!resourcesThisType.contains(this)) throw new RuntimeException ("Bad");

@@ -293,7 +293,6 @@ public class Online_evGen_generalGenerator extends IEventGenerator
 				currentTheoreticalOfferedTraffic_d.set (d , slowChangingTrafficPart + newFastTrafficVariation);
 				if (!isCac) // inform the processor with a demand modified only if it is NOT cac. In CAC the sent events are the routes only, and the algorithms update the offered traffic according to it
 				{
-					System.out.println ("GeneralGenerator (FAST FLUCT): Sending the event... demand: " + demand + ", Offered (ABSOLUTE) " + (slowChangingTrafficPart + newFastTrafficVariation) + " = slow (" +slowChangingTrafficPart + ") + fast ("+ newFastTrafficVariation + ")");
 					SimEvent.DemandModify modifyEvent = new SimEvent.DemandModify(demand , Math.max (0 , slowChangingTrafficPart + newFastTrafficVariation) , false);
 					scheduleEvent(new SimEvent (simTime, SimEvent.DestinationModule.EVENT_PROCESSOR , -1 , modifyEvent));
 				}
@@ -329,7 +328,6 @@ public class Online_evGen_generalGenerator extends IEventGenerator
 				final double newSlowFluctuationTraffic = initialOfferedTraffic_d.get(d) * activityFactorNodePair;
 				final double currentFastFluctuationTraffic = currentHd - currentSlowHd;
 				this.currentTheoreticalOfferedTraffic_d.set (d , newSlowFluctuationTraffic + currentFastFluctuationTraffic);
-				System.out.println ("GeneralGenerator (SLOW FLUCT): Sending the event... demand: " + demand + ", Offered (ABSOLUTE) " + Math.max (0 , newSlowFluctuationTraffic + currentFastFluctuationTraffic) + " = slow (" + newSlowFluctuationTraffic + ") + fast ("+ currentFastFluctuationTraffic+ "), old slow: " + this.slowChangingOfferedTraffic_d.get(d));
 				this.slowChangingOfferedTraffic_d.set (d , newSlowFluctuationTraffic);
 				if (!isCac) // inform the processor with a demand modified only if it is NOT cac. In CAC the sent events are the routes only, and the algorithms update the offered traffic according to it
 				{

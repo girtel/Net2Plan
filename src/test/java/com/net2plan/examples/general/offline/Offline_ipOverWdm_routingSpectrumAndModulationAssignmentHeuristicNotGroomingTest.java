@@ -45,6 +45,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	@After
 	public void tearDown() throws Exception
 	{
+		np.checkCachesConsistency();
 	}
 
 	@Test

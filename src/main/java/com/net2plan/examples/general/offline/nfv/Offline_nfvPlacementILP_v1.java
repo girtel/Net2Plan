@@ -29,11 +29,35 @@ import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
+/**
+ * Algorithm based on an ILP solving several variants of the service chain allocation problem in networks with nodes 
+ * equipped with IT resources (CPU, RAM, HD), and the possibility to instantiate user-defined virtualized network functions (VNFs).
+ * 
+ * <p>The demands in the input design are service chain requests. The design produces one or more routes (just one 
+ * if non-bifurcated routing option is used) from the demand input to the output nodes, traversing the resources of 
+ * the required types (e.g. firewall, NAT, ...). Resource types to traverse are user defined. Each resource type is associated 
+ * a cost, a capacity, and an amount of IT resources it consumes when instantiated (CPU, RAM, HD). The algorithms produces 
+ * a design where all the service chain requests are satisfied, traversing the appropriate user-defined resources so that no 
+ * resource is oversubscribed, and IT resources (CPU, HD, RAM) in the nodes are also not oversubscribed.</p>
+ * 
+ * <p>The algorithm solves an ILP based on a flow-path formulation, where for each demand, a maximum of {@code k} (user-defined 
+ * parameter) minimum cost service chains are enumerated, using a variant of the k-shortest path problem. 
+ * Each candidate service chain for a demand traverses the appropriate resources 
+ * in the appropriate order. The formulation optimally searches among all the options for all the demands, the best global solution. </p>
+ * 
+ * <p>The result is returned by instanting the appropriate Demand (service chain request), Route (service chain) and 
+ * Resource (virtualized functions, and It resources) objects in the output design.</p>
+ * <p>The details of the algorithm will be provided in a publication currently under elaboration.</p>
+ * 
+ * @net2plan.keywords JOM, NFV
+ * @net2plan.inputParameters 
+ * @author Pablo Pavon-Marino
+ */
 public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 {
 	private InputParameter k = new InputParameter ("k", (int) 5 , "Maximum number of admissible service chain paths per demand" , 1 , Integer.MAX_VALUE);
 	private InputParameter shortestPathType = new InputParameter ("shortestPathType", "#select# hops km" , "Criteria to compute the shortest path. Valid values: 'hops' or 'km'");
-	private InputParameter nfvsInfo = new InputParameter ("nfvsInfo", "NAT 1 1 1 1 1 ; FW 1 1 1 1 1" , "Info of NFVs that could be placed, separated by ';'. Each NFV info has six space-separated parameters: 1) type, 2) cost (measured in same units as the cost of one BW unit in a link),  3) CPU use, 4) RAM use, 5) HD use, 6) capacity in same units as traffic");
+	private InputParameter nfvTypesInfo = new InputParameter ("nfvTypesInfo", "NAT 1 1 1 1 1 ; FW 1 1 1 1 1" , "Info of NFVs that could be placed, separated by ';'. Each NFV info has six space-separated parameters: 1) type, 2) cost (measured in same units as the cost of one BW unit in a link),  3) CPU use, 4) RAM use, 5) HD use, 6) capacity in same units as traffic");
 	private InputParameter nonBifurcatedRouting = new InputParameter ("nonBifurcatedRouting", false , "True if the routing is constrained to be non-bifurcated");
 	private InputParameter overideBaseResourcesInfo = new InputParameter ("overideBaseResourcesInfo", true , "If true, the current resources in tne input n2p are removed, and for each node aone CPU, RAM and HD resources are created, with the capacities defined in input parameter defaultCPU_RAM_HD_Capacities");
 	private InputParameter defaultCPU_RAM_HD_Capacities = new InputParameter ("defaultCPU_RAM_HD_Capacities", "100 100 100" , "THe default capacity values (space separated) of CPU, RAM, HD");
@@ -87,57 +111,58 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 				d.setServiceChainSequenceOfTraversedResourceTypes(nfvsToTraverse);
 		}
 		
-		String [] nfvsInfoArray = StringUtils.split(nfvsInfo.getString() , ";");
-		final int NUMNFV = nfvsInfoArray.length;
-		List<String> nfv_type = new ArrayList<String> ();
-		DoubleMatrix1D nfv_cost = DoubleFactory1D.dense.make(NUMNFV);
-		DoubleMatrix1D nfv_cpu = DoubleFactory1D.dense.make(NUMNFV);
-		DoubleMatrix1D nfv_ram = DoubleFactory1D.dense.make(NUMNFV);
-		DoubleMatrix1D nfv_hd = DoubleFactory1D.dense.make(NUMNFV);
-		DoubleMatrix1D nfv_cap = DoubleFactory1D.dense.make(NUMNFV);
-		for (String nfvInfo : nfvsInfoArray)
+		String [] nfvsInfoArray_f = StringUtils.split(nfvTypesInfo.getString() , ";");
+		final int NUMNFVTYPES = nfvsInfoArray_f.length;
+		List<String> nfvType_f = new ArrayList<String> ();
+		DoubleMatrix1D nfvCost_f = DoubleFactory1D.dense.make(NUMNFVTYPES);
+		DoubleMatrix1D nfvCpu_f = DoubleFactory1D.dense.make(NUMNFVTYPES);
+		DoubleMatrix1D nfvRam_f = DoubleFactory1D.dense.make(NUMNFVTYPES);
+		DoubleMatrix1D nfvHardDisk_f = DoubleFactory1D.dense.make(NUMNFVTYPES);
+		DoubleMatrix1D nfvCap_f = DoubleFactory1D.dense.make(NUMNFVTYPES);
+		for (String nfvInfo : nfvsInfoArray_f)
 		{
 			final String [] fields = StringUtils.split(nfvInfo , " ");
 			if (fields.length != 6) throw new Net2PlanException ("Wrong parameter format for NFV info");
 			final String type = fields [0];
-			if (nfv_type.contains(type)) throw new Net2PlanException ("Wrong parameter format for NFV info: cannot repeat NFV types");
-			final int index = nfv_type.size();
-			nfv_type.add (type);
-			nfv_cost.set(index, Double.parseDouble(fields [1]));
-			nfv_cpu.set(index, Double.parseDouble(fields [2]));
-			nfv_ram.set(index, Double.parseDouble(fields [3]));
-			nfv_hd.set(index, Double.parseDouble(fields [4]));
-			nfv_cap.set(index, Double.parseDouble(fields [5]));
+			if (nfvType_f.contains(type)) throw new Net2PlanException ("Wrong parameter format for NFV info: cannot repeat NFV types");
+			final int index = nfvType_f.size();
+			nfvType_f.add (type);
+			nfvCost_f.set(index, Double.parseDouble(fields [1]));
+			nfvCpu_f.set(index, Double.parseDouble(fields [2]));
+			nfvRam_f.set(index, Double.parseDouble(fields [3]));
+			nfvHardDisk_f.set(index, Double.parseDouble(fields [4]));
+			nfvCap_f.set(index, Double.parseDouble(fields [5]));
 		}
 
 		DoubleMatrix1D cpu_n = DoubleFactory1D.dense.make(N);
 		DoubleMatrix1D ram_n = DoubleFactory1D.dense.make(N);
-		DoubleMatrix1D hd_n = DoubleFactory1D.dense.make(N);
+		DoubleMatrix1D hardDisk_n = DoubleFactory1D.dense.make(N);
 		for (int index_n = 0; index_n < N ; index_n ++)
 		{
 			final Node n = netPlan.getNode(index_n);
 			Set<Resource> cpuResources = n.getResources("CPU"); if (cpuResources.size() > 1) throw new Net2PlanException ("A node cannot have more than one resource of type CPU, or RAM or HD");
 			Set<Resource> ramResources = n.getResources("RAM"); if (ramResources.size() > 1) throw new Net2PlanException ("A node cannot have more than one resource of type CPU, or RAM or HD");
-			Set<Resource> hdResources = n.getResources("HD"); if (hdResources.size() > 1) throw new Net2PlanException ("A node cannot have more than one resource of type CPU, or RAM or HD");
+			Set<Resource> hardDiskResources = n.getResources("HD"); if (hardDiskResources.size() > 1) throw new Net2PlanException ("A node cannot have more than one resource of type CPU, or RAM or HD");
 			cpu_n.set(index_n, cpuResources.iterator().next().getCapacity());
 			ram_n.set(index_n, ramResources.iterator().next().getCapacity());
-			hd_n.set(index_n, hdResources.iterator().next().getCapacity());
+			hardDisk_n.set(index_n, hardDiskResources.iterator().next().getCapacity());
 		}
 
 		/* Instantiate "preliminary" NFV resources in the nodes, not consuming any base resource, and with a capacity as if one single instance existed. 
 		 * This is needed so service chain paths can be precomputed. 
 		 * If a node has not enough CPU/RAM/HD to even instantiate one single instance of a NFV type, do not add this resource in that node */
+		
 		for (Node n : netPlan.getNodes())
 		{
 			final double cpuNode = cpu_n.get(n.getIndex());
 			final double ramNode = ram_n.get(n.getIndex());
-			final double hdNode = hd_n.get(n.getIndex());
-			for (int indexNFVType = 0 ; indexNFVType < NUMNFV ; indexNFVType ++)
+			final double hdNode = hardDisk_n.get(n.getIndex());
+			for (int indexNFVType = 0 ; indexNFVType < NUMNFVTYPES ; indexNFVType ++)
 			{
-				if (nfv_cpu.get(indexNFVType) > cpuNode) continue;
-				if (nfv_ram.get(indexNFVType)  > ramNode) continue;
-				if (nfv_hd.get(indexNFVType)  > hdNode) continue;
-				netPlan.addResource(nfv_type.get(indexNFVType), "", n, nfv_cap.get(indexNFVType), "", n.getResources("CPU", "RAM", "HD").stream().collect(Collectors.toMap(e -> e ,  e-> 0.0)) , 0, null);
+				if (nfvCpu_f.get(indexNFVType) > cpuNode) continue;
+				if (nfvRam_f.get(indexNFVType)  > ramNode) continue;
+				if (nfvHardDisk_f.get(indexNFVType)  > hdNode) continue;
+				netPlan.addResource(nfvType_f.get(indexNFVType), "", n, nfvCap_f.get(indexNFVType), "", n.getResources("CPU", "RAM", "HD").stream().collect(Collectors.toMap(e -> e ,  e-> 0.0)) , 0, null);
 			}
 		}
 		
@@ -160,37 +185,37 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 		op.setInputParameter("A_ep", netPlan.getMatrixLink2RouteAssignment()); /* 1 in position (e,p) if link e is traversed by path p, 0 otherwise */
 		op.setInputParameter("h_d", netPlan.getVectorDemandOfferedTraffic(), "row"); /* for each demand, its offered traffic */
 		op.setInputParameter("h_p", netPlan.getVectorRouteOfferedTrafficOfAssociatedDemand () , "row"); /* for each path, the offered traffic of its demand */
-		op.setInputParameter("c_f", nfv_cost , "row"); /* for each NFV type, its cost */
-		op.setInputParameter("cpu_f", nfv_cpu , "row"); /* for each NFV type, its CPU */
-		op.setInputParameter("ram_f", nfv_ram , "row"); /* for each NFV type, its RAM */
-		op.setInputParameter("HD_f", nfv_hd , "row"); /* for each NFV type, its HD */
-		op.setInputParameter("cap_f", nfv_cap , "row"); /* for each NFV type, its capacity */
+		op.setInputParameter("c_f", nfvCost_f , "row"); /* for each NFV type, its cost */
+		op.setInputParameter("cpu_f", nfvCpu_f , "row"); /* for each NFV type, its CPU */
+		op.setInputParameter("ram_f", nfvRam_f , "row"); /* for each NFV type, its RAM */
+		op.setInputParameter("hardDisk_f", nfvHardDisk_f , "row"); /* for each NFV type, its HD */
+		op.setInputParameter("cap_f", nfvCap_f , "row"); /* for each NFV type, its capacity */
 		op.setInputParameter("cpu_n", cpu_n , "row"); /* for each node, CPU capacity  */
 		op.setInputParameter("ram_n", ram_n , "row"); /* for each node, RAM capacity  */
-		op.setInputParameter("hd_n", hd_n , "row"); /* for each node, HD capacity  */
+		op.setInputParameter("hardDisk_n", hardDisk_n , "row"); /* for each node, HD capacity  */
 		
 		/* Write the problem formulations */
 		if (optimizationTarget.getString ().equals ("min-total-cost")) 
 		{
 			op.setInputParameter("l_p", netPlan.getVectorRouteNumberOfLinks() , "row"); /* for each path, the number of traversed links */
 			op.addDecisionVariable("xx_p", nonBifurcatedRouting.getBoolean() , new int[] { 1, P }, 0, 1); /* the FRACTION of traffic of demand d(p) that is carried by p */
-			op.addDecisionVariable("y_nf", true , new int[] { N, NUMNFV }, 0, Integer.MAX_VALUE); /* the number of NFVs of each type that are instantiated */
+			op.addDecisionVariable("y_nf", true , new int[] { N, NUMNFVTYPES }, 0, Integer.MAX_VALUE); /* the number of NFVs of each type that are instantiated */
 	
 			op.setObjectiveFunction("minimize", "sum (l_p .* h_p .* xx_p) + sum (y_nf * c_f') "); 
 
 			op.addConstraint("A_dp * xx_p' == 1"); /* for each demand, the 100% of the traffic is carried (summing the associated paths) */
 			op.addConstraint("A_ep * (h_p .* xx_p)' <= u_e'"); /* the traffic in each link cannot exceed its capacity  */
-			op.addConstraint("y_nf * cpu_f' <= cpu_n'"); 
-			op.addConstraint("y_nf * ram_f' <= ram_n'"); 
-			op.addConstraint("y_nf * hd_f' <= hd_n'"); 
+			op.addConstraint("y_nf * cpu_f' <= cpu_n'"); /* the VFs instantiated in the node cannot consume more CPU than the node has */
+			op.addConstraint("y_nf * ram_f' <= ram_n'"); /* the VFs instantiated in the node cannot consume more RAM than the node has */
+			op.addConstraint("y_nf * hardDisk_f' <= hardDisk_n'"); /* the VFs instantiated in the node cannot consume more hard disk than the node has */
 			
-			for (int indexNFVType = 0 ; indexNFVType < NUMNFV ; indexNFVType ++)
+			for (int indexNFVType = 0 ; indexNFVType < NUMNFVTYPES ; indexNFVType ++)
 			{
-				final String type = nfv_type.get(indexNFVType);
+				final String type = nfvType_f.get(indexNFVType);
 				Pair<List<Resource>,DoubleMatrix2D> info = netPlan.getMatrixResource2RouteAssignment(type); 
 				op.setInputParameter("f", indexNFVType); /* K in position (res,p) if resource res is traversed by path p K times */
 				op.setInputParameter("A_nfvp", info.getSecond()); /* K in position (res,p) if resource res is traversed by path p K times */
-				op.setInputParameter("u_nfv", nfv_cap.get(indexNFVType)); /* for each resource link, its unused capacity (the one not used by any mulitcast trees) */
+				op.setInputParameter("u_nfv", nfvCap_f.get(indexNFVType)); /* for each resource link, its unused capacity (the one not used by any mulitcast trees) */
 				op.addConstraint("A_nfvp * (h_p .* xx_p)' <= y_nf(all,f) * u_nfv"); /* the traffic in each link cannot exceed its capacity  */
 			}
 		}
@@ -213,7 +238,7 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 
 		for (Route r : netPlan.getRoutes())
 		{
-			final double carriedTrafficAndOccupiedLinkCapacity = xx_p.get(r.getIndex()) * r.getDemand().getOfferedTraffic();
+			final double carriedTrafficAndOccupiedLinkCapacity = Math.max(0 , xx_p.get(r.getIndex())) * r.getDemand().getOfferedTraffic();
 			r.setCarriedTraffic(carriedTrafficAndOccupiedLinkCapacity, carriedTrafficAndOccupiedLinkCapacity);
 		}
 
@@ -222,18 +247,18 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 			final Resource cpu = n.getResources("CPU").iterator().next(); 
 			final Resource ram = n.getResources("RAM").iterator().next(); 
 			final Resource hd = n.getResources("HD").iterator().next(); 
-			for (int indexNFVType = 0 ; indexNFVType < NUMNFV ; indexNFVType ++)
+			for (int indexNFVType = 0 ; indexNFVType < NUMNFVTYPES ; indexNFVType ++)
 			{
-				final String type = nfv_type.get(indexNFVType);
+				final String type = nfvType_f.get(indexNFVType);
 				if (n.getResources(type).isEmpty()) continue;
 				final Resource nfv = n.getResources(type).iterator().next();
 				final int this_ynf = (int) y_nf.get(n.getIndex(), indexNFVType);
-				if (this_ynf == 0) nfv.remove();
+				if (this_ynf == 0) { nfv.remove(); continue; }
 				Map<Resource,Double> occupyInBaseResources = new HashMap<Resource,Double> ();
-				occupyInBaseResources.put(cpu, this_ynf * nfv_cpu.get(indexNFVType));
-				occupyInBaseResources.put(ram, this_ynf * nfv_ram.get(indexNFVType));
-				occupyInBaseResources.put(hd, this_ynf * nfv_hd.get(indexNFVType));
-				nfv.setCapacity(this_ynf * nfv_cap.get(indexNFVType), occupyInBaseResources);
+				occupyInBaseResources.put(cpu, this_ynf * nfvCpu_f.get(indexNFVType));
+				occupyInBaseResources.put(ram, this_ynf * nfvRam_f.get(indexNFVType));
+				occupyInBaseResources.put(hd, this_ynf * nfvHardDisk_f.get(indexNFVType));
+				nfv.setCapacity(this_ynf * nfvCap_f.get(indexNFVType), occupyInBaseResources);
 			}
 		}
 		

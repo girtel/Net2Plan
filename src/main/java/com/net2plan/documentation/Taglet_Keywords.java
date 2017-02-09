@@ -143,22 +143,18 @@ public class Taglet_Keywords implements Taglet
 		int counter = 0;
     for (int i = 0; i < tags.length; i++) 
     {
-//        System.out.println ("tags [i].text (): " + tags [i].text ());
         for (String tag : StringUtils.split(tags [i].text () , ","))
         {
           if (counter > 0) result += ",  ";
         	tag = tag.trim ();
           Pair<String,String> pair = CreateHTMLKeywords.keywordDescriptionMap.get (tag);
-//          System.out.println ("<CreateHTMLKeywords.keywordDescriptionMap:" + CreateHTMLKeywords.keywordDescriptionMap);
-//          System.out.println ("tag: " + tag);
-//          System.out.println (pair);
           result += "<a href=\"../../../../../keyword_" + pair.getSecond() + ".html\">" + tag  + "</a>";
           counter ++;
         }
     }
     result += "</li>" + NEWLINE;
     result += "</ul></div>" + NEWLINE;
-    return result;// + "</td></tr></table></div>\n";
+    return result;
   }
   
 }
