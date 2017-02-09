@@ -179,7 +179,7 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
                     else node.getNetPlan().addLink(startVertex.getAssociatedNetPlanNode(), node,0,0,200000,null);
                     callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals(); // implies a reset picked
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                    callback.getUndoRedoNavigationManager().addNetPlanChange();
     			}
                 //if (node == startVertex.getAssociatedNetPlanNode()) callback.resetPickedStateAndUpdateView();
             }

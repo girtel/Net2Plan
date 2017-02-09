@@ -139,7 +139,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         final Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> back = undoRedoManager.getNavigationBackElement();
         if (back == null) return;
-
         this.currentNetPlan = back.getFirst();
         this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, back.getSecond(), back.getThird());
         updateVisualizationAfterNewTopology();
@@ -154,6 +153,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         if (forward == null) return;
         this.currentNetPlan = forward.getFirst();
         this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, forward.getSecond(), forward.getThird());
+        updateVisualizationAfterNewTopology();
     }
 
     @Override
@@ -200,7 +200,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         /* Initialize the undo/redo manager, and set its initial design */
         this.undoRedoManager = new UndoRedoManager(this, MAXSIZEUNDOLISTCHANGES);
-        this.undoRedoManager.updateNavigationInformation_newNetPlanChange();
+        this.undoRedoManager.addNetPlanChange();
 
         onlineSimulationPane = new OnlineSimulationPane(this);
         executionPane = new OfflineExecutionPanel(this);
@@ -483,7 +483,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res = VisualizationState.generateCanvasDefaultVisualizationLayerInfo(getDesign());
         vs.setCanvasLayerVisibilityAndOrder(getDesign(), res.getFirst(), res.getSecond());
         updateVisualizationAfterNewTopology();
-        undoRedoManager.updateNavigationInformation_newNetPlanChange();
+        undoRedoManager.addNetPlanChange();
     }
 
 

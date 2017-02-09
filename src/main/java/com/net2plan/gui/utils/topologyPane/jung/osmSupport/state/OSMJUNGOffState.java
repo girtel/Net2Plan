@@ -119,7 +119,7 @@ public class OSMJUNGOffState implements OSMState
         callback.getDesign().addNode(pos.getX(), pos.getY(), "Node" + callback.getDesign().getNumberOfNodes(), null);
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+        callback.getUndoRedoNavigationManager().addNetPlanChange();
     }
 
     @Override
@@ -128,7 +128,7 @@ public class OSMJUNGOffState implements OSMState
         node.remove();
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+        callback.getUndoRedoNavigationManager().addNetPlanChange();
     }
 
     @Override

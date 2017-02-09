@@ -419,7 +419,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+            callback.getUndoRedoNavigationManager().addNetPlanChange();
         } else if (src == btn_increaseInterLayerDistance)
         {
             if (vs.getCanvasNumberOfVisibleLayers() == 1) return;
@@ -576,7 +576,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+            callback.getUndoRedoNavigationManager().addNetPlanChange();
 
             // Reactivating the OSM Support
             if  (isOSMRunning)
@@ -614,7 +614,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+            callback.getUndoRedoNavigationManager().addNetPlanChange();
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
@@ -668,7 +668,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                 }
                 callback.getVisualizationState().resetPickedState();
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND, NetworkElementType.MULTICAST_DEMAND));
-                callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                callback.getUndoRedoNavigationManager().addNetPlanChange();
             } catch (Throwable ex)
             {
                 callback.getDesign().assignFrom(aux_netPlan);

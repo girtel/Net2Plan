@@ -337,7 +337,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                             callback.getVisualizationState ().pickLink(link);
                             callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            callback.getUndoRedoNavigationManager().addNetPlanChange();
                             break;
 
                         case COLUMN_STATE:
@@ -537,7 +537,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                                 link.remove();
                                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                                callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                                callback.getUndoRedoNavigationManager().addNetPlanChange();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -564,7 +564,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                         		for (Link ee : linkRowsInTheTable) ee.remove();
                             callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            callback.getUndoRedoNavigationManager().addNetPlanChange();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -658,7 +658,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                     double euclideanDistance = netPlan.getNodePairEuclideanDistance(originNode, destinationNode);
                     link.setLengthInKm(euclideanDistance);
                 	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
-                	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                	callback.getUndoRedoNavigationManager().addNetPlanChange();
                 }
             });
 
@@ -674,7 +674,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                     double haversineDistanceInKm = netPlan.getNodePairHaversineDistanceInKm(originNode, destinationNode);
                     link.setLengthInKm(haversineDistanceInKm);
                 	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
-                	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                	callback.getUndoRedoNavigationManager().addNetPlanChange();
                 }
             });
 
@@ -702,7 +702,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
 
                     netPlan.getLinkFromId(linkId).setLengthInKm(netPlan.getLinkFromId(linkId).getLengthInKm() * scaleFactor);
                 	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
-                	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                	callback.getUndoRedoNavigationManager().addNetPlanChange();
                 }
             });
 
@@ -719,7 +719,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                             model.setValueAt("", row, 20);
                             callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK , NetworkElementType.DEMAND));
-                        	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                        	callback.getUndoRedoNavigationManager().addNetPlanChange();
                         }
                     });
 
@@ -757,7 +757,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                                     netPlan.addDemand(link.getOriginNode(), link.getDestinationNode(), link.getCapacity(), link.getAttributes(), netPlan.getNetworkLayerFromId(layerId));
                                     callback.getVisualizationState().resetPickedState();
                                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND));
-                                	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                                	callback.getUndoRedoNavigationManager().addNetPlanChange();
                                     break;
                                 } catch (Throwable ex) {
                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating lower layer demand from link");
@@ -837,7 +837,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                                     netPlan.getDemandFromId(demandId).coupleToUpperLayerLink(netPlan.getLinkFromId(linkId));
                                     callback.getVisualizationState().resetPickedState();
                                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK , NetworkElementType.DEMAND));
-                                	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                                	callback.getUndoRedoNavigationManager().addNetPlanChange();
                                     break;
                                 } catch (Throwable ex) {
                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error coupling lower layer demand to link");
@@ -880,7 +880,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                     try {
                         for (Link link : rowVisibleLinks) link.setCapacity(u_e);
                     	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                    	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                    	callback.getUndoRedoNavigationManager().addNetPlanChange();
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to all links");
                     }
@@ -913,7 +913,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                         for (Link link : rowVisibleLinks)
                             link.setCapacity(link.getOccupiedCapacity() / utilization);
                     	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                    	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                    	callback.getUndoRedoNavigationManager().addNetPlanChange();
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to all links according to a given link utilization");
                     }
@@ -947,7 +947,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                     try {
                         for (Link link : rowVisibleLinks) link.setLengthInKm(l_e);
                     	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                    	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                    	callback.getUndoRedoNavigationManager().addNetPlanChange();
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set link length to all links");
                     }
@@ -966,7 +966,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                         for (Link link : rowVisibleLinks) 
                             link.setLengthInKm(netPlan.getNodePairEuclideanDistance(link.getOriginNode(), link.getDestinationNode()));
                     	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                    	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                    	callback.getUndoRedoNavigationManager().addNetPlanChange();
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set link length value to all links");
                     }
@@ -986,7 +986,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                             link.setLengthInKm(netPlan.getNodePairHaversineDistanceInKm(link.getOriginNode(), link.getDestinationNode()));
                         }
                     	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                    	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                    	callback.getUndoRedoNavigationManager().addNetPlanChange();
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set link length value to all links");
                     }
@@ -1021,7 +1021,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                         for (Link link : rowVisibleLinks)
                             link.setLengthInKm(link.getLengthInKm() * scaleFactor);
                     	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                    	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                    	callback.getUndoRedoNavigationManager().addNetPlanChange();
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to scale link length");
                     }
@@ -1047,7 +1047,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                             for (int i = 0; i < numRows; i++) model.setValueAt("", i, 20);
                             callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK , NetworkElementType.DEMAND));
-                        	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                        	callback.getUndoRedoNavigationManager().addNetPlanChange();
                         }
                     });
 
@@ -1088,7 +1088,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                                             link.coupleToNewDemandCreated(layer);
                                     callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK , NetworkElementType.DEMAND));
-                                	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                                	callback.getUndoRedoNavigationManager().addNetPlanChange();
                                     break;
                                 } catch (Throwable ex) {
                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating lower layer demands");
@@ -1167,7 +1167,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
             }
             callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-        	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+        	callback.getUndoRedoNavigationManager().addNetPlanChange();
         }
     }
 

@@ -96,6 +96,7 @@ class PickTimeLineManager
         while (timeLine.size() > timelineMaxSize)
         {
             timeLine.remove(0);
+            currentElementInTimelineCursor--;
         }
 
         // NOTE: The cursor does not depend on the timeline, which may cause them to desynchronize.

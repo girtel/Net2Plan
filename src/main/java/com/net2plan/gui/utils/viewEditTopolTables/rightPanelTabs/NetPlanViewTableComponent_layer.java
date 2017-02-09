@@ -110,7 +110,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                         {
                         	networkViewer.getVisualizationState().resetPickedState();
                             networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
-                            networkViewer.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            networkViewer.getUndoRedoNavigationManager().addNetPlanChange();
                         }
                     }
 
@@ -120,7 +120,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                         {
                         	networkViewer.getVisualizationState().resetPickedState();
                             networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
-                            networkViewer.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            networkViewer.getUndoRedoNavigationManager().addNetPlanChange();
                         }
                     }
                 }
@@ -153,7 +153,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                             if (!insideUpdateView)
                             {
                             	networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
-                            	networkViewer.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            	networkViewer.getUndoRedoNavigationManager().addNetPlanChange();
                             }
                         }
                     }

@@ -539,7 +539,7 @@ public class FocusPane extends JPanel
 			callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
 			vs.pickLayer(e);
 			callback.updateVisualizationAfterPick();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+            callback.getUndoRedoNavigationManager().addNetPlanChange();
 		} else throw new RuntimeException ();
 	}
 
