@@ -1152,6 +1152,11 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
         @Override
         public void actionPerformed(ActionEvent e) {
             NetPlan netPlan = callback.getDesign();
+
+            // Ask for current element removal
+            final int answer = JOptionPane.showConfirmDialog(null, "Remove all existing links?", "", JOptionPane.YES_NO_OPTION);
+            if (answer == JOptionPane.OK_OPTION) netPlan.removeAllLinks(netPlan.getNetworkLayerDefault());
+
             for (long nodeId_1 : netPlan.getNodeIds()) {
                 for (long nodeId_2 : netPlan.getNodeIds()) {
                     if (nodeId_1 >= nodeId_2) continue;
