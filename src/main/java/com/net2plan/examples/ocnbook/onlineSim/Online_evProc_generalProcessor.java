@@ -48,8 +48,8 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
  * 
  * The algorithm reacts to the following events: 
  * <ul>
- * <li>SimEvent.RouteAdd: Adds a route associated to the given demand. This can mean creating also a protection segment if the 1+1 protection options are active. If there is not enough resources for the route, it is not created.</li>
- * <li>SimEvent.RouteRemove: Removes the corresponding Route object, and any associated protection segments.</li>
+ * <li>SimEvent.RouteAdd: Adds a route associated to the given demand. This can mean creating also a backup route if the 1+1 protection options are active. If there is not enough resources for the route, it is not created.</li>
+ * <li>SimEvent.RouteRemove: Removes the corresponding Route object, and any associated backup route.</li>
  * <li>SimEvent.DemandModify: Modifies the offered traffic of a demand, caused by a traffic fluctuation.</li>
  * <li>SimEvent.NodesAndLinksChangeFailureState: Fails/repairs the indicated nodes and/or links, and reacts to such failures (the particular form depends on the network recovery options selected).</li>
  * </ul>
@@ -73,9 +73,9 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 	private InputParameter maxLengthInKm = new InputParameter ("maxLengthInKm", (double) -1 , "Paths longer than this are considered not admissible. A non-positive number means this limit does not exist");
 	private InputParameter maxNumHops = new InputParameter ("maxNumHops", (int) -1 , "The path from an origin to any destination in cannot have more than this number of hops. A non-positive number means this limit does not exist");
 	private InputParameter layerId = new InputParameter ("layerId", (long) -1 , "Layer containing traffic demands (-1 means default layer)");
-	private InputParameter recoveryType = new InputParameter ("recoveryType", "#select# protection restoration none" , "None, nothing is done, so affected routes fail. Restoration, affected routes are visited sequentially, and we try to reroute them in the available capacity; in protection, affected routes are rerouted using the protection segments.");
+	private InputParameter recoveryType = new InputParameter ("recoveryType", "#select# protection restoration none" , "None, nothing is done, so affected routes fail. Restoration, affected routes are visited sequentially, and we try to reroute them in the available capacity; in protection, affected routes are rerouted using the backup routes.");
 	private InputParameter removePreviousRoutes = new InputParameter ("removePreviousRoutes", false  , "If true, previous routes are removed from the system.");
-	private InputParameter protectionTypeToNewRoutes = new InputParameter ("protectionTypeToNewRoutes", "#select# 1+1-link-disjoint 1+1-node-disjoint srg-disjoint none" , "The new routes to add, may be associated a 1+1 segment protection (link, node or SRG disjoint), or no segment protection is added (none)");
+	private InputParameter protectionTypeToNewRoutes = new InputParameter ("protectionTypeToNewRoutes", "#select# 1+1-link-disjoint 1+1-node-disjoint srg-disjoint none" , "The new routes to add, may be associated a 1+1 protection (link, node or SRG disjoint), or no protection is added (none)");
 	
 	private List<Node> nodes;
 	private NetworkLayer layer;
@@ -136,8 +136,7 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 		final int protectionTypeCode = protectionTypeToNewRoutes.equals("srg-disjoint") ? 0 : protectionTypeToNewRoutes.equals("1+1-node-disjoint")? 1 : 2;
 		this.cpl11 = !newRoutesHave11Protection? null : NetPlan.computeUnicastCandidate11PathList(cpl, protectionTypeCode); 
 		
-		//		System.out.println ("cpl: " + cpl);
-		System.out.println ("cpl11: " + cpl11);
+		
 		
 		if (removePreviousRoutes.getBoolean())
 		{
@@ -158,17 +157,14 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 			SimEvent.RouteAdd addRouteEvent = (SimEvent.RouteAdd) event.getEventObject ();
 			if (addRouteEvent.demand.getLayer() != this.layer) throw new Net2PlanException ("Routes cannot be added at layers different to layer " + layerId.getLong ());
 
-			System.out.println ("Recevie RouteAdd: " + addRouteEvent + ", demand: " + addRouteEvent.demand);
 			/* update the offered traffic of the demand */
 			this.stat_numOfferedConnections ++;
 			this.stat_trafficOfferedConnections += addRouteEvent.carriedTraffic;
 			
-			/* Computes one or two paths over the links (the second path would be a segment). You cannot use the already existing segments in these paths */
+			/* Computes one or two paths over the links (the second path would be a backup route).  */
 			if (newRoutesHave11Protection)
 			{
-				Pair<List<Link>,List<Link>> spLinks = computeValid11PathPairNewRoute(addRouteEvent.demand , addRouteEvent.occupiedLinkCapacity); // cannot use protection segments for this path, since the route still does not have them!!
-//				System.out.println ("protectionTypeToNewRoutes: " + protectionTypeToNewRoutes.getString());
-//				System.out.println ("spLinks : " + spLinks);
+				Pair<List<Link>,List<Link>> spLinks = computeValid11PathPairNewRoute(addRouteEvent.demand , addRouteEvent.occupiedLinkCapacity); 
 				if (spLinks != null)
 				{
 					final Route addedRoute = currentNetPlan.addRoute(addRouteEvent.demand , addRouteEvent.carriedTraffic , addRouteEvent.occupiedLinkCapacity, spLinks.getFirst() , null);
@@ -178,12 +174,11 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 					this.routeOriginalLinks.put (addedRoute , spLinks.getFirst());
 					this.stat_numCarriedConnections ++;
 					this.stat_trafficCarriedConnections += addRouteEvent.carriedTraffic;
-					System.out.println ("Added route: " + addedRoute);
 				}
 			}
 			else
 			{
-				List<Link> spLinks = computeValidPathNewRoute(addRouteEvent.demand , addRouteEvent.occupiedLinkCapacity); // cannot use protection segments for this path, since the route still does not have them!!
+				List<Link> spLinks = computeValidPathNewRoute(addRouteEvent.demand , addRouteEvent.occupiedLinkCapacity); 
 				if (!spLinks.isEmpty())
 				{
 					final Route addedRoute = currentNetPlan.addRoute(addRouteEvent.demand , addRouteEvent.carriedTraffic , addRouteEvent.occupiedLinkCapacity, spLinks , null);
@@ -215,7 +210,6 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 		{
 			SimEvent.NodesAndLinksChangeFailureState ev = (SimEvent.NodesAndLinksChangeFailureState) event.getEventObject ();
 
-//			System.out.println ("Event NodesAndLinksChangeFailureState: links up" + ev.linksUp + ", links down: " + ev.linksDown);
 			/* This automatically sets as up the routes affected by a repair in its current path, and sets as down the affected by a failure in its current path */
 			Set<Route> routesFromDownToUp = currentNetPlan.getRoutesDown();
 			currentNetPlan.setLinksAndNodesFailureState(ev.linksToUp , ev.linksToDown , ev.nodesToUp , ev.nodesToDown);
@@ -302,16 +296,15 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 		this.stat_transitoryInitTime = simTime;
 	}
 
-	/* down links or segments cannot be used */
+	/* down links cannot be used */
 	private List<Link> computeValidPathNewRoute (Demand demand , double occupiedLinkCapacity)
 	{
-//		System.out.println ("computeValidPathNewRoute, demand: " + demand + " occupied: " + occupiedLinkCapacity);
-		final List<List<Link>> paths = cpl.get(demand);
+		final List<List<Link>> paths = cpl.get(Pair.of(demand.getIngressNode() , demand.getEgressNode()));
 		/* If load sharing */
 		if (isLoadSharing)
 		{
 			final int randomChosenIndex = rng.nextInt(paths.size());
-			final List<Link> seqLinks = cpl.get(demand).get(randomChosenIndex);
+			final List<Link> seqLinks = cpl.get(Pair.of(demand.getIngressNode() , demand.getEgressNode())).get(randomChosenIndex);
 			if (isValidPath(seqLinks, occupiedLinkCapacity).getFirst()) return seqLinks; else return new LinkedList<Link> ();
 		}
 		/* If alternate or LCR */
@@ -319,7 +312,6 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 		for (List<Link> seqLinks : paths)
 		{
 			Pair<Boolean,Double> isValid = isValidPath(seqLinks, occupiedLinkCapacity);
-//			System.out.println ("path: " + seqLinks + ", occuied: " + occupiedLinkCapacity + ", isValid: " + isValid);
 			if (isValid.getFirst()) 
 			{
 				if (isAlternateRouting) return seqLinks; 
@@ -335,7 +327,7 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 
 	private Pair<List<Link>,List<Link>> computeValid11PathPairNewRoute (Demand demand , double occupiedLinkCapacity)
 	{
-		final List<Pair<List<Link>,List<Link>>> pathPairs = cpl11.get(demand);
+		final List<Pair<List<Link>,List<Link>>> pathPairs = cpl11.get(Pair.of(demand.getIngressNode() , demand.getEgressNode()));
 		/* If load sharing */
 		if (isLoadSharing)
 		{
@@ -346,7 +338,7 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 		}
 
 		Pair<List<Link>,List<Link>> lcrSoFar = null; double lcrIdleCapacitySoFar= -Double.MAX_VALUE;
-		for (Pair<List<Link>,List<Link>> pathPair : this.cpl11.get(demand))
+		for (Pair<List<Link>,List<Link>> pathPair : this.cpl11.get(Pair.of(demand.getIngressNode() , demand.getEgressNode())))
 		{
 			Pair<Boolean,Double> validityFirstPath = isValidPath(pathPair.getFirst(), occupiedLinkCapacity); 
 			if (!validityFirstPath.getFirst()) continue;

@@ -957,7 +957,6 @@ public class WDMUtils
 		{
 			final RSA rsa = new RSA (lpRoute , false);
 			if (!countFailedLightpaths && rsa.isDown()) continue;
-			if (lpRoute.getOccupiedCapacity() == 0) continue; // not been used now
 			allocateResources(rsa , frequencySlot2FiberOccupancy_se , nodeRegeneratorOccupancy);
 		}
 		return Pair.of(frequencySlot2FiberOccupancy_se,nodeRegeneratorOccupancy);
