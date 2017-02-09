@@ -542,6 +542,11 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
             List<Link> links = netPlan.getLinks();
             final int E = links.size();
             List<MulticastTree> addedTrees = new LinkedList<MulticastTree>();
+
+            // Ask for current element removal
+            final int answer = JOptionPane.showConfirmDialog(null, "Remove all multicast trees?", "", JOptionPane.YES_NO_OPTION);
+            if (answer == JOptionPane.OK_OPTION) netPlan.removeAllMulticastTrees(netPlan.getNetworkLayerDefault());
+
             try {
                 if (minCost) {
                     DoubleMatrix1D linkCosts = isMinHops ? DoubleFactory1D.dense.make(E, 1) : netPlan.getVectorLinkLengthInKm();
