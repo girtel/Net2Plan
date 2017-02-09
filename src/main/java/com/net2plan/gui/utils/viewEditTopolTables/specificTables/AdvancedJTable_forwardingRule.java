@@ -40,7 +40,6 @@ import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement.LastRowAggregatedValue;
 import com.net2plan.gui.utils.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
@@ -209,7 +208,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.FORWARDING_RULE));
                             callback.getVisualizationState ().pickForwardingRule(Pair.of(demand,link));
                             callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            callback.getUndoRedoNavigationManager().addNetPlanChange();
                             break;
 
                         default:
@@ -281,7 +280,6 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
     	Pair<Integer, Integer> pair = (Pair<Integer, Integer>) itemId;
     	callback.getVisualizationState ().pickForwardingRule(Pair.of(np.getDemand(pair.getFirst()) , np.getLink(pair.getSecond())));
         callback.updateVisualizationAfterPick();
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
     }
 
     public void doPopup(final MouseEvent e, final int row, final Object itemId) {
@@ -347,7 +345,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
                                 netPlan.setForwardingRule(netPlan.getDemandFromId(((Pair<Long, Long>) itemId).getFirst()), netPlan.getLinkFromId(((Pair<Long, Long>) itemId).getSecond()), 0);
                                 callback.getVisualizationState().resetPickedState();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.FORWARDING_RULE));
-                                callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                                callback.getUndoRedoNavigationManager().addNetPlanChange();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -372,7 +370,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
                         		for (Pair<Demand,Link> fr : frRowsInTheTable) netPlan.setForwardingRule(fr.getFirst() , fr.getSecond() , 0.0);
                             callback.getVisualizationState().resetPickedState();
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.FORWARDING_RULE));
-                            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            callback.getUndoRedoNavigationManager().addNetPlanChange();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -411,7 +409,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
                     createForwardingRuleGUI(callback);
                     callback.getVisualizationState().resetPickedState();
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.FORWARDING_RULE));
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                    callback.getUndoRedoNavigationManager().addNetPlanChange();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
@@ -553,7 +551,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
                 IPUtils.setECMPForwardingRulesFromLinkWeights(netPlan, linkWeightMap);
                 callback.getVisualizationState().resetPickedState();
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.FORWARDING_RULE));
-                callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                callback.getUndoRedoNavigationManager().addNetPlanChange();
             }
         });
 

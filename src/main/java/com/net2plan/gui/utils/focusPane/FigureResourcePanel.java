@@ -7,56 +7,40 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import javax.swing.JPanel;
-
-import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
-import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
-import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.utils.Pair;
 
-public class FigureResourcePanel extends JPanel 
+public class FigureResourcePanel extends FigureSequencePanel
 {
 	
-	private List<DrawNode> drawnNodes;
-	private List<DrawLine> drawnLines;
 	private Resource resource;
 	private List<String> generalMessage; 
     private NetPlan np;
     private Dimension preferredSize;
-    private IVisualizationCallback callback;
-    
+
     public FigureResourcePanel(IVisualizationCallback callback , Resource resource , String titleMessage) 
     {
-    	this.callback = callback;
+    	super(callback);
     	this.np = resource.getNetPlan();
    		this.generalMessage = Arrays.asList(titleMessage);
     	this.preferredSize = null;
     	this.resource = resource;
-        addMouseListener(new MouseAdapterFocusPanel() );
     }
 
-    @Override
+	@Override
+	public Dimension getPreferredSize()
+	{
+		return new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+	}
+
+	@Override
     protected void paintComponent(Graphics grphcs) 
     {
-        super.paintComponent(grphcs);
         final Graphics2D g2d = (Graphics2D) grphcs;
         g2d.setColor(Color.black);
 
@@ -128,40 +112,5 @@ public class FigureResourcePanel extends JPanel
 			drawnLines.add(dlNoURL);
     	}
     }
-
-    @Override
-    public Dimension getPreferredSize() 
-    {
-        return new Dimension(600,600);
-    }
-
-    
-
-    class MouseAdapterFocusPanel extends MouseAdapter
-    {
-        @Override
-        public void mouseClicked(MouseEvent me) 
-        {
-            super.mouseClicked(me);
-            for (DrawNode dn : drawnNodes)
-            {
-                if (dn.getShapeIconToSetByPainter().contains(me.getPoint()))
-                	FocusPane.processMouseClickInternalLink ("node" + dn.getAssociatedElement().getId() , callback);
-                for (int labelIndex = 0; labelIndex < dn.getLabels().size() ; labelIndex ++)
-                	if (dn.getShapesLabelsToCreateByPainter().get(labelIndex).contains(me.getPoint()))
-                		FocusPane.processMouseClickInternalLink (dn.getUrlsLabels().get(labelIndex) , callback);
-            }                
-            for (DrawLine dl : drawnLines)
-            {
-                if (dl.getShapeLineToCreateByPainter().contains(me.getPoint()))
-                	FocusPane.processMouseClickInternalLink ("link" + dl.getAssociatedElement().getId() , callback);
-                for (int labelIndex = 0; labelIndex < dl.getLabels().size() ; labelIndex ++)
-                	if (dl.getShapesLabelstoCreateByPainter().get(labelIndex).contains(me.getPoint()))
-                		FocusPane.processMouseClickInternalLink (dl.getUrlsLabels().get(labelIndex) , callback);
-            }                
-        }
-    }
-
-    
 }
 

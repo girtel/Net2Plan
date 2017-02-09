@@ -12,15 +12,13 @@ import java.util.Set;
 /**
  * Created by Jorge San Emeterio on 13/10/2016.
  */
-public class OSMMapPanel extends JXMapViewer
+public class OSMPanel extends JXMapViewer
 {
     private static final int NUMBER_OF_THREADS = 8;
     private static final GeoPosition europe = new GeoPosition(47.20, 25.2);
+    private static final int defaultZoom = 16;
 
-    private final GeoPosition defaultPosition;
-    private final int defaultZoom;
-
-    public OSMMapPanel()
+    public OSMPanel()
     {
         // Create a TileFactoryInfo for OpenStreetMap
         final TileFactoryInfo info = new OSMTileFactoryInfo();
@@ -30,16 +28,12 @@ public class OSMMapPanel extends JXMapViewer
 
         // Use 8 threads in parallel to load the tiles
         tileFactory.setThreadPoolSize(NUMBER_OF_THREADS);
-
-        this.defaultPosition = europe;
-        this.defaultZoom = 16;
     }
 
     public void moveToDefaultPosition()
     {
-        this.setCenterPosition(defaultPosition);
+        this.setCenterPosition(europe);
     }
-
     public void returnToDefaultZoom()
     {
         this.setZoom(defaultZoom);
@@ -47,9 +41,8 @@ public class OSMMapPanel extends JXMapViewer
 
     public GeoPosition getDefaultPosition()
     {
-        return defaultPosition;
+        return europe;
     }
-
     public int getDefaultZoom()
     {
         return defaultZoom;

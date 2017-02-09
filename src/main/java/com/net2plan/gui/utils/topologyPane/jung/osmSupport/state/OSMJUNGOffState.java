@@ -3,8 +3,8 @@ package com.net2plan.gui.utils.topologyPane.jung.osmSupport.state;
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.GUINode;
-import com.net2plan.gui.utils.topologyPane.VisualizationConstants;
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationConstants;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
@@ -119,7 +119,7 @@ public class OSMJUNGOffState implements OSMState
         callback.getDesign().addNode(pos.getX(), pos.getY(), "Node" + callback.getDesign().getNumberOfNodes(), null);
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+        callback.getUndoRedoNavigationManager().addNetPlanChange();
     }
 
     @Override
@@ -128,7 +128,7 @@ public class OSMJUNGOffState implements OSMState
         node.remove();
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+        callback.getUndoRedoNavigationManager().addNetPlanChange();
     }
 
     @Override

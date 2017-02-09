@@ -33,7 +33,7 @@ import org.apache.commons.collections15.BidiMap;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -228,7 +228,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
                     				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
                     		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
                                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
-                                    callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                                    callback.getUndoRedoNavigationManager().addNetPlanChange();
                                 } catch (Throwable ex) {
                                     ErrorHandling.addErrorOrException(ex, getClass());
                                     ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -282,7 +282,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
             				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
             		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                    callback.getUndoRedoNavigationManager().addNetPlanChange();
                 } catch (Throwable ex) {
                 	ex.printStackTrace();
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);

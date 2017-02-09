@@ -12,27 +12,24 @@ import java.util.stream.Collectors;
 
 import javax.swing.*;
 
-import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactory;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
 /**
  * @author Jorge San Emeterio
  * @date 03/11/2016
  */
-public class OSMMapController
+public class OSMController
 {
-    private static OSMMapPanel mapViewer;
+    private static OSMPanel mapViewer;
 
     private TopologyPanel topologyPanel;
     private ITopologyCanvas canvas;
@@ -69,7 +66,7 @@ public class OSMMapController
                         "All nodes must have their coordinates between the ranges: \n" +
                         "x = [-180, 180]\n" +
                         "y = [-90, 90]\n";
-                throw new OSMMapException(message);
+                throw new OSMException(message);
             }
         }
 
@@ -77,7 +74,7 @@ public class OSMMapController
         this.canvas = canvas;
         this.callback = callback;
 
-        mapViewer = new OSMMapPanel();
+        mapViewer = new OSMPanel();
 
         // Activating maps on the canvas
         loadMapOntoTopologyPanel();
@@ -299,7 +296,7 @@ public class OSMMapController
             restartMap();
         } else
         {
-            throw new OSMMapException("Map is currently deactivated");
+            throw new OSMException("Map is currently deactivated");
         }
     }
 
@@ -324,7 +321,7 @@ public class OSMMapController
             alignPanJUNGToOSMMap();
         } else
         {
-            throw new OSMMapException("Map is currently deactivated");
+            throw new OSMException("Map is currently deactivated");
         }
     }
 
@@ -341,7 +338,7 @@ public class OSMMapController
             alignZoomJUNGToOSMMap();
         } else
         {
-            throw new OSMMapException("Map is currently deactivated");
+            throw new OSMException("Map is currently deactivated");
         }
     }
 
@@ -358,26 +355,13 @@ public class OSMMapController
             alignZoomJUNGToOSMMap();
         } else
         {
-            throw new OSMMapException("Map is currently deactivated");
+            throw new OSMException("Map is currently deactivated");
         }
     }
 
     public JComponent getMapComponent()
     {
         return mapViewer;
-    }
-
-    public static class OSMMapException extends Net2PlanException
-    {
-        public OSMMapException(final String message)
-        {
-            ErrorHandling.showErrorDialog(message, "Could not display OSM Map");
-        }
-
-        public OSMMapException(final String message, final String title)
-        {
-            ErrorHandling.showErrorDialog(message, title);
-        }
     }
 
     public static class OSMMapUtils

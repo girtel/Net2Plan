@@ -14,19 +14,30 @@ import java.util.List;
  * @author Jorge San Emeterio
  * @date 06-Feb-17
  */
-public class FigureMultiCastDemandSequencePanel extends FigureSequencePanel
+public class FigureMulticastDemandSequencePanel extends FigureSequencePanel
 {
     private final List<String> generalMessage;
     private final MulticastDemand multicastDemand;
     private final BasicStroke lineStroke;
 
-    public FigureMultiCastDemandSequencePanel(final IVisualizationCallback callback, final MulticastDemand multicastDemand, final String... titleMessage)
+    private int panelWidth, panelHeight;
+
+    public FigureMulticastDemandSequencePanel(final IVisualizationCallback callback, final MulticastDemand multicastDemand, final String... titleMessage)
     {
         super(callback);
 
         this.multicastDemand = multicastDemand;
         this.generalMessage = Arrays.asList(titleMessage);
         this.lineStroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, new float[]{10.0f}, 0.0f);
+
+        this.panelWidth = DEFAULT_WIDTH;
+        this.panelHeight = DEFAULT_HEIGHT;
+    }
+
+    @Override
+    public Dimension getPreferredSize()
+    {
+        return new Dimension(panelWidth, panelHeight);
     }
 
     @Override
@@ -69,14 +80,20 @@ public class FigureMultiCastDemandSequencePanel extends FigureSequencePanel
         DrawNode.addNodeToGraphics(g2d, ingressNode, new Point(initialDnTopLeftPosition.x + ((xSeparationDnCenters * (egressNodes.size() / 2)) - xSeparationDnCenters/2), initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
         drawnNodes.add(ingressNode);
 
+        int maxWidth = 0;
         for (int i = 0; i < egressNodes.size(); i++)
         {
             final DrawNode egressNode = egressNodes.get(i);
-            DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + (i * xSeparationDnCenters), initialDnTopLeftPosition.y + ySeparationDnCenters), fontMetrics, regularInterlineSpacePixels, null);
+            final Point nodePos = new Point(initialDnTopLeftPosition.x + (i * xSeparationDnCenters), initialDnTopLeftPosition.y + ySeparationDnCenters);
+            DrawNode.addNodeToGraphics(g2d, egressNode, nodePos, fontMetrics, regularInterlineSpacePixels, null);
             final DrawLine link = new DrawLine(ingressNode, egressNode, ingressNode.posSouth(), egressNode.posNorth());
             DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels, lineStroke);
 
             drawnNodes.add(egressNode);
+
+            if (maxWidth < nodePos.x) maxWidth = nodePos.x;
         }
+
+        this.panelWidth = maxWidth < DEFAULT_WIDTH ? DEFAULT_WIDTH : maxWidth + (maxIconSize * 3);
     }
 }

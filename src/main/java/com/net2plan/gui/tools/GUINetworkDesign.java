@@ -46,7 +46,7 @@ import com.net2plan.gui.utils.onlineSimulationPane.OnlineSimulationPane;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.TopologyPanel;
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
@@ -133,20 +133,19 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
     @Override
-    public void undoRequested()
+    public void requestUndoAction()
     {
         if (inOnlineSimulationMode()) return;
 
         final Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> back = undoRedoManager.getNavigationBackElement();
         if (back == null) return;
-
         this.currentNetPlan = back.getFirst();
         this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, back.getSecond(), back.getThird());
         updateVisualizationAfterNewTopology();
     }
 
     @Override
-    public void redoRequested()
+    public void requestRedoAction()
     {
         if (inOnlineSimulationMode()) return;
 
@@ -154,6 +153,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         if (forward == null) return;
         this.currentNetPlan = forward.getFirst();
         this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, forward.getSecond(), forward.getThird());
+        updateVisualizationAfterNewTopology();
     }
 
     @Override
@@ -200,7 +200,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         /* Initialize the undo/redo manager, and set its initial design */
         this.undoRedoManager = new UndoRedoManager(this, MAXSIZEUNDOLISTCHANGES);
-        this.undoRedoManager.updateNavigationInformation_newNetPlanChange();
+        this.undoRedoManager.addNetPlanChange();
 
         onlineSimulationPane = new OnlineSimulationPane(this);
         executionPane = new OfflineExecutionPanel(this);
@@ -306,7 +306,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
     private JPanel configureLeftBottomPanel()
     {
-        focusPanel = new FocusPane(this);
+        this.focusPanel = new FocusPane(this);
         final JPanel focusPanelContainer = new JPanel(new BorderLayout());
         final JToolBar navigationToolbar = new JToolBar(JToolBar.VERTICAL);
         navigationToolbar.setRollover(true);
@@ -329,8 +329,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             {
                 backOrForward = (e.getSource() == btn_pickNavigationUndo) ? GUINetworkDesign.this.getVisualizationState().getPickNavigationBackElement() : GUINetworkDesign.this.getVisualizationState().getPickNavigationForwardElement();
                 if (backOrForward == null) break;
-                final NetworkElement ne = backOrForward.getFirst();
-                final Pair<Demand, Link> fr = backOrForward.getSecond();
+                final NetworkElement ne = backOrForward.getFirst(); // For network elements
+                final Pair<Demand, Link> fr = backOrForward.getSecond(); // For forwarding rules
                 if (ne != null)
                 {
                     if (ne.getNetPlan() != GUINetworkDesign.this.getDesign()) continue;
@@ -347,11 +347,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             } while (true);
             if (backOrForward != null)
             {
-                if (backOrForward.getFirst() != null)
-                    GUINetworkDesign.this.getVisualizationState().pickElement(backOrForward.getFirst());
-                else if (backOrForward.getSecond() != null)
-                    GUINetworkDesign.this.getVisualizationState().pickForwardingRule(backOrForward.getSecond());
+                if (backOrForward.getFirst() != null) GUINetworkDesign.this.getVisualizationState().pickElement(backOrForward.getFirst());
+                else if (backOrForward.getSecond() != null) GUINetworkDesign.this.getVisualizationState().pickForwardingRule(backOrForward.getSecond());
                 else GUINetworkDesign.this.getVisualizationState().resetPickedState();
+
                 GUINetworkDesign.this.updateVisualizationAfterPick();
             }
         };
@@ -365,14 +364,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         navigationToolbar.add(btn_pickNavigationUndo);
         navigationToolbar.add(btn_pickNavigationRedo);
 
-        focusPanelContainer.add(navigationToolbar, BorderLayout.WEST);
-        focusPanelContainer.add(focusPanel, BorderLayout.CENTER);
-
-        JPanel pane = new JPanel(new MigLayout("fill, insets 0 0 0 0"));
-        pane.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Focus panel"));
-        final JScrollPane scPane = new JScrollPane(focusPanelContainer, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        final JScrollPane scPane = new JScrollPane(focusPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scPane.getVerticalScrollBar().setUnitIncrement(20);
         scPane.getHorizontalScrollBar().setUnitIncrement(20);
+        scPane.setBorder(BorderFactory.createEmptyBorder());
 
         // Control the scroll
         scPane.getHorizontalScrollBar().addAdjustmentListener(e ->
@@ -382,7 +377,13 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             focusPanelContainer.repaint();
         });
 
-        pane.add(scPane, "grow");
+        focusPanelContainer.add(navigationToolbar, BorderLayout.WEST);
+        focusPanelContainer.add(scPane, BorderLayout.CENTER);
+
+        JPanel pane = new JPanel(new MigLayout("fill, insets 0 0 0 0"));
+        pane.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Focus panel"));
+
+        pane.add(focusPanelContainer, "grow");
         return pane;
     }
 
@@ -482,7 +483,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res = VisualizationState.generateCanvasDefaultVisualizationLayerInfo(getDesign());
         vs.setCanvasLayerVisibilityAndOrder(getDesign(), res.getFirst(), res.getSecond());
         updateVisualizationAfterNewTopology();
-        undoRedoManager.updateNavigationInformation_newNetPlanChange();
+        undoRedoManager.addNetPlanChange();
     }
 
 

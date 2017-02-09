@@ -42,9 +42,7 @@ import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement.LastRowAggregatedValue;
 import com.net2plan.gui.utils.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
-import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -234,7 +232,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
                         	callback.getVisualizationState ().pickResource(res);
                             callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            callback.getUndoRedoNavigationManager().addNetPlanChange();
                             break;
 
                         case COLUMN_CAPACITY:
@@ -243,7 +241,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
                         	callback.getVisualizationState ().pickResource(res);
                             callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            callback.getUndoRedoNavigationManager().addNetPlanChange();
                             break;
 
                         case COLUMN_PROCESSINGTIME:
@@ -252,7 +250,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
                         	callback.getVisualizationState ().pickResource(res);
                             callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            callback.getUndoRedoNavigationManager().addNetPlanChange();
                             break;
 
                         default:
@@ -441,7 +439,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                                 callback.getDesign().getResourceFromId((Long)itemId).remove();
                                 callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            	callback.getUndoRedoNavigationManager().addNetPlanChange();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -474,7 +472,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                                     res.remove();
                                 callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            	callback.getUndoRedoNavigationManager().addNetPlanChange();
                                 break;
                             }
                         }catch (Throwable ex) {
@@ -501,7 +499,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                         		for (Resource r : rowsInTheTable) r.remove();
                             callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                        	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                        	callback.getUndoRedoNavigationManager().addNetPlanChange();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -613,7 +611,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                                 0, capacityUnits, newBaseResources, 0, null);
                         callback.getVisualizationState().resetPickedState();
                     	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                    	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                    	callback.getUndoRedoNavigationManager().addNetPlanChange();
                         break;
                     }
                 }catch (Throwable ex) {
@@ -677,7 +675,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                         res.setCapacity(res.getCapacity() , newCapMap);
                         callback.getVisualizationState().resetPickedState();
                         callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                        callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                        callback.getUndoRedoNavigationManager().addNetPlanChange();
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to base resources");
                     }
@@ -712,7 +710,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                     		r.setCapacity(cap , null);
                     callback.getVisualizationState().resetPickedState();
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                	callback.getUndoRedoNavigationManager().addNetPlanChange();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to resources");
                 }
@@ -745,7 +743,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                     		r.setProcessingTimeToTraversingTrafficInMs(procTime);
                     callback.getVisualizationState().resetPickedState();
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                	callback.getUndoRedoNavigationManager().addNetPlanChange();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set processing time to resources");
                 }
@@ -767,7 +765,6 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
         if (getVisibleElementsInTable().isEmpty()) return;
     	callback.getVisualizationState ().pickResource(callback.getDesign().getResourceFromId((long) itemId));
         callback.updateVisualizationAfterPick();
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
     }
 
     private class ClassAwareTableModelImpl extends ClassAwareTableModel

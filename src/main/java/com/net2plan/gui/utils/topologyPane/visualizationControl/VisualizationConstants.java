@@ -1,4 +1,4 @@
-package com.net2plan.gui.utils.topologyPane;
+package com.net2plan.gui.utils.topologyPane.visualizationControl;
 
 import java.awt.BasicStroke;
 import java.awt.Color;

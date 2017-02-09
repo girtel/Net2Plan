@@ -28,8 +28,6 @@ import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.topologyPane.GUILink;
 import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.plugins.ITopologyCanvas;
@@ -112,7 +110,6 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
             if (node != null) {
                 callback.getVisualizationState().pickNode(node);
                 callback.updateVisualizationAfterPick();
-                callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
                 e.consume();
             } else {
                 GUILink link = canvas.getEdge(e);
@@ -122,8 +119,6 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
                 	{ 
                 		callback.getVisualizationState().pickLink(link.getAssociatedNetPlanLink());
                         callback.updateVisualizationAfterPick();
-                        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
-
                 	}
                     e.consume();
                 }
@@ -184,7 +179,7 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
                     else node.getNetPlan().addLink(startVertex.getAssociatedNetPlanNode(), node,0,0,200000,null);
                     callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals(); // implies a reset picked
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                    callback.getUndoRedoNavigationManager().addNetPlanChange();
     			}
                 //if (node == startVertex.getAssociatedNetPlanNode()) callback.resetPickedStateAndUpdateView();
             }

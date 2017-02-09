@@ -12,20 +12,20 @@
 
 package com.net2plan.gui.utils.topologyPane;
 
-import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_GUINODE_COLOR;
-import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP;
-import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.INCREASENODESIZEFACTORACTIVE;
+import static com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationConstants.DEFAULT_GUINODE_COLOR;
+import static com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP;
+import static com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationConstants.INCREASENODESIZEFACTORACTIVE;
 
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Paint;
 import java.awt.Shape;
 import java.net.URL;
-import java.util.Random;
 
 import javax.swing.Icon;
 
-import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationConstants;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;

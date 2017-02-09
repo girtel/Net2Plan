@@ -1,7 +1,6 @@
 package com.net2plan.gui.utils.topologyPane;
 
 import java.awt.BorderLayout;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
@@ -10,6 +9,7 @@ import java.util.Map;
 
 import javax.swing.*;
 
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
@@ -42,7 +42,11 @@ public class MultiLayerControlPanel extends JPanel
 
     private void fillPanel()
     {
-        this.add(new JScrollPane(multiLayerTable), BorderLayout.CENTER);
+        final JPanel auxPanel = new JPanel(new BorderLayout());
+        auxPanel.add(multiLayerTable);
+        auxPanel.add(multiLayerTable.getTableHeader(), BorderLayout.NORTH);
+
+        this.add(auxPanel, BorderLayout.CENTER);
         this.add(buttonPanel, BorderLayout.WEST);
     }
 
@@ -101,7 +105,6 @@ public class MultiLayerControlPanel extends JPanel
                 	vs.setCanvasLayerVisibilityAndOrder(netPlan , null , visibilityInfo);
                 	callback.getVisualizationState().resetPickedState();
                     callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
                 }
             } else if (src == btn_hideAllLayers)
             {
@@ -112,7 +115,6 @@ public class MultiLayerControlPanel extends JPanel
                 {
                 	vs.setCanvasLayerVisibilityAndOrder(netPlan , null , visibilityInfo);
                     callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
                 }
             } else if (src == btn_sortLayerByIndex)
             {
@@ -123,7 +125,6 @@ public class MultiLayerControlPanel extends JPanel
                 {
                     vs.setCanvasLayerVisibilityAndOrder(netPlan, layerIndexOrderMap , null);
                     callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
                 }
             } else if (src == btn_sortLayersByTopology)
             {
@@ -134,20 +135,17 @@ public class MultiLayerControlPanel extends JPanel
                 {
                     vs.setCanvasLayerVisibilityAndOrder(netPlan, layerIndexOrderMap , null);
                     callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
                 }
             } else if (src == btn_showAllLayerLinks)
             {
                 for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
                     vs.setLayerLinksVisibilityInCanvas(networkLayer, true);
                 callback.updateVisualizationJustCanvasLinkNodeVisibilityOrColor ();
-                callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
             } else if (src == btn_hideAllLayerLinks)
             {
                 for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
                     vs.setLayerLinksVisibilityInCanvas(networkLayer, false);
                 callback.updateVisualizationJustCanvasLinkNodeVisibilityOrColor ();
-                callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
             }
 
             refreshTable();

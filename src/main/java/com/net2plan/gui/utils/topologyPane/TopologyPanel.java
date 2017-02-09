@@ -23,6 +23,9 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 
 import com.net2plan.gui.utils.*;
+import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMException;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationConstants;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import org.apache.commons.collections15.BidiMap;
 
 import com.google.common.collect.Sets;
@@ -30,11 +33,9 @@ import com.net2plan.gui.utils.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
 import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.DialogType;
@@ -58,10 +59,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JButton btn_npChangeUndo, btn_npChangeRedo;
     private final JToggleButton btn_showLowerLayerInfo, btn_showUpperLayerInfo, btn_showThisLayerInfo;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
-    private final JPopUpButton btn_multilayer;
-    private final JPopupMenu multiLayerPopUp;
-    private final JButton btn_tableControlWindow;
     private final JToggleButton btn_osmMap;
+    private final JButton btn_tableControlWindow;
     private final JLabel position;
     private final JPanel canvasPanel;
     private final MultiLayerControlPanel multilayerControlPanel;
@@ -133,33 +132,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.setOpaque(false);
         toolbar.setBorderPainted(false);
 
-//        layerChooser = new WiderJComboBox();
-//        layerChooserPane = new JPanel(new BorderLayout());
-//        layerChooserPane.add(new JLabel("Select layer: "), BorderLayout.WEST);
-//        layerChooserPane.add(layerChooser, BorderLayout.CENTER);
-//        layerChooser.addActionListener(new ActionListener()
-//        {
-//            @Override
-//            public void actionPerformed(ActionEvent e)
-//            {
-//                Object selectedItem = layerChooser.getSelectedItem();
-//                if (!(selectedItem instanceof StringLabeller))
-//                    ErrorHandling.showErrorDialog("Bad object", "Error selecting layer");
-//
-//                final long newDefaultLayerId = (Long) ((StringLabeller) selectedItem).getObject();
-//                final NetPlan currentState = callback.getDesign();
-//                final NetworkLayer layer = currentState.getNetworkLayerFromId(newDefaultLayerId);
-////				System.out.println ("Select layer: layerId " + layerId + ", layer: " + layer);
-//                if (layer == null) throw new RuntimeException("Bad: " + newDefaultLayerId);
-//                currentState.setNetworkLayerDefault(layer);
-//
-//                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
-//            }
-//        });
-
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.add(toolbar, BorderLayout.NORTH);
-//        topPanel.add(layerChooserPane, BorderLayout.SOUTH);
 
         add(topPanel, BorderLayout.NORTH);
 
@@ -231,9 +205,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_tableControlWindow.setToolTipText("Show the network topology control window.");
 
         // MultiLayer control window
-        multiLayerPopUp = new JPopupMenu();
+        JPopupMenu multiLayerPopUp = new JPopupMenu();
         multiLayerPopUp.add(multilayerControlPanel);
-        btn_multilayer = new JPopUpButton("", multiLayerPopUp);
+        JPopUpButton btn_multilayer = new JPopUpButton("", multiLayerPopUp);
 
         btn_reset = new JButton("Reset");
         btn_reset.setToolTipText("Reset the user interface");
@@ -287,6 +261,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_npChangeUndo.addActionListener(this);
         btn_npChangeRedo.addActionListener(this);
         btn_osmMap.addActionListener(this);
+        btn_tableControlWindow.addActionListener(this);
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
@@ -446,7 +421,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+            callback.getUndoRedoNavigationManager().addNetPlanChange();
         } else if (src == btn_increaseInterLayerDistance)
         {
             if (vs.getCanvasNumberOfVisibleLayers() == 1) return;
@@ -484,10 +459,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             canvas.refresh();
         } else if (src == btn_npChangeUndo)
         {
-            callback.undoRequested();
+            callback.requestUndoAction();
         } else if (src == btn_npChangeRedo)
         {
-            callback.redoRequested();
+            callback.requestRedoAction();
         } else if (src == btn_tableControlWindow)
         {
             WindowController.showTablesWindow(true);
@@ -495,10 +470,16 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         {
             if (btn_osmMap.isSelected())
             {
-                switchOSMSupport(true);
+                try
+                {
+                    setOSMSupportTo(true);
+                } catch (OSMException ex)
+                {
+                    btn_osmMap.setSelected(false);
+                }
             } else if (!btn_osmMap.isSelected())
             {
-                switchOSMSupport(false);
+                setOSMSupportTo(false);
             }
         } else if (src == btn_increaseNodeSize)
         {
@@ -569,18 +550,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         return canvas;
     }
 
-//    private StringLabeller getLayerItem(long layerId)
-//    {
-//        int numLayers = layerChooser.getItemCount();
-//        for (int l = 0; l < numLayers; l++)
-//        {
-//            StringLabeller item = (StringLabeller) layerChooser.getItemAt(l);
-//            if (layerId == (Long) item.getObject()) return item;
-//        }
-//
-//        throw new RuntimeException("Bad");
-//    }
-
     /**
      * Loads a network design from a {@code .n2p} file.
      *
@@ -597,6 +566,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             int rc = fc_netPlan.showOpenDialog(null);
             if (rc != JFileChooser.APPROVE_OPTION) return;
 
+            // Disable OSM while loading the new topology
+            boolean isOSMRunning = canvas.isOSMRunning();
+            if (isOSMRunning) setOSMSupportTo(false);
+
             NetPlan aux = fc_netPlan.readNetPlan();
 
             aux.checkCachesConsistency();
@@ -607,7 +580,19 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+            callback.getUndoRedoNavigationManager().addNetPlanChange();
+
+            // Reactivating the OSM Support
+            if  (isOSMRunning)
+            {
+                try
+                {
+                    setOSMSupportTo(true);
+                } catch (OSMException ex)
+                {
+                    btn_osmMap.setSelected(false);
+                }
+            }
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
@@ -633,7 +618,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+            callback.getUndoRedoNavigationManager().addNetPlanChange();
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
@@ -687,7 +672,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                 }
                 callback.getVisualizationState().resetPickedState();
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND, NetworkElementType.MULTICAST_DEMAND));
-                callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                callback.getUndoRedoNavigationManager().addNetPlanChange();
             } catch (Throwable ex)
             {
                 callback.getDesign().assignFrom(aux_netPlan);
@@ -745,29 +730,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         }
     }
 
-//    /**
-//     * Allows setting the current layer.
-//     *
-//     * @param layer Layer identifier
-//     * @since 0.3.1
-//     */
-//    public void selectLayer(long layer)
-//    {
-//        long currentLayerId = (Long) ((StringLabeller) layerChooser.getSelectedItem()).getObject();
-//        if (layer == currentLayerId) return;
-//
-//        layerChooser.setSelectedItem(getLayerItem(layer));
-//    }
-//
-//    /**
-//     * Configures the topology panel to allow (or not) loading of external traffic demand files.
-//     *
-//     * @param isAllowed Indicates whether or not it is allowed to load traffic demand files.
-//     * @since 0.3.0
-//     */
-//    public void setAllowLoadTrafficDemand(boolean isAllowed) {
-//        btn_loadDemand.setVisible(isAllowed);
-//    }
 
     /**
      * Take a snapshot of the canvas.
@@ -784,37 +746,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         multilayerControlPanel.refreshTable();
     }
 
-//    /**
-//     * Updates the layer chooser.
-//     *
-//     * @since 0.3.1
-//     */
-//    public final void updateLayerChooser()
-//    {
-//        ActionListener[] al = layerChooser.getActionListeners();
-//        for (ActionListener a : al) layerChooser.removeActionListener(a);
-//
-//        layerChooser.removeAllItems();
-//
-//        NetPlan currentState = callback.getDesign();
-//
-//        Collection<Long> layerIds = currentState.getNetworkLayerIds();
-//
-//        if (ErrorHandling.isDebugEnabled()) currentState.checkCachesConsistency();
-//
-//        for (long layerId : layerIds)
-//            layerChooser.addItem(StringLabeller.of(layerId, createLayerName(layerId)));
-//
-//        for (ActionListener a : al) layerChooser.addActionListener(a);
-//
-//        layerChooser.setSelectedIndex(currentState.getNetworkLayerDefault().getIndex()); // PABLO: AQUI SE PIERDEN LOS LINKS!!!!
-//
-//        layerChooserPane.setVisible(layerChooser.getItemCount() > 1);
-//
-//        revalidate();
-//    }
-
-    private void switchOSMSupport(final boolean doSwitch)
+    private void setOSMSupportTo(final boolean doSwitch)
     {
         if (doSwitch)
             canvas.runOSMSupport();

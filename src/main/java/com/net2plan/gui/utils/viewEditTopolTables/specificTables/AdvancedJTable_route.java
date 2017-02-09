@@ -279,7 +279,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                         	callback.getVisualizationState ().pickRoute(route);
                             callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            callback.getUndoRedoNavigationManager().addNetPlanChange();
                             break;
 
                         case COLUMN_OCCUPIEDCAPACITY:
@@ -287,7 +287,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                         	callback.getVisualizationState ().pickRoute(route);
                             callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            callback.getUndoRedoNavigationManager().addNetPlanChange();
                             break;
 
                         default:
@@ -419,7 +419,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                                 netPlan.getRouteFromId((long) itemId).remove();
                                 callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                            	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            	callback.getUndoRedoNavigationManager().addNetPlanChange();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -446,7 +446,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                         		for (Route r : routeRowsInTheTable) r.remove();
                             callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                        	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                        	callback.getUndoRedoNavigationManager().addNetPlanChange();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -479,7 +479,6 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
         if (getVisibleElementsInTable().isEmpty()) return;
     	callback.getVisualizationState ().pickRoute(callback.getDesign().getRouteFromId((long) itemId));
         callback.updateVisualizationAfterPick();
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
     }
 
     private JMenuItem getAddOption() {
@@ -491,7 +490,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                     createRouteGUI(callback);
                     callback.getVisualizationState().resetPickedState();
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                	callback.getUndoRedoNavigationManager().addNetPlanChange();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
@@ -799,6 +798,11 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
             final int E = links.size();
             Map<Link, Double> linkCostMap = new HashMap<Link, Double>();
             List<Route> addedRoutes = new LinkedList<Route>();
+
+            // Ask for current element removal
+            final int answer = JOptionPane.showConfirmDialog(null, "Remove all existing routes?", "", JOptionPane.YES_NO_OPTION);
+            if (answer == JOptionPane.OK_OPTION) netPlan.removeAllRoutes(netPlan.getNetworkLayerDefault());
+
             for (Link link : netPlan.getLinks())
             {
                 linkCostMap.put(link, isMinHops ? 1 : link.getLengthInKm());
@@ -865,7 +869,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
             }
             callback.getVisualizationState().resetPickedState();
         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-        	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+        	callback.getUndoRedoNavigationManager().addNetPlanChange();
         }
     }
 
@@ -931,7 +935,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                 route.addBackupRoute(backupRoute);
                 callback.getVisualizationState().resetPickedState();
             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-            	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+            	callback.getUndoRedoNavigationManager().addNetPlanChange();
 
                 backupRouteSelector.removeItem(selectedItem);
                 if (backupRouteSelector.getItemCount() == 0) addSegment_pnl.setVisible(false);
@@ -974,7 +978,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                     netPlan.getRouteFromId(routeId).removeBackupRoute(backupRoute);
                     callback.getVisualizationState().resetPickedState();
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                	callback.getUndoRedoNavigationManager().addNetPlanChange();
 
                     String segmentLabel = "Backup route id " + backupRouteId + 
                     		": path = " + getSequenceLinkResourceIndexes(backupRoute) + 

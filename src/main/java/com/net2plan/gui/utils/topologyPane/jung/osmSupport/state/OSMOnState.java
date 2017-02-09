@@ -3,8 +3,8 @@ package com.net2plan.gui.utils.topologyPane.jung.osmSupport.state;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.topologyPane.GUINode;
-import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMMapController;
+import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMException;
+import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMController;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
@@ -14,7 +14,6 @@ import org.jxmapviewer.viewer.GeoPosition;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -28,9 +27,9 @@ class OSMOnState implements OSMState
 {
     private final IVisualizationCallback callback;
     private final ITopologyCanvas canvas;
-    private final OSMMapController mapController;
+    private final OSMController mapController;
 
-    OSMOnState(final IVisualizationCallback callback, final ITopologyCanvas canvas, final OSMMapController mapController)
+    OSMOnState(final IVisualizationCallback callback, final ITopologyCanvas canvas, final OSMController mapController)
     {
         this.callback = callback;
         this.canvas = canvas;
@@ -70,10 +69,10 @@ class OSMOnState implements OSMState
         final double scale = canvas.getCurrentCanvasScale();
         final Point2D swingPoint = new Point2D.Double(pos.getX() * scale, -pos.getY() * scale);
 
-        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(swingPoint);
-        if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
+        final GeoPosition geoPosition = OSMController.OSMMapUtils.convertPointToGeo(swingPoint);
+        if (!OSMController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
         {
-            throw new OSMMapController.OSMMapException("The node is out of the map's bounds", "Problem while adding node");
+            throw new OSMException("The node is out of the map's bounds", "Problem while adding node");
         }
 
         final NetPlan netPlan = callback.getDesign();
@@ -81,7 +80,7 @@ class OSMOnState implements OSMState
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
         mapController.refreshTopologyAlignment();
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+        callback.getUndoRedoNavigationManager().addNetPlanChange();
     }
 
     @Override
@@ -91,7 +90,7 @@ class OSMOnState implements OSMState
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         callback.updateVisualizationAfterChanges(Sets.newHashSet(Constants.NetworkElementType.NODE));
         mapController.refreshTopologyAlignment();
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+        callback.getUndoRedoNavigationManager().addNetPlanChange();
     }
 
     @Override
@@ -129,9 +128,9 @@ class OSMOnState implements OSMState
     {
         final Point2D jungPoint = canvas.getCanvasPointFromScreenPoint(pos);
 
-        final GeoPosition geoPosition = OSMMapController.OSMMapUtils.convertPointToGeo(jungPoint);
+        final GeoPosition geoPosition = OSMController.OSMMapUtils.convertPointToGeo(jungPoint);
 
-        if (!OSMMapController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
+        if (!OSMController.OSMMapUtils.isInsideBounds(geoPosition.getLongitude(), geoPosition.getLatitude()))
         {
             return null;
         }

@@ -1,6 +1,6 @@
 package com.net2plan.gui.utils.focusPane;
 
-import static com.net2plan.gui.utils.topologyPane.VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP;
+import static com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -18,8 +18,8 @@ import java.util.List;
 
 import javax.swing.*;
 
-import com.net2plan.gui.utils.topologyPane.VisualizationConstants;
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationConstants;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;

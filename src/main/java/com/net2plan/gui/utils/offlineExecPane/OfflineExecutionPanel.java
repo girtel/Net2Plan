@@ -5,7 +5,6 @@ import java.awt.event.ActionListener;
 import java.io.Closeable;
 import java.io.File;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 
 import javax.swing.JButton;
@@ -18,7 +17,7 @@ import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.RunnableSelector;
 import com.net2plan.gui.utils.ThreadExecutionController;
-import com.net2plan.gui.utils.topologyPane.VisualizationState;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -108,7 +107,7 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
     				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
     		vs.setCanvasLayerVisibilityAndOrder(mainWindow.getDesign() , res.getFirst() , res.getSecond());
             mainWindow.updateVisualizationAfterNewTopology();
-            mainWindow.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+            mainWindow.getUndoRedoNavigationManager().addNetPlanChange();
             String outMessage = String.format("Algorithm executed successfully%nExecution time: %.3g s%nExit message: %s", execTime, out);
             JOptionPane.showMessageDialog(null, outMessage, "Solve design", JOptionPane.PLAIN_MESSAGE);
         } catch (Throwable ex) {

@@ -276,7 +276,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                         	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                         	callback.getVisualizationState().pickDemand(demand);
                             callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            callback.getUndoRedoNavigationManager().addNetPlanChange();
                             break;
 
                         default:
@@ -412,7 +412,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                             	demand.remove();
                             	callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                            	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            	callback.getUndoRedoNavigationManager().addNetPlanChange();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -440,7 +440,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                         	
                         	callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                        	callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                        	callback.getUndoRedoNavigationManager().addNetPlanChange();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -472,7 +472,6 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
     {
     	callback.getVisualizationState ().pickDemand(callback.getDesign().getDemandFromId((long)itemId));
         callback.updateVisualizationAfterPick();
-        callback.getUndoRedoNavigationManager().updateNavigationInformation_onlyVisualizationChange();
     }
 
     private List<JComponent> getExtraAddOptions() {
@@ -573,7 +572,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                 	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
                 	callback.getVisualizationState ().pickLink(e);
                     callback.updateVisualizationAfterPick();
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                    callback.getUndoRedoNavigationManager().addNetPlanChange();
 
                 } else 
                 {
@@ -581,7 +580,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                 	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                 	callback.getVisualizationState ().pickDemand(d);
                     callback.updateVisualizationAfterPick();
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                    callback.getUndoRedoNavigationManager().addNetPlanChange();
                 }
 
                 break;
@@ -609,7 +608,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
             }
         	callback.getVisualizationState().resetPickedState();
             callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+            callback.getUndoRedoNavigationManager().addNetPlanChange();
         }
     }
 
@@ -652,7 +651,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                     for (Demand d : tableVisibleDemands) d.setOfferedTraffic(h_d);
                 	callback.getVisualizationState().resetPickedState();
                     callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                    callback.getUndoRedoNavigationManager().addNetPlanChange();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set offered traffic to all demands in the table");
                 }
@@ -684,7 +683,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                     for (Demand d : tableVisibleDemands) d.setOfferedTraffic(d.getOfferedTraffic() * scalingFactor);
                     callback.getVisualizationState().resetPickedState();
                     callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                    callback.getUndoRedoNavigationManager().addNetPlanChange();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to scale demand offered traffics");
                 }
@@ -769,7 +768,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                     }
                     callback.getVisualizationState().resetPickedState();
                     callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                    callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                    callback.getUndoRedoNavigationManager().addNetPlanChange();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set traversed resource types");
                 }
@@ -789,7 +788,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                         model.setValueAt("", row, 3);
                     	callback.getVisualizationState().resetPickedState();
                         callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                        callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                        callback.getUndoRedoNavigationManager().addNetPlanChange();
                     }
                 });
 
@@ -826,7 +825,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                                 netPlan.getDemandFromId(demandId).coupleToNewLinkCreated(netPlan.getNetworkLayerFromId(layerId));
                             	callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.LINK));
-                                callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                                callback.getUndoRedoNavigationManager().addNetPlanChange();
                                 break;
                             } catch (Throwable ex) {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating upper layer link from demand");
@@ -907,7 +906,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                                 netPlan.getDemandFromId(demandId).coupleToUpperLayerLink(netPlan.getLinkFromId(linkId));
                             	callback.getVisualizationState().resetPickedState();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.LINK));
-                                callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                                callback.getUndoRedoNavigationManager().addNetPlanChange();
                                 break;
                             } catch (Throwable ex) {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error coupling upper layer link to demand");
@@ -935,7 +934,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                             for (int i = 0; i < numRows; i++) model.setValueAt("", i, 3);
                         	callback.getVisualizationState().resetPickedState();
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND));
-                            callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                            callback.getUndoRedoNavigationManager().addNetPlanChange();
                         }
                     });
                 }
@@ -976,7 +975,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
 
                                     callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND , NetworkElementType.LINK));
-                                    callback.getUndoRedoNavigationManager().updateNavigationInformation_newNetPlanChange();
+                                    callback.getUndoRedoNavigationManager().addNetPlanChange();
                                     break;
                                 } catch (Throwable ex) {
                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating upper layer links");
