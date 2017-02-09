@@ -93,7 +93,7 @@ public class Online_evProc_ipOverWdm extends IEventProcessor
 	{
 		/* Initialize all InputParameter objects defined in this object (this uses Java reflection) */
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
-		if (!ipOverWdmNetworkRecoveryType.getString().equals("1+1-lps-OSPF-rerouting") && !wdmProtectionTypeToNewRoutes.getString().equals ("none")) throw new Net2PlanException ("The type of 1+1 protection can only be specified in network recovery uses lightpath protection");
+		if (ipOverWdmNetworkRecoveryType.getString().equals("1+1-lps-OSPF-rerouting") && wdmProtectionTypeToNewRoutes.getString().equals ("none")) throw new Net2PlanException ("The type of 1+1 protection can only be specified in network recovery uses lightpath protection");
 		
 		this.ipLayer = ipLayerIndex.getInt () == -1? initialNetPlan.getNetworkLayerDefault() : initialNetPlan.getNetworkLayer(ipLayerIndex.getInt ());
 		this.wdmLayer = wdmLayerIndex.getInt () == -1? initialNetPlan.getNetworkLayerDefault() : initialNetPlan.getNetworkLayer(wdmLayerIndex.getInt ());

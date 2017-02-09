@@ -1,7 +1,9 @@
 package com.net2plan.examples.general.onlineSim;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +23,7 @@ import com.net2plan.libraries.SRGUtils.SharedRiskModel;
 import com.net2plan.libraries.WDMUtils;
 import com.net2plan.utils.InputParameter;
 
-public class Online_evGen_ipOverWdmTest
+public class Online_evGen_wdmTest
 {
 	private NetPlan np;
 	private int wdmLayerIndex, ipLayerIndex;
@@ -49,8 +51,8 @@ public class Online_evGen_ipOverWdmTest
 	@Test
 	public void test()
 	{
-		final IEventGenerator generator = new Online_evGen_ipOverWdm ();
-		final IEventProcessor processor = new Online_evProc_ipOverWdm ();
+		final IEventGenerator generator = new Online_evGen_wdm();
+		final IEventProcessor processor = new Online_evProc_wdm ();
 
 		final Map<String,String> simulationParameters = new HashMap<> ();
 		simulationParameters.put("disableStatistics" , "false");
@@ -62,11 +64,14 @@ public class Online_evGen_ipOverWdmTest
 		final Map<String,String> net2planParameters = ImmutableMap.of("precisionFactor" , "0.001");
 		
 		final Map<String,List<String>> generatorParameters = new HashMap <>();
-		generatorParameters.put("ipOverWdmFailureDefaultMTTFInHours" , Arrays.asList("10"));
-		generatorParameters.put("ipOverWdmFailureDefaultMTTRInHours" , Arrays.asList("3"));
-		generatorParameters.put("ipOverWDmFailureStatisticalPattern" , Arrays.asList("exponential-iid"));
-		generatorParameters.put("ipTFFastFluctuationType" , Arrays.asList("random-truncated-gaussian")); //Arrays.asList("none" , "random-truncated-gaussian"));
-		generatorParameters.put("ipTFSlowFluctuationType" , Arrays.asList("time-zone-based")); //Arrays.asList("none" , "time-zone-based"));
+		generatorParameters.put("_fail_failureModel" , Arrays.asList("perBidirectionalLinkBundle"));
+		generatorParameters.put("_tfFast_fluctuationType" , Arrays.asList("random-truncated-gaussian"));
+		generatorParameters.put("_trafficType" , Arrays.asList("connection-based-longrun" , "connection-based-incremental"));
+		generatorParameters.put("_tfSlow_fluctuationType" , Arrays.asList("time-zone-based")); 
+		generatorParameters.put("cac_arrivalsPattern" , Arrays.asList("random-exponential-arrivals-and-duration")); 
+		generatorParameters.put("trafficLayerId" , Arrays.asList("" + np.getNetworkLayer(wdmLayerIndex).getId())); 
+		generatorParameters.put("fail_statisticalPattern" , Arrays.asList("exponential-iid")); 
+		generatorParameters.put("lineRatesPerLightpath_Gbps" , Arrays.asList("10 0.5 ; 20 0.5")); 
 		final List<Map<String,String>> testsParamGenerator = InputParameter.getCartesianProductOfParameters (generatorParameters);
 		for (Map<String,String> paramsGeneratorChangingThisTest : testsParamGenerator)
 		{
@@ -78,9 +83,11 @@ public class Online_evGen_ipOverWdmTest
 			final Map<String,List<String>> processorParameters = new HashMap <>();
 			processorParameters.put("wdmNumFrequencySlotsPerFiber" , Arrays.asList("" + WDMUtils.getFiberNumFrequencySlots(np.getLink(0 , np.getNetworkLayer(wdmLayerIndex)))));
 			processorParameters.put("wdmRwaType" , Arrays.asList("srg-disjointness-aware-route-first-fit" , "alternate-routing" , "least-congested-routing" , "load-sharing"));
-			processorParameters.put("wdmProtectionTypeToNewRoutes" , Arrays.asList("none" , "1+1-link-disjoint" , "1+1-node-disjoint" , "1+1-srg-disjoint"));
+			processorParameters.put("wdmK" , Arrays.asList("5"));
+			processorParameters.put("wdmProtectionTypeToNewRoutes" , Arrays.asList("1+1-link-disjoint"));//Arrays.asList("none" , "1+1-link-disjoint" , "1+1-node-disjoint" , "1+1-srg-disjoint"));
+			processorParameters.put("wdmRemovePreviousLightpaths" , Arrays.asList("false"));
 			processorParameters.put("wdmTransponderTypesInfo" , Arrays.asList("10 1 1 9600 1 ; 20 1.5 2 9600 1"));
-			processorParameters.put("ipOverWdmNetworkRecoveryType" , Arrays.asList("static-lps-OSPF-rerouting" , "1+1-lps-OSPF-rerouting" , "lp-restoration-OSPF-rerouting"));
+			processorParameters.put("wdmRecoveryType" , Arrays.asList("protection"));// , "restoration" , "none"));
 			final List<Map<String,String>> testsParamProcessor = InputParameter.getCartesianProductOfParameters (processorParameters);
 			
 			for (Map<String,String> paramsProcessorChangingThisTest : testsParamProcessor)
@@ -89,9 +96,8 @@ public class Online_evGen_ipOverWdmTest
 				allParamsProcessorThisTest.putAll(paramsProcessorChangingThisTest);
 				System.out.println(allParamsProcessorThisTest);
 
-				if (allParamsProcessorThisTest.get("ipOverWdmNetworkRecoveryType").equals("1+1-lps-OSPF-rerouting") && 
-						allParamsProcessorThisTest.get("wdmProtectionTypeToNewRoutes").equals ("none")) continue;
-				
+				if (!allParamsProcessorThisTest.get("wdmRecoveryType").equals("protection") && 
+						!allParamsProcessorThisTest.get("wdmProtectionTypeToNewRoutes").equals ("none")) continue;
 				
 				final NetPlan npInput = np.copy ();
 				new OnlineTestUtils().runSimulation(np , generator , processor , simulationParameters , net2planParameters , 

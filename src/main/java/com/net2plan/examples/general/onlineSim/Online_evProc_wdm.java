@@ -41,6 +41,7 @@ import com.net2plan.utils.Triple;
 
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import cern.jet.math.tdouble.DoubleFunctions;
 
 /** Implements the reactions of a WDM network carrying lightpaths in a fixed or flexi grid of wavelengths. 
  * 
@@ -160,9 +161,11 @@ public class Online_evProc_wdm extends IEventProcessor
 		this.cplWdm11 = newRoutesHave11Protection? NetPlan.computeUnicastCandidate11PathList(cplWdm , protectionTypeCode): null;
 		
 		this.wavelengthFiberOccupancy = WDMUtils.getNetworkSlotAndRegeneratorOcupancy(initialNetPlan, true , wdmLayer).getFirst();
-		if (DEBUG) checkClashing (initialNetPlan); 
+		checkClashing (initialNetPlan); 
 		initialNetPlan.setLinkCapacityUnitsName("Frequency slots" , wdmLayer);
 
+//		System.out.println("wavelengthFiberOccupancy: " + wavelengthFiberOccupancy);
+		
 		for (Route r : initialNetPlan.getRoutes(wdmLayer))
 		{
 			WDMUtils.RSA thisRouteRWA = new WDMUtils.RSA (r , false);
@@ -226,17 +229,33 @@ public class Online_evProc_wdm extends IEventProcessor
 //				System.out.println ("------ ADD LP: rwa: " + rwa);
 					if (rwa != null)
 					{
+						System.out.println("rwa1: " + rwa.getFirst());
+						System.out.println("rwa2: " + rwa.getSecond());
 						if (!WDMUtils.isAllocatableRSASet(wavelengthFiberOccupancy , rwa.getFirst() , rwa.getSecond())) throw new RuntimeException ("Bad");
-						for (Link e : rwa.getFirst ().seqLinks) if (e.getNetPlan() != currentNetPlan) throw new RuntimeException ("Bad");
+						for (Link e : rwa.getFirst ().seqLinks) if (e.getNetPlan() != currentNetPlan) throw new RuntimeException ("Bad. e.getNetPlan is null?: " + (e.getNetPlan() ==null) + ", currentNp is null: " + (currentNetPlan == null));
 						for (Link e : rwa.getSecond ().seqLinks) if (e.getNetPlan() != currentNetPlan) throw new RuntimeException ("Bad");
-						
+						if (DEBUG) checkClashing (currentNetPlan); 
+						DoubleMatrix2D freqNow_se = WDMUtils.getNetworkSlotAndRegeneratorOcupancy(currentNetPlan, true , wdmLayer).getFirst();
+						if (!freqNow_se.equals(wavelengthFiberOccupancy))
+						{
+							System.out.println(freqNow_se.assign(wavelengthFiberOccupancy , DoubleFunctions.minusMult(1.0)));
+							throw new RuntimeException ();
+						} else System.out.println("ok");
 						final Demand wdmLayerDemand = addLpEvent.demand == null? currentNetPlan.addDemand(addLpEvent.ingressNode, addLpEvent.egressNode, lineRateThisLp_Gbps , null, wdmLayer) : addLpEvent.demand;
+						if (DEBUG) checkClashing (currentNetPlan); 
 						final Route wdmLayerRoute = WDMUtils.addLightpath(wdmLayerDemand, rwa.getFirst(), lineRateThisLp_Gbps);
-						WDMUtils.allocateResources(rwa.getFirst() , wavelengthFiberOccupancy , null);
+						if (DEBUG) checkClashing (currentNetPlan); 
 						if (rwa.getFirst().seqLinks.equals(rwa.getSecond().seqLinks)) throw new RuntimeException ("Both 1+1 same route");
+						if (DEBUG) checkClashing (currentNetPlan); 
 						final Route wdmLayerBackupRoute = WDMUtils.addLightpath(wdmLayerDemand, rwa.getSecond(), 0); // it is a backup, has no traffic carried then
+						if (DEBUG) checkClashing (currentNetPlan); 
 						wdmLayerRoute.addBackupRoute(wdmLayerBackupRoute);
+						if (!WDMUtils.isAllocatableRSASet(wavelengthFiberOccupancy , rwa.getSecond())) throw new RuntimeException ("Bad");
+						if (DEBUG) checkClashing (currentNetPlan); 
 						WDMUtils.allocateResources(rwa.getSecond() , wavelengthFiberOccupancy , null);
+						if (DEBUG) checkClashing (currentNetPlan); 
+						WDMUtils.allocateResources(rwa.getFirst() , wavelengthFiberOccupancy , null);
+						if (DEBUG) checkClashing (currentNetPlan); 
 						checkDisjointness(wdmLayerRoute.getSeqLinks() , rwa.getSecond().seqLinks , protectionTypeCode);
 						this.wdmRouteOriginalRwa.put (wdmLayerRoute , rwa);
 						this.transponderTypeOfNewLps.put(wdmLayerRoute , transponderTypeUsed);
@@ -567,7 +586,7 @@ public class Online_evProc_wdm extends IEventProcessor
 				for (Route currentRoute : existingRoutesBetweenPairOfNodes)
 				{
 					for (SharedRiskGroup srg : currentRoute.getSRGs()) if (affectingSRGs_primaryOrBackup.contains (srg)) numOverlappingSRGs ++;
-					Set<SharedRiskGroup> affectingSRGs = currentRoute.getBackupRoutes().get(0).getSRGs();
+					Set<SharedRiskGroup> affectingSRGs = currentRoute.hasBackupRoutes()? currentRoute.getBackupRoutes().get(0).getSRGs() : new HashSet<> ();
 					for (SharedRiskGroup srg : affectingSRGs) if (affectingSRGs_primaryOrBackup.contains(srg)) numOverlappingSRGs ++;
 				}
 				if (numOverlappingSRGs < cplChosenRoute_numSRGOverlappingRoutes) 
@@ -623,7 +642,13 @@ public class Online_evProc_wdm extends IEventProcessor
 		}
 		Pair<Integer,Integer> seqWavelengths = WDMUtils.spectrumAssignment_firstFitTwoRoutes(seqLinks_1, seqLinks_2, wavelengthFiberOccupancy,numSlots);
 		if (seqWavelengths != null) 
-			return Quadruple.of(true , seqWavelengths.getFirst () , seqWavelengths.getSecond() , worseCaseSpareCapacity); 
+		{
+			if (!WDMUtils.isAllocatableRSASet(wavelengthFiberOccupancy , new WDMUtils.RSA(seqLinks_1 , seqWavelengths.getFirst() , numSlots)))
+				throw new RuntimeException();
+			if (!WDMUtils.isAllocatableRSASet(wavelengthFiberOccupancy , new WDMUtils.RSA(seqLinks_2 , seqWavelengths.getSecond() , numSlots)))
+				throw new RuntimeException();
+			return Quadruple.of(true , seqWavelengths.getFirst () , seqWavelengths.getSecond() , worseCaseSpareCapacity);
+		}
 		else return Quadruple.of(false,-1,-1,-1.0);
 	}
 

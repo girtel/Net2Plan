@@ -32,11 +32,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Route;
@@ -294,6 +294,15 @@ public class WDMUtils
 		 */
 		public final int [] seqRegeneratorsOccupancy_e; // as many coordinates as links traversed
 
+		
+		/* (non-Javadoc)
+		 * @see java.lang.Object#toString()
+		 */
+		public String toString () 
+		{
+			return "Seq links: " + seqLinks + ", seqFrequencySlots_se: " + seqFrequencySlots_se;
+		}
+		
 		/** Creates a RSA object reading the information from the existing Route object (and its WDM-related attributes). 
 		 * @param r the route object
 		 * @param initializeWithTheInitialState if {@code true}, the RSA object created gets the information from the route primary path: sequence of links, and if not, from the route current sequence of traversed links.
@@ -307,7 +316,8 @@ public class WDMUtils
 			{
 				if (!isNonNegativeInteger(r.getOccupiedCapacity())) throw new WDMException ("");
 				if (!isNonNegativeInteger(r.getOccupiedCapacityInNoFailureState())) throw new WDMException ("");
-				final IntMatrix2D candidateSeqFreqSlots = StringUtils.readIntMatrix(r.getAttribute(initializeWithTheInitialState? WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME));
+				final IntMatrix2D candidateSeqFreqSlots = StringUtils.readIntMatrix
+						(r.getAttribute(initializeWithTheInitialState? WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_FREQUENCYSLOTS_ATTRIBUTE_NAME));
 				this.seqFrequencySlots_se = candidateSeqFreqSlots.rows() > 0? candidateSeqFreqSlots : IntFactory2D.dense.make(0,this.seqLinks.size());
 				final int[] candidateSeqRegenerators = r.getAttribute(initializeWithTheInitialState? WDMUtils.SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME : WDMUtils.SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME) == null? new int [seqLinks.size()] : StringUtils.toIntArray(StringUtils.split(initializeWithTheInitialState? r.getAttribute(SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME): r.getAttribute(SEQUENCE_OF_REGENERATORS_ATTRIBUTE_NAME), " "));
 				this.seqRegeneratorsOccupancy_e = candidateSeqRegenerators.length == 0 ? new int[this.seqLinks.size()] : candidateSeqRegenerators;
@@ -909,8 +919,8 @@ public class WDMUtils
 				{
 					final int slotIndex = rsa.seqFrequencySlots_se.get(s,orderTravLink);
 					final int linkIndex = e.getIndex();
-					if (frequencySlot2FiberOccupancy_se.get (slotIndex , linkIndex) != 0) return false;
-					if (checkMatrix.get (slotIndex , linkIndex) != 0) return false;
+					if (frequencySlot2FiberOccupancy_se.get (slotIndex , linkIndex) != 0) return false; 
+					if (checkMatrix.get (slotIndex , linkIndex) != 0) return false; 
 					checkMatrix.set (slotIndex , linkIndex , 1);
 				}
 				orderTravLink ++;
@@ -1142,8 +1152,7 @@ public class WDMUtils
 		GraphUtils.checkRouteContinuity(seqFibers_1, Constants.CheckRoutingCycleType.NO_REPEAT_LINK);
 		GraphUtils.checkRouteContinuity(seqFibers_2, Constants.CheckRoutingCycleType.NO_REPEAT_LINK);
 		final int W = frequencySlot2FiberOccupancy_se.rows();
-		HashSet<Link> auxSet = new HashSet<Link> (seqFibers_1); auxSet.removeAll(seqFibers_2);
-		final boolean haveLinksInCommon = !auxSet.isEmpty();
+		final boolean haveLinksInCommon = !Sets.intersection(new HashSet<>(seqFibers_1)  , new HashSet<>(seqFibers_2)).isEmpty();
 		for(int initialSlot_1 = 0; initialSlot_1 < W - numContiguousSlotsRequired + 1; initialSlot_1 ++)
 		{
 			boolean freePath_1 = true;
@@ -1161,7 +1170,7 @@ public class WDMUtils
 				for (Link link : seqFibers_2)
 				{ 
 					for (int cont = 0 ; cont < numContiguousSlotsRequired ; cont ++)
-						if (frequencySlot2FiberOccupancy_se.get(initialSlot_2,link.getIndex()) != 0) { freePath_2 = false ; break; }
+						if (frequencySlot2FiberOccupancy_se.get(initialSlot_2 + cont,link.getIndex()) != 0) { freePath_2 = false ; break; }
 					if (!freePath_2) break;
 				}
 				if (!freePath_2) continue;
