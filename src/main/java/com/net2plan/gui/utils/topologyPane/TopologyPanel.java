@@ -59,6 +59,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JButton btn_npChangeUndo, btn_npChangeRedo;
     private final JToggleButton btn_showLowerLayerInfo, btn_showUpperLayerInfo, btn_showThisLayerInfo;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
+    private final JToggleButton btn_whatIfActivated;
     private final JToggleButton btn_osmMap;
     private final JButton btn_tableControlWindow;
     private final JLabel position;
@@ -171,6 +172,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showLinkIds.setToolTipText("Show/hide link utilization, measured as the ratio between the total traffic in the link (including that in protection segments) and total link capacity (including that reserved by protection segments)");
         btn_showNonConnectedNodes = new JToggleButton();
         btn_showNonConnectedNodes.setToolTipText("Show/hide non-connected nodes");
+        btn_whatIfActivated = new JToggleButton("W-I");
+        btn_whatIfActivated.setToolTipText("Is active or not the what-if analysis tool");
         btn_increaseNodeSize = new JButton();
         btn_increaseNodeSize.setToolTipText("Increase node size");
         btn_decreaseNodeSize = new JButton();
@@ -219,6 +222,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showNodeNames.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showNodeName.png")));
         btn_showLinkIds.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLinkUtilization.png")));
         btn_showNonConnectedNodes.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showNonConnectedNodes.png")));
+        //btn_whatIfActivated.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showNonConnectedNodes.png")));
         btn_zoomIn.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/zoomIn.png")));
         btn_zoomOut.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/zoomOut.png")));
         btn_zoomAll.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/zoomAll.png")));
@@ -244,6 +248,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showNodeNames.addActionListener(this);
         btn_showLinkIds.addActionListener(this);
         btn_showNonConnectedNodes.addActionListener(this);
+        btn_whatIfActivated.addActionListener(this);
         btn_zoomIn.addActionListener(this);
         btn_zoomOut.addActionListener(this);
         btn_zoomAll.addActionListener(this);
@@ -275,6 +280,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(btn_showNodeNames);
         toolbar.add(btn_showLinkIds);
         toolbar.add(btn_showNonConnectedNodes);
+        toolbar.add(btn_whatIfActivated);
         toolbar.add(new JToolBar.Separator());
         toolbar.add(btn_increaseNodeSize);
         toolbar.add(btn_decreaseNodeSize);
@@ -356,6 +362,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showNodeNames.setSelected(getVisualizationState().isCanvasShowNodeNames());
         btn_showLinkIds.setSelected(getVisualizationState().isCanvasShowLinkLabels());
         btn_showNonConnectedNodes.setSelected(getVisualizationState().isCanvasShowNonConnectedNodes());
+        btn_whatIfActivated.setSelected(getVisualizationState().isWhatIfAnalysisActive ());
 
         final ITopologyCanvasPlugin popupPlugin = new PopupMenuPlugin(callback, this.canvas);
         addPlugin(new PanGraphPlugin(callback, canvas, MouseEvent.BUTTON1_MASK));
@@ -400,6 +407,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         {
             vs.setCanvasShowNonConnectedNodes(btn_showNonConnectedNodes.isSelected());
             canvas.refresh();
+        } else if (src == btn_whatIfActivated)
+        {
+        	if (callback.inOnlineSimulationMode()) btn_whatIfActivated.setSelected(false);
+            vs.setWhatIfAnalysisActive(btn_whatIfActivated.isSelected());
         } else if (src == btn_takeSnapshot)
         {
             takeSnapshot();
