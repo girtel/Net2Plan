@@ -800,8 +800,11 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
             List<Route> addedRoutes = new LinkedList<Route>();
 
             // Ask for current element removal
-            final int answer = JOptionPane.showConfirmDialog(null, "Remove all existing routes?", "", JOptionPane.YES_NO_OPTION);
-            if (answer == JOptionPane.OK_OPTION) netPlan.removeAllRoutes(netPlan.getNetworkLayerDefault());
+            if (netPlan.hasRoutes(netPlan.getNetworkLayerDefault()))
+            {
+                final int answer = JOptionPane.showConfirmDialog(null, "Remove all existing routes?", "", JOptionPane.YES_NO_OPTION);
+                if (answer == JOptionPane.OK_OPTION) netPlan.removeAllRoutes(netPlan.getNetworkLayerDefault());
+            }
 
             for (Link link : netPlan.getLinks())
             {
