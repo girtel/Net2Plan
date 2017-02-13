@@ -2,14 +2,7 @@ package com.net2plan.gui.utils.focusPane;
 
 import static com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.FontMetrics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Point;
-import java.awt.Shape;
-import java.awt.Stroke;
+import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.net.URL;
 import java.util.ArrayList;
@@ -114,9 +107,10 @@ public class DrawNode
      * @param topLeftPosition
      * @param fontMetrics
      * @param interlineSpacePixels
+	 * @return Dimension indicating the south-east point of the icon
      */
-    static Point addNodeToGraphics (Graphics2D g2d , DrawNode dn , 
-    		Point topLeftPosition , FontMetrics fontMetrics , int interlineSpacePixels , Color rectangleColor)
+    static Dimension addNodeToGraphics (Graphics2D g2d , DrawNode dn ,
+										Point topLeftPosition , FontMetrics fontMetrics , int interlineSpacePixels , Color rectangleColor)
     {
 		/* create resource node,with URL  */
     	g2d.drawImage (dn.icon , topLeftPosition.x , topLeftPosition.y , null);
@@ -156,7 +150,7 @@ public class DrawNode
         	final int maxY = (int) Math.max(bottomRightPoint.y , yTopLeftCornerString - g2d.getFontMetrics().getAscent() + shapeText.getHeight());
         	bottomRightPoint = new Point (maxX , maxY);
     	}
-    	return bottomRightPoint;
+    	return new Dimension(bottomRightPoint.x, bottomRightPoint.y);
     }
 
 	public Image getIcon()

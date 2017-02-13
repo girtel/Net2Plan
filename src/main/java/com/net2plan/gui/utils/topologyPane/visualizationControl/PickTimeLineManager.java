@@ -51,7 +51,7 @@ class PickTimeLineManager
         if (this.timelineMaxSize <= 1) return; // nothing is stored since nothing will be retrieved
         if ((pickedForwardingRule == null) && (pickedNetworkElement == null)) return;
 
-        if (!timeLine.isEmpty())
+        if (!timeLine.isEmpty()) // TODO
         {
             // Do not add the same element that is currently be clicked upon.
             if (Pair.unmodifiableOf(this.pickedNetworkElement, pickedForwardingRule).equals(timeLine.get(currentElementInTimelineCursor)))

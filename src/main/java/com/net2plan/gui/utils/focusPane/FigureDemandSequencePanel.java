@@ -30,7 +30,7 @@ public class FigureDemandSequencePanel extends FigureSequencePanel
     @Override
     public Dimension getPreferredSize()
     {
-        return preferredSize == null? new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT) : preferredSize;
+        return preferredSize == null ? DEFAULT_DIMENSION : preferredSize;
     }
 
     @Override
@@ -63,22 +63,16 @@ public class FigureDemandSequencePanel extends FigureSequencePanel
         final int xSeparationDnCenters = maxIconSize * 3;
 
     	/* Initial dn */
-        Point auxPoint;
-        Point southEastPoint = new Point (0,0);
-        auxPoint = DrawNode.addNodeToGraphics(g2d, ingressNode, initialDnTopLeftPosition, fontMetrics, regularInterlineSpacePixels, null);
-        southEastPoint = southEastPoint(southEastPoint , auxPoint);
-        auxPoint = DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + xSeparationDnCenters, initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
-        southEastPoint = southEastPoint(southEastPoint , auxPoint);
+        DrawNode.addNodeToGraphics(g2d, ingressNode, initialDnTopLeftPosition, fontMetrics, regularInterlineSpacePixels, null);
+
+        // The furthest node of the drawing.
+        final Dimension windowDimension = DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + xSeparationDnCenters, initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
 
         drawnNodes.add(ingressNode);
         drawnNodes.add(egressNode);
 
         final DrawLine link = new DrawLine(ingressNode, egressNode, ingressNode.posEast(), egressNode.posWest());
-        auxPoint = DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels,lineStroke);
-        southEastPoint = southEastPoint(southEastPoint , auxPoint);
-        preferredSize = new Dimension (southEastPoint.x + XYMARGIN , southEastPoint.y + XYMARGIN);
+        DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels,lineStroke);
+        preferredSize = new Dimension (windowDimension.width + XYMARGIN , windowDimension.height + XYMARGIN);
     }
-    
-    private static Point southEastPoint (Point a , Point b) { return new Point (Math.max(a.x , b.x), Math.max(a.y,b.y)); }
-    
 }
