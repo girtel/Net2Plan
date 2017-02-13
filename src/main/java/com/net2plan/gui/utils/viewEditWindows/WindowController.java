@@ -17,9 +17,10 @@ public class WindowController
     private static GUIWindow reportWindow;
     private static GUIWindow offlineWindow;
     private static GUIWindow onlineWindow;
+    private static GUIWindow whatifWindow;
 
     // WindowToTab.network must always be the first one.
-    private final static WindowToTab[] tabCorrectOrder = {WindowToTab.network, WindowToTab.offline, WindowToTab.online, WindowToTab.report};
+    private final static WindowToTab[] tabCorrectOrder = {WindowToTab.network, WindowToTab.offline, WindowToTab.online, WindowToTab.whatif , WindowToTab.report};
 
     public static void buildTableControlWindow(final JComponent component)
     {
@@ -122,11 +123,37 @@ public class WindowController
         onlineWindow.buildWindow(component);
     }
 
+    public static void buildWhatifWindow(final JComponent component)
+    {
+        final String tabName = WindowToTab.getTabName(WindowToTab.whatif);
+
+        whatifWindow = new GUIWindow()
+        {
+            @Override
+            public String getTitle()
+            {
+                return "Net2Plan - " + tabName;
+            }
+        };
+
+        whatifWindow.addWindowListener(new CloseWindowAdapter(tabName, component));
+
+        whatifWindow.buildWindow(component);
+    }
+
     public static void showOnlineWindow()
     {
         if (onlineWindow != null)
         {
             onlineWindow.showWindow();
+        }
+    }
+
+    public static void showWhatifWindow()
+    {
+        if (whatifWindow != null)
+        {
+            whatifWindow.showWindow();
         }
     }
 
@@ -179,11 +206,13 @@ public class WindowController
         network(WindowToTab.networkWindowName),
         offline(WindowToTab.offlineWindowName),
         online(WindowToTab.onlineWindowName),
+        whatif(WindowToTab.whatifWindowName),
         report(WindowToTab.reportWindowName);
 
         private final static String networkWindowName = "View/Edit network state";
         private final static String offlineWindowName = "Offline algorithms";
         private final static String onlineWindowName = "Online simulation";
+        private final static String whatifWindowName = "What-if analysis";
         private final static String reportWindowName = "View reports";
 
 
@@ -204,6 +233,8 @@ public class WindowController
                     return offline;
                 case WindowToTab.onlineWindowName:
                     return online;
+                case WindowToTab.whatifWindowName:
+                    return whatif;
                 case WindowToTab.reportWindowName:
                     return report;
             }
@@ -221,6 +252,8 @@ public class WindowController
                     return WindowToTab.offlineWindowName;
                 case online:
                     return WindowToTab.onlineWindowName;
+                case whatif:
+                    return WindowToTab.whatifWindowName;
                 case report:
                     return WindowToTab.reportWindowName;
             }

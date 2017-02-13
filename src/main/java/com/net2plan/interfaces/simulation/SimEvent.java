@@ -120,6 +120,30 @@ public class SimEvent implements Comparable<SimEvent>
 	};
 
 	/**
+	 * This class represents the request to modify an existing Demand.
+	 */
+	public static class MulticastDemandModify
+	{
+		public final MulticastDemand demand; public final double offeredTraffic; public final boolean modificationIsRelativeToCurrentOfferedTraffic;
+
+		/**
+		 * Default constructor.
+		 * @param demand Demand to be modified
+		 * @param offeredTraffic New offered traffic
+		 * @param modificationIsRelativeToCurrentOfferedTraffic Wheter or not the modification is relative to the current offered traffic
+		 */
+		public MulticastDemandModify (MulticastDemand demand , double offeredTraffic , boolean modificationIsRelativeToCurrentOfferedTraffic) { this.demand = demand; this.offeredTraffic = offeredTraffic; this
+			.modificationIsRelativeToCurrentOfferedTraffic = modificationIsRelativeToCurrentOfferedTraffic; }
+
+		@Override
+		public String toString()
+		{
+			return this.getClass ().getSimpleName() + " [Multicast demand=" + demand + ", offeredTraffic=" + offeredTraffic + ", modificationIsRelativeToCurrentOfferedTraffic=" + modificationIsRelativeToCurrentOfferedTraffic + "]";
+		} 
+		
+	};
+
+	/**
 	 * This class represents the request to add a new Route.
 	 */
 	public static class RouteAdd

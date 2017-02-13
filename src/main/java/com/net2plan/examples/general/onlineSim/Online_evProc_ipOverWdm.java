@@ -181,13 +181,13 @@ public class Online_evProc_ipOverWdm extends IEventProcessor
 			if (ev.linksToDown != null) for (Link e : ev.linksToDown) if (e.getLayer () == ipLayer) ipLinksDown.add (e); else if (e.getLayer () == wdmLayer) wdmLinksDown.add (e); 
 			if (ev.linksToUp != null) for (Link e : ev.linksToUp) if (e.getLayer () == ipLayer) ipLinksUp.add (e); else if (e.getLayer () == wdmLayer) wdmLinksUp.add (e); 
 
-//			System.out.println ("-- original ip links up: " + ipLinksUp);
-//			System.out.println ("-- original ip links down: " + ipLinksDown);
-//			System.out.println ("-- original wdm links up: " + wdmLinksUp);
-//			System.out.println ("-- original wdm links down: " + wdmLinksDown);
+			System.out.println ("-- original ip links up: " + ipLinksUp);
+			System.out.println ("-- original ip links down: " + ipLinksDown);
+			System.out.println ("-- original wdm links up: " + wdmLinksUp);
+			System.out.println ("-- original wdm links down: " + wdmLinksDown);
 			
 			/* Failures at WDM layer are processed */
-//			System.out.println ("-- process wdm links up/down: " + wdmLinksDown + ", wdmLinksUp: " + wdmLinksUp + ", ev.nodesToUp : " + ev.nodesToUp  + ", ev.nodesToDown: " +  ev.nodesToDown);
+			System.out.println ("-- process wdm links up/down: " + wdmLinksDown + ", wdmLinksUp: " + wdmLinksUp + ", ev.nodesToUp : " + ev.nodesToUp  + ", ev.nodesToDown: " +  ev.nodesToDown);
 			SimEvent.NodesAndLinksChangeFailureState evWdm = new SimEvent.NodesAndLinksChangeFailureState(ev.nodesToUp , ev.nodesToDown , wdmLinksUp , wdmLinksDown);
 			wdmNetwork.processEvent(currentNetPlan , new SimEvent(event.getEventTime() , SimEvent.DestinationModule.EVENT_GENERATOR , -1 , evWdm));
 			

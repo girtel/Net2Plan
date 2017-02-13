@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,16 +46,20 @@ import javax.swing.JScrollPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
+import org.apache.commons.collections15.BidiMap;
+
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
 import com.net2plan.gui.utils.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
+import com.net2plan.gui.utils.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -65,6 +70,7 @@ import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
 import net.miginfocom.swing.MigLayout;
@@ -152,13 +158,13 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
         double accum_worstCasePropDelayMs = 0;
         for (Demand demand : rowVisibleDemands) 
         {
-            Set<Route> routes_thisDemand = isSourceRouting ? demand.getRoutes() : new LinkedHashSet<Route>();
-            Link coupledLink = demand.getCoupledLink();
-            Node ingressNode = demand.getIngressNode();
-            Node egressNode = demand.getEgressNode();
-            double h_d = demand.getOfferedTraffic();
-            double lostTraffic_d = demand.getBlockedTraffic();
-            Object[] demandData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
+        	final Set<Route> routes_thisDemand = isSourceRouting ? demand.getRoutes() : new LinkedHashSet<Route>();
+            final Link coupledLink = demand.getCoupledLink();
+            final Node ingressNode = demand.getIngressNode();
+            final Node egressNode = demand.getEgressNode();
+            final double h_d = demand.getOfferedTraffic();
+            final double lostTraffic_d = demand.getBlockedTraffic();
+            final Object[] demandData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
             demandData[COLUMN_ID] = demand.getId();
             demandData[COLUMN_INDEX] = demand.getIndex();
             demandData[COLUMN_INGRESSNODE] = ingressNode.getIndex() + (ingressNode.getName().isEmpty() ? "" : " (" + ingressNode.getName() + ")");
@@ -166,7 +172,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
             demandData[COLUMN_COUPLEDTOLINK] = coupledLink == null ? "" : "e" + coupledLink.getIndex() + " (layer " + coupledLink.getLayer() + ")";
             demandData[COLUMN_OFFEREDTRAFFIC] = h_d; accum_hd += h_d;
             demandData[COLUMN_CARRIEDTRAFFIC] = demand.getCarriedTraffic(); accum_carriedTraffic += demand.getCarriedTraffic();
-            demandData[COLUMN_LOSTTRAFFIC] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d; accum_lostTraffic += (Double) demandData [COLUMN_LOSTTRAFFIC];
+            demandData[COLUMN_LOSTTRAFFIC] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d; accum_lostTraffic += lostTraffic_d;
             demandData[COLUMN_ISSERVICECHAIN] = demand.isServiceChainRequest(); accum_numSCs += demand.isServiceChainRequest()? 1 : 0;
             demandData[COLUMN_TRAVERSEDRESOURCESTYPES] = isSourceRouting? joinTraversedResourcesTypes(demand) : "";
             demandData[COLUMN_ROUTINGCYCLES] = demand.getRoutingCycleType();
@@ -175,7 +181,6 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
             demandData[COLUMN_NUMROUTES] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + routes_thisDemand.stream().filter(e->e.isBackupRoute()).count() + ")";
             demandData[COLUMN_MAXE2ELATENCY] = demand.getWorstCasePropagationTimeInMs(); accum_worstCasePropDelayMs = Math.max(accum_worstCasePropDelayMs, demand.getWorstCasePropagationTimeInMs());
             demandData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(demand.getAttributes());
-
             for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
             {
                 if(demand.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
@@ -191,7 +196,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
         aggregatedData [COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(accum_hd);
         aggregatedData [COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(accum_carriedTraffic);
-        aggregatedData [COLUMN_LOSTTRAFFIC] = new LastRowAggregatedValue(accum_lostTraffic);
+        aggregatedData [COLUMN_LOSTTRAFFIC] = new LastRowAggregatedValue(accum_hd == 0 ? 0 : 100 * accum_lostTraffic / accum_hd);
         aggregatedData [COLUMN_ISSERVICECHAIN] = new LastRowAggregatedValue(accum_numSCs);
         aggregatedData [COLUMN_NUMROUTES] = new LastRowAggregatedValue(accum_numRoutes + "(" + accum_numBackupRoutes + ")");
         aggregatedData [COLUMN_MAXE2ELATENCY] = new LastRowAggregatedValue(accum_worstCasePropDelayMs);
@@ -272,17 +277,40 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                 try {
                     switch (column) {
                         case COLUMN_OFFEREDTRAFFIC:
-                        	demand.setOfferedTraffic(Double.parseDouble(newValue.toString()));
-                        	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                        	callback.getVisualizationState().pickDemand(demand);
-                            callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().addNetPlanChange();
+                        	final double newOfferedTraffic = Double.parseDouble(newValue.toString());
+                        	if (newOfferedTraffic < 0) throw new Net2PlanException ("The demand offered traffic cannot be negative");
+                            if (callback.getVisualizationState().isWhatIfAnalysisActive())
+                            {
+                            	final WhatIfAnalysisPane whatIfPane = callback.getWhatIfAnalysisPane(); 
+                            	synchronized (whatIfPane) 
+                            	{
+                            		whatIfPane.whatIfDemandOfferedTrafficModified(demand , newOfferedTraffic);
+                            		if (whatIfPane.getLastWhatIfExecutionException() != null) throw whatIfPane.getLastWhatIfExecutionException(); 
+                            		whatIfPane.wait(); // wait until the simulation ends
+                            		if (whatIfPane.getLastWhatIfExecutionException() != null) throw whatIfPane.getLastWhatIfExecutionException(); 
+
+                                    final VisualizationState vs = callback.getVisualizationState();
+                            		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+                            				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
+                            		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
+                                    callback.updateVisualizationAfterNewTopology();
+								}
+                            }
+                            else
+                            {
+                            	demand.setOfferedTraffic(newOfferedTraffic);
+                            	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
+                            	callback.getVisualizationState().pickDemand(demand);
+                                callback.updateVisualizationAfterPick();
+                                callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            }
                             break;
 
                         default:
                             break;
                     }
                 } catch (Throwable ex) {
+                	ex.printStackTrace();
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying demand");
                     return;
                 }
