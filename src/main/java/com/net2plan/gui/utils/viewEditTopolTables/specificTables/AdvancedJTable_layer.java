@@ -133,7 +133,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
         return netPlanViewTableTips;
     }
 
-    public boolean hasElements() 
+    public boolean hasElements()
     {
         return true;
     }
@@ -176,7 +176,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
     private void setSpecificCellRenderers() {
     }
 
-    public void setColumnRowSortingFixedAndNonFixedTable() 
+    public void setColumnRowSortingFixedAndNonFixedTable()
     {
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet();
         final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
@@ -224,7 +224,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
                                     netPlan.removeNetworkLayer(netPlan.getNetworkLayerFromId((long) itemId));
 
                                     final VisualizationState vs = callback.getVisualizationState();
-                            		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+                            		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res =
                     				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
                     		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
                                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
@@ -278,8 +278,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
                 try {
                     netPlan.addLayer("Layer " + netPlan.getNumberOfLayers(), null, null, null, null , null);
                     final VisualizationState vs = callback.getVisualizationState();
-            		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
-            				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
+            		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
             		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                     callback.getUndoRedoNavigationManager().addNetPlanChange();

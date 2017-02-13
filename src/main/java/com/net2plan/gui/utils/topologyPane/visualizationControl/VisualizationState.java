@@ -357,11 +357,6 @@ public class VisualizationState
 
         this.currentNp = newCurrentNetPlan;
 
-        if (netPlanChanged)
-        {
-        	tableRowFilter = null;
-        }
-        
         /* implicitly we restart the picking state */
         this.pickedElementType = null;
         this.pickedElementNotFR = null;
@@ -377,17 +372,25 @@ public class VisualizationState
         if (!this.layerVisibilityInCanvasMap.keySet().equals(new HashSet<>(currentNp.getNetworkLayers())))
             throw new RuntimeException();
 
-		/* Update the interlayer space */
-//        this.interLayerSpaceInPixels = 50; //getDefaultVerticalDistanceForInterLayers();
-
         if (netPlanChanged)
         {
+            tableRowFilter = null;
             nodesToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
             linksToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
 
             // Set all layer links as visible when loading a new topology.
             this.mapShowInCanvasLayerLinks = currentNp.getNetworkLayers().stream().collect(Collectors.toMap(layer -> layer, layer -> true));
         }
+
+        // If a new layer has been added, set its layer to shown as default
+        for (NetworkLayer networkLayer : currentNp.getNetworkLayers())
+        {
+            if (!mapShowInCanvasLayerLinks.containsKey(networkLayer))
+            {
+                mapShowInCanvasLayerLinks.put(networkLayer, true);
+            }
+        }
+
         this.cache_canvasIntraNodeGUILinks = new HashMap<>();
         this.cache_canvasRegularLinkMap = new HashMap<>();
         this.cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible = new DualHashBidiMap<>();
