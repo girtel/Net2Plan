@@ -1,5 +1,6 @@
 package com.net2plan.gui.utils;
 
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,10 +18,12 @@ import com.net2plan.utils.Triple;
  */
 public class UndoRedoManager
 {
-    private List<Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>>> pastInfoVsNewNp;
+    private List<TimelineState> pastInfoVsNewNp;
     private int pastInfoVsNewNpCursor;
     private int maxSizeUndoList;
     private final IVisualizationCallback callback;
+
+    private TimelineState backupState;
 
     public UndoRedoManager(IVisualizationCallback callback, int maxSizeUndoList)
     {
@@ -55,8 +58,7 @@ public class UndoRedoManager
             pastInfoVsNewNp.subList(pastInfoVsNewNpCursor + 1, pastInfoVsNewNp.size()).clear();
         }
 
-        pastInfoVsNewNp.add(Triple.of(npCopy, cp_mapLayer2VisualizationOrder, cp_layerVisibilityMap));
-
+        pastInfoVsNewNp.add(new TimelineState(npCopy, cp_mapLayer2VisualizationOrder, cp_layerVisibilityMap));
 
         // Remove the older changes so that the list does not bloat.
         while (pastInfoVsNewNp.size() > maxSizeUndoList)
@@ -81,7 +83,9 @@ public class UndoRedoManager
         if (callback.inOnlineSimulationMode()) return null;
         if (pastInfoVsNewNpCursor == 0) return null;
         this.pastInfoVsNewNpCursor--;
-        return pastInfoVsNewNp.get(this.pastInfoVsNewNpCursor);
+        final TimelineState currentState = pastInfoVsNewNp.get(this.pastInfoVsNewNpCursor);
+        this.backupState = currentState;
+        return currentState.getStateDefinition();
     }
 
     /**
@@ -97,6 +101,27 @@ public class UndoRedoManager
         if (callback.inOnlineSimulationMode()) return null;
         if (pastInfoVsNewNpCursor == pastInfoVsNewNp.size() - 1) return null;
         this.pastInfoVsNewNpCursor++;
-        return pastInfoVsNewNp.get(this.pastInfoVsNewNpCursor);
+        final TimelineState currentState = pastInfoVsNewNp.get(this.pastInfoVsNewNpCursor);
+        this.backupState = currentState;
+        return currentState.getStateDefinition();
+    }
+
+    private class TimelineState
+    {
+        private final NetPlan netPlan;
+        private final BidiMap<NetworkLayer, Integer> layerOrderMap;
+        private final Map<NetworkLayer, Boolean> layerVisibilityMap;
+
+        public TimelineState(final NetPlan netPlan, final BidiMap<NetworkLayer, Integer> layerOrderMap, final Map<NetworkLayer, Boolean> layerVisibilityMap)
+        {
+            this.netPlan = netPlan;
+            this.layerOrderMap = layerOrderMap;
+            this.layerVisibilityMap = layerVisibilityMap;
+        }
+
+        public Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> getStateDefinition()
+        {
+            return Triple.unmodifiableOf(netPlan, layerOrderMap, layerVisibilityMap);
+        }
     }
 }
