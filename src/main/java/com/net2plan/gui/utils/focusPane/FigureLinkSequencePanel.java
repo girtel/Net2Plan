@@ -53,7 +53,7 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
     @Override
     public Dimension getPreferredSize()
     {
-        return new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+        return preferredSize == null ? DEFAULT_DIMENSION : preferredSize;
     }
 
     @Override
@@ -136,7 +136,7 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
     			
     			/* create node for link end node, with URL  */
     			final DrawNode dnNode = new DrawNode (link.getDestinationNode() , layer , maxHeightOrSizeIcon);
-    			DrawNode.addNodeToGraphics(g2d , dnNode , new Point (initialDnTopLeftPosition.x + (xSeparationDnCenters * drawnNodes.size()) , topCoordinateLineNodes) , fontMetrics , regularInterlineSpacePixels , null);
+    			final Dimension windowDimension = DrawNode.addNodeToGraphics(g2d , dnNode , new Point (initialDnTopLeftPosition.x + (xSeparationDnCenters * drawnNodes.size()) , topCoordinateLineNodes) , fontMetrics , regularInterlineSpacePixels , null);
     			drawnNodes.add(dnNode);
     			
     			/* if the last element was a resource, add two links (res -> node [No URL], node->nextNode [URL]).
@@ -144,7 +144,9 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
     			final DrawLine dlLink = new DrawLine (lastNodeElement , dnNode , link , lastNodeElement.posEast() , dnNode.posWest() , occup);
     			DrawLine.addLineToGraphics(g2d , dlLink , fontMetrics , regularInterlineSpacePixels);
     			drawnLines.add(dlLink);
-    		} else throw new RuntimeException();
+
+                preferredSize = new Dimension (windowDimension.width + XYMARGIN , windowDimension.height + XYMARGIN);
+            } else throw new RuntimeException();
     	}
     }
 }

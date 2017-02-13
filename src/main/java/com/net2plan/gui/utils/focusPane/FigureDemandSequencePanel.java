@@ -66,7 +66,7 @@ public class FigureDemandSequencePanel extends FigureSequencePanel
         DrawNode.addNodeToGraphics(g2d, ingressNode, initialDnTopLeftPosition, fontMetrics, regularInterlineSpacePixels, null);
 
         // The furthest node of the drawing.
-        Dimension windowDimension = DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + xSeparationDnCenters, initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
+        final Dimension windowDimension = DrawNode.addNodeToGraphics(g2d, egressNode, new Point(initialDnTopLeftPosition.x + xSeparationDnCenters, initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
 
         drawnNodes.add(ingressNode);
         drawnNodes.add(egressNode);

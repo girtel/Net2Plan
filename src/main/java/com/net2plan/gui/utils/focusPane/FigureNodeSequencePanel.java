@@ -68,7 +68,7 @@ public class FigureNodeSequencePanel extends FigureSequencePanel
 
     	/* Initial dn */
         dn = new DrawNode(node, layer, maxHeightOrSizeIcon);
-        Dimension windowDimension = DrawNode.addNodeToGraphics(g2d , dn , initialDnTopLeftPosition , fontMetrics , regularInterlineSpacePixels , null);
+        final Dimension windowDimension = DrawNode.addNodeToGraphics(g2d , dn , initialDnTopLeftPosition , fontMetrics , regularInterlineSpacePixels , null);
         drawnNodes.add(dn);
         preferredSize = new Dimension (windowDimension.width + XYMARGIN , windowDimension.height + XYMARGIN);
     }
