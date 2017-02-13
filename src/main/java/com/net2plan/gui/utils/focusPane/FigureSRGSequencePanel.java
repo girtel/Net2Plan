@@ -24,7 +24,7 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
     private final int ICON_JUMP = 5;
     private final int LINE_JUMP = 1;
 
-    private int panelWidth, panelHeight;
+    private Dimension preferredSize;
 
     public FigureSRGSequencePanel(final IVisualizationCallback callback, final SharedRiskGroup srg, final String... titleMessage)
     {
@@ -32,17 +32,16 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
         this.riskGroup = srg;
         this.generalMessage = Arrays.asList(titleMessage);
 
-        this.panelWidth = DEFAULT_WIDTH;
-        this.panelHeight = DEFAULT_HEIGHT;
-
         this.plainFont = new Font("Arial", Font.PLAIN, 10);
         this.headerFont = new Font("Arial", Font.BOLD, 12);
+
+        this.preferredSize = null;
     }
 
     @Override
     public Dimension getPreferredSize()
     {
-        return new Dimension(panelWidth, panelHeight);
+        return preferredSize == null ? DEFAULT_DIMENSION : preferredSize;
     }
 
     @Override
@@ -178,8 +177,7 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
             iconRow = addLineJump(iconRow);
         }
 
-        this.panelWidth = maxWidth < DEFAULT_WIDTH ? DEFAULT_WIDTH : maxWidth + (maxIconSize * 3);
-        this.panelHeight = maxHeight < DEFAULT_HEIGHT ? DEFAULT_HEIGHT : maxHeight + (maxIconSize * 3);
+        this.preferredSize = new Dimension(maxWidth + XYMARGIN, maxHeight + XYMARGIN);
     }
 
     private int addIconJump(int graphicsRow)

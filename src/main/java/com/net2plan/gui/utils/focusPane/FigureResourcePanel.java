@@ -35,7 +35,7 @@ public class FigureResourcePanel extends FigureSequencePanel
 	@Override
 	public Dimension getPreferredSize()
 	{
-		return new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+		return preferredSize == null ? DEFAULT_DIMENSION : preferredSize;
 	}
 
 	@Override
