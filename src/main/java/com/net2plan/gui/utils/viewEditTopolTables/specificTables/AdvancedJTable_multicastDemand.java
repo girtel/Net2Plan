@@ -664,8 +664,8 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
 
             if (netPlan.hasMulticastDemands(netPlan.getNetworkLayerDefault()))
             {
-                int result = JOptionPane.showConfirmDialog(null, "Remove all existing multicast demands before?", "", JOptionPane.YES_NO_OPTION);
-                if (result == JOptionPane.CLOSED_OPTION) return;
+                int result = JOptionPane.showConfirmDialog(null, "Remove all existing multicast demands before?", "", JOptionPane.YES_NO_CANCEL_OPTION);
+                if (result == JOptionPane.CANCEL_OPTION || result == JOptionPane.CLOSED_OPTION) return;
                 else if (result == JOptionPane.YES_OPTION) netPlan.removeAllMulticastDemands();
             }
 
@@ -690,9 +690,9 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
 
             if (netPlan.hasMulticastDemands(netPlan.getNetworkLayerDefault()))
             {
-                int result = JOptionPane.showConfirmDialog(null, "Remove all existing multicast demands before?", "", JOptionPane.YES_NO_OPTION);
-                if (result == JOptionPane.CLOSED_OPTION) return;
-                else if (result == JOptionPane.YES_OPTION) netPlan.removeAllMulticastDemands();
+                int result = JOptionPane.showConfirmDialog(null, "Remove all existing multicast demands before?", "", JOptionPane.YES_NO_CANCEL_OPTION);
+                if (result == JOptionPane.CANCEL_OPTION || result == JOptionPane.CLOSED_OPTION) return;
+                if (result == JOptionPane.YES_OPTION) netPlan.removeAllMulticastDemands();
             }
 
             if (netPlan.getNumberOfNodes() < 2) throw new Net2PlanException("At least two nodes are needed");

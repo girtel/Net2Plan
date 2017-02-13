@@ -598,9 +598,9 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
 
             if  (netPlan.hasDemands(netPlan.getNetworkLayerDefault()))
             {
-                int result = JOptionPane.showConfirmDialog(null, "Remove all existing demands?", "", JOptionPane.YES_NO_OPTION);
-                if (result == JOptionPane.CLOSED_OPTION) return;
-                else if (result == JOptionPane.YES_OPTION) netPlan.removeAllDemands();
+                int result = JOptionPane.showConfirmDialog(null, "Remove all existing demands?", "", JOptionPane.YES_NO_CANCEL_OPTION);
+                if (result == JOptionPane.CANCEL_OPTION || result == JOptionPane.CLOSED_OPTION) return;
+                if (result == JOptionPane.YES_OPTION) netPlan.removeAllDemands();
             }
 
             for (Node n1 : netPlan.getNodes()) {
