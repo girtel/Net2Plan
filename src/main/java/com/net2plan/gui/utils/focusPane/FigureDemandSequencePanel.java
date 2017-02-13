@@ -30,7 +30,7 @@ public class FigureDemandSequencePanel extends FigureSequencePanel
     @Override
     public Dimension getPreferredSize()
     {
-        return preferredSize == null ? defaultDimension : preferredSize;
+        return preferredSize == null ? DEFAULT_DIMENSION : preferredSize;
     }
 
     @Override
