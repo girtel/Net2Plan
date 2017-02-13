@@ -72,15 +72,16 @@ public class FigureResourcePanel extends FigureSequencePanel
     	this.drawnLines = new ArrayList<> ();
 
     	/* First I draw the resource itself */
+    	final int xOffset = initialXTitle * 3;
     	final int xSeparationDnCenters = maxHeightOrSizeIcon * 3;
-    	final int thisResourceLeftPosition = initialXTitle + xSeparationDnCenters * (int) (Math.max(0.0 , Math.max(numBaseResources - 1 , numUpperResources - 1))/ 2.0);
+    	final int thisResourceLeftPosition = xOffset + xSeparationDnCenters * (int) (Math.max(0.0 , Math.max(numBaseResources - 1 , numUpperResources - 1))/ 2.0);
     	final Point dnResourceTopLeftPosition = new Point (thisResourceLeftPosition , initialTopYOfThisResource);
     	final DrawNode dnResource = new DrawNode(resource , maxHeightOrSizeIcon , -1);
     	this.drawnNodes.add(dnResource);
     	DrawNode.addNodeToGraphics(g2d , dnResource , dnResourceTopLeftPosition , fontMetrics , regularInterlineSpacePixels , null);
     	
     	/* Now the upper resource and the links to the resource */
-    	int xPositionResource = initialXTitle;
+    	int xPositionResource = xOffset;
     	for (Resource upperResource : resource.getUpperResources())
     	{
     		/* Add the gn */
@@ -97,7 +98,7 @@ public class FigureResourcePanel extends FigureSequencePanel
     	}
 
     	/* Now the base resource and the links from the resource */
-    	xPositionResource = initialXTitle;
+    	xPositionResource = xOffset;
         final Iterator<Resource> iterator = resource.getBaseResources().iterator();
         while (iterator.hasNext())
     	{
@@ -116,7 +117,7 @@ public class FigureResourcePanel extends FigureSequencePanel
 
 			if (!iterator.hasNext())
             {
-                this.preferredSize = new Dimension(windowSize.width + XYMARGIN, windowSize.height + XYMARGIN);
+                this.preferredSize = new Dimension(windowSize.width + XYMARGIN * 3, windowSize.height + XYMARGIN * 3);
             }
     	}
     }
