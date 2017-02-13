@@ -9,6 +9,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
@@ -35,7 +36,7 @@ public class FigureResourcePanel extends FigureSequencePanel
 	@Override
 	public Dimension getPreferredSize()
 	{
-		return new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+		return preferredSize == null ? DEFAULT_DIMENSION : preferredSize;
 	}
 
 	@Override
@@ -71,15 +72,16 @@ public class FigureResourcePanel extends FigureSequencePanel
     	this.drawnLines = new ArrayList<> ();
 
     	/* First I draw the resource itself */
+    	final int xOffset = initialXTitle * 3;
     	final int xSeparationDnCenters = maxHeightOrSizeIcon * 3;
-    	final int thisResourceLeftPosition = initialXTitle + xSeparationDnCenters * (int) (Math.max(0.0 , Math.max(numBaseResources - 1 , numUpperResources - 1))/ 2.0);
+    	final int thisResourceLeftPosition = xOffset + xSeparationDnCenters * (int) (Math.max(0.0 , Math.max(numBaseResources - 1 , numUpperResources - 1))/ 2.0);
     	final Point dnResourceTopLeftPosition = new Point (thisResourceLeftPosition , initialTopYOfThisResource);
     	final DrawNode dnResource = new DrawNode(resource , maxHeightOrSizeIcon , -1);
     	this.drawnNodes.add(dnResource);
     	DrawNode.addNodeToGraphics(g2d , dnResource , dnResourceTopLeftPosition , fontMetrics , regularInterlineSpacePixels , null);
     	
     	/* Now the upper resource and the links to the resource */
-    	int xPositionResource = initialXTitle;
+    	int xPositionResource = xOffset;
     	for (Resource upperResource : resource.getUpperResources())
     	{
     		/* Add the gn */
@@ -96,20 +98,27 @@ public class FigureResourcePanel extends FigureSequencePanel
     	}
 
     	/* Now the base resource and the links from the resource */
-    	xPositionResource = initialXTitle;
-    	for (Resource baseResource : resource.getBaseResources())
+    	xPositionResource = xOffset;
+        final Iterator<Resource> iterator = resource.getBaseResources().iterator();
+        while (iterator.hasNext())
     	{
+    	    final Resource baseResource = iterator.next();
     		/* Add the gn */
         	final Point dnTopLeftPosition = new Point (xPositionResource , initialTopYOfBaseResource);
         	final DrawNode dn = new DrawNode(baseResource , maxHeightOrSizeIcon , resource.getCapacityOccupiedInBaseResource(baseResource));
         	this.drawnNodes.add(dn);
-        	DrawNode.addNodeToGraphics(g2d , dn , dnTopLeftPosition , fontMetrics , regularInterlineSpacePixels , null);
+        	final Dimension windowSize = DrawNode.addNodeToGraphics(g2d , dn , dnTopLeftPosition , fontMetrics , regularInterlineSpacePixels , null);
         	xPositionResource += xSeparationDnCenters;
 
     		/* Add the glink */
 			final DrawLine dlNoURL = new DrawLine (dnResource , dn , dnResource.posSouth() , dn.posNorth());
 			DrawLine.addLineToGraphics(g2d , dlNoURL , fontMetrics , regularInterlineSpacePixels);
 			drawnLines.add(dlNoURL);
+
+			if (!iterator.hasNext())
+            {
+                this.preferredSize = new Dimension(windowSize.width + XYMARGIN * 3, windowSize.height + XYMARGIN * 3);
+            }
     	}
     }
 }
