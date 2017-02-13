@@ -1,10 +1,7 @@
 package com.net2plan.gui.utils;
 
 import java.sql.Time;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
@@ -55,7 +52,8 @@ public class UndoRedoManager
         // Removing all changes made after the one at the cursor
         if (pastInfoVsNewNpCursor != pastInfoVsNewNp.size() - 1)
         {
-            pastInfoVsNewNp.subList(pastInfoVsNewNpCursor + 1, pastInfoVsNewNp.size()).clear();
+            pastInfoVsNewNp.subList(pastInfoVsNewNpCursor, pastInfoVsNewNp.size()).clear();
+            pastInfoVsNewNp.add(backupState);
         }
 
         pastInfoVsNewNp.add(new TimelineState(npCopy, cp_mapLayer2VisualizationOrder, cp_layerVisibilityMap));
@@ -84,8 +82,13 @@ public class UndoRedoManager
         if (pastInfoVsNewNpCursor == 0) return null;
         this.pastInfoVsNewNpCursor--;
         final TimelineState currentState = pastInfoVsNewNp.get(this.pastInfoVsNewNpCursor);
-        this.backupState = currentState;
-        return currentState.getStateDefinition();
+        final Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> stateDefinition = currentState.getStateDefinition();
+
+        // Making a copy of the current state
+        // This is made so that in case we go back and make a change, we are able to save the state before then change.
+        // By reference copying is not useful in this case.
+        this.backupState = new TimelineState(stateDefinition.getFirst().copy(), new DualHashBidiMap<>(stateDefinition.getSecond()), new HashMap<>(stateDefinition.getThird()));
+        return stateDefinition;
     }
 
     /**
@@ -102,8 +105,13 @@ public class UndoRedoManager
         if (pastInfoVsNewNpCursor == pastInfoVsNewNp.size() - 1) return null;
         this.pastInfoVsNewNpCursor++;
         final TimelineState currentState = pastInfoVsNewNp.get(this.pastInfoVsNewNpCursor);
-        this.backupState = currentState;
-        return currentState.getStateDefinition();
+        final Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> stateDefinition = currentState.getStateDefinition();
+
+        // Making a copy of the current state
+        // This is made so that in case we go back and make a change, we are able to save the state before then change.
+        // By reference copying is not useful in this case.
+        this.backupState = new TimelineState(stateDefinition.getFirst().copy(), new DualHashBidiMap<>(stateDefinition.getSecond()), new HashMap<>(stateDefinition.getThird()));
+        return stateDefinition;
     }
 
     private class TimelineState
@@ -112,14 +120,14 @@ public class UndoRedoManager
         private final BidiMap<NetworkLayer, Integer> layerOrderMap;
         private final Map<NetworkLayer, Boolean> layerVisibilityMap;
 
-        public TimelineState(final NetPlan netPlan, final BidiMap<NetworkLayer, Integer> layerOrderMap, final Map<NetworkLayer, Boolean> layerVisibilityMap)
+        private TimelineState(final NetPlan netPlan, final BidiMap<NetworkLayer, Integer> layerOrderMap, final Map<NetworkLayer, Boolean> layerVisibilityMap)
         {
             this.netPlan = netPlan;
             this.layerOrderMap = layerOrderMap;
             this.layerVisibilityMap = layerVisibilityMap;
         }
 
-        public Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> getStateDefinition()
+        private Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> getStateDefinition()
         {
             return Triple.unmodifiableOf(netPlan, layerOrderMap, layerVisibilityMap);
         }
