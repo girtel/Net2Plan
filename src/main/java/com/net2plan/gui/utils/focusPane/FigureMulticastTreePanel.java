@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import javax.swing.JPanel;
 
 import org.apache.commons.collections15.BidiMap;
+import org.apache.commons.collections15.CollectionUtils;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
 import com.net2plan.gui.utils.IVisualizationCallback;
@@ -28,7 +29,7 @@ public class FigureMulticastTreePanel extends FigureSequencePanel
     private MulticastTree tree;
     private List<String> generalMessage;
 
-    private int panelWidth, panelHeight;
+    private Dimension preferredDimension;
 
     public FigureMulticastTreePanel(IVisualizationCallback callback, MulticastTree tree, String titleMessage, double carriedTraffic)
     {
@@ -36,14 +37,13 @@ public class FigureMulticastTreePanel extends FigureSequencePanel
         this.generalMessage = Arrays.asList(titleMessage, "Carried trafffic: " + String.format("%.2f ", carriedTraffic) + " " + callback.getDesign().getDemandTrafficUnitsName(tree.getLayer()));
         this.tree = tree;
 
-        this.panelWidth = DEFAULT_WIDTH;
-        this.panelHeight = DEFAULT_HEIGHT;
+        this.preferredDimension = null;
     }
 
     @Override
     public Dimension getPreferredSize()
     {
-        return new Dimension(panelWidth, panelHeight);
+        return preferredDimension == null ? DEFAULT_DIMENSION : preferredDimension;
     }
 
     @Override
@@ -120,8 +120,7 @@ public class FigureMulticastTreePanel extends FigureSequencePanel
             }
         }
 
-        this.panelWidth = maxWidth < DEFAULT_WIDTH ? DEFAULT_WIDTH : maxWidth + (maxHeightOrSizeIcon * 3);
-        this.panelHeight = maxHeight < DEFAULT_HEIGHT ? DEFAULT_HEIGHT : maxHeight + (maxHeightOrSizeIcon * 3);
+        this.preferredDimension = new Dimension(maxWidth + XYMARGIN, maxHeight + XYMARGIN);
     }
 }
 

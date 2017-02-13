@@ -79,20 +79,20 @@ public class FigureMulticastDemandSequencePanel extends FigureSequencePanel
         DrawNode.addNodeToGraphics(g2d, ingressNode, new Point(initialDnTopLeftPosition.x + ((xSeparationDnCenters * (egressNodes.size() / 2)) - xSeparationDnCenters/2), initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
         drawnNodes.add(ingressNode);
 
-        int maxWidth = 0;
         for (int i = 0; i < egressNodes.size(); i++)
         {
             final DrawNode egressNode = egressNodes.get(i);
             final Point nodePos = new Point(initialDnTopLeftPosition.x + (i * xSeparationDnCenters), initialDnTopLeftPosition.y + ySeparationDnCenters);
-            DrawNode.addNodeToGraphics(g2d, egressNode, nodePos, fontMetrics, regularInterlineSpacePixels, null);
+            final Dimension windowSize = DrawNode.addNodeToGraphics(g2d, egressNode, nodePos, fontMetrics, regularInterlineSpacePixels, null);
             final DrawLine link = new DrawLine(ingressNode, egressNode, ingressNode.posSouth(), egressNode.posNorth());
             DrawLine.addLineToGraphics(g2d, link, fontMetrics, regularInterlineSpacePixels, lineStroke);
 
             drawnNodes.add(egressNode);
 
-            if (maxWidth < nodePos.x) maxWidth = nodePos.x;
+            if (i == egressNodes.size() - 1)
+            {
+                this.preferredDimension = new Dimension(windowSize.width + XYMARGIN, windowSize.height + XYMARGIN);
+            }
         }
-        
-        this.preferredDimension = new Dimension(maxWidth + XYMARGIN, DEFAULT_HEIGHT);
     }
 }
