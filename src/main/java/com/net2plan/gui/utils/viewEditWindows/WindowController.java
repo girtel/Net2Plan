@@ -14,6 +14,7 @@ import java.util.*;
 public class WindowController
 {
     private static GUIWindow tableControlWindow;
+
     private static GUIWindow reportWindow;
     private static GUIWindow offlineWindow;
     private static GUIWindow onlineWindow;
@@ -53,7 +54,7 @@ public class WindowController
         }
     }
 
-    public static void addTabToControlWindow(final String newTabName, final JComponent newTabComponent)
+    private static void addTabToControlWindow(final String newTabName, final JComponent newTabComponent)
     {
         final JTabbedPane tabPane = (JTabbedPane) tableControlWindow.getComponent();
 
@@ -97,11 +98,19 @@ public class WindowController
         offlineWindow.buildWindow(component);
     }
 
-    public static void showOfflineWindow()
+    public static void showOfflineWindow(final boolean gainFocus)
     {
         if (offlineWindow != null)
         {
-            offlineWindow.showWindow();
+            if (gainFocus)
+            {
+                offlineWindow.showWindow();
+            } else
+            {
+                offlineWindow.setFocusableWindowState(false);
+                offlineWindow.showWindow();
+                offlineWindow.setFocusableWindowState(true);
+            }
         }
     }
 
@@ -141,19 +150,35 @@ public class WindowController
         whatifWindow.buildWindow(component);
     }
 
-    public static void showOnlineWindow()
+    public static void showOnlineWindow(final boolean gainFocus)
     {
         if (onlineWindow != null)
         {
-            onlineWindow.showWindow();
+            if (gainFocus)
+            {
+                onlineWindow.showWindow();
+            } else
+            {
+                onlineWindow.setFocusableWindowState(false);
+                onlineWindow.showWindow();
+                onlineWindow.setFocusableWindowState(true);
+            }
         }
     }
 
-    public static void showWhatifWindow()
+    public static void showWhatifWindow(final boolean gainFocus)
     {
         if (whatifWindow != null)
         {
-            whatifWindow.showWindow();
+            if (gainFocus)
+            {
+                whatifWindow.showWindow();
+            } else
+            {
+                whatifWindow.setFocusableWindowState(false);
+                whatifWindow.showWindow();
+                whatifWindow.setFocusableWindowState(true);
+            }
         }
     }
 
@@ -175,11 +200,19 @@ public class WindowController
         reportWindow.buildWindow(component);
     }
 
-    public static void showReportWindow()
+    public static void showReportWindow(final boolean gainFocus)
     {
         if (reportWindow != null)
         {
-            reportWindow.showWindow();
+            if (gainFocus)
+            {
+                reportWindow.showWindow();
+            } else
+            {
+                reportWindow.setFocusableWindowState(false);
+                reportWindow.showWindow();
+                reportWindow.setFocusableWindowState(true);
+            }
         }
     }
 
@@ -214,7 +247,6 @@ public class WindowController
         private final static String onlineWindowName = "Online simulation";
         private final static String whatifWindowName = "What-if analysis";
         private final static String reportWindowName = "View reports";
-
 
         private final String text;
 
