@@ -34,6 +34,7 @@ import java.util.Set;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
+import com.net2plan.gui.utils.viewEditWindows.parent.GUIWindow;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
@@ -97,6 +98,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     private OfflineExecutionPanel executionPane;
     private OnlineSimulationPane onlineSimulationPane;
     private WhatIfAnalysisPane whatIfAnalysisPane;
+
     private VisualizationState vs;
     private UndoRedoManager undoRedoManager;
 
@@ -112,9 +114,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         this(TITLE);
     }
 
-    @Override
-    public WhatIfAnalysisPane getWhatIfAnalysisPane () { return whatIfAnalysisPane; } 
-    
+
     /**
      * Constructor that allows set a title for the tool in the top section of the panel.
      *
@@ -126,10 +126,11 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         super(title);
     }
 
-//    public boolean allowLoadTrafficDemands()
-//    {
-//        return true;
-//    }
+    @Override
+    public WhatIfAnalysisPane getWhatIfAnalysisPane()
+    {
+        return whatIfAnalysisPane;
+    }
 
     @Override
     public UndoRedoManager getUndoRedoNavigationManager()
@@ -267,26 +268,29 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                             // Pops up the selected tab.
                             final WindowController.WindowToTab windowToTab = WindowController.WindowToTab.parseString(tabName);
 
-                            switch (windowToTab)
+                            if (windowToTab != null)
                             {
-                                case offline:
-                                    WindowController.buildOfflineWindow(selectedComponent);
-                                    WindowController.showOfflineWindow();
-                                    break;
-                                case online:
-                                    WindowController.buildOnlineWindow(selectedComponent);
-                                    WindowController.showOnlineWindow();
-                                    break;
-                                case whatif:
-                                    WindowController.buildWhatifWindow(selectedComponent);
-                                    WindowController.showWhatifWindow();
-                                    break;
-                                case report:
-                                    WindowController.buildReportWindow(selectedComponent);
-                                    WindowController.showReportWindow();
-                                    break;
-                                default:
-                                    return;
+                                switch (windowToTab)
+                                {
+                                    case offline:
+                                        WindowController.buildOfflineWindow(selectedComponent);
+                                        WindowController.showOfflineWindow(true);
+                                        break;
+                                    case online:
+                                        WindowController.buildOnlineWindow(selectedComponent);
+                                        WindowController.showOnlineWindow(true);
+                                        break;
+                                    case whatif:
+                                        WindowController.buildWhatifWindow(selectedComponent);
+                                        WindowController.showWhatifWindow(true);
+                                        break;
+                                    case report:
+                                        WindowController.buildReportWindow(selectedComponent);
+                                        WindowController.showReportWindow(true);
+                                        break;
+                                    default:
+                                        return;
+                                }
                             }
 
                             tabPane.setSelectedIndex(0);
@@ -358,8 +362,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             } while (true);
             if (backOrForward != null)
             {
-                if (backOrForward.getFirst() != null) GUINetworkDesign.this.getVisualizationState().pickElement(backOrForward.getFirst());
-                else if (backOrForward.getSecond() != null) GUINetworkDesign.this.getVisualizationState().pickForwardingRule(backOrForward.getSecond());
+                if (backOrForward.getFirst() != null)
+                    GUINetworkDesign.this.getVisualizationState().pickElement(backOrForward.getFirst());
+                else if (backOrForward.getSecond() != null)
+                    GUINetworkDesign.this.getVisualizationState().pickForwardingRule(backOrForward.getSecond());
                 else GUINetworkDesign.this.getVisualizationState().resetPickedState();
 
                 GUINetworkDesign.this.updateVisualizationAfterPick();
@@ -616,7 +622,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0) topologyPanel.getCanvas().zoomIn();
+                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0)
+                    topologyPanel.getCanvas().zoomIn();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK));
 
@@ -625,7 +632,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0) topologyPanel.getCanvas().zoomOut();
+                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0)
+                    topologyPanel.getCanvas().zoomOut();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK));
 
@@ -634,7 +642,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0) topologyPanel.getCanvas().zoomAll();
+                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0)
+                    topologyPanel.getCanvas().zoomAll();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_MULTIPLY, InputEvent.CTRL_DOWN_MASK));
 
@@ -710,6 +719,21 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                 WindowController.showTablesWindow(true);
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
+
+        viewEditTopTables.setInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW));
+        viewEditTopTables.setActionMap(this.getActionMap());
+
+        reportPane.setInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW));
+        reportPane.setActionMap(this.getActionMap());
+
+        executionPane.setInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW));
+        executionPane.setActionMap(this.getActionMap());
+
+        onlineSimulationPane.setInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW));
+        onlineSimulationPane.setActionMap(this.getActionMap());
+
+        whatIfAnalysisPane.setInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW));
+        whatIfAnalysisPane.setActionMap(this.getActionMap());
     }
 
     @Override
@@ -884,6 +908,4 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             }
         }
     }
-
-
 }
