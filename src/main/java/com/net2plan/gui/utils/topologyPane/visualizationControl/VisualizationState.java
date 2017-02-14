@@ -68,6 +68,7 @@ public class VisualizationState
     private boolean showInCanvasLowerLayerPropagation;
     private boolean showInCanvasUpperLayerPropagation;
     private boolean showInCanvasThisLayerPropagation;
+    private boolean whatIfAnalysisActive;
     private ITableRowFilter tableRowFilter;
 
     private boolean showInCanvasNonConnectedNodes;
@@ -104,6 +105,7 @@ public class VisualizationState
         this.showInCanvasLowerLayerPropagation = true;
         this.showInCanvasUpperLayerPropagation = true;
         this.showInCanvasThisLayerPropagation = true;
+        this.whatIfAnalysisActive = false;
         this.nodesToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
         this.linksToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
         this.interLayerSpaceInPixels = 50;
@@ -116,10 +118,11 @@ public class VisualizationState
         this.setCanvasLayerVisibilityAndOrder(currentNp, mapLayer2VisualizationOrder, layerVisibilityMap);
     }
 
-    public ITableRowFilter getTableRowFilter()
-    {
-        return tableRowFilter;
-    }
+	public boolean isWhatIfAnalysisActive () { return whatIfAnalysisActive; }
+	
+	public void setWhatIfAnalysisActive (boolean isWhatIfAnalysisActive) { this.whatIfAnalysisActive = isWhatIfAnalysisActive; }
+
+	public ITableRowFilter getTableRowFilter () { return tableRowFilter; }
 
     public void updateTableRowFilter(ITableRowFilter tableRowFilterToApply)
     {

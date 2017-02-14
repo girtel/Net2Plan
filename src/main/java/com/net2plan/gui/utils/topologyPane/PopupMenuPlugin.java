@@ -28,6 +28,7 @@ import javax.swing.JPopupMenu;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -63,11 +64,6 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         return e.isPopupTrigger();
     }
 
-//    @Override
-//    public ITopologyCanvas getCanvas() {
-//        return canvas;
-//    }
-
     @Override
     public int getModifiers() {
         throw new UnsupportedOperationException("Not supported yet");
@@ -76,7 +72,8 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
     @Override
     public void mouseReleased(MouseEvent e) 
     {
-        if (checkModifiers(e)) {
+        if (checkModifiers(e)) 
+        {
             final Point p = e.getPoint();
             final Point2D positionInNetPlanCoordinates = canvas.getCanvasPointFromNetPlanPoint(p);
             final GUINode gn = canvas.getVertex(e);
@@ -113,51 +110,54 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
 
     private List<JComponent> getNodeActions(Node node , Point2D pos)
     {
-        List<JComponent> actions = new LinkedList<JComponent>();
+        final List<JComponent> actions = new LinkedList<JComponent>();
+        final VisualizationState vs = callback.getVisualizationState();
+        if (!vs.isNetPlanEditable()) return actions;
+        if (vs.isWhatIfAnalysisActive()) return actions;
+        if (callback.inOnlineSimulationMode()) return actions;
+        
+    	final NetPlan netPlan = callback.getDesign();
+        actions.add(new JMenuItem(new RemoveNodeAction("Remove node", node)));
 
-        if (callback.getVisualizationState().isNetPlanEditable())
+        if (netPlan.getNumberOfNodes() > 1)
         {
-        	final NetPlan netPlan = callback.getDesign();
-            actions.add(new JMenuItem(new RemoveNodeAction("Remove node", node)));
+            actions.add(new JPopupMenu.Separator());
+            JMenu unidirectionalMenu = new JMenu("Create unidirectional link");
+            JMenu bidirectionalMenu = new JMenu("Create bidirectional link");
 
-            if (netPlan.getNumberOfNodes() > 1)
+            String nodeName = node.getName() == null ? "" : node.getName();
+            String nodeString = Long.toString(node.getId()) + (nodeName.isEmpty() ? "" : " (" + nodeName + ")");
+
+            final NetworkLayer layer = netPlan.getNetworkLayerDefault();
+            for (Node auxNode : netPlan.getNodes())
             {
-                actions.add(new JPopupMenu.Separator());
-                JMenu unidirectionalMenu = new JMenu("Create unidirectional link");
-                JMenu bidirectionalMenu = new JMenu("Create bidirectional link");
+                if (auxNode == node) continue;
 
-                String nodeName = node.getName() == null ? "" : node.getName();
-                String nodeString = Long.toString(node.getId()) + (nodeName.isEmpty() ? "" : " (" + nodeName + ")");
+                String auxNodeName = auxNode.getName() == null ? "" : auxNode.getName();
+                String auxNodeString = Long.toString(auxNode.getId()) + (auxNodeName.isEmpty() ? "" : " (" + auxNodeName + ")");
 
-                final NetworkLayer layer = netPlan.getNetworkLayerDefault();
-                for (Node auxNode : netPlan.getNodes())
-                {
-                    if (auxNode == node) continue;
+                AbstractAction unidirectionalAction = new AddLinkAction(nodeString + " => " + auxNodeString, layer, node, auxNode);
+                unidirectionalMenu.add(unidirectionalAction);
 
-                    String auxNodeName = auxNode.getName() == null ? "" : auxNode.getName();
-                    String auxNodeString = Long.toString(auxNode.getId()) + (auxNodeName.isEmpty() ? "" : " (" + auxNodeName + ")");
-
-                    AbstractAction unidirectionalAction = new AddLinkAction(nodeString + " => " + auxNodeString, layer, node, auxNode);
-                    unidirectionalMenu.add(unidirectionalAction);
-
-                    AbstractAction bidirectionalAction = new AddLinkBidirectionalAction(nodeString + " <=> " + auxNodeString, layer, node, auxNode);
-                    bidirectionalMenu.add(bidirectionalAction);
-                }
-
-                actions.add(unidirectionalMenu);
-                actions.add(bidirectionalMenu);
+                AbstractAction bidirectionalAction = new AddLinkBidirectionalAction(nodeString + " <=> " + auxNodeString, layer, node, auxNode);
+                bidirectionalMenu.add(bidirectionalAction);
             }
-        }
 
+            actions.add(unidirectionalMenu);
+            actions.add(bidirectionalMenu);
+        }
         return actions;
     }
 
     private List<JComponent> getLinkActions(Link link, Point2D pos)
     {
         List<JComponent> actions = new LinkedList<JComponent>();
+        final VisualizationState vs = callback.getVisualizationState();
+        if (!vs.isNetPlanEditable()) return actions;
+        if (vs.isWhatIfAnalysisActive()) return actions;
+        if (callback.inOnlineSimulationMode()) return actions;
 
-        if (callback.getVisualizationState().isNetPlanEditable())
-            actions.add(new JMenuItem(new RemoveLinkAction("Remove link", link)));
+        actions.add(new JMenuItem(new RemoveLinkAction("Remove link", link)));
 
         return actions;
     }
@@ -213,49 +213,37 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
 
     public List<JComponent> getCanvasActionsMouseInNoNodeNorLinkPoint(Point2D positionInNetPlanCoordinates)
     {
-        List<JComponent> actions = new LinkedList<>();
+        final List<JComponent> actions = new LinkedList<>();
+        final VisualizationState vs = callback.getVisualizationState();
+        if (!vs.isNetPlanEditable()) return actions;
+        if (vs.isWhatIfAnalysisActive()) return actions;
+        if (callback.inOnlineSimulationMode()) return actions;
+        
+        
+        JMenuItem addNode = new JMenuItem(new AddNodeAction("Add node here", positionInNetPlanCoordinates));
+        actions.add(addNode);
 
-        if (callback.getVisualizationState().isNetPlanEditable())
+        actions.add(new JPopupMenu.Separator());
+
+        JMenu topologySettingMenu = new JMenu("Change topology layout");
+
+        JMenuItem circularSetting = new JMenuItem("Circular");
+        circularSetting.addActionListener(e -> 
         {
-            JMenuItem addNode = new JMenuItem(new AddNodeAction("Add node here", positionInNetPlanCoordinates));
-            actions.add(addNode);
+        	final List<Node> nodes = callback.getDesign().getNodes();
+        	final double angStep = 360.0 / nodes.size(); 
+        	final double radius = 10; // PABLO: THIS SHOUD BE SET IN OTHER COORDINATES?
+            for (int i = 0; i < nodes.size(); i++)
+            	nodes.get(i).setXYPositionMap(new Point2D.Double(positionInNetPlanCoordinates.getX() + radius * Math.cos(Math.toRadians(angStep*i)) , positionInNetPlanCoordinates.getY() + radius * Math.sin(Math.toRadians(angStep*i))));
+        	callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+            callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
+            callback.getUndoRedoNavigationManager().addNetPlanChange();
+         });
 
-            actions.add(new JPopupMenu.Separator());
-//            JMenuItem restoreTopology = new JMenuItem("Restore topology to original layout");
-//            restoreTopology.setToolTipText("Restores all nodes to their original position when the topology was loaded, leaves them in place if they were not in the original topology.");
-//            restoreTopology.addActionListener(e ->
-//            {
-//                for (Node node : callback.getDesign().getNodes())
-//                {
-//                    // This is supposed to be done with the OSM state manager, but that does not exactly do what is required here.
-//                    getPointToMoveNode(node.getId(), initialTopologySetting.getNodeLocation(node));
-//                }
-//
-//                topologyPanel.zoomAll();
-//            });
-//
-//            actions.add(restoreTopology);
+        topologySettingMenu.add(circularSetting);
 
-            JMenu topologySettingMenu = new JMenu("Change topology layout");
-
-            JMenuItem circularSetting = new JMenuItem("Circular");
-            circularSetting.addActionListener(e -> 
-            {
-            	final List<Node> nodes = callback.getDesign().getNodes();
-            	final double angStep = 360.0 / nodes.size(); 
-            	final double radius = 10; // PABLO: THIS SHOUD BE SET IN OTHER COORDINATES?
-                for (int i = 0; i < nodes.size(); i++)
-                	nodes.get(i).setXYPositionMap(new Point2D.Double(positionInNetPlanCoordinates.getX() + radius * Math.cos(Math.toRadians(angStep*i)) , positionInNetPlanCoordinates.getY() + radius * Math.sin(Math.toRadians(angStep*i))));
-            	callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-                callback.getUndoRedoNavigationManager().addNetPlanChange();
-             });
-
-            topologySettingMenu.add(circularSetting);
-
-            actions.add(topologySettingMenu);
-        }
+        actions.add(topologySettingMenu);
 
         return actions;
     }

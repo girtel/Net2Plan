@@ -19,6 +19,7 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,11 +37,15 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.table.TableModel;
 
+import org.apache.commons.collections15.BidiMap;
+
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
 import com.net2plan.gui.utils.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
+import com.net2plan.gui.utils.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.WiderJComboBox;
@@ -52,6 +57,7 @@ import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.CollectionUtils;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
 import net.miginfocom.swing.MigLayout;
@@ -286,12 +292,32 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                             break;
 
                         case COLUMN_STATE:
-                            boolean isNodeUp = (Boolean) newValue;
-                        	node.setFailureState(isNodeUp);
-                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                        	callback.getVisualizationState ().pickNode(node);
-                            callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            final boolean isNodeUp = (Boolean) newValue;
+                            if (callback.getVisualizationState().isWhatIfAnalysisActive())
+                            {
+                            	final WhatIfAnalysisPane whatIfPane = callback.getWhatIfAnalysisPane(); 
+                            	synchronized (whatIfPane) 
+                            	{
+                            		whatIfPane.whatIfLinkNodesFailureStateChanged(isNodeUp? Sets.newHashSet(node): null, isNodeUp? null : Sets.newHashSet(node) , null, null);
+                            		if (whatIfPane.getLastWhatIfExecutionException() != null) throw whatIfPane.getLastWhatIfExecutionException(); 
+                            		whatIfPane.wait(); // wait until the simulation ends
+                            		if (whatIfPane.getLastWhatIfExecutionException() != null) throw whatIfPane.getLastWhatIfExecutionException(); 
+
+                                    final VisualizationState vs = callback.getVisualizationState();
+                            		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+                            				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
+                            		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
+                                    callback.updateVisualizationAfterNewTopology();
+								}
+                            }
+                            else
+                            {
+                            	node.setFailureState(isNodeUp);
+                            	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                            	callback.getVisualizationState ().pickNode(node);
+                                callback.updateVisualizationAfterPick();
+                                callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            }
                             break;
 
                         case COLUMN_XCOORD:
@@ -312,7 +338,6 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                 } catch (Throwable ex) {
                     ex.printStackTrace();
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying node");
-//					ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying node, Object newValue: " + newValue + ", int row: " + row + ", int column: " + column);
                     return;
                 }
 

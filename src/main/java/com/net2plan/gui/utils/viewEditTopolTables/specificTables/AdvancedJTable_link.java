@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -46,6 +47,8 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableModel;
 
+import org.apache.commons.collections15.BidiMap;
+
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
@@ -56,6 +59,7 @@ import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
 import com.net2plan.gui.utils.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
+import com.net2plan.gui.utils.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -91,7 +95,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
     public static final int COLUMN_STATE = 5;
     public static final int COLUMN_CAPACITY = 6;
     public static final int COLUMN_CARRIEDTRAFFIC = 7;
-    public static final int COLUMN_TRAFFICRESERVEDFORPROTECTION = 8;
+    public static final int COLUMN_OCCUPIEDCAPACITY = 8;
     public static final int COLUMN_UTILIZATION = 9;
     public static final int COLUMN_ISBOTTLENECK = 10;
     public static final int COLUMN_LENGTH = 11;
@@ -167,7 +171,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
             linkData[COLUMN_STATE] = !link.isDown();
             linkData[COLUMN_CAPACITY] = link.getCapacity();
             linkData[COLUMN_CARRIEDTRAFFIC] = link.getCarriedTraffic();
-            final Link linkCopy = link; linkData[COLUMN_TRAFFICRESERVEDFORPROTECTION] = !isSourceRouting? 0.0 : link.getTraversingBackupRoutes().stream ().mapToDouble(e->e.getOccupiedCapacity(linkCopy)).sum();
+            linkData[COLUMN_OCCUPIEDCAPACITY] = link.getOccupiedCapacity();
             linkData[COLUMN_UTILIZATION] = rho_e;
             linkData[COLUMN_ISBOTTLENECK] = DoubleUtils.isEqualWithinRelativeTolerance(max_rho_e, rho_e, Configuration.precisionFactor);
             linkData[COLUMN_LENGTH] = link.getLengthInKm();
@@ -193,6 +197,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
         
         /* Add the aggregation row with the aggregated statistics */
         final double aggCapacity = rowVisibleLinks.stream().mapToDouble(e->e.getCapacity()).sum();
+        final double aggOccupiedCapacity = rowVisibleLinks.stream().mapToDouble(e->e.getOccupiedCapacity()).sum();
         final double aggCarried = rowVisibleLinks.stream().mapToDouble(e->e.getCarriedTraffic()).sum();
         final double aggLengthKm = rowVisibleLinks.stream().mapToDouble(e->e.getLengthInKm()).sum();
         final double aggPropDelayMs = rowVisibleLinks.stream().mapToDouble(e->e.getPropagationDelayInMs()).max().orElse(0);
@@ -205,6 +210,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
         aggregatedData [COLUMN_CAPACITY] = new LastRowAggregatedValue(aggCapacity);
         aggregatedData [COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried);
+        aggregatedData [COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(aggOccupiedCapacity);
         aggregatedData [COLUMN_LENGTH] = new LastRowAggregatedValue(aggLengthKm);
         aggregatedData [COLUMN_PROPDELAYMS] = new LastRowAggregatedValue(aggPropDelayMs);
         aggregatedData [COLUMN_NUMROUTES] = new LastRowAggregatedValue(aggNumRoutes);
@@ -282,7 +288,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                     case COLUMN_ORIGINNODE:
                     case COLUMN_DESTNODE:
                     case COLUMN_CARRIEDTRAFFIC:
-                    case COLUMN_TRAFFICRESERVEDFORPROTECTION:
+                    case COLUMN_OCCUPIEDCAPACITY:
                     case COLUMN_UTILIZATION:
                     case COLUMN_ISBOTTLENECK:
                     case COLUMN_PROPDELAYMS:
@@ -325,7 +331,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
 
                 if (getValueAt(row, 0) == null) row = row - 1;
                 final long linkId = (Long) getValueAt(row, 0);
-                final Link link = netPlan.getLinkFromId(linkId);
+                Link link = netPlan.getLinkFromId(linkId);
 
 				/* Perform checks, if needed */
                 try {
@@ -341,11 +347,31 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                             break;
 
                         case COLUMN_STATE:
-                            boolean isLinkUp = (Boolean) newValue;
-                            link.setFailureState(isLinkUp);
-                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                            callback.getVisualizationState ().pickLink(link);
-                            callback.updateVisualizationAfterPick();
+                            final boolean isLinkUp = (Boolean) newValue;
+                            if (vs.isWhatIfAnalysisActive())
+                            {
+                            	final WhatIfAnalysisPane whatIfPane = callback.getWhatIfAnalysisPane(); 
+                            	synchronized (whatIfPane) 
+                            	{
+                            		whatIfPane.whatIfLinkNodesFailureStateChanged(null, null, isLinkUp? Sets.newHashSet(link): null, isLinkUp? null : Sets.newHashSet(link));
+                            		if (whatIfPane.getLastWhatIfExecutionException() != null) throw whatIfPane.getLastWhatIfExecutionException(); 
+                            		whatIfPane.wait(); // wait until the simulation ends
+                            		if (whatIfPane.getLastWhatIfExecutionException() != null) throw whatIfPane.getLastWhatIfExecutionException(); 
+
+                                    final VisualizationState vs = callback.getVisualizationState();
+                            		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+                            				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
+                            		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
+                                    callback.updateVisualizationAfterNewTopology();
+								}
+                            }
+                            else
+                            {
+                            	link.setFailureState(isLinkUp);
+	                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
+	                            callback.getVisualizationState ().pickLink(link);
+	                            callback.updateVisualizationAfterPick();
+                            }
                             break;
 
                         case COLUMN_CAPACITY:
@@ -375,6 +401,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                             break;
                     }
                 } catch (Throwable ex) {
+                	ex.printStackTrace();
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying link");
                     return;
                 }

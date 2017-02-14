@@ -26,6 +26,7 @@ import javax.swing.table.TableCellRenderer;
 import com.net2plan.gui.utils.viewEditTopolTables.multilayerTabs.AdvancedJTable_MultiLayerControlTable;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_link;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_multicastTree;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_route;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -590,7 +591,7 @@ public class CellRenderers
             NetPlan initialNetPlan = callback.getInitialDesign();
 
             long treeId = (long) itemId;
-            if (columnIndexModel == 13)
+            if (columnIndexModel == AdvancedJTable_multicastTree.COLUMN_BOTTLENECKUTILIZATION)
             {
                 double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
                 double doubleValue = (Double) table.getModel().getValueAt(rowIndexModel, columnIndexModel);

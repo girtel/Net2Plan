@@ -39,15 +39,19 @@ import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
 import javax.swing.table.TableModel;
 
+import org.apache.commons.collections15.BidiMap;
+
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
-import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
-import com.net2plan.gui.utils.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
+import com.net2plan.gui.utils.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
+import com.net2plan.gui.utils.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.MulticastTree;
@@ -58,6 +62,7 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.CollectionUtils;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
 /**
@@ -152,7 +157,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
         aggregatedData [COLUMN_COUPLEDTOLINKS] = new LastRowAggregatedValue(aggNumCouplings);
         aggregatedData [COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(aggOffered);
         aggregatedData [COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried);
-        aggregatedData [COLUMN_LOSTTRAFFIC] = new LastRowAggregatedValue(aggLost);
+        aggregatedData [COLUMN_LOSTTRAFFIC] = new LastRowAggregatedValue(aggOffered == 0 ? 0 : 100 * aggLost / aggOffered);
         aggregatedData [COLUMN_NUMTREES] = new LastRowAggregatedValue(aggNumTrees);
         aggregatedData [COLUMN_MAXE2ELATENCY] = new LastRowAggregatedValue(aggMaxLatency);
         allDemandData.add(aggregatedData);
@@ -238,11 +243,33 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                 try {
                     switch (column) {
                         case COLUMN_OFFEREDTRAFFIC:
-                            demand.setOfferedTraffic(Double.parseDouble(newValue.toString()));
-                        	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
-                            callback.getVisualizationState ().pickMulticastDemand(demand);
-                            callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().addNetPlanChange();
+                        	final double newOfferedTraffic = Double.parseDouble(newValue.toString());
+                        	if (newOfferedTraffic < 0) throw new Net2PlanException ("The demand offered traffic cannot be negative");
+                            if (callback.getVisualizationState().isWhatIfAnalysisActive())
+                            {
+                            	final WhatIfAnalysisPane whatIfPane = callback.getWhatIfAnalysisPane(); 
+                            	synchronized (whatIfPane) 
+                            	{
+                            		whatIfPane.whatIfDemandOfferedTrafficModified(demand , newOfferedTraffic);
+                            		if (whatIfPane.getLastWhatIfExecutionException() != null) throw whatIfPane.getLastWhatIfExecutionException(); 
+                            		whatIfPane.wait(); // wait until the simulation ends
+                            		if (whatIfPane.getLastWhatIfExecutionException() != null) throw whatIfPane.getLastWhatIfExecutionException(); 
+
+                                    final VisualizationState vs = callback.getVisualizationState();
+                            		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+                            				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
+                            		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
+                                    callback.updateVisualizationAfterNewTopology();
+								}
+                            }
+                            else
+                            {
+                                demand.setOfferedTraffic(newOfferedTraffic);
+                            	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
+                                callback.getVisualizationState ().pickMulticastDemand(demand);
+                                callback.updateVisualizationAfterPick();
+                                callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            }
                             break;
 
                         default:

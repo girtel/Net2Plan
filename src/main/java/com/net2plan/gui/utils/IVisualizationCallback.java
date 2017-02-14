@@ -21,6 +21,7 @@ import com.net2plan.gui.utils.topologyPane.GUINode;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 
 import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -63,4 +64,6 @@ public interface IVisualizationCallback
 	void requestUndoAction();
 
 	void requestRedoAction();
+
+	WhatIfAnalysisPane getWhatIfAnalysisPane();
 }

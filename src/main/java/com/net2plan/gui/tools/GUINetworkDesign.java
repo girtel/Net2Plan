@@ -52,6 +52,7 @@ import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
 import com.net2plan.gui.utils.viewEditWindows.utils.WindowUtils;
 import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
+import com.net2plan.gui.utils.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -95,6 +96,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     private ViewReportPane reportPane;
     private OfflineExecutionPanel executionPane;
     private OnlineSimulationPane onlineSimulationPane;
+    private WhatIfAnalysisPane whatIfAnalysisPane;
     private VisualizationState vs;
     private UndoRedoManager undoRedoManager;
 
@@ -110,6 +112,9 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         this(TITLE);
     }
 
+    @Override
+    public WhatIfAnalysisPane getWhatIfAnalysisPane () { return whatIfAnalysisPane; } 
+    
     /**
      * Constructor that allows set a title for the tool in the top section of the panel.
      *
@@ -204,6 +209,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         onlineSimulationPane = new OnlineSimulationPane(this);
         executionPane = new OfflineExecutionPanel(this);
+        whatIfAnalysisPane = new WhatIfAnalysisPane(this);
 
         // Closing windows
         WindowUtils.clearFloatingWindows();
@@ -212,6 +218,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.network), viewEditTopTables);
         tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.offline), executionPane);
         tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.online), onlineSimulationPane);
+        tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.whatif), whatIfAnalysisPane);
         tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.report), reportPane);
 
         // Installing customized mouse listener
@@ -269,6 +276,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                                 case online:
                                     WindowController.buildOnlineWindow(selectedComponent);
                                     WindowController.showOnlineWindow();
+                                    break;
+                                case whatif:
+                                    WindowController.buildWhatifWindow(selectedComponent);
+                                    WindowController.showWhatifWindow();
                                     break;
                                 case report:
                                     WindowController.buildReportWindow(selectedComponent);
