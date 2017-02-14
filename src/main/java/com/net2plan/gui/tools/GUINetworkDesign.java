@@ -719,6 +719,21 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                 WindowController.showTablesWindow(true);
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
+
+        viewEditTopTables.setInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW));
+        viewEditTopTables.setActionMap(this.getActionMap());
+
+        reportPane.setInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW));
+        reportPane.setActionMap(this.getActionMap());
+
+        executionPane.setInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW));
+        executionPane.setActionMap(this.getActionMap());
+
+        onlineSimulationPane.setInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW));
+        onlineSimulationPane.setActionMap(this.getActionMap());
+
+        whatIfAnalysisPane.setInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW));
+        whatIfAnalysisPane.setActionMap(this.getActionMap());
     }
 
     @Override
