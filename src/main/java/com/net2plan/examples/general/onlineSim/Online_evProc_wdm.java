@@ -8,10 +8,8 @@ package com.net2plan.examples.general.onlineSim;
  ******************************************************************************/
 
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -29,6 +27,7 @@ import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
+import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.WDMUtils;
 import com.net2plan.libraries.WDMUtils.TransponderTypesInfo;
@@ -39,7 +38,6 @@ import com.net2plan.utils.Quadruple;
 import com.net2plan.utils.RandomUtils;
 import com.net2plan.utils.Triple;
 
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.jet.math.tdouble.DoubleFunctions;
 
@@ -152,12 +150,11 @@ public class Online_evProc_wdm extends IEventProcessor
 		this.tpInfo = new TransponderTypesInfo(wdmTransponderTypesInfo.getString());
 		this.transponderTypeOfNewLps = new HashMap<Route,Integer> ();
 
-		/* Compute the candidate path list */
+		/* Create empty candidate path lists: they will be filled on demand */
 		this.E_wdm = initialNetPlan.getNumberOfLinks(wdmLayer);
-		this.cplWdm = initialNetPlan.computeUnicastCandidatePathList(initialNetPlan.getVectorLinkLengthInKm(wdmLayer) , 
-				wdmK.getInt(), tpInfo.getMaxOpticalReachKm(), wdmMaxLightpathNumHops.getInt(), -1, -1,-1, -1, null, wdmLayer);		
+		this.cplWdm = new HashMap<> ();
 		this.protectionTypeCode = wdmProtectionTypeToNewRoutes.getString ().equals("1+1-srg-disjoint") ? 0 : wdmProtectionTypeToNewRoutes.getString ().equals("1+1-node-disjoint")? 1 : 2;
-		this.cplWdm11 = newRoutesHave11Protection? NetPlan.computeUnicastCandidate11PathList(cplWdm , protectionTypeCode): null;
+		this.cplWdm11 = newRoutesHave11Protection? new HashMap<> () : null; 
 		
 		this.wavelengthFiberOccupancy = WDMUtils.getNetworkSlotAndRegeneratorOcupancy(initialNetPlan, true , wdmLayer).getFirst();
 		if (DEBUG) { checkWaveOccupEqualsNp(initialNetPlan); checkClashing (initialNetPlan); } 
@@ -458,7 +455,7 @@ public class Online_evProc_wdm extends IEventProcessor
 		final double maxLightpathLengthKm = isSignalRegenerationPossible? Double.MAX_VALUE : opticalReachKm;
 		if (isLoadSharing)
 		{
-			final List<List<Link>> paths = cplWdm.get(cplNodePair);
+			final List<List<Link>> paths = getAndUpdateCplWdm(cplNodePair, currentNetPlan);
 			final int randomChosenIndex = rng.nextInt(paths.size ());
 			final List<Link> seqLinksThisNetPlan = paths.get(randomChosenIndex);
 			final Triple<Boolean,Integer,Double> rwaEval = computeValidWAFirstFit_path (seqLinksThisNetPlan , numContiguousSlots , maxLightpathLengthKm);
@@ -468,7 +465,7 @@ public class Online_evProc_wdm extends IEventProcessor
 		{
 			/* If alternate or LCR */
 			WDMUtils.RSA lcrSoFar = null; double lcrIdleCapacitySoFar = -Double.MAX_VALUE; 
-			for (List<Link> seqLinks : this.cplWdm.get(cplNodePair))
+			for (List<Link> seqLinks : getAndUpdateCplWdm(cplNodePair, currentNetPlan))
 			{
 				final Triple<Boolean,Integer,Double> rwaEval = computeValidWAFirstFit_path (seqLinks , numContiguousSlots , maxLightpathLengthKm);
 				if (!rwaEval.getFirst()) continue;
@@ -488,7 +485,7 @@ public class Online_evProc_wdm extends IEventProcessor
 			WDMUtils.RSA chosenRWA = null; 
 			final Set<Route> existingPrimaryRoutesBetweenPairOfNodes = currentNetPlan.getNodePairRoutes(thisNpIngressNode, thisNpEgressNode , false , wdmLayer);
 			int cplChosenRoute_numSRGOverlappingRoutes = Integer.MAX_VALUE;
-			for(List<Link> seqLinks : this.cplWdm.get(cplNodePair))
+			for(List<Link> seqLinks : getAndUpdateCplWdm(cplNodePair, currentNetPlan))
 			{
 				/* Check that the route has an available wavlength */
 				final Triple<Boolean,Integer,Double> rwaEval = computeValidWAFirstFit_path (seqLinks , numContiguousSlots , maxLightpathLengthKm);
@@ -517,7 +514,7 @@ public class Online_evProc_wdm extends IEventProcessor
 		/* If load sharing */
 		if (isLoadSharing)
 		{
-			final List<Pair<List<Link>,List<Link>>> routePairs = this.cplWdm11.get(cplNodePair);
+			final List<Pair<List<Link>,List<Link>>> routePairs = getAndUpdateCplWdm11(cplNodePair, currentNetPlan);
 			final int randomChosenIndex = rng.nextInt(routePairs.size());
 			final List<Link> seqLinksPrimaryThisNetPlan = routePairs.get(randomChosenIndex).getFirst();
 			final List<Link> seqLinksBackupThisNetPlan = routePairs.get(randomChosenIndex).getSecond();
@@ -530,7 +527,7 @@ public class Online_evProc_wdm extends IEventProcessor
 		else if (isAlternateRouting || isLeastCongestedRouting)
 		{
 			Pair<WDMUtils.RSA,WDMUtils.RSA> lcrSoFar = null; double lcrIdleCapacitySoFar= -Double.MAX_VALUE; 
-			for (Pair<List<Link>,List<Link>> pathPair : this.cplWdm11.get(cplNodePair))
+			for (Pair<List<Link>,List<Link>> pathPair : getAndUpdateCplWdm11(cplNodePair, currentNetPlan))
 			{
 				final List<Link> seqLinksPrimaryThisNetPlan = pathPair.getFirst();
 				final List<Link> seqLinksBackupThisNetPlan = pathPair.getSecond();
@@ -551,7 +548,7 @@ public class Online_evProc_wdm extends IEventProcessor
 			Pair<WDMUtils.RSA,WDMUtils.RSA> chosenRWA = null; 
 			Set<Route> existingRoutesBetweenPairOfNodes = currentNetPlan.getNodePairRoutes(thisNpIngressNode, thisNpEgressNode , false , wdmLayer).stream().filter(e -> !e.isBackupRoute()).collect(Collectors.toSet());
 			int cplChosenRoute_numSRGOverlappingRoutes = Integer.MAX_VALUE;
-			for(Pair<List<Link>,List<Link>> pathPair : this.cplWdm11.get(cplNodePair))
+			for(Pair<List<Link>,List<Link>> pathPair : getAndUpdateCplWdm11(cplNodePair, currentNetPlan))
 			{
 				final List<Link> seqLinksPrimaryThisNetPlan = pathPair.getFirst();
 				final List<Link> seqLinksBackupThisNetPlan = pathPair.getSecond();
@@ -691,5 +688,30 @@ public class Online_evProc_wdm extends IEventProcessor
 			throw new RuntimeException ();
 		} 
 
+	}
+	
+	private List<List<Link>> getAndUpdateCplWdm (Pair<Node,Node> pair , NetPlan np)
+	{
+		List<List<Link>> res = cplWdm.get(pair);
+		if (res != null) return res;
+		final Map<Link,Double> linkCostMap = new HashMap<> (); for (Link e : np.getLinks(wdmLayer)) linkCostMap.put(e, e.getLengthInKm());
+        res = GraphUtils.getKLooplessShortestPaths(np.getNodes(), np.getLinks(wdmLayer), pair.getFirst(), 
+        		pair.getSecond(), linkCostMap, wdmK.getInt(), tpInfo.getMaxOpticalReachKm(), wdmMaxLightpathNumHops.getInt(), -1, -1, -1, -1);
+        if (res.isEmpty()) throw new Net2PlanException ("There is no path between nodes: " + pair.getFirst() + " -> " + pair.getSecond());
+        cplWdm.put(pair ,  res);
+        return res;
+	}
+	private List<Pair<List<Link>,List<Link>>> getAndUpdateCplWdm11 (Pair<Node,Node> pair , NetPlan np)
+	{
+		List<Pair<List<Link>,List<Link>>> res = cplWdm11.get(pair);
+		if (res != null) return res;
+		final List<List<Link>> basePathList = getAndUpdateCplWdm (pair , np);
+		final Map<Pair<Node,Node> , List<List<Link>>> singleNodePairCpl = new HashMap<>();
+		singleNodePairCpl.put(pair , basePathList); 
+		final Map<Pair<Node, Node>, List<Pair<List<Link>, List<Link>>>> cpl11ThisPair = 
+				NetPlan.computeUnicastCandidate11PathList(singleNodePairCpl , protectionTypeCode);
+        if (cpl11ThisPair.isEmpty()) throw new Net2PlanException ("There is no 1+1 paths between nodes: " + pair.getFirst() + " -> " + pair.getSecond());
+        cplWdm11.put(pair ,  cpl11ThisPair.get(pair));
+        return cpl11ThisPair.get(pair);
 	}
 }
