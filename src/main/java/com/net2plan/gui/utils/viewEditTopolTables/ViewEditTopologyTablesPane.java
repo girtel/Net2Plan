@@ -212,13 +212,6 @@ public class ViewEditTopologyTablesPane extends JPanel
         }
         if ((selectedTabIndex < netPlanView.getTabCount()) && (selectedTabIndex >= 0))
             netPlanView.setSelectedIndex(selectedTabIndex);
-//        
-//        for (int tabId = 0; tabId < netPlanView.getTabCount(); tabId++) {
-//            if (netPlanView.getComponentAt(tabId).equals(selectedTab)) {
-//                netPlanView.setSelectedIndex(tabId);
-//                break;
-//            }
-//        }
 
         currentState.checkCachesConsistency();
         
