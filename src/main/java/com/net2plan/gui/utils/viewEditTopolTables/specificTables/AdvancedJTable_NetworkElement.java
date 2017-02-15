@@ -1198,7 +1198,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
         setEnabled(false);
         String[] header = getCurrentTableHeaders();
         ((DefaultTableModel) getModel()).setDataVector(new Object[1][header.length], header);
-
+        
         if (currentState.getRoutingType() == RoutingType.SOURCE_ROUTING && networkElementType.equals(NetworkElementType.FORWARDING_RULE))
             return;
         if (currentState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING && (networkElementType.equals(NetworkElementType.ROUTE)))
@@ -1213,6 +1213,13 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
             if (attColumnsHeaders != null && networkElementType != NetworkElementType.FORWARDING_RULE)
             {
                 createDefaultColumnsFromModel();
+                final String[] columnTips = getTableTips();
+                final String[] columnHeader = getTableHeaders();
+                final ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
+                for (int c = 0; c < columnHeader.length; c++)
+                    tips.setToolTip(getColumnModel().getColumn(c), columnTips[c]);
+                getTableHeader().addMouseMotionListener(tips);
+                
                 if (areAttributesInDifferentColums())
                 {
                     removeNewColumn("Attributes");

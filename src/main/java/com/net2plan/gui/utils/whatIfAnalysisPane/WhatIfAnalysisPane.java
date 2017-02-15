@@ -134,6 +134,7 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
 
     public void whatIfDemandOfferedTrafficModified(Demand demand, double newOfferedTraffic)
     {
+    	if (demand.isCoupled()) throw new Net2PlanException ("What-if analysis changing the offered traffic in coupled demands is not accepted");
         this.lastWhatIfExecutionException = null;
         SimEvent.DemandModify modifyEvent = new SimEvent.DemandModify(demand, newOfferedTraffic, false);
         SimEvent event = new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR, -1, modifyEvent);
@@ -142,6 +143,7 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
 
     public void whatIfDemandOfferedTrafficModified(MulticastDemand demand, double newOfferedTraffic)
     {
+    	if (demand.isCoupled()) throw new Net2PlanException ("What-if analysis changing the offered traffic in coupled demands is not accepted");
         this.lastWhatIfExecutionException = null;
         SimEvent.MulticastDemandModify modifyEvent = new SimEvent.MulticastDemandModify(demand, newOfferedTraffic, false);
         SimEvent event = new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR, -1, modifyEvent);
