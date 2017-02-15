@@ -552,7 +552,8 @@ public class SimKernel implements IEventCallback
 			throw new Net2PlanException("Network design cannot be changed once simulation was started");
 	
 		initialNetPlan = netPlan.copy ();  initialNetPlan.setModifiableState(false);
-		initializeNetState();
+		currentNetPlan = netPlan;
+		//initializeNetState();
 	}
 
 	/**

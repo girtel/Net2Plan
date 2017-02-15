@@ -120,7 +120,8 @@ public class Online_evProc_congestionControlDual extends IEventProcessor
 		/* Remove all routes, and create one with the shortest path in km for each demand */
 		currentNetPlan.removeAllUnicastRoutingInformation();
 		currentNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
-		currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.getVectorLinkLengthInKm().toArray()  , "K" , "1");
+		this.currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.computeUnicastCandidatePathList(currentNetPlan.getVectorLinkLengthInKm() , 1, -1, -1, -1, -1, -1, -1 , null));
+
 		for (Route r : currentNetPlan.getRoutes ()) r.setCarriedTraffic(r.getDemand().getOfferedTraffic() , r.getDemand().getOfferedTraffic());
 		
 		this.rng = new Random (simulation_randomSeed.getLong());
@@ -175,7 +176,7 @@ public class Online_evProc_congestionControlDual extends IEventProcessor
 
 		this.stat_traceOf_hd.add(0.0, this.currentNetPlan.getVectorDemandOfferedTraffic());
 		this.stat_traceOf_pie.add(0.0, this.congControl_price_e.copy ());
-		this.stat_traceOf_ye.add(0.0, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+		this.stat_traceOf_ye.add(0.0, this.currentNetPlan.getVectorLinkCarriedTraffic());
 		this.stat_traceOf_objFunction.add(0.0, NetworkPerformanceMetrics.alphaUtility(currentNetPlan.getVectorDemandOfferedTraffic() , control_fairnessFactor.getDouble()));
 
 	}
@@ -201,7 +202,7 @@ public class Online_evProc_congestionControlDual extends IEventProcessor
 
 			/* Update the new price with the gradient approach */
 			final double u_e = eMe.getCapacity();
-			final double y_e = eMe.getCarriedTrafficIncludingProtectionSegments();
+			final double y_e = eMe.getCarriedTraffic();
 			final double old_pie = this.congControl_price_e.get(eMe.getIndex());
 			final double new_pie = Math.max(0, old_pie - this.gradient_gammaStep.getDouble() * (u_e - y_e) + 2*gradient_maxGradientAbsoluteNoise.getDouble()*(rng.nextDouble()-0.5));
 			this.congControl_price_e.set(eMe.getIndex(), new_pie);
@@ -247,7 +248,7 @@ public class Online_evProc_congestionControlDual extends IEventProcessor
 
 			this.stat_traceOf_hd.add(t, this.currentNetPlan.getVectorDemandOfferedTraffic());
 			this.stat_traceOf_pie.add(t, this.congControl_price_e.copy ());
-			this.stat_traceOf_ye.add(t, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+			this.stat_traceOf_ye.add(t, this.currentNetPlan.getVectorLinkCarriedTraffic());
 			this.stat_traceOf_objFunction.add(t, NetworkPerformanceMetrics.alphaUtility(currentNetPlan.getVectorDemandOfferedTraffic() , control_fairnessFactor.getDouble()));
 
 			if (t > this.simulation_maxNumberOfUpdateIntervals.getDouble() * this.update_averageInterUpdateTime.getDouble()) { this.endSimulation (); }
@@ -290,7 +291,7 @@ public class Online_evProc_congestionControlDual extends IEventProcessor
 		{
 			final double h_r = r.getCarriedTraffic();
 			demandCarriedTraffic += h_r;
-			for (Link e : r.getSeqLinksRealPath())
+			for (Link e : r.getSeqLinks())
 				demandWeightedSumLinkPrices += h_r * infoIKnow_price_e.get(e.getIndex ());
 		}
 		demandWeightedSumLinkPrices /= demandCarriedTraffic;

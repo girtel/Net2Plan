@@ -1,11 +1,8 @@
 package com.net2plan.gui.utils.viewEditTopolTables.tableStateFiles;
 
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
-import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement;
 import com.net2plan.internal.Constants;
-import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.XMLUtils;
-import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.utils.Pair;
 import org.codehaus.stax2.XMLInputFactory2;
 import org.codehaus.stax2.XMLOutputFactory2;
@@ -13,17 +10,13 @@ import org.codehaus.stax2.XMLStreamReader2;
 import org.codehaus.stax2.XMLStreamWriter2;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.events.XMLEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author César
@@ -43,7 +36,7 @@ public final class TableStateController
 
      */
 
-    public static HashMap<Constants.NetworkElementType, TableState> loadTableState(Map<Constants.NetworkElementType, AdvancedJTableNetworkElement> tables) throws XMLStreamException
+    public static HashMap<Constants.NetworkElementType, TableState> loadTableState(Map<Constants.NetworkElementType, AdvancedJTable_NetworkElement> tables) throws XMLStreamException
     {
         final JFileChooser fileChooser = new JFileChooser();
 
@@ -85,7 +78,7 @@ public final class TableStateController
                     }
                 }
 
-                for (Map.Entry<Constants.NetworkElementType, AdvancedJTableNetworkElement> entry : tables.entrySet())
+                for (Map.Entry<Constants.NetworkElementType, AdvancedJTable_NetworkElement> entry : tables.entrySet())
                 {
                     Pair<Constants.NetworkElementType, TableState> networkElementTypeTableStatePair = parseTableState(xmlStreamReader, entry.getKey());
                     tStateMap.put(networkElementTypeTableStatePair.getFirst(), networkElementTypeTableStatePair.getSecond());
@@ -112,7 +105,7 @@ public final class TableStateController
     /*Takes the current State from table and saves in a external file .n2pst
 
      */
-    public static void saveTableState(Map<Constants.NetworkElementType, AdvancedJTableNetworkElement> tables) throws XMLStreamException
+    public static void saveTableState(Map<Constants.NetworkElementType, AdvancedJTable_NetworkElement> tables) throws XMLStreamException
     {
         final JFileChooser fileChooser = new JFileChooser();
         fileChooser.setAcceptAllFileFilterUsed(false);
@@ -138,10 +131,10 @@ public final class TableStateController
             writer.writeStartElement("tableStateFile");
 
 
-            for (Map.Entry<Constants.NetworkElementType, AdvancedJTableNetworkElement> entry : tables.entrySet())
+            for (Map.Entry<Constants.NetworkElementType, AdvancedJTable_NetworkElement> entry : tables.entrySet())
             {
 
-                AdvancedJTableNetworkElement table = entry.getValue();
+                AdvancedJTable_NetworkElement table = entry.getValue();
                 XMLUtils.indent(writer, 1);
                 writer.writeStartElement("tableState");
                 writer.writeAttribute("networkElementType", table.getNetworkElementType().toString());

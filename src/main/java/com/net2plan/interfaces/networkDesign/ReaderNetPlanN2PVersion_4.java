@@ -45,7 +45,7 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 	protected Map<Long,MulticastDemand> mapOldId2MulticastDemand;
 	protected Map<Long,Route> mapOldId2Route;
 	protected Map<Long,MulticastTree> mapOldId2MulticastTree;
-	protected Map<Long,ProtectionSegment> mapOldId2ProtectionSegment;
+	//protected Map<Long,ProtectionSegment> mapOldId2ProtectionSegment;
 	protected boolean hasAlreadyReadOneLayer;
 	
 	public void create(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
@@ -58,7 +58,7 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 		this.mapOldId2MulticastDemand = new HashMap<Long,MulticastDemand> ();
 		this.mapOldId2Route = new HashMap<Long,Route> ();
 		this.mapOldId2MulticastTree = new HashMap<Long,MulticastTree> ();
-		this.mapOldId2ProtectionSegment = new HashMap<Long,ProtectionSegment> ();
+		//this.mapOldId2ProtectionSegment = new HashMap<Long,ProtectionSegment> ();
 		this.hasAlreadyReadOneLayer = false;
 		parseNetwork(netPlan, xmlStreamReader);
 
@@ -142,8 +142,8 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 		List<Long> seqLinks = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "seqLinks")));
 //		netPlan.nextSegmentId.put(layerId, segmentId);
 		List<Link> newSeqLinks = new LinkedList<Link> (); for (long linkId : seqLinks) newSeqLinks.add (mapOldId2Link.get(linkId));
-		ProtectionSegment newSegment = netPlan.addProtectionSegment(newSeqLinks, reservedCapacity, null);
-		mapOldId2ProtectionSegment.put (segmentId , newSegment);
+//		ProtectionSegment newSegment = netPlan.addProtectionSegment(newSeqLinks, reservedCapacity, null);
+//		mapOldId2ProtectionSegment.put (segmentId , newSegment);
 		
 		while(xmlStreamReader.hasNext())
 		{
@@ -158,7 +158,7 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 						case "attribute":
 							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
 							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
-							newSegment.setAttribute(key, name);
+//							newSegment.setAttribute(key, name);
 							break;
 
 						default:
@@ -281,12 +281,12 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 		List<Link> seqLinksAndProtectionSegments_link = new LinkedList<Link> (); 
 		for (long linkId : currentSeqLinksAndProtectionSegments) 
 			if (mapOldId2Link.get(linkId) != null) seqLinksAndProtectionSegments_link.add (mapOldId2Link.get(linkId));
-			else if (mapOldId2ProtectionSegment.get(linkId) != null) seqLinksAndProtectionSegments_link.add (mapOldId2ProtectionSegment.get(linkId));
+			//else if (mapOldId2ProtectionSegment.get(linkId) != null) seqLinksAndProtectionSegments_link.add (mapOldId2ProtectionSegment.get(linkId));
 			else throw new Net2PlanException ("Error parsing route information (current sequence of links and protection segments)");
 		Route newRoute = netPlan.addRoute(mapOldId2Demand.get(demandId) , carriedTrafficIfNotFailing, occupiedLinkCapacityIfNotFailing, initialSeqLinksWhenCreated_link, null);
 		mapOldId2Route.put (routeId,newRoute);
-		for(long segmentId : backupSegmentList) newRoute.addProtectionSegment(mapOldId2ProtectionSegment.get(segmentId));
-		newRoute.setSeqLinksAndProtectionSegments(seqLinksAndProtectionSegments_link);
+		//for(long segmentId : backupSegmentList) newRoute.addProtectionSegment(mapOldId2ProtectionSegment.get(segmentId));
+		newRoute.setSeqLinks(seqLinksAndProtectionSegments_link);
 		if (Math.abs (newRoute.getCarriedTraffic() - carriedTraffic) > 1e-3) throw new RuntimeException ("Bad");
 		if (Math.abs (newRoute.getOccupiedCapacity() - occupiedCapacity) > 1e-3) throw new RuntimeException ("Bad");
 		
@@ -329,7 +329,7 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 		long demandId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "demandId"));
 		double splittingRatio = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "splittingRatio"));
 
-		mapOldId2Layer.get(layerId).forwardingRules_f_de.set (mapOldId2Demand.get(demandId).index , mapOldId2Link.get(linkId).index  , splittingRatio);
+		mapOldId2Layer.get(layerId).forwardingRulesNoFailureState_f_de.set (mapOldId2Demand.get(demandId).index , mapOldId2Link.get(linkId).index  , splittingRatio);
 
 		while(xmlStreamReader.hasNext())
 		{
@@ -518,7 +518,7 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 		}
 		else
 		{
-			newLayer = netPlan.addLayer(layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, null);
+			newLayer = netPlan.addLayer(layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, null , null);
 		}
 
 		mapOldId2Layer.put(layerId , newLayer);

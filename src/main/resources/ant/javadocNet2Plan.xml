@@ -19,7 +19,7 @@
         <javadoc access="public" author="false" destdir="${releaseDestThisVersion}/doc/javadoc/examples"
                  nodeprecated="true" nodeprecatedlist="true" noindex="false" nonavbar="false" notree="false"
                  source="1.7"
-                 splitindex="true" use="true" version="false" overview="overview-examples.html" linksource="yes"
+                 splitindex="true" use="true" version="false" overview="overview-examplesJavadoc.html" linksource="yes"
                  noqualifier="java.lang:java.util:java.io:java.awt:java.net:java.awt.geom:javax.swing:cern.colt.matrix.tdouble">
             <classpath>
                 <pathelement path="../src"/>

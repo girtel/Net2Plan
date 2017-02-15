@@ -81,8 +81,7 @@ public class Offline_fa_xpMultihourDynamicRouting implements IAlgorithm
 
 		/* Add all the k-shortest candidate routes to the netPlan object carrying no traffic */
 		final DoubleMatrix1D linkCostVector = shortestPathType.getString().equalsIgnoreCase("hops")? DoubleFactory1D.dense.make (E , 1.0) : netPlan.getVectorLinkLengthInKm();
-
-		netPlan.addRoutesFromCandidatePathList(linkCostVector.toArray() , "K", Integer.toString(k.getInt ()), "maxLengthInKm", Double.toString(maxLengthInKm.getDouble () > 0? maxLengthInKm.getDouble () : Double.MAX_VALUE));
+		netPlan.addRoutesFromCandidatePathList(netPlan.computeUnicastCandidatePathList(linkCostVector , k.getInt(), maxLengthInKm.getDouble(), -1, -1, -1, -1, -1 , null));
 		final int P = netPlan.getNumberOfRoutes(); 
 		
 		/* Create the netPlan files, one per interval */
@@ -96,7 +95,7 @@ public class Offline_fa_xpMultihourDynamicRouting implements IAlgorithm
 				NetPlan netPlanToAdd = netPlan.copy ();
 				for (Demand d : netPlanToAdd.getDemands()) d.setOfferedTraffic(thisIntervalTrafficMatrix.get (d.getIngressNode().getIndex() , d.getEgressNode().getIndex()));
 				netPlanFiles.add (netPlanToAdd);
-			} catch (Exception e) { e.printStackTrace();  break; }
+			} catch (Exception e) {  break; }
 		}
 		final int T = netPlanFiles.size();
 
@@ -177,7 +176,7 @@ public class Offline_fa_xpMultihourDynamicRouting implements IAlgorithm
 			thisNp.saveToFile(new File (rootOfNameOfOutputFiles.getString() + "_res_tm" + netPlanFiles.size () + ".n2p"));
 			if (t == 0) netPlan.assignFrom (thisNp);
 			if (thisNp.getVectorLinkOversubscribedTraffic().zSum () > PRECISION_FACTOR) throw new RuntimeException ("Bad: " + thisNp.getVectorLinkOversubscribedTraffic().zSum ());
-			if (thisNp.getDemandTotalBlockedTraffic() > PRECISION_FACTOR) throw new RuntimeException ("Bad: " + thisNp.getDemandTotalBlockedTraffic());
+			if (thisNp.getVectorDemandBlockedTraffic().zSum() > PRECISION_FACTOR) throw new RuntimeException ("Bad: " + thisNp.getVectorDemandBlockedTraffic().zSum());
 		}
 
 		DoubleMatrix2D reroutedTraffic_pt = xx_pt.zMult (P_ttminus1 , null).assign (h_pt,  DoubleFunctions.mult).assign (DoubleFunctions.abs);

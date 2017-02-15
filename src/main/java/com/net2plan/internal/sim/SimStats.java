@@ -74,13 +74,11 @@ public class SimStats
 	private Map<Long, Map<Long, Integer>> previousState_nodeInDegree, previousState_nodeOutDegree, maxNodeInDegree, maxNodeOutDegree, minNodeInDegree, minNodeOutDegree;
 	
 	/* Link information */
-	private Map<Long, Map<Long, Double>> previousState_linkLengthInKm, previousState_linkCapacity, previousState_linkCarriedTraffic, previousState_linkReservedBandwidth;
+	private Map<Long, Map<Long, Double>> previousState_linkLengthInKm, previousState_linkCapacity, previousState_linkOccupiedCapacity;
 	private Map<Long, Map<Long, MutableDouble>> accum_avgLinkLengthInKm, minLinkLengthInKm, maxLinkLengthInKm;
 	private Map<Long, Map<Long, MutableDouble>> accum_avgCapacity, minCapacity, maxCapacity;
-	private Map<Long, Map<Long, MutableDouble>> accum_avgLinkCarriedTraffic, minLinkCarriedTraffic, maxLinkCarriedTraffic;
-	private Map<Long, Map<Long, MutableDouble>> accum_avgReservedBandwidth, minReservedBandwidth, maxReservedBandwidth;
+	private Map<Long, Map<Long, MutableDouble>> accum_avgLinkOccupiedCapacity, minLinkOccupiedCapacity, maxLinkOccupiedCapacity;
 	private Map<Long, Map<Long, MutableDouble>> accum_avgUtilization, minUtilization, maxUtilization;
-	private Map<Long, Map<Long, MutableDouble>> accum_avgUtilizationWithoutReservedBandwidth, minUtilizationWithoutReservedBandwidth, maxUtilizationWithoutReservedBandwidth;
 	private Map<Long, Map<Long, MutableDouble>> accum_avgOversubscribedCapacity, minOversubscribedCapacity, maxOversubscribedCapacity;
 	private Map<Long, Map<Long, MutableDouble>> accum_linkOversubscribedTime, accum_linkUpTime, accum_linkTotalTime;
 	
@@ -184,18 +182,12 @@ public class SimStats
 			accum_avgCapacity.put(layerId, new LinkedHashMap<Long, MutableDouble>());
 			minCapacity.put(layerId, new LinkedHashMap<Long, MutableDouble>());
 			maxCapacity.put(layerId, new LinkedHashMap<Long, MutableDouble>());
-			accum_avgLinkCarriedTraffic.put(layerId, new LinkedHashMap<Long, MutableDouble>());
-			minLinkCarriedTraffic.put(layerId, new LinkedHashMap<Long, MutableDouble>());
-			maxLinkCarriedTraffic.put(layerId, new LinkedHashMap<Long, MutableDouble>());
-			accum_avgReservedBandwidth.put(layerId, new LinkedHashMap<Long, MutableDouble>());
-			minReservedBandwidth.put(layerId, new LinkedHashMap<Long, MutableDouble>());
-			maxReservedBandwidth.put(layerId, new LinkedHashMap<Long, MutableDouble>());
+			accum_avgLinkOccupiedCapacity.put(layerId, new LinkedHashMap<Long, MutableDouble>());
+			minLinkOccupiedCapacity.put(layerId, new LinkedHashMap<Long, MutableDouble>());
+			maxLinkOccupiedCapacity.put(layerId, new LinkedHashMap<Long, MutableDouble>());
 			accum_avgUtilization.put(layerId, new LinkedHashMap<Long, MutableDouble>());
 			minUtilization.put(layerId, new LinkedHashMap<Long, MutableDouble>());
 			maxUtilization.put(layerId, new LinkedHashMap<Long, MutableDouble>());
-			accum_avgUtilizationWithoutReservedBandwidth.put(layerId, new LinkedHashMap<Long, MutableDouble>());
-			minUtilizationWithoutReservedBandwidth.put(layerId, new LinkedHashMap<Long, MutableDouble>());
-			maxUtilizationWithoutReservedBandwidth.put(layerId, new LinkedHashMap<Long, MutableDouble>());
 			accum_avgOversubscribedCapacity.put(layerId, new LinkedHashMap<Long, MutableDouble>());
 			minOversubscribedCapacity.put(layerId, new LinkedHashMap<Long, MutableDouble>());
 			maxOversubscribedCapacity.put(layerId, new LinkedHashMap<Long, MutableDouble>());
@@ -234,18 +226,12 @@ public class SimStats
 			accum_avgCapacity.get(layerId).put(linkId, new MutableDouble());
 			minCapacity.get(layerId).put(linkId, new MutableDouble(Double.MAX_VALUE));
 			maxCapacity.get(layerId).put(linkId, new MutableDouble());
-			accum_avgLinkCarriedTraffic.get(layerId).put(linkId, new MutableDouble());
-			minLinkCarriedTraffic.get(layerId).put(linkId, new MutableDouble(Double.MAX_VALUE));
-			maxLinkCarriedTraffic.get(layerId).put(linkId, new MutableDouble());
-			accum_avgReservedBandwidth.get(layerId).put(linkId, new MutableDouble());
-			minReservedBandwidth.get(layerId).put(linkId, new MutableDouble(Double.MAX_VALUE));
-			maxReservedBandwidth.get(layerId).put(linkId, new MutableDouble());
+			accum_avgLinkOccupiedCapacity.get(layerId).put(linkId, new MutableDouble());
+			minLinkOccupiedCapacity.get(layerId).put(linkId, new MutableDouble(Double.MAX_VALUE));
+			maxLinkOccupiedCapacity.get(layerId).put(linkId, new MutableDouble());
 			accum_avgUtilization.get(layerId).put(linkId, new MutableDouble());
 			minUtilization.get(layerId).put(linkId, new MutableDouble(Double.MAX_VALUE));
 			maxUtilization.get(layerId).put(linkId, new MutableDouble());
-			accum_avgUtilizationWithoutReservedBandwidth.get(layerId).put(linkId, new MutableDouble());
-			minUtilizationWithoutReservedBandwidth.get(layerId).put(linkId, new MutableDouble(Double.MAX_VALUE));
-			maxUtilizationWithoutReservedBandwidth.get(layerId).put(linkId, new MutableDouble());
 			accum_avgOversubscribedCapacity.get(layerId).put(linkId, new MutableDouble());
 			minOversubscribedCapacity.get(layerId).put(linkId, new MutableDouble(Double.MAX_VALUE));
 			maxOversubscribedCapacity.get(layerId).put(linkId, new MutableDouble());
@@ -398,15 +384,13 @@ public class SimStats
 					
 					Set<Long> previousState_linkDownIds_thisLayer = previousState_linkDownIds.get(layerId);
 					Map<Long, Double> previousState_linkCapacity_thisLayer = previousState_linkCapacity.get(layerId);
-					Map<Long, Double> previousState_linkCarriedTraffic_thisLayer = previousState_linkCarriedTraffic.get(layerId);
-					Map<Long, Double> previousState_linkReservedBandwidth_thisLayer = previousState_linkReservedBandwidth.get(layerId);
+					Map<Long, Double> previousState_linkOccupiedCapacity_thisLayer = previousState_linkOccupiedCapacity.get(layerId);
 					Map<Long, Double> previousState_linkLengthInKm_thisLayer = previousState_linkLengthInKm.get(layerId);
 					for(long linkId : previousState_linkIds_thisLayer)
 					{
 						double u_e = previousState_linkCapacity_thisLayer.get(linkId);
-						double y_e = previousState_linkCarriedTraffic_thisLayer.get(linkId);
-						double r_e = previousState_linkReservedBandwidth_thisLayer.get(linkId);
-						double rho_e = y_e + r_e == 0 ? 0 : Math.max((y_e + r_e) / u_e, 0);
+						double y_e = previousState_linkOccupiedCapacity_thisLayer.get(linkId);
+						double rho_e = y_e == 0 ? 0 : Math.max(y_e / u_e, 0);
 						
 						totalCapacityInstalled += u_e;
 						congestion = Math.max(congestion, rho_e);
@@ -416,8 +400,7 @@ public class SimStats
 						if (netState.getLinkFromId (linkId) != null)
 						{
 							double l_e = previousState_linkLengthInKm_thisLayer.get(linkId);
-							double rho_e_withoutReservedBandwidth = y_e == 0 ? 0 : Math.max(y_e / u_e, 0);
-							double oversubscribedCapacity = y_e + r_e - u_e; if (oversubscribedCapacity < precisionFactor) oversubscribedCapacity = 0;
+							double oversubscribedCapacity = y_e - u_e; if (oversubscribedCapacity < precisionFactor) oversubscribedCapacity = 0;
 
 							accum_avgLinkLengthInKm.get(layerId).get(linkId).add(l_e * timeInterval);
 							minLinkLengthInKm.get(layerId).get(linkId).setValue(Math.min(minLinkLengthInKm.get(layerId).get(linkId).doubleValue(), l_e));
@@ -425,18 +408,12 @@ public class SimStats
 							accum_avgCapacity.get(layerId).get(linkId).add(u_e * timeInterval);
 							minCapacity.get(layerId).get(linkId).setValue(Math.min(minCapacity.get(layerId).get(linkId).doubleValue(), u_e));
 							maxCapacity.get(layerId).get(linkId).setValue(Math.max(maxCapacity.get(layerId).get(linkId).doubleValue(), u_e));
-							accum_avgLinkCarriedTraffic.get(layerId).get(linkId).add(y_e * timeInterval);
-							minLinkCarriedTraffic.get(layerId).get(linkId).setValue(Math.min(minLinkCarriedTraffic.get(layerId).get(linkId).doubleValue(), y_e));
-							maxLinkCarriedTraffic.get(layerId).get(linkId).setValue(Math.max(maxLinkCarriedTraffic.get(layerId).get(linkId).doubleValue(), y_e));
-							accum_avgReservedBandwidth.get(layerId).get(linkId).add(r_e * timeInterval);
-							minReservedBandwidth.get(layerId).get(linkId).setValue(Math.min(minReservedBandwidth.get(layerId).get(linkId).doubleValue(), r_e));
-							maxReservedBandwidth.get(layerId).get(linkId).setValue(Math.max(maxReservedBandwidth.get(layerId).get(linkId).doubleValue(), r_e));
+							accum_avgLinkOccupiedCapacity.get(layerId).get(linkId).add(y_e * timeInterval);
+							minLinkOccupiedCapacity.get(layerId).get(linkId).setValue(Math.min(minLinkOccupiedCapacity.get(layerId).get(linkId).doubleValue(), y_e));
+							maxLinkOccupiedCapacity.get(layerId).get(linkId).setValue(Math.max(maxLinkOccupiedCapacity.get(layerId).get(linkId).doubleValue(), y_e));
 							accum_avgUtilization.get(layerId).get(linkId).add(rho_e * timeInterval);
 							minUtilization.get(layerId).get(linkId).setValue(Math.min(minUtilization.get(layerId).get(linkId).doubleValue(), rho_e));
 							maxUtilization.get(layerId).get(linkId).setValue(Math.max(maxUtilization.get(layerId).get(linkId).doubleValue(), rho_e));
-							accum_avgUtilizationWithoutReservedBandwidth.get(layerId).get(linkId).add(rho_e_withoutReservedBandwidth * timeInterval);
-							minUtilizationWithoutReservedBandwidth.get(layerId).get(linkId).setValue(Math.min(minUtilizationWithoutReservedBandwidth.get(layerId).get(linkId).doubleValue(), rho_e_withoutReservedBandwidth));
-							maxUtilizationWithoutReservedBandwidth.get(layerId).get(linkId).setValue(Math.max(maxUtilizationWithoutReservedBandwidth.get(layerId).get(linkId).doubleValue(), rho_e_withoutReservedBandwidth));
 							accum_avgOversubscribedCapacity.get(layerId).get(linkId).add(oversubscribedCapacity * timeInterval);
 							minOversubscribedCapacity.get(layerId).get(linkId).setValue(Math.min(minOversubscribedCapacity.get(layerId).get(linkId).doubleValue(), oversubscribedCapacity));
 							maxOversubscribedCapacity.get(layerId).get(linkId).setValue(Math.max(maxOversubscribedCapacity.get(layerId).get(linkId).doubleValue(), oversubscribedCapacity));
@@ -452,18 +429,12 @@ public class SimStats
 							accum_avgCapacity.get(layerId).remove(linkId);
 							minCapacity.get(layerId).remove(linkId);
 							maxCapacity.get(layerId).remove(linkId);
-							accum_avgLinkCarriedTraffic.get(layerId).remove(linkId);
-							minLinkCarriedTraffic.get(layerId).remove(linkId);
-							maxLinkCarriedTraffic.get(layerId).remove(linkId);
-							accum_avgReservedBandwidth.get(layerId).remove(linkId);
-							minReservedBandwidth.get(layerId).remove(linkId);
-							maxReservedBandwidth.get(layerId).remove(linkId);
+							accum_avgLinkOccupiedCapacity.get(layerId).remove(linkId);
+							minLinkOccupiedCapacity.get(layerId).remove(linkId);
+							maxLinkOccupiedCapacity.get(layerId).remove(linkId);
 							accum_avgUtilization.get(layerId).remove(linkId);
 							minUtilization.get(layerId).remove(linkId);
 							maxUtilization.get(layerId).remove(linkId);
-							accum_avgUtilizationWithoutReservedBandwidth.get(layerId).remove(linkId);
-							minUtilizationWithoutReservedBandwidth.get(layerId).remove(linkId);
-							maxUtilizationWithoutReservedBandwidth.get(layerId).remove(linkId);
 							accum_avgOversubscribedCapacity.get(layerId).remove(linkId);
 							minOversubscribedCapacity.get(layerId).remove(linkId);
 							maxOversubscribedCapacity.get(layerId).remove(linkId);
@@ -608,18 +579,12 @@ public class SimStats
 					accum_avgCapacity.remove(layerId);
 					minCapacity.remove(layerId);
 					maxCapacity.remove(layerId);
-					accum_avgLinkCarriedTraffic.remove(layerId);
-					minLinkCarriedTraffic.remove(layerId);
-					maxLinkCarriedTraffic.remove(layerId);
-					accum_avgReservedBandwidth.remove(layerId);
-					minReservedBandwidth.remove(layerId);
-					maxReservedBandwidth.remove(layerId);
+					accum_avgLinkOccupiedCapacity.remove(layerId);
+					minLinkOccupiedCapacity.remove(layerId);
+					maxLinkOccupiedCapacity.remove(layerId);
 					accum_avgUtilization.remove(layerId);
 					minUtilization.remove(layerId);
 					maxUtilization.remove(layerId);
-					accum_avgUtilizationWithoutReservedBandwidth.remove(layerId);
-					minUtilizationWithoutReservedBandwidth.remove(layerId);
-					maxUtilizationWithoutReservedBandwidth.remove(layerId);
 					accum_avgOversubscribedCapacity.remove(layerId);
 					minOversubscribedCapacity.remove(layerId);
 					maxOversubscribedCapacity.remove(layerId);
@@ -660,8 +625,7 @@ public class SimStats
 		previousState_linkDownIds = new LinkedHashMap<Long, Set<Long>>();
 		previousState_linkLengthInKm = new LinkedHashMap<Long, Map<Long, Double>>();
 		previousState_linkCapacity = new LinkedHashMap<Long, Map<Long, Double>>();
-		previousState_linkCarriedTraffic = new LinkedHashMap<Long, Map<Long, Double>>();
-		previousState_linkReservedBandwidth = new LinkedHashMap<Long, Map<Long, Double>>();
+		previousState_linkOccupiedCapacity = new LinkedHashMap<Long, Map<Long, Double>>();
 		previousState_demandIds = new LinkedHashMap<Long, Set<Long>>();
 		previousState_demandOfferedTraffic = new LinkedHashMap<Long, Map<Long, Double>>();
 		previousState_demandCarriedTraffic = new LinkedHashMap<Long, Map<Long, Double>>();
@@ -686,15 +650,13 @@ public class SimStats
 			previousState_linkIds.put(layerId, new LinkedHashSet<Long>(netState.getLinkIds(netStateLayer)));
 			previousState_linkDownIds.put(layerId, new LinkedHashSet<Long>(NetPlan.getIds (netState.getLinksDown(netStateLayer))));
 			previousState_linkCapacity.put(layerId, new LinkedHashMap<Long, Double>());
-			previousState_linkCarriedTraffic.put(layerId, new LinkedHashMap<Long, Double>());
-			previousState_linkReservedBandwidth.put(layerId, new LinkedHashMap<Long, Double>());
+			previousState_linkOccupiedCapacity.put(layerId, new LinkedHashMap<Long, Double>());
 			previousState_linkLengthInKm.put(layerId, new LinkedHashMap<Long, Double>());
 			for(long linkId : previousState_linkIds.get(layerId))
 			{
 				Link netStateLink = netState.getLinkFromId (linkId);
 				previousState_linkCapacity.get(layerId).put(linkId, netStateLink.getCapacity());
-				previousState_linkCarriedTraffic.get(layerId).put(linkId, netStateLink.getOccupiedCapacityIncludingProtectionSegments());
-				previousState_linkReservedBandwidth.get(layerId).put(linkId, netStateLink.getReservedCapacityForProtection());
+				previousState_linkOccupiedCapacity.get(layerId).put(linkId, netStateLink.getOccupiedCapacity());
 				previousState_linkLengthInKm.get(layerId).put(linkId, netStateLink.getLengthInKm());
 			}
 		}
@@ -783,18 +745,12 @@ public class SimStats
 		accum_avgCapacity = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
 		minCapacity = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
 		maxCapacity = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
-		accum_avgLinkCarriedTraffic = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
-		minLinkCarriedTraffic = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
-		maxLinkCarriedTraffic = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
-		accum_avgReservedBandwidth = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
-		minReservedBandwidth = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
-		maxReservedBandwidth = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
+		accum_avgLinkOccupiedCapacity = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
+		minLinkOccupiedCapacity = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
+		maxLinkOccupiedCapacity = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
 		accum_avgUtilization = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
 		minUtilization = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
 		maxUtilization = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
-		accum_avgUtilizationWithoutReservedBandwidth = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
-		minUtilizationWithoutReservedBandwidth = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
-		maxUtilizationWithoutReservedBandwidth = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
 		accum_avgOversubscribedCapacity = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
 		minOversubscribedCapacity = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
 		maxOversubscribedCapacity = new LinkedHashMap<Long, Map<Long, MutableDouble>>();
@@ -1025,30 +981,20 @@ public class SimStats
 					if (minCapacity_thisLayer == Double.MAX_VALUE) minCapacity_thisLayer = 0;
 					writer.writeAttribute("minCapacity", String.format("%.3f", minCapacity_thisLayer));
 					writer.writeAttribute("maxCapacity", String.format("%.3f", maxCapacity.get(layerId).get(linkId).doubleValue()));
-					writer.writeAttribute("avgCarriedTraffic", String.format("%.3f", totalTime_thisLink > 0 ? accum_avgLinkCarriedTraffic.get(layerId).get(linkId).doubleValue() / totalTime_thisLink : 0));
+					writer.writeAttribute("avgOccupiedCapacity", String.format("%.3f", totalTime_thisLink > 0 ? accum_avgLinkOccupiedCapacity.get(layerId).get(linkId).doubleValue() / totalTime_thisLink : 0));
 					
-					double minCarriedTraffic_thisLink = minLinkCarriedTraffic.get(layerId).get(linkId).doubleValue();
+					double minCarriedTraffic_thisLink = minLinkOccupiedCapacity.get(layerId).get(linkId).doubleValue();
 					if (minCarriedTraffic_thisLink == Double.MAX_VALUE) minCarriedTraffic_thisLink = 0;
-					writer.writeAttribute("minCarriedTraffic", String.format("%.3f", minCarriedTraffic_thisLink));
-					writer.writeAttribute("maxCarriedTraffic", String.format("%.3f", maxLinkCarriedTraffic.get(layerId).get(linkId).doubleValue()));
-					writer.writeAttribute("avgReservedBandwidth", String.format("%.3f", totalTime_thisLink > 0 ? accum_avgReservedBandwidth.get(layerId).get(linkId).doubleValue() / totalTime_thisLink : 0));
+					writer.writeAttribute("minOccupiedCapacity", String.format("%.3f", minCarriedTraffic_thisLink));
+					writer.writeAttribute("maxOccupiedCapacity", String.format("%.3f", maxLinkOccupiedCapacity.get(layerId).get(linkId).doubleValue()));
 					
-					double minReservedBandwidth_thisLink = minReservedBandwidth.get(layerId).get(linkId).doubleValue();
-					if (minReservedBandwidth_thisLink == Double.MAX_VALUE) minReservedBandwidth_thisLink = 0;
-					writer.writeAttribute("minReservedBandwidth", String.format("%.3f", minReservedBandwidth_thisLink));
-					writer.writeAttribute("maxReservedBandwidth", String.format("%.3f", maxReservedBandwidth.get(layerId).get(linkId).doubleValue()));
 					writer.writeAttribute("avgUtilization", String.format("%.3f", totalTime_thisLink > 0 ? accum_avgUtilization.get(layerId).get(linkId).doubleValue() / totalTime_thisLink : 0));
 					
 					double minUtilization_thisLink = minUtilization.get(layerId).get(linkId).doubleValue();
 					if (minUtilization_thisLink == Double.MAX_VALUE) minUtilization_thisLink = 0;
 					writer.writeAttribute("minUtilization", String.format("%.3f", minUtilization_thisLink));
 					writer.writeAttribute("maxUtilization", String.format("%.3f", maxUtilization.get(layerId).get(linkId).doubleValue()));
-					writer.writeAttribute("avgUtilizationWithoutReservedBandwidth", String.format("%.3f", totalTime_thisLink > 0 ? accum_avgUtilizationWithoutReservedBandwidth.get(layerId).get(linkId).doubleValue() / totalTime_thisLink : 0));
 					
-					double minUtilizationWithoutReservedBandwidth_thisLink = minUtilizationWithoutReservedBandwidth.get(layerId).get(linkId).doubleValue();
-					if (minUtilizationWithoutReservedBandwidth_thisLink == Double.MAX_VALUE) minUtilizationWithoutReservedBandwidth_thisLink = 0;
-					writer.writeAttribute("minUtilizationWithoutReservedBandwidth", String.format("%.3f", minUtilizationWithoutReservedBandwidth_thisLink));
-					writer.writeAttribute("maxUtilizationWithoutReservedBandwidth", String.format("%.3f", maxUtilizationWithoutReservedBandwidth.get(layerId).get(linkId).doubleValue()));
 					writer.writeAttribute("avgOversubscribedCapacity", String.format("%.3f", totalTime_thisLink > 0 ? accum_avgOversubscribedCapacity.get(layerId).get(linkId).doubleValue() / totalTime_thisLink : 0));
 					
 					double minOversubscribedCapacity_thisLink = minOversubscribedCapacity.get(layerId).get(linkId).doubleValue();

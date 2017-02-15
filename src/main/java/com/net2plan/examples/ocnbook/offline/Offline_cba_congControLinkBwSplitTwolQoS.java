@@ -89,7 +89,9 @@ public class Offline_cba_congControLinkBwSplitTwolQoS implements IAlgorithm
 		/* Remove all routes, and create one with the shortest path in km for each demand */
 		netPlan.removeAllUnicastRoutingInformation();
 		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
-		netPlan.addRoutesFromCandidatePathList(netPlan.getVectorLinkLengthInKm().toArray()  , "K" , "1");
+		netPlan.addRoutesFromCandidatePathList(netPlan.computeUnicastCandidatePathList(netPlan.getVectorLinkLengthInKm() , 1 , -1, -1, -1, -1, -1, -1, null)); // one route per demand, so P equals D
+
+		
 		
 		/* Make the formulation  */
 		final int E = netPlan.getNumberOfLinks();

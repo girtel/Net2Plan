@@ -90,7 +90,7 @@ public class ClassLoaderUtils
 				break;
 
 			default:
-				throw new RuntimeException("'file' is not a valid Java file (.jar or .class)");
+				throw new RuntimeException("'" + file +"' is not a valid Java file (.jar or .class)");
 		}
 
 		if (classes.isEmpty())

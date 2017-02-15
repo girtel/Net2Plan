@@ -182,7 +182,6 @@ public class NetworkElement
 	 */
 	public String toString ()
 	{
-		if (this instanceof ProtectionSegment) return "Protection segment id=" + id;
 		if (this instanceof Link) return "Link id=" + id;
 		if (this instanceof NetworkLayer) return "Network layer id=" + id;
 		if (this instanceof Node) return "Node id=" + id;

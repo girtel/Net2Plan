@@ -4,36 +4,42 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.Closeable;
 import java.io.File;
+import java.util.HashSet;
 import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-import com.net2plan.gui.utils.INetworkCallback;
+import org.apache.commons.collections15.BidiMap;
+
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.RunnableSelector;
 import com.net2plan.gui.utils.ThreadExecutionController;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.utils.ClassLoaderUtils;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
 import net.miginfocom.swing.MigLayout;
 
 public class OfflineExecutionPanel extends JPanel implements ThreadExecutionController.IThreadExecutionHandler
 {
-	private final INetworkCallback mainWindow;
+	private final IVisualizationCallback mainWindow;
     private ThreadExecutionController algorithmController;
     private RunnableSelector algorithmSelector;
     private long start;
     final JButton btn_solve;
 	
-	public OfflineExecutionPanel (INetworkCallback mainWindow)
+	public OfflineExecutionPanel (IVisualizationCallback mainWindow)
 	{
 		super ();
 
@@ -87,7 +93,7 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
         } catch (Throwable e) {
         }
         netPlan.setNetworkLayerDefault(netPlan.getNetworkLayer((int) 0));
-        mainWindow.getDesign().assignFrom(netPlan);
+        mainWindow.getDesign().assignFrom(netPlan); // do not update undo/redo here -> the visualization state should be updated before
         return out;
 	}
 
@@ -96,12 +102,14 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
 	{
         try {
             double execTime = (System.nanoTime() - start) / 1e9;
-            mainWindow.getTopologyPanel().updateLayerChooser();
-            mainWindow.getTopologyPanel().getCanvas().zoomAll();
-
+            final VisualizationState vs = mainWindow.getVisualizationState();
+    		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+    				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
+    		vs.setCanvasLayerVisibilityAndOrder(mainWindow.getDesign() , res.getFirst() , res.getSecond());
+            mainWindow.updateVisualizationAfterNewTopology();
+            mainWindow.getUndoRedoNavigationManager().addNetPlanChange();
             String outMessage = String.format("Algorithm executed successfully%nExecution time: %.3g s%nExit message: %s", execTime, out);
             JOptionPane.showMessageDialog(null, outMessage, "Solve design", JOptionPane.PLAIN_MESSAGE);
-            mainWindow.showNetPlanView();
         } catch (Throwable ex) {
             ErrorHandling.addErrorOrException(ex, OfflineExecutionPanel.class);
             ErrorHandling.showErrorDialog("Error executing algorithm");

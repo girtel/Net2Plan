@@ -123,8 +123,6 @@ public class Offline_fa_ospfWeightOptimization_ACO implements IAlgorithm
 			/* Truncate it in case we end the algorithm ahead of time */
 			objFunc_a = Arrays.copyOf(objFunc_a, sol_a.size());
 
-			System.out.println("sol_a: ");
-			
 			/* Increase the pheromones */
 			int [] orderedAntIndexes = DoubleUtils.sortIndexes(objFunc_a, OrderingType.ASCENDING);
 			final int numEliteAnts = (int) Math.ceil(sol_a.size() * aco_fractionOfEliteAntsContributingToPheromones.getDouble());

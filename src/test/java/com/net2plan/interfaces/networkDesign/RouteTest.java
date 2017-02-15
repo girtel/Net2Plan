@@ -4,7 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -13,6 +15,8 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.net2plan.utils.Triple;
 
 public class RouteTest 
 {
@@ -24,7 +28,7 @@ public class RouteTest
 	private List<Link> path13;
 	private List<NetworkElement> pathSc123;
 	private Resource res2 , res2backup;
-	private ProtectionSegment segm13;
+	private Route segm13;
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception 
@@ -48,16 +52,17 @@ public class RouteTest
 		this.d13 = np.addDemand(n1 , n3 , 3 , null);
 		this.d12 = np.addDemand(n1, n2, 3 , null);
 		this.r12 = np.addRoute(d12,1,1.5,Collections.singletonList(link12),null);
-		this.path13 = new LinkedList<Link> (); path13.add(link12); path13.add(link23);
+		this.path13 = Arrays.asList(link12 , link23);
 		this.r123a = np.addRoute(d13,1,1.5,path13,null);
+		this.segm13 = np.addServiceChain(d13 , 0.0 , Arrays.asList(25.0) , Arrays.asList(link13) , null);
+		this.r123a.addBackupRoute(segm13);
 		this.r123b = np.addRoute(d13,1,1.5,path13,null);
 		this.res2 = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
 		this.res2backup = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
 		this.scd123 = np.addDemand(n1 , n3 , 3 , null);
 		this.scd123.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("type"));
 		this.pathSc123 = new LinkedList<NetworkElement> (); pathSc123.add(link12); pathSc123.add(res2); pathSc123.add(link23); 
-		this.sc123 = np.addServiceChain(scd123 , 100 , 300 , pathSc123 , Collections.singletonMap(res2 , 1.0) , null); 
-		this.segm13 = np.addProtectionSegment(Collections.singletonList(link13) , 50 , null);
+		this.sc123 = np.addServiceChain(scd123 , 100 , Arrays.asList(100.0 , 1.0 , 200.0) , Arrays.asList(link12 , res2 , link23) , null);
 	}
 
 	@After
@@ -66,6 +71,7 @@ public class RouteTest
 		np.checkCachesConsistency();
 	}
 
+	
 	@Test
 	public void testCheckCaches() 
 	{
@@ -82,164 +88,157 @@ public class RouteTest
 		assertTrue (np2.isDeepCopy(np));
 	}
 
+
 	@Test
-	public void testGetInitialSequenceOfLinks() 
+	public void testGetRoutesIAmBackup() 
 	{
-		assertEquals (r12.getInitialSequenceOfLinks() , Collections.singletonList(link12));
-		assertEquals (r123a.getInitialSequenceOfLinks() , path13);
-		assertEquals (r123b.getInitialSequenceOfLinks() , path13);
-		assertEquals (sc123.getInitialSequenceOfLinks() , path13);
+		assertEquals (r12.getRoutesIAmBackup() , Collections.emptySet());
+		assertEquals (r123a.getRoutesIAmBackup() , Collections.emptySet());
+		assertEquals (segm13.getRoutesIAmBackup() , Collections.singleton(r123a));
+	}
+
+	@Test
+	public void testGetBackupRoutes() 
+	{
+		assertEquals (r12.getBackupRoutes() , Collections.emptyList());
+		assertEquals (r123a.getBackupRoutes() , Collections.singletonList(segm13));
+		assertEquals (segm13.getBackupRoutes() , Collections.emptyList());
+	}
+
+	@Test
+	public void testGetInitialState() 
+	{
+		Triple<Double, List<NetworkElement>, List<Double>> res;
+		res = sc123.getInitialState();
+		assertEquals (res.getFirst() , 100 , 0);
+		assertEquals (res.getSecond() , Arrays.asList(link12 , res2 , link23));
+		assertEquals (res.getThird() , Arrays.asList(100.0, 1.0 , 200.0));
+		sc123.setPath(1, Arrays.asList(link12 , res2backup , link23), Arrays.asList(1.0 , 2.0 , 3.0));
+		assertEquals (res.getFirst() , 100 , 0);
+		assertEquals (res.getSecond() , Arrays.asList(link12 , res2 , link23));
+		assertEquals (res.getThird() , Arrays.asList(100.0, 1.0 , 200.0));
+	}
+
+	@Test
+	public void testGetPath() 
+	{
+		assertEquals (r12.getPath() , Arrays.asList(link12));
+		assertEquals (r123a.getPath() , Arrays.asList(link12 , link23));
+		assertEquals (r123b.getPath() , Arrays.asList(link12 , link23));
+		assertEquals (sc123.getPath() , Arrays.asList(link12 , res2 , link23));
+		sc123.setPath(1, Arrays.asList(link12 , res2backup , link23), Arrays.asList(1.0 , 2.0 , 3.0));
+		assertEquals (sc123.getPath() , Arrays.asList(link12 , res2backup , link23));
+	}
+
+	@Test
+	public void testIsBackupRoute() 
+	{
+		assertTrue (segm13.isBackupRoute());
+		assertTrue (!r12.isBackupRoute());
+		assertTrue (!r123a.isBackupRoute());
+		assertTrue (!r123b.isBackupRoute());
+		assertTrue (!sc123.isBackupRoute());
+	}
+
+	@Test
+	public void testHasBackupRoutes() 
+	{
+		assertTrue (!segm13.hasBackupRoutes());
+		assertTrue (!r12.hasBackupRoutes());
+		assertTrue (r123a.hasBackupRoutes());
+		assertTrue (!r123b.hasBackupRoutes());
+		assertTrue (!sc123.hasBackupRoutes());
+	}
+
+	@Test
+	public void testAddBackupRoute() 
+	{
+		final Route newSegmScd = np.addServiceChain(scd123, 0, Arrays.asList(1.0 , 2.0 , 3.0), Arrays.asList(link12, res2backup , link23), null);
+		sc123.addBackupRoute(newSegmScd);
+		assertEquals(sc123.getBackupRoutes(), Arrays.asList(newSegmScd));
+		try { sc123.addBackupRoute(r123a); fail ("Should not accept a backup of different demand"); } catch (Net2PlanException e) { }
+		try { sc123.addBackupRoute(newSegmScd); fail ("Should not accept the same backup twice"); } catch (Net2PlanException e) { }
+		final Route newSegm123 = np.addServiceChain(d13, 0, Arrays.asList(1.0 , 2.0), Arrays.asList(link12, link23), null);
+		assertEquals(r123a.getBackupRoutes(), Arrays.asList(segm13));
+		r123a.addBackupRoute(newSegm123);
+		assertEquals(r123a.getBackupRoutes(), Arrays.asList(segm13 , newSegm123));
+	}
+
+	@Test
+	public void testRemoveBackupRoute() 
+	{
+		final Route newSegmScd = np.addServiceChain(scd123, 0, Arrays.asList(1.0 , 2.0 , 3.0), Arrays.asList(link12, res2backup , link23), null);
+		sc123.addBackupRoute(newSegmScd);
+		assertEquals(sc123.getBackupRoutes(), Arrays.asList(newSegmScd));
+		try { sc123.removeBackupRoute(null); fail ("Should not accept this"); } catch (Net2PlanException e) { }
+		try { sc123.removeBackupRoute(r12);  fail (""); } catch (Net2PlanException e) { }
+		sc123.removeBackupRoute(newSegmScd);
+		assertEquals(sc123.getBackupRoutes(), Arrays.asList());
+		final Route newSegm123 = np.addServiceChain(d13, 0, Arrays.asList(1.0 , 2.0), Arrays.asList(link12, link23), null);
+		r123a.addBackupRoute(newSegm123);
+		assertEquals(r123a.getBackupRoutes(), Arrays.asList(segm13 , newSegm123));
+		r123a.removeBackupRoute(segm13);
+		assertEquals(r123a.getBackupRoutes(), Arrays.asList(newSegm123));
+		r123a.removeBackupRoute(newSegm123);
+		assertEquals(r123a.getBackupRoutes(), Arrays.asList());
+	}
+
+	@Test
+	public void testGetCarriedTraffic() 
+	{
+		assertEquals(sc123.getCarriedTraffic() ,  100.0 , 0.0);
+		sc123.setCarriedTraffic(0.0, null);
+		assertEquals(sc123.getCarriedTraffic() ,  0.0 , 0.0);
+		sc123.setCarriedTraffic(1.0, null);
+		assertEquals(sc123.getCarriedTraffic() ,  1.0 , 0.0);
 		link12.setFailureState(false);
-		assertEquals (r12.getInitialSequenceOfLinks() , Collections.singletonList(link12));
-		assertEquals (r123a.getInitialSequenceOfLinks() , path13);
-		assertEquals (r123b.getInitialSequenceOfLinks() , path13);
-		assertEquals (sc123.getInitialSequenceOfLinks() , path13);
+		assertEquals(sc123.getCarriedTraffic() ,  0.0 , 0.0);
 	}
 
 	@Test
-	public void testGetInitialSeqLinksAndResourcesTraversed() 
+	public void testGetOccupiedCapacity() 
 	{
-		assertEquals (r12.getInitialSeqLinksAndResourcesTraversed() , Collections.singletonList(link12));
-		assertEquals (r123a.getInitialSeqLinksAndResourcesTraversed() , path13);
-		assertEquals (r123b.getInitialSeqLinksAndResourcesTraversed() , path13);
-		assertEquals (sc123.getInitialSeqLinksAndResourcesTraversed() , pathSc123);
+		this.sc123 = np.addServiceChain(scd123 , 100 , Arrays.asList(100.0 , 1.0 , 200.0) , Arrays.asList(link12 , res2 , link23) , null);
+		assertEquals(sc123.getOccupiedCapacity(), 100.0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(link12), 100.0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(res2), 1.0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(link23), 200.0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(link13), 0.0 , 0.0);
 		link12.setFailureState(false);
-		assertEquals (r12.getInitialSeqLinksAndResourcesTraversed() , Collections.singletonList(link12));
-		assertEquals (r123a.getInitialSeqLinksAndResourcesTraversed() , path13);
-		assertEquals (r123b.getInitialSeqLinksAndResourcesTraversed() , path13);
-		assertEquals (sc123.getInitialSeqLinksAndResourcesTraversed() , pathSc123);
+		assertEquals(sc123.getOccupiedCapacity(), 0.0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(link12), 0.0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(res2), 0.0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(link23), 0.0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(link13), 0.0 , 0.0);
 	}
 
 	@Test
-	public void testGetCurrentSeqLinksAndResourcesTraversed() 
+	public void testGetCarriedTrafficInNoFailureState() 
 	{
-		assertEquals (r12.getCurrentSeqLinksAndResourcesTraversed() , Collections.singletonList(link12));
-		assertEquals (r123a.getCurrentSeqLinksAndResourcesTraversed() , path13);
-		assertEquals (r123b.getCurrentSeqLinksAndResourcesTraversed() , path13);
-		assertEquals (sc123.getCurrentSeqLinksAndResourcesTraversed() , pathSc123);
+		assertEquals(sc123.getCarriedTrafficInNoFailureState() ,  100.0 , 0.0);
+		sc123.setCarriedTraffic(0.0, null);
+		assertEquals(sc123.getCarriedTrafficInNoFailureState() ,  0.0 , 0.0);
+		sc123.setCarriedTraffic(1.0, null);
+		assertEquals(sc123.getCarriedTrafficInNoFailureState() ,  1.0 , 0.0);
 		link12.setFailureState(false);
-		assertEquals (r12.getCurrentSeqLinksAndResourcesTraversed() , Collections.singletonList(link12));
-		assertEquals (r123a.getCurrentSeqLinksAndResourcesTraversed() , path13);
-		assertEquals (r123b.getCurrentSeqLinksAndResourcesTraversed() , path13);
-		assertEquals (sc123.getCurrentSeqLinksAndResourcesTraversed() , pathSc123);
+		assertEquals(sc123.getCarriedTrafficInNoFailureState() ,  1.0 , 0.0);
 	}
 
 	@Test
-	public void testGetCurrentResourcesTraversed() 
+	public void testGetOccupiedCapacityInNoFailureState() 
 	{
-		assertEquals (r12.getCurrentResourcesTraversed() , Collections.emptySet());
-		assertEquals (r123a.getCurrentResourcesTraversed() , Collections.emptySet());
-		assertEquals (r123b.getCurrentResourcesTraversed() , Collections.emptySet());
-		assertEquals (sc123.getCurrentResourcesTraversed() , Collections.singleton(res2));
+		this.sc123 = np.addServiceChain(scd123 , 100 , Arrays.asList(100.0 , 1.0 , 200.0) , Arrays.asList(link12 , res2 , link23) , null);
+		assertEquals(sc123.getOccupiedCapacityInNoFailureState(), 100.0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacityInNoFailureState(link12), 100.0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacityInNoFailureState(res2), 1.0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacityInNoFailureState(link23), 200.0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacityInNoFailureState(link13), 0.0 , 0.0);
 		link12.setFailureState(false);
-		assertEquals (r12.getCurrentResourcesTraversed() , Collections.emptySet());
-		assertEquals (r123a.getCurrentResourcesTraversed() , Collections.emptySet());
-		assertEquals (r123b.getCurrentResourcesTraversed() , Collections.emptySet());
-		assertEquals (sc123.getCurrentResourcesTraversed() , Collections.singleton(res2));
-	}
-
-	@Test
-	public void testGetInitialResourcesTraversed() 
-	{
-		assertEquals (r12.getInitialSeqLinksAndResourcesTraversed() , Collections.singletonList(link12));
-		assertEquals (r123a.getInitialSeqLinksAndResourcesTraversed() , path13);
-		assertEquals (r123b.getInitialSeqLinksAndResourcesTraversed() , path13);
-		assertEquals (sc123.getInitialSeqLinksAndResourcesTraversed() , pathSc123);
-		link12.setFailureState(false);
-		assertEquals (r12.getInitialSeqLinksAndResourcesTraversed() , Collections.singletonList(link12));
-		assertEquals (r123a.getInitialSeqLinksAndResourcesTraversed() , path13);
-		assertEquals (r123b.getInitialSeqLinksAndResourcesTraversed() , path13);
-		assertEquals (sc123.getInitialSeqLinksAndResourcesTraversed() , pathSc123);
-	}
-
-	@Test
-	public void testGetResourceCurrentTotalOccupation() 
-	{
-		assertEquals (sc123.getResourceCurrentTotalOccupation(res2) , 1.0 , 0.0);
-		link12.setFailureState(false);
-		assertEquals (sc123.getResourceCurrentTotalOccupation(res2) , 0.0 , 0.0);
-	}
-
-	@Test
-	public void testAddProtectionSegment() 
-	{
-		r123a.addProtectionSegment(segm13);
-		assertEquals (r123a.getPotentialBackupProtectionSegments() , Collections.singleton(segm13));
-	}
-
-	@Test
-	public void testGetCarriedTrafficAndOccupiedCapacities() 
-	{
-		/* Carried traffic and occupied capacities in no failure */
-		assertEquals (d12.getCarriedTraffic() , 1 , 0.0);
-		assertEquals (d13.getCarriedTraffic() , 2 , 0.0);
-		assertEquals (scd123.getCarriedTraffic() , 100 , 0.0);
-		assertEquals (r12.getCarriedTraffic() , 1 , 0.0);
-		assertEquals (r12.getCarriedTrafficInNoFailureState() , 1 , 0.0);
-		assertEquals (r12.getOccupiedCapacity() , 1.5 , 0.0);
-		assertEquals (r12.getOccupiedCapacityInNoFailureState(), 1.5 , 0.0);
-		assertEquals (r123a.getCarriedTraffic() , 1 , 0.0);
-		assertEquals (r123a.getCarriedTrafficInNoFailureState() , 1 , 0.0);
-		assertEquals (r123a.getOccupiedCapacity() , 1.5 , 0.0);
-		assertEquals (r123a.getOccupiedCapacityInNoFailureState(), 1.5 , 0.0);
-		assertEquals (r123b.getCarriedTraffic() , 1 , 0.0);
-		assertEquals (r123b.getCarriedTrafficInNoFailureState() , 1 , 0.0);
-		assertEquals (r123b.getOccupiedCapacity() , 1.5 , 0.0);
-		assertEquals (r123b.getOccupiedCapacityInNoFailureState(), 1.5 , 0.0);
-		assertEquals (sc123.getCarriedTraffic() , 100 , 0.0);
-		assertEquals (sc123.getCarriedTrafficInNoFailureState() , 100 , 0.0);
-		assertEquals (sc123.getOccupiedCapacity() , 300 , 0.0);
-		assertEquals (sc123.getOccupiedCapacityInNoFailureState(), 300 , 0.0);
-		
-		/* Carried traffic and occupied capacities in failure */
-		link12.setFailureState(false);
-		assertEquals (d12.getCarriedTraffic() , 0 , 0.0);
-		assertEquals (d13.getCarriedTraffic() , 0 , 0.0);
-		assertEquals (scd123.getCarriedTraffic() , 0 , 0.0);
-		assertEquals (r12.getCarriedTraffic() , 0 , 0.0);
-		assertEquals (r12.getCarriedTrafficInNoFailureState() , 1 , 0.0);
-		assertEquals (r12.getOccupiedCapacity() , 0 , 0.0);
-		assertEquals (r12.getOccupiedCapacityInNoFailureState(), 1.5 , 0.0);
-		assertEquals (r123a.getCarriedTraffic() , 0 , 0.0);
-		assertEquals (r123a.getCarriedTrafficInNoFailureState() , 1 , 0.0);
-		assertEquals (r123a.getOccupiedCapacity() , 0 , 0.0);
-		assertEquals (r123a.getOccupiedCapacityInNoFailureState(), 1.5 , 0.0);
-		assertEquals (r123b.getCarriedTraffic() , 0 , 0.0);
-		assertEquals (r123b.getCarriedTrafficInNoFailureState() , 1 , 0.0);
-		assertEquals (r123b.getOccupiedCapacity() , 0 , 0.0);
-		assertEquals (r123b.getOccupiedCapacityInNoFailureState(), 1.5 , 0.0);
-		assertEquals (sc123.getCarriedTraffic() , 0.0 , 0.0);
-		assertEquals (sc123.getCarriedTrafficInNoFailureState() , 100 , 0.0);
-		assertEquals (sc123.getOccupiedCapacity() , 0.0 , 0.0);
-		assertEquals (sc123.getOccupiedCapacityInNoFailureState(), 300 , 0.0);
-	}
-
-	@Test
-	public void testGetCurrentlyTraversedProtectionSegments() 
-	{
-		np.checkCachesConsistency();
-		r123a.addProtectionSegment(segm13);
-		r123a.setSeqLinksAndProtectionSegments(Collections.singletonList(segm13));
-		assertEquals (r123a.getCurrentlyTraversedProtectionSegments(), Collections.singletonList(segm13));
-		link12.setFailureState(false);
-		assertEquals (r123a.getCurrentlyTraversedProtectionSegments(), Collections.singletonList(segm13));
-	}
-
-	@Test
-	public void testRevertToInitialSequenceOfLinks() 
-	{
-		r123a.setSeqLinksAndProtectionSegments(Collections.singletonList(link13));
-		r123a.revertToInitialSequenceOfLinks();
-		assertEquals (r123a.getSeqLinksAndProtectionSegments(), path13);
-	}
-
-	@Test
-	public void testIsUpTheInitialSequenceOfLinks() 
-	{
-		r123a.setSeqLinksAndProtectionSegments(Collections.singletonList(link13));
-		assertTrue (r123a.isUpTheInitialSequenceOfLinks());
-		link12.setFailureState(false);
-		assertTrue (!r123a.isUpTheInitialSequenceOfLinks());
+		assertEquals(sc123.getOccupiedCapacityInNoFailureState(), 100.0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacityInNoFailureState(link12), 100.0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacityInNoFailureState(res2), 1.0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacityInNoFailureState(link23), 200.0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacityInNoFailureState(link13), 0.0 , 0.0);
 	}
 
 	@Test
@@ -282,7 +281,7 @@ public class RouteTest
 	}
 
 	@Test
-	public void testGetFirstAvailableNodeBeforeFailures() 
+	public void testGetFirstAvailableNodeBeforeFailures()
 	{
 		/* last node fails */
 		assertEquals (r123a.getFirstAvailableNodeBeforeFailures() , n3);
@@ -319,7 +318,8 @@ public class RouteTest
 	}
 
 	@Test
-	public void testGetLayer() {
+	public void testGetLayer() 
+	{
 		assertEquals(r123a.getLayer() , np.getNetworkLayerDefault());
 	}
 
@@ -351,13 +351,12 @@ public class RouteTest
 	}
 
 	@Test
-	public void testGetSeqLinksAndProtectionSegments() 
+	public void testGetSeqOccupiedCapacitiesIfNotFailing() 
 	{
-		assertEquals (r123a.getSeqLinksAndProtectionSegments(), path13);
-		assertEquals (sc123.getSeqLinksAndProtectionSegments(), path13);
-		r123a.addProtectionSegment(segm13);
-		r123a.setSeqLinksAndProtectionSegments(Collections.singletonList(segm13));
-		assertEquals (r123a.getSeqLinksAndProtectionSegments(), Collections.singletonList(segm13));
+		assertEquals (sc123.getSeqOccupiedCapacitiesIfNotFailing(), Arrays.asList(100.0 , 1.0 , 200.0));
+		List<NetworkElement> newSc = new LinkedList<NetworkElement> (); newSc.add (link12); newSc.add(res2backup); newSc.add(link23);
+		sc123.setPath(sc123.getCarriedTraffic(), newSc , Arrays.asList(1.0 , 2.0 , 3.0));
+		assertEquals (sc123.getSeqOccupiedCapacitiesIfNotFailing(), Arrays.asList(1.0 , 2.0 , 3.0));
 	}
 
 	@Test
@@ -368,76 +367,35 @@ public class RouteTest
 	}
 
 	@Test
-	public void testGetInitialSeqResourcesTraversed() 
+	public void testGetSeqLinks()
 	{
-		assertEquals (r123a.getInitialSeqResourcesTraversed(), Collections.emptyList());
-		assertEquals (sc123.getInitialSeqResourcesTraversed(), Collections.singletonList(res2));
+		assertEquals (r123a.getSeqLinks(), path13);
+		assertEquals (sc123.getSeqLinks(), path13);
 		List<NetworkElement> newSc = new LinkedList<NetworkElement> (); newSc.add (link12); newSc.add(res2backup); newSc.add(link23);
-		sc123.setSeqLinksSegmentsAndResourcesOccupation(newSc , Collections.singletonMap(res2backup , 1.0));
-		assertEquals (sc123.getInitialSeqResourcesTraversed(), Collections.singletonList(res2));
-		assertEquals (sc123.getSeqResourcesTraversed(), Collections.singletonList(res2backup));
-		assertEquals (sc123.getCurrentResourcesTraversed(), Collections.singleton(res2backup));
+		sc123.setPath(sc123.getCarriedTraffic(), newSc , Arrays.asList(1.0 , 2.0 , 3.0));
+		assertEquals (sc123.getSeqLinks(), path13);
+		r123a.setSeqLinks(Collections.singletonList(link13));
+		assertEquals (r123a.getSeqLinks(), Collections.singletonList(link13));
 	}
 
 	@Test
-	public void testGetSeqLinksRealPath() 
+	public void testGetSeqNodes() 
 	{
-		assertEquals (r123a.getSeqLinksRealPath(), path13);
-		assertEquals (sc123.getSeqLinksRealPath(), path13);
-		List<NetworkElement> newSc = new LinkedList<NetworkElement> (); newSc.add (link12); newSc.add(res2backup); newSc.add(link23);
-		sc123.setSeqLinksSegmentsAndResourcesOccupation(newSc , Collections.singletonMap(res2backup , 1.0));
-		assertEquals (sc123.getSeqLinksRealPath(), path13);
-		r123a.setSeqLinksAndProtectionSegments(Collections.singletonList(link13));
-		assertEquals (r123a.getSeqLinksRealPath(), Collections.singletonList(link13));
+		assertEquals (r123a.getSeqNodes(), Arrays.asList(n1,n2,n3));
+		assertEquals (sc123.getSeqNodes(), Arrays.asList(n1,n2,n3));
+		sc123.setPath(sc123.getCarriedTraffic(), Arrays.asList(link12 , res2backup , link23) , Arrays.asList(1.0 , 2.0 , 3.0));
+		assertEquals (sc123.getSeqNodes(), Arrays.asList(n1 , n2 , n3));
+		r123a.setSeqLinks(Collections.singletonList(link13));
+		assertEquals (r123a.getSeqNodes(), Arrays.asList(n1 , n3));
 	}
 
 	@Test
-	public void testGetSeqLinksRealPathAndResources() 
+	public void testGetNumberOfTimesIsTraversed() 
 	{
-		List<NetworkElement> currentSc = new LinkedList<NetworkElement> (); currentSc.add (link12); currentSc.add(res2); currentSc.add(link23);
-		assertEquals (r123a.getSeqLinksRealPathAndResources(), path13);
-		assertEquals (sc123.getSeqLinksRealPathAndResources(), currentSc);
-		List<NetworkElement> newSc = new LinkedList<NetworkElement> (); newSc.add (link12); newSc.add(res2backup); newSc.add(link23);
-		sc123.setSeqLinksSegmentsAndResourcesOccupation(newSc , Collections.singletonMap(res2backup , 1.0));
-		assertEquals (sc123.getSeqLinksRealPathAndResources(), newSc);
-		r123a.addProtectionSegment(segm13);
-		r123a.setSeqLinksAndProtectionSegments(Collections.singletonList(segm13));
-		assertEquals (r123a.getSeqLinksRealPathAndResources(), Collections.singletonList(link13));
-	}
-
-	@Test
-	public void testGetSeqNodesRealPath() 
-	{
-		List<Node> n123 = new LinkedList<Node> (); n123.add(n1); n123.add(n2); n123.add(n3);
-		List<Node> n13 = new LinkedList<Node> (); n13.add(n1); n13.add(n3);
-		assertEquals (r123a.getSeqNodesRealPath(), n123);
-		assertEquals (sc123.getSeqNodesRealPath(), n123);
-		List<NetworkElement> newSc = new LinkedList<NetworkElement> (); newSc.add (link12); newSc.add(res2backup); newSc.add(link23);
-		sc123.setSeqLinksSegmentsAndResourcesOccupation(newSc , Collections.singletonMap(res2backup , 1.0));
-		assertEquals (sc123.getSeqNodesRealPath(), n123);
-		r123a.addProtectionSegment(segm13);
-		r123a.setSeqLinksAndProtectionSegments(Collections.singletonList(segm13));
-		assertEquals (r123a.getSeqNodesRealPath(), n13);
-		r123a.setSeqLinksAndProtectionSegments(Collections.singletonList(link13));
-		assertEquals (r123a.getSeqNodesRealPath(), n13);
-	}
-
-	@Test
-	public void testGetNumberOfTimesLinkIsTraversed() 
-	{
-		assertEquals (r123a.getNumberOfTimesLinkIsTraversed(link12) , 1);
-		assertEquals (r123a.getNumberOfTimesLinkIsTraversed(link13) , 0);
-	}
-
-	@Test
-	public void testGetNumberOfTimesResourceIsTraversed() 
-	{
-		assertEquals (sc123.getNumberOfTimesResourceIsTraversed(res2) , 1);
-		assertEquals (sc123.getNumberOfTimesResourceIsTraversed(res2backup) , 0);
-		List<NetworkElement> newSc = new LinkedList<NetworkElement> (); newSc.add (link12); newSc.add(res2backup); newSc.add(link23);
-		sc123.setSeqLinksSegmentsAndResourcesOccupation(newSc , Collections.singletonMap(res2backup , 1.0));
-		assertEquals (sc123.getNumberOfTimesResourceIsTraversed(res2) , 0);
-		assertEquals (sc123.getNumberOfTimesResourceIsTraversed(res2backup) , 1);
+		assertEquals (r123a.getNumberOfTimesIsTraversed(link12) , 1);
+		assertEquals (r123a.getNumberOfTimesIsTraversed(link13) , 0);
+		assertEquals (sc123.getNumberOfTimesIsTraversed(res2) , 1);
+		assertEquals (sc123.getNumberOfTimesIsTraversed(res2backup) , 0);
 	}
 
 	@Test
@@ -460,7 +418,7 @@ public class RouteTest
 		srg = np.addSRG(1,1,null);
 		srg.addLink(link12);
 		assertEquals (r123a.getSRGs() , Collections.singleton(srg));
-		r123a.setSeqLinksAndProtectionSegments(Collections.singletonList(link13));
+		r123a.setSeqLinks(Collections.singletonList(link13));
 		assertEquals (r123a.getSRGs() , Collections.emptySet());
 	}
 
@@ -479,7 +437,7 @@ public class RouteTest
 		assertTrue (r123a.isDown());
 		link12.setFailureState(true);
 		assertTrue (!r123a.isDown());
-		r123a.setSeqLinksAndProtectionSegments(Collections.singletonList(link13));
+		r123a.setSeqLinks(Collections.singletonList(link13));
 		link12.setFailureState(false);
 		assertTrue (!r123a.isDown());
 	}
@@ -488,29 +446,157 @@ public class RouteTest
 	public void testRemove() 
 	{
 		r123a.remove();
-		assertEquals (d13.getRoutes() , Collections.singleton(r123b));
+		assertEquals (d13.getRoutes() , new HashSet<Route> (Arrays.asList(r123b , segm13)));
 		assertEquals (scd123.getRoutes() , Collections.singleton(sc123));
 		sc123.remove();
 		assertEquals (scd123.getRoutes() , Collections.emptySet());
 	}
 
 	@Test
-	public void testRemoveProtectionSegmentFromBackupSegmentList() 
+	public void testSetCarriedTrafficDoubleDouble() 
 	{
-		r123a.addProtectionSegment(segm13);
-		assertEquals (r123a.getPotentialBackupProtectionSegments() , Collections.singleton(segm13));
-		r123a.removeProtectionSegmentFromBackupSegmentList(segm13);
-		assertEquals (r123a.getPotentialBackupProtectionSegments() , Collections.emptySet());
-		r123a.addProtectionSegment(segm13);
-		r123a.setSeqLinksAndProtectionSegments(Collections.singletonList(segm13));
-		assertEquals (r123a.getPotentialBackupProtectionSegments() , Collections.singleton(segm13));
-		try { r123a.removeProtectionSegmentFromBackupSegmentList(segm13); fail ("An exceptrion should have been thrown"); } catch (Exception e) { }
+		sc123.setCarriedTraffic(4 ,  5);
+		assertEquals(sc123.getCarriedTraffic() , 4 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(link12) , 5 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(res2) , 5 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(res2backup) , 0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(link23) , 5 , 0.0);
 	}
+
+	@Test
+	public void testSetCarriedTrafficDoubleListOfDouble() 
+	{
+		sc123.setCarriedTraffic(5 ,  Arrays.asList(1.0,2.0,3.0));
+		assertEquals(sc123.getCarriedTraffic() , 5 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(link12) , 1 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(res2) , 2 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(link23) , 3 , 0.0);
+	}
+
+	@Test
+	public void testSetPath() 
+	{
+		assertEquals (r123a.getCarriedTraffic() , 1.0 , 0.0);
+		assertEquals (r123a.getSeqOccupiedCapacitiesIfNotFailing() , Arrays.asList(1.5, 1.5));
+		assertEquals (r123a.getSeqLinks() , Arrays.asList(link12, link23));
+		assertEquals (r123a.getSeqResourcesTraversed() , Arrays.asList());
+		assertEquals (r123a.getPath() , Arrays.asList(link12 , link23));
+		r123a.setPath(5 , Arrays.asList(link12 , link23) , Arrays.asList(1.0 , 3.0));
+		assertEquals (r123a.getCarriedTraffic() , 5.0 , 0.0);
+		assertEquals (r123a.getSeqOccupiedCapacitiesIfNotFailing() , Arrays.asList(1.0, 3.0));
+		assertEquals (r123a.getSeqLinks() , Arrays.asList(link12, link23));
+		assertEquals (r123a.getSeqResourcesTraversed() , Arrays.asList());
+		assertEquals (r123a.getPath() , Arrays.asList(link12 , link23));
+
+		this.sc123 = np.addServiceChain(scd123 , 100 , Arrays.asList(100.0 , 1.0 , 200.0) , Arrays.asList(link12 , res2 , link23) , null);
+
+		assertEquals (sc123.getCarriedTraffic() , 100.0 , 0.0);
+		assertEquals (sc123.getSeqOccupiedCapacitiesIfNotFailing() , Arrays.asList(100.0 , 1.0 , 200.0));
+		assertEquals (sc123.getSeqLinks() , Arrays.asList(link12, link23));
+		assertEquals (sc123.getSeqResourcesTraversed() , Arrays.asList(res2));
+		assertEquals (sc123.getPath() , Arrays.asList(link12 , res2 , link23));
+		sc123.setPath(5 , Arrays.asList(link12 , res2backup , link23) , Arrays.asList(1.0 , 2.0 , 3.0));
+		assertEquals (sc123.getCarriedTraffic() , 5.0 , 0.0);
+		assertEquals (sc123.getSeqOccupiedCapacitiesIfNotFailing() , Arrays.asList(1.0, 2.0 , 3.0));
+		assertEquals (sc123.getSeqLinks() , Arrays.asList(link12, link23));
+		assertEquals (sc123.getSeqResourcesTraversed() , Arrays.asList(res2backup));
+		assertEquals (sc123.getPath() , Arrays.asList(link12 , res2backup , link23));
+}
+
+	@Test
+	public void testSetSeqLinks() 
+	{
+		r12.setSeqLinks(Arrays.asList(link12));
+		assertEquals (r12.getSeqLinks() , Arrays.asList(link12));
+		r123a.setSeqLinks(Arrays.asList(link13));
+		assertEquals (r123a.getSeqLinks() , Arrays.asList(link13));
+		assertEquals (r123a.getCarriedTraffic() , 1.0 , 0.0);
+		assertEquals (r123a.getOccupiedCapacity(link13) , 1.5 , 0.0);
+		r123a.setPath(5 , Arrays.asList(link12 , link23) , Arrays.asList(1.0 , 3.0));
+		try { r123a.setSeqLinks(Arrays.asList(link13)); fail ("Cannot accep this with different occupations per link"); } catch (Exception e) { }
+	}
+
+	@Test
+	public void testGetSeqResources() 
+	{
+		assertEquals (r12.getSeqResourcesTraversed() , Arrays.asList());
+		assertEquals (r123a.getSeqResourcesTraversed() , Arrays.asList());
+		assertEquals (r123b.getSeqResourcesTraversed() , Arrays.asList());
+		assertEquals (sc123.getSeqResourcesTraversed() , Arrays.asList(res2));
+		link12.setFailureState(false);
+		assertEquals (sc123.getSeqResourcesTraversed() , Arrays.asList(res2));
+		n2.setFailureState(false);
+		assertEquals (sc123.getSeqResourcesTraversed() , Arrays.asList(res2));
+		sc123.setPath(sc123.getCarriedTraffic(), Arrays.asList(link12 , res2backup , link23) , Arrays.asList(1.0 , 2.0 , 3.0));
+		assertEquals (sc123.getSeqResourcesTraversed() , Arrays.asList(res2backup));
+	}
+
+	
+	/////////////////////
+	
+
+	@Test
+	public void testGetCarriedTrafficAndOccupiedCapacities() 
+	{
+		/* Carried traffic and occupied capacities in no failure */
+		assertEquals (d12.getCarriedTraffic() , 1 , 0.0);
+		assertEquals (d13.getCarriedTraffic() , 2 , 0.0);
+		assertEquals (scd123.getCarriedTraffic() , 100 , 0.0);
+		assertEquals (r12.getCarriedTraffic() , 1 , 0.0);
+		assertEquals (r12.getCarriedTrafficInNoFailureState() , 1 , 0.0);
+		assertEquals (r12.getOccupiedCapacity() , 1.5 , 0.0);
+		assertEquals (r12.getOccupiedCapacityInNoFailureState(), 1.5 , 0.0);
+		assertEquals (r123a.getCarriedTraffic() , 1 , 0.0);
+		assertEquals (r123a.getCarriedTrafficInNoFailureState() , 1 , 0.0);
+		assertEquals (r123a.getOccupiedCapacity() , 1.5 , 0.0);
+		assertEquals (r123a.getOccupiedCapacityInNoFailureState(), 1.5 , 0.0);
+		assertEquals (r123b.getCarriedTraffic() , 1 , 0.0);
+		assertEquals (r123b.getCarriedTrafficInNoFailureState() , 1 , 0.0);
+		assertEquals (r123b.getOccupiedCapacity() , 1.5 , 0.0);
+		assertEquals (r123b.getOccupiedCapacityInNoFailureState(), 1.5 , 0.0);
+		assertEquals (sc123.getCarriedTraffic() , 100 , 0.0);
+		assertEquals (sc123.getCarriedTrafficInNoFailureState() , 100 , 0.0);
+		assertEquals (sc123.getOccupiedCapacity() , 100 , 0.0);
+		assertEquals (sc123.getOccupiedCapacityInNoFailureState(), 100 , 0.0);
+		assertEquals (sc123.getOccupiedCapacity(link12) , 100 , 0.0);
+		assertEquals (sc123.getOccupiedCapacity(res2) , 1.0 , 0.0);
+		assertEquals (sc123.getOccupiedCapacity(link23) , 200 , 0.0);
+		assertEquals (sc123.getOccupiedCapacity(link13) , 0 , 0.0);
+		
+		/* Carried traffic and occupied capacities in failure */
+		link12.setFailureState(false);
+		assertEquals (d12.getCarriedTraffic() , 0 , 0.0);
+		assertEquals (d13.getCarriedTraffic() , 0 , 0.0);
+		assertEquals (scd123.getCarriedTraffic() , 0 , 0.0);
+		assertEquals (r12.getCarriedTraffic() , 0 , 0.0);
+		assertEquals (r12.getCarriedTrafficInNoFailureState() , 1 , 0.0);
+		assertEquals (r12.getOccupiedCapacity() , 0 , 0.0);
+		assertEquals (r12.getOccupiedCapacityInNoFailureState(), 1.5 , 0.0);
+		assertEquals (r123a.getCarriedTraffic() , 0 , 0.0);
+		assertEquals (r123a.getCarriedTrafficInNoFailureState() , 1 , 0.0);
+		assertEquals (r123a.getOccupiedCapacity() , 0 , 0.0);
+		assertEquals (r123a.getOccupiedCapacityInNoFailureState(), 1.5 , 0.0);
+		assertEquals (r123b.getCarriedTraffic() , 0 , 0.0);
+		assertEquals (r123b.getCarriedTrafficInNoFailureState() , 1 , 0.0);
+		assertEquals (r123b.getOccupiedCapacity() , 0 , 0.0);
+		assertEquals (r123b.getOccupiedCapacityInNoFailureState(), 1.5 , 0.0);
+		assertEquals (sc123.getCarriedTraffic() , 0.0 , 0.0);
+		assertEquals (sc123.getCarriedTrafficInNoFailureState() , 100 , 0.0);
+		assertEquals (sc123.getOccupiedCapacity() , 0.0 , 0.0);
+		assertEquals (sc123.getOccupiedCapacityInNoFailureState(), 100 , 0.0);
+		assertEquals (sc123.getOccupiedCapacity(link12) , 0 , 0.0);
+		assertEquals (sc123.getOccupiedCapacity(link23) , 0 , 0.0);
+		assertEquals (sc123.getOccupiedCapacity(link13) , 0 , 0.0);
+	}
+
 
 	@Test
 	public void testSetCarriedTraffic() 
 	{
-		try { sc123.setCarriedTraffic(1,1); fail ("An exception should be raised here"); } catch (Exception e) { }
+		sc123.setCarriedTraffic(1,2.0); 
+		assertEquals(sc123.getCarriedTraffic() , 1 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity() , 2.0 , 0.0);
+		assertEquals(sc123.getSeqOccupiedCapacitiesIfNotFailing() , Arrays.asList(2.0,2.0,2.0));
 		r123a.setCarriedTraffic(10,15);
 		assertEquals(r123a.getCarriedTraffic() , 10 , 0.0);
 		assertEquals(r123a.getOccupiedCapacity() , 15 , 0.0);
@@ -520,15 +606,18 @@ public class RouteTest
 	}
 
 	@Test
-	public void testSetCarriedTrafficAndResourcesOccupationInformation() 
+	public void testSetCarriedTrafficAndPath() 
 	{
-		assertEquals(res2.getTraversingRouteOccupiedCapacity(sc123) , 1 , 0.0);
-		sc123.setCarriedTrafficAndResourcesOccupationInformation(50,75,null);
-		assertEquals(sc123.getCarriedTraffic() , 50 , 0.0);
-		assertEquals(sc123.getOccupiedCapacity() , 75 , 0.0);
-		assertEquals(res2.getTraversingRouteOccupiedCapacity(sc123) , 0 , 0.0);
-		sc123.setCarriedTrafficAndResourcesOccupationInformation(10,15,Collections.singletonMap(res2 , 10.0));
-		assertEquals(res2.getTraversingRouteOccupiedCapacity(sc123) , 10 , 0.0);
+		sc123.setPath(5 ,  Arrays.asList(link12,res2backup,link23) , Arrays.asList(1.0,2.0,3.0));
+		assertEquals(sc123.getCarriedTraffic() , 5 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(link12) , 1 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(res2) , 0 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(res2backup) , 2 , 0.0);
+		assertEquals(sc123.getOccupiedCapacity(link23) , 3 , 0.0);
+		r123a.setPath(1, Arrays.asList(link13), Arrays.asList(11.0));
+		assertEquals(r123a.getCarriedTraffic() , 1 , 0.0);
+		assertEquals(r123a.getOccupiedCapacity(link13) , 11 , 0.0);
+		assertEquals(r123a.getOccupiedCapacity(link12) , 0 , 0.0);
 	}
 
 }

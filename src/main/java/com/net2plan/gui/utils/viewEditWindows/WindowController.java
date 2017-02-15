@@ -13,40 +13,50 @@ import java.util.*;
  */
 public class WindowController
 {
-    private static GUIWindow controlWindow;
+    private static GUIWindow tableControlWindow;
+
     private static GUIWindow reportWindow;
     private static GUIWindow offlineWindow;
     private static GUIWindow onlineWindow;
+    private static GUIWindow whatifWindow;
 
     // WindowToTab.network must always be the first one.
-    private static WindowToTab[] tabCorrectOrder = {WindowToTab.network, WindowToTab.offline, WindowToTab.online, WindowToTab.report};
+    private final static WindowToTab[] tabCorrectOrder = {WindowToTab.network, WindowToTab.offline, WindowToTab.online, WindowToTab.whatif , WindowToTab.report};
 
-    public static void buildControlWindow(final JComponent component)
+    public static void buildTableControlWindow(final JComponent component)
     {
         // Control window != Network state tab.
-        controlWindow = new GUIWindow()
+        tableControlWindow = new GUIWindow()
         {
             @Override
             public String getTitle()
             {
-                return "Net2Plan - Control window";
+                return "Net2Plan - Design tables and control window";
             }
         };
 
-        controlWindow.buildWindow(component);
+        tableControlWindow.buildWindow(component);
     }
 
-    public static void showControlWindow()
+    public static void showTablesWindow(final boolean gainFocus)
     {
-        if (controlWindow != null)
+        if (tableControlWindow != null)
         {
-            controlWindow.showWindow();
+            if (gainFocus)
+            {
+                tableControlWindow.showWindow();
+            } else
+            {
+                tableControlWindow.setFocusableWindowState(false);
+                tableControlWindow.showWindow();
+                tableControlWindow.setFocusableWindowState(true);
+            }
         }
     }
 
-    public static void addTabToControlWindow(final String newTabName, final JComponent newTabComponent)
+    private static void addTabToControlWindow(final String newTabName, final JComponent newTabComponent)
     {
-        final JTabbedPane tabPane = (JTabbedPane) controlWindow.getComponent();
+        final JTabbedPane tabPane = (JTabbedPane) tableControlWindow.getComponent();
 
         final Map<String, Component> toSortTabs = new HashMap<>();
         toSortTabs.put(newTabName, newTabComponent);
@@ -88,11 +98,19 @@ public class WindowController
         offlineWindow.buildWindow(component);
     }
 
-    public static void showOfflineWindow()
+    public static void showOfflineWindow(final boolean gainFocus)
     {
         if (offlineWindow != null)
         {
-            offlineWindow.showWindow();
+            if (gainFocus)
+            {
+                offlineWindow.showWindow();
+            } else
+            {
+                offlineWindow.setFocusableWindowState(false);
+                offlineWindow.showWindow();
+                offlineWindow.setFocusableWindowState(true);
+            }
         }
     }
 
@@ -114,11 +132,53 @@ public class WindowController
         onlineWindow.buildWindow(component);
     }
 
-    public static void showOnlineWindow()
+    public static void buildWhatifWindow(final JComponent component)
+    {
+        final String tabName = WindowToTab.getTabName(WindowToTab.whatif);
+
+        whatifWindow = new GUIWindow()
+        {
+            @Override
+            public String getTitle()
+            {
+                return "Net2Plan - " + tabName;
+            }
+        };
+
+        whatifWindow.addWindowListener(new CloseWindowAdapter(tabName, component));
+
+        whatifWindow.buildWindow(component);
+    }
+
+    public static void showOnlineWindow(final boolean gainFocus)
     {
         if (onlineWindow != null)
         {
-            onlineWindow.showWindow();
+            if (gainFocus)
+            {
+                onlineWindow.showWindow();
+            } else
+            {
+                onlineWindow.setFocusableWindowState(false);
+                onlineWindow.showWindow();
+                onlineWindow.setFocusableWindowState(true);
+            }
+        }
+    }
+
+    public static void showWhatifWindow(final boolean gainFocus)
+    {
+        if (whatifWindow != null)
+        {
+            if (gainFocus)
+            {
+                whatifWindow.showWindow();
+            } else
+            {
+                whatifWindow.setFocusableWindowState(false);
+                whatifWindow.showWindow();
+                whatifWindow.setFocusableWindowState(true);
+            }
         }
     }
 
@@ -140,11 +200,19 @@ public class WindowController
         reportWindow.buildWindow(component);
     }
 
-    public static void showReportWindow()
+    public static void showReportWindow(final boolean gainFocus)
     {
         if (reportWindow != null)
         {
-            reportWindow.showWindow();
+            if (gainFocus)
+            {
+                reportWindow.showWindow();
+            } else
+            {
+                reportWindow.setFocusableWindowState(false);
+                reportWindow.showWindow();
+                reportWindow.setFocusableWindowState(true);
+            }
         }
     }
 
@@ -171,13 +239,14 @@ public class WindowController
         network(WindowToTab.networkWindowName),
         offline(WindowToTab.offlineWindowName),
         online(WindowToTab.onlineWindowName),
+        whatif(WindowToTab.whatifWindowName),
         report(WindowToTab.reportWindowName);
 
         private final static String networkWindowName = "View/Edit network state";
         private final static String offlineWindowName = "Offline algorithms";
         private final static String onlineWindowName = "Online simulation";
+        private final static String whatifWindowName = "What-if analysis";
         private final static String reportWindowName = "View reports";
-
 
         private final String text;
 
@@ -196,6 +265,8 @@ public class WindowController
                     return offline;
                 case WindowToTab.onlineWindowName:
                     return online;
+                case WindowToTab.whatifWindowName:
+                    return whatif;
                 case WindowToTab.reportWindowName:
                     return report;
             }
@@ -213,6 +284,8 @@ public class WindowController
                     return WindowToTab.offlineWindowName;
                 case online:
                     return WindowToTab.onlineWindowName;
+                case whatif:
+                    return WindowToTab.whatifWindowName;
                 case report:
                     return WindowToTab.reportWindowName;
             }

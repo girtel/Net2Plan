@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,7 +34,7 @@ public class DemandTest
 	private List<Link> path13;
 	private List<NetworkElement> pathSc123;
 	private Resource res2 , res2backup;
-	private ProtectionSegment segm13;
+	private Route segm13;
 	private NetworkLayer lowerLayer , upperLayer;
 	private Link upperLink12;
 	
@@ -51,7 +52,7 @@ public class DemandTest
 		this.np = new NetPlan ();
 		this.lowerLayer = np.getNetworkLayerDefault();
 		np.setDemandTrafficUnitsName("Mbps" , lowerLayer);
-		this.upperLayer = np.addLayer("upperLayer" , "description" , "Mbps" , "upperTrafficUnits" , null);
+		this.upperLayer = np.addLayer("upperLayer" , "description" , "Mbps" , "upperTrafficUnits" , null , null);
 		this.n1 = this.np.addNode(0 , 0 , "node1" , null);
 		this.n2 = np.addNode(0 , 0 , "node2" , null);
 		this.n3 = np.addNode(0 , 0 , "node3" , null);
@@ -68,11 +69,14 @@ public class DemandTest
 		this.res2backup = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
 		this.scd123 = np.addDemand(n1 , n3 , 3 , null,lowerLayer);
 		this.scd123.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("type"));
-		this.pathSc123 = new LinkedList<NetworkElement> (); pathSc123.add(link12); pathSc123.add(res2); pathSc123.add(link23); 
-		this.sc123 = np.addServiceChain(scd123 , 100 , 300 , pathSc123 , Collections.singletonMap(res2 , 1.0) , null); 
-		this.segm13 = np.addProtectionSegment(Collections.singletonList(link13) , 50 , null);
+		this.pathSc123 = Arrays.asList(link12 ,res2 , link23); 
+		this.sc123 = np.addServiceChain(scd123 , 100 , Arrays.asList(300.0 , 50.0 , 302.0) , pathSc123 , null); 
+		this.segm13 = np.addRoute(d13 , 0 , 50 , Collections.singletonList(link13) , null);
+		this.r123a.addBackupRoute(segm13);
 		this.upperLink12 = np.addLink(n1,n2,10,100,1,null,upperLayer);
 		this.d12.coupleToUpperLayerLink(upperLink12);
+
+		np.checkCachesConsistency();
 	}
 
 	@After
@@ -84,29 +88,48 @@ public class DemandTest
 	@Test
 	public void testGetRoutes() 
 	{
-		Set<Route> twoRoutes = new HashSet<Route> (); twoRoutes.add (r123a); twoRoutes.add (r123b);
-		assertEquals (d13.getRoutes() , twoRoutes);
+		assertEquals (d13.getRoutes() , new HashSet<Route> (Arrays.asList(r123a , r123b , segm13)));
 		assertEquals (d12.getRoutes() , Collections.singleton(r12));
 		assertEquals (scd123.getRoutes() , Collections.singleton(sc123));
 		r123b.remove ();
-		assertEquals (d13.getRoutes() , Collections.singleton(r123a));
+		assertEquals (d13.getRoutes() , new HashSet<Route> (Arrays.asList(r123a , segm13)));
+	}
+
+	@Test
+	public void testGetRoutesAreBackup() 
+	{
+		assertEquals (d13.getRoutesAreBackup() , new HashSet<Route> (Arrays.asList(segm13)));
+		assertEquals (d12.getRoutesAreBackup() , Collections.emptySet());
+		assertEquals (scd123.getRoutesAreBackup() , Collections.emptySet());
+		segm13.remove ();
+		assertEquals (d13.getRoutesAreBackup() , Collections.emptySet());
+	}
+
+	@Test
+	public void testGetRoutesAreNotBackup() 
+	{
+		assertEquals (d13.getRoutesAreNotBackup() , new HashSet<Route> (Arrays.asList(r123a , r123b)));
+		assertEquals (d12.getRoutesAreNotBackup() , new HashSet<Route> (Arrays.asList(r12)));
+		assertEquals (scd123.getRoutesAreNotBackup() , new HashSet<Route> (Arrays.asList(sc123)));
+		segm13.remove ();
+		assertEquals (d13.getRoutesAreNotBackup() , new HashSet<Route> (Arrays.asList(r123a , r123b)));
 	}
 
 	@Test
 	public void testGetWorseCasePropagationTimeInMs() 
 	{
-		assertEquals (d13.getWorseCasePropagationTimeInMs() , 200000 , 0.0);
-		assertEquals (d12.getWorseCasePropagationTimeInMs() , 100000 , 0.0);
+		assertEquals (d13.getWorstCasePropagationTimeInMs() , 200000 , 0.0);
+		assertEquals (d12.getWorstCasePropagationTimeInMs() , 100000 , 0.0);
 		r12.remove();
-		assertEquals (d12.getWorseCasePropagationTimeInMs() , 0 , 0.0);
+		assertEquals (d12.getWorstCasePropagationTimeInMs() , 0 , 0.0);
 	}
 
 	@Test
 	public void testIsTraversingOversubscribedLinks() 
 	{
-		System.out.println(d12.getRoutes().iterator().next().getSeqLinksRealPath());
+		System.out.println(d12.getRoutes().iterator().next().getSeqLinks());
 		System.out.println(link12.getCapacity());
-		System.out.println(link12.getOccupiedCapacityIncludingProtectionSegments());
+		System.out.println(link12.getOccupiedCapacity());
 		assertTrue (d12.isTraversingOversubscribedLinks());
 		assertTrue (d13.isTraversingOversubscribedLinks());
 		link12.setCapacity(500);
@@ -122,7 +145,7 @@ public class DemandTest
 	{
 		assertTrue (!d12.isTraversingOversubscribedResources());
 		assertTrue (!scd123.isTraversingOversubscribedResources());
-		sc123.setCarriedTrafficAndResourcesOccupationInformation(10 , 10 , Collections.singletonMap(res2 , 1000.0));
+		sc123.setCarriedTraffic(10 , Arrays.asList(10.0 , 1000.0 , 10.0));
 		assertTrue (scd123.isTraversingOversubscribedResources());
 	}
 
@@ -314,7 +337,11 @@ public class DemandTest
 		assertEquals (sps.getFirst() , Collections.singleton(r12));
 		assertEquals (sps.getSecond() , 1.0 , 0.0);
 		sps = d13.computeShortestPathRoutes(null);
-		assertEquals (sps.getFirst() , d13.getRoutes());
+		assertEquals (sps.getFirst() , Collections.singleton(segm13));
+		assertEquals (sps.getSecond() , 1 , 0.0);
+		segm13.remove();
+		sps = d13.computeShortestPathRoutes(null);
+		assertEquals (sps.getFirst() , new HashSet<Route> (Arrays.asList(r123a , r123b)));
 		assertEquals (sps.getSecond() , 2 , 0.0);
 	}
 
@@ -341,7 +368,7 @@ public class DemandTest
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		np.setRoutingType(RoutingType.SOURCE_ROUTING , lowerLayer);
 		assertEquals(d12.getRoutes().size() , 1);
-		assertEquals(d12.getRoutes().iterator().next().getSeqLinksRealPath() , Collections.singletonList(link12));
+		assertEquals(d12.getRoutes().iterator().next().getSeqLinks() , Collections.singletonList(link12));
 	}
 
 }

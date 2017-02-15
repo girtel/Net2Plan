@@ -14,9 +14,8 @@ import javax.swing.table.TableColumn;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
-import com.net2plan.gui.utils.FixedColumnDecorator;
 import com.net2plan.gui.utils.FullScrollPaneLayout;
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.TableCursorNavigation;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_layer;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -34,9 +33,9 @@ public class NetPlanViewTableComponent_network extends JPanel {
     private AdvancedJTable networkAttributeTable;
     private AdvancedJTable_layer layerTable;
     private JScrollPane scrollPane;
-    private final INetworkCallback networkViewer;
+    private final IVisualizationCallback networkViewer;
 
-    public NetPlanViewTableComponent_network(final INetworkCallback networkViewer, AdvancedJTable_layer layerTable) {
+    public NetPlanViewTableComponent_network(final IVisualizationCallback networkViewer, AdvancedJTable_layer layerTable) {
         super(new MigLayout("", "[][grow]", "[][][grow][][][][][grow]"));
 
         this.layerTable = layerTable;
@@ -46,8 +45,8 @@ public class NetPlanViewTableComponent_network extends JPanel {
         txt_networkDescription.setFont(new JLabel().getFont());
         txt_networkDescription.setLineWrap(true);
         txt_networkDescription.setWrapStyleWord(true);
-        txt_networkName.setEditable(networkViewer.isEditable());
-        txt_networkDescription.setEditable(networkViewer.isEditable());
+        txt_networkName.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
+        txt_networkDescription.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
         txt_numLayers = new JTextField();
         txt_numLayers.setEditable(false);
         txt_numNodes = new JTextField();
@@ -55,7 +54,7 @@ public class NetPlanViewTableComponent_network extends JPanel {
         txt_numSRGs = new JTextField();
         txt_numSRGs.setEditable(false);
 
-        if (networkViewer.isEditable()) {
+        if (networkViewer.getVisualizationState().isNetPlanEditable()) {
             txt_networkName.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) {
                 @Override
                 protected void updateInfo(String text) {
@@ -72,7 +71,7 @@ public class NetPlanViewTableComponent_network extends JPanel {
         }
 
         networkAttributeTable = new AdvancedJTable(new ClassAwareTableModel(new Object[1][attributeTableHeader.length], attributeTableHeader));
-        if (networkViewer.isEditable()) {
+        if (networkViewer.getVisualizationState().isNetPlanEditable()) {
             networkAttributeTable.addMouseListener(new SingleElementAttributeEditor(networkViewer, NetworkElementType.NETWORK));
         }
 
@@ -98,8 +97,7 @@ public class NetPlanViewTableComponent_network extends JPanel {
 //			tips1.setToolTip(layerTable.getColumnModel().getColumn(c), layerTable.getTableTips() [c]);
 //		layerTable.getTableHeader().addMouseMotionListener(tips1);
 
-//		if (networkViewer.allowShowInitialNetPlan()) layerTable.setRowSorter(new CurrentAndPlannedStateTableSorter(layerTable.getModel()));
-//		else layerTable.setAutoCreateRowSorter(true);
+//		layerTable.setAutoCreateRowSorter(true);
 
         JScrollPane scrollPane1 = new JScrollPane(layerTable);
         ScrollPaneLayout layout1 = new FullScrollPaneLayout();

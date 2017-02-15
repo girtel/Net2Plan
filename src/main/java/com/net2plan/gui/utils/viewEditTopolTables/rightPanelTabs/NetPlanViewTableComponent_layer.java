@@ -31,11 +31,12 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
+import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.FullScrollPaneLayout;
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.ParamValueTable;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.TableCursorNavigation;
@@ -55,7 +56,6 @@ import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.Triple;
 
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import net.miginfocom.swing.MigLayout;
@@ -73,10 +73,11 @@ public class NetPlanViewTableComponent_layer extends JPanel {
     private ParamValueTable[] layerSummaryTables;
     private JButton forceUpdate;
     private final AdvancedJTable_layer layerTable;
+    private boolean insideUpdateView;
+    
+    private final IVisualizationCallback networkViewer;
 
-    private final INetworkCallback networkViewer;
-
-    public NetPlanViewTableComponent_layer(final INetworkCallback networkViewer, final AdvancedJTable_layer layerTable) {
+    public NetPlanViewTableComponent_layer(final IVisualizationCallback networkViewer, final AdvancedJTable_layer layerTable) {
         super(new MigLayout("", "[grow]", "[][][][][][grow]"));
         this.layerTable = layerTable;
         this.networkViewer = networkViewer;
@@ -89,11 +90,11 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         txt_layerDemandTrafficUnits = new JTextField();
         txt_layerLinkCapacityUnits = new JTextField();
         sourceRoutingActivated = new JRadioButton("Source routing", false);
-        sourceRoutingActivated.setEnabled(networkViewer.isEditable());
+        sourceRoutingActivated.setEnabled(networkViewer.getVisualizationState().isNetPlanEditable());
         hopByHopRoutingActivated = new JRadioButton("Hop-by-hop routing", false);
-        hopByHopRoutingActivated.setEnabled(networkViewer.isEditable());
+        hopByHopRoutingActivated.setEnabled(networkViewer.getVisualizationState().isNetPlanEditable());
 
-        if (networkViewer.isEditable()) {
+        if (networkViewer.getVisualizationState().isNetPlanEditable()) {
             ItemListener itemRoutingTypeListener = new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent event) {
@@ -106,13 +107,21 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                     if (button == sourceRoutingActivated && state == ItemEvent.SELECTED) {
                         netPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
                         if (previousRoutingType != RoutingType.SOURCE_ROUTING)
-                            networkViewer.updateNetPlanView();
+                        {
+                        	networkViewer.getVisualizationState().resetPickedState();
+                            networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+                            networkViewer.getUndoRedoNavigationManager().addNetPlanChange();
+                        }
                     }
 
                     if (button == hopByHopRoutingActivated && state == ItemEvent.SELECTED) {
                         netPlan.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
                         if (previousRoutingType != RoutingType.HOP_BY_HOP_ROUTING)
-                            networkViewer.updateNetPlanView();
+                        {
+                        	networkViewer.getVisualizationState().resetPickedState();
+                            networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+                            networkViewer.getUndoRedoNavigationManager().addNetPlanChange();
+                        }
                     }
                 }
             };
@@ -124,11 +133,11 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         routingSchemes.add(sourceRoutingActivated);
         routingSchemes.add(hopByHopRoutingActivated);
 
-        txt_layerName.setEditable(networkViewer.isEditable());
-        txt_layerDescription.setEditable(networkViewer.isEditable());
-        txt_layerDemandTrafficUnits.setEditable(networkViewer.isEditable());
-        txt_layerLinkCapacityUnits.setEditable(networkViewer.isEditable());
-        if (networkViewer.isEditable()) {
+        txt_layerName.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
+        txt_layerDescription.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
+        txt_layerDemandTrafficUnits.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
+        txt_layerLinkCapacityUnits.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
+        if (networkViewer.getVisualizationState().isNetPlanEditable()) {
             txt_layerName.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) {
                 @Override
                 protected void updateInfo(String text) {
@@ -141,7 +150,11 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                         if ((Long) model.getValueAt(row, AdvancedJTable_layer.COLUMN_ID) == layer.getId()) {
                             layer.setName(text);
                             model.setValueAt(text, row, AdvancedJTable_layer.COLUMN_NAME);
-                            networkViewer.getTopologyPanel().refreshLayerName(layer.getId());
+                            if (!insideUpdateView)
+                            {
+                            	networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
+                            	networkViewer.getUndoRedoNavigationManager().addNetPlanChange();
+                            }
                         }
                     }
 //					allowDocumentUpdate = isEditable();
@@ -231,7 +244,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
 
 
         layerAttributeTable = new AdvancedJTable(new ClassAwareTableModel(new Object[1][attributeTableHeader.length], attributeTableHeader));
-        if (networkViewer.isEditable())
+        if (networkViewer.getVisualizationState().isNetPlanEditable())
             layerAttributeTable.addMouseListener(new SingleElementAttributeEditor(networkViewer, NetworkElementType.LAYER));
 
         JTable table = layerAttributeTable;
@@ -318,7 +331,9 @@ public class NetPlanViewTableComponent_layer extends JPanel {
     }
 
 
-    public void updateNetPlanView(NetPlan currentState) {
+    public void updateNetPlanView(NetPlan currentState) 
+    {
+    	this.insideUpdateView = true;
         layerAttributeTable.setEnabled(false);
         ((DefaultTableModel) layerAttributeTable.getModel()).setDataVector(new Object[1][attributeTableHeader.length], attributeTableHeader);
 
@@ -339,14 +354,14 @@ public class NetPlanViewTableComponent_layer extends JPanel {
             ((DefaultTableModel) layerAttributeTable.getModel()).setDataVector(layerData, attributeTableHeader);
         }
 
-        txt_layerName.setText(layer.getName());
-        txt_layerDescription.setText(layer.getDescription());
-        txt_layerDescription.setCaretPosition(0);
-        txt_layerLinkCapacityUnits.setText(currentState.getLinkCapacityUnitsName());
-        txt_layerDemandTrafficUnits.setText(currentState.getDemandTrafficUnitsName());
+        if (!txt_layerName.getText().equals(layer.getName())) txt_layerName.setText(layer.getName());
+        if (!txt_layerDescription.getText().equals(layer.getDescription())) txt_layerDescription.setText(layer.getDescription());
+        if (!txt_layerLinkCapacityUnits.getText().equals(currentState.getLinkCapacityUnitsName())) txt_layerLinkCapacityUnits.setText(currentState.getLinkCapacityUnitsName());
+        if (!txt_layerDemandTrafficUnits.getText().equals(currentState.getDemandTrafficUnitsName())) txt_layerDemandTrafficUnits.setText(currentState.getDemandTrafficUnitsName());
 
         boolean hardComputations = currentState.getNumberOfNodes() <= 100;
         updateLayerMetrics(currentState, hardComputations);
+    	this.insideUpdateView = false;
     }
 
     private void updateLayerMetrics(NetPlan netPlan, boolean applyHardComputations) {
@@ -358,7 +373,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         int MD = netPlan.getNumberOfMulticastDemands();
         int numSRGs = netPlan.getNumberOfSRGs();
         double U_e = netPlan.getVectorLinkCapacity().zSum();
-        double H_d = netPlan.getDemandTotalOfferedTraffic();
+        double H_d = netPlan.getVectorDemandOfferedTraffic().zSum();
         double u_e_avg = E == 0 ? 0 : U_e / E;
 
         int E_limitedCapacityLinks = 0;
@@ -408,7 +423,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
 
         boolean isTrafficSymmetric = GraphUtils.isWeightedBidirectional(netPlan.getNodes(), netPlan.getDemands(), netPlan.getVectorDemandOfferedTraffic());
         double averageNodePairOfferedTraffic = H_d == 0 ? 0 : H_d / (N * (N - 1));
-        double blockedTrafficPercentage = H_d == 0 ? 0 : 100 * (netPlan.getDemandTotalBlockedTraffic() / H_d);
+        double blockedTrafficPercentage = H_d == 0 ? 0 : 100 * (netPlan.getVectorDemandBlockedTraffic().zSum() / H_d);
 
         Map<String, Object> trafficData = new LinkedHashMap<String, Object>();
         trafficData.put("Number of UNICAST demands", D);
@@ -417,20 +432,16 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         trafficData.put("Blocked UNICAST traffic (%)", String.format("%.3f", blockedTrafficPercentage));
         trafficData.put("Symmetric offered UNICAST traffic?", isTrafficSymmetric ? "Yes" : "No");
         trafficData.put("Number of MULTICAST demands", MD);
-        trafficData.put("Offered MULTICAST traffic: total", String.format("%.3f", netPlan.getMulticastDemandTotalOfferedTraffic()));
-        trafficData.put("Blocked MULTICAST traffic (%)", String.format("%.3f", netPlan.getMulticastDemandTotalBlockedTraffic()));
+        trafficData.put("Offered MULTICAST traffic: total", String.format("%.3f", netPlan.getVectorMulticastDemandOfferedTraffic().zSum()));
+        trafficData.put("Blocked MULTICAST traffic (%)", String.format("%.3f", netPlan.getVectorMulticastDemandBlockedTraffic().zSum()));
 
         layerSummaryInfo.add(trafficData);
 
-        DoubleMatrix1D vector_rhoe = netPlan.getVectorLinkUtilizationIncludingProtectionSegments();
+        DoubleMatrix1D vector_rhoe = netPlan.getVectorLinkUtilization();
         double max_rho_e = vector_rhoe.size() == 0 ? 0 : vector_rhoe.getMaxLocation()[0];
         RoutingType routingType = netPlan.getRoutingType();
         if (routingType == RoutingType.SOURCE_ROUTING) {
-            DoubleMatrix1D vector_rho_e_noProtection = netPlan.getVectorLinkUtilizationNotIncludingProtectionSegments();
-            double max_rho_e_noProtection = vector_rho_e_noProtection.size() == 0 ? 0 : vector_rho_e_noProtection.getMaxLocation()[0];
-
             int R = netPlan.getNumberOfRoutes();
-            int S = netPlan.getNumberOfProtectionSegments();
             boolean isUnicastRoutingBifurcated = netPlan.isUnicastRoutingBifurcated();
             boolean hasUnicastRoutingLoops = netPlan.hasUnicastRoutingLoops();
 
@@ -441,7 +452,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
             Map<String, Object> routingData = new LinkedHashMap<String, Object>();
             routingData.put("Number of routes", R);
             routingData.put("Unicast routing is bifurcated?", isUnicastRoutingBifurcated ? "Yes" : "No");
-            routingData.put("Network congestion - bottleneck utilization (w. reserved bw, w.o. reserved bw)", String.format("%.3f, %.3f", max_rho_e, max_rho_e_noProtection));
+            routingData.put("Network congestion - bottleneck utilization", String.format("%.3f, %.3f", max_rho_e, max_rho_e));
             routingData.put("Average (unicast) route length (hops, km, ms)", String.format("%.3f, %.3f, %.3g", averageRouteLength_hops, averageRouteLength_km, averageRouteLength_ms));
             routingData.put("Unicast routing has loops?", hasUnicastRoutingLoops ? "Yes" : "No");
             routingData.put("Number of multicast trees", netPlan.getNumberOfMulticastTrees());
@@ -451,30 +462,15 @@ public class NetPlanViewTableComponent_layer extends JPanel {
 
             layerSummaryInfo.add(routingData);
 
-            DoubleMatrix1D reservedCapacityMap = netPlan.getVectorLinkCapacityReservedForProtection();
-            double u_e_reservedForProtection_avg = S == 0 ? 0 : reservedCapacityMap.zSum() / S;
-            double percentageReserved = 0;
-            for (Link link : netPlan.getLinks())
-                percentageReserved += Math.max(0, reservedCapacityMap.get(link.getIndex()) / link.getCapacity());
-
-            if (E != 0) percentageReserved *= 100.0 / E;
-
-            Triple<Double, Double, Double> protectionPercentage = TrafficComputationEngine.getTrafficProtectionDegree(netPlan);
-            double percentageUnprotected = protectionPercentage.getFirst();
-            double percentageDedicated = protectionPercentage.getSecond();
-            double percentageShared = protectionPercentage.getThird();
+            final double protectionPercentage = TrafficComputationEngine.getTrafficProtectionDegree(netPlan);
             Pair<Double, Double> srgDisjointnessPercentage = SRGUtils.getSRGDisjointnessPercentage(netPlan);
             String srgModel = SRGUtils.getSRGModel(netPlan);
 
             Map<String, Object> protectionData = new LinkedHashMap<String, Object>();
-            protectionData.put("Number of protection segments in this layer", S);
-            protectionData.put("Average link capacity reserved for protection (absolute, %)", String.format("%.3f, %.3f", u_e_reservedForProtection_avg, percentageReserved));
-            protectionData.put("% of carried traffic unprotected", String.format("%.3f", percentageUnprotected));
-            protectionData.put("% of carried traffic complete and dedicated protection", String.format("%.3f", percentageDedicated));
-            protectionData.put("% of carried traffic partial and/or shared protection", String.format("%.3f", percentageShared));
+            protectionData.put("% of carried traffic with at least one backup path", String.format("%.3f", protectionPercentage));
             protectionData.put("Number of SRGs in the network", numSRGs);
             protectionData.put("SRG definition characteristic", srgModel);
-            protectionData.put("% routes protected with SRG disjoint segments (w. end nodes, w.o. end nodes)", String.format("%.3f, %.3f", srgDisjointnessPercentage.getFirst(), srgDisjointnessPercentage.getSecond()));
+            protectionData.put("% routes protected with SRG disjoint backup paths (w. end nodes, w.o. end nodes)", String.format("%.3f, %.3f", srgDisjointnessPercentage.getFirst(), srgDisjointnessPercentage.getSecond()));
 
             layerSummaryInfo.add(protectionData);
         } else {

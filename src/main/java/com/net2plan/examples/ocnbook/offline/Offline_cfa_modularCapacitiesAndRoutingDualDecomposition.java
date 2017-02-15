@@ -100,6 +100,8 @@ public class Offline_cfa_modularCapacitiesAndRoutingDualDecomposition implements
 		for (int n1 = 0 ; n1 < N ; n1 ++) for (int n2 = 0 ; n2 < N ; n2 ++) if (n1 == n2) continue; else trafficMatrix [n2][n2] -= trafficMatrix [n1][n2];
 		this.tmColumnSumZero= DoubleFactory2D.dense.make(trafficMatrix);
 
+		System.out.println(netPlan.getMatrixNode2NodeOfferedTraffic());
+		
 		this.numModulesUpperBound = Math.ceil(netPlan.getVectorDemandOfferedTraffic().zSum() / moduleCapacity.getDouble());
 		this.A_ne = netPlan.getMatrixNodeLinkIncidence();
 		
@@ -261,7 +263,7 @@ public class Offline_cfa_modularCapacitiesAndRoutingDualDecomposition implements
 		for (Demand d : netPlan.getDemandsBlocked())
 			if (d.getBlockedTraffic() > PRECISIONFACTOR) throw new RuntimeException ("Bad");
 		for (Link e : netPlan.getLinksOversubscribed())
-			if (e.getOccupiedCapacityIncludingProtectionSegments() - e.getCapacity() > PRECISIONFACTOR) throw new RuntimeException ("Bad");
+			if (e.getOccupiedCapacity() - e.getCapacity() > PRECISIONFACTOR) throw new RuntimeException ("Bad");
 	}
 	
 }

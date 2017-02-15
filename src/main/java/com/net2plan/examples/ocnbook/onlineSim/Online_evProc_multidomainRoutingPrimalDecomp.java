@@ -391,7 +391,7 @@ public class Online_evProc_multidomainRoutingPrimalDecomp extends IEventProcesso
 					if (linkOversubscription.getMaxLocation()[0] > 1e-3) System.out.println ("Some links are ovsersubscribed. Sum oversubscription traffic in the links: " + linkOversubscription.zSum());
 					stat_traceOf_objFun.add(time, computeObjectiveFunctionFromNetPlan(this.currentNetPlan));
 					stat_traceOf_x_te.add(time, this.currentNetPlan.getMatrixDestination2LinkTrafficCarried());
-					stat_traceOf_y_e.add(time, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+					stat_traceOf_y_e.add(time, this.currentNetPlan.getVectorLinkCarriedTraffic());
 				}
 
 				if (time > this.simulation_maxNumberOfMasterUpdateIntervals.getDouble() * routing_averageMasterUpdateInterval.getDouble())
@@ -448,7 +448,7 @@ public class Online_evProc_multidomainRoutingPrimalDecomp extends IEventProcesso
 		final NetPlan optNetPlan = computeOptimumSolution();
 		TimeTrace.printToFile(new File(simulation_outFileNameRoot.getString() + "_jom_objFunc.txt"), new double[] { computeObjectiveFunctionFromNetPlan(optNetPlan) });
 		TimeTrace.printToFile(new File(simulation_outFileNameRoot.getString() + "_jom_xte.txt"), optNetPlan.getMatrixDestination2LinkTrafficCarried());
-		TimeTrace.printToFile(new File(simulation_outFileNameRoot.getString() + "_jom_ye.txt"), optNetPlan.getVectorLinkTotalCarriedTraffic());
+		TimeTrace.printToFile(new File(simulation_outFileNameRoot.getString() + "_jom_ye.txt"), optNetPlan.getVectorLinkCarriedTraffic());
 		return null;
 	}
 
@@ -564,7 +564,7 @@ public class Online_evProc_multidomainRoutingPrimalDecomp extends IEventProcesso
 		double maxOverssubs = 0;
 		for (Link e : np.getLinks())
 		{
-			final double y_e = e.getCarriedTrafficIncludingProtectionSegments();
+			final double y_e = e.getCarriedTraffic();
 			final double u_e = e.getCapacity();
 			maxOverssubs = Math.max(maxOverssubs, y_e - u_e);
 			optCost += Math.min(y_e, u_e);

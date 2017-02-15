@@ -18,6 +18,7 @@ import org.apache.commons.collections15.Transformer;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
  * <p>Provides extra functionality for the Java Collections Framework. For Java primitives check 
@@ -344,5 +345,8 @@ public class CollectionUtils
 		Map<K,Double> res = new HashMap<K,Double> ();
 		int counter = 0; for (K key : keys) res.put(key, vals.get(counter++)); 
 		return res;
+
 	}
+
+
 }

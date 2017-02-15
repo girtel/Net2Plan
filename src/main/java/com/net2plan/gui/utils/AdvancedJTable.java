@@ -89,17 +89,12 @@ public class AdvancedJTable extends JTable {
 
         setModel(model);
         this.getTableHeader().setReorderingAllowed(false);
-
-
-
     }
 
     @Override
     public void setModel(TableModel model){
         super.setModel(model);
     }
-
-
 
     @Override
     public void doLayout() {
@@ -147,9 +142,12 @@ public class AdvancedJTable extends JTable {
     }
 
     @Override
-    public TableCellRenderer getCellRenderer(int row, int column) {
-        if (cellRendererMap.containsKey(Pair.of(row, column))) return cellRendererMap.get(Pair.of(row, column));
-        else return super.getCellRenderer(row, column);
+    public TableCellRenderer getCellRenderer(int row, int column) 
+    {
+        if (cellRendererMap.containsKey(Pair.of(row, column)))
+        	return cellRendererMap.get(Pair.of(row, column));
+        else 
+        	return super.getCellRenderer(row, column);
     }
 
     @Override

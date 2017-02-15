@@ -12,12 +12,14 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import com.net2plan.internal.AttributeMap;
-import com.net2plan.internal.ErrorHandling;
-
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
+import com.net2plan.internal.AttributeMap;
+import com.net2plan.internal.ErrorHandling;
 
 /** <p>This class contains a representation of a Shared Risk Group (SRG). This is a concept representing a risk of failure in the network,
  * such that if this risk becomes true, a particular set of links and/or nodes simultaneously fail. For instance, a SRG can be the risk of 
@@ -26,6 +28,14 @@ import java.util.Set;
  * that describe statistically the average time between a reparation of the risk effects and a new risk occurrence (MTTF), and the time between 
  * a risk occurrence until it is repaired (MTTR).</p> 
  * @author Pablo Pavon-Marino
+ */
+/**
+ * @author Pablo
+ *
+ */
+/**
+ * @author Pablo
+ *
  */
 public class SharedRiskGroup extends NetworkElement
 {
@@ -42,7 +52,7 @@ public class SharedRiskGroup extends NetworkElement
 		if (links == null) links = new HashSet<Link> ();
 		if (nodes == null) nodes = new HashSet<Node> ();
 		
-		for (Link e : links) { if (!netPlan.equals(e.netPlan)) throw new RuntimeException ("Bad"); if (e instanceof ProtectionSegment) throw new RuntimeException ("Bad"); }
+		for (Link e : links) if (!netPlan.equals(e.netPlan)) throw new RuntimeException ("Bad"); 
 		for (Node n : nodes) if (!netPlan.equals(n.netPlan)) throw new RuntimeException ("Bad");
 
 		this.nodes = new HashSet<Node> (nodes);
@@ -84,7 +94,7 @@ public class SharedRiskGroup extends NetworkElement
 	 * <p>Returns all the links affected by the SRG at all the layers: the links affected, and the input and output links of the affected nodes</p>
 	 * @return All the affected links
 	 */
-	public Set<Link> getAffectedLinks ()
+	public Set<Link> getAffectedLinksAllLayers ()
 	{
 		Set<Link> res = new HashSet<Link> ();
 		res.addAll (links);
@@ -113,7 +123,7 @@ public class SharedRiskGroup extends NetworkElement
 	 * <p>Returns the set of routes affected by the SRG (fail, when the SRG is in failure state). </p>
 	 * @return The set of failing routes
 	 */
-	public Set<Route> getAffectedRoutes ()
+	public Set<Route> getAffectedRoutesAllLayers ()
 	{
 		Set<Route> res = new HashSet<Route> ();
 		for (Link e : links) res.addAll (e.cache_traversingRoutes.keySet());
@@ -138,7 +148,7 @@ public class SharedRiskGroup extends NetworkElement
 	 * <p>Returns the set of multicast trees affected by the SRG (fail, when the SRG is in failure state). </p>
 	 * @return The set of failing multicast trees
 	 */
-	public Set<MulticastTree> getAffectedMulticastTrees ()
+	public Set<MulticastTree> getAffectedMulticastTreesAllLayers ()
 	{
 		Set<MulticastTree> res = new HashSet<MulticastTree> ();
 		for (Link e : links) res.addAll (e.cache_traversingTrees);
@@ -159,36 +169,43 @@ public class SharedRiskGroup extends NetworkElement
 		return res;
 	}
 
-	/**
-	 * <p>Returns the set of protection segments affected by the SRG (fail, when the SRG is in failure state). </p>
-	 * @return The set of failing protection segments
-	 */
-	public Set<ProtectionSegment> getAffectedProtectionSegments ()
-	{
-		Set<ProtectionSegment> res = new HashSet<ProtectionSegment> ();
-		for (Link e : links) res.addAll (e.cache_traversingSegments);
-		for (Node n : nodes) res.addAll (n.cache_nodeAssociatedSegments);
-		return res;
-	}
 
-	/**
-	 * <p>Returns the set of protection segments in the given layer affected by the SRG (fail, when the SRG is in failure state)</p>
-	 * @param layer Network layer
-	 * @return The failing protection segments belonging to the given layer
+	
+	/** Returns true if any element of the given collection of links, nodes and resources is affected by te SRG (fails if the SRG fails), false otherwise
+	 * @param col the collection
+	 * @return see above
 	 */
-	public Set<ProtectionSegment> getAffectedProtectionSegments (NetworkLayer layer)
+	public boolean affectsAnyOf (Collection<? extends NetworkElement> col)
 	{
-		Set<ProtectionSegment> res = new HashSet<ProtectionSegment> ();
-		for (Link e : links) for (ProtectionSegment s : e.cache_traversingSegments) if (s.layer.equals(layer)) res.add (s);
-		for (Node n : nodes) for (ProtectionSegment s : n.cache_nodeAssociatedSegments) if (s.layer.equals(layer)) res.add (s);
-		return res;
+		for (NetworkElement e : col)
+		{
+			if (e instanceof Link)
+			{
+				final Link ee = (Link) e;
+				if (nodes.contains(ee.originNode)) return true;
+				if (nodes.contains(ee.destinationNode)) return true;
+				if (links.contains(ee)) return true;
+			}
+			else if (e instanceof Resource)
+			{
+				final Resource ee = (Resource) e;
+				if (nodes.contains(ee.hostNode)) return true;
+			}
+			else if (e instanceof Node)
+			{
+				final Node ee = (Node) e;
+				if (nodes.contains(ee)) return true;
+			}
+			else throw new Net2PlanException ("The collection can contain only links, resources and/or nodes");
+		}
+		return false;
 	}
-
+	
 	/**
 	 * <p>Returns the set of links associated to the SRG (fail, when the SRG is in failure state).</p>
 	 * @return The set of failing links, as an unmodifiable set
 	 */
-	public Set<Link> getLinks()
+	public Set<Link> getLinksAllLayers()
 	{
 		return Collections.unmodifiableSet(links);
 	}
@@ -264,6 +281,16 @@ public class SharedRiskGroup extends NetworkElement
 	}
 	
 	/**
+	 * <p>Sets nodes and links associated to the  SRG as up (in case they are not yet). The network state is updated with the affected routes,
+	 * segments, trees and hop-by-hop routing associated to the new nodes/links down </p>
+	 */
+	public void setAsUp ()
+	{
+		checkAttachedToNetPlanObject();
+		netPlan.setLinksAndNodesFailureState (links , null , nodes , null);
+	}
+
+	/**
 	 * <p>Removes a link from the set of links of the SRG. If the link is not in the SRG, no action is taken</p>
 	 * @param e Link to be removed
 	 */
@@ -306,7 +333,7 @@ public class SharedRiskGroup extends NetworkElement
 	}
 
 	/**
-	 * <p>Adds a link to the SRG. The object cannot be a protection segment (recall that segments are subclasses of Link). </p>
+	 * <p>Adds a link to the SRG. If the link is already part of the srg, no action is taken.</p>
 	 * @param link Link to add
 	 */
 	public void addLink(Link link)
@@ -314,15 +341,14 @@ public class SharedRiskGroup extends NetworkElement
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		link.checkAttachedToNetPlanObject(this.netPlan);
-		if (link instanceof ProtectionSegment) throw new Net2PlanException ("Protections segments cannot be added as links of a SRG");
-
+		if (this.links.contains(link)) return;
 		link.cache_srgs.add(this);
 		this.links.add(link);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 
 	/**
-	 * <p>Adds a node to the SRG.</p>
+	 * <p>Adds a node to the SRG. If the node is already part of the SRG, no action is taken</p>
 	 * @param node Node to add
 	 */
 	public void addNode(Node node)
@@ -330,7 +356,7 @@ public class SharedRiskGroup extends NetworkElement
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		node.checkAttachedToNetPlanObject(this.netPlan);
-
+		if (this.nodes.contains(node)) return;
 		node.cache_nodeSRGs.add(this);
 		this.nodes.add(node);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();

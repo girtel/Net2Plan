@@ -12,17 +12,28 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import cern.colt.list.tdouble.DoubleArrayList;
-import cern.colt.list.tint.IntArrayList;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
+import com.net2plan.utils.Triple;
 
-import java.util.*;
-import java.util.Map.Entry;
+import cern.colt.list.tdouble.DoubleArrayList;
+import cern.colt.list.tint.IntArrayList;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 /** <p>This class contains a representation of a link. A link is characterized by its initial and end node, the network layer it belongs to, 
  * and its capacity, measured in the layer link capacity units. When the routing type at the link layer is {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, the link
@@ -49,8 +60,8 @@ public class Link extends NetworkElement
 	final Node originNode;
 	final Node destinationNode;
 	double capacity;
-	double cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments;
-	double cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments;
+	double cache_carriedTraffic;
+	double cache_occupiedCapacity;
 	double lengthInKm;
 	double propagationSpeedInKmPerSecond;
 	boolean isUp;
@@ -58,7 +69,6 @@ public class Link extends NetworkElement
 	Set<SharedRiskGroup> cache_srgs;
 	Map<Route,Integer> cache_traversingRoutes; // for each traversing route, the number of times it traverses this link (in seqLinksRealPath). If the route has segments, their internal route counts also
 	Set<MulticastTree> cache_traversingTrees;
-	Set<ProtectionSegment> cache_traversingSegments;
 
 	
 	Demand coupledLowerLayerDemand;
@@ -90,8 +100,8 @@ public class Link extends NetworkElement
 		this.originNode = originNode;
 		this.destinationNode = destinationNode;
 		this.capacity = capacity;
-		this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = 0;
-		this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = 0;
+		this.cache_carriedTraffic = 0;
+		this.cache_occupiedCapacity = 0;
 		this.lengthInKm = lengthInKm;
 		this.propagationSpeedInKmPerSecond = propagationSpeedInKmPerSecond;
 		this.isUp = true;
@@ -101,30 +111,6 @@ public class Link extends NetworkElement
 		this.cache_srgs = new HashSet<SharedRiskGroup> ();
 		this.cache_traversingRoutes = new HashMap<Route,Integer> ();
 		this.cache_traversingTrees = new HashSet<MulticastTree> ();
-		this.cache_traversingSegments = new HashSet<ProtectionSegment> ();
-	}
-
-	/** Constructor for protection segments */
-	Link (NetPlan netPlan , long segmentId , int index , List<Link> segmentSeqLinks , double segmentReservedCapacity  , AttributeMap attributes)
-	{
-		super (netPlan , segmentId , index , attributes);
-
-		Link firstLink = segmentSeqLinks.get (0);
-		Link lastLink = segmentSeqLinks.get (segmentSeqLinks.size() - 1);
-		this.originNode = firstLink.originNode;
-		this.destinationNode = lastLink.destinationNode;
-		this.layer = firstLink.getLayer();
-		this.capacity = segmentReservedCapacity;
-		this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = 0;
-		this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = 0;
-		this.lengthInKm = 0; for (Link e : segmentSeqLinks) lengthInKm += e.getLengthInKm(); 
-		this.propagationSpeedInKmPerSecond = 0; for (Link e : segmentSeqLinks) propagationSpeedInKmPerSecond += e.getPropagationSpeedInKmPerSecond() *  e.getLengthInKm() / this.lengthInKm ; 
-		this.isUp = true;
-
-		this.cache_srgs = new HashSet<SharedRiskGroup> ();
-		this.cache_traversingRoutes = new HashMap<Route,Integer> ();
-		this.cache_traversingTrees = new HashSet<MulticastTree> ();
-		this.cache_traversingSegments = new HashSet<ProtectionSegment> ();
 	}
 
 	void copyFrom (Link origin)
@@ -132,19 +118,17 @@ public class Link extends NetworkElement
 		if ((this.id != origin.id) || (this.index != origin.index)) throw new RuntimeException ("Bad");
 		if ((this.netPlan == null) || (origin.netPlan == null) || (this.netPlan == origin.netPlan)) throw new RuntimeException ("Bad");
 		this.capacity = origin.capacity;
-		this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = origin.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments;
-		this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = origin.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments;
+		this.cache_carriedTraffic = origin.cache_carriedTraffic;
+		this.cache_occupiedCapacity = origin.cache_occupiedCapacity;
 		this.lengthInKm = origin.lengthInKm;
 		this.propagationSpeedInKmPerSecond = origin.propagationSpeedInKmPerSecond;
 		this.isUp = origin.isUp;
 		this.cache_srgs = new HashSet<SharedRiskGroup> ();
 		this.cache_traversingRoutes = new HashMap<Route,Integer> ();
 		this.cache_traversingTrees = new HashSet<MulticastTree> ();
-		this.cache_traversingSegments = new HashSet<ProtectionSegment> ();
 		for (SharedRiskGroup s : origin.cache_srgs) this.cache_srgs.add(this.netPlan.getSRGFromId(s.id));
 		for (Entry<Route,Integer> r : origin.cache_traversingRoutes.entrySet()) this.cache_traversingRoutes.put(this.netPlan.getRouteFromId(r.getKey ().id) , r.getValue());
 		for (MulticastTree t : origin.cache_traversingTrees) this.cache_traversingTrees.add(this.netPlan.getMulticastTreeFromId(t.id));
-		for (ProtectionSegment s : origin.cache_traversingSegments) this.cache_traversingSegments.add(this.netPlan.getProtectionSegmentFromId(s.id));
 		this.coupledLowerLayerDemand = origin.coupledLowerLayerDemand == null? null : this.netPlan.getDemandFromId(origin.coupledLowerLayerDemand.id);
 		this.coupledLowerLayerMulticastDemand = origin.coupledLowerLayerMulticastDemand == null? null : this.netPlan.getMulticastDemandFromId(origin.coupledLowerLayerMulticastDemand.id);
 	}
@@ -156,8 +140,8 @@ public class Link extends NetworkElement
 		if (originNode.id != e2.originNode.id) return false;
 		if (destinationNode.id != e2.destinationNode.id) return false;
 		if (this.capacity != e2.capacity) return false;
-		if (this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments != e2.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) return false;
-		if (this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments != e2.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) return false;
+		if (this.cache_carriedTraffic != e2.cache_carriedTraffic) return false;
+		if (this.cache_occupiedCapacity != e2.cache_occupiedCapacity) return false;
 		if (this.lengthInKm != e2.lengthInKm) return false;
 		if (this.propagationSpeedInKmPerSecond != e2.propagationSpeedInKmPerSecond) return false;
 		if (this.isUp != e2.isUp) return false;
@@ -168,7 +152,6 @@ public class Link extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.cache_srgs , e2.cache_srgs)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_traversingRoutes , e2.cache_traversingRoutes)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_traversingTrees , e2.cache_traversingTrees)) return false;
-		if (!NetPlan.isDeepCopy(this.cache_traversingSegments , e2.cache_traversingSegments)) return false;
 		return true;
 	}
 	
@@ -238,7 +221,7 @@ public class Link extends NetworkElement
 		
 		Map<Pair<Demand,Link>,Double> res = new HashMap<Pair<Demand,Link>,Double> ();
 		IntArrayList ds = new IntArrayList (); DoubleArrayList vals = new DoubleArrayList ();
-		layer.forwardingRules_f_de.viewColumn (index). getNonZeros(ds,vals);
+		layer.forwardingRulesNoFailureState_f_de.viewColumn (index). getNonZeros(ds,vals);
 		for (int cont = 0 ; cont < ds.size () ; cont ++)
 			res.put (Pair.of (layer.demands.get(ds.get(cont)) , this) , vals.get(cont));
 		return res;
@@ -270,67 +253,48 @@ public class Link extends NetworkElement
 
 	/**
 	 * <p>Returns the link carried traffic (in traffic demand units).</p>
-	 * <p><b>Important:</b> carried traffic of the protection segments traversing the link is <b>NOT</b>considered.</p>
 	 * @return The carried traffic
 	 */
-	public double getCarriedTrafficNotIncludingProtectionSegments()
+	public double getCarriedTraffic()
 	{
-		checkAttachedToNetPlanObject();
-		double accum = this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments; for (ProtectionSegment segment : cache_traversingSegments) accum -= segment.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments;
-		return accum;
+		return cache_carriedTraffic;
 	}
-
-	/**
-	 * <p>Returns the link carried traffic (in traffic demand units).</p>
-	 * <p><b>Important: carried traffic of the protection segments traversing the link is summed.</b></p>
-	 *
-	 * @return The carried traffic
+	
+	
+	/** Returns the set of routes traversing the link that are designated as backup of other route
+	 * @return see above
 	 */
-	public double getCarriedTrafficIncludingProtectionSegments()
+	public Set<Route> getTraversingBackupRoutes ()
 	{
-		return cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments;
+		return getTraversingRoutes().stream ().filter(e->e.isBackupRoute()).collect(Collectors.toSet());
 	}
 	
 	/**
-	 * <p>Returns the link utilization, measured as the ratio between the total occupied capacity in the link and the total link capacity. In {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING},
-	 * the occupied capacity includes the one of the traversing routes, and the one from the traffic carried in the protection segments (disregarding the segment
-	 * reserved traffic). The total link capacity includes also any capacity reserved by the protection segments.</p>
-	 * @return The utilization as described above
+	 * <p>Returns the link utilization, measured as the ratio between the total occupied capacity in the link and the total link capacity.</p>
+	 * @return The utilization as described above. If the link has zero capacity and strictly positive occupied capacity, Double.POSITIVE_INFINITY is returned 
 	 * */
-	public double getUtilizationIncludingProtectionSegments()
+	public double getUtilization()
 	{
-		return capacity == 0? 0 : cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments / capacity;
+		if ((capacity == 0) && (cache_occupiedCapacity > 0)) return Double.POSITIVE_INFINITY;
+		return capacity == 0? 0 : cache_occupiedCapacity / capacity;
 	}
 	
-	/** <p>Returns the link utilization, measured as the ratio between the total occupied capacity in the link and the total link capacity. In {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING},
-	 * the occupied capacity includes the one of the traversing routes, <b>BUT NOT</b> from one of the traffic carried in the protection segments.
-	 * The total link capacity includes does NOT include any capacity reserved by the protection segments.</p>
-	 * @return The utilization as described above
-	 * */
-	public double getUtilizationNotIncludingProtectionSegments()
-	{
-		final double noProt = capacity - getReservedCapacityForProtection();
-		return noProt == 0? 0 : getOccupiedCapacityNotIncludingProtectionSegments() / noProt;
-	}
-	
-	/** <p>Returns the link occupied capacity (in link capacity units). If routing type is {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, this does NOT include any traffic carried in the protection segments traversing the link.</p>
-	 * @return the occupied capacity as described above
-	 * */
-	public double getOccupiedCapacityNotIncludingProtectionSegments()
-	{
-		checkAttachedToNetPlanObject();
-		double accum = this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments; for (ProtectionSegment segment : cache_traversingSegments) accum -= segment.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments;
-		return accum;
-	}
-
-	/** <p>Returns the link occupied capacity (in link capacity units). If routing type is {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, this includes any traffic carried in the protection segments traversing the link.</p>
+	/** <p>Returns the link occupied capacity (in link capacity units). </p>
 	 * @return The occupied capacity as described above
 	 * */
-	public double getOccupiedCapacityIncludingProtectionSegments()
+	public double getOccupiedCapacity()
 	{
-		return cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments;
+		return cache_occupiedCapacity;
 	}
 	
+	/** <p>Returns the link occupied capacity (in link capacity units). </p>
+	 * @return The occupied capacity as described above
+	 * */
+	public double getOccupiedCapacityOnlyBackupRoutes ()
+	{
+		return cache_traversingRoutes.keySet().stream ().filter(e -> e.isBackupRoute()).mapToDouble(e -> e.getOccupiedCapacity(this)).sum ();
+	}
+
 	/**
 	 * <p>Returns the link length in km.</p>
 	 * @return The link length in km
@@ -400,17 +364,6 @@ public class Link extends NetworkElement
 		return ((propagationSpeedInKmPerSecond == Double.MAX_VALUE) || (propagationSpeedInKmPerSecond <= 0))? 0 : 1000 * lengthInKm / propagationSpeedInKmPerSecond;
 	}
 
-	/** <p>Returns the link capacity that is reserved by traversing protection segments (disregarding the traffic they may or not carry).</p>
-	 * @return The reserved link capacity (in link capacity units)
-	 */
-	public double getReservedCapacityForProtection ()
-	{
-		checkAttachedToNetPlanObject();
-		if (this instanceof ProtectionSegment) return this.capacity; 
-		double accumCap = 0; for (ProtectionSegment segment : cache_traversingSegments) accumCap += segment.capacity;
-		return accumCap;
-	}
-
 	/**
 	 * <p>Returns whether the link is up (not in failure) or down.</p>
 	 * @return {@code true} if up, {@code false} if down
@@ -438,7 +391,7 @@ public class Link extends NetworkElement
 	public boolean isOversubscribed ()
 	{
 		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-		return (cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments > capacity + PRECISION_FACTOR);
+		return (cache_occupiedCapacity > capacity + PRECISION_FACTOR);
 	}
 	
 	/** <p>Returns the Shared Risk Groups ({@link com.net2plan.interfaces.networkDesign.SharedRiskGroup SRGs}) the link belongs to. The link fails when any of these SRGs is down.</p>
@@ -493,7 +446,7 @@ public class Link extends NetworkElement
 		newDemandLayer.checkAttachedToNetPlanObject(this.netPlan);
 		if (this.layer.equals (newDemandLayer)) throw new Net2PlanException ("Cannot couple a link and a demand in the same layer");
 		Demand newDemand = netPlan.addDemand(originNode ,  destinationNode , capacity , null , newDemandLayer);
-		try { newDemand.coupleToUpperLayerLink(this); } catch (RuntimeException e) { newDemand.remove (); System.out.println ("************* Bad **********"); throw e; }
+		try { newDemand.coupleToUpperLayerLink(this); } catch (RuntimeException e) { newDemand.remove (); throw e; }
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		return newDemand;
 	}
@@ -507,9 +460,9 @@ public class Link extends NetworkElement
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
-		layer.forwardingRules_f_de.viewColumn (this.index).assign(0);
+		layer.forwardingRulesNoFailureState_f_de.viewColumn (this.index).assign(0);
 		/* update the routing of the demands traversing the eliminated link (others are unaffected) */
-		for (Demand d : layer.demands) if (layer.forwardingRules_x_de.get(d.index , this.index) > 0) layer.updateHopByHopRoutingDemand(d);
+		for (Demand d : layer.demands) if (layer.forwardingRulesCurrentFailureState_x_de.get(d.index , this.index) > 0) layer.updateHopByHopRoutingDemand(d);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		
 	}
@@ -526,17 +479,6 @@ public class Link extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns the {@link com.net2plan.interfaces.networkDesign.ProtectionSegment Protection Segments} traversing the link. If network layer routing type is not
-	 * {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, an exception is thrown.</p>
-	 * @return An unmodifiable {@code Set} with the traversing protection segments. If no protection segments traverse the link, an empty {@code Set} is returned
-	 */
-	public Set<ProtectionSegment> getTraversingProtectionSegments()
-	{
-		layer.checkRoutingType (RoutingType.SOURCE_ROUTING);
-		return Collections.unmodifiableSet(cache_traversingSegments);
-	}
-
-	/**
 	 * <p>Removes the link. The routing is updated removing any associated routes, protection segments, multicast trees or forwarding rules.</p>
 	 * <p>If the link is coupled to a unicast or multicast demand, it is first decoupled. In the multicast case, this means that the multicast
 	 * demand is decoupled from <b>ALL</b> the links it is coupled to. </p>
@@ -544,7 +486,6 @@ public class Link extends NetworkElement
 	public void remove()
 	{
 		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-		if (this instanceof ProtectionSegment) throw new Net2PlanException ("Use remove method in ProtectionSegment class to remove protection segments");
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 
@@ -563,7 +504,6 @@ public class Link extends NetworkElement
 		if (layer.routingType == RoutingType.SOURCE_ROUTING)
 		{
 			for (Route route : new HashSet<Route> (cache_traversingRoutes.keySet())) route.remove ();
-			for (ProtectionSegment segment : new HashSet<ProtectionSegment> (cache_traversingSegments)) segment.remove ();
 			NetPlan.removeNetworkElementAndShiftIndexes (layer.links , index);
 		}
 		else
@@ -572,9 +512,9 @@ public class Link extends NetworkElement
 			final int N = netPlan.nodes.size ();
 			layer.forwardingRules_Aout_ne = DoubleFactory2D.sparse.appendColumns(layer.forwardingRules_Aout_ne.viewPart(0, 0, N , index), layer.forwardingRules_Aout_ne.viewPart(0 , index + 1, N , layer.links.size() - index - 1));
 			layer.forwardingRules_Ain_ne = DoubleFactory2D.sparse.appendColumns(layer.forwardingRules_Ain_ne.viewPart(0, 0, N , index), layer.forwardingRules_Ain_ne.viewPart(0 , index + 1, N , layer.links.size() - index - 1));
-			layer.forwardingRules_f_de = DoubleFactory2D.sparse.appendColumns(layer.forwardingRules_f_de.viewPart(0, 0, D , index), layer.forwardingRules_f_de.viewPart(0 , index + 1, D , layer.links.size() - index - 1));
-			DoubleMatrix1D x_d_linkToRemove = layer.forwardingRules_x_de.viewColumn(index).copy ();
-			layer.forwardingRules_x_de = DoubleFactory2D.sparse.appendColumns(layer.forwardingRules_x_de.viewPart(0, 0, D , index), layer.forwardingRules_x_de.viewPart(0 , index + 1, D , layer.links.size() - index - 1));
+			layer.forwardingRulesNoFailureState_f_de = DoubleFactory2D.sparse.appendColumns(layer.forwardingRulesNoFailureState_f_de.viewPart(0, 0, D , index), layer.forwardingRulesNoFailureState_f_de.viewPart(0 , index + 1, D , layer.links.size() - index - 1));
+			DoubleMatrix1D x_d_linkToRemove = layer.forwardingRulesCurrentFailureState_x_de.viewColumn(index).copy ();
+			layer.forwardingRulesCurrentFailureState_x_de = DoubleFactory2D.sparse.appendColumns(layer.forwardingRulesCurrentFailureState_x_de.viewPart(0, 0, D , index), layer.forwardingRulesCurrentFailureState_x_de.viewPart(0 , index + 1, D , layer.links.size() - index - 1));
 			NetPlan.removeNetworkElementAndShiftIndexes (layer.links , index);
 			for (Demand d : layer.demands) if (x_d_linkToRemove.get(d.index) > PRECISION_FACTOR) layer.updateHopByHopRoutingDemand(d);
 		}
@@ -616,42 +556,26 @@ public class Link extends NetworkElement
 		if (!isUp && !layer.cache_linksDown.contains(this)) throw new RuntimeException ("Bad");
 		if (!isUp)
 		{
-			if (Math.abs(cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) > 1e-3)
-			{
-				System.out.println ("Link " + this + ", is down, and carried traffic is: " + cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
-				System.out.println ("Traversing routes: " + cache_traversingRoutes);
-				for (Route r : cache_traversingRoutes.keySet())
-					System.out.println ("Route " + r + ", isDown? " + r.isDown() + ", carriedTraffic: " + r.getCarriedTraffic() + ", carried of all ok: " + r.carriedTrafficIfNotFailing);
-				if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) System.out.println ("f_d for this link, all demands: " + layer.forwardingRules_f_de.viewColumn(index));
-				if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) System.out.println ("x_d for this link, all demands: " + layer.forwardingRules_x_de.viewColumn(index));
+			if (Math.abs(cache_carriedTraffic) > 1e-3)
 				throw new RuntimeException ("Bad");
-			}
-			if (Math.abs(cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > 1e-3) throw new RuntimeException ("Bad");
-			for (Route r : cache_traversingRoutes.keySet()) if ((r.getCarriedTraffic() != 0) || (r.getOccupiedCapacity() != 0)) throw new RuntimeException ("Bad");
+			if (Math.abs(cache_occupiedCapacity) > 1e-3) throw new RuntimeException ("Bad");
+			for (Route r : cache_traversingRoutes.keySet()) if ((r.getCarriedTraffic() != 0) || (r.getOccupiedCapacity(this) != 0)) throw new RuntimeException ("Bad");
 			for (MulticastTree r : cache_traversingTrees) if ((r.getCarriedTraffic() != 0) || (r.getOccupiedLinkCapacity() != 0)) throw new RuntimeException ("Bad");
-			for (ProtectionSegment r : cache_traversingSegments) if ((r.getCarriedTraffic() != 0) || (r.getOccupiedLinkCapacity() != 0)) throw new RuntimeException ("Bad");
 		}
 		
 		for (SharedRiskGroup srg : netPlan.srgs) if (this.cache_srgs.contains(srg) != srg.links.contains(this)) throw new RuntimeException ("Bad");
 
 		if (layer.routingType == RoutingType.SOURCE_ROUTING)
 		{
-//			System.out.println ("The routes traversing link " + this + " in layer: " + layer + " are " + cache_traversingRoutes);
-//			for (Route r : cache_traversingRoutes.keySet()) System.out.println ("-- route: " + r + ", seq links real path: " + r.seqLinksRealPath);
 			for (Route route : layer.routes)
 			{
-				if (this.cache_traversingRoutes.containsKey(route) != route.cache_seqLinksRealPath.contains(this)) throw new RuntimeException ("Bad. link: " + this + ", route: " + route + ", this.cache_traversingRoutes: " + this.cache_traversingRoutes + ", route.seqLinksRealPath: "+  route.cache_seqLinksRealPath + ", route.seqLinksAndProtectionSegments: " + route.cache_seqLinksAndProtectionSegments);
+				if (this.cache_traversingRoutes.containsKey(route) != route.cache_seqLinksRealPath.contains(this)) throw new RuntimeException ("Bad. link: " + this + ", route: " + route + ", this.cache_traversingRoutes: " + this.cache_traversingRoutes + ", route.seqLinksRealPath: "+  route.cache_seqLinksRealPath);
 				if (this.cache_traversingRoutes.containsKey(route))
 				{
 					int numPasses = 0; for (Link linkRoute : route.cache_seqLinksRealPath) if (linkRoute == this) numPasses ++; if (numPasses != this.cache_traversingRoutes.get(route)) throw new RuntimeException ("Bad");
-					check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += route.getCarriedTraffic() * this.cache_traversingRoutes.get(route);
-					check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += route.getOccupiedCapacity() * this.cache_traversingRoutes.get(route);
-//					System.out.println ("Route " + route + ", traverses this link (" + this + "), numPasses: " + this.cache_traversingRoutes.get(route) + ", its carried traffic is: " + route.carriedTraffic + " and thus accumlates a carried traffic of: " + (route.carriedTraffic * this.cache_traversingRoutes.get(route)));
+					check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += route.getCarriedTraffic();
+					check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += route.getOccupiedCapacity(this);
 				}
-			}
-			for (ProtectionSegment segment : layer.protectionSegments)
-			{
-				if (this.cache_traversingSegments.contains(segment) != segment.seqLinks.contains(this)) throw new RuntimeException ("Bad");
 			}
 		}
 		for (MulticastTree tree : layer.multicastTrees)
@@ -666,19 +590,14 @@ public class Link extends NetworkElement
 
 		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
 		{
-			final double x_e = layer.forwardingRules_x_de.viewColumn(index).zSum();
+			final double x_e = layer.forwardingRulesCurrentFailureState_x_de.viewColumn(index).zSum();
 			check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += x_e;
 			check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += x_e;
 		}
 
-		if (Math.abs(cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments - check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) 
-		{
-			System.out.println ("Link "+ this + ", is Up: " + isUp + ", trav routes: " + cache_traversingRoutes + ", trav segments: " + cache_traversingSegments);
-			for (Route r : cache_traversingRoutes.keySet()) System.out.println ("-- trav route: " + r + ", is down: " + r.isDown() + ", carried: " + r.getCarriedTraffic() + ", carried all ok: " + r.carriedTrafficIfNotFailing + ", seq links and ps: " + r.cache_seqLinksAndProtectionSegments + ", seqlinks real: " + r.cache_seqLinksRealPath);
-			for (ProtectionSegment r : cache_traversingSegments) System.out.println ("-- trav segment: " + r + ", is down: " + r.isDown() + ", carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + r.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments + ", sea links: " + r.seqLinks);
-			throw new RuntimeException ("Bad: Link: " + this + ". carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments + ", check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
-		}
-		if (Math.abs(cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments - check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) throw new RuntimeException ("Bad");
+		if (Math.abs(cache_carriedTraffic - check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) 
+			throw new RuntimeException ("Bad: Link: " + this + ". carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + cache_carriedTraffic + ", check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
+		org.junit.Assert.assertEquals(cache_occupiedCapacity , check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments , 1E-3);
 		
 		if (coupledLowerLayerDemand != null)
 			if (!coupledLowerLayerDemand.coupledUpperLayerLink.equals (this)) throw new RuntimeException ("Bad");
@@ -688,19 +607,249 @@ public class Link extends NetworkElement
 	
 	void updateLinkTrafficAndOccupation ()
 	{
-		this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = 0;
-		this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments = 0;
-		for (Entry<Route,Integer> entry : cache_traversingRoutes.entrySet())
+		this.cache_carriedTraffic = 0;
+		this.cache_occupiedCapacity = 0;
+		if (layer.isSourceRouting())
 		{
-			/* this includes routes traversing the link, and routes traversing a protection segment containing the link */
-			this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += entry.getValue() * entry.getKey().getCarriedTraffic();
-			this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += entry.getValue() * entry.getKey().getOccupiedCapacity();
+			for (Entry<Route,Integer> entry : cache_traversingRoutes.entrySet())
+			{
+				this.cache_carriedTraffic += entry.getKey().getCarriedTraffic();
+				this.cache_occupiedCapacity += entry.getKey().getOccupiedCapacity(this);
+			}
+		}
+		else
+		{
+			final double traffic = layer.forwardingRulesCurrentFailureState_x_de.viewColumn(index).zSum(); 
+			this.cache_carriedTraffic += traffic; 
+			this.cache_occupiedCapacity += traffic; 
 		}
 		for (MulticastTree t : cache_traversingTrees)
 		{
-			this.cache_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += t.getCarriedTraffic();
-			this.cache_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += t.getOccupiedLinkCapacity();
+			this.cache_carriedTraffic += t.getCarriedTraffic();
+			this.cache_occupiedCapacity += t.getOccupiedLinkCapacity();
 		}
 	}
-	
+
+	/** Returns the set of links in this layer (including this) that carry the traffic that traverses this link, before and after traversing it,
+	 *  according to the routes/forwarding rules defined. 
+	 *  Potentially carrying traffic means that (i) in source routing, down routes are not included, but all up routes 
+	 *  are considered even if the carry zero traffic, 
+	 * (ii) in hop-by-hop routing the links are computed even if the demand offered traffic is zero. All the links are considered primary.
+	 * The method returns  three maps: (i) first map, with one entry per demand whose traffic traverses this node, associated to 
+	 * the other links (aside of this) that this link traffic also traverses, but are not part of backup routes, 
+	 * (ii) second map, the same as before, but only links belonging to backup routes, (iii) other links with multicast trees that traverse this 
+	 * node, being a key its associated multicast demands.
+	 *  
+	 * @param assumeNoFailureState in this case, the links are computed as if all network link/nodes are in no-failure state
+	 * capacity in it
+	 * @return see above
+	 */
+	public Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (boolean assumeNoFailureState)
+	{
+		final double tolerance = Configuration.precisionFactor;
+		Map<Demand,Set<Link>> resPrimary = new HashMap<> ();
+		Map<Demand,Set<Link>> resBackup = new HashMap<> ();
+		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
+		{
+			final int index_ae = originNode.index;
+			final int index_be = destinationNode.index;
+			final boolean someLinksFailed = !layer.cache_linksDown.isEmpty() || !netPlan.cache_nodesDown.isEmpty();
+			for (Demand d : layer.demands)
+			{
+				final Set<Link> resThisDemand_primary = new HashSet<> ();
+				final Set<Link> resThisDemand_backup = new HashSet<> ();
+				resPrimary.put(d ,  resThisDemand_primary);
+				resBackup.put(d ,  resThisDemand_backup);
+				
+				final int index_ad = d.getIngressNode().index;
+				DoubleMatrix1D f_e;// = layer.forwardingRulesNoFailureState_f_de.viewRow(d.index);
+				DoubleMatrix2D fundMatrix;
+				if (someLinksFailed && !assumeNoFailureState)
+				{
+					f_e = layer.forwardingRulesNoFailureState_f_de.viewRow(d.index).copy();
+					for (Link e : layer.cache_linksDown) f_e.set(e.index, 0);
+					for (Node n : netPlan.cache_nodesDown)
+					{
+						for (Link e : n.getOutgoingLinks(layer)) f_e.set(e.index, 0);
+						for (Link e : n.getIncomingLinks(layer)) f_e.set(e.index, 0);
+					}
+					fundMatrix = d.computeRoutingFundamentalMatrixDemand(f_e).getFirst();
+				}
+				else
+				{
+					f_e = layer.forwardingRulesNoFailureState_f_de.viewRow(d.index);
+					fundMatrix = d.computeRoutingFundamentalMatrixDemand(f_e).getFirst();
+				}
+				/* If this link does not carry traffic of the demand => continue */
+				if (fundMatrix.get(index_ad, index_ae) * f_e.get(index_ae) < tolerance) continue;
+				/* See the links that carry traffic of this demand AND such traffic traversed BEFORE or AFTER this link */
+				for (Link candLink : layer.links)
+				{
+					/* Candidate link does not carry demand traffic => continue */
+					if (fundMatrix.get(index_ad, candLink.originNode.index) * f_e.get(candLink.index) == 0) continue; 
+					/* if the traffic outgoing cand link enters my link, include it */
+					if (fundMatrix.get(candLink.destinationNode.index , index_ae) > tolerance) resThisDemand_primary.add(candLink);
+					/* if the traffic outgoing my link link enters cand link, include it */
+					if (fundMatrix.get(index_be , candLink.originNode.index) > tolerance) resThisDemand_primary.add(candLink);
+				}
+			}
+		}
+		else
+		{
+			for (Route r : cache_traversingRoutes.keySet())
+			{
+				if (!assumeNoFailureState && r.isDown()) continue;
+				for (Link e : r.getSeqLinks())
+				{
+					if (r.isBackupRoute())
+					{
+						Set<Link> linksSoFar = resBackup.get(r.getDemand());
+						if (linksSoFar == null) { linksSoFar = new HashSet<> (); resBackup.put(r.getDemand(), linksSoFar); }
+						linksSoFar.add(e);
+					}
+					else 
+					{
+						Set<Link> linksSoFar = resPrimary.get(r.getDemand());
+						if (linksSoFar == null) { linksSoFar = new HashSet<> (); resPrimary.put(r.getDemand(), linksSoFar); }
+						linksSoFar.add(e);
+					}
+				}
+			}
+		}
+		
+		Map<Pair<MulticastDemand,Node>,Set<Link>> resMCast = new HashMap<> ();
+		for (MulticastTree t : cache_traversingTrees)
+		{
+			for (Node egressNode : t.getMulticastDemand().getEgressNodes())
+			{
+				final List<Link> pathToEgressNode = t.getSeqLinksToEgressNode(egressNode);
+				if (!pathToEgressNode.contains(this)) continue;
+				if (!assumeNoFailureState && !netPlan.isUp (pathToEgressNode)) continue;
+				Set<Link> linksSoFar = resMCast.get(Pair.of(t.getMulticastDemand() , egressNode));
+				if (linksSoFar == null) { linksSoFar = new HashSet<> (); resMCast.put(Pair.of(t.getMulticastDemand() , egressNode), linksSoFar); }
+				linksSoFar.addAll(pathToEgressNode);
+			}
+		}
+		return Triple.of(resPrimary,resBackup,resMCast);
+	}
+
+
+	/** Returns the set of links in this layer carry the traffic that traverses this link, before and after traversing it,
+	 *  according to the routes/forwarding rules defined. 
+	 *  Potentially carrying traffic means that (i) in source routing, down routes are not included, but all up routes 
+	 *  are considered even if the carry zero traffic, 
+	 * (ii) in hop-by-hop routing the links are computed even if the demand offered traffic is zero. All the links are considered primary.
+	 * The method returns  three maps: (i) first map, with one entry per demand whose traffic traverses this node, associated to 
+	 * the other links (aside of this) that this link traffic also traverses, but are not part of backup routes, 
+	 * (ii) second map, the same as before, but only links belonging to backup routes, (iii) other links with multicast trees that traverse this 
+	 * node, being a key its associated multicast demands.
+	 * <p>Note: this link is not included in any set an any map </p>
+	 *  
+	 * @param assumeNoFailureState in this case, the links are computed as if all network link/nodes are in no-failure state
+	 * capacity in it
+	 * @return see above
+	 */
+	public Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> getLinksLowerLayersPotentiallyCarryingTrafficTraversingThisLink  (boolean assumeNoFailureState)
+	{
+		final Map<Demand,Set<Link>> resPrimary = new HashMap <> ();
+		final Map<Demand,Set<Link>> resBackup = new HashMap <> ();
+		final Map<Pair<MulticastDemand,Node>,Set<Link>> resMCast = new HashMap <> ();
+		
+		if (!isCoupled()) return Triple.of(resPrimary, resBackup,resMCast);
+		if (!assumeNoFailureState && !this.isUp) return Triple.of(resPrimary, resBackup,resMCast);
+		
+		if (this.coupledLowerLayerDemand != null)
+		{
+			Pair<Set<Link>,Set<Link>> pair = coupledLowerLayerDemand.getLinksThisLayerPotentiallyCarryingTraffic  (assumeNoFailureState);
+			resPrimary.put(coupledLowerLayerDemand, pair.getFirst());
+			resBackup.put(coupledLowerLayerDemand, pair.getSecond());
+			for (Link lowerLayerLink_primary : pair.getFirst())
+			{
+				final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> linksLayersTwoBelow = lowerLayerLink_primary.getLinksLowerLayersPotentiallyCarryingTrafficTraversingThisLink  (assumeNoFailureState);
+				resPrimary.putAll(linksLayersTwoBelow.getFirst()); // primary traffic in lower layer, and in two layers below -> is primary
+				resBackup.putAll(linksLayersTwoBelow.getSecond()); // primary traffic in lower layer, and backup in two layers below -> is backup
+				resMCast.putAll (linksLayersTwoBelow.getThird());
+			}
+			for (Link lowerLayerLink_backup : pair.getFirst())
+			{
+				final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> linksLayersTwoBelow = lowerLayerLink_backup.getLinksLowerLayersPotentiallyCarryingTrafficTraversingThisLink  (assumeNoFailureState);
+				resBackup.putAll(linksLayersTwoBelow.getFirst()); // primary traffic in lower layer, and in two layers below -> is primary
+				resBackup.putAll(linksLayersTwoBelow.getSecond()); // primary traffic in lower layer, and backup in two layers below -> is backup
+				resMCast.putAll (linksLayersTwoBelow.getThird());
+			}
+		}
+		else if (this.coupledLowerLayerMulticastDemand != null)
+		{
+			Set<Link> linksLowerLayer = coupledLowerLayerMulticastDemand.getLinksThisLayerPotentiallyCarryingTraffic  (this.destinationNode , assumeNoFailureState);
+			resMCast.put(Pair.of(coupledLowerLayerMulticastDemand, this.destinationNode) , linksLowerLayer);
+			for (Link lowerLayerLink : linksLowerLayer)
+			{
+				final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> linksLayersTwoBelow = lowerLayerLink.getLinksLowerLayersPotentiallyCarryingTrafficTraversingThisLink  (assumeNoFailureState);
+				resPrimary.putAll(linksLayersTwoBelow.getFirst()); // primary traffic in lower layer, and in two layers below -> is primary
+				resBackup.putAll(linksLayersTwoBelow.getSecond()); // primary traffic in lower layer, and backup in two layers below -> is backup
+				resMCast.putAll (linksLayersTwoBelow.getThird());
+			}
+		}
+		return Triple.of(resPrimary,resBackup,resMCast);
+	}
+
+	public Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>>
+		getLinksUpperLayersPotentiallyPuttingTrafficInThisLink  (boolean assumeNoFailureState , Triple<Set<Demand>,Set<Demand>,Set<Pair<MulticastDemand,Node>>> thisLayerDemandsPuttingTrafficThisLink)
+	{
+		if (thisLayerDemandsPuttingTrafficThisLink == null)
+		{
+			Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
+					this.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (assumeNoFailureState);
+			thisLayerDemandsPuttingTrafficThisLink = Triple.of(triple.getFirst().keySet(), triple.getSecond().keySet(), triple.getThird().keySet());
+		}
+		
+		/* Add upper layer info*/
+		final Map<Demand,Set<Link>> res_unicastPrimary = new HashMap<> ();
+		final Map<Demand,Set<Link>> res_unicastBackup = new HashMap<> ();
+		final Map<Pair<MulticastDemand,Node>,Set<Link>> res_multicast = new HashMap<> ();
+
+		/* Propagate to two layers up, and accumulate results */
+		for (Demand thisLayerDemand : thisLayerDemandsPuttingTrafficThisLink.getFirst())
+		{
+			if (thisLayerDemand.isCoupled())
+			{
+				final Link upperLayerLink = thisLayerDemand.coupledUpperLayerLink;
+				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
+						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(assumeNoFailureState);
+				res_unicastPrimary.putAll(res_upperLayer.getFirst()); // primary traffic in primary links -> primary
+				res_unicastBackup.putAll(res_upperLayer.getSecond()); // primary traffic in backup links -> backup
+				res_multicast.putAll(res_upperLayer.getThird()); 
+			}
+		}
+		for (Demand thisLayerDemand : thisLayerDemandsPuttingTrafficThisLink.getSecond())
+		{
+			if (thisLayerDemand.isCoupled())
+			{
+				final Link upperLayerLink = thisLayerDemand.coupledUpperLayerLink;
+				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
+						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(assumeNoFailureState);
+				res_unicastBackup.putAll(res_upperLayer.getFirst()); // backup traffic in primary links -> backup
+				res_unicastBackup.putAll(res_upperLayer.getSecond()); // backup traffic in backup links -> backup
+				res_multicast.putAll(res_upperLayer.getThird()); 
+			}
+		}
+
+		for (Pair<MulticastDemand,Node> thisLayerMDemandInfo : thisLayerDemandsPuttingTrafficThisLink.getThird())
+		{
+			final MulticastDemand thisLayerMDemand = thisLayerMDemandInfo.getFirst();
+			final Node mDemandEgressNode = thisLayerMDemandInfo.getSecond();
+			if (thisLayerMDemand.isCoupled()) 
+			{
+				final Link upperLayerLink = thisLayerMDemand.coupledUpperLayerLinks.get(mDemandEgressNode);
+				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
+						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(assumeNoFailureState);
+				res_unicastPrimary.putAll(res_upperLayer.getFirst()); // primary traffic in primary links -> primary
+				res_unicastBackup.putAll(res_upperLayer.getSecond()); // primary traffic in backup links -> backup
+				res_multicast.putAll(res_upperLayer.getThird()); 
+			}
+		}
+		return Triple.of(res_unicastPrimary, res_unicastBackup , res_multicast);
+	}
+
+
 }

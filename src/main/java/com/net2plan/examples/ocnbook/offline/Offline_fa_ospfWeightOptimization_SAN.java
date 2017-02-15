@@ -96,7 +96,7 @@ public class Offline_fa_ospfWeightOptimization_SAN implements IAlgorithm
 		/* Compute the initial and end temperatures, and the geometric temperature reduction factor */
 		final double initialTemperature = -san_worseCaseObjFunctionWorsening.getDouble () / Math.log(san_initialAcceptanceProbability.getDouble ());
 
-		System.out.println("initialTemperature: " + initialTemperature + ", geometricReductionFactor: " + san_geometricTemperatureReductionFactor.getDouble ());
+		//System.out.println("initialTemperature: " + initialTemperature + ", geometricReductionFactor: " + san_geometricTemperatureReductionFactor.getDouble ());
 		
 		double currentTemperature = initialTemperature;
 		DoubleMatrix1D bestSol = currentSol.copy ();
@@ -127,7 +127,7 @@ public class Offline_fa_ospfWeightOptimization_SAN implements IAlgorithm
 					if (currentObjFunction == neighborObjFunction) numFrozenJumps ++;
 					/* jump to the neighbor solution */
 					currentObjFunction = neighborObjFunction;
-					if (neighborObjFunction < bestObjFunction) { bestObjFunction = neighborObjFunction; bestSol = currentSol.copy (); System.out.println("Improving solution (temp: " + currentTemperature + ", objFunction: "+  bestObjFunction); }
+					if (neighborObjFunction < bestObjFunction) { bestObjFunction = neighborObjFunction; bestSol = currentSol.copy (); /* System.out.println("Improving solution (temp: " + currentTemperature + ", objFunction: "+  bestObjFunction); */ }
 				}
 				else
 				{
@@ -140,9 +140,9 @@ public class Offline_fa_ospfWeightOptimization_SAN implements IAlgorithm
 				stat_temperature.add(currentTimeInSecs , currentTemperature);
 			}
 			if (((double) numFrozenJumps)/san_maxNumIterationsInnerLoop.getInt () > 1-san_freezingProbabilityThreshold.getDouble ())
-				{ currentTemperature = initialTemperature; System.out.println("Reheat the system."); } // reheat the system  
+				{ currentTemperature = initialTemperature; /* System.out.println("Reheat the system."); */ } // reheat the system  
 			else
-				{ currentTemperature *= san_geometricTemperatureReductionFactor.getDouble(); System.out.println("Decrease temperature."); } // decrease temperature
+				{ currentTemperature *= san_geometricTemperatureReductionFactor.getDouble(); /* System.out.println("Decrease temperature."); */ } // decrease temperature
 		}
 		
 		IPUtils.setECMPForwardingRulesFromLinkWeights(netPlan, bestSol);

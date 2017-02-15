@@ -1,3 +1,6 @@
+package com.net2plan.examples.ocnbook.offline;
+
+/*******************************************************************************
 /*******************************************************************************
  * Copyright (c) 2016 Pablo Pavon Mariño.
  * All rights reserved. This program and the accompanying materials
@@ -6,16 +9,6 @@
  * http://www.gnu.org/licenses/lgpl.html
  ******************************************************************************/
 
-
-
-
-
- 
-
-
-
-
-package com.net2plan.examples.ocnbook.offline;
 
 import java.util.List;
 import java.util.Map;
@@ -130,3 +123,4 @@ public class Offline_tca_nodeLocation implements IAlgorithm
 	
 	
 }
+

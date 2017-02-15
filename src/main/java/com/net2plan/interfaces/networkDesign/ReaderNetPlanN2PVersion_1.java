@@ -26,7 +26,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
@@ -42,13 +41,14 @@ class ReaderNetPlanN2PVersion_1 implements IReaderNetPlan
 	{
 		parseNetwork(netPlan, xmlStreamReader);
 		
-		for(Entry<Long, List<Long>> entry : backupSegmentMap.entrySet())
-		{
-			long routeId = entry.getKey();
-			List<Long> backupSegmentList = entry.getValue();
-			for(long segmentId : backupSegmentList)
-				netPlan.defaultLayer.routes.get((int) routeId).addProtectionSegment(netPlan.defaultLayer.protectionSegments.get ((int) segmentId));
-		}
+		/* Protection segments are not added now */
+//		for(Entry<Long, List<Long>> entry : backupSegmentMap.entrySet())
+//		{
+//			long routeId = entry.getKey();
+//			List<Long> backupSegmentList = entry.getValue();
+//			for(long segmentId : backupSegmentList)
+//				netPlan.defaultLayer.routes.get((int) routeId).addProtectionSegment(netPlan.defaultLayer.protectionSegments.get ((int) segmentId));
+//		}
 		
 	}
 
@@ -427,7 +427,8 @@ class ReaderNetPlanN2PVersion_1 implements IReaderNetPlan
 					if (endElementName.equals("protectionSegment"))
 					{
 						List<Link> newSeqLinks = new LinkedList<Link> (); for (long linkId : seqLinks) newSeqLinks.add (netPlan.defaultLayer.links.get((int) linkId));
-						netPlan.addProtectionSegment(newSeqLinks, reservedBandwidthInErlangs, attributeMap);
+						/* Protection segments are not added */
+						//netPlan.addProtectionSegment(newSeqLinks, reservedBandwidthInErlangs, attributeMap);
 						return;
 					}
 					break;

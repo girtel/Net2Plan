@@ -151,11 +151,6 @@ public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 		this.currentNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
 		final Pair<NetPlan,double [][]> pOpt = computeOptimumSolution (false);
 		final Pair<NetPlan,double [][]> pOpt01 = computeOptimumSolution (true);
-		System.out.println("opt No 01" + DoubleFactory2D.dense.make(pOpt.getSecond()));
-		System.out.println("opt 01" + DoubleFactory2D.dense.make(pOpt01.getSecond()));
-
-//		if (1==1) throw new RuntimeException ("Bad");
-		
 		this.optNetPlan = pOpt.getFirst();
 		this.optQueueSizes_nd = pOpt.getSecond();
 		/* Add the routes in the optimum solution to the netPlan, with zero traffic. For having teh same IDs later */
@@ -163,7 +158,7 @@ public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 		for (Route r: currentNetPlan.getRoutes())
 		{
 			r.setCarriedTraffic(0.0 , 0.0);
-			this.stat_mapSeqLinks2RouteId.put(r.getSeqLinksRealPath(),r);
+			this.stat_mapSeqLinks2RouteId.put(r.getSeqLinks(),r);
 			this.stat_mapRouteId2CarriedPacketsLastInterval.put(r, 0);
 		}
 		this.ctlQueue_nd = new HashMap<Pair<Node,Demand>,LinkedList<PacketInfo>> ();
@@ -194,7 +189,7 @@ public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 		this.stat_traceOf_queueSizes = new TimeTrace ();
 		this.stat_traceOf_objFunction = new TimeTrace (); 
 		this.stat_traceOf_xp.add(0.0 , netPlanRouteCarriedTrafficMap (this.currentNetPlan));
-		this.stat_traceOf_ye.add(0.0, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+		this.stat_traceOf_ye.add(0.0, this.currentNetPlan.getVectorLinkCarriedTraffic());
 		this.stat_traceOf_queueSizes.add(0.0, copyOf(this.ctlNumPacketsQueue_nd));
 		this.stat_traceOf_objFunction.add(0.0, computeObjectiveFucntionFromNetPlan());
 		
@@ -220,13 +215,13 @@ public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 			
 			/* Update the traces */
 			this.stat_traceOf_xp.add(time, netPlanRouteCarriedTrafficMap(this.currentNetPlan));
-			this.stat_traceOf_ye.add(time, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+			this.stat_traceOf_ye.add(time, this.currentNetPlan.getVectorLinkCarriedTraffic());
 			this.stat_traceOf_objFunction.add(time, computeObjectiveFucntionFromNetPlan());
 			final double scaleFactorAccumNumQueuePacketsToAverageQueuedTraffic = this.routing_numTrafficUnitsOfOnePacket.getDouble() / this.routing_statNumSchedSlotBetweenN2PRecomputing.getInt();
 			/* We store the average queue sizes in traffic units */
 			this.stat_traceOf_queueSizes.add(time, scaledCopyOf(this.stat_accumNumQeueusPackets_nd , scaleFactorAccumNumQueuePacketsToAverageQueuedTraffic));
 			this.stat_accumNumQeueusPackets_nd = new int [N][D]; // reset the count
-			
+
 			this.scheduleEvent(new SimEvent (time + routing_fixedPacketDurationAndSchedulingInterval.getDouble() * routing_statNumSchedSlotBetweenN2PRecomputing.getInt() , SimEvent.DestinationModule.EVENT_PROCESSOR , UPDATE_STATISTICTRACES , -1));
 
 			break;
@@ -389,25 +384,19 @@ public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 
 	public String finish (StringBuilder st , double simTime)
 	{
-		System.out.println("stat_accumNumGeneratedPackets_d: " + Arrays.toString(stat_accumNumGeneratedPackets_d));
-		System.out.println("stat_accumNumReceivedPackets_d: " + Arrays.toString(stat_accumNumReceivedPackets_d));
-		System.out.println("transmittedNotReceived: " + Arrays.toString(IntUtils.substract(stat_accumNumGeneratedPackets_d, stat_accumNumReceivedPackets_d)));
 		double [] avTrafficGenerated_d = new double [D];
 		for (int index_d = 0; index_d < D ; index_d ++)
 			avTrafficGenerated_d[index_d] = stat_accumNumGeneratedPackets_d [index_d] * routing_numTrafficUnitsOfOnePacket.getDouble() / simTime;
-
-//		System.out.println("avTrafficGenerated_d: " + Arrays.toString(avTrafficGenerated_d));
-//		System.out.println("avTrafficGenerated_d - offeredFromN2P: " + Arrays.toString(DoubleUtils.substract(avTrafficGenerated_d, this.currentNetPlan.getVectorDemandOfferedTraffic().toArray())));
 
 		/* If no output file, return */
 		if (simulation_outFileNameRoot.getString().equals("")) return null;
 		
 		/* Compute optimum solution and cost */
-		double optCost = optNetPlan.getVectorLinkTotalCarriedTraffic().zSum() / stat_totalOfferedTrafficConstant;
+		double optCost = optNetPlan.getVectorLinkCarriedTraffic().zSum() / stat_totalOfferedTrafficConstant;
 		
 		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_objFunc.txt"), optCost);
 		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_xp.txt"), optNetPlan.getVectorRouteCarriedTraffic());
-		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_ye.txt"), optNetPlan.getVectorLinkTotalCarriedTraffic());
+		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_ye.txt"), optNetPlan.getVectorLinkCarriedTraffic());
 		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_qnd.txt"), optQueueSizes_nd);
 		this.stat_traceOf_queueSizes.printToFile(new File (simulation_outFileNameRoot.getString() + "_qnd.txt"));
 		this.stat_traceOf_objFunction.printToFile(new File (simulation_outFileNameRoot.getString() + "_objFunc.txt"));
@@ -424,7 +413,7 @@ public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 	
 	private double computeObjectiveFucntionFromNetPlan ()
 	{
-		return this.currentNetPlan.getVectorLinkTotalCarriedTraffic().zSum () / this.stat_totalOfferedTrafficConstant;
+		return this.currentNetPlan.getVectorLinkCarriedTraffic().zSum () / this.stat_totalOfferedTrafficConstant;
 	}
 
 	private Pair<NetPlan,double [][]> computeOptimumSolution (boolean xdeVariablesAsFractionsOfTraffic)
@@ -474,8 +463,6 @@ public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 		final DoubleMatrix2D x_de_array = op.getPrimalSolution("x_de").view2D ();
 		final double [][] q_nd_array = (double [][]) op.getMultipliersOfConstraint("flowConservationConstraints").toArray();
 		
-		//System.out.println("x_de:" + op.getPrimalSolution("x_de"));
-		
 		/* Convert the x_de variables into a set of routes for each demand  */
 		NetPlan np = this.currentNetPlan.copy();
 		np.removeAllUnicastRoutingInformation();
@@ -483,7 +470,7 @@ public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 		
 		/* Check solution: all traffic is carried, no link oversubscribed */
 		for (Demand d : np.getDemands()) if (d.getBlockedTraffic() > 1E-3) throw new RuntimeException ("d: " + d + ", hd: " +  d.getOfferedTraffic() + ", carried_d: " + d.getCarriedTraffic() + "... Bad");
-		for (Link e : np.getLinks()) if (e.getCarriedTrafficIncludingProtectionSegments() > e.getCapacity() + 1E-3) throw new RuntimeException ("Bad");
+		for (Link e : np.getLinks()) if (e.getCarriedTraffic() > e.getCapacity() + 1E-3) throw new RuntimeException ("Bad");
 
 		/* Scale q_nd multipliers by 1/gamma factor => they become now the optimum queue sizes in the algorithm */
 		double [][] optQueueSizes = new double [N][D];

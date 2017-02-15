@@ -1,7 +1,5 @@
 package com.net2plan.gui.utils.viewEditTopolTables.tableStateFiles;
 
-import com.net2plan.gui.utils.AdvancedJTable;
-import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTableNetworkElement;
 import com.net2plan.internal.Constants;
 
 import java.util.ArrayList;

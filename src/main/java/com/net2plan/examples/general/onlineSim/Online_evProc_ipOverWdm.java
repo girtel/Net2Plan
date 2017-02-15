@@ -92,9 +92,8 @@ public class Online_evProc_ipOverWdm extends IEventProcessor
 	public void initialize(NetPlan initialNetPlan, Map<String, String> algorithmParameters, Map<String, String> simulationParameters, Map<String, String> net2planParameters)
 	{
 		/* Initialize all InputParameter objects defined in this object (this uses Java reflection) */
-//		System.out.println ("IP over WDM algoritm params: " + algorithmParameters);
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
-		if (!ipOverWdmNetworkRecoveryType.getString().equals("1+1-lps-OSPF-rerouting") && !wdmProtectionTypeToNewRoutes.getString().equals ("none")) throw new Net2PlanException ("The type of 1+1 protection can only be specified in network recovery uses lightpath protection");
+		if (ipOverWdmNetworkRecoveryType.getString().equals("1+1-lps-OSPF-rerouting") && wdmProtectionTypeToNewRoutes.getString().equals ("none")) throw new Net2PlanException ("The type of 1+1 protection can only be specified in network recovery uses lightpath protection");
 		
 		this.ipLayer = ipLayerIndex.getInt () == -1? initialNetPlan.getNetworkLayerDefault() : initialNetPlan.getNetworkLayer(ipLayerIndex.getInt ());
 		this.wdmLayer = wdmLayerIndex.getInt () == -1? initialNetPlan.getNetworkLayerDefault() : initialNetPlan.getNetworkLayer(wdmLayerIndex.getInt ());
@@ -114,6 +113,7 @@ public class Online_evProc_ipOverWdm extends IEventProcessor
 		else throw new RuntimeException ("Bad");
 		wdmParam.put ("wdmRecoveryType" , wdmRecoveryType);
 		wdmParam.put ("wdmProtectionTypeToNewRoutes" , wdmProtectionTypeToNewRoutes_st);
+
 		this.wdmNetwork.initialize(initialNetPlan , wdmParam , simulationParameters , net2planParameters);
 
 		Map<String,String> ipParam = InputParameter.createMapFromInputParameters(new InputParameter [] { ipLayerIndex  , ipMaximumE2ELatencyMs } );
@@ -122,8 +122,8 @@ public class Online_evProc_ipOverWdm extends IEventProcessor
 		Set<Link> ipLinksDownBecauseOfWDMLayer = new HashSet<Link> (); for (Link ipLink : initialNetPlan.getLinks (ipLayer)) if (ipLink.getCapacity() == 0)  ipLinksDownBecauseOfWDMLayer.add (ipLink); 
 		SimEvent.NodesAndLinksChangeFailureState evIp = new SimEvent.NodesAndLinksChangeFailureState(null , null , null , ipLinksDownBecauseOfWDMLayer);
 		ospfNetwork.processEvent(initialNetPlan , new SimEvent(0 , SimEvent.DestinationModule.EVENT_GENERATOR , -1 , evIp));
-}
-
+	}
+	
 	@Override
 	public void processEvent(NetPlan currentNetPlan, SimEvent event)
 	{
@@ -181,13 +181,13 @@ public class Online_evProc_ipOverWdm extends IEventProcessor
 			if (ev.linksToDown != null) for (Link e : ev.linksToDown) if (e.getLayer () == ipLayer) ipLinksDown.add (e); else if (e.getLayer () == wdmLayer) wdmLinksDown.add (e); 
 			if (ev.linksToUp != null) for (Link e : ev.linksToUp) if (e.getLayer () == ipLayer) ipLinksUp.add (e); else if (e.getLayer () == wdmLayer) wdmLinksUp.add (e); 
 
-//			System.out.println ("-- original ip links up: " + ipLinksUp);
-//			System.out.println ("-- original ip links down: " + ipLinksDown);
-//			System.out.println ("-- original wdm links up: " + wdmLinksUp);
-//			System.out.println ("-- original wdm links down: " + wdmLinksDown);
+			System.out.println ("-- original ip links up: " + ipLinksUp);
+			System.out.println ("-- original ip links down: " + ipLinksDown);
+			System.out.println ("-- original wdm links up: " + wdmLinksUp);
+			System.out.println ("-- original wdm links down: " + wdmLinksDown);
 			
 			/* Failures at WDM layer are processed */
-//			System.out.println ("-- process wdm links up/down: " + wdmLinksDown + ", wdmLinksUp: " + wdmLinksUp + ", ev.nodesToUp : " + ev.nodesToUp  + ", ev.nodesToDown: " +  ev.nodesToDown);
+			System.out.println ("-- process wdm links up/down: " + wdmLinksDown + ", wdmLinksUp: " + wdmLinksUp + ", ev.nodesToUp : " + ev.nodesToUp  + ", ev.nodesToDown: " +  ev.nodesToDown);
 			SimEvent.NodesAndLinksChangeFailureState evWdm = new SimEvent.NodesAndLinksChangeFailureState(ev.nodesToUp , ev.nodesToDown , wdmLinksUp , wdmLinksDown);
 			wdmNetwork.processEvent(currentNetPlan , new SimEvent(event.getEventTime() , SimEvent.DestinationModule.EVENT_GENERATOR , -1 , evWdm));
 			

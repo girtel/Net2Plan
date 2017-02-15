@@ -12,10 +12,18 @@
 
 package com.net2plan.gui.utils.topologyPane;
 
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.utils.Pair;
+import java.awt.Color;
+import java.awt.Paint;
+import java.awt.Stroke;
 
-import java.awt.*;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
+
+import static com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationConstants.*;
+
 
 /**
  * Class representing a link.
@@ -23,21 +31,46 @@ import java.awt.*;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
-public class GUILink {
+public class GUILink 
+{
     private final GUINode originNode;
     private final GUINode destinationNode;
-    private Link npLink;
+    private final Link npLink;
+//    private final VisualizationState vs;
 
     /* New variables */
-    private Color normalColor, colorIfPicked;
-    private boolean showLabel;
-    private boolean isVisible;
     private boolean hasArrow;
-    private Stroke arrowStroke, arrowStrokeIfPicked, edgeStroke, edgeStrokeIfPicked;
-    private Paint arrowDrawPaint, arrowDrawPaintIfPicked, arrowFillPaint, arrowFillPaintIfPicked, edgeDrawPaint, edgeDrawPaintIfPicked;
-    private Color userDefinedColorOverridesTheRest;
-    private Stroke userDefinedEdgeStrokeOverridesTheRest;
+//    private Stroke arrowStroke, arrowStrokeIfPicked, edgeStroke, edgeStrokeIfPicked;
+    private Stroke arrowStrokeIfActiveLayer, edgeStrokeIfActiveLayer;
+    private Stroke arrowStrokeIfNotActiveLayer, edgeStrokeIfNotActiveLayer;
+    private Paint arrowDrawPaint, arrowFillPaint, edgeDrawPaint;
+    private boolean shownSeparated;
+//    private Paint arrowDrawPaint, arrowDrawPaintIfPicked, arrowFillPaint, arrowFillPaintIfPicked, edgeDrawPaint, edgeDrawPaintIfPicked;
+//    private Color userDefinedColorOverridesTheRest;
+//    private Stroke userDefinedEdgeStrokeOverridesTheRest;
 
+    
+    
+    /** Creates a copy of this GUINode. Used by undo/redo
+     * @param translateToThisNp if not null, translate elements to this np. This is null iff translateToThisVs should be also null
+     * @param translateToThisVs if not null, translate elements to this np. This is null iff translateToThisNp should be also null
+     * @return
+     */
+    public GUILink copy (Link npLink , GUINode originNode , GUINode destinationNode)
+    {
+    	GUILink copy = new GUILink (npLink , originNode , destinationNode);
+    	copy.arrowStrokeIfActiveLayer = this.arrowStrokeIfActiveLayer;
+    	copy.edgeStrokeIfActiveLayer = this.edgeStrokeIfActiveLayer;
+    	copy.arrowStrokeIfNotActiveLayer = this.arrowStrokeIfNotActiveLayer;
+    	copy.edgeStrokeIfNotActiveLayer = this.edgeStrokeIfNotActiveLayer;
+    	copy.arrowDrawPaint = this.arrowDrawPaint;
+    	copy.arrowFillPaint = this.arrowFillPaint;
+    	copy.edgeDrawPaint = this.edgeDrawPaint;
+    	copy.shownSeparated = this.shownSeparated;
+    	return copy;
+    }
+
+    
     /**
      * Default constructor.
      *
@@ -46,43 +79,62 @@ public class GUILink {
      * @param destinationNode Destination node identifier
      * @since 0.3.0
      */
-    public GUILink(Link npLink, GUINode originNode, GUINode destinationNode) {
+    public GUILink(Link npLink, GUINode originNode, GUINode destinationNode) 
+    {
+//    	this.vs = originNode.getVisualizationState();
         this.npLink = npLink;
         this.originNode = originNode;
         this.destinationNode = destinationNode;
-        if (originNode.getAssociatedNetPlanNode() != npLink.getOriginNode())
-            throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
-        if (destinationNode.getAssociatedNetPlanNode() != npLink.getDestinationNode())
-            throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
-
-        this.isVisible = true;
-        this.hasArrow = true;
-        this.arrowStroke = new BasicStroke(1);
-        this.arrowStrokeIfPicked = new BasicStroke(2);
-        this.edgeDrawPaint = Color.BLACK;
-        this.edgeDrawPaintIfPicked = Color.BLUE;
-        this.arrowDrawPaint = Color.BLACK;
-        this.arrowDrawPaintIfPicked = Color.BLUE;
-        this.arrowFillPaint = Color.BLACK;
-        this.arrowFillPaintIfPicked = Color.BLUE;
-        this.edgeStroke = new BasicStroke(3);
-        this.edgeStrokeIfPicked = new BasicStroke(5);
-        this.userDefinedColorOverridesTheRest = null;
-        this.userDefinedEdgeStrokeOverridesTheRest = null;
+        if (npLink != null)
+        {
+        	if (originNode.getAssociatedNetPlanNode() != npLink.getOriginNode()) throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
+            if (destinationNode.getAssociatedNetPlanNode() != npLink.getDestinationNode()) throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
+        }
+        else
+        {
+        	//if (Math.abs(originNode.getVisualizationOrderRemovingNonVisibleLayers() - destinationNode.getVisualizationOrderRemovingNonVisibleLayers()) != 1) throw new RuntimeException ("Bad");
+        }
+//        this.hasArrow = true;
+////        this.arrowStrokeIfPicked = new BasicStroke(2);
+//        this.edgeDrawPaint = Color.BLACK;
+////        this.edgeDrawPaintIfPicked = Color.BLUE;
+//        this.arrowDrawPaint = Color.BLACK;
+////        this.arrowDrawPaintIfPicked = Color.BLUE;
+//        this.arrowFillPaint = Color.BLACK;
+////        this.arrowFillPaintIfPicked = Color.BLUE;
+        if (this.isIntraNodeLink())
+        {
+            this.hasArrow = DEFAULT_INTRANODEGUILINK_HASARROW;
+            this.edgeDrawPaint = DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
+            this.arrowDrawPaint = DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
+            this.arrowFillPaint = DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
+            this.edgeStrokeIfActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
+            this.edgeStrokeIfNotActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
+            this.arrowStrokeIfActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
+            this.arrowStrokeIfNotActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
+        }
+        else
+        {
+            this.hasArrow = DEFAULT_REGGUILINK_HASARROW;
+            this.edgeDrawPaint = DEFAULT_REGGUILINK_EDGECOLOR;
+            this.arrowDrawPaint = DEFAULT_REGGUILINK_EDGECOLOR;
+            this.arrowFillPaint = DEFAULT_REGGUILINK_EDGECOLOR;
+            this.edgeStrokeIfActiveLayer = DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER;
+            this.edgeStrokeIfNotActiveLayer = DEFAULT_REGGUILINK_EDGESTROKE;
+            this.arrowStrokeIfActiveLayer = DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER;
+            this.arrowStrokeIfNotActiveLayer = DEFAULT_REGGUILINK_EDGESTROKE;
+        }
+        
+        this.shownSeparated = false;
+//        this.edgeStrokeIfPicked = new BasicStroke(5);
+//        this.userDefinedColorOverridesTheRest = null;
+//        this.userDefinedEdgeStrokeOverridesTheRest = null;
         //PARA EL EDGE STROKE SI BACKUP: return new BasicStroke(vv.getPickedEdgeState().isPicked(i) ? 2 : 1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
     }
 
     @Override
     public String toString() {
         return getLabel();
-    }
-
-    public boolean isVisible() {
-        return this.isVisible;
-    }
-
-    public void setVisible(boolean isVisible) {
-        this.isVisible = isVisible;
     }
 
     public boolean getHasArrow() {
@@ -93,80 +145,97 @@ public class GUILink {
         this.hasArrow = hasArrow;
     }
 
-    public Pair<Stroke, Stroke> getArrowStroke() {
-        return Pair.of(arrowStroke, arrowStrokeIfPicked);
+    public Stroke getArrowStroke() 
+    {
+    	if (npLink == null) return arrowStrokeIfNotActiveLayer; // interlayer link
+        return npLink.getNetPlan().getNetworkLayerDefault() == npLink.getLayer()? arrowStrokeIfActiveLayer : arrowStrokeIfNotActiveLayer;
     }
 
-    public void setArrowStroke(Stroke arrowStroke, Stroke arrowStrokeIfPicked) {
-        this.arrowStroke = arrowStroke;
-        this.arrowStrokeIfPicked = arrowStrokeIfPicked;
+    public void setArrowStroke(Stroke arrowStrokeIfActiveLayer , Stroke arrowStrokeIfNotActiveLayer) 
+    {
+    	this.arrowStrokeIfActiveLayer = arrowStrokeIfActiveLayer;
+    	this.arrowStrokeIfNotActiveLayer = arrowStrokeIfNotActiveLayer;
     }
 
-    public Pair<Paint, Paint> getEdgeDrawPaint() {
-        return Pair.of(npLink.isUp() ? edgeDrawPaint : Color.RED, npLink.isUp() ? edgeDrawPaintIfPicked : Color.RED);
+    public Paint getEdgeDrawPaint() 
+    {
+        return npLink == null? edgeDrawPaint : npLink.isUp() ? edgeDrawPaint : Color.RED;
     }
 
-    public void setEdgeDrawPaint(Paint drawPaint, Paint drawPaintIfPicked) {
+    public void setEdgeDrawPaint(Paint drawPaint) {
         this.edgeDrawPaint = drawPaint;
-        this.edgeDrawPaintIfPicked = drawPaintIfPicked;
     }
 
-    public Pair<Paint, Paint> getArrowDrawPaint() {
-        return Pair.of(npLink.isUp() ? arrowDrawPaint : Color.RED, npLink.isUp() ? arrowDrawPaintIfPicked : Color.RED);
+    public boolean isShownSeparated () { return shownSeparated; }
+
+    public void setShownSeparated (boolean shownSeparated) { this.shownSeparated = shownSeparated; }
+
+    public Paint getArrowDrawPaint() 
+    {
+        return npLink == null? arrowDrawPaint : npLink.isUp() ? arrowDrawPaint : Color.RED;
     }
 
-    public void setArrowDrawPaint(Paint drawPaint, Paint drawPaintIfPicked) {
+    public void setArrowDrawPaint(Paint drawPaint)
+    {
         this.arrowDrawPaint = drawPaint;
-        this.arrowDrawPaintIfPicked = drawPaintIfPicked;
     }
 
-    public Pair<Paint, Paint> getArrowFillPaint() {
-        return Pair.of(npLink.isUp() ? arrowFillPaint : Color.RED, npLink.isUp() ? arrowFillPaintIfPicked : Color.RED);
+    public Paint getArrowFillPaint() 
+    {
+        return npLink == null? arrowFillPaint : npLink.isUp() ? arrowFillPaint : Color.RED;
     }
 
-    public void setArrowFillPaint(Paint fillPaint, Paint fillPaintIfPicked) {
+    public void setArrowFillPaint(Paint fillPaint) {
         this.arrowFillPaint = fillPaint;
-        this.arrowFillPaintIfPicked = fillPaintIfPicked;
     }
 
-    public Pair<Stroke, Stroke> getEdgeStroke() {
-        return Pair.of(edgeStroke, edgeStrokeIfPicked);
+    public Stroke getEdgeStroke() 
+    {
+    	if (isIntraNodeLink()) return edgeStrokeIfNotActiveLayer;
+        return npLink.getNetPlan().getNetworkLayerDefault() == npLink.getLayer()? edgeStrokeIfActiveLayer : edgeStrokeIfNotActiveLayer;
     }
 
-    public void setEdgeStroke(Stroke edgeStroke, Stroke edgeStrokeIfPicked) {
-        this.edgeStroke = edgeStroke;
-        this.edgeStrokeIfPicked = edgeStrokeIfPicked;
-    }
-
-    public Color getUserDefinedColorOverridesTheRest() {
-        return userDefinedColorOverridesTheRest;
-    }
-
-    public void setUserDefinedColorOverridesTheRest(Color c) {
-        this.userDefinedColorOverridesTheRest = c;
-    }
-
-    public Stroke getUserDefinedStrokeOverridesTheRest() {
-        return userDefinedEdgeStrokeOverridesTheRest;
-    }
-
-    public void setUserDefinedStrokeOverridesTheRest(Stroke c) {
-        this.userDefinedEdgeStrokeOverridesTheRest = c;
+    public void setEdgeStroke(Stroke edgeStrokeIfActiveLayer , Stroke edgeStrokeIfNotActiveLayer) 
+    {
+    	this.edgeStrokeIfActiveLayer = edgeStrokeIfActiveLayer;
+    	this.edgeStrokeIfNotActiveLayer = edgeStrokeIfNotActiveLayer;
     }
 
     public String getToolTip() {
         StringBuilder temp = new StringBuilder();
-        temp.append("<html>");
-        temp.append("<table>");
-        temp.append("<tr><td>Index:</td><td>" + getAssociatedNetPlanLink().getIndex() + "</td></tr>");
-        temp.append("<tr><td>Id:</td><td>" + getAssociatedNetPlanLink().getId() + "</td></tr>");
-        temp.append("<tr><td>Utilization:</td><td>" + getLabel() + "</td></tr>");
-        temp.append("</table>");
-        temp.append("</html>");
+        if (isIntraNodeLink())
+        {
+            temp.append("<html>");
+            temp.append("<p>Internal link in the node, between two layers</p>");
+            temp.append("<table border=\"0\">");
+            temp.append("<tr><td>Origin layer:</td><td>" + getLayerName(originNode.getLayer()) + "</td></tr>");
+            temp.append("<tr><td>Destination layer:</td><td>" + getLayerName(destinationNode.getLayer()) + "</td></tr>");
+            temp.append("</table>");
+            temp.append("</html>");
+        }
+        else
+        {
+            final NetPlan np = npLink.getNetPlan();
+        	final NetworkLayer layer = npLink.getLayer();
+    		final String capUnits = np.getLinkCapacityUnitsName(layer);
+    		final String trafUnits = np.getDemandTrafficUnitsName(layer);
+            temp.append("<html>");
+            temp.append("<table border=\"0\">");
+            temp.append("<tr><td colspan=\"2\"><strong>Link index " + npLink.getIndex() + " (id: " + npLink.getId() + ") - Layer " + getLayerName(layer) + "</strong></td></tr>");
+            temp.append("<tr><td>Link carried traffic:</td><td>" + String.format("%.2f" , npLink.getCarriedTraffic()) + " " + trafUnits + "</td></tr>");
+            temp.append("<tr><td>Link occupied capacity:</td><td>" + String.format("%.2f" , npLink.getOccupiedCapacity()) + " " + capUnits + "</td></tr>");
+            temp.append("<tr><td>Link capacity:</td><td>" + String.format("%.2f" , npLink.getCapacity()) + " " + capUnits + "</td></tr>");
+            temp.append("<tr><td>Link utilization:</td><td>" + String.format("%.2f" , npLink.getUtilization()) + "</td></tr>");
+            temp.append("<tr><td>Destination layer:</td><td>" + getLayerName(destinationNode.getLayer()) + "</td></tr>");
+            temp.append("<tr><td>Link length:</td><td>" + String.format("%.2f" , npLink.getLengthInKm()) + " km (" + String.format("%.2f" , npLink.getPropagationDelayInMs()) + " ms)" + "</td></tr>");
+            temp.append("</table>");
+            temp.append("</html>");
+        }
         return temp.toString();
     }
 
-
+    public boolean isIntraNodeLink () { return npLink == null; }
+    
     /**
      * Returns the destination node of the link.
      *
@@ -194,7 +263,7 @@ public class GUILink {
      * @since 0.2.0
      */
     public String getLabel() {
-        return String.format("%.2f", npLink.getUtilizationIncludingProtectionSegments());
+        return npLink == null? "IntraLink (" + getOriginNode() + "->" + getDestinationNode() +")" : String.format("%.2f", npLink.getUtilization());
     }
 
     /**
@@ -206,4 +275,9 @@ public class GUILink {
     public GUINode getOriginNode() {
         return originNode;
     }
+
+	private String getNodeName (Node n) { return "Node " + n.getIndex() + " (" + (n.getName().length() == 0? "No name" : n.getName()) + ")"; }
+	private String getResourceName (Resource e) { return "Resource " + e.getIndex() + " (" + (e.getName().length() == 0? "No name" : e.getName()) + "). Type: " + e.getType(); }
+	private String getLayerName (NetworkLayer e) { return "Layer " + e.getIndex() + " (" + (e.getName().length() == 0? "No name" : e.getName()) + ")"; }
+
 }

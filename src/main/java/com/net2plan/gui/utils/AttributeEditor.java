@@ -58,7 +58,7 @@ public class AttributeEditor extends JDialog implements ActionListener {
      * @param type     Type of element (i.e. layers, nodes, links, and so on)
      * @since 0.3.0
      */
-    public AttributeEditor(final INetworkCallback callback, final NetworkElementType type) {
+    public AttributeEditor(final IVisualizationCallback callback, final NetworkElementType type) {
         NetPlan netPlan = callback.getDesign();
 
         Object[][] data;
@@ -66,8 +66,11 @@ public class AttributeEditor extends JDialog implements ActionListener {
         final Set<String> attributes = new HashSet<String>();
         String dialogHeader;
 
+        
+        
         switch (type) {
             case LAYER:
+            {
                 ArrayList<Long> layerIds = netPlan.getNetworkLayerIds();
                 itemIds = layerIds;
                 int L = layerIds.size();
@@ -105,7 +108,47 @@ public class AttributeEditor extends JDialog implements ActionListener {
                 dialogHeader = "Edit layer attributes";
 
                 break;
+            }
+            case RESOURCE:
+            {
+                ArrayList<Long> resourceIds = netPlan.getNetworkLayerIds();
+                itemIds = resourceIds;
+                final int RES = resourceIds.size();
 
+                columnNames = new String[RES + 1];
+                columnNames[0] = "Attribute";
+                for (int l = 0; l < RES; l++) {
+                    long resourceId = resourceIds.get(l);
+                    columnNames[l + 1] = generateColumnName(type, resourceId);
+                    attributes.addAll(netPlan.getResourceFromId(resourceId).getAttributes().keySet());
+                }
+
+                if (attributes.isEmpty()) {
+                    data = new Object[1][RES + 1];
+                } else {
+                    data = new Object[attributes.size()][RES + 1];
+
+                    int itemId = 0;
+                    Iterator<String> it = attributes.iterator();
+                    while (it.hasNext()) {
+                        String attribute = it.next();
+                        data[itemId][0] = attribute;
+                        for (int l = 0; l < RES; l++) {
+                            long resourceId = resourceIds.get(l);
+                            data[itemId][l + 1] = netPlan.getResourceFromId(resourceId).getAttribute(attribute);
+                            if (data[itemId][l + 1] == null) {
+                                data[itemId][l + 1] = "";
+                            }
+                        }
+
+                        itemId++;
+                    }
+                }
+
+                dialogHeader = "Edit resource attributes";
+
+                break;
+            }
             case NODE:
                 ArrayList<Long> nodeIds = netPlan.getNodeIds();
                 itemIds = nodeIds;
@@ -323,42 +366,6 @@ public class AttributeEditor extends JDialog implements ActionListener {
                 dialogHeader = "Edit route attributes";
                 break;
 
-            case PROTECTION_SEGMENT:
-                ArrayList<Long> segmentIds = netPlan.getProtectionSegmentIds();
-                itemIds = segmentIds;
-                int S = segmentIds.size();
-
-                columnNames = new String[S + 1];
-                columnNames[0] = "Attribute";
-                for (int s = 0; s < S; s++) {
-                    long segmentId = segmentIds.get(s);
-                    columnNames[s + 1] = generateColumnName(type, segmentId);
-                    attributes.addAll(netPlan.getProtectionSegmentFromId(segmentId).getAttributes().keySet());
-                }
-
-                if (attributes.isEmpty()) {
-                    data = new Object[1][S + 1];
-                } else {
-                    data = new Object[attributes.size()][S + 1];
-
-                    int itemId = 0;
-                    Iterator<String> it = attributes.iterator();
-                    while (it.hasNext()) {
-                        String attribute = it.next();
-                        data[itemId][0] = attribute;
-                        for (int segmentIndex = 0; segmentIndex < S; segmentIndex++) {
-                            long segmentId = segmentIds.get(segmentIndex);
-                            data[itemId][segmentIndex + 1] = netPlan.getProtectionSegmentFromId(segmentId).getAttribute(attribute);
-                            if (data[itemId][segmentIndex + 1] == null) data[itemId][segmentIndex + 1] = "";
-                        }
-
-                        itemId++;
-                    }
-                }
-
-                dialogHeader = "Edit protection segment attributes";
-                break;
-
 //			case FORWARDING_RULE:
 //				List<Pair<Long, Long>> forwardingRules = new ArrayList<Pair<Long, Long>>(netPlan.getForwardingRules());
 //				itemIds = forwardingRules;
@@ -466,7 +473,7 @@ public class AttributeEditor extends JDialog implements ActionListener {
      * @param itemId   Item identifier
      * @since 0.3.0
      */
-    public AttributeEditor(final INetworkCallback callback, final NetworkElementType type, Object itemId) {
+    public AttributeEditor(final IVisualizationCallback callback, final NetworkElementType type, Object itemId) {
         this(callback, type);
 
         final TableColumnHider tch = new TableColumnHider(table);
@@ -521,11 +528,11 @@ public class AttributeEditor extends JDialog implements ActionListener {
             case NODE:
                 return "Node " + (long) itemId;
 
-            case PROTECTION_SEGMENT:
-                return "Protection segment " + (long) itemId;
-
             case ROUTE:
                 return "Route " + (long) itemId;
+
+            case RESOURCE:
+                return "Resource " + (long) itemId;
 
             case SRG:
                 return "SRG " + (long) itemId;
@@ -722,10 +729,10 @@ public class AttributeEditor extends JDialog implements ActionListener {
                             else netPlan.getRouteFromId(routeId).setAttribute(key, newValue);
                             break;
 
-                        case PROTECTION_SEGMENT:
-                            long segmentId = itemIds.get(col - 1);
-                            if (newValue.isEmpty()) netPlan.getProtectionSegmentFromId(segmentId).removeAttribute(key);
-                            else netPlan.getProtectionSegmentFromId(segmentId).setAttribute(key, newValue);
+                        case RESOURCE:
+                            long resourceId = itemIds.get(col - 1);
+                            if (newValue.isEmpty()) netPlan.getResourceFromId(resourceId).removeAttribute(key);
+                            else netPlan.getResourceFromId(resourceId).setAttribute(key, newValue);
                             break;
 
 //						case FORWARDING_RULE:

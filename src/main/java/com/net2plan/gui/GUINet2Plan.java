@@ -12,10 +12,7 @@
 
 package com.net2plan.gui;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dialog;
-import java.awt.Dimension;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -61,6 +58,7 @@ import com.net2plan.gui.utils.ClassPathEditor;
 import com.net2plan.gui.utils.ColumnFitAdapter;
 import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.viewEditWindows.utils.WindowUtils;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants.UserInterface;
 import com.net2plan.internal.ErrorHandling;
@@ -139,6 +137,8 @@ public class GUINet2Plan extends JFrame implements ActionListener {
                 loadExamples();
             } else {
                 Object object = itemObject.get(item);
+
+                WindowUtils.setWindowLeftSide(instance);
 
                 if (object != null) {
                     if (object instanceof Class) {
@@ -377,6 +377,7 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         itemObject = new DualHashBidiMap<JMenuItem, Object>();
 
         URL iconURL = GUINet2Plan.class.getResource("/resources/gui/icon.png");
+        System.out.println(iconURL);
         ImageIcon icon = new ImageIcon(iconURL);
         setIconImage(icon.getImage());
         setTitle("Net2Plan");

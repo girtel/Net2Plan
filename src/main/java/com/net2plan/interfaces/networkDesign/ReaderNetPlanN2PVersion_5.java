@@ -20,12 +20,16 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
@@ -34,51 +38,37 @@ import javax.xml.stream.events.XMLEvent;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.codehaus.stax2.XMLStreamReader2;
 
-import com.net2plan.internal.AttributeMap;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.LongUtils;
+import com.net2plan.utils.Pair;
 
 class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanFormat_v3
 {
-//	private Map<Long,NetworkElement> mapId2NewNE;
-//	protected Map<Long,Node> mapOldId2Node;
-//	protected Map<Long,SharedRiskGroup> mapOldId2Srg;
-//	protected Map<Long,Resource> mapOldId2Resource;
-//	protected Map<Long,NetworkLayer> mapOldId2Layer;
-//	protected Map<Long,Link> mapOldId2Link;
-//	protected Map<Long,Demand> mapOldId2Demand;
-//	protected Map<Long,MulticastDemand> mapOldId2MulticastDemand;
-//	protected Map<Long,Route> mapOldId2Route;
-//	protected Map<Long,MulticastTree> mapOldId2MulticastTree;
-//	protected Map<Long,ProtectionSegment> mapOldId2ProtectionSegment;
-	protected boolean hasAlreadyReadOneLayer;
+	private boolean hasAlreadyReadOneLayer;
+	private XMLStreamReader2 xmlStreamReader;
+	private Map<Route,List<Long>> backupRouteIdsMap;
+	private Map<Long , List<Pair<Node,URL>>> nodeAndLayerToIconURLMap;
+	
 	
 	public void create(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
 	{
-//		this.mapOldId2Node = new HashMap<Long,Node> ();
-//		this.mapOldId2Srg = new HashMap<Long,SharedRiskGroup> ();
-//		this.mapOldId2Resource = new HashMap<Long,Resource> ();
-//		this.mapOldId2Layer = new HashMap<Long,NetworkLayer> ();
-//		this.mapOldId2Link = new HashMap<Long,Link> ();
-//		this.mapOldId2Demand = new HashMap<Long,Demand> ();
-//		this.mapOldId2MulticastDemand = new HashMap<Long,MulticastDemand> ();
-//		this.mapOldId2Route = new HashMap<Long,Route> ();
-//		this.mapOldId2MulticastTree = new HashMap<Long,MulticastTree> ();
-//		this.mapOldId2ProtectionSegment = new HashMap<Long,ProtectionSegment> ();
 		this.hasAlreadyReadOneLayer = false;
-		parseNetwork(netPlan, xmlStreamReader);
+		this.xmlStreamReader = xmlStreamReader;
+		this.backupRouteIdsMap = new HashMap<Route,List<Long>> ();
+		this.nodeAndLayerToIconURLMap = new HashMap<> ();
+		parseNetwork(netPlan);
 
 //		System.out.println ("End ReaderNetPlan_v5: " + netPlan + " ----------- ");
 		
 		netPlan.checkCachesConsistency();
 	}
 
-	protected void parseNetwork(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
+	protected void parseNetwork(NetPlan netPlan) throws XMLStreamException
 	{
-		String networkDescription_thisNetPlan = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "description"));
-		String networkName_thisNetPlan = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "name"));
-		final Long nexElementId_thisNetPlan = Long.parseLong(xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "nextElementId")));
+		final String networkDescription_thisNetPlan = getString ("description");
+		final String networkName_thisNetPlan = getString ("name");
+		final Long nexElementId_thisNetPlan = getLong ("nextElementId");
 		netPlan.setNetworkDescription(networkDescription_thisNetPlan);
 		netPlan.setNetworkName(networkName_thisNetPlan);
 		netPlan.nextElementId = new MutableLong(nexElementId_thisNetPlan);
@@ -100,31 +90,30 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 							break;
 
 						case "layer":
-							parseLayer(netPlan, xmlStreamReader);
+							parseLayer(netPlan);
 							break;
 
 						case "node":
-							parseNode(netPlan, xmlStreamReader);
+							parseNode(netPlan);
 							break;
 
 						case "resource":
-							parseResource(netPlan, xmlStreamReader);
+							parseResource(netPlan);
 							break;
 
 						case "srg":
-							parseSRG(netPlan, xmlStreamReader);
+							parseSRG(netPlan);
 							break;
 
 						case "layerCouplingDemand":
-							long upperLayerLinkId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "upperLayerLinkId"));
-							long lowerLayerDemandId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "lowerLayerDemandId"));
+							final long upperLayerLinkId = getLong ("upperLayerLinkId");
+							final long lowerLayerDemandId = getLong ("lowerLayerDemandId");
 							netPlan.getDemandFromId(lowerLayerDemandId).coupleToUpperLayerLink(netPlan.getLinkFromId(upperLayerLinkId));
 							break;
 
 						case "layerCouplingMulticastDemand":
-							List<Long> upperLayerLinkIds = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "upperLayerLinkIds")));
-							long lowerLayerMulticastDemandId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "lowerLayerDemandId"));
-							Set<Link> setLinksToCouple = new HashSet<Link> (); for (long linkId : upperLayerLinkIds) setLinksToCouple.add (netPlan.getLinkFromId(linkId));
+							final long lowerLayerMulticastDemandId = getLong ("lowerLayerDemandId");
+							final Set<Link> setLinksToCouple = getLinkSetFromIds(netPlan , getListLong("upperLayerLinkIds"));
 							netPlan.getMulticastDemandFromId(lowerLayerMulticastDemandId).couple(setLinksToCouple);
 							break;
 
@@ -149,97 +138,36 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		throw new RuntimeException("'Network' element not parsed correctly (end tag not found)");
 	}
 	
-	protected void parseProtectionSegment(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
+	private void parseNode(NetPlan netPlan) throws XMLStreamException
 	{
-		long segmentId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "id"));
-		if (segmentId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
-		double reservedCapacity = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "reservedCapacity"));
-		List<Long> seqLinks = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "seqLinks")));
-		List<Link> newSeqLinks = new LinkedList<Link> (); for (long linkId : seqLinks) newSeqLinks.add (netPlan.getLinkFromId(linkId));
-		ProtectionSegment newSegment = netPlan.addProtectionSegment(segmentId , newSeqLinks, reservedCapacity, null);
-		
-		while(xmlStreamReader.hasNext())
-		{
-			xmlStreamReader.next();
-
-			switch(xmlStreamReader.getEventType())
-			{
-				case XMLEvent.START_ELEMENT:
-					String startElementName = xmlStreamReader.getName().toString();
-					switch(startElementName)
-					{
-						case "attribute":
-							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
-							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
-							newSegment.setAttribute(key, name);
-							break;
-
-						default:
-							throw new RuntimeException("Bad");
-					}
-
-					break;
-
-				case XMLEvent.END_ELEMENT:
-					String endElementName = xmlStreamReader.getName().toString();
-					if (endElementName.equals("protectionSegment")) return;
-					break;
-			}
-		}
-
-		throw new RuntimeException("'Protection segment' element not parsed correctly (end tag not found)");
-	}
-
-	protected void parseNode(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
-	{
-		long nodeId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "id"));
+		final long nodeId = getLong ("id");
 		if (nodeId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
-		double xCoord = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "xCoord"));
-		double yCoord = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "yCoord"));
-		String nodeName = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "name"));
-		boolean isUp = true; try { isUp = xmlStreamReader.getAttributeAsBoolean(xmlStreamReader.getAttributeIndex(null, "isUp")); } catch (Exception e) {} 
+		final double xCoord = getDouble ("xCoord");
+		final double yCoord = getDouble ("yCoord");
+		final String nodeName = getString ("name");
+		boolean isUp = true; try { isUp = getBoolean ("isUp"); } catch (Exception e) {} 
 		//netPlan.nextNodeId = new MutableLong(nodeId);
 		Node newNode = netPlan.addNode(nodeId , xCoord, yCoord, nodeName, null);
 		newNode.setFailureState(isUp);
 
-		while(xmlStreamReader.hasNext())
+		/* read the icons information and put it in a map for later (layers are not created yet!) */
+		for (long layerId : getListLong("layersWithIconsDefined"))
 		{
-			xmlStreamReader.next();
-			switch(xmlStreamReader.getEventType())
-			{
-				case XMLEvent.START_ELEMENT:
-					String startElementName = xmlStreamReader.getName().toString();
-					switch(startElementName)
-					{
-						case "attribute":
-							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
-							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
-							newNode.setAttribute(key, name);
-							break;
-
-						default:
-							throw new RuntimeException("Bad");
-					}
-
-					break;
-
-				case XMLEvent.END_ELEMENT:
-					String endElementName = xmlStreamReader.getName().toString();
-					if (endElementName.equals("node")) return;
-					break;
-			}
+			List<Pair<Node,URL>> iconsThisLayerSoFar = nodeAndLayerToIconURLMap.get (layerId);
+			if (iconsThisLayerSoFar == null) { iconsThisLayerSoFar = new LinkedList<> (); nodeAndLayerToIconURLMap.put(layerId , iconsThisLayerSoFar); }
+			URL url = null; try { url = new URL (getString ("nodeIconURLLayer_" + layerId)); } catch (Exception e) {}
+			iconsThisLayerSoFar.add(Pair.of(newNode , url));
 		}
-
-		throw new RuntimeException("'Node' element not parsed correctly (end tag not found)");
+		readAndAddAttributesToEnd(newNode, "node");
 	}
 
-	protected void parseDemand(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
+	private void parseDemand(NetPlan netPlan, long layerId) throws XMLStreamException
 	{
-		long demandId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "id"));
+		final long demandId = getLong ("id");
 		if (demandId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
-		long ingressNodeId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "ingressNodeId"));
-		long egressNodeId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "egressNodeId"));
-		double offeredTraffic = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "offeredTraffic"));
+		final long ingressNodeId = getLong ("ingressNodeId");
+		final long egressNodeId = getLong ("egressNodeId");
+		final double offeredTraffic = getDouble ("offeredTraffic");
 		Demand newDemand = netPlan.addDemand(demandId , netPlan.getNodeFromId(ingressNodeId), netPlan.getNodeFromId(egressNodeId), offeredTraffic, null , netPlan.getNetworkLayerFromId(layerId));
 
 		List<String> mandatorySequenceOfTraversedResourceTypes = new LinkedList<String> ();
@@ -257,7 +185,6 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 						case "attribute":
 							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
 							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
-							if (key.equals(NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE)) name = "" + netPlan.getDemandFromId(Long.parseLong(name)).getId();
 							newDemand.setAttribute(key, name);
 							break;
 
@@ -282,142 +209,45 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		newDemand.setServiceChainSequenceOfTraversedResourceTypes(mandatorySequenceOfTraversedResourceTypes);
 	}
 
-	protected void parseRoute(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
+	private void parseRoute(NetPlan netPlan, long layerId) throws XMLStreamException
 	{
-		long routeId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "id"));
+		final long routeId = getLong ("id");
 		if (routeId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
-		long demandId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "demandId"));
-		//double carriedTraffic = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "carriedTraffic"));
-		//double occupiedCapacity = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "occupiedCapacity"));
-		double carriedTrafficIfNotFailing = 0.0; try { carriedTrafficIfNotFailing = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "carriedTrafficIfNotFailing")); } catch (Exception e) {} 
-		double occupiedLinkCapacityIfNotFailing = 0.0; try { occupiedLinkCapacityIfNotFailing = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "occupiedLinkCapacityIfNotFailing")); } catch (Exception e) {} 
-		if (occupiedLinkCapacityIfNotFailing < 0) occupiedLinkCapacityIfNotFailing = carriedTrafficIfNotFailing;
+		final long demandId = getLong ("demandId");
 		
-		List<Long> initialSeqLinksAndResources = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "initialSeqLinksAndResources")));
-		List<Double> initialResourceOccupationMap = DoubleUtils.toList(xmlStreamReader.getAttributeAsDoubleArray(xmlStreamReader.getAttributeIndex(null, "initialResourceOccupationMap")));
-		List<Long> currentSeqLinksSegmentsAndResources = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "currentSeqLinksSegmentsAndResources")));
-		List<Double> currentResourceOccupationMap = DoubleUtils.toList(xmlStreamReader.getAttributeAsDoubleArray(xmlStreamReader.getAttributeIndex(null, "currentResourceOccupationMap")));
-//		List<Long> currentSeqLinksAndProtectionSegments = new LinkedList<Long> (initialSeqLinksWhenCreated);
-//		try { currentSeqLinksAndProtectionSegments = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "currentSeqLinksAndProtectionSegments"))); } catch (Exception e) { }
-		List<Long> backupSegmentList = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "backupSegmentList")));
-		List<NetworkElement> initialSeqLinksAndResources_obj = new LinkedList<NetworkElement> (); 
-		for (long linkOrResourceId : initialSeqLinksAndResources)
-			if (netPlan.getLinkFromId(linkOrResourceId) != null) initialSeqLinksAndResources_obj.add (netPlan.getLinkFromId(linkOrResourceId));
-			else if (netPlan.getResourceFromId(linkOrResourceId) != null) initialSeqLinksAndResources_obj.add (netPlan.getResourceFromId(linkOrResourceId));
-			else throw new Net2PlanException ("Error parsing route information. Unknown element of id: " + linkOrResourceId);
-		List<NetworkElement> currentSeqLinksSegmentsAndResources_obj = new LinkedList<NetworkElement> (); 
-		for (long linkOrSegmentOrResourceId : currentSeqLinksSegmentsAndResources)
-			if (netPlan.getLinkFromId(linkOrSegmentOrResourceId) != null) currentSeqLinksSegmentsAndResources_obj.add (netPlan.getLinkFromId(linkOrSegmentOrResourceId));
-			else if (netPlan.getProtectionSegmentFromId(linkOrSegmentOrResourceId) != null) currentSeqLinksSegmentsAndResources_obj.add (netPlan.getProtectionSegmentFromId(linkOrSegmentOrResourceId));
-			else if (netPlan.getResourceFromId(linkOrSegmentOrResourceId) != null) currentSeqLinksSegmentsAndResources_obj.add (netPlan.getResourceFromId(linkOrSegmentOrResourceId));
-			else throw new Net2PlanException ("Error parsing route information. Unknown element of id: " + linkOrSegmentOrResourceId);
-		Map<Resource,Double> initialResourceOccupationMap_obj = new HashMap<Resource,Double> ();
-		{
-			Iterator<Double> it = initialResourceOccupationMap.iterator();
-			while (it.hasNext())
-			{
-				final long id = (long) (double) it.next();
-				final double cap = it.next();
-				if (netPlan.getResourceFromId(id) == null) throw new Net2PlanException ("Error parsing route information. Unknown element of id: " + id);
-				initialResourceOccupationMap_obj.put(netPlan.getResourceFromId(id) , cap);
-			}
-		}
-		Map<Resource,Double> currentResourceOccupationMap_obj = new HashMap<Resource,Double> ();
-		{
-			Iterator<Double> it = currentResourceOccupationMap.iterator();
-			while (it.hasNext())
-			{
-				final long id = (long) (double) it.next();
-				final double cap = it.next();
-				if (netPlan.getResourceFromId(id) == null) throw new Net2PlanException ("Error parsing route information. Unknown element of id: " + id);
-				currentResourceOccupationMap_obj.put(netPlan.getResourceFromId(id) , cap);
-			}
-		}
+		final double currentCarriedTrafficIfNotFailing = getDouble ("currentCarriedTrafficIfNotFailing");
+		final List<Double> currentLinksAndResourcesOccupationIfNotFailing = getListDouble("currentLinksAndResourcesOccupationIfNotFailing");
+		final List<NetworkElement> currentPath = getLinkAndResorceListFromIds(netPlan, getListLong("currentPath"));
 		
-//		List<Link> initialSeqLinksAndResources_obj = new LinkedList<Link> (); for (long linkId : initialSeqLinksAndResources) initialSeqLinksAndResources_obj.add (netPlan.getLinkFromId(linkId));
-//		List<Link> seqLinksAndProtectionSegments_link = new LinkedList<Link> (); 
-//		for (long linkId : currentSeqLinksAndProtectionSegments) 
-//			if (netPlan.getLinkFromId(linkId) != null) seqLinksAndProtectionSegments_link.add (netPlan.getLinkFromId(linkId));
-//			else if (mapOldId2ProtectionSegment.get(linkId) != null) seqLinksAndProtectionSegments_link.add (mapOldId2ProtectionSegment.get(linkId));
-//			else throw new Net2PlanException ("Error parsing route information (current sequence of links and protection segments)");
-//		Route newRoute = netPlan.addRoute(mapOldId2Demand.get(demandId) , carriedTrafficIfNotFailing, occupiedLinkCapacityIfNotFailing, initialSeqLinksWhenCreated_link, null);
-		Route newRoute = netPlan.addServiceChain(routeId , netPlan.getDemandFromId(demandId) , carriedTrafficIfNotFailing, occupiedLinkCapacityIfNotFailing, initialSeqLinksAndResources_obj, initialResourceOccupationMap_obj , null);
-		for(long segmentId : backupSegmentList) newRoute.addProtectionSegment(netPlan.getProtectionSegmentFromId(segmentId));
-		newRoute.setSeqLinksSegmentsAndResourcesOccupation(currentSeqLinksSegmentsAndResources_obj , currentResourceOccupationMap_obj);
-		if (Math.abs (newRoute.getCarriedTrafficInNoFailureState() - carriedTrafficIfNotFailing) > 1e-3) throw new RuntimeException ("Bad");
-		if (Math.abs (newRoute.getOccupiedCapacityInNoFailureState() - occupiedLinkCapacityIfNotFailing) > 1e-3) throw new RuntimeException ("Bad");
+		/* Initial route may not exist, if so current equals the initial */
+		List<NetworkElement> initialStatePath = new ArrayList<NetworkElement> (currentPath);
+		boolean initialPathExists = true; 
+		try { initialStatePath = getLinkAndResorceListFromIds(netPlan, getListLong("initialStatePath")); } catch (Exception e) { initialPathExists = false; } 
+		final double initialStateCarriedTrafficIfNotFailing = initialPathExists? getDouble ("initialStateCarriedTrafficIfNotFailing") : currentCarriedTrafficIfNotFailing;
+		final List<Double> initialStateOccupationIfNotFailing = initialPathExists? getListDouble("initialStateOccupationIfNotFailing") : new ArrayList<Double> (currentLinksAndResourcesOccupationIfNotFailing);
 		
-		while(xmlStreamReader.hasNext())
-		{
-			xmlStreamReader.next();
+		final Route newRoute = netPlan.addServiceChain(routeId , netPlan.getDemandFromId(demandId), initialStateCarriedTrafficIfNotFailing, 
+				initialStateOccupationIfNotFailing, initialStatePath, null);
+		newRoute.setPath(currentCarriedTrafficIfNotFailing, currentPath, currentLinksAndResourcesOccupationIfNotFailing);
 
-			switch(xmlStreamReader.getEventType())
-			{
-				case XMLEvent.START_ELEMENT:
-					String startElementName = xmlStreamReader.getName().toString();
-					switch(startElementName)
-					{
-						case "attribute":
-							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
-							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
-							newRoute.setAttribute(key, name);
-							break;
+		/* To be added at the end: backup routes may not exist yet */
+		this.backupRouteIdsMap.put(newRoute ,  getListLong ("backupRoutes")); 
 
-						default:
-							throw new RuntimeException("Bad");
-					}
-
-					break;
-
-				case XMLEvent.END_ELEMENT:
-					String endElementName = xmlStreamReader.getName().toString();
-					if (endElementName.equals("route")) return;
-					break;
-			}
-		}
-
-		throw new RuntimeException("'Route' element not parsed correctly (end tag not found)");
+		readAndAddAttributesToEnd(newRoute, "route");
 	}
 	
 	
-	protected void parseForwardingRule(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
+	private void parseForwardingRule(NetPlan netPlan, long layerId) throws XMLStreamException
 	{
-		long linkId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "linkId"));
-		long demandId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "demandId"));
-		double splittingRatio = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "splittingRatio"));
+		final long linkId = getLong ("linkId");
+		final long demandId = getLong ("demandId");
+		final double splittingRatio = getDouble ("splittingRatio");
 
-		netPlan.getNetworkLayerFromId(layerId).forwardingRules_f_de.set (netPlan.getDemandFromId(demandId).index , netPlan.getLinkFromId(linkId).index  , splittingRatio);
-
-		while(xmlStreamReader.hasNext())
-		{
-			xmlStreamReader.next();
-
-			switch(xmlStreamReader.getEventType())
-			{
-				case XMLEvent.START_ELEMENT:
-					String startElementName = xmlStreamReader.getName().toString();
-					switch(startElementName)
-					{
-						case "attribute":
-							break;
-
-						default:
-							throw new RuntimeException("Bad");
-					}
-
-					break;
-
-				case XMLEvent.END_ELEMENT:
-					String endElementName = xmlStreamReader.getName().toString();
-					if (endElementName.equals("forwardingRule")) return;
-					break;
-			}
-		}
-
-		throw new RuntimeException("'Forwarding rule' element not parsed correctly (end tag not found)");
+		netPlan.getNetworkLayerFromId(layerId).forwardingRulesNoFailureState_f_de.set (netPlan.getDemandFromId(demandId).index , netPlan.getLinkFromId(linkId).index  , splittingRatio);
+		readAndAddAttributesToEnd(null, "forwardingRule");
 	}
 
-	protected void parseHopByHopRouting(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
+	private void parseHopByHopRouting(NetPlan netPlan, long layerId) throws XMLStreamException
 	{
 		netPlan.setRoutingType (RoutingType.HOP_BY_HOP_ROUTING , netPlan.getNetworkLayerFromId(layerId) );
 
@@ -432,7 +262,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 					switch(startElementName)
 					{
 						case "forwardingRule":
-							parseForwardingRule(netPlan, layerId, xmlStreamReader);
+							parseForwardingRule(netPlan, layerId);
 							break;
 
 						default:
@@ -455,166 +285,68 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		throw new RuntimeException("'Hop-by-hop routing' element not parsed correctly (end tag not found)");
 	}
 
-	protected void parseLink(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
+	private void parseLink(NetPlan netPlan, long layerId) throws XMLStreamException
 	{
-		long linkId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "id"));
+		final long linkId = getLong ("id");
 		if (linkId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
-		long originNodeId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "originNodeId"));
-		long destinationNodeId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "destinationNodeId"));
-		double capacity = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "capacity"));
-		double lengthInKm = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "lengthInKm"));
-		double propagationSpeedInKmPerSecond = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "propagationSpeedInKmPerSecond"));
-		boolean isUp = true; try { isUp = xmlStreamReader.getAttributeAsBoolean(xmlStreamReader.getAttributeIndex(null, "isUp")); } catch (Exception e) {} 
+		final long originNodeId = getLong ("originNodeId");
+		final long destinationNodeId = getLong ("destinationNodeId");
+		final double capacity = getDouble ("capacity");
+		final double lengthInKm = getDouble ("lengthInKm");
+		final double propagationSpeedInKmPerSecond = getDouble ("propagationSpeedInKmPerSecond");
+		boolean isUp = true; try { isUp = getBoolean ("isUp"); } catch (Exception e) {} 
 
 		Link newLink = netPlan.addLink(linkId , netPlan.getNodeFromId(originNodeId), netPlan.getNodeFromId(destinationNodeId), capacity, lengthInKm, propagationSpeedInKmPerSecond, null , netPlan.getNetworkLayerFromId(layerId));
 		newLink.setFailureState(isUp);
-		
-		while(xmlStreamReader.hasNext())
-		{
-			xmlStreamReader.next();
-			switch(xmlStreamReader.getEventType())
-			{
-				case XMLEvent.START_ELEMENT:
-					String startElementName = xmlStreamReader.getName().toString();
-					switch(startElementName)
-					{
-						case "attribute":
-							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
-							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
-							if (key.equals(NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE)) name = "" + netPlan.getLinkFromId(Long.parseLong(name)).getId();
-							newLink.setAttribute(key, name);
-							break;
-
-						default:
-							throw new RuntimeException("Bad");
-					}
-
-					break;
-
-				case XMLEvent.END_ELEMENT:
-					String endElementName = xmlStreamReader.getName().toString();
-					if (endElementName.equals("link")) return;
-					break;
-			}
-		}
-
-		throw new RuntimeException("'Link' element not parsed correctly (end tag not found)");
+		readAndAddAttributesToEnd(newLink, "link");
 	}
 
 	
-	protected void parseSRG(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
+	private void parseSRG(NetPlan netPlan) throws XMLStreamException
 	{
-		long srgId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "id"));
+		final long srgId = getLong ("id");
 		if (srgId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
-		double meanTimeToFailInHours = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "meanTimeToFailInHours"));
-		double meanTimeToRepairInHours = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "meanTimeToRepairInHours"));
+		final double meanTimeToFailInHours = getDouble ("meanTimeToFailInHours");
+		final double meanTimeToRepairInHours = getDouble ("meanTimeToRepairInHours");
 		SharedRiskGroup newSRG = netPlan.addSRG(srgId , meanTimeToFailInHours, meanTimeToRepairInHours, null);
-		
-		while(xmlStreamReader.hasNext())
-		{
-			xmlStreamReader.next();
-
-			switch(xmlStreamReader.getEventType())
-			{
-				case XMLEvent.START_ELEMENT:
-					String startElementName = xmlStreamReader.getName().toString();
-					switch(startElementName)
-					{
-						case "attribute":
-							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
-							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
-							newSRG.setAttribute(key, name);
-							break;
-
-						case "node":
-							long nodeId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "id"));
-							newSRG.addNode(netPlan.getNodeFromId(nodeId));
-							break;
-
-						case "link":
-							long linkId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "linkId"));
-							newSRG.addLink(netPlan.getLinkFromId(linkId));
-							break;
-
-						default:
-							throw new RuntimeException("Bad");
-					}
-
-					break;
-
-				case XMLEvent.END_ELEMENT:
-					String endElementName = xmlStreamReader.getName().toString();
-					if (endElementName.equals("srg")) return;
-					break;
-			}
-		}
-
-		throw new RuntimeException("'SRG' element not parsed correctly (end tag not found)");
+		Set<Node> srgNodes = getNodeSetFromIds(netPlan, getListLong("nodes"));
+		Set<Link> srgLinks = getLinkSetFromIds(netPlan, getListLong("links"));
+		for (Node n : srgNodes) newSRG.addNode(n);
+		for (Link e : srgLinks) newSRG.addLink(e);
+		readAndAddAttributesToEnd(newSRG, "srg");
 	}
 
-	protected void parseResource(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
+	private void parseResource(NetPlan netPlan) throws XMLStreamException
 	{
-		long resId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "id"));
+		final long resId = getLong ("id");
 		if (resId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
-		long hostNodeId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "hostNodeId"));
+		final long hostNodeId = getLong ("hostNodeId");
 		if (netPlan.getNodeFromId(hostNodeId) == null) throw new Net2PlanException ("Could not find the hot node of a resource when reading");
-		String type = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "type"));
-		String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "name"));
-		String capacityMeasurementUnits = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "capacityMeasurementUnits"));
-		double processingTimeToTraversingTrafficInMs = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "processingTimeToTraversingTrafficInMs"));
-		double capacity = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "capacity"));
-
-		Map<String,String> attributes = new HashMap<String,String> ();
-		Map<Resource,Double> occupiedCapacitiesInBaseResources = new HashMap<Resource,Double> ();
-		boolean finalElementReached = false;
-		while(xmlStreamReader.hasNext() && !finalElementReached)
-		{
-			xmlStreamReader.next();
-
-			switch(xmlStreamReader.getEventType())
-			{
-				case XMLEvent.START_ELEMENT:
-					String startElementName = xmlStreamReader.getName().toString();
-					switch(startElementName)
-					{
-						case "attribute":
-							final String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
-							final String value = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
-							attributes.put(key,value);
-							break;
-
-						case "baseResource":
-							final long baseResourceId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "id"));
-							final double occupiedCapacity = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "occupiedCapacity"));
-							if (netPlan.getResourceFromId(baseResourceId) == null) throw new Net2PlanException ("Cannot find base resource of id: " + baseResourceId);
-							occupiedCapacitiesInBaseResources.put(netPlan.getResourceFromId(baseResourceId) , occupiedCapacity);
-							break;
-						default:
-							throw new RuntimeException("Bad");
-					}
-
-					break;
-
-				case XMLEvent.END_ELEMENT:
-					String endElementName = xmlStreamReader.getName().toString();
-					if (endElementName.equals("resource")) { finalElementReached = true; break; }
-			}
-		}
-
-		if (!finalElementReached) throw new RuntimeException("'Resource' element not parsed correctly (end tag not found)");
-		netPlan.addResource(resId , type , name , netPlan.getNodeFromId(hostNodeId) , capacity , capacityMeasurementUnits , 
-				occupiedCapacitiesInBaseResources , processingTimeToTraversingTrafficInMs , new AttributeMap(attributes));
+		final String type = getString ("type");
+		final String name = getString ("name");
+		final String capacityMeasurementUnits = getString ("capacityMeasurementUnits");
+		final double processingTimeToTraversingTrafficInMs = getDouble ("processingTimeToTraversingTrafficInMs");
+		final double capacity = getDouble ("capacity");
+		URL urlIcon = null; try { urlIcon = new URL (getString ("urlIcon")); } catch (Exception e) {}
+		final List<Double> baseResourceAndOccupiedCapacitiesMap = getListDouble("baseResourceAndOccupiedCapacitiesMap");
+		Map<Resource,Double> occupiedCapacitiesInBaseResources = getResourceOccupationMap(netPlan, baseResourceAndOccupiedCapacitiesMap); 
+		Resource newResource = netPlan.addResource(resId , type , name , netPlan.getNodeFromId(hostNodeId) , capacity , capacityMeasurementUnits , 
+				occupiedCapacitiesInBaseResources , processingTimeToTraversingTrafficInMs , null);
+		newResource.setUrlIcon(urlIcon);
+		readAndAddAttributesToEnd(newResource, "resource");
 	}
 	
-	protected void parseLayer(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
+	private void parseLayer(NetPlan netPlan) throws XMLStreamException
 	{
-		long layerId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "id"));
+		final long layerId = getLong ("id");
 		if (layerId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
-		String demandTrafficUnitsName = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "demandTrafficUnitsName"));
-		String layerDescription = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "description"));
-		String layerName = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "name"));
-		String linkCapacityUnitsName = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "linkCapacityUnitsName"));
-		final boolean isDefaultLayer = Boolean.parseBoolean(xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "isDefaultLayer")));
+		final String demandTrafficUnitsName = getString ("demandTrafficUnitsName");
+		final String layerDescription = getString ("description");
+		final String layerName = getString ("name");
+		final String linkCapacityUnitsName = getString ("linkCapacityUnitsName");
+		URL defaultNodeIconURL = null;
+		try { defaultNodeIconURL = new URL (getString ("defaultNodeIconURL")); } catch (Exception e) {}
+		final boolean isDefaultLayer = getBoolean ("isDefaultLayer");
 		
 		NetworkLayer newLayer;
 		if (!hasAlreadyReadOneLayer)
@@ -623,7 +355,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 			if (netPlan.layers.get (0).id != layerId)
 			{
 				// the Id of first layer is different => create a new one and remove the existing
-				newLayer = netPlan.addLayer(layerId , layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, null);
+				newLayer = netPlan.addLayer(layerId , layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, defaultNodeIconURL , null);
 				netPlan.removeNetworkLayer(netPlan.layers.get (0));
 			}
 			else
@@ -638,9 +370,14 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		}
 		else
 		{
-			newLayer = netPlan.addLayer(layerId , layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, null);
+			newLayer = netPlan.addLayer(layerId , layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, defaultNodeIconURL , null);
 		}
 
+		/* write the node icons information, that is already there */
+		if (nodeAndLayerToIconURLMap.containsKey(newLayer.getId()))
+			for (Pair<Node,URL> iconInfo : nodeAndLayerToIconURLMap.get(newLayer.getId()))
+				iconInfo.getFirst().setUrlNodeIcon(newLayer , iconInfo.getSecond());
+		
 		if (isDefaultLayer) netPlan.setNetworkLayerDefault(newLayer);
 
 		while(xmlStreamReader.hasNext())
@@ -654,33 +391,31 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 					switch(startElementName)
 					{
 						case "attribute":
-							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
-							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
-							newLayer.setAttribute(key, name);
+							newLayer.setAttribute(getString ("key"), getString ("name"));
 							break;
 
 						case "demand":
-							parseDemand(netPlan, layerId, xmlStreamReader);
+							parseDemand(netPlan, layerId);
 							break;
 
 						case "multicastDemand":
-							parseMulticastDemand(netPlan, layerId, xmlStreamReader);
+							parseMulticastDemand(netPlan, layerId);
 							break;
 
 						case "multicastTree":
-							parseMulticastTree(netPlan, layerId, xmlStreamReader);
+							parseMulticastTree(netPlan, layerId);
 							break;
 
 						case "link":
-							parseLink(netPlan, layerId, xmlStreamReader);
+							parseLink(netPlan, layerId);
 							break;
 
 						case "hopByHopRouting":
-							parseHopByHopRouting(netPlan, layerId, xmlStreamReader);
+							parseHopByHopRouting(netPlan, layerId);
 							break;
 
 						case "sourceRouting":
-							parseSourceRouting(netPlan, layerId, xmlStreamReader);
+							parseSourceRouting(netPlan, layerId);
 							break;
 
 						default:
@@ -698,53 +433,22 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		throw new RuntimeException("'Layer' element not parsed correctly (end tag not found)");
 	}
 
-	protected void parseMulticastDemand(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
+	private void parseMulticastDemand(NetPlan netPlan, long layerId) throws XMLStreamException
 	{
-		long demandId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "id"));
+		final long demandId = getLong ("id");
 		if (demandId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
-		long ingressNodeId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "ingressNodeId"));
-		Set<Long> egressNodeIds = new HashSet <Long>(LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "egressNodeIds"))));
-		Set<Node> newEgressNodes = new HashSet<Node> (); for (long nodeId : egressNodeIds) newEgressNodes.add (netPlan.getNodeFromId(nodeId));
-		
-		double offeredTraffic = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "offeredTraffic"));
-		MulticastDemand newDemand = netPlan.addMulticastDemand(demandId , netPlan.getNodeFromId(ingressNodeId), newEgressNodes , offeredTraffic, null , netPlan.getNetworkLayerFromId(layerId));
-		
-		while(xmlStreamReader.hasNext())
-		{
-			xmlStreamReader.next();
-
-			switch(xmlStreamReader.getEventType())
-			{
-				case XMLEvent.START_ELEMENT:
-					String startElementName = xmlStreamReader.getName().toString();
-					switch(startElementName)
-					{
-						case "attribute":
-							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
-							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
-							newDemand.setAttribute(key, name);
-							break;
-
-						default:
-							throw new RuntimeException("Bad");
-					}
-
-					break;
-
-				case XMLEvent.END_ELEMENT:
-					String endElementName = xmlStreamReader.getName().toString();
-					if (endElementName.equals("multicastDemand")) return;
-					break;
-			}
-		}
-
-		throw new RuntimeException("'MulticastDemand' element not parsed correctly (end tag not found)");
+		final long ingressNodeId = getLong ("ingressNodeId");
+		Set<Node> newEgressNodes = getNodeSetFromIds(netPlan ,  getListLong("egressNodeIds"));
+		final double offeredTraffic = getDouble ("offeredTraffic");
+		final MulticastDemand newDemand = netPlan.addMulticastDemand(demandId , netPlan.getNodeFromId(ingressNodeId), newEgressNodes , offeredTraffic, null , netPlan.getNetworkLayerFromId(layerId));
+		readAndAddAttributesToEnd(newDemand, "multicastDemand");
 	}
 
-	protected void parseSourceRouting(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
+	private void parseSourceRouting(NetPlan netPlan, long layerId) throws XMLStreamException
 	{
 		netPlan.setRoutingType (RoutingType.SOURCE_ROUTING , netPlan.getNetworkLayerFromId(layerId));
-
+		this.backupRouteIdsMap.clear(); // in multiple layers, we have to refresh this
+		
 		while(xmlStreamReader.hasNext())
 		{
 			xmlStreamReader.next();
@@ -755,12 +459,8 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 					String startElementName = xmlStreamReader.getName().toString();
 					switch(startElementName)
 					{
-						case "protectionSegment":
-							parseProtectionSegment(netPlan, layerId, xmlStreamReader);
-							break;
-
 						case "route":
-							parseRoute(netPlan, layerId, xmlStreamReader);
+							parseRoute(netPlan, layerId);
 							break;
 
 						default:
@@ -770,7 +470,16 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 
 				case XMLEvent.END_ELEMENT:
 					String endElementName = xmlStreamReader.getName().toString();
-					if (endElementName.equals("sourceRouting")) return;
+					if (endElementName.equals("sourceRouting"))
+					{
+						/* Before returning, we add the backup routes */
+						for (Entry<Route,List<Long>> entry : this.backupRouteIdsMap.entrySet())
+						{
+							final Route primary = entry.getKey();
+							for (long backupId : entry.getValue()) primary.addBackupRoute(netPlan.getRouteFromId(backupId));
+						}
+						return;
+					}
 					break;
 			}
 		}
@@ -778,23 +487,71 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		throw new RuntimeException("'Source routing' element not parsed correctly (end tag not found)");
 	}
 	
-	protected void parseMulticastTree(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
+	private void parseMulticastTree(NetPlan netPlan, long layerId) throws XMLStreamException
 	{
-		long treeId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "id"));
+		final long treeId = getLong ("id");
 		if (treeId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
-		long demandId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "demandId"));
-		double carriedTraffic = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "carriedTraffic"));
-		double occupiedCapacity = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "occupiedCapacity"));
-		double carriedTrafficIfNotFailing = carriedTraffic; try { carriedTrafficIfNotFailing = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "carriedTrafficIfNotFailing")); } catch (Exception e) {} 
-		double occupiedLinkCapacityIfNotFailing = occupiedCapacity; try { occupiedLinkCapacityIfNotFailing = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "occupiedLinkCapacityIfNotFailing")); } catch (Exception e) {} 
+		final long demandId = getLong ("demandId");
+		final double carriedTraffic = getDouble ("carriedTrafficIfNotFailing");
+		double occupiedCapacity = getDouble ("occupiedLinkCapacityIfNotFailing");
+		double carriedTrafficIfNotFailing = carriedTraffic; try { carriedTrafficIfNotFailing = getDouble ("carriedTrafficIfNotFailing"); } catch (Exception e) {} 
+		double occupiedLinkCapacityIfNotFailing = occupiedCapacity; try { occupiedLinkCapacityIfNotFailing = getDouble ("occupiedLinkCapacityIfNotFailing"); } catch (Exception e) {} 
 		if (occupiedCapacity < 0) occupiedCapacity = carriedTraffic;
-		MulticastDemand demand = netPlan.getMulticastDemandFromId(demandId);
-		Set<Long> currentSetLinks = new HashSet<Long> (LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "currentSetLinks"))));
-		Set<Long> initialSetLinksWhenWasCreated = new HashSet<Long> (LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "linkIds"))));
-		Set<Link> initialSetLinks_link = new HashSet<Link> (); for (long linkId : initialSetLinksWhenWasCreated) initialSetLinks_link.add (netPlan.getLinkFromId(linkId));
-		Set<Link> currentSetLinks_link = new HashSet<Link> (); for (long linkId : currentSetLinks) currentSetLinks_link.add (netPlan.getLinkFromId(linkId));
-		MulticastTree newTree = netPlan.addMulticastTree(treeId , demand , carriedTrafficIfNotFailing , occupiedLinkCapacityIfNotFailing , initialSetLinks_link , null);
+		final MulticastDemand demand = netPlan.getMulticastDemandFromId(demandId);
+		final Set<Link> initialSetLinks_link = getLinkSetFromIds(netPlan, getListLong ("initialSetLinks"));
+		final Set<Link> currentSetLinks_link = getLinkSetFromIds(netPlan, getListLong ("currentSetLinks"));
+		final MulticastTree newTree = netPlan.addMulticastTree(treeId , demand , carriedTrafficIfNotFailing , occupiedLinkCapacityIfNotFailing , initialSetLinks_link , null);
 		newTree.setLinks(currentSetLinks_link);
+		readAndAddAttributesToEnd (newTree , "multicastTree");
+	}
+
+	private boolean getBoolean (String name) { return Boolean.parseBoolean(xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, name))); }
+	private String getString (String name) throws XMLStreamException 	{ return xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, name));	}
+	private long getLong (String name) throws XMLStreamException 	{ return xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, name)); }
+	private List<Long> getListLong (String name) throws XMLStreamException 	{ return LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, name))); }
+	private List<Double> getListDouble (String name) throws XMLStreamException 	{ return DoubleUtils.toList(xmlStreamReader.getAttributeAsDoubleArray(xmlStreamReader.getAttributeIndex(null, name))); }
+	private double getDouble (String name) throws XMLStreamException 	{ return xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, name)); }
+	private static Set<Link> getLinkSetFromIds (NetPlan np , Collection<Long> ids) 
+	{
+		Set<Link> res = new HashSet<Link> (); for (long id : ids) res.add(np.getLinkFromId(id)); return res; 
+	}
+	private static Set<Node> getNodeSetFromIds (NetPlan np , Collection<Long> ids) 
+	{
+		Set<Node> res = new HashSet<Node> (); for (long id : ids) res.add(np.getNodeFromId(id)); return res; 
+	}
+	private static List<Link> getLinkListFromIds (NetPlan np , Collection<Long> ids) 
+	{
+		List<Link> res = new LinkedList<Link> (); for (long id : ids) res.add(np.getLinkFromId(id)); return res; 
+	}
+	private static List<NetworkElement> getLinkAndResorceListFromIds (NetPlan np , Collection<Long> ids) 
+	{
+		List<NetworkElement> res = new LinkedList<NetworkElement> (); 
+		for (long id : ids)
+		{
+			NetworkElement e = np.getLinkFromId(id);
+			if (e == null) e = np.getResourceFromId(id);
+			if (e == null) throw new Net2PlanException ("Unknown id in the list");
+			res.add(e); 
+		}
+		return res;
+	}
+	private static Map<Resource,Double> getResourceOccupationMap (NetPlan np , List<Double> resAndOccList)
+	{
+		Map<Resource,Double> res = new HashMap<Resource,Double> ();
+		Iterator<Double> it = resAndOccList.iterator();
+		while (it.hasNext())
+		{
+			final long id = (long) (double) it.next();
+			if (!it.hasNext()) throw new Net2PlanException ("Wrong array size");
+			final double val = it.next();
+			final Resource r = np.getResourceFromId(id); if (r == null) throw new Net2PlanException ("Unknown resource id");
+			res.put(r, val);
+		}
+		return res;
+	}
+	
+	private void readAndAddAttributesToEnd (NetworkElement updateElement , String endingTag) throws XMLStreamException
+	{
 		while(xmlStreamReader.hasNext())
 		{
 			xmlStreamReader.next();
@@ -808,7 +565,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 						case "attribute":
 							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
 							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
-							newTree.setAttribute(key, name);
+							if (updateElement != null) updateElement.setAttribute(key, name);
 							break;
 
 						default:
@@ -819,12 +576,13 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 
 				case XMLEvent.END_ELEMENT:
 					String endElementName = xmlStreamReader.getName().toString();
-					if (endElementName.equals("multicastTree")) return;
+					if (endElementName.equals(endingTag)) return;
 					break;
 			}
 		}
 
-		throw new RuntimeException("'Multicast tree' element not parsed correctly (end tag not found)");
+		throw new RuntimeException("'" + endingTag +"' tag not parsed correctly (end tag not found)");
+
 	}
 	
 }

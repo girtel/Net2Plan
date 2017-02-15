@@ -21,6 +21,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
@@ -37,8 +38,11 @@ import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.InputParameter;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
 
@@ -93,8 +97,8 @@ public class Offline_cfa_xpMultiperiodModularCapacities implements IAlgorithm
 
 		/* Add all the k-shortest candidate routes to the netPlan object carrying no traffic */
 		final DoubleMatrix1D linkCostVectorForCandidatePathList = shortestPathType.getString().equalsIgnoreCase("hops")? DoubleFactory1D.dense.make (E , 1.0) : netPlan.getVectorLinkLengthInKm();
+		netPlan.addRoutesFromCandidatePathList(netPlan.computeUnicastCandidatePathList(linkCostVectorForCandidatePathList , k.getInt(), maxLengthInKm.getDouble(), -1, -1, -1, -1, -1 , null));
 		
-		netPlan.addRoutesFromCandidatePathList(linkCostVectorForCandidatePathList.toArray() , "K", Integer.toString(k.getInt ()), "maxLengthInKm", Double.toString(maxLengthInKm.getDouble () > 0? maxLengthInKm.getDouble () : Double.MAX_VALUE));
 		final int P = netPlan.getNumberOfRoutes(); 
 		
 		/* Create the netPlan files, one per interval */
@@ -108,7 +112,7 @@ public class Offline_cfa_xpMultiperiodModularCapacities implements IAlgorithm
 				NetPlan netPlanToAdd = netPlan.copy ();
 				for (Demand d : netPlanToAdd.getDemands()) d.setOfferedTraffic(thisIntervalTrafficMatrix.get (d.getIngressNode().getIndex() , d.getEgressNode().getIndex()));
 				netPlanFiles.add (netPlanToAdd);
-			} catch (Exception e) { e.printStackTrace();  break; }
+			} catch (Exception e) { break; }
 		}
 		final int T = netPlanFiles.size();
 
@@ -161,7 +165,7 @@ public class Offline_cfa_xpMultiperiodModularCapacities implements IAlgorithm
 			NetPlan thisNp = netPlanFiles.get(t);
 			final DoubleMatrix1D h_p = thisNp.getVectorRouteOfferedTrafficOfAssociatedDemand();
 			final DoubleMatrix1D x_p = xx_pt.viewColumn(t).copy().assign (h_p , DoubleFunctions.mult);
-			System.out.println ("h_p: " + h_p);
+			//System.out.println ("h_p: " + h_p);
 			thisNp.setVectorRouteCarriedTrafficAndOccupiedLinkCapacities(x_p , x_p);
 			for (Link link : thisNp.getLinks ())
 			{
@@ -174,7 +178,7 @@ public class Offline_cfa_xpMultiperiodModularCapacities implements IAlgorithm
 			thisNp.saveToFile(new File (rootOfNameOfOutputFiles.getString() + "_res_tm" + netPlanFiles.size () + ".n2p"));
 			if (t == 0) netPlan.assignFrom (thisNp);
 			if (thisNp.getVectorLinkOversubscribedTraffic().zSum () > PRECISION_FACTOR) throw new RuntimeException ("Bad: " + thisNp.getVectorLinkOversubscribedTraffic().zSum ());
-			if (thisNp.getDemandTotalBlockedTraffic() > PRECISION_FACTOR) throw new RuntimeException ("Bad: " + thisNp.getDemandTotalBlockedTraffic());
+			if (thisNp.getVectorDemandBlockedTraffic().zSum() > PRECISION_FACTOR) throw new RuntimeException ("Bad: " + thisNp.getVectorDemandBlockedTraffic().zSum());
 		}
 
 		return "Ok!: The solution found is guaranteed to be optimal: " + op.solutionIsOptimal() + ". Total cost = " + op.parseExpression("sum (c_kt .* sum(a_ket,2))").evaluate("a_ket" , new DoubleMatrixND (a_ket));

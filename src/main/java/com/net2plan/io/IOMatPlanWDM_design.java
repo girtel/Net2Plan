@@ -237,7 +237,7 @@ public class IOMatPlanWDM_design extends IOFilter
 			for(int timeSlotId = 0; timeSlotId < numTimeSlots; timeSlotId++)
 			{
 				NetworkLayer wdmLayer = timeSlotId == 0 ? netPlan.getNetworkLayer ((int) 0) : netPlan.addLayerFrom(templateNetPlan.getNetworkLayer((int) 0));
-				NetworkLayer ipLayer = netPlan.addLayer(null, null, null, null, null);
+				NetworkLayer ipLayer = netPlan.addLayer(null, null, null, null, null , null);
 				
 				if (numTimeSlots == 1)
 				{
