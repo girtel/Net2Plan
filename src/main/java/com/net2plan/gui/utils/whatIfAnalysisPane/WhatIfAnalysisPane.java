@@ -93,6 +93,7 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
         btn_whatIfActivated = new JToggleButton("What-if Activated");
         btn_whatIfActivated.setToolTipText("Is active or not the what-if analysis tool");
         btn_whatIfActivated.addActionListener(this);
+        btn_whatIfActivated.setFocusable(false);
         btn_whatIfActivated.setSelected(!callback.getVisualizationState().isWhatIfAnalysisActive());
         // Negate the last selection and run the listener.
         btn_whatIfActivated.doClick();
