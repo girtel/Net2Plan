@@ -78,7 +78,10 @@ public class Offline_fa_xpFormulationsMulticast implements IAlgorithm
 		/* Add all the k-shortest candidate routes to the netPlan object carrying no traffic */
 		final DoubleMatrix1D linkCostVector = linkCostType.getString().equalsIgnoreCase("hops")? DoubleFactory1D.dense.make (E , 1.0) : netPlan.getVectorLinkLengthInKm();
 
-		netPlan.addMulticastTreesFromCandidateTreeList(netPlan.computeMulticastCandidatePathList(linkCostVector , solverName.getString() , solverLibraryName.getString () , maxSolverTimeInSeconds.getDouble () , 
+		netPlan.addMulticastTreesFromCandidateTreeList(netPlan.computeMulticastCandidatePathList(linkCostVector , 
+				solverName.getString().equals("ipopt")? "glpk" : solverName.getString() , 
+				solverName.getString().equals("ipopt")? "" : solverLibraryName.getString () , 
+				maxSolverTimeInSeconds.getDouble () , 
 				"K", Integer.toString(k.getInt ()), 
 				"maxCopyCapability", Integer.toString(maxCopyCapability.getInt ()) , 
 				"maxE2ELengthInKm", Double.toString(maxE2ELengthInKm.getDouble ()) , 
@@ -89,8 +92,6 @@ public class Offline_fa_xpFormulationsMulticast implements IAlgorithm
 				"maxTreeCostRespectToMinimumCostTree", Double.toString(maxTreeCostRespectToMinimumCostTree.getDouble ())));
 		final int P = netPlan.getNumberOfMulticastTrees(); 
 
-		System.out.println ("Number of multicast trees CPL: " + P);
-		
 		/* Create the optimization problem object (JOM library) */
 		OptimizationProblem op = new OptimizationProblem();
 
@@ -145,11 +146,7 @@ public class Offline_fa_xpFormulationsMulticast implements IAlgorithm
 		}
 		else throw new Net2PlanException ("Unknown optimization target " + optimizationTarget.getString());
 
-		System.out.println ("solverLibraryName: " +  solverLibraryName.getString ());
 		op.solve(solverName.getString (), "solverLibraryName", solverLibraryName.getString () , "maxSolverTimeInSeconds" , maxSolverTimeInSeconds.getDouble ());
-		//op.solve(solverName.getString (), "maxSolverTimeInSeconds" , maxSolverTimeInSeconds.getDouble ());
-
-		System.out.println ("solverLibraryName: " +  solverLibraryName.getString ());
 
 		/* If no solution is found, quit */
 		if (op.feasibleSolutionDoesNotExist()) throw new Net2PlanException("The problem has no feasible solution");

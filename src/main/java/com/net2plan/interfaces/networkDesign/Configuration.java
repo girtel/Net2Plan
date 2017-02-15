@@ -82,7 +82,7 @@ public class Configuration
 		
 		defaultOptions = new LinkedList<Triple<String, String, String>>();
 		defaultOptions.add(Triple.unmodifiableOf("classpath", "", "Set of external libraries loaded at runtime (separated by semi-colon)"));
-		defaultOptions.add(Triple.unmodifiableOf("defaultRunnableCodePath", SystemUtils.getCurrentDir() + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "BuiltInExamples.jar", "Default path (either .jar file or folder) for external code (i.e. algorithms)"));
+		defaultOptions.add(Triple.unmodifiableOf("defaultRunnableCodePath", "#path# " + SystemUtils.getCurrentDir() + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "BuiltInExamples.jar", "Default path (either .jar file or folder) for external code (i.e. algorithms)"));
 		defaultOptions.add(Triple.unmodifiableOf("precisionFactor", "1e-3", "Precision factor for checks to overcome numeric errors"));
 //		defaultOptions.add(Triple.unmodifiableOf("topologyViewer", "#select# " + StringUtils.join(canvasTypes, " "), "Type of topology viewer (it requires reloading active tool)"));
 		defaultOptions.add(Triple.unmodifiableOf("xpressSolverLicenseFileName", "", "Default path for XPRESS solver license file (typically xpauth.xpr)"));
@@ -154,6 +154,37 @@ public class Configuration
 		return map;
 	}
 
+	/** Goes through this map of parameters and, if both the parameters solverName and solverLibraryName exist, and solverLibraryName 
+	 * equals "", then sets the value of such parameter to the default library file set by the user (in user-&gt;options) for such solver.
+	 * @param parameters The map of parameters, that may be modified in the solverLibraryName key 
+	 */
+	public static void updateSolverLibraryNameParameter (Map<String,String> parameters)
+	{
+		String val = parameters.get("solverLibraryName"); if (val == null) return;
+		if (val.equals(""))
+		{
+			final String solverName = parameters.get("solverName");
+			if (solverName == null) return;
+			parameters.put("solverLibraryName" , getDefaultSolverLibraryName(solverName));
+		}
+	}
+	
+	/** Returns the default name of the library file (to set as solverLibraryName in JOM calls), defined by the user 
+	 * for the given solver name. In the XPRESS solver case, this corresponds to the credentials for the license (xpauth.xpr file typically).
+	 * Throws an Exception if the solver name matches any of the accepted by JOM
+	 * @param solver The name of the solver (case insensitive)
+	 * @return The file name as defined by the user in the Net2Plan options for the 
+	 */
+	public static String getDefaultSolverLibraryName (String solver)
+	{
+		final String s = solver.toLowerCase();
+		if (s.equals("cplex")) return getOption("cplexSolverLibraryName");
+		else if (s.equals("glpk")) return getOption("glpkSolverLibraryName");
+		else if (s.equals("ipopt")) return getOption("ipoptSolverLibraryName");
+		else if (s.equals("xpress")) return getOption("xpressSolverLicenseFileName");
+		else { final RuntimeException e = new Net2PlanException ("Unknown solver name: " + solver); e.printStackTrace (); throw e; }
+	}
+	
 	/**
 	 * <p>Returns the list of Net2Plan-wide parameters, where the first item of each element 
 	 * is the parameter name, the second one is the parameter value, and the third 

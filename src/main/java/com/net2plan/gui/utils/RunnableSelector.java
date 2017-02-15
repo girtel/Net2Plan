@@ -12,6 +12,35 @@
 
 package com.net2plan.gui.utils;
 
+import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.border.LineBorder;
+import javax.swing.filechooser.FileFilter;
+
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.ErrorHandling;
@@ -20,19 +49,8 @@ import com.net2plan.internal.SystemUtils;
 import com.net2plan.utils.ClassLoaderUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
-import net.miginfocom.swing.MigLayout;
 
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-import javax.swing.filechooser.FileFilter;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.List;
+import net.miginfocom.swing.MigLayout;
 
 /**
  * This class construct a panel that can be used to load some runnable code
@@ -42,6 +60,7 @@ import java.util.List;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
+@SuppressWarnings("unchecked")
 public class RunnableSelector extends JPanel {
     private final static Comparator<String> SORT_FQCN;
     private JButton load;
@@ -139,33 +158,38 @@ public class RunnableSelector extends JPanel {
 
                     ((Closeable) instance.getClass().getClassLoader()).close();
 
-                    String solverName = null;
-                    Triple<String, String, String> solverLibraryNameItem = null;
-
-                    Iterator<Triple<String, String, String>> it = aux_parameters.iterator();
-                    while (it.hasNext()) {
-                        Triple<String, String, String> aux = it.next();
-                        String paramName = aux.getFirst();
-                        if (paramName.equals("solverName")) {
-                            solverName = aux.getSecond();
-                        }
-
-                        if (paramName.equals("solverLibraryName")) {
-                            solverLibraryNameItem = aux;
-                        }
-                    }
-
-                    if (solverName != null && solverLibraryNameItem != null && solverLibraryNameItem.getSecond().isEmpty()) {
-                        try {
-                            String solverLibraryName = null;
-                            if (solverName.equalsIgnoreCase("glpk")) solverLibraryName = Configuration.getOption("glpkSolverLibraryName");
-                            else if (solverName.equalsIgnoreCase("ipopt")) solverLibraryName = Configuration.getOption("ipoptSolverLibraryName");
-                            else if (solverName.equalsIgnoreCase("cplex")) solverLibraryName = Configuration.getOption("cplexSolverLibraryName");
-                            else if (solverName.equalsIgnoreCase("xpress")) solverLibraryName = Configuration.getOption("xpressSolverLicenseFileName");
-                            if (solverLibraryName != null) solverLibraryNameItem.setSecond(solverLibraryName);
-                        } catch (Throwable ex) {
-                        }
-                    }
+//                    String solverName = null;
+//                    Triple<String, String, String> solverLibraryNameItem = null;
+//
+//                    Iterator<Triple<String, String, String>> it = aux_parameters.iterator();
+//                    while (it.hasNext()) {
+//                        Triple<String, String, String> aux = it.next();
+//                        String paramName = aux.getFirst();
+//                        if (paramName.equals("solverName")) {
+//                            solverName = aux.getSecond();
+//                        }
+//
+//                        if (paramName.equals("solverLibraryName")) {
+//                            solverLibraryNameItem = aux;
+//                        }
+//                    }
+//
+//                    if (solverName != null && solverLibraryNameItem != null && solverLibraryNameItem.getSecond().isEmpty()) 
+//                    {
+//                    	try { solverLibraryNameItem.setSecond(Configuration.getDefaultSolverLibraryName(solverName)); } catch (Exception ex) {} // in case the default name is not one solver
+//                    }
+//                   } 
+//                    {
+//                        try {
+//                            String solverLibraryName = null;
+//                            if (solverName.equalsIgnoreCase("glpk")) solverLibraryName = Configuration.getOption("glpkSolverLibraryName");
+//                            else if (solverName.equalsIgnoreCase("ipopt")) solverLibraryName = Configuration.getOption("ipoptSolverLibraryName");
+//                            else if (solverName.equalsIgnoreCase("cplex")) solverLibraryName = Configuration.getOption("cplexSolverLibraryName");
+//                            else if (solverName.equalsIgnoreCase("xpress")) solverLibraryName = Configuration.getOption("xpressSolverLicenseFileName");
+//                            if (solverLibraryName != null) solverLibraryNameItem.setSecond(solverLibraryName);
+//                        } catch (Throwable ex) {
+//                        }
+//                    }
 
                     txt_description.setText(aux_description);
                     if (!txt_description.getText().isEmpty()) txt_description.setCaretPosition(0);
@@ -332,6 +356,7 @@ public class RunnableSelector extends JPanel {
                 String packageName = aux1.getFirst();
                 if (!packageName.isEmpty()) implementationLabel += " (" + packageName + ")";
                 algorithmSelector.addItem(StringLabeller.unmodifiableOf(implementation, implementationLabel));
+
             }
 
             if (algorithmSelector.getItemCount() > 1) algorithmSelector.setSelectedIndex(-1);

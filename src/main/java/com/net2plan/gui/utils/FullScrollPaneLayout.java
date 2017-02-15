@@ -19,8 +19,7 @@ import java.awt.*;
 /**
  * <p>This class extends the default layout for {@code JScrollPane} to support
  * more than headers and corners.</p>
- * <p>
- * <p>Credits to Santhosh Kumar for his <a href='http://www.jroller.com/santhosh/entry/enhancing_jscrollpane'>Enhancing JScrollPane</a>.</p>
+ * <p>redits to Santhosh Kumar for his <a href='http://www.jroller.com/santhosh/entry/enhancing_jscrollpane'>Enhancing JScrollPane</a>.</p>
  *
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0

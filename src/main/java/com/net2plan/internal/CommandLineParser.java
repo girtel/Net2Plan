@@ -26,12 +26,11 @@ import com.net2plan.utils.Triple;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import org.apache.commons.cli.PosixParser;
+import org.apache.commons.cli.*;
 
 /**
  * Extends the {@code PosixParser} to modify the {@code processOption}
@@ -40,6 +39,7 @@ import org.apache.commons.cli.PosixParser;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.2
  */
+@SuppressWarnings({"deprecation", "unchecked"})
 public class CommandLineParser extends PosixParser
 {
 	/**
@@ -50,10 +50,10 @@ public class CommandLineParser extends PosixParser
 	 * @param iter The iterator over the flattened command line arguments
 	 * @since 0.2.2
 	 */
-	@Override
+
 	protected void processOption(String arg, ListIterator iter)
 	{
-		boolean hasOption = getOptions().hasOption(arg);
+		boolean hasOption = this.getOptions().hasOption(arg);
 		if (!hasOption) return;
 
 		try { super.processOption(arg, iter); }

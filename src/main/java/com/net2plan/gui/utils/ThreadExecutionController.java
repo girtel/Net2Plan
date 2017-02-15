@@ -148,7 +148,7 @@ public class ThreadExecutionController {
          * Reports the end of execution.
          *
          * @param controller Reference to the controller
-         * @param out        Object returned by the {@link #execute(com.net2plan.utils.ThreadExecutionController) execute} method
+         * @param out        Object returned by the {@link #execute(com.net2plan.gui.utils.ThreadExecutionController) execute} method
          * @since 0.2.0
          */
         public void executionFinished(ThreadExecutionController controller, Object out);
@@ -210,6 +210,7 @@ public class ThreadExecutionController {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private class StopExecution implements ActionListener {
         private final SwingWorker worker;
 

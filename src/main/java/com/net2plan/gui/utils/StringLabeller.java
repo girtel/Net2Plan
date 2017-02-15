@@ -18,7 +18,6 @@ import com.net2plan.interfaces.networkDesign.NetworkElement;
 /**
  * <p>Class to wrap an object with a {@code toString()} method independent of
  * the object's internal {@code toString()}. It is useful for {@code JComboBox}.</p>
- * <p>
  * <p>Example:</p>
  * <p>
  * {@code Integer number = new Integer(3);}
@@ -30,7 +29,6 @@ import com.net2plan.interfaces.networkDesign.NetworkElement;
  * {@code System.out.println(labelledNumber);} (returns "label");
  * <br />
  * </p>
- * <p>
  * <p><b>Important</b>: The object is not cloned or copied, so changes in the original
  * object are reflected here.</p>
  *

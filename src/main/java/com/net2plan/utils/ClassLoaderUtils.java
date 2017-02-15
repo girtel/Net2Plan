@@ -36,6 +36,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
+@SuppressWarnings("unchecked")
 public class ClassLoaderUtils
 {
 	private final static FileFilter fileFilter = new FileNameExtensionFilter("Java files (*.class, *.jar)", "class", "jar");
@@ -89,7 +90,7 @@ public class ClassLoaderUtils
 				break;
 
 			default:
-				throw new RuntimeException("'file' is not a valid Java file (.jar or .class)");
+				throw new RuntimeException("'" + file +"' is not a valid Java file (.jar or .class)");
 		}
 
 		if (classes.isEmpty())

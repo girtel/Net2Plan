@@ -21,7 +21,7 @@ import java.util.*;
  * Class able to show/hide columns from a table.
  *
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
- * @see http://stackoverflow.com/questions/6796673
+ * @see <a href="http://stackoverflow.com/questions/6796673"></a>
  * @since 0.3.0
  */
 public class TableColumnHider {

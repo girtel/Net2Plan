@@ -12,22 +12,31 @@
 
 package com.net2plan.gui.utils;
 
-import com.net2plan.gui.tools.specificTables.AdvancedJTable_link;
-import com.net2plan.gui.tools.specificTables.AdvancedJTable_route;
-import com.net2plan.gui.utils.topology.INetworkCallback;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.utils.DoubleUtils;
-import com.net2plan.utils.Pair;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+
+import com.net2plan.gui.utils.viewEditTopolTables.multilayerTabs.AdvancedJTable_MultiLayerControlTable;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_link;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_multicastTree;
+import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_route;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.utils.DoubleUtils;
+import com.net2plan.utils.Pair;
 
 /**
  * Set of several cell renderers used into the GUI.
@@ -35,17 +44,31 @@ import java.util.Set;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
-public class CellRenderers {
+@SuppressWarnings("unchecked")
+public class CellRenderers
+{
     /**
      * Renderer for cells containing boolean values.
      *
      * @since 0.2.0
      */
-    public static class CheckBoxRenderer extends NonEditableCellRenderer {
+    public static final long IDINDICATIONFORAGGREGATIONROW = -1000;
+    public static final Color bgColorLastRow = new Color(200, 200, 200);
+    public static final Color fgColorLastRow = new Color(0, 0, 0);
+
+    public static class CheckBoxRenderer extends NonEditableCellRenderer
+    {
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
+        {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             if (value == null) return c;
+            if (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue)
+            {
+                c.setBackground(bgColorLastRow);
+                c.setForeground(fgColorLastRow);
+                return c;
+            }
 
             Color oldColor = (Color) UIManager.get("CheckBox.interiorBackground");
             UIManager.put("CheckBox.interiorBackground", bgColorNonEditable);
@@ -70,7 +93,8 @@ public class CellRenderers {
      *
      * @since 0.3.0
      */
-    public abstract static class CurrentPlannedCellRenderer implements TableCellRenderer {
+    public abstract static class CurrentPlannedCellRenderer implements TableCellRenderer
+    {
         private final TableCellRenderer cellRenderer;
 
         /**
@@ -87,24 +111,37 @@ public class CellRenderers {
          * @param networkElementType Type of element (i.e. layers, nodes, links, and so on)
          * @since 0.3.0
          */
-        public CurrentPlannedCellRenderer(TableCellRenderer cellRenderer, NetworkElementType networkElementType) {
+        public CurrentPlannedCellRenderer(TableCellRenderer cellRenderer, NetworkElementType networkElementType)
+        {
             this.cellRenderer = cellRenderer;
             this.networkElementType = networkElementType;
         }
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
+        {
             Component c = cellRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-            if (!isSelected && row != -1 && column != -1) {
+            if (value != null && value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue)
+            {
+                c.setBackground(bgColorLastRow);
+                c.setForeground(fgColorLastRow);
+                return c;
+            }
+
+            if (!isSelected && row != -1 && column != -1)
+            {
                 row = table.convertRowIndexToModel(row);
                 column = table.convertColumnIndexToModel(column);
 
-                if (table.getModel().getValueAt(row, 0) == null) {
+                if (table.getModel().getValueAt(row, 0) == null)
+                {
                     setPlannedState(c, table, row, column, isSelected);
-                } else {
+                } else
+                {
                     Object itemId;
-                    if (networkElementType == NetworkElementType.FORWARDING_RULE) {
+                    if (networkElementType == NetworkElementType.FORWARDING_RULE)
+                    {
                         itemId = Pair.of(Integer.parseInt(table.getModel().getValueAt(row, 1).toString().split(" ")[0]), Integer.parseInt(table.getModel().getValueAt(row, 2).toString().split(" ")[0]));
                     } else
                         itemId = (Long) table.getModel().getValueAt(row, 0);
@@ -127,7 +164,8 @@ public class CellRenderers {
          * @param isSelected       Indicates whether or not the cell is selected
          * @since 0.2.0
          */
-        public void setCurrentState(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected) {
+        public void setCurrentState(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected)
+        {
         }
 
         /**
@@ -140,7 +178,8 @@ public class CellRenderers {
          * @param isSelected       Indicates whether or not the cell is selected
          * @since 0.2.0
          */
-        public void setPlannedState(Component c, JTable table, int rowIndexModel, int columnIndexModel, boolean isSelected) {
+        public void setPlannedState(Component c, JTable table, int rowIndexModel, int columnIndexModel, boolean isSelected)
+        {
         }
     }
 
@@ -151,7 +190,8 @@ public class CellRenderers {
      *
      * @since 0.3.0
      */
-    public static class LinkRenderer extends UpDownRenderer {
+    public static class LinkRenderer extends UpDownRenderer
+    {
         /**
          * Default constructor.
          *
@@ -159,29 +199,57 @@ public class CellRenderers {
          * @param callback     Reference to the handler of the network design
          * @since 0.3.0
          */
-        public LinkRenderer(TableCellRenderer cellRenderer, INetworkCallback callback) {
+        public LinkRenderer(TableCellRenderer cellRenderer, IVisualizationCallback callback)
+        {
             super(cellRenderer, callback, NetworkElementType.LINK);
         }
 
         @Override
-        public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected) {
+        public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected)
+        {
+            if (itemId != null && itemId instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue)
+            {
+                c.setBackground(bgColorLastRow);
+                c.setForeground(fgColorLastRow);
+                return;
+            }
+
             NetPlan currentNetPlan = callback.getDesign();
 
             long linkId = (long) itemId;
             long originNodeId = currentNetPlan.getLinkFromId(linkId).getOriginNode().getId();
             long destinationNodeId = currentNetPlan.getLinkFromId(linkId).getDestinationNode().getId();
-            if (!currentNetPlan.getNodeFromId(originNodeId).isUp() || !currentNetPlan.getNodeFromId(destinationNodeId).isUp()) {
+            if (!currentNetPlan.getNodeFromId(originNodeId).isUp() || !currentNetPlan.getNodeFromId(destinationNodeId).isUp())
+            {
                 c.setBackground(Color.RED);
                 return;
             }
 
-//			if (columnIndexModel == 9 || columnIndexModel == 10)
-            if (columnIndexModel == AdvancedJTable_link.COLUMN_UTILIZATION || columnIndexModel == AdvancedJTable_link.COLUMN_UTILIZATIONWOPROTECTION) {
-                double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
+            double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
+
+            // In case both of them are not in red, paint only the correspondent column.
+            if (columnIndexModel == AdvancedJTable_link.COLUMN_UTILIZATION)
+            {
                 double doubleValue = (Double) table.getModel().getValueAt(rowIndexModel, columnIndexModel);
                 if (DoubleUtils.isEqualWithinAbsoluteTolerance(doubleValue, 1, PRECISION_FACTOR))
+                {
                     c.setBackground(Color.ORANGE);
-                else if (doubleValue > 1) c.setBackground(Color.RED);
+                } else if (doubleValue > 1)
+                {
+                    c.setBackground(Color.RED);
+                    c.setForeground(Color.WHITE);
+                }
+            } else
+            {
+                double utilizationValue = (Double) table.getModel().getValueAt(rowIndexModel, AdvancedJTable_link.COLUMN_UTILIZATION);
+
+                if (DoubleUtils.isEqualWithinAbsoluteTolerance(utilizationValue, 1, PRECISION_FACTOR))
+                {
+                    c.setBackground(Color.ORANGE);
+                } else if (utilizationValue > 1)
+                {
+                    c.setBackground(Color.RED);
+                }
             }
         }
     }
@@ -191,9 +259,12 @@ public class CellRenderers {
      *
      * @since 0.2.0
      */
-    public static class LostTrafficCellRenderer extends NumberCellRenderer {
+    public static class LostTrafficCellRenderer extends NumberCellRenderer
+    {
         private static final long serialVersionUID = 1L;
         private final int offeredTrafficColumnModelIndex;
+        private final int lostTrafficColumnModelIndex;
+        private final TableCellRenderer tcr;
 
         /**
          * Default constructor.
@@ -201,22 +272,50 @@ public class CellRenderers {
          * @param offeredTrafficColumnModelIndex Column index (in model order) in which is found the offered traffic
          * @since 0.2.0
          */
-        public LostTrafficCellRenderer(int offeredTrafficColumnModelIndex) {
+        public LostTrafficCellRenderer(TableCellRenderer tcr, int offeredTrafficColumnModelIndex, int lostTrafficColumnModelIndex)
+        {
             super();
 
+            this.tcr = tcr;
             this.offeredTrafficColumnModelIndex = offeredTrafficColumnModelIndex;
+            this.lostTrafficColumnModelIndex = lostTrafficColumnModelIndex;
         }
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-            if (!isSelected && value != null) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
+        {
+            Component c = null;
+            if (tcr != null)
+                c = tcr.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            else
+                c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if ((value != null) && (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            {
+                c.setForeground(fgColorLastRow);
+                c.setBackground(bgColorLastRow);
+                return c;
+            }
+            if (!isSelected && value != null)
+            {
                 int demandId = table.convertRowIndexToModel(row);
-                double lostTraffic = (Double) value;
+                double lostTraffic = (Double) table.getModel().getValueAt(demandId, lostTrafficColumnModelIndex);
                 double h_d = (Double) table.getModel().getValueAt(demandId, offeredTrafficColumnModelIndex);
-                if (h_d > 0) {
-                    c.setBackground(lostTraffic > 1E-10 ? Color.RED : Color.GREEN);
+                if (h_d > 0)
+                {
+                    if (lostTraffic > 1E-10)
+                    {
+                        c.setBackground(Color.RED);
+                        if (column == (lostTrafficColumnModelIndex - (table.getModel().getColumnCount() - table.getColumnCount())))
+                        {
+                            c.setForeground(Color.WHITE);
+                        }
+                    } else
+                    {
+                        if (column == (lostTrafficColumnModelIndex - (table.getModel().getColumnCount() - table.getColumnCount())))
+                        {
+                            c.setBackground(Color.GREEN);
+                        }
+                    }
                 }
             }
 
@@ -229,7 +328,8 @@ public class CellRenderers {
      *
      * @since 0.2.0
      */
-    public static class NonEditableCellRenderer extends DefaultTableCellRenderer {
+    public static class NonEditableCellRenderer extends DefaultTableCellRenderer
+    {
         /**
          * Background color for non-editable cell.
          *
@@ -237,9 +337,17 @@ public class CellRenderers {
          */
         protected final static Color bgColorNonEditable = new Color(245, 245, 245);
 
+
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
+        {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if ((value != null) && (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            {
+                c.setForeground(fgColorLastRow);
+                c.setBackground(bgColorLastRow);
+                return c;
+            }
 
 			/*
              * When you call setForeground() or setBackground(), the selected colors stay
@@ -252,17 +360,58 @@ public class CellRenderers {
             c.setForeground(UIManager.getColor(isSelected ? "Table.selectionForeground" : "Table.foreground"));
             c.setBackground(UIManager.getColor(isSelected ? "Table.selectionBackground" : "Table.background"));
 
-            if (!isSelected) {
-                if (row != -1 && column != -1) {
+            if (!isSelected)
+            {
+                if (row != -1 && column != -1)
+                {
                     row = table.convertRowIndexToModel(row);
                     column = table.convertColumnIndexToModel(column);
 
-                    if (!table.getModel().isCellEditable(row, column)) {
+                    if (!table.getModel().isCellEditable(row, column))
+                    {
                         c.setBackground(isSelected ? UIManager.getColor("Table.selectionBackground") : bgColorNonEditable);
                     }
                 }
             }
 
+            return c;
+        }
+    }
+
+    public static class LastRowAggregatingInfoCellRenderer extends DefaultTableCellRenderer
+    {
+        private final static Color bgColorNonEditable = new Color(230, 230, 230);
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
+        {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            c.setForeground(UIManager.getColor("Table.foreground"));
+            c.setBackground(bgColorNonEditable);
+            return c;
+        }
+    }
+
+    public static class FixedTableHeaderRenderer extends DefaultTableCellHeaderRenderer
+    {
+        /**
+         * Background color for Fixed Table Columns.
+         *
+         * @since 0.2.0
+         */
+        protected final static Color bgColorFixedTable = new Color(245, 245, 245);
+
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
+        {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (value != null && value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue)
+            {
+                c.setBackground(bgColorLastRow);
+                c.setForeground(fgColorLastRow);
+            } else
+                c.setBackground(bgColorFixedTable);
             return c;
         }
     }
@@ -273,7 +422,8 @@ public class CellRenderers {
      *
      * @since 0.2.0
      */
-    public static class NumberCellRenderer extends NonEditableCellRenderer {
+    public static class NumberCellRenderer extends NonEditableCellRenderer
+    {
         private final NumberFormat nf;
 
         /**
@@ -281,7 +431,8 @@ public class CellRenderers {
          *
          * @since 0.2.0
          */
-        public NumberCellRenderer() {
+        public NumberCellRenderer()
+        {
             nf = NumberFormat.getInstance();
             nf.setGroupingUsed(false);
         }
@@ -292,14 +443,17 @@ public class CellRenderers {
          * @param maxNumDecimals Maximum number of decimal digits
          * @since 0.3.1
          */
-        public NumberCellRenderer(int maxNumDecimals) {
+        public NumberCellRenderer(int maxNumDecimals)
+        {
             this();
             nf.setMaximumFractionDigits(maxNumDecimals);
         }
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            if (value instanceof Number) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
+        {
+            if (value instanceof Number)
+            {
                 double doubleValue = ((Number) value).doubleValue();
                 if (doubleValue == Double.MAX_VALUE) doubleValue = Double.POSITIVE_INFINITY;
                 else if (doubleValue == -Double.MAX_VALUE) doubleValue = Double.NEGATIVE_INFINITY;
@@ -308,6 +462,12 @@ public class CellRenderers {
             }
 
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if ((value != null) && (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            {
+                c.setForeground(fgColorLastRow);
+                c.setBackground(bgColorLastRow);
+                return c;
+            }
             return c;
         }
     }
@@ -318,7 +478,8 @@ public class CellRenderers {
      *
      * @since 0.3.0
      */
-    public static class ForwardingRuleRenderer extends UpDownRenderer {
+    public static class ForwardingRuleRenderer extends UpDownRenderer
+    {
         /**
          * Default constructor.
          *
@@ -326,7 +487,8 @@ public class CellRenderers {
          * @param callback     Reference to the handler of the network design
          * @since 0.3.0
          */
-        public ForwardingRuleRenderer(TableCellRenderer cellRenderer, INetworkCallback callback) {
+        public ForwardingRuleRenderer(TableCellRenderer cellRenderer, IVisualizationCallback callback)
+        {
             super(cellRenderer, callback, NetworkElementType.FORWARDING_RULE);
         }
     }
@@ -338,7 +500,8 @@ public class CellRenderers {
      *
      * @since 0.3.0
      */
-    public static class RouteRenderer extends UpDownRenderer {
+    public static class RouteRenderer extends UpDownRenderer
+    {
         /**
          * Default constructor.
          *
@@ -346,29 +509,43 @@ public class CellRenderers {
          * @param callback     Reference to the handler of the network design
          * @since 0.3.0
          */
-        public RouteRenderer(TableCellRenderer cellRenderer, INetworkCallback callback) {
+        public RouteRenderer(TableCellRenderer cellRenderer, IVisualizationCallback callback)
+        {
             super(cellRenderer, callback, NetworkElementType.ROUTE);
         }
 
         @Override
-        public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected) {
+        public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected)
+        {
+            if ((itemId != null) && (itemId instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            {
+                c.setForeground(fgColorLastRow);
+                c.setBackground(bgColorLastRow);
+                return;
+            }
             NetPlan currentNetPlan = callback.getDesign();
             NetPlan initialNetPlan = callback.getInitialDesign();
 
             long routeId = (long) itemId;
-            if (columnIndexModel == AdvancedJTable_route.COLUMN_BOTTLENECKUTILIZATION) {
-                double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-                double doubleValue = (Double) table.getModel().getValueAt(rowIndexModel, columnIndexModel);
-                if (DoubleUtils.isEqualWithinAbsoluteTolerance(doubleValue, 1, PRECISION_FACTOR))
-                    c.setBackground(Color.ORANGE);
-                else if (doubleValue > 1) c.setBackground(Color.RED);
+            double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
+            double bottleneckValue = (Double) table.getModel().getValueAt(rowIndexModel, AdvancedJTable_route.COLUMN_BOTTLENECKUTILIZATION);
+            if (DoubleUtils.isEqualWithinAbsoluteTolerance(bottleneckValue, 1, PRECISION_FACTOR))
+                c.setBackground(Color.ORANGE);
+            else if (bottleneckValue > 1)
+            {
+                c.setBackground(Color.RED);
+                if (columnIndexModel == AdvancedJTable_route.COLUMN_BOTTLENECKUTILIZATION)
+                {
+                    c.setForeground(Color.WHITE);
+                }
             }
 
-            if (initialNetPlan != null && initialNetPlan.getRouteFromId(routeId) != null) {
+            if (initialNetPlan != null && initialNetPlan.getRouteFromId(routeId) != null)
+            {
                 Route initialRoute = initialNetPlan.getRouteFromId(routeId);
                 Route currentRoute = currentNetPlan.getRouteFromId(routeId);
-                List<Long> currentSeqLinks = (List<Long>) NetPlan.getIds(currentRoute.getSeqLinksRealPath());
-                List<Long> initialSeqLinks = (List<Long>) NetPlan.getIds(initialRoute.getSeqLinksRealPath());
+                List<Long> currentSeqLinks = (List<Long>) NetPlan.getIds(currentRoute.getSeqLinks());
+                List<Long> initialSeqLinks = (List<Long>) NetPlan.getIds(initialRoute.getSeqLinks());
 
                 if (!currentSeqLinks.equals(initialSeqLinks))
                     c.setBackground(Color.YELLOW);
@@ -386,7 +563,8 @@ public class CellRenderers {
      *
      * @since 0.3.1
      */
-    public static class MulticastTreeRenderer extends UpDownRenderer {
+    public static class MulticastTreeRenderer extends UpDownRenderer
+    {
         /**
          * Default constructor.
          *
@@ -394,17 +572,27 @@ public class CellRenderers {
          * @param callback     Reference to the handler of the network design
          * @since 0.3.1
          */
-        public MulticastTreeRenderer(TableCellRenderer cellRenderer, INetworkCallback callback) {
+        public MulticastTreeRenderer(TableCellRenderer cellRenderer, IVisualizationCallback callback)
+        {
             super(cellRenderer, callback, NetworkElementType.MULTICAST_TREE);
         }
 
         @Override
-        public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected) {
+        public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected)
+        {
+            if ((itemId != null) && (itemId instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            {
+                c.setForeground(fgColorLastRow);
+                c.setBackground(bgColorLastRow);
+                return;
+            }
+
             NetPlan currentNetPlan = callback.getDesign();
             NetPlan initialNetPlan = callback.getInitialDesign();
 
             long treeId = (long) itemId;
-            if (columnIndexModel == 13) {
+            if (columnIndexModel == AdvancedJTable_multicastTree.COLUMN_BOTTLENECKUTILIZATION)
+            {
                 double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
                 double doubleValue = (Double) table.getModel().getValueAt(rowIndexModel, columnIndexModel);
                 if (DoubleUtils.isEqualWithinAbsoluteTolerance(doubleValue, 1, PRECISION_FACTOR))
@@ -413,15 +601,18 @@ public class CellRenderers {
             }
 
             NetworkLayer layer = currentNetPlan.getNetworkLayerDefault();
-            if (initialNetPlan != null && initialNetPlan.getMulticastTreeFromId(treeId) != null && initialNetPlan.getMulticastTreeFromId(treeId).getLayer().equals(layer)) {
+            if (initialNetPlan != null && initialNetPlan.getMulticastTreeFromId(treeId) != null && initialNetPlan.getMulticastTreeFromId(treeId).getLayer().equals(layer))
+            {
                 MulticastTree currentTree = currentNetPlan.getMulticastTreeFromId(treeId);
                 MulticastTree initialTree = initialNetPlan.getMulticastTreeFromId(treeId);
                 Set<Link> currentSeqLinks = currentTree.getLinkSet();
                 Set<Link> initialSeqLinks = initialTree.getLinkSet();
 
-                if (!currentSeqLinks.equals(initialSeqLinks)) {
+                if (!currentSeqLinks.equals(initialSeqLinks))
+                {
                     c.setBackground(Color.YELLOW);
-                } else {
+                } else
+                {
                     Map<String, String> currentAttributes = currentTree.getAttributes();
                     Map<String, String> initialAttributes = initialTree.getAttributes();
                     if (!currentAttributes.equals(initialAttributes)) c.setBackground(Color.YELLOW);
@@ -430,9 +621,11 @@ public class CellRenderers {
                 double current_x_p = currentTree.getCarriedTraffic();
                 double initial_x_p = initialTree.getCarriedTraffic();
 
-                if (current_x_p < initial_x_p) {
+                if (current_x_p < initial_x_p)
+                {
                     c.setBackground(Color.ORANGE);
-                } else {
+                } else
+                {
                     double current_y_p = currentTree.getOccupiedLinkCapacity();
                     double initial_y_p = initialTree.getOccupiedLinkCapacity();
                     if (current_y_p < initial_y_p) c.setBackground(Color.ORANGE);
@@ -446,13 +639,14 @@ public class CellRenderers {
      *
      * @since 0.3.0
      */
-    public static class UpDownRenderer extends CurrentPlannedCellRenderer {
+    public static class UpDownRenderer extends CurrentPlannedCellRenderer
+    {
         /**
          * Reference to the handler of the network design.
          *
          * @since 0.3.0
          */
-        protected final INetworkCallback callback;
+        protected final IVisualizationCallback callback;
 
         /**
          * Default constructor.
@@ -462,18 +656,28 @@ public class CellRenderers {
          * @param networkElementType Type of element (i.e. layers, nodes, links, and so on)
          * @since 0.3.0
          */
-        public UpDownRenderer(TableCellRenderer cellRenderer, INetworkCallback callback, NetworkElementType networkElementType) {
+        public UpDownRenderer(TableCellRenderer cellRenderer, IVisualizationCallback callback, NetworkElementType networkElementType)
+        {
             super(cellRenderer, networkElementType);
 
             this.callback = callback;
         }
 
         @Override
-        public void setCurrentState(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected) {
+        public void setCurrentState(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected)
+        {
+            if ((itemId != null) && (itemId instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            {
+                c.setForeground(fgColorLastRow);
+                c.setBackground(bgColorLastRow);
+                return;
+            }
+
             NetPlan currentNetPlan = callback.getDesign();
             boolean isDown = false;
 
-            switch (networkElementType) {
+            switch (networkElementType)
+            {
                 case NODE:
                     isDown = currentNetPlan.getNodeFromId((long) itemId).isDown();
                     break;
@@ -490,8 +694,8 @@ public class CellRenderers {
                     isDown = currentNetPlan.getMulticastTreeFromId((long) itemId).isDown();
                     break;
 
-                case PROTECTION_SEGMENT:
-                    isDown = currentNetPlan.getProtectionSegmentFromId((long) itemId).isDown();
+                case RESOURCE:
+                    isDown = currentNetPlan.getResourceFromId((long) itemId).getHostNode().isDown();
                     break;
 
                 case FORWARDING_RULE:
@@ -503,9 +707,11 @@ public class CellRenderers {
                     throw new RuntimeException("Bad");
             }
 
-            if (isDown) {
+            if (isDown)
+            {
                 c.setBackground(Color.RED);
-            } else {
+            } else
+            {
                 setCurrentStateUp(c, table, itemId, rowIndexModel, columnIndexModel, isSelected);
             }
         }
@@ -521,7 +727,8 @@ public class CellRenderers {
          * @param isSelected       Indicates whether or not the cell is selected
          * @since 0.3.0
          */
-        public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected) {
+        public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected)
+        {
         }
     }
 
@@ -530,10 +737,38 @@ public class CellRenderers {
      *
      * @since 0.3.0
      */
-    public static class UnfocusableCellRenderer extends DefaultTableCellRenderer {
+    public static class UnfocusableCellRenderer extends DefaultTableCellRenderer
+    {
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            return super.getTableCellRendererComponent(table, value, isSelected, false, row, column);
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
+        {
+            final Component c = super.getTableCellRendererComponent(table, value, isSelected, false, row, column);
+            if ((value != null) && (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            {
+                c.setForeground(fgColorLastRow);
+                c.setBackground(bgColorLastRow);
+            }
+            return c;
+        }
+    }
+
+    public class ButtonRenderer extends JButton implements TableCellRenderer
+    {
+        private ButtonRenderer()
+        {
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                                                       boolean isSelected, boolean hasFocus, int row, int column)
+        {
+            if (isSelected)
+            {
+                this.setBackground(table.getSelectionBackground());
+            } else
+            {
+                this.setBackground(table.getBackground());
+            }
+            return this;
         }
     }
 }

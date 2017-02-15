@@ -19,7 +19,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
+import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants.RunnableCodeType;
 
@@ -260,7 +263,7 @@ public class InputParameter
 	{
 //		System.out.println ("o.getClass() " +  o.getClass());
 //		System.out.println ("o.getClass().getDeclaredFields() " +  o.getClass().getDeclaredFields());
-
+//
 		for (Field f : o.getClass().getDeclaredFields())
 		{
 			Object possibleParam;
@@ -279,7 +282,8 @@ public class InputParameter
 	{
 		Class<?> c = o.getClass ();
 //		System.out.println ("Init c.getName (): " + c.getName ());
-		while (!c.getName().equals(className)) { c = c.getSuperclass(); System.out.println ("c.getName (): " + c.getName ()); if (c == new Object ().getClass ()) throw new RuntimeException ("Bad"); }
+		while (!c.getName().equals(className)) 
+		{ c = c.getSuperclass(); /*System.out.println ("c.getName (): " + c.getName ()); */ if (c == new Object ().getClass ()) throw new RuntimeException ("Bad"); }
 		
 //		System.out.println ("End c.getName (): " + c.getName ());
 		for (Field f : c.getDeclaredFields())
@@ -320,7 +324,11 @@ public class InputParameter
 	{
 		Class<?> c = o.getClass ();
 //		System.out.println ("Init c.getName (): " + c.getName ());
-		while (!c.getName().equals(className)) { c = c.getSuperclass(); System.out.println ("c.getName (): " + c.getName ()); if (c == new Object ().getClass ()) throw new RuntimeException ("Bad"); }
+		while (!c.getName().equals(className)) 
+		{ 
+			c = c.getSuperclass(); /* System.out.println ("c.getName (): " + c.getName ()); */ 
+			if (c == new Object ().getClass ()) throw new RuntimeException ("Bad"); 
+		}
 
 		List<Triple<String, String, String>> algorithmParameters = new LinkedList<Triple<String, String, String>>();
 		/* Return the information of the input parameters defined with InputParameter classes. 
@@ -363,7 +371,7 @@ public class InputParameter
 			else if (isBoolean) initialize (Boolean.parseBoolean(map.get (memberName)));
 			else if (isRunnableCode) initialize (map.get (memberName + "_file") , map.get (memberName + "_classname") , map.get (memberName + "_parameters")); 
 			else throw new RuntimeException ("Bad");
-		} catch (Exception e) { e.printStackTrace(); System.out.println (map); throw new Net2PlanException ("Failing to convert the parameter " + memberName + " = " + map.get (memberName)); }
+		} catch (Exception e) { e.printStackTrace(); System.out.println (map); for (Entry<String,String> ent : map.entrySet()) System.out.println("**" + ent.getKey() + "** = **" + ent.getValue() + "**"); throw new Net2PlanException ("Failing to convert the parameter **" + memberName + "** = " + map.get (memberName)); }
 	}
 
 	public boolean isWithinAcceptableRange () 
@@ -395,7 +403,7 @@ public class InputParameter
 			if (selectOccurrence != -1)
 			{
 				String [] options = StringUtils.split(defaultString.substring(selectOccurrence + "#select#".length()) , " ");
-				System.out.println ("InputParameter :" + this.memberName + ", default: " + this.defaultString + ", options: " + Arrays.toString (options));
+				//System.out.println ("InputParameter :" + this.memberName + ", default: " + this.defaultString + ", options: " + Arrays.toString (options));
 				boolean validOption = false; for (String option : options) if (valString.equals (option)) { validOption = true; break; }
 				if (!validOption) return false; //throw new Net2PlanException ("Input parameter " + this.memberName + " is initialized with vaule '" + val + "' which is not a valid option :" + Arrays.toString(options));
 			}
@@ -417,8 +425,63 @@ public class InputParameter
 		throw new RuntimeException ("Unexpected error");
 	}
 
+	/** Receives a map which assigns for each parameter name, a set of possible values, and returns a list with the cartesian 
+	 * product of all the maps combining the different parameter values
+	 * @param paramKeyValues the input param-key values 
+	 * @return see above
+	 */
+	public static List<Map<String,String>> getCartesianProductOfParameters (Map<String,List<String>> paramKeyValues)
+	{
+		List<Map<String,String>> res = new LinkedList<> ();
+		
+		Map<String,String> firstParamSetting = paramKeyValues.entrySet().stream().collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue().get(0)));
+		res.add(firstParamSetting);
+		for (String key : paramKeyValues.keySet())
+		{
+			List<String> valuesThisKey = paramKeyValues.get(key);
+			List<Map<String,String>> copyCurrentResWithoutThisParam = res.stream().map(e->new HashMap<> (e)).collect(Collectors.toList()); 
+			res.clear();
+			for (String newValueParam : valuesThisKey)
+			{
+				for (Map<String,String> map : copyCurrentResWithoutThisParam)
+				{
+					final Map<String,String> mapCopy = new HashMap<> (map);
+					mapCopy.put (key , newValueParam); res.add(mapCopy);
+				}
+			}
+		}
+		return res;
+	}
 
-
+	/** Returns the map with the default parameters of the parameter description given. For those default descriptions 
+	 *  starting with character '#' (e.g. #select# 1 2 3), we return the first element after the second '#', trimmed without 
+	 *  spaces (e.g. '2' in the previous example) 
+	 * @param paramDescriptions param name, param default, param description
+	 * @return see above
+	 */
+	public static Map<String,String> getDefaultParameters (List<Triple<String, String, String>> paramDescriptions)
+	{
+		Map<String,String> res = new HashMap<> ();
+		for (Triple<String,String,String> triple : paramDescriptions)
+		{
+			final String key = triple.getFirst();
+			String defaultDescription = triple.getSecond();
+			if (defaultDescription.startsWith("#"))
+			{
+				final int secondIndex = defaultDescription.indexOf("#" , 1);
+				if (secondIndex != -1) 	
+				{
+					defaultDescription = defaultDescription.substring(secondIndex + 1).trim();
+					final int indexFirstSpace = defaultDescription.indexOf(" ");
+					if (indexFirstSpace != -1)
+						defaultDescription = defaultDescription.substring(0 , indexFirstSpace).trim();
+				}
+			}
+			defaultDescription.trim();
+			res.put(key  ,defaultDescription.trim());
+		}
+		return res;
+	}
 	
 	public static void main (String [] args)
 	{

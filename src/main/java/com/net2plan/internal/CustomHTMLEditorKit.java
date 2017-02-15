@@ -63,6 +63,7 @@ import org.jsoup.Jsoup;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.3.0
  */
+@SuppressWarnings("unchecked")
 public class CustomHTMLEditorKit extends HTMLEditorKit
 {
 	private static final long serialVersionUID = 1L;
@@ -144,7 +145,7 @@ public class CustomHTMLEditorKit extends HTMLEditorKit
 	 * <p>Saves an HTML content to a given file.</p>
 	 * 
 	 * <p><b>Important</b>: This method is for internal use, users should use the 
-	 * other {@link com.net2plan.utils.HTMLUtils#exportToHTML(java.io.File, java.lang.String) saveToFile} method.</p>
+	 * other {@link com.net2plan.utils.HTMLUtils#saveToFile(java.io.File, java.lang.String) saveToFile} method.</p>
 	 *
 	 * @param file A valid file
 	 * @param html HTML content
@@ -205,7 +206,7 @@ public class CustomHTMLEditorKit extends HTMLEditorKit
 	 * 
 	 * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
 	 * @since 0.2.3
-	 * @see http://stackoverflow.com/questions/5939732/jeditorpane-is-removing-css-font-styles
+	 * @see <a href="http://stackoverflow.com/questions/5939732/jeditorpane-is-removing-css-font-styles"></a>
 	 */
 	private static class FixedHTMLWriter extends HTMLWriter
 	{

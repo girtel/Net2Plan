@@ -50,14 +50,12 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
  * any delay constraint either in the IP layer or in the WDM layer. In addition,
  * we assume that ROADMs do not allow wavelength conversion, and signal regeneration
  * is not required.</p>
- * <p>
  * <p>The algorithm is divided into two stages. First, we use a heuristic, inspired
  * in the well-known heuristic logical topology design algorithm (HLDA), to solve
  * the VTD problem allocating enough lightpaths to carry all the offered traffic
  * to the network without grooming. Then, an optional second stage is able to
  * set up new lightpaths in such a way that the traffic can still be routed
  * across the network under different possible failure states.</p>
- * <p>
  * <p>When the second stage is disabled, we are considering the case that the optical
  * layer is able to reroute affected lightpaths over the surviving physical topology,
  * before triggering restoration mechanisms at the IP layer. Otherwise, we are
@@ -108,7 +106,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
         NetPlan cpl = netPlan.copy();
         cpl.removeNetworkLayer(cpl.getNetworkLayerFromId(ipLayer.getId()));
         for (Node n1 : cpl.getNodes()) for (Node n2 : cpl.getNodes()) if (n1 != n2) cpl.addDemand(n1, n2, 0.0, null);
-        cpl.addRoutesFromCandidatePathList(null, "K", Integer.toString(K));
+		cpl.addRoutesFromCandidatePathList(cpl.computeUnicastCandidatePathList(null , K, -1, -1, -1, -1, -1, -1 , null));
 		
 		/* Configure SRGs */
         if (setSRGsAsBidirectionalLinkFiber) {
@@ -144,7 +142,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
 
 			/* Allocate the lightpath */
             final List<Link> seqFibers = new LinkedList<Link>();
-            for (Link cplLink : lp.getFirst().getSeqLinksRealPath())
+            for (Link cplLink : lp.getFirst().getSeqLinks())
                 seqFibers.add(netPlan.getLinkFromId(cplLink.getId()));
             final int wavelengthId = lp.getSecond();
             final double trafficToCarry = Math.min(pendingCarriedTraffic_thisDemand, lineRatePerLightpath_Gbps);
@@ -243,7 +241,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
                     if (lp == null) continue;
 
                     final List<Link> seqFibers = new LinkedList<Link>();
-                    for (Link cplLink : lp.getFirst().getSeqLinksRealPath())
+                    for (Link cplLink : lp.getFirst().getSeqLinks())
                         seqFibers.add(netPlan.getLinkFromId(cplLink.getId()));
                     final int wavelengthId = lp.getSecond();
 					
@@ -334,7 +332,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
         final Demand cplDemand = cpl.getNodePairDemands(cpl.getNodeFromId(ingressNode.getId()), cpl.getNodeFromId(egressNode.getId()), false).iterator().next();
         for (Route cplRoute : cplDemand.getRoutes()) {
             List<Link> seqLinks = new LinkedList<Link>();
-            for (Link cplLink : cplRoute.getSeqLinksRealPath()) seqLinks.add(netPlan.getLinkFromId(cplLink.getId()));
+            for (Link cplLink : cplRoute.getSeqLinks()) seqLinks.add(netPlan.getLinkFromId(cplLink.getId()));
             final int wavelength = WDMUtils.spectrumAssignment_firstFit(seqLinks, wavelengthFiberOccupancy,1);
             if (wavelength != -1)
                 return Pair.of(cplRoute, wavelength);

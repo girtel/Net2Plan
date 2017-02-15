@@ -120,6 +120,30 @@ public class SimEvent implements Comparable<SimEvent>
 	};
 
 	/**
+	 * This class represents the request to modify an existing Demand.
+	 */
+	public static class MulticastDemandModify
+	{
+		public final MulticastDemand demand; public final double offeredTraffic; public final boolean modificationIsRelativeToCurrentOfferedTraffic;
+
+		/**
+		 * Default constructor.
+		 * @param demand Demand to be modified
+		 * @param offeredTraffic New offered traffic
+		 * @param modificationIsRelativeToCurrentOfferedTraffic Wheter or not the modification is relative to the current offered traffic
+		 */
+		public MulticastDemandModify (MulticastDemand demand , double offeredTraffic , boolean modificationIsRelativeToCurrentOfferedTraffic) { this.demand = demand; this.offeredTraffic = offeredTraffic; this
+			.modificationIsRelativeToCurrentOfferedTraffic = modificationIsRelativeToCurrentOfferedTraffic; }
+
+		@Override
+		public String toString()
+		{
+			return this.getClass ().getSimpleName() + " [Multicast demand=" + demand + ", offeredTraffic=" + offeredTraffic + ", modificationIsRelativeToCurrentOfferedTraffic=" + modificationIsRelativeToCurrentOfferedTraffic + "]";
+		} 
+		
+	};
+
+	/**
 	 * This class represents the request to add a new Route.
 	 */
 	public static class RouteAdd
@@ -184,47 +208,6 @@ public class SimEvent implements Comparable<SimEvent>
 		{
 			return this.getClass ().getSimpleName() + " [route=" + route + ", seqLinks=" + seqLinks + ", carriedTraffic=" + carriedTraffic + ", occupiedLinkCapacity=" + occupiedLinkCapacity + "]";
 		}  
-	};
-
-	/**
-	 * This class represents the request to add a new Protection Segment.
-	 */
-	public static class SegmentAdd
-	{ 
-		public ProtectionSegment segmentAddedToFillByProcessor; public final Set<Route> associatedRoutes; public final List<Link> seqLinks; public final double reservedLinkCapacity;
-
-		/**
-		 * Default constructor.
-		 * @param associatedRoutes Associated routes
-		 * @param seqLinks Sequence of links
-		 * @param reservedLinkCapacity Reserved link capacity
-		 */
-		public SegmentAdd(Set<Route> associatedRoutes , List<Link> seqLinks, double reservedLinkCapacity) { this.associatedRoutes = new HashSet<Route> (associatedRoutes); this.seqLinks = new
-			LinkedList<Link> (seqLinks); this.reservedLinkCapacity = reservedLinkCapacity; }
-		@Override
-		public String toString()
-		{
-			return this.getClass ().getSimpleName() + " [associatedRoutes=" + associatedRoutes + ", seqLinks=" + seqLinks + ", reservedLinkCapacity=" + reservedLinkCapacity + "]";
-		}  
-	};
-
-	/**
-	 * This class represents the request to remove an existing Protection Segment.
-	 */
-	public static class SegmentRemove
-	{ 
-		public final ProtectionSegment segment;
-
-		/**
-		 * Default constructor.
-		 * @param segment Protection Segment to be removed
-		 */
-		public SegmentRemove (ProtectionSegment segment) { this.segment = segment; }
-		@Override
-		public String toString()
-		{
-			return this.getClass ().getSimpleName() + " [segment=" + segment + "]";
-		} 
 	};
 
 	/**

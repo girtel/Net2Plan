@@ -51,6 +51,7 @@ import com.net2plan.utils.Triple;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.3.1
  */
+@SuppressWarnings("unchecked")
 public class IOSNDLibNative extends IOFilter
 {
 	private final static String title = "Native SNDLib";

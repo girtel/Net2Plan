@@ -35,6 +35,7 @@ import java.util.Map;
  *
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  */
+@SuppressWarnings("unchecked")
 public class CLINet2Plan {
     private final static int LINE_WIDTH = 80;
     private final Map<String, Class<? extends ICLIModule>> modes = new LinkedHashMap<String, Class<? extends ICLIModule>>();

@@ -61,7 +61,7 @@ public class Report_robustness implements IReport
 	public String executeReport(NetPlan netPlan, Map<String, String> reportParameters, Map<String, String> net2planParameters)
 	{
 		boolean doReport = false;
-		for(NetworkLayer layer : netPlan.getNetworkLayers ()) if (netPlan.hasLinks(layer)) {	doReport = true;	break; }
+		for(NetworkLayer layer : netPlan.getNetworkLayers ()) if (netPlan.hasLinks(layer)) { doReport = true; break; }
 		if (!doReport) throw new Net2PlanException("A network with nodes and links is required");
 		
 		try (ByteArrayOutputStream os = new ByteArrayOutputStream())

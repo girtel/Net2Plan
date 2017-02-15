@@ -54,7 +54,8 @@ import com.net2plan.utils.Triple;
  * @net2plan.inputParameters 
  * @author Pablo Pavon-Marino
  */
-public class Online_evProc_congControlAndQoSTwoClassesPrimalDecomp extends IEventProcessor 
+@SuppressWarnings("unchecked")
+public class Online_evProc_congControlAndQoSTwoClassesPrimalDecomp extends IEventProcessor
 {
 	private double PRECISIONFACTOR;
 	private Random rng;
@@ -177,7 +178,9 @@ public class Online_evProc_congControlAndQoSTwoClassesPrimalDecomp extends IEven
 		/* Remove all routes, and create one with the shortest path in km for each demand */
 		currentNetPlan.removeAllUnicastRoutingInformation();
 		currentNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
-		currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.getVectorLinkLengthInKm().toArray()  , "K" , "1");
+		this.currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.computeUnicastCandidatePathList(currentNetPlan.getVectorLinkLengthInKm() , 1, -1, -1, -1, -1, -1, -1 , null));
+
+		
 		for (Route r : currentNp.getRoutes ()) r.setCarriedTraffic(cc_control_minHd.getDouble() , cc_control_minHd.getDouble());
 		
 		/* INITIALIZE control information  */
@@ -404,7 +407,7 @@ public class Online_evProc_congControlAndQoSTwoClassesPrimalDecomp extends IEven
 		{
 			final double h_d = d.getCarriedTraffic();
 			final int type = (int) this.demandType.get(d.getIndex());
-			final List<Link> seqLinks = d.getRoutes ().iterator().next().getSeqLinksRealPath();
+			final List<Link> seqLinks = d.getRoutes ().iterator().next().getSeqLinks();
 			for (Link e : seqLinks)
 			{
 				final int index_e = e.getIndex ();
@@ -438,7 +441,7 @@ public class Online_evProc_congControlAndQoSTwoClassesPrimalDecomp extends IEven
 		{
 			final double h_r = r.getCarriedTraffic();
 			demandCarriedTraffic += h_r;
-			for (Link e : r.getSeqLinksRealPath())
+			for (Link e : r.getSeqLinks())
 				demandWeightedSumLinkPrices += h_r * infoIKnow_price_e.get(e.getIndex ());
 		}
 		//if (Math.abs(demandCarriedTraffic - this.currentNetPlan.getDemandCarriedTraffic(dIdMe)) > 1E-3) throw new RuntimeException ("Not all the traffic is carried");

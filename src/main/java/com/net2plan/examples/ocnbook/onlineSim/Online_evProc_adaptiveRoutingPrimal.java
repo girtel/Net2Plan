@@ -58,7 +58,8 @@ import com.net2plan.utils.Constants.RoutingType;
  * @net2plan.inputParameters 
  * @author Pablo Pavon-Marino
  */
-public class Online_evProc_adaptiveRoutingPrimal extends IEventProcessor 
+@SuppressWarnings("unchecked")
+public class Online_evProc_adaptiveRoutingPrimal extends IEventProcessor
 {
 	private InputParameter signaling_isSynchronous = new InputParameter ("signaling_isSynchronous", false , "true if all the distributed agents involved wake up synchronously to send the signaling messages");
 	private InputParameter signaling_averageInterMessageTime = new InputParameter ("signaling_averageInterMessageTime", 1.0 , "Average time between two signaling messages sent by an agent" , 0 , false , Double.MAX_VALUE , true);
@@ -139,7 +140,8 @@ public class Online_evProc_adaptiveRoutingPrimal extends IEventProcessor
 		/* Sets the initial routing, with all the traffic balanced equally in all the paths of the demand */
 		currentNetPlan.removeAllUnicastRoutingInformation();
 		currentNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
-		this.currentNetPlan.addRoutesFromCandidatePathList(null , "K" , "" + control_maxNumberOfPathsPerDemand.getInt());
+		this.currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.computeUnicastCandidatePathList(null , control_maxNumberOfPathsPerDemand.getInt(), -1, -1, -1, -1, -1, -1 , null));
+
 		this.R = currentNetPlan.getNumberOfRoutes ();
 		this.control_previousXp = DoubleFactory1D.dense.make (currentNetPlan.getNumberOfRoutes());
 		this.control_routeIndexes_d = new int [D][];
@@ -155,7 +157,7 @@ public class Online_evProc_adaptiveRoutingPrimal extends IEventProcessor
 				control_routeIndexes_d [d.getIndex ()][counter_r ++] = r.getIndex ();
 				r.setCarriedTraffic(h_d / routes.size() , h_d / routes.size());
 				control_previousXp.set(r.getIndex(), h_d / routes.size());
-				log.println("Initial route: " + r + " demand: " +d + ", h_d: " + h_d + ", h_r = " + r.getCarriedTraffic() + ", seqLinks: "+ r.getSeqLinksRealPath());
+				log.println("Initial route: " + r + " demand: " +d + ", h_d: " + h_d + ", h_r = " + r.getCarriedTraffic() + ", seqLinks: "+ r.getSeqLinks());
 			}
 		}
 
@@ -245,7 +247,7 @@ public class Online_evProc_adaptiveRoutingPrimal extends IEventProcessor
 					final Route r = currentNetPlan.getRoute (rIndex);
 					final double old_xp = x_p.get(rIndex);
 					double accumPrices = 0;
-					for (Link e : r.getSeqLinksRealPath()) accumPrices += infoIKnow_price_e.get(e.getIndex());
+					for (Link e : r.getSeqLinks()) accumPrices += infoIKnow_price_e.get(e.getIndex());
 					accumPrices += 2*gradient_maxGradientAbsoluteNoise.getDouble()*(this.rng.nextDouble()-0.5);
 					new_x_p.set (r.getIndex () , old_xp - this.gradient_gammaStep.getDouble() * accumPrices + this.gradient_heavyBallBetaParameter.getDouble() * (r.getCarriedTraffic() - this.control_previousXp.get(r.getIndex ())  ));
 				}
@@ -295,7 +297,7 @@ public class Online_evProc_adaptiveRoutingPrimal extends IEventProcessor
 	
 	private double computeLinkPriceFromNetPlan (Link e)
 	{
-		final double y_e = e.getCarriedTrafficIncludingProtectionSegments();
+		final double y_e = e.getCarriedTraffic();
 		final double u_e = e.getCapacity();
 		if (u_e == 0) throw new RuntimeException ("Zero capacity in a link means");
 		final double gradient = (y_e / u_e > 0.99)? 1/Math.pow(u_e * 0.01,2) : 1/Math.pow(u_e - y_e,2); 
@@ -309,7 +311,7 @@ public class Online_evProc_adaptiveRoutingPrimal extends IEventProcessor
 		double objFunc = 0;
 		for (Link e : this.currentNetPlan.getLinks())
 		{
-			final double y_e = e.getCarriedTrafficIncludingProtectionSegments();
+			final double y_e = e.getCarriedTraffic();
 			final double u_e = e.getCapacity();
 			if (y_e / u_e > 0.99)
 				objFunc += 1/(0.01*u_e) + 1/Math.pow(u_e * 0.01,2) * (y_e - 0.99*u_e);

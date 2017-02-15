@@ -1,3 +1,12 @@
+//MAKE ALGORITHM
+//MAKE TESTS JUNIT
+//MAKE USERS GUIDE WITH THAT
+//--
+//ONE MORE TABLE
+//CHANGE THE TIP IN THE NODES
+
+
+
 /******************************************************************************* Copyright (c) 2016 Pablo Pavon-Marino. All rights reserved. This program and the accompanying materials are made available under the terms of the GNU Lesser Public License v2.1 which accompanies this distribution, and is available at http://www.gnu.org/licenses/lgpl.html
  * 
  * Contributors: Pablo Pavon-Marino - Jose-Luis Izquierdo-Zaragoza, up to version 0.3.1 Pablo Pavon-Marino - from version 0.4.0 onwards ******************************************************************************/
@@ -19,6 +28,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -28,10 +38,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import javax.naming.ConfigurationException;
 import javax.swing.JComponent;
 
 import org.apache.commons.collections15.ListUtils;
@@ -56,9 +67,8 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
+import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Constants;
@@ -67,7 +77,6 @@ import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Quadruple;
-import com.net2plan.utils.Triple;
 
 import cern.colt.list.tdouble.DoubleArrayList;
 import cern.colt.list.tint.IntArrayList;
@@ -104,6 +113,7 @@ import edu.uci.ics.jung.visualization.renderers.Renderer;
  * @see <a name='jom'></a><a href='http://www.net2plan.com/jom'>Java Optimization Modeler (JOM) website</a>
  * @see <a name='jgrapht'></a><a href='http://jgrapht.org/'>JGraphT website</a>
  * @see <a name='jung'></a><a href='http://jung.sourceforge.net/'>Java Universal Network/Graph Framework (JUNG) website</a> */
+@SuppressWarnings("unchecked")
 public class GraphUtils
 {
 	private GraphUtils()
@@ -496,7 +506,7 @@ public class GraphUtils
 			op.setObjectiveFunction("minimize" , "sum(x_e)");
 			op.addConstraint("A_ne * x_e == div");
 			if (solverLibraryName == null)
-				op.solve(solverName, "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerDemand);
+				op.solve(solverName, "solverLibraryName" , Configuration.getDefaultSolverLibraryName(solverName) , "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerDemand);
 			else
 				op.solve(solverName, "solverLibraryName", solverLibraryName, "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerDemand);
 			if (!op.solutionIsFeasible()) throw new Net2PlanException ("A feasible solution was not found");
@@ -534,7 +544,7 @@ public class GraphUtils
 			op.setObjectiveFunction("minimize" , "sum(x_e)");
 			op.addConstraint("A_ne * x_e == div");
 			if (solverLibraryName == null)
-				op.solve(solverName, "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerDestination);
+				op.solve(solverName, "solverLibraryName" , Configuration.getDefaultSolverLibraryName(solverName), "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerDestination);
 			else
 				op.solve(solverName, "solverLibraryName", solverLibraryName, "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerDestination);
 			if (!op.solutionIsFeasible()) throw new Net2PlanException ("A feasible solution was not found");
@@ -656,7 +666,7 @@ public class GraphUtils
 		for (Route route : routes)
 		{
 			final int t = route.getEgressNode().getIndex();
-			for (Link link : route.getSeqLinksRealPath())
+			for (Link link : route.getSeqLinks())
 			{
 				final int e = link.getIndex();
 				x_te.setQuick(t, e, x_te.getQuick(t, e) + route.getCarriedTraffic());
@@ -675,7 +685,7 @@ public class GraphUtils
 		final int E = links.size();
 		DoubleMatrix1D y_e = DoubleFactory1D.dense.make(E);
 		for (Route r : routes)
-			for (Link e : r.getSeqLinksRealPath())
+			for (Link e : r.getSeqLinks())
 				y_e.set(e.getIndex(), y_e.get(e.getIndex()) + r.getCarriedTraffic());
 		return y_e;
 	}
@@ -706,10 +716,12 @@ public class GraphUtils
 		return f_te;
 	}
 
-	/** Given a path-based routing, returns the amount of traffic for each demand d traversing each link e.
+	/** Given a path-based routing, returns the amount of traffic for each demand d traversing each link e. The link 
+	 * occupation information is not used, only the route carried traffic (recall that a route carried traffic is zero if 
+	 * it traverses a failed link/node)  
 	 * @param links List of links
 	 * @param demands List of demands
-	 * @param routes List of rutes
+	 * @param routes List of routes
 	 * @return Demand-link routing in the form x_de (amount of traffic from demand d, transmitted through link e) */
 	public static DoubleMatrix2D convert_xp2xde(List<Link> links, List<Demand> demands, List<Route> routes)
 	{
@@ -720,7 +732,7 @@ public class GraphUtils
 		for (Route route : routes)
 		{
 			final int d = route.getDemand().getIndex();
-			for (Link link : route.getSeqLinksRealPath())
+			for (Link link : route.getSeqLinks())
 			{
 				final int e = link.getIndex();
 				x_de.setQuick(d, e, x_de.getQuick(d, e) + route.getCarriedTraffic());
@@ -739,6 +751,7 @@ public class GraphUtils
 	}
 
 	/** Returns all the loopless shortest paths between two nodes. All these paths have the same total cost.
+	 * Links with cost {@code Double.MAX_VALUE} are not considered.
 	 * 
 	 * @param nodes List of nodes
 	 * @param links List of links
@@ -784,7 +797,7 @@ public class GraphUtils
 		{
 			final Map<Link, Double> linkSpareCapacityMapToUse = new HashMap<Link, Double>();
 			for (Link e : links)
-				linkSpareCapacityMapToUse.put(e, Math.max(0, e.getCapacity() - e.getCarriedTrafficIncludingProtectionSegments()));
+				linkSpareCapacityMapToUse.put(e, Math.max(0, e.getCapacity() - e.getOccupiedCapacity()));
 			capacityTransformer = JUNGUtils.getEdgeWeightTransformer(linkSpareCapacityMapToUse);
 		} else
 			capacityTransformer = JUNGUtils.getEdgeWeightTransformer(linkSpareCapacityMap);
@@ -811,6 +824,23 @@ public class GraphUtils
 	//		return JUNGUtils.getCapacitatedShortestPath(graph, nev, originNodeId, destinationNodeId, capacityTransformer, capacityGoal);
 	//	}
 
+//	/** Receives a candidate path list indexed by demands, and converts it into a CPL indexed by node pairs. 
+//	 * If more than one demand exists with the same end node pairs, the paths used are the ones of the first found when iterating the input CPL 
+//	 * @param cpl thw input CPL
+//	 * @return
+//	 */
+//	public static Map<Pair<Node,Node>,List<List<NetworkElement>>> transformCPLToNodePairMap (Map<Demand,List<List<? extends NetworkElement>>> cpl)
+//	{
+//		Map<Pair<Node,Node>,List<List<NetworkElement>>> res = new HashMap<> ();
+//		for (Entry<Demand,List<List<? extends NetworkElement>>> entry : cpl.entrySet())
+//		{
+//			final Pair<Node,Node> pair = Pair.of(entry.getKey().getIngressNode() , entry.getKey().getEgressNode());
+//			if (res.containsKey(pair)) continue;
+//			res.put(pair , (List<List<NetworkElement>>) (List<?>) entry.getValue());
+//		}
+//		return res;
+//	}
+	
 	/** Obtains the sequence of links representing the (unidirectional) shortest path between two nodes.
 	 * 
 	 * @param nodes Collection of nodes
@@ -898,6 +928,182 @@ public class GraphUtils
 		//		return JUNGUtils.getKLooplessShortestPaths(graph, nev, originNode, destinationNode , K);
 	}
 
+	/** Returns the K minimum cost service chains between two nodes (summing costs of links and resources traversed), traversing a given set of resource types, satisfying some user-defined constraints.
+	 * If only <i>n</i> shortest path are found (n&lt;K), those are returned. If none is found an empty list is returned. 
+	 * The subpaths (the set of links between two resources, or the first(last) resource and the origin (destination) node, are constrained to be loopless 
+	 * (the algorithm uses Yen's scheme for subpaths enumeration).
+	 * @param links The set of links which can be used for the chain
+	 * @param originNode The origin node of the chain
+	 * @param destinationNode The destination node of the chain (could be the same as the origin node)
+	 * @param sequenceOfResourceTypesToTraverse the types of the sequence of resources to traverse
+	 * @param linkCost the cost of each link (if null, all links have cost one), all numbers must be strictly positive
+	 * @param resourceCost a map with the cost of each resource (if null, all resources have cost zero). A resources with Double.MAX_VALUE cost cannot be traversed (as if it was not there). All costs must be nonnegative. If a resource is not present in the map, its cost is zero.  
+	 * @param K The maximum number of service chains to return (less than K may be returned if there are no different paths).
+	 * @param maxCostServiceChain Service chains with a cost higher than this are not enumerated
+	 * @param maxLengthInKmPerSubpath The maximum length in km in each subpath. Service chains not satisfying this are not enumerated
+	 * @param maxNumHopsPerSubpath The maximum number of traversed links in each subpath. Service chains not satisfying this are not enumerated
+	 * @param maxPropDelayInMsPerSubpath The propagation delay summing the links in each subpath. Service chains not satisfying this are not enumerated
+	 * @param cacheSubpathLists A map which associated to node pairs, the k-shortest paths (only considering links) already computed to be used. 
+	 * The algorithm will add new entries here for those pairs of nodes for which no per-computed values exist, and that are needed in the algorithm 
+	 * (e.g. for origin node to all nodes of the first resource type, nodes of the first resource type to the second...). If null, then no entries are 
+	 * precomputed AND also no new entries are returned.   
+	 * @return the (at most) K minimum cost service chains.
+	 */
+	public static List<Pair<List<NetworkElement>,Double>> getKMinimumCostServiceChains(List<Link> links ,  
+			Node originNode, Node destinationNode, List<String> sequenceOfResourceTypesToTraverse , DoubleMatrix1D linkCost, Map<Resource,Double> resourceCost , 
+			int K, double maxCostServiceChain , double maxLengthInKmPerSubpath, int maxNumHopsPerSubpath, double maxPropDelayInMsPerSubpath, 
+			Map<Pair<Node,Node>,List<Pair<List<Link>,Double>>> cacheSubpathLists)
+	{
+		if (maxLengthInKmPerSubpath <= 0) maxLengthInKmPerSubpath = Double.MAX_VALUE;
+		if (maxNumHopsPerSubpath <= 0) maxNumHopsPerSubpath = Integer.MAX_VALUE;
+		if (maxPropDelayInMsPerSubpath <= 0) maxPropDelayInMsPerSubpath = Double.MAX_VALUE;
+		if (maxCostServiceChain < 0) maxCostServiceChain = Double.MAX_VALUE;
+		final int E = links.size();
+		if (E == 0) return new LinkedList<Pair<List<NetworkElement>,Double>> ();
+		final NetPlan netPlan = links.get(0).getNetPlan();
+		if (linkCost == null) linkCost = DoubleFactory1D.dense.make(E , 1.0);
+		if (linkCost.size() != E) throw new Net2PlanException ("Wrong size of cost array");
+		if (linkCost.getMinLocation() [0] <= 0) throw new Net2PlanException ("All link costs must be strictly positive");
+		if (resourceCost != null) for (Double val : resourceCost.values()) if (val < 0) throw new Net2PlanException ("All resource costs must be non-negative");
+		
+		/* initialize the link cost map */
+		Map<Link,Double> linkCostMap = new HashMap<Link,Double> (); 
+		for (int cont = 0; cont < E ; cont ++) linkCostMap.put(links.get(cont), linkCost.get(cont));
+	
+		/* initialize the nodes per phase. One element per resource type to traverse, plus one for the last node  */
+		List<Set<Node>> nodesPerPhase = new ArrayList<Set<Node>> ();
+		for (String resourceType : sequenceOfResourceTypesToTraverse)
+		{
+			Set<Resource> resourcesNotInfiniteCostThisType = netPlan.getResources(resourceType);
+			if (resourceCost != null) resourcesNotInfiniteCostThisType.removeIf(e-> resourceCost.get(e) == Double.MAX_VALUE); 
+			if (resourcesNotInfiniteCostThisType.isEmpty()) return new LinkedList<Pair<List<NetworkElement>,Double>> ();
+			final Set<Node> nodesWithResourcesNotInfiniteCostThisType = resourcesNotInfiniteCostThisType.stream().map(e -> e.getHostNode()).
+					collect(Collectors.toCollection(HashSet::new));
+			nodesPerPhase.add(nodesWithResourcesNotInfiniteCostThisType);
+		}
+		nodesPerPhase.add(Collections.singleton(destinationNode));
+
+		/* initialize the path lists. This includes (n,n) pairs with one path of empty seq links and zero cost */
+		if (cacheSubpathLists == null) cacheSubpathLists = new HashMap<Pair<Node,Node>,List<Pair<List<Link>,Double>>> ();
+		for (int contPhase = 0; contPhase < nodesPerPhase.size() ; contPhase ++)
+		{
+			final Set<Node> outputNodes = nodesPerPhase.get(contPhase);
+			final Set<Node> inputNodes = contPhase == 0? Collections.singleton(originNode) : nodesPerPhase.get(contPhase-1); 
+			for (Node nIn : inputNodes)
+				for (Node nOut : outputNodes)
+					if (!cacheSubpathLists.containsKey(Pair.of(nIn, nOut)))
+						if (nIn != nOut)
+						{
+							List<List<Link>> kPaths = getKLooplessShortestPaths(netPlan.getNodes(), links , nIn, nOut, linkCostMap, K, maxLengthInKmPerSubpath, maxNumHopsPerSubpath, maxPropDelayInMsPerSubpath, -1, -1, -1);
+							List<Pair<List<Link> , Double>> pathsInfo = new ArrayList<Pair<List<Link> , Double>> ();
+							double previousCost = 0;
+							for (List<Link> path : kPaths)
+							{
+								final double thisCost = path.stream().mapToDouble(e -> linkCostMap.get(e)).sum ();
+								if (previousCost > thisCost + 0.001) throw new RuntimeException ("thisCost: " + thisCost + ", previousCost: " + previousCost + ", Bad");
+								if (thisCost > maxCostServiceChain) break; // the maximum cost is exceeded, do not add this as subpath
+								pathsInfo.add(Pair.of(path, thisCost));
+								previousCost = thisCost;
+							}
+							cacheSubpathLists.put(Pair.of(nIn, nOut), pathsInfo);
+						}
+						else cacheSubpathLists.put(Pair.of (nIn,nIn), Collections.singletonList(Pair.of(new LinkedList<Link> (), 0.0)));
+		}
+		
+		/* Start the main loop */
+
+		/* Initialize the SCs per out node, with those from origin node, to each node with resources of the first type (or end node if this is not a SC) */
+		Map<Node , List<Pair<List<NetworkElement>,Double>>> outNodeToKSCsMap = new HashMap<Node , List<Pair<List<NetworkElement>,Double>>> (); 
+		for (Node outNode : nodesPerPhase.get(0))
+		{
+			List<Pair<List<NetworkElement>,Double>> thisFirstStageNodeSCs = new ArrayList<Pair<List<NetworkElement>,Double>> ();
+			for (Pair<List<Link>,Double> path : cacheSubpathLists.get(Pair.of(originNode, outNode)))
+				if (path.getSecond() <= maxCostServiceChain)
+					thisFirstStageNodeSCs.add(Pair.of(new LinkedList<NetworkElement> (path.getFirst()), path.getSecond()));
+			outNodeToKSCsMap.put(outNode, thisFirstStageNodeSCs);
+		}
+		
+		final Comparator<Pair<List<NetworkElement>,Double>> scComparator = 
+				new Comparator<Pair<List<NetworkElement>,Double>> () 
+				{ 
+					public int compare(Pair<List<NetworkElement>,Double> t1, Pair<List<NetworkElement>,Double> t2) { return Double.compare(t1.getSecond() ,  t2.getSecond());  }   
+				}; 
+		
+		for (int nextPhase = 1; nextPhase < nodesPerPhase.size() ; nextPhase ++)
+		{
+			final Set<Node> thisPhaseNodes = nodesPerPhase.get(nextPhase-1); 
+			final Set<Node> nextPhaseNodes = nodesPerPhase.get(nextPhase);
+			final String intermediateNodeResourceType = sequenceOfResourceTypesToTraverse.get(nextPhase-1);
+			Map<Node , List<Pair<List<NetworkElement>,Double>>> new_outNodeToKSCsMap = new HashMap<Node , List<Pair<List<NetworkElement>,Double>>> ();		
+			for (Node newOutNode : nextPhaseNodes)
+			{
+				List<Pair<List<NetworkElement>,Double>> kSCsToThisOutNode = new ArrayList<Pair<List<NetworkElement>,Double>> (); 
+				for (Node intermediateNode : thisPhaseNodes)
+				{
+					for (Pair<List<NetworkElement>,Double> scOriginToIntermediateInfo : outNodeToKSCsMap.get(intermediateNode))
+					{
+						final List<NetworkElement> scOriginToIntermediate = scOriginToIntermediateInfo.getFirst();
+						final double scOriginToIntermediateCost = scOriginToIntermediateInfo.getSecond();
+						for (Pair<List<Link>,Double> scIntermediateToOutInfo : cacheSubpathLists.get(Pair.of(intermediateNode, newOutNode)))
+						{
+							final List<NetworkElement> scIntermediateToOut = (List<NetworkElement>) (List<?>) scIntermediateToOutInfo.getFirst();
+							final double scIntermediateToOutCost = scIntermediateToOutInfo.getSecond();
+							if (scOriginToIntermediateCost + scIntermediateToOutCost > maxCostServiceChain) break; // do not add this SC, and no more interm->out paths: all are worse
+							if (kSCsToThisOutNode.size () == K)
+								if (kSCsToThisOutNode.get(K-1).getSecond() <= scOriginToIntermediateCost + scIntermediateToOutCost)
+									break; // do not add this SC (already full), and no more interm->out paths: all are worse
+							/* Add as many concatenated SCs as resources here, but do not exceed maximum size k of total list. Resource costs may not be ordered  */
+							for (Resource intermediateResource : intermediateNode.getResources(intermediateNodeResourceType))
+							{
+								final Double intermediateResourceCost = resourceCost == null? 0.0 : resourceCost.get(intermediateResource);
+								if (intermediateResourceCost == Double.MAX_VALUE) continue; // resources with infinite cost cannot be used
+								final double totalSCCost = scOriginToIntermediateCost + scIntermediateToOutCost + ((intermediateResourceCost == null)? 0.0 : intermediateResourceCost);	
+								if (totalSCCost > maxCostServiceChain) continue; // do not add this, but maybe other resources later are cheaper
+								if ((kSCsToThisOutNode.size () == K) && (totalSCCost > kSCsToThisOutNode.get(K-1).getSecond())) continue; // do not add this, but maybe other resources later are cheaper 
+								/* Add this SC */
+								List<NetworkElement> newSC = new LinkedList<NetworkElement> (scOriginToIntermediate);
+								newSC.add(intermediateResource);
+								newSC.addAll(scIntermediateToOut);
+								kSCsToThisOutNode.add(Pair.of(newSC, scOriginToIntermediateCost + scIntermediateToOutCost));
+								/* One SC was added, sort again, and remove the last SCs (higher cost), keep up to K */
+								Collections.sort(kSCsToThisOutNode, scComparator);
+								if (kSCsToThisOutNode.size() > K) kSCsToThisOutNode = kSCsToThisOutNode.subList(0, K);
+							}
+						}
+					}
+				}
+				new_outNodeToKSCsMap.put(newOutNode, kSCsToThisOutNode);
+			}
+			outNodeToKSCsMap = new_outNodeToKSCsMap;
+		}
+		if (!outNodeToKSCsMap.keySet().equals(Collections.singleton(destinationNode))) throw new RuntimeException ("Bad");
+		return outNodeToKSCsMap.get(destinationNode);
+	}
+
+	/** Returns the minimum cost service chain between two nodes (summing costs of links and resources traversed), traversing a given set of resource types, satisfying some user-defined constraints.
+	 * If none is found an empty list is returned, with cost equal to Double.MAX_VALUE. It makes so, calling to 
+	 * the method  {@link #getKMinimumCostServiceChains} with parameter {@code k = 1} (see more information in that method).
+	 * @param links The set of links which can be used for the chain
+	 * @param originNode The origin node of the chain
+	 * @param destinationNode The destination node of the chain (could be the same as the origin node)
+	 * @param sequenceOfResourceTypesToTraverse the types of the sequence of resources to traverse
+	 * @param linkCost the cost of each link (if null, all links have cost one), all numbers must be strictly positive
+	 * @param resourceCost a map with the cost of each resource (if null, all resources have cost zero). A resources with Double.MAX_VALUE cost cannot be traversed (as if it was not there). All costs must be nonnegative. If a resource is not present in the map, its cost is zero. 
+	 * @param maxLengthInKmPerSubpath The maximum length in km in each subpath. Service chains not satisfying this are not enumerated (negative number means no limit)
+	 * @param maxNumHopsPerSubpath The maximum number of traversed links in each subpath. Service chains not satisfying this are not enumerated (negative number means no limit)
+	 * @param maxPropDelayInMsPerSubpath The propagation delay summing the links in each subpath. Service chains not satisfying this are not enumerated (negative number means no limit)
+	 * @return the (at most) K minimum cost service chains.
+	 */
+	public static Pair<List<NetworkElement>,Double> getMinimumCostServiceChain(List<Link> links ,  
+			Node originNode, Node destinationNode, List<String> sequenceOfResourceTypesToTraverse , DoubleMatrix1D linkCost, Map<Resource,Double> resourceCost , 
+			double maxLengthInKmPerSubpath, int maxNumHopsPerSubpath, double maxPropDelayInMsPerSubpath)
+	{
+		List<Pair<List<NetworkElement>,Double>> res = getKMinimumCostServiceChains(links ,  
+				originNode, destinationNode, sequenceOfResourceTypesToTraverse , linkCost, resourceCost , 
+				1, Double.MAX_VALUE , maxLengthInKmPerSubpath, maxNumHopsPerSubpath, maxPropDelayInMsPerSubpath, null); 
+		return res.isEmpty()? Pair.of(new LinkedList<NetworkElement> () , Double.MAX_VALUE) : res.get(0);
+	}	
+	
 	/** Returns the shortest pair of link-disjoint paths, where each item represents a path. The number of returned items will be equal to the number of paths found: when empty, no path was found; when {@code size()} = 1, only one path was found; and when {@code size()} = 2, the link-disjoint paths were found. Internally it uses the Suurballe-Tarjan algorithm.
 	 * @param nodes Collection of nodes
 	 * @param links Collection of links
@@ -1100,7 +1306,8 @@ public class GraphUtils
 		return A_ne;
 	}
 
-	/** Obtains the sequence of links representing the (unidirectional) shortest path between two nodes.
+	/** Obtains the sequence of links representing the (unidirectional) shortest path between two nodes. 
+	 * Links with cost {@code Double.MAX_VALUE} are not considered.
 	 * @param nodes Collection of nodes
 	 * @param links Collection of links
 	 * @param originNode Origin node
@@ -1194,6 +1401,7 @@ public class GraphUtils
 			op.addConstraint("Ain_ne * x_e' >= delta_bd'"); // a destination node receives at least one input link
 			op.addConstraint("Ain_ne * x_e' <= 1 - delta_ad'"); // source nodes receive 0 links, destination nodes at most one (then just one)
 			op.addConstraint("Aout_ne * x_e' <= K * (delta_ad' + Ain_ne * x_e')"); // at most K out links from ingress node and from intermediate nodes if they have one input link
+			if (maxTreeCost < Double.MAX_VALUE) op.addConstraint("c_e * x_e' <= " + maxTreeCost);
 			double maximumAllowedTreeCost = maxTreeCost;
 			if (!previousTrees.isEmpty())
 			{
@@ -1229,14 +1437,14 @@ public class GraphUtils
 			}
 
 			if (solverLibraryName == null)
-				op.solve(solverName, "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerTree);
+				op.solve(solverName, "solverLibraryName" , Configuration.getDefaultSolverLibraryName(solverName) , "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerTree);
 			else
 				op.solve(solverName, "solverLibraryName", solverLibraryName, "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerTree);
 
 			/* If the problem is infeqasible, there are no more trees for this demand */
 			if (op.feasibleSolutionDoesNotExist())
 			{
-				System.out.println("*** K minimum cost multicast tree + BREAK when k = " + k);
+				//System.out.println("*** K minimum cost multicast tree + BREAK when k = " + k);
 				break;
 			}
 			if (!op.solutionIsFeasible()) throw new Net2PlanException("The multicast tree ILP in the candidate tree list ended without producing a feasible solution nor guaranteeing unfeasibility: increase the solver time?");
@@ -1325,7 +1533,7 @@ public class GraphUtils
 		}
 
 		if (solverLibraryName == null)
-			op.solve(solverName, "maxSolverTimeInSeconds", maxSolverTimeInSeconds);
+			op.solve(solverName, "solverLibraryName" , Configuration.getDefaultSolverLibraryName(solverName)  , "maxSolverTimeInSeconds", maxSolverTimeInSeconds);
 		else
 			op.solve(solverName, "solverLibraryName", solverLibraryName, "maxSolverTimeInSeconds", maxSolverTimeInSeconds);
 
@@ -1400,12 +1608,6 @@ public class GraphUtils
 			org.jgrapht.Graph<Node, Route> auxGraph = JGraphTUtils.getGraphFromRouteMap((List<Route>) elements);
 			Map<Route, Double> linkCostMapMap = CollectionUtils.toMap((List<Route>) elements, linkCostMap);
 			org.jgrapht.Graph<Node, Route> graph = JGraphTUtils.getAsWeightedGraph(auxGraph, linkCostMapMap);
-			return JGraphTUtils.isWeightedBidirectional(graph);
-		} else if (elements.get(0) instanceof ProtectionSegment)
-		{
-			org.jgrapht.Graph<Node, ProtectionSegment> auxGraph = JGraphTUtils.getGraphFromProtectionSegmentMap((List<ProtectionSegment>) elements);
-			Map<ProtectionSegment, Double> linkCostMapMap = CollectionUtils.toMap((List<ProtectionSegment>) elements, linkCostMap);
-			org.jgrapht.Graph<Node, ProtectionSegment> graph = JGraphTUtils.getAsWeightedGraph(auxGraph, linkCostMapMap);
 			return JGraphTUtils.isWeightedBidirectional(graph);
 		} else
 			throw new Net2PlanException("Unexpected network element type");
@@ -1688,30 +1890,6 @@ public class GraphUtils
 					if (!graph.containsVertex(destinationNode)) graph.addVertex(destinationNode);
 
 					graph.addEdge(originNode, destinationNode, route);
-				}
-			}
-			return graph;
-		}
-
-		/** <p>Obtains a {@code JGraphT} graph from a given protection segment map.</p>
-		 * 
-		 * @param demands List of demands
-		 * @return {@code JGraphT} graph */
-		public static org.jgrapht.Graph<Node, ProtectionSegment> getGraphFromProtectionSegmentMap(List<ProtectionSegment> segments)
-		{
-			org.jgrapht.Graph<Node, ProtectionSegment> graph = new DirectedWeightedMultigraph<Node, ProtectionSegment>(ProtectionSegment.class);
-
-			if (segments != null)
-			{
-				for (ProtectionSegment segment : segments)
-				{
-					Node originNode = segment.getOriginNode();
-					Node destinationNode = segment.getDestinationNode();
-
-					if (!graph.containsVertex(originNode)) graph.addVertex(originNode);
-					if (!graph.containsVertex(destinationNode)) graph.addVertex(destinationNode);
-
-					graph.addEdge(originNode, destinationNode, segment);
 				}
 			}
 			return graph;
@@ -2162,7 +2340,8 @@ public class GraphUtils
 			return linkFilter.transform(graph);
 		}
 
-		/** Returns the shortest path that fulfills a given minimum capacity requirement along its traversed edges. In case no path can be found, an empty list will be returned.
+		/** Returns the shortest path that fulfills a given minimum capacity requirement along its traversed edges. 
+		 * In case no path can be found, an empty list will be returned. Links with cost {@code Double.MAX_VALUE} are not considered.
 		 * 
 		 * @param <V> Class type for vertices
 		 * @param <E> Class type for edges
@@ -2273,6 +2452,7 @@ public class GraphUtils
 		//		}
 
 		/** Returns the K-loopless shortest paths between two nodes. If <i>n</i> shortest paths are found (n&lt;K), those are returned.
+		 * Links with cost {@code Double.MAX_VALUE} are not considered.
 		 * 
 		 * @param <V> Class type for vertices
 		 * @param <E> Class type for edges
@@ -2311,7 +2491,7 @@ public class GraphUtils
 			return pathWeight;
 		}
 
-		/** Returns the shortest path between two nodes using Dijkstra's algorithm.
+		/** Returns the shortest path between two nodes using Dijkstra's algorithm. Links with cost {@code Double.MAX_VALUE} are not considered.
 		 * 
 		 * @param <V> Vertex type
 		 * @param <E> Edge type
@@ -2821,7 +3001,7 @@ public class GraphUtils
 		protected double maxRouteCostFactorRespectToShortestPath;
 		protected double maxRouteCostRespectToShortestPath;
 
-		/** Default constructor.
+		/** Default constructor. Links with cost {@code Double.MAX_VALUE} are not considered.
 		 * 
 		 * @param graph Graph on which shortest paths are searched
 		 * @param nev The class responsible for returning weights for edges */
@@ -2847,7 +3027,7 @@ public class GraphUtils
 			dijkstra = new DijkstraShortestPath<V, E>(graph, nev);
 		}
 
-		/** Default constructor.
+		/** Default constructor. Links with cost {@code Double.MAX_VALUE} are not considered.
 		 * 
 		 * @param graph Graph on which shortest paths are searched
 		 * @param nev The class responsible for returning weights for edges */
@@ -3022,4 +3202,5 @@ public class GraphUtils
 			super(message);
 		}
 	}
+	
 }

@@ -23,6 +23,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -30,6 +32,8 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants.RunnableCodeType;
 import com.net2plan.internal.ErrorHandling;
@@ -44,6 +48,7 @@ import com.net2plan.utils.Triple;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
+@SuppressWarnings("unchecked")
 public class ParameterValueDescriptionPanel extends JPanel
 {
     private final static TableCellRenderer CHECKBOX_RENDERER;
@@ -159,17 +164,120 @@ public class ParameterValueDescriptionPanel extends JPanel
         table.setCellEditor(rowIndex, columnIndex, new DefaultCellEditor(comboBox));
     }
 
-    private void addFileChooserCellEditor(int rowIndex, int columnIndex)
+    private void addFileChooserCellEditor(int rowIndex, int columnIndex, String defaultValue)
     {
-        table.setCellEditor(rowIndex, columnIndex, new FileChooserEditor());
+        final JTextField textField = new JTextField();
+        textField.setEnabled(false);
+        textField.setBorder(BorderFactory.createEmptyBorder());
+
+        final DefaultCellEditor editor = new DefaultCellEditor(textField);
+        editor.setClickCountToStart(1);
+
+        table.getModel().setValueAt(defaultValue, rowIndex, columnIndex);
+
+        table.setCellEditor(rowIndex, columnIndex, new ActionTableCellEditor(editor)
+        {
+            @Override
+            protected void editCell(JTable table, int row, int column)
+            {
+                final int rowModel = table.convertRowIndexToModel(row);
+                final TableModel model = table.getModel();
+
+                final JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setMultiSelectionEnabled(false);
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+                final int returnVal = fileChooser.showOpenDialog(null);
+
+                if (returnVal == JFileChooser.APPROVE_OPTION)
+                {
+                    model.setValueAt(fileChooser.getSelectedFile().getAbsolutePath(), rowModel, 1);
+                }
+            }
+        });
     }
 
-    private void addFileMultiChooserCellEditor(int rowIndex, int columnIndex)
+    private void addFileMultiChooserCellEditor(int rowIndex, int columnIndex, String defaultValue)
     {
-        table.setCellEditor(rowIndex, columnIndex, new FileMultiChooserEditor());
+        final JTextField textField = new JTextField();
+        textField.setEnabled(false);
+        textField.setBorder(BorderFactory.createEmptyBorder());
+
+        final DefaultCellEditor editor = new DefaultCellEditor(textField);
+        editor.setClickCountToStart(1);
+
+        table.getModel().setValueAt(defaultValue, rowIndex, columnIndex);
+
+        table.setCellEditor(rowIndex, columnIndex, new ActionTableCellEditor(editor)
+        {
+            @Override
+            protected void editCell(JTable table, int row, int column)
+            {
+                final int rowModel = table.convertRowIndexToModel(row);
+                final TableModel model = table.getModel();
+
+                final String fileSeparator = "<>";
+                final JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setMultiSelectionEnabled(true);
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+                final int returnVal = fileChooser.showOpenDialog(null);
+
+                if (returnVal == JFileChooser.APPROVE_OPTION)
+                {
+                    final File[] selectedFiles = fileChooser.getSelectedFiles();
+                    final StringBuilder builder = new StringBuilder();
+
+                    for (int i = 0; i < selectedFiles.length; i++)
+                    {
+                        final File file = selectedFiles[i];
+
+                        builder.append(file.getAbsolutePath());
+
+                        if (i != selectedFiles.length - 1)
+                        {
+                            builder.append(fileSeparator);
+                        }
+                    }
+
+                    model.setValueAt(builder.toString(), rowModel, 1);
+                }
+            }
+        });
     }
 
+    private void addPathChooserCellEditor(int rowIndex, int columnIndex, String defaultValue)
+    {
+        final JTextField textField = new JTextField();
+        textField.setEnabled(false);
+        textField.setBorder(BorderFactory.createEmptyBorder());
 
+        final DefaultCellEditor editor = new DefaultCellEditor(textField);
+        editor.setClickCountToStart(1);
+
+        table.getModel().setValueAt(defaultValue, rowIndex, columnIndex);
+
+        table.setCellEditor(rowIndex, columnIndex, new ActionTableCellEditor(editor)
+        {
+            @Override
+            protected void editCell(JTable table, int row, int column)
+            {
+                final int rowModel = table.convertRowIndexToModel(row);
+                final TableModel model = table.getModel();
+
+                final JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setMultiSelectionEnabled(false);
+                fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+                final int returnVal = fileChooser.showOpenDialog(null);
+
+                if (returnVal == JFileChooser.APPROVE_OPTION)
+                {
+                    model.setValueAt(fileChooser.getSelectedFile().getAbsolutePath(), rowModel, 1);
+                }
+            }
+        });
+    }
 
     /**
      * Returns the parameter-value map.
@@ -219,7 +327,22 @@ public class ParameterValueDescriptionPanel extends JPanel
         {
             String paramName = model.getValueAt(row, 0).toString();
             if (parameters.containsKey(paramName))
-                model.setValueAt(parameters.get(paramName), row, 1);
+            {
+                String value = parameters.get(paramName);
+
+                Pattern p = Pattern.compile("#.*?#");
+                Matcher m = p.matcher(value);
+
+                String filteredValue = value;
+                if (m.find())
+                {
+                    final String option = m.group();
+
+                    filteredValue = filteredValue.replace(option, "").trim();
+                }
+
+                model.setValueAt(filteredValue, row, 1);
+            }
         }
     }
 
@@ -273,13 +396,24 @@ public class ParameterValueDescriptionPanel extends JPanel
                         continue;
                     } else if (defaultValue.startsWith("#file#"))
                     {
+                        final String fileDefaultValue = aux.getSecond().replaceFirst("#file#", "").trim();
+
                         model.addRow(StringUtils.arrayOf(aux.getFirst(), "", aux.getThird()));
-                        addFileChooserCellEditor(model.getRowCount() - 1, 1);
+                        addFileChooserCellEditor(model.getRowCount() - 1, 1, fileDefaultValue);
                         continue;
                     } else if (defaultValue.startsWith("#files#"))
                     {
+                        final String fileDefaultValue = aux.getSecond().replaceFirst("#files#", "").trim();
+
                         model.addRow(StringUtils.arrayOf(aux.getFirst(), "", aux.getThird()));
-                        addFileMultiChooserCellEditor(model.getRowCount() - 1, 1);
+                        addFileMultiChooserCellEditor(model.getRowCount() - 1, 1, fileDefaultValue);
+                        continue;
+                    } else if (defaultValue.startsWith("#path#"))
+                    {
+                        final String fileDefaultValue = aux.getSecond().replaceFirst("#path#", "").trim();
+
+                        model.addRow(StringUtils.arrayOf(aux.getFirst(), "", aux.getThird()));
+                        addPathChooserCellEditor(model.getRowCount() - 1, 1, fileDefaultValue);
                         continue;
                     }
 
@@ -389,38 +523,6 @@ public class ParameterValueDescriptionPanel extends JPanel
         public void setValueAt(Object value, int row, int column)
         {
             super.setValueAt(value, row, column);
-
-//            if (haveData) 
-//            {
-//                if ("solverName".equals(getValueAt(row, 0)) && column == 1) 
-//                {
-//                	final String solverName = (String) getValueAt(row, 1);
-//                    int solverLibraryNameRow = -1;
-//                    String solverLibraryName = null;
-//                    for (int rowId = 0; rowId < getRowCount(); rowId++) 
-//                    {
-//                        if ("solverLibraryName".equals(getValueAt(rowId, 0))) 
-//                        {
-//                            solverLibraryNameRow = rowId; solverLibraryName = (String) getValueAt(solverLibraryNameRow, 1); 
-//                            break;
-//                        }
-//                    }
-//                    if (solverLibraryNameRow != -1) if (solverLibraryName != null) 
-//                    	setValueAt(Configuration.getDefaultSolverLibraryName(solverName) , solverLibraryNameRow , 1);
-//                    try {
-//                        try {
-//                            if (solverName.equalsIgnoreCase("glpk")) solverLibraryName = Configuration.getOption("glpkSolverLibraryName");
-//                            else if (solverName.equalsIgnoreCase("ipopt")) solverLibraryName = Configuration.getOption("ipoptSolverLibraryName");
-//                            else if (solverName.equalsIgnoreCase("cplex")) solverLibraryName = Configuration.getOption("cplexSolverLibraryName");
-//                            else if (solverName.equalsIgnoreCase("xpress")) solverLibraryName = Configuration.getOption("xpressSolverLicenseFileName");
-//                            setValueAt(solverLibraryName, solverLibraryNameRow, 1);
-//                        } catch (Throwable e) {
-//
-//                        }
-//                    } catch (Throwable ex) {
-//                    }
-//                }
-//            }
         }
     }
 
@@ -433,97 +535,4 @@ public class ParameterValueDescriptionPanel extends JPanel
         }
     }
 
-
-    private void refreshAfterParameterEdition()
-    {
-        /* sets the visualization according to the current parameter values */
-    }
-
-    private class FileChooserEditor extends DefaultCellEditor implements TableCellEditor
-    {
-        protected String currentText;
-        protected JFileChooser fileChooser;
-        protected JButton editorButton;
-
-        public FileChooserEditor()
-        {
-            super(new JTextField());
-
-            setClickCountToStart(2);
-
-            editorButton = new JButton();
-            editorButton.setBackground(Color.white);
-            editorButton.setBorderPainted(false);
-            editorButton.setContentAreaFilled(false);
-
-            fileChooser = new JFileChooser();
-            fileChooser.setMultiSelectionEnabled(false);
-        }
-
-        public Object getCellEditorValue()
-        {
-            return currentText;
-        }
-
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column)
-        {
-            final int returnVal = fileChooser.showOpenDialog(null);
-
-            if (returnVal == JFileChooser.APPROVE_OPTION)
-            {
-                currentText = fileChooser.getSelectedFile().getAbsolutePath();
-            } else
-            {
-                currentText = "";
-            }
-
-            fireEditingStopped();
-            editorButton.setText(currentText);
-            return editorButton;
-        }
-    }
-
-    private class FileMultiChooserEditor extends FileChooserEditor
-    {
-        private static final String fileSeparator = "<>";
-
-        public FileMultiChooserEditor()
-        {
-            super();
-
-            fileChooser.setMultiSelectionEnabled(true);
-        }
-
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column)
-        {
-            final int returnVal = fileChooser.showOpenDialog(null);
-
-            if (returnVal == JFileChooser.APPROVE_OPTION)
-            {
-                final File[] selectedFiles = fileChooser.getSelectedFiles();
-                final StringBuilder builder = new StringBuilder();
-
-                for (int i = 0; i < selectedFiles.length; i++)
-                {
-                    final File file = selectedFiles[i];
-
-                    builder.append(file.getAbsolutePath());
-
-                    if (i != selectedFiles.length - 1)
-                    {
-                        builder.append(fileSeparator);
-                    }
-                }
-
-                currentText = builder.toString();
-            } else
-            {
-                currentText = "";
-            }
-
-            fireEditingStopped();
-            editorButton.setText(currentText);
-            return editorButton;
-        }
-    }
 }

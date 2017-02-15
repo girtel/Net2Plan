@@ -22,6 +22,7 @@ import com.sun.javadoc.DocErrorReporter;
 import com.sun.javadoc.RootDoc;
 import com.sun.javadoc.Tag;
 
+@SuppressWarnings("unchecked")
 public class CreateHTMLKeywords
 {
 	public static Map<String,Pair<String,String>> keywordDescriptionMap = null;
@@ -68,6 +69,7 @@ public class CreateHTMLKeywords
 		keywordDescriptionMap.put ("Transmission power optimization" , Pair.of ("An example where the links are wireless links, and its transmission power is optimized." , "transmissionPower"));
 		keywordDescriptionMap.put ("Wireless" , Pair.of ("An example focused on the design of a wireless network" , "wireless"));
 		keywordDescriptionMap.put ("WDM" , Pair.of ("An example where Wavelength Division Multiplexing (WDM) technology is used" , "wdm"));
+		keywordDescriptionMap.put ("NFV" , Pair.of ("An example in the context of Network Function Virtualizatin (NFV)" , "nfv"));
 	}
 	static
 	{
@@ -139,7 +141,9 @@ public class CreateHTMLKeywords
 		{
 			final ClassDoc javaClass = classes [i];
 			final String className = javaClass.qualifiedName();
-			final String firstSentenceThisClass = javaClass.firstSentenceTags() [0].text ();
+			final Tag [] firstSentenceTags = javaClass.firstSentenceTags();
+			if (firstSentenceTags.length == 0) System.out.println("A class without first sentence!!: " + className);
+			final String firstSentenceThisClass = (firstSentenceTags.length == 0)? "" : javaClass.firstSentenceTags() [0].text ();
 			algorithmToFirstSentence.put (className , firstSentenceThisClass);
 			algorithmToKeywordsMap.put (className , new LinkedList<String> ());
 			String keywordsString = ""; for (Tag tag : javaClass.tags()) {  if (tag.name().equals ("@"+tagName)) keywordsString += " " + tag.text () + " "; }
@@ -153,9 +157,6 @@ public class CreateHTMLKeywords
 				algorithmToKeywordsMap.get (className).add (keywordName);
 			}
 		}
-		System.out.println ("keywordsToAlgorithmsMap: " + keywordsToAlgorithmsMap);
-		System.out.println ("algorithmToKeywordsMap: " + algorithmToKeywordsMap);
-		System.out.println ("keywords: " + keywordsToAlgorithmsMap.keySet());
 		
 		String htmlFile = createHtml(keywordsToAlgorithmsMap , algorithmToKeywordsMap , algorithmToFirstSentence , outputFolder);
 		try 

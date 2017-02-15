@@ -20,11 +20,22 @@
 
 package com.net2plan.internal;
 
+import java.util.Locale;
+
+import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.IReport;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.IEventProcessor;
-import java.util.Locale;
 
 /**
  * Internal constants.
@@ -167,11 +178,11 @@ public class Constants
 		FORWARDING_RULE("forwarding rule"),
 		
 		/**
-		 * Protection segment type.
+		 * Resource type.
 		 * 
 		 * @since 0.3.0
 		 */
-		PROTECTION_SEGMENT("protection segment"),
+		RESOURCE ("resource"),
 		
 		/**
 		 * Shared-risk group type.
@@ -183,6 +194,20 @@ public class Constants
 		private final String label;
 		
 		NetworkElementType(String label) { this.label = label; }
+		
+		public static NetworkElementType getType (NetworkElement e)
+		{
+			if (e instanceof Node) return NODE;
+			if (e instanceof Link) return LINK;
+			if (e instanceof Demand) return DEMAND;
+			if (e instanceof MulticastDemand) return MULTICAST_DEMAND;
+			if (e instanceof MulticastTree) return NetworkElementType.MULTICAST_TREE;
+			if (e instanceof Route) return ROUTE;
+			if (e instanceof SharedRiskGroup) return SRG;
+			if (e instanceof NetworkLayer) return LAYER;
+			if (e instanceof Resource) return RESOURCE;
+			throw new RuntimeException ();
+		}
 		
 		@Override
 		public String toString() { return label; }

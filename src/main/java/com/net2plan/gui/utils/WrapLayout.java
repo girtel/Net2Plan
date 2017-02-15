@@ -17,11 +17,10 @@ import java.awt.*;
 
 /**
  * <p>{@code FlowLayout} subclass that fully supports wrapping of components.</p>
- * <p>
  * <p>Credits to Rob Camick for his {@code WrapLayout} (<a href='http://tips4java.wordpress.com/2008/11/06/wrap-layout/'>Wrap Layout</a>)</p>
  *
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
- * @see http://tips4java.wordpress.com/2008/11/06/wrap-layout/
+ * @see <a href="http://tips4java.wordpress.com/2008/11/06/wrap-layout/"></a>
  * @since 0.2.0
  */
 public class WrapLayout extends FlowLayout {

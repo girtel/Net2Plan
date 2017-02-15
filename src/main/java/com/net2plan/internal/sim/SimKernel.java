@@ -62,11 +62,10 @@ public class SimKernel implements IEventCallback
 	private IExternal eventProcessor;
 	private boolean disableStatistics;
 	private SimEvent lastEvent;
-	private boolean omitProtectionSegments;
 	private IGUISimulationListener guiListener;
 	private Throwable lastReason = null;
 	private final SimCore simCore;
-	private NetPlan originalNetPlan;
+//	private NetPlan originalNetPlan;
 	
 	/**
 	 * Default constructor.
@@ -168,18 +167,6 @@ public class SimKernel implements IEventCallback
 
 		if (!simulationParameters.containsKey("disableStatistics"))	throw new Net2PlanException("'disableStatistics' parameter is not configured");
 		disableStatistics = Boolean.parseBoolean(simulationParameters.get("disableStatistics"));
-
-		if (!simulationParameters.containsKey("omitProtectionSegments")) throw new Net2PlanException("'omitProtectionSegments' parameter is not configured");
-		omitProtectionSegments = Boolean.parseBoolean(simulationParameters.get("omitProtectionSegments"));
-
-		originalNetPlan = initialNetPlan;
-
-		if (omitProtectionSegments && initialNetPlan.hasProtectionSegments())
-		{
-			NetPlan aux_netPlan = initialNetPlan.copy();
-			aux_netPlan.removeAllProtectionSegments();
-			setNetPlan(aux_netPlan);
-		}
 
 		if (!simulationParameters.containsKey("refreshTime")) throw new Net2PlanException("'refreshTime' parameter is not configured");
 		double refreshTimeInSeconds = Double.parseDouble(simulationParameters.get("refreshTime"));
@@ -343,7 +330,6 @@ public class SimKernel implements IEventCallback
 		List<Triple<String, String, String>> parameters = new LinkedList<Triple<String, String, String>>();
 		parameters.add(Triple.of("disableStatistics", "#boolean# false", "Disable compilation of simulation statistics (only simulation information, and optionally algorithm-specific information, is collected)"));
 		parameters.add(Triple.of("refreshTime", "10", "Refresh time (in seconds)"));
-		parameters.add(Triple.of("omitProtectionSegments", "#boolean# false", "Remove protection segments from the network plan to free their reserved bandwidth"));
 		parameters.add(Triple.of("simEvents", "-1", "Total simulation events (including transitory period) (-1 means no limit). In case that 'simTime' and 'simEvents' are specified, the transitory period will finish when one of the previous values is reached"));
 		parameters.add(Triple.of("transitoryEvents", "-1", "Number of events for transitory period (-1 means no transitory period). In case that 'transitoryTime' and 'transitoryEvents' are specified, the transitory period will finish when one of the previous values is reached"));
 		parameters.add(Triple.of("simTime", "-1", "Total simulation time (in seconds, including transitory period) (-1 means no limit). In case that 'simTime' and 'simEvents' are specified, the transitory period will finish when one of the previous values is reached"));
@@ -470,17 +456,7 @@ public class SimKernel implements IEventCallback
 	public void reset()
 	{
 		simCore.reset();
-
-		if (originalNetPlan != null)
-		{
-			setNetPlan(originalNetPlan);
-			originalNetPlan = null;
-		}
-		else
-		{
-			initializeNetState();
-		}
-
+		initializeNetState();
 		lastReason = null;
 		stats = null;
 	}
@@ -552,7 +528,7 @@ public class SimKernel implements IEventCallback
 	
 	/**
 	 *
-	 * @param stateListener
+	 * @param stateListener State listener
 	 * @since 0.2.2
 	 */
 	public void setGUIListener(IGUISimulationListener stateListener)
@@ -575,10 +551,9 @@ public class SimKernel implements IEventCallback
 		if (simCore.getSimulationState() != SimCore.SimState.NOT_STARTED)
 			throw new Net2PlanException("Network design cannot be changed once simulation was started");
 	
-		originalNetPlan = null;
-		//initialNetPlan = netPlan.unmodifiableView();
 		initialNetPlan = netPlan.copy ();  initialNetPlan.setModifiableState(false);
-		initializeNetState();
+		currentNetPlan = netPlan;
+		//initializeNetState();
 	}
 
 	/**

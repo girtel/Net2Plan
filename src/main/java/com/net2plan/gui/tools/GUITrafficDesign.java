@@ -53,6 +53,7 @@ import java.util.List;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
+@SuppressWarnings("unchecked")
 public final class GUITrafficDesign extends IGUIModule {
     private final static String TITLE = "Traffic matrix design";
     private final static int DEFAULT_NUMBER_OF_NODES = 4;
@@ -652,9 +653,9 @@ public final class GUITrafficDesign extends IGUIModule {
         aux3.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Topology information"));
 
         final JScrollPane pane = new JScrollPane(table);
+
+
         aux3.add(pane, "grow, wrap");
-        FixedColumnDecorator decorator = new FixedColumnDecorator(pane, 1);
-        decorator.getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
 
         new FileDrop(pane, new LineBorder(Color.BLACK), new FileDrop.Listener() {
             @Override
@@ -732,6 +733,7 @@ public final class GUITrafficDesign extends IGUIModule {
         aux4.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Level matrix"));
 
         JScrollPane levelMatrixPane = new JScrollPane(levelMatrixTable);
+
         aux4.add(levelMatrixPane, "grow");
 
         pnl_popDistBasedTrafficModelPattern.add(aux1, "align left, spanx 2, wrap");
@@ -935,8 +937,6 @@ public final class GUITrafficDesign extends IGUIModule {
             }
         });
 
-        FixedColumnDecorator decorator = new FixedColumnDecorator(pane, 1);
-        decorator.getFixedTable().getColumnModel().getColumn(0).setMinWidth(50);
 
         return pane;
     }
@@ -948,8 +948,9 @@ public final class GUITrafficDesign extends IGUIModule {
         table.setDefaultRenderer(Number.class, new TotalRowColumnRenderer());
         table.setDefaultRenderer(Integer.class, new TotalRowColumnRenderer());
         table.setDefaultRenderer(String.class, new TotalRowColumnRenderer());
-
         return table;
+
+
     }
 
     private int getNumberOfTrafficMatrices() {
@@ -1468,7 +1469,8 @@ public final class GUITrafficDesign extends IGUIModule {
                         JTable gravityModelTable = new AdvancedJTable(gravityModelTableModel);
 
                         JPanel gravityModelPanel = new JPanel();
-                        gravityModelPanel.add(new JScrollPane(gravityModelTable));
+                        JScrollPane gPane = new JScrollPane(gravityModelTable);
+                        gravityModelPanel.add(gPane);
 
                         double[] ingressTrafficPerNode = new double[N];
                         double[] egressTrafficPerNode = new double[N];
@@ -1717,9 +1719,9 @@ public final class GUITrafficDesign extends IGUIModule {
                     model.setDataVector(data, header);
 
                     JTable table = new AdvancedJTable(model);
-
+                    JScrollPane sPane = new JScrollPane(table);
                     JPanel pane = new JPanel();
-                    pane.add(new JScrollPane(table));
+                    pane.add(sPane);
 
                     int result = JOptionPane.showConfirmDialog(null, pane, option == 2 ? "Please enter total ingress traffic per node (one value per row)" : "Please enter total egress traffic per node (one value per row)", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                     if (result != JOptionPane.OK_OPTION) return;
@@ -1779,12 +1781,7 @@ public final class GUITrafficDesign extends IGUIModule {
 
                             case 1:
                                 String solverName = Configuration.getOption("defaultILPSolver");
-                                String solverLibraryName = null;
-                                if (solverName.equalsIgnoreCase("glpk")) solverLibraryName = Configuration.getOption("glpkSolverLibraryName");
-                                else if (solverName.equalsIgnoreCase("ipopt")) solverLibraryName = Configuration.getOption("ipoptSolverLibraryName");
-                                else if (solverName.equalsIgnoreCase("cplex")) solverLibraryName = Configuration.getOption("cplexSolverLibraryName");
-                                else if (solverName.equalsIgnoreCase("xpress")) solverLibraryName = Configuration.getOption("xpressSolverLicenseFileName");
-
+                                String solverLibraryName = Configuration.getDefaultSolverLibraryName(solverName);
                                 h_d = TrafficMatrixGenerationModels.normalizeTraffic_linkCapacity_xde(aux, solverName, solverLibraryName);
                                 break;
 

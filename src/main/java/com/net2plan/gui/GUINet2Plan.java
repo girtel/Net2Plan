@@ -12,8 +12,53 @@
 
 package com.net2plan.gui;
 
-import com.net2plan.gui.utils.*;
-import com.net2plan.gui.utils.topology.jung.JUNGCanvas;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.PrintStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import javax.swing.ImageIcon;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
+import javax.swing.MenuElement;
+import javax.swing.RowSorter;
+import javax.swing.WindowConstants;
+import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+
+import org.apache.commons.collections15.BidiMap;
+import org.apache.commons.collections15.bidimap.DualHashBidiMap;
+
+import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.ClassPathEditor;
+import com.net2plan.gui.utils.ColumnFitAdapter;
+import com.net2plan.gui.utils.SwingUtils;
+import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.viewEditWindows.utils.WindowUtils;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants.UserInterface;
 import com.net2plan.internal.ErrorHandling;
@@ -26,25 +71,8 @@ import com.net2plan.internal.plugins.PluginSystem;
 import com.net2plan.utils.HTMLUtils;
 import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.StringUtils;
-import net.miginfocom.swing.MigLayout;
-import org.apache.commons.collections15.BidiMap;
-import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
-import java.awt.*;
-import java.awt.event.*;
-import java.io.File;
-import java.io.PrintStream;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import net.miginfocom.swing.MigLayout;
 
 /**
  * Main class for the graphical user interface (GUI).
@@ -52,6 +80,7 @@ import java.util.Set;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
+@SuppressWarnings("unchecked")
 public class GUINet2Plan extends JFrame implements ActionListener {
     private final static String USERSGUIDEFILENAME = "usersGuide.pdf";
     private static GUINet2Plan instance;
@@ -68,7 +97,8 @@ public class GUINet2Plan extends JFrame implements ActionListener {
             + "and simulator.</p><br><p align='justify'>Net2Plan is a free and open-source "
             + "Java tool devoted to the planning, optimization and evaluation of "
             + "communication networks.</p><br><p align='justify'>For more information, please "
-            + "visit Net2Plan website: http://www.net2plan.com</p></html>";
+            + "visit Net2Plan website: http://www.net2plan.com</p><br>"
+            + "<p>Map support provided by: © OpenStreetMap contributors (Provided under ODbL license: http://www.openstreetmap.org/copyright)</p></html>";
 
     static {
         CLOSE_NET2PLAN = new CloseNet2PlanListener();
@@ -107,6 +137,8 @@ public class GUINet2Plan extends JFrame implements ActionListener {
                 loadExamples();
             } else {
                 Object object = itemObject.get(item);
+
+                WindowUtils.setWindowLeftSide(instance);
 
                 if (object != null) {
                     if (object instanceof Class) {

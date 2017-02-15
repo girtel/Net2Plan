@@ -57,6 +57,7 @@ import com.net2plan.utils.Triple;
  * @net2plan.inputParameters 
  * @author Pablo Pavon-Marino
  */
+@SuppressWarnings("unchecked")
 public class Online_evProc_adaptiveRoutingDual extends IEventProcessor
 {
 	private static PrintStream getNulFile () { try { return new PrintStream (new FileOutputStream ("NUL") , false); } catch (Exception e) {e.printStackTrace(); throw new RuntimeException ("Not NUL file"); }   } 
@@ -143,7 +144,8 @@ public class Online_evProc_adaptiveRoutingDual extends IEventProcessor
 		/* Sets the initial routing, according to the prices, with all the traffic balanced equally in all the paths of the demand */
 		currentNetPlan.removeAllUnicastRoutingInformation();
 		currentNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
-		this.currentNetPlan.addRoutesFromCandidatePathList(null , "K" , "" + control_maxNumberOfPathsPerDemand.getInt());
+		this.currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.computeUnicastCandidatePathList(null , control_maxNumberOfPathsPerDemand.getInt(), -1, -1, -1, -1, -1, -1 , null));
+		
 		this.R = currentNetPlan.getNumberOfRoutes ();
 		this.control_routeIndexes_d = new int [D][];
 		for (Demand d : this.currentNetPlan.getDemands())
@@ -156,10 +158,6 @@ public class Online_evProc_adaptiveRoutingDual extends IEventProcessor
 		for (Demand d : this.currentNetPlan.getDemands())
 			updateDemandRoutingFromWeightsKnown (d);		
 
-		//System.out.println("Initial maximum link utilization: " + this.currentNetPlan.getLinkMaximumUtilization());
-		
-		/* Initially all nodes receive a "wake up to transmit" event, aligned at time zero or y asynchr => randomly chosen */
-		/* Initially all nodes receive a "wake up to transmit" event, aligned at time zero or y asynchr => randomly chosen */
 		/* Initially all nodes receive a "wake up to transmit" event, aligned at time zero or y asynchr => randomly chosen */
 		for (Link e : currentNetPlan.getLinks())
 		{
@@ -172,17 +170,6 @@ public class Online_evProc_adaptiveRoutingDual extends IEventProcessor
 			this.scheduleEvent(new SimEvent (updateTime , SimEvent.DestinationModule.EVENT_PROCESSOR , UPDATE_WAKEUPTOUPDATE , n));
 		}
 
-//		for (long e : currentNetPlan.getLinkIds())
-//		{
-//			final double signalingTime = (routing_isSignalingSynchronous)? routing_averageSignalingInterval : Math.max(0 , routing_averageSignalingInterval + routing_maxFluctuationSignalingInterval * (rng.nextDouble() - 0.5));
-//			scheduleEvent(new SimEvent (signalingTime , e , SimEvent.DestinationModule.EVENT_PROCESSOR).setEventType(ROUTING_LINK_UPDATEGRADIENTANDSIGNALTONODES));
-//		}
-//		for (long n : currentNetPlan.getNodeIds())
-//		{
-//			final double recomputingTime = (routing_isRecomputingSynchronous)? routing_averageRecomputingInterval : Math.max(0 , routing_averageRecomputingInterval + routing_maxFluctuationRecomputingInterval * (rng.nextDouble() - 0.5));
-//			scheduleEvent(new SimEvent (recomputingTime , n , SimEvent.DestinationModule.EVENT_PROCESSOR).setEventType(ROUTING_NODEWAKEUPTO_RECOMPUTEROUTING));
-//		}
-
 		/* Intialize the traces */
 		this.stat_traceOf_xp = new TimeTrace ();
 		this.stat_traceOf_pie = new TimeTrace ();
@@ -190,12 +177,9 @@ public class Online_evProc_adaptiveRoutingDual extends IEventProcessor
 		this.stat_traceOf_objFunction = new TimeTrace (); 
 		this.stat_traceOf_xp.add(0.0, this.currentNetPlan.getVectorRouteCarriedTraffic());
 		this.stat_traceOf_pie.add(0.0, this.routing_price_e.copy ());
-		this.stat_traceOf_ye.add(0.0, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+		this.stat_traceOf_ye.add(0.0, this.currentNetPlan.getVectorLinkCarriedTraffic());
 		this.stat_traceOf_objFunction.add(0.0, computeObjectiveFucntionFromNetPlan());
 
-		/* */
-//		System.out.println("U_e: " + this.currentNetPlan.getLinkCapacityMap());
-//		log.println("Initial rouetrs in this.currentNetPlan.getRouteCarriedTrafficMap(): " + this.currentNetPlan.getRouteCarriedTrafficMap());
 	}
 
 	@Override
@@ -221,21 +205,12 @@ public class Online_evProc_adaptiveRoutingDual extends IEventProcessor
 			/* Update the gradient iteration */
 			final double previous_pi_e = this.routing_previousLinkWeight_e.get(eMe.getIndex ());
 			final double old_pi_e = this.routing_price_e.get(eMe.getIndex ());
-			final double gradient_e = eMe.getCarriedTrafficIncludingProtectionSegments() - eMe.getCapacity() +  2*gradient_maxGradientAbsoluteNoise.getDouble()*(this.rng.nextDouble()-0.5);
+			final double gradient_e = eMe.getCarriedTraffic() - eMe.getCapacity() +  2*gradient_maxGradientAbsoluteNoise.getDouble()*(this.rng.nextDouble()-0.5);
 			final double new_pi_e_notProjected = old_pi_e + this.gradient_gammaStep.getDouble() * gradient_e + this.gradient_heavyBallBetaParameter.getDouble() * (old_pi_e - previous_pi_e);
 			double new_pi_e_projected = Math.max(0, new_pi_e_notProjected);
 			if (gradient_maxGradientCoordinateChange.getDouble() > 0)
 				new_pi_e_projected = GradientProjectionUtils.scaleDown_maxAbsoluteCoordinateChange (old_pi_e , new_pi_e_projected ,  gradient_maxGradientCoordinateChange.getDouble());
 
-//			if (eIdMe == 0)
-//			{
-//				System.out.println("previous_pi_e: " + previous_pi_e);
-//				System.out.println("old_pi_e: " + old_pi_e);
-//				System.out.println("gradient_e: " + gradient_e);
-//				System.out.println("new_pi_e_notProjected: " + new_pi_e_notProjected);
-//				System.out.println("new_pi_e_projected: " + new_pi_e_projected);
-//			}
-				
 			this.routing_previousLinkWeight_e.set(eMe.getIndex (), old_pi_e);
 			this.routing_price_e.set(eMe.getIndex () , new_pi_e_projected);
 			eMe.setAttribute("pi_e" , "" + routing_price_e.get (eMe.getIndex ()));
@@ -267,7 +242,7 @@ public class Online_evProc_adaptiveRoutingDual extends IEventProcessor
 
 			this.stat_traceOf_xp.add(t, this.currentNetPlan.getVectorRouteCarriedTraffic());
 			this.stat_traceOf_pie.add(t, this.routing_price_e.copy ());
-			this.stat_traceOf_ye.add(t, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+			this.stat_traceOf_ye.add(t, this.currentNetPlan.getVectorLinkCarriedTraffic());
 			this.stat_traceOf_objFunction.add(t, computeObjectiveFucntionFromNetPlan());
 
 			if (t > this.simulation_maxNumberOfUpdateIntervals.getDouble() * this.update_averageInterUpdateTime.getDouble()) { this.endSimulation (); }
@@ -381,40 +356,16 @@ public class Online_evProc_adaptiveRoutingDual extends IEventProcessor
 		final double h_d = d.getOfferedTraffic();
 		final DoubleMatrix1D weightsKnown_e = this.routing_mostUpdatedLinkPriceKnownByNode_ne.viewRow(a_d.getIndex ()); 
 		DoubleMatrix1D a_k = DoubleFactory1D.dense.make (R);
-//		Map<Long,Double> map_a_k = new HashMap<Long,Double> ();
 		for (Route r : d.getRoutes())
 		{
 			double val = 0; 
-			for (Link e : r.getSeqLinksRealPath()) val += weightsKnown_e.get(e.getIndex()) + 1; 
+			for (Link e : r.getSeqLinks()) val += weightsKnown_e.get(e.getIndex()) + 1; 
 			a_k.set(r.getIndex (), val);
-//			map_a_k.put (r.getId () , val);
 		}
 
-//		Map<Long,Double> x_r_map = GradientProjectionUtils.regularizedProjection_sumEquality (map_a_k , null , null , h_d , this.gradient_regularizationEpsilon.getDouble());
-//		for (Route r : d.getRoutes ())
-//			r.setCarriedTraffic(x_r_map.get(r.getId ()) ,  x_r_map.get(r.getId ()));
-//		System.out.println ("MAP: x_r this route: " +  currentNetPlan.getVectorRouteCarriedTraffic().viewSelection(control_routeIndexes_d [d.getIndex ()])); 
-//
-//		System.out.println ("control_routeIndexes_d [d.getIndex ()]: " + Arrays.toString (control_routeIndexes_d [d.getIndex ()]));
-//		System.out.println ("a_k.viewSelection control_routeIndexes_d [d.getIndex ()]): " + a_k.viewSelection (control_routeIndexes_d [d.getIndex ()]));
-//		
 		DoubleMatrix1D x_r = GradientProjectionUtils.regularizedProjection_sumEquality (a_k , control_routeIndexes_d [d.getIndex ()] , null , h_d , this.gradient_regularizationEpsilon.getDouble());
 		for (Route r : d.getRoutes ())
 			r.setCarriedTraffic(x_r.get(r.getIndex ()) ,  x_r.get(r.getIndex ()));
-
-//		System.out.println ("DOUBLE: x_r this route: " +  currentNetPlan.getVectorRouteCarriedTraffic().viewSelection(control_routeIndexes_d [d.getIndex ()])); 
-
-		
-//		if (1 == 1) throw new RuntimeException ("here");
-		
-//		if (d == this.currentNetPlan.getDemandIdsVector() [1])
-//		{
-//			System.out.println("Demand " + d + ", h_d: " + h_d + ", epsilon: " + routing_regularizationEpsilon + ", a_k: : " + a_k);
-//			System.out.println("Demand " + d + ", x_r: " + x_r);
-//			System.out.println("y_e: " + this.currentNetPlan.getLinkCarriedTrafficMap());
-//			System.out.println("pi_e: " + this.routing_price_e);
-//			}
-
 	}
 	
 }

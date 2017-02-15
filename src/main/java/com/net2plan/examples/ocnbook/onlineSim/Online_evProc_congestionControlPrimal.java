@@ -57,7 +57,8 @@ import com.net2plan.utils.Triple;
  * @net2plan.inputParameters 
  * @author Pablo Pavon-Marino
  */
-public class Online_evProc_congestionControlPrimal extends IEventProcessor 
+@SuppressWarnings("unchecked")
+public class Online_evProc_congestionControlPrimal extends IEventProcessor
 {
 	private InputParameter signaling_isSynchronous = new InputParameter ("signaling_isSynchronous", false , "true if all the distributed agents involved wake up synchronously to send the signaling messages");
 	private InputParameter signaling_averageInterMessageTime = new InputParameter ("signaling_averageInterMessageTime", 1.0 , "Average time between two signaling messages sent by an agent" , 0 , false , Double.MAX_VALUE , true);
@@ -130,7 +131,8 @@ public class Online_evProc_congestionControlPrimal extends IEventProcessor
 		/* Remove all routes, and create one with the shortest path in km for each demand */
 		currentNetPlan.removeAllUnicastRoutingInformation();
 		currentNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
-		currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.getVectorLinkLengthInKm().toArray()  , "K" , "1");
+		this.currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.computeUnicastCandidatePathList(currentNetPlan.getVectorLinkLengthInKm() , 1, -1, -1, -1, -1, -1, -1 , null));
+
 
 		this.control_isBarrierMethod = gradient_penaltyMethod.getString ().equals ("barrier");
 		this.control_epsilonOrMuFactor = control_isBarrierMethod? gradient_interiorPenaltyEpsilonFactor.getDouble() : gradient_exteriorPenaltyMuFactor.getDouble();
@@ -179,7 +181,7 @@ public class Online_evProc_congestionControlPrimal extends IEventProcessor
 		this.stat_traceOf_maxLinkTraffic = new TimeTrace ();
 		this.stat_traceOf_hd.add(0 , this.currentNetPlan.getVectorDemandOfferedTraffic());
 		this.stat_traceOf_objFunction.add(0 , NetworkPerformanceMetrics.alphaUtility(currentNetPlan.getVectorDemandOfferedTraffic() , control_fairnessFactor.getDouble()));
-		this.stat_traceOf_maxLinkTraffic.add(0.0, this.currentNetPlan.getVectorLinkTotalCarriedTraffic().getMaxLocation() [0]);
+		this.stat_traceOf_maxLinkTraffic.add(0.0, this.currentNetPlan.getVectorLinkCarriedTraffic().getMaxLocation() [0]);
 	}
 
 	@Override
@@ -233,7 +235,7 @@ public class Online_evProc_congestionControlPrimal extends IEventProcessor
 			{
 				final double h_r = r.getCarriedTraffic();
 				demandCarriedTraffic += h_r;
-				for (Link e : r.getSeqLinksRealPath())
+				for (Link e : r.getSeqLinks())
 				{
 					demandWeightedSumLinkPrices += h_r * infoIKnow_priceFirstOrder_e.get(e.getIndex ());
 					demandWeightedSumSecondDerivativeLinkPrices += h_r * infoIKnow_priceSecondOrder_e.get(e.getIndex ());
@@ -266,7 +268,7 @@ public class Online_evProc_congestionControlPrimal extends IEventProcessor
 
 			this.stat_traceOf_hd.add(t, this.currentNetPlan.getVectorDemandOfferedTraffic());
 			this.stat_traceOf_objFunction.add(t, NetworkPerformanceMetrics.alphaUtility(currentNetPlan.getVectorDemandOfferedTraffic() , control_fairnessFactor.getDouble()));
-			this.stat_traceOf_maxLinkTraffic.add(t, this.currentNetPlan.getVectorLinkTotalCarriedTraffic().getMaxLocation() [0]);
+			this.stat_traceOf_maxLinkTraffic.add(t, this.currentNetPlan.getVectorLinkCarriedTraffic().getMaxLocation() [0]);
 
 			if (t > this.simulation_maxNumberOfUpdateIntervals.getDouble() * this.update_averageInterUpdateTime.getDouble()) { this.endSimulation (); }
 			
@@ -331,7 +333,7 @@ public class Online_evProc_congestionControlPrimal extends IEventProcessor
 	/* Computes the price, and the price for diagonal scaling */
 	private double computeFirstOrderPriceFromNetPlan (Link e)
 	{
-		final double y_e = e.getCarriedTrafficIncludingProtectionSegments();
+		final double y_e = e.getCarriedTraffic();
 		final double u_e = e.getCapacity();
 		if (u_e == 0) throw new RuntimeException ("Zero capacity in a link");
 		double price = 0;
@@ -349,7 +351,7 @@ public class Online_evProc_congestionControlPrimal extends IEventProcessor
 
 	private double computeSecondOrderPriceFromNetPlan (Link e)
 	{
-		final double y_e = e.getCarriedTrafficIncludingProtectionSegments();
+		final double y_e = e.getCarriedTraffic();
 		final double u_e = e.getCapacity();
 		if (u_e == 0) throw new RuntimeException ("Zero capacity in a link");
 		double priceDiagScaling = 0;

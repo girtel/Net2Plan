@@ -12,17 +12,25 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import cern.colt.list.tdouble.DoubleArrayList;
-import cern.colt.list.tint.IntArrayList;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
+import java.awt.geom.Point2D;
+import java.net.URL;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.UnmodifiablePoint2D;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
-import java.awt.geom.Point2D;
-import java.util.*;
+import cern.colt.list.tdouble.DoubleArrayList;
+import cern.colt.list.tint.IntArrayList;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
 
 
 /** <p>This class contains a representation of a node.
@@ -49,13 +57,21 @@ public class Node extends NetworkElement
 	Set<MulticastDemand> cache_nodeOutgoingMulticastDemands;
 	Set<SharedRiskGroup> cache_nodeSRGs;
 	Set<Route> cache_nodeAssociatedRoutes;
-	Set<ProtectionSegment> cache_nodeAssociatedSegments;
 	Set<MulticastTree> cache_nodeAssociatedulticastTrees;
+	Set<Resource> cache_nodeResources;
+	Map<NetworkLayer,URL> mapLayer2URLSpecificIcon;
 
 
 	/**
 	 * Default constructor.
 	 *
+	 * @param netPlan Network topology
+	 * @param id Node ID
+	 * @param index Node index
+	 * @param xCoord Node X Coord
+	 * @param yCoord Node Y Coord
+	 * @param name Node name
+	 * @param attributes Node attributes
 	 * @since 0.2.0
 	 */
 	protected Node (NetPlan netPlan , long id , int index , double xCoord, double yCoord, String name, AttributeMap attributes)
@@ -73,11 +89,10 @@ public class Node extends NetworkElement
 		this.cache_nodeIncomingMulticastDemands = new HashSet<MulticastDemand> ();
 		this.cache_nodeOutgoingMulticastDemands = new HashSet<MulticastDemand> ();
 		this.cache_nodeSRGs = new HashSet<SharedRiskGroup> ();
+		this.cache_nodeResources = new HashSet<Resource> ();
 		this.cache_nodeAssociatedRoutes = new HashSet<Route> ();
-		this.cache_nodeAssociatedSegments = new HashSet<ProtectionSegment> ();
 		this.cache_nodeAssociatedulticastTrees = new HashSet<MulticastTree> ();
-
-	
+		this.mapLayer2URLSpecificIcon = new HashMap <> ();
 	}
 	
 	void copyFrom (Node origin)
@@ -87,6 +102,7 @@ public class Node extends NetworkElement
 		this.name = origin.name;
 		this.nodeXYPositionMap = new UnmodifiablePoint2D(origin.nodeXYPositionMap.getX() , origin.nodeXYPositionMap.getY());
 		this.isUp = origin.isUp;
+		this.mapLayer2URLSpecificIcon.clear(); for (NetworkLayer l : origin.mapLayer2URLSpecificIcon.keySet()) this.mapLayer2URLSpecificIcon.put(this.netPlan.getNetworkLayerFromId(l.getId()) , origin.mapLayer2URLSpecificIcon.get(l));
 		this.cache_nodeIncomingLinks.clear (); for (Link e : origin.cache_nodeIncomingLinks) this.cache_nodeIncomingLinks.add(this.netPlan.getLinkFromId (e.id));
 		this.cache_nodeOutgoingLinks.clear (); for (Link e : origin.cache_nodeOutgoingLinks) this.cache_nodeOutgoingLinks.add(this.netPlan.getLinkFromId (e.id));
 		this.cache_nodeIncomingDemands.clear (); for (Demand d : origin.cache_nodeIncomingDemands) this.cache_nodeIncomingDemands.add(this.netPlan.getDemandFromId (d.id));
@@ -94,11 +110,32 @@ public class Node extends NetworkElement
 		this.cache_nodeIncomingMulticastDemands.clear (); for (MulticastDemand d : origin.cache_nodeIncomingMulticastDemands) this.cache_nodeIncomingMulticastDemands.add(this.netPlan.getMulticastDemandFromId(d.id));
 		this.cache_nodeOutgoingMulticastDemands.clear (); for (MulticastDemand d : origin.cache_nodeOutgoingMulticastDemands) this.cache_nodeOutgoingMulticastDemands.add(this.netPlan.getMulticastDemandFromId(d.id));
 		this.cache_nodeSRGs.clear (); for (SharedRiskGroup s : origin.cache_nodeSRGs) this.cache_nodeSRGs.add(this.netPlan.getSRGFromId(s.id));
+		this.cache_nodeResources.clear(); for (Resource r : origin.cache_nodeResources) this.cache_nodeResources.add(this.netPlan.getResourceFromId(r.id));
 		this.cache_nodeAssociatedRoutes.clear (); for (Route r : origin.cache_nodeAssociatedRoutes) this.cache_nodeAssociatedRoutes.add(this.netPlan.getRouteFromId (r.id));
-		this.cache_nodeAssociatedSegments.clear (); for (ProtectionSegment s : origin.cache_nodeAssociatedSegments) this.cache_nodeAssociatedSegments.add(this.netPlan.getProtectionSegmentFromId(s.id));
 		this.cache_nodeAssociatedulticastTrees.clear (); for (MulticastTree t : origin.cache_nodeAssociatedulticastTrees) this.cache_nodeAssociatedulticastTrees.add(this.netPlan.getMulticastTreeFromId(t.id));
 	}
 	
+	boolean isDeepCopy (Node e2)
+	{
+		if (!super.isDeepCopy(e2)) return false;
+		if (!this.name.equals(e2.name)) return false;
+		if (!this.nodeXYPositionMap.equals(e2.nodeXYPositionMap)) return false;
+		if (this.isUp != e2.isUp) return false;
+		
+		if (!NetPlan.isDeepCopy(this.mapLayer2URLSpecificIcon , e2.mapLayer2URLSpecificIcon)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeIncomingLinks , e2.cache_nodeIncomingLinks)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeOutgoingLinks , e2.cache_nodeOutgoingLinks)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeIncomingDemands , e2.cache_nodeIncomingDemands)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeOutgoingDemands , e2.cache_nodeOutgoingDemands)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeIncomingMulticastDemands , e2.cache_nodeIncomingMulticastDemands)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeOutgoingMulticastDemands , e2.cache_nodeOutgoingMulticastDemands)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeSRGs , e2.cache_nodeSRGs)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeResources, e2.cache_nodeResources)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeAssociatedRoutes , e2.cache_nodeAssociatedRoutes)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_nodeAssociatedulticastTrees , e2.cache_nodeAssociatedulticastTrees)) return false;
+		return true;
+	}
+
 	/**
 	 * <p>Returns the node name</p>
 	 * @return The node name
@@ -130,6 +167,33 @@ public class Node extends NetworkElement
 		checkAttachedToNetPlanObject();
 		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
 		double accum = 0; for (Demand d : cache_nodeIncomingDemands) if (d.layer.equals (layer)) accum += d.offeredTraffic;
+		return accum;
+	}
+
+
+	/** Returns the total carried in the links of te given layer entering the node.
+	 * If no layer is provided, the default layer is assumed
+	 * @param optionalLayerParameter Network layer (optional)
+	 * @return see above
+	 */
+	public double getIncomingLinksTraffic (NetworkLayer ... optionalLayerParameter)
+	{
+		checkAttachedToNetPlanObject();
+		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		double accum = 0; for (Link e : cache_nodeIncomingLinks) if (e.layer.equals (layer)) accum += e.cache_carriedTraffic;
+		return accum;
+	}
+
+	/** Returns the total carried in the links of te given layer entering the node.
+	 * If no layer is provided, the default layer is assumed
+	 * @param optionalLayerParameter Network layer (optional)
+	 * @return see above
+	 */
+	public double getOutgoingLinksTraffic (NetworkLayer ... optionalLayerParameter)
+	{
+		checkAttachedToNetPlanObject();
+		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		double accum = 0; for (Link e : cache_nodeOutgoingLinks) if (e.layer.equals (layer)) accum += e.cache_carriedTraffic;
 		return accum;
 	}
 
@@ -429,7 +493,7 @@ public class Node extends NetworkElement
 
 	/**
 	 * <p>Set the failure state of the node: up or down. Returns the previous failure state. The routing is automatically updated, making the traffic
-	 * of the traversing routes and segments as zero, and the hop-by-hop routing is updated as if the forwarding rules of input and output links were zero</p>
+	 * of the traversing routes as zero, and the hop-by-hop routing is updated as if the forwarding rules of input and output links were zero</p>
 	 * @param setAsUp The new failure state ({@code true} up, {@code false} down)
 	 * @return The previous failure state
 	 */
@@ -549,6 +613,7 @@ public class Node extends NetworkElement
 	{
 		checkAttachedToNetPlanObject();
 		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		Set<Route> res = new HashSet<Route> (); 
 		for (Link e : cache_nodeIncomingLinks) if (e.layer.equals (layer)) res.addAll (e.cache_traversingRoutes.keySet()); 
 		for (Link e : cache_nodeOutgoingLinks) if (e.layer.equals (layer)) res.addAll (e.cache_traversingRoutes.keySet()); 
@@ -571,20 +636,6 @@ public class Node extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns the set of protection segments that start, end or traverse this node, in the given layer. If no layer is provided, the default layer is assumed.</p>
-	 * @param optionalLayerParameter Network layer (optional)
-	 * @return The segments, or an empty set if none
-	 */
-	public Set<ProtectionSegment> getAssociatedProtectionSegments (NetworkLayer ... optionalLayerParameter)
-	{
-		checkAttachedToNetPlanObject();
-		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-		Set<ProtectionSegment> res = new HashSet<ProtectionSegment> (); 
-		for (ProtectionSegment s : cache_nodeAssociatedSegments) if (s.layer.equals (layer)) res.add (s);
-		return res;
-	}
-
-	/**
 	 * <p>Returns the set of shared risk groups (SRGs) this node belongs to. </p>
 	 * @return The set of SRGs as an unmodifiable set
 	 */
@@ -593,8 +644,22 @@ public class Node extends NetworkElement
 		return (Set<SharedRiskGroup>) Collections.unmodifiableSet(cache_nodeSRGs);
 	}
 
+	/** Returns the set of resources that this node hosts. If no resource is provided, all the resources of all types are provided. If one ore more optional parameters type are given, 
+	 * a set with the hosted resources of any of those types is returned (or an empty set if none)
+	 * @param type one or more optional types (optional)
+	 * @return the set
+	 */
+	public Set<Resource> getResources (String ... type)
+	{
+		if (type.length == 0) return Collections.unmodifiableSet(cache_nodeResources);
+		Set<Resource> res = new HashSet<Resource> ();
+		for (Resource r : cache_nodeResources) for (String thisType : type) if (r.type.equals(thisType)) { res.add(r); break; }
+		return res;
+	}
+	
+	
 	/**
-	 * <p>Removes a node, and any associated link, demand, route, protection segment or forwarding rule.</p>
+	 * <p>Removes a node, and any associated link, demand, route or forwarding rule.</p>
 	 */
 	public void remove ()
 	{
@@ -602,7 +667,6 @@ public class Node extends NetworkElement
 		netPlan.checkIsModifiable();
 
 		for (MulticastTree tree : new LinkedList<MulticastTree> (cache_nodeAssociatedulticastTrees)) tree.remove ();
-		for (ProtectionSegment segment : new LinkedList<ProtectionSegment> (cache_nodeAssociatedSegments)) segment.remove ();
 		for (Route route : new LinkedList<Route> (cache_nodeAssociatedRoutes)) route.remove ();
 		for (SharedRiskGroup srg : new LinkedList<SharedRiskGroup> (cache_nodeSRGs)) srg.remove ();
 		for (Link link : new LinkedList<Link> (cache_nodeIncomingLinks)) link.remove ();
@@ -647,7 +711,7 @@ public class Node extends NetworkElement
 		for (Link e : getOutgoingLinks(layer))
 		{
 			IntArrayList ds = new IntArrayList (); DoubleArrayList vals = new DoubleArrayList ();
-			layer.forwardingRules_f_de.viewColumn(e.index).getNonZeros(ds,vals);
+			layer.forwardingRulesNoFailureState_f_de.viewColumn(e.index).getNonZeros(ds,vals);
 			for (int cont = 0 ; cont < ds.size () ; cont ++)
 				res.put (Pair.of (layer.demands.get(ds.get(cont)) , e) , vals.get(cont));
 		}
@@ -667,11 +731,38 @@ public class Node extends NetworkElement
 		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
 		Map<Pair<Demand,Link>,Double> res = new HashMap<Pair<Demand,Link>,Double> ();
 		for (Link e : getOutgoingLinks(layer))
-			if (layer.forwardingRules_f_de.get(demand.index , e.index) > 0)
-				res.put (Pair.of (demand , e) , layer.forwardingRules_f_de.get(demand.index , e.index));
+			if (layer.forwardingRulesNoFailureState_f_de.get(demand.index , e.index) > 0)
+				res.put (Pair.of (demand , e) , layer.forwardingRulesNoFailureState_f_de.get(demand.index , e.index));
 		return res;
 	}
 	
+	
+	/** Returns the url of the icon specified by the user to represent this node at the given layer, or null if none
+	 * @param layer the layer
+	 * @return the url
+	 */
+	public URL getUrlNodeIcon (NetworkLayer layer)
+	{
+		return mapLayer2URLSpecificIcon.get(layer);
+	}
+	
+	/** Sets the url of the icon specified by the user to represent this node at the given layer. Previous url for this layer (if any) will be removed
+	 * @param layer the layer
+	 * @param url the url
+	 */
+	public void setUrlNodeIcon (NetworkLayer layer , URL url)
+	{
+		mapLayer2URLSpecificIcon.put(layer , url);
+	}
+
+	/** Removes any previous url of the node icon for this layer (if any)
+	 * @param layer the layer
+	 */
+	public void removeUrlNodeIcon (NetworkLayer layer)
+	{
+		mapLayer2URLSpecificIcon.remove(layer);
+	}
+
 	void checkCachesConsistency ()
 	{
 		if (isUp && netPlan.cache_nodesDown.contains(this)) throw new RuntimeException ("Bad");
@@ -683,9 +774,8 @@ public class Node extends NetworkElement
 		for (MulticastDemand demand : cache_nodeIncomingMulticastDemands) if (!demand.egressNodes.contains(this)) throw new RuntimeException ("Bad");
 		for (MulticastDemand demand : cache_nodeOutgoingMulticastDemands) if (demand.ingressNode != this) throw new RuntimeException ("Bad");
 		for (SharedRiskGroup srg : cache_nodeSRGs) if (!srg.nodes.contains(this)) throw new RuntimeException ("Bad");
-		for (Route route : cache_nodeAssociatedRoutes) if (!route.seqNodesRealPath.contains(this)) throw new RuntimeException ("Bad: " + cache_nodeAssociatedRoutes);
-		for (ProtectionSegment segment : cache_nodeAssociatedSegments) if (!segment.seqNodes.contains(this)) throw new RuntimeException ("Bad");
+		for (Route route : cache_nodeAssociatedRoutes) if (!route.cache_seqNodesRealPath.contains(this)) throw new RuntimeException ("Bad: " + cache_nodeAssociatedRoutes);
 		for (MulticastTree tree : cache_nodeAssociatedulticastTrees) if (!tree.cache_traversedNodes.contains(this)) throw new RuntimeException ("Bad");
 	}
-	
+
 }

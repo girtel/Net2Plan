@@ -22,7 +22,8 @@ import java.util.List;
 import java.util.Map;
 
 //public class TimeTrace <A>
-public class TimeTrace 
+@SuppressWarnings("unchecked")
+public class TimeTrace
 {
 	private LinkedList<Pair<Double,Object>> list;
 	

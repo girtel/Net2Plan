@@ -12,23 +12,18 @@
 
 package com.net2plan.libraries;
 
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
 
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastTree;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
-import com.net2plan.utils.Triple;
+
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 
 /**
  * Class implementing different traffic metrics.
@@ -107,72 +102,34 @@ public class TrafficComputationEngine
 		for (Route r : routes)
 		{
 			R_d += r.getCarriedTraffic();
-			for (Link e : r.getSeqLinksRealPath()) average += r.getCarriedTraffic() * ((linkCostMap == null)? 1 : linkCostMap.get(e.getIndex()));
+			for (Link e : r.getSeqLinks()) average += r.getCarriedTraffic() * ((linkCostMap == null)? 1 : linkCostMap.get(e.getIndex()));
 		}
 		return R_d == 0? 0 : average / R_d;
 	}
 	
 	/**
-	 * <p>Returns the statistics for protection degree carried traffic. Returned
-	 * values are the following:</p>
-	 * 
-	 * <ul>
-	 * <li>Unprotected: Percentage of carried traffic which is not backed up by protection segments</li>
-	 * <li>Complete and dedicated protection: Percentage of carried traffic which
-	 * has one or more dedicated protection segments covering the whole route with enough bandwidth</li>
-	 * <li>Partial and/or shared protection: For cases not covered by the above definitions</li>
-	 * </ul>
-	 * 
+	 * <p>Returns the fraction of the total carried traffic in the given layer that has at least one backup path defined. 
+	 * If a layer is not defined, the defaul layer is used.</p>
 	 * @param netPlan Current network design
-	 * @param optionalLayerParameter Network laer (optional)
+	 * @param optionalLayerParameter Network layer (optional)
 	 * @return Traffic protection degree
 	 */
-	public static Triple<Double, Double, Double> getTrafficProtectionDegree(NetPlan netPlan, NetworkLayer ... optionalLayerParameter)
+	public static double getTrafficProtectionDegree(NetPlan netPlan, NetworkLayer ... optionalLayerParameter)
 	{
 		if (optionalLayerParameter.length >= 2) throw new Net2PlanException ("None or one layer parameter can be supplied");
 		NetworkLayer layer = (optionalLayerParameter.length == 1)? optionalLayerParameter [0] : netPlan.getNetworkLayerDefault();
 		layer.checkAttachedToNetPlanObject(netPlan);
-		if (netPlan.getRoutingType(layer) == RoutingType.HOP_BY_HOP_ROUTING) return Triple.of (1.0,0.0,0.0);
+		if (netPlan.getRoutingType(layer) == RoutingType.HOP_BY_HOP_ROUTING) return 0;
 		
-		double R_d = netPlan.getVectorDemandCarriedTraffic(layer).zSum();
-		double percentageUnprotected = 0;
-		double percentageDedicated = 0;
-		double percentageShared = 0;
+		double totalCarriedTraffic = 0;
+		double totalCarriedAndProtectedTraffic = 0;
 
 		for (Route route : netPlan.getRoutes(layer))
 		{
-			final double x_p = route.getCarriedTraffic();
-			if (route.getPotentialBackupProtectionSegments().isEmpty()) { percentageUnprotected += x_p; continue; }
-
-			/* Complete and dedicated: we can go from origin to destination, traversing only non currently used protection segments, dedicated only to me, and with enough capacity */
-//			Map<Long,Pair<Long,Long>> notCurrentlyUsedProtSegmentMap = new HashMap<Long,Pair<Long,Long>> ();
-//			Map<Long,Double> linkSpareCapacityMap = new HashMap<Long,Double> ();
-//			for (ProtectionSegment s : route.getPotentialBackupProtectionSegments())
-//			{
-//				if (route.getCurrentlyTraversedProtectionSegments().contains (s)) continue;
-//				if (s.getAssociatedRoutesToWhichIsBackup().size() > 1) continue;
-//				notCurrentlyUsedProtSegmentMap.put (s.getId () , Pair.of (s.getOriginNode().getId () , s.getDestinationNode().getId ()));
-//				linkSpareCapacityMap.put (s.getId () , s.getReservedCapacityForProtection() - s.getCarriedTraffic());
-//			}
-//			List<Long> backupSeqProtSegments = GraphUtils.getCapacitatedShortestPath(netPlan.getNodeIds () , notCurrentlyUsedProtSegmentMap , route.getIngressNode().getId () , route.getEgressNode().getId () , null , linkSpareCapacityMap , route.getCarriedTraffic());
-			List<Link> notCurrentlyUsedProtSegments = new LinkedList<Link> ();
-			Map<Link,Double> linkSpareCapacityMap = new HashMap<Link,Double> ();
-			for (ProtectionSegment s : route.getPotentialBackupProtectionSegments())
-			{
-				if (route.getCurrentlyTraversedProtectionSegments().contains (s)) continue;
-				if (s.getAssociatedRoutesToWhichIsBackup().size() > 1) continue;
-				notCurrentlyUsedProtSegments.add (s);
-				linkSpareCapacityMap.put (s , s.getReservedCapacityForProtection() - s.getCarriedTraffic());
-			}
-			List<Link> backupSeqProtSegments = GraphUtils.getCapacitatedShortestPath(netPlan.getNodes () , notCurrentlyUsedProtSegments , route.getIngressNode() , route.getEgressNode() , null , linkSpareCapacityMap , route.getCarriedTraffic());
-			
-			if (backupSeqProtSegments.isEmpty()) percentageShared += x_p; else  percentageDedicated += x_p;
+			totalCarriedTraffic += route.getCarriedTraffic();
+			if (route.hasBackupRoutes())
+				totalCarriedAndProtectedTraffic += route.getCarriedTraffic();
 		}
-
-		percentageUnprotected = R_d == 0 ? 0 : 100 * percentageUnprotected / R_d;
-		percentageDedicated = R_d == 0 ? 0 : 100 * percentageDedicated / R_d;
-		percentageShared = R_d == 0 ? 0 : 100 * percentageShared / R_d;
-
-		return Triple.of(percentageUnprotected, percentageDedicated, percentageShared);
+		return totalCarriedTraffic == 0? 0 : totalCarriedAndProtectedTraffic / totalCarriedTraffic;
 	}
 }

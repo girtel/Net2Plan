@@ -80,8 +80,7 @@ public class Offline_fa_xpMultihourObliviousRouting implements IAlgorithm
 
 		/* Add all the k-shortest candidate routes to the netPlan object carrying no traffic */
 		final DoubleMatrix1D linkCostVector = shortestPathType.getString().equalsIgnoreCase("hops")? DoubleFactory1D.dense.make (E , 1.0) : netPlan.getVectorLinkLengthInKm();
-
-		netPlan.addRoutesFromCandidatePathList(linkCostVector.toArray() , "K", Integer.toString(k.getInt ()), "maxLengthInKm", Double.toString(maxLengthInKm.getDouble () > 0? maxLengthInKm.getDouble () : Double.MAX_VALUE));
+		netPlan.addRoutesFromCandidatePathList(netPlan.computeUnicastCandidatePathList(linkCostVector , k.getInt(), maxLengthInKm.getDouble(), -1, -1, -1, -1, -1 , null));
 		final int P = netPlan.getNumberOfRoutes(); 
 
 		/* Create the netPlan files, one per interval */
@@ -94,10 +93,10 @@ public class Offline_fa_xpMultihourObliviousRouting implements IAlgorithm
 				NetPlan netPlanToAdd = netPlan.copy ();
 				for (Demand d : netPlanToAdd.getDemands()) d.setOfferedTraffic(thisIntervalTrafficMatrix.get (d.getIngressNode().getIndex() , d.getEgressNode().getIndex()));
 				netPlanFiles.add (netPlanToAdd);
-			} catch (Exception e) { e.printStackTrace();  break; }
+			} catch (Exception e) {  break; }
 		}
 		final int T = netPlanFiles.size();
-		System.out.println ("Number of traffic matrices loaded: " + netPlanFiles.size ());
+		//System.out.println ("Number of traffic matrices loaded: " + netPlanFiles.size ());
 
 		/* Create the optimization problem object (JOM library) */
 		OptimizationProblem op = new OptimizationProblem();
@@ -162,7 +161,7 @@ public class Offline_fa_xpMultihourObliviousRouting implements IAlgorithm
 			thisNp.saveToFile(new File (rootOfNameOfOutputFiles.getString() + "_res_tm" + netPlanFiles.size () + ".n2p"));
 			if (t == 0) netPlan.assignFrom (thisNp);
 			if (!thisNp.getLinksOversubscribed().isEmpty()) throw new RuntimeException ("Bad");
-			if (thisNp.getDemandTotalBlockedTraffic() > PRECISION_FACTOR) throw new RuntimeException ("Bad: " + thisNp.getDemandTotalBlockedTraffic());
+			if (thisNp.getVectorDemandBlockedTraffic().zSum() > PRECISION_FACTOR) throw new RuntimeException ("Bad: " + thisNp.getVectorDemandBlockedTraffic().zSum());
 		}
 
 		return "Ok!: The solution found is guaranteed to be optimal: " + op.solutionIsOptimal() + ". Number routes = " + netPlan.getNumberOfRoutes();

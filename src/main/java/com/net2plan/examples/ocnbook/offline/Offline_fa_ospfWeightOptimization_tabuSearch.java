@@ -108,7 +108,7 @@ public class Offline_fa_ospfWeightOptimization_tabuSearch implements IAlgorithm
 		/* update the long-term memory*/
 		for (int eIndex = 0 ; eIndex < E ; eIndex ++) this.numberOccurrencies_ew [eIndex][(int) (currentSol.get(eIndex)) - 1] ++;
 		
-		System.out.println("Initial objFunction: " + bestObjFunction + ", tabu list tenure: " + tabuListSize);
+		//System.out.println("Initial objFunction: " + bestObjFunction + ", tabu list tenure: " + tabuListSize);
 
 		while ((System.nanoTime() < algorithmEndtime) && (numIterations < ts_maxNumIterations.getInt ()))
 		{
@@ -135,7 +135,7 @@ public class Offline_fa_ospfWeightOptimization_tabuSearch implements IAlgorithm
 					/* Update best neighbor if (i) not tabu and improves best neighbor, (ii) tabu, but aspiration criterion is active and improves incumbent solution */
 					if ( (!isTabu && (neighborObjFunction < bestNeighborObjFunction)) || (isTabu && ts_aspirationCriterion.getBoolean() && (neighborObjFunction < bestObjFunction)) ) 
 					{
-						if (isTabu) System.out.println ("Aspiration criterion applied");
+						// if (isTabu) System.out.println ("Aspiration criterion applied");
 						bestNeighborLink = e1; bestNeighborWeight = w1; bestNeighborObjFunction = neighborObjFunction;
 					}
 				}
@@ -155,8 +155,8 @@ public class Offline_fa_ospfWeightOptimization_tabuSearch implements IAlgorithm
 			{
 				this.numIterationsNonImprovingBestSolutionSinceLastRandomization = 0;
 				bestObjFunctionSinceLastRandomization = currentObjFunction; 
-				System.out.println("Improving best objFunction since last randomization: " + currentObjFunction);
-				if (currentObjFunction < bestObjFunction) { bestObjFunction = currentObjFunction; bestSol = currentSol.copy (); System.out.println("Improving best objFunction: " + bestObjFunction); }
+				//System.out.println("Improving best objFunction since last randomization: " + currentObjFunction);
+				if (currentObjFunction < bestObjFunction) { bestObjFunction = currentObjFunction; bestSol = currentSol.copy (); /* System.out.println("Improving best objFunction: " + bestObjFunction); */ }
 			}
 			else
 				this.numIterationsNonImprovingBestSolutionSinceLastRandomization ++;
@@ -167,7 +167,7 @@ public class Offline_fa_ospfWeightOptimization_tabuSearch implements IAlgorithm
 			/* Check if too many iterations without improving the incumbent solution */
 			if (numIterationsNonImprovingBestSolutionSinceLastRandomization > ts_maxNumIterationsNonImprovingIncumbentSolution.getInt ())
 			{
-				System.out.println("Randomization!!");
+				// System.out.println("Randomization!!");
 				
 				/* Initialize tabu list */
 				tabuList_e.clear(); for (Link e : netPlan.getLinks()) numEntriesTabuList_e.put(e, 0); 
