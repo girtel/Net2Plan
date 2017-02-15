@@ -272,10 +272,8 @@ public class CellRenderers
          * @param offeredTrafficColumnModelIndex Column index (in model order) in which is found the offered traffic
          * @since 0.2.0
          */
-
         public LostTrafficCellRenderer(TableCellRenderer tcr, int offeredTrafficColumnModelIndex, int lostTrafficColumnModelIndex)
         {
-
             super();
 
             this.tcr = tcr;
@@ -284,14 +282,6 @@ public class CellRenderers
         }
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            Component c = null;
-            if(tcr != null)
-                c = tcr.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            else{
-                c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            }
-            if (!isSelected && value != null) {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
         {
             Component c = null;
