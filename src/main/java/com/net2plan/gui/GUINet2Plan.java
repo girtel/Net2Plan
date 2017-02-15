@@ -377,7 +377,6 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         itemObject = new DualHashBidiMap<JMenuItem, Object>();
 
         URL iconURL = GUINet2Plan.class.getResource("/resources/gui/icon.png");
-        System.out.println(iconURL);
         ImageIcon icon = new ImageIcon(iconURL);
         setIconImage(icon.getImage());
         setTitle("Net2Plan");
