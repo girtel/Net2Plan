@@ -27,6 +27,7 @@ import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.utils.Pair;
 
+@SuppressWarnings("unchecked")
 public abstract class ITableRowFilter
 {
 	protected final Map<NetworkLayer,List<Demand>> vDemands;
