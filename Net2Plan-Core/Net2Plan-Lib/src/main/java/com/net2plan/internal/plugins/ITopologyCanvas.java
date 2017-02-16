@@ -20,23 +20,17 @@
 
 package com.net2plan.internal.plugins;
 
-import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.awt.image.AffineTransformOp;
 import java.util.Map;
 import java.util.Set;
 
 import javax.swing.JComponent;
 
-import com.net2plan.gui.utils.topologyPane.GUILink;
-import com.net2plan.gui.utils.topologyPane.GUINode;
-import com.net2plan.gui.utils.topologyPane.ITopologyCanvasPlugin;
+import com.net2plan.gui.topologyPane.GUILink;
+import com.net2plan.gui.topologyPane.GUINode;
+import com.net2plan.gui.topologyPane.ITopologyCanvasPlugin;
 import com.net2plan.interfaces.networkDesign.Node;
-import edu.uci.ics.jung.visualization.Layer;
-import edu.uci.ics.jung.visualization.transform.AffineTransformer;
-import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 
 /**
  * Base class for topology canvas.

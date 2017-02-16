@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.net2plan</groupId>
+        <artifactId>net2plan-core</artifactId>
+        <version>${net2plan.version}</version>
+    </parent>
+
+    <groupId>com.net2plan.net2plan-core</groupId>
+    <artifactId>net2plan-gui</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.net2plan.net2plan-core</groupId>
+            <artifactId>net2plan-lib</artifactId>
+            <version>${net2plan.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>${project.parent.relativePath}/../src/main/resources</directory>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <mainClass>com.net2plan.resources.gui.GUINet2Plan</mainClass>
+                        </manifest>
+                        <manifestEntries>
+                            <Class-Path>lib/NetPlan-lib.jar</Class-Path>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
