@@ -23,7 +23,8 @@ public final class VisualizationConstants
 	public static Color TRANSPARENTCOLOR = new Color (0,0,0,0);
     public final static int DEFAULT_ICONBORDERSIZEINPIXELS = 4;
     public final static Map<String,URL> DEFAULT_LAYERNAME2ICONURLMAP = 
-    		ImmutableMap.of("WDM" , GUINet2Plan.class.getResource("/resources/gui/figs/OpticalTransport.png") , 
+    		ImmutableMap.of("OTN" , GUINet2Plan.class.getResource("/resources/gui/figs/OpticalTransport.png") , 
+					"WDM" , GUINet2Plan.class.getResource("/resources/gui/figs/OADM.png") , 
     						"IP" , GUINet2Plan.class.getResource("/resources/gui/figs/Router.png") , 
     						"WIRELESS" , GUINet2Plan.class.getResource("/resources/gui/figs/WirelessRouter.png"));
     public final static Map<String,URL> DEFAULT_RESPOURCETYPE2ICONURLMAP = ImmutableMap.of(
