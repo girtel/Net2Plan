@@ -12,13 +12,16 @@
 
 package com.net2plan.gui.utils.topologyPane;
 
-import com.net2plan.gui.utils.INetworkCallback;
+import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.internal.Constants;
 import com.net2plan.internal.plugins.ITopologyCanvas;
-import com.net2plan.internal.plugins.ITopologyCanvasPlugin;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collections;
 
 /**
  * This plugin allows to pan the graph along the canvas.
@@ -26,9 +29,8 @@ import java.awt.event.MouseEvent;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.3.1
  */
-public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugin
-{
-    private final INetworkCallback callback;
+public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugin {
+    private final IVisualizationCallback callback;
     private final Cursor cursor;
 
     private ITopologyCanvas canvas;
@@ -43,10 +45,13 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
      * @param modifiers Mouse event modifiers to activate this functionality
      * @since 0.3.1
      */
-    public PanGraphPlugin(INetworkCallback callback, int modifiers) {
+    public PanGraphPlugin(IVisualizationCallback callback, ITopologyCanvas canvas , int modifiers)
+    {
         setModifiers(modifiers);
         this.callback = callback;
+        this.canvas = canvas;
 
+        //originalCursor = this.canvas.getCanvasComponent().getCursor();
         originalCursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
         cursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
         down = null;
@@ -59,11 +64,6 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     }
 
     @Override
-    public ITopologyCanvas getCanvas() {
-        return canvas;
-    }
-
-    @Override
     public int getModifiers() {
         return modifiers;
     }
@@ -71,23 +71,44 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mouseDragged(MouseEvent e) {
         if (down != null) {
-            getCanvas().getInternalComponent().setCursor(cursor);
-            getCanvas().panTo(down, e.getPoint());
+            canvas.getCanvasComponent().setCursor(cursor);
+            canvas.panTo(down, e.getPoint());
             down = e.getPoint();
             e.consume();
         }
     }
 
     @Override
+    public void mouseClicked(MouseEvent e)
+    {
+        if (e.getClickCount() == 2)
+        {
+            final GUINode gn = canvas.getVertex(e);
+
+            if (gn != null)
+            {
+                final NetworkLayer layer = gn.getLayer();
+                final NetPlan netPlan = callback.getDesign();
+
+                if (netPlan.getNetworkLayerDefault() != layer)
+                {
+                    netPlan.setNetworkLayerDefault(layer);
+                    callback.getVisualizationState().setCanvasLayerVisibility(layer, true);
+                    callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
+                }
+            }
+        }
+    }
+
+    @Override
     public void mousePressed(MouseEvent e) {
         if (checkModifiers(e)) {
-            long nodeId = getCanvas().getNode(e);
-            long linkId = getCanvas().getLink(e);
-            if (nodeId == -1 && linkId == -1) {
+            GUINode gn = canvas.getVertex(e);
+            GUILink gl = canvas.getEdge(e);
+            if (gn == null && gl == null) {
                 down = e.getPoint();
                 initialPoint = e.getPoint();
-                getCanvas().getInternalComponent().setCursor(cursor);
-
+                canvas.getCanvasComponent().setCursor(cursor);
                 e.consume();
             }
         }
@@ -96,17 +117,11 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mouseReleased(MouseEvent e) {
         if (initialPoint != null && initialPoint.equals(e.getPoint()))
-            callback.resetView();
+            callback.resetPickedStateAndUpdateView();
 
         down = null;
         initialPoint = null;
-        getCanvas().getInternalComponent().setCursor(originalCursor);
-    }
-
-    @Override
-    public void setCanvas(ITopologyCanvas canvas) {
-        this.canvas = canvas;
-        originalCursor = this.canvas.getInternalComponent().getCursor();
+        canvas.getCanvasComponent().setCursor(originalCursor);
     }
 
     @Override

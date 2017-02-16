@@ -55,4 +55,10 @@ public class ClassAwareTableModel extends DefaultTableModel {
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return false;
     }
+    
+    /* Called to set a value in a cell without going through thje overriden method setValueAt */
+    public void setAtValueSuper (Object aValue, int rowIndex, int columnIndex)
+    {
+    	super.setValueAt(aValue , rowIndex , columnIndex);
+    }
 }

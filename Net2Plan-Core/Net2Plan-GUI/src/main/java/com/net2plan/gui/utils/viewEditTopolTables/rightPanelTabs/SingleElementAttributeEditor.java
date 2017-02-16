@@ -1,23 +1,32 @@
 package com.net2plan.gui.utils.viewEditTopolTables.rightPanelTabs;
 
-import com.net2plan.gui.utils.INetworkCallback;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.internal.ErrorHandling;
-import com.net2plan.utils.StringUtils;
-
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
 
+import javax.swing.Box;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+
+import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.internal.ErrorHandling;
+import com.net2plan.utils.StringUtils;
+
 class SingleElementAttributeEditor extends MouseAdapter {
-    private final INetworkCallback callback;
+    private final IVisualizationCallback callback;
     private final NetworkElementType type;
 
-    public SingleElementAttributeEditor(final INetworkCallback callback, final NetworkElementType type) {
+    public SingleElementAttributeEditor(final IVisualizationCallback callback, final NetworkElementType type) {
         this.callback = callback;
         this.type = type;
     }
@@ -66,7 +75,7 @@ class SingleElementAttributeEditor extends MouseAdapter {
                                     return;
                             }
 
-                            callback.updateNetPlanView();
+                            callback.updateVisualizationJustTables();
                             return;
                         } catch (Exception ex) {
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Error adding/editing attribute");
@@ -136,7 +145,7 @@ class SingleElementAttributeEditor extends MouseAdapter {
                                     return;
                             }
 
-                            callback.updateNetPlanView();
+                            callback.updateVisualizationJustTables();
                         } catch (Exception ex) {
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attribute");
                         }
@@ -165,7 +174,7 @@ class SingleElementAttributeEditor extends MouseAdapter {
                                     return;
                             }
 
-                            callback.updateNetPlanView();
+                            callback.updateVisualizationJustTables();
                         } catch (Exception ex) {
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attributes");
                         }

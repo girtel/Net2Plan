@@ -13,19 +13,16 @@
 package com.net2plan.gui.utils;
 
 import com.net2plan.utils.Pair;
+import com.net2plan.utils.Triple;
 
 import javax.swing.*;
-import javax.swing.event.TableModelEvent;
+import javax.swing.event.*;
 import javax.swing.table.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.util.EventObject;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.awt.event.*;
+import java.util.*;
+import java.util.List;
 
 /**
  * <p>Extended version of the {@code JTable} class. It presents the following
@@ -92,17 +89,12 @@ public class AdvancedJTable extends JTable {
 
         setModel(model);
         this.getTableHeader().setReorderingAllowed(false);
-
-
-
     }
 
     @Override
     public void setModel(TableModel model){
         super.setModel(model);
     }
-
-
 
     @Override
     public void doLayout() {
@@ -150,9 +142,12 @@ public class AdvancedJTable extends JTable {
     }
 
     @Override
-    public TableCellRenderer getCellRenderer(int row, int column) {
-        if (cellRendererMap.containsKey(Pair.of(row, column))) return cellRendererMap.get(Pair.of(row, column));
-        else return super.getCellRenderer(row, column);
+    public TableCellRenderer getCellRenderer(int row, int column) 
+    {
+        if (cellRendererMap.containsKey(Pair.of(row, column)))
+        	return cellRendererMap.get(Pair.of(row, column));
+        else 
+        	return super.getCellRenderer(row, column);
     }
 
     @Override

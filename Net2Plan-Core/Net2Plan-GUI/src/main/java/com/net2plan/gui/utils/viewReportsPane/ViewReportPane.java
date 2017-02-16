@@ -1,6 +1,31 @@
 package com.net2plan.gui.utils.viewReportsPane;
 
-import com.net2plan.gui.utils.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ContainerEvent;
+import java.awt.event.ContainerListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.Closeable;
+import java.io.File;
+import java.util.Map;
+
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+
+import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
+import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
+import com.net2plan.gui.utils.ReportBrowser;
+import com.net2plan.gui.utils.RunnableSelector;
+import com.net2plan.gui.utils.TabIcon;
+import com.net2plan.gui.utils.ThreadExecutionController;
+import com.net2plan.gui.utils.WrapLayout;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.internal.ErrorHandling;
@@ -10,23 +35,16 @@ import com.net2plan.utils.ClassLoaderUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
-import java.io.Closeable;
-import java.io.File;
-import java.util.Map;
-
 @SuppressWarnings("unchecked")
 public class ViewReportPane extends JSplitPane implements ThreadExecutionController.IThreadExecutionHandler
 {
-	private final INetworkCallback mainWindow;
+	private final IVisualizationCallback mainWindow;
     private RunnableSelector reportSelector;
     private ThreadExecutionController reportController;
     private JTabbedPane reportContainer;
     private JButton closeAllReports;
 
-	public ViewReportPane (INetworkCallback mainWindow , int newOrientation)
+	public ViewReportPane (IVisualizationCallback mainWindow , int newOrientation)
 	{
 		super (newOrientation);
 

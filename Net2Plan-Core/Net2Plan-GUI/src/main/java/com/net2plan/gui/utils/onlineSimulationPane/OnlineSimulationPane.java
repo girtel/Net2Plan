@@ -12,10 +12,59 @@
 
 package com.net2plan.gui.utils.onlineSimulationPane;
 
+import static com.net2plan.internal.sim.SimCore.SimState.NOT_STARTED;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.PriorityQueue;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JToolBar;
+import javax.swing.RowSorter;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
+import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+import javax.swing.text.DefaultCaret;
+
+import org.apache.commons.collections15.BidiMap;
+
 import com.jom.JOMException;
-import com.net2plan.gui.utils.*;
+import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.CellRenderers;
+import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.ColumnFitAdapter;
+import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
+import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
+import com.net2plan.gui.utils.ReportBrowser;
+import com.net2plan.gui.utils.RunnableSelector;
+import com.net2plan.gui.utils.SwingUtils;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.IExternal;
@@ -27,25 +76,11 @@ import com.net2plan.internal.sim.SimCore;
 import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.internal.sim.SimKernel;
 import com.net2plan.utils.ClassLoaderUtils;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
+
 import net.miginfocom.swing.MigLayout;
-
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
-import javax.swing.text.DefaultCaret;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.PriorityQueue;
-
-import static com.net2plan.internal.sim.SimCore.SimState.NOT_STARTED;
 
 /**
  * Targeted to evaluate network designs from the offline tool simulating the
@@ -58,7 +93,7 @@ import static com.net2plan.internal.sim.SimCore.SimState.NOT_STARTED;
  */
 public class OnlineSimulationPane extends JTabbedPane implements ActionListener, IGUISimulationListener {
 
-	private final INetworkCallback mainWindow;
+	private final IVisualizationCallback mainWindow;
     private final int simReportTab;
     private JButton btn_run, btn_step, btn_pause, btn_stop , btn_reset;
     private JButton btn_viewEventList, btn_updateReport;
@@ -74,7 +109,7 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
     private SimKernel simKernel;
     private JPanel simulationControlPanel;
     
-    public OnlineSimulationPane(INetworkCallback mainWindow) 
+    public OnlineSimulationPane(IVisualizationCallback mainWindow)
     {
 		super ();
 		this.mainWindow = mainWindow;
@@ -147,7 +182,13 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
             }else if (src == btn_reset) {
                 simKernel.getSimCore().setSimulationState(SimState.STOPPED);
                 simKernel.reset();
-                mainWindow.loadDesign(simKernel.getCurrentNetPlan());
+                simKernel.setNetPlan(simKernel.getInitialNetPlan());
+                mainWindow.setCurrentNetPlanDoNotUpdateVisualization(simKernel.getInitialNetPlan());
+                final VisualizationState vs = mainWindow.getVisualizationState();
+        		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+        				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
+        		vs.setCanvasLayerVisibilityAndOrder(mainWindow.getDesign() , res.getFirst() , res.getSecond());
+                mainWindow.updateVisualizationAfterNewTopology();
             } else if (src == btn_viewEventList) {
                 viewFutureEventList();
             } else if (src == btn_updateReport) {
@@ -281,8 +322,12 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
         if (simulationState == SimState.NOT_STARTED || simulationState == SimState.PAUSED || simulationState == SimState.STEP || simulationState == SimState.STOPPED) 
         {
             updateSimulationInfo();
-            mainWindow.getTopologyPanel().updateLayerChooser();
-            mainWindow.resetView();
+            mainWindow.setCurrentNetPlanDoNotUpdateVisualization(simKernel.getCurrentNetPlan());
+            final VisualizationState vs = mainWindow.getVisualizationState();
+    		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+    				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
+    		vs.setCanvasLayerVisibilityAndOrder(mainWindow.getDesign() , res.getFirst() , res.getSecond());
+            mainWindow.updateVisualizationAfterNewTopology();
         }
 
         if (reason == null) return;

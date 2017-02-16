@@ -11,18 +11,18 @@
 
 package com.net2plan.gui.utils;
 
+import com.net2plan.interfaces.networkDesign.NetPlan;
+
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.plaf.basic.BasicTableHeaderUI;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Arc2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * <p>This class allows to hack a {@code JTable} with frozen columns.</p>

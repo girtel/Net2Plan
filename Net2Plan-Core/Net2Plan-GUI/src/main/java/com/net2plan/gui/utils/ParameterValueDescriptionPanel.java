@@ -12,6 +12,28 @@
 
 package com.net2plan.gui.utils;
 
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableModel;
+
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants.RunnableCodeType;
 import com.net2plan.internal.ErrorHandling;
@@ -19,18 +41,6 @@ import com.net2plan.internal.SystemUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableModel;
-import java.awt.*;
-import java.io.File;
-import java.util.*;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Allows to define parameters.
@@ -513,38 +523,6 @@ public class ParameterValueDescriptionPanel extends JPanel
         public void setValueAt(Object value, int row, int column)
         {
             super.setValueAt(value, row, column);
-
-//            if (haveData) 
-//            {
-//                if ("solverName".equals(getValueAt(row, 0)) && column == 1) 
-//                {
-//                	final String solverName = (String) getValueAt(row, 1);
-//                    int solverLibraryNameRow = -1;
-//                    String solverLibraryName = null;
-//                    for (int rowId = 0; rowId < getRowCount(); rowId++) 
-//                    {
-//                        if ("solverLibraryName".equals(getValueAt(rowId, 0))) 
-//                        {
-//                            solverLibraryNameRow = rowId; solverLibraryName = (String) getValueAt(solverLibraryNameRow, 1); 
-//                            break;
-//                        }
-//                    }
-//                    if (solverLibraryNameRow != -1) if (solverLibraryName != null) 
-//                    	setValueAt(Configuration.getDefaultSolverLibraryName(solverName) , solverLibraryNameRow , 1);
-//                    try {
-//                        try {
-//                            if (solverName.equalsIgnoreCase("glpk")) solverLibraryName = Configuration.getOption("glpkSolverLibraryName");
-//                            else if (solverName.equalsIgnoreCase("ipopt")) solverLibraryName = Configuration.getOption("ipoptSolverLibraryName");
-//                            else if (solverName.equalsIgnoreCase("cplex")) solverLibraryName = Configuration.getOption("cplexSolverLibraryName");
-//                            else if (solverName.equalsIgnoreCase("xpress")) solverLibraryName = Configuration.getOption("xpressSolverLicenseFileName");
-//                            setValueAt(solverLibraryName, solverLibraryNameRow, 1);
-//                        } catch (Throwable e) {
-//
-//                        }
-//                    } catch (Throwable ex) {
-//                    }
-//                }
-//            }
         }
     }
 
@@ -557,9 +535,4 @@ public class ParameterValueDescriptionPanel extends JPanel
         }
     }
 
-
-    private void refreshAfterParameterEdition()
-    {
-        /* sets the visualization according to the current parameter values */
-    }
 }

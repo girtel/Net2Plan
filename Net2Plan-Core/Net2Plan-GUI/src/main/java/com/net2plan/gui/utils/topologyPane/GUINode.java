@@ -12,10 +12,24 @@
 
 package com.net2plan.gui.utils.topologyPane;
 
-import com.net2plan.interfaces.networkDesign.Node;
+import static com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationConstants.DEFAULT_GUINODE_COLOR;
+import static com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP;
+import static com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationConstants.INCREASENODESIZEFACTORACTIVE;
 
-import java.awt.*;
-import java.awt.geom.Ellipse2D;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Paint;
+import java.awt.Shape;
+import java.net.URL;
+
+import javax.swing.Icon;
+
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationConstants;
+import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
 
 /**
  * Class representing a node.
@@ -23,141 +37,176 @@ import java.awt.geom.Ellipse2D;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
-public class GUINode {
+public class GUINode
+{
     private final Node npNode;
+    private final NetworkLayer layer;
 
     /* New variables */
-    private boolean visible;
-    private Paint drawPaint, fillPaint, fillPaintIfPicked;
     private Font font;
-    private Shape shape, shapeIfPicked;
-    private double shapeSize;
-    private Color userDefinedColorOverridesTheRest;
+    private Paint drawPaint, fillPaint;
+    private double iconHeightIfNotActive;
+
+    /**
+     * Creates a copy of this GUINode. Used by undo/redo
+     *
+     * @param translateToThisNp if not null, translate elements to this np. This is null iff translateToThisVs should be also null
+     * @param translateToThisVs if not null, translate elements to this np. This is null iff translateToThisNp should be also null
+     * @return
+     */
+    public GUINode copy(NetPlan translateToThisNp, VisualizationState translateToThisVs)
+    {
+        if ((translateToThisNp == null != (translateToThisVs == null))) throw new RuntimeException();
+        GUINode copyGn = null;
+        if (translateToThisNp != null)
+        {
+            final Node tNpNode = translateToThisNp.getNode(this.npNode.getIndex());
+            final NetworkLayer tLayer = translateToThisNp.getNetworkLayer(this.layer.getIndex());
+            copyGn = new GUINode(tNpNode, tLayer);
+        } else
+        {
+            copyGn = new GUINode(this.npNode, this.layer);
+        }
+        copyGn.font = this.font;
+        copyGn.drawPaint = this.drawPaint;
+        copyGn.fillPaint = this.fillPaint;
+        copyGn.iconHeightIfNotActive = this.iconHeightIfNotActive;
+        return copyGn;
+    }
+
 
     /**
      * Constructor that allows to set a node label.
      *
-     * @param npNode    Node identifier
+     * @param npNode Node identifier
      * @since 0.3.0
      */
-    public GUINode(Node npNode) {
+    public GUINode(Node npNode, NetworkLayer layer)
+    {
+        this.layer = layer;
         this.npNode = npNode;
+//        if (!callback.getVisualizationState().isLayerVisibleInCanvas(layer)) throw new RuntimeException ("Bad");
 
 		/* defaults */
-        this.visible = true;
-        this.drawPaint = java.awt.Color.BLACK;
-        this.fillPaint = java.awt.Color.BLACK;
-        this.fillPaintIfPicked = java.awt.Color.BLACK;
+        this.drawPaint = DEFAULT_GUINODE_COLOR;
+        this.fillPaint = DEFAULT_GUINODE_COLOR;
         this.font = new Font("Helvetica", Font.BOLD, 11);
-        this.shapeSize = 30;
-        this.shape = new Ellipse2D.Double(-1 * shapeSize / 2, -1 * shapeSize / 2, 1 * shapeSize, 1 * shapeSize);
-        this.shapeIfPicked = new Ellipse2D.Double(-1.2 * shapeSize / 2, -1.2 * shapeSize / 2, 1.2 * shapeSize, 1.2 * shapeSize);
-        this.userDefinedColorOverridesTheRest = null;
+        this.iconHeightIfNotActive = 30;
     }
 
-    public Node getAssociatedNetPlanNode() {
+    public NetworkLayer getLayer()
+    {
+        return layer;
+    }
+
+    public Node getAssociatedNetPlanNode()
+    {
         return npNode;
     }
 
-    public boolean isVisible() {
-        return visible;
+
+    public double getIconHeightInNotActiveLayer()
+    {
+        return iconHeightIfNotActive;
     }
 
-    public void setVisible(boolean isVisible) {
-        this.visible = isVisible;
+    public void setIconHeightInNonActiveLayer(double sizeNonActiveLayer)
+    {
+        this.iconHeightIfNotActive = sizeNonActiveLayer;
     }
 
-    public double getShapeSize() {
-        return shapeSize;
-    }
-
-    public void setShapeSize(double size) {
-        this.shapeSize = size;
-        this.shape = new Ellipse2D.Double(-1 * shapeSize / 2, -1 * shapeSize / 2, 1 * shapeSize, 1 * shapeSize);
-        this.shapeIfPicked = new Ellipse2D.Double(-1.2 * shapeSize / 2, -1.2 * shapeSize / 2, 1.2 * shapeSize, 1.2 * shapeSize);
-    }
-
-    public Paint getDrawPaint() {
+    public Paint getDrawPaint()
+    {
         return npNode.isUp() ? drawPaint : Color.RED;
     }
 
-    public void setDrawPaint(Paint p) {
+    public void setDrawPaint(Paint p)
+    {
         this.drawPaint = p;
     }
 
-    public Paint getFillPaint() {
-        return fillPaint;
+    public Paint getFillPaint()
+    {
+        return npNode.isUp() ? fillPaint : Color.RED;
     }
 
-    public void setFillPaint(Paint p) {
+    public void setFillPaint(Paint p)
+    {
         this.fillPaint = p;
     }
 
-    public Paint getFillPaintIfPicked() {
-        return fillPaintIfPicked;
-    }
-
-    public void setFillPaintIfPicked(Paint p) {
-        this.fillPaintIfPicked = p;
-    }
-
-    public Font getFont() {
-        return font;
-    }
-
-    public void setFont(Font f) {
+    public void setFont(Font f)
+    {
         this.font = f;
     }
 
-    public Shape getShape() {
-        return shape;
+    public Font getFont()
+    {
+        return font;
     }
 
-    public void setShape(Shape f) {
-        this.shape = f;
+    public Shape getShape()
+    {
+        URL url = npNode.getUrlNodeIcon(layer);
+        if (url == null) url = layer.getDefaultNodeIconURL();
+        if (url == null) url = DEFAULT_LAYERNAME2ICONURLMAP.get(layer.getName());
+        final int height = layer.isDefaultLayer() ? (int) (iconHeightIfNotActive * INCREASENODESIZEFACTORACTIVE) : (int) iconHeightIfNotActive;
+        final Color borderColor = getDrawPaint() == DEFAULT_GUINODE_COLOR ? VisualizationConstants.TRANSPARENTCOLOR : (Color) getDrawPaint();
+        return VisualizationState.getIcon(url, height, borderColor).getSecond();
     }
 
-    public Shape getShapeIfPicked() {
-        return shapeIfPicked;
-    }
-
-    public void setShapeIfPicked(Shape f) {
-        this.shapeIfPicked = f;
-    }
-
-    public Color getUserDefinedColorOverridesTheRest() {
-        return userDefinedColorOverridesTheRest;
-    }
-
-    public void setUserDefinedColorOverridesTheRest(Color c) {
-        this.userDefinedColorOverridesTheRest = c;
-    }
-
-    public boolean decreaseFontSize() {
+    public boolean decreaseFontSize()
+    {
         final int currentSize = font.getSize();
         if (currentSize == 1) return false;
         font = new Font("Helvetica", Font.BOLD, currentSize - 1);
         return true;
     }
 
-    public void increaseFontSize() {
+    public void increaseFontSize()
+    {
         font = new Font("Helvetica", Font.BOLD, font.getSize() + 1);
     }
 
-    public String getToolTip() {
+    public String getToolTip()
+    {
         StringBuilder temp = new StringBuilder();
+        final NetPlan np = npNode.getNetPlan();
+        final String capUnits = np.getLinkCapacityUnitsName(layer);
+        final String trafUnits = np.getDemandTrafficUnitsName(layer);
+        final double inLinkOccup = npNode.getIncomingLinks(layer).stream().mapToDouble(e -> e.getOccupiedCapacity()).sum();
+        final double outLinkOccup = npNode.getOutgoingLinks(layer).stream().mapToDouble(e -> e.getOccupiedCapacity()).sum();
+        final double inLinkCapacity = npNode.getIncomingLinks(layer).stream().mapToDouble(e -> e.getCapacity()).sum();
+        final double outLinkCapacity = npNode.getOutgoingLinks(layer).stream().mapToDouble(e -> e.getCapacity()).sum();
+        final double inOfferedUnicast = npNode.getIncomingDemands(layer).stream().mapToDouble(e -> e.getOfferedTraffic()).sum();
+        final double outOfferedUnicast = npNode.getOutgoingDemands(layer).stream().mapToDouble(e -> e.getOfferedTraffic()).sum();
+        final double inOfferedMulticast = npNode.getIncomingMulticastDemands(layer).stream().mapToDouble(e -> e.getOfferedTraffic()).sum();
+        final double outOfferedMulticast = npNode.getOutgoingMulticastDemands(layer).stream().mapToDouble(e -> e.getOfferedTraffic()).sum();
         temp.append("<html>");
-        temp.append("<table>");
-        temp.append("<tr><td>Name:</td><td>" + getLabel() + "</td></tr>");
-        temp.append("<tr><td>Index:</td><td>" + getAssociatedNetPlanNode().getIndex() + "</td></tr>");
-        temp.append("<tr><td>Id:</td><td>" + getAssociatedNetPlanNode().getId() + "</td></tr>");
+        temp.append("<table border=\"0\">");
+        temp.append("<tr><td colspan=\"2\"><strong>Node index " + npNode.getIndex() + " (id: " + npNode.getId() + ") - Layer " + getLayerName(layer) + "</strong></td></tr>");
+        temp.append("<tr><td>Name:</td><td>" + npNode.getName() + "</td></tr>");
+        temp.append("<tr><td>Total offered unicast traffic (in / out):</td>");
+        temp.append("<td>" + String.format("%.2f", inOfferedUnicast) + "  / " + String.format("%.2f", outOfferedUnicast) + " " + trafUnits + "</td></tr>");
+        temp.append("<tr><td>Total offered multicast traffic (in / out):</td>");
+        temp.append("<td>" + String.format("%.2f", inOfferedMulticast) + "  / " + String.format("%.2f", outOfferedMulticast) + " " + trafUnits + "</td></tr>");
+        temp.append("<tr><td>Total link capacities (in / out):</td>");
+        temp.append("<td>" + String.format("%.2f", inLinkCapacity) + "  / " + String.format("%.2f", outLinkCapacity) + " " + capUnits + "</td></tr>");
+        temp.append("<tr><td>Total link occupation (in / out):</td>");
+        temp.append("<td>" + String.format("%.2f", inLinkOccup) + "  / " + String.format("%.2f", outLinkOccup) + " " + capUnits + "</td></tr>");
+        for (Resource r : npNode.getResources())
+        {
+            temp.append("<tr><td>Resource " + getResourceName(r) + "</td>");
+            temp.append("<td>Capacity (occupp. / avail.): " + String.format("%.2f", r.getOccupiedCapacity()) + "  / " + String.format("%.2f", r.getCapacity()) + " " + r.getCapacityMeasurementUnits() + "</td></tr>");
+        }
         temp.append("</table>");
         temp.append("</html>");
         return temp.toString();
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return getLabel();
     }
 
@@ -167,8 +216,37 @@ public class GUINode {
      * @return Node label
      * @since 0.2.0
      */
-    public String getLabel() {
-        return npNode.getName();
+    public String getLabel()
+    {
+        return npNode.getName().equals("") ? "Node " + npNode.getIndex() : npNode.getName();
+//        return npNode.getName() + " - L" + layer.getIndex() + ", VL" + getVisualizationOrderRemovingNonVisibleLayers();
     }
 
+    public Icon getIcon()
+    {
+        URL url = npNode.getUrlNodeIcon(layer);
+        if (url == null) url = layer.getDefaultNodeIconURL();
+        if (url == null) url = DEFAULT_LAYERNAME2ICONURLMAP.get(layer.getName());
+        final int height = layer.isDefaultLayer() ? (int) (iconHeightIfNotActive * INCREASENODESIZEFACTORACTIVE) : (int) iconHeightIfNotActive;
+        final Color borderColor = getDrawPaint() == DEFAULT_GUINODE_COLOR ? VisualizationConstants.TRANSPARENTCOLOR : (Color) getDrawPaint();
+        final Icon icon = VisualizationState.getIcon(url, height, borderColor).getFirst();
+        return icon;
+    }
+
+    //    private static Shape adjustShapeToSize (Shape s , double size_x , double size_y)
+//    {
+//    	AffineTransform transf = new AffineTransform();
+//    	final Rectangle currentShapeBounds = s.getBounds();
+//    	transf.scale(size_x / currentShapeBounds.getWidth() , size_y / currentShapeBounds.getHeight());
+//    	return transf.createTransformedShape(s);
+//    }
+    private String getResourceName(Resource e)
+    {
+        return "Resource " + e.getIndex() + " (" + (e.getName().length() == 0 ? "No name" : e.getName()) + "). Type: " + e.getType();
+    }
+
+    private String getLayerName(NetworkLayer e)
+    {
+        return "Layer " + e.getIndex() + " (" + (e.getName().length() == 0 ? "No name" : e.getName()) + ")";
+    }
 }
