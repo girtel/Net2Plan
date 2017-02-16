@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<network description="" name="" version="3">
+	<node id="0" xCoord="0.057356812737053495" yCoord="-0.09915540839958877" name=""/>
+	<node id="1" xCoord="0.04122522760503248" yCoord="0.015131101535290181" name=""/>
+	<node id="2" xCoord="-0.07786866548036842" yCoord="-0.023429139156880177" name=""/>
+	<node id="3" xCoord="-0.03444324457778445" yCoord="0.1454524620599427" name=""/>
+	<node id="5" xCoord="-0.05382857831706443" yCoord="-0.08773636720170011" name=""/>
+	<node id="7" xCoord="0.03331673703587028" yCoord="0.10037730113754473" name=""/>
+	<layer id="0" name="" description="" linkCapacityUnitsName="" demandTrafficUnitsName="">
+		<link id="0" originNodeId="1" destinationNodeId="0" capacity="1.0" lengthInKm="0.0971138718293795" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="1" originNodeId="0" destinationNodeId="1" capacity="1.0" lengthInKm="0.0971138718293795" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="2" originNodeId="2" destinationNodeId="0" capacity="1.0" lengthInKm="0.04873639765728119" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="3" originNodeId="0" destinationNodeId="2" capacity="1.0" lengthInKm="0.04873639765728119" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="4" originNodeId="2" destinationNodeId="1" capacity="1.0" lengthInKm="0.06625431284707792" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="5" originNodeId="1" destinationNodeId="2" capacity="1.0" lengthInKm="0.06625431284707792" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="6" originNodeId="3" destinationNodeId="1" capacity="1.0" lengthInKm="0.15069629952815097" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="7" originNodeId="1" destinationNodeId="3" capacity="1.0" lengthInKm="0.15069629952815097" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="12" originNodeId="5" destinationNodeId="0" capacity="1.0" lengthInKm="0.14084414706649204" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="13" originNodeId="0" destinationNodeId="5" capacity="1.0" lengthInKm="0.14084414706649204" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="14" originNodeId="5" destinationNodeId="1" capacity="1.0" lengthInKm="0.16678370641307574" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="15" originNodeId="1" destinationNodeId="5" capacity="1.0" lengthInKm="0.16678370641307574" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="16" originNodeId="5" destinationNodeId="2" capacity="1.0" lengthInKm="0.1145561409743293" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="17" originNodeId="2" destinationNodeId="5" capacity="1.0" lengthInKm="0.1145561409743293" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="24" originNodeId="7" destinationNodeId="1" capacity="1.0" lengthInKm="0.12715885739932725" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="25" originNodeId="1" destinationNodeId="7" capacity="1.0" lengthInKm="0.12715885739932725" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="26" originNodeId="7" destinationNodeId="2" capacity="1.0" lengthInKm="0.189992885110585" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="27" originNodeId="2" destinationNodeId="7" capacity="1.0" lengthInKm="0.189992885110585" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="28" originNodeId="7" destinationNodeId="3" capacity="1.0" lengthInKm="0.04884834735783528" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="29" originNodeId="3" destinationNodeId="7" capacity="1.0" lengthInKm="0.04884834735783528" propagationSpeedInKmPerSecond="200000.0"/>
+		<sourceRouting/>
+	</layer>
+</network>

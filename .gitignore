@@ -31,5 +31,5 @@ etc/
 **/lib/
 *.releaseBackup
 *.stackdump
-*.n2p
+./*.n2p
 *.orig
