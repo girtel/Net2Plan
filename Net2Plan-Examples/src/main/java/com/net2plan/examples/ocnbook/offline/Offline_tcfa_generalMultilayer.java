@@ -67,7 +67,7 @@ public class Offline_tcfa_generalMultilayer implements IAlgorithm
 		if (netPlan.isSingleLayer())
 		{
 			this.lowerLayer = netPlan.getNetworkLayerDefault();
-			this.upperLayer = netPlan.addLayer("UP LAYER" , "Upper layer of the design" , "Gbps" , "Gbps" , null);
+			this.upperLayer = netPlan.addLayer("UP LAYER" , "Upper layer of the design" , "Gbps" , "Gbps" , null , null);
 			/* Save the demands in the upper layer, and remove them from the lower layer */
 			for (Demand d : netPlan.getDemands (lowerLayer)) netPlan.addDemand(d.getIngressNode() , d.getEgressNode() , d.getOfferedTraffic() , null , upperLayer);
 		}

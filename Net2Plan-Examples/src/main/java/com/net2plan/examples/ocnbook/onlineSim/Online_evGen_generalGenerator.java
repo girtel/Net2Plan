@@ -293,7 +293,6 @@ public class Online_evGen_generalGenerator extends IEventGenerator
 				currentTheoreticalOfferedTraffic_d.set (d , slowChangingTrafficPart + newFastTrafficVariation);
 				if (!isCac) // inform the processor with a demand modified only if it is NOT cac. In CAC the sent events are the routes only, and the algorithms update the offered traffic according to it
 				{
-					System.out.println ("GeneralGenerator (FAST FLUCT): Sending the event... demand: " + demand + ", Offered (ABSOLUTE) " + (slowChangingTrafficPart + newFastTrafficVariation) + " = slow (" +slowChangingTrafficPart + ") + fast ("+ newFastTrafficVariation + ")");
 					SimEvent.DemandModify modifyEvent = new SimEvent.DemandModify(demand , Math.max (0 , slowChangingTrafficPart + newFastTrafficVariation) , false);
 					scheduleEvent(new SimEvent (simTime, SimEvent.DestinationModule.EVENT_PROCESSOR , -1 , modifyEvent));
 				}
@@ -329,7 +328,6 @@ public class Online_evGen_generalGenerator extends IEventGenerator
 				final double newSlowFluctuationTraffic = initialOfferedTraffic_d.get(d) * activityFactorNodePair;
 				final double currentFastFluctuationTraffic = currentHd - currentSlowHd;
 				this.currentTheoreticalOfferedTraffic_d.set (d , newSlowFluctuationTraffic + currentFastFluctuationTraffic);
-				System.out.println ("GeneralGenerator (SLOW FLUCT): Sending the event... demand: " + demand + ", Offered (ABSOLUTE) " + Math.max (0 , newSlowFluctuationTraffic + currentFastFluctuationTraffic) + " = slow (" + newSlowFluctuationTraffic + ") + fast ("+ currentFastFluctuationTraffic+ "), old slow: " + this.slowChangingOfferedTraffic_d.get(d));
 				this.slowChangingOfferedTraffic_d.set (d , newSlowFluctuationTraffic);
 				if (!isCac) // inform the processor with a demand modified only if it is NOT cac. In CAC the sent events are the routes only, and the algorithms update the offered traffic according to it
 				{
@@ -349,7 +347,7 @@ public class Online_evGen_generalGenerator extends IEventGenerator
 			
 			/* Send event of appropriate failures to the processor (only links and nodes changing its state) */
 			Set<Node> nodesUpToDown = new HashSet<Node> (currentNetPlan.getNodesUp()); nodesUpToDown.retainAll(srg.getNodes());
-			Set<Link> linksUpToDown = new HashSet<Link> (currentNetPlan.getLinksUpAllLayers()); linksUpToDown.retainAll(srg.getLinks());
+			Set<Link> linksUpToDown = new HashSet<Link> (currentNetPlan.getLinksUpAllLayers()); linksUpToDown.retainAll(srg.getLinksAllLayers());
 			if (!nodesUpToDown.isEmpty() || !linksUpToDown.isEmpty())
 			{
 				SimEvent.NodesAndLinksChangeFailureState failEvent = new SimEvent.NodesAndLinksChangeFailureState (null , nodesUpToDown , null , linksUpToDown);
@@ -372,7 +370,7 @@ public class Online_evGen_generalGenerator extends IEventGenerator
 			for (SharedRiskGroup srgStillFailed : fail_currentlyFailedSRGs)
 			{
 				nodesDownAfterRepair.addAll (srgStillFailed.getNodes());
-				linksDownAfterRepair.addAll (srgStillFailed.getLinks());
+				linksDownAfterRepair.addAll (srgStillFailed.getLinksAllLayers());
 			}
 			Set<Node> nodesDownToUp = new HashSet<Node> (currentNetPlan.getNodesDown()); nodesDownToUp.removeAll (nodesDownAfterRepair);
 			Set<Link> linksDownToUp = new HashSet<Link> (currentNetPlan.getLinksDownAllLayers()); linksDownToUp.removeAll (linksDownAfterRepair);

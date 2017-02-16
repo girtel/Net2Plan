@@ -12,6 +12,7 @@ package com.net2plan.examples.ocnbook.offline;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
@@ -22,8 +23,11 @@ import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.InputParameter;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
 /** 
@@ -39,7 +43,7 @@ public class Offline_ba_numFormulations implements IAlgorithm
 	private InputParameter shortestPathType = new InputParameter ("shortestPathType", "#select# hops km" , "Criteria to compute the shortest path. Valid values: 'hops' or 'km'");
 	private InputParameter alphaFairnessFactor = new InputParameter ("alphaFairnessFactor", (double) 2 , "Fairness alpha factor" , 0 , true , Double.MAX_VALUE , true);
 	private InputParameter utilityFunctionType = new InputParameter ("utilityFunctionType", "#select# alphaFairness TCP-Reno TCP-Vegas", "The type of utility function of each demand, in the NUM problem to solve: standard alpha-fairness (alpha parameter is given by alphaFairnessFactor), an utility function suitable for TCP-Reno NUM model (each demand is a TCP connection) and the same for TCP-Vegas");
-	private InputParameter solverName = new InputParameter ("solverName", "#select# glpk ipopt xpress cplex", "The solver name to be used by JOM. GLPK and IPOPT are free, XPRESS and CPLEX commercial. GLPK, XPRESS and CPLEX solve linear problems w/w.o integer contraints. IPOPT is can solve nonlinear problems (if convex, returns global optimum), but cannot handle integer constraints");
+	private InputParameter solverName = new InputParameter ("solverName", "#select# ipopt glpk xpress cplex", "The solver name to be used by JOM. GLPK and IPOPT are free, XPRESS and CPLEX commercial. GLPK, XPRESS and CPLEX solve linear problems w/w.o integer contraints. IPOPT is can solve nonlinear problems (if convex, returns global optimum), but cannot handle integer constraints");
 	private InputParameter solverLibraryName = new InputParameter ("solverLibraryName", "" , "The solver library full or relative path, to be used by JOM. Leave blank to use JOM default.");
 	private InputParameter maxSolverTimeInSeconds = new InputParameter ("maxSolverTimeInSeconds", (double) -1 , "Maximum time granted to the solver to solve the problem. If this time expires, the solver returns the best solution found so far (if a feasible solution is found)");
 	
@@ -63,7 +67,8 @@ public class Offline_ba_numFormulations implements IAlgorithm
 
 		/* Add all the k-shortest candidate routes to the netPlan object carrying no traffic */
 		final DoubleMatrix1D linkCostVector = shortestPathType.getString().equalsIgnoreCase("hops")? DoubleFactory1D.dense.make (E , 1.0) : netPlan.getVectorLinkLengthInKm();
-		netPlan.addRoutesFromCandidatePathList(linkCostVector.toArray() , "K", "1"); // one route per demand, so P equals D
+		
+		netPlan.addRoutesFromCandidatePathList(netPlan.computeUnicastCandidatePathList(linkCostVector , 1 , -1, -1, -1, -1, -1, -1, null)); // one route per demand, so P equals D
 		final int P = netPlan.getNumberOfRoutes(); 
 
 		/* Create the optimization problem object (JOM library) */

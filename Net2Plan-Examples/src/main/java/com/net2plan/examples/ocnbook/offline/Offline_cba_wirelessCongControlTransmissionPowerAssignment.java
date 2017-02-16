@@ -73,7 +73,8 @@ public class Offline_cba_wirelessCongControlTransmissionPowerAssignment implemen
 			for (Node n2 : netPlan.getNodes())
 				if (n1 != n2)
 					netPlan.addDemand(n1, n2, cc_minHd.getDouble(), null);
-		netPlan.addRoutesFromCandidatePathList(netPlan.getVectorLinkLengthInKm().toArray()  , "K" , "1");
+		netPlan.addRoutesFromCandidatePathList(netPlan.computeUnicastCandidatePathList(netPlan.getVectorLinkLengthInKm() , 1 , -1, -1, -1, -1, -1, -1, null)); // one route per demand, so P equals D
+		
 		
 		/* Initialize the gains between links, normalizing them so that the maximum gain is one */
 		DoubleMatrix2D mac_g_nu_ee = WirelessUtils.computeInterferenceMatrixNaturalUnits (netPlan.getLinks () , mac_interferenceAttenuationFactor_nu.getDouble() , mac_pathLossExponent.getDouble());
@@ -148,7 +149,7 @@ public class Offline_cba_wirelessCongControlTransmissionPowerAssignment implemen
 			final double p_e = Double.parseDouble(e.getAttribute("p_e"));
 			if (p_e < mac_minTransmissionPower_logu.getDouble() - 1E-3) throw new RuntimeException ("Bad");
 			if (p_e > mac_maxTransmissionPower_logu.getDouble() + 1E-3) throw new RuntimeException ("Bad");
-			if (e.getCapacity() < e.getCarriedTrafficIncludingProtectionSegments() - PRECISIONFACTOR) throw new RuntimeException ("Bad"); 
+			if (e.getCapacity() < e.getCarriedTraffic() - PRECISIONFACTOR) throw new RuntimeException ("Bad"); 
 		} 
 
 		boolean allMaxPower = true;

@@ -32,13 +32,17 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.libraries.GraphTheoryMetrics;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.HTMLUtils;
+import com.net2plan.utils.IntUtils;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import org.codehaus.stax2.XMLOutputFactory2;
@@ -57,7 +61,7 @@ public class Report_robustness implements IReport
 	public String executeReport(NetPlan netPlan, Map<String, String> reportParameters, Map<String, String> net2planParameters)
 	{
 		boolean doReport = false;
-		for(NetworkLayer layer : netPlan.getNetworkLayers ()) if (netPlan.hasLinks(layer)) {	doReport = true;	break; }
+		for(NetworkLayer layer : netPlan.getNetworkLayers ()) if (netPlan.hasLinks(layer)) { doReport = true; break; }
 		if (!doReport) throw new Net2PlanException("A network with nodes and links is required");
 		
 		try (ByteArrayOutputStream os = new ByteArrayOutputStream())

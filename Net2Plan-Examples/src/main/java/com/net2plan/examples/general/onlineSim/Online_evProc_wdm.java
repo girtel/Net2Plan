@@ -8,15 +8,13 @@ package com.net2plan.examples.general.onlineSim;
  ******************************************************************************/
 
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -25,11 +23,12 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
+import com.net2plan.libraries.GraphUtils;
+import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.WDMUtils;
 import com.net2plan.libraries.WDMUtils.TransponderTypesInfo;
 import com.net2plan.utils.Constants.RoutingType;
@@ -39,8 +38,6 @@ import com.net2plan.utils.Quadruple;
 import com.net2plan.utils.RandomUtils;
 import com.net2plan.utils.Triple;
 
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.jet.math.tdouble.DoubleFunctions;
 
@@ -89,9 +86,9 @@ public class Online_evProc_wdm extends IEventProcessor
 
 	private NetworkLayer wdmLayer;
 	private Map<Route,Pair<WDMUtils.RSA,WDMUtils.RSA>> wdmRouteOriginalRwa;
-	private NetPlan cplWdm;
+	private Map<Pair<Node,Node>,List<List<Link>>> cplWdm;
+	private Map<Pair<Node,Node>,List<Pair<List<Link>,List<Link>>>> cplWdm11;
 	private DoubleMatrix2D wavelengthFiberOccupancy;
-	private DoubleMatrix2D cplA_rs , cplA_pss;
 	private TransponderTypesInfo tpInfo;
 	private Map<Route,Integer> transponderTypeOfNewLps;
 
@@ -107,8 +104,7 @@ public class Online_evProc_wdm extends IEventProcessor
 	private long stat_numOfferedConnections , stat_numCarriedConnections;
 	private long stat_numAttemptedToRecoverConnections , stat_numSuccessfullyRecoveredConnections;
 	private double stat_transitoryInitTime;
-	private final boolean DEBUG = true;
-
+	public boolean DEBUG = false;
 	
 	@Override
 	public String getDescription()
@@ -145,7 +141,6 @@ public class Online_evProc_wdm extends IEventProcessor
 		if (wdmRemovePreviousLightpaths.getBoolean())
 		{
 			initialNetPlan.removeAllRoutes(wdmLayer);
-			initialNetPlan.removeAllProtectionSegments(wdmLayer);
 			initialNetPlan.removeAllMulticastTrees(wdmLayer);
 		}
 		initialNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING , wdmLayer);
@@ -155,53 +150,31 @@ public class Online_evProc_wdm extends IEventProcessor
 		this.tpInfo = new TransponderTypesInfo(wdmTransponderTypesInfo.getString());
 		this.transponderTypeOfNewLps = new HashMap<Route,Integer> ();
 
-		/* Compute the candidate path list */
+		/* Create empty candidate path lists: they will be filled on demand */
 		this.E_wdm = initialNetPlan.getNumberOfLinks(wdmLayer);
-		this.cplWdm = initialNetPlan.copy(); 
-		for (NetworkLayer cplLayer : new HashSet<NetworkLayer> (cplWdm.getNetworkLayers())) if (cplLayer.getId () != wdmLayer.getId ()) cplWdm.removeNetworkLayer(cplLayer);
-		cplWdm.removeAllDemands();
-		for (Node n1 : cplWdm.getNodes ()) for (Node n2 : cplWdm.getNodes ()) if (n1 != n2) cplWdm.addDemand(n1 , n2 , 0 , null);
-		final Map<Demand,List<List<Link>>> cplPaths = cplWdm.computeUnicastCandidatePathList(initialNetPlan.getVectorLinkLengthInKm(wdmLayer).toArray() , "K", Integer.toString(wdmK.getInt ()), "maxLengthInKm", Double.toString(tpInfo.getMaxOpticalReachKm()) , "maxNumHops", Integer.toString(wdmMaxLightpathNumHops.getInt () > 0? wdmMaxLightpathNumHops.getInt () : Integer.MAX_VALUE));
+		this.cplWdm = new HashMap<> ();
 		this.protectionTypeCode = wdmProtectionTypeToNewRoutes.getString ().equals("1+1-srg-disjoint") ? 0 : wdmProtectionTypeToNewRoutes.getString ().equals("1+1-node-disjoint")? 1 : 2;
-		if (newRoutesHave11Protection)
-		{
-			final Map<Demand,List<Pair<List<Link>,List<Link>>>> pathPairs = NetPlan.computeUnicastCandidate11PathList(cplPaths, protectionTypeCode);
-			this.cplWdm.addRoutesAndProtectionSegmentFromCandidate11PathList(pathPairs);
-			for (Route r : cplWdm.getRoutes()) 
-			{ 
-				checkDisjointness (r.getSeqLinksRealPath() , r.getPotentialBackupProtectionSegments().iterator().next().getSeqLinks() , protectionTypeCode); 
-			}
-		}
-		else
-		{
-			this.cplWdm.addRoutesFromCandidatePathList(cplPaths);
-		}
-		this.cplA_rs = cplWdm.getMatrixRoute2SRGAffecting();
-		this.cplA_pss = cplWdm.getMatrixProtectionSegment2SRGAffecting();
-
+		this.cplWdm11 = newRoutesHave11Protection? new HashMap<> () : null; 
+		
 		this.wavelengthFiberOccupancy = WDMUtils.getNetworkSlotAndRegeneratorOcupancy(initialNetPlan, true , wdmLayer).getFirst();
-		if (DEBUG) checkClashing (initialNetPlan); 
+		if (DEBUG) { checkWaveOccupEqualsNp(initialNetPlan); checkClashing (initialNetPlan); } 
 		initialNetPlan.setLinkCapacityUnitsName("Frequency slots" , wdmLayer);
 
 		for (Route r : initialNetPlan.getRoutes(wdmLayer))
 		{
-			if (!r.getSeqLinksAndProtectionSegments().equals (r.getSeqLinksRealPath())) throw new Net2PlanException ("Some of the initial routes are traversing protection segments");
-
 			WDMUtils.RSA thisRouteRWA = new WDMUtils.RSA (r , false);
 			if (thisRouteRWA.hasFrequencySlotConversions()) throw new Net2PlanException ("Initial lightpaths must have route continuity");
 			WDMUtils.RSA segmentRWA = null;
-			if (r.getPotentialBackupProtectionSegments().size () > 1) throw new Net2PlanException ("The number of protection segments of a route cannot be higher than one");
-			if ((r.getPotentialBackupProtectionSegments().size () == 1) && (!isProtectionRecovery)) throw new Net2PlanException ("Initial routes have protection segments, which would be unused since the recovery type is not protection");
-			if (r.getPotentialBackupProtectionSegments().size () == 1)
+			if (r.getBackupRoutes().size () > 1) throw new Net2PlanException ("The number of protection segments of a route cannot be higher than one");
+			if (r.getBackupRoutes().size () == 1)
 			{
-				final ProtectionSegment backupPath = r.getPotentialBackupProtectionSegments().iterator().next();
-				segmentRWA = new WDMUtils.RSA (backupPath);
+				segmentRWA = new WDMUtils.RSA (r.getBackupRoutes().get(0) , false); // its first backup route
 				if (segmentRWA.hasFrequencySlotConversions()) throw new Net2PlanException ("Initial lightpaths must have route continuity");
 			}			
 			wdmRouteOriginalRwa.put (r , Pair.of (thisRouteRWA , segmentRWA));
 		}
 		this.finishTransitory(0);
-		if (DEBUG) checkClashing (initialNetPlan); 
+		if (DEBUG) { checkWaveOccupEqualsNp(initialNetPlan); checkClashing (initialNetPlan); } 
 	}
 
 	@Override
@@ -214,11 +187,10 @@ public class Online_evProc_wdm extends IEventProcessor
 				if (addLpEvent.layer != this.wdmLayer) throw new Net2PlanException ("Lightpaths cannot be added to layer " + addLpEvent.demand.getLayer() + ", and just to the WDM layer (" + wdmLayer + ")");
 				final Node ingressNode = addLpEvent.ingressNode;
 				final Node egressNode = addLpEvent.egressNode;
-				final Demand cplDemand = this.cplWdm.getNodePairDemands(cplWdm.getNodeFromId(ingressNode.getId()) , cplWdm.getNodeFromId(egressNode.getId()) , false).iterator().next();
+				final Pair<Node,Node> cplNodePair = Pair.of(ingressNode,egressNode);
 				final double lineRateThisLp_Gbps = addLpEvent.lineRateGbps;
 				if (!tpInfo.isValidLineRateForAtLeastOneType (lineRateThisLp_Gbps)) throw new Net2PlanException ("Requested to set up a lightpath of a line rate (" + lineRateThisLp_Gbps + ") for which I don't have transpoders");
 
-//				System.out.println ("EVENT LightpathAddAsPrimary: " + addLpEvent + ", demand: " + addLpEvent.demand);
 				/* update the offered traffic of the demand */
 				this.stat_numOfferedConnections ++;
 				this.stat_trafficOfferedConnections += lineRateThisLp_Gbps;
@@ -241,34 +213,40 @@ public class Online_evProc_wdm extends IEventProcessor
 						for (int t = 0; t < tpInfo.getNumTypes() ; t ++)
 						{
 							if (lineRateThisLp_Gbps != tpInfo.getLineRateGbps(t)) continue;
-							rwa = computeValid11PathPairNewRoute(cplDemand , currentNetPlan , tpInfo.getNumSlots(t) , tpInfo.getOpticalReachKm(t) , tpInfo.isOpticalRegenerationPossible(t));
+							rwa = computeValid11PathPairNewRoute(cplNodePair , currentNetPlan , tpInfo.getNumSlots(t) , tpInfo.getOpticalReachKm(t) , tpInfo.isOpticalRegenerationPossible(t));
 							if (rwa != null) { transponderTypeUsed = t; break; }
 						}
 					}
 
-//				System.out.println ("------ ADD LP: rwa: " + rwa);
 					if (rwa != null)
 					{
 						if (!WDMUtils.isAllocatableRSASet(wavelengthFiberOccupancy , rwa.getFirst() , rwa.getSecond())) throw new RuntimeException ("Bad");
-						for (Link e : rwa.getFirst ().seqLinks) if (e.getNetPlan() != currentNetPlan) throw new RuntimeException ("Bad");
+						if (!WDMUtils.isAllocatableRSASet(wavelengthFiberOccupancy , rwa.getSecond())) throw new RuntimeException ("Bad");
+						for (Link e : rwa.getFirst ().seqLinks) if (e.getNetPlan() != currentNetPlan) throw new RuntimeException ("Bad. e.getNetPlan is null?: " + (e.getNetPlan() ==null) + ", currentNp is null: " + (currentNetPlan == null));
 						for (Link e : rwa.getSecond ().seqLinks) if (e.getNetPlan() != currentNetPlan) throw new RuntimeException ("Bad");
+
+						if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
 						
 						final Demand wdmLayerDemand = addLpEvent.demand == null? currentNetPlan.addDemand(addLpEvent.ingressNode, addLpEvent.egressNode, lineRateThisLp_Gbps , null, wdmLayer) : addLpEvent.demand;
 						final Route wdmLayerRoute = WDMUtils.addLightpath(wdmLayerDemand, rwa.getFirst(), lineRateThisLp_Gbps);
 						WDMUtils.allocateResources(rwa.getFirst() , wavelengthFiberOccupancy , null);
+
+						if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
+
 						if (rwa.getFirst().seqLinks.equals(rwa.getSecond().seqLinks)) throw new RuntimeException ("Both 1+1 same route");
-						final ProtectionSegment wdmLayerSegment = WDMUtils.addLightpathAsProtectionSegment(rwa.getSecond());
+						final Route wdmLayerBackupRoute = WDMUtils.addLightpath(wdmLayerDemand, rwa.getSecond(), 0); // it is a backup, has no traffic carried then
+						wdmLayerRoute.addBackupRoute(wdmLayerBackupRoute);
 						WDMUtils.allocateResources(rwa.getSecond() , wavelengthFiberOccupancy , null);
-						checkDisjointness(wdmLayerRoute.getSeqLinksRealPath() , wdmLayerSegment.getSeqLinks() , protectionTypeCode);
-						wdmLayerRoute.addProtectionSegment(wdmLayerSegment);
+						if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
+						checkDisjointness(wdmLayerRoute.getSeqLinks() , rwa.getSecond().seqLinks , protectionTypeCode);
 						this.wdmRouteOriginalRwa.put (wdmLayerRoute , rwa);
 						this.transponderTypeOfNewLps.put(wdmLayerRoute , transponderTypeUsed);
 						this.stat_numCarriedConnections ++;
 						this.stat_trafficCarriedConnections += lineRateThisLp_Gbps;
 						addLpEvent.lpAddedToFillByProcessor = wdmLayerRoute;
-						if (DEBUG) checkClashing (currentNetPlan); 
+						if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
 					}
-					if (DEBUG) checkClashing (currentNetPlan); 
+					if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
 				}
 				else
 				{
@@ -287,11 +265,10 @@ public class Online_evProc_wdm extends IEventProcessor
 						for (int t = 0; t < tpInfo.getNumTypes() ; t ++)
 						{
 							if (lineRateThisLp_Gbps != tpInfo.getLineRateGbps(t)) continue;
-							rwa = computeValidPathNewRoute(cplDemand , currentNetPlan , tpInfo.getNumSlots(t) , tpInfo.getOpticalReachKm(t) , tpInfo.isOpticalRegenerationPossible(t));
+							rwa = computeValidPathNewRoute(cplNodePair , currentNetPlan , tpInfo.getNumSlots(t) , tpInfo.getOpticalReachKm(t) , tpInfo.isOpticalRegenerationPossible(t));
 							if (rwa != null) { transponderTypeUsed = t; break; }
 						}
 					}
-//				System.out.println ("------ ADD LP: rwa: " + rwa);
 					if (rwa != null)
 					{
 						final Demand wdmLayerDemand = addLpEvent.demand == null? currentNetPlan.addDemand(addLpEvent.ingressNode, addLpEvent.egressNode, lineRateThisLp_Gbps , null, wdmLayer) : addLpEvent.demand;
@@ -302,10 +279,9 @@ public class Online_evProc_wdm extends IEventProcessor
 						this.stat_numCarriedConnections ++;
 						this.stat_trafficCarriedConnections += lineRateThisLp_Gbps;
 						addLpEvent.lpAddedToFillByProcessor = wdmLayerRoute;
-//					System.out.println ("Added lp: " + wdmLayerRoute);
 					}
 				}
-				if (DEBUG) checkClashing (currentNetPlan); 
+				if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
 			}
 			else if (event.getEventObject () instanceof WDMUtils.LightpathRemove)
 			{
@@ -318,14 +294,12 @@ public class Online_evProc_wdm extends IEventProcessor
 				else
 					removeRoute_protection(lpToRemove , originalRwa);
 				this.transponderTypeOfNewLps.remove(lpToRemove);
-				if (DEBUG) checkClashing (currentNetPlan); 
+				if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
 			} else if (event.getEventObject () instanceof SimEvent.NodesAndLinksChangeFailureState)
 			{
 				SimEvent.NodesAndLinksChangeFailureState ev = (SimEvent.NodesAndLinksChangeFailureState) event.getEventObject ();
 
-//				System.out.println ("----------- Event NodesAndLinksChangeFailureState: links up" + ev.linksToUp + ", links down: " + ev.linksToDown);
-
-				if (DEBUG) checkClashing (currentNetPlan); 
+				if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
 
 				/* This automatically sets as up the routes affected by a repair in its current path, and sets as down the affected by a failure in its current path */
 				Set<Route> routesFromDownToUp = currentNetPlan.getRoutesDown(wdmLayer);
@@ -333,58 +307,59 @@ public class Online_evProc_wdm extends IEventProcessor
 				routesFromDownToUp.removeAll(currentNetPlan.getRoutesDown(wdmLayer));
 
 				/* If something failed, and I am supposed to use protection or restoration... */
-				if (isProtectionRecovery || isRestorationRecovery)
+				if (isProtectionRecovery)
 				{
-					/* Try to reroute the routes that are still failing */
+					/* POLICY WITH PROTECTION: */
+					/* Primary up => backup carried traffic in no failure state is zero */
+					/* Primary down => backup carried traffic in no failure state is equal to the carried in no failure of the primary */
+
+					/* If primary GOES up => backup carried is set to zero */ 
+					for (Route r : routesFromDownToUp)
+						if (r.hasBackupRoutes()) r.getBackupRoutes().get(0).setCarriedTraffic(0, null); // primary to up => carried in backup to zero
+					/* Now for the each primary route that is down, set backup carried to the one of the primary, but count recovered only if backup is up */
+					for (Route r : currentNetPlan.getRoutesDown(wdmLayer).stream().filter(e -> !e.isBackupRoute()).collect(Collectors.toSet()))
+					{
+						if (r.isBackupRoute()) continue;
+						this.stat_numAttemptedToRecoverConnections ++;
+						this.stat_trafficAttemptedToRecoverConnections += r.getCarriedTrafficInNoFailureState();
+						/* The primary routes goes down => its backup has now carried traffic (if no failure) */
+						if (r.hasBackupRoutes())
+						{
+							final Route backupRoute = r.getBackupRoutes().get(0);
+							backupRoute.setCarriedTraffic(r.getCarriedTrafficInNoFailureState(), null);
+							if (!backupRoute.isDown())
+							{
+								this.stat_numSuccessfullyRecoveredConnections ++; 
+								this.stat_trafficSuccessfullyRecoveredConnections += r.getCarriedTrafficInNoFailureState(); 
+							}
+						}
+					}					
+				}
+				else if (isRestorationRecovery)
+				{
 					for (Route r : new HashSet<Route> (currentNetPlan.getRoutesDown(wdmLayer)))
 					{
 						this.stat_numAttemptedToRecoverConnections ++;
 						this.stat_trafficAttemptedToRecoverConnections += r.getCarriedTrafficInNoFailureState();
-						final Demand cplDemand = this.cplWdm.getNodePairDemands(cplWdm.getNodeFromId(r.getIngressNode().getId()) , cplWdm.getNodeFromId(r.getEgressNode().getId()) , false).iterator().next();
-						
-						if (isProtectionRecovery)
-						{
-							final Pair<WDMUtils.RSA,WDMUtils.RSA> originalRWA = wdmRouteOriginalRwa.get(r);
-							final WDMUtils.RSA primaryRSA = originalRWA.getFirst();
-							final WDMUtils.RSA backupRSA = originalRWA.getSecond();
-							final boolean primaryUp = currentNetPlan.isUp (primaryRSA.seqLinks);
-							final boolean backupUp = backupRSA == null? false : currentNetPlan.isUp (backupRSA.seqLinks);
-							if (primaryUp) 
-							{
-								r.setSeqLinksAndProtectionSegments(primaryRSA.seqLinks);
-								WDMUtils.setLightpathRSAAttributes(r , primaryRSA , false);
-								this.stat_numSuccessfullyRecoveredConnections ++; 
-								this.stat_trafficSuccessfullyRecoveredConnections += r.getCarriedTrafficInNoFailureState(); 
-							}
-							else if (backupUp) 
-							{
-								r.setSeqLinksAndProtectionSegments(Collections.singletonList(r.getPotentialBackupProtectionSegments().iterator().next()));
-								WDMUtils.setLightpathRSAAttributes(r , backupRSA , false);
-								this.stat_numSuccessfullyRecoveredConnections ++; 
-								this.stat_trafficSuccessfullyRecoveredConnections += r.getCarriedTrafficInNoFailureState(); 
-							}
+						final Pair<Node,Node> cplNodePair= Pair.of(r.getIngressNode() , r.getEgressNode());
+						final Integer transponderTypeLp = transponderTypeOfNewLps.get(r);
+						final double maxOpticalReachKm = transponderTypeLp == null? Double.MAX_VALUE : tpInfo.getOpticalReachKm(transponderTypeLp);
+						final boolean isSignalRegenerationPossible = transponderTypeLp == null? true : tpInfo.isOpticalRegenerationPossible(transponderTypeLp); 
+						final int numSlots = transponderTypeLp == null? new WDMUtils.RSA(r,false).getNumSlots() : tpInfo.getNumSlots(transponderTypeLp);
+						WDMUtils.RSA rwa = computeValidPathNewRoute (cplNodePair , currentNetPlan , numSlots , maxOpticalReachKm , isSignalRegenerationPossible);
+						if (rwa != null)
+						{ 
+							WDMUtils.releaseResources(new WDMUtils.RSA (r , false) , wavelengthFiberOccupancy, null);
+							WDMUtils.allocateResources(rwa , wavelengthFiberOccupancy , null);
+							r.setSeqLinks(rwa.seqLinks);
+							WDMUtils.setLightpathRSAAttributes(r , rwa , false);
+							
+							this.stat_numSuccessfullyRecoveredConnections ++; 
+							this.stat_trafficSuccessfullyRecoveredConnections += r.getCarriedTrafficInNoFailureState(); 
 						}
-						else if (isRestorationRecovery)
-						{
-							final Integer transponderTypeLp = transponderTypeOfNewLps.get(r);
-							final double maxOpticalReachKm = transponderTypeLp == null? Double.MAX_VALUE : tpInfo.getOpticalReachKm(transponderTypeLp);
-							final boolean isSignalRegenerationPossible = transponderTypeLp == null? true : tpInfo.isOpticalRegenerationPossible(transponderTypeLp); 
-							final int numSlots = transponderTypeLp == null? new WDMUtils.RSA(r,false).getNumSlots() : tpInfo.getNumSlots(transponderTypeLp);
-							WDMUtils.RSA rwa = computeValidPathNewRoute (cplDemand , currentNetPlan , numSlots , maxOpticalReachKm , isSignalRegenerationPossible);
-							if (rwa != null)
-							{ 
-								WDMUtils.releaseResources(new WDMUtils.RSA (r , false) , wavelengthFiberOccupancy, null);
-								WDMUtils.allocateResources(rwa , wavelengthFiberOccupancy , null);
-								r.setSeqLinksAndProtectionSegments(rwa.seqLinks);
-								WDMUtils.setLightpathRSAAttributes(r , rwa , false);
-								
-								this.stat_numSuccessfullyRecoveredConnections ++; 
-								this.stat_trafficSuccessfullyRecoveredConnections += r.getCarriedTrafficInNoFailureState(); 
-							}
-						}
-					}
+					}					
 				}
-				if (DEBUG) checkClashing (currentNetPlan); 
+				if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
 			} else if (event.getEventObject () instanceof SimEvent.DemandModify)
 			{
 				SimEvent.DemandModify ev = (SimEvent.DemandModify) event.getEventObject ();
@@ -393,7 +368,7 @@ public class Online_evProc_wdm extends IEventProcessor
 					d.setOfferedTraffic(d.getOfferedTraffic() + ev.offeredTraffic);
 				else
 					d.setOfferedTraffic(ev.offeredTraffic);
-				if (DEBUG) checkClashing (currentNetPlan); 
+				if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
 			} else if (event.getEventObject () instanceof SimEvent.DemandRemove)
 			{
 				SimEvent.DemandRemove ev = (SimEvent.DemandRemove) event.getEventObject ();
@@ -409,7 +384,7 @@ public class Online_evProc_wdm extends IEventProcessor
 					transponderTypeOfNewLps.remove(lpToRemove);
 				}
 				d.remove();
-				if (DEBUG) checkClashing (currentNetPlan); 
+				if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
 			}
 			else if(event.getEventObject() instanceof WDMUtils.LightpathModify)
 			{
@@ -428,13 +403,12 @@ public class Online_evProc_wdm extends IEventProcessor
 					lpRoute.setCarriedTraffic(modifyLpEvent.carriedTraffic, modifyLpEvent.rsa.getNumSlots());
 					WDMUtils.releaseResources( oldRSA, wavelengthFiberOccupancy , null);
 					WDMUtils.allocateResources(modifyLpEvent.rsa , wavelengthFiberOccupancy , null);
-					lpRoute.setSeqLinksAndProtectionSegments(modifyLpEvent.rsa.seqLinks);
+					lpRoute.setSeqLinks(modifyLpEvent.rsa.seqLinks);
 					WDMUtils.setLightpathRSAAttributes(lpRoute , modifyLpEvent.rsa , false);
 				}
 			}
 			else throw new Net2PlanException ("Unknown event type: " + event);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			throw e;
 		}
@@ -475,17 +449,15 @@ public class Online_evProc_wdm extends IEventProcessor
 	
 
 	/* down links or segments cannot be used */
-	private WDMUtils.RSA computeValidPathNewRoute (Demand cplDemand , NetPlan currentNetPlan , int numContiguousSlots , double opticalReachKm , boolean isSignalRegenerationPossible)
+	private WDMUtils.RSA computeValidPathNewRoute (Pair<Node,Node> cplNodePair , NetPlan currentNetPlan , int numContiguousSlots , double opticalReachKm , boolean isSignalRegenerationPossible)
 	{
-//		System.out.println ("computeValidPathNewRoute, demand: " + demand + " occupied: " + occupiedLinkCapacity);
 		/* If load sharing */
 		final double maxLightpathLengthKm = isSignalRegenerationPossible? Double.MAX_VALUE : opticalReachKm;
 		if (isLoadSharing)
 		{
-			final ArrayList<Route> paths = new ArrayList<Route> (cplDemand.getRoutes());
+			final List<List<Link>> paths = getAndUpdateCplWdm(cplNodePair, currentNetPlan);
 			final int randomChosenIndex = rng.nextInt(paths.size ());
-			final Route cplRoute = paths.get(randomChosenIndex);
-			final List<Link> seqLinksThisNetPlan = cplToNetPlanLinks(cplRoute.getSeqLinksRealPath(), currentNetPlan);
+			final List<Link> seqLinksThisNetPlan = paths.get(randomChosenIndex);
 			final Triple<Boolean,Integer,Double> rwaEval = computeValidWAFirstFit_path (seqLinksThisNetPlan , numContiguousSlots , maxLightpathLengthKm);
 			if (rwaEval.getFirst()) return new WDMUtils.RSA (seqLinksThisNetPlan, rwaEval.getSecond() , numContiguousSlots , WDMUtils.computeRegeneratorPositions(seqLinksThisNetPlan , maxLightpathLengthKm)); else return null;
 		}
@@ -493,11 +465,9 @@ public class Online_evProc_wdm extends IEventProcessor
 		{
 			/* If alternate or LCR */
 			WDMUtils.RSA lcrSoFar = null; double lcrIdleCapacitySoFar = -Double.MAX_VALUE; 
-			for (Route cplRoute : cplDemand.getRoutes())
+			for (List<Link> seqLinks : getAndUpdateCplWdm(cplNodePair, currentNetPlan))
 			{
-				final List<Link> seqLinks = cplToNetPlanLinks(cplRoute.getSeqLinksRealPath() , currentNetPlan);
 				final Triple<Boolean,Integer,Double> rwaEval = computeValidWAFirstFit_path (seqLinks , numContiguousSlots , maxLightpathLengthKm);
-//				System.out.println ("Route: " + cplRoute + ", links : " + seqLinks + ", eval: " + rwaEval);
 				if (!rwaEval.getFirst()) continue;
 				if (isAlternateRouting) return new WDMUtils.RSA (seqLinks, rwaEval.getSecond(),numContiguousSlots , WDMUtils.computeRegeneratorPositions(seqLinks , maxLightpathLengthKm));
 				if (rwaEval.getThird() > lcrIdleCapacitySoFar)
@@ -510,23 +480,21 @@ public class Online_evProc_wdm extends IEventProcessor
 		}
 		else if (isSrgDisjointAwareLpRouting)
 		{
-			final Node thisNpIngressNode = currentNetPlan.getNodeFromId (cplDemand.getIngressNode().getId ());
-			final Node thisNpEgressNode = currentNetPlan.getNodeFromId (cplDemand.getEgressNode().getId ());
+			final Node thisNpIngressNode = cplNodePair.getFirst();
+			final Node thisNpEgressNode = cplNodePair.getSecond();
 			WDMUtils.RSA chosenRWA = null; 
-			Set<Route> existingRoutesBetweenPairOfNodes = currentNetPlan.getNodePairRoutes(thisNpIngressNode, thisNpEgressNode , false , wdmLayer);
+			final Set<Route> existingPrimaryRoutesBetweenPairOfNodes = currentNetPlan.getNodePairRoutes(thisNpIngressNode, thisNpEgressNode , false , wdmLayer);
 			int cplChosenRoute_numSRGOverlappingRoutes = Integer.MAX_VALUE;
-			for(Route cplCandidateRoute : cplDemand.getRoutes())
+			for(List<Link> seqLinks : getAndUpdateCplWdm(cplNodePair, currentNetPlan))
 			{
-//				if (forbiddenCplRoutes.contains (cplCandidateRoute)) continue;
 				/* Check that the route has an available wavlength */
-				final List<Link> seqLinks = cplToNetPlanLinks(cplCandidateRoute.getSeqLinksRealPath() , currentNetPlan);
 				final Triple<Boolean,Integer,Double> rwaEval = computeValidWAFirstFit_path (seqLinks , numContiguousSlots , maxLightpathLengthKm);
 				if (!rwaEval.getFirst()) continue;
 				/* compute the number of SRG-route pairs this route overlaps with, respect to the already existing lightpaths  */
-				final DoubleMatrix1D affectingSRGs = cplA_rs.viewRow (cplCandidateRoute.getIndex());
+				Set<SharedRiskGroup> affectingSRGs = SRGUtils.getAffectingSRGs(seqLinks);
 				int numOverlappingSRGs = 0; 
-				for (Route currentRoute : existingRoutesBetweenPairOfNodes)
-					for (SharedRiskGroup srg : currentRoute.getSRGs()) if (affectingSRGs.get(srg.getIndex()) == 1) numOverlappingSRGs ++;
+				for (Route currentRoute : existingPrimaryRoutesBetweenPairOfNodes)
+					for (SharedRiskGroup srg : currentRoute.getSRGs()) if (affectingSRGs.contains(srg)) numOverlappingSRGs ++;
 				if (numOverlappingSRGs < cplChosenRoute_numSRGOverlappingRoutes) 
 				{ 
 					cplChosenRoute_numSRGOverlappingRoutes = numOverlappingSRGs; 
@@ -539,19 +507,17 @@ public class Online_evProc_wdm extends IEventProcessor
 		throw new RuntimeException ("Bad");
 	}
 
-	private Pair<WDMUtils.RSA,WDMUtils.RSA> computeValid11PathPairNewRoute (Demand cplDemand , NetPlan currentNetPlan , int numContigousSlotsOccupies , double opticalReachKm , boolean isSignalRegenerationPossible)
+	private Pair<WDMUtils.RSA,WDMUtils.RSA> computeValid11PathPairNewRoute (Pair<Node,Node> cplNodePair , NetPlan currentNetPlan , int numContigousSlotsOccupies , double opticalReachKm , boolean isSignalRegenerationPossible)
 	{
 		final double maximumLengthOfLighptathKm = isSignalRegenerationPossible? Double.MAX_VALUE : opticalReachKm;
 		
 		/* If load sharing */
 		if (isLoadSharing)
 		{
-			final ArrayList<Route> primaryRoutes = new ArrayList<Route> (cplDemand.getRoutes());
-			final int randomChosenIndex = rng.nextInt(primaryRoutes.size());
-			final Route cplRoute = primaryRoutes.get(randomChosenIndex);
-			final ProtectionSegment cplSegment = cplRoute.getPotentialBackupProtectionSegments().iterator().next();
-			final List<Link> seqLinksPrimaryThisNetPlan = cplToNetPlanLinks(cplRoute.getSeqLinksRealPath(), currentNetPlan);
-			final List<Link> seqLinksBackupThisNetPlan = cplToNetPlanLinks(cplSegment.getSeqLinks(), currentNetPlan);
+			final List<Pair<List<Link>,List<Link>>> routePairs = getAndUpdateCplWdm11(cplNodePair, currentNetPlan);
+			final int randomChosenIndex = rng.nextInt(routePairs.size());
+			final List<Link> seqLinksPrimaryThisNetPlan = routePairs.get(randomChosenIndex).getFirst();
+			final List<Link> seqLinksBackupThisNetPlan = routePairs.get(randomChosenIndex).getSecond();
 			final Quadruple<Boolean,Integer,Integer,Double> rwaEval = computeValidWAFirstFit_pathPair (seqLinksPrimaryThisNetPlan , seqLinksBackupThisNetPlan , numContigousSlotsOccupies , maximumLengthOfLighptathKm);
 			if (rwaEval.getFirst()) 
 				return Pair.of(new WDMUtils.RSA (seqLinksPrimaryThisNetPlan, rwaEval.getSecond() , numContigousSlotsOccupies , WDMUtils.computeRegeneratorPositions(seqLinksPrimaryThisNetPlan, maximumLengthOfLighptathKm)) , new WDMUtils.RSA (seqLinksBackupThisNetPlan, rwaEval.getThird() , numContigousSlotsOccupies , WDMUtils.computeRegeneratorPositions(seqLinksBackupThisNetPlan , maximumLengthOfLighptathKm))); 
@@ -561,14 +527,11 @@ public class Online_evProc_wdm extends IEventProcessor
 		else if (isAlternateRouting || isLeastCongestedRouting)
 		{
 			Pair<WDMUtils.RSA,WDMUtils.RSA> lcrSoFar = null; double lcrIdleCapacitySoFar= -Double.MAX_VALUE; 
-			for (Route cplRoute : cplDemand.getRoutes())
+			for (Pair<List<Link>,List<Link>> pathPair : getAndUpdateCplWdm11(cplNodePair, currentNetPlan))
 			{
-				if (cplRoute.getPotentialBackupProtectionSegments().isEmpty()) throw new RuntimeException ("Bad");
-				final ProtectionSegment cplSegment = cplRoute.getPotentialBackupProtectionSegments().iterator().next();
-				final List<Link> seqLinksPrimaryThisNetPlan = cplToNetPlanLinks(cplRoute.getSeqLinksRealPath(), currentNetPlan);
-				final List<Link> seqLinksBackupThisNetPlan = cplToNetPlanLinks(cplSegment.getSeqLinks(), currentNetPlan);
+				final List<Link> seqLinksPrimaryThisNetPlan = pathPair.getFirst();
+				final List<Link> seqLinksBackupThisNetPlan = pathPair.getSecond();
 				final Quadruple<Boolean,Integer,Integer,Double> rwaEval = computeValidWAFirstFit_pathPair (seqLinksPrimaryThisNetPlan , seqLinksBackupThisNetPlan , numContigousSlotsOccupies , maximumLengthOfLighptathKm);
-//				System.out.println ("Route: " + cplRoute + ", links primary: " + seqLinksPrimaryThisNetPlan + ", backup: " + seqLinksBackupThisNetPlan +  ", eval: " + rwaEval);
 				if (!rwaEval.getFirst()) continue;
 				if (isAlternateRouting) return Pair.of(new WDMUtils.RSA (seqLinksPrimaryThisNetPlan, rwaEval.getSecond() , numContigousSlotsOccupies , WDMUtils.computeRegeneratorPositions(seqLinksPrimaryThisNetPlan , maximumLengthOfLighptathKm)) , new WDMUtils.RSA (seqLinksBackupThisNetPlan, rwaEval.getThird() , numContigousSlotsOccupies , WDMUtils.computeRegeneratorPositions(seqLinksBackupThisNetPlan , maximumLengthOfLighptathKm)));
 				if (rwaEval.getFourth() > lcrIdleCapacitySoFar)
@@ -580,29 +543,26 @@ public class Online_evProc_wdm extends IEventProcessor
 			return lcrSoFar; //if alternate, this is null also
 		} else if (isSrgDisjointAwareLpRouting)
 		{
-			final Node thisNpIngressNode = currentNetPlan.getNodeFromId (cplDemand.getIngressNode().getId ());
-			final Node thisNpEgressNode = currentNetPlan.getNodeFromId (cplDemand.getEgressNode().getId ());
+			final Node thisNpIngressNode = cplNodePair.getFirst();
+			final Node thisNpEgressNode = cplNodePair.getSecond();
 			Pair<WDMUtils.RSA,WDMUtils.RSA> chosenRWA = null; 
-			Set<Route> existingRoutesBetweenPairOfNodes = currentNetPlan.getNodePairRoutes(thisNpIngressNode, thisNpEgressNode , false , wdmLayer);
+			Set<Route> existingRoutesBetweenPairOfNodes = currentNetPlan.getNodePairRoutes(thisNpIngressNode, thisNpEgressNode , false , wdmLayer).stream().filter(e -> !e.isBackupRoute()).collect(Collectors.toSet());
 			int cplChosenRoute_numSRGOverlappingRoutes = Integer.MAX_VALUE;
-			for(Route cplCandidateRoute : cplDemand.getRoutes())
+			for(Pair<List<Link>,List<Link>> pathPair : getAndUpdateCplWdm11(cplNodePair, currentNetPlan))
 			{
-				if (cplCandidateRoute.getPotentialBackupProtectionSegments().isEmpty()) throw new RuntimeException ("Bad");
-				final ProtectionSegment cplSegment = cplCandidateRoute.getPotentialBackupProtectionSegments().iterator().next();
-				final List<Link> seqLinksPrimaryThisNetPlan = cplToNetPlanLinks(cplCandidateRoute.getSeqLinksRealPath(), currentNetPlan);
-				final List<Link> seqLinksBackupThisNetPlan = cplToNetPlanLinks(cplSegment.getSeqLinks(), currentNetPlan);
+				final List<Link> seqLinksPrimaryThisNetPlan = pathPair.getFirst();
+				final List<Link> seqLinksBackupThisNetPlan = pathPair.getSecond();
 				final Quadruple<Boolean,Integer,Integer,Double> rwaEval = computeValidWAFirstFit_pathPair (seqLinksPrimaryThisNetPlan , seqLinksBackupThisNetPlan , numContigousSlotsOccupies , maximumLengthOfLighptathKm);
-//				System.out.println ("Route: " + cplCandidateRoute + ", links primary: " + seqLinksPrimaryThisNetPlan + ", backup: " + seqLinksBackupThisNetPlan +  ", eval: " + rwaEval);
 				if (!rwaEval.getFirst()) continue;
 				/* compute the number of SRG-route pairs this route overlaps with, respect to the already existing lightpaths  */
-				final DoubleMatrix1D affectingSRGs_primary = cplA_rs.viewRow (cplCandidateRoute.getIndex());
-				final DoubleMatrix1D affectingSRGs_backup = cplA_pss.viewRow (cplSegment.getIndex());
+				final Set<SharedRiskGroup> affectingSRGs_primaryOrBackup = SRGUtils.getAffectingSRGs(seqLinksPrimaryThisNetPlan);
+				affectingSRGs_primaryOrBackup.addAll(SRGUtils.getAffectingSRGs(seqLinksBackupThisNetPlan));
 				int numOverlappingSRGs = 0; 
 				for (Route currentRoute : existingRoutesBetweenPairOfNodes)
 				{
-					for (SharedRiskGroup srg : currentRoute.getSRGs()) if (affectingSRGs_primary.get(srg.getIndex()) == 1) numOverlappingSRGs ++;
-					final ProtectionSegment currentSegment = currentRoute.getPotentialBackupProtectionSegments().iterator().next();
-					for (SharedRiskGroup srg : currentSegment.getSRGs()) if (affectingSRGs_backup.get(srg.getIndex()) == 1) numOverlappingSRGs ++;
+					for (SharedRiskGroup srg : currentRoute.getSRGs()) if (affectingSRGs_primaryOrBackup.contains (srg)) numOverlappingSRGs ++;
+					Set<SharedRiskGroup> affectingSRGs = currentRoute.hasBackupRoutes()? currentRoute.getBackupRoutes().get(0).getSRGs() : new HashSet<> ();
+					for (SharedRiskGroup srg : affectingSRGs) if (affectingSRGs_primaryOrBackup.contains(srg)) numOverlappingSRGs ++;
 				}
 				if (numOverlappingSRGs < cplChosenRoute_numSRGOverlappingRoutes) 
 				{ 
@@ -620,36 +580,6 @@ public class Online_evProc_wdm extends IEventProcessor
 		throw new RuntimeException ("Bad");
 	}
 
-	/* down links or segments cannot be used */
-	private WDMUtils.RSA computeValidReroute_protection (Route routeToReroute)
-	{
-		final NetPlan np = routeToReroute.getNetPlan();
-		final Pair<WDMUtils.RSA,WDMUtils.RSA> originalRWA = wdmRouteOriginalRwa.get(routeToReroute);
-		final boolean primaryUp = np.isUp (originalRWA.getFirst().seqLinks);
-		final boolean backupUp = originalRWA.getSecond() == null? false : np.isUp (originalRWA.getSecond().seqLinks);
-		if (primaryUp) 
-		{
-			if (originalRWA.getFirst ().seqLinks.contains(null)) throw new RuntimeException ("Bad");
-			return originalRWA.getFirst (); 
-		}
-		else if (backupUp) 
-		{
-			List<Link> res = new LinkedList<Link> (); res.add (routeToReroute.getPotentialBackupProtectionSegments().iterator().next());
-			if (routeToReroute.getPotentialBackupProtectionSegments().iterator().next() == null)  throw new RuntimeException ("Bad");
-			if (res.contains(null)) throw new RuntimeException ("Bad");
-			return new WDMUtils.RSA (res , originalRWA.getSecond().seqFrequencySlots_se.get(0,0));
-		}
-		else return null;
-	}
-
-
-	private List<Link> cplToNetPlanLinks(List<Link> cplLinkList, NetPlan netPlan)
-	{
-		List<Link> list = new LinkedList<>();
-		for(Link cplLink : cplLinkList) list.add(netPlan.getLinkFromId (cplLink.getId ()));
-		return list;
-	}
-	
 	private Triple<Boolean,Integer,Double> computeValidWAFirstFit_path (List<Link> seqLinks , int numContiguousSlots , double maxOpticalReachKm)
 	{
 		if (seqLinks.isEmpty()) throw new RuntimeException ("Bad");
@@ -658,7 +588,7 @@ public class Online_evProc_wdm extends IEventProcessor
 		double worseCaseSpareCapacity = Double.MAX_VALUE; 
 		for (Link e : seqLinks) 
 		{ 
-			worseCaseSpareCapacity = Math.min(worseCaseSpareCapacity, e.getCapacity() - e.getOccupiedCapacityIncludingProtectionSegments());
+			worseCaseSpareCapacity = Math.min(worseCaseSpareCapacity, e.getCapacity() - e.getOccupiedCapacity());
 			if (e.getDestinationNode().isDown() || e.isDown()) return Triple.of(false,-1,-1.0);
 		}
 		int wavelength = WDMUtils.spectrumAssignment_firstFit(seqLinks, wavelengthFiberOccupancy , numContiguousSlots);
@@ -677,17 +607,23 @@ public class Online_evProc_wdm extends IEventProcessor
 		double worseCaseSpareCapacity = Double.MAX_VALUE; 
 		for (Link e : seqLinks_1) 
 		{ 
-			worseCaseSpareCapacity = Math.min(worseCaseSpareCapacity, e.getCapacity() - e.getOccupiedCapacityIncludingProtectionSegments());
+			worseCaseSpareCapacity = Math.min(worseCaseSpareCapacity, e.getCapacity() - e.getOccupiedCapacity());
 			if (e.getDestinationNode().isDown() || e.isDown()) return Quadruple.of(false,-1,-1,-1.0);
 		}
 		for (Link e : seqLinks_2) 
 		{ 
-			worseCaseSpareCapacity = Math.min(worseCaseSpareCapacity, e.getCapacity() - e.getOccupiedCapacityIncludingProtectionSegments());
+			worseCaseSpareCapacity = Math.min(worseCaseSpareCapacity, e.getCapacity() - e.getOccupiedCapacity());
 			if (e.getDestinationNode().isDown() || e.isDown()) return Quadruple.of(false,-1,-1,-1.0);
 		}
 		Pair<Integer,Integer> seqWavelengths = WDMUtils.spectrumAssignment_firstFitTwoRoutes(seqLinks_1, seqLinks_2, wavelengthFiberOccupancy,numSlots);
 		if (seqWavelengths != null) 
-			return Quadruple.of(true , seqWavelengths.getFirst () , seqWavelengths.getSecond() , worseCaseSpareCapacity); 
+		{
+			if (!WDMUtils.isAllocatableRSASet(wavelengthFiberOccupancy , new WDMUtils.RSA(seqLinks_1 , seqWavelengths.getFirst() , numSlots)))
+				throw new RuntimeException();
+			if (!WDMUtils.isAllocatableRSASet(wavelengthFiberOccupancy , new WDMUtils.RSA(seqLinks_2 , seqWavelengths.getSecond() , numSlots)))
+				throw new RuntimeException();
+			return Quadruple.of(true , seqWavelengths.getFirst () , seqWavelengths.getSecond() , worseCaseSpareCapacity);
+		}
 		else return Quadruple.of(false,-1,-1,-1.0);
 	}
 
@@ -700,37 +636,26 @@ public class Online_evProc_wdm extends IEventProcessor
 	private void removeRoute_protection (Route lpToRemove , Pair<WDMUtils.RSA,WDMUtils.RSA> originalRwa)
 	{
 		/* Release WDM resources */
+		final NetPlan np = lpToRemove.getNetPlan();
 		WDMUtils.releaseResources(originalRwa.getFirst (), wavelengthFiberOccupancy, null);
 		if (originalRwa.getSecond() != null)
+		{
 			WDMUtils.releaseResources(originalRwa.getSecond () , wavelengthFiberOccupancy, null);
+			if (!lpToRemove.hasBackupRoutes()) throw new RuntimeException(); 
+			lpToRemove.getBackupRoutes().iterator().next().remove();
+		}
+		
 		/* Release NetPlan resources */
-		lpToRemove.remove (); for (ProtectionSegment s : lpToRemove.getPotentialBackupProtectionSegments()) s.remove ();
+		lpToRemove.remove (); 
 		this.wdmRouteOriginalRwa.remove(lpToRemove);
 	}
 
 	private void checkClashing (NetPlan np)
 	{
-		DoubleMatrix2D mat = DoubleFactory2D.dense.make (wavelengthFiberOccupancy.rows () , E_wdm);
-		for (Route r : np.getRoutes(wdmLayer))
-		{
-			if (r.getCurrentlyTraversedProtectionSegments().isEmpty())
-				WDMUtils.allocateResources(new WDMUtils.RSA(r , false) , mat , null);
-			else
-				WDMUtils.allocateResources(wdmRouteOriginalRwa.get(r).getFirst() , mat , null);
-		}
-		for (ProtectionSegment r : np.getProtectionSegments(wdmLayer))
-			WDMUtils.allocateResources(new WDMUtils.RSA(r) , mat , null);
-		if (!mat.equals (wavelengthFiberOccupancy))
-		{
-			System.out.println ("mat: " + mat);
-			System.out.println ("wavelengthFiberOccupancy: " + wavelengthFiberOccupancy);
-			System.out.println ("1 minus 2: " + mat.copy ().assign(wavelengthFiberOccupancy , DoubleFunctions.minus));
-			throw new RuntimeException ("Bad");
-		}
-
+		WDMUtils.checkResourceAllocationClashing(np, false, false, wdmLayer);
 	}
 	
-	private void checkDisjointness (List<Link> p1 , List<Link> p2 , int disjointnessType)
+	private static void checkDisjointness (List<Link> p1 , List<Link> p2 , int disjointnessType)
 	{
 		if ((p1 == null) || (p2 == null)) throw new RuntimeException ("Bad");
 		if (disjointnessType == 0) // SRG disjoint
@@ -754,4 +679,39 @@ public class Online_evProc_wdm extends IEventProcessor
 	}
 	
 	private static double getLengthInKm (List<Link> p) { double res = 0; for (Link e : p) res += e.getLengthInKm(); return res; }
+	private void checkWaveOccupEqualsNp (NetPlan currentNetPlan)
+	{
+		DoubleMatrix2D freqNow_se = WDMUtils.getNetworkSlotAndRegeneratorOcupancy(currentNetPlan, true , wdmLayer).getFirst();
+		if (!freqNow_se.equals(wavelengthFiberOccupancy))
+		{
+			System.out.println(freqNow_se.assign(wavelengthFiberOccupancy , DoubleFunctions.minusMult(1.0)));
+			throw new RuntimeException ();
+		} 
+
+	}
+	
+	private List<List<Link>> getAndUpdateCplWdm (Pair<Node,Node> pair , NetPlan np)
+	{
+		List<List<Link>> res = cplWdm.get(pair);
+		if (res != null) return res;
+		final Map<Link,Double> linkCostMap = new HashMap<> (); for (Link e : np.getLinks(wdmLayer)) linkCostMap.put(e, e.getLengthInKm());
+        res = GraphUtils.getKLooplessShortestPaths(np.getNodes(), np.getLinks(wdmLayer), pair.getFirst(), 
+        		pair.getSecond(), linkCostMap, wdmK.getInt(), tpInfo.getMaxOpticalReachKm(), wdmMaxLightpathNumHops.getInt(), -1, -1, -1, -1);
+        if (res.isEmpty()) throw new Net2PlanException ("There is no path between nodes: " + pair.getFirst() + " -> " + pair.getSecond());
+        cplWdm.put(pair ,  res);
+        return res;
+	}
+	private List<Pair<List<Link>,List<Link>>> getAndUpdateCplWdm11 (Pair<Node,Node> pair , NetPlan np)
+	{
+		List<Pair<List<Link>,List<Link>>> res = cplWdm11.get(pair);
+		if (res != null) return res;
+		final List<List<Link>> basePathList = getAndUpdateCplWdm (pair , np);
+		final Map<Pair<Node,Node> , List<List<Link>>> singleNodePairCpl = new HashMap<>();
+		singleNodePairCpl.put(pair , basePathList); 
+		final Map<Pair<Node, Node>, List<Pair<List<Link>, List<Link>>>> cpl11ThisPair = 
+				NetPlan.computeUnicastCandidate11PathList(singleNodePairCpl , protectionTypeCode);
+        if (cpl11ThisPair.isEmpty()) throw new Net2PlanException ("There is no 1+1 paths between nodes: " + pair.getFirst() + " -> " + pair.getSecond());
+        cplWdm11.put(pair ,  cpl11ThisPair.get(pair));
+        return cpl11ThisPair.get(pair);
+	}
 }

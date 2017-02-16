@@ -25,12 +25,6 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import cern.jet.math.tdouble.DoubleFunctions;
-
 import com.jom.DoubleMatrixND;
 import com.jom.OptimizationProblem;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -40,7 +34,6 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.ProtectionSegment;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.utils.Constants.RoutingType;
@@ -51,6 +44,12 @@ import com.net2plan.utils.IntUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Quadruple;
 import com.net2plan.utils.Triple;
+
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import cern.jet.math.tdouble.DoubleFunctions;
 
 /**
  * This algorithm is devoted to solve the several network planning problems in an optical WDM network (fiber placement, RWA, under different recovery schemes), appearing in the case study in the book section mentioned below. 
@@ -164,7 +163,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		/* Initialize demand info */
 		this.D = netPlan.getNumberOfDemands();
 		this.numCircH_d = netPlan.getVectorDemandOfferedTraffic().assign(DoubleFunctions.div(this.tcfa_circuitCapacity_Gbps.getDouble ())).assign(DoubleFunctions.rint);
-		System.out.println("Total number of circuits to establish: " + numCircH_d.zSum());
+		//System.out.println("Total number of circuits to establish: " + numCircH_d.zSum());
 		
 		//if (1==1) throw new RuntimeException ("Stop");
 		this.R = netPlan.getNumberOfRoutes();
@@ -174,7 +173,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		initializeSRGs(netPlan);
 		this.nSRGs = netPlan.getNumberOfSRGs();
 		this.routeList_d = new int [D][]; for (Demand d : netPlan.getDemands ()) routeList_d [d.getIndex ()] = getIndexes (d.getRoutes ());
-		this.traversedLinks_r = new int [R][]; for (Route r : netPlan.getRoutes ()) traversedLinks_r [r.getIndex ()] = getIndexes (r.getSeqLinksRealPath());
+		this.traversedLinks_r = new int [R][]; for (Route r : netPlan.getRoutes ()) traversedLinks_r [r.getIndex ()] = getIndexes (r.getSeqLinks());
 		
 		
 		/* Initialize aux arrays for speed-up */
@@ -183,10 +182,10 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		this.A_er = netPlan.getMatrixLink2RouteAssignment();
 		this.A_se = DoubleFactory2D.dense.make(1 + nSRGs , Efm , 1.0); // 1 if link OK, 0 if fails
 		for (int contSRG = 0 ; contSRG < nSRGs ; contSRG ++)
-			for (Link e : netPlan.getSRG (contSRG).getLinks())
+			for (Link e : netPlan.getSRG (contSRG).getLinksAllLayers())
 				A_se.set(contSRG+1 , e.getIndex () , 0.0);
 		this.A_rs = DoubleFactory2D.dense.make(R , 1 + nSRGs , 1.0); // 1 if link OK, 0 if fails
-		for (Route r : netPlan.getRoutes ()) for (Link e : r.getSeqLinksRealPath()) for (SharedRiskGroup srg : e.getSRGs())
+		for (Route r : netPlan.getRoutes ()) for (Link e : r.getSeqLinks()) for (SharedRiskGroup srg : e.getSRGs())
 					A_rs.set(r.getIndex (),1+srg.getIndex () , 0.0);
 
 		/* Check if the problem may have a solution: demands have at least one path in any failure state  */
@@ -238,10 +237,10 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 			{
 				if (Math.abs(best_xr.viewSelection(routeList_d [d.getIndex ()]).zSum() - 1) > 1E-3) throw new RuntimeException ("Bad");
 				if (Math.abs(best_x2r.viewSelection(routeList_d [d.getIndex ()]).zSum() - 1) > 1E-3) throw new RuntimeException ("Bad");
-				Route primaryRoute = null; ProtectionSegment protSegment = null;  
+				Route primaryRoute = null; Route backupRoute = null;  
 				for (Route r : d.getRoutes ()) if (Math.abs(best_xr.get(r.getIndex ()) - 1) <= 1e-3) { primaryRoute = r; primaryRoute.setCarriedTraffic(tcfa_circuitCapacity_Gbps.getDouble () , tcfa_circuitCapacity_Gbps.getDouble ()); break; }
-				for (Route r : d.getRoutes ()) if (Math.abs(best_x2r.get(r.getIndex ()) - 1) <= 1e-3) { protSegment = netPlan.addProtectionSegment(r.getSeqLinksRealPath() , tcfa_circuitCapacity_Gbps.getDouble () , null); break; }
-				primaryRoute.addProtectionSegment(protSegment);
+				for (Route r : d.getRoutes ()) if (Math.abs(best_x2r.get(r.getIndex ()) - 1) <= 1e-3) { backupRoute = r; backupRoute.setCarriedTraffic(0 , tcfa_circuitCapacity_Gbps.getDouble ()); break; }
+				primaryRoute.addBackupRoute(backupRoute);
 			}
 			for (Link e : netPlan.getLinks ()) e.setCapacity(tcfa_linkCapacity_numCirc.getInt () * tcfa_circuitCapacity_Gbps.getDouble () * best_pe.get(e.getIndex()));
 		
@@ -263,7 +262,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		} else throw new RuntimeException ("Bad");		
 		
 		/* Remove unused routes and links */
-		for (Route r : new HashSet<Route>(netPlan.getRoutes())) if (r.getCarriedTraffic() == 0) r.remove();
+		for (Route r : new HashSet<Route>(netPlan.getRoutes())) if (!r.isBackupRoute() && r.getCarriedTraffic() == 0) r.remove();
 		for (Link e : new HashSet<Link>(netPlan.getLinks())) if (e.getCapacity() == 0) e.remove();
 		
 		Quadruple<Double,Double,Double,Double> q = computeCost (netPlan);
@@ -272,12 +271,12 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		stat_costNodes = q.getThird();
 		stat_costCirc = q.getFourth();
 		stat_numLinks = (int) (netPlan.getVectorLinkCapacity().zSum () / (tcfa_linkCapacity_numCirc.getInt () * tcfa_circuitCapacity_Gbps.getDouble ())); 
-		stat_numCirc = (int) Math.round(netPlan.getDemandTotalCarriedTraffic() / tcfa_circuitCapacity_Gbps.getDouble ()); if (tcfa_recoveryType.getString ().equals("1+1")) stat_numCirc *=2; 
+		stat_numCirc = (int) Math.round(netPlan.getVectorDemandCarriedTraffic().zSum() / tcfa_circuitCapacity_Gbps.getDouble ()); if (tcfa_recoveryType.getString ().equals("1+1")) stat_numCirc *=2; 
 		for (Node n : netPlan.getNodes()) if (n.getOutgoingLinks().size() > 2) stat_numNodesDeg3 ++; else stat_numNodesDeg2 ++;
 		stat_totalTimeSecs = (System.nanoTime() - algorithmInitialtime)*1e-9;
 		checkSolution (netPlan);
 
-		double averageLinkUtilization = netPlan.getVectorLinkUtilizationIncludingProtectionSegments().zSum() / stat_numLinks;
+		double averageLinkUtilization = netPlan.getVectorLinkUtilization().zSum() / stat_numLinks;
 		final String fileNameStem = algorithm_outputFileNameRoot.getString() + "_" + tcfa_srgType.getString() + "_c" + tcfa_circuitCapacity_Gbps.getDouble () + "_t" + algorithm_maxExecutionTimeInSeconds.getDouble() + "_r" + tcfa_recoveryType.getString ();  
 		try 
 		{
@@ -322,7 +321,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 
 //		if (netPlan.getDemandTotalBlockedTraffic() > 1E-3) throw new RuntimeException ("Bad");
 //		if (netPlan.getLinksOversubscribed().size() > 0) throw new RuntimeException ("Bad");
-		System.out.println("JOM sol: cost: " + stat_totalCost + ", num links: "+ stat_numLinks);
+		//System.out.println("JOM sol: cost: " + stat_totalCost + ", num links: "+ stat_numLinks);
 
 		return "Ok! cost: " + stat_totalCost + ", num links: "+ stat_numLinks;
 
@@ -350,10 +349,11 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 			costLinks += linkCost_e.get(e.getIndex ()) * e.getCapacity() / (tcfa_linkCapacity_numCirc.getInt () * tcfa_circuitCapacity_Gbps.getDouble ());
 		
 		double costCircuits = 0;
-		for (Route r : np.getRoutes ())
-			costCircuits += tcfa_circuitCost.getDouble () * (r.getCarriedTraffic() / tcfa_circuitCapacity_Gbps.getDouble ());
-		for (ProtectionSegment p : np.getProtectionSegments())
-			costCircuits += tcfa_circuitCost.getDouble () * (p.getReservedCapacityForProtection() / tcfa_circuitCapacity_Gbps.getDouble ());
+		for (Route r : np.getRoutes ()) // sums both lps and 1+1 if there are any
+		{
+			final double lineRate = r.isBackupRoute()? r.getRoutesIAmBackup().iterator().next().getCarriedTrafficInNoFailureState() : r.getCarriedTrafficInNoFailureState();
+			costCircuits += tcfa_circuitCost.getDouble () * (lineRate / tcfa_circuitCapacity_Gbps.getDouble ());
+		}
 		double costNodes = 0;
 		for (Node n : np.getNodes())
 		{
@@ -394,15 +394,15 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		return totalCost;
 	}
 
-	private Link oppositeLink (Link e) { return e.getNetPlan ().getNodePairLinks(e.getDestinationNode(), e.getOriginNode() , false).iterator().next(); }
+	private static Link oppositeLink (Link e) { return e.getNetPlan ().getNodePairLinks(e.getDestinationNode(), e.getOriginNode() , false).iterator().next(); }
 	
 	private Pair<Map<Demand,Demand>,Map<Route,Route>> initializeNetPlanLinksBidirDemandsAndRoutes (NetPlan np)
 	{
 		/* Remove lower half demands from np */
-		np.removeAllRoutes(); np.removeAllProtectionSegments();
+		np.removeAllRoutes(); 
 		for (Node n1 : np.getNodes()) for (Node n2 : np.getNodes()) if (n1.getIndex () > n2.getIndex ()) for (Demand d : np.getNodePairDemands(n1, n2,false)) d.remove ();
-		np.addRoutesFromCandidatePathList(null , "K" , "" + tcfa_maxNumberPathsPerDemand.getInt () , "maxLengthInKm" , "" + tcfa_maxPathLengthInKm.getDouble() ,  "maxNumHops" , "" + tcfa_maxPathNumberOfHops.getInt ());
-
+		np.addRoutesFromCandidatePathList(netPlan.computeUnicastCandidatePathList(null , tcfa_maxNumberPathsPerDemand.getInt(), tcfa_maxPathLengthInKm.getDouble(), tcfa_maxPathNumberOfHops.getInt(), -1, -1, -1, -1 , null));
+		
 		/* Add symmetric demands and routes */
 		Map<Demand,Demand> opposite_d = new HashMap<Demand,Demand> ();
 		Map<Route,Route> opposite_r = new HashMap<Route,Route> ();
@@ -413,7 +413,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 			opposite_d.put(opDemand,d);
 			for (Route r : new HashSet<Route> (d.getRoutes ()))
 			{
-				final Route oppRoute = np.addRoute(opDemand, r.getCarriedTraffic(), r.getOccupiedCapacity() , oppositeSeqLinks (r.getSeqLinksRealPath()), null);
+				final Route oppRoute = np.addRoute(opDemand, r.getCarriedTraffic(), r.getOccupiedCapacity() , oppositeSeqLinks (r.getSeqLinks()), null);
 				opposite_r.put(r,oppRoute); opposite_r.put(oppRoute,r);
 			}
 		}
@@ -457,7 +457,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		{
 			System.out.println("np.getLinksOversubscribed(): " + np.getLinksOversubscribed());
 			System.out.println("np.getLinkCapacityMap(): " + np.getVectorLinkCapacity());
-			System.out.println("np.getLinkCarriedTrafficMap(): " + np.getVectorLinkTotalCarriedTraffic());
+			System.out.println("np.getLinkCarriedTrafficMap(): " + np.getVectorLinkCarriedTraffic());
 			throw new RuntimeException ("Bad");
 		}
 		
@@ -488,15 +488,15 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 
 		if (tcfa_recoveryType.getString ().equals("1+1"))
 		{ // one prot segment, and link disjoint
-			for (Route r : np.getRoutes())
+			for (Route r : np.getRoutesAreNotBackup())
 			{
-				if (r.getPotentialBackupProtectionSegments().size() != 1) throw new RuntimeException ("Bad");
-				final ProtectionSegment protSegment = r.getPotentialBackupProtectionSegments().iterator().next();
-				List<Link> seqLinks = new ArrayList<Link> (r.getSeqLinksRealPath());
-				seqLinks.retainAll(protSegment.getSeqLinks());
+				if (r.getBackupRoutes().size() != 1) throw new RuntimeException ("Bad: " + r.getBackupRoutes().size());
+				final Route backupRoute = r.getBackupRoutes().get(0);
+				List<Link> seqLinks = new ArrayList<Link> (r.getSeqLinks());
+				seqLinks.retainAll(backupRoute.getSeqLinks());
 				if (!seqLinks.isEmpty()) 
 				{
-					System.out.println ("Route : "+  r + " links: " + r.getSeqLinksRealPath() + ", prot segment " + protSegment + " links: " + protSegment.getSeqLinks() + ", get route carried traffic: " + r.getCarriedTraffic() + ", prot segment reserved traffic: " + protSegment.getReservedCapacityForProtection());
+					System.out.println ("Route : "+  r + " links: " + r.getSeqLinks() + ", backup route " + backupRoute + " links: " + backupRoute.getSeqLinks() + ", route carried traffic: " + r.getCarriedTraffic() + ", backup occupied capacity: " + backupRoute.getOccupiedCapacity());
 					throw new RuntimeException ("Bad");
 				}
 			}
@@ -754,7 +754,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		double current_cost = computeCost_shared(current_xr, current_pe); 
 		//DoubleMatrix1D best_xr = current_xr.copy(); DoubleMatrix1D best_pe = current_pe.copy(); double bestCost = ;
 		
-		System.out.println("---- Greedy solution Time " + (1E-9*(System.nanoTime() - initGreedy)) +",  Cost : "+  current_cost + ", num links: " + current_pe.zSum());
+		//System.out.println("---- Greedy solution Time " + (1E-9*(System.nanoTime() - initGreedy)) +",  Cost : "+  current_cost + ", num links: " + current_pe.zSum());
 
 		while (System.nanoTime() < algorithmEndtime) 
 		{
@@ -781,7 +781,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 				}
 			}			
 			
-			System.out.println("- Local search TIME: " + ((System.nanoTime()-initLSIteration)*1e-9) + ", current cost: " + current_cost + ", num links: " + current_pe.zSum() + ", IMPROVED: " + improvedSolution);
+			//System.out.println("- Local search TIME: " + ((System.nanoTime()-initLSIteration)*1e-9) + ", current cost: " + current_cost + ", num links: " + current_pe.zSum() + ", IMPROVED: " + improvedSolution);
 
 			if (!improvedSolution) break; else stat_numLSIterationsReducingCost ++; // end grasp iteration 
 		}
@@ -808,7 +808,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		DoubleMatrix1D current_pe = computePe_11 (current_xr , current_xr);
 		double current_cost = computeCost_11(current_xr, current_x2r , current_pe); 
 
-		System.out.println("---- Greedy solution Time " + (1E-9*(System.nanoTime() - initGreedy)) +",  Cost : "+  current_cost + ", num links: " + current_pe.zSum());
+		//System.out.println("---- Greedy solution Time " + (1E-9*(System.nanoTime() - initGreedy)) +",  Cost : "+  current_cost + ", num links: " + current_pe.zSum());
 
 		while (System.nanoTime() < algorithmEndtime) 
 		{
@@ -834,7 +834,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 				}
 			}			
 			
-			System.out.println("- Local search TIME: " + ((System.nanoTime()-initLSIteration)*1e-9) + ", current cost: " + current_cost + ", num links: " + current_pe.zSum() + ", IMPROVED: " + improvedSolution);
+			//System.out.println("- Local search TIME: " + ((System.nanoTime()-initLSIteration)*1e-9) + ", current cost: " + current_cost + ", num links: " + current_pe.zSum() + ", IMPROVED: " + improvedSolution);
 
 			if (!improvedSolution) break; else stat_numLSIterationsReducingCost ++; // end grasp iteration 
 		}
@@ -859,7 +859,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		DoubleMatrix1D current_pe = computePe_restoration(current_xrs);
 		double current_cost = computeCost_shared(current_xrs.viewColumn(0), current_pe); 
 		
-		System.out.println("---- Greedy solution Time " + (1E-9*(System.nanoTime() - initGreedy)) +",  Cost : "+  current_cost + ", num links: " + current_pe.zSum() + ", SRGs: " + nSRGs);
+		//System.out.println("---- Greedy solution Time " + (1E-9*(System.nanoTime() - initGreedy)) +",  Cost : "+  current_cost + ", num links: " + current_pe.zSum() + ", SRGs: " + nSRGs);
 
 		while (System.nanoTime() < algorithmEndtime) 
 		{
@@ -884,7 +884,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 				}
 			}			
 			
-			System.out.println("- Local search TIME: " + ((System.nanoTime()-initLSIteration)*1e-9) + ", current cost: " + current_cost + ", num links: " + current_pe.zSum() + ", IMPROVED: " + improvedSolution);
+			//System.out.println("- Local search TIME: " + ((System.nanoTime()-initLSIteration)*1e-9) + ", current cost: " + current_cost + ", num links: " + current_pe.zSum() + ", IMPROVED: " + improvedSolution);
 
 			if (!improvedSolution) break; else stat_numLSIterationsReducingCost ++; // end grasp iteration 
 		}

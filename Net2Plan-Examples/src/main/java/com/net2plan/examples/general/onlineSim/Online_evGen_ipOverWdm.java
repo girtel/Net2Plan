@@ -18,6 +18,7 @@ import com.net2plan.examples.ocnbook.onlineSim.Online_evGen_generalGenerator;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.utils.InputParameter;

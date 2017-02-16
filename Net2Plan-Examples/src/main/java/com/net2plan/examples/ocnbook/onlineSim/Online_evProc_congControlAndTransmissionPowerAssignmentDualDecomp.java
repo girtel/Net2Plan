@@ -178,7 +178,9 @@ public class Online_evProc_congControlAndTransmissionPowerAssignmentDualDecomp e
 			for (Node n2 : this.currentNetPlan.getNodes())
 				if (n1 != n2)
 					this.currentNetPlan.addDemand(n1, n2, cc_minHd.getDouble(), null);
-		currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.getVectorLinkLengthInKm().toArray()  , "K" , "1");
+		this.currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.computeUnicastCandidatePathList(currentNetPlan.getVectorLinkLengthInKm() , 1, -1, -1, -1, -1, -1, -1 , null));
+
+		
 		for (Route r : currentNetPlan.getRoutes ()) r.setCarriedTraffic(r.getDemand().getOfferedTraffic() , r.getDemand().getOfferedTraffic());
 		this.D = this.currentNetPlan.getNumberOfDemands();
 		
@@ -252,7 +254,7 @@ public class Online_evProc_congControlAndTransmissionPowerAssignmentDualDecomp e
 		this.traceOf_objFunction = new TimeTrace ();
 
 		this.traceOf_u_e.add(0.0, this.currentNetPlan.getVectorLinkCapacity());
-		this.traceOf_y_e.add(0.0, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+		this.traceOf_y_e.add(0.0, this.currentNetPlan.getVectorLinkCarriedTraffic());
 		this.traceOf_p_e.add(0.0, this.mac_transmissionPower_logu_e.copy ());
 		this.traceOf_pi_e.add(0.0, this.cc_price_e.copy ());
 		this.traceOf_h_d.add(0.0, this.currentNetPlan.getVectorDemandCarriedTraffic());
@@ -323,7 +325,7 @@ public class Online_evProc_congControlAndTransmissionPowerAssignmentDualDecomp e
 				e.setCapacity(Math.log(computeSINR_e (e)));
 
 			this.traceOf_u_e.add(t, this.currentNetPlan.getVectorLinkCapacity());
-			this.traceOf_y_e.add(t, this.currentNetPlan.getVectorLinkTotalCarriedTraffic());
+			this.traceOf_y_e.add(t, this.currentNetPlan.getVectorLinkCarriedTraffic());
 			this.traceOf_p_e.add(t, this.mac_transmissionPower_logu_e.copy ());
 			this.traceOf_pi_e.add(t, this.cc_price_e.copy ());
 			this.traceOf_h_d.add(t, this.currentNetPlan.getVectorDemandCarriedTraffic());
@@ -348,7 +350,7 @@ public class Online_evProc_congControlAndTransmissionPowerAssignmentDualDecomp e
 
 			/* Update the new price with the gradient approach */
 			final double u_e = eMe.getCapacity();
-			final double y_e = eMe.getCarriedTrafficIncludingProtectionSegments();
+			final double y_e = eMe.getCarriedTraffic();
 			final double old_pie = this.cc_price_e.get(eMe.getIndex());
 			final double new_pie = Math.max(0, old_pie - this.cc_gradient_gammaStep.getDouble() * (u_e - y_e) + 2*cc_gradient_maxGradientAbsoluteNoise.getDouble()*(rng.nextDouble()-0.5));
 			this.cc_price_e.set(eMe.getIndex(), new_pie);
@@ -413,7 +415,7 @@ public class Online_evProc_congControlAndTransmissionPowerAssignmentDualDecomp e
 		new Offline_cba_wirelessCongControlTransmissionPowerAssignment ().executeAlgorithm(copyInitialNetPlan , param , this.net2planParameters);
 		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_objFunc.txt") , NetworkPerformanceMetrics.alphaUtility(copyInitialNetPlan.getVectorDemandOfferedTraffic() , cc_fairnessFactor.getDouble()));
 		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_ue.txt") , copyInitialNetPlan.getVectorLinkCapacity());
-		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_ye.txt") , copyInitialNetPlan.getVectorLinkTotalCarriedTraffic());
+		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_ye.txt") , copyInitialNetPlan.getVectorLinkCarriedTraffic());
 		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_hd.txt") , copyInitialNetPlan.getVectorDemandCarriedTraffic());
 		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_pe.txt") , copyInitialNetPlan.getVectorAttributeValues(copyInitialNetPlan.getLinks () , "p_e"));
 		TimeTrace.printToFile(new File (simulation_outFileNameRoot.getString() + "_jom_pie.txt") , copyInitialNetPlan.getVectorAttributeValues(copyInitialNetPlan.getLinks () , "pi_e"));
@@ -463,7 +465,7 @@ public class Online_evProc_congControlAndTransmissionPowerAssignmentDualDecomp e
 		{
 			final double h_r = r.getCarriedTraffic();
 			demandCarriedTraffic += h_r;
-			for (Link e : r.getSeqLinksRealPath())
+			for (Link e : r.getSeqLinks())
 				demandWeightedSumLinkPrices += h_r * infoIKnow_price_e.get(e.getIndex());
 		}
 		//if (Math.abs(demandCarriedTraffic - this.currentNetPlan.getDemandCarriedTraffic(dIdMe)) > 1E-3) throw new RuntimeException ("Not all the traffic is carried");

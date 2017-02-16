@@ -276,7 +276,7 @@ public class Report_WDM_lineEngineering implements IReport
 		Map<Route, LinkedList<String>> warnings_r = new LinkedHashMap<Route, LinkedList<String>>();
 		for (Route r : netPlan.getRoutes())
 		{
-			final List<Link> seqLinks = r.getSeqLinksRealPath();
+			final List<Link> seqLinks = r.getSeqLinks();
 			final LinkedList<Triple<Double, String, Double>> elementPositions = getElementPositionsList(seqLinks);
 			final LinkedList<Pair<double[], double[]>> impairmentsAtInputAndOutputs = computeImpairments(elementPositions);
 			final LinkedList<String> warningMessages = computeWarningMessages(elementPositions, impairmentsAtInputAndOutputs);
