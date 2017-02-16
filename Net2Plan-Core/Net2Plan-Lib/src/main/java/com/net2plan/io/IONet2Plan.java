@@ -18,12 +18,11 @@
 
 package com.net2plan.io;
 
+import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants.IOFeature;
-import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.utils.Triple;
-
 import java.io.File;
 import java.util.EnumSet;
 import java.util.List;

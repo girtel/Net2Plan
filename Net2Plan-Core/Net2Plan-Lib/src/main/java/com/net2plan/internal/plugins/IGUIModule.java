@@ -21,12 +21,24 @@ package com.net2plan.internal.plugins;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.SystemUtils;
-import net.miginfocom.swing.MigLayout;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import net.miginfocom.swing.MigLayout;
 
 /**
  * Generic template for plugins (tools) within Net2Plan.

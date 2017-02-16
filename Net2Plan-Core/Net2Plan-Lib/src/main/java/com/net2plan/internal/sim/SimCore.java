@@ -18,8 +18,8 @@
 
 package com.net2plan.internal.sim;
 
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.simulation.SimEvent;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants.UserInterface;
 import com.net2plan.internal.SystemUtils;
 
@@ -72,7 +72,21 @@ public final class SimCore implements Runnable
 		 * 
 		 * @since 0.2.0
 		 */
-		STOPPED
+		STOPPED;
+		
+		@Override
+		public String toString() 
+		{
+		    switch(this) 
+		    {
+		      case NOT_STARTED: return "NOT_STARTED";
+		      case RUNNING: return "RUNNING";
+		      case PAUSED: return "PAUSED";
+		      case STEP: return "STEP";
+		      case STOPPED: return "STOPPED";
+		      default: throw new RuntimeException ();
+		    }
+		}
 	};
 	
 	private final IEventCallback callback;
@@ -133,12 +147,12 @@ public final class SimCore implements Runnable
 					if (totalSimTime != -1 && nextEventTime >= totalSimTime)
 					{
 						setSimulationState(SimState.STOPPED, new EndSimulationException());
-						return;
+						return; // this kills the thread
 					}
 					else if (totalSimEvents != -1 && futureEventList.getNumberOfProcessedEvents() == totalSimEvents)
 					{
 						setSimulationState(SimState.STOPPED, new EndSimulationException());
-						return;
+						return;  // this kills the thread
 					}
 
 					/* Process next event in the future event list */
@@ -161,7 +175,7 @@ public final class SimCore implements Runnable
 						cpuTime += ((double) (end - start)) / 1e9;
 						callback.refresh(true);
 
-						return;
+						return;  // this kills the thread
 					}
 
 					processingEvent = false;
@@ -178,7 +192,7 @@ public final class SimCore implements Runnable
 					if (futureEventList.getNumberOfProcessedEvents() == Long.MAX_VALUE)
 					{
 						setSimulationState(SimState.STOPPED);
-						return;
+						return;  // this kills the thread
 					}
 
 					if (simulationState == SimState.STEP)
@@ -196,6 +210,12 @@ public final class SimCore implements Runnable
 			callback.refresh(true);
 			timeSinceLastRefresh = cpuTime;
 
+			if (!futureEventList.hasMoreEvents())
+			{
+				setSimulationState(SimState.STOPPED, new EndSimulationException());
+				return;  // this kills the thread
+			}
+			
 			if (SystemUtils.getUserInterface() == UserInterface.CLI)
 			{
 				setSimulationState(SimState.STOPPED, new EndSimulationException());

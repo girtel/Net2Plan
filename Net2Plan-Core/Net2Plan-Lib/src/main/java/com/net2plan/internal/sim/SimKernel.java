@@ -18,20 +18,28 @@
 
 package com.net2plan.internal.sim;
 
+import com.net2plan.interfaces.simulation.SimEvent;
 import com.jom.JOMException;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.simulation.*;
+import com.net2plan.interfaces.simulation.ICombinedEventGenerator;
+import com.net2plan.interfaces.simulation.ICombinedEventProcessor;
+import com.net2plan.interfaces.simulation.IEventGenerator;
+import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.IExternal;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Core-class for simulators. Users are only responsible to implement their
@@ -544,7 +552,8 @@ public class SimKernel implements IEventCallback
 			throw new Net2PlanException("Network design cannot be changed once simulation was started");
 	
 		initialNetPlan = netPlan.copy ();  initialNetPlan.setModifiableState(false);
-		initializeNetState();
+		currentNetPlan = netPlan;
+		//initializeNetState();
 	}
 
 	/**

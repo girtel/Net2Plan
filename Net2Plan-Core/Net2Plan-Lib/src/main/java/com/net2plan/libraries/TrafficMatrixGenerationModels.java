@@ -12,20 +12,29 @@
 
 package com.net2plan.libraries;
 
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
 import cern.colt.list.tint.IntArrayList;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.jet.math.tdouble.DoubleFunctions;
+
 import com.jom.OptimizationProblem;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.DoubleUtils;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.RandomUtils;
-import com.net2plan.interfaces.networkDesign.*;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
 
 /**
  * <p>Set of methods implementing different traffic generation models based on traffic matrices.</p>

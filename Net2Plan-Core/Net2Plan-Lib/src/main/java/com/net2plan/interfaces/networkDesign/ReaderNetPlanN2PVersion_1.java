@@ -20,12 +20,17 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import org.codehaus.stax2.XMLStreamReader2;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
-import java.util.*;
-import java.util.Map.Entry;
+
+import org.codehaus.stax2.XMLStreamReader2;
 
 class ReaderNetPlanN2PVersion_1 implements IReaderNetPlan
 {
@@ -36,13 +41,14 @@ class ReaderNetPlanN2PVersion_1 implements IReaderNetPlan
 	{
 		parseNetwork(netPlan, xmlStreamReader);
 		
-		for(Entry<Long, List<Long>> entry : backupSegmentMap.entrySet())
-		{
-			long routeId = entry.getKey();
-			List<Long> backupSegmentList = entry.getValue();
-			for(long segmentId : backupSegmentList)
-				netPlan.defaultLayer.routes.get((int) routeId).addProtectionSegment(netPlan.defaultLayer.protectionSegments.get ((int) segmentId));
-		}
+		/* Protection segments are not added now */
+//		for(Entry<Long, List<Long>> entry : backupSegmentMap.entrySet())
+//		{
+//			long routeId = entry.getKey();
+//			List<Long> backupSegmentList = entry.getValue();
+//			for(long segmentId : backupSegmentList)
+//				netPlan.defaultLayer.routes.get((int) routeId).addProtectionSegment(netPlan.defaultLayer.protectionSegments.get ((int) segmentId));
+//		}
 		
 	}
 
@@ -421,7 +427,8 @@ class ReaderNetPlanN2PVersion_1 implements IReaderNetPlan
 					if (endElementName.equals("protectionSegment"))
 					{
 						List<Link> newSeqLinks = new LinkedList<Link> (); for (long linkId : seqLinks) newSeqLinks.add (netPlan.defaultLayer.links.get((int) linkId));
-						netPlan.addProtectionSegment(newSeqLinks, reservedBandwidthInErlangs, attributeMap);
+						/* Protection segments are not added */
+						//netPlan.addProtectionSegment(newSeqLinks, reservedBandwidthInErlangs, attributeMap);
 						return;
 					}
 					break;

@@ -19,7 +19,6 @@
 package com.net2plan.internal.plugins;
 
 import com.net2plan.internal.IExternal;
-
 import java.util.Map;
 
 /**

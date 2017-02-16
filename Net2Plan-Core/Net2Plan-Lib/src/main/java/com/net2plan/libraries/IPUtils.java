@@ -25,6 +25,7 @@ import com.net2plan.utils.Quadruple;
 import org.apache.commons.collections15.Transformer;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Class for destination-based routing (IP-like).
@@ -168,13 +169,13 @@ public class IPUtils
 		final List<Link> links = netPlan.getLinks(layer);
 		final List<Demand> demands = netPlan.getDemands(layer);
 		final DoubleMatrix1D h_d = netPlan.getVectorDemandOfferedTraffic(layer);
-
 		final DoubleMatrix2D f_te = IPUtils.computeECMPRoutingTableMatrix_fte (nodes, links , linkWeightVector);
-		final Quadruple<DoubleMatrix2D , DoubleMatrix1D, DoubleMatrix1D, List<Constants.RoutingCycleType>> q_noFailure = GraphUtils.convert_fte2xde(nodes, links, demands, f_te);
+		final DoubleMatrix2D f_de = GraphUtils.convert_fte2fde(demands, f_te);
+		final Quadruple<DoubleMatrix2D , DoubleMatrix1D, DoubleMatrix1D, List<Constants.RoutingCycleType>> q_noFailure = 
+				GraphUtils.convert_fde2xde(nodes, links, demands, h_d, f_de);
 		final DoubleMatrix2D x_de = q_noFailure.getFirst();
 		final DoubleMatrix1D r_d = q_noFailure.getSecond();
 		final DoubleMatrix1D y_e = q_noFailure.getThird();
-		final DoubleMatrix2D f_de = GraphUtils.convert_xde2fde(nodes,links,demands,x_de);
 		return Quadruple.of(f_de, x_de, r_d, y_e);
 	}
 

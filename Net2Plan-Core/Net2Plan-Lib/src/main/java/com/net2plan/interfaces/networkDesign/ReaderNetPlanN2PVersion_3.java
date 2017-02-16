@@ -20,12 +20,15 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.Pair;
-import org.codehaus.stax2.XMLStreamReader2;
-
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
+
+import org.codehaus.stax2.XMLStreamReader2;
+
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+
+import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Pair;
 
 class ReaderNetPlanN2PVersion_3 extends ReaderNetPlanN2PVersion_2
 {
@@ -51,7 +54,7 @@ class ReaderNetPlanN2PVersion_3 extends ReaderNetPlanN2PVersion_2
 		}
 		else
 		{
-			newLayer = netPlan.addLayer(layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, null);
+			newLayer = netPlan.addLayer(layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, null , null);
 		}
 
 		mapOldId2Layer.put (layerId , newLayer);
@@ -109,7 +112,7 @@ class ReaderNetPlanN2PVersion_3 extends ReaderNetPlanN2PVersion_2
 		long demandId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "demandId"));
 		double splittingRatio = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "splittingRatio"));
 
-		mapOldId2Layer.get(layerId).forwardingRules_f_de.set (mapOldId2Demand.get(Pair.of (layerId,demandId)).index , mapOldId2Link.get(Pair.of(layerId , linkId)).index  , splittingRatio);
+		mapOldId2Layer.get(layerId).forwardingRulesNoFailureState_f_de.set (mapOldId2Demand.get(Pair.of (layerId,demandId)).index , mapOldId2Link.get(Pair.of(layerId , linkId)).index  , splittingRatio);
 
 		while(xmlStreamReader.hasNext())
 		{

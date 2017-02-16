@@ -20,12 +20,13 @@
 
 package com.net2plan.internal.plugins;
 
-import com.net2plan.interfaces.networkDesign.Configuration;
-import com.net2plan.internal.CommandLineParser;
+import java.util.Map;
+
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import java.util.Map;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.internal.CommandLineParser;
 
 /**
  * Interface for any module to be executed from the command-line user interface.

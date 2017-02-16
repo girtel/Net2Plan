@@ -20,16 +20,18 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import com.net2plan.utils.LongUtils;
-import com.net2plan.utils.Pair;
-import org.codehaus.stax2.XMLStreamReader2;
-
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.XMLEvent;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
+
+import org.codehaus.stax2.XMLStreamReader2;
+
+import com.net2plan.utils.LongUtils;
+import com.net2plan.utils.Pair;
 
 class ReaderNetPlanN2PVersion_2 implements IReaderNetPlan
 {
@@ -39,7 +41,7 @@ class ReaderNetPlanN2PVersion_2 implements IReaderNetPlan
 	protected Map<Pair<Long,Long>,Link> mapOldId2Link;
 	protected Map<Pair<Long,Long>,Demand> mapOldId2Demand;
 	protected Map<Pair<Long,Long>,Route> mapOldId2Route;
-	protected Map<Pair<Long,Long>,ProtectionSegment> mapOldId2ProtectionSegment;
+	//protected Map<Pair<Long,Long>,ProtectionSegment> mapOldId2ProtectionSegment;
 	protected boolean hasAlreadyReadOneLayer;
 	
 	
@@ -52,7 +54,7 @@ class ReaderNetPlanN2PVersion_2 implements IReaderNetPlan
 		this.mapOldId2Link = new HashMap<Pair<Long,Long>,Link> ();
 		this.mapOldId2Demand = new HashMap<Pair<Long,Long>,Demand> ();
 		this.mapOldId2Route = new HashMap<Pair<Long,Long>,Route> ();
-		this.mapOldId2ProtectionSegment = new HashMap<Pair<Long,Long>,ProtectionSegment> ();
+		//this.mapOldId2ProtectionSegment = new HashMap<Pair<Long,Long>,ProtectionSegment> ();
 		this.hasAlreadyReadOneLayer = false;
 		
 		parseNetwork(netPlan, xmlStreamReader);
@@ -124,7 +126,7 @@ class ReaderNetPlanN2PVersion_2 implements IReaderNetPlan
 		}
 		else
 		{
-			newLayer = netPlan.addLayer(layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, null);
+			newLayer = netPlan.addLayer(layerName, layerDescription, linkCapacityUnitsName, demandTrafficUnitsName, null , null);
 		}
 		mapOldId2Layer.put (layerId , newLayer);
 		
@@ -328,8 +330,8 @@ class ReaderNetPlanN2PVersion_2 implements IReaderNetPlan
 		List<Long> seqLinks = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "seqLinks")));
 //		netPlan.nextSegmentId.put(layerId, segmentId);
 		List<Link> newSeqLinks = new LinkedList<Link> (); for (long linkId : seqLinks) newSeqLinks.add (mapOldId2Link.get(Pair.of(layerId , linkId)));
-		ProtectionSegment newSegment = netPlan.addProtectionSegment(newSeqLinks, reservedCapacity, null);
-		mapOldId2ProtectionSegment.put (Pair.of(layerId , segmentId) , newSegment);
+		//ProtectionSegment newSegment = netPlan.addProtectionSegment(newSeqLinks, reservedCapacity, null);
+		//mapOldId2ProtectionSegment.put (Pair.of(layerId , segmentId) , newSegment);
 		
 		while(xmlStreamReader.hasNext())
 		{
@@ -344,7 +346,7 @@ class ReaderNetPlanN2PVersion_2 implements IReaderNetPlan
 						case "attribute":
 							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
 							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
-							newSegment.setAttribute(key, name);
+							//newSegment.setAttribute(key, name);
 							break;
 
 						default:
@@ -376,7 +378,7 @@ class ReaderNetPlanN2PVersion_2 implements IReaderNetPlan
 		List<Link> newSeqLinks = new LinkedList<Link> (); for (long linkId : seqLinks) newSeqLinks.add (mapOldId2Link.get(Pair.of(layerId , linkId)));
 		Route newRoute = netPlan.addRoute(mapOldId2Demand.get(Pair.of(layerId , demandId)) , carriedTraffic, occupiedCapacity, newSeqLinks, null);
 		mapOldId2Route.put (Pair.of (layerId,routeId),newRoute);
-		for(long segmentId : backupSegmentList) newRoute.addProtectionSegment(mapOldId2ProtectionSegment.get(Pair.of(layerId , segmentId)));
+		//for(long segmentId : backupSegmentList) newRoute.addProtectionSegment(mapOldId2ProtectionSegment.get(Pair.of(layerId , segmentId)));
 		
 		while(xmlStreamReader.hasNext())
 		{

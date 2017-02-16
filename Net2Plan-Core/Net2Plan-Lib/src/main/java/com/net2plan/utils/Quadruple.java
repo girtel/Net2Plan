@@ -13,7 +13,6 @@
 package com.net2plan.utils;
 
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-
 import java.util.Objects;
 
 /**
@@ -106,7 +105,27 @@ public class Quadruple<A, B, C, D>
 		}
 
 		Quadruple p = (Quadruple) o;
-		return getFirst().equals(p.getFirst()) && getSecond().equals(p.getSecond()) && getThird().equals(p.getThird()) && getFourth().equals(p.getFourth());
+		if (a != null)
+		{
+			if (p.getFirst() == null) return false;
+			if (!a.equals(p.getFirst())) return false;
+		} else { if (p.getFirst() != null) return false; }
+		if (b != null)
+		{
+			if (p.getSecond() == null) return false;
+			if (!b.equals(p.getSecond())) return false;
+		} else { if (p.getSecond() != null) return false; }
+		if (c != null)
+		{
+			if (p.getThird() == null) return false;
+			if (!c.equals(p.getThird())) return false;
+		} else { if (p.getThird() != null) return false; }
+		if (d != null)
+		{
+			if (p.getFourth() == null) return false;
+			if (!d.equals(p.getFourth())) return false;
+		} else { if (p.getFourth() != null) return false; }
+		return true;
 	}
 
 	/**
@@ -135,7 +154,7 @@ public class Quadruple<A, B, C, D>
 	@Override
 	public String toString()
 	{
-		return "(" + getFirst() + ", " + getSecond() + ", " + getThird() + ", " + getFourth() + ")";
+		return "(" + a + ", " + b + ", " + c + ", " + d + ")";
 	}
 
 	private void checkIsModifiable()

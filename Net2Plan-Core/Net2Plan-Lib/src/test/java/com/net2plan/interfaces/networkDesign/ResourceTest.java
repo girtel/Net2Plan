@@ -1,13 +1,25 @@
-package com.net2plan.interfaces.networkDesign; /**
+/**
  * 
  */
+package com.net2plan.interfaces.networkDesign;
 
-import org.junit.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
-import static org.junit.Assert.assertTrue;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * @author Pablo
@@ -68,10 +80,10 @@ public class ResourceTest
 		assertTrue (np.getNumberOfResources() == 2);
 		
 		/* create service chain */
-		List<NetworkElement> pathUpper = new LinkedList<NetworkElement> (); pathUpper.add(upperResource); pathUpper.add(interLink);
-		this.serviceChainUpper = np.addServiceChain(demandUpper , 100 , 200 , pathUpper , Collections.singletonMap(upperResource , 1.0) , null);
-		List<NetworkElement> pathBase = new LinkedList<NetworkElement> (); pathBase.add(baseResource); pathBase.add(interLink);
-		this.serviceChainBase = np.addServiceChain(demandBase , 100 , 300 , pathBase , Collections.singletonMap(baseResource , 1.0) , null);
+		List<NetworkElement> pathUpper = Arrays.asList(upperResource , interLink);
+		this.serviceChainUpper = np.addServiceChain(demandUpper , 100 , Arrays.asList(1.0 , 200.0) , pathUpper , null);
+		List<NetworkElement> pathBase = Arrays.asList(baseResource , interLink);
+		this.serviceChainBase = np.addServiceChain(demandBase , 100 , Arrays.asList(1.0 , 300.0) , pathBase , null);
 	}
 
 	/**
@@ -80,6 +92,7 @@ public class ResourceTest
 	@After
 	public void tearDown() throws Exception 
 	{
+		np.checkCachesConsistency();
 	}
 
 	
@@ -93,30 +106,30 @@ public class ResourceTest
 	@Test
 	public void testGetResourcesOfType () 
 	{
-		Assert.assertEquals(np.getResources("baseType"), Collections.singleton(baseResource));
-		Assert.assertEquals(np.getResources("upperType"), Collections.singleton(upperResource));
-		Assert.assertEquals(np.getResources("xxx"), Collections.emptySet());
+		assertEquals(np.getResources("baseType"), Collections.singleton(baseResource));
+		assertEquals(np.getResources("upperType"), Collections.singleton(upperResource));
+		assertEquals(np.getResources("xxx"), Collections.emptySet());
 		upperResource.remove();
-		Assert.assertEquals(np.getResources("upperType"), Collections.emptySet());
+		assertEquals(np.getResources("upperType"), Collections.emptySet());
 		baseResource.remove();
-		Assert.assertEquals(np.getResources("baseType"), Collections.emptySet());
+		assertEquals(np.getResources("baseType"), Collections.emptySet());
 	}
 
 	@Test
 	public void testGetResources () 
 	{
-		Assert.assertEquals(hostNode.getResources("baseType"), Collections.singleton(baseResource));
-		Assert.assertEquals(hostNode.getResources("upperType"), Collections.singleton(upperResource));
-		Assert.assertEquals(hostNode.getResources("xxx"), Collections.emptySet());
+		assertEquals(hostNode.getResources("baseType"), Collections.singleton(baseResource));
+		assertEquals(hostNode.getResources("upperType"), Collections.singleton(upperResource));
+		assertEquals(hostNode.getResources("xxx"), Collections.emptySet());
 		Set<Resource> res = new HashSet<Resource> (); res.add(baseResource); res.add (upperResource);
-		Assert.assertEquals(hostNode.getResources(), res);
-		Assert.assertEquals(hostNode.getResources("upperType" , "baseType"), res);
+		assertEquals(hostNode.getResources(), res);
+		assertEquals(hostNode.getResources("upperType" , "baseType"), res);
 		baseResource.remove();
-		Assert.assertEquals(hostNode.getResources("baseType"), Collections.emptySet());
-		Assert.assertEquals(hostNode.getResources("upperType"), Collections.emptySet());
-		Assert.assertEquals(hostNode.getResources("xxx"), Collections.emptySet());
-		Assert.assertEquals(hostNode.getResources(), Collections.emptySet());
-		Assert.assertEquals(hostNode.getResources("upperType" , "baseType"), Collections.emptySet());
+		assertEquals(hostNode.getResources("baseType"), Collections.emptySet());
+		assertEquals(hostNode.getResources("upperType"), Collections.emptySet());
+		assertEquals(hostNode.getResources("xxx"), Collections.emptySet());
+		assertEquals(hostNode.getResources(), Collections.emptySet());
+		assertEquals(hostNode.getResources("upperType" , "baseType"), Collections.emptySet());
 	}
 
 	@Test
@@ -170,39 +183,39 @@ public class ResourceTest
 	@Test
 	public void testGetOccupiedCapacity ()
 	{
-		Assert.assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0);
-		Assert.assertEquals(baseResource.getOccupiedCapacity() , 6.0 , 0);
+		assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0);
+		assertEquals(baseResource.getOccupiedCapacity() , 6.0 , 0);
 	}
 	
 	@Test
 	public void testGetTraversingDemands ()
 	{
-		Assert.assertEquals(upperResource.getTraversingDemands().iterator().next() , demandUpper);
-		Assert.assertEquals(baseResource.getTraversingDemands().iterator().next() , demandBase);
+		assertEquals(upperResource.getTraversingDemands().iterator().next() , demandUpper);
+		assertEquals(baseResource.getTraversingDemands().iterator().next() , demandBase);
 	}
 	
 	@Test
 	public void testGetTraversingRouteOccupiedCapacity ()
 	{
-		Assert.assertEquals(upperResource.getTraversingRouteOccupiedCapacity(demandUpper.getRoutes().iterator().next()) , 1.0 , 0);
-		Assert.assertEquals(baseResource.getTraversingRouteOccupiedCapacity(demandBase.getRoutes().iterator().next()) , 1.0 , 0);
+		assertEquals(upperResource.getTraversingRouteOccupiedCapacity(demandUpper.getRoutes().iterator().next()) , 1.0 , 0);
+		assertEquals(baseResource.getTraversingRouteOccupiedCapacity(demandBase.getRoutes().iterator().next()) , 1.0 , 0);
 		interLink.setFailureState(false);
-		Assert.assertEquals(upperResource.getTraversingRouteOccupiedCapacity(demandUpper.getRoutes().iterator().next()) , 0.0 , 0);
-		Assert.assertEquals(baseResource.getTraversingRouteOccupiedCapacity(demandBase.getRoutes().iterator().next()) , 0.0 , 0);
+		assertEquals(upperResource.getTraversingRouteOccupiedCapacity(demandUpper.getRoutes().iterator().next()) , 0.0 , 0);
+		assertEquals(baseResource.getTraversingRouteOccupiedCapacity(demandBase.getRoutes().iterator().next()) , 0.0 , 0);
 	}
 
 	@Test
 	public void testGetTraversingRoutes ()
 	{
-		Assert.assertEquals (baseResource.getTraversingRoutes() , Collections.singleton(serviceChainBase));
-		Assert.assertEquals (upperResource.getTraversingRoutes() , Collections.singleton(serviceChainUpper));
+		assertEquals (baseResource.getTraversingRoutes() , Collections.singleton(serviceChainBase));
+		assertEquals (upperResource.getTraversingRoutes() , Collections.singleton(serviceChainUpper));
 	}
 
 	@Test
 	public void testGetUpperResources ()
 	{
-		Assert.assertEquals (baseResource.getUpperResources() , Collections.singleton(upperResource));
-		Assert.assertEquals (upperResource.getUpperResources() , new HashSet<Resource> ());
+		assertEquals (baseResource.getUpperResources() , Collections.singleton(upperResource));
+		assertEquals (upperResource.getUpperResources() , new HashSet<Resource> ());
 	}
 	
 	@Test
@@ -210,12 +223,12 @@ public class ResourceTest
 	{
 		assertTrue (!baseResource.isOversubscribed());
 		assertTrue (!upperResource.isOversubscribed());
-		serviceChainBase.setCarriedTrafficAndResourcesOccupationInformation(20,20,null);
+		serviceChainBase.setCarriedTraffic(20,Arrays.asList(0.0 , 20.0));
 		assertTrue (!baseResource.isOversubscribed());
 		assertTrue (!upperResource.isOversubscribed());
-		serviceChainBase.setCarriedTrafficAndResourcesOccupationInformation(20,20,Collections.singletonMap(baseResource , 100.0));
+		serviceChainBase.setCarriedTraffic(20,Arrays.asList(100.0 , 20.0));
 		assertTrue (baseResource.isOversubscribed());
-		serviceChainUpper.setCarriedTrafficAndResourcesOccupationInformation(20,20,Collections.singletonMap(upperResource , 100.0));
+		serviceChainUpper.setCarriedTraffic(20,Arrays.asList(100.0 , 20.0));
 		assertTrue (upperResource.isOversubscribed());
 		np.checkCachesConsistency();
 	}
@@ -225,10 +238,10 @@ public class ResourceTest
 	{
 		baseResource.remove();
 		np.checkCachesConsistency();
-		Assert.assertEquals(upperResource.getNetPlan() , null);
-		Assert.assertEquals(baseResource.getNetPlan() , null);
-		Assert.assertEquals(serviceChainBase.getNetPlan() , null);
-		Assert.assertEquals(serviceChainUpper.getNetPlan() , null);
+		assertEquals(upperResource.getNetPlan() , null);
+		assertEquals(baseResource.getNetPlan() , null);
+		assertEquals(serviceChainBase.getNetPlan() , null);
+		assertEquals(serviceChainUpper.getNetPlan() , null);
 	}
 
 	@Test
@@ -236,8 +249,8 @@ public class ResourceTest
 	{
 		upperResource.remove();
 		np.checkCachesConsistency();
-		Assert.assertEquals(upperResource.getNetPlan() , null);
-		Assert.assertEquals(serviceChainUpper.getNetPlan() , null);
+		assertEquals(upperResource.getNetPlan() , null);
+		assertEquals(serviceChainUpper.getNetPlan() , null);
 		assertTrue(baseResource.getNetPlan() != null);
 		assertTrue(serviceChainBase.getNetPlan() != null);
 	}
@@ -246,14 +259,14 @@ public class ResourceTest
 	@Test
 	public void testSetCapacity ()
 	{
-		Assert.assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
-		Assert.assertEquals(baseResource.getOccupiedCapacity() , 6.0 , 0.0);
+		assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
+		assertEquals(baseResource.getOccupiedCapacity() , 6.0 , 0.0);
 		upperResource.setCapacity(10 , Collections.singletonMap(baseResource , 3.0));
 		np.checkCachesConsistency();
-		Assert.assertEquals(upperResource.getCapacity() , 10.0 , 0.0);
-		Assert.assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
-		Assert.assertEquals(baseResource.getCapacity() , 10.0 , 0.0);
-		Assert.assertEquals(baseResource.getOccupiedCapacity() , 4.0 , 0.0);
+		assertEquals(upperResource.getCapacity() , 10.0 , 0.0);
+		assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
+		assertEquals(baseResource.getCapacity() , 10.0 , 0.0);
+		assertEquals(baseResource.getOccupiedCapacity() , 4.0 , 0.0);
 	}
 
 	@Test
@@ -286,17 +299,17 @@ public class ResourceTest
 	@Test
 	public void testFailureRoute ()
 	{
-		Assert.assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
-		Assert.assertEquals(baseResource.getOccupiedCapacity() , 6.0 , 0.0);
+		assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
+		assertEquals(baseResource.getOccupiedCapacity() , 6.0 , 0.0);
 		interLink.setFailureState(false);
-		Assert.assertEquals(serviceChainBase.getCarriedTraffic() , 0 , 0.0);
-		Assert.assertEquals(serviceChainUpper.getCarriedTraffic() , 0 , 0.0);
-		Assert.assertEquals(serviceChainBase.getOccupiedCapacity() , 0 , 0.0);
-		Assert.assertEquals(serviceChainUpper.getOccupiedCapacity() , 0 , 0.0);
-		Assert.assertEquals(serviceChainBase.getOccupiedCapacityInNoFailureState() , 300.0 , 0.0);
-		Assert.assertEquals(serviceChainUpper.getOccupiedCapacityInNoFailureState() , 200.0 , 0.0);
-		Assert.assertEquals(upperResource.getOccupiedCapacity() , 0.0 , 0.0);
-		Assert.assertEquals(baseResource.getOccupiedCapacity() , 5.0 , 0.0);
+		assertEquals(serviceChainBase.getCarriedTraffic() , 0 , 0.0);
+		assertEquals(serviceChainUpper.getCarriedTraffic() , 0 , 0.0);
+		assertEquals(serviceChainBase.getOccupiedCapacity() , 0 , 0.0);
+		assertEquals(serviceChainUpper.getOccupiedCapacity() , 0 , 0.0);
+		assertEquals(serviceChainBase.getOccupiedCapacityInNoFailureState() , 1.0 , 0.0);
+		assertEquals(serviceChainUpper.getOccupiedCapacityInNoFailureState() , 1.0 , 0.0);
+		assertEquals(upperResource.getOccupiedCapacity() , 0.0 , 0.0);
+		assertEquals(baseResource.getOccupiedCapacity() , 5.0 , 0.0);
 	}
 	
 	@Test
@@ -306,10 +319,11 @@ public class ResourceTest
 		try
 		{
 			file = new File ("test.n2p"); //File.createTempFile("testN2p" , "n2p");
-		} catch (Exception e) { Assert.fail ("could not make the test: no temporary file creation possible"); }
+		} catch (Exception e) { Assert.fail ("could not make the test: no temprary file creation possible"); }
 		assertTrue (file != null);
 		np.saveToFile(file);
 		NetPlan np2 = new NetPlan (file);
+		np.checkCachesConsistency();
 		np2.checkCachesConsistency();
 		assertTrue (np.isDeepCopy(np2));
 		assertTrue (np2.isDeepCopy(np));

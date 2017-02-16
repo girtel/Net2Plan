@@ -22,10 +22,15 @@ package com.net2plan.internal.plugins;
 
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.utils.ClassLoaderUtils;
-
-import javax.swing.filechooser.FileFilter;
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import javax.swing.filechooser.FileFilter;
 
 /**
  * Class to handle plugin management.

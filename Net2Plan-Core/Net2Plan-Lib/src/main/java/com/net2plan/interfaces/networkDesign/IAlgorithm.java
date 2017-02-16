@@ -14,7 +14,6 @@ package com.net2plan.interfaces.networkDesign;
 
 import com.net2plan.internal.IExternal;
 import com.net2plan.utils.Triple;
-
 import java.util.List;
 import java.util.Map;
 

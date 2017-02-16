@@ -10,14 +10,17 @@
 package com.net2plan.utils;
 
 
+
+
+import java.util.LinkedList;
+
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.utils.Constants.OrderingType;
+
 import cern.colt.function.tdouble.DoubleDoubleFunction;
 import cern.colt.function.tdouble.DoubleFunction;
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.utils.Constants.OrderingType;
-
-import java.util.LinkedList;
 
 
 /**

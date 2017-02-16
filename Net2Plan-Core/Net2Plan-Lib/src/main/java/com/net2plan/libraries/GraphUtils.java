@@ -15,6 +15,69 @@
 
 package com.net2plan.libraries;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.swing.JComponent;
+
+import org.apache.commons.collections15.ListUtils;
+import org.apache.commons.collections15.Predicate;
+import org.apache.commons.collections15.Transformer;
+import org.apache.commons.collections15.functors.ConstantTransformer;
+import org.apache.commons.collections15.functors.MapTransformer;
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.UndirectedGraph;
+import org.jgrapht.alg.ConnectivityInspector;
+import org.jgrapht.alg.StrongConnectivityInspector;
+import org.jgrapht.graph.AsWeightedGraph;
+import org.jgrapht.graph.DirectedSubgraph;
+import org.jgrapht.graph.DirectedWeightedMultigraph;
+import org.jgrapht.graph.Subgraph;
+import org.jgrapht.graph.UndirectedSubgraph;
+
+import com.jom.OptimizationProblem;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.utils.CollectionUtils;
+import com.net2plan.utils.Constants;
+import com.net2plan.utils.Constants.CheckRoutingCycleType;
+import com.net2plan.utils.Constants.RoutingCycleType;
+import com.net2plan.utils.ImageUtils;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Quadruple;
+
 import cern.colt.list.tdouble.DoubleArrayList;
 import cern.colt.list.tint.IntArrayList;
 import cern.colt.matrix.tdouble.DoubleFactory1D;
@@ -24,11 +87,6 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
 import cern.jet.math.tdouble.DoubleFunctions;
 import cern.jet.math.tdouble.DoublePlusMultFirst;
-import com.jom.OptimizationProblem;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.utils.*;
-import com.net2plan.utils.Constants.CheckRoutingCycleType;
-import com.net2plan.utils.Constants.RoutingCycleType;
 import edu.uci.ics.jung.algorithms.filters.EdgePredicateFilter;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.algorithms.layout.StaticLayout;
@@ -45,25 +103,6 @@ import edu.uci.ics.jung.visualization.decorators.EdgeShape;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.renderers.DefaultVertexLabelRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
-import org.apache.commons.collections15.ListUtils;
-import org.apache.commons.collections15.Predicate;
-import org.apache.commons.collections15.Transformer;
-import org.apache.commons.collections15.functors.ConstantTransformer;
-import org.apache.commons.collections15.functors.MapTransformer;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.UndirectedGraph;
-import org.jgrapht.alg.ConnectivityInspector;
-import org.jgrapht.alg.StrongConnectivityInspector;
-import org.jgrapht.graph.*;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
-import java.util.*;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /** <p>Auxiliary static methods to work with graphs.</p>
  * 
@@ -627,7 +666,7 @@ public class GraphUtils
 		for (Route route : routes)
 		{
 			final int t = route.getEgressNode().getIndex();
-			for (Link link : route.getSeqLinksRealPath())
+			for (Link link : route.getSeqLinks())
 			{
 				final int e = link.getIndex();
 				x_te.setQuick(t, e, x_te.getQuick(t, e) + route.getCarriedTraffic());
@@ -646,7 +685,7 @@ public class GraphUtils
 		final int E = links.size();
 		DoubleMatrix1D y_e = DoubleFactory1D.dense.make(E);
 		for (Route r : routes)
-			for (Link e : r.getSeqLinksRealPath())
+			for (Link e : r.getSeqLinks())
 				y_e.set(e.getIndex(), y_e.get(e.getIndex()) + r.getCarriedTraffic());
 		return y_e;
 	}
@@ -677,10 +716,12 @@ public class GraphUtils
 		return f_te;
 	}
 
-	/** Given a path-based routing, returns the amount of traffic for each demand d traversing each link e.
+	/** Given a path-based routing, returns the amount of traffic for each demand d traversing each link e. The link 
+	 * occupation information is not used, only the route carried traffic (recall that a route carried traffic is zero if 
+	 * it traverses a failed link/node)  
 	 * @param links List of links
 	 * @param demands List of demands
-	 * @param routes List of rutes
+	 * @param routes List of routes
 	 * @return Demand-link routing in the form x_de (amount of traffic from demand d, transmitted through link e) */
 	public static DoubleMatrix2D convert_xp2xde(List<Link> links, List<Demand> demands, List<Route> routes)
 	{
@@ -691,7 +732,7 @@ public class GraphUtils
 		for (Route route : routes)
 		{
 			final int d = route.getDemand().getIndex();
-			for (Link link : route.getSeqLinksRealPath())
+			for (Link link : route.getSeqLinks())
 			{
 				final int e = link.getIndex();
 				x_de.setQuick(d, e, x_de.getQuick(d, e) + route.getCarriedTraffic());
@@ -756,7 +797,7 @@ public class GraphUtils
 		{
 			final Map<Link, Double> linkSpareCapacityMapToUse = new HashMap<Link, Double>();
 			for (Link e : links)
-				linkSpareCapacityMapToUse.put(e, Math.max(0, e.getCapacity() - e.getCarriedTrafficIncludingProtectionSegments()));
+				linkSpareCapacityMapToUse.put(e, Math.max(0, e.getCapacity() - e.getOccupiedCapacity()));
 			capacityTransformer = JUNGUtils.getEdgeWeightTransformer(linkSpareCapacityMapToUse);
 		} else
 			capacityTransformer = JUNGUtils.getEdgeWeightTransformer(linkSpareCapacityMap);
@@ -783,6 +824,23 @@ public class GraphUtils
 	//		return JUNGUtils.getCapacitatedShortestPath(graph, nev, originNodeId, destinationNodeId, capacityTransformer, capacityGoal);
 	//	}
 
+//	/** Receives a candidate path list indexed by demands, and converts it into a CPL indexed by node pairs. 
+//	 * If more than one demand exists with the same end node pairs, the paths used are the ones of the first found when iterating the input CPL 
+//	 * @param cpl thw input CPL
+//	 * @return
+//	 */
+//	public static Map<Pair<Node,Node>,List<List<NetworkElement>>> transformCPLToNodePairMap (Map<Demand,List<List<? extends NetworkElement>>> cpl)
+//	{
+//		Map<Pair<Node,Node>,List<List<NetworkElement>>> res = new HashMap<> ();
+//		for (Entry<Demand,List<List<? extends NetworkElement>>> entry : cpl.entrySet())
+//		{
+//			final Pair<Node,Node> pair = Pair.of(entry.getKey().getIngressNode() , entry.getKey().getEgressNode());
+//			if (res.containsKey(pair)) continue;
+//			res.put(pair , (List<List<NetworkElement>>) (List<?>) entry.getValue());
+//		}
+//		return res;
+//	}
+	
 	/** Obtains the sequence of links representing the (unidirectional) shortest path between two nodes.
 	 * 
 	 * @param nodes Collection of nodes
@@ -942,7 +1000,7 @@ public class GraphUtils
 							for (List<Link> path : kPaths)
 							{
 								final double thisCost = path.stream().mapToDouble(e -> linkCostMap.get(e)).sum ();
-								if (thisCost > previousCost + 0.001) throw new RuntimeException ("Bad");
+								if (previousCost > thisCost + 0.001) throw new RuntimeException ("thisCost: " + thisCost + ", previousCost: " + previousCost + ", Bad");
 								if (thisCost > maxCostServiceChain) break; // the maximum cost is exceeded, do not add this as subpath
 								pathsInfo.add(Pair.of(path, thisCost));
 								previousCost = thisCost;
@@ -1022,10 +1080,9 @@ public class GraphUtils
 		return outNodeToKSCsMap.get(destinationNode);
 	}
 
-	/** Returns the K minimum cost service chains between two nodes (summing costs of links and resources traversed), traversing a given set of resource types, satisfying some user-defined constraints.
-	 * If only <i>n</i> shortest path are found (n&lt;K), those are returned. If none is found an empty list is returned. 
-	 * The subpaths (the set of links between two resources, or the first(last) resource and the origin (destination) node, are constrained to be loopless 
-	 * (the algorithm uses Yen's scheme for subpaths enumeration).
+	/** Returns the minimum cost service chain between two nodes (summing costs of links and resources traversed), traversing a given set of resource types, satisfying some user-defined constraints.
+	 * If none is found an empty list is returned, with cost equal to Double.MAX_VALUE. It makes so, calling to 
+	 * the method  {@link #getKMinimumCostServiceChains} with parameter {@code k = 1} (see more information in that method).
 	 * @param links The set of links which can be used for the chain
 	 * @param originNode The origin node of the chain
 	 * @param destinationNode The destination node of the chain (could be the same as the origin node)
@@ -1037,13 +1094,14 @@ public class GraphUtils
 	 * @param maxPropDelayInMsPerSubpath The propagation delay summing the links in each subpath. Service chains not satisfying this are not enumerated (negative number means no limit)
 	 * @return the (at most) K minimum cost service chains.
 	 */
-	public static List<Pair<List<NetworkElement>,Double>> getMinimumCostServiceChain(List<Link> links ,  
+	public static Pair<List<NetworkElement>,Double> getMinimumCostServiceChain(List<Link> links ,  
 			Node originNode, Node destinationNode, List<String> sequenceOfResourceTypesToTraverse , DoubleMatrix1D linkCost, Map<Resource,Double> resourceCost , 
 			double maxLengthInKmPerSubpath, int maxNumHopsPerSubpath, double maxPropDelayInMsPerSubpath)
 	{
-		return getKMinimumCostServiceChains(links ,  
+		List<Pair<List<NetworkElement>,Double>> res = getKMinimumCostServiceChains(links ,  
 				originNode, destinationNode, sequenceOfResourceTypesToTraverse , linkCost, resourceCost , 
 				1, Double.MAX_VALUE , maxLengthInKmPerSubpath, maxNumHopsPerSubpath, maxPropDelayInMsPerSubpath, null); 
+		return res.isEmpty()? Pair.of(new LinkedList<NetworkElement> () , Double.MAX_VALUE) : res.get(0);
 	}	
 	
 	/** Returns the shortest pair of link-disjoint paths, where each item represents a path. The number of returned items will be equal to the number of paths found: when empty, no path was found; when {@code size()} = 1, only one path was found; and when {@code size()} = 2, the link-disjoint paths were found. Internally it uses the Suurballe-Tarjan algorithm.
@@ -1343,6 +1401,7 @@ public class GraphUtils
 			op.addConstraint("Ain_ne * x_e' >= delta_bd'"); // a destination node receives at least one input link
 			op.addConstraint("Ain_ne * x_e' <= 1 - delta_ad'"); // source nodes receive 0 links, destination nodes at most one (then just one)
 			op.addConstraint("Aout_ne * x_e' <= K * (delta_ad' + Ain_ne * x_e')"); // at most K out links from ingress node and from intermediate nodes if they have one input link
+			if (maxTreeCost < Double.MAX_VALUE) op.addConstraint("c_e * x_e' <= " + maxTreeCost);
 			double maximumAllowedTreeCost = maxTreeCost;
 			if (!previousTrees.isEmpty())
 			{
@@ -1385,7 +1444,7 @@ public class GraphUtils
 			/* If the problem is infeqasible, there are no more trees for this demand */
 			if (op.feasibleSolutionDoesNotExist())
 			{
-				System.out.println("*** K minimum cost multicast tree + BREAK when k = " + k);
+				//System.out.println("*** K minimum cost multicast tree + BREAK when k = " + k);
 				break;
 			}
 			if (!op.solutionIsFeasible()) throw new Net2PlanException("The multicast tree ILP in the candidate tree list ended without producing a feasible solution nor guaranteeing unfeasibility: increase the solver time?");
@@ -1549,12 +1608,6 @@ public class GraphUtils
 			org.jgrapht.Graph<Node, Route> auxGraph = JGraphTUtils.getGraphFromRouteMap((List<Route>) elements);
 			Map<Route, Double> linkCostMapMap = CollectionUtils.toMap((List<Route>) elements, linkCostMap);
 			org.jgrapht.Graph<Node, Route> graph = JGraphTUtils.getAsWeightedGraph(auxGraph, linkCostMapMap);
-			return JGraphTUtils.isWeightedBidirectional(graph);
-		} else if (elements.get(0) instanceof ProtectionSegment)
-		{
-			org.jgrapht.Graph<Node, ProtectionSegment> auxGraph = JGraphTUtils.getGraphFromProtectionSegmentMap((List<ProtectionSegment>) elements);
-			Map<ProtectionSegment, Double> linkCostMapMap = CollectionUtils.toMap((List<ProtectionSegment>) elements, linkCostMap);
-			org.jgrapht.Graph<Node, ProtectionSegment> graph = JGraphTUtils.getAsWeightedGraph(auxGraph, linkCostMapMap);
 			return JGraphTUtils.isWeightedBidirectional(graph);
 		} else
 			throw new Net2PlanException("Unexpected network element type");
@@ -1837,30 +1890,6 @@ public class GraphUtils
 					if (!graph.containsVertex(destinationNode)) graph.addVertex(destinationNode);
 
 					graph.addEdge(originNode, destinationNode, route);
-				}
-			}
-			return graph;
-		}
-
-		/** <p>Obtains a {@code JGraphT} graph from a given protection segment map.</p>
-		 * 
-		 * @param demands List of demands
-		 * @return {@code JGraphT} graph */
-		public static org.jgrapht.Graph<Node, ProtectionSegment> getGraphFromProtectionSegmentMap(List<ProtectionSegment> segments)
-		{
-			org.jgrapht.Graph<Node, ProtectionSegment> graph = new DirectedWeightedMultigraph<Node, ProtectionSegment>(ProtectionSegment.class);
-
-			if (segments != null)
-			{
-				for (ProtectionSegment segment : segments)
-				{
-					Node originNode = segment.getOriginNode();
-					Node destinationNode = segment.getDestinationNode();
-
-					if (!graph.containsVertex(originNode)) graph.addVertex(originNode);
-					if (!graph.containsVertex(destinationNode)) graph.addVertex(destinationNode);
-
-					graph.addEdge(originNode, destinationNode, segment);
 				}
 			}
 			return graph;
@@ -3173,4 +3202,5 @@ public class GraphUtils
 			super(message);
 		}
 	}
+	
 }

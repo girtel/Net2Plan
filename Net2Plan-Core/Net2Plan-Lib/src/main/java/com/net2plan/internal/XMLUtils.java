@@ -21,9 +21,8 @@
 package com.net2plan.internal;
 
 import com.net2plan.utils.StringUtils;
-import org.codehaus.stax2.XMLStreamWriter2;
-
 import javax.xml.stream.XMLStreamException;
+import org.codehaus.stax2.XMLStreamWriter2;
 
 /**
  * Class with utilities for XML files.

@@ -13,7 +13,6 @@
 package com.net2plan.utils;
 
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-
 import java.util.Objects;
 
 /**
@@ -81,7 +80,18 @@ public class Pair<A, B>
 		if (!(o instanceof Pair)) return false;
 
 		Pair p = (Pair) o;
-		return getFirst().equals(p.getFirst()) && getSecond().equals(p.getSecond());
+		if (a != null)
+		{
+			if (p.getFirst() == null) return false;
+			if (!a.equals(p.getFirst())) return false;
+		} else { if (p.getFirst() != null) return false; }
+		if (b != null)
+		{
+			if (p.getSecond() == null) return false;
+			if (!b.equals(p.getSecond())) return false;
+		} else { if (p.getSecond() != null) return false; }
+
+		return true;
 	}
 
 	/**
@@ -108,7 +118,7 @@ public class Pair<A, B>
 	@Override
 	public String toString()
 	{
-		return "(" + getFirst() + ", " + getSecond() + ")";
+		return "(" + a + ", " + b + ")";
 	}
 
 	private void checkIsModifiable()

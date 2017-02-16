@@ -16,11 +16,22 @@ package com.net2plan.interfaces.networkDesign;
 
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.SystemUtils;
+import com.net2plan.internal.plugins.ITopologyCanvas;
+import com.net2plan.internal.plugins.Plugin;
+import com.net2plan.internal.plugins.PluginSystem;
+import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
-
 import java.io.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 /**
  * <p>Class containing current Net2Plan-wide options, and methods to work with them.</p>
@@ -74,12 +85,12 @@ public class Configuration
 		defaultOptions.add(Triple.unmodifiableOf("defaultRunnableCodePath", "#path# " + SystemUtils.getCurrentDir() + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "BuiltInExamples.jar", "Default path (either .jar file or folder) for external code (i.e. algorithms)"));
 		defaultOptions.add(Triple.unmodifiableOf("precisionFactor", "1e-3", "Precision factor for checks to overcome numeric errors"));
 //		defaultOptions.add(Triple.unmodifiableOf("topologyViewer", "#select# " + StringUtils.join(canvasTypes, " "), "Type of topology viewer (it requires reloading active tool)"));
-		defaultOptions.add(Triple.unmodifiableOf("xpressSolverLicenseFileName", "#file#", "Default path for XPRESS solver license file (typically xpauth.xpr)"));
-		defaultOptions.add(Triple.unmodifiableOf("cplexSolverLibraryName", "#file#", "Default path for cplex library (.dll/.so/.dylib file)"));
-		defaultOptions.add(Triple.unmodifiableOf("glpkSolverLibraryName", "#file#", "Default path for glpk library (.dll/.so/.dylib file)"));
-		defaultOptions.add(Triple.unmodifiableOf("ipoptSolverLibraryName", "#file#", "Default path for ipopt library (.dll/.so/.dylib file)"));
-		defaultOptions.add(Triple.unmodifiableOf("defaultILPSolver", "#select# glpk cplex xpress", "Default solver for LP/ILP models"));
-		defaultOptions.add(Triple.unmodifiableOf("defaultNLPSolver", "#select# ipopt", "Default solver for NLP models"));
+		defaultOptions.add(Triple.unmodifiableOf("xpressSolverLicenseFileName", "", "Default path for XPRESS solver license file (typically xpauth.xpr)"));
+		defaultOptions.add(Triple.unmodifiableOf("cplexSolverLibraryName", "", "Default path for cplex library (.dll/.so/.dylib file)"));
+		defaultOptions.add(Triple.unmodifiableOf("glpkSolverLibraryName", "", "Default path for glpk library (.dll/.so/.dylib file)"));
+		defaultOptions.add(Triple.unmodifiableOf("ipoptSolverLibraryName", "", "Default path for ipopt library (.dll/.so/.dylib file)"));
+		defaultOptions.add(Triple.unmodifiableOf("defaultILPSolver", "glpk", "Default solver for LP/ILP models"));
+		defaultOptions.add(Triple.unmodifiableOf("defaultNLPSolver", "ipopt", "Default solver for NLP models"));
 		options = CommandLineParser.getParameters(defaultOptions, null);
 
 		optionsFile = new File(SystemUtils.getCurrentDir() + SystemUtils.getDirectorySeparator() + "options.ini");

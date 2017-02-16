@@ -13,7 +13,6 @@
 package com.net2plan.utils;
 
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-
 import java.util.Random;
 
 /**

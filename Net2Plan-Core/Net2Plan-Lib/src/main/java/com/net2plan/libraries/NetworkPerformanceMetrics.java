@@ -73,7 +73,7 @@ public class NetworkPerformanceMetrics
 				if (max_u_e < PRECISIONFACTOR) warnings.add("All the links have zero capacity" + thisLayerMsg);
 
 				Collection<Link> links_thisLayer = netPlan.getLinks(layer);
-				DoubleMatrix1D rho_e = netPlan.getVectorLinkUtilizationIncludingProtectionSegments(layer);
+				DoubleMatrix1D rho_e = netPlan.getVectorLinkUtilization(layer);
 				boolean someLinksOvercongested = false;
 				boolean someLinksCongested = false;
 				int numCoupledLinks = 0;
@@ -141,7 +141,7 @@ public class NetworkPerformanceMetrics
 					boolean routingCycles = false;
 					for (Route route : routes_thisLayer)
 					{
-						List<Node> sequenceOfNodes = route.getSeqNodesRealPath();
+						List<Node> sequenceOfNodes = route.getSeqNodes();
 						Set<Node> uniqueNodeIds = new HashSet<Node> (sequenceOfNodes);
 
 						if (uniqueNodeIds.size() != sequenceOfNodes.size())

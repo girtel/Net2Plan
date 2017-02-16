@@ -25,11 +25,17 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
-
-import java.util.*;
-import java.util.Map.Entry;
 
 /** <p>.</p> 
  * @author Pablo Pavon-Marino
@@ -41,7 +47,8 @@ public class Resource extends NetworkElement
 	String capacityMeasurementUnits; // never changes after created, but with copyFrom
 	String type; // never changes after created, but with copyFrom
 	double processingTimeToTraversingTrafficInMs;
-
+	URL urlIcon;
+	
 	/* this information can change after creation */
 	String name; // descriptive name of the resource. Can change.
 	Map<Resource,Double> capacityUpperResourcesOccupyInMe;
@@ -76,6 +83,7 @@ public class Resource extends NetworkElement
 		this.processingTimeToTraversingTrafficInMs = processingTimeToTraversingTraffic;
 		this.capacityUpperResourcesOccupyInMe = new HashMap<Resource,Double> ();
 		this.capacityIOccupyInBaseResource = new HashMap<Resource,Double> (capacityIOccupyInBaseResource);
+		this.urlIcon = null;
 		for (Entry<Resource,Double> entry : this.capacityIOccupyInBaseResource.entrySet())
 		{		
 			entry.getKey().capacityUpperResourcesOccupyInMe.put(this , entry.getValue());
@@ -95,6 +103,7 @@ public class Resource extends NetworkElement
 		this.capacity = origin.capacity;
 		this.cache_totalOccupiedCapacity = origin.cache_totalOccupiedCapacity;
 		this.processingTimeToTraversingTrafficInMs = origin.processingTimeToTraversingTrafficInMs;
+		this.urlIcon = origin.urlIcon;
 		this.capacityUpperResourcesOccupyInMe = new HashMap<Resource,Double> ();
 		for (Entry<Resource,Double> entry : origin.capacityUpperResourcesOccupyInMe.entrySet())
 		{
@@ -127,12 +136,24 @@ public class Resource extends NetworkElement
 		if (!this.name.equals(r2.name)) return false;
 		if (this.processingTimeToTraversingTrafficInMs != r2.processingTimeToTraversingTrafficInMs) return false;
 		if (this.capacity != r2.capacity) return false;
+		if  ((this.urlIcon == null) != (r2.urlIcon == null)) return false;
+		if (this.urlIcon != null) if (!this.urlIcon.equals(r2.urlIcon)) return false;
 		if (!NetPlan.isDeepCopy(this.capacityIOccupyInBaseResource , r2.capacityIOccupyInBaseResource)) return false;
 		if (!NetPlan.isDeepCopy(this.capacityUpperResourcesOccupyInMe , r2.capacityUpperResourcesOccupyInMe)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute , r2.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute)) return false;
 		return true;
 	}
 	
+	/**
+	 * <p>Returns resource link utilization, measured as the ratio between the total occupied capacity in the total capacity.</p>
+	 * @return The utilization as described above. If the resource has zero capacity and strictly positive occupied capacity, Double.POSITIVE_INFINITY is returned 
+	 * */
+	public double getUtilization()
+	{
+		if ((capacity == 0) && (cache_totalOccupiedCapacity > 0)) return Double.POSITIVE_INFINITY;
+		return capacity == 0? 0 : cache_totalOccupiedCapacity / capacity;
+	}
+
 	/** Returns true if the occupied capacity of the resource exceeds its capacity
 	 * @return See above
 	 */
@@ -159,7 +180,22 @@ public class Resource extends NetworkElement
 		this.processingTimeToTraversingTrafficInMs = time;
 	}
 
+	/** Returns the url of the icon specified by the user to represent this resource, or null if none
+	 * @return the url
+	 */
+	public URL getUrlIcon ()
+	{
+		return urlIcon;
+	}
 	
+	/** Sets the url of the icon specified by the user to represent this resource. A null value removes current URL
+	 * @param url the url
+	 */
+	public void setUrlIcon (URL url)
+	{
+		this.urlIcon = url;
+	}
+
 	/** Returns the String describing the type of the node
 	 * @return the type
 	 */
@@ -363,7 +399,7 @@ public class Resource extends NetworkElement
 
 	void addTraversingRoute (Route r , double resourceOccupiedCapacityByThisRouteIfNotFailing)
 	{
-		if (!r.getSeqNodesRealPath().contains(this.hostNode)) throw new Net2PlanException ("The route does not traverse the host node of this resource");
+		if (!r.getSeqNodes().contains(this.hostNode)) throw new Net2PlanException ("The route does not traverse the host node of this resource");
 		this.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.put(r , resourceOccupiedCapacityByThisRouteIfNotFailing);
 		updateTotalOccupiedCapacity();
 	}
@@ -394,9 +430,9 @@ public class Resource extends NetworkElement
 	{
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
-		for (Route r : cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet()) r.remove();
-		for (Resource upperResource : capacityUpperResourcesOccupyInMe.keySet()) upperResource.remove();
-		for (Resource baseResource : capacityIOccupyInBaseResource.keySet()) baseResource.removeUpperResourceOccupation(this);
+		for (Route r : new ArrayList<> (cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet())) r.remove();
+		for (Resource upperResource : new ArrayList<> (capacityUpperResourcesOccupyInMe.keySet())) upperResource.remove();
+		for (Resource baseResource : new ArrayList<> (capacityIOccupyInBaseResource.keySet())) baseResource.removeUpperResourceOccupation(this);
 		netPlan.cache_id2ResourceMap.remove (id);
 		Set<Resource> resourcesThisType = netPlan.cache_type2Resources.get(type);
 		if (!resourcesThisType.contains(this)) throw new RuntimeException ("Bad");
@@ -437,10 +473,10 @@ public class Resource extends NetworkElement
 		{
 			final Route r = travRoute.getKey();
 			final double val = travRoute.getValue();
-			if (r.resourcesTraversedAndOccupiedCapIfnotFailMap.get(this) != val) throw new RuntimeException ("Bad");
-			accumOccupCap += val;
+			if (r.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.get(this) != val) throw new RuntimeException ("Bad");
+			if (!r.isDown()) accumOccupCap += val;
 		}
-		if (Math.abs(accumOccupCap - cache_totalOccupiedCapacity) > 1e-3) throw new RuntimeException ("Bad");
+		org.junit.Assert.assertEquals (accumOccupCap , cache_totalOccupiedCapacity , 0.001);
 	}
 
 	

@@ -18,15 +18,25 @@
 
 package com.net2plan.internal.plugins;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+import javax.swing.filechooser.FileFilter;
+
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.Constants.IOFeature;
 import com.net2plan.io.IONet2Plan;
-
-import javax.swing.filechooser.FileFilter;
-import java.io.File;
-import java.util.*;
 
 /**
  * This class defines the template for input/output filters.
