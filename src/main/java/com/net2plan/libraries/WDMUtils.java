@@ -950,7 +950,7 @@ public class WDMUtils
 		DoubleMatrix1D nodeRegeneratorOccupancy = DoubleFactory1D.dense.make (N);
 	
 		/* The wavelengths above the maximum number of wavelengths of a fiber, are set as occupied */
-		for (int e = 0 ; e < E ; e ++) for (int w = (int) w_f.get(e) ; w < W ; w ++) frequencySlot2FiberOccupancy_se.set (e,w,1);
+		for (int e = 0 ; e < E ; e ++) for (int w = (int) w_f.get(e) ; w < W ; w ++) frequencySlot2FiberOccupancy_se.set (w,e,1);
 		
 		/* Wavlengths occupied by the lightpaths as routes */
 		for (Route lpRoute : netPlan.getRoutes(layer))

@@ -3,13 +3,13 @@ Net2Plan is a Java developed tool for the planning, optimization and evaluation 
 
 For further information, please feel free to follow the next web pages:
 * The [Net2Plan website](www.net2plan.com).
-* The [Net2Plan 0.4.1 user's guide](http://net2plan.com/documentation/current/help/usersGuide.pdf).
-* The [Net2Plan 0.4.1 API Javadoc](http://net2plan.com/documentation/current/javadoc/api/index.html).
+* The [Net2Plan 0.5.0 user's guide](http://net2plan.com/documentation/current/help/usersGuide.pdf).
+* The [Net2Plan 0.5.0 API Javadoc](http://net2plan.com/documentation/current/javadoc/api/index.html).
 
 #About Net2Plan
 Net2Plan is a free and open-source Java tool devoted to the planning, optimization and evaluation of communication networks. It was originally thought as a tool to assist on the teaching of communication networks courses. Eventually, it got converted into a powerful network optimization and planning tool for both the academia and the industry, together with a growing repository of network planning resources.
 
-Net2Plan is built on top of an abstract network representation, so-called network plan, based on abstract components: nodes, links, traffic unicast and multicast demands, routes, protection segments, multicast trees, shared-risk groups and network layers. The network representation is technology-agnostic, thus Net2Plan can be adapted for planning networks of any technology. Technology-specific information can be introduced in the network representation via user-defined attributes attached to any of the abstract components mentioned above. Some attribute names has been fixed to ease the adaptation of well-known technologies (i.e. IP networks).
+Net2Plan is built on top of an abstract network representation, so-called network plan, based on abstract components: nodes, links, traffic unicast and multicast demands, routes, protection segments, multicast trees, shared-risk groups, resources and network layers. The network representation is technology-agnostic, thus Net2Plan can be adapted for planning networks of any technology. Technology-specific information can be introduced in the network representation via user-defined attributes attached to any of the abstract components mentioned above. Some attribute names has been fixed to ease the adaptation of well-known technologies (e.g. IP networks, WDM networks, NFV scenarios).
 
 Net2Plan is implemented as a Java library along with both command-line and graphical user interfaces (CLI and GUI, respectively). The GUI is specially useful for laboratory sessions as an educational resource, or for a visual inspection of the network. In its turn, the command-line interface is specifically devoted to in-depth research studies, making use of batch processing or large-scale simulation features. Therefore, Net2Plan is a tool intended for a broad spectrum of users: industry, research, and academia.
 

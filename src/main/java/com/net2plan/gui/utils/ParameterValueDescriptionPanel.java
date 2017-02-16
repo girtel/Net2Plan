@@ -523,38 +523,6 @@ public class ParameterValueDescriptionPanel extends JPanel
         public void setValueAt(Object value, int row, int column)
         {
             super.setValueAt(value, row, column);
-
-//            if (haveData) 
-//            {
-//                if ("solverName".equals(getValueAt(row, 0)) && column == 1) 
-//                {
-//                	final String solverName = (String) getValueAt(row, 1);
-//                    int solverLibraryNameRow = -1;
-//                    String solverLibraryName = null;
-//                    for (int rowId = 0; rowId < getRowCount(); rowId++) 
-//                    {
-//                        if ("solverLibraryName".equals(getValueAt(rowId, 0))) 
-//                        {
-//                            solverLibraryNameRow = rowId; solverLibraryName = (String) getValueAt(solverLibraryNameRow, 1); 
-//                            break;
-//                        }
-//                    }
-//                    if (solverLibraryNameRow != -1) if (solverLibraryName != null) 
-//                    	setValueAt(Configuration.getDefaultSolverLibraryName(solverName) , solverLibraryNameRow , 1);
-//                    try {
-//                        try {
-//                            if (solverName.equalsIgnoreCase("glpk")) solverLibraryName = Configuration.getOption("glpkSolverLibraryName");
-//                            else if (solverName.equalsIgnoreCase("ipopt")) solverLibraryName = Configuration.getOption("ipoptSolverLibraryName");
-//                            else if (solverName.equalsIgnoreCase("cplex")) solverLibraryName = Configuration.getOption("cplexSolverLibraryName");
-//                            else if (solverName.equalsIgnoreCase("xpress")) solverLibraryName = Configuration.getOption("xpressSolverLicenseFileName");
-//                            setValueAt(solverLibraryName, solverLibraryNameRow, 1);
-//                        } catch (Throwable e) {
-//
-//                        }
-//                    } catch (Throwable ex) {
-//                    }
-//                }
-//            }
         }
     }
 
@@ -567,9 +535,4 @@ public class ParameterValueDescriptionPanel extends JPanel
         }
     }
 
-
-    private void refreshAfterParameterEdition()
-    {
-        /* sets the visualization according to the current parameter values */
-    }
 }
