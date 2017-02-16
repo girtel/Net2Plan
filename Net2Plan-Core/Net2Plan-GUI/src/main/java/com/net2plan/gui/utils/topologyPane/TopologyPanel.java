@@ -26,6 +26,7 @@ import com.net2plan.gui.utils.*;
 import com.net2plan.gui.utils.topologyPane.jung.osmSupport.OSMException;
 import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationConstants;
 import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationState;
+import com.net2plan.utils.SwingUtils;
 import org.apache.commons.collections15.BidiMap;
 
 import com.google.common.collect.Sets;

@@ -11,12 +11,12 @@ import javax.swing.ScrollPaneLayout;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 
-import com.net2plan.gui.utils.AdvancedJTable;
-import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.utils.gui.AdvancedJTable;
+import com.net2plan.utils.gui.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.FullScrollPaneLayout;
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.TableCursorNavigation;
+import com.net2plan.utils.gui.TableCursorNavigation;
 import com.net2plan.gui.utils.viewEditTopolTables.specificTables.AdvancedJTable_layer;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants.NetworkElementType;

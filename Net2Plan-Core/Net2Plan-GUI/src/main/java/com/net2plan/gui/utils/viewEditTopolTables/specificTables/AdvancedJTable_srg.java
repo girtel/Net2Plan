@@ -47,13 +47,13 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
 import com.google.common.collect.Sets;
-import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.utils.gui.AdvancedJTable;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
 import com.net2plan.gui.utils.CellRenderers.UnfocusableCellRenderer;
-import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.utils.gui.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.SwingUtils;
+import com.net2plan.utils.SwingUtils;
 import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
 import com.net2plan.gui.utils.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.interfaces.networkDesign.Link;

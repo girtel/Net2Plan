@@ -13,7 +13,6 @@
 package com.net2plan.gui.utils;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.Collections;
 import java.util.Comparator;
@@ -32,8 +31,6 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants.RunnableCodeType;
 import com.net2plan.internal.ErrorHandling;
@@ -41,6 +38,8 @@ import com.net2plan.internal.SystemUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
+import com.net2plan.utils.gui.AdvancedJTable;
+import com.net2plan.utils.gui.ClassAwareTableModel;
 
 /**
  * Allows to define parameters.

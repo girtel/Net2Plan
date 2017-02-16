@@ -15,6 +15,8 @@ import javax.swing.JTable;
 import javax.swing.table.*;
 
 import com.net2plan.gui.utils.*;
+import com.net2plan.utils.gui.AdvancedJTable;
+import com.net2plan.utils.gui.ClassAwareTableModel;
 import org.apache.commons.collections15.BidiMap;
 
 import com.google.common.collect.Lists;

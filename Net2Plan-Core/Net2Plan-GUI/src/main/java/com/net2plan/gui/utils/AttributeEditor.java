@@ -39,6 +39,9 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Pair;
+import com.net2plan.utils.SwingUtils;
+import com.net2plan.utils.gui.AdvancedJTable;
+import com.net2plan.utils.gui.ClassAwareTableModel;
 
 /**
  * Utility to edit attributes from a set of elements (i.e. nodes, links, and so on).
@@ -658,7 +661,8 @@ public class AttributeEditor extends JDialog implements ActionListener {
         }
     }
 
-    private class ClassAwareTableModelImpl extends ClassAwareTableModel {
+    private class ClassAwareTableModelImpl extends ClassAwareTableModel
+    {
         private final NetworkElementType type;
         private final NetPlan netPlan;
 

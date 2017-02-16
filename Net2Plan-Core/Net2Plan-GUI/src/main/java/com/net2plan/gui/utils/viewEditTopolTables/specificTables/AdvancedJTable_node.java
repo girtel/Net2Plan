@@ -46,7 +46,7 @@ import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationSta
 import com.net2plan.gui.utils.viewEditTopolTables.ITableRowFilter;
 import com.net2plan.gui.utils.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.whatIfAnalysisPane.WhatIfAnalysisPane;
-import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.utils.gui.ClassAwareTableModel;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.Link;

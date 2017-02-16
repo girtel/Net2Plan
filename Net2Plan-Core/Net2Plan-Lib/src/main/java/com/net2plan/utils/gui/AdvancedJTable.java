@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.utils;
+package com.net2plan.utils.gui;
 
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;

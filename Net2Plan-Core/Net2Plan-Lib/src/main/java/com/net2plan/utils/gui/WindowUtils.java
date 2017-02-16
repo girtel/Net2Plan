@@ -1,6 +1,4 @@
-package com.net2plan.gui.utils.viewEditWindows.utils;
-
-import com.net2plan.gui.GUINet2Plan;
+package com.net2plan.utils.gui;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,13 +12,13 @@ public final class WindowUtils
     {
     }
 
-    public static void clearFloatingWindows()
+    public static void clearFloatingWindows(final JFrame mainWindow)
     {
         Window[] windows = Window.getWindows();
 
         for (Window window : windows)
         {
-            if (!(window instanceof GUINet2Plan))
+            if (!(window == mainWindow))
             {
                 window.setVisible(false);
                 window.dispose();

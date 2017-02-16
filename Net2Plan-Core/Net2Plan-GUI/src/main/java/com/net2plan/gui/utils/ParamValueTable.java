@@ -13,6 +13,8 @@
 package com.net2plan.gui.utils;
 
 import com.net2plan.utils.StringUtils;
+import com.net2plan.utils.gui.AdvancedJTable;
+import com.net2plan.utils.gui.ClassAwareTableModel;
 
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
@@ -24,7 +26,8 @@ import java.util.Map;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
-public final class ParamValueTable extends AdvancedJTable {
+public final class ParamValueTable extends AdvancedJTable
+{
     private String[] columnNames;
 
     /**

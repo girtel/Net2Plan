@@ -49,16 +49,11 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import com.net2plan.utils.SwingUtils;
+import com.net2plan.utils.gui.*;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
-import com.net2plan.gui.utils.AdvancedJTable;
-import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.ClassPathEditor;
-import com.net2plan.gui.utils.ColumnFitAdapter;
-import com.net2plan.gui.utils.SwingUtils;
-import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.utils.viewEditWindows.utils.WindowUtils;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants.UserInterface;
 import com.net2plan.internal.ErrorHandling;

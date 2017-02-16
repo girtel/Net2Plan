@@ -10,12 +10,13 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.utils;
+package com.net2plan.utils.gui;
 
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.utils.StringUtils;
+import com.net2plan.utils.SwingUtils;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;

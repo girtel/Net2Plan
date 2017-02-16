@@ -34,7 +34,6 @@ import java.util.Set;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
-import com.net2plan.gui.utils.viewEditWindows.parent.GUIWindow;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
@@ -51,7 +50,7 @@ import com.net2plan.gui.utils.topologyPane.visualizationControl.VisualizationSta
 import com.net2plan.gui.utils.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.viewEditTopolTables.ViewEditTopologyTablesPane;
 import com.net2plan.gui.utils.viewEditWindows.WindowController;
-import com.net2plan.gui.utils.viewEditWindows.utils.WindowUtils;
+import com.net2plan.utils.gui.WindowUtils;
 import com.net2plan.gui.utils.viewReportsPane.ViewReportPane;
 import com.net2plan.gui.utils.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.interfaces.networkDesign.Demand;

@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.utils;
+package com.net2plan.utils;
 
 import javax.swing.*;
 import java.awt.*;

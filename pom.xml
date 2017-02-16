@@ -21,6 +21,7 @@
         <module>Net2Plan-Javadoc</module>
         <module>Net2Plan-Assembly</module>
         <module>Net2Plan-Parent</module>
+        <module>Net2Plan-GUI</module>
     </modules>
 
 </project>

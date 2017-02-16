@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.utils;
+package com.net2plan.utils.gui;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;

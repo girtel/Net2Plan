@@ -28,6 +28,8 @@ import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.TrafficMatrixGenerationModels;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
+import com.net2plan.utils.gui.AdvancedJTable;
+import com.net2plan.utils.gui.ClassAwareTableModel;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
