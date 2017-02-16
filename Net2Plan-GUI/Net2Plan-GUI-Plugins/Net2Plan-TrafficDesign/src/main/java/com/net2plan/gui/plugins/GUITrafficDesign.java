@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.tools;
+package com.net2plan.gui.plugins;
 
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;

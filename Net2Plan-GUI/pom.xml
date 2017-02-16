@@ -11,6 +11,11 @@
 
 
     <artifactId>net2plan-gui</artifactId>
+    <packaging>pom</packaging>
+    <modules>
+        <module>Net2Plan-GUI-Exec</module>
+        <module>Net2Plan-GUI-Plugins</module>
+    </modules>
 
     <dependencies>
         <dependency>

@@ -1,4 +1,4 @@
-package com.net2plan.launcher;
+package com.net2plan.gui.launcher;
 
 import com.net2plan.gui.GUINet2Plan;
 import com.net2plan.gui.tools.GUINetworkDesign;

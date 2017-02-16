@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.tools;
+package com.net2plan.gui.plugins;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -212,7 +212,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         whatIfAnalysisPane = new WhatIfAnalysisPane(this);
 
         // Closing windows
-        WindowUtils.clearFloatingWindows();
+        WindowUtils.clearFloatingWindows((JFrame) SwingUtilities.getWindowAncestor(this));
 
         final JTabbedPane tabPane = new JTabbedPane();
         tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.network), viewEditTopTables);
@@ -271,19 +271,19 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                             {
                                 switch (windowToTab)
                                 {
-                                    case offline:
+                                    case WindowToTab.offline:
                                         WindowController.buildOfflineWindow(selectedComponent);
                                         WindowController.showOfflineWindow(true);
                                         break;
-                                    case online:
+                                    case WindowToTab.online:
                                         WindowController.buildOnlineWindow(selectedComponent);
                                         WindowController.showOnlineWindow(true);
                                         break;
-                                    case whatif:
+                                    case WindowToTab.whatif:
                                         WindowController.buildWhatifWindow(selectedComponent);
                                         WindowController.showWhatifWindow(true);
                                         break;
-                                    case report:
+                                    case WindowToTab.report:
                                         WindowController.buildReportWindow(selectedComponent);
                                         WindowController.showReportWindow(true);
                                         break;
@@ -474,8 +474,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             {
                 switch (onlineSimulationPane.getSimKernel().getSimCore().getSimulationState())
                 {
-                    case NOT_STARTED:
-                    case STOPPED:
+                    case SimState.NOT_STARTED:
+                    case SimState.STOPPED:
                         break;
                     default:
                         onlineSimulationPane.getSimKernel().getSimCore().setSimulationState(SimState.STOPPED);
@@ -719,19 +719,19 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
 
-        viewEditTopTables.setInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW));
+        viewEditTopTables.setInputMap(WHEN_IN_FOCUSED_WINDOW, this.getInputMap(WHEN_IN_FOCUSED_WINDOW));
         viewEditTopTables.setActionMap(this.getActionMap());
 
-        reportPane.setInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW));
+        reportPane.setInputMap(WHEN_IN_FOCUSED_WINDOW, this.getInputMap(WHEN_IN_FOCUSED_WINDOW));
         reportPane.setActionMap(this.getActionMap());
 
-        executionPane.setInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW));
+        executionPane.setInputMap(WHEN_IN_FOCUSED_WINDOW, this.getInputMap(WHEN_IN_FOCUSED_WINDOW));
         executionPane.setActionMap(this.getActionMap());
 
-        onlineSimulationPane.setInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW));
+        onlineSimulationPane.setInputMap(WHEN_IN_FOCUSED_WINDOW, this.getInputMap(WHEN_IN_FOCUSED_WINDOW));
         onlineSimulationPane.setActionMap(this.getActionMap());
 
-        whatIfAnalysisPane.setInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW));
+        whatIfAnalysisPane.setInputMap(WHEN_IN_FOCUSED_WINDOW, this.getInputMap(WHEN_IN_FOCUSED_WINDOW));
         whatIfAnalysisPane.setActionMap(this.getActionMap());
     }
 
