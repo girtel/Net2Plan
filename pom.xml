@@ -3,13 +3,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>net2plan</artifactId>
-    <version>0.5.1-SNAPSHOT</version>
+    <version>${net2plan.version}</version>
     <packaging>pom</packaging>
 
     <parent>
         <groupId>com.net2plan</groupId>
         <artifactId>net2plan-parent</artifactId>
-        <version>0.5-SNAPSHOT</version>
+        <version>${net2plan.version}</version>
         <relativePath>./Net2Plan-Parent/pom.xml</relativePath>
     </parent>
 

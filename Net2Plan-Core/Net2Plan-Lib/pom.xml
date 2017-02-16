@@ -7,7 +7,7 @@
     <parent>
         <artifactId>net2plan-core</artifactId>
         <groupId>com.net2plan</groupId>
-        <version>0.5-SNAPSHOT</version>
+        <version>${net2plan.version}</version>
     </parent>
 
     <groupId>com.net2plan.net2plan-core</groupId>
