@@ -55,6 +55,7 @@ import com.net2plan.internal.Constants;
 import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.WDMUtils;
+import com.net2plan.libraries.WDMUtils.RSA;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.IntUtils;
 import com.net2plan.utils.Triple;
@@ -236,7 +237,7 @@ public class IOMatPlanWDM_design extends IOFilter
 			for(int timeSlotId = 0; timeSlotId < numTimeSlots; timeSlotId++)
 			{
 				NetworkLayer wdmLayer = timeSlotId == 0 ? netPlan.getNetworkLayer ((int) 0) : netPlan.addLayerFrom(templateNetPlan.getNetworkLayer((int) 0));
-				NetworkLayer ipLayer = netPlan.addLayer(null, null, null, null, null);
+				NetworkLayer ipLayer = netPlan.addLayer(null, null, null, null, null , null);
 				
 				if (numTimeSlots == 1)
 				{
