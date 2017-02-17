@@ -4,12 +4,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <groupId>com.net2plan</groupId>
-        <artifactId>net2plan-core</artifactId>
+        <artifactId>net2plan</artifactId>
         <version>${net2plan.version}</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.net2plan.net2plan-core</groupId>
     <artifactId>net2plan-cli</artifactId>
     <packaging>pom</packaging>
 
@@ -20,8 +19,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.net2plan.net2plan-core</groupId>
-            <artifactId>net2plan-lib</artifactId>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-core</artifactId>
             <version>${net2plan.version}</version>
             <scope>provided</scope>
         </dependency>
