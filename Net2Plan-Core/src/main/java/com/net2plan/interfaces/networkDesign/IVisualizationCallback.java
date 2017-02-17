@@ -10,10 +10,10 @@
  ******************************************************************************/
 
 
-package com.net2plan.interfaces;
+package com.net2plan.interfaces.networkDesign;
 
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.ITopologyCanvas;
+import com.net2plan.interfaces.ITopologyCanvasVertex;
 import com.net2plan.internal.Constants;
 
 import java.awt.*;

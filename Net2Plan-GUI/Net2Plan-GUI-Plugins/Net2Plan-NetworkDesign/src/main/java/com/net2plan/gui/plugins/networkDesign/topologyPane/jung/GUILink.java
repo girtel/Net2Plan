@@ -81,8 +81,8 @@ public class GUILink implements ITopologyCanvasEdge
         this.destinationNode = destinationNode;
         if (npLink != null)
         {
-        	if (originNode.getAssociatedNetPlanNode() != npLink.getOriginNode()) throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
-            if (destinationNode.getAssociatedNetPlanNode() != npLink.getDestinationNode()) throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
+        	if (originNode.getAssociatedNode() != npLink.getOriginNode()) throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
+            if (destinationNode.getAssociatedNode() != npLink.getDestinationNode()) throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
         }
         else
         {

@@ -99,14 +99,14 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
     @Override
     public void mouseClicked(MouseEvent e) {
         if (checkModifiers(e)) {
-            GUINode guiNode = canvas.getVertex(e);
-            Node node = guiNode == null? null : guiNode.getAssociatedNetPlanNode();
+            GUINode guiNode = (GUINode) canvas.getVertex(e);
+            Node node = guiNode == null? null : guiNode.getAssociatedNode();
             if (node != null) {
                 callback.getVisualizationState().pickNode(node);
                 callback.updateVisualizationAfterPick();
                 e.consume();
             } else {
-                GUILink link = canvas.getEdge(e);
+                GUILink link = (GUILink) canvas.getEdge(e);
                 if (link != null) 
                 {
                 	if (!link.isIntraNodeLink())
@@ -137,8 +137,8 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
             startVertex = null;
             down = null;
 
-            GUINode guiNode = canvas.getVertex(e);
-            Node node = guiNode == null? null : guiNode.getAssociatedNetPlanNode();
+            GUINode guiNode = (GUINode) canvas.getVertex(e);
+            Node node = guiNode == null? null : guiNode.getAssociatedNode();
             if (node != null) {
                 final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) e.getSource();
 
@@ -162,20 +162,20 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
             vv.removePostRenderPaintable(edgePaintable);
             vv.removePostRenderPaintable(arrowPaintable);
 
-            final GUINode guiNode = canvas.getVertex(e);
-            final Node node = guiNode == null? null : guiNode.getAssociatedNetPlanNode();
-            if (node != null && startVertex.getAssociatedNetPlanNode() != node) 
+            final GUINode guiNode = (GUINode) canvas.getVertex(e);
+            final Node node = guiNode == null? null : guiNode.getAssociatedNode();
+            if (node != null && startVertex.getAssociatedNode() != node)
             {
             	if (guiNode.getLayer() == startVertex.getLayer ())
     			{
         			boolean bidirectional = (e.getModifiersEx() & MouseEvent.SHIFT_DOWN_MASK) == MouseEvent.SHIFT_DOWN_MASK;
-                    if (bidirectional) node.getNetPlan().addLinkBidirectional(startVertex.getAssociatedNetPlanNode(), node,0,0,200000,null);
-                    else node.getNetPlan().addLink(startVertex.getAssociatedNetPlanNode(), node,0,0,200000,null);
+                    if (bidirectional) node.getNetPlan().addLinkBidirectional(startVertex.getAssociatedNode(), node,0,0,200000,null);
+                    else node.getNetPlan().addLink(startVertex.getAssociatedNode(), node,0,0,200000,null);
                     callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals(); // implies a reset picked
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                     callback.getUndoRedoNavigationManager().addNetPlanChange();
     			}
-                //if (node == startVertex.getAssociatedNetPlanNode()) callback.resetPickedStateAndUpdateView();
+                //if (node == startVertex.getAssociatedNode()) callback.resetPickedStateAndUpdateView();
             }
 
             startVertex = null;

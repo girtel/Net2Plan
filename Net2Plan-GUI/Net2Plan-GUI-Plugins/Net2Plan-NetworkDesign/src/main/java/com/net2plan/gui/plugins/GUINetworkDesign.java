@@ -39,7 +39,7 @@ import com.net2plan.gui.plugins.networkDesign.viewReportsPane.ViewReportPane;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.interfaces.ITopologyCanvas;
 import com.net2plan.interfaces.ITopologyCanvasVertex;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.interfaces.networkDesign.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;

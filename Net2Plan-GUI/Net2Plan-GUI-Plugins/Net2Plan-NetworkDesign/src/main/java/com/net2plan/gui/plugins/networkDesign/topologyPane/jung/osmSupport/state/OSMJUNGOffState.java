@@ -7,6 +7,7 @@ import com.net2plan.gui.plugins.networkDesign.visualizationControl.Visualization
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.interfaces.ITopologyCanvasVertex;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
 import com.net2plan.utils.ImageUtils;
@@ -75,7 +76,7 @@ public class OSMJUNGOffState implements OSMState
     public void zoomAll()
     {
         final VisualizationState vs = callback.getVisualizationState();
-        final Set<GUINode> visibleGUINodes = canvas.getAllVertices().stream().filter(vs::isVisibleInCanvas).collect(Collectors.toSet());
+        final Set<ITopologyCanvasVertex> visibleGUINodes = canvas.getAllVertices().stream().filter(gn -> vs.isVisibleInCanvas((GUINode) gn)).collect(Collectors.toSet());
         if (visibleGUINodes.isEmpty()) return;
 
         // Returns the canvas transformer to its original state, so that Layout = View.
@@ -83,10 +84,10 @@ public class OSMJUNGOffState implements OSMState
 
         // Getting topology limits
         final List<Double> nodeXCoordJUNG = visibleGUINodes.stream()
-                .map(node -> canvas.getCanvasPointFromNetPlanPoint(node.getAssociatedNetPlanNode().getXYPositionMap()).getX())
+                .map(node -> canvas.getCanvasPointFromNetPlanPoint(node.getAssociatedNode().getXYPositionMap()).getX())
                 .collect(Collectors.toList());
         final List<Double> nodeYCoordJUNG = visibleGUINodes.stream()
-                .map(node -> canvas.getCanvasPointFromNetPlanPoint(node.getAssociatedNetPlanNode().getXYPositionMap()).getY())
+                .map(node -> canvas.getCanvasPointFromNetPlanPoint(node.getAssociatedNode().getXYPositionMap()).getY())
                 .collect(Collectors.toList());
 
         final double xmaxJungCoords = Collections.max(nodeXCoordJUNG);
@@ -154,8 +155,9 @@ public class OSMJUNGOffState implements OSMState
     @Override
     public void updateNodesXYPosition()
     {
-        for (GUINode guiNode : canvas.getAllVertices())
+        for (ITopologyCanvasVertex vertex : canvas.getAllVertices())
         {
+            GUINode guiNode = (GUINode)  vertex;
             canvas.getLayout().setLocation(guiNode, canvas.getTransformer().transform(guiNode));
         }
     }
