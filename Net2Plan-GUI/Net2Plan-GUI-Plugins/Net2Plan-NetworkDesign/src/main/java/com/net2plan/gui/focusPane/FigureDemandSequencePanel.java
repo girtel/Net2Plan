@@ -1,6 +1,7 @@
 package com.net2plan.gui.focusPane;
 
-import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.interfaces.networkDesign.Demand;
 
 import java.awt.*;
 import java.util.Arrays;

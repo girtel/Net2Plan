@@ -1,13 +1,17 @@
 package com.net2plan.gui.viewEditTopolTables.multilayerTabs;
 
 import com.google.common.collect.Lists;
+import com.net2plan.gui.CellRenderers;
+import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.ColumnHeaderToolTips;
+import com.net2plan.gui.utils.ColumnsAutoSizer;
 import com.net2plan.gui.utils.visualizationControl.VisualizationState;
+import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
 import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.gui.AdvancedJTable;
-import com.net2plan.utils.gui.ClassAwareTableModel;
 import org.apache.commons.collections15.BidiMap;
 
 import javax.swing.*;

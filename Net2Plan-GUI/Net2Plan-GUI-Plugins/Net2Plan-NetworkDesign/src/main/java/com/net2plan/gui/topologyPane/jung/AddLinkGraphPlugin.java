@@ -13,13 +13,12 @@
 package com.net2plan.gui.topologyPane.jung;
 
 import com.google.common.collect.Sets;
-import com.net2plan.gui.topologyPane.GUILink;
-import com.net2plan.gui.topologyPane.GUINode;
-import com.net2plan.gui.topologyPane.ITopologyCanvasPlugin;
-import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.gui.utils.networkDesign.GUILink;
+import com.net2plan.gui.utils.networkDesign.GUINode;
+import com.net2plan.interfaces.ITopologyCanvas;
+import com.net2plan.interfaces.ITopologyCanvasPlugin;
+import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.internal.plugins.ITopologyCanvas;
 import edu.uci.ics.jung.visualization.VisualizationServer.Paintable;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.util.ArrowFactory;
@@ -38,7 +37,8 @@ import java.awt.geom.Point2D;
  * @since 0.2.0
  */
 @SuppressWarnings("unchecked")
-public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugin {
+public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugin
+{
     private IVisualizationCallback callback;
     private GUINode startVertex;
     private Paintable edgePaintable;

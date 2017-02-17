@@ -12,11 +12,14 @@
 
 package com.net2plan.gui.topologyPane;
 
-import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.networkDesign.GUILink;
+import com.net2plan.gui.utils.networkDesign.GUINode;
+import com.net2plan.interfaces.ITopologyCanvas;
+import com.net2plan.interfaces.ITopologyCanvasPlugin;
+import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
-import com.net2plan.internal.plugins.ITopologyCanvas;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -29,7 +32,8 @@ import java.util.Collections;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.3.1
  */
-public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugin {
+public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugin
+{
     private final IVisualizationCallback callback;
     private final Cursor cursor;
 

@@ -247,19 +247,19 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                             {
                                 switch (windowToTab)
                                 {
-                                    case WindowToTab.offline:
+                                    case offline:
                                         WindowController.buildOfflineWindow(selectedComponent);
                                         WindowController.showOfflineWindow(true);
                                         break;
-                                    case WindowToTab.online:
+                                    case online:
                                         WindowController.buildOnlineWindow(selectedComponent);
                                         WindowController.showOnlineWindow(true);
                                         break;
-                                    case WindowToTab.whatif:
+                                    case whatif:
                                         WindowController.buildWhatifWindow(selectedComponent);
                                         WindowController.showWhatifWindow(true);
                                         break;
-                                    case WindowToTab.report:
+                                    case report:
                                         WindowController.buildReportWindow(selectedComponent);
                                         WindowController.showReportWindow(true);
                                         break;
@@ -450,8 +450,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             {
                 switch (onlineSimulationPane.getSimKernel().getSimCore().getSimulationState())
                 {
-                    case SimState.NOT_STARTED:
-                    case SimState.STOPPED:
+                    case NOT_STARTED:
+                    case STOPPED:
                         break;
                     default:
                         onlineSimulationPane.getSimKernel().getSimCore().setSimulationState(SimState.STOPPED);

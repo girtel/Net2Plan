@@ -13,18 +13,23 @@
 package com.net2plan.gui.topologyPane;
 
 import com.google.common.collect.Sets;
+import com.net2plan.gui.FileChooserNetworkDesign;
 import com.net2plan.gui.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.topologyPane.jung.osmSupport.OSMException;
+import com.net2plan.gui.utils.FileDrop;
+import com.net2plan.gui.utils.JPopUpButton;
 import com.net2plan.gui.utils.visualizationControl.VisualizationConstants;
 import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.gui.viewEditWindows.WindowController;
+import com.net2plan.interfaces.ITopologyCanvas;
+import com.net2plan.interfaces.ITopologyCanvasPlugin;
+import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.DialogType;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
-import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.SwingUtils;
 import org.apache.commons.collections15.BidiMap;

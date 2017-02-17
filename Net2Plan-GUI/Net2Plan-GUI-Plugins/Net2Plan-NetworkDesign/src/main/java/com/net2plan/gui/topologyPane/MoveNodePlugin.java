@@ -12,8 +12,10 @@
 
 package com.net2plan.gui.topologyPane;
 
-import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.internal.plugins.ITopologyCanvas;
+import com.net2plan.gui.utils.networkDesign.GUINode;
+import com.net2plan.interfaces.ITopologyCanvas;
+import com.net2plan.interfaces.ITopologyCanvasPlugin;
+import com.net2plan.interfaces.IVisualizationCallback;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -25,7 +27,8 @@ import java.awt.event.MouseEvent;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.3.1
  */
-public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugin {
+public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugin
+{
     private IVisualizationCallback callback;
     private ITopologyCanvas canvas;
     private GUINode startVertex;

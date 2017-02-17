@@ -13,14 +13,17 @@
 package com.net2plan.gui.topologyPane;
 
 import com.google.common.collect.Sets;
-import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.networkDesign.GUILink;
+import com.net2plan.gui.utils.networkDesign.GUINode;
 import com.net2plan.gui.utils.visualizationControl.VisualizationState;
+import com.net2plan.interfaces.ITopologyCanvas;
+import com.net2plan.interfaces.ITopologyCanvasPlugin;
+import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.internal.plugins.ITopologyCanvas;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,7 +40,7 @@ import java.util.List;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.3.1
  */
-public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlugin 
+public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlugin
 {
     private final IVisualizationCallback callback;
     private final ITopologyCanvas canvas;

@@ -1,6 +1,6 @@
 package com.net2plan.gui.focusPane;
 
-import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.Node;
 

@@ -12,6 +12,7 @@
 
 package com.net2plan.gui;
 
+import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants.DialogType;
 import com.net2plan.internal.Constants.IOFeature;
@@ -19,7 +20,6 @@ import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.internal.plugins.PluginSystem;
 import com.net2plan.io.IONet2Plan;
-import com.net2plan.utils.gui.FileChooserConfirmOverwrite;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
@@ -35,7 +35,8 @@ import java.util.List;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.2
  */
-public class FileChooserNetworkDesign extends FileChooserConfirmOverwrite {
+public class FileChooserNetworkDesign extends FileChooserConfirmOverwrite
+{
     private boolean finishConfiguration;
     private Set<IOFilter> loadFilters;
     private Set<IOFilter> saveFilters;
