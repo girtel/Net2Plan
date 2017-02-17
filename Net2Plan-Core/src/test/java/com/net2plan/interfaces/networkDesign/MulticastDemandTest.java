@@ -1,12 +1,23 @@
 package com.net2plan.interfaces.networkDesign;
 
-import com.net2plan.utils.Pair;
-import org.junit.*;
-
-import java.util.*;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.net2plan.utils.Pair;
 
 
 public class MulticastDemandTest 

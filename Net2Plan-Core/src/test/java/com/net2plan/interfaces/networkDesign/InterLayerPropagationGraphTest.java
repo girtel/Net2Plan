@@ -1,15 +1,27 @@
 package com.net2plan.interfaces.networkDesign;
 
-import com.google.common.collect.Sets;
-import com.net2plan.libraries.GraphUtils;
-import com.net2plan.utils.Pair;
-import org.junit.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.net2plan.libraries.GraphUtils;
+import com.net2plan.utils.Pair;
+
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 public class InterLayerPropagationGraphTest
 {
