@@ -12,4 +12,11 @@
 
     <groupId>com.net2plan.net2plan-cli</groupId>
     <artifactId>net2plan-cli-plugins</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-core</artifactId>
+        </dependency>
+    </dependencies>
 </project>

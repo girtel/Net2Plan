@@ -17,6 +17,7 @@
         <module>Net2Plan-CLI-Plugins</module>
     </modules>
 
+    <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>com.net2plan</groupId>
@@ -25,4 +26,5 @@
                 <scope>provided</scope>
             </dependency>
         </dependencies>
+    </dependencyManagement>
 </project>
