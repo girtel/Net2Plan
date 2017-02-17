@@ -26,10 +26,19 @@
             <unpack>false</unpack>
             <includes>
                 <include>${project.groupId}.net2plan-gui.net2plan-gui-plugins:net2plan-gui-plugins-networkDesign:*</include>
+            </includes>
+            <outputDirectory>plugins</outputDirectory>
+            <outputFileNameMapping>defaultNetworkDesign.jar</outputFileNameMapping>
+        </dependencySet>
+        <dependencySet>
+            <useProjectArtifact>false</useProjectArtifact>
+            <useTransitiveDependencies>false</useTransitiveDependencies>
+            <unpack>false</unpack>
+            <includes>
                 <include>${project.groupId}.net2plan-gui.net2plan-gui-plugins:net2plan-gui-plugins-trafficDesign:*</include>
             </includes>
             <outputDirectory>plugins</outputDirectory>
-            <outputFileNameMapping>defaultGUITools.jar</outputFileNameMapping>
+            <outputFileNameMapping>defaultTrafficDesign.jar</outputFileNameMapping>
         </dependencySet>
         <!--CLI Plugin-->
         <dependencySet>
@@ -103,7 +112,7 @@
             <useTransitiveDependencies>false</useTransitiveDependencies>
             <unpack>true</unpack>
             <includes>
-                <include>${project.groupId}.net2plan-core:zip:bundle</include>
+                <include>${project.groupId}:net2plan-core:zip:bundle</include>
             </includes>
             <outputDirectory/>
         </dependencySet>
@@ -115,7 +124,6 @@
             <outputDirectory>lib</outputDirectory>
             <excludes>
                 <exclude>${project.groupId}:*:*</exclude>
-                <exclude>${project.groupId}.net2plan-core:*:*</exclude>
                 <exclude>${project.groupId}.net2plan-gui:*:*</exclude>
                 <exclude>${project.groupId}.net2plan-cli:*:*</exclude>
             </excludes>

@@ -27,7 +27,7 @@ public abstract class GUIWindow extends JFrame
 
         this.add(this.component, BorderLayout.CENTER);
 
-        URL iconURL = GUINet2Plan.class.getResource("/resources/gui/icon.png");
+        URL iconURL = GUINet2Plan.class.getResource("/resoures.gui/icon.png");
         ImageIcon icon = new ImageIcon(iconURL);
         this.setIconImage(icon.getImage());
     }
