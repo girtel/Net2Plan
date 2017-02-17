@@ -13,8 +13,6 @@
 package com.net2plan.gui.plugins.trafficDesign;
 
 
-import com.net2plan.gui.plugins.trafficDesign.viewEditTopolTable.AdvancedJTable_NetworkElement;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
@@ -31,7 +29,7 @@ public class CellRenderers
 {
     /**
      * Renderer for cells containing boolean values.
-     *
+     *1
      * @since 0.2.0
      */
     public static final Color bgColorLastRow = new Color(200, 200, 200);
@@ -56,7 +54,8 @@ public class CellRenderers
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
         {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            if ((value != null) && (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            // TODO: if ((value != null) && (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            if ((value != null))
             {
                 c.setForeground(fgColorLastRow);
                 c.setBackground(bgColorLastRow);
@@ -138,7 +137,8 @@ public class CellRenderers
             }
 
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            if ((value != null) && (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            // TODO: if ((value != null) && (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            if ((value != null))
             {
                 c.setForeground(fgColorLastRow);
                 c.setBackground(bgColorLastRow);
