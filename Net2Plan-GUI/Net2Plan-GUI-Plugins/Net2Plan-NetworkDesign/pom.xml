@@ -5,11 +5,10 @@
     <parent>
         <artifactId>net2plan-gui-plugins</artifactId>
         <groupId>com.net2plan</groupId>
-        <version>0.5.1-SNAPSHOT</version>
+        <version>${net2plan.version}</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>net2plan-gui-plugins-networkDesign</artifactId>
-
-
+    <version>${net2plan.version}</version>
 </project>

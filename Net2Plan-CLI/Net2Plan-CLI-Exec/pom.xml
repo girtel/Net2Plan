@@ -12,6 +12,7 @@
 
     <groupId>com.net2plan.net2plan-cli</groupId>
     <artifactId>net2plan-cli-exec</artifactId>
+    <version>${net2plan.version}</version>
 
     <build>
         <plugins>
