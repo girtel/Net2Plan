@@ -1,4 +1,4 @@
-package com.net2plan.gui.viewEditTopolTables;
+package com.net2plan.interfaces;
 
 import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.*;

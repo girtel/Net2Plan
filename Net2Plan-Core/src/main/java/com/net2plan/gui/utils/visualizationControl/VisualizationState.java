@@ -1,9 +1,9 @@
-package com.net2plan.gui.topologyPane.visualizationControl;
+package com.net2plan.gui.utils.visualizationControl;
 
 import com.google.common.collect.Sets;
-import com.net2plan.gui.topologyPane.GUILink;
-import com.net2plan.gui.topologyPane.GUINode;
-import com.net2plan.gui.viewEditTopolTables.ITableRowFilter;
+import com.net2plan.gui.utils.networkDesign.GUILink;
+import com.net2plan.gui.utils.networkDesign.GUINode;
+import com.net2plan.interfaces.ITableRowFilter;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.ImageUtils;
@@ -23,9 +23,6 @@ import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class VisualizationState
 {
@@ -434,40 +431,41 @@ public class VisualizationState
         }
     }
 
-    private void checkCacheConsistency()
-    {
-        for (Node n : currentNp.getNodes())
-        {
-            assertTrue(cache_canvasIntraNodeGUILinks.get(n) != null);
-            assertTrue(cache_mapNode2IntraNodeCanvasGUILinkMap.get(n) != null);
-            assertTrue(cache_mapNode2ListVerticallyStackedGUINodes.get(n) != null);
-            for (Entry<Pair<Integer, Integer>, GUILink> entry : cache_mapNode2IntraNodeCanvasGUILinkMap.get(n).entrySet())
-            {
-                final int fromLayer = entry.getKey().getFirst();
-                final int toLayer = entry.getKey().getSecond();
-                final GUILink gl = entry.getValue();
-                assertTrue(gl.isIntraNodeLink());
-                assertTrue(gl.getOriginNode().getAssociatedNetPlanNode() == n);
-                assertTrue(getCanvasVisualizationOrderRemovingNonVisible(gl.getOriginNode().getLayer()) == fromLayer);
-                assertTrue(getCanvasVisualizationOrderRemovingNonVisible(gl.getDestinationNode().getLayer()) == toLayer);
-            }
-            assertEquals(new HashSet<>(cache_mapNode2IntraNodeCanvasGUILinkMap.get(n).values()), cache_canvasIntraNodeGUILinks.get(n));
-            for (GUILink gl : cache_canvasIntraNodeGUILinks.get(n))
-            {
-                assertTrue(gl.isIntraNodeLink());
-                assertEquals(gl.getOriginNode().getAssociatedNetPlanNode(), n);
-                assertEquals(gl.getDestinationNode().getAssociatedNetPlanNode(), n);
-            }
-            assertEquals(cache_mapNode2ListVerticallyStackedGUINodes.get(n).size(), getCanvasNumberOfVisibleLayers());
-            int indexLayer = 0;
-            for (GUINode gn : cache_mapNode2ListVerticallyStackedGUINodes.get(n))
-            {
-                assertEquals(gn.getLayer(), cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.inverseBidiMap().get(indexLayer));
-                assertEquals(getCanvasVisualizationOrderRemovingNonVisible(gn.getLayer()), indexLayer++);
-                assertEquals(gn.getAssociatedNetPlanNode(), n);
-            }
-        }
-    }
+    // TODO: Test
+//    private void checkCacheConsistency()
+//    {
+//        for (Node n : currentNp.getNodes())
+//        {
+//            assertTrue(cache_canvasIntraNodeGUILinks.get(n) != null);
+//            assertTrue(cache_mapNode2IntraNodeCanvasGUILinkMap.get(n) != null);
+//            assertTrue(cache_mapNode2ListVerticallyStackedGUINodes.get(n) != null);
+//            for (Entry<Pair<Integer, Integer>, GUILink> entry : cache_mapNode2IntraNodeCanvasGUILinkMap.get(n).entrySet())
+//            {
+//                final int fromLayer = entry.getKey().getFirst();
+//                final int toLayer = entry.getKey().getSecond();
+//                final GUILink gl = entry.getValue();
+//                assertTrue(gl.isIntraNodeLink());
+//                assertTrue(gl.getOriginNode().getAssociatedNetPlanNode() == n);
+//                assertTrue(getCanvasVisualizationOrderRemovingNonVisible(gl.getOriginNode().getLayer()) == fromLayer);
+//                assertTrue(getCanvasVisualizationOrderRemovingNonVisible(gl.getDestinationNode().getLayer()) == toLayer);
+//            }
+//            assertEquals(new HashSet<>(cache_mapNode2IntraNodeCanvasGUILinkMap.get(n).values()), cache_canvasIntraNodeGUILinks.get(n));
+//            for (GUILink gl : cache_canvasIntraNodeGUILinks.get(n))
+//            {
+//                assertTrue(gl.isIntraNodeLink());
+//                assertEquals(gl.getOriginNode().getAssociatedNetPlanNode(), n);
+//                assertEquals(gl.getDestinationNode().getAssociatedNetPlanNode(), n);
+//            }
+//            assertEquals(cache_mapNode2ListVerticallyStackedGUINodes.get(n).size(), getCanvasNumberOfVisibleLayers());
+//            int indexLayer = 0;
+//            for (GUINode gn : cache_mapNode2ListVerticallyStackedGUINodes.get(n))
+//            {
+//                assertEquals(gn.getLayer(), cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.inverseBidiMap().get(indexLayer));
+//                assertEquals(getCanvasVisualizationOrderRemovingNonVisible(gn.getLayer()), indexLayer++);
+//                assertEquals(gn.getAssociatedNetPlanNode(), n);
+//            }
+//        }
+//    }
 
     public boolean decreaseCanvasFontSizeAll()
     {

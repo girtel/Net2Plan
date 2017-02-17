@@ -1,7 +1,6 @@
-package com.net2plan.gui.topologyPane.visualizationControl;
+package com.net2plan.gui.utils.visualizationControl;
 
 import com.google.common.collect.ImmutableMap;
-import com.net2plan.gui.GUINet2Plan;
 
 import java.awt.*;
 import java.net.URL;
@@ -15,7 +14,6 @@ public final class VisualizationConstants
 {
     private VisualizationConstants() {}
 
-    //public final static String DEFAULT_NODEICONURL = "src/main/resources/resources/icons/imagen1.png";
 	public static Color TRANSPARENTCOLOR = new Color (0,0,0,0);
     public final static int DEFAULT_ICONBORDERSIZEINPIXELS = 4;
     public final static Map<String,URL> DEFAULT_LAYERNAME2ICONURLMAP = 
@@ -42,15 +40,8 @@ public final class VisualizationConstants
     public final static Paint DEFAULT_GUINODE_COLOR = java.awt.Color.BLACK;
     public final static Font DEFAULT_GUINODE_FONT = new Font("Helvetica", Font.BOLD, 11);
     public final static int DEFAULT_GUINODE_SHAPESIZE = 30;
-//    public final static Shape DEFAULT_GUINODE_SHAPE = new Ellipse2D.Double(-1 * DEFAULT_GUINODE_SHAPESIZE / 2, -1 * DEFAULT_GUINODE_SHAPESIZE / 2, 1 * DEFAULT_GUINODE_SHAPESIZE, 1 * DEFAULT_GUINODE_SHAPESIZE);
 
     public final static boolean DEFAULT_REGGUILINK_HASARROW = false;
-//    public final static Stroke DEFAULT_REGGUILINK_ARROWSTROKE = new BasicStroke(1);
-//    public final static Stroke DEFAULT_REGGUILINK_ARROWSTROKE_ACTIVELAYER = new BasicStroke(1 * INCREASELINKSTROKEFACTORACTIVE);
-//    public final static Stroke DEFAULT_REGGUILINK_ARROWSTROKE_PICKED = new BasicStroke(1 * INCREASELINKSTROKEFACTORACTIVE * INCREASELINKSTROKEFACTORACTIVE);
-//    public final static Paint DEFAULT_REGGUILINK_ARROWDRAWCOLOR = Color.BLACK;
-//    public final static Paint DEFAULT_REGGUILINK_ARROWDRAWCOLOR_PICKED = Color.BLUE;
-//    public final static Paint DEFAULT_REGGUILINK_ARROWFILLCOLOR = Color.BLACK;
 
     public final static Stroke DEFAULT_REGGUILINK_EDGESTROKE = new BasicStroke(2);
     public final static Stroke DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER = new BasicStroke(2 * INCREASELINKSTROKEFACTORACTIVE);
@@ -69,16 +60,8 @@ public final class VisualizationConstants
     public final static Paint DEFAULT_REGGUILINK_EDGECOLOR_FAILED = Color.RED;
 
     public final static boolean DEFAULT_INTRANODEGUILINK_HASARROW = false;
-//    public final static Stroke DEFAULT_INTRANODEGUILINK_ARROWSTROKE = new BasicStroke(0.5f);
-//    public final static Stroke DEFAULT_INTRANODEGUILINK_ARROWSTROKE_ACTIVE = new BasicStroke(0.5f * INCREASELINKSTROKEFACTORACTIVE);
-//    public final static Stroke DEFAULT_INTRANODEGUILINK_ARROWSTROKE_PICKED = new BasicStroke(0.5f * INCREASELINKSTROKEFACTORACTIVE * INCREASELINKSTROKEFACTORACTIVE);
     public final static Stroke DEFAULT_INTRANODEGUILINK_EDGESTROKE = new BasicStroke(1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
     public final static Stroke DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED = new BasicStroke(1 * INCREASELINKSTROKEFACTORACTIVE , BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
-//    public final static Stroke DEFAULT_REGGUILINK_INTRANODEGESTROKE_BACKUP = new BasicStroke(0.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
-//    public final static Stroke DEFAULT_REGGUILINK_INTRANODEGESTROKE_BACKUP_PICKED = new BasicStroke(1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
-//    public final static Paint DEFAULT_INTRANODEGUILINK_ARROWDRAWCOLOR = Color.BLACK;
-//    public final static Paint DEFAULT_INTRANODEGUILINK_ARROWDRAWCOLOR_PICKED = Color.BLUE;
-//    public final static Paint DEFAULT_INTRANODEGUILINK_ARROWFILLCOLOR = Color.BLACK;
     public final static Paint DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR = Color.BLACK;
     public final static Paint DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR_PICKED = Color.BLUE;
 }

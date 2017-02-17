@@ -1,7 +1,7 @@
 package com.net2plan.gui.viewEditTopolTables.multilayerTabs;
 
 import com.google.common.collect.Lists;
-import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;

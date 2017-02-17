@@ -10,10 +10,10 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.topologyPane;
+package com.net2plan.gui.utils.networkDesign;
 
-import com.net2plan.gui.topologyPane.visualizationControl.VisualizationConstants;
-import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.visualizationControl.VisualizationConstants;
+import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -22,8 +22,6 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
-
-import static com.net2plan.gui.topologyPane.visualizationControl.VisualizationConstants.*;
 
 /**
  * Class representing a node.
@@ -82,8 +80,8 @@ public class GUINode
 //        if (!callback.getVisualizationState().isLayerVisibleInCanvas(layer)) throw new RuntimeException ("Bad");
 
 		/* defaults */
-        this.drawPaint = DEFAULT_GUINODE_COLOR;
-        this.fillPaint = DEFAULT_GUINODE_COLOR;
+        this.drawPaint = VisualizationConstants.DEFAULT_GUINODE_COLOR;
+        this.fillPaint = VisualizationConstants.DEFAULT_GUINODE_COLOR;
         this.font = new Font("Helvetica", Font.BOLD, 11);
         this.iconHeightIfNotActive = 30;
     }
@@ -143,9 +141,9 @@ public class GUINode
     {
         URL url = npNode.getUrlNodeIcon(layer);
         if (url == null) url = layer.getDefaultNodeIconURL();
-        if (url == null) url = DEFAULT_LAYERNAME2ICONURLMAP.get(layer.getName());
-        final int height = layer.isDefaultLayer() ? (int) (iconHeightIfNotActive * INCREASENODESIZEFACTORACTIVE) : (int) iconHeightIfNotActive;
-        final Color borderColor = getDrawPaint() == DEFAULT_GUINODE_COLOR ? VisualizationConstants.TRANSPARENTCOLOR : (Color) getDrawPaint();
+        if (url == null) url = VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP.get(layer.getName());
+        final int height = layer.isDefaultLayer() ? (int) (iconHeightIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE) : (int) iconHeightIfNotActive;
+        final Color borderColor = getDrawPaint() == VisualizationConstants.DEFAULT_GUINODE_COLOR ? VisualizationConstants.TRANSPARENTCOLOR : (Color) getDrawPaint();
         return VisualizationState.getIcon(url, height, borderColor).getSecond();
     }
 
@@ -220,9 +218,9 @@ public class GUINode
     {
         URL url = npNode.getUrlNodeIcon(layer);
         if (url == null) url = layer.getDefaultNodeIconURL();
-        if (url == null) url = DEFAULT_LAYERNAME2ICONURLMAP.get(layer.getName());
-        final int height = layer.isDefaultLayer() ? (int) (iconHeightIfNotActive * INCREASENODESIZEFACTORACTIVE) : (int) iconHeightIfNotActive;
-        final Color borderColor = getDrawPaint() == DEFAULT_GUINODE_COLOR ? VisualizationConstants.TRANSPARENTCOLOR : (Color) getDrawPaint();
+        if (url == null) url = VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP.get(layer.getName());
+        final int height = layer.isDefaultLayer() ? (int) (iconHeightIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE) : (int) iconHeightIfNotActive;
+        final Color borderColor = getDrawPaint() == VisualizationConstants.DEFAULT_GUINODE_COLOR ? VisualizationConstants.TRANSPARENTCOLOR : (Color) getDrawPaint();
         final Icon icon = VisualizationState.getIcon(url, height, borderColor).getFirst();
         return icon;
     }

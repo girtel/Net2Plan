@@ -10,13 +10,12 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.topologyPane;
+package com.net2plan.gui.utils.networkDesign;
 
+import com.net2plan.gui.utils.visualizationControl.VisualizationConstants;
 import com.net2plan.interfaces.networkDesign.*;
 
 import java.awt.*;
-
-import static com.net2plan.gui.topologyPane.visualizationControl.VisualizationConstants.*;
 
 
 /**
@@ -98,25 +97,25 @@ public class GUILink
 ////        this.arrowFillPaintIfPicked = Color.BLUE;
         if (this.isIntraNodeLink())
         {
-            this.hasArrow = DEFAULT_INTRANODEGUILINK_HASARROW;
-            this.edgeDrawPaint = DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
-            this.arrowDrawPaint = DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
-            this.arrowFillPaint = DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
-            this.edgeStrokeIfActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
-            this.edgeStrokeIfNotActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
-            this.arrowStrokeIfActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
-            this.arrowStrokeIfNotActiveLayer = DEFAULT_INTRANODEGUILINK_EDGESTROKE;
+            this.hasArrow = VisualizationConstants.DEFAULT_INTRANODEGUILINK_HASARROW;
+            this.edgeDrawPaint = VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
+            this.arrowDrawPaint = VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
+            this.arrowFillPaint = VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR;
+            this.edgeStrokeIfActiveLayer = VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE;
+            this.edgeStrokeIfNotActiveLayer = VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE;
+            this.arrowStrokeIfActiveLayer = VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE;
+            this.arrowStrokeIfNotActiveLayer = VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE;
         }
         else
         {
-            this.hasArrow = DEFAULT_REGGUILINK_HASARROW;
-            this.edgeDrawPaint = DEFAULT_REGGUILINK_EDGECOLOR;
-            this.arrowDrawPaint = DEFAULT_REGGUILINK_EDGECOLOR;
-            this.arrowFillPaint = DEFAULT_REGGUILINK_EDGECOLOR;
-            this.edgeStrokeIfActiveLayer = DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER;
-            this.edgeStrokeIfNotActiveLayer = DEFAULT_REGGUILINK_EDGESTROKE;
-            this.arrowStrokeIfActiveLayer = DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER;
-            this.arrowStrokeIfNotActiveLayer = DEFAULT_REGGUILINK_EDGESTROKE;
+            this.hasArrow = VisualizationConstants.DEFAULT_REGGUILINK_HASARROW;
+            this.edgeDrawPaint = VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR;
+            this.arrowDrawPaint = VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR;
+            this.arrowFillPaint = VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR;
+            this.edgeStrokeIfActiveLayer = VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER;
+            this.edgeStrokeIfNotActiveLayer = VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE;
+            this.arrowStrokeIfActiveLayer = VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER;
+            this.arrowStrokeIfNotActiveLayer = VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE;
         }
         
         this.shownSeparated = false;

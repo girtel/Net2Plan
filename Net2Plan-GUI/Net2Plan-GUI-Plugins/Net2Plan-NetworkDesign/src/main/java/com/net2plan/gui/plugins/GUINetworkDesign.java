@@ -29,7 +29,7 @@ import com.net2plan.gui.topologyPane.GUILink;
 import com.net2plan.gui.topologyPane.GUINode;
 import com.net2plan.gui.topologyPane.TopologyPanel;
 import com.net2plan.gui.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.UndoRedoManager;

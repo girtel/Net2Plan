@@ -2,7 +2,7 @@ package com.net2plan.gui.topologyPane.jung.osmSupport;
 
 import com.net2plan.gui.topologyPane.GUINode;
 import com.net2plan.gui.topologyPane.TopologyPanel;
-import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;

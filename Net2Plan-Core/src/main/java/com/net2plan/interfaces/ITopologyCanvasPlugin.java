@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.topologyPane;
+package com.net2plan.interfaces;
 
 import java.awt.event.MouseEvent;
 

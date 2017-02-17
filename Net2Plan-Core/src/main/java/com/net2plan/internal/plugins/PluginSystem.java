@@ -20,6 +20,7 @@
 
 package com.net2plan.internal.plugins;
 
+import com.net2plan.interfaces.ITopologyCanvas;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.utils.ClassLoaderUtils;
 

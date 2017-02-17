@@ -18,12 +18,12 @@
 
 
 
-package com.net2plan.internal.plugins;
+package com.net2plan.interfaces;
 
-import com.net2plan.gui.topologyPane.GUILink;
-import com.net2plan.gui.topologyPane.GUINode;
-import com.net2plan.gui.topologyPane.ITopologyCanvasPlugin;
+import com.net2plan.gui.utils.networkDesign.GUILink;
+import com.net2plan.gui.utils.networkDesign.GUINode;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.internal.plugins.Plugin;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;

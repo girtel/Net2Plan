@@ -1,7 +1,7 @@
 package com.net2plan.gui.focusPane;
 
-import com.net2plan.gui.topologyPane.visualizationControl.VisualizationConstants;
-import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.visualizationControl.VisualizationConstants;
+import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.net2plan.gui.topologyPane.visualizationControl.VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP;
+import static com.net2plan.gui.utils.visualizationControl.VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP;
 
 public class DrawNode
 {

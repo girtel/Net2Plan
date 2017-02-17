@@ -13,7 +13,7 @@
 package com.net2plan.gui;
 
 import com.net2plan.gui.topologyPane.GUINode;
-import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.gui.whatIfAnalysisPane.WhatIfAnalysisPane;
 
 import java.awt.*;
