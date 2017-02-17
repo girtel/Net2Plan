@@ -1,6 +1,10 @@
 package com.net2plan.gui.viewReportsPane;
 
+
+import com.net2plan.gui.ReportBrowser;
+import com.net2plan.gui.ThreadExecutionController;
 import com.net2plan.gui.utils.*;
+import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.internal.ErrorHandling;

@@ -12,18 +12,18 @@
 
 package com.net2plan.gui.viewEditTopolTables.specificTables;
 
-import com.net2plan.gui.utils.AttributeEditor;
+import com.net2plan.gui.AttributeEditor;
+import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.FixedColumnDecorator;
-import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.viewEditTopolTables.tableStateFiles.TableState;
+import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.gui.AdvancedJTable;
 
 import javax.swing.*;
 import javax.swing.RowSorter.SortKey;
@@ -59,7 +59,8 @@ import java.util.*;
  * @since 0.2.0
  */
 @SuppressWarnings("unchecked")
-public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable {
+public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
+{
     protected final TableModel model;
     protected final IVisualizationCallback callback;
     protected final NetworkElementType networkElementType;

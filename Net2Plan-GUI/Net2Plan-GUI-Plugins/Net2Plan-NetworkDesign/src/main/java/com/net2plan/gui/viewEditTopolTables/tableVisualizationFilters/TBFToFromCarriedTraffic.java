@@ -1,7 +1,7 @@
 package com.net2plan.gui.viewEditTopolTables.tableVisualizationFilters;
 
 import com.google.common.collect.Sets;
-import com.net2plan.gui.viewEditTopolTables.ITableRowFilter;
+import com.net2plan.interfaces.ITableRowFilter;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;

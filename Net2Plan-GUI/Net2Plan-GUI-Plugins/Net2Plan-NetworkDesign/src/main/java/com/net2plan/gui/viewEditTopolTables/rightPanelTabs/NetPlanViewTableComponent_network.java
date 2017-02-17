@@ -1,15 +1,11 @@
 package com.net2plan.gui.viewEditTopolTables.rightPanelTabs;
 
-import com.net2plan.gui.utils.ColumnHeaderToolTips;
-import com.net2plan.gui.utils.FullScrollPaneLayout;
-import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.*;
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_layer;
+import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.gui.AdvancedJTable;
-import com.net2plan.utils.gui.ClassAwareTableModel;
-import com.net2plan.utils.gui.TableCursorNavigation;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;

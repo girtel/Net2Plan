@@ -13,8 +13,8 @@
 package com.net2plan.gui.onlineSimulationPane;
 
 import com.jom.JOMException;
-import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.*;
+import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -29,9 +29,6 @@ import com.net2plan.internal.sim.SimCore;
 import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.internal.sim.SimKernel;
 import com.net2plan.utils.*;
-import com.net2plan.utils.gui.AdvancedJTable;
-import com.net2plan.utils.gui.ClassAwareTableModel;
-import com.net2plan.utils.gui.ColumnFitAdapter;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.collections15.BidiMap;
 

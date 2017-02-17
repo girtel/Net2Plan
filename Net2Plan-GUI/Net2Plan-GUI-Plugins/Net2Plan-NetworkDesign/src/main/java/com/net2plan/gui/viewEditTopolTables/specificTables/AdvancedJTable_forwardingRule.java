@@ -14,20 +14,19 @@ package com.net2plan.gui.viewEditTopolTables.specificTables;
 
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import com.google.common.collect.Sets;
-import com.net2plan.gui.utils.CellRenderers;
-import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
-import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.CellRenderers;
+import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.gui.viewEditTopolTables.ITableRowFilter;
 import com.net2plan.gui.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
+import com.net2plan.interfaces.ITableRowFilter;
+import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.libraries.IPUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.gui.ClassAwareTableModel;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;

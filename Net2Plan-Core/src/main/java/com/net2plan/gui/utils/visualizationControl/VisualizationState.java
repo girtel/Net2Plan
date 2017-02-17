@@ -21,7 +21,6 @@ import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 public class VisualizationState

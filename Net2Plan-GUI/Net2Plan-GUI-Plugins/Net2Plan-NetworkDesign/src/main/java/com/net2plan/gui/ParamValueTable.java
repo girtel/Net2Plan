@@ -12,9 +12,9 @@
 
 package com.net2plan.gui;
 
+import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.gui.AdvancedJTable;
-import com.net2plan.utils.gui.ClassAwareTableModel;
 
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;

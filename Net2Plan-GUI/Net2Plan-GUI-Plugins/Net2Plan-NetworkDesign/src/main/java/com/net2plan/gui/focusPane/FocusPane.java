@@ -1,8 +1,8 @@
 package com.net2plan.gui.focusPane;
 
 import com.google.common.collect.Sets;
-import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.libraries.SRGUtils;

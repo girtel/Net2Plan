@@ -1,14 +1,14 @@
 package com.net2plan.gui.viewEditTopolTables;
 
+
 import com.net2plan.gui.utils.FullScrollPaneLayout;
-import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
 import com.net2plan.gui.viewEditTopolTables.specificTables.*;
+import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
-import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
 
 import javax.swing.*;
@@ -20,16 +20,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 @SuppressWarnings("unchecked")
 public class ViewEditTopologyTablesPane extends JPanel
 {
 	private final IVisualizationCallback callback;
     private final JTabbedPane netPlanView;
-    private final Map<NetworkElementType, AdvancedJTable_NetworkElement> netPlanViewTable;
-    private final Map<NetworkElementType, JComponent> netPlanViewTableComponent;
-    private final Map<NetworkElementType, JLabel> netPlanViewTableNumEntriesLabel;
+    private final Map<Constants.NetworkElementType, AdvancedJTable_NetworkElement> netPlanViewTable;
+    private final Map<Constants.NetworkElementType, JComponent> netPlanViewTableComponent;
+    private final Map<Constants.NetworkElementType, JLabel> netPlanViewTableNumEntriesLabel;
 
 	public ViewEditTopologyTablesPane (IVisualizationCallback callback , LayoutManager layout)
 	{
@@ -37,40 +36,40 @@ public class ViewEditTopologyTablesPane extends JPanel
 		
 		this.callback = callback;
 
-        netPlanViewTable = new EnumMap<NetworkElementType, AdvancedJTable_NetworkElement>(NetworkElementType.class);
-        netPlanViewTableComponent = new EnumMap<NetworkElementType, JComponent>(NetworkElementType.class);
-        netPlanViewTableNumEntriesLabel = new EnumMap<NetworkElementType, JLabel>(NetworkElementType.class);
+        netPlanViewTable = new EnumMap<Constants.NetworkElementType, AdvancedJTable_NetworkElement>(Constants.NetworkElementType.class);
+        netPlanViewTableComponent = new EnumMap<Constants.NetworkElementType, JComponent>(Constants.NetworkElementType.class);
+        netPlanViewTableNumEntriesLabel = new EnumMap<Constants.NetworkElementType, JLabel>(Constants.NetworkElementType.class);
 
 //        mainWindow.allowDocumentUpdate = mainWindow.isEditable();
-        netPlanViewTable.put(NetworkElementType.NODE, new AdvancedJTable_node(callback));
-        netPlanViewTable.put(NetworkElementType.LINK, new AdvancedJTable_link(callback));
-        netPlanViewTable.put(NetworkElementType.DEMAND, new AdvancedJTable_demand(callback));
-        netPlanViewTable.put(NetworkElementType.ROUTE, new AdvancedJTable_route(callback));
-        netPlanViewTable.put(NetworkElementType.FORWARDING_RULE, new AdvancedJTable_forwardingRule(callback));
-        netPlanViewTable.put(NetworkElementType.MULTICAST_DEMAND, new AdvancedJTable_multicastDemand(callback));
-        netPlanViewTable.put(NetworkElementType.MULTICAST_TREE, new AdvancedJTable_multicastTree(callback));
-        netPlanViewTable.put(NetworkElementType.SRG, new AdvancedJTable_srg(callback));
-        netPlanViewTable.put(NetworkElementType.RESOURCE, new AdvancedJTable_resource(callback));
-        netPlanViewTable.put(NetworkElementType.LAYER, new AdvancedJTable_layer(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.NODE, new AdvancedJTable_node(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.LINK, new AdvancedJTable_link(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.DEMAND, new AdvancedJTable_demand(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.ROUTE, new AdvancedJTable_route(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.FORWARDING_RULE, new AdvancedJTable_forwardingRule(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.MULTICAST_DEMAND, new AdvancedJTable_multicastDemand(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.MULTICAST_TREE, new AdvancedJTable_multicastTree(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.SRG, new AdvancedJTable_srg(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.RESOURCE, new AdvancedJTable_resource(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.LAYER, new AdvancedJTable_layer(callback));
 
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.NODE, new JLabel ("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.LINK, new JLabel ("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.DEMAND, new JLabel ("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.ROUTE, new JLabel ("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.FORWARDING_RULE, new JLabel ("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.MULTICAST_DEMAND, new JLabel ("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.MULTICAST_TREE, new JLabel ("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.SRG, new JLabel ("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.RESOURCE, new JLabel ("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.LAYER, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(Constants.NetworkElementType.NODE, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(Constants.NetworkElementType.LINK, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(Constants.NetworkElementType.DEMAND, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(Constants.NetworkElementType.ROUTE, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(Constants.NetworkElementType.FORWARDING_RULE, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(Constants.NetworkElementType.MULTICAST_DEMAND, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(Constants.NetworkElementType.MULTICAST_TREE, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(Constants.NetworkElementType.SRG, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(Constants.NetworkElementType.RESOURCE, new JLabel ("Number of entries: "));
+        netPlanViewTableNumEntriesLabel.put(Constants.NetworkElementType.LAYER, new JLabel ("Number of entries: "));
         
         netPlanView = new JTabbedPane();
 
-        for (NetworkElementType elementType : Constants.NetworkElementType.values()) {
-            if (elementType == NetworkElementType.NETWORK) {
-                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_network(callback, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
-            } else if (elementType == NetworkElementType.LAYER) {
-                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_layer(callback, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
+        for (Constants.NetworkElementType elementType : Constants.NetworkElementType.values()) {
+            if (elementType == Constants.NetworkElementType.NETWORK) {
+                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_network(callback, (AdvancedJTable_layer) netPlanViewTable.get(Constants.NetworkElementType.LAYER)));
+            } else if (elementType == Constants.NetworkElementType.LAYER) {
+                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_layer(callback, (AdvancedJTable_layer) netPlanViewTable.get(Constants.NetworkElementType.LAYER)));
             } else {
                 JScrollPane scrollPane = netPlanViewTable.get(elementType).getScroll();
                 scrollPane.setLayout(new FullScrollPaneLayout());
@@ -113,7 +112,7 @@ public class ViewEditTopologyTablesPane extends JPanel
         
 	}
 
-	public Map<NetworkElementType,AdvancedJTable_NetworkElement> currentTables(){
+	public Map<Constants.NetworkElementType,AdvancedJTable_NetworkElement> currentTables(){
 
 	    return netPlanViewTable;
     }
@@ -123,22 +122,22 @@ public class ViewEditTopologyTablesPane extends JPanel
         netPlanViewTable.clear();
         netPlanViewTableComponent.clear();
 
-        netPlanViewTable.put(NetworkElementType.NODE, new AdvancedJTable_node(callback));
-        netPlanViewTable.put(NetworkElementType.LINK, new AdvancedJTable_link(callback));
-        netPlanViewTable.put(NetworkElementType.DEMAND, new AdvancedJTable_demand(callback));
-        netPlanViewTable.put(NetworkElementType.ROUTE, new AdvancedJTable_route(callback));
-        netPlanViewTable.put(NetworkElementType.FORWARDING_RULE, new AdvancedJTable_forwardingRule(callback));
-        netPlanViewTable.put(NetworkElementType.MULTICAST_DEMAND, new AdvancedJTable_multicastDemand(callback));
-        netPlanViewTable.put(NetworkElementType.MULTICAST_TREE, new AdvancedJTable_multicastTree(callback));
-        netPlanViewTable.put(NetworkElementType.SRG, new AdvancedJTable_srg(callback));
-        netPlanViewTable.put(NetworkElementType.RESOURCE, new AdvancedJTable_resource(callback));
-        netPlanViewTable.put(NetworkElementType.LAYER, new AdvancedJTable_layer(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.NODE, new AdvancedJTable_node(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.LINK, new AdvancedJTable_link(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.DEMAND, new AdvancedJTable_demand(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.ROUTE, new AdvancedJTable_route(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.FORWARDING_RULE, new AdvancedJTable_forwardingRule(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.MULTICAST_DEMAND, new AdvancedJTable_multicastDemand(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.MULTICAST_TREE, new AdvancedJTable_multicastTree(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.SRG, new AdvancedJTable_srg(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.RESOURCE, new AdvancedJTable_resource(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.LAYER, new AdvancedJTable_layer(callback));
 
-        for (NetworkElementType elementType : Constants.NetworkElementType.values()) {
-            if (elementType == NetworkElementType.NETWORK) {
-                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_network(callback, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
-            } else if (elementType == NetworkElementType.LAYER) {
-                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_layer(callback, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
+        for (Constants.NetworkElementType elementType : Constants.NetworkElementType.values()) {
+            if (elementType == Constants.NetworkElementType.NETWORK) {
+                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_network(callback, (AdvancedJTable_layer) netPlanViewTable.get(Constants.NetworkElementType.LAYER)));
+            } else if (elementType == Constants.NetworkElementType.LAYER) {
+                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_layer(callback, (AdvancedJTable_layer) netPlanViewTable.get(Constants.NetworkElementType.LAYER)));
             } else {
                 JScrollPane scrollPane = new JScrollPane(netPlanViewTable.get(elementType));
                 scrollPane.setLayout(new FullScrollPaneLayout());
@@ -165,7 +164,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
 	public JTabbedPane getNetPlanView () { return netPlanView; }
 	
-    public Map<NetworkElementType, AdvancedJTable_NetworkElement> getNetPlanViewTable () { return netPlanViewTable; }
+    public Map<Constants.NetworkElementType, AdvancedJTable_NetworkElement> getNetPlanViewTable () { return netPlanViewTable; }
 
     public void updateView ()
     {
@@ -176,13 +175,13 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         final int selectedTabIndex = netPlanView.getSelectedIndex();
         netPlanView.removeAll();
-        for (NetworkElementType elementType : Constants.NetworkElementType.values()) 
+        for (Constants.NetworkElementType elementType : Constants.NetworkElementType.values())
         {
-            if (layer.isSourceRouting() && elementType == NetworkElementType.FORWARDING_RULE)
+            if (layer.isSourceRouting() && elementType == Constants.NetworkElementType.FORWARDING_RULE)
                 continue;
-            if (!layer.isSourceRouting() && (elementType == NetworkElementType.ROUTE))
+            if (!layer.isSourceRouting() && (elementType == Constants.NetworkElementType.ROUTE))
                 continue;
-            netPlanView.addTab(elementType == NetworkElementType.NETWORK ? "Network" : netPlanViewTable.get(elementType).getTabName(), netPlanViewTableComponent.get(elementType));
+            netPlanView.addTab(elementType == Constants.NetworkElementType.NETWORK ? "Network" : netPlanViewTable.get(elementType).getTabName(), netPlanViewTableComponent.get(elementType));
         }
         if ((selectedTabIndex < netPlanView.getTabCount()) && (selectedTabIndex >= 0))
             netPlanView.setSelectedIndex(selectedTabIndex);
@@ -190,10 +189,10 @@ public class ViewEditTopologyTablesPane extends JPanel
         currentState.checkCachesConsistency();
         
         /* update the required tables */
-        for (Entry<NetworkElementType,AdvancedJTable_NetworkElement> entry : netPlanViewTable.entrySet())
+        for (Map.Entry<Constants.NetworkElementType,AdvancedJTable_NetworkElement> entry : netPlanViewTable.entrySet())
         {
-            if (layer.isSourceRouting() && entry.getKey() == NetworkElementType.FORWARDING_RULE) continue;
-            if (!layer.isSourceRouting() && (entry.getKey() == NetworkElementType.ROUTE)) continue;
+            if (layer.isSourceRouting() && entry.getKey() == Constants.NetworkElementType.FORWARDING_RULE) continue;
+            if (!layer.isSourceRouting() && (entry.getKey() == Constants.NetworkElementType.ROUTE)) continue;
             final AdvancedJTable_NetworkElement table = entry.getValue();
             table.updateView(currentState);
             final JLabel label = netPlanViewTableNumEntriesLabel.get(entry.getKey());
@@ -207,8 +206,8 @@ public class ViewEditTopologyTablesPane extends JPanel
             }
             
         }
-        ((NetPlanViewTableComponent_layer) netPlanViewTableComponent.get(NetworkElementType.LAYER)).updateNetPlanView(currentState);
-        ((NetPlanViewTableComponent_network) netPlanViewTableComponent.get(NetworkElementType.NETWORK)).updateNetPlanView(currentState);
+        ((NetPlanViewTableComponent_layer) netPlanViewTableComponent.get(Constants.NetworkElementType.LAYER)).updateNetPlanView(currentState);
+        ((NetPlanViewTableComponent_network) netPlanViewTableComponent.get(Constants.NetworkElementType.NETWORK)).updateNetPlanView(currentState);
     }
 
     
@@ -218,12 +217,12 @@ public class ViewEditTopologyTablesPane extends JPanel
      * @param type    Network element type
      * @param itemId  Item identifier (if null, it will just show the tab)
      */
-    public void selectViewItem (NetworkElementType type, Object itemId)
+    public void selectViewItem (Constants.NetworkElementType type, Object itemId)
     {
         AdvancedJTable_NetworkElement table = netPlanViewTable.get(type);
         int tabIndex = netPlanView.getSelectedIndex();
         int col = 0;
-        if (netPlanView.getTitleAt(tabIndex).equals(type == NetworkElementType.NETWORK ? "Network" : table.getTabName())) {
+        if (netPlanView.getTitleAt(tabIndex).equals(type == Constants.NetworkElementType.NETWORK ? "Network" : table.getTabName())) {
             col = table.getSelectedColumn();
             if (col == -1) col = 0;
         } else {
@@ -242,7 +241,7 @@ public class ViewEditTopologyTablesPane extends JPanel
             Object obj = model.getValueAt(row, 0);
             if (obj == null) continue;
 
-            if (type == NetworkElementType.FORWARDING_RULE) {
+            if (type == Constants.NetworkElementType.FORWARDING_RULE) {
                 obj = Pair.of(
                 		Integer.parseInt(model.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_DEMAND).toString().split(" ")[0]), 
                 		Integer.parseInt(model.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK).toString().split(" ")[0]));
@@ -279,7 +278,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 //		final int  [] selectedElements = table.getSelectedRows();
 //		if (selectedElements.length == 0) return;
 //		if (selectedElements.length > 1) throw new RuntimeException("MULTIPLE SELECTIONS NOT IMPLEMENTED");
-//		if (elementType != NetworkElementType.FORWARDING_RULE)
+//		if (elementType != Constants.NetworkElementType.FORWARDING_RULE)
 //		{
 //			final List<NetworkElement> selectedNetElements = new LinkedList<NetworkElement> ();
 //			for (int row : selectedElements) selectedNetElements.add(callback.getDesign().getNetworkElement((long) table.getValueAt(row , 0)));

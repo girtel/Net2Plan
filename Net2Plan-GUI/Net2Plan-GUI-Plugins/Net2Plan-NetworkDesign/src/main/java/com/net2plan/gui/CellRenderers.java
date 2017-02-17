@@ -12,6 +12,7 @@
 
 package com.net2plan.gui;
 
+import com.net2plan.gui.utils.DefaultTableCellHeaderRenderer;
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement;
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_link;
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_multicastTree;
@@ -671,27 +672,27 @@ public class CellRenderers
 
             switch (networkElementType)
             {
-                case NetworkElementType.NODE:
+                case NODE:
                     isDown = currentNetPlan.getNodeFromId((long) itemId).isDown();
                     break;
 
-                case NetworkElementType.LINK:
+                case LINK:
                     isDown = currentNetPlan.getLinkFromId((long) itemId).isDown();
                     break;
 
-                case NetworkElementType.ROUTE:
+                case ROUTE:
                     isDown = currentNetPlan.getRouteFromId((long) itemId).isDown();
                     break;
 
-                case NetworkElementType.MULTICAST_TREE:
+                case MULTICAST_TREE:
                     isDown = currentNetPlan.getMulticastTreeFromId((long) itemId).isDown();
                     break;
 
-                case NetworkElementType.RESOURCE:
+                case RESOURCE:
                     isDown = currentNetPlan.getResourceFromId((long) itemId).getHostNode().isDown();
                     break;
 
-                case NetworkElementType.FORWARDING_RULE:
+                case FORWARDING_RULE:
                     final int linkIndex = ((Pair<Integer, Integer>) itemId).getSecond();
                     isDown = currentNetPlan.getLink(linkIndex).isDown() || currentNetPlan.getLink(linkIndex).getOriginNode().isDown();
                     break;

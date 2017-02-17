@@ -2,8 +2,10 @@ package com.net2plan.gui.viewEditTopolTables.rightPanelTabs;
 
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import com.google.common.collect.Sets;
+import com.net2plan.gui.ParamValueTable;
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_layer;
+import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.libraries.GraphTheoryMetrics;
@@ -15,9 +17,6 @@ import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.gui.AdvancedJTable;
-import com.net2plan.utils.gui.ClassAwareTableModel;
-import com.net2plan.utils.gui.TableCursorNavigation;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;

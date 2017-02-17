@@ -1,14 +1,14 @@
 package com.net2plan.gui.topologyPane.jung.osmSupport.state;
 
-import com.net2plan.gui.topologyPane.GUINode;
 import com.net2plan.gui.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
+import com.net2plan.gui.utils.networkDesign.GUINode;
 import com.net2plan.gui.utils.visualizationControl.VisualizationConstants;
 import com.net2plan.gui.utils.visualizationControl.VisualizationState;
-import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
-import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.interfaces.ITopologyCanvas;
+import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
-import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.ImageUtils;
 
 import javax.swing.*;

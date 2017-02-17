@@ -1,6 +1,7 @@
 package com.net2plan.gui.viewEditTopolTables.rightPanelTabs;
 
-import com.net2plan.gui.utils.IVisualizationCallback;
+
+import com.net2plan.interfaces.IVisualizationCallback;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
