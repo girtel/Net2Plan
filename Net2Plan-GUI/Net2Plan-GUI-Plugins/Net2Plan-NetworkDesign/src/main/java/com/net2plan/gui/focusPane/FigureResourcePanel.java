@@ -1,6 +1,6 @@
 package com.net2plan.gui.focusPane;
 
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Resource;
 
@@ -18,7 +18,7 @@ public class FigureResourcePanel extends FigureSequencePanel
     private NetPlan np;
     private Dimension preferredSize;
 
-    public FigureResourcePanel(IVisualizationCallback callback , Resource resource , String titleMessage) 
+    public FigureResourcePanel(GUINetworkDesign callback , Resource resource , String titleMessage)
     {
     	super(callback);
     	this.np = resource.getNetPlan();

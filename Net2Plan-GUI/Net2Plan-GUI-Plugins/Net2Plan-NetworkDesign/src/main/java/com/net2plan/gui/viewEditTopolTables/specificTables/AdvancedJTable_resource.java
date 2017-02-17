@@ -8,7 +8,7 @@ import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.interfaces.ITableRowFilter;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -52,7 +52,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique Identifier","Index","Name","Type","Host Node","Capacity","Cap. Units","Ocuppied capacity","Traversing Routes","Upper Resources","Base Resources","Processing Time","Attributes");
 //    private final String[] resourceTypes = StringUtils.arrayOf("Firewall","NAT","CPU","RAM");
 
-    public AdvancedJTable_resource(final IVisualizationCallback callback)
+    public AdvancedJTable_resource(final GUINetworkDesign callback)
     {
         super(createTableModel(callback), callback, Constants.NetworkElementType.RESOURCE, true);
         setDefaultCellRenderers(callback);
@@ -172,7 +172,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
 //        return new int[]{5};
 //    }
 
-    private static TableModel createTableModel(final IVisualizationCallback callback)
+    private static TableModel createTableModel(final GUINetworkDesign callback)
     {
         TableModel resourceTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
@@ -246,7 +246,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
     private void setSpecificCellRenderers() {
     }
 
-    private void setDefaultCellRenderers(final IVisualizationCallback callback) {
+    private void setDefaultCellRenderers(final GUINetworkDesign callback) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());

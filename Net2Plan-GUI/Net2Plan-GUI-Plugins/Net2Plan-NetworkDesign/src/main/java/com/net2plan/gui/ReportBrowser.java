@@ -12,11 +12,11 @@
 
 package com.net2plan.gui;
 
+import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.internal.CustomHTMLEditorKit;
 import com.net2plan.internal.CustomHTMLEditorKit.CustomJEditorPane;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.HTMLUtils;
-import com.net2plan.utils.gui.FileChooserConfirmOverwrite;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;

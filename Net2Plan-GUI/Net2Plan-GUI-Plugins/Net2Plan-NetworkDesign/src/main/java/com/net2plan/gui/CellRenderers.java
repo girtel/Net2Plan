@@ -17,7 +17,7 @@ import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_Networ
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_link;
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_multicastTree;
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_route;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.DoubleUtils;
@@ -193,7 +193,7 @@ public class CellRenderers
          * @param callback     Reference to the handler of the network design
          * @since 0.3.0
          */
-        public LinkRenderer(TableCellRenderer cellRenderer, IVisualizationCallback callback)
+        public LinkRenderer(TableCellRenderer cellRenderer, GUINetworkDesign callback)
         {
             super(cellRenderer, callback, NetworkElementType.LINK);
         }
@@ -481,7 +481,7 @@ public class CellRenderers
          * @param callback     Reference to the handler of the network design
          * @since 0.3.0
          */
-        public ForwardingRuleRenderer(TableCellRenderer cellRenderer, IVisualizationCallback callback)
+        public ForwardingRuleRenderer(TableCellRenderer cellRenderer, GUINetworkDesign callback)
         {
             super(cellRenderer, callback, NetworkElementType.FORWARDING_RULE);
         }
@@ -503,7 +503,7 @@ public class CellRenderers
          * @param callback     Reference to the handler of the network design
          * @since 0.3.0
          */
-        public RouteRenderer(TableCellRenderer cellRenderer, IVisualizationCallback callback)
+        public RouteRenderer(TableCellRenderer cellRenderer, GUINetworkDesign callback)
         {
             super(cellRenderer, callback, NetworkElementType.ROUTE);
         }
@@ -566,7 +566,7 @@ public class CellRenderers
          * @param callback     Reference to the handler of the network design
          * @since 0.3.1
          */
-        public MulticastTreeRenderer(TableCellRenderer cellRenderer, IVisualizationCallback callback)
+        public MulticastTreeRenderer(TableCellRenderer cellRenderer, GUINetworkDesign callback)
         {
             super(cellRenderer, callback, NetworkElementType.MULTICAST_TREE);
         }
@@ -640,7 +640,7 @@ public class CellRenderers
          *
          * @since 0.3.0
          */
-        protected final IVisualizationCallback callback;
+        protected final GUINetworkDesign callback;
 
         /**
          * Default constructor.
@@ -650,7 +650,7 @@ public class CellRenderers
          * @param networkElementType Type of element (i.e. layers, nodes, links, and so on)
          * @since 0.3.0
          */
-        public UpDownRenderer(TableCellRenderer cellRenderer, IVisualizationCallback callback, NetworkElementType networkElementType)
+        public UpDownRenderer(TableCellRenderer cellRenderer, GUINetworkDesign callback, NetworkElementType networkElementType)
         {
             super(cellRenderer, networkElementType);
 

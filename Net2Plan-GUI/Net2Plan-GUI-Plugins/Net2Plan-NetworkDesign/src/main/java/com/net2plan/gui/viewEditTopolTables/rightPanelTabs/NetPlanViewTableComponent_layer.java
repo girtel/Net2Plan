@@ -5,7 +5,7 @@ import com.google.common.collect.Sets;
 import com.net2plan.gui.ParamValueTable;
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_layer;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.libraries.GraphTheoryMetrics;
@@ -44,9 +44,9 @@ public class NetPlanViewTableComponent_layer extends JPanel {
     private final AdvancedJTable_layer layerTable;
     private boolean insideUpdateView;
     
-    private final IVisualizationCallback networkViewer;
+    private final GUINetworkDesign networkViewer;
 
-    public NetPlanViewTableComponent_layer(final IVisualizationCallback networkViewer, final AdvancedJTable_layer layerTable) {
+    public NetPlanViewTableComponent_layer(final GUINetworkDesign networkViewer, final AdvancedJTable_layer layerTable) {
         super(new MigLayout("", "[grow]", "[][][][][][grow]"));
         this.layerTable = layerTable;
         this.networkViewer = networkViewer;

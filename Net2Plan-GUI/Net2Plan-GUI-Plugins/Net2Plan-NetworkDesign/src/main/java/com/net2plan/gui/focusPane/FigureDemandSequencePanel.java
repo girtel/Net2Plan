@@ -1,6 +1,6 @@
 package com.net2plan.gui.focusPane;
 
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.Demand;
 
 import java.awt.*;
@@ -18,7 +18,7 @@ public class FigureDemandSequencePanel extends FigureSequencePanel
     private final BasicStroke lineStroke;
     private Dimension preferredSize;
 
-    public FigureDemandSequencePanel(final IVisualizationCallback callback, final Demand demand, final String... titleMessage)
+    public FigureDemandSequencePanel(final GUINetworkDesign callback, final Demand demand, final String... titleMessage)
     {
         super(callback);
         this.demand = demand;

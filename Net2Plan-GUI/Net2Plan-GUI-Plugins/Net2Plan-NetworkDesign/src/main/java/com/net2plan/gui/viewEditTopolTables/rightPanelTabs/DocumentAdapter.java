@@ -1,7 +1,7 @@
 package com.net2plan.gui.viewEditTopolTables.rightPanelTabs;
 
 
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -10,9 +10,9 @@ import javax.swing.text.Document;
 
 abstract class DocumentAdapter implements DocumentListener 
 {
-	private final IVisualizationCallback networkViewer;
+	private final GUINetworkDesign networkViewer;
 	
-	public DocumentAdapter(IVisualizationCallback networkViewer) { this.networkViewer = networkViewer; }
+	public DocumentAdapter(GUINetworkDesign networkViewer) { this.networkViewer = networkViewer; }
 	
     @Override
     public void changedUpdate(DocumentEvent e) {

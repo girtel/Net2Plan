@@ -1,6 +1,6 @@
 package com.net2plan.gui.focusPane;
 
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.Node;
 
@@ -22,7 +22,7 @@ public class FigureMulticastDemandSequencePanel extends FigureSequencePanel
 
     private Dimension preferredDimension;
 
-    public FigureMulticastDemandSequencePanel(final IVisualizationCallback callback, final MulticastDemand multicastDemand, final String... titleMessage)
+    public FigureMulticastDemandSequencePanel(final GUINetworkDesign callback, final MulticastDemand multicastDemand, final String... titleMessage)
     {
         super(callback);
 

@@ -43,6 +43,7 @@ import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
+import com.net2plan.internal.plugins.PluginSystem;
 import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
@@ -113,6 +114,17 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         super(title);
     }
 
+
+    public UndoRedoManager getUndoRedoNavigationManager()
+    {
+        return undoRedoManager;
+    }
+
+    public WhatIfAnalysisPane getWhatIfAnalysisPane()
+    {
+        return whatIfAnalysisPane;
+    }
+
     @Override
     public void requestUndoAction()
     {
@@ -140,6 +152,9 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @Override
     public void configure(JPanel contentPane)
     {
+        /* Add default canvas systems */
+        PluginSystem.addPlugin(ITopologyCanvas.class, JUNGCanvas.class);
+
         this.currentNetPlan = new NetPlan();
 
         BidiMap<NetworkLayer, Integer> mapLayer2VisualizationOrder = new DualHashBidiMap<>();

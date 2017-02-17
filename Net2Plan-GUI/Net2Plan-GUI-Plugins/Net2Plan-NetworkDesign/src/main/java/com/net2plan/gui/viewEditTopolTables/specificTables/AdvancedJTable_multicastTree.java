@@ -17,10 +17,10 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.CellRenderers;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.interfaces.ITableRowFilter;
-import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -62,7 +62,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
             "Worst case length (km)", "Worst case propagation delay (ms)", "Bottleneck utilization", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Multicast demand", "Ingress node", "Egress nodes", "Multicast demand offered traffic", "This multicast tree carried traffic", "Capacity occupied in the links (typically same as the carried traffic)", "Set of links in the tree", "Number of links in the tree (equal to the number of traversed nodes minus one)", "Set of traversed nodes (including ingress and egress ndoes)", "Number of hops of the longest path (in number of hops) to any egress node", "Length (km) of the longest path (in km) to any egress node", "Propagation demay (ms) of the longest path (in ms) to any egress node", "Highest utilization among all traversed links", "Multicast tree specific attributes");
 
-    public AdvancedJTable_multicastTree(final IVisualizationCallback callback) {
+    public AdvancedJTable_multicastTree(final GUINetworkDesign callback) {
         super(createTableModel(callback), callback, NetworkElementType.MULTICAST_TREE, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
@@ -189,7 +189,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
 //        return new int[]{};
 //    }
 
-    private static TableModel createTableModel(final IVisualizationCallback callback) {
+    private static TableModel createTableModel(final GUINetworkDesign callback) {
         TableModel treeTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
@@ -248,11 +248,11 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
         return treeTableModel;
     }
 
-    private void setDefaultCellRenderers(final IVisualizationCallback callback) {
+    private void setDefaultCellRenderers(final GUINetworkDesign callback) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
-        setDefaultRenderer(Double.class, new NumberCellRenderer());
+        setDefaultRenderer(Double.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
-        setDefaultRenderer(Float.class, new NumberCellRenderer());
+        setDefaultRenderer(Float.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Long.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Integer.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(String.class, new CellRenderers.NonEditableCellRenderer());
@@ -443,7 +443,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
         return addItem;
     }
 
-    private static void createMulticastTreeGUI(final IVisualizationCallback callback) {
+    private static void createMulticastTreeGUI(final GUINetworkDesign callback) {
         final NetPlan netPlan = callback.getDesign();
 
         JTextField textFieldDemandIndex = new JTextField(20);

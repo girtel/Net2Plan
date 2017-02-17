@@ -17,4 +17,15 @@
         <module>Net2Plan-NetworkDesign</module>
         <module>Net2Plan-TrafficDesign</module>
     </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.net2plan.net2plan-gui</groupId>
+                <artifactId>net2plan-gui-exec</artifactId>
+                <version>0.5.1-SNAPSHOT</version>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>

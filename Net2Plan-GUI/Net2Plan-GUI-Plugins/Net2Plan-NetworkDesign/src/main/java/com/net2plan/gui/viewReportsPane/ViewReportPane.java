@@ -4,7 +4,7 @@ package com.net2plan.gui.viewReportsPane;
 import com.net2plan.gui.ReportBrowser;
 import com.net2plan.gui.ThreadExecutionController;
 import com.net2plan.gui.utils.*;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.internal.ErrorHandling;
@@ -24,13 +24,13 @@ import java.util.Map;
 @SuppressWarnings("unchecked")
 public class ViewReportPane extends JSplitPane implements ThreadExecutionController.IThreadExecutionHandler
 {
-	private final IVisualizationCallback mainWindow;
+	private final GUINetworkDesign mainWindow;
     private RunnableSelector reportSelector;
     private ThreadExecutionController reportController;
     private JTabbedPane reportContainer;
     private JButton closeAllReports;
 
-	public ViewReportPane (IVisualizationCallback mainWindow , int newOrientation)
+	public ViewReportPane (GUINetworkDesign mainWindow , int newOrientation)
 	{
 		super (newOrientation);
 

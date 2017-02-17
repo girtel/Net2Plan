@@ -18,7 +18,7 @@ import com.net2plan.gui.utils.networkDesign.GUINode;
 import com.net2plan.gui.utils.visualizationControl.VisualizationConstants;
 import com.net2plan.interfaces.ITopologyCanvas;
 import com.net2plan.interfaces.ITopologyCanvasPlugin;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.CommandLineParser;
@@ -67,7 +67,7 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public final class JUNGCanvas implements ITopologyCanvas
 {
-    private final IVisualizationCallback callback;
+    private final GUINetworkDesign callback;
 
     private double currentInterLayerDistanceInNpCoordinates;
 
@@ -88,7 +88,7 @@ public final class JUNGCanvas implements ITopologyCanvas
      *
      * @since 0.2.3
      */
-    public JUNGCanvas(IVisualizationCallback callback, TopologyPanel topologyPanel)
+    public JUNGCanvas(GUINetworkDesign callback, TopologyPanel topologyPanel)
     {
         this.callback = callback;
 

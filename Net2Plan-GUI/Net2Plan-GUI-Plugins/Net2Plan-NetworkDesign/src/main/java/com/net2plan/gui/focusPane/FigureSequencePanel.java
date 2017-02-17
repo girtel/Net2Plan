@@ -1,7 +1,7 @@
 package com.net2plan.gui.focusPane;
 
 
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,7 +17,7 @@ import java.util.List;
  */
 public abstract class FigureSequencePanel extends JPanel
 {
-    protected final IVisualizationCallback callback;
+    protected final GUINetworkDesign callback;
     protected List<DrawNode> drawnNodes;
     protected List<DrawLine> drawnLines;
 
@@ -25,7 +25,7 @@ public abstract class FigureSequencePanel extends JPanel
     protected final Dimension DEFAULT_DIMENSION = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
     protected final int XYMARGIN = 100;
 
-    public FigureSequencePanel(IVisualizationCallback callback)
+    public FigureSequencePanel(GUINetworkDesign callback)
     {
         this.callback = callback;
         this.drawnNodes = new ArrayList<>();

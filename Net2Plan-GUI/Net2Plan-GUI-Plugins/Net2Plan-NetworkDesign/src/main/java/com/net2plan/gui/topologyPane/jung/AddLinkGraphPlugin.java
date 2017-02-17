@@ -13,11 +13,12 @@
 package com.net2plan.gui.topologyPane.jung;
 
 import com.google.common.collect.Sets;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.utils.networkDesign.GUILink;
 import com.net2plan.gui.utils.networkDesign.GUINode;
 import com.net2plan.interfaces.ITopologyCanvas;
 import com.net2plan.interfaces.ITopologyCanvasPlugin;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import edu.uci.ics.jung.visualization.VisualizationServer.Paintable;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
@@ -39,7 +40,7 @@ import java.awt.geom.Point2D;
 @SuppressWarnings("unchecked")
 public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugin
 {
-    private IVisualizationCallback callback;
+    private GUINetworkDesign callback;
     private GUINode startVertex;
     private Paintable edgePaintable;
     private Paintable arrowPaintable;
@@ -59,7 +60,7 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
      * @param callback Topology callback
      * @since 0.2.0
      */
-    public AddLinkGraphPlugin(IVisualizationCallback callback , ITopologyCanvas canvas) {
+    public AddLinkGraphPlugin(GUINetworkDesign callback , ITopologyCanvas canvas) {
         this(callback, canvas , MouseEvent.BUTTON1_MASK, MouseEvent.BUTTON1_MASK | MouseEvent.SHIFT_MASK);
     }
 
@@ -72,7 +73,7 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
      * @param modifiersBidirectional Modifier to activate the plugin to add bidirectional links
      * @since 0.2.0
      */
-    public AddLinkGraphPlugin(IVisualizationCallback callback, ITopologyCanvas canvas , int modifiers, int modifiersBidirectional) {
+    public AddLinkGraphPlugin(GUINetworkDesign callback, ITopologyCanvas canvas , int modifiers, int modifiersBidirectional) {
         setModifiers(modifiers);
         setModifiersBidirectional(modifiersBidirectional);
 

@@ -17,7 +17,7 @@ import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.FixedColumnDecorator;
 import com.net2plan.gui.viewEditTopolTables.tableStateFiles.TableState;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -62,7 +62,7 @@ import java.util.*;
 public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
 {
     protected final TableModel model;
-    protected final IVisualizationCallback callback;
+    protected final GUINetworkDesign callback;
     protected final NetworkElementType networkElementType;
 
     protected final JTable mainTable;
@@ -93,7 +93,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
      * @param networkElementType Network element type
      * @since 0.2.0
      */
-    public AdvancedJTable_NetworkElement(TableModel model, final IVisualizationCallback networkViewer, NetworkElementType networkElementType, boolean canExpandAttributes)
+    public AdvancedJTable_NetworkElement(TableModel model, final GUINetworkDesign networkViewer, NetworkElementType networkElementType, boolean canExpandAttributes)
     {
         super(model);
         this.model = model;

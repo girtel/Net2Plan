@@ -15,12 +15,12 @@ package com.net2plan.gui.viewEditTopolTables.specificTables;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.CellRenderers;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.interfaces.ITableRowFilter;
-import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -48,7 +48,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
     private static final int COLUMN_SPLITTINGRATIO = 3;
     private static final int COLUMN_CARRIEDTRAFFIC = 4;
 
-    public AdvancedJTable_forwardingRule(final IVisualizationCallback callback) {
+    public AdvancedJTable_forwardingRule(final GUINetworkDesign callback) {
         super(createTableModel(callback), callback, NetworkElementType.FORWARDING_RULE, false);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
@@ -148,7 +148,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
 //        return new int[]{0, 1, 2};
 //    }
 
-    private static TableModel createTableModel(final IVisualizationCallback callback) {
+    private static TableModel createTableModel(final GUINetworkDesign callback) {
         TableModel forwardingRuleTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
@@ -202,11 +202,11 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
         return forwardingRuleTableModel;
     }
 
-    private void setDefaultCellRenderers(final IVisualizationCallback callback) {
+    private void setDefaultCellRenderers(final GUINetworkDesign callback) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
-        setDefaultRenderer(Double.class, new NumberCellRenderer());
+        setDefaultRenderer(Double.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
-        setDefaultRenderer(Float.class, new NumberCellRenderer());
+        setDefaultRenderer(Float.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Long.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Integer.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(String.class, new CellRenderers.NonEditableCellRenderer());
@@ -397,7 +397,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
         return addItem;
     }
 
-    private static void createForwardingRuleGUI(final IVisualizationCallback callback) {
+    private static void createForwardingRuleGUI(final GUINetworkDesign callback) {
         final NetPlan netPlan = callback.getDesign();
         final JComboBox nodeSelector = new WiderJComboBox();
         final JComboBox linkSelector = new WiderJComboBox();

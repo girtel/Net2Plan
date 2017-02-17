@@ -1,6 +1,6 @@
 package com.net2plan.gui.focusPane;
 
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -27,10 +27,10 @@ public class FocusPanelHyperLinkListener implements HyperlinkListener
 	public static final String PREFIXLAYER = "layer";
 	public static final String PREFIXRESOURCETYPE = "resourceType";
 	public static final String PREFIXINTERNALANCHOR = "internal";
-	private IVisualizationCallback callback;
+	private GUINetworkDesign callback;
 	private final JEditorPane ep;
 	
-	public FocusPanelHyperLinkListener (IVisualizationCallback callback , JEditorPane ep)
+	public FocusPanelHyperLinkListener (GUINetworkDesign callback , JEditorPane ep)
 	{
 		super ();
 		this.callback = callback;

@@ -13,7 +13,6 @@
 package com.net2plan.gui;
 
 import com.net2plan.gui.utils.*;
-import com.net2plan.interfaces.ITopologyCanvas;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.ErrorHandling;
@@ -436,9 +435,6 @@ public class GUINet2Plan extends JFrame implements ActionListener {
      */
     public static void main(String[] args) {
         SystemUtils.configureEnvironment(GUINet2Plan.class, Constants.UserInterface.GUI);
-		
-		/* Add default canvas systems */
-        PluginSystem.addPlugin(ITopologyCanvas.class, JUNGCanvas.class);
 
         PrintStream stdout = System.out;
         PrintStream stderr = System.err;

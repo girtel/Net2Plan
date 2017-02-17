@@ -1,8 +1,8 @@
 package com.net2plan.gui.viewEditWindows.parent;
 
 import com.net2plan.gui.GUINet2Plan;
+import com.net2plan.gui.utils.WindowUtils;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.utils.gui.WindowUtils;
 
 import javax.swing.*;
 import java.awt.*;

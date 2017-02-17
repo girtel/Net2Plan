@@ -1,6 +1,6 @@
 package com.net2plan.gui.viewEditTopolTables.rightPanelTabs;
 
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -14,10 +14,10 @@ import java.awt.event.MouseEvent;
 import java.util.HashMap;
 
 class SingleElementAttributeEditor extends MouseAdapter {
-    private final IVisualizationCallback callback;
+    private final GUINetworkDesign callback;
     private final NetworkElementType type;
 
-    public SingleElementAttributeEditor(final IVisualizationCallback callback, final NetworkElementType type) {
+    public SingleElementAttributeEditor(final GUINetworkDesign callback, final NetworkElementType type) {
         this.callback = callback;
         this.type = type;
     }

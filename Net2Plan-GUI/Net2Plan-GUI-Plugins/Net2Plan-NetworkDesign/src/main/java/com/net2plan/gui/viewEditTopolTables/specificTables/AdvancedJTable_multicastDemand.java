@@ -14,6 +14,7 @@ package com.net2plan.gui.viewEditTopolTables.specificTables;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.CellRenderers;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
@@ -21,7 +22,6 @@ import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.gui.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.interfaces.ITableRowFilter;
-import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -61,7 +61,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
             "Offered traffic", "Carried traffic", "% Lost traffic", "Routing cycles", "Bifurcated", "# Multicast trees", "Max e2e latency (ms)", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Ingress node", "Egress nodes", "Indicates the coupled upper layer links, if any, or empty", "Offered traffic by the multicast demand", "Carried traffic by multicast trees carrying demand traffic", "Percentage of lost traffic from the offered", "Indicates whether there are routing cycles: always loopless since we always deal with multicast trees", "Indicates whether the demand has more than one associated multicast tree carrying traffic", "Number of associated multicast trees", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", "Multicast demand-specific attributes");
 
-    public AdvancedJTable_multicastDemand(final IVisualizationCallback callback) {
+    public AdvancedJTable_multicastDemand(final GUINetworkDesign callback) {
         super(createTableModel(callback), callback, NetworkElementType.MULTICAST_DEMAND, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
@@ -186,7 +186,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
 //        return new int[]{3, 4, 5, 9, 10};
 //    }
 
-    private static TableModel createTableModel(final IVisualizationCallback callback) {
+    private static TableModel createTableModel(final GUINetworkDesign callback) {
         TableModel multicastDemandTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
             private static final long serialVersionUID = 1L;
 
@@ -260,12 +260,12 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
         return multicastDemandTableModel;
     }
 
-    private void setDefaultCellRenderers(final IVisualizationCallback callback)
+    private void setDefaultCellRenderers(final GUINetworkDesign callback)
     {
         setDefaultRenderer(Boolean.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.CheckBoxRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Double.class, new CellRenderers.LostTrafficCellRenderer(new NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Double.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
         setDefaultRenderer(Object.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.NonEditableCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
-        setDefaultRenderer(Float.class, new CellRenderers.LostTrafficCellRenderer(new NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
+        setDefaultRenderer(Float.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
         setDefaultRenderer(Long.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
         setDefaultRenderer(Integer.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.NumberCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
         setDefaultRenderer(String.class, new CellRenderers.LostTrafficCellRenderer(new CellRenderers.NonEditableCellRenderer(), COLUMN_OFFEREDTRAFFIC, COLUMN_LOSTTRAFFIC));
@@ -453,7 +453,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
         return addItem;
     }
 
-    private static void createMulticastDemandGUI(final NetworkElementType networkElementType, final IVisualizationCallback callback) {
+    private static void createMulticastDemandGUI(final NetworkElementType networkElementType, final GUINetworkDesign callback) {
         final NetPlan netPlan = callback.getDesign();
 
         JTextField textFieldIngressNodeId = new JTextField(20);

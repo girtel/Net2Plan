@@ -12,15 +12,15 @@
 
 package com.net2plan.gui;
 
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.TableColumnHider;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.SwingUtils;
-import com.net2plan.utils.gui.AdvancedJTable;
-import com.net2plan.utils.gui.ClassAwareTableModel;
-import com.net2plan.utils.gui.TableColumnHider;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -49,7 +49,7 @@ public class AttributeEditor extends JDialog implements ActionListener {
      * @param type     Type of element (i.e. layers, nodes, links, and so on)
      * @since 0.3.0
      */
-    public AttributeEditor(final IVisualizationCallback callback, final NetworkElementType type) {
+    public AttributeEditor(final GUINetworkDesign callback, final NetworkElementType type) {
         NetPlan netPlan = callback.getDesign();
 
         Object[][] data;
@@ -464,7 +464,7 @@ public class AttributeEditor extends JDialog implements ActionListener {
      * @param itemId   Item identifier
      * @since 0.3.0
      */
-    public AttributeEditor(final IVisualizationCallback callback, final NetworkElementType type, Object itemId) {
+    public AttributeEditor(final GUINetworkDesign callback, final NetworkElementType type, Object itemId) {
         this(callback, type);
 
         final TableColumnHider tch = new TableColumnHider(table);

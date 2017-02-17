@@ -2,7 +2,7 @@ package com.net2plan.gui.viewEditTopolTables.rightPanelTabs;
 
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_layer;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.StringUtils;
@@ -22,9 +22,9 @@ public class NetPlanViewTableComponent_network extends JPanel {
     private AdvancedJTable networkAttributeTable;
     private AdvancedJTable_layer layerTable;
     private JScrollPane scrollPane;
-    private final IVisualizationCallback networkViewer;
+    private final GUINetworkDesign networkViewer;
 
-    public NetPlanViewTableComponent_network(final IVisualizationCallback networkViewer, AdvancedJTable_layer layerTable) {
+    public NetPlanViewTableComponent_network(final GUINetworkDesign networkViewer, AdvancedJTable_layer layerTable) {
         super(new MigLayout("", "[][grow]", "[][][grow][][][][][grow]"));
 
         this.layerTable = layerTable;

@@ -1,6 +1,6 @@
 package com.net2plan.gui.focusPane;
 
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastTree;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -19,7 +19,7 @@ public class FigureMulticastTreePanel extends FigureSequencePanel
 
     private Dimension preferredDimension;
 
-    public FigureMulticastTreePanel(IVisualizationCallback callback, MulticastTree tree, String titleMessage, double carriedTraffic)
+    public FigureMulticastTreePanel(GUINetworkDesign callback, MulticastTree tree, String titleMessage, double carriedTraffic)
     {
         super(callback);
         this.generalMessage = Arrays.asList(titleMessage, "Carried trafffic: " + String.format("%.2f ", carriedTraffic) + " " + callback.getDesign().getDemandTrafficUnitsName(tree.getLayer()));

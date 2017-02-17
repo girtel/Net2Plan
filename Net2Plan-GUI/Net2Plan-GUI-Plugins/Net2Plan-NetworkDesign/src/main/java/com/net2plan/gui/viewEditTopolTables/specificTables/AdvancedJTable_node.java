@@ -14,6 +14,7 @@ package com.net2plan.gui.viewEditTopolTables.specificTables;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.CellRenderers;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.utils.visualizationControl.VisualizationState;
@@ -21,7 +22,6 @@ import com.net2plan.gui.viewEditTopolTables.tableVisualizationFilters.TBFToFromC
 import com.net2plan.gui.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.interfaces.ITableRowFilter;
 import com.net2plan.interfaces.ITopologyCanvas;
-import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -90,7 +90,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
      * @param callback The network callback
      * @since 0.2.0
      */
-    public AdvancedJTable_node(final IVisualizationCallback callback) {
+    public AdvancedJTable_node(final GUINetworkDesign callback) {
         super(createTableModel(callback), callback, NetworkElementType.NODE, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
@@ -223,7 +223,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
         return attColumnsHeaders;
     }
 
-    private static TableModel createTableModel(final IVisualizationCallback callback)
+    private static TableModel createTableModel(final GUINetworkDesign callback)
     {
 //    	final TopologyPanel topologyPanel = callback.getTopologyPanel();
         TableModel nodeTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
@@ -329,11 +329,11 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
         return nodeTableModel;
     }
 
-    private void setDefaultCellRenderers(final IVisualizationCallback callback) {
+    private void setDefaultCellRenderers(final GUINetworkDesign callback) {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
-        setDefaultRenderer(Double.class, new NumberCellRenderer());
+        setDefaultRenderer(Double.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
-        setDefaultRenderer(Float.class, new NumberCellRenderer());
+        setDefaultRenderer(Float.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Long.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Integer.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(String.class, new CellRenderers.NonEditableCellRenderer());

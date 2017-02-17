@@ -1,6 +1,6 @@
 package com.net2plan.gui.focusPane;
 
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -26,7 +26,7 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
 
     private Dimension preferredSize;
 
-    public FigureSRGSequencePanel(final IVisualizationCallback callback, final SharedRiskGroup srg, final String... titleMessage)
+    public FigureSRGSequencePanel(final GUINetworkDesign callback, final SharedRiskGroup srg, final String... titleMessage)
     {
         super(callback);
         this.riskGroup = srg;

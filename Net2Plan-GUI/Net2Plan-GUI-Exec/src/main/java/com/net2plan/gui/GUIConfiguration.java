@@ -18,6 +18,7 @@ import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.Plugin;
 import com.net2plan.internal.plugins.PluginSystem;
+import com.net2plan.utils.SwingUtils;
 import com.net2plan.utils.Triple;
 
 import javax.swing.*;

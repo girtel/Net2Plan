@@ -13,8 +13,8 @@
 
 package com.net2plan.gui.topologyPane.jung;
 
-import com.net2plan.gui.topologyPane.ITopologyCanvasPlugin;
-import com.net2plan.internal.plugins.ITopologyCanvas;
+import com.net2plan.interfaces.ITopologyCanvas;
+import com.net2plan.interfaces.ITopologyCanvasPlugin;
 import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
 
 /**
@@ -23,7 +23,8 @@ import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.3
  */
-public abstract class AbstractCanvasPlugin extends AbstractGraphMousePlugin implements ITopologyCanvasPlugin {
+public abstract class AbstractCanvasPlugin extends AbstractGraphMousePlugin implements ITopologyCanvasPlugin
+{
     /**
      * Reference to the topology canvas.
      *

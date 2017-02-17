@@ -1,6 +1,6 @@
 package com.net2plan.gui;
 
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.utils.Triple;
@@ -17,14 +17,14 @@ import java.util.Map;
  */
 public class UndoRedoManager
 {
-    private final IVisualizationCallback callback;
+    private final GUINetworkDesign callback;
     private List<TimelineState> pastInfoVsNewNp;
     private int pastInfoVsNewNpCursor;
     private int maxSizeUndoList;
 
     private TimelineState backupState;
 
-    public UndoRedoManager(IVisualizationCallback callback, int maxSizeUndoList)
+    public UndoRedoManager(GUINetworkDesign callback, int maxSizeUndoList)
     {
         this.pastInfoVsNewNp = new ArrayList<>();
         this.pastInfoVsNewNpCursor = -1;

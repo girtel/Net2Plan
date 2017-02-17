@@ -4,7 +4,7 @@ import com.net2plan.gui.ThreadExecutionController;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.RunnableSelector;
 import com.net2plan.gui.utils.visualizationControl.VisualizationState;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -28,13 +28,13 @@ import java.util.Map;
 
 public class OfflineExecutionPanel extends JPanel implements ThreadExecutionController.IThreadExecutionHandler
 {
-	private final IVisualizationCallback mainWindow;
+	private final GUINetworkDesign mainWindow;
     private ThreadExecutionController algorithmController;
     private RunnableSelector algorithmSelector;
     private long start;
     final JButton btn_solve;
 	
-	public OfflineExecutionPanel (IVisualizationCallback mainWindow)
+	public OfflineExecutionPanel (GUINetworkDesign mainWindow)
 	{
 		super ();
 

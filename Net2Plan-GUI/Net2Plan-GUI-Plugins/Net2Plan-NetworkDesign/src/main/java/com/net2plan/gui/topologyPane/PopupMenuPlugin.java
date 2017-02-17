@@ -18,7 +18,7 @@ import com.net2plan.gui.utils.networkDesign.GUINode;
 import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.ITopologyCanvas;
 import com.net2plan.interfaces.ITopologyCanvasPlugin;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -42,7 +42,7 @@ import java.util.List;
  */
 public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlugin
 {
-    private final IVisualizationCallback callback;
+    private final GUINetworkDesign callback;
     private final ITopologyCanvas canvas;
 
     /**
@@ -51,7 +51,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
      * @param callback Reference to the class handling change events.
      * @since 0.3.1
      */
-    public PopupMenuPlugin(IVisualizationCallback callback , ITopologyCanvas canvas)
+    public PopupMenuPlugin(GUINetworkDesign callback , ITopologyCanvas canvas)
     {
         this.callback = callback;
         this.canvas = canvas;

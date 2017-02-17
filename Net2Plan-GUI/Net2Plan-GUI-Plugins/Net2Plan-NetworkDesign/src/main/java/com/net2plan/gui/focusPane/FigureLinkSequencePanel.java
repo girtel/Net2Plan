@@ -1,6 +1,6 @@
 package com.net2plan.gui.focusPane;
 
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.*;
 
 import java.awt.*;
@@ -19,7 +19,7 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
     private NetPlan np;
     private Dimension preferredSize;
 
-    public FigureLinkSequencePanel(IVisualizationCallback callback, List<? extends NetworkElement> path, NetworkLayer layer, List<Double> occupationsPerElement, double carriedTraffic, String... titleMessage)
+    public FigureLinkSequencePanel(GUINetworkDesign callback, List<? extends NetworkElement> path, NetworkLayer layer, List<Double> occupationsPerElement, double carriedTraffic, String... titleMessage)
     {
         super(callback);
         this.np = layer.getNetPlan();

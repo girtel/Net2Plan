@@ -7,7 +7,7 @@ import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.ColumnsAutoSizer;
 import com.net2plan.gui.utils.visualizationControl.VisualizationState;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
@@ -33,7 +33,7 @@ import java.util.List;
  */
 public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
 {
-    private final IVisualizationCallback callback;
+    private final GUINetworkDesign callback;
 
     private final DefaultTableModel tableModel;
 
@@ -62,7 +62,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             "Is the active layer?"
     );
 
-    public AdvancedJTable_MultiLayerControlTable(final IVisualizationCallback callback)
+    public AdvancedJTable_MultiLayerControlTable(final GUINetworkDesign callback)
     {
         super();
 

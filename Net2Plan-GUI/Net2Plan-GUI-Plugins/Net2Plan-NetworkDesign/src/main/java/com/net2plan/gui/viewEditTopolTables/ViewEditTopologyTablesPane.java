@@ -5,7 +5,7 @@ import com.net2plan.gui.utils.FullScrollPaneLayout;
 import com.net2plan.gui.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
 import com.net2plan.gui.viewEditTopolTables.specificTables.*;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
@@ -24,13 +24,13 @@ import java.util.Map;
 @SuppressWarnings("unchecked")
 public class ViewEditTopologyTablesPane extends JPanel
 {
-	private final IVisualizationCallback callback;
+	private final GUINetworkDesign callback;
     private final JTabbedPane netPlanView;
     private final Map<Constants.NetworkElementType, AdvancedJTable_NetworkElement> netPlanViewTable;
     private final Map<Constants.NetworkElementType, JComponent> netPlanViewTableComponent;
     private final Map<Constants.NetworkElementType, JLabel> netPlanViewTableNumEntriesLabel;
 
-	public ViewEditTopologyTablesPane (IVisualizationCallback callback , LayoutManager layout)
+	public ViewEditTopologyTablesPane (GUINetworkDesign callback , LayoutManager layout)
 	{
 		super (layout);
 		

@@ -15,21 +15,19 @@ package com.net2plan.gui.plugins;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import com.net2plan.gui.utils.*;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.IGUIModule;
-import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.TrafficMatrixGenerationModels;
 import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.Triple;
-import com.net2plan.utils.gui.AdvancedJTable;
-import com.net2plan.utils.gui.ClassAwareTableModel;
+import com.sun.tools.javac.util.GraphUtils;
 import net.miginfocom.swing.MigLayout;
+import org.apache.commons.lang3.tuple.Triple;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -55,7 +53,8 @@ import java.util.List;
  * @since 0.2.0
  */
 @SuppressWarnings("unchecked")
-public final class GUITrafficDesign extends IGUIModule {
+public final class GUITrafficDesign extends IGUIModule
+{
     private final static String TITLE = "Traffic matrix design";
     private final static int DEFAULT_NUMBER_OF_NODES = 4;
     private final static TabIcon CLOSE_TAB_ICON = new TabIcon(TabIcon.IconType.TIMES_SIGN);

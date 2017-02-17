@@ -5,7 +5,7 @@ import com.net2plan.gui.topologyPane.jung.osmSupport.OSMController;
 import com.net2plan.gui.topologyPane.jung.osmSupport.OSMException;
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.interfaces.ITopologyCanvas;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
@@ -25,11 +25,11 @@ import java.util.Collections;
  */
 class OSMOnState implements OSMState
 {
-    private final IVisualizationCallback callback;
+    private final GUINetworkDesign callback;
     private final ITopologyCanvas canvas;
     private final OSMController mapController;
 
-    OSMOnState(final IVisualizationCallback callback, final ITopologyCanvas canvas, final OSMController mapController)
+    OSMOnState(final GUINetworkDesign callback, final ITopologyCanvas canvas, final OSMController mapController)
     {
         this.callback = callback;
         this.canvas = canvas;

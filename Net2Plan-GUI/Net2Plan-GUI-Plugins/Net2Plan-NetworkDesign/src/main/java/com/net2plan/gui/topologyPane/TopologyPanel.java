@@ -24,7 +24,7 @@ import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.gui.viewEditWindows.WindowController;
 import com.net2plan.interfaces.ITopologyCanvas;
 import com.net2plan.interfaces.ITopologyCanvasPlugin;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.DialogType;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -45,7 +45,7 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public class TopologyPanel extends JPanel implements ActionListener//FrequentisBackgroundPanel implements ActionListener//JPanel implements ActionListener
 {
-    private final IVisualizationCallback callback;
+    private final GUINetworkDesign callback;
     private final ITopologyCanvas canvas;
 
     //    private final JPanel layerChooserPane;
@@ -73,7 +73,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param callback   Topology callback listening plugin events
      * @param canvasType Canvas type (i.e. JUNG)
      */
-    public TopologyPanel(IVisualizationCallback callback, Class<? extends ITopologyCanvas> canvasType)
+    public TopologyPanel(GUINetworkDesign callback, Class<? extends ITopologyCanvas> canvasType)
     {
         this(callback, canvasType, null);
     }
@@ -86,7 +86,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param canvasType Canvas type (i.e. JUNG)
      * @param plugins    List of plugins to be included (it may be null)
      */
-    public TopologyPanel(IVisualizationCallback callback, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins)
+    public TopologyPanel(GUINetworkDesign callback, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins)
     {
         this(callback, null, null, canvasType, plugins);
     }
@@ -100,7 +100,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param canvasType             Canvas type (i.e. JUNG)
      * @param plugins                List of plugins to be included (it may be null)
      */
-    public TopologyPanel(final IVisualizationCallback callback, File defaultDesignDirectory, File defaultDemandDirectory, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins)
+    public TopologyPanel(final GUINetworkDesign callback, File defaultDesignDirectory, File defaultDemandDirectory, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins)
     {
         File currentDir = SystemUtils.getCurrentDir();
 
@@ -111,7 +111,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
         try
         {
-            canvas = canvasType.getDeclaredConstructor(IVisualizationCallback.class, TopologyPanel.class).newInstance(callback, this);
+            canvas = canvasType.getDeclaredConstructor(GUINetworkDesign.class, TopologyPanel.class).newInstance(callback, this);
         } catch (Exception e)
         {
             throw new RuntimeException(e);

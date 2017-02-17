@@ -2,7 +2,7 @@ package com.net2plan.gui.focusPane;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.visualizationControl.VisualizationState;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.libraries.SRGUtils;
@@ -26,9 +26,9 @@ import java.util.Set;
 
 public class FocusPane extends JPanel
 {
-	private final IVisualizationCallback callback;
+	private final GUINetworkDesign callback;
 
-	public FocusPane (IVisualizationCallback callback)
+	public FocusPane (GUINetworkDesign callback)
 	{
 		super ();
 
@@ -453,7 +453,7 @@ public class FocusPane extends JPanel
 	}
 
 	/* whenever we have a click using an internal link, is processed here */
-	static void processMouseClickInternalLink (String internalLink , IVisualizationCallback callback)
+	static void processMouseClickInternalLink (String internalLink , GUINetworkDesign callback)
 	{
 		final NetPlan np = callback.getDesign();
 		final VisualizationState vs = callback.getVisualizationState();

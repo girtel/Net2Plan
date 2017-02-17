@@ -3,7 +3,7 @@ package com.net2plan.gui.topologyPane.jung.osmSupport.state;
 import com.net2plan.gui.topologyPane.TopologyPanel;
 import com.net2plan.gui.topologyPane.jung.osmSupport.OSMController;
 import com.net2plan.interfaces.ITopologyCanvas;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.Node;
 
 import java.awt.geom.Point2D;
@@ -18,13 +18,13 @@ public class OSMStateManager
     private final OSMOnState runningState;
     private final OSMJUNGOffState stoppedState;
 
-    private final IVisualizationCallback callback;
+    private final GUINetworkDesign callback;
     private final TopologyPanel topologyPanel;
     private final ITopologyCanvas canvas;
 
     private final OSMController mapController;
 
-    public OSMStateManager(final IVisualizationCallback callback, final TopologyPanel topologyPanel, final ITopologyCanvas canvas)
+    public OSMStateManager(final GUINetworkDesign callback, final TopologyPanel topologyPanel, final ITopologyCanvas canvas)
     {
         this.callback = callback;
         this.topologyPanel = topologyPanel;

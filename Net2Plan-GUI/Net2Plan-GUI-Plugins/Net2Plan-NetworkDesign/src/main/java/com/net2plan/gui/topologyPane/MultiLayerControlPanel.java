@@ -2,7 +2,7 @@ package com.net2plan.gui.topologyPane;
 
 import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.gui.viewEditTopolTables.multilayerTabs.AdvancedJTable_MultiLayerControlTable;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
@@ -23,11 +23,11 @@ import java.util.Map;
  */
 public class MultiLayerControlPanel extends JPanel
 {
-    private final IVisualizationCallback callback;
+    private final GUINetworkDesign callback;
     private final AdvancedJTable_MultiLayerControlTable multiLayerTable;
     private final MultiLayerButtonPanel buttonPanel;
 
-    public MultiLayerControlPanel(final IVisualizationCallback callback)
+    public MultiLayerControlPanel(final GUINetworkDesign callback)
     {
         this.callback = callback;
         this.multiLayerTable = new AdvancedJTable_MultiLayerControlTable(callback);

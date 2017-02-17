@@ -14,17 +14,18 @@ package com.net2plan.gui.viewEditTopolTables.specificTables;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.CellRenderers;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.interfaces.ITableRowFilter;
-import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.SRGUtils.SharedRiskModel;
 import com.net2plan.utils.CollectionUtils;
+import com.net2plan.utils.Constants;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.SwingUtils;
 import net.miginfocom.swing.MigLayout;
@@ -48,8 +49,8 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
     private static final String netPlanViewTabName = "Shared-risk groups";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "MTTF (days)", "MTTR (days)", "Availability",
             "Nodes", "Links", "Links (other layers)", "# Affected routes", "# Affected backup routes", "# Affected multicast trees", "Attributes");
-    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", 
-    		"Index (consecutive integer starting in zero)", "Mean time to fail", "Mean time to repair", "Expected availability", "Nodes included into the shared-risk group", "Links (in this layer) included into the shared-risk group", "Links (in other layers) included into the shared-risk group", "# Affected routes (primary or backup)", "# Affected routes that are designated as backup routes", "# Affected multicast trees", "Attributes");
+    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)",
+            "Index (consecutive integer starting in zero)", "Mean time to fail", "Mean time to repair", "Expected availability", "Nodes included into the shared-risk group", "Links (in this layer) included into the shared-risk group", "Links (in other layers) included into the shared-risk group", "# Affected routes (primary or backup)", "# Affected routes that are designated as backup routes", "# Affected multicast trees", "Attributes");
     private static final int COLUMN_ID = 0;
     private static final int COLUMN_INDEX = 1;
     private static final int COLUMN_MTTF = 2;
@@ -64,7 +65,8 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
     private static final int COLUMN_ATTRIBUTES = 11;
     private static int MAXNUMDECIMALSINAVAILABILITY = 7;
 
-    public AdvancedJTable_srg(final IVisualizationCallback callback) {
+    public AdvancedJTable_srg(final GUINetworkDesign callback)
+    {
         super(createTableModel(callback), callback, NetworkElementType.SRG, true);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
@@ -79,16 +81,16 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         fixedTable.getTableHeader().setDefaultRenderer(new CellRenderers.FixedTableHeaderRenderer());
     }
 
-    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) 
+    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns)
     {
         final NetworkLayer layer = currentState.getNetworkLayerDefault();
-    	final List<SharedRiskGroup> rowVisibleSRGs = getVisibleElementsInTable ();
+        final List<SharedRiskGroup> rowVisibleSRGs = getVisibleElementsInTable();
         List<Object[]> allSRGData = new LinkedList<Object[]>();
-        for (SharedRiskGroup srg : rowVisibleSRGs) 
+        for (SharedRiskGroup srg : rowVisibleSRGs)
         {
-            final Set<Route> routeIds_thisSRG = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING ? srg.getAffectedRoutes(layer) : new LinkedHashSet<Route>();
-            final Set<Route> segmentIds_thisSRG = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING ? srg.getAffectedRoutes(layer).stream().filter(e->e.isBackupRoute()).collect(Collectors.toSet()) : new LinkedHashSet<Route>();
-            final Set<MulticastTree> treeIds_thisSRG = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING ? srg.getAffectedMulticastTrees(layer) : new LinkedHashSet<MulticastTree>();
+            final Set<Route> routeIds_thisSRG = currentState.getRoutingType() == Constants.RoutingType.SOURCE_ROUTING ? srg.getAffectedRoutes(layer) : new LinkedHashSet<Route>();
+            final Set<Route> segmentIds_thisSRG = currentState.getRoutingType() == Constants.RoutingType.SOURCE_ROUTING ? srg.getAffectedRoutes(layer).stream().filter(e -> e.isBackupRoute()).collect(Collectors.toSet()) : new LinkedHashSet<Route>();
+            final Set<MulticastTree> treeIds_thisSRG = currentState.getRoutingType() == Constants.RoutingType.SOURCE_ROUTING ? srg.getAffectedMulticastTrees(layer) : new LinkedHashSet<MulticastTree>();
             final int numRoutes = routeIds_thisSRG.size();
             final int numSegments = segmentIds_thisSRG.size();
             final int numMulticastTrees = treeIds_thisSRG.size();
@@ -109,11 +111,11 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
             srgData[COLUMN_AFFECTEDTREES] = numMulticastTrees == 0 ? "none" : numMulticastTrees + " (" + CollectionUtils.join(NetPlan.getIndexes(treeIds_thisSRG), ", ") + ")";
             srgData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(srg.getAttributes());
 
-            for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
+            for (int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size(); i++)
             {
-                if(srg.getAttributes().containsKey(attributesColumns.get(i-netPlanViewTableHeader.length)))
+                if (srg.getAttributes().containsKey(attributesColumns.get(i - netPlanViewTableHeader.length)))
                 {
-                    srgData[i] = srg.getAttribute(attributesColumns.get(i-netPlanViewTableHeader.length));
+                    srgData[i] = srg.getAttribute(attributesColumns.get(i - netPlanViewTableHeader.length));
                 }
             }
 
@@ -122,43 +124,46 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         }
 
         /* Add the aggregation row with the aggregated statistics */
-        final int aggNumNodes = rowVisibleSRGs.stream().mapToInt(e->e.getNodes().size()).sum();
-        final int aggNumLinks = rowVisibleSRGs.stream().mapToInt(e->e.getLinks(layer).size()).sum();
-        final int aggNumLinksOtherLayers = rowVisibleSRGs.stream().mapToInt(e->e.getLinksAllLayers().size()).sum();
-        final int aggNumAffectedRoutes = rowVisibleSRGs.stream().mapToInt(e->(int) e.getAffectedRoutes(layer).stream().filter(ee->ee.isBackupRoute()).count()).sum();
-        final int aggNumAffectedTrees = rowVisibleSRGs.stream().mapToInt(e->(int) e.getAffectedMulticastTrees(layer).size()).sum();
-        final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue [netPlanViewTableHeader.length + attributesColumns.size()];
+        final int aggNumNodes = rowVisibleSRGs.stream().mapToInt(e -> e.getNodes().size()).sum();
+        final int aggNumLinks = rowVisibleSRGs.stream().mapToInt(e -> e.getLinks(layer).size()).sum();
+        final int aggNumLinksOtherLayers = rowVisibleSRGs.stream().mapToInt(e -> e.getLinksAllLayers().size()).sum();
+        final int aggNumAffectedRoutes = rowVisibleSRGs.stream().mapToInt(e -> (int) e.getAffectedRoutes(layer).stream().filter(ee -> ee.isBackupRoute()).count()).sum();
+        final int aggNumAffectedTrees = rowVisibleSRGs.stream().mapToInt(e -> (int) e.getAffectedMulticastTrees(layer).size()).sum();
+        final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData [COLUMN_NODES] = new LastRowAggregatedValue(aggNumNodes);
-        aggregatedData [COLUMN_LINKS] = new LastRowAggregatedValue(aggNumLinks);
-        aggregatedData [COLUMN_LINKSOTHERLAYERS] = new LastRowAggregatedValue(aggNumLinksOtherLayers);
-        aggregatedData [COLUMN_AFFECTEDROUTES] = new LastRowAggregatedValue(aggNumAffectedRoutes);
-        aggregatedData [COLUMN_AFFECTEDBACKUPROUTES] = new LastRowAggregatedValue(aggNumAffectedRoutes);
-        aggregatedData [COLUMN_AFFECTEDTREES] = new LastRowAggregatedValue(aggNumAffectedTrees);
+        aggregatedData[COLUMN_NODES] = new LastRowAggregatedValue(aggNumNodes);
+        aggregatedData[COLUMN_LINKS] = new LastRowAggregatedValue(aggNumLinks);
+        aggregatedData[COLUMN_LINKSOTHERLAYERS] = new LastRowAggregatedValue(aggNumLinksOtherLayers);
+        aggregatedData[COLUMN_AFFECTEDROUTES] = new LastRowAggregatedValue(aggNumAffectedRoutes);
+        aggregatedData[COLUMN_AFFECTEDBACKUPROUTES] = new LastRowAggregatedValue(aggNumAffectedRoutes);
+        aggregatedData[COLUMN_AFFECTEDTREES] = new LastRowAggregatedValue(aggNumAffectedTrees);
         allSRGData.add(aggregatedData);
 
         return allSRGData;
     }
 
-    public String getTabName() {
+    public String getTabName()
+    {
         return netPlanViewTabName;
     }
 
-    public String[] getTableHeaders() {
+    public String[] getTableHeaders()
+    {
         return netPlanViewTableHeader;
     }
 
-    public String[] getCurrentTableHeaders(){
+    public String[] getCurrentTableHeaders()
+    {
         ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
         String[] headers = new String[netPlanViewTableHeader.length + attColumnsHeaders.size()];
-        for(int i = 0; i < headers.length ;i++)
+        for (int i = 0; i < headers.length; i++)
         {
-            if(i<netPlanViewTableHeader.length)
+            if (i < netPlanViewTableHeader.length)
             {
                 headers[i] = netPlanViewTableHeader[i];
-            }
-            else{
-                headers[i] = "Att: "+attColumnsHeaders.get(i - netPlanViewTableHeader.length);
+            } else
+            {
+                headers[i] = "Att: " + attColumnsHeaders.get(i - netPlanViewTableHeader.length);
             }
         }
 
@@ -167,17 +172,16 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
     }
 
 
-
-
-    public String[] getTableTips() {
+    public String[] getTableTips()
+    {
         return netPlanViewTableTips;
     }
 
-    public boolean hasElements() 
+    public boolean hasElements()
     {
-    	final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-    	final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
-    	return rf == null? callback.getDesign().hasSRGs() : rf.hasSRGs(layer);
+        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+        final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
+        return rf == null ? callback.getDesign().hasSRGs() : rf.hasSRGs(layer);
     }
 
     @Override
@@ -186,22 +190,25 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         return COLUMN_ATTRIBUTES;
     }
 
-    private static TableModel createTableModel(final IVisualizationCallback callback) 
+    private static TableModel createTableModel(final GUINetworkDesign callback)
     {
-        TableModel srgTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
+        TableModel srgTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader)
+        {
             private static final long serialVersionUID = 1L;
 
             @Override
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
+            public boolean isCellEditable(int rowIndex, int columnIndex)
+            {
                 if (!callback.getVisualizationState().isNetPlanEditable()) return false;
                 if (columnIndex >= netPlanViewTableHeader.length) return true;
-                if (getValueAt(rowIndex,columnIndex) == null) return false;
+                if (getValueAt(rowIndex, columnIndex) == null) return false;
 
                 return columnIndex == COLUMN_MTTF || columnIndex == COLUMN_MTTR || columnIndex >= netPlanViewTableHeader.length;
             }
 
             @Override
-            public void setValueAt(Object newValue, int row, int column) {
+            public void setValueAt(Object newValue, int row, int column)
+            {
                 Object oldValue = getValueAt(row, column);
 
                 if (newValue.equals(oldValue)) return;
@@ -213,8 +220,10 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                 final SharedRiskGroup srg = netPlan.getSRGFromId(srgId);
 
 				/* Perform checks, if needed */
-                try {
-                    switch (column) {
+                try
+                {
+                    switch (column)
+                    {
                         case COLUMN_MTTF:
                             srg.setMeanTimeToFailInHours(Double.parseDouble(newValue.toString()));
                             super.setValueAt(srg.getAvailability(), row, COLUMN_AVAILABILITY);
@@ -228,7 +237,8 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                         default:
                             break;
                     }
-                } catch (Throwable ex) {
+                } catch (Throwable ex)
+                {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying SRG");
                     return;
                 }
@@ -240,36 +250,39 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         return srgTableModel;
     }
 
-    private void setDefaultCellRenderers(final IVisualizationCallback callback) {
+    private void setDefaultCellRenderers(final GUINetworkDesign callback)
+    {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
-        setDefaultRenderer(Double.class, new NumberCellRenderer());
+        setDefaultRenderer(Double.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Object.class, new CellRenderers.NonEditableCellRenderer());
-        setDefaultRenderer(Float.class, new NumberCellRenderer());
+        setDefaultRenderer(Float.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Long.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(Integer.class, new CellRenderers.NumberCellRenderer());
         setDefaultRenderer(String.class, new CellRenderers.NonEditableCellRenderer());
     }
 
-    private void setSpecificCellRenderers() {
+    private void setSpecificCellRenderers()
+    {
         getColumnModel().getColumn(convertColumnIndexToView(COLUMN_AVAILABILITY)).setCellRenderer(new CellRenderers.NumberCellRenderer(MAXNUMDECIMALSINAVAILABILITY));
     }
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable() 
+    public void setColumnRowSortingFixedAndNonFixedTable()
     {
         setAutoCreateRowSorter(true);
-        final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_AFFECTEDROUTES , COLUMN_AFFECTEDBACKUPROUTES , COLUMN_AFFECTEDTREES);
+        final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_AFFECTEDROUTES, COLUMN_AFFECTEDBACKUPROUTES, COLUMN_AFFECTEDTREES);
         DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
-        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
-        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
+        for (int col = 0; col <= COLUMN_ATTRIBUTES; col++)
+            rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter, columnsWithDoubleAndThenParenthesis.contains(col)));
         fixedTable.setAutoCreateRowSorter(true);
         fixedTable.setRowSorter(this.getRowSorter());
         rowSorter = ((DefaultRowSorter) fixedTable.getRowSorter());
-        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
-        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
+        for (int col = 0; col <= COLUMN_ATTRIBUTES; col++)
+            rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter, columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
-    public int getNumFixedLeftColumnsInDecoration() {
+    public int getNumFixedLeftColumnsInDecoration()
+    {
         return 2;
     }
 
@@ -277,15 +290,15 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
     public ArrayList<String> getAttributesColumnsHeaders()
     {
         ArrayList<String> attColumnsHeaders = new ArrayList<>();
-        for(SharedRiskGroup srg : getVisibleElementsInTable())
+        for (SharedRiskGroup srg : getVisibleElementsInTable())
             for (Map.Entry<String, String> entry : srg.getAttributes().entrySet())
-                if(attColumnsHeaders.contains(entry.getKey()) == false)
+                if (attColumnsHeaders.contains(entry.getKey()) == false)
                     attColumnsHeaders.add(entry.getKey());
         return attColumnsHeaders;
     }
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, final Object itemId) 
+    public void doPopup(final MouseEvent e, final int row, final Object itemId)
     {
         JPopupMenu popup = new JPopupMenu();
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
@@ -293,49 +306,57 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         
         /* Add the popup menu option of the filters */
         final List<SharedRiskGroup> selectedSRGs = (List<SharedRiskGroup>) (List<?>) getSelectedElements().getFirst();
-        if (!selectedSRGs.isEmpty()) 
+        if (!selectedSRGs.isEmpty())
         {
-        	final JMenu submenuFilters = new JMenu ("Filters");
+            final JMenu submenuFilters = new JMenu("Filters");
             final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements affected by this SRG");
             if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
-            filterKeepElementsAffectedAllLayers.addActionListener(new ActionListener() 
+            filterKeepElementsAffectedAllLayers.addActionListener(new ActionListener()
             {
-				@Override
-				public void actionPerformed(ActionEvent e) 
-				{
-					if (selectedSRGs.size() > 1) throw new RuntimeException ();
-					TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedSRGs.get(0));
-					callback.getVisualizationState().updateTableRowFilter(filter);
-					callback.updateVisualizationJustTables();
-				}
-			});
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    if (selectedSRGs.size() > 1) throw new RuntimeException();
+                    TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedSRGs.get(0));
+                    callback.getVisualizationState().updateTableRowFilter(filter);
+                    callback.updateVisualizationJustTables();
+                }
+            });
             popup.add(submenuFilters);
             popup.addSeparator();
         }
 
-        
-        if (callback.getVisualizationState().isNetPlanEditable()) {
+
+        if (callback.getVisualizationState().isNetPlanEditable())
+        {
             popup.add(getAddOption());
             for (JComponent item : getExtraAddOptions())
                 popup.add(item);
         }
 
-        if (!rowsInTheTable.isEmpty()) {
-            if (callback.getVisualizationState().isNetPlanEditable()) {
-                if (row != -1) {
+        if (!rowsInTheTable.isEmpty())
+        {
+            if (callback.getVisualizationState().isNetPlanEditable())
+            {
+                if (row != -1)
+                {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
 
                     JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
-                    removeItem.addActionListener(new ActionListener() {
+                    removeItem.addActionListener(new ActionListener()
+                    {
                         @Override
-                        public void actionPerformed(ActionEvent e) {
+                        public void actionPerformed(ActionEvent e)
+                        {
                             NetPlan netPlan = callback.getDesign();
-                            try {
+                            try
+                            {
                                 netPlan.getSRGFromId((long) itemId).remove();
                                 callback.getVisualizationState().resetPickedState();
-                            	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
-                            	callback.getUndoRedoNavigationManager().addNetPlanChange();
-                            } catch (Throwable ex) {
+                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                                callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            } catch (Throwable ex)
+                            {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
                             }
@@ -347,20 +368,24 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                 }
                 JMenuItem removeItems = new JMenuItem("Remove all table " + networkElementType + "s");
 
-                removeItems.addActionListener(new ActionListener() {
+                removeItems.addActionListener(new ActionListener()
+                {
                     @Override
-                    public void actionPerformed(ActionEvent e) {
+                    public void actionPerformed(ActionEvent e)
+                    {
                         NetPlan netPlan = callback.getDesign();
 
-                        try {
-                        	if (rf == null)
-                        		netPlan.removeAllSRGs();
-                        	else
-                        		for (SharedRiskGroup srg : rowsInTheTable) srg.remove();
+                        try
+                        {
+                            if (rf == null)
+                                netPlan.removeAllSRGs();
+                            else
+                                for (SharedRiskGroup srg : rowsInTheTable) srg.remove();
                             callback.getVisualizationState().resetPickedState();
-                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
-                        	callback.getUndoRedoNavigationManager().addNetPlanChange();
-                        } catch (Throwable ex) {
+                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                            callback.getUndoRedoNavigationManager().addNetPlanChange();
+                        } catch (Throwable ex)
+                        {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
                         }
@@ -370,14 +395,16 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                 popup.add(removeItems);
 
                 List<JComponent> extraOptions = getExtraOptions(row, itemId);
-                if (!extraOptions.isEmpty()) {
+                if (!extraOptions.isEmpty())
+                {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
                     for (JComponent item : extraOptions) popup.add(item);
                 }
             }
 
             List<JComponent> forcedOptions = getForcedOptions();
-            if (!forcedOptions.isEmpty()) {
+            if (!forcedOptions.isEmpty())
+            {
                 if (popup.getSubElements().length > 0) popup.addSeparator();
                 for (JComponent item : forcedOptions) popup.add(item);
             }
@@ -387,29 +414,33 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, Object itemId) 
+    public void showInCanvas(MouseEvent e, Object itemId)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         final SharedRiskGroup srg = callback.getDesign().getSRGFromId((long) itemId);
-        callback.getVisualizationState ().pickSRG(srg);
+        callback.getVisualizationState().pickSRG(srg);
         callback.updateVisualizationAfterPick();
     }
 
-    private JMenuItem getAddOption() 
+    private JMenuItem getAddOption()
     {
         JMenuItem addItem = new JMenuItem("Add " + networkElementType);
 
-        addItem.addActionListener(new ActionListener() {
+        addItem.addActionListener(new ActionListener()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 NetPlan netPlan = callback.getDesign();
 
-                try {
+                try
+                {
                     netPlan.addSRG(8748, 12, null);
                     callback.getVisualizationState().resetPickedState();
-                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
-                	callback.getUndoRedoNavigationManager().addNetPlanChange();
-                } catch (Throwable ex) {
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                    callback.getUndoRedoNavigationManager().addNetPlanChange();
+                } catch (Throwable ex)
+                {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
             }
@@ -417,7 +448,8 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         return addItem;
     }
 
-    private List<JComponent> getExtraAddOptions() {
+    private List<JComponent> getExtraAddOptions()
+    {
         List<JComponent> options = new LinkedList<JComponent>();
         NetPlan netPlan = callback.getDesign();
         JMenu submenuSRGs = new JMenu("Add SRGs from model");
@@ -432,19 +464,23 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         final JMenuItem onePerBidiLinkBundle = new JMenuItem("One SRG per bidirectional bundle of links");
         submenuSRGs.add(onePerBidiLinkBundle);
 
-        if (!netPlan.hasNodes()) {
+        if (!netPlan.hasNodes())
+        {
             onePerNode.setEnabled(false);
         }
 
-        if (!netPlan.hasLinks()) {
+        if (!netPlan.hasLinks())
+        {
             onePerLink.setEnabled(false);
             onePerLinkBundle.setEnabled(false);
             onePerBidiLinkBundle.setEnabled(false);
         }
 
-        ActionListener srgModel = new ActionListener() {
+        ActionListener srgModel = new ActionListener()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 double mttf;
                 double mttr;
 
@@ -461,17 +497,20 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                 pane.add(new JLabel("Remove existing SRGs: "));
                 pane.add(chk_removeExistingSRGs);
 
-                while (true) {
+                while (true)
+                {
                     int result = JOptionPane.showConfirmDialog(null, pane, "Add SRGs from model", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                     if (result != JOptionPane.OK_OPTION) return;
 
-                    try {
+                    try
+                    {
                         mttf = Double.parseDouble(txt_mttf.getText());
                         mttr = Double.parseDouble(txt_mttr.getText());
                         if (mttr <= 0) throw new RuntimeException();
 
                         break;
-                    } catch (Throwable ex) {
+                    } catch (Throwable ex)
+                    {
                         ErrorHandling.showErrorDialog("MTTF/MTTR must be greater than zero", "Error adding SRGs from model");
                     }
                 }
@@ -480,7 +519,8 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
 
                 NetPlan netPlan = callback.getDesign();
 
-                try {
+                try
+                {
                     SharedRiskModel srgModel = null;
                     if (e.getSource() == onePerNode) srgModel = SRGUtils.SharedRiskModel.PER_NODE;
                     else if (e.getSource() == onePerLink) srgModel = SRGUtils.SharedRiskModel.PER_LINK;
@@ -492,9 +532,10 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                     if (srgModel == null) throw new RuntimeException("Bad");
                     SRGUtils.configureSRGs(netPlan, mttf, mttr, srgModel, removeExistingSRGs);
                     callback.getVisualizationState().resetPickedState();
-                	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
-                	callback.getUndoRedoNavigationManager().addNetPlanChange();
-                } catch (Throwable ex) {
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                    callback.getUndoRedoNavigationManager().addNetPlanChange();
+                } catch (Throwable ex)
+                {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add SRGs from model");
                 }
 
@@ -510,24 +551,29 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         return options;
     }
 
-    private List<JComponent> getExtraOptions(final int row, final Object itemId) 
+    private List<JComponent> getExtraOptions(final int row, final Object itemId)
     {
         final List<SharedRiskGroup> rowsInTheTable = getVisibleElementsInTable();
         List<JComponent> options = new LinkedList<JComponent>();
 
         final int numRows = model.getRowCount();
 
-        if (itemId != null) {
+        if (itemId != null)
+        {
             JMenuItem editSRG = new JMenuItem("View/edit SRG");
-            editSRG.addActionListener(new ActionListener() {
+            editSRG.addActionListener(new ActionListener()
+            {
                 @Override
-                public void actionPerformed(ActionEvent e) {
-                    try {
+                public void actionPerformed(ActionEvent e)
+                {
+                    try
+                    {
                         viewEditSRGGUI(callback, (long) itemId);
                         callback.getVisualizationState().resetPickedState();
-                    	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
-                    	callback.getUndoRedoNavigationManager().addNetPlanChange();
-                    } catch (Throwable ex) {
+                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                        callback.getUndoRedoNavigationManager().addNetPlanChange();
+                    } catch (Throwable ex)
+                    {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Error viewing/editing SRG");
                     }
                 }
@@ -536,35 +582,44 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
             options.add(editSRG);
         }
 
-        if (numRows > 1) {
+        if (numRows > 1)
+        {
             if (!options.isEmpty()) options.add(new JPopupMenu.Separator());
 
             JMenuItem mttfValue = new JMenuItem("Set MTTF to all");
-            mttfValue.addActionListener(new ActionListener() {
+            mttfValue.addActionListener(new ActionListener()
+            {
                 @Override
-                public void actionPerformed(ActionEvent e) {
+                public void actionPerformed(ActionEvent e)
+                {
                     double mttf;
 
-                    while (true) {
+                    while (true)
+                    {
                         String str = JOptionPane.showInputDialog(null, "MTTF (in hours, zero or negative value means no failure)", "Set MTTF to all SRGs", JOptionPane.QUESTION_MESSAGE);
                         if (str == null) return;
 
-                        try {
+                        try
+                        {
                             mttf = Double.parseDouble(str);
                             break;
-                        } catch (NumberFormatException ex) {
+                        } catch (NumberFormatException ex)
+                        {
                             ErrorHandling.showErrorDialog("Non-valid MTTF value", "Error setting MTTF value");
-                        } catch (Throwable ex) {
+                        } catch (Throwable ex)
+                        {
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Error setting MTTF");
                         }
                     }
 
-                    try {
+                    try
+                    {
                         for (SharedRiskGroup srg : rowsInTheTable) srg.setMeanTimeToFailInHours(mttf);
                         callback.getVisualizationState().resetPickedState();
-                    	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
-                    	callback.getUndoRedoNavigationManager().addNetPlanChange();
-                    } catch (Throwable ex) {
+                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                        callback.getUndoRedoNavigationManager().addNetPlanChange();
+                    } catch (Throwable ex)
+                    {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set MTTF to all SRGs");
                     }
                 }
@@ -573,33 +628,41 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
             options.add(mttfValue);
 
             JMenuItem mttrValue = new JMenuItem("Set MTTR to all");
-            mttrValue.addActionListener(new ActionListener() {
+            mttrValue.addActionListener(new ActionListener()
+            {
                 @Override
-                public void actionPerformed(ActionEvent e) {
+                public void actionPerformed(ActionEvent e)
+                {
                     double mttr;
 
-                    while (true) {
+                    while (true)
+                    {
                         String str = JOptionPane.showInputDialog(null, "MTTR (in hours)", "Set MTTR to all SRGs", JOptionPane.QUESTION_MESSAGE);
                         if (str == null) return;
 
-                        try {
+                        try
+                        {
                             mttr = Double.parseDouble(str);
                             if (mttr <= 0) throw new NumberFormatException();
 
                             break;
-                        } catch (NumberFormatException ex) {
+                        } catch (NumberFormatException ex)
+                        {
                             ErrorHandling.showErrorDialog("Non-valid MTTR value. Please, introduce a non-zero non-negative number", "Error setting MTTR value");
-                        } catch (Throwable ex) {
+                        } catch (Throwable ex)
+                        {
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Error setting MTTR");
                         }
                     }
 
-                    try {
+                    try
+                    {
                         for (SharedRiskGroup srg : rowsInTheTable) srg.setMeanTimeToRepairInHours(mttr);
                         callback.getVisualizationState().resetPickedState();
-                    	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
-                    	callback.getUndoRedoNavigationManager().addNetPlanChange();
-                    } catch (Throwable ex) {
+                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                        callback.getUndoRedoNavigationManager().addNetPlanChange();
+                    } catch (Throwable ex)
+                    {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set MTTR to all SRGs");
                     }
                 }
@@ -613,21 +676,24 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
     }
 
 
-    private static void viewEditSRGGUI(final IVisualizationCallback callback, final long srgId) {
+    private static void viewEditSRGGUI(final GUINetworkDesign callback, final long srgId)
+    {
         final NetPlan netPlan = callback.getDesign();
         final SharedRiskGroup srg = netPlan.getSRGFromId(srgId);
-        callback.putTransientColorInElementTopologyCanvas(srg.getNodes() , Color.ORANGE);
-        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers() , Color.ORANGE);
+        callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
+        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
 
         final int N = netPlan.getNumberOfNodes();
         final int E = netPlan.getNumberOfLinks();
         final Object[][] nodeData = new Object[N == 0 ? 1 : N][3];
         final Object[][] linkData = new Object[E == 0 ? 1 : E][4];
 
-        if (N > 0) {
+        if (N > 0)
+        {
             int n = 0;
             Iterator<Node> nodeIt = netPlan.getNodes().iterator();
-            while (nodeIt.hasNext()) {
+            while (nodeIt.hasNext())
+            {
                 Node node = nodeIt.next();
                 nodeData[n] = new Object[3];
                 nodeData[n][0] = node.getId();
@@ -638,10 +704,12 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
             }
         }
 
-        if (E > 0) {
+        if (E > 0)
+        {
             int e = 0;
             Iterator<Link> linkIt = netPlan.getLinks().iterator();
-            while (linkIt.hasNext()) {
+            while (linkIt.hasNext())
+            {
                 Link link = linkIt.next();
 
                 linkData[e] = new Object[4];
@@ -654,26 +722,30 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
             }
         }
 
-        final DefaultTableModel nodeModel = new ClassAwareTableModel(nodeData, new String[]{"Id", "Name", "Included in the SRG"}) {
+        final DefaultTableModel nodeModel = new ClassAwareTableModel(nodeData, new String[]{"Id", "Name", "Included in the SRG"})
+        {
             @Override
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
+            public boolean isCellEditable(int rowIndex, int columnIndex)
+            {
                 return columnIndex == 2;
             }
 
             @Override
-            public void setValueAt(Object aValue, int row, int column) {
-                if (column == 2) {
+            public void setValueAt(Object aValue, int row, int column)
+            {
+                if (column == 2)
+                {
                     boolean value = (boolean) aValue;
                     Node node = netPlan.getNodeFromId((long) getValueAt(row, 0));
-                    if (value && !srg.getNodes().contains(node)) 
+                    if (value && !srg.getNodes().contains(node))
                     {
                         netPlan.getSRGFromId(srgId).addNode(node);
-                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes() , Color.ORANGE);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
                         callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
-                    } else if (!value && srg.getNodes().contains(node)) 
+                    } else if (!value && srg.getNodes().contains(node))
                     {
                         netPlan.getSRGFromId(srgId).removeNode(node);
-                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes() , Color.ORANGE);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
                         callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
                     }
                 }
@@ -682,24 +754,30 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
             }
         };
 
-        final DefaultTableModel linkModel = new ClassAwareTableModel(linkData, new String[]{"Id", "Origin node", "Destination node", "Included in the SRG"}) {
+        final DefaultTableModel linkModel = new ClassAwareTableModel(linkData, new String[]{"Id", "Origin node", "Destination node", "Included in the SRG"})
+        {
             @Override
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
+            public boolean isCellEditable(int rowIndex, int columnIndex)
+            {
                 return columnIndex == 3;
             }
 
             @Override
-            public void setValueAt(Object aValue, int row, int column) {
-                if (column == 3) {
+            public void setValueAt(Object aValue, int row, int column)
+            {
+                if (column == 3)
+                {
                     boolean value = (boolean) aValue;
                     Link link = netPlan.getLinkFromId((long) getValueAt(row, 0));
-                    if (value && !srg.getLinksAllLayers().contains(link)) {
+                    if (value && !srg.getLinksAllLayers().contains(link))
+                    {
                         srg.addLink(link);
-                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes() , Color.ORANGE);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
                         callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
-                    } else if (!value && srg.getLinksAllLayers().contains(link)) {
+                    } else if (!value && srg.getLinksAllLayers().contains(link))
+                    {
                         srg.removeLink(link);
-                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes() , Color.ORANGE);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
                         callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
                     }
                 }
@@ -712,20 +790,20 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         final JTable linkTable = new AdvancedJTable(linkModel);
 
         nodeTable.setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
-        nodeTable.setDefaultRenderer(Double.class, new UnfocusableCellRenderer());
-        nodeTable.setDefaultRenderer(Object.class, new UnfocusableCellRenderer());
-        nodeTable.setDefaultRenderer(Float.class, new UnfocusableCellRenderer());
-        nodeTable.setDefaultRenderer(Long.class, new UnfocusableCellRenderer());
-        nodeTable.setDefaultRenderer(Integer.class, new UnfocusableCellRenderer());
-        nodeTable.setDefaultRenderer(String.class, new UnfocusableCellRenderer());
+        nodeTable.setDefaultRenderer(Double.class, new CellRenderers.UnfocusableCellRenderer());
+        nodeTable.setDefaultRenderer(Object.class, new CellRenderers.UnfocusableCellRenderer());
+        nodeTable.setDefaultRenderer(Float.class, new CellRenderers.UnfocusableCellRenderer());
+        nodeTable.setDefaultRenderer(Long.class, new CellRenderers.UnfocusableCellRenderer());
+        nodeTable.setDefaultRenderer(Integer.class, new CellRenderers.UnfocusableCellRenderer());
+        nodeTable.setDefaultRenderer(String.class, new CellRenderers.UnfocusableCellRenderer());
 
         linkTable.setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
-        linkTable.setDefaultRenderer(Double.class, new UnfocusableCellRenderer());
-        linkTable.setDefaultRenderer(Object.class, new UnfocusableCellRenderer());
-        linkTable.setDefaultRenderer(Float.class, new UnfocusableCellRenderer());
-        linkTable.setDefaultRenderer(Long.class, new UnfocusableCellRenderer());
-        linkTable.setDefaultRenderer(Integer.class, new UnfocusableCellRenderer());
-        linkTable.setDefaultRenderer(String.class, new UnfocusableCellRenderer());
+        linkTable.setDefaultRenderer(Double.class, new CellRenderers.UnfocusableCellRenderer());
+        linkTable.setDefaultRenderer(Object.class, new CellRenderers.UnfocusableCellRenderer());
+        linkTable.setDefaultRenderer(Float.class, new CellRenderers.UnfocusableCellRenderer());
+        linkTable.setDefaultRenderer(Long.class, new CellRenderers.UnfocusableCellRenderer());
+        linkTable.setDefaultRenderer(Integer.class, new CellRenderers.UnfocusableCellRenderer());
+        linkTable.setDefaultRenderer(String.class, new CellRenderers.UnfocusableCellRenderer());
 
         JScrollPane nodeScrollPane = new JScrollPane(nodeTable);
         JScrollPane linkScrollPane = new JScrollPane(linkTable);
@@ -747,14 +825,15 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         dialog.setVisible(true);
     }
 
-    private List<JComponent> getForcedOptions() {
+    private List<JComponent> getForcedOptions()
+    {
         return new LinkedList<JComponent>();
     }
 
-    private List<SharedRiskGroup> getVisibleElementsInTable ()
+    private List<SharedRiskGroup> getVisibleElementsInTable()
     {
-    	final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-    	final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
-    	return rf == null? callback.getDesign().getSRGs() : rf.getVisibleSRGs(layer);
+        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+        final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
+        return rf == null ? callback.getDesign().getSRGs() : rf.getVisibleSRGs(layer);
     }
 }

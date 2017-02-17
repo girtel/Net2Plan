@@ -15,7 +15,7 @@ package com.net2plan.gui.whatIfAnalysisPane;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.RunnableSelector;
 import com.net2plan.gui.utils.visualizationControl.VisualizationState;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.SimEvent;
@@ -50,7 +50,7 @@ import java.util.List;
 public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener, ActionListener
 {
 
-    private final IVisualizationCallback callback;
+    private final GUINetworkDesign callback;
     private JTextArea simInfo;
     private Thread simThread;
     private ParameterValueDescriptionPanel simulationConfigurationPanel;
@@ -59,7 +59,7 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
     private final JToggleButton btn_whatIfActivated;
     private Throwable lastWhatIfExecutionException;
 
-    public WhatIfAnalysisPane(IVisualizationCallback callback)
+    public WhatIfAnalysisPane(GUINetworkDesign callback)
     {
         super();
         this.callback = callback;

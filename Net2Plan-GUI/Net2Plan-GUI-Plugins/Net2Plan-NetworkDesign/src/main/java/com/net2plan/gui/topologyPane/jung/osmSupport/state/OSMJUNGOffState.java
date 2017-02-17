@@ -6,7 +6,7 @@ import com.net2plan.gui.utils.networkDesign.GUINode;
 import com.net2plan.gui.utils.visualizationControl.VisualizationConstants;
 import com.net2plan.gui.utils.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.ITopologyCanvas;
-import com.net2plan.interfaces.IVisualizationCallback;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
 import com.net2plan.utils.ImageUtils;
@@ -28,11 +28,11 @@ import java.util.stream.Collectors;
  */
 public class OSMJUNGOffState implements OSMState
 {
-    private final IVisualizationCallback callback;
+    private final GUINetworkDesign callback;
     private final JUNGCanvas canvas;
 
     @SuppressWarnings("unchecked")
-    OSMJUNGOffState(final IVisualizationCallback callback, final ITopologyCanvas canvas)
+    OSMJUNGOffState(final GUINetworkDesign callback, final ITopologyCanvas canvas)
     {
         this.callback = callback;
 
