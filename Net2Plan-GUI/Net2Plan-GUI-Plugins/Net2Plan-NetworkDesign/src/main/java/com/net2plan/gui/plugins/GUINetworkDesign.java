@@ -22,21 +22,21 @@
 
 package com.net2plan.gui.plugins;
 
-import com.net2plan.gui.UndoRedoManager;
-import com.net2plan.gui.focusPane.FocusPane;
-import com.net2plan.gui.offlineExecPane.OfflineExecutionPanel;
-import com.net2plan.gui.onlineSimulationPane.OnlineSimulationPane;
-import com.net2plan.gui.topologyPane.TopologyPanel;
-import com.net2plan.gui.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.plugins.networkDesign.UndoRedoManager;
+import com.net2plan.gui.plugins.networkDesign.focusPane.FocusPane;
+import com.net2plan.gui.plugins.networkDesign.offlineExecPane.OfflineExecutionPanel;
+import com.net2plan.gui.plugins.networkDesign.onlineSimulationPane.OnlineSimulationPane;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
 import com.net2plan.gui.utils.WindowUtils;
 import com.net2plan.gui.utils.networkDesign.GUILink;
 import com.net2plan.gui.utils.networkDesign.GUINode;
 import com.net2plan.gui.utils.visualizationControl.VisualizationState;
-import com.net2plan.gui.viewEditTopolTables.ViewEditTopologyTablesPane;
-import com.net2plan.gui.viewEditWindows.WindowController;
-import com.net2plan.gui.viewReportsPane.ViewReportPane;
-import com.net2plan.gui.whatIfAnalysisPane.WhatIfAnalysisPane;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.ViewEditTopologyTablesPane;
+import com.net2plan.gui.plugins.networkDesign.viewEditWindows.WindowController;
+import com.net2plan.gui.plugins.networkDesign.viewReportsPane.ViewReportPane;
+import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.interfaces.ITopologyCanvas;
 import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.*;
