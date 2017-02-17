@@ -4,7 +4,7 @@
 
     <groupId>com.net2plan</groupId>
     <artifactId>net2plan</artifactId>
-    <version>${net2plan.version}</version>
+    <version>0.5.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <url>http://www.net2plan.com</url>
 
@@ -26,7 +26,6 @@
     </modules>
 
     <properties>
-        <net2plan.version>0.5.1-SNAPSHOT</net2plan.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 

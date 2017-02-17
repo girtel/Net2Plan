@@ -5,7 +5,7 @@
     <parent>
         <artifactId>net2plan-gui</artifactId>
         <groupId>com.net2plan</groupId>
-        <version>${net2plan.version}</version>
+        <version>0.5.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 

@@ -9,7 +9,7 @@
     <parent>
         <groupId>com.net2plan</groupId>
         <artifactId>net2plan</artifactId>
-        <version>${net2plan.version}</version>
+        <version>0.5.1-SNAPSHOT</version>
     </parent>
 
     <build>
