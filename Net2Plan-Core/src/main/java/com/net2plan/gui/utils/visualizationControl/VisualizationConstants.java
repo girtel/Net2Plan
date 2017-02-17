@@ -17,13 +17,13 @@ public final class VisualizationConstants
 	public static Color TRANSPARENTCOLOR = new Color (0,0,0,0);
     public final static int DEFAULT_ICONBORDERSIZEINPIXELS = 4;
     public final static Map<String,URL> DEFAULT_LAYERNAME2ICONURLMAP = 
-    		ImmutableMap.of("WDM" , GUINet2Plan.class.getResource("/resources/gui/figs/OpticalTransport.png") , 
-    						"IP" , GUINet2Plan.class.getResource("/resources/gui/figs/Router.png") , 
-    						"WIRELESS" , GUINet2Plan.class.getResource("/resources/gui/figs/WirelessRouter.png"));
+    		ImmutableMap.of("WDM" , VisualizationConstants.class.getResource("/resources/gui/figs/OpticalTransport.png") ,
+    						"IP" , VisualizationConstants.class.getResource("/resources/gui/figs/Router.png") ,
+    						"WIRELESS" , VisualizationConstants.class.getResource("/resources/gui/figs/WirelessRouter.png"));
     public final static Map<String,URL> DEFAULT_RESPOURCETYPE2ICONURLMAP = ImmutableMap.of(
-    		"CPU" , GUINet2Plan.class.getResource("/resources/gui/figs/CPU.png") , 
-    		"RAM" , GUINet2Plan.class.getResource("/resources/gui/figs/RAM.png") , 
-    		"HD" , GUINet2Plan.class.getResource("/resources/gui/figs/HD.png"));
+    		"CPU" , VisualizationConstants.class.getResource("/resources/gui/figs/CPU.png") ,
+    		"RAM" , VisualizationConstants.class.getResource("/resources/gui/figs/RAM.png") ,
+    		"HD" , VisualizationConstants.class.getResource("/resources/gui/figs/HD.png"));
     
     public final static float SCALE_IN = 1.1f;
     public final static float SCALE_OUT = 1 / SCALE_IN;

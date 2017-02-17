@@ -12,20 +12,6 @@
 
 package com.net2plan.gui;
 
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.internal.Constants.UserInterface;
-import com.net2plan.internal.ErrorHandling;
-import com.net2plan.internal.SystemUtils;
-import com.net2plan.internal.Version;
-import com.net2plan.internal.plugins.IGUIModule;
-import com.net2plan.internal.plugins.ITopologyCanvas;
-import com.net2plan.internal.plugins.Plugin;
-import com.net2plan.internal.plugins.PluginSystem;
-import com.net2plan.utils.HTMLUtils;
-import com.net2plan.utils.ImageUtils;
-import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.SwingUtils;
-import com.net2plan.utils.gui.*;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
@@ -45,6 +31,8 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import static sun.rmi.transport.TransportConstants.Version;
 
 /**
  * Main class for the graphical user interface (GUI).
