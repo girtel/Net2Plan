@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<network description="" name="" version="3">
+	<node id="0" xCoord="0.0" yCoord="0.0" name="Node 0"/>
+	<node id="1" xCoord="0.0" yCoord="0.0" name="Node 1"/>
+	<node id="2" xCoord="0.0" yCoord="0.0" name="Node 2"/>
+	<node id="3" xCoord="0.0" yCoord="0.0" name="Node 3"/>
+	<node id="4" xCoord="0.0" yCoord="0.0" name="Node 4"/>
+	<layer id="0" name="" description="" linkCapacityUnitsName="" demandTrafficUnitsName="">
+		<demand id="0" ingressNodeId="0" egressNodeId="1" offeredTraffic="21.500103463430207"/>
+		<demand id="1" ingressNodeId="0" egressNodeId="2" offeredTraffic="9.042607882361448"/>
+		<demand id="2" ingressNodeId="0" egressNodeId="3" offeredTraffic="6.367417453693879"/>
+		<demand id="3" ingressNodeId="0" egressNodeId="4" offeredTraffic="7.274208599302056"/>
+		<demand id="4" ingressNodeId="1" egressNodeId="0" offeredTraffic="21.500103463430207"/>
+		<demand id="5" ingressNodeId="1" egressNodeId="2" offeredTraffic="2.3938869738306208"/>
+		<demand id="6" ingressNodeId="1" egressNodeId="3" offeredTraffic="0.6523585940543908"/>
+		<demand id="7" ingressNodeId="1" egressNodeId="4" offeredTraffic="1.777609200988071"/>
+		<demand id="8" ingressNodeId="2" egressNodeId="0" offeredTraffic="9.042607882361448"/>
+		<demand id="9" ingressNodeId="2" egressNodeId="1" offeredTraffic="2.3938869738306208"/>
+		<demand id="10" ingressNodeId="2" egressNodeId="3" offeredTraffic="0.24181625947326166"/>
+		<demand id="11" ingressNodeId="2" egressNodeId="4" offeredTraffic="0.5944600255362343"/>
+		<demand id="12" ingressNodeId="3" egressNodeId="0" offeredTraffic="6.367417453693879"/>
+		<demand id="13" ingressNodeId="3" egressNodeId="1" offeredTraffic="0.6523585940543908"/>
+		<demand id="14" ingressNodeId="3" egressNodeId="2" offeredTraffic="0.24181625947326166"/>
+		<demand id="15" ingressNodeId="3" egressNodeId="4" offeredTraffic="0.155531547329821"/>
+		<demand id="16" ingressNodeId="4" egressNodeId="0" offeredTraffic="7.274208599302056"/>
+		<demand id="17" ingressNodeId="4" egressNodeId="1" offeredTraffic="1.777609200988071"/>
+		<demand id="18" ingressNodeId="4" egressNodeId="2" offeredTraffic="0.5944600255362343"/>
+		<demand id="19" ingressNodeId="4" egressNodeId="3" offeredTraffic="0.155531547329821"/>
+		<sourceRouting/>
+	</layer>
+</network>

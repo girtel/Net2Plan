@@ -8,8 +8,10 @@
 *.iml
 *.iws
 
-# Mac
-.DS_Store
+# Netbeans
+nb-configuration.xml
+nbactions.xml
+build.xml
 
 # Maven
 log/
@@ -17,19 +19,12 @@ target/
 *.pmd
 *.checkstyle
 
-# documentation
+# Documentation
 doc/gen/
 */doc/gen/
 
-# Netbeans
-nb-configuration.xml
-nbactions.xml
-build.xml
+# Mac
+.DS_Store
 
-release.properties/
-etc/
-**/lib/
 *.releaseBackup
 *.stackdump
-*.n2p
-**/javadoc/
