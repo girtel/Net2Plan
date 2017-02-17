@@ -16,6 +16,7 @@ import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.IEventProcessor;
+import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.IExternal;
 import com.net2plan.internal.plugins.ICLIModule;
 import com.net2plan.internal.sim.SimKernel;
@@ -103,7 +104,8 @@ public class CLIOnlineSimulation extends ICLIModule {
     }
 
     @Override
-    public final void executeFromCommandLine(String[] args) throws ParseException {
+    public final void executeFromCommandLine(String[] args) throws ParseException
+    {
         CommandLineParser parser = new CommandLineParser();
         CommandLine cli = parser.parse(OPTIONS, args);
         Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();

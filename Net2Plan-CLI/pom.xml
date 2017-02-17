@@ -17,12 +17,12 @@
         <module>Net2Plan-CLI-Plugins</module>
     </modules>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.net2plan</groupId>
-            <artifactId>net2plan-core</artifactId>
-            <version>0.5.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
+        <dependencies>
+            <dependency>
+                <groupId>com.net2plan</groupId>
+                <artifactId>net2plan-core</artifactId>
+                <version>0.5.1-SNAPSHOT</version>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
 </project>

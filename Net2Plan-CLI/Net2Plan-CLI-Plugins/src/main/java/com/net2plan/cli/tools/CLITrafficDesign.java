@@ -16,6 +16,7 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.plugins.ICLIModule;
 import com.net2plan.libraries.TrafficMatrixGenerationModels;
 import com.net2plan.utils.DoubleUtils;

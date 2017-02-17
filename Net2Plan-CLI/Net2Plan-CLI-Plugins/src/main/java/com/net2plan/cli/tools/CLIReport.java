@@ -15,6 +15,7 @@ package com.net2plan.cli.tools;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.plugins.ICLIModule;
 import com.net2plan.utils.ClassLoaderUtils;
 import com.net2plan.utils.HTMLUtils;
@@ -70,7 +71,8 @@ public class CLIReport extends ICLIModule {
     }
 
     @Override
-    public void executeFromCommandLine(String[] args) throws ParseException {
+    public void executeFromCommandLine(String[] args) throws ParseException
+    {
         CommandLineParser parser = new CommandLineParser();
         CommandLine cli = parser.parse(OPTIONS, args);
 
