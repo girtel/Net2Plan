@@ -16,6 +16,20 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-core</artifactId>
+            <version>0.5.1-SNAPSHOT</version>
+            <type>jar</type>
+        </dependency>
+        <!--Core resources bundle(data, help...)-->
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-core</artifactId>
+            <version>0.5.1-SNAPSHOT</version>
+            <type>zip</type>
+            <classifier>bundle</classifier>
+        </dependency>
+        <dependency>
             <groupId>com.net2plan.net2plan-cli</groupId>
             <artifactId>net2plan-cli-exec</artifactId>
             <version>0.5.1-SNAPSHOT</version>
@@ -26,19 +40,6 @@
             <artifactId>net2plan-cli-plugins</artifactId>
             <version>0.5.1-SNAPSHOT</version>
             <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>com.net2plan</groupId>
-            <artifactId>net2plan-core</artifactId>
-            <version>0.5.1-SNAPSHOT</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>com.net2plan</groupId>
-            <artifactId>net2plan-core</artifactId>
-            <version>0.5.1-SNAPSHOT</version>
-            <type>zip</type>
-            <classifier>bundle</classifier>
         </dependency>
         <dependency>
             <groupId>com.net2plan.net2plan-gui</groupId>

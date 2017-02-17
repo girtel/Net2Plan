@@ -25,7 +25,8 @@
             <useTransitiveDependencies>false</useTransitiveDependencies>
             <unpack>false</unpack>
             <includes>
-                <include>${project.groupId}:net2plan-plugins:*</include>
+                <include>${project.groupId}.net2plan-gui.net2plan-gui-plugins:net2plan-gui-plugins-networkDesign:*</include>
+                <include>${project.groupId}.net2plan-gui.net2plan-gui-plugins:net2plan-gui-plugins-trafficDesign:*</include>
             </includes>
             <outputDirectory>plugins</outputDirectory>
             <outputFileNameMapping>defaultGUITools.jar</outputFileNameMapping>
@@ -36,7 +37,7 @@
             <useTransitiveDependencies>false</useTransitiveDependencies>
             <unpack>false</unpack>
             <includes>
-                <include>${project.groupId}.net2plan-core.net2plan-cli:net2plan-cli-plugins:*</include>
+                <include>${project.groupId}.net2plan-cli:net2plan-cli-plugins:*</include>
             </includes>
             <outputDirectory>plugins</outputDirectory>
             <outputFileNameMapping>defaultCLITools.jar</outputFileNameMapping>
@@ -63,16 +64,16 @@
             <outputDirectory>workspace</outputDirectory>
             <outputFileNameMapping>BuiltInExamples.jar</outputFileNameMapping>
         </dependencySet>
-        <!--NetPlan Lib-->
+        <!--NetPlan Core-->
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
             <useTransitiveDependencies>false</useTransitiveDependencies>
             <unpack>false</unpack>
             <includes>
-                <include>${project.groupId}.net2plan-core:net2plan-lib:jar</include>
+                <include>${project.groupId}:net2plan-core:jar</include>
             </includes>
             <outputDirectory>lib</outputDirectory>
-            <outputFileNameMapping>NetPlan-lib.jar</outputFileNameMapping>
+            <outputFileNameMapping>net2plan-core.jar</outputFileNameMapping>
         </dependencySet>
         <!--CLI Main-->
         <dependencySet>
@@ -80,7 +81,7 @@
             <useTransitiveDependencies>false</useTransitiveDependencies>
             <unpack>false</unpack>
             <includes>
-                <include>${project.groupId}.net2plan-core.net2plan-cli:net2plan-cli-exec:*</include>
+                <include>${project.groupId}.net2plan-cli:net2plan-cli-exec:*</include>
             </includes>
             <outputDirectory/>
             <outputFileNameMapping>Net2Plan-CLI.jar</outputFileNameMapping>
@@ -91,7 +92,7 @@
             <useTransitiveDependencies>false</useTransitiveDependencies>
             <unpack>false</unpack>
             <includes>
-                <include>${project.groupId}.net2plan-core:net2plan-gui:*</include>
+                <include>${project.groupId}.net2plan-gui:net2plan-gui-exec:*</include>
             </includes>
             <outputDirectory/>
             <outputFileNameMapping>Net2Plan.jar</outputFileNameMapping>
@@ -102,7 +103,7 @@
             <useTransitiveDependencies>false</useTransitiveDependencies>
             <unpack>true</unpack>
             <includes>
-                <include>${project.groupId}.net2plan-core:net2plan-lib:zip:bundle</include>
+                <include>${project.groupId}.net2plan-core:zip:bundle</include>
             </includes>
             <outputDirectory/>
         </dependencySet>
@@ -115,7 +116,8 @@
             <excludes>
                 <exclude>${project.groupId}:*:*</exclude>
                 <exclude>${project.groupId}.net2plan-core:*:*</exclude>
-                <exclude>${project.groupId}.net2plan-core.net2plan-cli:*:*</exclude>
+                <exclude>${project.groupId}.net2plan-gui:*:*</exclude>
+                <exclude>${project.groupId}.net2plan-cli:*:*</exclude>
             </excludes>
         </dependencySet>
     </dependencySets>
