@@ -12,8 +12,6 @@
 
 package com.net2plan.interfaces;
 
-import com.net2plan.gui.plugins.networkDesign.networkDesign.GUINode;
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.internal.Constants;
@@ -28,8 +26,6 @@ import java.util.Set;
  */
 public interface IVisualizationCallback
 {
-	VisualizationState getVisualizationState ();
-	
 	void resetPickedStateAndUpdateView ();
 
     void putTransientColorInElementTopologyCanvas (Collection<? extends NetworkElement> linksAndNodes , Color color);
@@ -52,7 +48,8 @@ public interface IVisualizationCallback
 
 	void updateVisualizationAfterPick();
 
-	void moveNodeTo(GUINode guiNode, Point2D toPoint);
+	// TODO: Rethink if this one is needed...
+	void moveNodeTo(ITopologyCanvasVertex guiNode, Point2D toPoint);
 
 	void runCanvasOperation(ITopologyCanvas.CanvasOperation... canvasOperation);
 

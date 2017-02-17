@@ -15,8 +15,10 @@ import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.OSMStateManager;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.interfaces.ITopologyCanvas;
+import com.net2plan.interfaces.ITopologyCanvasEdge;
 import com.net2plan.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.interfaces.ITopologyCanvasVertex;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.CommandLineParser;
@@ -273,13 +275,13 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public Set<GUINode> getAllVertices()
+    public Set<ITopologyCanvasVertex> getAllVertices()
     {
         return Collections.unmodifiableSet(new HashSet<>(g.getVertices()));
     }
 
     @Override
-    public Set<GUILink> getAllEdges()
+    public Set<ITopologyCanvasEdge> getAllEdges()
     {
         return Collections.unmodifiableSet(new HashSet<>(g.getEdges()));
     }
@@ -342,9 +344,9 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public void moveVertexToXYPosition(GUINode npNode, Point2D point)
+    public void moveVertexToXYPosition(ITopologyCanvasVertex npNode, Point2D point)
     {
-        l.setLocation(npNode, point);
+        l.setLocation((GUINode) npNode, point);
     }
 
     @Override

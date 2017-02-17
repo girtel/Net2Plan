@@ -38,6 +38,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditWindows.WindowController;
 import com.net2plan.gui.plugins.networkDesign.viewReportsPane.ViewReportPane;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.interfaces.ITopologyCanvas;
+import com.net2plan.interfaces.ITopologyCanvasVertex;
 import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -726,12 +727,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         whatIfAnalysisPane.setActionMap(this.getActionMap());
     }
 
-    @Override
     public VisualizationState getVisualizationState()
     {
         return vs;
     }
-
 
     @Override
     public void updateVisualizationAfterPick()
@@ -836,12 +835,12 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
     @Override
-    public void moveNodeTo(final GUINode guiNode, final Point2D toPoint)
+    public void moveNodeTo(final ITopologyCanvasVertex guiNode, final Point2D toPoint)
     {
         if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("NetPlan is not editable");
 
         final ITopologyCanvas canvas = topologyPanel.getCanvas();
-        final Node node = guiNode.getAssociatedNetPlanNode();
+        final Node node = guiNode.getAssociatedNode();
 
         final Point2D netPlanPoint = canvas.getCanvasPointFromMovement(toPoint);
         if (netPlanPoint == null) return;

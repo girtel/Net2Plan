@@ -87,16 +87,16 @@ public class GUINode implements ITopologyCanvasVertex
         this.iconHeightIfNotActive = 30;
     }
 
-    public NetworkLayer getLayer()
-    {
-        return layer;
-    }
-
-    public Node getAssociatedNetPlanNode()
+    @Override
+    public Node getAssociatedNode()
     {
         return npNode;
     }
 
+    public NetworkLayer getLayer()
+    {
+        return layer;
+    }
 
     public double getIconHeightInNotActiveLayer()
     {

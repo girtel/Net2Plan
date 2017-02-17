@@ -83,9 +83,9 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mousePressed(MouseEvent e) {
         if (checkModifiers(e)) {
-            GUINode node = canvas.getVertex(e);
+            GUINode node = (GUINode) canvas.getVertex(e);
             if (node != null) {
-                callback.getVisualizationState().pickNode(node.getAssociatedNetPlanNode());
+                callback.getVisualizationState().pickNode(node.getAssociatedNode());
                 callback.updateVisualizationAfterPick();
                 startVertex = node;
                 e.consume();
