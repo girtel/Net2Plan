@@ -10,14 +10,19 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui;
+package com.net2plan.interfaces;
 
-import com.net2plan.gui.topologyPane.GUINode;
+import com.net2plan.gui.utils.networkDesign.GUINode;
 import com.net2plan.gui.utils.visualizationControl.VisualizationState;
-import com.net2plan.gui.whatIfAnalysisPane.WhatIfAnalysisPane;
+import com.net2plan.interfaces.ITopologyCanvas;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.internal.Constants;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Interface to be implemented by any class dealing with network designs.
@@ -40,7 +45,7 @@ public interface IVisualizationCallback
 
     NetPlan getInitialDesign();
 
-	void updateVisualizationAfterChanges (Set<NetworkElementType> modificationsMade);
+	void updateVisualizationAfterChanges (Set<Constants.NetworkElementType> modificationsMade);
 
     boolean inOnlineSimulationMode();
 
@@ -52,11 +57,7 @@ public interface IVisualizationCallback
 
 	void runCanvasOperation(ITopologyCanvas.CanvasOperation... canvasOperation);
 
-	UndoRedoManager getUndoRedoNavigationManager();
-
 	void requestUndoAction();
 
 	void requestRedoAction();
-
-	WhatIfAnalysisPane getWhatIfAnalysisPane();
 }

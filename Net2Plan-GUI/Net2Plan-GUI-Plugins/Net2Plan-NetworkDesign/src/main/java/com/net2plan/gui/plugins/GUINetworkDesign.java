@@ -114,18 +114,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
     @Override
-    public WhatIfAnalysisPane getWhatIfAnalysisPane()
-    {
-        return whatIfAnalysisPane;
-    }
-
-    @Override
-    public UndoRedoManager getUndoRedoNavigationManager()
-    {
-        return undoRedoManager;
-    }
-
-    @Override
     public void requestUndoAction()
     {
         if (inOnlineSimulationMode()) return;

@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui;
+package com.net2plan.gui.utils;
 
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -20,9 +20,6 @@ import com.net2plan.internal.SystemUtils;
 import com.net2plan.utils.ClassLoaderUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
-import com.net2plan.utils.gui.FileDrop;
-import com.net2plan.utils.gui.StringLabeller;
-import com.net2plan.utils.gui.WiderJComboBox;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;

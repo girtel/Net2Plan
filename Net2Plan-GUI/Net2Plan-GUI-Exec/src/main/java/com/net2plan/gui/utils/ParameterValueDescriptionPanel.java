@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui;
+package com.net2plan.gui.utils;
 
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants.RunnableCodeType;
@@ -19,9 +19,6 @@ import com.net2plan.internal.SystemUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
-import com.net2plan.utils.gui.ActionTableCellEditor;
-import com.net2plan.utils.gui.AdvancedJTable;
-import com.net2plan.utils.gui.ClassAwareTableModel;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;

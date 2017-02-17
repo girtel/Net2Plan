@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui;
+package com.net2plan.gui.utils;
 
 import com.net2plan.internal.IExternal;
 import org.apache.commons.lang3.StringUtils;

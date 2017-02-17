@@ -16,6 +16,7 @@ import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_Networ
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_link;
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_multicastTree;
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_route;
+import com.net2plan.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.DoubleUtils;

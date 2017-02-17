@@ -12,6 +12,20 @@
 
 package com.net2plan.gui;
 
+import com.net2plan.gui.utils.*;
+import com.net2plan.interfaces.ITopologyCanvas;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.internal.Constants;
+import com.net2plan.internal.ErrorHandling;
+import com.net2plan.internal.SystemUtils;
+import com.net2plan.internal.Version;
+import com.net2plan.internal.plugins.IGUIModule;
+import com.net2plan.internal.plugins.Plugin;
+import com.net2plan.internal.plugins.PluginSystem;
+import com.net2plan.utils.HTMLUtils;
+import com.net2plan.utils.ImageUtils;
+import com.net2plan.utils.StringUtils;
+import com.net2plan.utils.SwingUtils;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
@@ -31,8 +45,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import static sun.rmi.transport.TransportConstants.Version;
 
 /**
  * Main class for the graphical user interface (GUI).
@@ -423,7 +435,7 @@ public class GUINet2Plan extends JFrame implements ActionListener {
      * @since 0.2.0
      */
     public static void main(String[] args) {
-        SystemUtils.configureEnvironment(GUINet2Plan.class, UserInterface.GUI);
+        SystemUtils.configureEnvironment(GUINet2Plan.class, Constants.UserInterface.GUI);
 		
 		/* Add default canvas systems */
         PluginSystem.addPlugin(ITopologyCanvas.class, JUNGCanvas.class);

@@ -14,7 +14,6 @@ package com.net2plan.gui;
 
 
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
-import com.net2plan.gui.utils.SwingUtils;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.Plugin;
