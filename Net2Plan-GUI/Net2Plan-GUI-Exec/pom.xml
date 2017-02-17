@@ -9,8 +9,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>com.net2plan.net2plan-gui</groupId>
     <artifactId>net2plan-gui-exec</artifactId>
-    <version>${net2plan.version}</version>
 
     <build>
         <resources>

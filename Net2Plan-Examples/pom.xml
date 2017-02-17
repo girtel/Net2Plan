@@ -12,7 +12,6 @@
     <packaging>jar</packaging>
 
     <artifactId>net2plan-examples</artifactId>
-    <version>${net2plan.version}</version>
 
     <dependencies>
         <dependency>
