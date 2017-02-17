@@ -23,10 +23,6 @@
                 </excludes>
                 <filtering>false</filtering>
             </resource>
-            <resource>
-                <directory>${project.parent.relativePath}/../src/main/resources</directory>
-                <filtering>false</filtering>
-            </resource>
         </resources>
 
         <plugins>
