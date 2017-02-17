@@ -17,7 +17,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 /**
- * Listener that allows maintainng the divider's location constant
+ * Listener that allows maintaining the divider's location constant
  * proportionally when the window it is resized.
  *
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
