@@ -10,9 +10,10 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.utils.networkDesign;
+package com.net2plan.gui.plugins.networkDesign.topologyPane.jung;
 
-import com.net2plan.gui.utils.visualizationControl.VisualizationConstants;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
+import com.net2plan.interfaces.ITopologyCanvasEdge;
 import com.net2plan.interfaces.networkDesign.*;
 
 import java.awt.*;
@@ -24,7 +25,7 @@ import java.awt.*;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
-public class GUILink 
+public class GUILink implements ITopologyCanvasEdge
 {
     private final GUINode originNode;
     private final GUINode destinationNode;

@@ -1,4 +1,4 @@
-package com.net2plan.gui.utils.visualizationControl;
+package com.net2plan.gui.plugins.networkDesign.visualizationControl;
 
 import com.google.common.collect.ImmutableMap;
 

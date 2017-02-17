@@ -3,7 +3,7 @@ package com.net2plan.gui.plugins.networkDesign.offlineExecPane;
 import com.net2plan.gui.plugins.networkDesign.ThreadExecutionController;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.RunnableSelector;
-import com.net2plan.gui.utils.visualizationControl.VisualizationState;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;

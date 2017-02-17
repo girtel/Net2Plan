@@ -20,8 +20,6 @@
 
 package com.net2plan.interfaces;
 
-import com.net2plan.gui.utils.networkDesign.GUILink;
-import com.net2plan.gui.utils.networkDesign.GUINode;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.Plugin;
 
@@ -79,7 +77,7 @@ public interface ITopologyCanvas extends Plugin
 	 * @return Link identifier, or -1 if no link was clicked
 	 * @since 0.3.1
 	 */
-	GUILink getEdge(MouseEvent e);
+	ITopologyCanvasEdge getEdge(MouseEvent e);
 
 	/**
 	 * Returns the identifier of a link associated to a mouse event, or -1 otherwise.
@@ -88,11 +86,11 @@ public interface ITopologyCanvas extends Plugin
 	 * @return Link identifier, or -1 if no link was clicked
 	 * @since 0.3.1
 	 */
-	GUINode getVertex(MouseEvent e);
+	ITopologyCanvasVertex getVertex(MouseEvent e);
 
-	Set<GUINode> getAllVertices();
+	Set<ITopologyCanvasVertex> getAllVertices();
 
-	Set<GUILink> getAllEdges();
+	Set<ITopologyCanvasEdge> getAllEdges();
 
 	Point2D getCanvasPointFromMovement(Point2D point);
 
@@ -120,7 +118,7 @@ public interface ITopologyCanvas extends Plugin
 	 * @param npNode Node to move.
 	 * @param point  Point to which the node will be moved.
 	 */
-	void moveVertexToXYPosition(GUINode npNode, Point2D point);
+	void moveVertexToXYPosition(ITopologyCanvasVertex npNode, Point2D point);
 
 	/**
 	 * Resets the emphasized elements.

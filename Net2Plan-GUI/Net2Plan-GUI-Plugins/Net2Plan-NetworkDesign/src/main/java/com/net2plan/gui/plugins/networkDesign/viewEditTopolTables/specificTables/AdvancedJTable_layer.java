@@ -14,7 +14,7 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTable
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.visualizationControl.VisualizationState;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;

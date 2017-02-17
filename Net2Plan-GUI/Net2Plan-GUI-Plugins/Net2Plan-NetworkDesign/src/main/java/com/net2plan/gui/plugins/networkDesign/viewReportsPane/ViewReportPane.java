@@ -1,7 +1,9 @@
 package com.net2plan.gui.plugins.networkDesign.viewReportsPane;
 
 
+import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.plugins.networkDesign.ReportBrowser;
+import com.net2plan.gui.utils.RunnableSelector;
 import com.net2plan.gui.plugins.networkDesign.ThreadExecutionController;
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.plugins.GUINetworkDesign;

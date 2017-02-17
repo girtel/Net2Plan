@@ -13,9 +13,9 @@
 package com.net2plan.gui.plugins.networkDesign.topologyPane;
 
 import com.google.common.collect.Sets;
-import com.net2plan.gui.utils.networkDesign.GUILink;
-import com.net2plan.gui.utils.networkDesign.GUINode;
-import com.net2plan.gui.utils.visualizationControl.VisualizationState;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.ITopologyCanvas;
 import com.net2plan.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.GUINetworkDesign;

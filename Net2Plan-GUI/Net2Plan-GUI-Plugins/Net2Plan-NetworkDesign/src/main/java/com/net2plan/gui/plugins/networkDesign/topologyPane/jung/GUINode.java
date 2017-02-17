@@ -10,10 +10,11 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.utils.networkDesign;
+package com.net2plan.gui.plugins.networkDesign.topologyPane.jung;
 
-import com.net2plan.gui.utils.visualizationControl.VisualizationConstants;
-import com.net2plan.gui.utils.visualizationControl.VisualizationState;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
+import com.net2plan.interfaces.ITopologyCanvasVertex;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -29,7 +30,7 @@ import java.net.URL;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
-public class GUINode
+public class GUINode implements ITopologyCanvasVertex
 {
     private final Node npNode;
     private final NetworkLayer layer;

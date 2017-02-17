@@ -13,9 +13,7 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane.jung;
 
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.OSMStateManager;
-import com.net2plan.gui.utils.networkDesign.GUILink;
-import com.net2plan.gui.utils.networkDesign.GUINode;
-import com.net2plan.gui.utils.visualizationControl.VisualizationConstants;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.interfaces.ITopologyCanvas;
 import com.net2plan.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.GUINetworkDesign;

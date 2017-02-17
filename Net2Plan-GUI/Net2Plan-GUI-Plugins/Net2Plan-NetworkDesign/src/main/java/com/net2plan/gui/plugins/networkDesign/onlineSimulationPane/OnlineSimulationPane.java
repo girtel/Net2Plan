@@ -14,9 +14,11 @@ package com.net2plan.gui.plugins.networkDesign.onlineSimulationPane;
 
 import com.jom.JOMException;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
+import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.plugins.networkDesign.ReportBrowser;
+import com.net2plan.gui.utils.RunnableSelector;
 import com.net2plan.gui.utils.*;
-import com.net2plan.gui.utils.visualizationControl.VisualizationState;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
