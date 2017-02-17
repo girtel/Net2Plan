@@ -11,8 +11,6 @@ package com.net2plan.examples.ocnbook.onlineSim;
 
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;

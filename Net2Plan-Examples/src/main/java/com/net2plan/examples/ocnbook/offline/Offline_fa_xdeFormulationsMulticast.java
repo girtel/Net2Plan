@@ -27,7 +27,6 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 import com.jom.DoubleMatrixND;
 import com.jom.OptimizationProblem;
-import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Link;

@@ -11,8 +11,6 @@ package com.net2plan.examples.ocnbook.onlineSim;
 
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -31,7 +29,6 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
-import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.NetworkPerformanceMetrics;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.GradientProjectionUtils;

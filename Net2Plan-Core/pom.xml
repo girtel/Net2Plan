@@ -2,19 +2,49 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <groupId>com.net2plan</groupId>
-        <artifactId>net2plan</artifactId>
-        <version>${net2plan.version}</version>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>com.net2plan</groupId>
     <artifactId>net2plan-core</artifactId>
-    <packaging>pom</packaging>
 
-    <modules>
-        <module>Net2Plan-Lib</module>
-        <module>Net2Plan-GUI</module>
-        <module>Net2Plan-CLI</module>
-    </modules>
+    <build>
+        <!--Filters out external resources-->
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <excludes>
+                    <exclude>data/**</exclude>
+                    <exclude>help/**</exclude>
+                </excludes>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>${project.parent.relativePath}/../src/main/resources</directory>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
+
+        <plugins>
+            <!-- Zips up resources not contained within the jars -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>assemble</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/main/assembly/bundle-descriptor.xsl</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

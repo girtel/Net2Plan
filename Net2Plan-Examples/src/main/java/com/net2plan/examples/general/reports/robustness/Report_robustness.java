@@ -22,27 +22,20 @@ package com.net2plan.examples.general.reports.robustness;
 
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 
-import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.IReport;
-import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.libraries.GraphTheoryMetrics;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.HTMLUtils;
-import com.net2plan.utils.IntUtils;
-import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import org.codehaus.stax2.XMLOutputFactory2;
