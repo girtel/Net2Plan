@@ -11,35 +11,17 @@
 package es.upct.girtel.networks2014_IPoverWDMRestoration;
 
 
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.IAlgorithm;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
-import com.net2plan.libraries.IPUtils;
-import com.net2plan.libraries.SRGUtils;
-import com.net2plan.libraries.WDMUtils;
-import com.net2plan.utils.Constants;
-import com.net2plan.utils.Constants.OrderingType;
-import com.net2plan.utils.DoubleUtils;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.Quadruple;
-import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.Triple;
-
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.libraries.IPUtils;
+import com.net2plan.libraries.SRGUtils;
+import com.net2plan.libraries.WDMUtils;
+import com.net2plan.utils.*;
+import com.net2plan.utils.Constants.OrderingType;
+
+import java.util.*;
 
 /**
  * <p>This algorithm is used for dimensioning multilayer IP-over-WDM networks taking

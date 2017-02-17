@@ -22,14 +22,6 @@
 
 package com.net2plan.io;
 
-import java.io.File;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.healthmarketscience.jackcess.Column;
 import com.healthmarketscience.jackcess.DatabaseBuilder;
 import com.healthmarketscience.jackcess.Row;
@@ -40,6 +32,9 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.utils.Triple;
+
+import java.io.File;
+import java.util.*;
 
 /**
  * Importer filter for BRITE topology generator ({@code .brite}).

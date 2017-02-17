@@ -15,26 +15,10 @@
 
 package com.net2plan.examples.ocnbook.onlineSim;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.jet.random.tdouble.Exponential;
-
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.libraries.SRGUtils;
@@ -43,6 +27,9 @@ import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.RandomUtils;
 import com.net2plan.utils.Triple;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /** 
  * Generates events to a technology-agnostic network, consisting of connection requests/releases and failures and repairs.

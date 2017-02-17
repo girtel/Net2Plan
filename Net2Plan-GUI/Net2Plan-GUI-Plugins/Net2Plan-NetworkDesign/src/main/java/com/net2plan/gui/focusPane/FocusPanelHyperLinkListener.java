@@ -1,16 +1,16 @@
 package com.net2plan.gui.focusPane;
 
-import javax.swing.JEditorPane;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-
-import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.utils.Pair;
+
+import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 
 public class FocusPanelHyperLinkListener implements HyperlinkListener
 {

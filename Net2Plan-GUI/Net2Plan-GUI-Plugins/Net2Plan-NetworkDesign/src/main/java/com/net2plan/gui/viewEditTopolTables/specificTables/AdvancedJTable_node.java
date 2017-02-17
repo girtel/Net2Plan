@@ -12,43 +12,15 @@
 
 package com.net2plan.gui.viewEditTopolTables.specificTables;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.swing.DefaultRowSorter;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.table.TableModel;
-
-import org.apache.commons.collections15.BidiMap;
-
 import com.google.common.collect.Sets;
+import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
-import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.gui.viewEditTopolTables.ITableRowFilter;
 import com.net2plan.gui.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.whatIfAnalysisPane.WhatIfAnalysisPane;
-import com.net2plan.utils.gui.ClassAwareTableModel;
-import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -59,8 +31,17 @@ import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
-
+import com.net2plan.utils.gui.ClassAwareTableModel;
 import net.miginfocom.swing.MigLayout;
+import org.apache.commons.collections15.BidiMap;
+
+import javax.swing.*;
+import javax.swing.table.TableModel;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.util.*;
 
 /**
  */

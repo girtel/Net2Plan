@@ -16,7 +16,6 @@ import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.IEventProcessor;
-import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.IExternal;
 import com.net2plan.internal.plugins.ICLIModule;
 import com.net2plan.internal.sim.SimKernel;

@@ -1,33 +1,18 @@
 package com.net2plan.examples.general.offline.nfv;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.StringUtils;
-
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import com.jom.OptimizationProblem;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.IAlgorithm;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Resource;
-import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
+import org.apache.commons.lang3.StringUtils;
 
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Algorithm based on an ILP solving several variants of the service chain allocation problem in networks with nodes 

@@ -20,17 +20,16 @@
 
 package com.net2plan.internal.plugins;
 
-import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
-import java.util.Map;
-import java.util.Set;
-
-import javax.swing.JComponent;
-
 import com.net2plan.gui.topologyPane.GUILink;
 import com.net2plan.gui.topologyPane.GUINode;
 import com.net2plan.gui.topologyPane.ITopologyCanvasPlugin;
 import com.net2plan.interfaces.networkDesign.Node;
+
+import javax.swing.*;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Base class for topology canvas.

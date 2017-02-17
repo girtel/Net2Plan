@@ -18,27 +18,17 @@
 
 package com.net2plan.internal.sim;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
-
-import javax.xml.stream.XMLOutputFactory;
-
+import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.utils.HTMLUtils;
+import com.net2plan.utils.StringUtils;
 import org.apache.commons.lang3.mutable.MutableDouble;
 import org.codehaus.stax2.XMLOutputFactory2;
 import org.codehaus.stax2.XMLStreamWriter2;
 
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.utils.HTMLUtils;
-import com.net2plan.utils.StringUtils;
+import javax.xml.stream.XMLOutputFactory;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 /**
  * Abstract class defining a template for statistics classes for simulations.

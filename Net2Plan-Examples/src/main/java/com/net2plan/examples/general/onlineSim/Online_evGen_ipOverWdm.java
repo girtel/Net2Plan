@@ -8,12 +8,6 @@ package com.net2plan.examples.general.onlineSim;
  ******************************************************************************/
 
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.net2plan.examples.ocnbook.onlineSim.Online_evGen_generalGenerator;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -22,6 +16,12 @@ import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 

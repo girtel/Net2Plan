@@ -1,4 +1,4 @@
-package com.net2plan.utils.gui;
+package com.net2plan.gui.utils;
 
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -29,12 +29,12 @@ package com.net2plan.utils.gui;
  */
 
 
-import java.awt.Component;
-import java.awt.Color;
 import javax.swing.*;
-import javax.swing.plaf.UIResource;
 import javax.swing.border.Border;
-import javax.swing.table.*;
+import javax.swing.plaf.UIResource;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
+import java.awt.*;
 
 /**
  */

@@ -25,17 +25,12 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
+
+import java.net.URL;
+import java.util.*;
+import java.util.Map.Entry;
 
 /** <p>.</p> 
  * @author Pablo Pavon-Marino

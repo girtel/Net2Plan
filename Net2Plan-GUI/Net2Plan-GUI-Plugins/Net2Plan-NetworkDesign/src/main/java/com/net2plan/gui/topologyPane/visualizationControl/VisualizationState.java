@@ -1,55 +1,31 @@
 package com.net2plan.gui.topologyPane.visualizationControl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.awt.Color;
-import java.awt.Paint;
-import java.awt.Shape;
-import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
-
+import com.google.common.collect.Sets;
 import com.net2plan.gui.topologyPane.GUILink;
 import com.net2plan.gui.topologyPane.GUINode;
-import org.apache.commons.collections15.BidiMap;
-import org.apache.commons.collections15.bidimap.DualHashBidiMap;
-
-import com.google.common.collect.Sets;
 import com.net2plan.gui.viewEditTopolTables.ITableRowFilter;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.InterLayerPropagationGraph;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.MulticastDemand;
-import com.net2plan.interfaces.networkDesign.MulticastTree;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Resource;
-import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
-
 import edu.uci.ics.jung.visualization.FourPassImageShaper;
+import org.apache.commons.collections15.BidiMap;
+import org.apache.commons.collections15.bidimap.DualHashBidiMap;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
+import java.net.URL;
+import java.util.*;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class VisualizationState
 {

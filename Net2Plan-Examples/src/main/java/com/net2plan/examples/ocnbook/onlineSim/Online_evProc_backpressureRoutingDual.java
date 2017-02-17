@@ -8,30 +8,13 @@
 package com.net2plan.examples.ocnbook.onlineSim;
 
 
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.colt.matrix.tint.IntFactory3D;
 import cern.colt.matrix.tint.IntMatrix3D;
 import cern.jet.random.tdouble.Poisson;
-
 import com.jom.OptimizationProblem;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.utils.Constants.RoutingType;
@@ -39,6 +22,11 @@ import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.TimeTrace;
 import com.net2plan.utils.Triple;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.util.*;
 
 /** 
  * This module implements a distributed dual-gradient based algorithm for adapting the network routing to the one which minimizes the average number of hops, that results in a purely decentralized backpressure scheme.

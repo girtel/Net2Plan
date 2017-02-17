@@ -18,24 +18,16 @@
 
 package com.net2plan.io;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 /**
  * Importer filter for BRITE topology generator ({@code .brite}).

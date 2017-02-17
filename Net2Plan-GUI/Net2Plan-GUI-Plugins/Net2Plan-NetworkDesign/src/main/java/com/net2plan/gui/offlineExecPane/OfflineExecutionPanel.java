@@ -1,23 +1,10 @@
 package com.net2plan.gui.offlineExecPane;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.Closeable;
-import java.io.File;
-import java.util.HashSet;
-import java.util.Map;
-
-import javax.swing.JButton;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-
-import org.apache.commons.collections15.BidiMap;
-
+import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.RunnableSelector;
 import com.net2plan.gui.utils.ThreadExecutionController;
-import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -28,8 +15,16 @@ import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.utils.ClassLoaderUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
-
 import net.miginfocom.swing.MigLayout;
+import org.apache.commons.collections15.BidiMap;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.Closeable;
+import java.io.File;
+import java.util.HashSet;
+import java.util.Map;
 
 public class OfflineExecutionPanel extends JPanel implements ThreadExecutionController.IThreadExecutionHandler
 {

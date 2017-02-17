@@ -18,17 +18,11 @@
 
 package com.net2plan.examples.ocnbook.offline;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.jet.math.tdouble.DoubleFunctions;
-
 import com.jom.OptimizationProblem;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
@@ -37,6 +31,11 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Solves a multihour routing problem with dynamic routing (routing may be different at different time intervals) using a flow-path formulation

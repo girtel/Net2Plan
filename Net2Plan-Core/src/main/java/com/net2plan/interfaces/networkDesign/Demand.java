@@ -12,29 +12,6 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
-
-import com.net2plan.internal.AttributeMap;
-import com.net2plan.internal.ErrorHandling;
-import com.net2plan.libraries.GraphUtils;
-import com.net2plan.utils.Constants.RoutingCycleType;
-import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.DoubleUtils;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.Quadruple;
-
 import cern.colt.list.tdouble.DoubleArrayList;
 import cern.colt.list.tint.IntArrayList;
 import cern.colt.matrix.tdouble.DoubleFactory1D;
@@ -43,6 +20,18 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
 import cern.jet.math.tdouble.DoublePlusMultSecond;
+import com.net2plan.internal.AttributeMap;
+import com.net2plan.internal.ErrorHandling;
+import com.net2plan.libraries.GraphUtils;
+import com.net2plan.utils.Constants.RoutingCycleType;
+import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.DoubleUtils;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Quadruple;
+import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /** <p>This class contains a representation of a unicast demand. Unicast demands are defined by its initial and end node, the network layer they belong to, 
  * and their offered traffic. When the routing in the network layer is the type {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, demands are carried

@@ -8,38 +8,19 @@ package com.net2plan.examples.general.onlineSim;
  ******************************************************************************/
 
 
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.jet.random.tdouble.Exponential;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.TrafficMatrixGenerationModels;
 import com.net2plan.libraries.WDMUtils;
-import com.net2plan.utils.DoubleUtils;
-import com.net2plan.utils.InputParameter;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.RandomUtils;
-import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.Triple;
+import com.net2plan.utils.*;
 
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.jet.random.tdouble.Exponential;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /** 
  * Generates events for a WDM network carrying lightpaths in a fixed or flexi grid of wavelengths

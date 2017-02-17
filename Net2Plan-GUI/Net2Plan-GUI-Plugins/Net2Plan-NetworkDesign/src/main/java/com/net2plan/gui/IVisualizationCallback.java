@@ -10,20 +10,14 @@
  ******************************************************************************/
 
 
-package com.net2plan.internal.plugins;
-
-import java.awt.Color;
-import java.awt.geom.Point2D;
-import java.util.Collection;
-import java.util.Set;
+package com.net2plan.gui;
 
 import com.net2plan.gui.topologyPane.GUINode;
-
 import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.gui.whatIfAnalysisPane.WhatIfAnalysisPane;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.internal.Constants.NetworkElementType;
+
+import java.awt.*;
+import java.awt.geom.Point2D;
 
 /**
  * Interface to be implemented by any class dealing with network designs.

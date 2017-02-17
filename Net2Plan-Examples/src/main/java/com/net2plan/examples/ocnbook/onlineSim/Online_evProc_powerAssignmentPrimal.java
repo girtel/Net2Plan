@@ -8,19 +8,11 @@
 package com.net2plan.examples.ocnbook.onlineSim;
 
 
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.jet.math.tdouble.DoubleFunctions;
-
 import com.net2plan.examples.ocnbook.offline.Offline_ca_wirelessTransmissionPower;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -29,11 +21,13 @@ import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.libraries.NetworkPerformanceMetrics;
 import com.net2plan.libraries.WirelessUtils;
-import com.net2plan.utils.GradientProjectionUtils;
-import com.net2plan.utils.InputParameter;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.TimeTrace;
-import com.net2plan.utils.Triple;
+import com.net2plan.utils.*;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /** 
  * This module implements a distributed primal-gradient based algorithm for adjusting the transmission power of the links in a wireless network subject to interferences, to maximize the network utility enforcing a fair allocation of the resources.

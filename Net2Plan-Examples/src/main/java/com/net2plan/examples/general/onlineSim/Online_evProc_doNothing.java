@@ -12,14 +12,14 @@
 
 package com.net2plan.examples.general.onlineSim;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.utils.Triple;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /** 
  * This event processor does not react to any received event. In general, it is only for testing purposes.

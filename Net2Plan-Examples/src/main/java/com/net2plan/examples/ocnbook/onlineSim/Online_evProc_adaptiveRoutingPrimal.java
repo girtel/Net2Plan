@@ -8,38 +8,21 @@
 package com.net2plan.examples.ocnbook.onlineSim;
 
 
-
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
-
 import com.jom.OptimizationProblem;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
-import com.net2plan.utils.DoubleUtils;
-import com.net2plan.utils.GradientProjectionUtils;
-import com.net2plan.utils.InputParameter;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.TimeTrace;
-import com.net2plan.utils.Triple;
 import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.*;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.util.*;
 
 /** 
  * This module implements a distributed primal-gradient based algorithm, for iteratively adapting the network routing.

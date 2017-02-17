@@ -17,14 +17,10 @@
 
 package com.net2plan.examples.ocnbook.offline;
 
-import java.util.List;
-import java.util.Map;
-
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.jet.math.tdouble.DoubleFunctions;
-
 import com.jom.OptimizationProblem;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -33,8 +29,11 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.libraries.NetworkPerformanceMetrics;
 import com.net2plan.libraries.WirelessUtils;
 import com.net2plan.utils.DoubleUtils;
-import com.net2plan.utils.InputParameter; 
+import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Optimizes the backoff window size of the links in a wireless network based on a CSMA MAC, solving a formulation.

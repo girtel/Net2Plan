@@ -12,29 +12,24 @@
 
 package com.net2plan.gui.topologyPane;
 
-import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
-import java.util.LinkedList;
-import java.util.List;
-
-import javax.swing.AbstractAction;
-import javax.swing.JComponent;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-
 import com.google.common.collect.Sets;
-import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.plugins.ITopologyCanvas;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Plugin for the popup menu of the canvas.

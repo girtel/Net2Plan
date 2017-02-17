@@ -20,17 +20,13 @@
 package com.net2plan.examples.ocnbook.notshown;
 
 
-import java.util.List;
-import java.util.Map;
-
-import com.net2plan.interfaces.networkDesign.IAlgorithm;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
+
+import java.util.List;
+import java.util.Map;
 
 public class Offline_wdm_opticalAmplifierAndDCMPlacementDiscrete implements IAlgorithm
 {

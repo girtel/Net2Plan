@@ -10,25 +10,18 @@
 
 package com.net2plan.examples.ocnbook.offline;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.jet.math.tdouble.DoubleFunctions;
-
 import com.jom.OptimizationProblem;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.IAlgorithm;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * In a network with demands of two QoS, jointly optimizes the demand injected traffic and link capacity assigned to each solving a formulation.

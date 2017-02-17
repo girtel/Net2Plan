@@ -8,23 +8,9 @@ package com.net2plan.examples.general.onlineSim;
  ******************************************************************************/
 
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import cern.jet.math.tdouble.DoubleFunctions;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.libraries.GraphUtils;
@@ -32,14 +18,10 @@ import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.WDMUtils;
 import com.net2plan.libraries.WDMUtils.TransponderTypesInfo;
 import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.InputParameter;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.Quadruple;
-import com.net2plan.utils.RandomUtils;
-import com.net2plan.utils.Triple;
+import com.net2plan.utils.*;
 
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import cern.jet.math.tdouble.DoubleFunctions;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /** Implements the reactions of a WDM network carrying lightpaths in a fixed or flexi grid of wavelengths. 
  * 

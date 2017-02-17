@@ -2,11 +2,6 @@
 package com.net2plan.documentation;
 
 
-
-import java.io.File;
-import java.util.List;
-import java.util.Map;
-
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.interfaces.simulation.IEventGenerator;
@@ -15,6 +10,10 @@ import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
 import com.sun.javadoc.Tag;
 import com.sun.tools.doclets.Taglet;
+
+import java.io.File;
+import java.util.List;
+import java.util.Map;
 // Taglet API
 // Doclet API
 // Used in register(Map)

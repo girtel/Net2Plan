@@ -12,33 +12,11 @@
 
 package com.net2plan.gui.whatIfAnalysisPane;
 
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
-import javax.swing.JToggleButton;
-
+import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.RunnableSelector;
-import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
-import com.net2plan.interfaces.networkDesign.Configuration;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.MulticastDemand;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.internal.IExternal;
@@ -51,6 +29,14 @@ import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.internal.sim.SimKernel;
 import com.net2plan.utils.ClassLoaderUtils;
 import com.net2plan.utils.Triple;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.util.*;
+import java.util.List;
 
 /**
  * Targeted to evaluate network designs from the offline tool simulating the

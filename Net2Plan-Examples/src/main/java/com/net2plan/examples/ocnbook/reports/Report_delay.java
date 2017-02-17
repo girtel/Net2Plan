@@ -8,18 +8,14 @@
 
 package com.net2plan.examples.ocnbook.reports;
 
-import java.text.DecimalFormat;
-import java.util.List;
-import java.util.Map;
-
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.IReport;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
+
+import java.text.DecimalFormat;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This report receives as an input a network design, where the network is assumed to be based on packet switching, and estimates the packet delay 

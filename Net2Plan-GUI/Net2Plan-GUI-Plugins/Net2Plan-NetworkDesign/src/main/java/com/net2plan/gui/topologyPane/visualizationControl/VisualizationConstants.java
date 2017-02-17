@@ -1,15 +1,11 @@
 package com.net2plan.gui.topologyPane.visualizationControl;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Paint;
-import java.awt.Stroke;
-import java.net.URL;
-import java.util.Map;
-
 import com.google.common.collect.ImmutableMap;
 import com.net2plan.gui.GUINet2Plan;
+
+import java.awt.*;
+import java.net.URL;
+import java.util.Map;
 
 /**
  * @author Jorge San Emeterio

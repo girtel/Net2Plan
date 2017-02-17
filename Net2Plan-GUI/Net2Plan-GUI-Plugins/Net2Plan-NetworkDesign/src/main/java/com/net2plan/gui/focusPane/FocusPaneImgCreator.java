@@ -1,18 +1,10 @@
 package com.net2plan.gui.focusPane;
 
-import java.awt.Dimension;
-import java.awt.FlowLayout;
+import com.net2plan.interfaces.networkDesign.*;
+
+import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
-
-import javax.swing.JFrame;
-
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Resource;
-import com.net2plan.interfaces.networkDesign.Route;
 
 public class FocusPaneImgCreator {
 

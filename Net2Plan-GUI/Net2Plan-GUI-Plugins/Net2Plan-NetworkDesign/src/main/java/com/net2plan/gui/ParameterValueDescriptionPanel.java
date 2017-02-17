@@ -12,25 +12,6 @@
 
 package com.net2plan.gui;
 
-import java.awt.*;
-import java.io.File;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableModel;
-
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants.RunnableCodeType;
 import com.net2plan.internal.ErrorHandling;
@@ -41,6 +22,18 @@ import com.net2plan.utils.Triple;
 import com.net2plan.utils.gui.ActionTableCellEditor;
 import com.net2plan.utils.gui.AdvancedJTable;
 import com.net2plan.utils.gui.ClassAwareTableModel;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableModel;
+import java.awt.*;
+import java.io.File;
+import java.util.*;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Allows to define parameters.

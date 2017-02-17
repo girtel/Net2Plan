@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.utils.gui;
+package com.net2plan.gui.utils;
 
 import com.net2plan.internal.plugins.IOFilter;
 

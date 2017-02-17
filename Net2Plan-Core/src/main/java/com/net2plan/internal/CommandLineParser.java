@@ -23,14 +23,9 @@ package com.net2plan.internal;
 import com.net2plan.internal.Constants.RunnableCodeType;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
-import org.apache.commons.cli.*;
 
 /**
  * Extends the {@code PosixParser} to modify the {@code processOption}

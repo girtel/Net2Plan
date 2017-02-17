@@ -17,25 +17,18 @@
 
 package com.net2plan.examples.ocnbook.offline;
 
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import com.jom.DoubleMatrixND;
+import com.jom.OptimizationProblem;
+import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.utils.InputParameter;
+import com.net2plan.utils.Triple;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-
-import com.jom.DoubleMatrixND;
-import com.jom.OptimizationProblem;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.IAlgorithm;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.MulticastDemand;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.utils.InputParameter;
-import com.net2plan.utils.Triple;
 
 /**
  * Solves several variants of multicast routing problems, with flow-link formulations

@@ -1,19 +1,12 @@
 package com.net2plan.gui.topologyPane;
 
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Image;
-import java.awt.Shape;
-import java.awt.image.BufferedImage;
-import java.io.File;
+import com.net2plan.utils.Pair;
 
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-
-import com.net2plan.utils.Pair;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
 
 public class IconCreator {
 

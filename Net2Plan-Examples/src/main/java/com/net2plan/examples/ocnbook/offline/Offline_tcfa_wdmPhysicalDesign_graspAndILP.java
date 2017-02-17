@@ -11,45 +11,22 @@
 
 package com.net2plan.examples.ocnbook.offline;
 
-import java.io.File;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Random;
-import java.util.Set;
-
-import com.jom.DoubleMatrixND;
-import com.jom.OptimizationProblem;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.IAlgorithm;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
-import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.Constants.SearchType;
-import com.net2plan.utils.DoubleUtils;
-import com.net2plan.utils.InputParameter;
-import com.net2plan.utils.IntUtils;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.Quadruple;
-import com.net2plan.utils.Triple;
-
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.jet.math.tdouble.DoubleFunctions;
+import com.jom.DoubleMatrixND;
+import com.jom.OptimizationProblem;
+import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Constants.SearchType;
+import com.net2plan.utils.*;
+
+import java.io.File;
+import java.io.PrintWriter;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * This algorithm is devoted to solve the several network planning problems in an optical WDM network (fiber placement, RWA, under different recovery schemes), appearing in the case study in the book section mentioned below. 

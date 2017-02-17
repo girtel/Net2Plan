@@ -18,13 +18,13 @@
 
 package com.net2plan.internal;
 
-import java.io.Serializable;
-import java.util.Comparator;
-
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.utils.Pair;
+
+import java.io.Serializable;
+import java.util.Comparator;
 
 /**
  * Comparator for forwarding rules. First sort in ascending order of installed node 

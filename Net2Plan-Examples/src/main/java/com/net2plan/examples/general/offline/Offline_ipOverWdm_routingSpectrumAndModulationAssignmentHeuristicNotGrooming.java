@@ -11,37 +11,15 @@ package com.net2plan.examples.general.offline;
  ******************************************************************************/
 
 
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.IAlgorithm;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.libraries.WDMUtils;
 import com.net2plan.utils.Constants.OrderingType;
 import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.DoubleUtils;
-import com.net2plan.utils.InputParameter;
-import com.net2plan.utils.IntUtils;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.Triple;
+import com.net2plan.utils.*;
 
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import java.util.*;
 
 /**
  * Algorithm based on an heuristic solving the Routing, Spectrum, Modulation Assignment (RSMA) problem with regenerator placement, 

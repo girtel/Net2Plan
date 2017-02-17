@@ -14,7 +14,6 @@ package com.net2plan.cli;
 
 import com.jom.JOMException;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.Constants.UserInterface;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;

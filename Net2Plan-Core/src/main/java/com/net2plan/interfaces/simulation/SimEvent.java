@@ -15,7 +15,10 @@ package com.net2plan.interfaces.simulation;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.StringUtils;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * <p>Class representing a simulation event.</p>

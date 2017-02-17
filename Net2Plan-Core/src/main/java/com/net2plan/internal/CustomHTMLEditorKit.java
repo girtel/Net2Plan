@@ -20,10 +20,15 @@
 
 package com.net2plan.internal;
 
-import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.HTMLUtils;
+import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.StringUtils;
-import java.awt.Image;
+import org.jsoup.Jsoup;
+
+import javax.swing.*;
+import javax.swing.text.*;
+import javax.swing.text.html.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -31,31 +36,9 @@ import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import javax.swing.JEditorPane;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-import javax.swing.text.Element;
-import javax.swing.text.MutableAttributeSet;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
-import javax.swing.text.View;
-import javax.swing.text.ViewFactory;
-import javax.swing.text.html.CSS;
-import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.HTMLWriter;
-import javax.swing.text.html.ImageView;
-import javax.swing.text.html.MinimalHTMLWriter;
-import org.jsoup.Jsoup;
 
 /**
  * Custom version of {@code HTMLEditorKit} with an image cache.

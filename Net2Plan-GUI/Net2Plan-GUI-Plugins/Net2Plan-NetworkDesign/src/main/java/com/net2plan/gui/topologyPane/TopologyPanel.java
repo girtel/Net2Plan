@@ -12,38 +12,30 @@
 
 package com.net2plan.gui.topologyPane;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.event.ActionEvent;
-import java.io.File;
-import java.util.*;
-import java.util.List;
-
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-
-import com.net2plan.gui.topologyPane.jung.osmSupport.OSMException;
-import com.net2plan.gui.topologyPane.visualizationControl.VisualizationConstants;
-import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
-import com.net2plan.utils.SwingUtils;
-import org.apache.commons.collections15.BidiMap;
-
 import com.google.common.collect.Sets;
 import com.net2plan.gui.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.topologyPane.jung.osmSupport.OSMException;
+import com.net2plan.gui.topologyPane.visualizationControl.VisualizationConstants;
+import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.gui.viewEditWindows.WindowController;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.MulticastDemand;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.DialogType;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.ITopologyCanvas;
 import com.net2plan.utils.Pair;
+import com.net2plan.utils.SwingUtils;
+import org.apache.commons.collections15.BidiMap;
+
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.File;
+import java.util.*;
+import java.util.List;
 
 @SuppressWarnings("unchecked")
 public class TopologyPanel extends JPanel implements ActionListener//FrequentisBackgroundPanel implements ActionListener//JPanel implements ActionListener

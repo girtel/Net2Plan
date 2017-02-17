@@ -1,27 +1,23 @@
 package com.net2plan.gui.topologyPane.jung.osmSupport;
 
-import java.awt.BorderLayout;
-import java.awt.LayoutManager;
-import java.awt.Rectangle;
+import com.net2plan.gui.topologyPane.GUINode;
+import com.net2plan.gui.topologyPane.TopologyPanel;
+import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.internal.plugins.ITopologyCanvas;
+import org.jxmapviewer.viewer.GeoPosition;
+import org.jxmapviewer.viewer.TileFactory;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.geom.Point2D;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import javax.swing.*;
-
-import org.jxmapviewer.viewer.GeoPosition;
-import org.jxmapviewer.viewer.TileFactory;
-
-import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.topologyPane.GUINode;
-import com.net2plan.gui.topologyPane.TopologyPanel;
-import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.internal.plugins.ITopologyCanvas;
 
 /**
  * @author Jorge San Emeterio

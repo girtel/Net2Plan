@@ -16,7 +16,6 @@ import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
-
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 
 import java.util.*;

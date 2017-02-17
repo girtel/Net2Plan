@@ -1,16 +1,15 @@
 package com.net2plan.interfaces.networkDesign;
 
+import com.google.common.collect.Sets;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Triple;
+import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
+import org.jgrapht.experimental.dag.DirectedAcyclicGraph.CycleFoundException;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph.CycleFoundException;
-
-import com.google.common.collect.Sets;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.Triple;
 
 public class InterLayerPropagationGraph
 {

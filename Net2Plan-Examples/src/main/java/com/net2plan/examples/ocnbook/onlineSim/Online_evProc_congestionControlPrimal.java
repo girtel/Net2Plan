@@ -8,35 +8,23 @@
 package com.net2plan.examples.ocnbook.onlineSim;
 
 
-
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import com.jom.OptimizationProblem;
+import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.interfaces.simulation.IEventProcessor;
+import com.net2plan.interfaces.simulation.SimEvent;
+import com.net2plan.libraries.NetworkPerformanceMetrics;
+import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.*;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-
-import com.jom.OptimizationProblem;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.interfaces.simulation.IEventProcessor;
-import com.net2plan.interfaces.simulation.SimEvent;
-import com.net2plan.libraries.NetworkPerformanceMetrics;
-import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.GradientProjectionUtils;
-import com.net2plan.utils.InputParameter;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.Quadruple;
-import com.net2plan.utils.TimeTrace;
-import com.net2plan.utils.Triple;
 
 /** 
  * This module implements a distributed primal-gradient based algorithm using a barrier function, for adapting the demand injected traffic (congestion control) in the network, to maximize the network utility enforcing a fair allocation of the resources.

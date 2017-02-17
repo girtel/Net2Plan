@@ -1,18 +1,12 @@
 package com.net2plan.gui.focusPane;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.util.Arrays;
-import java.util.List;
-
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+
+import java.awt.*;
+import java.util.Arrays;
+import java.util.List;
 
 public class FigureNodeSequencePanel extends FigureSequencePanel
 {

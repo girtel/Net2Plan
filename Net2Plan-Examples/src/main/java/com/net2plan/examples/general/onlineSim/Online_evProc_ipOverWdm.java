@@ -8,23 +8,18 @@ package com.net2plan.examples.general.onlineSim;
  ******************************************************************************/
 
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.libraries.IPUtils;
 import com.net2plan.libraries.WDMUtils;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /** 
  * <p>Implements the reactions of an IP over WDM multilayer network, where the IP traffic is carried over lightpaths routed over 

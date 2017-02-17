@@ -1,27 +1,13 @@
 package com.net2plan.gui.viewEditTopolTables.tableVisualizationFilters;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import com.google.common.collect.Sets;
 import com.net2plan.gui.viewEditTopolTables.ITableRowFilter;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.InterLayerPropagationGraph;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.MulticastDemand;
-import com.net2plan.interfaces.networkDesign.MulticastTree;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Resource;
-import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class TBFToFromCarriedTraffic extends ITableRowFilter
 {

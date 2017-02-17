@@ -21,7 +21,6 @@
 package com.net2plan.examples.general.reports.robustness;
 
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
-
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -30,16 +29,17 @@ import com.net2plan.libraries.GraphTheoryMetrics;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.HTMLUtils;
 import com.net2plan.utils.Triple;
+import org.codehaus.stax2.XMLOutputFactory2;
+import org.codehaus.stax2.XMLStreamWriter2;
+
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
-import org.codehaus.stax2.XMLOutputFactory2;
-import org.codehaus.stax2.XMLStreamWriter2;
 
 /**
  * This report analyzes a network design (all the layers) in terms of robustness 

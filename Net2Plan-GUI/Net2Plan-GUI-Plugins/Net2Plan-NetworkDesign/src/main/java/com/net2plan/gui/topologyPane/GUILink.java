@@ -12,15 +12,9 @@
 
 package com.net2plan.gui.topologyPane;
 
-import java.awt.Color;
-import java.awt.Paint;
-import java.awt.Stroke;
+import com.net2plan.interfaces.networkDesign.*;
 
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Resource;
+import java.awt.*;
 
 import static com.net2plan.gui.topologyPane.visualizationControl.VisualizationConstants.*;
 

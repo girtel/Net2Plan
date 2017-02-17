@@ -25,7 +25,9 @@ import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants.UserInterface;
 import com.net2plan.internal.plugins.PluginSystem;
-import java.awt.Color;
+
+import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -36,14 +38,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Locale;
-import java.util.Set;
-import java.util.TreeSet;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
+import java.util.*;
 
 /**
  * Class with system utilities depending on the operating system and locale configuration.

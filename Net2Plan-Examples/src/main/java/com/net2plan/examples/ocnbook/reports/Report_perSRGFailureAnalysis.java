@@ -16,23 +16,7 @@
 
 package com.net2plan.examples.ocnbook.reports;
 
-import java.io.File;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.IReport;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.MulticastDemand;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.libraries.SRGUtils;
@@ -40,6 +24,10 @@ import com.net2plan.utils.ClassLoaderUtils;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
+
+import java.io.File;
+import java.text.DecimalFormat;
+import java.util.*;
 
 /**
  * This report receives as an input a network design, the network recovery scheme algorithm, and a set of network risks (SRGs), and computes 

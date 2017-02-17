@@ -1,27 +1,17 @@
 package com.net2plan.interfaces.networkDesign;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
+import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Triple;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.Triple;
-import com.net2plan.utils.Constants.RoutingType;
+import java.util.*;
+
+import static org.junit.Assert.*;
 
 public class LinkTest 
 {

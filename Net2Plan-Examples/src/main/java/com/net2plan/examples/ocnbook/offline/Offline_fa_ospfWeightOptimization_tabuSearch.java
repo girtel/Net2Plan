@@ -10,15 +10,7 @@
 
 package com.net2plan.examples.ocnbook.offline;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
-
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -26,11 +18,10 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.libraries.IPUtils;
 import com.net2plan.utils.Constants.OrderingType;
 import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.DoubleUtils;
-import com.net2plan.utils.InputParameter;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.TimeTrace;
-import com.net2plan.utils.Triple;
+import com.net2plan.utils.*;
+
+import java.io.File;
+import java.util.*;
 
 /**
  * Searches for the OSPF link weights that minimize a measure of congestion, using a tabu search heuristic

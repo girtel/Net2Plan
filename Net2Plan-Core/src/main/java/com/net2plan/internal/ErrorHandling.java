@@ -20,25 +20,17 @@
 
 package com.net2plan.internal;
 
-import com.net2plan.utils.ImageUtils;
 import com.net2plan.internal.Constants.UserInterface;
+import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.StringUtils;
-import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.Dialog;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Frame;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import javax.swing.*;
+import java.util.*;
 
 /**
  * Class handling errors within Net2Plan.

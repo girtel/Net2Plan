@@ -2,15 +2,6 @@
 
 package com.net2plan.documentation;
 
-import java.io.File;
-import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.interfaces.simulation.IEventGenerator;
@@ -21,6 +12,11 @@ import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.DocErrorReporter;
 import com.sun.javadoc.RootDoc;
 import com.sun.javadoc.Tag;
+
+import java.io.File;
+import java.io.PrintWriter;
+import java.util.*;
+import java.util.Map.Entry;
 
 @SuppressWarnings("unchecked")
 public class CreateHTMLKeywords

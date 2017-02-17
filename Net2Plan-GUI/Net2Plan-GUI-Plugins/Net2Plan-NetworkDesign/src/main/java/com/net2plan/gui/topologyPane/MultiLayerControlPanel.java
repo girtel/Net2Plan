@@ -1,23 +1,21 @@
 package com.net2plan.gui.topologyPane;
 
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.swing.*;
-
 import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
-import org.apache.commons.collections15.BidiMap;
-import org.apache.commons.collections15.bidimap.DualHashBidiMap;
-
 import com.net2plan.gui.utils.IVisualizationCallback;
 import com.net2plan.gui.viewEditTopolTables.multilayerTabs.AdvancedJTable_MultiLayerControlTable;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
+import org.apache.commons.collections15.BidiMap;
+import org.apache.commons.collections15.bidimap.DualHashBidiMap;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Jorge San Emeterio

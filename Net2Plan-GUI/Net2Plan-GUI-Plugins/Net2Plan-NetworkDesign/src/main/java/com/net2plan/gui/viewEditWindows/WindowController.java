@@ -6,7 +6,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Jorge San Emeterio on 07/10/2016.

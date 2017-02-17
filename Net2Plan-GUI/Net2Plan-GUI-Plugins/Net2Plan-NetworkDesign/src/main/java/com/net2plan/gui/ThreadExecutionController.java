@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.utils.gui;
+package com.net2plan.gui;
 
 import com.jom.JOMException;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;

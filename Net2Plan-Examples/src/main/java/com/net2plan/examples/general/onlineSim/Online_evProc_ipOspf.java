@@ -8,23 +8,18 @@ package com.net2plan.examples.general.onlineSim;
  ******************************************************************************/
 
 
-import java.util.List;
-import java.util.Map;
-
 import cern.colt.function.tdouble.DoubleDoubleFunction;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
-
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.libraries.IPUtils;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
+
+import java.util.List;
+import java.util.Map;
 
 /** 
  * Implements the reactions of an IP network governed by the OSPF/ECMP forwarding policies, for given link weigths

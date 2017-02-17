@@ -10,33 +10,25 @@
  ******************************************************************************/
 
 
-package com.net2plan.utils.gui;
+package com.net2plan.gui;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.text.NumberFormat;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-
-import com.net2plan.gui.viewEditTopolTables.multilayerTabs.AdvancedJTable_MultiLayerControlTable;
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement;
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_link;
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_multicastTree;
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_route;
-import com.net2plan.interfaces.networkDesign.Configuration;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.MulticastTree;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+import java.awt.*;
+import java.text.NumberFormat;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Set of several cell renderers used into the GUI.
@@ -678,27 +670,27 @@ public class CellRenderers
 
             switch (networkElementType)
             {
-                case NODE:
+                case NetworkElementType.NODE:
                     isDown = currentNetPlan.getNodeFromId((long) itemId).isDown();
                     break;
 
-                case LINK:
+                case NetworkElementType.LINK:
                     isDown = currentNetPlan.getLinkFromId((long) itemId).isDown();
                     break;
 
-                case ROUTE:
+                case NetworkElementType.ROUTE:
                     isDown = currentNetPlan.getRouteFromId((long) itemId).isDown();
                     break;
 
-                case MULTICAST_TREE:
+                case NetworkElementType.MULTICAST_TREE:
                     isDown = currentNetPlan.getMulticastTreeFromId((long) itemId).isDown();
                     break;
 
-                case RESOURCE:
+                case NetworkElementType.RESOURCE:
                     isDown = currentNetPlan.getResourceFromId((long) itemId).getHostNode().isDown();
                     break;
 
-                case FORWARDING_RULE:
+                case NetworkElementType.FORWARDING_RULE:
                     final int linkIndex = ((Pair<Integer, Integer>) itemId).getSecond();
                     isDown = currentNetPlan.getLink(linkIndex).isDown() || currentNetPlan.getLink(linkIndex).getOriginNode().isDown();
                     break;

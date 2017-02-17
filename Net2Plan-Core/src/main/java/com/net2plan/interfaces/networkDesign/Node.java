@@ -12,25 +12,18 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import java.awt.geom.Point2D;
-import java.net.URL;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import cern.colt.list.tdouble.DoubleArrayList;
+import cern.colt.list.tint.IntArrayList;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.UnmodifiablePoint2D;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
-import cern.colt.list.tdouble.DoubleArrayList;
-import cern.colt.list.tint.IntArrayList;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
+import java.awt.geom.Point2D;
+import java.net.URL;
+import java.util.*;
 
 
 /** <p>This class contains a representation of a node.

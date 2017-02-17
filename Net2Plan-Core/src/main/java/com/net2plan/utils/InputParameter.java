@@ -13,6 +13,9 @@
 package com.net2plan.utils;
 
 
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.internal.Constants.RunnableCodeType;
+
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -20,9 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.internal.Constants.RunnableCodeType;
 
 
 /**

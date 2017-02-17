@@ -16,7 +16,6 @@ import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
-
 import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.CollectionUtils;

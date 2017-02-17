@@ -8,41 +8,25 @@
 package com.net2plan.examples.ocnbook.onlineSim;
 
 
-
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.jet.math.tdouble.DoublePlusMultFirst;
 import cern.jet.math.tdouble.DoublePlusMultSecond;
-
 import com.jom.DoubleMatrixND;
 import com.jom.OptimizationProblem;
 import com.net2plan.examples.ocnbook.offline.Offline_fa_xteFormulations;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Constants.SearchType;
-import com.net2plan.utils.DoubleUtils;
-import com.net2plan.utils.InputParameter;
-import com.net2plan.utils.IntUtils;
-import com.net2plan.utils.TimeTrace;
-import com.net2plan.utils.Triple;
+import com.net2plan.utils.*;
+
+import java.io.File;
+import java.util.*;
 
 /** 
  * This module implements a distributed primal-decomposition-based gradient algorithm, for a coordinated adjustment of the routing in multiple domains (or cluster, or autonomous systems) in a network, so that domains do not need to exchange sensitive internal information, and minimize the average number of hops in the network.

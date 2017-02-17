@@ -1,14 +1,15 @@
 package com.net2plan.gui;
 
-import java.util.*;
-
-import com.net2plan.internal.plugins.IVisualizationCallback;
-import org.apache.commons.collections15.BidiMap;
-import org.apache.commons.collections15.bidimap.DualHashBidiMap;
-
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.utils.Triple;
+import org.apache.commons.collections15.BidiMap;
+import org.apache.commons.collections15.bidimap.DualHashBidiMap;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Manages the undo/redo information, tracking the current netPlan and the visualization state

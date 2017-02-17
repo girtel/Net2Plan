@@ -1,32 +1,18 @@
 package com.net2plan.interfaces.networkDesign;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import com.google.common.collect.ImmutableMap;
+import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Pair;
+import org.junit.*;
 
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import com.google.common.collect.ImmutableMap;
-import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.Pair;
-
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import static org.junit.Assert.*;
 
 public class NetPlanTest
 {

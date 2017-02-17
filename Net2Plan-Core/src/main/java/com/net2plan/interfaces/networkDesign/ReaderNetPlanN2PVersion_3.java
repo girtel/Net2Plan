@@ -20,13 +20,12 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.XMLEvent;
-
-import org.codehaus.stax2.XMLStreamReader2;
-
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
+import org.codehaus.stax2.XMLStreamReader2;
+
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
 
 class ReaderNetPlanN2PVersion_3 extends ReaderNetPlanN2PVersion_2
 {

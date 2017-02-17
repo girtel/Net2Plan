@@ -1,8 +1,20 @@
 package com.net2plan.gui.focusPane;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Font;
+import com.google.common.collect.Sets;
+import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.libraries.SRGUtils;
+import com.net2plan.utils.Constants.RoutingCycleType;
+import com.net2plan.utils.DoubleUtils;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Triple;
+import net.miginfocom.swing.MigLayout;
+import org.apache.commons.lang3.StringUtils;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.text.DecimalFormat;
@@ -11,35 +23,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-
-import org.apache.commons.lang3.StringUtils;
-
-import com.google.common.collect.Sets;
-import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
-import com.net2plan.interfaces.networkDesign.Configuration;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.MulticastDemand;
-import com.net2plan.interfaces.networkDesign.MulticastTree;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Resource;
-import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
-import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.libraries.SRGUtils;
-import com.net2plan.utils.Constants.RoutingCycleType;
-import com.net2plan.utils.DoubleUtils;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.Triple;
-
-import net.miginfocom.swing.MigLayout;
 
 public class FocusPane extends JPanel
 {

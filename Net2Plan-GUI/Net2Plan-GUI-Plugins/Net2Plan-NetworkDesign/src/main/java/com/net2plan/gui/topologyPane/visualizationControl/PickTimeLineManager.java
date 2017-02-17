@@ -1,6 +1,5 @@
 package com.net2plan.gui.topologyPane.visualizationControl;
 
-import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.Pair;
 
 import java.util.ArrayList;

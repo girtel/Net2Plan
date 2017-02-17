@@ -12,13 +12,13 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import com.net2plan.internal.AttributeMap;
+import com.net2plan.internal.ErrorHandling;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-
-import com.net2plan.internal.AttributeMap;
-import com.net2plan.internal.ErrorHandling;
 
 /** <p>This class contains a representation of a Shared Risk Group (SRG). This is a concept representing a risk of failure in the network,
  * such that if this risk becomes true, a particular set of links and/or nodes simultaneously fail. For instance, a SRG can be the risk of 

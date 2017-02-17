@@ -12,29 +12,24 @@
 
 package com.net2plan.gui.topologyPane.jung;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Shape;
+import com.google.common.collect.Sets;
+import com.net2plan.gui.topologyPane.GUILink;
+import com.net2plan.gui.topologyPane.GUINode;
+import com.net2plan.gui.topologyPane.ITopologyCanvasPlugin;
+import com.net2plan.gui.utils.IVisualizationCallback;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.internal.plugins.ITopologyCanvas;
+import edu.uci.ics.jung.visualization.VisualizationServer.Paintable;
+import edu.uci.ics.jung.visualization.VisualizationViewer;
+import edu.uci.ics.jung.visualization.util.ArrowFactory;
+
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Point2D;
-
-import com.google.common.collect.Sets;
-import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.gui.topologyPane.GUILink;
-import com.net2plan.gui.topologyPane.GUINode;
-import com.net2plan.gui.topologyPane.ITopologyCanvasPlugin;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.internal.plugins.ITopologyCanvas;
-
-import edu.uci.ics.jung.visualization.VisualizationServer.Paintable;
-import edu.uci.ics.jung.visualization.VisualizationViewer;
-import edu.uci.ics.jung.visualization.util.ArrowFactory;
 
 /**
  * Plugin that allows to add new links graphically over the canvas.

@@ -1,28 +1,21 @@
 package com.net2plan.gui.viewEditTopolTables.rightPanelTabs;
 
-import java.util.Map;
-
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.ScrollPaneLayout;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
-
-import com.net2plan.utils.gui.AdvancedJTable;
-import com.net2plan.utils.gui.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.FullScrollPaneLayout;
 import com.net2plan.gui.utils.IVisualizationCallback;
-import com.net2plan.utils.gui.TableCursorNavigation;
 import com.net2plan.gui.viewEditTopolTables.specificTables.AdvancedJTable_layer;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.StringUtils;
-
+import com.net2plan.utils.gui.AdvancedJTable;
+import com.net2plan.utils.gui.ClassAwareTableModel;
+import com.net2plan.utils.gui.TableCursorNavigation;
 import net.miginfocom.swing.MigLayout;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import java.util.Map;
 
 public class NetPlanViewTableComponent_network extends JPanel {
     private final static String[] attributeTableHeader = StringUtils.arrayOf("Attribute", "Value");

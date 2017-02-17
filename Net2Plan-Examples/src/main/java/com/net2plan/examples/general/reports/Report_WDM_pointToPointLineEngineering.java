@@ -17,15 +17,7 @@
 
 package com.net2plan.examples.general.reports;
 
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
-
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -34,6 +26,9 @@ import com.net2plan.utils.Constants.OrderingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
+
+import java.text.DecimalFormat;
+import java.util.*;
 
 /**
  * <p>This report shows line engineering information for WDM links in the network.</p>

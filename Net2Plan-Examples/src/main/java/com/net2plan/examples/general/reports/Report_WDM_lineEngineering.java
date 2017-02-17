@@ -17,23 +17,15 @@
 
 package com.net2plan.examples.general.reports;
 
-import java.text.DecimalFormat;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import com.net2plan.interfaces.networkDesign.IReport;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.Constants.OrderingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
+
+import java.text.DecimalFormat;
+import java.util.*;
 
 /**
  * <p>

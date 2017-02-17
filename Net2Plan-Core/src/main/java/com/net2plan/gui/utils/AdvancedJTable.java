@@ -10,17 +10,22 @@
  ******************************************************************************/
 
 
-package com.net2plan.utils.gui;
+package com.net2plan.gui.utils;
 
 import com.net2plan.utils.Pair;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.TableModelEvent;
 import javax.swing.table.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.util.EventObject;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * <p>Extended version of the {@code JTable} class. It presents the following

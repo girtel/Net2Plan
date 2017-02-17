@@ -8,19 +8,10 @@
 package com.net2plan.examples.ocnbook.onlineSim;
 
 
-
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.jet.math.tdouble.DoubleFunctions;
-
 import com.net2plan.examples.ocnbook.offline.Offline_ca_wirelessCsmaWindowSize;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -33,6 +24,12 @@ import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.TimeTrace;
 import com.net2plan.utils.Triple;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /** 
  * This module implements a distributed dual-gradient based algorithm for adjusting the backoff windows sizes in a wireless network with a CSMA-mased MAC, to maximize the network utility enforcing a fair allocation of the resources.

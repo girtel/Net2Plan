@@ -19,16 +19,13 @@
 package com.net2plan.io;
 
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants.IOFeature;
+import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Triple;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
+
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.List;

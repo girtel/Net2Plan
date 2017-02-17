@@ -4,23 +4,16 @@
 package com.net2plan.documentation;
 
 
-
-import java.io.File;
-import java.io.PrintWriter;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.net2plan.utils.StringUtils;
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.DocErrorReporter;
 import com.sun.javadoc.RootDoc;
 import com.sun.javadoc.Tag;
+
+import java.io.File;
+import java.io.PrintWriter;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class CreateBookSectionsTable
 {

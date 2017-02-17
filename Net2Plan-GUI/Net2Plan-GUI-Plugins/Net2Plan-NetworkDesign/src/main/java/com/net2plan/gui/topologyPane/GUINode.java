@@ -12,24 +12,18 @@
 
 package com.net2plan.gui.topologyPane;
 
-import static com.net2plan.gui.topologyPane.visualizationControl.VisualizationConstants.DEFAULT_GUINODE_COLOR;
-import static com.net2plan.gui.topologyPane.visualizationControl.VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP;
-import static com.net2plan.gui.topologyPane.visualizationControl.VisualizationConstants.INCREASENODESIZEFACTORACTIVE;
-
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Paint;
-import java.awt.Shape;
-import java.net.URL;
-
-import javax.swing.Icon;
-
 import com.net2plan.gui.topologyPane.visualizationControl.VisualizationConstants;
 import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
+
+import javax.swing.*;
+import java.awt.*;
+import java.net.URL;
+
+import static com.net2plan.gui.topologyPane.visualizationControl.VisualizationConstants.*;
 
 /**
  * Class representing a node.

@@ -20,20 +20,13 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.LongUtils;
+import org.codehaus.stax2.XMLStreamReader2;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
-
-import org.codehaus.stax2.XMLStreamReader2;
-
-import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.LongUtils;
+import java.util.*;
 
 class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanFormat_v3
 {

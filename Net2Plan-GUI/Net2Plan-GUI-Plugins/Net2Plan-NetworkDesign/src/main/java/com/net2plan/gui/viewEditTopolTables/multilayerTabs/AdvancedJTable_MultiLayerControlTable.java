@@ -1,5 +1,20 @@
 package com.net2plan.gui.viewEditTopolTables.multilayerTabs;
 
+import com.google.common.collect.Lists;
+import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.internal.Constants;
+import com.net2plan.utils.StringUtils;
+import com.net2plan.utils.gui.AdvancedJTable;
+import com.net2plan.utils.gui.ClassAwareTableModel;
+import org.apache.commons.collections15.BidiMap;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -7,23 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
-
-import javax.swing.AbstractCellEditor;
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.JTable;
-import javax.swing.table.*;
-
-import com.net2plan.utils.gui.AdvancedJTable;
-import com.net2plan.utils.gui.ClassAwareTableModel;
-import org.apache.commons.collections15.BidiMap;
-
-import com.google.common.collect.Lists;
-import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.internal.Constants;
-import com.net2plan.utils.StringUtils;
 
 /**
  * @author Jorge San Emeterio

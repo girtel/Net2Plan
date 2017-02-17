@@ -1,16 +1,5 @@
 package com.net2plan.gui.focusPane;
 
-import static com.net2plan.gui.topologyPane.visualizationControl.VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP;
-
-import java.awt.*;
-import java.awt.geom.Rectangle2D;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.swing.*;
-
 import com.net2plan.gui.topologyPane.visualizationControl.VisualizationConstants;
 import com.net2plan.gui.topologyPane.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
@@ -18,6 +7,16 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.utils.Pair;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.geom.Rectangle2D;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static com.net2plan.gui.topologyPane.visualizationControl.VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP;
 
 public class DrawNode
 {

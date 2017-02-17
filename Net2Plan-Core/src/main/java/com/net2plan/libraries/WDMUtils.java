@@ -16,36 +16,6 @@
 
 package com.net2plan.libraries;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
-import com.google.common.collect.Sets;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.utils.CollectionUtils;
-import com.net2plan.utils.Constants;
-import com.net2plan.utils.IntUtils;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.StringUtils;
-
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
@@ -53,6 +23,11 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.colt.matrix.tint.IntFactory2D;
 import cern.colt.matrix.tint.IntMatrix1D;
 import cern.colt.matrix.tint.IntMatrix2D;
+import com.google.common.collect.Sets;
+import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.utils.*;
+
+import java.util.*;
 
 /**
  * Class to deal with WDM optical topologies in fixed-grid and flexi-grid networks, including wavelength assignment and regenerator placement.

@@ -18,8 +18,8 @@
 
 package com.net2plan.internal.sim;
 
-import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.internal.Constants.UserInterface;
 import com.net2plan.internal.SystemUtils;
 

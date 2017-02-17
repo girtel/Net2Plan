@@ -2,7 +2,9 @@ package com.net2plan.gui.topologyPane.jung.osmSupport;
 
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
-import org.jxmapviewer.viewer.*;
+import org.jxmapviewer.viewer.DefaultTileFactory;
+import org.jxmapviewer.viewer.GeoPosition;
+import org.jxmapviewer.viewer.TileFactoryInfo;
 
 /**
  * Created by Jorge San Emeterio on 13/10/2016.

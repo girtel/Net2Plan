@@ -12,18 +12,12 @@
 
 package com.net2plan.libraries;
 
-import java.util.List;
-
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.MulticastTree;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Route;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import java.util.List;
 
 /**
  * Class implementing different traffic metrics.

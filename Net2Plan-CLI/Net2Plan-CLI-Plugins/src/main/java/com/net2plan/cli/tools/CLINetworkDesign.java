@@ -12,8 +12,6 @@
 
 package com.net2plan.cli.tools;
 
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.plugins.ICLIModule;
 import com.net2plan.utils.ClassLoaderUtils;
 import com.net2plan.utils.StringUtils;

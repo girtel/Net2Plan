@@ -15,6 +15,7 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.utils.Triple;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
