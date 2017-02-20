@@ -16,12 +16,10 @@
         <dependency>
             <groupId>com.net2plan</groupId>
             <artifactId>net2plan-core</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.net2plan.net2plan-gui</groupId>
             <artifactId>net2plan-gui-exec</artifactId>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 

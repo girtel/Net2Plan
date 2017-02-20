@@ -16,6 +16,7 @@
             <groupId>com.net2plan</groupId>
             <artifactId>net2plan-core</artifactId>
             <version>0.5.1-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

@@ -16,7 +16,6 @@
         <dependency>
             <groupId>com.net2plan</groupId>
             <artifactId>net2plan-core</artifactId>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 
