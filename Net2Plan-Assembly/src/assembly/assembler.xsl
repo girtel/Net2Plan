@@ -18,21 +18,6 @@
         </fileSet>
     </fileSets>
 
-    <moduleSets>
-        <moduleSet>
-            <useAllReactorProjects>true</useAllReactorProjects>
-            <includes>
-                <include>${project.groupId}:net2plan-javadoc</include>
-            </includes>
-            <binaries>
-                <unpack>true</unpack>
-                <attachmentClassifier>javadoc</attachmentClassifier>
-                <outputDirectory>doc/javadoc</outputDirectory>
-                <includeDependencies>false</includeDependencies>
-            </binaries>
-        </moduleSet>
-    </moduleSets>
-
     <dependencySets>
         <!--GUI Plugin-->
         <dependencySet>
@@ -40,7 +25,8 @@
             <useTransitiveDependencies>false</useTransitiveDependencies>
             <unpack>false</unpack>
             <includes>
-                <include>${project.groupId}.net2plan-gui.net2plan-gui-plugins:net2plan-gui-plugins-networkDesign:*</include>
+                <include>${project.groupId}.net2plan-gui.net2plan-gui-plugins:net2plan-gui-plugins-networkDesign:*
+                </include>
             </includes>
             <outputDirectory>plugins</outputDirectory>
             <outputFileNameMapping>defaultNetworkDesign.jar</outputFileNameMapping>
@@ -50,7 +36,8 @@
             <useTransitiveDependencies>false</useTransitiveDependencies>
             <unpack>false</unpack>
             <includes>
-                <include>${project.groupId}.net2plan-gui.net2plan-gui-plugins:net2plan-gui-plugins-trafficDesign:*</include>
+                <include>${project.groupId}.net2plan-gui.net2plan-gui-plugins:net2plan-gui-plugins-trafficDesign:*
+                </include>
             </includes>
             <outputDirectory>plugins</outputDirectory>
             <outputFileNameMapping>defaultTrafficDesign.jar</outputFileNameMapping>
@@ -143,23 +130,21 @@
                 <exclude>${project.groupId}.net2plan-cli:*:*</exclude>
             </excludes>
         </dependencySet>
-        <!--Javadoc-->
-        <!--<dependencySet>-->
-            <!--<unpack>true</unpack>-->
-            <!--<includes>-->
-                <!--<include>${project.groupId}:net2plan-javadoc:*:isJavadoc</include>-->
-            <!--</includes>-->
-            <!--<outputDirectory>doc/javadoc</outputDirectory>-->
-        <!--</dependencySet>-->
-        <!--<dependencySet>-->
-            <!--<unpack>true</unpack>-->
-            <!--<useTransitiveDependencies>true</useTransitiveDependencies>-->
-            <!--<useProjectArtifact>false</useProjectArtifact>-->
-            <!--<useStrictFiltering>true</useStrictFiltering>-->
-            <!--<includes>-->
-                <!--<include>net.sourceforge.parallelcolt:parallelcolt:*:javadoc</include>-->
-            <!--</includes>-->
-            <!--<outputDirectory>doc/javadoc</outputDirectory>-->
-        <!--</dependencySet>-->
     </dependencySets>
+
+    <!-- Javadoc -->
+    <moduleSets>
+        <moduleSet>
+            <useAllReactorProjects>true</useAllReactorProjects>
+            <includes>
+                <include>${project.groupId}:net2plan-javadoc</include>
+            </includes>
+            <binaries>
+                <unpack>true</unpack>
+                <attachmentClassifier>javadoc</attachmentClassifier>
+                <outputDirectory>doc/javadoc</outputDirectory>
+                <includeDependencies>false</includeDependencies>
+            </binaries>
+        </moduleSet>
+    </moduleSets>
 </assembly>

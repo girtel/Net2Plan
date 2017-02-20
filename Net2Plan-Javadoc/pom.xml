@@ -27,6 +27,33 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>unpack-parallelcolt</id>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>net.sourceforge.parallelcolt</groupId>
+                                    <artifactId>parallelcolt</artifactId>
+                                    <version>0.10.1</version>
+                                    <type>jar</type>
+                                    <classifier>javadoc</classifier>
+                                    <outputDirectory>${project.build.directory}/apidocs/parallelcolt</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!--Generate Javadoc -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -67,6 +94,7 @@
                                 <include>com/net2plan/libraries/**</include>
                                 <include>com/net2plan/utils/**</include>
                             </sourceFileIncludes>
+                            <outputDirectory>${project.build.directory}/apidocs/api</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
