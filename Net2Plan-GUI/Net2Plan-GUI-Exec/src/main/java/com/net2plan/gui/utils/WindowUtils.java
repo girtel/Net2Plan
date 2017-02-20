@@ -12,16 +12,19 @@ public final class WindowUtils
     {
     }
 
-    public static void clearFloatingWindows(final JFrame mainWindow)
+    public static void clearFloatingWindows()
     {
         Window[] windows = Window.getWindows();
 
         for (Window window : windows)
         {
-            if (!(window == mainWindow))
+            if (window instanceof JFrame)
             {
-                window.setVisible(false);
-                window.dispose();
+                if (!((JFrame) window).getTitle().equals("Net2Plan"))
+                {
+                    window.setVisible(false);
+                    window.dispose();
+                }
             }
         }
     }
@@ -66,7 +69,7 @@ public final class WindowUtils
         final Rectangle winSize = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
         final int taskBarHeight = screenSize.height - winSize.height;
 
-        final int width = (int) (screenSize.width  * 0.505);
+        final int width = (int) (screenSize.width * 0.505);
         final int height = screenSize.height - taskBarHeight;
 
         frame.setSize(width, height);

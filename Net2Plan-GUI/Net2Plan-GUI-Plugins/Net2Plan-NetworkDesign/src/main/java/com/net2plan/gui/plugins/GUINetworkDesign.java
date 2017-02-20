@@ -204,7 +204,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         whatIfAnalysisPane = new WhatIfAnalysisPane(this);
 
         // Closing windows
-        WindowUtils.clearFloatingWindows((JFrame) SwingUtilities.getWindowAncestor(this));
+        WindowUtils.clearFloatingWindows();
 
         final JTabbedPane tabPane = new JTabbedPane();
         tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.network), viewEditTopTables);
