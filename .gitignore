@@ -28,4 +28,3 @@ doc/gen/
 
 *.releaseBackup
 *.stackdump
-/Net2Plan-Javadoc/src/main/resources/lib/

@@ -80,7 +80,7 @@
     </dependencies>
 
     <build>
-        <finalName>Net2Plan-${project.version}</finalName>
+        <finalName>Net2Plan-${project.version}.zip</finalName>
         <plugins>
             <!-- Plugin required to assemble the project for distribution  -->
             <plugin>
