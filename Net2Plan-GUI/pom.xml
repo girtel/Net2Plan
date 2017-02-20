@@ -15,6 +15,7 @@
     <modules>
         <module>Net2Plan-GUI-Exec</module>
         <module>Net2Plan-GUI-Plugins</module>
+        <module>Net2Plan-GUI-Launcher</module>
     </modules>
 
     <dependencyManagement>
