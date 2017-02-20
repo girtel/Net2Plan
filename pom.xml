@@ -17,11 +17,11 @@
 
     <modules>
         <module>Net2Plan-Core</module>
+        <module>Net2Plan-Javadoc</module>
         <module>Net2Plan-CLI</module>
         <module>Net2Plan-GUI</module>
         <module>Net2Plan-IO</module>
         <module>Net2Plan-Examples</module>
-        <module>Net2Plan-Javadoc</module>
         <module>Net2Plan-Assembly</module>
     </modules>
 
