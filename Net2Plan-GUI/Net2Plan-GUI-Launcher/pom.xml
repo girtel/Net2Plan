@@ -10,16 +10,20 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>net2plan-gui-launcher</artifactId>
+
+    <!--GUILauncher will not be deployed as a jar-->
+    <!--It is a tool to launch Net2Plan from the IDE-->
+    <!--GUILauncher needs its dependencies to be within compile as it will use them from the IDE-->
     <dependencies>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-core</artifactId>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>com.net2plan.net2plan-gui</groupId>
             <artifactId>net2plan-gui-exec</artifactId>
             <version>0.5.1-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.net2plan</groupId>
-            <artifactId>net2plan-core</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>
