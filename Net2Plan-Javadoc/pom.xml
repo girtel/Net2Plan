@@ -53,12 +53,12 @@
                             <version>true</version>
                             <overview>${project.basedir}/src/main/resources/resources/javadoc/overview-main.html
                             </overview>
-                            <!--<links>-->
-                            <!--<link>../parallelcolt</link>-->
-                            <!--</links>-->
-                            <!--<sourcepath>${netplan-core.sources}</sourcepath>-->
+                            <links>
+                                <link>../parallelcolt</link>
+                            </links>
                             <includeDependencySources>true</includeDependencySources>
                             <dependencySourceIncludes>
+                                <!-- Net2Plan Core-->
                                 <dependencySourceInclude>com.net2plan:*</dependencySourceInclude>
                             </dependencySourceIncludes>
                             <sourceFileIncludes>
