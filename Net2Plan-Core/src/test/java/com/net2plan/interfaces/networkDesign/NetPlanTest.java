@@ -139,8 +139,8 @@ public class NetPlanTest
 
 		NetPlan np1 = new NetPlan (new File ("src/main/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"));
 		np1.checkCachesConsistency();
-		np1.saveToFile(new File ("test.n2p"));
-		NetPlan np2 = new NetPlan (new File ("test.n2p"));
+		np1.saveToFile(f);
+		NetPlan np2 = new NetPlan (new File("test.n2p"));
 		np2.checkCachesConsistency();
 		assertTrue (np1.isDeepCopy(np2));
 		assertTrue (np2.isDeepCopy(np1));

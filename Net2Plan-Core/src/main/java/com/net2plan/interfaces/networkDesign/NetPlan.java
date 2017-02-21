@@ -5276,20 +5276,19 @@ public class NetPlan extends NetworkElement
         {
             fos = new FileOutputStream(file);
             saveToOutputStream(fos);
-
         } catch (FileNotFoundException e)
         {
-            if (fos != null)
-            {
-                try
-                {
-                    fos.close();
-                } catch (IOException ex)
-                {
-                }
-            }
-
             throw new Net2PlanException(e.getMessage());
+        } finally
+        {
+            try
+            {
+                assert fos != null;
+                fos.close();
+            } catch (IOException e)
+            {
+                e.printStackTrace();
+            }
         }
     }
 
