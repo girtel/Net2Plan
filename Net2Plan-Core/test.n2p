@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<network description="" name="" version="5" nextElementId="11">
+	<node id="2" xCoord="0.0" yCoord="0.0" name="node0" isUp="true" layersWithIconsDefined=""/>
+	<node id="3" xCoord="0.0" yCoord="0.0" name="node1" isUp="true" layersWithIconsDefined=""/>
+	<resource id="7" hostNodeId="2" type="baseType" name="baseName" capacityMeasurementUnits="Mbps" processingTimeToTraversingTrafficInMs="1.0" capacity="10.0" baseResourceAndOccupiedCapacitiesMap=""/>
+	<resource id="8" hostNodeId="2" type="upperType" name="upperName" capacityMeasurementUnits="Mbps" processingTimeToTraversingTrafficInMs="1.0" capacity="10.0" baseResourceAndOccupiedCapacitiesMap="7.0 5.0"/>
+	<layer id="1" name="Layer 0" description="" isDefaultLayer="true" linkCapacityUnitsName="" demandTrafficUnitsName="">
+		<link id="4" originNodeId="2" destinationNodeId="3" capacity="100.0" lengthInKm="100.0" propagationSpeedInKmPerSecond="1.0" isUp="true"/>
+		<demand id="5" ingressNodeId="2" egressNodeId="3" offeredTraffic="3.0">
+		<serviceChainResourceTypeOfSequence type="upperType"/>
+		</demand>
+		<demand id="6" ingressNodeId="2" egressNodeId="3" offeredTraffic="3.0">
+		<serviceChainResourceTypeOfSequence type="baseType"/>
+		</demand>
+		<sourceRouting>
+			<route id="9" demandId="5" currentCarriedTrafficIfNotFailing="100.0" currentLinksAndResourcesOccupationIfNotFailing="1.0 200.0" currentPath="8 4" initialStateCarriedTrafficIfNotFailing="100.0" initialStateOccupationIfNotFailing="1.0 200.0" initialStatePath="8 4" backupRoutes=""/>
+			<route id="10" demandId="6" currentCarriedTrafficIfNotFailing="100.0" currentLinksAndResourcesOccupationIfNotFailing="1.0 300.0" currentPath="7 4" initialStateCarriedTrafficIfNotFailing="100.0" initialStateOccupationIfNotFailing="1.0 300.0" initialStatePath="7 4" backupRoutes=""/>
+		</sourceRouting>
+	</layer>
+</network>
