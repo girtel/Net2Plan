@@ -237,7 +237,7 @@
                             <sourceFileExcludes>
                                 <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
                             </sourceFileExcludes>
-                            <additionalparam>-outputFolder ${project.build.directory}/site/apidocs/examples</additionalparam>
+                            <additionalparam>-outputFolder ${project.build.directory}/apidocs/examples</additionalparam>
                         </configuration>
                     </execution>
                 </executions>
