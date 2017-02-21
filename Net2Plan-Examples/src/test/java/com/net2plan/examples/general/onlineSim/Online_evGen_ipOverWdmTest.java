@@ -1,18 +1,6 @@
 package com.net2plan.examples.general.onlineSim;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.IEventProcessor;
@@ -20,6 +8,15 @@ import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.SRGUtils.SharedRiskModel;
 import com.net2plan.libraries.WDMUtils;
 import com.net2plan.utils.InputParameter;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Online_evGen_ipOverWdmTest
 {
@@ -31,7 +28,7 @@ public class Online_evGen_ipOverWdmTest
 	@Before
 	public void setUp() throws Exception
 	{
-		this.np = new NetPlan (new File ("src/main/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"));
+		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"));
 		this.wdmLayerIndex = 0;
 		this.ipLayerIndex = 1;
 		np.removeAllSRGs(); 

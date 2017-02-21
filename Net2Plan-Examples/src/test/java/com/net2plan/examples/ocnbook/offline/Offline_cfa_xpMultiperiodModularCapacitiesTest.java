@@ -37,7 +37,7 @@ public class Offline_cfa_xpMultiperiodModularCapacitiesTest
 		/* delete everything inside temporalDirectoryTests, including subfolders */
 		Files.walk(Paths.get("temporalDirectoryTests")).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);		
 
-		this.np = new NetPlan (new File ("src/main/resources/data/networkTopologies/example4nodes.n2p"));
+		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example4nodes.n2p"));
 		
 		final Random rng = new Random (0L);
 		NetPlan npTm0 = np.copy(); 

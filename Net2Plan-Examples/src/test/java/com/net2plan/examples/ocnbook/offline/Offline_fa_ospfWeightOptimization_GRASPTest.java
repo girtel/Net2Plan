@@ -37,7 +37,7 @@ public class Offline_fa_ospfWeightOptimization_GRASPTest
 		/* delete everything inside temporalDirectoryTests, including subfolders */
 		Files.walk(Paths.get("temporalDirectoryTests")).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);		
 
-		this.np = new NetPlan (new File ("src/main/resources/data/networkTopologies/example7nodes_withTraffic.n2p"));
+		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example7nodes_withTraffic.n2p"));
 	}
 
 	@After

@@ -30,7 +30,7 @@ public class Offline_ba_numFormulationsTest
 	@Before
 	public void setUp() throws Exception
 	{
-		this.np = new NetPlan (new File ("src/main/resources/data/networkTopologies/example4nodes.n2p"));
+		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example4nodes.n2p"));
 		np.removeAllDemands();
 		for (Node n1 : np.getNodes ()) for (Node n2 : np.getNodes ()) if (n1 != n2) np.addDemand(n1, n2, 0, null);
 		

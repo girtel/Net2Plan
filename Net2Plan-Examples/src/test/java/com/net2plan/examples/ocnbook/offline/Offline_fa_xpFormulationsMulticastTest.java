@@ -41,7 +41,7 @@ public class Offline_fa_xpFormulationsMulticastTest
 	public void setUp() throws Exception 
 	{
 		final Random rng = new Random (0L);
-		this.np = new NetPlan (new File ("src/main/resources/data/networkTopologies/example7nodes_withTraffic.n2p"));
+		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example7nodes_withTraffic.n2p"));
 		for (Node n : np.getNodes())
 			np.addMulticastDemand(n , randomEgressNodes(rng,n) , rng.nextDouble() * 5 , null); 
 		

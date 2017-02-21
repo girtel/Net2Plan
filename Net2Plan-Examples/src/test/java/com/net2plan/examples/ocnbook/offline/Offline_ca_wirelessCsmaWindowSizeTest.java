@@ -29,7 +29,7 @@ public class Offline_ca_wirelessCsmaWindowSizeTest
 	@Before
 	public void setUp() throws Exception 
 	{
-		this.np = new NetPlan (new File ("src/main/resources/data/networkTopologies/example6nodes.n2p"));
+		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example6nodes.n2p"));
 		np.removeAllDemands();
 		np.getLinks().forEach(e ->e.setCapacity(0));
 		

@@ -30,7 +30,7 @@ public class Online_evGen_ipOspfTest
 	@Before
 	public void setUp() throws Exception
 	{
-		this.np = new NetPlan (new File ("src/main/resources/data/networkTopologies/example7nodes_withTraffic.n2p"));
+		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example7nodes_withTraffic.n2p"));
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
 		IPUtils.setLinkWeights(np , 1);
 		np.removeAllSRGs(); 

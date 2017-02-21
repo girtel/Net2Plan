@@ -29,7 +29,7 @@ public class Online_evGen_wdmTest
 	@Before
 	public void setUp() throws Exception
 	{
-		this.np = new NetPlan (new File ("src/main/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"));
+		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"));
 		this.wdmLayerIndex = 0;
 		this.ipLayerIndex = 1;
 		np.removeAllSRGs(); 

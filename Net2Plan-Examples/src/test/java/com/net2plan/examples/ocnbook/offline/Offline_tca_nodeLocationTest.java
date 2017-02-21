@@ -24,7 +24,7 @@ public class Offline_tca_nodeLocationTest
 	@Before
 	public void setUp() throws Exception 
 	{
-		this.np = new NetPlan (new File ("src/main/resources/data/networkTopologies/example7nodes_withTraffic.n2p"));
+		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example7nodes_withTraffic.n2p"));
 	}
 
 	@After

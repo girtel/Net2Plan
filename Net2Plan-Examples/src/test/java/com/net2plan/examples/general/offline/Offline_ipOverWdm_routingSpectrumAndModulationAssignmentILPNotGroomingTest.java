@@ -1,36 +1,19 @@
 package com.net2plan.examples.general.offline;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.net2plan.interfaces.networkDesign.Configuration;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.SRGUtils.SharedRiskModel;
 import com.net2plan.libraries.WDMUtils;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Quadruple;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-import com.net2plan.utils.InputParameter;
+import java.io.File;
+import java.util.*;
+
+import static org.junit.Assert.*;
 public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGroomingTest
 {
 	private NetPlan np;
@@ -39,7 +22,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGroom
 	@Before
 	public void setUp() throws Exception
 	{
-		this.np = new NetPlan (new File ("src/main/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"));
+		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"));
 		this.wdmLayerIndex = 0;
 		this.ipLayerIndex = 1;
 		np.removeAllSRGs(); 
@@ -82,7 +65,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGroom
 	@Test
 	public void testExecuteAlgorithmSingleLayerInputDesign()
 	{
-		this.np = new NetPlan (new File ("src/main/resources/data/networkTopologies/example7nodes_withTraffic.n2p"));
+		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example7nodes_withTraffic.n2p"));
 		testExecuteAlgorithm();
 	}
 

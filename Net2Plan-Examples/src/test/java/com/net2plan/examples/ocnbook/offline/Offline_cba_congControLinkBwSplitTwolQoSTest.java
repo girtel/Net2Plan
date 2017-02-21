@@ -29,7 +29,7 @@ public class Offline_cba_congControLinkBwSplitTwolQoSTest
 	@Before
 	public void setUp() throws Exception 
 	{
-		this.np = new NetPlan (new File ("src/main/resources/data/networkTopologies/example4nodes.n2p"));
+		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example4nodes.n2p"));
 		
 		/* Create the temporal directory for storing the test files */
 		this.temporalDirectoryTests = new File ("temporalDirectoryTests");
