@@ -198,13 +198,4 @@
             </plugins>
         </pluginManagement>
     </build>
-
-    <profiles>
-        <profile>
-            <id>dev</id>
-            <modules>
-                <module>Net2Plan-Core</module>
-            </modules>
-        </profile>
-    </profiles>
 </project>

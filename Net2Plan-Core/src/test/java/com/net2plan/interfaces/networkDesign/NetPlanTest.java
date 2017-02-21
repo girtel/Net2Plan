@@ -1,32 +1,18 @@
 package com.net2plan.interfaces.networkDesign;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import com.google.common.collect.ImmutableMap;
+import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Pair;
+import org.junit.*;
 
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import com.google.common.collect.ImmutableMap;
-import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.Pair;
-
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import static org.junit.Assert.*;
 
 public class NetPlanTest
 {
@@ -35,7 +21,7 @@ public class NetPlanTest
 	private Resource netTriangle_r1,  netTriangle_r2, netTriangle_r3;
 	private Link netTriangle_e12,  netTriangle_e21, netTriangle_e13 , netTriangle_e31 , netTriangle_e23 , netTriangle_e32;
 	private Demand netTriangle_d12,  netTriangle_d21, netTriangle_d13 , netTriangle_d31 , netTriangle_d23 , netTriangle_d32;
-	
+
 	private NetPlan np = null;
 	private Node n1, n2 , n3;
 	private Link link12, link23 , link13;
@@ -54,8 +40,8 @@ public class NetPlanTest
 	private Link upperMdLink12 , upperMdLink13;
 	private MulticastDemand upperMd123;
 	private MulticastTree upperMt123;
-	
-	
+
+
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception
 	{
@@ -90,13 +76,13 @@ public class NetPlanTest
 		this.res2backup = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
 		this.scd123 = np.addDemand(n1 , n3 , 3 , null,lowerLayer);
 		this.scd123.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("type"));
-		this.pathSc123 = Arrays.asList(link12 ,res2 , link23); 
-		this.sc123 = np.addServiceChain(scd123 , 100 , Arrays.asList(300.0 , 50.0 , 302.0) , pathSc123 , null); 
+		this.pathSc123 = Arrays.asList(link12 ,res2 , link23);
+		this.sc123 = np.addServiceChain(scd123 , 100 , Arrays.asList(300.0 , 50.0 , 302.0) , pathSc123 , null);
 		this.segm13 = np.addRoute(d13 , 0 , 50 , Collections.singletonList(link13) , null);
 		this.r123a.addBackupRoute(segm13);
 		this.upperLink12 = np.addLink(n1,n2,10,100,1,null,upperLayer);
 		this.d12.coupleToUpperLayerLink(upperLink12);
-		this.line123 = new HashSet<Link> (Arrays.asList(link12, link23)); 
+		this.line123 = new HashSet<Link> (Arrays.asList(link12, link23));
 		this.star = new HashSet<Link> (Arrays.asList(link12, link13));
 		this.endNodes = new HashSet<Node> (Arrays.asList(n2,n3));
 		this.d123 = np.addMulticastDemand(n1 , endNodes , 100 , null , lowerLayer);
@@ -150,7 +136,7 @@ public class NetPlanTest
 		NetPlan readNp = new NetPlan (f);
 		assertTrue(readNp.isDeepCopy(np));
 		assertTrue(np.isDeepCopy(readNp));
-		
+
 		NetPlan np1 = new NetPlan (new File ("src/main/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"));
 		np1.checkCachesConsistency();
 		np1.saveToFile(new File ("test.n2p"));
@@ -294,7 +280,7 @@ public class NetPlanTest
 		double maxLengthInKm = -1;
 		int maxNumHops = -1;
 		double maxPropDelayInMs = -1;
-		double maxRouteCost = -1; 
+		double maxRouteCost = -1;
 		double maxRouteCostFactorRespectToShortestPath = -1;
 		double maxRouteCostRespectToShortestPath = -1;
 		Map<Pair<Node,Node>,List<List<Link>>> cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
@@ -304,7 +290,7 @@ public class NetPlanTest
 		K=2; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
 		for (Demand d : netTriangle.getDemands())
 		{
-			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());  
+			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());
 			allNodes.removeAll(Arrays.asList(d.getIngressNode() , d.getEgressNode()));
 			final Node intermNode = allNodes.iterator().next();
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
@@ -315,7 +301,7 @@ public class NetPlanTest
 		K=3; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
 		for (Demand d : netTriangle.getDemands())
 		{
-			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());  
+			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());
 			allNodes.removeAll(Arrays.asList(d.getIngressNode() , d.getEgressNode()));
 			final Node intermNode = allNodes.iterator().next();
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
@@ -332,19 +318,19 @@ public class NetPlanTest
 		maxLengthInKm = -1;
 		for (Demand d : netTriangle.getDemands())
 			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList());
-		
+
 		K=3; maxNumHops = 1; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
-		maxNumHops = -1; 
+		maxNumHops = -1;
 		for (Demand d : netTriangle.getDemands())
 			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
-		
+
 		K=3; maxPropDelayInMs = 1000; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
 		maxPropDelayInMs = -1;
 		for (Demand d : netTriangle.getDemands())
 			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
 
 		K=3; maxRouteCost = 1; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
-		maxRouteCost = -1; 
+		maxRouteCost = -1;
 		for (Demand d : netTriangle.getDemands())
 			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
 
@@ -356,7 +342,7 @@ public class NetPlanTest
 		maxRouteCostFactorRespectToShortestPath = -1;
 		for (Demand d : netTriangle.getDemands())
 		{
-			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());  
+			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());
 			allNodes.removeAll(Arrays.asList(d.getIngressNode() , d.getEgressNode()));
 			final Node intermNode = allNodes.iterator().next();
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
@@ -377,14 +363,14 @@ public class NetPlanTest
 		double maxLengthInKm = -1;
 		int maxNumHops = -1;
 		double maxPropDelayInMs = -1;
-		double maxRouteCost = -1; 
+		double maxRouteCost = -1;
 		double maxRouteCostFactorRespectToShortestPath = -1;
 		double maxRouteCostRespectToShortestPath = -1;
 		Map<Pair<Node,Node>,List<List<Link>>> cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
 		Map<Pair<Node,Node>,List<Pair<List<Link>,List<Link>>>> cpl11 = NetPlan.computeUnicastCandidate11PathList(cpl , 1);
 		for (Demand d : netTriangle.getDemands())
 		{
-			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());  
+			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());
 			allNodes.removeAll(Arrays.asList(d.getIngressNode() , d.getEgressNode()));
 			final Node intermNode = allNodes.iterator().next();
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
@@ -395,7 +381,7 @@ public class NetPlanTest
 		cpl11 = NetPlan.computeUnicastCandidate11PathList(cpl , 2);
 		for (Demand d : netTriangle.getDemands())
 		{
-			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());  
+			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());
 			allNodes.removeAll(Arrays.asList(d.getIngressNode() , d.getEgressNode()));
 			final Node intermNode = allNodes.iterator().next();
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
@@ -408,7 +394,7 @@ public class NetPlanTest
 		for (Demand d : netTriangle.getDemands())
 			assertEquals(cpl11.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList());
 	}
-	
+
 	@Test
 	public void testComputeUnicastCandidate11ServiceChainList()
 	{
@@ -421,14 +407,14 @@ public class NetPlanTest
 	@Test
 	public void testComputeUnicastCandidateServiceChainList()
 	{
-		Map<Demand,List<List<NetworkElement>>> cpl = netTriangle.computeUnicastCandidateServiceChainList (null , null , 
+		Map<Demand,List<List<NetworkElement>>> cpl = netTriangle.computeUnicastCandidateServiceChainList (null , null ,
 				1, -1 , -1, -1, -1);
 		for (Demand d : netTriangle.getDemands())
 			assertEquals(cpl.get(d) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
 		cpl = netTriangle.computeUnicastCandidateServiceChainList (null , null , 2, -1 , -1, -1, -1);
 		for (Demand d : netTriangle.getDemands())
 		{
-			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());  
+			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());
 			allNodes.removeAll(Arrays.asList(d.getIngressNode() , d.getEgressNode()));
 			final Node intermNode = allNodes.iterator().next();
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
@@ -436,7 +422,7 @@ public class NetPlanTest
 			final Link secondLink = netTriangle.getNodePairLinks(intermNode , d.getEgressNode(),false).iterator().next();
 			assertEquals(cpl.get(d) , Arrays.asList(Arrays.asList(directLink) , Arrays.asList(firstLink,secondLink)));
 		}
-		
+
 		netTriangle_d12.setServiceChainSequenceOfTraversedResourceTypes(Arrays.asList("type1"));
 		cpl = netTriangle.computeUnicastCandidateServiceChainList (null , null , 3, -1 , -1, -1, -1);
 		assertEquals(cpl.get(netTriangle_d12) , Arrays.asList(Arrays.asList(netTriangle_r1 , netTriangle_e12)  ,  Arrays.asList(netTriangle_r1 , netTriangle_e13 , netTriangle_e32)));
@@ -449,7 +435,7 @@ public class NetPlanTest
 		cpl = netTriangle.computeUnicastCandidateServiceChainList (null , null , 3, -1 , -1, -1, -1);
 
 		assertEquals(cpl.get(netTriangle_d12) , Arrays.asList(
-				Arrays.asList(netTriangle_e12 , netTriangle_r2 , netTriangle_e21 , netTriangle_r1 , netTriangle_e12)  ,  
+				Arrays.asList(netTriangle_e12 , netTriangle_r2 , netTriangle_e21 , netTriangle_r1 , netTriangle_e12)  ,
 				Arrays.asList(netTriangle_e12 , netTriangle_r2 , netTriangle_e21 , netTriangle_r1 , netTriangle_e13 , netTriangle_e32) ,
 				Arrays.asList(netTriangle_e12 , netTriangle_r2 , netTriangle_e23 , netTriangle_e31 , netTriangle_r1 , netTriangle_e12)));
 	}
@@ -466,46 +452,53 @@ public class NetPlanTest
 //	 * 		<li>{@code maxTreeCost}: Maximum tree weight allowed, summing the weights of the links (default: Double.MAX_VALUE)</li>
 //	 * 		<li>{@code maxTreeCostFactorRespectToMinimumCostTree}: Trees with higher weight (cost) than the cost of the minimum cost tree, multiplied by this factor, are not returned (default: Double.MAX_VALUE)</li>
 //	 *		<li>{@code maxTreeCostRespectToMinimumCostTree}: Trees with higher weight (cost) than the cost of the minimum cost tree, plus this factor, are not returned (default: Double.MAX_VALUE). While the previous one is a multiplicative factor, this one is an additive factor</li>
-		Map<MulticastDemand,List<Set<Link>>> cpl;
-		MulticastDemand d123 = netTriangle.addMulticastDemand(netTriangle_n1 , 
-				new HashSet<Node> (Arrays.asList(netTriangle_n2 , netTriangle_n3)) , 0 , null); 
-		cpl = netTriangle.computeMulticastCandidatePathList(null , "cplex" , "cplex.dll" , -1 , "K" , "100");
-		assertEquals(cpl.get(d123) , Arrays.asList(
-				new HashSet<Link> (Arrays.asList(netTriangle_e12 , netTriangle_e13))  ,
-				new HashSet<Link> (Arrays.asList(netTriangle_e12 , netTriangle_e23)) , 
-				new HashSet<Link> (Arrays.asList(netTriangle_e13 , netTriangle_e32)) ));
-		cpl = netTriangle.computeMulticastCandidatePathList(null , "cplex" , "cplex.dll" , -1 , "K" , "100" , "maxCopyCapability" , "1");
-		assertEquals(cpl.get(d123) , Arrays.asList(
-				new HashSet<Link> (Arrays.asList(netTriangle_e12 , netTriangle_e23)) , 
-				new HashSet<Link> (Arrays.asList(netTriangle_e13 , netTriangle_e32)) ));
-		cpl = netTriangle.computeMulticastCandidatePathList(null , "cplex" , "cplex.dll" , -1 , "K" , "100" , "maxE2ELengthInKm" , "1");
-		assertEquals(cpl.get(d123) , Arrays.asList(
-				new HashSet<Link> (Arrays.asList(netTriangle_e12 , netTriangle_e13))));
-		cpl = netTriangle.computeMulticastCandidatePathList(null , "cplex" , "cplex.dll" , -1 , "K" , "100" , "maxE2ENumHops" , "1");
-		assertEquals(cpl.get(d123) , Arrays.asList(
-				new HashSet<Link> (Arrays.asList(netTriangle_e12 , netTriangle_e13))));
-		cpl = netTriangle.computeMulticastCandidatePathList(null , "cplex" , "cplex.dll" , -1 , "K" , "100" , "maxE2EPropDelayInMs" , "1000");
-		assertEquals(cpl.get(d123) , Arrays.asList(
-				new HashSet<Link> (Arrays.asList(netTriangle_e12 , netTriangle_e13))));
-		cpl = netTriangle.computeMulticastCandidatePathList(null , "cplex" , "cplex.dll" , -1 , "K" , "100" , "maxTreeCost" , "1");
-		assertEquals(cpl.get(d123) , Arrays.asList());
-		cpl = netTriangle.computeMulticastCandidatePathList(null , "cplex" , "cplex.dll" , -1 , "K" , "100" , "maxTreeCostFactorRespectToMinimumCostTree" , "1");
-		assertEquals(cpl.get(d123) , Arrays.asList(
-				new HashSet<Link> (Arrays.asList(netTriangle_e12 , netTriangle_e13))  ,
-				new HashSet<Link> (Arrays.asList(netTriangle_e12 , netTriangle_e23)) , 
-				new HashSet<Link> (Arrays.asList(netTriangle_e13 , netTriangle_e32)) ));
-		cpl = netTriangle.computeMulticastCandidatePathList(null , "cplex" , "cplex.dll" , -1 , "K" , "100" , "maxTreeCostRespectToMinimumCostTree" , "0");
-		assertEquals(cpl.get(d123) , Arrays.asList(
-				new HashSet<Link> (Arrays.asList(netTriangle_e12 , netTriangle_e13))  ,
-				new HashSet<Link> (Arrays.asList(netTriangle_e12 , netTriangle_e23)) , 
-				new HashSet<Link> (Arrays.asList(netTriangle_e13 , netTriangle_e32)) ));
-		netTriangle_e12.remove();
-		cpl = netTriangle.computeMulticastCandidatePathList(null , "cplex" , "cplex.dll" , -1 , "K" , "100");
-		assertEquals(cpl.get(d123) , Arrays.asList(
-				new HashSet<Link> (Arrays.asList(netTriangle_e13 , netTriangle_e32)) ));
+
+		try
+		{
+		    Map<MulticastDemand, List<Set<Link>>> cpl;
+			MulticastDemand d123 = netTriangle.addMulticastDemand(netTriangle_n1,
+					new HashSet<Node>(Arrays.asList(netTriangle_n2, netTriangle_n3)), 0, null);
+			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100");
+			assertEquals(cpl.get(d123), Arrays.asList(
+					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13)),
+					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e23)),
+					new HashSet<Link>(Arrays.asList(netTriangle_e13, netTriangle_e32))));
+			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100", "maxCopyCapability", "1");
+			assertEquals(cpl.get(d123), Arrays.asList(
+					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e23)),
+					new HashSet<Link>(Arrays.asList(netTriangle_e13, netTriangle_e32))));
+			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100", "maxE2ELengthInKm", "1");
+			assertEquals(cpl.get(d123), Arrays.asList(
+					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13))));
+			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100", "maxE2ENumHops", "1");
+			assertEquals(cpl.get(d123), Arrays.asList(
+					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13))));
+			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100", "maxE2EPropDelayInMs", "1000");
+			assertEquals(cpl.get(d123), Arrays.asList(
+					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13))));
+			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100", "maxTreeCost", "1");
+			assertEquals(cpl.get(d123), Arrays.asList());
+			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100", "maxTreeCostFactorRespectToMinimumCostTree", "1");
+			assertEquals(cpl.get(d123), Arrays.asList(
+					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13)),
+					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e23)),
+					new HashSet<Link>(Arrays.asList(netTriangle_e13, netTriangle_e32))));
+			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100", "maxTreeCostRespectToMinimumCostTree", "0");
+			assertEquals(cpl.get(d123), Arrays.asList(
+					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13)),
+					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e23)),
+					new HashSet<Link>(Arrays.asList(netTriangle_e13, netTriangle_e32))));
+			netTriangle_e12.remove();
+			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100");
+			assertEquals(cpl.get(d123), Arrays.asList(
+					new HashSet<Link>(Arrays.asList(netTriangle_e13, netTriangle_e32))));
+		} catch (UnsatisfiedLinkError e)
+        {
+            System.out.println("CPLEX solver was not found, ignoring related tests...");
+        }
 	}
 
-	
+
 	@Test
 	public void testAddSRG()
 	{
@@ -665,7 +658,7 @@ public class NetPlanTest
 	{
 		try { np.removeAllForwardingRules(upperLayer); fail (); } catch (Exception e) {}
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , upperLayer);
-		np.removeAllForwardingRules(upperLayer); 
+		np.removeAllForwardingRules(upperLayer);
 		assertEquals(np.getNumberOfForwardingRules(upperLayer) , 0);
 	}
 
@@ -689,7 +682,7 @@ public class NetPlanTest
 		np.removeAllMulticastTrees(lowerLayer);
 		assertEquals(np.getNumberOfMulticastTrees(lowerLayer) , 0);
 	}
- 
+
 	@Test
 	public void testRemoveAllMulticastTreesUnused()
 	{
@@ -801,7 +794,7 @@ public class NetPlanTest
 	@Test
 	public void testSetLinksAndNodesFailureState()
 	{
-		try { np.setLinksAndNodesFailureState(Arrays.asList(link12) , Arrays.asList(link12 , link13 , upperLink12), null, Arrays.asList(n1,n2)); fail (); } catch (Exception e) {} 
+		try { np.setLinksAndNodesFailureState(Arrays.asList(link12) , Arrays.asList(link12 , link13 , upperLink12), null, Arrays.asList(n1,n2)); fail (); } catch (Exception e) {}
 		np.setLinksAndNodesFailureState(null , Arrays.asList(link12 , link13 , upperLink12), null, Arrays.asList(n1,n2));
 		assertTrue (!n1.isUp());
 		assertTrue (!n2.isUp());
@@ -832,9 +825,9 @@ public class NetPlanTest
 		sc123.remove();
 		scd123.setServiceChainSequenceOfTraversedResourceTypes(null);
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
-		np.setForwardingRule(d12, link12 , 0.7); 
+		np.setForwardingRule(d12, link12 , 0.7);
 		assertEquals(np.getForwardingRuleSplittingFactor(d12,   link12) , 0.7 , 0);
-		try { np.setForwardingRule(d12, link13 , 0.7); fail (); } catch (Exception e) {} 
+		try { np.setForwardingRule(d12, link13 , 0.7); fail (); } catch (Exception e) {}
 	}
 
 	@Test
@@ -843,7 +836,7 @@ public class NetPlanTest
 		sc123.remove();
 		scd123.setServiceChainSequenceOfTraversedResourceTypes(null);
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
-		np.setForwardingRules(Arrays.asList(d12 , d12), Arrays.asList(link12 , link13), Arrays.asList(0.7 , 0.1), true); 
+		np.setForwardingRules(Arrays.asList(d12 , d12), Arrays.asList(link12 , link13), Arrays.asList(0.7 , 0.1), true);
 		assertEquals(np.getForwardingRuleSplittingFactor(d12,   link12) , 0.7 , 0);
 		assertEquals(np.getForwardingRuleSplittingFactor(d12,   link13) , 0.1 , 0);
 	}
@@ -856,7 +849,7 @@ public class NetPlanTest
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		DoubleMatrix2D f_de = np.getMatrixDemandBasedForwardingRules(lowerLayer);
 		f_de.set(d12.getIndex(), link12.getIndex(), 0.7);
-		np.setForwardingRules(f_de , lowerLayer); 
+		np.setForwardingRules(f_de , lowerLayer);
 		assertEquals(np.getForwardingRuleSplittingFactor(d12,   link12) , 0.7 , 0);
 	}
 
@@ -864,28 +857,28 @@ public class NetPlanTest
 	public void testSetLinkCapacityUnitsName()
 	{
 		try { np.setLinkCapacityUnitsName("bla", upperLayer); fail (); } catch (Exception e) {}
-		np.setLinkCapacityUnitsName("bla", lowerLayer); 
+		np.setLinkCapacityUnitsName("bla", lowerLayer);
 		assertEquals(np.getLinkCapacityUnitsName(lowerLayer) , "bla");
 	}
 
 	@Test
 	public void testSetNetworkDescription()
 	{
-		np.setNetworkDescription("bla"); 
+		np.setNetworkDescription("bla");
 		assertEquals(np.getNetworkDescription() , "bla");
 	}
 
 	@Test
 	public void testSetNetworkLayerDefault()
 	{
-		np.setNetworkLayerDefault(upperLayer); 
+		np.setNetworkLayerDefault(upperLayer);
 		assertEquals(np.getNetworkLayerDefault() , upperLayer);
 	}
 
 	@Test
 	public void testSetNetworkName()
 	{
-		np.setNetworkName("bla"); 
+		np.setNetworkName("bla");
 		assertEquals(np.getNetworkName() , "bla");
 	}
 

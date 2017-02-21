@@ -1,28 +1,14 @@
 package com.net2plan.interfaces.networkDesign;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
+import org.junit.*;
+
+import java.util.*;
+
+import static org.junit.Assert.*;
 
 public class DemandTest 
 {
@@ -127,9 +113,6 @@ public class DemandTest
 	@Test
 	public void testIsTraversingOversubscribedLinks() 
 	{
-		System.out.println(d12.getRoutes().iterator().next().getSeqLinks());
-		System.out.println(link12.getCapacity());
-		System.out.println(link12.getOccupiedCapacity());
 		assertTrue (d12.isTraversingOversubscribedLinks());
 		assertTrue (d13.isTraversingOversubscribedLinks());
 		link12.setCapacity(500);

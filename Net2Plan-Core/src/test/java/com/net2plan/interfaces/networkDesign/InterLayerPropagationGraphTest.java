@@ -1,27 +1,15 @@
 package com.net2plan.interfaces.networkDesign;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.utils.Pair;
+import org.junit.*;
 
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.junit.Assert.*;
 
 public class InterLayerPropagationGraphTest
 {
@@ -115,8 +103,6 @@ public class InterLayerPropagationGraphTest
 		this.g_link12_L0_down = new InterLayerPropagationGraph(null , Sets.newHashSet(link12_L0) , null , false , true);
 		this.g_link13_L0_up = new InterLayerPropagationGraph(null , Sets.newHashSet(link13_L0) , null , true , true);
 		this.g_link13_L0_down = new InterLayerPropagationGraph(null , Sets.newHashSet(link13_L0) , null , false , true);
-		
-		System.out.println(g_link13_L0_up.getInterLayerPropagationGraph().toString());
 	}
 
 	@After
