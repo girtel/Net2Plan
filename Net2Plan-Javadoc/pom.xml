@@ -135,7 +135,11 @@
                             <links>
                                 <link>../parallelcolt</link>
                             </links>
-                            <tagletpath>${project.build.directory}/${project.name}-${project.version}.jar</tagletpath>
+                            <tagletArtifact>
+                                <groupId>com.net2plan</groupId>
+                                <artifactId>net2plan-javadoc</artifactId>
+                                <version>0.5.1-SNAPSHOT</version>
+                            </tagletArtifact>
                             <taglets>
                                 <taglet>
                                     <tagletClass>com.net2plan.documentation.Taglet_Description</tagletClass>
