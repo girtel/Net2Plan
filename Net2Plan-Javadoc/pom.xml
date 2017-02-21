@@ -16,14 +16,15 @@
             <groupId>com.net2plan</groupId>
             <artifactId>net2plan-core</artifactId>
             <version>0.5.1-SNAPSHOT</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-examples</artifactId>
+            <version>0.5.1-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
-
-    <properties>
-        <netplan-core.sources>${project.parent.basedir}/Net2Plan-Core/src/main/java</netplan-core.sources>
-        <netplan-examples.sources>${project.parent.basedir}/Net2Plan-Examples/src/main/java</netplan-examples.sources>
-    </properties>
 
     <build>
         <plugins>
@@ -75,6 +76,7 @@
                         </goals>
                         <phase>package</phase>
                         <configuration>
+                            <skip>true</skip>
                             <show>public</show>
                             <author>true</author>
                             <nodeprecated>true</nodeprecated>
@@ -94,7 +96,7 @@
                             <includeDependencySources>true</includeDependencySources>
                             <dependencySourceIncludes>
                                 <!-- Net2Plan Core-->
-                                <dependencySourceInclude>com.net2plan:*</dependencySourceInclude>
+                                <dependencySourceInclude>com.net2plan:net2plan-core</dependencySourceInclude>
                             </dependencySourceIncludes>
                             <sourceFileIncludes>
                                 <include>com/net2plan/interfaces/networkDesign/**</include>
@@ -128,11 +130,12 @@
                             <noqualifier>
                                 java.lang:java.util:java.io:java.awt:java.net:java.awt.geom:javax.swing:cern.colt.matrix.tdouble
                             </noqualifier>
-                            <overview>${project.basedir}/src/main/resources/javadoc/overview-examples.html
+                            <overview>${project.basedir}/src/main/resources/resources/javadoc/overview-examples.html
                             </overview>
                             <links>
                                 <link>../parallelcolt</link>
                             </links>
+                            <tagletpath>${project.build.directory}/${project.name}-${project.version}.jar</tagletpath>
                             <taglets>
                                 <taglet>
                                     <tagletClass>com.net2plan.documentation.Taglet_Description</tagletClass>
@@ -147,8 +150,11 @@
                                     <tagletClass>com.net2plan.documentation.Taglet_BookSections</tagletClass>
                                 </taglet>
                             </taglets>
-                            <tagletpath>${project.build.directory}/${project.name}-${project.version}.jar</tagletpath>
-                            <sourcepath>${netplan-examples.sources}</sourcepath>
+                            <includeDependencySources>true</includeDependencySources>
+                            <dependencySourceIncludes>
+                                <!-- Net2Plan Examples-->
+                                <dependencySourceInclude>com.net2plan:net2plan-examples</dependencySourceInclude>
+                            </dependencySourceIncludes>
                             <sourceFileIncludes>
                                 <include>com/net2plan/examples/general/offline/**</include>
                                 <include>com/net2plan/examples/general/onlineSim/**</include>
@@ -160,7 +166,9 @@
                             <sourceFileExcludes>
                                 <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
                             </sourceFileExcludes>
-                            <additionalparam>-d ${project.build.directory}/site/apidocs/examples</additionalparam>
+                            <additionalparam>
+                                -d ${project.build.directory}/apidocs/examples
+                            </additionalparam>
                         </configuration>
                     </execution>
                 </executions>
