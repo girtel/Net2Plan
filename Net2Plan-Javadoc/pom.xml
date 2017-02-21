@@ -76,7 +76,6 @@
                         </goals>
                         <phase>package</phase>
                         <configuration>
-                            <skip>true</skip>
                             <show>public</show>
                             <author>true</author>
                             <nodeprecated>true</nodeprecated>
@@ -173,6 +172,72 @@
                             <additionalparam>
                                 -d ${project.build.directory}/apidocs/examples
                             </additionalparam>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>keywordTable</id>
+                        <goals>
+                            <goal>javadoc</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <useStandardDocletOptions>false</useStandardDocletOptions>
+                            <doclet>com.net2plan.documentation.CreateHTMLKeywords</doclet>
+                            <docletArtifact>
+                                <groupId>com.net2plan</groupId>
+                                <artifactId>net2plan-javadoc</artifactId>
+                                <version>0.5.1-SNAPSHOT</version>
+                            </docletArtifact>
+                            <includeDependencySources>true</includeDependencySources>
+                            <dependencySourceIncludes>
+                                <!-- Net2Plan Examples-->
+                                <dependencySourceInclude>com.net2plan:net2plan-examples</dependencySourceInclude>
+                            </dependencySourceIncludes>
+                            <sourceFileIncludes>
+                                <include>com/net2plan/examples/general/offline/**</include>
+                                <include>com/net2plan/examples/general/onlineSim/**</include>
+                                <include>com/net2plan/examples/general/reports/**</include>
+                                <include>com/net2plan/examples/ocnbook/offline/**</include>
+                                <include>com/net2plan/examples/ocnbook/onlineSim/**</include>
+                                <include>com/net2plan/examples/ocnbook/reports/**</include>
+                            </sourceFileIncludes>
+                            <sourceFileExcludes>
+                                <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
+                            </sourceFileExcludes>
+                            <additionalparam>-outputFolder ${project.build.directory}/apidocs/examples</additionalparam>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>bookSectionsTable</id>
+                        <goals>
+                            <goal>javadoc</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <useStandardDocletOptions>false</useStandardDocletOptions>
+                            <doclet>com.net2plan.documentation.CreateBookSectionsTable</doclet>
+                            <docletArtifact>
+                                <groupId>com.net2plan</groupId>
+                                <artifactId>net2plan-javadoc</artifactId>
+                                <version>0.5.1-SNAPSHOT</version>
+                            </docletArtifact>
+                            <includeDependencySources>true</includeDependencySources>
+                            <dependencySourceIncludes>
+                                <!-- Net2Plan Examples-->
+                                <dependencySourceInclude>com.net2plan:net2plan-examples</dependencySourceInclude>
+                            </dependencySourceIncludes>
+                            <sourceFileIncludes>
+                                <include>com/net2plan/examples/general/offline/**</include>
+                                <include>com/net2plan/examples/general/onlineSim/**</include>
+                                <include>com/net2plan/examples/general/reports/**</include>
+                                <include>com/net2plan/examples/ocnbook/offline/**</include>
+                                <include>com/net2plan/examples/ocnbook/onlineSim/**</include>
+                                <include>com/net2plan/examples/ocnbook/reports/**</include>
+                            </sourceFileIncludes>
+                            <sourceFileExcludes>
+                                <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
+                            </sourceFileExcludes>
+                            <additionalparam>-outputFolder ${project.build.directory}/site/apidocs/examples</additionalparam>
                         </configuration>
                     </execution>
                 </executions>
