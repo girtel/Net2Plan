@@ -1024,7 +1024,7 @@ public class NetPlan extends NetworkElement
                         Set<Node> secondPathNodes = new HashSet<Node> (GraphUtils.convertSequenceOfLinksToSequenceOfNodes(secondPathSeqLinks));
                         secondPathNodes.remove(nodePair.getFirst());
                         secondPathNodes.remove(nodePair.getSecond());
-                    	disjoint = Sets.intersection(firstPathLinks , new HashSet<> (secondPathSeqLinks)).isEmpty() && 
+                    	disjoint = Sets.intersection(firstPathLinks , new HashSet<> (secondPathSeqLinks)).isEmpty() &&
                     			Sets.intersection(firstPathNodesButLastAndFirst , secondPathNodes).isEmpty();
                     } else if (srgDisjoint)
                     {
@@ -5299,10 +5299,11 @@ public class NetPlan extends NetworkElement
      */
     public void saveToOutputStream(OutputStream outputStream)
     {
+        XMLStreamWriter2 writer = null;
         try
         {
             XMLOutputFactory2 output = (XMLOutputFactory2) XMLOutputFactory2.newFactory();
-            XMLStreamWriter2 writer = (XMLStreamWriter2) output.createXMLStreamWriter(outputStream);
+            writer = (XMLStreamWriter2) output.createXMLStreamWriter(outputStream);
 
             writer.writeStartDocument("UTF-8", "1.0");
 
@@ -5366,7 +5367,7 @@ public class NetPlan extends NetworkElement
                 writer.writeAttribute("processingTimeToTraversingTrafficInMs", Double.toString(res.processingTimeToTraversingTrafficInMs));
                 writer.writeAttribute("capacity", Double.toString(res.capacity));
                 if (res.urlIcon != null) writer.writeAttribute("urlIcon", res.urlIcon.toString());
-                
+
                 List<Double> baseResourceAndOccupiedCapacitiesMap = new LinkedList<Double>();
                 for (Entry<Resource, Double> br : res.capacityIOccupyInBaseResource.entrySet())
                 {
@@ -5695,10 +5696,19 @@ public class NetPlan extends NetworkElement
             writer.writeEndElement();
             writer.writeEndDocument();
             writer.flush();
-            writer.close();
         } catch (XMLStreamException e)
         {
             throw new RuntimeException(e);
+        } finally
+        {
+            try
+            {
+                assert writer != null;
+                writer.close();
+            } catch (XMLStreamException e)
+            {
+                e.printStackTrace();
+            }
         }
     }
 
