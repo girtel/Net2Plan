@@ -1,5 +1,5 @@
 <assembly>
-    <id>bundle</id>
+    <id>bundle</id> <!-- Classifier -->
 
     <formats>
         <format>zip</format>

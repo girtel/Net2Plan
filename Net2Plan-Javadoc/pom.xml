@@ -27,7 +27,15 @@
 
     <build>
         <plugins>
+            <!-- Generate Jar before anything else -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
+            </plugin>
+
+            <plugin>
+                <!-- ParallelColt Javadoc -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>3.0.0</version>
@@ -63,7 +71,7 @@
                     <execution>
                         <id>net2plan-javadoc</id>
                         <goals>
-                            <goal>jar</goal>
+                            <goal>javadoc</goal>
                         </goals>
                         <phase>package</phase>
                         <configuration>
@@ -94,7 +102,30 @@
                                 <include>com/net2plan/libraries/**</include>
                                 <include>com/net2plan/utils/**</include>
                             </sourceFileIncludes>
-                            <outputDirectory>${project.build.directory}/apidocs/api</outputDirectory>
+                            <!-- Output directory -->
+                            <additionalparam>-d ${project.build.directory}/apidocs/api</additionalparam>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Pack Javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>assemble</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <appendAssemblyId>true</appendAssemblyId>
+                            <descriptors>
+                                <descriptor>src/assembly/javadoc-descriptor.xsl</descriptor>
+                            </descriptors>
                         </configuration>
                     </execution>
                 </executions>

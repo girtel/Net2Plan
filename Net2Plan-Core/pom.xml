@@ -40,7 +40,7 @@
                         </goals>
                         <configuration>
                             <descriptors>
-                                <descriptor>src/main/assembly/bundle-descriptor.xsl</descriptor>
+                                <descriptor>src/assembly/bundle-descriptor.xsl</descriptor>
                             </descriptors>
                         </configuration>
                     </execution>
