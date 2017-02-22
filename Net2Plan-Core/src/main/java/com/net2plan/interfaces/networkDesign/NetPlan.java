@@ -411,6 +411,7 @@ public class NetPlan extends NetworkElement
     /**
      * <p>Adds a new traffic demand.</p>
      * <p><b>Important</b>: Self-demands are not allowed.</p>
+     *
      * @param ingressNode            Ingress node
      * @param egressNode             Egress node
      * @param offeredTraffic         Offered traffic by this demand. It must be greater or equal than zero
@@ -493,7 +494,7 @@ public class NetPlan extends NetworkElement
      * @param description            Layer description ({@code null} means empty)
      * @param linkCapacityUnitsName  Textual description of link capacity units ({@code null} means empty)
      * @param demandTrafficUnitsName Textual description of demand traffic units ({@code null} means empty)
-     * @param defaultNodeIconURL The URL of the default icon for the layer nodes
+     * @param defaultNodeIconURL     The URL of the default icon for the layer nodes
      * @param attributes             Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
      * @return The newly created layer object
      */
@@ -1018,17 +1019,17 @@ public class NetPlan extends NetworkElement
                     boolean disjoint = true;
                     if (linkDisjoint)
                     {
-                    	disjoint = Sets.intersection(firstPathLinks , new HashSet<> (secondPathSeqLinks)).isEmpty();
+                        disjoint = Sets.intersection(firstPathLinks, new HashSet<>(secondPathSeqLinks)).isEmpty();
                     } else if (linkAndNodeDisjoint)
                     {
-                        Set<Node> secondPathNodes = new HashSet<Node> (GraphUtils.convertSequenceOfLinksToSequenceOfNodes(secondPathSeqLinks));
+                        Set<Node> secondPathNodes = new HashSet<Node>(GraphUtils.convertSequenceOfLinksToSequenceOfNodes(secondPathSeqLinks));
                         secondPathNodes.remove(nodePair.getFirst());
                         secondPathNodes.remove(nodePair.getSecond());
-                    	disjoint = Sets.intersection(firstPathLinks , new HashSet<> (secondPathSeqLinks)).isEmpty() &&
-                    			Sets.intersection(firstPathNodesButLastAndFirst , secondPathNodes).isEmpty();
+                        disjoint = Sets.intersection(firstPathLinks, new HashSet<>(secondPathSeqLinks)).isEmpty() &&
+                                Sets.intersection(firstPathNodesButLastAndFirst, secondPathNodes).isEmpty();
                     } else if (srgDisjoint)
                     {
-                    	disjoint = Sets.intersection(firstPathSRGs , SRGUtils.getAffectingSRGs(secondPathSeqLinks)).isEmpty();
+                        disjoint = Sets.intersection(firstPathSRGs, SRGUtils.getAffectingSRGs(secondPathSeqLinks)).isEmpty();
                     }
                     if (disjoint)
                     {
@@ -2180,6 +2181,7 @@ public class NetPlan extends NetworkElement
     /**
      * <p>Returns the forwarding rules for the given layer. If no layer is provided, the default layer is assumed.</p>
      * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#HOP_BY_HOP_ROUTING HOP_BY_HOP_ROUTING}.</p>
+     *
      * @param optionalLayerParameter Network layer (optional)
      * @return The forwarding rules as a map of splitting factor (value) per demand and link (key)
      * @see com.net2plan.utils.Pair
@@ -5283,8 +5285,10 @@ public class NetPlan extends NetworkElement
         {
             try
             {
-                assert fos != null;
-                fos.close();
+                if (fos != null)
+                {
+                    fos.close();
+                }
             } catch (IOException e)
             {
                 e.printStackTrace();
@@ -6284,7 +6288,7 @@ public class NetPlan extends NetworkElement
                     double outTraf = A_dn.get(d, layer.links.get(e).originNode.index);
                     layer.forwardingRulesNoFailureState_f_de.set(d, e, outTraf == 0 ? 0 : trafs.get(cont) / outTraf);
                 }
-				/* update link and demand carried traffics, and demand routing cycle type */
+                /* update link and demand carried traffics, and demand routing cycle type */
                 layer.forwardingRulesCurrentFailureState_x_de.assign(0); // this is recomputed inside next call
                 for (Demand d : layer.demands) layer.updateHopByHopRoutingDemand(d);
 
