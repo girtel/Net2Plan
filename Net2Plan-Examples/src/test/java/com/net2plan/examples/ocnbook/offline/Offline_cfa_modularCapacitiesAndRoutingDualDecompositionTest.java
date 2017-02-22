@@ -1,6 +1,13 @@
 package com.net2plan.examples.ocnbook.offline;
 
-import static org.junit.Assert.*;
+import com.google.common.collect.ImmutableMap;
+import com.net2plan.examples.TestConstants;
+import com.net2plan.interfaces.networkDesign.IAlgorithm;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.utils.InputParameter;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -11,16 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.google.common.collect.ImmutableMap;
-import com.net2plan.interfaces.networkDesign.IAlgorithm;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.utils.InputParameter;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class Offline_cfa_modularCapacitiesAndRoutingDualDecompositionTest 
 {
@@ -64,7 +63,14 @@ public class Offline_cfa_modularCapacitiesAndRoutingDualDecompositionTest
 			this.moduleCapacity = Double.parseDouble(paramsUsedToCall.get("moduleCapacity"));
 			paramsUsedToCall.putAll(params); // so default parameters that are also in param, are replaced
 			final NetPlan npInput = np.copy ();
-			algorithm.executeAlgorithm(np , paramsUsedToCall , ImmutableMap.of("precisionFactor" , "0.0001"));
+			try
+			{
+				algorithm.executeAlgorithm(np , paramsUsedToCall , ImmutableMap.of("precisionFactor" , "0.0001"));
+			} catch (UnsatisfiedLinkError e)
+			{
+				System.out.println(this.getClass().getName() + ": " + TestConstants.CPLEX_NOT_FOUND_ERROR);
+				return;
+			}
 			checkValidity (npInput , np , paramsUsedToCall);
 		}
 	}

@@ -1,7 +1,16 @@
 package com.net2plan.examples.ocnbook.onlineSim;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import com.google.common.collect.ImmutableMap;
+import com.net2plan.examples.TestConstants;
+import com.net2plan.examples.general.onlineSim.OnlineTestUtils;
+import com.net2plan.examples.general.onlineSim.Online_evGen_doNothing;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.simulation.IEventGenerator;
+import com.net2plan.interfaces.simulation.IEventProcessor;
+import com.net2plan.utils.InputParameter;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -12,17 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.google.common.collect.ImmutableMap;
-import com.net2plan.examples.general.onlineSim.OnlineTestUtils;
-import com.net2plan.examples.general.onlineSim.Online_evGen_doNothing;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.simulation.IEventGenerator;
-import com.net2plan.interfaces.simulation.IEventProcessor;
-import com.net2plan.utils.InputParameter;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class Online_evProc_backpressureRoutingDualTest
 {
@@ -86,8 +86,15 @@ public class Online_evProc_backpressureRoutingDualTest
 				System.out.println(allParamsProcessorThisTest);
 
 				final NetPlan npInput = np.copy ();
-				new OnlineTestUtils().runSimulation(np , generator , processor , simulationParameters , net2planParameters , 
-						allParamsGeneratorThisTest , allParamsProcessorThisTest , TIMEPERSIMULATIONINSECONDS);
+				try
+				{
+					new OnlineTestUtils().runSimulation(np , generator , processor , simulationParameters , net2planParameters ,
+							allParamsGeneratorThisTest , allParamsProcessorThisTest , TIMEPERSIMULATIONINSECONDS);
+				} catch (UnsatisfiedLinkError e)
+				{
+					System.out.println(this.getClass().getName() + ": " + TestConstants.CPLEX_NOT_FOUND_ERROR);
+					return;
+				}
 				checkValidity (npInput , np , allParamsGeneratorThisTest);
 			}			
 		}
