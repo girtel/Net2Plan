@@ -3,23 +3,14 @@
  */
 package com.net2plan.interfaces.networkDesign;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import com.net2plan.interfaces.TestConstants;
+import org.junit.*;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Pablo
@@ -318,7 +309,9 @@ public class ResourceTest
 		File file = null;
 		try
 		{
-			file = new File ("test.n2p"); //File.createTempFile("testN2p" , "n2p");
+			File resourcesDir = new File(TestConstants.TEST_FILE_DIRECTORY);
+			if (!resourcesDir.exists()) resourcesDir.mkdirs();
+			file = new File (resourcesDir, TestConstants.TEST_FILE_NAME); //File.createTempFile("testN2p" , "n2p");
 		} catch (Exception e) { Assert.fail ("could not make the test: no temprary file creation possible"); }
 		assertTrue (file != null);
 		np.saveToFile(file);
@@ -336,8 +329,10 @@ public class ResourceTest
 		File fileOut = null;
 		try
 		{
+			File resourcesDir = new File(TestConstants.TEST_FILE_DIRECTORY);
+			if (!resourcesDir.exists()) resourcesDir.mkdirs();
 			fileIn = new File ("src/main/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"); //File.createTempFile("testN2p" , "n2p");
-			fileOut = new File ("test.n2p"); //File.createTempFile("testN2p" , "n2p");
+			fileOut = new File (resourcesDir, TestConstants.TEST_FILE_NAME); //File.createTempFile("testN2p" , "n2p");
 		} catch (Exception e) { Assert.fail ("could not make the test: no temprary file creation possible"); }
 		assertTrue (fileIn != null);
 		assertTrue (fileOut != null);

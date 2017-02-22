@@ -3,6 +3,7 @@ package com.net2plan.interfaces.networkDesign;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import com.google.common.collect.ImmutableMap;
+import com.net2plan.interfaces.TestConstants;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import org.junit.*;
@@ -131,7 +132,9 @@ public class NetPlanTest
 	@Test
 	public void testNetPlanFile()
 	{
-		File f = new File ("test.n2p");
+		File resourcesDir = new File(TestConstants.TEST_FILE_DIRECTORY);
+		if (!resourcesDir.exists()) resourcesDir.mkdirs();
+		File f = new File (resourcesDir, TestConstants.TEST_FILE_NAME);
 		this.np.saveToFile(f);
 		NetPlan readNp = new NetPlan (f);
 		assertTrue(readNp.isDeepCopy(np));
@@ -140,7 +143,7 @@ public class NetPlanTest
 		NetPlan np1 = new NetPlan (new File ("src/main/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"));
 		np1.checkCachesConsistency();
 		np1.saveToFile(f);
-		NetPlan np2 = new NetPlan (new File("test.n2p"));
+		NetPlan np2 = new NetPlan (new File(resourcesDir, TestConstants.TEST_FILE_NAME));
 		np2.checkCachesConsistency();
 		assertTrue (np1.isDeepCopy(np2));
 		assertTrue (np2.isDeepCopy(np1));
