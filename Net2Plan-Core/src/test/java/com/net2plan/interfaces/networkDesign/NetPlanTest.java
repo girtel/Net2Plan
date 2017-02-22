@@ -115,6 +115,9 @@ public class NetPlanTest
 		this.netTriangle_r1 = netTriangle.addResource("type1" , "name" , netTriangle_n1 , 100.0 , "units" , null , 1.0 , null);
 		this.netTriangle_r2 = netTriangle.addResource("type2" , "name" , netTriangle_n2 , 100.0 , "units" , null , 1.0 , null);
 		this.netTriangle_r3 = netTriangle.addResource("type3" , "name" , netTriangle_n3 , 100.0 , "units" , null , 1.0 , null);
+
+		File resourcesDir = new File(TestConstants.TEST_FILE_DIRECTORY);
+		if (!resourcesDir.exists()) resourcesDir.mkdirs();
 	}
 
 	@After
@@ -132,9 +135,7 @@ public class NetPlanTest
 	@Test
 	public void testNetPlanFile()
 	{
-		File resourcesDir = new File(TestConstants.TEST_FILE_DIRECTORY);
-		if (!resourcesDir.exists()) resourcesDir.mkdirs();
-		File f = new File (resourcesDir, TestConstants.TEST_FILE_NAME);
+		File f = new File (TestConstants.TEST_FILE_DIRECTORY, TestConstants.TEST_FILE_NAME);
 		this.np.saveToFile(f);
 		NetPlan readNp = new NetPlan (f);
 		assertTrue(readNp.isDeepCopy(np));
@@ -143,7 +144,7 @@ public class NetPlanTest
 		NetPlan np1 = new NetPlan (new File ("src/main/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"));
 		np1.checkCachesConsistency();
 		np1.saveToFile(f);
-		NetPlan np2 = new NetPlan (new File(resourcesDir, TestConstants.TEST_FILE_NAME));
+		NetPlan np2 = new NetPlan (new File(TestConstants.TEST_FILE_DIRECTORY, TestConstants.TEST_FILE_NAME));
 		np2.checkCachesConsistency();
 		assertTrue (np1.isDeepCopy(np2));
 		assertTrue (np2.isDeepCopy(np1));

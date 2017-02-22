@@ -75,6 +75,9 @@ public class ResourceTest
 		this.serviceChainUpper = np.addServiceChain(demandUpper , 100 , Arrays.asList(1.0 , 200.0) , pathUpper , null);
 		List<NetworkElement> pathBase = Arrays.asList(baseResource , interLink);
 		this.serviceChainBase = np.addServiceChain(demandBase , 100 , Arrays.asList(1.0 , 300.0) , pathBase , null);
+
+		File resourcesDir = new File(TestConstants.TEST_FILE_DIRECTORY);
+		if (!resourcesDir.exists()) resourcesDir.mkdirs();
 	}
 
 	/**
@@ -309,9 +312,7 @@ public class ResourceTest
 		File file = null;
 		try
 		{
-			File resourcesDir = new File(TestConstants.TEST_FILE_DIRECTORY);
-			if (!resourcesDir.exists()) resourcesDir.mkdirs();
-			file = new File (resourcesDir, TestConstants.TEST_FILE_NAME); //File.createTempFile("testN2p" , "n2p");
+			file = new File (TestConstants.TEST_FILE_DIRECTORY, TestConstants.TEST_FILE_NAME); //File.createTempFile("testN2p" , "n2p");
 		} catch (Exception e) { Assert.fail ("could not make the test: no temprary file creation possible"); }
 		assertTrue (file != null);
 		np.saveToFile(file);
@@ -329,10 +330,8 @@ public class ResourceTest
 		File fileOut = null;
 		try
 		{
-			File resourcesDir = new File(TestConstants.TEST_FILE_DIRECTORY);
-			if (!resourcesDir.exists()) resourcesDir.mkdirs();
 			fileIn = new File ("src/main/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"); //File.createTempFile("testN2p" , "n2p");
-			fileOut = new File (resourcesDir, TestConstants.TEST_FILE_NAME); //File.createTempFile("testN2p" , "n2p");
+			fileOut = new File (TestConstants.TEST_FILE_DIRECTORY, TestConstants.TEST_FILE_NAME); //File.createTempFile("testN2p" , "n2p");
 		} catch (Exception e) { Assert.fail ("could not make the test: no temprary file creation possible"); }
 		assertTrue (fileIn != null);
 		assertTrue (fileOut != null);

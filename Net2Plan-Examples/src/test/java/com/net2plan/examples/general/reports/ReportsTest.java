@@ -1,18 +1,7 @@
 package com.net2plan.examples.general.reports;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.google.common.collect.ImmutableMap;
+import com.net2plan.examples.TestConstants;
 import com.net2plan.examples.general.offline.Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGrooming;
 import com.net2plan.examples.general.onlineSim.Online_evProc_ipOverWdm;
 import com.net2plan.examples.ocnbook.reports.Report_availability;
@@ -26,6 +15,14 @@ import com.net2plan.libraries.SRGUtils.SharedRiskModel;
 import com.net2plan.libraries.WDMUtils;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.StringUtils;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.File;
+import java.util.*;
+
+import static org.junit.Assert.assertTrue;
 public class ReportsTest
 {
 	private NetPlan np;
@@ -45,7 +42,9 @@ public class ReportsTest
 		Map<String,String> paramFor11 = InputParameter.getDefaultParameters(new Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGrooming ().getParameters());
 		paramFor11.put("networkRecoveryType" , "1+1-srg-disjoint-lps");
 		new Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGrooming().executeAlgorithm(np , paramFor11 , null);
-		
+
+		File resourcesFolder = new File(TestConstants.TEST_FILE_DIRECTORY);
+		if (!resourcesFolder.exists()) resourcesFolder.mkdirs();
 	}
 
 	@After
@@ -183,6 +182,7 @@ public class ReportsTest
 			testingParameters.put("provisioningAlgorithm_parameters" , Arrays.asList(StringUtils.mapToString(provAlgorithmParam)));
 			testingParameters.put("considerTrafficInOversubscribedLinksAsLost" , Arrays.asList("true" , "false"));
 			testingParameters.put("failureModel" , Arrays.asList("perBidirectionalLinkBundle" , "SRGfromNetPlan" , "perNode" , "perLink" , "perDirectionalLinkBundle"));
+			testingParameters.put("rootNameOfOutFiles", Collections.singletonList(TestConstants.TEST_FILE_DIRECTORY + "/reportPerSRGFailure"));
 			List<Map<String,String>> testsParam = InputParameter.getCartesianProductOfParameters (testingParameters);
 			if (testsParam.isEmpty()) testsParam = Arrays.asList(InputParameter.getDefaultParameters(report.getParameters()));
 			for (Map<String,String> params : testsParam)
