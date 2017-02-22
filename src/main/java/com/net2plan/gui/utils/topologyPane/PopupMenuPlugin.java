@@ -20,11 +20,7 @@ import java.awt.geom.Point2D;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.swing.AbstractAction;
-import javax.swing.JComponent;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
+import javax.swing.*;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.utils.IVisualizationCallback;
@@ -61,7 +57,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
 
     @Override
     public boolean checkModifiers(MouseEvent e) {
-        return e.isPopupTrigger();
+        return SwingUtilities.isRightMouseButton(e);
     }
 
     @Override
