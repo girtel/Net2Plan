@@ -92,7 +92,7 @@ public class Online_evProc_backpressureRoutingDualTest
 							allParamsGeneratorThisTest , allParamsProcessorThisTest , TIMEPERSIMULATIONINSECONDS);
 				} catch (UnsatisfiedLinkError e)
 				{
-					System.out.println(this.getClass().getName() + ": " + TestConstants.CPLEX_NOT_FOUND_ERROR);
+					System.err.println(this.getClass().getName() + ": " + TestConstants.CPLEX_NOT_FOUND_ERROR);
 					return;
 				}
 				checkValidity (npInput , np , allParamsGeneratorThisTest);

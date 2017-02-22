@@ -64,7 +64,7 @@ public class Offline_fa_xdeFormulationsTest
 			    algorithm.executeAlgorithm(np , paramsUsedToCall , ImmutableMap.of("precisionFactor" , "0.0001"));
 			} catch (UnsatisfiedLinkError e)
 			{
-				System.out.println(this.getClass().getName() + ": " + TestConstants.CPLEX_NOT_FOUND_ERROR);
+				System.err.println(this.getClass().getName() + ": " + TestConstants.CPLEX_NOT_FOUND_ERROR);
 				return;
 			}
 			checkValidity (npInput , np , paramsUsedToCall);
