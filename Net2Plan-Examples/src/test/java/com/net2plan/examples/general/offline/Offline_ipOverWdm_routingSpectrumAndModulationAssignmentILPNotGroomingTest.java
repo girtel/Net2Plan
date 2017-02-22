@@ -1,5 +1,6 @@
 package com.net2plan.examples.general.offline;
 
+import com.net2plan.examples.TestConstants;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.SRGUtils.SharedRiskModel;
@@ -57,7 +58,14 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGroom
 		for (Map<String,String> params : testsParam)
 		{
 			final NetPlan npInput = np.copy ();
-			new Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGrooming ().executeAlgorithm(np , params , null);
+			try
+            {
+                new Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGrooming ().executeAlgorithm(np , params , null);
+            } catch (UnsatisfiedLinkError e)
+            {
+				System.out.println(this.getClass().getName() + ": " + TestConstants.CPLEX_NOT_FOUND_ERROR);
+				return;
+			}
 			checkValidity (npInput , np , params);
 		}
 	}

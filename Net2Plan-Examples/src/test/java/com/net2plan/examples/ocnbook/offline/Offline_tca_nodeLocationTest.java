@@ -1,6 +1,7 @@
 package com.net2plan.examples.ocnbook.offline;
 
 import com.google.common.collect.ImmutableMap;
+import com.net2plan.examples.TestConstants;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -48,7 +49,14 @@ public class Offline_tca_nodeLocationTest
 			Map<String,String> paramsUsedToCall = InputParameter.getDefaultParameters(algorithm.getParameters());
 			paramsUsedToCall.putAll(params); // so default parameters that are also in param, are replaced
 			final NetPlan npInput = np.copy ();
-			algorithm.executeAlgorithm(np , paramsUsedToCall , ImmutableMap.of("precisionFactor" , "0.0001"));
+			try
+			{
+				algorithm.executeAlgorithm(np , paramsUsedToCall , ImmutableMap.of("precisionFactor" , "0.0001"));
+			} catch (UnsatisfiedLinkError e)
+			{
+				System.out.println(this.getClass().getName() + ": " + TestConstants.CPLEX_NOT_FOUND_ERROR);
+				return;
+			}
 			checkValidity (npInput , np , paramsUsedToCall);
 		}
 	}

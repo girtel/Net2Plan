@@ -1,50 +1,41 @@
 package com.net2plan.examples.ocnbook.offline;
 
-import static org.junit.Assert.*;
-
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.google.common.collect.ImmutableMap;
+import com.net2plan.examples.TestConstants;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
-import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.SRGUtils.SharedRiskModel;
 import com.net2plan.utils.InputParameter;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-public class Offline_fa_xde11PathProtectionTest 
+import java.io.File;
+import java.util.*;
+
+import static org.junit.Assert.*;
+
+public class Offline_fa_xde11PathProtectionTest
 {
 	private NetPlan np;
 
 	@Before
-	public void setUp() throws Exception 
+	public void setUp() throws Exception
 	{
 		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example7nodes_withTraffic.n2p"));
 		SRGUtils.configureSRGs(np , 1 , 1 , SharedRiskModel.PER_BIDIRECTIONAL_LINK_BUNDLE , true);
 	}
 
 	@After
-	public void tearDown() throws Exception 
+	public void tearDown() throws Exception
 	{
 		np.checkCachesConsistency();
 	}
 
 	@Test
-	public void test() 
+	public void test()
 	{
 		final IAlgorithm algorithm = new Offline_fa_xde11PathProtection();
 		Map<String,List<String>> testingParameters = new HashMap<> ();
@@ -58,7 +49,14 @@ public class Offline_fa_xde11PathProtectionTest
 			Map<String,String> paramsUsedToCall = InputParameter.getDefaultParameters(algorithm.getParameters());
 			paramsUsedToCall.putAll(params); // so default parameters that are also in param, are replaced
 			final NetPlan npInput = np.copy ();
-			algorithm.executeAlgorithm(np , paramsUsedToCall , ImmutableMap.of("precisionFactor" , "0.0001"));
+			try
+			{
+			    algorithm.executeAlgorithm(np , paramsUsedToCall , ImmutableMap.of("precisionFactor" , "0.0001"));
+			} catch (UnsatisfiedLinkError e)
+			{
+				System.out.println(this.getClass().getName() + ": " + TestConstants.CPLEX_NOT_FOUND_ERROR);
+				return;
+			}
 			checkValidity (npInput , np , paramsUsedToCall);
 		}
 	}

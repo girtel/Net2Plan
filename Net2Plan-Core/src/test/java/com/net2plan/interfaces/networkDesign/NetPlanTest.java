@@ -494,7 +494,7 @@ public class NetPlanTest
 					new HashSet<Link>(Arrays.asList(netTriangle_e13, netTriangle_e32))));
 		} catch (UnsatisfiedLinkError e)
         {
-            System.out.println("CPLEX solver was not found, ignoring related tests...");
+            System.out.println(this.getClass().getName() + ": Could not find CPLEX solver, related tests will be ignored...");
         }
 	}
 
