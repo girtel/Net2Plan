@@ -53,17 +53,6 @@
             <outputDirectory>plugins</outputDirectory>
             <outputFileNameMapping>defaultCLITools.jar</outputFileNameMapping>
         </dependencySet>
-        <!--IO Plugin-->
-        <dependencySet>
-            <useProjectArtifact>false</useProjectArtifact>
-            <useTransitiveDependencies>false</useTransitiveDependencies>
-            <unpack>false</unpack>
-            <includes>
-                <include>${project.groupId}:net2plan-io:*</include>
-            </includes>
-            <outputDirectory>plugins</outputDirectory>
-            <outputFileNameMapping>defaultIO.jar</outputFileNameMapping>
-        </dependencySet>
         <!--Examples-->
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
