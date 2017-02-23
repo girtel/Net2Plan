@@ -65,6 +65,7 @@ public class Offline_ca_wirelessCsmaWindowSizeTest
 			} catch (UnsatisfiedLinkError e)
 			{
 				System.err.println(this.getClass().getName() + ": " + TestConstants.IPOPT_NOT_FOUND_ERROR);
+				return;
 			}
 			checkValidity (npInput , np , paramsUsedToCall);
 		}

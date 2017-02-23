@@ -67,6 +67,7 @@ public class Offline_ba_numFormulationsTest
 			} catch (UnsatisfiedLinkError e)
 			{
 				System.err.println(this.getClass().getName() + ": " + TestConstants.IPOPT_NOT_FOUND_ERROR);
+				return;
 			}
 			checkValidity (npInput , np , paramsUsedToCall);
 		}

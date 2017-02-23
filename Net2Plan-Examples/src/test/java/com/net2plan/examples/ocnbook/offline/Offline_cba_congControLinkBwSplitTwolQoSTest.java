@@ -64,6 +64,7 @@ public class Offline_cba_congControLinkBwSplitTwolQoSTest
 			} catch (UnsatisfiedLinkError e)
 			{
 				System.err.println(this.getClass().getName() + ": " + TestConstants.IPOPT_NOT_FOUND_ERROR);
+				return;
 			}
 			checkValidity (npInput , np , paramsUsedToCall);
 		}
