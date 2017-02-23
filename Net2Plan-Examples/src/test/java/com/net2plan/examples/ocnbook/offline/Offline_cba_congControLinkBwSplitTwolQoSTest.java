@@ -1,6 +1,7 @@
 package com.net2plan.examples.ocnbook.offline;
 
 import com.google.common.collect.ImmutableMap;
+import com.jom.JOMException;
 import com.net2plan.examples.TestConstants;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -20,6 +21,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class Offline_cba_congControLinkBwSplitTwolQoSTest 
 {
@@ -65,7 +67,12 @@ public class Offline_cba_congControLinkBwSplitTwolQoSTest
 			{
 				System.err.println(this.getClass().getName() + ": " + TestConstants.IPOPT_NOT_FOUND_ERROR);
 				return;
+			} catch (JOMException e)
+			{
+				e.printStackTrace();
+				fail();
 			}
+
 			checkValidity (npInput , np , paramsUsedToCall);
 		}
 	}
