@@ -851,7 +851,7 @@ public class WDMUtils
 	/**
 	 * Returns the number of frequency slots for the given fiber. It is equivalent to 
 	 * the method {@link Link#getCapacity() getCapacity()}
-	 * from the {@link com.net2plan.interfaces.networkDesign.Link Link} object,
+	 * from the {@link Link Link} object,
 	 * but converting capacity value from {@code double} to {@code int}.
 	 * 
 	 * @param fiber Link fiber
@@ -867,7 +867,7 @@ public class WDMUtils
 	/**
 	 * Returns the total number of frequency slots in each fiber.
 	 * 
-	 * @param netPlan A {@link com.net2plan.interfaces.networkDesign.NetPlan} representing a WDM physical topology
+	 * @param netPlan A {@link NetPlan} representing a WDM physical topology
 	 * @param optionalLayerParameter WDM network layer. If not present, the default layer is assumed
 	 * @return Number of wavelengths per fiber
 	 */
@@ -960,7 +960,7 @@ public class WDMUtils
 		Map<Node,List<Route>> regeneratorOccup = new HashMap<Node,List<Route>> (); 
 		for (Route r : netPlan.getRoutes(layer))
 		{
- 			final WDMUtils.RSA rsa = new WDMUtils.RSA(r , false);
+ 			final RSA rsa = new RSA(r , false);
 			if (rsa.isDown() && countFailedLightpaths) continue;
  			
 			for (int contLink = 0; contLink < rsa.seqLinks.size() ; contLink ++)
@@ -1043,7 +1043,7 @@ public class WDMUtils
 	/**
 	 * Sets the number of frequency slots available in each fiber to the same value.
 	 * 
-	 * @param netPlan A {@link com.net2plan.interfaces.networkDesign.NetPlan} representing a WDM physical topology
+	 * @param netPlan A {@link NetPlan} representing a WDM physical topology
 	 * @param numFrequencySlots Number of wavelengths for all fibers
 	 * @param optionalLayerParameter WDM network layer. If not present, the default layer is assumed
 	 */

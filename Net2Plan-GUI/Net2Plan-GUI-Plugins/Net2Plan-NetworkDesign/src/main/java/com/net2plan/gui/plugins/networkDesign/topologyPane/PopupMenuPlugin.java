@@ -59,8 +59,9 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
 
     @Override
     public boolean checkModifiers(MouseEvent e) {
-        return e.isPopupTrigger();
+        return SwingUtilities.isRightMouseButton(e);
     }
+
 
     @Override
     public int getModifiers() {
@@ -68,9 +69,9 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) 
+    public void mouseReleased(MouseEvent e)
     {
-        if (checkModifiers(e)) 
+        if (checkModifiers(e))
         {
             final Point p = e.getPoint();
             final Point2D positionInNetPlanCoordinates = canvas.getCanvasPointFromNetPlanPoint(p);
@@ -101,7 +102,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
     }
 
     @Override
-    public void setModifiers(int modifiers) 
+    public void setModifiers(int modifiers)
     {
         throw new UnsupportedOperationException("Not supported yet");
     }
@@ -113,7 +114,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         if (!vs.isNetPlanEditable()) return actions;
         if (vs.isWhatIfAnalysisActive()) return actions;
         if (callback.inOnlineSimulationMode()) return actions;
-        
+
     	final NetPlan netPlan = callback.getDesign();
         actions.add(new JMenuItem(new RemoveNodeAction("Remove node", node)));
 
@@ -216,8 +217,8 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         if (!vs.isNetPlanEditable()) return actions;
         if (vs.isWhatIfAnalysisActive()) return actions;
         if (callback.inOnlineSimulationMode()) return actions;
-        
-        
+
+
         JMenuItem addNode = new JMenuItem(new AddNodeAction("Add node here", positionInNetPlanCoordinates));
         actions.add(addNode);
 
@@ -226,10 +227,10 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         JMenu topologySettingMenu = new JMenu("Change topology layout");
 
         JMenuItem circularSetting = new JMenuItem("Circular");
-        circularSetting.addActionListener(e -> 
+        circularSetting.addActionListener(e ->
         {
         	final List<Node> nodes = callback.getDesign().getNodes();
-        	final double angStep = 360.0 / nodes.size(); 
+        	final double angStep = 360.0 / nodes.size();
         	final double radius = 10; // PABLO: THIS SHOUD BE SET IN OTHER COORDINATES?
             for (int i = 0; i < nodes.size(); i++)
             	nodes.get(i).setXYPositionMap(new Point2D.Double(positionInNetPlanCoordinates.getX() + radius * Math.cos(Math.toRadians(angStep*i)) , positionInNetPlanCoordinates.getY() + radius * Math.sin(Math.toRadians(angStep*i))));

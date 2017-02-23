@@ -189,7 +189,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                 @Override
                 public void mouseReleased(MouseEvent ev)
                 {
-                    if (ev.isPopupTrigger())
+                    if (SwingUtilities.isRightMouseButton(ev))
                     {
                         // Building menu
                         mainTableMenu.removeAll();
@@ -272,7 +272,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                 public void mouseReleased(MouseEvent e)
                 {
                     //Checking if right button is clicked
-                    if (e.isPopupTrigger())
+                    if (SwingUtilities.isRightMouseButton(e))
                     {
                         // Build menu
                         fixedTableMenu.removeAll();
