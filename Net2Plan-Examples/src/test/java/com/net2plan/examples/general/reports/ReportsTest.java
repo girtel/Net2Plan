@@ -43,7 +43,7 @@ public class ReportsTest
 		paramFor11.put("networkRecoveryType" , "1+1-srg-disjoint-lps");
 		new Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGrooming().executeAlgorithm(np , paramFor11 , null);
 
-		File resourcesFolder = new File(TestConstants.TEST_FILE_DIRECTORY);
+		File resourcesFolder = new File(TestConstants.TEST_REPORT_FILE_DIRECTORY);
 		if (!resourcesFolder.exists()) resourcesFolder.mkdirs();
 	}
 
@@ -182,7 +182,7 @@ public class ReportsTest
 			testingParameters.put("provisioningAlgorithm_parameters" , Arrays.asList(StringUtils.mapToString(provAlgorithmParam)));
 			testingParameters.put("considerTrafficInOversubscribedLinksAsLost" , Arrays.asList("true" , "false"));
 			testingParameters.put("failureModel" , Arrays.asList("perBidirectionalLinkBundle" , "SRGfromNetPlan" , "perNode" , "perLink" , "perDirectionalLinkBundle"));
-			testingParameters.put("rootNameOfOutFiles", Collections.singletonList(TestConstants.TEST_FILE_DIRECTORY + "/reportPerSRGFailure"));
+			testingParameters.put("rootNameOfOutFiles", Collections.singletonList(TestConstants.TEST_REPORT_FILE_DIRECTORY + "/reportPerSRGFailure"));
 			List<Map<String,String>> testsParam = InputParameter.getCartesianProductOfParameters (testingParameters);
 			if (testsParam.isEmpty()) testsParam = Arrays.asList(InputParameter.getDefaultParameters(report.getParameters()));
 			for (Map<String,String> params : testsParam)

@@ -10,5 +10,6 @@ public final class TestConstants
 
     public final static String CPLEX_NOT_FOUND_ERROR = "Could not find CPLEX solver, ignoring test...";
 
-    public static final String TEST_FILE_DIRECTORY = "src/test/resources/temp";
+    public static final String TEST_REPORT_FILE_DIRECTORY = "src/test/resources/temp/reports";
+    public static final String TEST_ALGORITHM_FILE_DIRECTORY = "src/test/resources/temp/algorithms";
 }
