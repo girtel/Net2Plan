@@ -33,17 +33,17 @@ public class Offline_cfa_modularCapacitiesAndRoutingDualDecompositionTest
 		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/abilene_N12_E30_withTrafficAndClusters3.n2p"));
 		
 		/* Create the temporal directory for storing the test files */
-		this.temporalDirectoryTests = new File ("temporalDirectoryTests");
+		this.temporalDirectoryTests = new File (TestConstants.TEST_ALGORITHM_FILE_DIRECTORY);
 		temporalDirectoryTests.mkdirs();
 		/* delete everything inside temporalDirectoryTests, including subfolders */
-		Files.walk(Paths.get("temporalDirectoryTests")).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);		
+		Files.walk(Paths.get(TestConstants.TEST_ALGORITHM_FILE_DIRECTORY)).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
 	}
 
 	@After
 	public void tearDown() throws Exception 
 	{
 		np.checkCachesConsistency();
-		Files.walk(Paths.get("temporalDirectoryTests")).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
+		Files.walk(Paths.get(TestConstants.TEST_ALGORITHM_FILE_DIRECTORY)).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
 		temporalDirectoryTests.delete();
 	}
 
@@ -53,7 +53,7 @@ public class Offline_cfa_modularCapacitiesAndRoutingDualDecompositionTest
 		final IAlgorithm algorithm = new Offline_cfa_modularCapacitiesAndRoutingDualDecomposition();
 		Map<String,List<String>> testingParameters = new HashMap<> ();
 		testingParameters.put("solverName" , Arrays.asList("cplex"));
-		testingParameters.put("simulation_outFileNameRoot" , Arrays.asList("temporalDirectoryTests/modularCapacitiesAndRoutingDualDecomp"));
+		testingParameters.put("simulation_outFileNameRoot" , Arrays.asList(TestConstants.TEST_ALGORITHM_FILE_DIRECTORY + "/modularCapacitiesAndRoutingDualDecomp"));
 		testingParameters.put("simulation_numIterations" , Arrays.asList("5"));
 		List<Map<String,String>> testsParam = InputParameter.getCartesianProductOfParameters (testingParameters);
 		if (testsParam.isEmpty()) testsParam = Arrays.asList(InputParameter.getDefaultParameters(algorithm.getParameters()));

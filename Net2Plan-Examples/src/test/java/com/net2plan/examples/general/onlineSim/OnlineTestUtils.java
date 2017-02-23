@@ -1,20 +1,19 @@
 package com.net2plan.examples.general.onlineSim;
 
-import static com.net2plan.internal.sim.SimCore.SimState.NOT_STARTED;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
-import java.util.Map;
-
 import com.jom.JOMException;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.IExternal;
 import com.net2plan.internal.sim.EndSimulationException;
 import com.net2plan.internal.sim.IGUISimulationListener;
-import com.net2plan.internal.sim.SimCore;
 import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.internal.sim.SimKernel;
+
+import java.util.Map;
+
+import static com.net2plan.internal.sim.SimCore.SimState.NOT_STARTED;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class OnlineTestUtils implements IGUISimulationListener
 {

@@ -1,7 +1,16 @@
 package com.net2plan.examples.ocnbook.onlineSim;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import com.google.common.collect.ImmutableMap;
+import com.net2plan.examples.TestConstants;
+import com.net2plan.examples.general.onlineSim.OnlineTestUtils;
+import com.net2plan.examples.general.onlineSim.Online_evGen_doNothing;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.simulation.IEventGenerator;
+import com.net2plan.interfaces.simulation.IEventProcessor;
+import com.net2plan.utils.InputParameter;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -12,17 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.google.common.collect.ImmutableMap;
-import com.net2plan.examples.general.onlineSim.OnlineTestUtils;
-import com.net2plan.examples.general.onlineSim.Online_evGen_doNothing;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.simulation.IEventGenerator;
-import com.net2plan.interfaces.simulation.IEventProcessor;
-import com.net2plan.utils.InputParameter;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class Online_evProc_adaptiveRoutingDualTest
 {
@@ -37,17 +37,17 @@ public class Online_evProc_adaptiveRoutingDualTest
 		np.setTrafficMatrix(new NetPlan (new File ("src/test/resources/data/trafficMatrices/tm4nodes.n2p")).getMatrixNode2NodeOfferedTraffic());
 
 		/* Create the temporal directory for storing the test files */
-		this.temporalDirectoryTests = new File ("temporalDirectoryTests");
+		this.temporalDirectoryTests = new File (TestConstants.TEST_ALGORITHM_FILE_DIRECTORY);
 		temporalDirectoryTests.mkdirs();
 		/* delete everything inside temporalDirectoryTests, including subfolders */
-		Files.walk(Paths.get("temporalDirectoryTests")).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);		
+		Files.walk(Paths.get(TestConstants.TEST_ALGORITHM_FILE_DIRECTORY)).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
 	}
 
 	@After
 	public void tearDown() throws Exception
 	{
 		np.checkCachesConsistency();
-//		Files.walk(Paths.get("temporalDirectoryTests")).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
+//		Files.walk(Paths.get(TestConstants.TEST_ALGORITHM_FILE_DIRECTORY)).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
 //		temporalDirectoryTests.delete();
 	}
 
@@ -76,7 +76,7 @@ public class Online_evProc_adaptiveRoutingDualTest
 			/* Create the processor parameters */
 			final Map<String,List<String>> processorParameters = new HashMap <>();
 			
-			processorParameters.put("simulation_outFileNameRoot" , Arrays.asList("temporalDirectoryTests/rootOutput"));
+			processorParameters.put("simulation_outFileNameRoot" , Arrays.asList(TestConstants.TEST_ALGORITHM_FILE_DIRECTORY + "/rootOutput"));
 			final List<Map<String,String>> testsParamProcessor = InputParameter.getCartesianProductOfParameters (processorParameters);
 			
 			for (Map<String,String> paramsProcessorChangingThisTest : testsParamProcessor)

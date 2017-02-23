@@ -1,33 +1,23 @@
 package com.net2plan.examples.ocnbook.offline;
 
-import static org.junit.Assert.*;
+import com.google.common.collect.ImmutableMap;
+import com.net2plan.examples.TestConstants;
+import com.net2plan.interfaces.networkDesign.IAlgorithm;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.utils.InputParameter;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.IAlgorithm;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.libraries.SRGUtils;
-import com.net2plan.libraries.SRGUtils.SharedRiskModel;
-import com.net2plan.utils.InputParameter;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class Offline_fa_xpMultihourDynamicRoutingTest 
 {
@@ -38,10 +28,10 @@ public class Offline_fa_xpMultihourDynamicRoutingTest
 	public void setUp() throws Exception 
 	{
 		/* Create the temporal directory for storing the test files */
-		this.temporalDirectoryTests = new File ("temporalDirectoryTests");
+		this.temporalDirectoryTests = new File (TestConstants.TEST_ALGORITHM_FILE_DIRECTORY);
 		temporalDirectoryTests.mkdirs();
 		/* delete everything inside temporalDirectoryTests, including subfolders */
-		Files.walk(Paths.get("temporalDirectoryTests")).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);		
+		Files.walk(Paths.get(TestConstants.TEST_ALGORITHM_FILE_DIRECTORY)).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
 
 		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example4nodes.n2p"));
 		
@@ -52,15 +42,15 @@ public class Offline_fa_xpMultihourDynamicRoutingTest
 		npTm1.removeAllDemands(); 
 		for (Node n1 : npTm0.getNodes()) for (Node n2 : npTm0.getNodes()) if (n1 != n2) npTm0.addDemand(n1, n2, 5*rng.nextDouble() , null);
 		for (Node n1 : npTm1.getNodes()) for (Node n2 : npTm1.getNodes()) if (n1 != n2) npTm1.addDemand(n1, n2, 5*rng.nextDouble() , null);
-		npTm0.saveToFile(new File ("temporalDirectoryTests/rootInput_tm0.n2p"));
-		npTm1.saveToFile(new File ("temporalDirectoryTests/rootInput_tm1.n2p"));
+		npTm0.saveToFile(new File (TestConstants.TEST_ALGORITHM_FILE_DIRECTORY + "/rootInput_tm0.n2p"));
+		npTm1.saveToFile(new File (TestConstants.TEST_ALGORITHM_FILE_DIRECTORY + "/rootInput_tm1.n2p"));
 	}
 
 	@After
 	public void tearDown() throws Exception 
 	{
 		np.checkCachesConsistency();
-		Files.walk(Paths.get("temporalDirectoryTests")).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
+		Files.walk(Paths.get(TestConstants.TEST_ALGORITHM_FILE_DIRECTORY)).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
 		temporalDirectoryTests.delete();
 	}
 
@@ -69,8 +59,8 @@ public class Offline_fa_xpMultihourDynamicRoutingTest
 	{
 		final IAlgorithm algorithm = new Offline_fa_xpMultihourDynamicRouting();
 		Map<String,List<String>> testingParameters = new HashMap<> ();
-		testingParameters.put("rootOfNameOfInputTrafficFiles" , Arrays.asList("temporalDirectoryTests/rootInput"));
-		testingParameters.put("rootOfNameOfOutputFiles" , Arrays.asList("temporalDirectoryTests/rootOutput"));
+		testingParameters.put("rootOfNameOfInputTrafficFiles" , Arrays.asList(TestConstants.TEST_ALGORITHM_FILE_DIRECTORY + "/rootInput"));
+		testingParameters.put("rootOfNameOfOutputFiles" , Arrays.asList(TestConstants.TEST_ALGORITHM_FILE_DIRECTORY + "/rootOutput"));
 		testingParameters.put("solverName" , Arrays.asList("ipopt"));
 		testingParameters.put("optimizationTarget" , Arrays.asList("min-av-num-hops" , "minimax-link-utilization" , "maximin-link-idle-capacity"));
 		List<Map<String,String>> testsParam = InputParameter.getCartesianProductOfParameters (testingParameters);
