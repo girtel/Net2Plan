@@ -86,8 +86,14 @@ public class Online_evProc_congControlAndBackpressureRoutingDualDecompTest
 				System.out.println(allParamsProcessorThisTest);
 
 				final NetPlan npInput = np.copy ();
-				new OnlineTestUtils().runSimulation(np , generator , processor , simulationParameters , net2planParameters , 
-						allParamsGeneratorThisTest , allParamsProcessorThisTest , TIMEPERSIMULATIONINSECONDS);
+				try
+				{
+					new OnlineTestUtils().runSimulation(np , generator , processor , simulationParameters , net2planParameters ,
+							allParamsGeneratorThisTest , allParamsProcessorThisTest , TIMEPERSIMULATIONINSECONDS);
+				} catch (UnsatisfiedLinkError e)
+				{
+					System.err.println(this.getClass().getName() + ": " + TestConstants.IPOPT_NOT_FOUND_ERROR);
+				}
 				checkValidity (npInput , np , allParamsGeneratorThisTest);
 			}			
 		}
