@@ -119,11 +119,11 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                         if ((Long) model.getValueAt(row, AdvancedJTable_layer.COLUMN_ID) == layer.getId()) {
                             layer.setName(text);
                             model.setValueAt(text, row, AdvancedJTable_layer.COLUMN_NAME);
-                            if (!insideUpdateView)
+                            /*if (!insideUpdateView)
                             {
                             	networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                             	networkViewer.getUndoRedoNavigationManager().addNetPlanChange();
-                            }
+                            }*/
                         }
                     }
 //					allowDocumentUpdate = isEditable();
