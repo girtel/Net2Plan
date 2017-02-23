@@ -63,7 +63,14 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILPTest
 			Map<String,String> paramsUsedToCall = InputParameter.getDefaultParameters(algorithm.getParameters());
 			paramsUsedToCall.putAll(params); // so default parameters that are also in param, are replaced
 			final NetPlan npInput = np.copy ();
-			algorithm.executeAlgorithm(np , paramsUsedToCall , ImmutableMap.of("precisionFactor" , "0.0001"));
+			try
+			{
+				algorithm.executeAlgorithm(np , paramsUsedToCall , ImmutableMap.of("precisionFactor" , "0.0001"));
+			} catch (UnsatisfiedLinkError e)
+			{
+				System.err.println(this.getClass().getName() + ": " + TestConstants.GLPK_NOT_FOUND_ERROR);
+				return;
+			}
 			checkValidity (npInput , np , paramsUsedToCall);
 		}
 	}
