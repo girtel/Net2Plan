@@ -99,7 +99,7 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
                 + "some events triggered in the user interface." + NEWLINE + NEWLINE
                 + "The events that can be tested are:" + NEWLINE + NEWLINE
                 + "- Setting failures/repairs in nodes and links. This can be done in the Nodes table, Links table "
-                + "and Sharer-risk group tables. " + NEWLINE + NEWLINE
+                + "and Shared-risk group tables. " + NEWLINE + NEWLINE
                 + "- Modifying the offered traffic of demands (only those not coupled to any upper layer link)." + NEWLINE + NEWLINE
                 + "In the what-if analysis, the user modifications in the previous tables will trigger appropriate "
                 + "events sent to the (built-in or user-developed) online reaction algorithm selected in the "
