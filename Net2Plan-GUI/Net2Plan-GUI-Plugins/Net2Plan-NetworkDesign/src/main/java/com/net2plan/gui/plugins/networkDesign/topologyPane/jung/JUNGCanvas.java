@@ -132,7 +132,7 @@ public final class JUNGCanvas implements ITopologyCanvas
         	}
 		});
 		/* Customize the graph */
-        vv.getRenderContext().setVertexDrawPaintTransformer(n -> n.getDrawPaint());
+        vv.getRenderContext().setVertexDrawPaintTransformer(n -> n.getBorderPaint());
         vv.getRenderContext().setVertexFillPaintTransformer(n -> n.getFillPaint());
         vv.getRenderContext().setVertexFontTransformer(n -> n.getFont());
 

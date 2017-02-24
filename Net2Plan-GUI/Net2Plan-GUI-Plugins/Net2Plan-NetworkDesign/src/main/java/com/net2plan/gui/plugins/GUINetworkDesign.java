@@ -770,7 +770,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             {
                 for (GUINode gn : vs.getCanvasVerticallyStackedGUINodes((Node) e))
                 {
-                    gn.setDrawPaint(color);
+                    gn.setBorderPaint(color);
                     gn.setFillPaint(color);
                 }
             } else throw new RuntimeException();

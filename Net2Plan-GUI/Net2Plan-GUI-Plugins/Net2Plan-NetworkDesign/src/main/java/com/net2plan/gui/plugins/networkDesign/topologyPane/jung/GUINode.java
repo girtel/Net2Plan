@@ -37,7 +37,7 @@ public class GUINode implements ITopologyCanvasVertex
 
     /* New variables */
     private Font font;
-    private Paint drawPaint, fillPaint;
+    private Paint borderPaint, fillPaint;
     private double iconHeightIfNotActive;
 
     /**
@@ -61,7 +61,7 @@ public class GUINode implements ITopologyCanvasVertex
             copyGn = new GUINode(this.npNode, this.layer);
         }
         copyGn.font = this.font;
-        copyGn.drawPaint = this.drawPaint;
+        copyGn.borderPaint = this.borderPaint;
         copyGn.fillPaint = this.fillPaint;
         copyGn.iconHeightIfNotActive = this.iconHeightIfNotActive;
         return copyGn;
@@ -81,7 +81,7 @@ public class GUINode implements ITopologyCanvasVertex
 //        if (!callback.getVisualizationState().isLayerVisibleInCanvas(layer)) throw new RuntimeException ("Bad");
 
 		/* defaults */
-        this.drawPaint = VisualizationConstants.DEFAULT_GUINODE_COLOR;
+        this.borderPaint = VisualizationConstants.DEFAULT_GUINODE_COLOR;
         this.fillPaint = VisualizationConstants.DEFAULT_GUINODE_COLOR;
         this.font = new Font("Helvetica", Font.BOLD, 11);
         this.iconHeightIfNotActive = 30;
@@ -108,14 +108,14 @@ public class GUINode implements ITopologyCanvasVertex
         this.iconHeightIfNotActive = sizeNonActiveLayer;
     }
 
-    public Paint getDrawPaint()
+    public Paint getBorderPaint()
     {
-        return npNode.isUp() ? drawPaint : Color.RED;
+        return npNode.isUp() ? borderPaint : Color.RED;
     }
 
-    public void setDrawPaint(Paint p)
+    public void setBorderPaint(Paint p)
     {
-        this.drawPaint = p;
+        this.borderPaint = p;
     }
 
     public Paint getFillPaint()
@@ -144,7 +144,7 @@ public class GUINode implements ITopologyCanvasVertex
         if (url == null) url = layer.getDefaultNodeIconURL();
         if (url == null) url = VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP.get(layer.getName());
         final int height = layer.isDefaultLayer() ? (int) (iconHeightIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE) : (int) iconHeightIfNotActive;
-        final Color borderColor = getDrawPaint() == VisualizationConstants.DEFAULT_GUINODE_COLOR ? VisualizationConstants.TRANSPARENTCOLOR : (Color) getDrawPaint();
+        final Color borderColor = getBorderPaint() == VisualizationConstants.DEFAULT_GUINODE_COLOR ? VisualizationConstants.TRANSPARENTCOLOR : (Color) getBorderPaint();
         return VisualizationState.getIcon(url, height, borderColor).getSecond();
     }
 
@@ -221,7 +221,7 @@ public class GUINode implements ITopologyCanvasVertex
         if (url == null) url = layer.getDefaultNodeIconURL();
         if (url == null) url = VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP.get(layer.getName());
         final int height = layer.isDefaultLayer() ? (int) (iconHeightIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE) : (int) iconHeightIfNotActive;
-        final Color borderColor = getDrawPaint() == VisualizationConstants.DEFAULT_GUINODE_COLOR ? VisualizationConstants.TRANSPARENTCOLOR : (Color) getDrawPaint();
+        final Color borderColor = getBorderPaint() == VisualizationConstants.DEFAULT_GUINODE_COLOR ? VisualizationConstants.TRANSPARENTCOLOR : (Color) getBorderPaint();
         final Icon icon = VisualizationState.getIcon(url, height, borderColor).getFirst();
         return icon;
     }

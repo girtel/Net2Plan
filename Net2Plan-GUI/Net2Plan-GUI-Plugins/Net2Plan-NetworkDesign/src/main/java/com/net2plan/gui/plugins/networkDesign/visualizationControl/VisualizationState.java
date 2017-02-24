@@ -808,9 +808,9 @@ public class VisualizationState
         /* Picked link the last, so overrides the rest */
         if (isDemandLayerVisibleInTheCanvas)
         {
-            gnOrigin.setDrawPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+            gnOrigin.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
             gnOrigin.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
-            gnDestination.setDrawPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
+            gnDestination.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
             gnDestination.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
         }
     }
@@ -879,7 +879,7 @@ public class VisualizationState
         {
             for (GUINode gn : getCanvasVerticallyStackedGUINodes(node))
             {
-                gn.setDrawPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_FAILED);
+                gn.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_FAILED);
                 gn.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_FAILED);
             }
         }
@@ -924,14 +924,14 @@ public class VisualizationState
             /* Picked link the last, so overrides the rest */
             if (isDemandLayerVisibleInTheCanvas)
             {
-                gnDestination.setDrawPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
+                gnDestination.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
                 gnDestination.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
             }
         }
         /* Picked link the last, so overrides the rest */
         if (isDemandLayerVisibleInTheCanvas)
         {
-            gnOrigin.setDrawPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+            gnOrigin.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
             gnOrigin.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
         }
     }
@@ -968,9 +968,9 @@ public class VisualizationState
         {
             final GUINode gnOrigin = getCanvasAssociatedGUINode(pickedRoute.getIngressNode(), pickedRoute.getLayer());
             final GUINode gnDestination = getCanvasAssociatedGUINode(pickedRoute.getEgressNode(), pickedRoute.getLayer());
-            gnOrigin.setDrawPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+            gnOrigin.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
             gnOrigin.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
-            gnDestination.setDrawPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
+            gnDestination.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
             gnDestination.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
         }
     }
@@ -1009,14 +1009,14 @@ public class VisualizationState
             }
             if (isTreeLayerVisibleInTheCanvas)
             {
-                gnDestination.setDrawPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
+                gnDestination.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
                 gnDestination.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
             }
         }
 		/* Picked link the last, so overrides the rest */
         if (isTreeLayerVisibleInTheCanvas)
         {
-            gnOrigin.setDrawPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+            gnOrigin.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
             gnOrigin.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
         }
     }
@@ -1082,7 +1082,7 @@ public class VisualizationState
 
         for (GUINode gn : getCanvasVerticallyStackedGUINodes(pickedNode))
         {
-            gn.setDrawPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_PICK);
+            gn.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_PICK);
             gn.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_PICK);
         }
         for (Link e : Sets.union(pickedNode.getOutgoingLinks(currentNp.getNetworkLayerDefault()), pickedNode.getIncomingLinks(currentNp.getNetworkLayerDefault())))
@@ -1103,7 +1103,7 @@ public class VisualizationState
 
         for (GUINode gn : getCanvasVerticallyStackedGUINodes(pickedResource.getHostNode()))
         {
-            gn.setDrawPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_RESOURCE);
+            gn.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_RESOURCE);
             gn.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_RESOURCE);
         }
     }
@@ -1154,9 +1154,9 @@ public class VisualizationState
             gl.setArrowFillPaint(color);
             gl.setEdgeDrawPaint(color);
             gl.setShownSeparated(true);
-            gl.getOriginNode().setDrawPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+            gl.getOriginNode().setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
             gl.getOriginNode().setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
-            gl.getDestinationNode().setDrawPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
+            gl.getDestinationNode().setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
             gl.getDestinationNode().setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
         }
     }
@@ -1182,7 +1182,7 @@ public class VisualizationState
 
         for (GUINode n : getCanvasAllGUINodes())
         {
-            n.setDrawPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR);
+            n.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR);
             n.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR);
         }
         for (GUILink e : getCanvasAllGUILinks(true, false))
