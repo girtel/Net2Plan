@@ -14,6 +14,7 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane.jung;
 
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.interfaces.ITopologyCanvasEdge;
+import com.net2plan.interfaces.ITopologyCanvasVertex;
 import com.net2plan.interfaces.networkDesign.*;
 
 import java.awt.*;
@@ -75,7 +76,6 @@ public class GUILink implements ITopologyCanvasEdge
      */
     public GUILink(Link npLink, GUINode originNode, GUINode destinationNode) 
     {
-//    	this.vs = originNode.getVisualizationState();
         this.npLink = npLink;
         this.originNode = originNode;
         this.destinationNode = destinationNode;
@@ -84,18 +84,7 @@ public class GUILink implements ITopologyCanvasEdge
         	if (originNode.getAssociatedNode() != npLink.getOriginNode()) throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
             if (destinationNode.getAssociatedNode() != npLink.getDestinationNode()) throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
         }
-        else
-        {
-        	//if (Math.abs(originNode.getVisualizationOrderRemovingNonVisibleLayers() - destinationNode.getVisualizationOrderRemovingNonVisibleLayers()) != 1) throw new RuntimeException ("Bad");
-        }
-//        this.hasArrow = true;
-////        this.arrowStrokeIfPicked = new BasicStroke(2);
-//        this.edgeDrawPaint = Color.BLACK;
-////        this.edgeDrawPaintIfPicked = Color.BLUE;
-//        this.arrowDrawPaint = Color.BLACK;
-////        this.arrowDrawPaintIfPicked = Color.BLUE;
-//        this.arrowFillPaint = Color.BLACK;
-////        this.arrowFillPaintIfPicked = Color.BLUE;
+
         if (this.isIntraNodeLink())
         {
             this.hasArrow = VisualizationConstants.DEFAULT_INTRANODEGUILINK_HASARROW;
@@ -120,10 +109,6 @@ public class GUILink implements ITopologyCanvasEdge
         }
         
         this.shownSeparated = false;
-//        this.edgeStrokeIfPicked = new BasicStroke(5);
-//        this.userDefinedColorOverridesTheRest = null;
-//        this.userDefinedEdgeStrokeOverridesTheRest = null;
-        //PARA EL EDGE STROKE SI BACKUP: return new BasicStroke(vv.getPickedEdgeState().isPicked(i) ? 2 : 1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] { 10 }, 0.0f);
     }
 
     @Override
@@ -131,31 +116,37 @@ public class GUILink implements ITopologyCanvasEdge
         return getLabel();
     }
 
+    @Override
     public boolean getHasArrow() {
         return this.hasArrow;
     }
 
+    @Override
     public void setHasArrow(boolean hasArrow) {
         this.hasArrow = hasArrow;
     }
 
+    @Override
     public Stroke getArrowStroke() 
     {
     	if (npLink == null) return arrowStrokeIfNotActiveLayer; // interlayer link
         return npLink.getNetPlan().getNetworkLayerDefault() == npLink.getLayer()? arrowStrokeIfActiveLayer : arrowStrokeIfNotActiveLayer;
     }
 
+    @Override
     public void setArrowStroke(Stroke arrowStrokeIfActiveLayer , Stroke arrowStrokeIfNotActiveLayer) 
     {
     	this.arrowStrokeIfActiveLayer = arrowStrokeIfActiveLayer;
     	this.arrowStrokeIfNotActiveLayer = arrowStrokeIfNotActiveLayer;
     }
 
+    @Override
     public Paint getEdgeDrawPaint() 
     {
         return npLink == null? edgeDrawPaint : npLink.isUp() ? edgeDrawPaint : Color.RED;
     }
 
+    @Override
     public void setEdgeDrawPaint(Paint drawPaint) {
         this.edgeDrawPaint = drawPaint;
     }
@@ -164,37 +155,44 @@ public class GUILink implements ITopologyCanvasEdge
 
     public void setShownSeparated (boolean shownSeparated) { this.shownSeparated = shownSeparated; }
 
+    @Override
     public Paint getArrowDrawPaint() 
     {
         return npLink == null? arrowDrawPaint : npLink.isUp() ? arrowDrawPaint : Color.RED;
     }
 
+    @Override
     public void setArrowDrawPaint(Paint drawPaint)
     {
         this.arrowDrawPaint = drawPaint;
     }
 
+    @Override
     public Paint getArrowFillPaint() 
     {
         return npLink == null? arrowFillPaint : npLink.isUp() ? arrowFillPaint : Color.RED;
     }
 
+    @Override
     public void setArrowFillPaint(Paint fillPaint) {
         this.arrowFillPaint = fillPaint;
     }
 
+    @Override
     public Stroke getEdgeStroke() 
     {
     	if (isIntraNodeLink()) return edgeStrokeIfNotActiveLayer;
         return npLink.getNetPlan().getNetworkLayerDefault() == npLink.getLayer()? edgeStrokeIfActiveLayer : edgeStrokeIfNotActiveLayer;
     }
 
-    public void setEdgeStroke(Stroke edgeStrokeIfActiveLayer , Stroke edgeStrokeIfNotActiveLayer) 
+    @Override
+    public void setEdgeStroke(Stroke edgeStrokeIfActiveLayer, Stroke edgeStrokeIfNotActiveLayer)
     {
     	this.edgeStrokeIfActiveLayer = edgeStrokeIfActiveLayer;
     	this.edgeStrokeIfNotActiveLayer = edgeStrokeIfNotActiveLayer;
     }
 
+    @Override
     public String getToolTip() {
         StringBuilder temp = new StringBuilder();
         if (isIntraNodeLink())
@@ -236,6 +234,7 @@ public class GUILink implements ITopologyCanvasEdge
      * @return Destination node
      * @since 0.2.0
      */
+    @Override
     public GUINode getDestinationNode() {
         return destinationNode;
     }
@@ -246,6 +245,7 @@ public class GUILink implements ITopologyCanvasEdge
      * @return Link identifier
      * @since 0.3.0
      */
+    @Override
     public Link getAssociatedNetPlanLink() {
         return npLink;
     }
@@ -256,6 +256,7 @@ public class GUILink implements ITopologyCanvasEdge
      * @return Link label
      * @since 0.2.0
      */
+    @Override
     public String getLabel() {
         return npLink == null? "IntraLink (" + getOriginNode() + "->" + getDestinationNode() +")" : String.format("%.2f", npLink.getUtilization());
     }
@@ -266,6 +267,7 @@ public class GUILink implements ITopologyCanvasEdge
      * @return Origin node
      * @since 0.2.0
      */
+    @Override
     public GUINode getOriginNode() {
         return originNode;
     }
