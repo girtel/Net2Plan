@@ -117,6 +117,7 @@
                 <exclude>${project.groupId}:*:*</exclude>
                 <exclude>${project.groupId}.net2plan-gui:*:*</exclude>
                 <exclude>${project.groupId}.net2plan-cli:*:*</exclude>
+                <exclude>${project.groupId}.net2plan-gui.net2plan-gui-plugins:*:*</exclude>
             </excludes>
         </dependencySet>
     </dependencySets>

@@ -15,7 +15,6 @@ public class GUILauncher
 		PluginSystem.addPlugin(IGUIModule.class, GUITrafficDesign.class);
 		PluginSystem.loadExternalPlugins();
 		GUINet2Plan.refreshMenu();
-
 	}
 }
 
