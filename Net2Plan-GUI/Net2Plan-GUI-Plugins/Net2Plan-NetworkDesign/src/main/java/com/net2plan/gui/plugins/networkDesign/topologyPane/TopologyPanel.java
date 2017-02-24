@@ -436,7 +436,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             if (vs.getCanvasNumberOfVisibleLayers() == 1) return;
 
             final int currentInterLayerDistance = vs.getInterLayerSpaceInPixels();
-            final int newInterLayerDistance = currentInterLayerDistance - (int) Math.ceil(currentInterLayerDistance * (1 - VisualizationConstants.SCALE_OUT));
+            int newInterLayerDistance = currentInterLayerDistance - (int) Math.ceil(currentInterLayerDistance * (1 - VisualizationConstants.SCALE_OUT));
+
+            if(newInterLayerDistance <= 0)
+                newInterLayerDistance = 1;
 
             vs.setInterLayerSpaceInPixels(newInterLayerDistance);
             canvas.updateInterLayerDistanceInNpCoordinates(newInterLayerDistance);
