@@ -152,10 +152,17 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @Override
     public void configure(JPanel contentPane)
     {
-        if (!(new ArrayList<>(PluginSystem.getPlugins(ITopologyCanvas.class)).contains(JUNGCanvas.class)))
+        // Configuring PluginSystem for this plugin...
+        try
         {
+            // Add canvas plugin
+            PluginSystem.addExternalPlugin(ITopologyCanvas.class);
+
             /* Add default canvas systems */
             PluginSystem.addPlugin(ITopologyCanvas.class, JUNGCanvas.class);
+        } catch (RuntimeException ignored)
+        {
+            // NOTE: ITopologyCanvas has already been added. Meaning that JUNGCanvas has already been too.
         }
 
         this.currentNetPlan = new NetPlan();
