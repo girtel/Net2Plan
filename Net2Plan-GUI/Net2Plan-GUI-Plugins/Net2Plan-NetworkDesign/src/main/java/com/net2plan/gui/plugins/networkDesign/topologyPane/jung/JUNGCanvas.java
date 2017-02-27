@@ -14,11 +14,9 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane.jung;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.OSMStateManager;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
-import com.net2plan.interfaces.ITopologyCanvas;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasEdge;
-import com.net2plan.interfaces.ITopologyCanvasPlugin;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasVertex;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.CommandLineParser;
@@ -259,7 +257,6 @@ public final class JUNGCanvas implements ITopologyCanvas
         return null;
     }
 
-    @Override
     public GUINode getVertex(MouseEvent e)
     {
         final VisualizationViewer<GUINode, GUILink> vv = (VisualizationViewer<GUINode, GUILink>) e.getSource();
@@ -275,13 +272,13 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public Set<ITopologyCanvasVertex> getAllVertices()
+    public Set<GUINode> getAllVertices()
     {
         return Collections.unmodifiableSet(new HashSet<>(g.getVertices()));
     }
 
     @Override
-    public Set<ITopologyCanvasEdge> getAllEdges()
+    public Set<GUILink> getAllEdges()
     {
         return Collections.unmodifiableSet(new HashSet<>(g.getEdges()));
     }
@@ -344,7 +341,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public void moveVertexToXYPosition(ITopologyCanvasVertex npNode, Point2D point)
+    public void moveVertexToXYPosition(GUINode npNode, Point2D point)
     {
         l.setLocation((GUINode) npNode, point);
     }

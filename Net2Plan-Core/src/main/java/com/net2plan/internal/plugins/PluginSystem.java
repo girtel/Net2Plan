@@ -20,7 +20,6 @@
 
 package com.net2plan.internal.plugins;
 
-import com.net2plan.interfaces.ITopologyCanvas;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.utils.ClassLoaderUtils;
 
@@ -101,7 +100,7 @@ public class PluginSystem
 
 				case GUI:
 					PLUGIN_TYPES.add(IGUIModule.class);
-					PLUGIN_TYPES.add(ITopologyCanvas.class);
+					//PLUGIN_TYPES.add(ITopologyCanvas.class);
 					PLUGIN_TYPES.add(IOFilter.class);
 					break;
 			}
