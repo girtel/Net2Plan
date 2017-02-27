@@ -87,7 +87,7 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     {
         if (e.getClickCount() == 2)
         {
-            final GUINode gn = (GUINode) canvas.getVertex(e);
+            final GUINode gn = canvas.getVertex(e);
 
             if (gn != null)
             {
@@ -107,8 +107,8 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mousePressed(MouseEvent e) {
         if (checkModifiers(e)) {
-            GUINode gn = (GUINode) canvas.getVertex(e);
-            GUILink gl = (GUILink) canvas.getEdge(e);
+            GUINode gn = canvas.getVertex(e);
+            GUILink gl = canvas.getEdge(e);
             if (gn == null && gl == null) {
                 down = e.getPoint();
                 initialPoint = e.getPoint();

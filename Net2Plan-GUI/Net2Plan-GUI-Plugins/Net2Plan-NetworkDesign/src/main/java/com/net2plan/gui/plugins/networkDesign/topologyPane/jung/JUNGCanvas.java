@@ -343,7 +343,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     @Override
     public void moveVertexToXYPosition(GUINode npNode, Point2D point)
     {
-        l.setLocation((GUINode) npNode, point);
+        l.setLocation(npNode, point);
     }
 
     @Override

@@ -75,7 +75,7 @@ public class OSMJUNGOffState implements OSMState
     public void zoomAll()
     {
         final VisualizationState vs = callback.getVisualizationState();
-        final Set<GUINode> visibleGUINodes = canvas.getAllVertices().stream().filter(gn -> vs.isVisibleInCanvas((GUINode) gn)).collect(Collectors.toSet());
+        final Set<GUINode> visibleGUINodes = canvas.getAllVertices().stream().filter(vs::isVisibleInCanvas).collect(Collectors.toSet());
         if (visibleGUINodes.isEmpty()) return;
 
         // Returns the canvas transformer to its original state, so that Layout = View.
@@ -156,8 +156,7 @@ public class OSMJUNGOffState implements OSMState
     {
         for (GUINode vertex : canvas.getAllVertices())
         {
-            GUINode guiNode = (GUINode)  vertex;
-            canvas.getLayout().setLocation(guiNode, canvas.getTransformer().transform(guiNode));
+            canvas.getLayout().setLocation(vertex, canvas.getTransformer().transform(vertex));
         }
     }
 

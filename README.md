@@ -14,29 +14,27 @@ Net2Plan is built on top of an abstract network representation, so-called networ
 Net2Plan is implemented as a Java library along with both command-line and graphical user interfaces (CLI and GUI, respectively). The GUI is specially useful for laboratory sessions as an educational resource, or for a visual inspection of the network. In its turn, the command-line interface is specifically devoted to in-depth research studies, making use of batch processing or large-scale simulation features. Therefore, Net2Plan is a tool intended for a broad spectrum of users: industry, research, and academia.
 
 #Building instructions
-Since Net2Plan 0.4.1, the project is being built through the use of Maven. For this task, two different Maven profiles are provided:
-* _build-without-javadoc_: Quick build where the Javadoc build step is ignored. Useful for checking that everything in the program is right before creating a final release. 
-* _build-with-javadoc_: The main profile of the project. The Javadoc and the documentation will be added alongside the result that the former profile produced.
+Since Net2Plan 0.4.1, the project is being built through the use of Maven.
 
-For both profiles, the Maven command-line to execute is the one as follows:
+The Maven command to build the project is the following:
 
-`clean package -P PROFILE_NAME`
+`clean package`
 
-The result of this command is a _net2plan-VERSION.zip_ file containing the resulting program. The default location for this file is the "target" folder inside the project's structure.
+The result is a _Net2Plan-VERSION.zip_ package containing the resulting program. By default, this file can be found under the _target_ folder of the _Net2Plan-Assembly_ module.
 
-Final releases of Net2Plan can be also be found at the project's [website](http://net2plan.com/download.php).
-
-#Running instructions
-Net2Plan offers an alternative way of compiling the program in order to avoid the use of Maven during development. This is achieved by running the main class found in:
+#Developer tools
+Net2Plan offers an alternative method of running the program without the need of going through the packaging phase. This is achieved by running the main method under:
 
 `com.net2plan.launcher.GUILauncher`
 
-For this class to work, it is necessary to add the libraries found at `src\main\resources\lib-essentials` to the project's build-path. More information about these libraries [here](http://net2plan.com/license.php).
+Which can be found at:
 
-Note that this method only works for launching the GUI version of the project.
+`Net2Plan -> Net2Plan-GUI -> Net2Plan-GUI-Launcher`
+
+Note that this is meant for running the graphical interface of the project.
 
 #Learning materials
-Net2Plan's [Youtube channel](https://www.youtube.com/channel/UCCgkr1wlMlO221yhFGmWZUg) alongside the [user's guide](http://net2plan.com/documentation/current/help/usersGuide.pdf) provide a nice start for new users to start learning the multiple tools that Net2Plan provides. 
+New users may want to checkout the Net2Plan's [Youtube channel](https://www.youtube.com/channel/UCCgkr1wlMlO221yhFGmWZUg), alongside the [user's guide](http://net2plan.com/documentation/current/help/usersGuide.pdf), for an introduction into the basics of the provided tools. 
 
 #License
 Net2Plan is licensed under the [GNU Lesser General Public License Version 3](http://www.gnu.org/licenses/lgpl.html) and onwards (called the _LGPL_). Meaning that it is completely free and open-source. As a consequence of this, you may use parts of Net2Plan or the complete package inside your own programs for free, can make money from them and do not have to disclose your code. Although, you are obliged to mention that you are using Net2Plan in your program.
