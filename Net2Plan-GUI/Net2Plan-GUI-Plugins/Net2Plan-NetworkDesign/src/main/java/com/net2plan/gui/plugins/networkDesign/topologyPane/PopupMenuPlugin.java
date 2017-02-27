@@ -75,9 +75,9 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         {
             final Point p = e.getPoint();
             final Point2D positionInNetPlanCoordinates = canvas.getCanvasPointFromNetPlanPoint(p);
-            final GUINode gn = (GUINode) canvas.getVertex(e);
+            final GUINode gn = canvas.getVertex(e);
             final Node node = gn == null ? null : gn.getAssociatedNode();
-            final GUILink gl = (GUILink) canvas.getEdge(e);
+            final GUILink gl = canvas.getEdge(e);
             final Link link = gl == null ? null : gl.isIntraNodeLink()? null : gl.getAssociatedNetPlanLink();
 
             List<JComponent> actions;
