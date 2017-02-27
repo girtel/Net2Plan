@@ -613,7 +613,7 @@ public class Link extends NetworkElement
 		{
 			final double traffic = layer.forwardingRulesCurrentFailureState_x_de.viewColumn(index).zSum(); 
 			this.cache_carriedTraffic += traffic; 
-			this.cache_occupiedCapacity += traffic; 
+			this.cache_occupiedCapacity += traffic;
 		}
 		for (MulticastTree t : cache_traversingTrees)
 		{

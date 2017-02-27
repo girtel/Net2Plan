@@ -50,7 +50,7 @@ public class ErrorHandling
 	private final static JFrame consoleDialog;
 	private final static JTextArea log;
 	private final static String NEWLINE = StringUtils.getLineSeparator();
-	private static boolean DEBUG = false;
+	private static boolean DEBUG = true;
 
 	static
 	{

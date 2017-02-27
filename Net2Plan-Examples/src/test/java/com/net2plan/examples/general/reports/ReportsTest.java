@@ -135,6 +135,10 @@ public class ReportsTest
 			{
 				Map<String,String> paramsUsedToCall = InputParameter.getDefaultParameters(report.getParameters());
 				paramsUsedToCall.putAll(params); // so default parameters that are also in param, are replaced
+				
+				if (provAlgorithmParam.get("ipOverWdmNetworkRecoveryType").equals("1+1-lps-OSPF-rerouting") && 
+						provAlgorithmParam.get("wdmProtectionTypeToNewRoutes").equals ("none")) continue;
+				
 				String result = report.executeReport(np , paramsUsedToCall , ImmutableMap.of("precisionFactor" , "0.0001"));
 				assertTrue (result.length() > 100);
 			}
@@ -187,6 +191,9 @@ public class ReportsTest
 			if (testsParam.isEmpty()) testsParam = Arrays.asList(InputParameter.getDefaultParameters(report.getParameters()));
 			for (Map<String,String> params : testsParam)
 			{
+				if (provAlgorithmParam.get("ipOverWdmNetworkRecoveryType").equals("1+1-lps-OSPF-rerouting") && 
+						provAlgorithmParam.get("wdmProtectionTypeToNewRoutes").equals ("none")) continue;
+				
 				Map<String,String> paramsUsedToCall = InputParameter.getDefaultParameters(report.getParameters());
 				paramsUsedToCall.putAll(params); // so default parameters that are also in param, are replaced
 				String result = report.executeReport(np , paramsUsedToCall , ImmutableMap.of("precisionFactor" , "0.0001"));

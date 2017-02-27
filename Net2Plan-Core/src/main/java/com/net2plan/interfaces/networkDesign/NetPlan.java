@@ -5815,7 +5815,6 @@ public class NetPlan extends NetworkElement
         {
             if (link.layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
             {
-                if (affectedLayersHopByHopRouting.contains(link.layer)) continue;
                 affectedLayersHopByHopRouting.add(link.layer);
             } else
             {
