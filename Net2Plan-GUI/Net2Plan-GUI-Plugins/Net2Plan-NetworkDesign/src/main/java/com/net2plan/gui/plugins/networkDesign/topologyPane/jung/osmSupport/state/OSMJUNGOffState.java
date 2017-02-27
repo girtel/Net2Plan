@@ -7,7 +7,7 @@ import com.net2plan.gui.plugins.networkDesign.visualizationControl.Visualization
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.interfaces.ITopologyCanvasVertex;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasVertex;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
 import com.net2plan.utils.ImageUtils;

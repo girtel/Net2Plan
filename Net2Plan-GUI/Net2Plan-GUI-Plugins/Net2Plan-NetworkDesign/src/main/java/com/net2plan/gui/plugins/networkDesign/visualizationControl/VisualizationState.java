@@ -3,7 +3,7 @@ package com.net2plan.gui.plugins.networkDesign.visualizationControl;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
-import com.net2plan.interfaces.ITableRowFilter;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.ImageUtils;

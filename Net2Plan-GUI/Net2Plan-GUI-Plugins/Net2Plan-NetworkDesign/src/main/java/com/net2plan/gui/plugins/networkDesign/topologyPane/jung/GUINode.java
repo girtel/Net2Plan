@@ -14,7 +14,7 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane.jung;
 
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.interfaces.ITopologyCanvasVertex;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasVertex;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;

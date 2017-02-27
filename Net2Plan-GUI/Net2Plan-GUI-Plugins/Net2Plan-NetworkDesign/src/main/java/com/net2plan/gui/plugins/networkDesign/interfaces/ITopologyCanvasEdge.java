@@ -1,4 +1,4 @@
-package com.net2plan.interfaces;
+package com.net2plan.gui.plugins.networkDesign.interfaces;
 
 import com.net2plan.interfaces.networkDesign.Link;
 
