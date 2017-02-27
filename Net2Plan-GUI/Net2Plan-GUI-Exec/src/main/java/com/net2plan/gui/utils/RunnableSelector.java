@@ -260,7 +260,9 @@ public class RunnableSelector extends JPanel {
     private void getDefaults() {
         try {
             String defaultRunnableCodePath = Configuration.getOption("defaultRunnableCodePath");
+            defaultRunnableCodePath = defaultRunnableCodePath.replace("#path# ", "");
             File file = new File(defaultRunnableCodePath);
+
             if (!file.exists() || file.isDirectory()) return;
 
             if (file.getName().toLowerCase(Locale.getDefault()).endsWith(".jar") || file.getName().toLowerCase(Locale.getDefault()).endsWith(".class"))
