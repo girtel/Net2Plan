@@ -20,7 +20,6 @@
 
 package com.net2plan.internal.plugins;
 
-import com.net2plan.interfaces.ITopologyCanvas;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.utils.ClassLoaderUtils;
 
@@ -82,7 +81,16 @@ public class PluginSystem
 	{
 		return Collections.unmodifiableSet(PLUGINS.get(pluginType));
 	}
-	
+
+	public static void addExternalPlugin(Class<? extends Plugin> plugin)
+	{
+		if (PLUGIN_TYPES.contains(plugin))
+			throw new RuntimeException("Plugin " + plugin.getName() + " already defined...");
+
+		PLUGIN_TYPES.add(plugin);
+		PLUGINS.put(plugin, new TreeSet<>(new PluginComparator()));
+	}
+
 	/**
 	 * Load (or reload) external plugins from 'plugins' folder.
 	 * 
@@ -95,20 +103,15 @@ public class PluginSystem
 			switch(SystemUtils.getUserInterface())
 			{
 				case CLI:
-					PLUGIN_TYPES.add(ICLIModule.class);
-					PLUGIN_TYPES.add(IOFilter.class);
+					addExternalPlugin(ICLIModule.class);
+					addExternalPlugin(IOFilter.class);
 					break;
 
 				case GUI:
-					PLUGIN_TYPES.add(IGUIModule.class);
-					PLUGIN_TYPES.add(ITopologyCanvas.class);
-					PLUGIN_TYPES.add(IOFilter.class);
+					addExternalPlugin(IGUIModule.class);
+					addExternalPlugin(IOFilter.class);
 					break;
 			}
-
-			Comparator<Class<? extends Plugin>> pluginComparator = new PluginComparator();
-			for(Class<? extends Plugin> pluginType : PLUGIN_TYPES)
-				PLUGINS.put(pluginType, new TreeSet<Class<? extends Plugin>>(pluginComparator));
 		}
 		
 		File pluginsFolder = new File(SystemUtils.getCurrentDir(), "plugins");

@@ -37,9 +37,8 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.ViewEditTopolo
 import com.net2plan.gui.plugins.networkDesign.viewEditWindows.WindowController;
 import com.net2plan.gui.plugins.networkDesign.viewReportsPane.ViewReportPane;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
-import com.net2plan.interfaces.ITopologyCanvas;
-import com.net2plan.interfaces.ITopologyCanvasVertex;
-import com.net2plan.interfaces.networkDesign.IVisualizationCallback;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
+import com.net2plan.gui.plugins.networkDesign.interfaces.IVisualizationCallback;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -153,10 +152,17 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @Override
     public void configure(JPanel contentPane)
     {
-        if (!(new ArrayList<>(PluginSystem.getPlugins(ITopologyCanvas.class)).contains(JUNGCanvas.class)))
+        // Configuring PluginSystem for this plugin...
+        try
         {
+            // Add canvas plugin
+            PluginSystem.addExternalPlugin(ITopologyCanvas.class);
+
             /* Add default canvas systems */
             PluginSystem.addPlugin(ITopologyCanvas.class, JUNGCanvas.class);
+        } catch (RuntimeException ignored)
+        {
+            // NOTE: ITopologyCanvas has already been added. Meaning that JUNGCanvas has already been too.
         }
 
         this.currentNetPlan = new NetPlan();
@@ -838,7 +844,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
     @Override
-    public void moveNodeTo(final ITopologyCanvasVertex guiNode, final Point2D toPoint)
+    public void moveNodeTo(final GUINode guiNode, final Point2D toPoint)
     {
         if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("NetPlan is not editable");
 

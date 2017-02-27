@@ -10,10 +10,11 @@
  ******************************************************************************/
 
 
-package com.net2plan.interfaces.networkDesign;
+package com.net2plan.gui.plugins.networkDesign.interfaces;
 
-import com.net2plan.interfaces.ITopologyCanvas;
-import com.net2plan.interfaces.ITopologyCanvasVertex;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.internal.Constants;
 
 import java.awt.*;
@@ -49,7 +50,7 @@ public interface IVisualizationCallback
 	void updateVisualizationAfterPick();
 
 	// TODO: Rethink if this one is needed...
-	void moveNodeTo(ITopologyCanvasVertex guiNode, Point2D toPoint);
+	void moveNodeTo(GUINode guiNode, Point2D toPoint);
 
 	void runCanvasOperation(ITopologyCanvas.CanvasOperation... canvasOperation);
 

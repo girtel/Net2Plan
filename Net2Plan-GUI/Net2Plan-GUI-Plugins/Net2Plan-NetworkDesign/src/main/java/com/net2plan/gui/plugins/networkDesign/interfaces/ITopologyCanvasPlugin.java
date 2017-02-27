@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.interfaces;
+package com.net2plan.gui.plugins.networkDesign.interfaces;
 
 import java.awt.event.MouseEvent;
 

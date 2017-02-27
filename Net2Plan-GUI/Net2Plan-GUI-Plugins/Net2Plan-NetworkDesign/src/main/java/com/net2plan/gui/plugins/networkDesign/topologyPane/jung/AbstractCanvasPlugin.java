@@ -13,8 +13,8 @@
 
 package com.net2plan.gui.plugins.networkDesign.topologyPane.jung;
 
-import com.net2plan.interfaces.ITopologyCanvas;
-import com.net2plan.interfaces.ITopologyCanvasPlugin;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
 
 /**

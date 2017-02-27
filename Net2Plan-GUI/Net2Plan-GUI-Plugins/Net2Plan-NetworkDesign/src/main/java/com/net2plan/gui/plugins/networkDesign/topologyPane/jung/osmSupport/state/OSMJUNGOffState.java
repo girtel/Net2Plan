@@ -5,9 +5,8 @@ import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.interfaces.ITopologyCanvas;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.interfaces.ITopologyCanvasVertex;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
 import com.net2plan.utils.ImageUtils;
@@ -76,7 +75,7 @@ public class OSMJUNGOffState implements OSMState
     public void zoomAll()
     {
         final VisualizationState vs = callback.getVisualizationState();
-        final Set<ITopologyCanvasVertex> visibleGUINodes = canvas.getAllVertices().stream().filter(gn -> vs.isVisibleInCanvas((GUINode) gn)).collect(Collectors.toSet());
+        final Set<GUINode> visibleGUINodes = canvas.getAllVertices().stream().filter(gn -> vs.isVisibleInCanvas((GUINode) gn)).collect(Collectors.toSet());
         if (visibleGUINodes.isEmpty()) return;
 
         // Returns the canvas transformer to its original state, so that Layout = View.
@@ -155,7 +154,7 @@ public class OSMJUNGOffState implements OSMState
     @Override
     public void updateNodesXYPosition()
     {
-        for (ITopologyCanvasVertex vertex : canvas.getAllVertices())
+        for (GUINode vertex : canvas.getAllVertices())
         {
             GUINode guiNode = (GUINode)  vertex;
             canvas.getLayout().setLocation(guiNode, canvas.getTransformer().transform(guiNode));

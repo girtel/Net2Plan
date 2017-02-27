@@ -14,7 +14,6 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane.jung;
 
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.interfaces.ITopologyCanvasVertex;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -30,7 +29,7 @@ import java.net.URL;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
-public class GUINode implements ITopologyCanvasVertex
+public class GUINode
 {
     private final Node npNode;
     private final NetworkLayer layer;
@@ -87,13 +86,11 @@ public class GUINode implements ITopologyCanvasVertex
         this.iconHeightIfNotActive = 30;
     }
 
-    @Override
     public Node getAssociatedNode()
     {
         return npNode;
     }
 
-    @Override
     public NetworkLayer getLayer()
     {
         return layer;
@@ -109,43 +106,36 @@ public class GUINode implements ITopologyCanvasVertex
         this.iconHeightIfNotActive = sizeNonActiveLayer;
     }
 
-    @Override
     public Paint getBorderPaint()
     {
         return npNode.isUp() ? borderPaint : Color.RED;
     }
 
-    @Override
     public void setBorderPaint(Paint p)
     {
         this.borderPaint = p;
     }
 
-    @Override
     public Paint getFillPaint()
     {
         return npNode.isUp() ? fillPaint : Color.RED;
     }
 
-    @Override
     public void setFillPaint(Paint p)
     {
         this.fillPaint = p;
     }
 
-    @Override
     public void setFont(Font f)
     {
         this.font = f;
     }
 
-    @Override
     public Font getFont()
     {
         return font;
     }
 
-    @Override
     public Shape getShape()
     {
         URL url = npNode.getUrlNodeIcon(layer);
@@ -156,7 +146,6 @@ public class GUINode implements ITopologyCanvasVertex
         return VisualizationState.getIcon(url, height, borderColor).getSecond();
     }
 
-    @Override
     public boolean decreaseFontSize()
     {
         final int currentSize = font.getSize();
@@ -165,13 +154,11 @@ public class GUINode implements ITopologyCanvasVertex
         return true;
     }
 
-    @Override
     public void increaseFontSize()
     {
         font = new Font("Helvetica", Font.BOLD, font.getSize() + 1);
     }
 
-    @Override
     public String getToolTip()
     {
         StringBuilder temp = new StringBuilder();
@@ -220,14 +207,12 @@ public class GUINode implements ITopologyCanvasVertex
      * @return Node label
      * @since 0.2.0
      */
-    @Override
     public String getLabel()
     {
         return npNode.getName().equals("") ? "Node " + npNode.getIndex() : npNode.getName();
 //        return npNode.getName() + " - L" + layer.getIndex() + ", VL" + getVisualizationOrderRemovingNonVisibleLayers();
     }
 
-    @Override
     public Icon getIcon()
     {
         URL url = npNode.getUrlNodeIcon(layer);
