@@ -19,5 +19,10 @@
             <outputDirectory>api/doc-files</outputDirectory>
             <useDefaultExcludes>true</useDefaultExcludes>
         </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/src/main/resources/resources/documentation</directory>
+            <outputDirectory>examples/doc-files</outputDirectory>
+            <useDefaultExcludes>true</useDefaultExcludes>
+        </fileSet>
     </fileSets>
 </assembly>

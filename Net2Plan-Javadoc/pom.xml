@@ -92,6 +92,7 @@
                             <links>
                                 <link>../parallelcolt</link>
                             </links>
+                            <detectOfflineLinks>false</detectOfflineLinks>
                             <includeDependencySources>true</includeDependencySources>
                             <dependencySourceIncludes>
                                 <!-- Net2Plan Core-->
@@ -134,6 +135,7 @@
                             <links>
                                 <link>../parallelcolt</link>
                             </links>
+                            <detectOfflineLinks>false</detectOfflineLinks>
                             <tagletArtifact>
                                 <groupId>com.net2plan</groupId>
                                 <artifactId>net2plan-javadoc</artifactId>
@@ -188,6 +190,7 @@
                                 <artifactId>net2plan-javadoc</artifactId>
                                 <version>0.5.1-SNAPSHOT</version>
                             </docletArtifact>
+                            <detectOfflineLinks>false</detectOfflineLinks>
                             <includeDependencySources>true</includeDependencySources>
                             <dependencySourceIncludes>
                                 <!-- Net2Plan Examples-->
@@ -221,6 +224,7 @@
                                 <artifactId>net2plan-javadoc</artifactId>
                                 <version>0.5.1-SNAPSHOT</version>
                             </docletArtifact>
+                            <detectOfflineLinks>false</detectOfflineLinks>
                             <includeDependencySources>true</includeDependencySources>
                             <dependencySourceIncludes>
                                 <!-- Net2Plan Examples-->
