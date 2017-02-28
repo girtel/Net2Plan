@@ -352,7 +352,7 @@ public class NetPlan extends NetworkElement
         if (this.defaultLayer.id != np2.defaultLayer.id) throw new RuntimeException("Bad"); //return false;
         if (this.nextElementId.longValue() != np2.nextElementId.longValue())
         {
-            System.out.println(this.nextElementId + "," + np2.nextElementId);
+//            System.out.println(this.nextElementId + "," + np2.nextElementId);
             throw new RuntimeException("Bad");
         } //return false;
 
@@ -5068,10 +5068,12 @@ public class NetPlan extends NetworkElement
      */
     public void removeAllLinks(NetworkLayer... optionalLayerParameter)
     {
+		final boolean previousErrorHandling = ErrorHandling.DEBUG; 
+		ErrorHandling.DEBUG = false;
         checkIsModifiable();
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         for (Link e : new ArrayList<Link>(layer.links)) e.remove();
-        for (Link e : new ArrayList<Link>(layer.links)) e.remove();
+		ErrorHandling.DEBUG = previousErrorHandling;
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 
@@ -5122,6 +5124,8 @@ public class NetPlan extends NetworkElement
      */
     public void removeAllNetworkLayers()
     {
+		final boolean previousErrorHandling = ErrorHandling.DEBUG; 
+		ErrorHandling.DEBUG = false;
         checkIsModifiable();
         for (NetworkLayer layer : new ArrayList<NetworkLayer>(layers))
         {
@@ -5134,6 +5138,7 @@ public class NetPlan extends NetworkElement
             removeAllDemands(layer);
             removeAllMulticastDemands(layer);
         }
+		ErrorHandling.DEBUG = previousErrorHandling;
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 
@@ -5142,11 +5147,14 @@ public class NetPlan extends NetworkElement
      */
     public void removeAllNodes()
     {
+		final boolean previousErrorHandling = ErrorHandling.DEBUG; 
+		ErrorHandling.DEBUG = false;
         checkIsModifiable();
         for (NetworkLayer layer : layers)
             if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
                 removeAllForwardingRules(layer); // to speed up things
         for (Node n : new ArrayList<Node>(nodes)) n.remove();
+		ErrorHandling.DEBUG = previousErrorHandling;
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 
@@ -6297,7 +6305,7 @@ public class NetPlan extends NetworkElement
             case SOURCE_ROUTING:
             {
                 layer.routingType = RoutingType.SOURCE_ROUTING;
-                removeAllRoutes(layer);
+                if (!layer.routes.isEmpty()) throw new RuntimeException ();
                 for (Link e : layer.links)
                 {
                     e.cache_carriedTraffic = e.getMulticastCarriedTraffic();

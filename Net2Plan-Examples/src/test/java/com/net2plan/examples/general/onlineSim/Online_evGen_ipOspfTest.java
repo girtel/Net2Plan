@@ -87,9 +87,10 @@ public class Online_evGen_ipOspfTest
 				
 				
 				final NetPlan npInput = np.copy ();
-				new OnlineTestUtils().runSimulation(np , generator , processor , simulationParameters , net2planParameters , 
+				final NetPlan npOutput = np.copy ();
+				new OnlineTestUtils().runSimulation(npOutput , generator , processor , simulationParameters , net2planParameters , 
 						allParamsGeneratorThisTest , allParamsProcessorThisTest , TIMEPERSIMULATIONINSECONDS);
-				checkValidity (npInput , np , allParamsGeneratorThisTest);
+				checkValidity (npInput , npOutput , allParamsGeneratorThisTest);
 			}			
 			
 			

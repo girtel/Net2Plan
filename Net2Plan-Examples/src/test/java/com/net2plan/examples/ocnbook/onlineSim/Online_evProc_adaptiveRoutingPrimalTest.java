@@ -86,9 +86,10 @@ public class Online_evProc_adaptiveRoutingPrimalTest
 				System.out.println(allParamsProcessorThisTest);
 
 				final NetPlan npInput = np.copy ();
-				new OnlineTestUtils().runSimulation(np , generator , processor , simulationParameters , net2planParameters , 
+				final NetPlan npOutput = np.copy ();
+				new OnlineTestUtils().runSimulation(npOutput , generator , processor , simulationParameters , net2planParameters , 
 						allParamsGeneratorThisTest , allParamsProcessorThisTest , TIMEPERSIMULATIONINSECONDS);
-				checkValidity (npInput , np , allParamsGeneratorThisTest);
+				checkValidity (npInput , npOutput , allParamsGeneratorThisTest);
 			}			
 		}
 	}

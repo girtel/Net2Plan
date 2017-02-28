@@ -107,6 +107,8 @@ public class ReportsTest
 	@Test
 	public void testReportAvailability ()
 	{
+		System.out.println("ZZZ");
+		
 		final IReport report = new Report_availability();
 		List<String> ipOverWdmEvProcessorRecoveryTypes = Arrays.asList("static-lps-OSPF-rerouting" , "1+1-lps-OSPF-rerouting" , "lp-restoration-OSPF-rerouting");
 		for (String ipOverWdmEvProcessorRecoveryType : ipOverWdmEvProcessorRecoveryTypes)
@@ -126,9 +128,9 @@ public class ReportsTest
 			testingParameters.put("provisioningAlgorithm_file" , Arrays.asList(evProcClassRelativePath));
 			testingParameters.put("provisioningAlgorithm_classname" , Arrays.asList(evProcClassQualifiedName));
 			testingParameters.put("provisioningAlgorithm_parameters" , Arrays.asList(StringUtils.mapToString(provAlgorithmParam)));
-			testingParameters.put("analyzeDoubleFailures" , Arrays.asList("true" , "false"));
-			testingParameters.put("failureModel" , Arrays.asList("perBidirectionalLinkBundle" , "SRGfromNetPlan" , "perLink" , "perDirectionalLinkBundle"));
-			testingParameters.put("considerTrafficInOversubscribedLinksAsLost" , Arrays.asList("true" , "false"));
+			testingParameters.put("analyzeDoubleFailures" , Arrays.asList("false"));
+			testingParameters.put("failureModel" , Arrays.asList("perBidirectionalLinkBundle" , "SRGfromNetPlan"));
+			testingParameters.put("considerTrafficInOversubscribedLinksAsLost" , Arrays.asList("true"));
 			List<Map<String,String>> testsParam = InputParameter.getCartesianProductOfParameters (testingParameters);
 			if (testsParam.isEmpty()) testsParam = Arrays.asList(InputParameter.getDefaultParameters(report.getParameters()));
 			for (Map<String,String> params : testsParam)
@@ -138,8 +140,10 @@ public class ReportsTest
 				
 				if (provAlgorithmParam.get("ipOverWdmNetworkRecoveryType").equals("1+1-lps-OSPF-rerouting") && 
 						provAlgorithmParam.get("wdmProtectionTypeToNewRoutes").equals ("none")) continue;
-				
+
+				System.out.println(params);
 				String result = report.executeReport(np , paramsUsedToCall , ImmutableMap.of("precisionFactor" , "0.0001"));
+				System.out.println("Ok");
 				assertTrue (result.length() > 100);
 			}
 		}
@@ -184,8 +188,8 @@ public class ReportsTest
 			testingParameters.put("provisioningAlgorithm_file" , Arrays.asList(evProcClassRelativePath));
 			testingParameters.put("provisioningAlgorithm_classname" , Arrays.asList(evProcClassQualifiedName));
 			testingParameters.put("provisioningAlgorithm_parameters" , Arrays.asList(StringUtils.mapToString(provAlgorithmParam)));
-			testingParameters.put("considerTrafficInOversubscribedLinksAsLost" , Arrays.asList("true" , "false"));
-			testingParameters.put("failureModel" , Arrays.asList("perBidirectionalLinkBundle" , "SRGfromNetPlan" , "perNode" , "perLink" , "perDirectionalLinkBundle"));
+			testingParameters.put("considerTrafficInOversubscribedLinksAsLost" , Arrays.asList("true"));
+			testingParameters.put("failureModel" , Arrays.asList("perBidirectionalLinkBundle" , "SRGfromNetPlan"));
 			testingParameters.put("rootNameOfOutFiles", Collections.singletonList(TestConstants.TEST_REPORT_FILE_DIRECTORY + "/reportPerSRGFailure"));
 			List<Map<String,String>> testsParam = InputParameter.getCartesianProductOfParameters (testingParameters);
 			if (testsParam.isEmpty()) testsParam = Arrays.asList(InputParameter.getDefaultParameters(report.getParameters()));
