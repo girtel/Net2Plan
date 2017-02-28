@@ -349,6 +349,7 @@ public class DemandTest
 	{
 		scd123.remove();
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		np.checkCachesConsistency();
 		np.setRoutingType(RoutingType.SOURCE_ROUTING , lowerLayer);
 		assertEquals(d12.getRoutes().size() , 1);
 		assertEquals(d12.getRoutes().iterator().next().getSeqLinks() , Collections.singletonList(link12));

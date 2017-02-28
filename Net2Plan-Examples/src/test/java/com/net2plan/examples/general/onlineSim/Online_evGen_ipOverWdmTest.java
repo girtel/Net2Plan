@@ -75,9 +75,9 @@ public class Online_evGen_ipOverWdmTest
 			final Map<String,List<String>> processorParameters = new HashMap <>();
 			processorParameters.put("wdmNumFrequencySlotsPerFiber" , Arrays.asList("" + WDMUtils.getFiberNumFrequencySlots(np.getLink(0 , np.getNetworkLayer(wdmLayerIndex)))));
 			processorParameters.put("wdmRwaType" , Arrays.asList("srg-disjointness-aware-route-first-fit" , "alternate-routing" , "least-congested-routing" , "load-sharing"));
-			processorParameters.put("wdmProtectionTypeToNewRoutes" , Arrays.asList("none" , "1+1-link-disjoint" , "1+1-node-disjoint" , "1+1-srg-disjoint"));
+			processorParameters.put("wdmProtectionTypeToNewRoutes" , Arrays.asList("1+1-node-disjoint" , "none" , "1+1-link-disjoint" , "1+1-srg-disjoint"));
 			processorParameters.put("wdmTransponderTypesInfo" , Arrays.asList("10 1 1 9600 1 ; 20 1.5 2 9600 1"));
-			processorParameters.put("ipOverWdmNetworkRecoveryType" , Arrays.asList("static-lps-OSPF-rerouting" , "1+1-lps-OSPF-rerouting" , "lp-restoration-OSPF-rerouting"));
+			processorParameters.put("ipOverWdmNetworkRecoveryType" , Arrays.asList("1+1-lps-OSPF-rerouting" , "static-lps-OSPF-rerouting" , "lp-restoration-OSPF-rerouting"));
 			final List<Map<String,String>> testsParamProcessor = InputParameter.getCartesianProductOfParameters (processorParameters);
 			
 			for (Map<String,String> paramsProcessorChangingThisTest : testsParamProcessor)
@@ -91,9 +91,10 @@ public class Online_evGen_ipOverWdmTest
 				
 				
 				final NetPlan npInput = np.copy ();
-				new OnlineTestUtils().runSimulation(np , generator , processor , simulationParameters , net2planParameters , 
+				final NetPlan npOutput = np.copy ();
+				new OnlineTestUtils().runSimulation(npOutput , generator , processor , simulationParameters , net2planParameters , 
 						allParamsGeneratorThisTest , allParamsProcessorThisTest , TIMEPERSIMULATIONINSECONDS);
-				checkValidity (npInput , np , allParamsGeneratorThisTest);
+				checkValidity (npInput , npOutput , allParamsGeneratorThisTest);
 			}			
 			
 			

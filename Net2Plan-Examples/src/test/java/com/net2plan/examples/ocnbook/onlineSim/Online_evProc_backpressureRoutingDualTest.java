@@ -86,16 +86,17 @@ public class Online_evProc_backpressureRoutingDualTest
 				System.out.println(allParamsProcessorThisTest);
 
 				final NetPlan npInput = np.copy ();
+				final NetPlan npOutput = np.copy ();
 				try
 				{
-					new OnlineTestUtils().runSimulation(np , generator , processor , simulationParameters , net2planParameters ,
+					new OnlineTestUtils().runSimulation(npOutput , generator , processor , simulationParameters , net2planParameters ,
 							allParamsGeneratorThisTest , allParamsProcessorThisTest , TIMEPERSIMULATIONINSECONDS);
 				} catch (UnsatisfiedLinkError e)
 				{
 					System.err.println(this.getClass().getName() + ": " + TestConstants.CPLEX_NOT_FOUND_ERROR);
 					return;
 				}
-				checkValidity (npInput , np , allParamsGeneratorThisTest);
+				checkValidity (npInput , npOutput , allParamsGeneratorThisTest);
 			}			
 		}
 	}

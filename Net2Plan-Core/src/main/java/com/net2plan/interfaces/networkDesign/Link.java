@@ -477,6 +477,8 @@ public class Link extends NetworkElement
 	 */
 	public void remove()
 	{
+		final boolean previousErrorHandling = ErrorHandling.DEBUG; 
+		ErrorHandling.DEBUG = false;
 		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
@@ -511,6 +513,7 @@ public class Link extends NetworkElement
 			for (Demand d : layer.demands) if (x_d_linkToRemove.get(d.index) > PRECISION_FACTOR) layer.updateHopByHopRoutingDemand(d);
 		}
 
+		ErrorHandling.DEBUG = previousErrorHandling;
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		removeId();
 }
@@ -613,7 +616,7 @@ public class Link extends NetworkElement
 		{
 			final double traffic = layer.forwardingRulesCurrentFailureState_x_de.viewColumn(index).zSum(); 
 			this.cache_carriedTraffic += traffic; 
-			this.cache_occupiedCapacity += traffic; 
+			this.cache_occupiedCapacity += traffic;
 		}
 		for (MulticastTree t : cache_traversingTrees)
 		{

@@ -111,8 +111,8 @@ public class Offline_ba_numFormulations implements IAlgorithm
 		netPlan.setVectorRouteCarriedTrafficAndOccupiedLinkCapacities(h_p , h_p);
 		for (Demand d : netPlan.getDemands ()) d.setOfferedTraffic(d.getCarriedTraffic()); // make the offered traffic equal to the carried traffic
 
-		System.out.println ("Total carried traffic: " + netPlan.getVectorDemandOfferedTraffic().zSum());
-		System.out.println ("Network utility: " + op.getOptimalCost());
+//		System.out.println ("Total carried traffic: " + netPlan.getVectorDemandOfferedTraffic().zSum());
+//		System.out.println ("Network utility: " + op.getOptimalCost());
 		
 		return "Ok!: The solution found is guaranteed to be optimal: " + op.solutionIsOptimal() + ". Total carried traffic: " + netPlan.getVectorDemandOfferedTraffic().zSum() + ", Network utility: " + op.getOptimalCost();
 	}

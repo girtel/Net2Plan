@@ -84,13 +84,12 @@ public class Online_evGen_generalProcessorTest
 			{
 				final Map<String,String> allParamsProcessorThisTest = InputParameter.getDefaultParameters(processor.getParameters());
 				allParamsProcessorThisTest.putAll(paramsProcessorChangingThisTest);
-				System.out.println(allParamsProcessorThisTest);
-
 				if (!allParamsProcessorThisTest.get("recoveryType").equals("protection") && 
 						!allParamsProcessorThisTest.get("protectionTypeToNewRoutes").equals ("none")) continue;
-				
+				System.out.println(allParamsProcessorThisTest);
 				final NetPlan npInput = np.copy ();
-				new OnlineTestUtils().runSimulation(np , generator , processor , simulationParameters , net2planParameters , 
+				final NetPlan npOutput = np.copy ();
+				new OnlineTestUtils().runSimulation(npOutput , generator , processor , simulationParameters , net2planParameters , 
 						allParamsGeneratorThisTest , allParamsProcessorThisTest , TIMEPERSIMULATIONINSECONDS);
 				checkValidity (npInput , np , allParamsGeneratorThisTest);
 			}			

@@ -318,7 +318,7 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 		/* If load sharing */
 		if (isLoadSharing)
 		{
-			final int randomChosenIndex = rng.nextInt(pathPairs.size());
+			final int randomChosenIndex = pathPairs.isEmpty()? 0 : rng.nextInt(pathPairs.size());
 			final Pair<List<Link>,List<Link>> pathPair = pathPairs.get(randomChosenIndex);
 			if (isValidPath(pathPair.getFirst(), occupiedLinkCapacity).getFirst() && isValidPath(pathPair.getSecond(), occupiedLinkCapacity).getFirst ())
 				return pathPair; else return null;
