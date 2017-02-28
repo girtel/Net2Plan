@@ -69,6 +69,9 @@ public class GUIConfiguration extends JDialog implements ActionListener {
         JPanel pane_generalOptions = new JPanel(new BorderLayout());
         tabbedPane.addTab("General options", pane_generalOptions);
 
+        CheckSolversPanel checkSolversPanel = new CheckSolversPanel();
+        tabbedPane.addTab("Check solvers", checkSolversPanel);
+
         ParameterValueDescriptionPanel generalParameterPanel = new ParameterValueDescriptionPanel();
         pane_generalOptions.add(generalParameterPanel, BorderLayout.CENTER);
 
@@ -160,5 +163,27 @@ public class GUIConfiguration extends JDialog implements ActionListener {
         }
 
         dispose();
+    }
+
+    private class CheckSolversPanel extends JPanel
+    {
+        private final JButton btn_checkSolvers;
+        private final JTextArea txt_result;
+
+        public CheckSolversPanel()
+        {
+            this.setLayout(new BorderLayout());
+
+            this.btn_checkSolvers = new JButton("Check solvers");
+            this.txt_result = new JTextArea("");
+
+            btn_checkSolvers.addActionListener(e ->
+            {
+
+            });
+
+            this.add(btn_checkSolvers, BorderLayout.NORTH);
+            this.add(txt_result, BorderLayout.CENTER);
+        }
     }
 }
