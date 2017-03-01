@@ -58,7 +58,8 @@ public class Online_evProc_ipOverWdm extends IEventProcessor
 	private InputParameter wdmRandomSeed = new InputParameter ("wdmRandomSeed", (long) 1 , "Seed for the random generator (-1 means random)");
 	private InputParameter wdmMaxLightpathNumHops = new InputParameter ("wdmMaxLightpathNumHops", (int) -1 , "A lightpath cannot have more than this number of hops. A non-positive number means this limit does not exist");
 	private InputParameter wdmRemovePreviousLightpaths = new InputParameter ("wdmRemovePreviousLightpaths", false  , "If true, previous lightpaths are removed from the system during initialization.");
-	private InputParameter wdmProtectionTypeToNewRoutes = new InputParameter ("wdmProtectionTypeToNewRoutes", "#select# none 1+1-link-disjoint 1+1-node-disjoint 1+1-srg-disjoint" , "");
+//	private InputParameter wdmProtectionTypeToNewRoutes = new InputParameter ("wdmProtectionTypeToNewRoutes", "#select# none 1+1-link-disjoint 1+1-node-disjoint 1+1-srg-disjoint" , "");
+	private InputParameter wdmProtectionTypeIfProtectionToNewRoutes = new InputParameter ("wdmProtectionTypeIfProtectionToNewRoutes", "#select# 1+1-link-disjoint 1+1-node-disjoint 1+1-srg-disjoint" , "");
 	private InputParameter wdmTransponderTypesInfo = new InputParameter ("wdmTransponderTypesInfo", "10 1 1 9600 1" , "Transpoder types separated by \";\" . Each type is characterized by the space-separated values: (i) Line rate in Gbps, (ii) cost of the transponder, (iii) number of slots occupied in each traversed fiber, (iv) optical reach in km (a non-positive number means no reach limit), (v) cost of the optical signal regenerator (regenerators do NOT make wavelength conversion ; if negative, regeneration is not possible).");
 
 	private InputParameter ipMaximumE2ELatencyMs = new InputParameter ("ipMaximumE2ELatencyMs", (double) -1 , "Maximum end-to-end latency of the traffic of an IP demand to consider it as lost traffic (a non-positive value means no limit)");
@@ -86,7 +87,6 @@ public class Online_evProc_ipOverWdm extends IEventProcessor
 	{
 		/* Initialize all InputParameter objects defined in this object (this uses Java reflection) */
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
-		if (ipOverWdmNetworkRecoveryType.getString().equals("1+1-lps-OSPF-rerouting") && wdmProtectionTypeToNewRoutes.getString().equals ("none")) throw new Net2PlanException ("The type of 1+1 protection can only be specified in network recovery uses lightpath protection");
 		
 		this.ipLayer = initialNetPlan.getNetworkLayer("IP"); if (ipLayer == null) throw new Net2PlanException ("IP layer not found");
 		this.wdmLayer = initialNetPlan.getNetworkLayer("WDM"); if (wdmLayer == null) throw new Net2PlanException ("WDM layer not found");
@@ -98,13 +98,12 @@ public class Online_evProc_ipOverWdm extends IEventProcessor
 		Map<String,String> wdmParam = InputParameter.createMapFromInputParameters(new InputParameter [] 
 				{ wdmNumFrequencySlotsPerFiber , wdmRwaType ,  wdmK , wdmRandomSeed , wdmTransponderTypesInfo ,  
 				wdmMaxLightpathNumHops , wdmRemovePreviousLightpaths  } );
-		String wdmRecoveryType , wdmProtectionTypeToNewRoutes_st;
-		if (ipOverWdmNetworkRecoveryType.getString ().equals ("static-lps-OSPF-rerouting")) { wdmRecoveryType = "none"; wdmProtectionTypeToNewRoutes_st = "none"; }
-		else if (ipOverWdmNetworkRecoveryType.getString ().equals ("1+1-lps-OSPF-rerouting")) { wdmRecoveryType = "protection"; wdmProtectionTypeToNewRoutes_st = wdmProtectionTypeToNewRoutes.getString (); }
-		else if (ipOverWdmNetworkRecoveryType.getString ().equals ("lp-restoration-OSPF-rerouting")) {wdmRecoveryType = "restoration"; wdmProtectionTypeToNewRoutes_st = "none"; }
+		String wdmDefaultAndNewRouteRevoveryType_st;
+		if (ipOverWdmNetworkRecoveryType.getString ().equals ("static-lps-OSPF-rerouting")) { wdmDefaultAndNewRouteRevoveryType_st = "none"; }
+		else if (ipOverWdmNetworkRecoveryType.getString ().equals ("1+1-lps-OSPF-rerouting")) { wdmDefaultAndNewRouteRevoveryType_st = wdmProtectionTypeIfProtectionToNewRoutes.getString (); }
+		else if (ipOverWdmNetworkRecoveryType.getString ().equals ("lp-restoration-OSPF-rerouting")) {wdmDefaultAndNewRouteRevoveryType_st = "restoration";  }
 		else throw new RuntimeException ("Bad");
-		wdmParam.put ("wdmRecoveryType" , wdmRecoveryType);
-		wdmParam.put ("wdmProtectionTypeToNewRoutes" , wdmProtectionTypeToNewRoutes_st);
+		wdmParam.put ("wdmDefaultAndNewRouteRevoveryType" , wdmDefaultAndNewRouteRevoveryType_st);
 
 		this.wdmNetwork.initialize(initialNetPlan , wdmParam , simulationParameters , net2planParameters);
 

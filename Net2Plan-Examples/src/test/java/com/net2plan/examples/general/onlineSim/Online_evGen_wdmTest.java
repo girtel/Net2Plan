@@ -66,7 +66,7 @@ public class Online_evGen_wdmTest
 		generatorParameters.put("_trafficType" , Arrays.asList("connection-based-longrun" , "connection-based-incremental"));
 		generatorParameters.put("_tfSlow_fluctuationType" , Arrays.asList("time-zone-based")); 
 		generatorParameters.put("cac_arrivalsPattern" , Arrays.asList("random-exponential-arrivals-and-duration")); 
-		generatorParameters.put("trafficLayerId" , Arrays.asList("" + np.getNetworkLayer(ipLayerIndex).getId())); 
+		generatorParameters.put("trafficLayerId" , Arrays.asList("" + np.getNetworkLayer(wdmLayerIndex).getId())); 
 		generatorParameters.put("fail_statisticalPattern" , Arrays.asList("exponential-iid")); 
 		generatorParameters.put("lineRatesPerLightpath_Gbps" , Arrays.asList("10 0.5 ; 20 0.5")); 
 		final List<Map<String,String>> testsParamGenerator = InputParameter.getCartesianProductOfParameters (generatorParameters);
@@ -81,10 +81,10 @@ public class Online_evGen_wdmTest
 			processorParameters.put("wdmNumFrequencySlotsPerFiber" , Arrays.asList("" + WDMUtils.getFiberNumFrequencySlots(np.getLink(0 , np.getNetworkLayer(wdmLayerIndex)))));
 			processorParameters.put("wdmRwaType" , Arrays.asList("srg-disjointness-aware-route-first-fit" , "alternate-routing" , "least-congested-routing" , "load-sharing"));
 			processorParameters.put("wdmK" , Arrays.asList("5"));
-			processorParameters.put("wdmProtectionTypeToNewRoutes" , Arrays.asList("1+1-link-disjoint"));//Arrays.asList("none" , "1+1-link-disjoint" , "1+1-node-disjoint" , "1+1-srg-disjoint"));
+//			processorParameters.put("wdmProtectionTypeToNewRoutes" , Arrays.asList("1+1-link-disjoint"));//Arrays.asList("none" , "1+1-link-disjoint" , "1+1-node-disjoint" , "1+1-srg-disjoint"));
 			processorParameters.put("wdmRemovePreviousLightpaths" , Arrays.asList("false"));
 			processorParameters.put("wdmTransponderTypesInfo" , Arrays.asList("10 1 1 9600 1 ; 20 1.5 2 9600 1"));
-			processorParameters.put("wdmRecoveryType" , Arrays.asList("protection"));// , "restoration" , "none"));
+			processorParameters.put("wdmDefaultAndNewRouteRevoveryType" , Arrays.asList("restoration" , "1+1-link-disjoint"));// , "restoration" , "none"));
 			final List<Map<String,String>> testsParamProcessor = InputParameter.getCartesianProductOfParameters (processorParameters);
 			
 			for (Map<String,String> paramsProcessorChangingThisTest : testsParamProcessor)
@@ -93,9 +93,6 @@ public class Online_evGen_wdmTest
 				allParamsProcessorThisTest.putAll(paramsProcessorChangingThisTest);
 				System.out.println(allParamsProcessorThisTest);
 
-				if (!allParamsProcessorThisTest.get("wdmRecoveryType").equals("protection") && 
-						!allParamsProcessorThisTest.get("wdmProtectionTypeToNewRoutes").equals ("none")) continue;
-				
 				final NetPlan npInput = np.copy ();
 				final NetPlan npOutput = np.copy ();
 				new OnlineTestUtils().runSimulation(npOutput , generator , processor , simulationParameters , net2planParameters , 
