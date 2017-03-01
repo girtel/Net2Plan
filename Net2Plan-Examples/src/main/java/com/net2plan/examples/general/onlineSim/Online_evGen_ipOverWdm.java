@@ -43,8 +43,6 @@ public class Online_evGen_ipOverWdm extends Online_evGen_generalGenerator
 {
 	private final static String DATE_FORMAT = "MM/dd/YY HH:mm:ss";
 
-	private InputParameter ipLayerIndex = new InputParameter ("ipLayerIndex", (int) 1 , "Index of the layer containing IP network (-1 means default layer)");
-	private InputParameter wdmLayerIndex = new InputParameter ("wdmLayerIndex", (int) 0 , "Index of the WDM layer (-1 means default layer)");
 	private InputParameter ipOverWdmFailureModel = new InputParameter ("ipOverWdmFailureModel", "#select# perBidirectionalLinkBundle none SRGfromNetPlan perNode perLink perDirectionalLinkBundle" , "Failure model selection: SRGfromNetPlan, perNode, perLink, perDirectionalLinkBundle, perBidirectionalLinkBundle");
 	private InputParameter ipOverWdmFailureDefaultMTTFInHours = new InputParameter ("ipOverWdmFailureDefaultMTTFInHours", (double) 10 , "Default value for Mean Time To Fail (hours) (unused when failureModel=SRGfromNetPlan)" , 0 , false , Double.MAX_VALUE , true);
 	private InputParameter ipOverWdmFailureDefaultMTTRInHours = new InputParameter ("ipOverWdmFailureDefaultMTTRInHours", (double) 12 , "Default value for Mean Time To Repair (hours) (unused when failureModel=SRGfromNetPlan)" , 0 , false , Double.MAX_VALUE , true);
@@ -78,8 +76,8 @@ public class Online_evGen_ipOverWdm extends Online_evGen_generalGenerator
 		/* Initialize all InputParameter objects defined in this object (this uses Java reflection) */
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
 
-		NetworkLayer ipLayer = ipLayerIndex.getInt () == -1? initialNetPlan.getNetworkLayerDefault () : initialNetPlan.getNetworkLayer(ipLayerIndex.getInt ());
-		NetworkLayer wdmLayer = wdmLayerIndex.getInt () == -1? initialNetPlan.getNetworkLayerDefault () : initialNetPlan.getNetworkLayer(wdmLayerIndex.getInt ());
+		final NetworkLayer ipLayer = initialNetPlan.getNetworkLayer("IP"); if (ipLayer == null) throw new Net2PlanException ("IP layer not found");
+		final NetworkLayer wdmLayer = initialNetPlan.getNetworkLayer("WDM"); if (wdmLayer == null) throw new Net2PlanException ("WDM layer not found");
 		if ((ipLayer == wdmLayer) || (initialNetPlan.getNumberOfLayers() != 2)) throw new Net2PlanException ("Wrong layer Ids (or the design does not have two layers)");
 
 		/* Initialize slow changing traffic */
@@ -113,7 +111,7 @@ public class Online_evGen_ipOverWdm extends Online_evGen_generalGenerator
 		generalEventGeneratorParam.put ("_tfSlow_fluctuationType" , ipTFSlowFluctuationType.getString ()); 
 		generalEventGeneratorParam.put ("_tfFast_fluctuationType" , ipTFFastFluctuationType.getString ()); 
 		generalEventGeneratorParam.put ("cac_arrivalsPattern" , "deterministic"); 
-		generalEventGeneratorParam.put ("trafficLayerId" , "" + ipLayer.getId ()); 
+		generalEventGeneratorParam.put ("trafficLayerId" , "" + wdmLayer.getId ()); 
 		generalEventGeneratorParam.put ("randomSeed" , "" + randomSeed.getLong()); 
 		generalEventGeneratorParam.put ("cac_avHoldingTimeHours" , "" + 1.0); 
 		generalEventGeneratorParam.put ("cac_defaultConnectionSizeTrafficUnits" , "" + 1.0); 

@@ -12,14 +12,55 @@
 
 package com.net2plan.gui.plugins.networkDesign.onlineSimulationPane;
 
+import static com.net2plan.internal.sim.SimCore.SimState.NOT_STARTED;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.PriorityQueue;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JToolBar;
+import javax.swing.RowSorter;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
+import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+import javax.swing.text.DefaultCaret;
+
+import org.apache.commons.collections15.BidiMap;
+
 import com.jom.JOMException;
-import com.net2plan.gui.plugins.networkDesign.CellRenderers;
-import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
-import com.net2plan.gui.plugins.networkDesign.ReportBrowser;
-import com.net2plan.gui.utils.RunnableSelector;
-import com.net2plan.gui.utils.*;
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.CellRenderers;
+import com.net2plan.gui.plugins.networkDesign.ReportBrowser;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.ColumnFitAdapter;
+import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
+import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
+import com.net2plan.gui.utils.RunnableSelector;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -33,26 +74,13 @@ import com.net2plan.internal.sim.IGUISimulationListener;
 import com.net2plan.internal.sim.SimCore;
 import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.internal.sim.SimKernel;
-import com.net2plan.utils.*;
+import com.net2plan.utils.ClassLoaderUtils;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.StringUtils;
+import com.net2plan.utils.SwingUtils;
+import com.net2plan.utils.Triple;
+
 import net.miginfocom.swing.MigLayout;
-import org.apache.commons.collections15.BidiMap;
-
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
-import javax.swing.text.DefaultCaret;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.PriorityQueue;
-
-import static com.net2plan.internal.sim.SimCore.SimState.NOT_STARTED;
 
 /**
  * Targeted to evaluate network designs from the offline tool simulating the

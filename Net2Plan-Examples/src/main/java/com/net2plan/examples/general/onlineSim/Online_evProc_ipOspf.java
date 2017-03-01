@@ -44,7 +44,6 @@ import java.util.Map;
  */
 public class Online_evProc_ipOspf extends IEventProcessor
 {
-	private InputParameter ipLayerIndex = new InputParameter ("ipLayerIndex", (int) -1 , "Index of the layer containing IP network (-1 means default layer)");
 	private InputParameter ipMaximumE2ELatencyMs = new InputParameter ("ipMaximumE2ELatencyMs", (double) -1 , "Maximum end-to-end latency of the traffic of an IP demand to consider it as lost traffic (a non-positive value means no limit)");
 	private NetworkLayer ipLayer;
 	private double stat_trafficOffered , stat_trafficCarried , stat_trafficOversubscribed , stat_trafficOutOfLatencyLimit , stat_trafficOfDemandsTraversingOversubscribedLink;
@@ -69,8 +68,7 @@ public class Online_evProc_ipOspf extends IEventProcessor
 		/* Initialize all InputParameter objects defined in this object (this uses Java reflection) */
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
 
-		this.ipLayer = (ipLayerIndex.getInt() == -1)? initialNetPlan.getNetworkLayerDefault() : initialNetPlan.getNetworkLayer(ipLayerIndex.getInt ());
-		if (ipLayer == null) throw new Net2PlanException ("Unknown layer id");
+		this.ipLayer = initialNetPlan.getNetworkLayer("IP"); if (ipLayer == null) throw new Net2PlanException ("IP layer not found");
 		
 		initialNetPlan.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , ipLayer);
 		DoubleMatrix1D linkIGPWeightSetting = IPUtils.getLinkWeightVector(initialNetPlan , ipLayer);

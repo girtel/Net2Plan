@@ -1,5 +1,18 @@
 package com.net2plan.examples.general.reports;
 
+import static org.junit.Assert.assertTrue;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import com.google.common.collect.ImmutableMap;
 import com.net2plan.examples.TestConstants;
 import com.net2plan.examples.general.offline.Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGrooming;
@@ -15,14 +28,6 @@ import com.net2plan.libraries.SRGUtils.SharedRiskModel;
 import com.net2plan.libraries.WDMUtils;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.StringUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.io.File;
-import java.util.*;
-
-import static org.junit.Assert.assertTrue;
 public class ReportsTest
 {
 	private NetPlan np;

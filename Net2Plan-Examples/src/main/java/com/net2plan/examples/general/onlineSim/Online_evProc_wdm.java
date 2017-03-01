@@ -60,7 +60,6 @@ public class Online_evProc_wdm extends IEventProcessor
 	private InputParameter wdmK = new InputParameter ("wdmK", (int) 5 , "Maximum number of admissible paths per demand in the candidate list computation" , 1 , Integer.MAX_VALUE);
 	private InputParameter wdmRandomSeed = new InputParameter ("wdmRandomSeed", (long) 1 , "Seed for the random generator (-1 means random)");
 	private InputParameter wdmMaxLightpathNumHops = new InputParameter ("wdmMaxLightpathNumHops", (int) -1 , "A lightpath cannot have more than this number of hops. A non-positive number means this limit does not exist");
-	private InputParameter wdmLayerIndex = new InputParameter ("wdmLayerIndex", (int) 0 , "Index of the WDM layer (-1 means default layer)");
 	private InputParameter wdmRecoveryType = new InputParameter ("wdmRecoveryType", "#select# protection restoration none" , "None, nothing is done, so affected routes fail. Restoration, affected routes are visited sequentially, and we try to reroute them in the available capacity; in protection, affected routes are rerouted using the protection segments.");
 	private InputParameter wdmRemovePreviousLightpaths = new InputParameter ("wdmRemovePreviousLightpaths", false  , "If true, previous lightpaths are removed from the system during initialization.");
 	private InputParameter wdmProtectionTypeToNewRoutes = new InputParameter ("wdmProtectionTypeToNewRoutes", "#select# none 1+1-link-disjoint 1+1-node-disjoint 1+1-srg-disjoint" , "New lightpaths are not protected, or are protected by a 1+1 link disjoint, or a node disjoint or a SRG disjoint lightpath");
@@ -107,7 +106,7 @@ public class Online_evProc_wdm extends IEventProcessor
 		/* Initialize all InputParameter objects defined in this object (this uses Java reflection) */
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
 		
-		this.wdmLayer = wdmLayerIndex.getInt () == -1? initialNetPlan.getNetworkLayerDefault() : initialNetPlan.getNetworkLayer(wdmLayerIndex.getInt ());
+		this.wdmLayer = initialNetPlan.getNetworkLayer("WDM"); if (wdmLayer == null) throw new Net2PlanException ("WDM layer not found");
 		this.wdmRouteOriginalRwa = new HashMap<Route,Pair<WDMUtils.RSA,WDMUtils.RSA>> ();
 		this.isRestorationRecovery = wdmRecoveryType.getString ().equalsIgnoreCase("restoration");
 		this.isProtectionRecovery = wdmRecoveryType.getString ().equalsIgnoreCase("protection");

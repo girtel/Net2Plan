@@ -57,12 +57,10 @@ public class Online_evProc_ipOverWdm extends IEventProcessor
 	private InputParameter wdmK = new InputParameter ("wdmK", (int) 2 , "Maximum number of admissible paths per demand" , 1 , Integer.MAX_VALUE);
 	private InputParameter wdmRandomSeed = new InputParameter ("wdmRandomSeed", (long) 1 , "Seed for the random generator (-1 means random)");
 	private InputParameter wdmMaxLightpathNumHops = new InputParameter ("wdmMaxLightpathNumHops", (int) -1 , "A lightpath cannot have more than this number of hops. A non-positive number means this limit does not exist");
-	private InputParameter wdmLayerIndex = new InputParameter ("wdmLayerIndex", (int) 0 , "Index of the WDM layer (-1 means default layer)");
 	private InputParameter wdmRemovePreviousLightpaths = new InputParameter ("wdmRemovePreviousLightpaths", false  , "If true, previous lightpaths are removed from the system during initialization.");
 	private InputParameter wdmProtectionTypeToNewRoutes = new InputParameter ("wdmProtectionTypeToNewRoutes", "#select# none 1+1-link-disjoint 1+1-node-disjoint 1+1-srg-disjoint" , "");
 	private InputParameter wdmTransponderTypesInfo = new InputParameter ("wdmTransponderTypesInfo", "10 1 1 9600 1" , "Transpoder types separated by \";\" . Each type is characterized by the space-separated values: (i) Line rate in Gbps, (ii) cost of the transponder, (iii) number of slots occupied in each traversed fiber, (iv) optical reach in km (a non-positive number means no reach limit), (v) cost of the optical signal regenerator (regenerators do NOT make wavelength conversion ; if negative, regeneration is not possible).");
 
-	private InputParameter ipLayerIndex = new InputParameter ("ipLayerIndex", (int) 1 , "Index of the layer containing IP network (-1 means default layer)");
 	private InputParameter ipMaximumE2ELatencyMs = new InputParameter ("ipMaximumE2ELatencyMs", (double) -1 , "Maximum end-to-end latency of the traffic of an IP demand to consider it as lost traffic (a non-positive value means no limit)");
 
 	private InputParameter ipOverWdmNetworkRecoveryType = new InputParameter ("ipOverWdmNetworkRecoveryType", "#select# static-lps-OSPF-rerouting 1+1-lps-OSPF-rerouting lp-restoration-OSPF-rerouting" , "The recovery type the network will apply. If static lps, the VT is overdimensioned to tolerate single SRG failures. In the 1+1 case, link disjoit backup lps are created. If lps are 1+1 protected or have lp restoration, the VT is dimensioned to carry all IP traffic in the no failure state.");
@@ -90,17 +88,16 @@ public class Online_evProc_ipOverWdm extends IEventProcessor
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
 		if (ipOverWdmNetworkRecoveryType.getString().equals("1+1-lps-OSPF-rerouting") && wdmProtectionTypeToNewRoutes.getString().equals ("none")) throw new Net2PlanException ("The type of 1+1 protection can only be specified in network recovery uses lightpath protection");
 		
-		this.ipLayer = ipLayerIndex.getInt () == -1? initialNetPlan.getNetworkLayerDefault() : initialNetPlan.getNetworkLayer(ipLayerIndex.getInt ());
-		this.wdmLayer = wdmLayerIndex.getInt () == -1? initialNetPlan.getNetworkLayerDefault() : initialNetPlan.getNetworkLayer(wdmLayerIndex.getInt ());
+		this.ipLayer = initialNetPlan.getNetworkLayer("IP"); if (ipLayer == null) throw new Net2PlanException ("IP layer not found");
+		this.wdmLayer = initialNetPlan.getNetworkLayer("WDM"); if (wdmLayer == null) throw new Net2PlanException ("WDM layer not found");
 		if (initialNetPlan.getNumberOfLayers() != 2) throw new Net2PlanException ("The input design must have two layers");
-		if (ipLayer == wdmLayer) throw new Net2PlanException ("IP layer and/or WDM layer ids are wrong");
 
 		this.ospfNetwork = new Online_evProc_ipOspf();
 		this.wdmNetwork = new Online_evProc_wdm();
 
 		Map<String,String> wdmParam = InputParameter.createMapFromInputParameters(new InputParameter [] 
 				{ wdmNumFrequencySlotsPerFiber , wdmRwaType ,  wdmK , wdmRandomSeed , wdmTransponderTypesInfo ,  
-				wdmMaxLightpathNumHops , wdmLayerIndex , wdmRemovePreviousLightpaths  } );
+				wdmMaxLightpathNumHops , wdmRemovePreviousLightpaths  } );
 		String wdmRecoveryType , wdmProtectionTypeToNewRoutes_st;
 		if (ipOverWdmNetworkRecoveryType.getString ().equals ("static-lps-OSPF-rerouting")) { wdmRecoveryType = "none"; wdmProtectionTypeToNewRoutes_st = "none"; }
 		else if (ipOverWdmNetworkRecoveryType.getString ().equals ("1+1-lps-OSPF-rerouting")) { wdmRecoveryType = "protection"; wdmProtectionTypeToNewRoutes_st = wdmProtectionTypeToNewRoutes.getString (); }
@@ -111,7 +108,7 @@ public class Online_evProc_ipOverWdm extends IEventProcessor
 
 		this.wdmNetwork.initialize(initialNetPlan , wdmParam , simulationParameters , net2planParameters);
 
-		Map<String,String> ipParam = InputParameter.createMapFromInputParameters(new InputParameter [] { ipLayerIndex  , ipMaximumE2ELatencyMs } );
+		Map<String,String> ipParam = InputParameter.createMapFromInputParameters(new InputParameter [] { ipMaximumE2ELatencyMs } );
 		this.ospfNetwork.initialize(initialNetPlan , ipParam , simulationParameters , net2planParameters);
 
 		Set<Link> ipLinksDownBecauseOfWDMLayer = new HashSet<Link> (); for (Link ipLink : initialNetPlan.getLinks (ipLayer)) if (ipLink.getCapacity() == 0)  ipLinksDownBecauseOfWDMLayer.add (ipLink); 
