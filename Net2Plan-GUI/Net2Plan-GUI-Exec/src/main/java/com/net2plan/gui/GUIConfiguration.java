@@ -13,6 +13,7 @@
 package com.net2plan.gui;
 
 
+import com.jom.SolverTester;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.internal.ErrorHandling;
@@ -34,7 +35,8 @@ import java.util.List;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.3
  */
-public class GUIConfiguration extends JDialog implements ActionListener {
+public class GUIConfiguration extends JDialog implements ActionListener
+{
     private final JButton btn_cancel, btn_save;
     private final JTabbedPane tabbedPane;
 
@@ -43,7 +45,8 @@ public class GUIConfiguration extends JDialog implements ActionListener {
      *
      * @since 0.2.3
      */
-    public GUIConfiguration() {
+    public GUIConfiguration()
+    {
         super();
 
         setTitle("Options");
@@ -77,8 +80,10 @@ public class GUIConfiguration extends JDialog implements ActionListener {
 
         List<Triple<String, String, String>> net2planParameters = new LinkedList<Triple<String, String, String>>(Configuration.getNet2PlanParameters());
         Iterator<Triple<String, String, String>> it = net2planParameters.iterator();
-        while (it.hasNext()) {
-            if (it.next().getFirst().equals("classpath")) {
+        while (it.hasNext())
+        {
+            if (it.next().getFirst().equals("classpath"))
+            {
                 it.remove();
                 break;
             }
@@ -88,23 +93,30 @@ public class GUIConfiguration extends JDialog implements ActionListener {
         generalParameterPanel.setParameterValues(Configuration.getNet2PlanOptions());
 
         Set<Class<? extends Plugin>> pluginTypes = PluginSystem.getPluginTypes();
-        for (Class<? extends Plugin> pluginType : pluginTypes) {
-            for (Class<? extends Plugin> plugin : PluginSystem.getPlugins(pluginType)) {
-                try {
+        for (Class<? extends Plugin> pluginType : pluginTypes)
+        {
+            for (Class<? extends Plugin> plugin : PluginSystem.getPlugins(pluginType))
+            {
+                try
+                {
                     Plugin instance = plugin.newInstance();
                     String description;
                     String name;
 
-                    try {
+                    try
+                    {
                         name = instance.getName();
-                    } finally {
+                    } finally
+                    {
                     }
 
                     if (name == null || name.isEmpty()) continue;
 
-                    try {
+                    try
+                    {
                         description = instance.getDescription();
-                    } finally {
+                    } finally
+                    {
                     }
 
                     JPanel subTab = new JPanel(new BorderLayout());
@@ -112,9 +124,11 @@ public class GUIConfiguration extends JDialog implements ActionListener {
                         subTab.add(new JLabel(description), BorderLayout.NORTH);
 
                     List<Triple<String, String, String>> parameters;
-                    try {
+                    try
+                    {
                         parameters = instance.getParameters();
-                    } finally {
+                    } finally
+                    {
                     }
 
                     System.out.println("Plugin name :" + name + ", descrption: " + description + ", parameters: " + parameters);
@@ -126,7 +140,8 @@ public class GUIConfiguration extends JDialog implements ActionListener {
                     parameterPanel.setParameterValues(instance.getCurrentOptions());
                     subTab.add(parameterPanel, BorderLayout.CENTER);
                     tabbedPane.addTab(name, subTab);
-                } catch (Throwable e) {
+                } catch (Throwable e)
+                {
 
                 }
             }
@@ -139,24 +154,31 @@ public class GUIConfiguration extends JDialog implements ActionListener {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == btn_save) {
+    public void actionPerformed(ActionEvent e)
+    {
+        if (e.getSource() == btn_save)
+        {
             Map<String, String> newOptions = new LinkedHashMap<String, String>();
             int numTabs = tabbedPane.getTabCount();
-            for (int tabId = 0; tabId < numTabs; tabId++) {
+            for (int tabId = 0; tabId < numTabs; tabId++)
+            {
                 ParameterValueDescriptionPanel pane = (ParameterValueDescriptionPanel) ((BorderLayout) ((JPanel) tabbedPane.getComponentAt(tabId)).getLayout()).getLayoutComponent(BorderLayout.CENTER);
                 newOptions.putAll(pane.getParameters());
             }
 
-            try {
+            try
+            {
                 Configuration.setOptions(newOptions);
-            } catch (Throwable e1) {
+            } catch (Throwable e1)
+            {
                 ErrorHandling.addErrorOrException(e1, GUIConfiguration.class);
             }
 
-            try {
+            try
+            {
                 Configuration.saveOptions();
-            } catch (Throwable ex) {
+            } catch (Throwable ex)
+            {
                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error saving options");
                 return;
             }
@@ -179,7 +201,10 @@ public class GUIConfiguration extends JDialog implements ActionListener {
 
             btn_checkSolvers.addActionListener(e ->
             {
+                String s = SolverTester.check_cplex(Configuration.getDefaultSolverLibraryName("cplex"));
 
+                txt_result.append(s);
+                txt_result.append("CPLEX found...");
             });
 
             this.add(btn_checkSolvers, BorderLayout.NORTH);
