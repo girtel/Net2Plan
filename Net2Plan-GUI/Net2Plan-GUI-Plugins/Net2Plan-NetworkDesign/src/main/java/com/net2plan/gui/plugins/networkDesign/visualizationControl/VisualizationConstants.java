@@ -22,12 +22,12 @@ public final class VisualizationConstants
     public final static Map<String, URL> DEFAULT_LAYERNAME2ICONURLMAP =
             ImmutableMap.of("OTN", GUINetworkDesign.class.getResource("/resources/gui/figs/OpticalTransport.png"),
                     "WDM", GUINetworkDesign.class.getResource("/resources/gui/figs/OADM.png"),
-                    "IP", VisualizationConstants.class.getResource("/resources/gui/figs/Router.png"),
-                    "WIRELESS", VisualizationConstants.class.getResource("/resources/gui/figs/WirelessRouter.png"));
+                    "IP", GUINetworkDesign.class.getResource("/resources/gui/figs/Router.png"),
+                    "WIRELESS", GUINetworkDesign.class.getResource("/resources/gui/figs/WirelessRouter.png"));
     public final static Map<String, URL> DEFAULT_RESPOURCETYPE2ICONURLMAP = ImmutableMap.of(
-            "CPU", VisualizationConstants.class.getResource("/resources/gui/figs/CPU.png"),
-            "RAM", VisualizationConstants.class.getResource("/resources/gui/figs/RAM.png"),
-            "HD", VisualizationConstants.class.getResource("/resources/gui/figs/HD.png"));
+            "CPU", GUINetworkDesign.class.getResource("/resources/gui/figs/CPU.png"),
+            "RAM", GUINetworkDesign.class.getResource("/resources/gui/figs/RAM.png"),
+            "HD", GUINetworkDesign.class.getResource("/resources/gui/figs/HD.png"));
 
     public final static float SCALE_IN = 1.1f;
     public final static float SCALE_OUT = 1 / SCALE_IN;
