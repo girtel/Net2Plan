@@ -5,7 +5,7 @@
     <parent>
         <artifactId>net2plan-gui</artifactId>
         <groupId>com.net2plan</groupId>
-        <version>0.5.1-SNAPSHOT</version>
+        <version>0.5.0.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -23,19 +23,19 @@
         <dependency>
             <groupId>com.net2plan.net2plan-gui</groupId>
             <artifactId>net2plan-gui-exec</artifactId>
-            <version>0.5.1-SNAPSHOT</version>
+            <version>0.5.0.1</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.net2plan.net2plan-gui.net2plan-gui-plugins</groupId>
             <artifactId>net2plan-gui-plugins-networkDesign</artifactId>
-            <version>0.5.1-SNAPSHOT</version>
+            <version>0.5.0.1</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.net2plan.net2plan-gui.net2plan-gui-plugins</groupId>
             <artifactId>net2plan-gui-plugins-trafficDesign</artifactId>
-            <version>0.5.1-SNAPSHOT</version>
+            <version>0.5.0.1</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
