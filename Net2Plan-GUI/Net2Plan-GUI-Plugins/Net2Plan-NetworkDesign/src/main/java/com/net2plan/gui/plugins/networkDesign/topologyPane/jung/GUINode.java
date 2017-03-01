@@ -83,7 +83,7 @@ public class GUINode
         this.borderPaint = VisualizationConstants.DEFAULT_GUINODE_COLOR;
         this.fillPaint = VisualizationConstants.DEFAULT_GUINODE_COLOR;
         this.font = new Font("Helvetica", Font.BOLD, 11);
-        this.iconHeightIfNotActive = 30;
+        this.iconHeightIfNotActive = npNode.getNetPlan().getNumberOfNodes() > 100? VisualizationConstants.DEFAULT_GUINODE_SHAPESIZE_MORETHAN100NODES : VisualizationConstants.DEFAULT_GUINODE_SHAPESIZE;
     }
 
     public Node getAssociatedNode()
