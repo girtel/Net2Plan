@@ -1,5 +1,15 @@
 package com.net2plan.examples.general.onlineSim;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import com.google.common.collect.ImmutableMap;
 import com.net2plan.examples.ocnbook.onlineSim.Online_evGen_generalGenerator;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -10,15 +20,6 @@ import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.SRGUtils.SharedRiskModel;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.InputParameter;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class Online_evGen_ipOspfTest
 {
@@ -30,6 +31,7 @@ public class Online_evGen_ipOspfTest
 	public void setUp() throws Exception
 	{
 		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example7nodes_withTraffic.n2p"));
+		np.getNetworkLayerDefault().setName("IP");
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
 		IPUtils.setLinkWeights(np , 1);
 		np.removeAllSRGs(); 

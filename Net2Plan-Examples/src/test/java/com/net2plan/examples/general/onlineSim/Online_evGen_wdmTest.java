@@ -1,5 +1,15 @@
 package com.net2plan.examples.general.onlineSim;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import com.google.common.collect.ImmutableMap;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.simulation.IEventGenerator;
@@ -8,15 +18,6 @@ import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.SRGUtils.SharedRiskModel;
 import com.net2plan.libraries.WDMUtils;
 import com.net2plan.utils.InputParameter;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class Online_evGen_wdmTest
 {
@@ -65,7 +66,7 @@ public class Online_evGen_wdmTest
 		generatorParameters.put("_trafficType" , Arrays.asList("connection-based-longrun" , "connection-based-incremental"));
 		generatorParameters.put("_tfSlow_fluctuationType" , Arrays.asList("time-zone-based")); 
 		generatorParameters.put("cac_arrivalsPattern" , Arrays.asList("random-exponential-arrivals-and-duration")); 
-		generatorParameters.put("trafficLayerId" , Arrays.asList("" + np.getNetworkLayer(wdmLayerIndex).getId())); 
+		generatorParameters.put("trafficLayerId" , Arrays.asList("" + np.getNetworkLayer(ipLayerIndex).getId())); 
 		generatorParameters.put("fail_statisticalPattern" , Arrays.asList("exponential-iid")); 
 		generatorParameters.put("lineRatesPerLightpath_Gbps" , Arrays.asList("10 0.5 ; 20 0.5")); 
 		final List<Map<String,String>> testsParamGenerator = InputParameter.getCartesianProductOfParameters (generatorParameters);
