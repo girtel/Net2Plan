@@ -140,21 +140,8 @@ public class Configuration
 	{
 		final Map<String, String> map = new LinkedHashMap<String, String>();
 
-		final Pattern pattern = Pattern.compile("#(.*?)#");
-
-		for (Triple<String, String, String> parameter : defaultOptions)
-		{
-			final Matcher matcher = pattern.matcher(getOption(parameter.getFirst()));
-
-			if (matcher.find())
-			{
-				final String optionNoHash = parameter.getSecond().replace(matcher.group(), "").trim();
-				map.put(parameter.getFirst(), optionNoHash);
-			} else
-			{
-				map.put(parameter.getFirst(), getOption(parameter.getFirst()));
-			}
-		}
+        for(Triple<String, String, String> parameter : defaultOptions)
+            map.put(parameter.getFirst(), getOption(parameter.getFirst()));
 
 		return map;
 	}
@@ -235,7 +222,22 @@ public class Configuration
 		if (!options.containsKey(option)) throw new RuntimeException("Unknown option '" + option + "'");
 
 		String value = options.get(option);
-		return value == null ? "" : value;
+
+		if (value != null)
+        {
+            final Pattern pattern = Pattern.compile("#(.*?)#");
+            final Matcher matcher = pattern.matcher(value);
+
+            if (matcher.find())
+            {
+                return value.replace(matcher.group(), "").trim();
+            } else
+            {
+                return value;
+            }
+        }
+
+        return "";
 	}
 
 	/**
