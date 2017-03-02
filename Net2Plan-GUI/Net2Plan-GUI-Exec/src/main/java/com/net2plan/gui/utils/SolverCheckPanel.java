@@ -235,7 +235,21 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         }
 
         txt_info.append(MESSAGE_HEADER + "Checking for solver by using system defaults..." + NEW_LINE);
-        message = callJOM(solver, "");
+
+        switch (getOS().getFirst())
+        {
+
+            case windows:
+                message = callJOM(solver, solver.name() + ".dll");
+                break;
+            case linux:
+            case macintosh:
+                message = callJOM(solver, "lib" + solver.name());
+                break;
+            default:
+            case unknown:
+                return;
+        }
 
         if (message.isEmpty())
         {
