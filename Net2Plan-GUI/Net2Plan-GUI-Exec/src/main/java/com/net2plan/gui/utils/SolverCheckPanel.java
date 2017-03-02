@@ -120,35 +120,19 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         // Checking solvers
         for (Solvers solvers : Solvers.values())
         {
-            final String solverPath;
-            final String message;
             switch (solvers)
             {
                 case glpk:
-                    txt_info.append(MESSAGE_HEADER + "Looking for solver: GLPK" + NEW_LINE);
-                    solverPath = Configuration.getDefaultSolverLibraryName("glpk");
-                    message = SolverTester.check_glpk(solverPath);
-                    if (message.isEmpty())
-                    {
-                        txt_info.append(MESSAGE_HEADER + "Solver GLPK has been found at directory: " + solverPath + NEW_LINE);
-                    } else
-                    {
-                        txt_info.append(WARNING_HEADER + "Solver GLPK could not be found at directory: " + solverPath + NEW_LINE);
-                        txt_info.append(WARNING_HEADER + "JOM library has this to say: " + NEW_LINE);
-                        txt_info.append(message + NEW_LINE);
-                    }
+                    checkForSolver(Solvers.glpk);
                     break;
                 case ipopt:
-                    solverPath = Configuration.getDefaultSolverLibraryName("ipopt");
-                    message = SolverTester.check_ipopt(solverPath);
-                    if (message.isEmpty())
-                        txt_info.append(MESSAGE_HEADER + "Solver IPOPT has been found at directory: " + solverPath + NEW_LINE);
+                    checkForSolver(Solvers.ipopt);
                     break;
                 case cplex:
-                    message = SolverTester.check_cplex(Configuration.getDefaultSolverLibraryName("cplex"));
+                    checkForSolver(Solvers.cplex);
                     break;
                 case xpress:
-                    message = SolverTester.check_xpress(Configuration.getDefaultSolverLibraryName("xpress"));
+                    checkForSolver(Solvers.xpress);
                     break;
                 default:
                     txt_info.append(ERROR_HEADER + "Unknown solver has been provided: " + solvers.name() + NEW_LINE);
@@ -157,6 +141,74 @@ public class SolverCheckPanel extends JPanel implements ActionListener
                     return;
             }
         }
+
+        btn_launch.setEnabled(true);
+    }
+
+    private void checkForSolver(Solvers solver)
+    {
+        final String solverPath;
+        final String solverName = solver.name();
+        final String solverNameUppercase = solverName.toUpperCase();
+
+        String message;
+
+        txt_info.append(MESSAGE_HEADER + "Looking for solver: " + solverNameUppercase + NEW_LINE);
+        solverPath = Configuration.getDefaultSolverLibraryName(solverName);
+
+        if (solverPath.isEmpty())
+            txt_info.append(WARNING_HEADER + "Directory for " + solverNameUppercase + " solver has been left blank. Using default path..." + NEW_LINE);
+
+        message = callJOM(solver, solverPath);
+
+        if (message.isEmpty())
+        {
+            txt_info.append(MESSAGE_HEADER + "Solver " + solverNameUppercase + " has been found at directory: " + solverPath + NEW_LINE);
+        } else
+        {
+            txt_info.append(WARNING_HEADER + "Solver " + solverNameUppercase + " could not be found at directory: " + solverPath + NEW_LINE);
+            txt_info.append(WARNING_HEADER + "JOM library has this to say: " + NEW_LINE);
+            txt_info.append(message + NEW_LINE);
+
+            txt_info.append(MESSAGE_HEADER + "Retrying..." + NEW_LINE);
+            txt_info.append(MESSAGE_HEADER + "Trying to find solver at default location..." + NEW_LINE);
+            message = callJOM(solver, solverPath);
+
+            if (message.isEmpty())
+            {
+                txt_info.append(MESSAGE_HEADER + "Solver " + solverNameUppercase + " has been found at directory: " + "" + NEW_LINE);
+            } else
+            {
+                txt_info.append(WARNING_HEADER + "Solver " + solverNameUppercase + " could not be found at directory: " + "" + NEW_LINE);
+                txt_info.append(WARNING_HEADER + "JOM library has this to say: " + NEW_LINE);
+                txt_info.append(message + NEW_LINE);
+            }
+        }
+    }
+
+    private String callJOM(Solvers solver, String path)
+    {
+        String message;
+
+        switch (solver)
+        {
+            case glpk:
+                message = SolverTester.check_glpk(path);
+                break;
+            case ipopt:
+                message = SolverTester.check_ipopt(path);
+                break;
+            case cplex:
+                message = SolverTester.check_cplex(path);
+                break;
+            case xpress:
+                message = SolverTester.check_xpress(path);
+                break;
+            default:
+                throw new RuntimeException("Unknown solver. Cannot proceed...");
+        }
+
+        return message;
     }
 
     private static Pair<OS, String> getOS()
