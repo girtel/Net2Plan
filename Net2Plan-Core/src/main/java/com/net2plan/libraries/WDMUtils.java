@@ -705,7 +705,7 @@ public class WDMUtils
 	/**
 	 * The recovery type for the route object (lightpath).
 	 */
-	private final static String RECOVERYTYPE_ATTRIBUTE_NAME = "wdmRouteRecoveryType";
+	private final static String RECOVERYTYPE_ATTRIBUTE_NAME = "wdmDemandRecoveryType";
 
 	/**
 	 * Route/protection segment attribute name for sequence of regenerators occupied for the initial sequence of links (when the route was created)
@@ -1081,7 +1081,7 @@ public class WDMUtils
 	{
 		final RSA primaryRSA = new RSA (r , true);
 		r.setPath(r.getInitialState().getFirst(), primaryRSA.seqLinks, Collections.nCopies(primaryRSA.seqLinks.size(), (double) primaryRSA.getNumSlots()));
-		setLightpathRSAAttributes(r, primaryRSA, true);
+		setLightpathRSAAttributes(r, primaryRSA, false);
 	}
 	
 	/**
