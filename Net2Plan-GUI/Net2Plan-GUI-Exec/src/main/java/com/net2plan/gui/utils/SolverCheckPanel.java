@@ -101,6 +101,18 @@ public class SolverCheckPanel extends JPanel implements ActionListener
             txt_info.append(WARNING_HEADER + "Default JNA library path is not currently defined..." + NEW_LINE);
         }
 
+        final String javaDefaultPath = System.getProperty("java.library.path");
+
+        if (javaDefaultPath != null)
+        {
+            txt_info.append(MESSAGE_HEADER + "Default JAVA library path found at: " + javaDefaultPath + NEW_LINE);
+        } else
+        {
+            txt_info.append(WARNING_HEADER + "Default JAVA library path is not currently defined..." + NEW_LINE);
+        }
+
+        txt_info.append(NEW_LINE);
+
         txt_info.append(MESSAGE_HEADER + "Checking for current installed solvers..." + NEW_LINE);
 
         txt_info.append(NEW_LINE);
@@ -113,6 +125,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
             switch (solvers)
             {
                 case glpk:
+                    txt_info.append(MESSAGE_HEADER + "Looking for solver: GLPK" + NEW_LINE);
                     solverPath = Configuration.getDefaultSolverLibraryName("glpk");
                     message = SolverTester.check_glpk(solverPath);
                     if (message.isEmpty())
@@ -122,14 +135,12 @@ public class SolverCheckPanel extends JPanel implements ActionListener
                     {
                         txt_info.append(WARNING_HEADER + "Solver GLPK could not be found at directory: " + solverPath + NEW_LINE);
                         txt_info.append(WARNING_HEADER + "JOM library has this to say: " + NEW_LINE);
-
-
                         txt_info.append(message + NEW_LINE);
                     }
                     break;
                 case ipopt:
                     solverPath = Configuration.getDefaultSolverLibraryName("ipopt");
-                    message = SolverTester.check_glpk(solverPath);
+                    message = SolverTester.check_ipopt(solverPath);
                     if (message.isEmpty())
                         txt_info.append(MESSAGE_HEADER + "Solver IPOPT has been found at directory: " + solverPath + NEW_LINE);
                     break;
