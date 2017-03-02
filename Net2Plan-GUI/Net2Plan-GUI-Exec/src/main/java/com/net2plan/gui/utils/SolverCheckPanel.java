@@ -156,7 +156,9 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         txt_info.append(MESSAGE_HEADER + "Looking for solver: " + solverNameUppercase + NEW_LINE);
         solverPath = Configuration.getDefaultSolverLibraryName(solverName);
 
-        if (solverPath.isEmpty())
+        final boolean useDefaultPath = solverPath.isEmpty();
+
+        if (useDefaultPath)
             txt_info.append(WARNING_HEADER + "Directory for " + solverNameUppercase + " solver has been left blank. Using default path..." + NEW_LINE);
 
         message = callJOM(solver, solverPath);
@@ -168,22 +170,29 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         {
             txt_info.append(WARNING_HEADER + "Solver " + solverNameUppercase + " could not be found at directory: " + solverPath + NEW_LINE);
             txt_info.append(WARNING_HEADER + "JOM library has this to say: " + NEW_LINE);
-            txt_info.append(message + NEW_LINE);
+            txt_info.append(message);
 
-            txt_info.append(MESSAGE_HEADER + "Retrying..." + NEW_LINE);
-            txt_info.append(MESSAGE_HEADER + "Trying to find solver at default location..." + NEW_LINE);
-            message = callJOM(solver, solverPath);
+            if (!useDefaultPath)
+            {
+                txt_info.append(NEW_LINE);
 
-            if (message.isEmpty())
-            {
-                txt_info.append(MESSAGE_HEADER + "Solver " + solverNameUppercase + " has been found at directory: " + "" + NEW_LINE);
-            } else
-            {
-                txt_info.append(WARNING_HEADER + "Solver " + solverNameUppercase + " could not be found at directory: " + "" + NEW_LINE);
-                txt_info.append(WARNING_HEADER + "JOM library has this to say: " + NEW_LINE);
-                txt_info.append(message + NEW_LINE);
+                txt_info.append(MESSAGE_HEADER + "Retrying..." + NEW_LINE);
+                txt_info.append(MESSAGE_HEADER + "Trying to find solver at default location..." + NEW_LINE);
+                message = callJOM(solver, "");
+
+                if (message.isEmpty())
+                {
+                    txt_info.append(MESSAGE_HEADER + "Solver " + solverNameUppercase + " has been found at directory: " + "" + NEW_LINE);
+                } else
+                {
+                    txt_info.append(WARNING_HEADER + "Solver " + solverNameUppercase + " could not be found at directory: " + "" + NEW_LINE);
+                    txt_info.append(WARNING_HEADER + "JOM library has this to say: " + NEW_LINE);
+                    txt_info.append(message + NEW_LINE);
+                }
             }
         }
+
+        txt_info.append(NEW_LINE);
     }
 
     private String callJOM(Solvers solver, String path)
