@@ -162,8 +162,13 @@ public class GUIConfiguration extends JDialog implements ActionListener
             int numTabs = tabbedPane.getTabCount();
             for (int tabId = 0; tabId < numTabs; tabId++)
             {
-                ParameterValueDescriptionPanel pane = (ParameterValueDescriptionPanel) ((BorderLayout) ((JPanel) tabbedPane.getComponentAt(tabId)).getLayout()).getLayoutComponent(BorderLayout.CENTER);
-                newOptions.putAll(pane.getParameters());
+                try
+                {
+                    ParameterValueDescriptionPanel pane = (ParameterValueDescriptionPanel) ((BorderLayout) ((JPanel) tabbedPane.getComponentAt(tabId)).getLayout()).getLayoutComponent(BorderLayout.CENTER);
+                    newOptions.putAll(pane.getParameters());
+                } catch (ClassCastException ignored)
+                {
+                }
             }
 
             try
