@@ -89,7 +89,21 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
         txt_info.append(NEW_LINE);
 
+        txt_info.append(MESSAGE_HEADER + "Checking current runtime environment..." + NEW_LINE);
+
+        final String jnaDefaultPath = System.getProperty("jna.library.path");
+
+        if (jnaDefaultPath != null)
+        {
+            txt_info.append(MESSAGE_HEADER + "Default JNA library path found at: " + jnaDefaultPath + NEW_LINE);
+        } else
+        {
+            txt_info.append(WARNING_HEADER + "Default JNA library path is not currently defined..." + NEW_LINE);
+        }
+
         txt_info.append(MESSAGE_HEADER + "Checking for current installed solvers..." + NEW_LINE);
+
+        txt_info.append(NEW_LINE);
 
         // Checking solvers
         for (Solvers solvers : Solvers.values())
@@ -107,8 +121,10 @@ public class SolverCheckPanel extends JPanel implements ActionListener
                     } else
                     {
                         txt_info.append(WARNING_HEADER + "Solver GLPK could not be found at directory: " + solverPath + NEW_LINE);
-                        txt_info.append(WARNING_HEADER + "JOM library has this to say: " + message + NEW_LINE);
-                        txt_info.append(NEW_LINE);
+                        txt_info.append(WARNING_HEADER + "JOM library has this to say: " + NEW_LINE);
+
+
+                        txt_info.append(message + NEW_LINE);
                     }
                     break;
                 case ipopt:
@@ -129,17 +145,6 @@ public class SolverCheckPanel extends JPanel implements ActionListener
                     txt_info.append(ERROR_HEADER + "Tester shutting down..." + NEW_LINE);
                     return;
             }
-        }
-
-        final String path = Configuration.getDefaultSolverLibraryName("cplex");
-        final String message = SolverTester.check_cplex(path);
-
-        if (message.isEmpty())
-        {
-            txt_info.append("MESSAGE: CPLEX found...");
-        } else
-        {
-            txt_info.append(message);
         }
     }
 
