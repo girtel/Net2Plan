@@ -59,7 +59,7 @@ public class Online_evGen_wdmTest
 		simulationParameters.put("transitoryTime" , "" + (TIMEPERSIMULATIONINSECONDS/2));
 		simulationParameters.put("simTime" , "" + TIMEPERSIMULATIONINSECONDS);
 		final Map<String,String> net2planParameters = ImmutableMap.of("precisionFactor" , "0.001");
-		
+
 		final Map<String,List<String>> generatorParameters = new HashMap <>();
 		generatorParameters.put("_fail_failureModel" , Arrays.asList("perBidirectionalLinkBundle"));
 		generatorParameters.put("_tfFast_fluctuationType" , Arrays.asList("random-truncated-gaussian"));
