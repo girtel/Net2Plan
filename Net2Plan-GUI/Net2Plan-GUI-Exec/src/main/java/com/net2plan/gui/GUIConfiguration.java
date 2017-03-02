@@ -13,8 +13,8 @@
 package com.net2plan.gui;
 
 
-import com.jom.SolverTester;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
+import com.net2plan.gui.utils.SolverCheckPanel;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.Plugin;
@@ -72,7 +72,7 @@ public class GUIConfiguration extends JDialog implements ActionListener
         JPanel pane_generalOptions = new JPanel(new BorderLayout());
         tabbedPane.addTab("General options", pane_generalOptions);
 
-        CheckSolversPanel checkSolversPanel = new CheckSolversPanel();
+        SolverCheckPanel checkSolversPanel = new SolverCheckPanel();
         tabbedPane.addTab("Check solvers", checkSolversPanel);
 
         ParameterValueDescriptionPanel generalParameterPanel = new ParameterValueDescriptionPanel();

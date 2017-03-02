@@ -19,7 +19,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
     private enum Solvers
     {
-        gplk, ipopt, cplex, xpress
+        glpk, ipopt, cplex, xpress
     }
 
     private enum OS
@@ -67,7 +67,6 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         final String OSName = foundOS.getSecond();
 
         txt_info.append(MESSAGE_HEADER + "Checking for current operating system..." + NEW_LINE);
-        txt_info.append(NEW_LINE);
 
         switch (currentOS)
         {
@@ -90,6 +89,8 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
         txt_info.append(NEW_LINE);
 
+        txt_info.append(MESSAGE_HEADER + "Checking for current installed solvers..." + NEW_LINE);
+
         // Checking solvers
         for (Solvers solvers : Solvers.values())
         {
@@ -97,7 +98,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
             final String message;
             switch (solvers)
             {
-                case gplk:
+                case glpk:
                     solverPath = Configuration.getDefaultSolverLibraryName("glpk");
                     message = SolverTester.check_glpk(solverPath);
                     if (message.isEmpty())
@@ -105,9 +106,10 @@ public class SolverCheckPanel extends JPanel implements ActionListener
                         txt_info.append(MESSAGE_HEADER + "Solver GLPK has been found at directory: " + solverPath + NEW_LINE);
                     } else
                     {
-                        txt_info.append(MESSAGE_HEADER + "Solver GLPK: " + solverPath + NEW_LINE);
+                        txt_info.append(WARNING_HEADER + "Solver GLPK could not be found at directory: " + solverPath + NEW_LINE);
+                        txt_info.append(WARNING_HEADER + "JOM library has this to say: " + message + NEW_LINE);
+                        txt_info.append(NEW_LINE);
                     }
-
                     break;
                 case ipopt:
                     solverPath = Configuration.getDefaultSolverLibraryName("ipopt");
