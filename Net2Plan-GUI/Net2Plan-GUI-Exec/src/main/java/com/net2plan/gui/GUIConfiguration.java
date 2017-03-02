@@ -186,29 +186,4 @@ public class GUIConfiguration extends JDialog implements ActionListener
 
         dispose();
     }
-
-    private class CheckSolversPanel extends JPanel
-    {
-        private final JButton btn_checkSolvers;
-        private final JTextArea txt_result;
-
-        public CheckSolversPanel()
-        {
-            this.setLayout(new BorderLayout());
-
-            this.btn_checkSolvers = new JButton("Check solvers");
-            this.txt_result = new JTextArea("");
-
-            btn_checkSolvers.addActionListener(e ->
-            {
-                String s = SolverTester.check_cplex(Configuration.getDefaultSolverLibraryName("cplex"));
-
-                txt_result.append(s);
-                txt_result.append("CPLEX found...");
-            });
-
-            this.add(btn_checkSolvers, BorderLayout.NORTH);
-            this.add(txt_result, BorderLayout.CENTER);
-        }
-    }
 }
