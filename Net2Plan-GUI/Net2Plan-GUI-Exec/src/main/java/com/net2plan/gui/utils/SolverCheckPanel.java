@@ -10,7 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * Created by jorge on 2/03/17.
+ * Created by Jorge San Emeterio on 2/03/17.
  */
 public class SolverCheckPanel extends JPanel implements ActionListener
 {
@@ -31,6 +31,12 @@ public class SolverCheckPanel extends JPanel implements ActionListener
     private final String MESSAGE_HEADER = "MESSAGE: ";
     private final String WARNING_HEADER = "WARNING: ";
     private final String ERROR_HEADER = "ERROR: ";
+
+    private boolean isJNAPathSet;
+    private boolean isJAVAPathSet;
+
+    private String JNAPath;
+    private String JAVAPath;
 
     public SolverCheckPanel()
     {
@@ -95,20 +101,28 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
         if (jnaDefaultPath != null)
         {
-            txt_info.append(MESSAGE_HEADER + "Default JNA library path found at: " + jnaDefaultPath + NEW_LINE);
+            txt_info.append(MESSAGE_HEADER + "Default JNA library path set to: " + jnaDefaultPath + NEW_LINE);
+            isJNAPathSet = true;
+            JNAPath = jnaDefaultPath;
         } else
         {
             txt_info.append(WARNING_HEADER + "Default JNA library path is not currently defined..." + NEW_LINE);
+            isJNAPathSet = false;
+            JNAPath = null;
         }
 
         final String javaDefaultPath = System.getProperty("java.library.path");
 
         if (javaDefaultPath != null)
         {
-            txt_info.append(MESSAGE_HEADER + "Default JAVA library path found at: " + javaDefaultPath + NEW_LINE);
+            txt_info.append(MESSAGE_HEADER + "Default JAVA library path set to: " + javaDefaultPath + NEW_LINE);
+            isJAVAPathSet = true;
+            JAVAPath = javaDefaultPath;
         } else
         {
             txt_info.append(WARNING_HEADER + "Default JAVA library path is not currently defined..." + NEW_LINE);
+            isJAVAPathSet = false;
+            JAVAPath = null;
         }
 
         txt_info.append(NEW_LINE);
@@ -159,40 +173,77 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         final boolean useDefaultPath = solverPath.isEmpty();
 
         if (useDefaultPath)
-            txt_info.append(WARNING_HEADER + "Directory for " + solverNameUppercase + " solver has been left blank. Using default path..." + NEW_LINE);
-
-        message = callJOM(solver, solverPath);
-
-        if (message.isEmpty())
         {
-            txt_info.append(MESSAGE_HEADER + "Solver " + solverNameUppercase + " has been found at directory: " + solverPath + NEW_LINE);
+            txt_info.append(WARNING_HEADER + "Directory for " + solverNameUppercase + " solver has been left blank. Using default path..." + NEW_LINE);
+            checkSolverAtDefaultFolder(solver);
         } else
         {
-            txt_info.append(WARNING_HEADER + "Solver " + solverNameUppercase + " could not be found at directory: " + solverPath + NEW_LINE);
-            txt_info.append(WARNING_HEADER + "JOM library has this to say: " + NEW_LINE);
-            txt_info.append(message);
+            message = callJOM(solver, solverPath);
 
-            if (!useDefaultPath)
+            if (message.isEmpty())
             {
-                txt_info.append(NEW_LINE);
+                txt_info.append(MESSAGE_HEADER + "Solver " + solverNameUppercase + " has been found at directory: " + solverPath + NEW_LINE);
+            } else
+            {
+                txt_info.append(WARNING_HEADER + "Solver " + solverNameUppercase + " could not be found at directory: " + solverPath + NEW_LINE);
 
                 txt_info.append(MESSAGE_HEADER + "Retrying..." + NEW_LINE);
                 txt_info.append(MESSAGE_HEADER + "Trying to find solver at default location..." + NEW_LINE);
-                message = callJOM(solver, "");
-
-                if (message.isEmpty())
-                {
-                    txt_info.append(MESSAGE_HEADER + "Solver " + solverNameUppercase + " has been found at directory: " + "" + NEW_LINE);
-                } else
-                {
-                    txt_info.append(WARNING_HEADER + "Solver " + solverNameUppercase + " could not be found at directory: " + "" + NEW_LINE);
-                    txt_info.append(WARNING_HEADER + "JOM library has this to say: " + NEW_LINE);
-                    txt_info.append(message + NEW_LINE);
-                }
+                checkSolverAtDefaultFolder(solver);
             }
         }
 
         txt_info.append(NEW_LINE);
+    }
+
+    private void checkSolverAtDefaultFolder(Solvers solver)
+    {
+        String message;
+
+        if (isJNAPathSet)
+        {
+            txt_info.append(MESSAGE_HEADER + "Checking for solver at JNA library path: " + JNAPath + NEW_LINE);
+            message = callJOM(solver, JNAPath);
+
+            if (message.isEmpty())
+            {
+                txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at directory: " + JNAPath + NEW_LINE);
+            } else
+            {
+                txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + JNAPath + NEW_LINE);
+            }
+        } else
+        {
+            txt_info.append(WARNING_HEADER + "JNA library path not set. Ignoring..." + NEW_LINE);
+        }
+
+        if (isJAVAPathSet)
+        {
+            txt_info.append(MESSAGE_HEADER + "Checking for solver at JAVA library path: " + JAVAPath + NEW_LINE);
+            message = callJOM(solver, JAVAPath);
+
+            if (message.isEmpty())
+            {
+                txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at directory: " + JAVAPath + NEW_LINE);
+            } else
+            {
+                txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + JAVAPath + NEW_LINE);
+            }
+        } else
+        {
+            txt_info.append(WARNING_HEADER + "JAVA library path not set. Ignoring..." + NEW_LINE);
+        }
+
+        txt_info.append(MESSAGE_HEADER + "Checking for solver by using system defaults..." + NEW_LINE);
+        message = callJOM(solver, "");
+
+        if (message.isEmpty())
+        {
+            txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found." + NEW_LINE);
+        } else
+        {
+            txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found" + NEW_LINE);
+        }
     }
 
     private String callJOM(Solvers solver, String path)
