@@ -23,6 +23,8 @@ import com.net2plan.utils.SwingUtils;
 import com.net2plan.utils.Triple;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -59,8 +61,8 @@ public class GUIConfiguration extends JDialog implements ActionListener
         btn_save.setToolTipText("Save the current options in the .ini file");
         btn_save.addActionListener(this);
 
-        btn_cancel = new JButton("Cancel");
-        btn_cancel.setToolTipText("Close the dialog without saving");
+        btn_cancel = new JButton("Close");
+        btn_cancel.setToolTipText("Close the dialog");
         btn_cancel.addActionListener(this);
 
         buttonBar.add(btn_save);
@@ -88,6 +90,21 @@ public class GUIConfiguration extends JDialog implements ActionListener
                 break;
             }
         }
+
+        tabbedPane.addChangeListener(new ChangeListener()
+        {
+            @Override
+            public void stateChanged(ChangeEvent changeEvent)
+            {
+                final JTabbedPane tabPane = (JTabbedPane) changeEvent.getSource();
+
+                if (tabPane.getSelectedComponent() == pane_generalOptions)
+                {
+                    generalParameterPanel.setParameters(net2planParameters);
+                    generalParameterPanel.setParameterValues(Configuration.getNet2PlanOptions());
+                }
+            }
+        });
 
         generalParameterPanel.setParameters(net2planParameters);
         generalParameterPanel.setParameterValues(Configuration.getNet2PlanOptions());
@@ -187,8 +204,9 @@ public class GUIConfiguration extends JDialog implements ActionListener
                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error saving options");
                 return;
             }
+        } else if (e.getSource() == btn_cancel)
+        {
+            dispose();
         }
-
-        dispose();
     }
 }
