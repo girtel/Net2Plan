@@ -23,6 +23,9 @@ public class SolverCheckPanel extends JPanel implements ActionListener
     private final JButton btn_checkAll;
     private final JTextArea txt_info;
 
+    private final JPanel pn_saveConfirm;
+    private final JButton btn_accept, btn_refuse;
+
     private enum OS
     {
         windows, linux, macintosh, unknown
@@ -75,8 +78,29 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         this.txt_info = new JTextArea();
         this.txt_info.setText("");
 
+        // Build confirm dialog
+        this.pn_saveConfirm = new JPanel(new BorderLayout());
+        this.pn_saveConfirm.setVisible(false);
+        this.btn_accept = new JButton("Save");
+        this.btn_accept.setFocusable(false);
+        this.btn_refuse = new JButton("Cancel");
+        this.btn_refuse.setFocusable(false);
+
+        this.pn_saveConfirm.add(new JLabel("New solver path has been found. Save it under configuration?: "), BorderLayout.CENTER);
+
+        final JPanel aux = new JPanel(new GridBagLayout());
+        aux.add(btn_accept);
+        aux.add(btn_refuse);
+
+        this.pn_saveConfirm.add(aux, BorderLayout.EAST);
+
+        final JPanel pn_text = new JPanel(new BorderLayout());
+
+        pn_text.add(new JScrollPane(txt_info), BorderLayout.CENTER);
+        pn_text.add(pn_saveConfirm, BorderLayout.SOUTH);
+
         this.add(tb_buttons, BorderLayout.EAST);
-        this.add(new JScrollPane(txt_info), BorderLayout.CENTER);
+        this.add(pn_text, BorderLayout.CENTER);
     }
 
     @Override
