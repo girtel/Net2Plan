@@ -1,5 +1,6 @@
 package com.net2plan.gui.utils;
 
+import com.jom.OptimizationProblem.JOMSolver;
 import com.jom.SolverTester;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.utils.Pair;
@@ -8,19 +9,19 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Jorge San Emeterio on 2/03/17.
  */
 public class SolverCheckPanel extends JPanel implements ActionListener
 {
-    private final JButton btn_launch;
+    private final JToolBar tb_buttons;
+    private final List<JButton> btn_solverButtons;
+    private final JButton btn_checkAll;
     private final JTextArea txt_info;
-
-    private enum Solvers
-    {
-        glpk, ipopt, cplex, xpress
-    }
 
     private enum OS
     {
@@ -31,6 +32,8 @@ public class SolverCheckPanel extends JPanel implements ActionListener
     private final String MESSAGE_HEADER = "MESSAGE: ";
     private final String WARNING_HEADER = "WARNING: ";
     private final String ERROR_HEADER = "ERROR: ";
+
+    private OS currentOS;
 
     private boolean isJNAPathSet;
     private boolean isJAVAPathSet;
@@ -44,122 +47,177 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
         this.setLayout(new BorderLayout());
 
-        this.btn_launch = new JButton("Check solvers");
-        this.setFocusable(false);
-        this.btn_launch.addActionListener(this);
+        this.tb_buttons = new JToolBar(JToolBar.VERTICAL);
+        this.tb_buttons.setFloatable(false);
+        this.tb_buttons.setFocusable(false);
+        this.tb_buttons.setBorderPainted(false);
+        this.tb_buttons.setRollover(false);
+
+        this.btn_solverButtons = new ArrayList<>();
+
+        // Adding as many buttons as solvers there are.
+        for (JOMSolver solver : JOMSolver.values())
+        {
+            final JButton btn = new JButton("Check " + solver.name());
+            btn.setFocusable(false);
+            btn.addActionListener(this);
+
+            btn_solverButtons.add(btn);
+            tb_buttons.add(btn);
+        }
+
+        // Add check all
+        this.btn_checkAll = new JButton("Check all");
+        this.btn_checkAll.setFocusable(false);
+        this.btn_checkAll.addActionListener(this);
+        this.tb_buttons.add(btn_checkAll);
 
         this.txt_info = new JTextArea();
         this.txt_info.setText("");
 
-
-        this.add(btn_launch, BorderLayout.NORTH);
+        this.add(tb_buttons, BorderLayout.EAST);
         this.add(new JScrollPane(txt_info), BorderLayout.CENTER);
     }
 
     @Override
     public void actionPerformed(ActionEvent actionEvent)
     {
-        // Previous steps
-
-        // Clean window
-        txt_info.setText("");
-
-        // Do not allow to click again
-        btn_launch.setEnabled(false);
-
-        // Getting OS
-        final Pair<OS, String> foundOS = getOS();
-        final OS currentOS = foundOS.getFirst();
-        final String OSName = foundOS.getSecond();
-
-        txt_info.append(MESSAGE_HEADER + "Checking for current operating system..." + NEW_LINE);
-
-        switch (currentOS)
+        try
         {
-            case windows:
-                txt_info.append(MESSAGE_HEADER + "Found Windows operating system: " + OSName + NEW_LINE);
-                break;
-            case linux:
-                txt_info.append(MESSAGE_HEADER + "Found Linux operating system: " + OSName + NEW_LINE);
-                break;
-            case macintosh:
-                txt_info.append(MESSAGE_HEADER + "Found Macintosh operating system: " + OSName + NEW_LINE);
-                break;
-            case unknown:
-            default:
-                txt_info.append(ERROR_HEADER + "Found an unknown operating system." + NEW_LINE);
-                txt_info.append(ERROR_HEADER + "The tester cannot continue without knowing the operating system it is working on." + NEW_LINE);
-                txt_info.append(ERROR_HEADER + "Tester shutting down..." + NEW_LINE);
-                return;
-        }
+            // Previous steps
 
-        txt_info.append(NEW_LINE);
+            // Clean window
+            txt_info.setText("");
 
-        txt_info.append(MESSAGE_HEADER + "Checking current runtime environment..." + NEW_LINE);
+            // Do not allow to click again
+            tb_buttons.setEnabled(false);
 
-        final String jnaDefaultPath = System.getProperty("jna.library.path");
+            // Getting OS
+            final Pair<OS, String> foundOS = getOS();
+            final OS currentOS = foundOS.getFirst();
+            final String OSName = foundOS.getSecond();
 
-        if (jnaDefaultPath != null)
-        {
-            txt_info.append(MESSAGE_HEADER + "Default JNA library path set to: " + jnaDefaultPath + NEW_LINE);
-            isJNAPathSet = true;
-            JNAPath = jnaDefaultPath;
-        } else
-        {
-            txt_info.append(WARNING_HEADER + "Default JNA library path is not currently defined..." + NEW_LINE);
-            isJNAPathSet = false;
-            JNAPath = null;
-        }
+            txt_info.append(MESSAGE_HEADER + "Checking for current operating system..." + NEW_LINE);
 
-        final String javaDefaultPath = System.getProperty("java.library.path");
-
-        if (javaDefaultPath != null)
-        {
-            txt_info.append(MESSAGE_HEADER + "Default JAVA library path set to: " + javaDefaultPath + NEW_LINE);
-            isJAVAPathSet = true;
-            JAVAPath = javaDefaultPath;
-        } else
-        {
-            txt_info.append(WARNING_HEADER + "Default JAVA library path is not currently defined..." + NEW_LINE);
-            isJAVAPathSet = false;
-            JAVAPath = null;
-        }
-
-        txt_info.append(NEW_LINE);
-
-        txt_info.append(MESSAGE_HEADER + "Checking for current installed solvers..." + NEW_LINE);
-
-        txt_info.append(NEW_LINE);
-
-        // Checking solvers
-        for (Solvers solvers : Solvers.values())
-        {
-            switch (solvers)
+            switch (currentOS)
             {
-                case glpk:
-                    checkForSolver(Solvers.glpk);
+                case windows:
+                    txt_info.append(MESSAGE_HEADER + "Found Windows operating system: " + OSName + NEW_LINE);
                     break;
-                case ipopt:
-                    checkForSolver(Solvers.ipopt);
+                case linux:
+                    txt_info.append(MESSAGE_HEADER + "Found Linux operating system: " + OSName + NEW_LINE);
                     break;
-                case cplex:
-                    checkForSolver(Solvers.cplex);
+                case macintosh:
+                    txt_info.append(MESSAGE_HEADER + "Found Macintosh operating system: " + OSName + NEW_LINE);
                     break;
-                case xpress:
-                    checkForSolver(Solvers.xpress);
-                    break;
+                case unknown:
                 default:
-                    txt_info.append(ERROR_HEADER + "Unknown solver has been provided: " + solvers.name() + NEW_LINE);
-                    txt_info.append(ERROR_HEADER + "The tester is trying to work with unknown solvers and cannot continue." + NEW_LINE);
+                    txt_info.append(ERROR_HEADER + "Found an unknown operating system." + NEW_LINE);
+                    txt_info.append(ERROR_HEADER + "The tester cannot continue without knowing the operating system it is working on." + NEW_LINE);
                     txt_info.append(ERROR_HEADER + "Tester shutting down..." + NEW_LINE);
                     return;
             }
-        }
 
-        btn_launch.setEnabled(true);
+            this.currentOS = currentOS;
+
+            txt_info.append(NEW_LINE);
+
+            txt_info.append(MESSAGE_HEADER + "Checking current runtime environment..." + NEW_LINE);
+
+            final String jnaDefaultPath = System.getProperty("jna.library.path");
+
+            if (jnaDefaultPath != null)
+            {
+                txt_info.append(MESSAGE_HEADER + "Default JNA library path set to: " + jnaDefaultPath + NEW_LINE);
+                isJNAPathSet = true;
+                JNAPath = jnaDefaultPath;
+            } else
+            {
+                txt_info.append(WARNING_HEADER + "Default JNA library path is not currently defined..." + NEW_LINE);
+                isJNAPathSet = false;
+                JNAPath = null;
+            }
+
+            final String javaDefaultPath = System.getProperty("java.library.path");
+
+            if (javaDefaultPath != null)
+            {
+                txt_info.append(MESSAGE_HEADER + "Default JAVA library path set to: " + javaDefaultPath + NEW_LINE);
+                isJAVAPathSet = true;
+                JAVAPath = javaDefaultPath;
+            } else
+            {
+                txt_info.append(WARNING_HEADER + "Default JAVA library path is not currently defined..." + NEW_LINE);
+                isJAVAPathSet = false;
+                JAVAPath = null;
+            }
+
+            // Calculating selected solver
+            final List<JOMSolver> selectedSolvers = new ArrayList<>();
+
+            final JButton src = (JButton) actionEvent.getSource();
+            final String selectedSolverName = src.getText().replace("Check ", "").trim();
+
+            try
+            {
+                final JOMSolver selectedSolver = JOMSolver.valueOf(selectedSolverName);
+                selectedSolvers.add(selectedSolver);
+            } catch (IllegalArgumentException e)
+            {
+                selectedSolvers.addAll(Arrays.asList(JOMSolver.values()));
+            }
+
+            if (selectedSolvers.isEmpty())
+            {
+                txt_info.append(ERROR_HEADER + "Internal problem: no solver was selected for testing." + NEW_LINE);
+                txt_info.append(ERROR_HEADER + "Tester shutting down..." + NEW_LINE);
+                throw new RuntimeException("No solver was selected for testing.");
+            }
+
+            txt_info.append(NEW_LINE);
+
+            txt_info.append(MESSAGE_HEADER + "Checking for solvers: " + Arrays.toString(selectedSolvers.toArray()) + NEW_LINE);
+
+            txt_info.append(NEW_LINE);
+
+            // Checking solvers
+            for (JOMSolver solvers : selectedSolvers)
+            {
+                switch (solvers)
+                {
+                    case glpk:
+                        checkForSolver(JOMSolver.glpk);
+                        break;
+                    case ipopt:
+                        checkForSolver(JOMSolver.ipopt);
+                        break;
+                    case cplex:
+                        checkForSolver(JOMSolver.cplex);
+                        break;
+                    case xpress:
+                        checkForSolver(JOMSolver.xpress);
+                        break;
+                    default:
+                        txt_info.append(ERROR_HEADER + "Unknown solver has been provided: " + solvers.name() + NEW_LINE);
+                        txt_info.append(ERROR_HEADER + "The tester is trying to work with unknown solvers and cannot continue." + NEW_LINE);
+                        txt_info.append(ERROR_HEADER + "Tester shutting down..." + NEW_LINE);
+                        return;
+                }
+            }
+
+        } catch (Exception ex)
+        {
+            txt_info.append(ERROR_HEADER + "An error has been found while running the solver tester..." + NEW_LINE);
+            txt_info.append(ERROR_HEADER + "Check the console for more information." + NEW_LINE);
+            txt_info.append(ERROR_HEADER + "Tester shutting down..." + NEW_LINE);
+            ex.printStackTrace();
+        } finally
+        {
+            tb_buttons.setEnabled(true);
+        }
     }
 
-    private void checkForSolver(Solvers solver)
+    private void checkForSolver(JOMSolver solver)
     {
         final String solverPath;
         final String solverName = solver.name();
@@ -196,7 +254,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         txt_info.append(NEW_LINE);
     }
 
-    private void checkSolverAtDefaultFolder(Solvers solver)
+    private void checkSolverAtDefaultFolder(JOMSolver solver)
     {
         String message;
 
@@ -220,15 +278,21 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         if (isJAVAPathSet)
         {
             txt_info.append(MESSAGE_HEADER + "Checking for solver at JAVA library path: " + JAVAPath + NEW_LINE);
-            message = callJOM(solver, JAVAPath);
 
-            if (message.isEmpty())
+            final List<String> strings = splitPath(JAVAPath);
+            for (String separatedPath : strings)
             {
-                txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at directory: " + JAVAPath + NEW_LINE);
-            } else
-            {
-                txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + JAVAPath + NEW_LINE);
+                message = callJOM(solver, separatedPath);
+
+                if (message.isEmpty())
+                {
+                    txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at directory: " + separatedPath + NEW_LINE);
+                } else
+                {
+                    txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + separatedPath + NEW_LINE);
+                }
             }
+
         } else
         {
             txt_info.append(WARNING_HEADER + "JAVA library path not set. Ignoring..." + NEW_LINE);
@@ -236,7 +300,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
         txt_info.append(MESSAGE_HEADER + "Checking for solver by using system defaults..." + NEW_LINE);
 
-        switch (getOS().getFirst())
+        switch (currentOS)
         {
 
             case windows:
@@ -260,7 +324,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         }
     }
 
-    private String callJOM(Solvers solver, String path)
+    private String callJOM(JOMSolver solver, String path)
     {
         String message;
 
@@ -283,6 +347,29 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         }
 
         return message;
+    }
+
+    private List<String> splitPath(final String path)
+    {
+        if (currentOS == OS.linux)
+        {
+            final String[] ideSplit = path.split("::");
+
+            final List<String> separatedPaths = new ArrayList<>();
+            for (String s : ideSplit)
+            {
+                final String[] aux = s.split(":");
+
+                for (String string : aux)
+                {
+                    separatedPaths.add(string);
+                }
+            }
+
+            return separatedPaths;
+        }
+
+        return null;
     }
 
     private static Pair<OS, String> getOS()
