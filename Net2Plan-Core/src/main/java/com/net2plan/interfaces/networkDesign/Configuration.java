@@ -73,13 +73,13 @@ public class Configuration
 
 		defaultOptions = new LinkedList<Triple<String, String, String>>();
 		defaultOptions.add(Triple.unmodifiableOf("classpath", "", "Set of external libraries loaded at runtime (separated by semi-colon)"));
-		defaultOptions.add(Triple.unmodifiableOf("defaultRunnableCodePath", "#path# " + SystemUtils.getCurrentDir() + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "BuiltInExamples.jar", "Default path (either .jar file or folder) for external code (i.e. algorithms)"));
+		defaultOptions.add(Triple.unmodifiableOf("defaultRunnableCodePath", SystemUtils.getCurrentDir() + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "BuiltInExamples.jar", "Default path (either .jar file or folder) for external code (i.e. algorithms)"));
 		defaultOptions.add(Triple.unmodifiableOf("precisionFactor", "1e-3", "Precision factor for checks to overcome numeric errors"));
 //		defaultOptions.add(Triple.unmodifiableOf("topologyViewer", "#select# " + StringUtils.join(canvasTypes, " "), "Type of topology viewer (it requires reloading active tool)"));
-		defaultOptions.add(Triple.unmodifiableOf("xpressSolverLicenseFileName", "#path# ", "Default path for XPRESS solver license file (typically xpauth.xpr)"));
-		defaultOptions.add(Triple.unmodifiableOf("cplexSolverLibraryName", "#path# ", "Default path for cplex library (.dll/.so/.dylib file)"));
-		defaultOptions.add(Triple.unmodifiableOf("glpkSolverLibraryName", "#path# ", "Default path for glpk library (.dll/.so/.dylib file)"));
-		defaultOptions.add(Triple.unmodifiableOf("ipoptSolverLibraryName", "#path# ", "Default path for ipopt library (.dll/.so/.dylib file)"));
+		defaultOptions.add(Triple.unmodifiableOf("xpressSolverLicenseFileName", "", "Default path for XPRESS solver license file (typically xpauth.xpr)"));
+		defaultOptions.add(Triple.unmodifiableOf("cplexSolverLibraryName", "", "Default path for cplex library (.dll/.so/.dylib file)"));
+		defaultOptions.add(Triple.unmodifiableOf("glpkSolverLibraryName", "", "Default path for glpk library (.dll/.so/.dylib file)"));
+		defaultOptions.add(Triple.unmodifiableOf("ipoptSolverLibraryName", "", "Default path for ipopt library (.dll/.so/.dylib file)"));
 		defaultOptions.add(Triple.unmodifiableOf("defaultILPSolver", "#select# glpk cplex xpress", "Default solver for LP/ILP models"));
 		defaultOptions.add(Triple.unmodifiableOf("defaultNLPSolver", "#select# ipopt", "Default solver for NLP models"));
 		options = CommandLineParser.getParameters(defaultOptions, null);
