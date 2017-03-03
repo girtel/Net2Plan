@@ -19,13 +19,9 @@ import java.util.List;
  */
 public class SolverCheckPanel extends JPanel implements ActionListener
 {
+    private final JPanel pn_text;
     private final JToolBar tb_buttons;
-    private final List<JButton> btn_solverButtons;
-    private final JButton btn_checkAll;
     private final JTextArea txt_info;
-
-    private final JPanel pn_saveConfirm;
-    private final JButton btn_accept, btn_refuse;
 
     private enum OS
     {
@@ -57,7 +53,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         this.tb_buttons.setBorderPainted(false);
         this.tb_buttons.setRollover(false);
 
-        this.btn_solverButtons = new ArrayList<>();
+        List<JButton> btn_solverButtons = new ArrayList<>();
 
         // Adding as many buttons as solvers there are.
         for (JOMSolver solver : JOMSolver.values())
@@ -71,34 +67,16 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         }
 
         // Add check all
-        this.btn_checkAll = new JButton("Check all");
-        this.btn_checkAll.setFocusable(false);
-        this.btn_checkAll.addActionListener(this);
+        JButton btn_checkAll = new JButton("Check all");
+        btn_checkAll.setFocusable(false);
+        btn_checkAll.addActionListener(this);
         this.tb_buttons.add(btn_checkAll);
 
         this.txt_info = new JTextArea();
         this.txt_info.setText("");
 
-        // Build confirm dialog
-        this.pn_saveConfirm = new JPanel(new BorderLayout());
-        this.pn_saveConfirm.setVisible(false);
-        this.btn_accept = new JButton("Save");
-        this.btn_accept.setFocusable(false);
-        this.btn_refuse = new JButton("Cancel");
-        this.btn_refuse.setFocusable(false);
-
-        this.pn_saveConfirm.add(new JLabel("New solver path has been found. Save it under configuration?: "), BorderLayout.CENTER);
-
-        final JPanel aux = new JPanel(new GridBagLayout());
-        aux.add(btn_accept);
-        aux.add(btn_refuse);
-
-        this.pn_saveConfirm.add(aux, BorderLayout.EAST);
-
-        final JPanel pn_text = new JPanel(new BorderLayout());
-
-        pn_text.add(new JScrollPane(txt_info), BorderLayout.CENTER);
-        pn_text.add(pn_saveConfirm, BorderLayout.SOUTH);
+        this.pn_text = new JPanel(new BorderLayout());
+        this.pn_text.add(new JScrollPane(txt_info), BorderLayout.CENTER);
 
         this.add(tb_buttons, BorderLayout.EAST);
         this.add(pn_text, BorderLayout.CENTER);
@@ -381,18 +359,41 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
     private void showSaveDialog(final JOMSolver solver, final String path)
     {
-        pn_saveConfirm.setVisible(true);
+        final JPanel pn_saveConfirm = new JPanel(new BorderLayout());
+        pn_saveConfirm.setVisible(false);
+
+        final JButton btn_accept, btn_refuse;
+
+        btn_accept = new JButton("Save");
+        btn_accept.setFocusable(false);
+
+        btn_refuse = new JButton("Cancel");
+        btn_refuse.setFocusable(false);
+
+        pn_saveConfirm.add(new JLabel("New solver path has been found. Save it under configuration?: "), BorderLayout.CENTER);
+
+        final JPanel aux = new JPanel(new GridBagLayout());
+        aux.add(btn_accept);
+        aux.add(btn_refuse);
+
+        pn_saveConfirm.add(aux, BorderLayout.EAST);
+
+        pn_text.add(pn_saveConfirm, BorderLayout.SOUTH);
 
         btn_accept.addActionListener(e ->
         {
             savePathToConfiguration(solver, path);
             pn_saveConfirm.setVisible(false);
+            pn_text.remove(pn_saveConfirm);
         });
 
         btn_refuse.addActionListener(e ->
         {
             pn_saveConfirm.setVisible(false);
+            pn_text.remove(pn_saveConfirm);
         });
+
+        pn_saveConfirm.setVisible(true);
     }
 
     private void savePathToConfiguration(final JOMSolver solver, final String path)
