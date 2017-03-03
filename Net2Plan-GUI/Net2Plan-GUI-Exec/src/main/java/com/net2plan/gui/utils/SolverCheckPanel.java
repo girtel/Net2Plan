@@ -114,8 +114,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
                 default:
                     txt_info.append(ERROR_HEADER + "Found an unknown operating system." + NEW_LINE);
                     txt_info.append(ERROR_HEADER + "The tester cannot continue without knowing the operating system it is working on." + NEW_LINE);
-                    txt_info.append(ERROR_HEADER + "Tester shutting down..." + NEW_LINE);
-                    return;
+                    throw new RuntimeException("Unknown operating system: " + OSName);
             }
 
             this.currentOS = currentOS;
@@ -170,8 +169,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
             if (selectedSolvers.isEmpty())
             {
                 txt_info.append(ERROR_HEADER + "Internal problem: no solver was selected for testing." + NEW_LINE);
-                txt_info.append(ERROR_HEADER + "Tester shutting down..." + NEW_LINE);
-                throw new RuntimeException("No solver was selected for testing.");
+                throw new RuntimeException("Could not find a solver for testing. Meaning that the provided solver is unknown or built poorly.");
             }
 
             txt_info.append(NEW_LINE);
@@ -200,8 +198,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
                     default:
                         txt_info.append(ERROR_HEADER + "Unknown solver has been provided: " + solvers.name() + NEW_LINE);
                         txt_info.append(ERROR_HEADER + "The tester is trying to work with unknown solvers and cannot continue." + NEW_LINE);
-                        txt_info.append(ERROR_HEADER + "Tester shutting down..." + NEW_LINE);
-                        return;
+                        throw new RuntimeException("Unknown solver was provided: " + solvers.name());
                 }
             }
 
@@ -280,19 +277,24 @@ public class SolverCheckPanel extends JPanel implements ActionListener
             txt_info.append(MESSAGE_HEADER + "Checking for solver at JAVA library path: " + JAVAPath + NEW_LINE);
 
             final List<String> strings = splitPath(JAVAPath);
-            for (String separatedPath : strings)
+            if (strings != null)
             {
-                message = callJOM(solver, separatedPath);
+                for (String separatedPath : strings)
+                {
+                    message = callJOM(solver, separatedPath);
 
-                if (message.isEmpty())
-                {
-                    txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at directory: " + separatedPath + NEW_LINE);
-                } else
-                {
-                    txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + separatedPath + NEW_LINE);
+                    if (message.isEmpty())
+                    {
+                        txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at directory: " + separatedPath + NEW_LINE);
+                    } else
+                    {
+                        txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + separatedPath + NEW_LINE);
+                    }
                 }
+            } else
+            {
+                throw new RuntimeException("Internal: ");
             }
-
         } else
         {
             txt_info.append(WARNING_HEADER + "JAVA library path not set. Ignoring..." + NEW_LINE);
