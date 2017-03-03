@@ -11,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -326,27 +327,30 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
         txt_info.append(MESSAGE_HEADER + "Checking for solver by using system defaults..." + NEW_LINE);
 
+        final String solverDefaultPath;
         switch (currentOS)
         {
-
             case windows:
-                message = callJOM(solver, solver.name() + ".dll");
+                solverDefaultPath = solver.name() + ".dll";
+                message = callJOM(solver, solverDefaultPath);
                 break;
             case linux:
             case macintosh:
-                message = callJOM(solver, "lib" + solver.name());
+                solverDefaultPath = "lib" + solver.name();
+                message = callJOM(solver, solverDefaultPath);
                 break;
             default:
             case unknown:
-                return;
+                throw new RuntimeException("Unknown OS, cannot proceed...");
         }
 
         if (message.isEmpty())
         {
-            txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found." + NEW_LINE);
+            txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at: " + solverDefaultPath + NEW_LINE);
+            showSaveDialog(solver, solverDefaultPath);
         } else
         {
-            txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found" + NEW_LINE);
+            txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at: " + solverDefaultPath + NEW_LINE);
         }
     }
 
@@ -375,9 +379,32 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         return message;
     }
 
+    private void showSaveDialog(final JOMSolver solver, final String path)
+    {
+        pn_saveConfirm.setVisible(true);
+
+        btn_accept.addActionListener(e ->
+        {
+            savePathToConfiguration(solver, path);
+            pn_saveConfirm.setVisible(false);
+        });
+
+        btn_refuse.addActionListener(e ->
+        {
+            pn_saveConfirm.setVisible(false);
+        });
+    }
+
+    private void savePathToConfiguration(final JOMSolver solver, final String path)
+    {
+        Configuration.setOption(solver.name() + "SolverLibraryName", path);
+        Configuration.saveOptions();
+    }
+
     private List<String> splitPath(final String path)
     {
-        if (currentOS == OS.linux)
+        // TODO: Check for windows...
+        if (currentOS == OS.linux || currentOS == OS.macintosh)
         {
             final String[] ideSplit = path.split("::");
 
@@ -386,10 +413,20 @@ public class SolverCheckPanel extends JPanel implements ActionListener
             {
                 final String[] aux = s.split(":");
 
-                for (String string : aux)
-                {
-                    separatedPaths.add(string);
-                }
+                Collections.addAll(separatedPaths, aux);
+            }
+
+            return separatedPaths;
+        } else if (currentOS == OS.windows)
+        {
+            final String[] ideSplit = path.split(";;");
+
+            final List<String> separatedPaths = new ArrayList<>();
+            for (String s : ideSplit)
+            {
+                final String[] aux = s.split(";");
+
+                Collections.addAll(separatedPaths, aux);
             }
 
             return separatedPaths;
