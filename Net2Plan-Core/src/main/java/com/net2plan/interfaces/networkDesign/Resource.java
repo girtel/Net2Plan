@@ -448,6 +448,8 @@ public class Resource extends NetworkElement
 
 	void checkCachesConsistency ()
 	{
+		super.checkCachesConsistency ();
+
 		if (!netPlan.cache_type2Resources.get(this.type).contains(this)) throw new RuntimeException ("Bad");
 
 		double accumOccupCap = 0;

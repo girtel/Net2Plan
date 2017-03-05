@@ -369,6 +369,8 @@ public class SharedRiskGroup extends NetworkElement
 
 	void checkCachesConsistency ()
 	{
+		super.checkCachesConsistency ();
+
 		for (Link link : links) if (!link.cache_srgs.contains(this)) throw new RuntimeException ("Bad");
 		for (Node node : nodes) if (!node.cache_nodeSRGs.contains(this)) throw new RuntimeException ("Bad");
 	}

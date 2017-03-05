@@ -30,8 +30,9 @@ public class NetworkElement
 	final protected long id;
 	protected int index;
 	protected final AttributeMap attributes;
+	protected final Set<String> tags;
 	
-	NetworkElement (NetPlan netPlan , long id , int index , AttributeMap attributes) { this.netPlan = netPlan; this.id = id; this.index = index; this.attributes = new AttributeMap (attributes); }
+	NetworkElement (NetPlan netPlan , long id , int index , AttributeMap attributes) { this.netPlan = netPlan; this.id = id; this.index = index; this.attributes = new AttributeMap (attributes); this.tags = new HashSet<> (); }
 
 	/**
 	 * <p>Checks whether this element (demand, node, route...) is attached to a netPlan object. When negative, an exception will be thrown.</p>
@@ -64,12 +65,7 @@ public class NetworkElement
 	 */
 	final public boolean equals(Object o) 
 	{
-//		System.out.println ("Check equal: this: " + this + ", other: " + ((NetworkElement) o));
-//		System.out.println ("o instanceof NetworkElement: "+ (o instanceof NetworkElement));
-//		System.out.println ("((NetworkElement)o).id == this.id: "+ (((NetworkElement)o).id == this.id));
-//		System.out.println ("(((NetworkElement)o).netPlan == this.netPlan): "+ (((NetworkElement)o).netPlan == this.netPlan));
 			return (o == this); 
-//			return (o instanceof NetworkElement) && (((NetworkElement)o).id == this.id) && (((NetworkElement)o).netPlan == this.netPlan); 
 	}
 	
 	final boolean isDeepCopy (NetworkElement e2) 
@@ -77,6 +73,7 @@ public class NetworkElement
 		if (this.id != e2.id) return false;
 		if (this.index != e2.index) return false;
 		if (!this.attributes.equals(e2.attributes)) return false;
+		if (!this.tags.equals (e2.tags)) return false;
 		return true;
 	}
 
@@ -96,6 +93,32 @@ public class NetworkElement
 		return value == null ? netPlan.getAttribute (key) : value;
 	}
 
+	public void addTag (String tag)
+	{
+		this.tags.add (tag);
+		Set<NetworkElement> setElements = netPlan.cache_taggedElements.get (tag);
+		if (setElements == null) { setElements = new HashSet<> (); netPlan.cache_taggedElements.put (tag , setElements); }
+		setElements.add (this);
+	}
+	
+	public boolean hasTag (String tag)
+	{
+		return this.tags.contains (tag);
+	}
+
+	public void removeTag (String tag)
+	{
+		final boolean removed = this.tags.remove ();
+		if (removed)
+			netPlan.cache_taggedElements.get (tag).remove (this);
+	}
+	
+	public Set<String> getTags ()
+	{
+		return Collections.unmodifiableSet(this.tags);
+	}
+	
+	
 	/**
 	 * <p>Returns the element attributes (a copy)</p>
 	 * @return the attribute map
@@ -202,4 +225,12 @@ public class NetworkElement
 	final public boolean wasRemoved () { return (netPlan == null); }
 
 	final protected void removeId () { this.netPlan = null; } // called when the element is removed from the net2plan object
+
+
+	void checkCachesConsistency ()
+	{
+		/* Check all the tags here are in the cache */
+		for (String tag : tags) if (!netPlan.cache_taggedElements.get(tag).contains (this)) throw new RuntimeException ();
+	}
+
 }

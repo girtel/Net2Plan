@@ -708,6 +708,7 @@ public class Demand extends NetworkElement
 	 */
 	void checkCachesConsistency ()
 	{
+		super.checkCachesConsistency ();
 		double check_carriedTraffic = 0;
 		if (layer.routingType == RoutingType.SOURCE_ROUTING)
 		{

@@ -630,6 +630,8 @@ public class Route extends NetworkElement
 	
 	void checkCachesConsistency ()
 	{
+		super.checkCachesConsistency ();
+
 		assertTrue (layer.routes.contains(this));
 		assertTrue (demand.cache_routes.contains(this));
 		assertNotNull (ingressNode.netPlan);

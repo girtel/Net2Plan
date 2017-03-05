@@ -594,6 +594,8 @@ public class MulticastTree extends NetworkElement
 	
 	void checkCachesConsistency ()
 	{
+		super.checkCachesConsistency ();
+
 		if (!layer.multicastTrees.contains(this)) throw new RuntimeException ("Bad");
 		if (!demand.cache_multicastTrees.contains(this)) throw new RuntimeException ("Bad");
 		if (linkSet == null) throw new RuntimeException ("Multicast tree " + this + ", linkSet == null");

@@ -409,6 +409,8 @@ public class MulticastDemand extends NetworkElement
 
 	void checkCachesConsistency ()
 	{
+		super.checkCachesConsistency ();
+
 		double check_arriedTraffic = 0;
 		for (MulticastTree t : cache_multicastTrees)
 		{

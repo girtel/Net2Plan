@@ -758,6 +758,8 @@ public class Node extends NetworkElement
 
 	void checkCachesConsistency ()
 	{
+		super.checkCachesConsistency ();
+
 		if (isUp && netPlan.cache_nodesDown.contains(this)) throw new RuntimeException ("Bad");
 		if (!isUp && !netPlan.cache_nodesDown.contains(this)) throw new RuntimeException ("Bad");
 		for (Link link : cache_nodeIncomingLinks) if (link.destinationNode != this) throw new RuntimeException ("Bad");

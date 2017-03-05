@@ -542,6 +542,7 @@ public class Link extends NetworkElement
 
 	void checkCachesConsistency ()
 	{
+		super.checkCachesConsistency ();
 		if (layer.netPlan != this.netPlan) throw new RuntimeException ("Bad");
 		if (!layer.links.contains(this)) throw new RuntimeException ("Bad");
 		double check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = 0;
