@@ -23,8 +23,6 @@ import com.net2plan.utils.SwingUtils;
 import com.net2plan.utils.Triple;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -91,18 +89,14 @@ public class GUIConfiguration extends JDialog implements ActionListener
             }
         }
 
-        tabbedPane.addChangeListener(new ChangeListener()
+        tabbedPane.addChangeListener(changeEvent ->
         {
-            @Override
-            public void stateChanged(ChangeEvent changeEvent)
-            {
-                final JTabbedPane tabPane = (JTabbedPane) changeEvent.getSource();
+            final JTabbedPane tabPane = (JTabbedPane) changeEvent.getSource();
 
-                if (tabPane.getSelectedComponent() == pane_generalOptions)
-                {
-                    generalParameterPanel.setParameters(net2planParameters);
-                    generalParameterPanel.setParameterValues(Configuration.getNet2PlanOptions());
-                }
+            if (tabPane.getSelectedComponent() == pane_generalOptions)
+            {
+                generalParameterPanel.setParameters(net2planParameters);
+                generalParameterPanel.setParameterValues(Configuration.getNet2PlanOptions());
             }
         });
 
@@ -120,33 +114,18 @@ public class GUIConfiguration extends JDialog implements ActionListener
                     String description;
                     String name;
 
-                    try
-                    {
-                        name = instance.getName();
-                    } finally
-                    {
-                    }
+                    name = instance.getName();
 
                     if (name == null || name.isEmpty()) continue;
 
-                    try
-                    {
-                        description = instance.getDescription();
-                    } finally
-                    {
-                    }
+                    description = instance.getDescription();
 
                     JPanel subTab = new JPanel(new BorderLayout());
                     if (description != null && !description.isEmpty())
                         subTab.add(new JLabel(description), BorderLayout.NORTH);
 
                     List<Triple<String, String, String>> parameters;
-                    try
-                    {
-                        parameters = instance.getParameters();
-                    } finally
-                    {
-                    }
+                    parameters = instance.getParameters();
 
                     System.out.println("Plugin name :" + name + ", descrption: " + description + ", parameters: " + parameters);
 
@@ -157,9 +136,8 @@ public class GUIConfiguration extends JDialog implements ActionListener
                     parameterPanel.setParameterValues(instance.getCurrentOptions());
                     subTab.add(parameterPanel, BorderLayout.CENTER);
                     tabbedPane.addTab(name, subTab);
-                } catch (Throwable e)
+                } catch (Throwable ignored)
                 {
-
                 }
             }
         }

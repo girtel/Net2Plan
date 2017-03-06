@@ -20,6 +20,7 @@ import java.util.List;
 public class SolverCheckPanel extends JPanel implements ActionListener
 {
     private final JPanel pn_text;
+    private final JPanel stackPanel; // Stacks up the dialogs for saving solver paths.
     private final JToolBar tb_buttons;
     private final JTextArea txt_info;
 
@@ -47,13 +48,14 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
         this.setLayout(new BorderLayout());
 
+        this.stackPanel = new JPanel();
+        this.stackPanel.setLayout(new BoxLayout(stackPanel, BoxLayout.PAGE_AXIS));
+
         this.tb_buttons = new JToolBar(JToolBar.VERTICAL);
         this.tb_buttons.setFloatable(false);
         this.tb_buttons.setFocusable(false);
         this.tb_buttons.setBorderPainted(false);
         this.tb_buttons.setRollover(false);
-
-        List<JButton> btn_solverButtons = new ArrayList<>();
 
         // Adding as many buttons as solvers there are.
         for (JOMSolver solver : JOMSolver.values())
@@ -62,7 +64,6 @@ public class SolverCheckPanel extends JPanel implements ActionListener
             btn.setFocusable(false);
             btn.addActionListener(this);
 
-            btn_solverButtons.add(btn);
             tb_buttons.add(btn);
         }
 
@@ -77,6 +78,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
         this.pn_text = new JPanel(new BorderLayout());
         this.pn_text.add(new JScrollPane(txt_info), BorderLayout.CENTER);
+        this.pn_text.add(stackPanel, BorderLayout.SOUTH);
 
         this.add(tb_buttons, BorderLayout.EAST);
         this.add(pn_text, BorderLayout.CENTER);
@@ -94,6 +96,10 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
             // Do not allow to click again
             tb_buttons.setEnabled(false);
+
+            // Cleaning old dialogs
+            stackPanel.removeAll();
+            stackPanel.setVisible(false);
 
             // Getting OS
             final Pair<OS, String> foundOS = getOS();
@@ -326,6 +332,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         {
             txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at: " + solverDefaultPath + NEW_LINE);
             showSaveDialog(solver, solverDefaultPath);
+            stackPanel.setVisible(true);
         } else
         {
             txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at: " + solverDefaultPath + NEW_LINE);
@@ -359,9 +366,10 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
     private void showSaveDialog(final JOMSolver solver, final String path)
     {
+        // Container
         final JPanel pn_saveConfirm = new JPanel(new BorderLayout());
-        pn_saveConfirm.setVisible(false);
 
+        // Buttons
         final JButton btn_accept, btn_refuse;
 
         btn_accept = new JButton("Save");
@@ -369,16 +377,6 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
         btn_refuse = new JButton("Cancel");
         btn_refuse.setFocusable(false);
-
-        pn_saveConfirm.add(new JLabel("New solver path has been found. Save it under configuration?: "), BorderLayout.CENTER);
-
-        final JPanel aux = new JPanel(new GridBagLayout());
-        aux.add(btn_accept);
-        aux.add(btn_refuse);
-
-        pn_saveConfirm.add(aux, BorderLayout.EAST);
-
-        pn_text.add(pn_saveConfirm, BorderLayout.SOUTH);
 
         btn_accept.addActionListener(e ->
         {
@@ -393,7 +391,15 @@ public class SolverCheckPanel extends JPanel implements ActionListener
             pn_text.remove(pn_saveConfirm);
         });
 
-        pn_saveConfirm.setVisible(true);
+        pn_saveConfirm.add(new JLabel("New path has been found for solver: " + solver.name() + ". Save it under configuration?: "), BorderLayout.CENTER);
+
+        final JPanel buttonPanel = new JPanel(new GridBagLayout());
+        buttonPanel.add(btn_accept);
+        buttonPanel.add(btn_refuse);
+
+        // Adding to main panel
+        pn_saveConfirm.add(buttonPanel, BorderLayout.EAST);
+        stackPanel.add(pn_saveConfirm);
     }
 
     private void savePathToConfiguration(final JOMSolver solver, final String path)
