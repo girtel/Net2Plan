@@ -442,12 +442,12 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         switch (currentOS)
         {
             case windows:
-                solverDefaultPath = getLibraryNameForOS(currentOS, solver);
+                solverDefaultPath = solver.name() + ".dll";
                 message = callJOM(solver, solverDefaultPath);
                 break;
             case linux:
             case macintosh:
-                solverDefaultPath = getLibraryNameForOS(currentOS, solver);
+                solverDefaultPath = "lib" + solver.name();
                 message = callJOM(solver, solverDefaultPath);
                 break;
             default:
@@ -461,7 +461,17 @@ public class SolverCheckPanel extends JPanel implements ActionListener
             showSaveDialog(solver, solverDefaultPath);
         } else
         {
-            txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at: " + solverDefaultPath + NEW_LINE);
+            txt_info.append(ERROR_HEADER + "Solver " + solver.name().toUpperCase() + "could not be found in the system." + NEW_LINE);
+            txt_info.append(NEW_LINE);
+            txt_info.append(MESSAGE_HEADER + " * Check that the solver has been correctly installed on your system." + NEW_LINE);
+            txt_info.append(MESSAGE_HEADER + " * If the solver has been installed in a custom path, make sure that Net2Plan's configuration is correctly pointing to the solver's binary file." + NEW_LINE);
+            if (currentOS == OS.windows)
+            {
+                txt_info.append(MESSAGE_HEADER + " * Under windows, try installing your solver dll file under: c:/Windows/system32" + NEW_LINE);
+            } else if (currentOS == OS.linux)
+            {
+                txt_info.append(MESSAGE_HEADER + " * Under linux, try installing your solver using your distribution package manager." + NEW_LINE);
+            }
         }
     }
 
@@ -590,25 +600,5 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         {
             return Pair.of(OS.unknown, "");
         }
-    }
-
-    private static String getLibraryNameForOS(final OS operatingSystem, final JOMSolver solver)
-    {
-        final String libraryName;
-        switch (operatingSystem)
-        {
-            case windows:
-                libraryName = solver.name() + ".dll";
-                break;
-            case linux:
-            case macintosh:
-                libraryName = "lib" + solver.name();
-                break;
-            default:
-            case unknown:
-                throw new RuntimeException("Unknown OS, cannot proceed...");
-        }
-
-        return libraryName;
     }
 }
