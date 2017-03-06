@@ -9,9 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -38,9 +36,11 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
     private boolean isJNAPathSet;
     private boolean isJAVAPathSet;
+    private boolean isLinuxPathSet;
 
     private String JNAPath;
     private String JAVAPath;
+    private String linuxPath;
 
     public SolverCheckPanel()
     {
@@ -76,6 +76,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         this.txt_info = new JTextArea();
         this.txt_info.setText("");
 
+        // Building main window
         this.pn_text = new JPanel(new BorderLayout());
         this.pn_text.add(new JScrollPane(txt_info), BorderLayout.CENTER);
         this.pn_text.add(stackPanel, BorderLayout.SOUTH);
@@ -89,7 +90,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
     {
         try
         {
-            // Previous steps
+            // *Previous steps*
 
             // Clean window
             txt_info.setText("");
@@ -130,8 +131,10 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
             txt_info.append(NEW_LINE);
 
+            // Checking for VM variables
             txt_info.append(MESSAGE_HEADER + "Checking current runtime environment..." + NEW_LINE);
 
+            // JNA
             final String jnaDefaultPath = System.getProperty("jna.library.path");
 
             if (jnaDefaultPath != null)
@@ -146,6 +149,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
                 JNAPath = null;
             }
 
+            // JAVA
             final String javaDefaultPath = System.getProperty("java.library.path");
 
             if (javaDefaultPath != null)
@@ -160,34 +164,58 @@ public class SolverCheckPanel extends JPanel implements ActionListener
                 JAVAPath = null;
             }
 
-            // Calculating selected solver
+            // LINUX
+            if (currentOS == OS.linux)
+            {
+                final String linuxDefaultPath = System.getenv("LD_LIBRARY_PATH");
+                if (linuxDefaultPath != null)
+                {
+                    txt_info.append(MESSAGE_HEADER + "Default Linux library path set to: " + linuxDefaultPath + NEW_LINE);
+                    isLinuxPathSet = true;
+                    linuxPath = linuxDefaultPath;
+                } else
+                {
+                    txt_info.append(WARNING_HEADER + "Default Linux library path is not currently defined..." + NEW_LINE);
+                    isLinuxPathSet = false;
+                }
+            } else
+            {
+                isLinuxPathSet = false;
+            }
+
+            // Calculating selected solvers
             final List<JOMSolver> selectedSolvers = new ArrayList<>();
 
+            // The solver is found in the name of the clicked button.
             final JButton src = (JButton) actionEvent.getSource();
             final String selectedSolverName = src.getText().replace("Check ", "").trim();
 
             try
             {
+                // Enum from string
                 final JOMSolver selectedSolver = JOMSolver.valueOf(selectedSolverName);
                 selectedSolvers.add(selectedSolver);
             } catch (IllegalArgumentException e)
             {
+                // If the selected choice is not on the enum, select all of them...
                 selectedSolvers.addAll(Arrays.asList(JOMSolver.values()));
             }
 
+            // Could not find solvers...
             if (selectedSolvers.isEmpty())
             {
                 txt_info.append(ERROR_HEADER + "Internal problem: no solver was selected for testing." + NEW_LINE);
                 throw new RuntimeException("Could not find a solver for testing. Meaning that the provided solver is unknown or built poorly.");
             }
 
+            // Running tester...
             txt_info.append(NEW_LINE);
 
             txt_info.append(MESSAGE_HEADER + "Checking for solvers: " + Arrays.toString(selectedSolvers.toArray()) + NEW_LINE);
 
             txt_info.append(NEW_LINE);
 
-            // Checking solvers
+            // Checking solvers individually
             for (JOMSolver solvers : selectedSolvers)
             {
                 switch (solvers)
@@ -234,14 +262,14 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         txt_info.append(MESSAGE_HEADER + "Looking for solver: " + solverNameUppercase + NEW_LINE);
         solverPath = Configuration.getDefaultSolverLibraryName(solverName);
 
-        final boolean useDefaultPath = solverPath.isEmpty();
-
-        if (useDefaultPath)
+        // No path has been provided by the user.
+        if (solverPath.isEmpty())
         {
             txt_info.append(WARNING_HEADER + "Directory for " + solverNameUppercase + " solver has been left blank. Using default path..." + NEW_LINE);
             checkSolverAtDefaultFolder(solver);
         } else
         {
+            // Checking at custom location.
             message = callJOM(solver, solverPath);
 
             if (message.isEmpty())
@@ -264,23 +292,36 @@ public class SolverCheckPanel extends JPanel implements ActionListener
     {
         String message;
 
+        // Checking at JNA
         if (isJNAPathSet)
         {
             txt_info.append(MESSAGE_HEADER + "Checking for solver at JNA library path: " + JNAPath + NEW_LINE);
-            message = callJOM(solver, JNAPath);
 
-            if (message.isEmpty())
+            final List<String> strings = splitPath(JNAPath);
+            if (strings != null)
             {
-                txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at directory: " + JNAPath + NEW_LINE);
+                for (String separatedPath : strings)
+                {
+                    message = callJOM(solver, separatedPath);
+
+                    if (message.isEmpty())
+                    {
+                        txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at directory: " + separatedPath + NEW_LINE);
+                    } else
+                    {
+                        txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + separatedPath + NEW_LINE);
+                    }
+                }
             } else
             {
-                txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + JNAPath + NEW_LINE);
+                throw new RuntimeException("Internal: String not properly split.");
             }
         } else
         {
             txt_info.append(WARNING_HEADER + "JNA library path not set. Ignoring..." + NEW_LINE);
         }
 
+        // Checking at JAVA
         if (isJAVAPathSet)
         {
             txt_info.append(MESSAGE_HEADER + "Checking for solver at JAVA library path: " + JAVAPath + NEW_LINE);
@@ -302,7 +343,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
                 }
             } else
             {
-                throw new RuntimeException("Internal: ");
+                throw new RuntimeException("Internal: String not properly split.");
             }
         } else
         {
@@ -311,6 +352,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
         txt_info.append(MESSAGE_HEADER + "Checking for solver by using system defaults..." + NEW_LINE);
 
+        // Checking without giving a path
         final String solverDefaultPath;
         switch (currentOS)
         {
@@ -332,7 +374,6 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         {
             txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at: " + solverDefaultPath + NEW_LINE);
             showSaveDialog(solver, solverDefaultPath);
-            stackPanel.setVisible(true);
         } else
         {
             txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at: " + solverDefaultPath + NEW_LINE);
@@ -400,6 +441,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         // Adding to main panel
         pn_saveConfirm.add(buttonPanel, BorderLayout.EAST);
         stackPanel.add(pn_saveConfirm);
+        stackPanel.setVisible(true);
     }
 
     private void savePathToConfiguration(final JOMSolver solver, final String path)
