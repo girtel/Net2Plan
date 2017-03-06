@@ -489,6 +489,8 @@ public class Route extends NetworkElement
 		for (NetworkElement e : cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.keySet())
 			if (e instanceof Resource) ((Resource) e).removeTraversingRoute(this);
 		
+        for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
+
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		removeId();
 	}

@@ -515,6 +515,7 @@ public class MulticastTree extends NetworkElement
 		for (Node node : cache_traversedNodes) node.cache_nodeAssociatedulticastTrees.remove(this);
 		demand.cache_multicastTrees.remove(this);
 		layer.cache_multicastTreesDown.remove(this);
+        for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		removeId();
 	}

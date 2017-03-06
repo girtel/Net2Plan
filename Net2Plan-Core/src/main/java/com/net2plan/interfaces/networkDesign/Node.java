@@ -678,6 +678,7 @@ public class Node extends NetworkElement
 		}
 
 		netPlan.cache_id2NodeMap.remove (id);
+        for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.nodes , this.index);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		removeId ();

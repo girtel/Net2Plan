@@ -382,6 +382,7 @@ public class MulticastDemand extends NetworkElement
 		NetPlan.removeNetworkElementAndShiftIndexes (layer.multicastDemands , index);
 		ingressNode.cache_nodeOutgoingMulticastDemands.remove (this);
 		for (Node egressNode : egressNodes) egressNode.cache_nodeIncomingMulticastDemands.remove (this);
+        for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		removeId();
 	}

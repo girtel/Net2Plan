@@ -464,7 +464,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 							break;
 
 						default:
-							throw new RuntimeException("Bad");
+							throw new RuntimeException("Bad: " + startElementName);
 					}
 					break;
 

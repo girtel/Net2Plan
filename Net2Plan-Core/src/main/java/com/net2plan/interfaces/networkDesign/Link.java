@@ -512,6 +512,8 @@ public class Link extends NetworkElement
 			for (Demand d : layer.demands) if (x_d_linkToRemove.get(d.index) > PRECISION_FACTOR) layer.updateHopByHopRoutingDemand(d);
 		}
 
+        for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
+
 		ErrorHandling.DEBUG = previousErrorHandling;
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		removeId();

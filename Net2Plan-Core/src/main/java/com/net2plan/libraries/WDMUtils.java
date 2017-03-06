@@ -737,7 +737,8 @@ public class WDMUtils
 		return lp;
 	}
 
-	/** Sets the recovery type of the lightpath, to the one given
+	/** Sets the recovery type of the lightpath demand, to the one given
+	 * @param d the demand (representing all the lightpaths in it)
 	 * @param recoveryType the recovery type
 	 */
 	public static void setRecoveryType (Demand d , DemandRecoveryType recoveryType)
@@ -745,10 +746,11 @@ public class WDMUtils
 		d.setAttribute(RECOVERYTYPE_ATTRIBUTE_NAME, recoveryType.toString());
 	}
 
-	/** Sets the recovery type of the lightpath, to the one given
-	 * @param recoveryType the recovery type
+	/** Sets the recovery type of the lightpath, to the one given. An exception can be thrown if the attribute of the demand storing this information exists, but has a wrong format
+	 * @param d the demand (representing all the lightpaths in it)
 	 * @param defaultRecovery if included, this default recovery type is returned when the demand has not the 
 	 * attribute with the recovery information
+	 * @return see above
 	 */
 	public static DemandRecoveryType getRecoveryType (Demand d , DemandRecoveryType ...defaultRecovery)
 	{

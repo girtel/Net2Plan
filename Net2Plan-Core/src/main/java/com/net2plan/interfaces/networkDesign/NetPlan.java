@@ -137,44 +137,6 @@ public class NetPlan extends NetworkElement
 
     DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping> interLayerCoupling;
 
-    public Set<Demand> getTaggedDemands (String tag , NetworkLayer... optionalLayerParameter)
-    {
-        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-    	final Set<NetworkElement> el = cache_taggedElements (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof Demand).map(e->(Demand) e).collect (Collectors.toSet());
-    }
-    public Set<Link> getTaggedLinks (String tag) 
-    {
-    	final Set<NetworkElement> el = cache_taggedElements (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof Link).map(e->(Link) e).collect (Collectors.toSet());
-    }
-    public Set<MulticastDemand> getTaggedMulticastDemands (String tag) 
-    {
-    	final Set<NetworkElement> el = cache_taggedElements (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof MulticastDemand).map(e->(MulticastDemand) e).collect (Collectors.toSet());
-    }
-    public Set<MulticastTree> getTaggedMulticastTrees (String tag) 
-    {
-    	final Set<NetworkElement> el = cache_taggedElements (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof MulticastTree).map(e->(MulticastTree) e).collect (Collectors.toSet());
-    }
-    public Set<NetworkLayer> getTaggedLayers (String tag) 
-    {
-    	final Set<NetworkElement> el = cache_taggedElements (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof NetworkLayer).map(e->(NetworkLayer) e).collect (Collectors.toSet());
-    }
-    public Set<Node> getTaggedNodes (String tag) 
-    {
-    	final Set<NetworkElement> el = cache_taggedElements (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof Node).map(e->(Node) e).collect (Collectors.toSet());
-    }
-    public Set<Resource> getTaggedResources (String tag) 
-    {
-    	final Set<NetworkElement> el = cache_taggedElements (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof Resource).map(e->(Resource) e).collect (Collectors.toSet());
-    }
-    public Set<Route> getTaggedRoutes (String tag) 
-    {
-    	final Set<NetworkElement> el = cache_taggedElements (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof Route).map(e->(Route) e).collect (Collectors.toSet());
-    }
-    public Set<SharedRiskGroup> getTaggedSrgs (String tag) 
-    {
-    	final Set<NetworkElement> el = cache_taggedElements (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof SharedRiskGroup).map(e->(SharedRiskGroup) e).collect (Collectors.toSet());
-    }
-
     /**
      * <p>Default constructor. Creates an empty design</p>
      *
@@ -395,7 +357,11 @@ public class NetPlan extends NetworkElement
 //            System.out.println(this.nextElementId + "," + np2.nextElementId);
             throw new RuntimeException("Bad");
         } //return false;
-
+        if (!this.tags.equals(np2.tags)) throw new RuntimeException("Bad. Tags: " + this.tags + ", otheR: " + np2.tags);
+        if (!this.cache_taggedElements.keySet().equals(np2.cache_taggedElements.keySet())) throw new RuntimeException("Bad");
+        for (String tag : cache_taggedElements.keySet()) 
+       		if (this.cache_taggedElements.get(tag).size() != np2.cache_taggedElements.get(tag).size())
+       			throw new RuntimeException("Bad");
         for (int cont = 0; cont < nodes.size(); cont++)
             if (!this.getNode(cont).isDeepCopy(np2.getNode(cont))) throw new RuntimeException("Bad"); //return false;
         for (int cont = 0; cont < resources.size(); cont++)
@@ -1539,8 +1505,14 @@ public class NetPlan extends NetworkElement
         this.cache_id2RouteMap = netPlan.cache_id2RouteMap;
         this.cache_id2MulticastTreeMap = netPlan.cache_id2MulticastTreeMap;
         this.cache_id2srgMap = netPlan.cache_id2srgMap;
-        this.cache_taggedElements = netPlan.cache_taggedElements;
+        this.cache_taggedElements = netPlan.cache_taggedElements; 
         this.interLayerCoupling = netPlan.interLayerCoupling;
+        this.tags.clear(); this.tags.addAll(netPlan.tags);
+        for (String tag : this.tags) // remove reference to origin netPlan in tags (the other network elements do not change, but NetPlan does) 
+        { 
+        	this.cache_taggedElements.get(tag).remove(netPlan); 
+        	this.cache_taggedElements.get(tag).add(this); 
+        }
         this.attributes.clear();
         this.attributes.putAll(netPlan.attributes);
         for (Node node : netPlan.nodes) node.netPlan = this;
@@ -1946,6 +1918,8 @@ public class NetPlan extends NetworkElement
         this.networkName = originNetPlan.networkName;
         this.nextElementId = originNetPlan.nextElementId;
         this.interLayerCoupling = new DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping>(DemandLinkMapping.class);
+        this.tags.clear(); for (String tag : originNetPlan.tags) this.addTag (tag);
+        
 
 		/* Create the new network elements, not all the fields filled */
         for (Node originNode : originNetPlan.nodes)
@@ -1982,7 +1956,7 @@ public class NetPlan extends NetworkElement
         for (NetworkLayer originLayer : originNetPlan.layers)
         {
             NetworkLayer newLayer = new NetworkLayer(this, originLayer.id, originLayer.index, originLayer.demandTrafficUnitsName, originLayer.description, originLayer.name, originLayer.linkCapacityUnitsName, originLayer.defaultNodeIconURL, originLayer.attributes);
-            for (String tag : originLayer.getTags ()) newElement.addTag (tag);
+            for (String tag : originLayer.getTags ()) newLayer.addTag (tag);
             cache_id2LayerMap.put(originLayer.id, newLayer);
             layers.add(newLayer);
             if (originLayer.id == originNetPlan.defaultLayer.id)
@@ -4766,6 +4740,91 @@ public class NetPlan extends NetworkElement
         return res;
     }
 
+    /** Returns the set of demands in the given layer with the given tag. If no layer is provided, the defaulf layer is assumed.
+     * @param tag the tag
+     * @param optionalLayerParameter the layer (optional)
+     * @return the set (or an empty set if there are no elements to return)
+     */
+    public Set<Demand> getTaggedDemands (String tag , NetworkLayer... optionalLayerParameter)
+    {
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof Demand).map(e->(Demand) e).filter(e->e.getLayer().equals(layer)).collect (Collectors.toSet());
+    }
+    /** Returns the set of links in the given layer with the given tag. If no layer is provided, the defaulf layer is assumed.
+     * @param tag the tag
+     * @param optionalLayerParameter the layer (optional)
+     * @return the set (or an empty set if there are no elements to return)
+     */
+    public Set<Link> getTaggedLinks (String tag , NetworkLayer... optionalLayerParameter)
+    {
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof Link).map(e->(Link) e).filter(e->e.getLayer().equals(layer)).collect (Collectors.toSet());
+    }
+    /** Returns the set of multicast demands in the given layer with the given tag. If no layer is provided, the defaulf layer is assumed.
+     * @param tag the tag
+     * @param optionalLayerParameter the layer (optional)
+     * @return the set (or an empty set if there are no elements to return)
+     */
+    public Set<MulticastDemand> getTaggedMulticastDemands (String tag , NetworkLayer... optionalLayerParameter)
+    {
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof MulticastDemand).map(e->(MulticastDemand) e).filter(e->e.getLayer().equals(layer)).collect (Collectors.toSet());
+    }
+    /** Returns the set of multicast trees in the given layer with the given tag. If no layer is provided, the defaulf layer is assumed.
+     * @param tag the tag
+     * @param optionalLayerParameter the layer (optional)
+     * @return the set (or an empty set if there are no elements to return)
+     */
+    public Set<MulticastTree> getTaggedMulticastTrees (String tag , NetworkLayer... optionalLayerParameter)
+    {
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof MulticastTree).map(e->(MulticastTree) e).filter(e->e.getLayer().equals(layer)).collect (Collectors.toSet());
+    }
+    /** Returns the set of layers with the given tag. 
+     * @param tag the tag
+     * @return the set (or an empty set if there are no elements to return)
+     */
+    public Set<NetworkLayer> getTaggedLayers (String tag) 
+    {
+    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof NetworkLayer).map(e->(NetworkLayer) e).collect (Collectors.toSet());
+    }
+    /** Returns the set of nodes with the given tag. 
+     * @param tag the tag
+     * @return the set (or an empty set if there are no elements to return)
+     */
+    public Set<Node> getTaggedNodes (String tag) 
+    {
+    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof Node).map(e->(Node) e).collect (Collectors.toSet());
+    }
+    /** Returns the set of resources with the given tag. 
+     * @param tag the tag
+     * @return the set (or an empty set if there are no elements to return)
+     */
+    public Set<Resource> getTaggedResources (String tag) 
+    {
+    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof Resource).map(e->(Resource) e).collect (Collectors.toSet());
+    }
+    /** Returns the set of routes in the given layer with the given tag. If no layer is provided, the defaulf layer is assumed.
+     * @param tag the tag
+     * @param optionalLayerParameter the layer (optional)
+     * @return the set (or an empty set if there are no elements to return)
+     */
+    public Set<Route> getTaggedRoutes (String tag , NetworkLayer... optionalLayerParameter)
+    {
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof Route).map(e->(Route) e).filter(e->e.getLayer().equals(layer)).collect (Collectors.toSet());
+    }
+    /** Returns the set of SRGs with the given tag. 
+     * @param tag the tag
+     * @return the set (or an empty set if there are no elements to return)
+     */
+    public Set<SharedRiskGroup> getTaggedSrgs (String tag) 
+    {
+    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof SharedRiskGroup).map(e->(SharedRiskGroup) e).collect (Collectors.toSet());
+    }
+
+
+    
     /**
      * <p>Returns an array with the cost of each multicast tree in the layer. The cost of a multicast tree is given by the sum
      * of the costs in its links, given by the provided cost vector. If the cost vector provided is {@code null},
@@ -5063,13 +5122,14 @@ public class NetPlan extends NetworkElement
         for (Demand demand : new LinkedList<Demand>(layer.demands)) demand.remove();
         for (MulticastDemand demand : new LinkedList<MulticastDemand>(layer.multicastDemands)) demand.remove();
         for (Node node : nodes) node.removeUrlNodeIcon(layer);
-
+        for (String tag : layer.tags) this.cache_taggedElements.get(tag).remove(layer);
+        
         netPlan.interLayerCoupling.removeVertex(layer);
         netPlan.cache_id2LayerMap.remove(layer.id);
         NetPlan.removeNetworkElementAndShiftIndexes(netPlan.layers, layer.index);
         if (netPlan.defaultLayer.equals(layer)) netPlan.defaultLayer = netPlan.layers.get(0);
         if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-        removeId();
+        layer.removeId();
     }
 
     /**
@@ -5383,8 +5443,7 @@ public class NetPlan extends NetworkElement
                 boolean emptyNode = node.attributes.isEmpty();
 
                 XMLUtils.indent(writer, 1);
-                if (emptyNode) writer.writeEmptyElement("node");
-                else writer.writeStartElement("node");
+                writer.writeStartElement("node");
 
                 Point2D position = node.nodeXYPositionMap;
                 writer.writeAttribute("id", Long.toString(node.id));
@@ -5399,7 +5458,7 @@ public class NetPlan extends NetworkElement
                     if (node.getUrlNodeIcon(layer) != null)
                         writer.writeAttribute("nodeIconURLLayer_" + layer.getId(), node.getUrlNodeIcon(layer).toString());
 
-                for (String tag : node.tags) { XMLUtils.indent(writer, 1); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
+                for (String tag : node.tags) { XMLUtils.indent(writer, 2); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
                 for (Entry<String, String> entry : node.attributes.entrySet())
                 {
@@ -5409,20 +5468,14 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("value", entry.getValue());
                 }
 
-                if (!emptyNode)
-                {
-                    XMLUtils.indent(writer, 1);
-                    writer.writeEndElement();
-                }
+                XMLUtils.indent(writer, 1);
+                writer.writeEndElement();
             }
 
             for (Resource res : resources)
             {
-                final boolean emptyResource = res.attributes.isEmpty();
-
                 XMLUtils.indent(writer, 1);
-                if (emptyResource) writer.writeEmptyElement("resource");
-                else writer.writeStartElement("resource");
+                writer.writeStartElement("resource");
 
                 writer.writeAttribute("id", Long.toString(res.id));
                 writer.writeAttribute("hostNodeId", Long.toString(res.hostNode.id));
@@ -5441,7 +5494,7 @@ public class NetPlan extends NetworkElement
                 }
                 writer.writeAttribute("baseResourceAndOccupiedCapacitiesMap", CollectionUtils.join(baseResourceAndOccupiedCapacitiesMap, " "));
 
-                for (String tag : res.tags) { XMLUtils.indent(writer, 1); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
+                for (String tag : res.tags) { XMLUtils.indent(writer, 2); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
                 for (Entry<String, String> entry : res.attributes.entrySet())
                 {
@@ -5451,11 +5504,8 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("value", entry.getValue());
                 }
 
-                if (!emptyResource)
-                {
-                    XMLUtils.indent(writer, 1);
-                    writer.writeEndElement();
-                }
+                XMLUtils.indent(writer, 1);
+                writer.writeEndElement();
             }
 
             for (NetworkLayer layer : layers)
@@ -5474,11 +5524,8 @@ public class NetPlan extends NetworkElement
 
                 for (Link link : layer.links)
                 {
-                    boolean emptyLink = link.attributes.isEmpty();
-
                     XMLUtils.indent(writer, 2);
-                    if (emptyLink) writer.writeEmptyElement("link");
-                    else writer.writeStartElement("link");
+                    writer.writeStartElement("link");
 
                     writer.writeAttribute("id", Long.toString(link.id));
                     writer.writeAttribute("originNodeId", Long.toString(link.originNode.id));
@@ -5488,7 +5535,7 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("propagationSpeedInKmPerSecond", Double.toString(link.propagationSpeedInKmPerSecond));
                     writer.writeAttribute("isUp", Boolean.toString(link.isUp));
 
-                    for (String tag : link.tags) { XMLUtils.indent(writer, 1); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
+                    for (String tag : link.tags) { XMLUtils.indent(writer, 3); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
                     for (Entry<String, String> entry : link.attributes.entrySet())
                     {
@@ -5498,20 +5545,14 @@ public class NetPlan extends NetworkElement
                         writer.writeAttribute("value", entry.getValue());
                     }
 
-                    if (!emptyLink)
-                    {
-                        XMLUtils.indent(writer, 2);
-                        writer.writeEndElement();
-                    }
+                    XMLUtils.indent(writer, 2);
+                    writer.writeEndElement();
                 }
 
                 for (Demand demand : layer.demands)
                 {
-                    boolean emptyDemand = demand.attributes.isEmpty() && demand.mandatorySequenceOfTraversedResourceTypes.isEmpty();
-
                     XMLUtils.indent(writer, 2);
-                    if (emptyDemand) writer.writeEmptyElement("demand");
-                    else writer.writeStartElement("demand");
+                    writer.writeStartElement("demand");
 
                     writer.writeAttribute("id", Long.toString(demand.id));
                     writer.writeAttribute("ingressNodeId", Long.toString(demand.ingressNode.id));
@@ -5525,7 +5566,7 @@ public class NetPlan extends NetworkElement
                         writer.writeAttribute("type", type);
                     }
 
-                    for (String tag : demand.tags) { XMLUtils.indent(writer, 1); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
+                    for (String tag : demand.tags) { XMLUtils.indent(writer, 3); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
                     for (Entry<String, String> entry : demand.attributes.entrySet())
                     {
@@ -5535,20 +5576,14 @@ public class NetPlan extends NetworkElement
                         writer.writeAttribute("value", entry.getValue());
                     }
 
-                    if (!emptyDemand)
-                    {
-                        XMLUtils.indent(writer, 2);
-                        writer.writeEndElement();
-                    }
+                    XMLUtils.indent(writer, 2);
+                    writer.writeEndElement();
                 }
 
                 for (MulticastDemand demand : layer.multicastDemands)
                 {
-                    boolean emptyDemand = demand.attributes.isEmpty();
-
                     XMLUtils.indent(writer, 2);
-                    if (emptyDemand) writer.writeEmptyElement("multicastDemand");
-                    else writer.writeStartElement("multicastDemand");
+                    writer.writeStartElement("multicastDemand");
 
                     writer.writeAttribute("id", Long.toString(demand.id));
                     writer.writeAttribute("ingressNodeId", Long.toString(demand.ingressNode.id));
@@ -5557,7 +5592,7 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("egressNodeIds", CollectionUtils.join(egressNodeIds, " "));
                     writer.writeAttribute("offeredTraffic", Double.toString(demand.offeredTraffic));
 
-                    for (String tag : demand.tags) { XMLUtils.indent(writer, 1); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
+                    for (String tag : demand.tags) { XMLUtils.indent(writer, 3); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
                     for (Entry<String, String> entry : demand.attributes.entrySet())
                     {
@@ -5567,20 +5602,14 @@ public class NetPlan extends NetworkElement
                         writer.writeAttribute("value", entry.getValue());
                     }
 
-                    if (!emptyDemand)
-                    {
-                        XMLUtils.indent(writer, 2);
-                        writer.writeEndElement();
-                    }
+                    XMLUtils.indent(writer, 2);
+                    writer.writeEndElement();
                 }
 
                 for (MulticastTree tree : layer.multicastTrees)
                 {
-                    boolean emptyTree = tree.attributes.isEmpty();
-
                     XMLUtils.indent(writer, 3);
-                    if (emptyTree) writer.writeEmptyElement("multicastTree");
-                    else writer.writeStartElement("multicastTree");
+                    writer.writeStartElement("multicastTree");
 
                     writer.writeAttribute("id", Long.toString(tree.id));
                     writer.writeAttribute("demandId", Long.toString(tree.demand.id));
@@ -5602,38 +5631,30 @@ public class NetPlan extends NetworkElement
                         linkIds.add(e.id);
                     writer.writeAttribute("initialSetLinks", CollectionUtils.join(linkIds, " "));
 
-                    for (String tag : tree.tags) { XMLUtils.indent(writer, 1); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
+                    for (String tag : tree.tags) { XMLUtils.indent(writer, 3); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
                     for (Entry<String, String> entry : tree.attributes.entrySet())
                     {
-                        XMLUtils.indent(writer, 4);
+                        XMLUtils.indent(writer, 3);
                         writer.writeEmptyElement("attribute");
                         writer.writeAttribute("key", entry.getKey());
                         writer.writeAttribute("value", entry.getValue());
                     }
 
-                    if (!emptyTree)
-                    {
-                        XMLUtils.indent(writer, 3);
-                        writer.writeEndElement();
-                    }
+                    XMLUtils.indent(writer, 3);
+                    writer.writeEndElement();
                 }
 
 
                 if (layer.routingType == RoutingType.SOURCE_ROUTING)
                 {
-                    boolean emptySourceRouting = !hasRoutes(layer);
                     XMLUtils.indent(writer, 2);
-                    if (emptySourceRouting) writer.writeEmptyElement("sourceRouting");
-                    else writer.writeStartElement("sourceRouting");
+                    writer.writeStartElement("sourceRouting");
 
                     for (Route route : layer.routes)
                     {
-                        boolean emptyRoute = route.attributes.isEmpty();
-
                         XMLUtils.indent(writer, 3);
-                        if (emptyRoute) writer.writeEmptyElement("route");
-                        else writer.writeStartElement("route");
+                        writer.writeStartElement("route");
 
                         writer.writeAttribute("id", Long.toString(route.id));
                         writer.writeAttribute("demandId", Long.toString(route.demand.id));
@@ -5648,7 +5669,7 @@ public class NetPlan extends NetworkElement
 
                         writer.writeAttribute("backupRoutes", CollectionUtils.join(NetPlan.getIds(route.backupRoutes), " "));
 
-                        for (String tag : route.tags) { XMLUtils.indent(writer, 1); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
+                        for (String tag : route.tags) { XMLUtils.indent(writer, 4); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
                         for (Entry<String, String> entry : route.attributes.entrySet())
                         {
@@ -5658,24 +5679,16 @@ public class NetPlan extends NetworkElement
                             writer.writeAttribute("value", entry.getValue());
                         }
 
-                        if (!emptyRoute)
-                        {
-                            XMLUtils.indent(writer, 3);
-                            writer.writeEndElement();
-                        }
-                    }
-
-                    if (!emptySourceRouting)
-                    {
-                        XMLUtils.indent(writer, 2);
+                        XMLUtils.indent(writer, 3);
                         writer.writeEndElement();
                     }
+
+                    XMLUtils.indent(writer, 2);
+                    writer.writeEndElement();
                 } else
                 {
-                    boolean emptyHopByHopRouting = !hasForwardingRules(layer);
                     XMLUtils.indent(writer, 2);
-                    if (emptyHopByHopRouting) writer.writeEmptyElement("hopByHopRouting");
-                    else writer.writeStartElement("hopByHopRouting");
+                    writer.writeStartElement("hopByHopRouting");
                     IntArrayList rows = new IntArrayList();
                     IntArrayList cols = new IntArrayList();
                     DoubleArrayList vals = new DoubleArrayList();
@@ -5692,14 +5705,11 @@ public class NetPlan extends NetworkElement
                         writer.writeAttribute("splittingRatio", Double.toString(splittingRatio));
                     }
 
-                    if (!emptyHopByHopRouting)
-                    {
-                        XMLUtils.indent(writer, 2);
-                        writer.writeEndElement();
-                    }
+                    XMLUtils.indent(writer, 2);
+                    writer.writeEndElement();
                 }
 
-                for (String tag : layer.tags) { XMLUtils.indent(writer, 1); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
+                for (String tag : layer.tags) { XMLUtils.indent(writer, 2); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
                 for (Entry<String, String> entry : layer.attributes.entrySet())
                 {
@@ -5715,11 +5725,8 @@ public class NetPlan extends NetworkElement
 
             for (SharedRiskGroup srg : srgs)
             {
-                boolean emptySRG = srg.attributes.isEmpty();
-
                 XMLUtils.indent(writer, 1);
-                if (emptySRG) writer.writeEmptyElement("srg");
-                else writer.writeStartElement("srg");
+                writer.writeStartElement("srg");
 
                 writer.writeAttribute("id", Long.toString(srg.id));
                 writer.writeAttribute("meanTimeToFailInHours", Double.toString(srg.meanTimeToFailInHours));
@@ -5727,7 +5734,7 @@ public class NetPlan extends NetworkElement
                 writer.writeAttribute("nodes", CollectionUtils.join(NetPlan.getIds(srg.nodes), " "));
                 writer.writeAttribute("links", CollectionUtils.join(NetPlan.getIds(srg.links), " "));
 
-                for (String tag : srg.tags) { XMLUtils.indent(writer, 1); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
+                for (String tag : srg.tags) { XMLUtils.indent(writer, 2); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
                 for (Entry<String, String> entry : srg.attributes.entrySet())
                 {
@@ -5737,11 +5744,8 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("value", entry.getValue());
                 }
 
-                if (!emptySRG)
-                {
-                    XMLUtils.indent(writer, 1);
-                    writer.writeEndElement();
-                }
+                XMLUtils.indent(writer, 1);
+                writer.writeEndElement();
             }
 
 
@@ -7023,7 +7027,7 @@ public class NetPlan extends NetworkElement
         
         /* Check tags caches: all tags in the caches are reflected in the elements (the other way around is not checked here, it is checked in each element) */
         for (String tag : cache_taggedElements.keySet ())
-        	for (NetworkElement e : cache_taggedElements.get(e))
+        	for (NetworkElement e : cache_taggedElements.get(tag))
         		if (!e.tags.contains (tag)) throw new RuntimeException();
 
 		/* What is in the cache is correct */

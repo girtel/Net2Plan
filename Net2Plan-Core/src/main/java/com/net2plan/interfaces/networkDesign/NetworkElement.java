@@ -12,10 +12,12 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import com.net2plan.internal.AttributeMap;
-
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
+import com.net2plan.internal.AttributeMap;
 
 /**
  * <p>Class defining a generic network element.</p>
@@ -38,18 +40,6 @@ public class NetworkElement
 	 * <p>Checks whether this element (demand, node, route...) is attached to a netPlan object. When negative, an exception will be thrown.</p>
 	 */
 	public final void checkAttachedToNetPlanObject () { if (netPlan == null) throw new Net2PlanException ("The element " + this + " is not associated to any NetPlan object"); }
-
-//	/**
-//	 * Checks whether this element (demand, node, route...) was not already removed from the NetPlan object. When negative, an exception will be thrown.
-//	 * @since 0.4.0
-//	 */
-//	public final void checkNotPreviouslyRemoved () { if (wasRemoved) throw new Net2PlanException ("The element with identifier " + id + " was removed fron NetPlan object and cannot be accessed"); }
-	
-//	/**
-//	 * Checks whether this element (demand, node, route...) is attached to the given NetPlan object. When negative, an exception will be thrown.
-//	 * @since 0.4.0
-//	 */
-//	public final void checkAttachedToNetPlanObject (NetPlan np) { if (np != this.netPlan) throw new Net2PlanException ("The element " + this + " is not associated to the given NetPlan object");  }
 
 	/**
 	 * <p>Checks whether this element (demand, node, route...) was not already removed from the {@code NetPlan} object. When negative, an exception will be thrown.</p>
@@ -93,6 +83,9 @@ public class NetworkElement
 		return value == null ? netPlan.getAttribute (key) : value;
 	}
 
+	/** Adds a tag to this network element. If the element already has this tag, nothing happens
+	 * @param tag the tag
+	 */
 	public void addTag (String tag)
 	{
 		this.tags.add (tag);
@@ -101,18 +94,30 @@ public class NetworkElement
 		setElements.add (this);
 	}
 	
+	/** Returns true if this network element has the given tag
+	 * @param tag the tag
+	 * @return see above
+	 */
 	public boolean hasTag (String tag)
 	{
 		return this.tags.contains (tag);
 	}
 
-	public void removeTag (String tag)
+	/** Removes this tag from the network element. If the element did not have the tag, nothing happens 
+	 * @param tag the tag
+	 * @return true if the element had the tag before, and so it was removed from it. False, if the element did not have the tag (and thus nothing happened)
+	 */
+	public boolean removeTag (String tag)
 	{
-		final boolean removed = this.tags.remove ();
+		final boolean removed = this.tags.remove (tag);
 		if (removed)
 			netPlan.cache_taggedElements.get (tag).remove (this);
+		return removed;
 	}
 	
+	/** Returns the set of tags assigned to this network element
+	 * @return the set (unmodifiable)
+	 */
 	public Set<String> getTags ()
 	{
 		return Collections.unmodifiableSet(this.tags);
@@ -230,7 +235,7 @@ public class NetworkElement
 	void checkCachesConsistency ()
 	{
 		/* Check all the tags here are in the cache */
-		for (String tag : tags) if (!netPlan.cache_taggedElements.get(tag).contains (this)) throw new RuntimeException ();
+		for (String tag : tags) if (!netPlan.cache_taggedElements.get(tag).contains (this)) throw new RuntimeException ("tag: " + tag);
 	}
 
 }
