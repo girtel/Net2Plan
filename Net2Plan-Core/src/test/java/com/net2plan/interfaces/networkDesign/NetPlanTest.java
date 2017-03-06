@@ -7,8 +7,6 @@ import static org.junit.Assert.fail;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.net.URL;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
