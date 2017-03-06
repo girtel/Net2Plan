@@ -102,7 +102,7 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
     				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
     		vs.setCanvasLayerVisibilityAndOrder(mainWindow.getDesign() , res.getFirst() , res.getSecond());
             mainWindow.updateVisualizationAfterNewTopology();
-            mainWindow.getUndoRedoNavigationManager().addNetPlanChange();
+            mainWindow.addNetPlanChange();
             String outMessage = String.format("Algorithm executed successfully%nExecution time: %.3g s%nExit message: %s", execTime, out);
             JOptionPane.showMessageDialog(null, outMessage, "Solve design", JOptionPane.PLAIN_MESSAGE);
         } catch (Throwable ex) {

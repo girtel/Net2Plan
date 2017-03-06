@@ -207,7 +207,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.FORWARDING_RULE));
                             callback.getVisualizationState ().pickForwardingRule(Pair.of(demand,link));
                             callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            callback.addNetPlanChange();
                             break;
 
                         default:
@@ -344,7 +344,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
                                 netPlan.setForwardingRule(netPlan.getDemandFromId(((Pair<Long, Long>) itemId).getFirst()), netPlan.getLinkFromId(((Pair<Long, Long>) itemId).getSecond()), 0);
                                 callback.getVisualizationState().resetPickedState();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.FORWARDING_RULE));
-                                callback.getUndoRedoNavigationManager().addNetPlanChange();
+                                callback.addNetPlanChange();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -369,7 +369,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
                         		for (Pair<Demand,Link> fr : frRowsInTheTable) netPlan.setForwardingRule(fr.getFirst() , fr.getSecond() , 0.0);
                             callback.getVisualizationState().resetPickedState();
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.FORWARDING_RULE));
-                            callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            callback.addNetPlanChange();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -408,7 +408,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
                     createForwardingRuleGUI(callback);
                     callback.getVisualizationState().resetPickedState();
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.FORWARDING_RULE));
-                    callback.getUndoRedoNavigationManager().addNetPlanChange();
+                    callback.addNetPlanChange();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
@@ -550,7 +550,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
                 IPUtils.setECMPForwardingRulesFromLinkWeights(netPlan, linkWeightMap);
                 callback.getVisualizationState().resetPickedState();
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.FORWARDING_RULE));
-                callback.getUndoRedoNavigationManager().addNetPlanChange();
+                callback.addNetPlanChange();
             }
         });
 
