@@ -9,7 +9,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -392,12 +394,12 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         switch (currentOS)
         {
             case windows:
-                solverDefaultPath = solver.name() + ".dll";
+                solverDefaultPath = getLibraryNameForOS(currentOS, solver);
                 message = callJOM(solver, solverDefaultPath);
                 break;
             case linux:
             case macintosh:
-                solverDefaultPath = "lib" + solver.name();
+                solverDefaultPath = getLibraryNameForOS(currentOS, solver);
                 message = callJOM(solver, solverDefaultPath);
                 break;
             default:
@@ -540,5 +542,25 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         {
             return Pair.of(OS.unknown, "");
         }
+    }
+
+    private static String getLibraryNameForOS(final OS operatingSystem, final JOMSolver solver)
+    {
+        final String libraryName;
+        switch (operatingSystem)
+        {
+            case windows:
+                libraryName = solver.name() + ".dll";
+                break;
+            case linux:
+            case macintosh:
+                libraryName = "lib" + solver.name();
+                break;
+            default:
+            case unknown:
+                throw new RuntimeException("Unknown OS, cannot proceed...");
+        }
+
+        return libraryName;
     }
 }
