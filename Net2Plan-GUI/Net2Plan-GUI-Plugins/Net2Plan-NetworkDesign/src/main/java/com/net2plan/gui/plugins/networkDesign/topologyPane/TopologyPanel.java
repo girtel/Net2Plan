@@ -573,15 +573,13 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             NetPlan aux = fc_netPlan.readNetPlan();
 
-            aux.checkCachesConsistency();
-
             callback.setCurrentNetPlanDoNotUpdateVisualization(aux);
             final VisualizationState vs = callback.getVisualizationState();
             Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
-            callback.getUndoRedoNavigationManager().addNetPlanChange();
+            callback.getUndoRedoNavigationManager().resetManager();
 
             // Reactivating the OSM Support
             if  (isOSMRunning)

@@ -18,45 +18,51 @@ import java.util.Map;
 public class UndoRedoManager
 {
     private final GUINetworkDesign callback;
-    private List<TimelineState> pastInfoVsNewNp;
-    private int pastInfoVsNewNpCursor;
-    private int maxSizeUndoList;
+    private List<TimelineState> timeline;
+    private int timelineCursor;
+    private int listMaxSize;
 
     private TimelineState backupState;
 
-    public UndoRedoManager(GUINetworkDesign callback, int maxSizeUndoList)
+    public UndoRedoManager(GUINetworkDesign callback, int listMaxSize)
     {
-        this.pastInfoVsNewNp = new ArrayList<>();
-        this.pastInfoVsNewNpCursor = -1;
+        this.timeline = new ArrayList<>();
+        this.timelineCursor = -1;
         this.callback = callback;
-        this.maxSizeUndoList = maxSizeUndoList;
+        this.listMaxSize = listMaxSize;
     }
 
     public void addNetPlanChange()
     {
-        if (this.maxSizeUndoList <= 1) return; // nothing is stored since nothing will be retrieved
+        if (this.listMaxSize <= 1) return; // nothing is stored since nothing will be retrieved
         if (callback.inOnlineSimulationMode()) return;
 
         final TimelineState state = createState(callback.getDesign());
 
         // Removing all changes made after the one at the cursor
-        if (pastInfoVsNewNpCursor != pastInfoVsNewNp.size() - 1)
+        if (timelineCursor != timeline.size() - 1)
         {
-            pastInfoVsNewNp.subList(pastInfoVsNewNpCursor, pastInfoVsNewNp.size()).clear();
+            timeline.subList(timelineCursor, timeline.size()).clear();
 
             // Adding a copy of the current state before it was modified
-            pastInfoVsNewNp.add(backupState);
+            timeline.add(backupState);
         }
-        pastInfoVsNewNp.add(state);
+        timeline.add(state);
 
         // Remove the older changes so that the list does not bloat.
-        while (pastInfoVsNewNp.size() > maxSizeUndoList)
+        while (timeline.size() > listMaxSize)
         {
-            pastInfoVsNewNp.remove(0);
-            pastInfoVsNewNpCursor--;
+            timeline.remove(0);
+            timelineCursor--;
         }
 
-        pastInfoVsNewNpCursor++;
+        timelineCursor++;
+    }
+
+    public void resetManager()
+    {
+        this.timeline.clear();
+        this.timelineCursor = -1;
     }
 
     /**
@@ -68,11 +74,11 @@ public class UndoRedoManager
     public Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> getNavigationBackElement()
     {
         if (!checkMovementValidity()) return null;
-        if (pastInfoVsNewNpCursor == 0) return null;
+        if (timelineCursor == 0) return null;
 
-        this.pastInfoVsNewNpCursor--;
+        this.timelineCursor--;
 
-        final TimelineState currentState = pastInfoVsNewNp.get(this.pastInfoVsNewNpCursor);
+        final TimelineState currentState = timeline.get(this.timelineCursor);
         this.backupState = createState(currentState.getStateDefinition().getFirst());
 
         return currentState.getStateDefinition();
@@ -87,11 +93,11 @@ public class UndoRedoManager
     public Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> getNavigationForwardElement()
     {
         if (!checkMovementValidity()) return null;
-        if (pastInfoVsNewNpCursor == pastInfoVsNewNp.size() - 1) return null;
+        if (timelineCursor == timeline.size() - 1) return null;
 
-        this.pastInfoVsNewNpCursor++;
+        this.timelineCursor++;
 
-        final TimelineState currentState = pastInfoVsNewNp.get(this.pastInfoVsNewNpCursor);
+        final TimelineState currentState = timeline.get(this.timelineCursor);
         this.backupState = createState(currentState.getStateDefinition().getFirst());
 
         return currentState.getStateDefinition();
@@ -99,7 +105,7 @@ public class UndoRedoManager
 
     private boolean checkMovementValidity()
     {
-        return !(pastInfoVsNewNp.isEmpty() || this.maxSizeUndoList <= 1 || callback.inOnlineSimulationMode());
+        return !(timeline.isEmpty() || this.listMaxSize <= 1 || callback.inOnlineSimulationMode());
     }
 
     /**
