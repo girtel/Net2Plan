@@ -60,25 +60,26 @@ public class Online_evProc_wdm extends IEventProcessor
 	private InputParameter wdmK = new InputParameter ("wdmK", (int) 5 , "Maximum number of admissible paths per demand in the candidate list computation" , 1 , Integer.MAX_VALUE);
 	private InputParameter wdmRandomSeed = new InputParameter ("wdmRandomSeed", (long) 1 , "Seed for the random generator (-1 means random)");
 	private InputParameter wdmMaxLightpathNumHops = new InputParameter ("wdmMaxLightpathNumHops", (int) -1 , "A lightpath cannot have more than this number of hops. A non-positive number means this limit does not exist");
-	private InputParameter wdmRecoveryType = new InputParameter ("wdmRecoveryType", "#select# protection restoration none" , "None, nothing is done, so affected routes fail. Restoration, affected routes are visited sequentially, and we try to reroute them in the available capacity; in protection, affected routes are rerouted using the protection segments.");
+//	private InputParameter wdmRecoveryType = new InputParameter ("wdmRecoveryType", "#select# protection restoration none" , "None, nothing is done, so affected routes fail. Restoration, affected routes are visited sequentially, and we try to reroute them in the available capacity; in protection, affected routes are rerouted using the protection segments.");
 	private InputParameter wdmRemovePreviousLightpaths = new InputParameter ("wdmRemovePreviousLightpaths", false  , "If true, previous lightpaths are removed from the system during initialization.");
-	private InputParameter wdmProtectionTypeToNewRoutes = new InputParameter ("wdmProtectionTypeToNewRoutes", "#select# none 1+1-link-disjoint 1+1-node-disjoint 1+1-srg-disjoint" , "New lightpaths are not protected, or are protected by a 1+1 link disjoint, or a node disjoint or a SRG disjoint lightpath");
+	//private InputParameter wdmProtectionTypeToNewRoutes = new InputParameter ("wdmProtectionTypeToNewRoutes", "#select# none 1+1-link-disjoint 1+1-node-disjoint 1+1-srg-disjoint" , "New lightpaths are not protected, or are protected by a 1+1 link disjoint, or a node disjoint or a SRG disjoint lightpath");
+	private InputParameter wdmDefaultAndNewRouteRevoveryType = new InputParameter ("wdmDefaultAndNewRouteRevoveryType", "#select# none restoration 1+1-link-disjoint 1+1-node-disjoint 1+1-srg-disjoint" , "New lightpaths are not protected, or are protected by a 1+1 link disjoint, or a node disjoint or a SRG disjoint lightpath");
 	private InputParameter wdmTransponderTypesInfo = new InputParameter ("wdmTransponderTypesInfo", "10 1 1 9600 1" , "Transpoder types separated by \";\" . Each type is characterized by the space-separated values: (i) Line rate in Gbps, (ii) cost of the transponder, (iii) number of slots occupied in each traversed fiber, (iv) optical reach in km (a non-positive number means no reach limit), (v) cost of the optical signal regenerator (regenerators do NOT make wavelength conversion ; if negative, regeneration is not possible).");
 
 	private NetworkLayer wdmLayer;
-	private Map<Route,Pair<WDMUtils.RSA,WDMUtils.RSA>> wdmRouteOriginalRwa;
+	//private Map<Route,Pair<WDMUtils.RSA,WDMUtils.RSA>> wdmRouteOriginalRwa;
 	private Map<Pair<Node,Node>,List<List<Link>>> cplWdm;
 	private Map<Pair<Node,Node>,List<Pair<List<Link>,List<Link>>>> cplWdm11;
 	private DoubleMatrix2D wavelengthFiberOccupancy;
 	private TransponderTypesInfo tpInfo;
 	private Map<Route,Integer> transponderTypeOfNewLps;
 
-	private boolean newRoutesHave11Protection;
+//	private boolean newRoutesHave11Protection;
 	private boolean isRestorationRecovery , isProtectionRecovery;
 	private boolean isAlternateRouting , isLeastCongestedRouting , isLoadSharing , isSrgDisjointAwareLpRouting;
 	private Random rng;
-	private int E_wdm;
 	private int protectionTypeCode;
+	private WDMUtils.DemandRecoveryType defaultRecoveryType;
 
 	private double stat_trafficOfferedConnections , stat_trafficCarriedConnections;
 	private double stat_trafficAttemptedToRecoverConnections , stat_trafficSuccessfullyRecoveredConnections;
@@ -107,18 +108,16 @@ public class Online_evProc_wdm extends IEventProcessor
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
 		
 		this.wdmLayer = initialNetPlan.getNetworkLayer("WDM"); if (wdmLayer == null) throw new Net2PlanException ("WDM layer not found");
-		this.wdmRouteOriginalRwa = new HashMap<Route,Pair<WDMUtils.RSA,WDMUtils.RSA>> ();
-		this.isRestorationRecovery = wdmRecoveryType.getString ().equalsIgnoreCase("restoration");
-		this.isProtectionRecovery = wdmRecoveryType.getString ().equalsIgnoreCase("protection");
+		this.isRestorationRecovery = wdmDefaultAndNewRouteRevoveryType.getString ().equalsIgnoreCase("restoration");
+		this.isProtectionRecovery = wdmDefaultAndNewRouteRevoveryType.getString ().startsWith("1+1");
 		this.isAlternateRouting = wdmRwaType.getString().equalsIgnoreCase("alternate-routing");
 		this.isLeastCongestedRouting = wdmRwaType.getString().equalsIgnoreCase("least-congested-routing");
 		this.isSrgDisjointAwareLpRouting = 	wdmRwaType.getString().equalsIgnoreCase("srg-disjointness-aware-route-first-fit");;
 		this.isLoadSharing = wdmRwaType.getString().equalsIgnoreCase("load-sharing");
-		this.newRoutesHave11Protection = !wdmProtectionTypeToNewRoutes.getString ().equalsIgnoreCase("none");
 		this.rng = new Random(wdmRandomSeed.getLong () == -1? (long) RandomUtils.random(0, Long.MAX_VALUE - 1) : wdmRandomSeed.getLong ());
-		if (!isProtectionRecovery && newRoutesHave11Protection) throw new Net2PlanException ("In the input parameter you ask to assign protection paths to new connections, while the recovery type chosen does not use them");
 		
-		
+		this.defaultRecoveryType = isProtectionRecovery? WDMUtils.DemandRecoveryType.PROTECTION_REVERT : isRestorationRecovery? WDMUtils.DemandRecoveryType.RESTORATION : WDMUtils.DemandRecoveryType.NONE;
+
 		if (wdmRemovePreviousLightpaths.getBoolean())
 		{
 			initialNetPlan.removeAllRoutes(wdmLayer);
@@ -132,28 +131,14 @@ public class Online_evProc_wdm extends IEventProcessor
 		this.transponderTypeOfNewLps = new HashMap<Route,Integer> ();
 
 		/* Create empty candidate path lists: they will be filled on demand */
-		this.E_wdm = initialNetPlan.getNumberOfLinks(wdmLayer);
 		this.cplWdm = new HashMap<> ();
-		this.protectionTypeCode = wdmProtectionTypeToNewRoutes.getString ().equals("1+1-srg-disjoint") ? 0 : wdmProtectionTypeToNewRoutes.getString ().equals("1+1-node-disjoint")? 1 : 2;
-		this.cplWdm11 = newRoutesHave11Protection? new HashMap<> () : null; 
+		this.protectionTypeCode = wdmDefaultAndNewRouteRevoveryType.getString ().equals("1+1-srg-disjoint") ? 0 : wdmDefaultAndNewRouteRevoveryType.getString ().equals("1+1-node-disjoint")? 1 : 2;
+		this.cplWdm11 = isProtectionRecovery? new HashMap<> () : null; 
 		
 		this.wavelengthFiberOccupancy = WDMUtils.getNetworkSlotAndRegeneratorOcupancy(initialNetPlan, true , wdmLayer).getFirst();
 		if (DEBUG) { checkWaveOccupEqualsNp(initialNetPlan); checkClashing (initialNetPlan); } 
 		initialNetPlan.setLinkCapacityUnitsName("Frequency slots" , wdmLayer);
 
-		for (Route r : initialNetPlan.getRoutes(wdmLayer))
-		{
-			WDMUtils.RSA thisRouteRWA = new WDMUtils.RSA (r , false);
-			if (thisRouteRWA.hasFrequencySlotConversions()) throw new Net2PlanException ("Initial lightpaths must have route continuity");
-			WDMUtils.RSA segmentRWA = null;
-			if (r.getBackupRoutes().size () > 1) throw new Net2PlanException ("The number of protection segments of a route cannot be higher than one");
-			if (r.getBackupRoutes().size () == 1)
-			{
-				segmentRWA = new WDMUtils.RSA (r.getBackupRoutes().get(0) , false); // its first backup route
-				if (segmentRWA.hasFrequencySlotConversions()) throw new Net2PlanException ("Initial lightpaths must have route continuity");
-			}			
-			wdmRouteOriginalRwa.put (r , Pair.of (thisRouteRWA , segmentRWA));
-		}
 		this.finishTransitory(0);
 		if (DEBUG) { checkWaveOccupEqualsNp(initialNetPlan); checkClashing (initialNetPlan); } 
 	}
@@ -177,7 +162,7 @@ public class Online_evProc_wdm extends IEventProcessor
 				this.stat_trafficOfferedConnections += lineRateThisLp_Gbps;
 				
 				/* Computes one or two paths over the links (the second path would be a segment). You cannot use the already existing segments in these paths */
-				if (newRoutesHave11Protection)
+				if (isProtectionRecovery)
 				{
 					/* The RWA may be computed by me, or mandated by the event */
 					Pair<WDMUtils.RSA,WDMUtils.RSA> rwa = null;
@@ -209,6 +194,7 @@ public class Online_evProc_wdm extends IEventProcessor
 						if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
 						
 						final Demand wdmLayerDemand = addLpEvent.demand == null? currentNetPlan.addDemand(addLpEvent.ingressNode, addLpEvent.egressNode, lineRateThisLp_Gbps , null, wdmLayer) : addLpEvent.demand;
+						WDMUtils.setRecoveryType(wdmLayerDemand, WDMUtils.DemandRecoveryType.PROTECTION_REVERT);
 						final Route wdmLayerRoute = WDMUtils.addLightpath(wdmLayerDemand, rwa.getFirst(), lineRateThisLp_Gbps);
 						WDMUtils.allocateResources(rwa.getFirst() , wavelengthFiberOccupancy , null);
 
@@ -220,7 +206,6 @@ public class Online_evProc_wdm extends IEventProcessor
 						WDMUtils.allocateResources(rwa.getSecond() , wavelengthFiberOccupancy , null);
 						if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
 						checkDisjointness(wdmLayerRoute.getSeqLinks() , rwa.getSecond().seqLinks , protectionTypeCode);
-						this.wdmRouteOriginalRwa.put (wdmLayerRoute , rwa);
 						this.transponderTypeOfNewLps.put(wdmLayerRoute , transponderTypeUsed);
 						this.stat_numCarriedConnections ++;
 						this.stat_trafficCarriedConnections += lineRateThisLp_Gbps;
@@ -253,9 +238,9 @@ public class Online_evProc_wdm extends IEventProcessor
 					if (rwa != null)
 					{
 						final Demand wdmLayerDemand = addLpEvent.demand == null? currentNetPlan.addDemand(addLpEvent.ingressNode, addLpEvent.egressNode, lineRateThisLp_Gbps , null, wdmLayer) : addLpEvent.demand;
+						WDMUtils.setRecoveryType(wdmLayerDemand, isRestorationRecovery? WDMUtils.DemandRecoveryType.RESTORATION : WDMUtils.DemandRecoveryType.NONE);
 						final Route wdmLayerRoute = WDMUtils.addLightpath(wdmLayerDemand, rwa , lineRateThisLp_Gbps);
 						WDMUtils.allocateResources(rwa , wavelengthFiberOccupancy , null);
-						this.wdmRouteOriginalRwa.put (wdmLayerRoute , Pair.of(rwa,(WDMUtils.RSA)null));
 						this.transponderTypeOfNewLps.put(wdmLayerRoute , transponderTypeUsed);
 						this.stat_numCarriedConnections ++;
 						this.stat_trafficCarriedConnections += lineRateThisLp_Gbps;
@@ -268,12 +253,14 @@ public class Online_evProc_wdm extends IEventProcessor
 			{
 				WDMUtils.LightpathRemove lpEvent = (WDMUtils.LightpathRemove) event.getEventObject ();
 				final Route lpToRemove = lpEvent.lp;
-				final Pair<WDMUtils.RSA,WDMUtils.RSA> originalRwa = wdmRouteOriginalRwa.get(lpToRemove);
-				if (originalRwa == null) return; // the ligtpath was already removed, because it was first accepted, but then blocked because of failures 
-				if (isRestorationRecovery) // restoration => the current route is the one to release
-					removeRoute_restoration(lpToRemove);
-				else
-					removeRoute_protection(lpToRemove , originalRwa);
+				WDMUtils.releaseResources(new WDMUtils.RSA(lpToRemove , false) , wavelengthFiberOccupancy, null);
+				for (Route backupLp : new ArrayList<> (lpToRemove.getBackupRoutes()))
+				{
+					WDMUtils.releaseResources(new WDMUtils.RSA(backupLp , false), wavelengthFiberOccupancy, null);
+					backupLp.remove();
+					this.transponderTypeOfNewLps.remove(backupLp);
+				}
+				lpToRemove.remove (); 
 				this.transponderTypeOfNewLps.remove(lpToRemove);
 				if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
 			} else if (event.getEventObject () instanceof SimEvent.NodesAndLinksChangeFailureState)
@@ -287,19 +274,25 @@ public class Online_evProc_wdm extends IEventProcessor
 				currentNetPlan.setLinksAndNodesFailureState(ev.linksToUp , ev.linksToDown , ev.nodesToUp , ev.nodesToDown);
 				routesFromDownToUp.removeAll(currentNetPlan.getRoutesDown(wdmLayer));
 
-				/* If something failed, and I am supposed to use protection or restoration... */
-				if (isProtectionRecovery)
+				/* If primary GOES up in PROTECTION-REVERT => backup carried is set to zero in all backups */ 
+				for (Route r : routesFromDownToUp)
 				{
-					/* POLICY WITH PROTECTION: */
-					/* Primary up => backup carried traffic in no failure state is zero */
-					/* Primary down => backup carried traffic in no failure state is equal to the carried in no failure of the primary */
+					final Demand wdmDemand = r.getDemand();
+					if (WDMUtils.getRecoveryType(wdmDemand, defaultRecoveryType) ==  WDMUtils.DemandRecoveryType.PROTECTION_REVERT)
+					for (Route backup : r.getBackupRoutes())
+						backup.setCarriedTraffic(0, null); // primary to up => carried in backup to zero
+				}
 
-					/* If primary GOES up => backup carried is set to zero */ 
-					for (Route r : routesFromDownToUp)
-						if (r.hasBackupRoutes()) r.getBackupRoutes().get(0).setCarriedTraffic(0, null); // primary to up => carried in backup to zero
-					/* Now for the each primary route that is down, set backup carried to the one of the primary, but count recovered only if backup is up */
-					for (Route r : currentNetPlan.getRoutesDown(wdmLayer).stream().filter(e -> !e.isBackupRoute()).collect(Collectors.toSet()))
+				/* Now take down routes one by one, and see what to do with them (if something)  */ 
+				for (Route r : currentNetPlan.getRoutesDown(wdmLayer))
+				{
+					final WDMUtils.DemandRecoveryType recovType = WDMUtils.getRecoveryType(r.getDemand(), defaultRecoveryType); 
+
+					if (recovType == WDMUtils.DemandRecoveryType.NONE) continue;
+
+					if (recovType == WDMUtils.DemandRecoveryType.PROTECTION_REVERT)
 					{
+						/* If is 1+1 protection, do nothing with backup routes that are down */
 						if (r.isBackupRoute()) continue;
 						this.stat_numAttemptedToRecoverConnections ++;
 						this.stat_trafficAttemptedToRecoverConnections += r.getCarriedTrafficInNoFailureState();
@@ -314,11 +307,8 @@ public class Online_evProc_wdm extends IEventProcessor
 								this.stat_trafficSuccessfullyRecoveredConnections += r.getCarriedTrafficInNoFailureState(); 
 							}
 						}
-					}					
-				}
-				else if (isRestorationRecovery)
-				{
-					for (Route r : new HashSet<Route> (currentNetPlan.getRoutesDown(wdmLayer)))
+					}
+					else if (recovType == WDMUtils.DemandRecoveryType.RESTORATION)
 					{
 						this.stat_numAttemptedToRecoverConnections ++;
 						this.stat_trafficAttemptedToRecoverConnections += r.getCarriedTrafficInNoFailureState();
@@ -338,9 +328,10 @@ public class Online_evProc_wdm extends IEventProcessor
 							this.stat_numSuccessfullyRecoveredConnections ++; 
 							this.stat_trafficSuccessfullyRecoveredConnections += r.getCarriedTrafficInNoFailureState(); 
 						}
-					}					
+					}
 				}
 				if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
+				
 			} else if (event.getEventObject () instanceof SimEvent.DemandModify)
 			{
 				SimEvent.DemandModify ev = (SimEvent.DemandModify) event.getEventObject ();
@@ -354,14 +345,10 @@ public class Online_evProc_wdm extends IEventProcessor
 			{
 				SimEvent.DemandRemove ev = (SimEvent.DemandRemove) event.getEventObject ();
 				Demand d = ev.demand;
-				for (Route lpToRemove : d.getRoutes())
+				for (Route lpToRemove : new ArrayList<> (d.getRoutes()))
 				{
-					final Pair<WDMUtils.RSA,WDMUtils.RSA> originalRwa = wdmRouteOriginalRwa.get(lpToRemove);
-					if (originalRwa == null) return; // the ligtpath was already removed, because it was first accepted, but then blocked because of failures 
-					if (isRestorationRecovery) // restoration => the current route is the one to release
-						removeRoute_restoration(lpToRemove);
-					else
-						removeRoute_protection(lpToRemove , originalRwa);
+					WDMUtils.releaseResources(new WDMUtils.RSA(lpToRemove , false), wavelengthFiberOccupancy, null);
+					lpToRemove.remove();
 					transponderTypeOfNewLps.remove(lpToRemove);
 				}
 				d.remove();
@@ -606,29 +593,6 @@ public class Online_evProc_wdm extends IEventProcessor
 			return Quadruple.of(true , seqWavelengths.getFirst () , seqWavelengths.getSecond() , worseCaseSpareCapacity);
 		}
 		else return Quadruple.of(false,-1,-1,-1.0);
-	}
-
-	private void removeRoute_restoration (Route lpToRemove)
-	{
-		WDMUtils.releaseResources(new WDMUtils.RSA(lpToRemove , false) , wavelengthFiberOccupancy, null);
-		lpToRemove.remove (); 
-		this.wdmRouteOriginalRwa.remove(lpToRemove);
-	}
-	private void removeRoute_protection (Route lpToRemove , Pair<WDMUtils.RSA,WDMUtils.RSA> originalRwa)
-	{
-		/* Release WDM resources */
-		final NetPlan np = lpToRemove.getNetPlan();
-		WDMUtils.releaseResources(originalRwa.getFirst (), wavelengthFiberOccupancy, null);
-		if (originalRwa.getSecond() != null)
-		{
-			WDMUtils.releaseResources(originalRwa.getSecond () , wavelengthFiberOccupancy, null);
-			if (!lpToRemove.hasBackupRoutes()) throw new RuntimeException(); 
-			lpToRemove.getBackupRoutes().iterator().next().remove();
-		}
-		
-		/* Release NetPlan resources */
-		lpToRemove.remove (); 
-		this.wdmRouteOriginalRwa.remove(lpToRemove);
 	}
 
 	private void checkClashing (NetPlan np)

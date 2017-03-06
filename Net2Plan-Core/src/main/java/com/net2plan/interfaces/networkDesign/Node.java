@@ -678,6 +678,7 @@ public class Node extends NetworkElement
 		}
 
 		netPlan.cache_id2NodeMap.remove (id);
+        for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.nodes , this.index);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		removeId ();
@@ -758,6 +759,8 @@ public class Node extends NetworkElement
 
 	void checkCachesConsistency ()
 	{
+		super.checkCachesConsistency ();
+
 		if (isUp && netPlan.cache_nodesDown.contains(this)) throw new RuntimeException ("Bad");
 		if (!isUp && !netPlan.cache_nodesDown.contains(this)) throw new RuntimeException ("Bad");
 		for (Link link : cache_nodeIncomingLinks) if (link.destinationNode != this) throw new RuntimeException ("Bad");
