@@ -62,7 +62,6 @@ public class Link extends NetworkElement
 	Map<Route,Integer> cache_traversingRoutes; // for each traversing route, the number of times it traverses this link (in seqLinksRealPath). If the route has segments, their internal route counts also
 	Set<MulticastTree> cache_traversingTrees;
 
-	
 	Demand coupledLowerLayerDemand;
 	MulticastDemand coupledLowerLayerMulticastDemand;
 	

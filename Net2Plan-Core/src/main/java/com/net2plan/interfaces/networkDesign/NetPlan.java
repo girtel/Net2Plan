@@ -137,8 +137,9 @@ public class NetPlan extends NetworkElement
 
     DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping> interLayerCoupling;
 
-    public Set<Demand> getTaggedDemands (String tag) 
+    public Set<Demand> getTaggedDemands (String tag , NetworkLayer... optionalLayerParameter)
     {
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
     	final Set<NetworkElement> el = cache_taggedElements (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof Demand).map(e->(Demand) e).collect (Collectors.toSet());
     }
     public Set<Link> getTaggedLinks (String tag) 

@@ -73,7 +73,7 @@ public class Demand extends NetworkElement
 	Demand (NetPlan netPlan , long id , int index , NetworkLayer layer , Node ingressNode , Node egressNode , double offeredTraffic , AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);
-		
+
 		if (ingressNode.equals (egressNode)) throw new Net2PlanException("Self-demands are not allowed");
 		if (offeredTraffic < 0) throw new Net2PlanException("Offered traffic must be non-negative");
 		
