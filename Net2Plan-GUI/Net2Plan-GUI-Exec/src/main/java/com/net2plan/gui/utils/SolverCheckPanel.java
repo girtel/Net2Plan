@@ -350,6 +350,35 @@ public class SolverCheckPanel extends JPanel implements ActionListener
             txt_info.append(WARNING_HEADER + "JAVA library path not set. Ignoring..." + NEW_LINE);
         }
 
+        // Checking Linux
+        if (isLinuxPathSet)
+        {
+            txt_info.append(MESSAGE_HEADER + "Checking for solver at Linux library path: " + linuxPath + NEW_LINE);
+
+            final List<String> strings = splitPath(linuxPath);
+            if (strings != null)
+            {
+                for (String separatedPath : strings)
+                {
+                    message = callJOM(solver, separatedPath);
+
+                    if (message.isEmpty())
+                    {
+                        txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at directory: " + separatedPath + NEW_LINE);
+                    } else
+                    {
+                        txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + separatedPath + NEW_LINE);
+                    }
+                }
+            } else
+            {
+                throw new RuntimeException("Internal: String not properly split.");
+            }
+        } else
+        {
+            txt_info.append(WARNING_HEADER + "Linux library path not set. Ignoring..." + NEW_LINE);
+        }
+
         txt_info.append(MESSAGE_HEADER + "Checking for solver by using system defaults..." + NEW_LINE);
 
         // Checking without giving a path
