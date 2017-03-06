@@ -178,6 +178,21 @@ public class Configuration
 	}
 
 	/**
+	 * Sets the default name of the library file (to set as solverLibraryName in JOM calls).
+	 * @param solver Name of the solver
+ 	 * @param name The file name that will be defined at the Net2Plan options.
+	 */
+	public static void setDefaultSolverLibraryName(String solver, String name)
+	{
+		final String s = solver.toLowerCase();
+		if (s.equals("cplex")) setOption("cplexSolverLibraryName", name);
+		else if (s.equals("glpk")) setOption("glpkSolverLibraryName", name);
+		else if (s.equals("ipopt")) setOption("ipoptSolverLibraryName", name);
+		else if (s.equals("xpress")) setOption("xpressSolverLicenseFileName", name);
+		else { final RuntimeException e = new Net2PlanException ("Unknown solver name: " + solver); e.printStackTrace (); throw e; }
+	}
+
+	/**
 	 * <p>Returns the list of Net2Plan-wide parameters, where the first item of each element
 	 * is the parameter name, the second one is the parameter value, and the third
 	 * one is the parameter description.</p>

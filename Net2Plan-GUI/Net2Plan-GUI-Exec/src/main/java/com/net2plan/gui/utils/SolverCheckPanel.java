@@ -275,6 +275,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
             if (message.isEmpty())
             {
                 txt_info.append(MESSAGE_HEADER + "Solver " + solverNameUppercase + " has been found at directory: " + solverPath + NEW_LINE);
+                showSaveDialog(solver, solverPath);
             } else
             {
                 txt_info.append(WARNING_HEADER + "Solver " + solverNameUppercase + " could not be found at directory: " + solverPath + NEW_LINE);
@@ -307,6 +308,8 @@ public class SolverCheckPanel extends JPanel implements ActionListener
                     if (message.isEmpty())
                     {
                         txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at directory: " + separatedPath + NEW_LINE);
+                        showSaveDialog(solver, linuxPath);
+                        return;
                     } else
                     {
                         txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + separatedPath + NEW_LINE);
@@ -336,6 +339,8 @@ public class SolverCheckPanel extends JPanel implements ActionListener
                     if (message.isEmpty())
                     {
                         txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at directory: " + separatedPath + NEW_LINE);
+                        showSaveDialog(solver, linuxPath);
+                        return;
                     } else
                     {
                         txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + separatedPath + NEW_LINE);
@@ -365,6 +370,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
                     if (message.isEmpty())
                     {
                         txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at directory: " + separatedPath + NEW_LINE);
+                        showSaveDialog(solver, linuxPath);
                     } else
                     {
                         txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + separatedPath + NEW_LINE);
@@ -436,6 +442,9 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
     private void showSaveDialog(final JOMSolver solver, final String path)
     {
+        // Do not show if the new path is already on the configuration screen
+        if (Configuration.getDefaultSolverLibraryName(solver.name()).equals(path)) return;
+
         // Container
         final JPanel pn_saveConfirm = new JPanel(new BorderLayout());
 
@@ -475,7 +484,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
     private void savePathToConfiguration(final JOMSolver solver, final String path)
     {
-        Configuration.setOption(solver.name() + "SolverLibraryName", path);
+        Configuration.setDefaultSolverLibraryName(solver.name(), path);
         Configuration.saveOptions();
     }
 
