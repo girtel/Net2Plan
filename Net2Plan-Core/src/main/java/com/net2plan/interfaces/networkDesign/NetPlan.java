@@ -4496,6 +4496,17 @@ public class NetPlan extends NetworkElement
     }
 
     /**
+     * <p>Returns a vector with the population of the nodes. i-th vector corresponds to i-th index of the element</p>
+     * @return see above
+     */
+    public DoubleMatrix1D getVectorNodePopulation()
+    {
+        DoubleMatrix1D res = DoubleFactory1D.dense.make(nodes.size());
+        for (Node e : nodes) res.set(e.index, e.population);
+        return res;
+    }
+
+    /**
      * <p>Returns the vector with the total outgoing offered traffic per node at the given layer. i-th vector corresponds to i-th index of the element. if no layer is provided, default layer is assumed.</p>
      *
      * @param optionalLayerParameter Network layer (optional)
@@ -5440,8 +5451,6 @@ public class NetPlan extends NetworkElement
             //Set<Long> nodeIds_thisNetPlan = new HashSet<Long> (getNodeIds());
             for (Node node : nodes)
             {
-                boolean emptyNode = node.attributes.isEmpty();
-
                 XMLUtils.indent(writer, 1);
                 writer.writeStartElement("node");
 
@@ -5450,6 +5459,7 @@ public class NetPlan extends NetworkElement
                 writer.writeAttribute("xCoord", Double.toString(position.getX()));
                 writer.writeAttribute("yCoord", Double.toString(position.getY()));
                 writer.writeAttribute("name", node.name);
+                writer.writeAttribute("population", Double.toString(node.population));
                 writer.writeAttribute("isUp", Boolean.toString(node.isUp));
                 final Set<NetworkLayer> layersWithIcons = layers.stream().filter(l -> node.getUrlNodeIcon(l) != null).collect(Collectors.toSet());
                 final List<Long> idsLayersWithIcons = layersWithIcons.stream().map(l -> l.getId()).collect(Collectors.toList());

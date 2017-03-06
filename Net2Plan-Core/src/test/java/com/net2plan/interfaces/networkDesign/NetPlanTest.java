@@ -78,8 +78,10 @@ public class NetPlanTest
 		upperLayer.addTag("t1");
 		this.n1 = this.np.addNode(0 , 0 , "node1" , null);
 		n1.addTag("t1");
+		n1.setPopulation(100);
 		n1.setAttribute("att" , "1");
 		this.n2 = np.addNode(0 , 0 , "node2" , null);
+		n1.setPopulation(200);
 		this.n3 = np.addNode(0 , 0 , "node3" , null);
 		this.n1.setUrlNodeIcon(lowerLayer , new URL ("file:/lowerIcon"));
 		this.link12 = np.addLink(n1,n2,100,100,1,null,lowerLayer);

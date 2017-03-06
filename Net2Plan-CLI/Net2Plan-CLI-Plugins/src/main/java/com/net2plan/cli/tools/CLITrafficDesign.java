@@ -293,8 +293,8 @@ public class CLITrafficDesign extends ICLIModule {
                         DoubleMatrix2D levelMatrix = DoubleUtils.read2DMatrixFromFile((File) cli.getParsedOptionValue("level-matrix-file"));
 
                         DoubleMatrix2D distanceMatrix = netPlan.getMatrixNode2NodeEuclideanDistance();
-                        int[] populationVector = StringUtils.toIntArray(netPlan.getAttributes(netPlan.getNodes(), "population").values(), 0);
-                        int[] levelVector = StringUtils.toIntArray(netPlan.getAttributes(netPlan.getNodes(), "level").values(), 1);
+                        double[] populationVector = netPlan.getVectorNodePopulation().toArray();
+                        int[] levelVector = StringUtils.toIntArray(NetPlan.getAttributes(netPlan.getNodes(), "level").values(), 1);
 
                         for (int tmId = 0; tmId < numMatrices; tmId++)
                             trafficMatrices[tmId] = TrafficMatrixGenerationModels.populationDistanceModel(distanceMatrix, populationVector, levelVector, levelMatrix, randomFactor, populationOffset, populationPower, distanceOffset, distancePower, normalizePopulation, normalizeDistance);

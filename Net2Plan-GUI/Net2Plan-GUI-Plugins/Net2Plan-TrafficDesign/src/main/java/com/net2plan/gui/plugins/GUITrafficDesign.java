@@ -555,9 +555,28 @@ public final class GUITrafficDesign extends IGUIModule
             }
 
             @Override
-            public void setValueAt(Object value, int row, int column) {
-                if (column == 4 || column == 5) {
-                    if (value instanceof Integer) {
+            public void setValueAt(Object value, int row, int column) 
+            {
+            	if (column == 4)
+            	{
+                    if (value instanceof Double)
+                    {
+                        double aux = (Double) value;
+                        if (aux < 0) 
+                        {
+                            ErrorHandling.showErrorDialog("Population must be non-negative", "Error editing population/level attribute");
+                            return;
+                        }
+                    } else 
+                    {
+                        ErrorHandling.showErrorDialog("Population must be a non-negative number", "Error editing population/level attribute");
+                        return;
+                    }
+            	}
+            	else if (column == 5) 
+            	{
+                    if (value instanceof Integer) 
+                    {
                         int aux = (Integer) value;
 
                         if (aux < 0) {
@@ -565,18 +584,17 @@ public final class GUITrafficDesign extends IGUIModule
                             return;
                         }
 
-                        if (column == 5) {
-                            maxLevel = 1;
-                            int N = getRowCount();
-                            for (int n = 0; n < N; n++) {
-                                int level = (n == row) ? aux : Integer.parseInt(getValueAt(n, column).toString());
-                                if (level > maxLevel) maxLevel = level;
-                            }
-
-                            ((DefaultTableModel) levelMatrixTableModel).setRowCount(maxLevel);
-                            levelMatrixTable.revalidate();
+                        maxLevel = 1;
+                        int N = getRowCount();
+                        for (int n = 0; n < N; n++) {
+                            int level = (n == row) ? aux : Integer.parseInt(getValueAt(n, column).toString());
+                            if (level > maxLevel) maxLevel = level;
                         }
-                    } else {
+
+                        ((DefaultTableModel) levelMatrixTableModel).setRowCount(maxLevel);
+                        levelMatrixTable.revalidate();
+                    } else 
+                    {
                         ErrorHandling.showErrorDialog("Population/level must be an integer number greater than zero", "Error editing population/level attribute");
                         return;
                     }
@@ -693,7 +711,7 @@ public final class GUITrafficDesign extends IGUIModule
 
                         if (newN > oldN) {
                             for (int nodeId = oldN; nodeId < newN; nodeId++) {
-                                nodeInfoTableModel.addRow(new Object[]{nodeId, "Node " + nodeId, 0.0, 0.0, 1, 1});
+                                nodeInfoTableModel.addRow(new Object[]{nodeId, "Node " + nodeId, 0.0, 0.0, 1.0, 1});
                             }
                         } else {
                             nodeInfoTableModel.setRowCount(newN);
@@ -1037,14 +1055,11 @@ public final class GUITrafficDesign extends IGUIModule
         for (Node node : netPlan.getNodes()) {
             final int n = node.getIndex();
             final long nodeId = node.getId();
-            int population, level;
+            double population;
+            int level;
 
-            try {
-                population = Integer.parseInt(node.getAttribute("population"));
-            } catch (Exception ex) {
-                population = 0;
-            }
-
+            population = (int) node.getPopulation ();
+      
             try {
                 level = Integer.parseInt(node.getAttribute("level"));
             } catch (Exception ex) {
@@ -1241,14 +1256,14 @@ public final class GUITrafficDesign extends IGUIModule
             int L = levelMatrixTableModel.getRowCount();
 
             Point2D[] nodeXYPositionTable = new Point2D[N];
-            int[] populationVector = new int[N];
+            double[] populationVector = new double[N];
             int[] levelVector = new int[N];
             DoubleMatrix2D levelMatrix = DoubleFactory2D.dense.make(L, L);
 
             try {
                 for (int n = 0; n < N; n++) {
                     nodeXYPositionTable[n] = new Point2D.Double(Double.parseDouble(nodeInfoTableModel.getValueAt(n, 2).toString()), Double.parseDouble(nodeInfoTableModel.getValueAt(n, 3).toString()));
-                    populationVector[n] = Integer.parseInt(nodeInfoTableModel.getValueAt(n, 4).toString());
+                    populationVector[n] = Double.parseDouble(nodeInfoTableModel.getValueAt(n, 4).toString());
                     levelVector[n] = Integer.parseInt(nodeInfoTableModel.getValueAt(n, 5).toString());
                 }
 

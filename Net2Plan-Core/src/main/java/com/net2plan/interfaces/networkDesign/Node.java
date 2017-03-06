@@ -41,6 +41,7 @@ public class Node extends NetworkElement
 	String name;
 	Point2D nodeXYPositionMap;
 	boolean isUp;
+	double population;
 	
 	Set<Link> cache_nodeIncomingLinks;
 	Set<Link> cache_nodeOutgoingLinks;
@@ -86,6 +87,7 @@ public class Node extends NetworkElement
 		this.cache_nodeAssociatedRoutes = new HashSet<Route> ();
 		this.cache_nodeAssociatedulticastTrees = new HashSet<MulticastTree> ();
 		this.mapLayer2URLSpecificIcon = new HashMap <> ();
+		this.population = 0;
 	}
 	
 	void copyFrom (Node origin)
@@ -93,6 +95,7 @@ public class Node extends NetworkElement
 		if ((this.id != origin.id) || (this.index != origin.index)) throw new RuntimeException ("Bad");
 		if ((this.netPlan == null) || (origin.netPlan == null) || (this.netPlan == origin.netPlan)) throw new RuntimeException ("Bad");
 		this.name = origin.name;
+		this.population = origin.population;
 		this.nodeXYPositionMap = new UnmodifiablePoint2D(origin.nodeXYPositionMap.getX() , origin.nodeXYPositionMap.getY());
 		this.isUp = origin.isUp;
 		this.mapLayer2URLSpecificIcon.clear(); for (NetworkLayer l : origin.mapLayer2URLSpecificIcon.keySet()) this.mapLayer2URLSpecificIcon.put(this.netPlan.getNetworkLayerFromId(l.getId()) , origin.mapLayer2URLSpecificIcon.get(l));
@@ -114,6 +117,7 @@ public class Node extends NetworkElement
 		if (!this.name.equals(e2.name)) return false;
 		if (!this.nodeXYPositionMap.equals(e2.nodeXYPositionMap)) return false;
 		if (this.isUp != e2.isUp) return false;
+		if (this.population != e2.population) return false;
 		
 		if (!NetPlan.isDeepCopy(this.mapLayer2URLSpecificIcon , e2.mapLayer2URLSpecificIcon)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_nodeIncomingLinks , e2.cache_nodeIncomingLinks)) return false;
@@ -129,6 +133,23 @@ public class Node extends NetworkElement
 		return true;
 	}
 
+	/** Sets the population of the node (must be non-negative)
+	 * @param population the population
+	 */
+	public void setPopulation (double population)
+	{
+		checkAttachedToNetPlanObject();
+		netPlan.checkIsModifiable();
+		if (population < 0) throw new Net2PlanException ("Node population must be non-negative");
+		this.population = population;
+		this.name = name == null? "" : name;
+	}
+	
+	/** Returns the node population
+	 * @return see above
+	 */
+	public double getPopulation () { return population; }
+	
 	/**
 	 * <p>Returns the node name</p>
 	 * @return The node name
