@@ -155,7 +155,7 @@
             <artifactId>JOM</artifactId>
             <version>0.2.0.2-SNAPSHOT</version>
             <scope>system</scope>
-            <systemPath>/home/jorge/Code/JOM/JOM-Assembly/target/jom-0.2.0.2-SNAPSHOT.jar</systemPath>
+            <systemPath>C:/Users/Jorge/Documents/Code/JOM/JOM-Assembly/target/jom-0.2.0.2-SNAPSHOT.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.sun</groupId>

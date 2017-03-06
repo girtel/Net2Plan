@@ -273,33 +273,51 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         } else
         {
             File dir = new File(solverPath);
-            File[] files = dir.listFiles((file, name) -> name.toLowerCase().contains(solver.name()));
 
-            if (files != null)
+            if (dir.isDirectory())
             {
-                for (File file : files)
-                {
-                    // Checking at custom location.
-                    message = callJOM(solver, file.getAbsolutePath());
+                File[] files = dir.listFiles((file, name) -> name.toLowerCase().contains(solver.name()));
 
-                    if (message.isEmpty())
+                if (files != null)
+                {
+                    for (File file : files)
                     {
-                        txt_info.append(MESSAGE_HEADER + "Solver " + solverNameUppercase + " has been found at directory: " + file.getAbsolutePath() + NEW_LINE);
-                        txt_info.append(NEW_LINE);
-                        showSaveDialog(solver, file.getAbsolutePath());
-                        return;
-                    } else
-                    {
-                        txt_info.append(WARNING_HEADER + "Solver " + solverNameUppercase + " could not be found at directory: " + file.getAbsolutePath() + NEW_LINE);
+                        // Checking at custom location.
+                        message = callJOM(solver, file.getAbsolutePath());
+
+                        if (message.isEmpty())
+                        {
+                            txt_info.append(MESSAGE_HEADER + "Solver " + solverNameUppercase + " has been found at directory: " + file.getAbsolutePath() + NEW_LINE);
+                            txt_info.append(NEW_LINE);
+                            showSaveDialog(solver, file.getAbsolutePath());
+                            return;
+                        } else
+                        {
+                            txt_info.append(WARNING_HEADER + "Solver " + solverNameUppercase + " could not be found at directory: " + file.getAbsolutePath() + NEW_LINE);
+                        }
                     }
                 }
+
+                txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + solverPath + NEW_LINE);
+
+                txt_info.append(MESSAGE_HEADER + "Retrying..." + NEW_LINE);
+                txt_info.append(MESSAGE_HEADER + "Trying to find solver at default location..." + NEW_LINE);
+                checkSolverAtDefaultFolder(solver);
+            } else
+            {
+                message = callJOM(solver, dir.getAbsolutePath());
+
+                if (message.isEmpty())
+                {
+                    txt_info.append(MESSAGE_HEADER + "Solver " + solverNameUppercase + " has been found at directory: " + dir.getAbsolutePath() + NEW_LINE);
+                    txt_info.append(NEW_LINE);
+                    showSaveDialog(solver, dir.getAbsolutePath());
+                    return;
+                } else
+                {
+                    txt_info.append(WARNING_HEADER + "Solver " + solverNameUppercase + " could not be found at directory: " + dir.getAbsolutePath() + NEW_LINE);
+                }
             }
-
-            txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + solverPath + NEW_LINE);
-
-            txt_info.append(MESSAGE_HEADER + "Retrying..." + NEW_LINE);
-            txt_info.append(MESSAGE_HEADER + "Trying to find solver at default location..." + NEW_LINE);
-            checkSolverAtDefaultFolder(solver);
         }
 
         txt_info.append(NEW_LINE);
