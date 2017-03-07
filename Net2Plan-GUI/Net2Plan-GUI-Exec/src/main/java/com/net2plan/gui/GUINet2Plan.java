@@ -117,7 +117,7 @@ public class GUINet2Plan extends JFrame implements ActionListener {
                     if (result == JOptionPane.YES_OPTION)
                     {
                         runningModule.stop();
-                    } else if (result == JOptionPane.NO_OPTION)
+                    } else if (result == JOptionPane.NO_OPTION || result == JOptionPane.CLOSED_OPTION)
                     {
                         return;
                     }
