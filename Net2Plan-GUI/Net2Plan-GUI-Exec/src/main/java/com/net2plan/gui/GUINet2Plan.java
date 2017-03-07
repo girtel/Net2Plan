@@ -110,13 +110,14 @@ public class GUINet2Plan extends JFrame implements ActionListener {
             } else {
                 Object object = itemObject.get(item);
 
-                WindowUtils.setWindowLeftSide(instance);
-
                 if (this.runningModule != null)
                 {
                     final int result = JOptionPane.showConfirmDialog(instance, "Are you sure you want to exit the plugin?\nAll unsaved changes will be lost", "Exit?", JOptionPane.YES_NO_OPTION);
 
-                    if (result == JOptionPane.NO_OPTION)
+                    if (result == JOptionPane.YES_OPTION)
+                    {
+                        runningModule.stop();
+                    } else if (result == JOptionPane.NO_OPTION)
                     {
                         return;
                     }

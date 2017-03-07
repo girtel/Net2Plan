@@ -118,7 +118,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         super(title);
     }
 
-
     public UndoRedoManager getUndoRedoNavigationManager()
     {
         return undoRedoManager;
@@ -215,9 +214,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         onlineSimulationPane = new OnlineSimulationPane(this);
         executionPane = new OfflineExecutionPanel(this);
         whatIfAnalysisPane = new WhatIfAnalysisPane(this);
-
-        // Closing windows
-        WindowUtils.clearFloatingWindows();
 
         final JTabbedPane tabPane = new JTabbedPane();
         tabPane.add(NetworkDesignWindow.getWindowName(NetworkDesignWindow.network), viewEditTopTables);
@@ -327,6 +323,12 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         updateVisualizationAfterNewTopology();
     }
 
+    @Override
+    public void stop()
+    {
+        tableControlWindow.setVisible(false);
+        windowController.hideAllWindows();
+    }
 
     private JPanel configureLeftBottomPanel()
     {
@@ -1032,13 +1034,21 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             reportWindow.addWindowListener(new CloseWindowAdapter(tabName, component));
         }
 
-        public void showReportWindow(final boolean gainFocus)
+        void showReportWindow(final boolean gainFocus)
         {
             buildReportWindow(reportWindowComponent);
             if (reportWindow != null)
             {
                 reportWindow.showWindow(gainFocus);
             }
+        }
+
+        void hideAllWindows()
+        {
+            offlineWindow.dispatchEvent(new WindowEvent(offlineWindow, WindowEvent.WINDOW_CLOSING));
+            onlineWindow.dispatchEvent(new WindowEvent(offlineWindow, WindowEvent.WINDOW_CLOSING));
+            whatifWindow.dispatchEvent(new WindowEvent(offlineWindow, WindowEvent.WINDOW_CLOSING));
+            reportWindow.dispatchEvent(new WindowEvent(offlineWindow, WindowEvent.WINDOW_CLOSING));
         }
 
         private class CloseWindowAdapter extends WindowAdapter
