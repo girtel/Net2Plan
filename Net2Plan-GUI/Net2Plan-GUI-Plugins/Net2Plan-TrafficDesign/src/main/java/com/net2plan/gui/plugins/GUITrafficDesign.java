@@ -782,6 +782,11 @@ public final class GUITrafficDesign extends IGUIModule
     }
 
     @Override
+    public void stop()
+    {
+    }
+
+    @Override
     public String getDescription() {
         return getName();
     }
