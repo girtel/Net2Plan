@@ -1,19 +1,33 @@
 package com.net2plan.interfaces.networkDesign;
 
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import com.google.common.collect.ImmutableMap;
-import com.net2plan.interfaces.TestConstants;
-import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.Pair;
-import org.junit.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.google.common.collect.ImmutableMap;
+import com.net2plan.interfaces.TestConstants;
+import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Pair;
+
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 public class NetPlanTest
 {
@@ -58,27 +72,39 @@ public class NetPlanTest
 	{
 		this.np = new NetPlan ();
 		this.lowerLayer = np.getNetworkLayerDefault();
+		lowerLayer.addTag("t1");
 		np.setDemandTrafficUnitsName("Mbps" , lowerLayer);
 		this.upperLayer = np.addLayer("upperLayer" , "description" , "Mbps" , "upperTrafficUnits" , new URL ("file:/upperIcon") , null);
+		upperLayer.addTag("t1");
 		this.n1 = this.np.addNode(0 , 0 , "node1" , null);
+		n1.addTag("t1");
+		n1.setPopulation(100);
+		n1.setAttribute("att" , "1");
 		this.n2 = np.addNode(0 , 0 , "node2" , null);
+		n1.setPopulation(200);
 		this.n3 = np.addNode(0 , 0 , "node3" , null);
 		this.n1.setUrlNodeIcon(lowerLayer , new URL ("file:/lowerIcon"));
 		this.link12 = np.addLink(n1,n2,100,100,1,null,lowerLayer);
 		this.link23 = np.addLink(n2,n3,100,100,1,null,lowerLayer);
 		this.link13 = np.addLink(n1,n3,100,100,1,null,lowerLayer);
+		link12.addTag("t1");
 		this.d13 = np.addDemand(n1 , n3 , 3 , null,lowerLayer);
+		d13.addTag("t1"); d13.addTag("t2");
 		this.d12 = np.addDemand(n1, n2, 3 , null,lowerLayer);
 		this.r12 = np.addRoute(d12,1,1.5,Collections.singletonList(link12),null);
+		r12.addTag("t1"); r12.addTag("t3");
+		np.addTag("t1");
 		this.path13 = new LinkedList<Link> (); path13.add(link12); path13.add(link23);
 		this.r123a = np.addRoute(d13,1,1.5,path13,null);
 		this.r123b = np.addRoute(d13,1,1.5,path13,null);
 		this.res2 = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
+		res2.addTag("t1");
 		this.res2backup = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
 		this.scd123 = np.addDemand(n1 , n3 , 3 , null,lowerLayer);
 		this.scd123.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("type"));
 		this.pathSc123 = Arrays.asList(link12 ,res2 , link23);
 		this.sc123 = np.addServiceChain(scd123 , 100 , Arrays.asList(300.0 , 50.0 , 302.0) , pathSc123 , null);
+		sc123.addTag("t1");
 		this.segm13 = np.addRoute(d13 , 0 , 50 , Collections.singletonList(link13) , null);
 		this.r123a.addBackupRoute(segm13);
 		this.upperLink12 = np.addLink(n1,n2,10,100,1,null,upperLayer);
@@ -87,7 +113,9 @@ public class NetPlanTest
 		this.star = new HashSet<Link> (Arrays.asList(link12, link13));
 		this.endNodes = new HashSet<Node> (Arrays.asList(n2,n3));
 		this.d123 = np.addMulticastDemand(n1 , endNodes , 100 , null , lowerLayer);
+		d123.addTag("t1");
 		this.t123 = np.addMulticastTree(d123 , 10,15,line123,null);
+		t123.addTag("t1");
 		this.tStar = np.addMulticastTree(d123 , 10,15,star,null);
 		this.upperMdLink12 = np.addLink(n1,n2,10,100,1,null,upperLayer);
 		this.upperMdLink13 = np.addLink(n1,n3,10,100,1,null,upperLayer);
@@ -516,7 +544,12 @@ public class NetPlanTest
 	public void testAssignFrom()
 	{
 		NetPlan np2 = np.copy();
+		np.checkCachesConsistency();
+		np2.checkCachesConsistency();
+		assertTrue (np.isDeepCopy(np2));
+		assertTrue (np2.isDeepCopy(np));
 		np.assignFrom(np2);
+		np.checkCachesConsistency();
 		assertTrue (np.isDeepCopy(np2));
 		assertTrue (np2.isDeepCopy(np));
 	}

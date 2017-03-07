@@ -496,14 +496,14 @@ public class TrafficMatrixGenerationModels
 	 * @param normalizeDistanceFactor  Indicates whether node-pair distances must be normalized by the maximum distance among all node-pairs
 	 * @return Traffic matrix
 	 */
-	public static DoubleMatrix2D populationDistanceModel(DoubleMatrix2D distanceMatrix, int[] populationVector, int[] levelVector, DoubleMatrix2D levelMatrix, double randomFactor, double populationOffset, double populationPower, double distanceOffset, double distancePower, boolean normalizePopulationFactor, boolean normalizeDistanceFactor)
+	public static DoubleMatrix2D populationDistanceModel(DoubleMatrix2D distanceMatrix, double[] populationVector, int[] levelVector, DoubleMatrix2D levelMatrix, double randomFactor, double populationOffset, double populationPower, double distanceOffset, double distancePower, boolean normalizePopulationFactor, boolean normalizeDistanceFactor)
 	{
 		int N = distanceMatrix.rows();
 
 		DoubleMatrix2D trafficMatrix = DoubleFactory2D.dense.make(N, N);
 		
 		double dist_max = 1;
-		int pop_max = 1;
+		double pop_max = 1.0;
 		if (normalizePopulationFactor || normalizeDistanceFactor)
 		{
 			/* First, compute pop_max and dist_max */
@@ -536,7 +536,7 @@ public class TrafficMatrixGenerationModels
 				if (distanceCoeff == 0) continue;
 				else if (Double.isNaN(distanceCoeff)) distanceCoeff = 1;
 				
-				double populationCoeff = Math.pow(populationOffset + ((double) populationVector[i] * (double) populationVector[j] / Math.pow(pop_max, 2)), populationPower);
+				double populationCoeff = Math.pow(populationOffset + (populationVector[i] * populationVector[j] / Math.pow(pop_max, 2)), populationPower);
 				if (populationCoeff == 0) continue;
 				
 				double levelCoeff = levelMatrix.getQuick(levelVector[i] - 1, levelVector[j] - 1);

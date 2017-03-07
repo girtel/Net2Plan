@@ -56,6 +56,11 @@ class PickTimeLineManager
 
         if (!timeLine.isEmpty()) // TODO
         {
+            if (timeLine.size() == 1)
+            {
+                System.out.println();
+            }
+
             // Do not add the same element that is currently be clicked upon.
             if (Pair.unmodifiableOf(this.pickedNetworkElement, pickedForwardingRule).equals(timeLine.get(currentElementInTimelineCursor)))
             {

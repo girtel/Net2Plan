@@ -79,19 +79,21 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
     	final Node firstNode = path.get(0) instanceof Resource? ((Resource) path.get(0)).getHostNode() : ((Link) path.get(0)).getOriginNode();
     	this.drawnNodes.add(new DrawNode(firstNode , layer , maxHeightOrSizeIcon));
     	DrawNode.addNodeToGraphics(g2d , drawnNodes.get(0) , initialDnTopLeftPosition , fontMetrics , regularInterlineSpacePixels , null);
+
+    	Dimension linkDimension = null, resourceDimension = null;
         for (int indexElementInPath = 0; indexElementInPath < path.size() ; indexElementInPath ++)
     	{
         	final NetworkElement e = path.get(indexElementInPath);
 			final double occup = occupationsPerElement.get(indexElementInPath);
-//			final double capacity = capacitiesPerElement.get(indexElementInPath);
+
         	if (e instanceof Resource)
     		{
     			/* Draw the resource, there always are a previous node */
     			final Resource r = (Resource) e;
     			/* create resource node,with URL  */
     			final DrawNode dnResource = new DrawNode (r , maxHeightOrSizeIcon , occup);
-    			DrawNode.addNodeToGraphics(g2d , dnResource , new Point (initialDnTopLeftPosition.x + (xSeparationDnCenters * drawnNodes.size()) , topCoordinateLineResources) , fontMetrics , regularInterlineSpacePixels , null);
-    			drawnNodes.add(dnResource);
+                final Dimension windowDimension = DrawNode.addNodeToGraphics(g2d, dnResource, new Point(initialDnTopLeftPosition.x + (xSeparationDnCenters * drawnNodes.size()), topCoordinateLineResources), fontMetrics, regularInterlineSpacePixels, null);
+                drawnNodes.add(dnResource);
 
     			/* create link from previous dn (resource of node) to here: no URL */
     			final DrawNode dnOrigin = drawnNodes.get(drawnNodes.size()-2);
@@ -101,13 +103,15 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
     			final DrawLine dlNoURL = new DrawLine (dnOrigin , dnDestination , initialPoint , endPoint);
     			DrawLine.addLineToGraphics(g2d , dlNoURL , fontMetrics , regularInterlineSpacePixels);
     			drawnLines.add(dlNoURL);
+
+                resourceDimension = new Dimension(windowDimension.width + XYMARGIN, windowDimension.height + XYMARGIN);
     		}
     		else if (e instanceof Link)
     		{
     			final Link link = (Link) e;
 
     			DrawNode lastNodeElement = null;
-    			for (int index = drawnNodes.size()-1 ; index >= 0 ; index --) 
+    			for (int index = drawnNodes.size()-1 ; index >= 0 ; index --)
     				if (drawnNodes.get(index).getAssociatedElement() instanceof Node) { lastNodeElement = drawnNodes.get(index); break; }
     			if (lastNodeElement == null) throw new RuntimeException();
 
@@ -134,9 +138,29 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
     			DrawLine.addLineToGraphics(g2d , dlLink , fontMetrics , regularInterlineSpacePixels);
     			drawnLines.add(dlLink);
 
-                preferredSize = new Dimension (windowDimension.width + XYMARGIN , windowDimension.height + XYMARGIN);
+                linkDimension = new Dimension (windowDimension.width + XYMARGIN , windowDimension.height + XYMARGIN);
             } else throw new RuntimeException();
     	}
+
+    	if (resourceDimension == null)
+        {
+            if (linkDimension == null)
+            {
+                preferredSize = new Dimension(DEFAULT_DIMENSION.width + XYMARGIN, DEFAULT_HEIGHT + XYMARGIN);
+            } else
+            {
+                preferredSize = new Dimension(linkDimension.width + XYMARGIN, linkDimension.height + XYMARGIN);
+            }
+        } else
+        {
+            if (linkDimension != null)
+            {
+    	        preferredSize = new Dimension(Math.max(linkDimension.width, resourceDimension.width), Math.max(linkDimension.height, resourceDimension.height));
+            } else
+            {
+                preferredSize = new Dimension(resourceDimension.width + XYMARGIN, resourceDimension.height + XYMARGIN);
+            }
+        }
     }
 }
 
