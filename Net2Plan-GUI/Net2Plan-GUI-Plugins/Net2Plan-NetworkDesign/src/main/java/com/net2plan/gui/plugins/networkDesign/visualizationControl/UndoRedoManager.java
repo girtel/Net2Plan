@@ -37,7 +37,22 @@ public class UndoRedoManager
         if (this.listMaxSize <= 1) return; // nothing is stored since nothing will be retrieved
         if (callback.inOnlineSimulationMode()) return;
 
-        final TimelineState state = createState(callback.getDesign());
+        // Create new timeline state from current visualization state.
+        final NetPlan npCopy = callback.getDesign().copy();
+
+        final BidiMap<NetworkLayer, Integer> cp_mapLayer2VisualizationOrder = new DualHashBidiMap<>();
+        for (NetworkLayer cpLayer : npCopy.getNetworkLayers())
+        {
+            cp_mapLayer2VisualizationOrder.put(cpLayer, callback.getVisualizationState().getCanvasVisualizationOrderNotRemovingNonVisible(callback.getDesign().getNetworkLayer(cpLayer.getIndex())));
+        }
+
+        final Map<NetworkLayer, Boolean> cp_layerVisibilityMap = new HashMap<>();
+        for (NetworkLayer cpLayer : npCopy.getNetworkLayers())
+        {
+            cp_layerVisibilityMap.put(cpLayer, callback.getVisualizationState().isLayerVisibleInCanvas(callback.getDesign().getNetworkLayer(cpLayer.getIndex())));
+        }
+
+        TimelineState newState = new TimelineState(npCopy, cp_mapLayer2VisualizationOrder, cp_layerVisibilityMap);
 
         // Removing all changes made after the one at the cursor
         if (timelineCursor != timeline.size() - 1)
@@ -47,7 +62,7 @@ public class UndoRedoManager
             // Adding a copy of the current state before it was modified
             timeline.add(backupState);
         }
-        timeline.add(state);
+        timeline.add(newState);
 
         // Remove the older changes so that the list does not bloat.
         while (timeline.size() > listMaxSize)
@@ -79,7 +94,7 @@ public class UndoRedoManager
         this.timelineCursor--;
 
         final TimelineState currentState = timeline.get(this.timelineCursor);
-        this.backupState = createState(currentState.getStateDefinition().getFirst());
+        this.backupState = copyState(currentState);
 
         return currentState.getStateDefinition();
     }
@@ -98,7 +113,7 @@ public class UndoRedoManager
         this.timelineCursor++;
 
         final TimelineState currentState = timeline.get(this.timelineCursor);
-        this.backupState = createState(currentState.getStateDefinition().getFirst());
+        this.backupState = copyState(currentState);
 
         return currentState.getStateDefinition();
     }
@@ -109,26 +124,18 @@ public class UndoRedoManager
     }
 
     /**
-     * Creates a new timeline state from a given NetPlan moment.
-     *
-     * @param netPlan
-     * @return
+     * Copies a timeline state.
      */
-    private TimelineState createState(final NetPlan netPlan)
+    private TimelineState copyState(final TimelineState timelineState)
     {
-        final NetPlan npCopy = netPlan.copy();
+        final Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> state = timelineState.getStateDefinition();
+        final NetPlan npCopy = state.getFirst().copy();
 
         final BidiMap<NetworkLayer, Integer> cp_mapLayer2VisualizationOrder = new DualHashBidiMap<>();
-        for (NetworkLayer cpLayer : npCopy.getNetworkLayers())
-        {
-            cp_mapLayer2VisualizationOrder.put(cpLayer, callback.getVisualizationState().getCanvasVisualizationOrderNotRemovingNonVisible(callback.getDesign().getNetworkLayer(cpLayer.getIndex())));
-        }
+        cp_mapLayer2VisualizationOrder.putAll(state.getSecond());
 
         final Map<NetworkLayer, Boolean> cp_layerVisibilityMap = new HashMap<>();
-        for (NetworkLayer cpLayer : npCopy.getNetworkLayers())
-        {
-            cp_layerVisibilityMap.put(cpLayer, callback.getVisualizationState().isLayerVisibleInCanvas(callback.getDesign().getNetworkLayer(cpLayer.getIndex())));
-        }
+        cp_layerVisibilityMap.putAll(state.getThird());
 
         return new TimelineState(npCopy, cp_mapLayer2VisualizationOrder, cp_layerVisibilityMap);
     }

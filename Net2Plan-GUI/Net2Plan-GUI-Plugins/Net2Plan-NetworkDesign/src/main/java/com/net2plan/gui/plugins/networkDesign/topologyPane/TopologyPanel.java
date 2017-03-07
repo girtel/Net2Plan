@@ -578,7 +578,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
-            callback.resetTimelineNavigator();
+            callback.addNetPlanChange();
 
             // Reactivating the OSM Support
             if  (isOSMRunning)

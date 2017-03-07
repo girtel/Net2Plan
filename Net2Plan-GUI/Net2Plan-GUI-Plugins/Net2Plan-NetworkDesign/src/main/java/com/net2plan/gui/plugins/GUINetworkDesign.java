@@ -22,7 +22,8 @@
 
 package com.net2plan.gui.plugins;
 
-import com.net2plan.gui.plugins.networkDesign.UndoRedoManager;
+import com.net2plan.gui.plugins.networkDesign.GUIWindow;
+import com.net2plan.gui.plugins.networkDesign.NetworkDesignWindow;
 import com.net2plan.gui.plugins.networkDesign.focusPane.FocusPane;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.IVisualizationCallback;
@@ -38,7 +39,6 @@ import com.net2plan.gui.plugins.networkDesign.visualizationControl.UndoRedoManag
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
-import com.net2plan.gui.utils.WindowUtils;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
