@@ -43,7 +43,7 @@ public enum NetworkDesignWindow
         return null;
     }
 
-    public static String getTabName(final NetworkDesignWindow tab)
+    public static String getWindowName(final NetworkDesignWindow tab)
     {
         switch (tab)
         {

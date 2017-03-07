@@ -93,6 +93,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
     private NetPlan currentNetPlan;
 
+    private WindowController windowController;
     private GUIWindow tableControlWindow;
 
     /**
@@ -219,11 +220,11 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         WindowUtils.clearFloatingWindows();
 
         final JTabbedPane tabPane = new JTabbedPane();
-        tabPane.add(WindowController.NetworkDesignWindow.getTabName(WindowController.NetworkDesignWindow.network), viewEditTopTables);
-        tabPane.add(WindowController.NetworkDesignWindow.getTabName(WindowController.NetworkDesignWindow.offline), executionPane);
-        tabPane.add(WindowController.NetworkDesignWindow.getTabName(WindowController.NetworkDesignWindow.online), onlineSimulationPane);
-        tabPane.add(WindowController.NetworkDesignWindow.getTabName(WindowController.NetworkDesignWindow.whatif), whatIfAnalysisPane);
-        tabPane.add(WindowController.NetworkDesignWindow.getTabName(WindowController.NetworkDesignWindow.report), reportPane);
+        tabPane.add(NetworkDesignWindow.getWindowName(NetworkDesignWindow.network), viewEditTopTables);
+        tabPane.add(NetworkDesignWindow.getWindowName(NetworkDesignWindow.offline), executionPane);
+        tabPane.add(NetworkDesignWindow.getWindowName(NetworkDesignWindow.online), onlineSimulationPane);
+        tabPane.add(NetworkDesignWindow.getWindowName(NetworkDesignWindow.whatif), whatIfAnalysisPane);
+        tabPane.add(NetworkDesignWindow.getWindowName(NetworkDesignWindow.report), reportPane);
 
         // Installing customized mouse listener
         MouseListener[] ml = tabPane.getListeners(MouseListener.class);
@@ -269,27 +270,23 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                             final JComponent selectedComponent = (JComponent) tabPane.getSelectedComponent();
 
                             // Pops up the selected tab.
-                            final WindowController.NetworkDesignWindow networkDesignWindow = WindowController.NetworkDesignWindow.parseString(tabName);
+                            final NetworkDesignWindow networkDesignWindow = NetworkDesignWindow.parseString(tabName);
 
                             if (networkDesignWindow != null)
                             {
                                 switch (networkDesignWindow)
                                 {
                                     case offline:
-                                        WindowController.buildOfflineWindow(selectedComponent);
-                                        WindowController.showOfflineWindow(true);
+                                        windowController.showOfflineWindow(true);
                                         break;
                                     case online:
-                                        WindowController.buildOnlineWindow(selectedComponent);
-                                        WindowController.showOnlineWindow(true);
+                                        windowController.showOnlineWindow(true);
                                         break;
                                     case whatif:
-                                        WindowController.buildWhatifWindow(selectedComponent);
-                                        WindowController.showWhatifWindow(true);
+                                        windowController.showWhatifWindow(true);
                                         break;
                                     case report:
-                                        WindowController.buildReportWindow(selectedComponent);
-                                        WindowController.showReportWindow(true);
+                                        windowController.showReportWindow(true);
                                         break;
                                     default:
                                         return;
@@ -300,7 +297,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                         });
 
                         // Disabling the pop up button for the network state tab.
-                        if (WindowController.NetworkDesignWindow.parseString(tabPane.getTitleAt(tabPane.getSelectedIndex())) == WindowController.NetworkDesignWindow.network)
+                        if (NetworkDesignWindow.parseString(tabPane.getTitleAt(tabPane.getSelectedIndex())) == NetworkDesignWindow.network)
                         {
                             popWindow.setEnabled(false);
                         }
@@ -314,7 +311,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         });
 
         // Building windows
-        tableControlWindow = new GUIWindow(tabPane)
+        this.tableControlWindow = new GUIWindow(tabPane)
         {
             @Override
             public String getTitle()
@@ -322,7 +319,9 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                 return "Net2Plan - Design tables and control window";
             }
         };
-        tableControlWindow.showWindow(false);
+        this.tableControlWindow.showWindow(false);
+
+        this.windowController = new WindowController(executionPane, onlineSimulationPane, whatIfAnalysisPane, reportPane);
 
         addAllKeyCombinationActions();
         updateVisualizationAfterNewTopology();
@@ -472,6 +471,11 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 //        if (onlineSimulationPane != null) onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
         currentNetPlan = netPlan;
 //        netPlan.checkCachesConsistency();
+    }
+
+    public void showTableControlWindow()
+    {
+        tableControlWindow.showWindow(true);
     }
 
     private void resetButton()
@@ -726,7 +730,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                WindowController.showTablesWindow(true);
+                tableControlWindow.showWindow(true);
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
 
@@ -937,7 +941,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         private void buildOfflineWindow(final JComponent component)
         {
-            final String tabName = NetworkDesignWindow.getTabName(NetworkDesignWindow.offline);
+            final String tabName = NetworkDesignWindow.getWindowName(NetworkDesignWindow.offline);
 
             offlineWindow = new GUIWindow(component)
             {
@@ -963,7 +967,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         private void buildOnlineWindow(final JComponent component)
         {
-            final String tabName = NetworkDesignWindow.getTabName(NetworkDesignWindow.online);
+            final String tabName = NetworkDesignWindow.getWindowName(NetworkDesignWindow.online);
 
             onlineWindow = new GUIWindow(component)
             {
@@ -989,7 +993,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         private void buildWhatifWindow(final JComponent component)
         {
-            final String tabName = NetworkDesignWindow.getTabName(NetworkDesignWindow.whatif);
+            final String tabName = NetworkDesignWindow.getWindowName(NetworkDesignWindow.whatif);
 
             whatifWindow = new GUIWindow(component)
             {
@@ -1014,7 +1018,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         private void buildReportWindow(final JComponent component)
         {
-            final String tabName = NetworkDesignWindow.getTabName(NetworkDesignWindow.report);
+            final String tabName = NetworkDesignWindow.getWindowName(NetworkDesignWindow.report);
 
             reportWindow = new GUIWindow(component)
             {
@@ -1072,7 +1076,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
                 for (int i = 0; i < tabCorrectOrder.length; i++)
                 {
-                    final String tabName = NetworkDesignWindow.getTabName(tabCorrectOrder[i]);
+                    final String tabName = NetworkDesignWindow.getWindowName(tabCorrectOrder[i]);
 
                     if (toSortTabs.containsKey(tabName))
                     {
