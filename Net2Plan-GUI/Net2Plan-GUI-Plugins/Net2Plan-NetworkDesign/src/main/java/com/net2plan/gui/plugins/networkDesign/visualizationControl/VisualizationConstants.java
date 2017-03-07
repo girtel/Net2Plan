@@ -44,6 +44,8 @@ public final class VisualizationConstants
     public final static Paint DEFAULT_GUINODE_COLOR = java.awt.Color.BLACK;
     public final static Font DEFAULT_GUINODE_FONT = new Font("Helvetica", Font.BOLD, 11);
     public final static int DEFAULT_GUINODE_SHAPESIZE = 30;
+    public final static int DEFAULT_GUINODE_SHAPESIZE_MORETHAN100NODES = 10;
+    
 
     public final static boolean DEFAULT_REGGUILINK_HASARROW = false;
 

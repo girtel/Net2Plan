@@ -176,13 +176,13 @@ public class IOMatPlanWDM_design extends IOFilter
 						Map<String, String> nodeAttributes = new HashMap<String, String>();
 						nodeAttributes.put("id", node.getAttribute("id"));
 						nodeAttributes.put("level", node.getAttribute("nodeLevel"));
-						nodeAttributes.put("population", node.getAttribute("nodePopulation"));
 						nodeAttributes.put("timezone", node.getAttribute("nodeTimezone"));
 						nodeAttributes.put("eoTransmitter", ((Element) node.getElementsByTagName("eoTransmitter").item(0)).getAttribute("number"));
 						nodeAttributes.put("oeReceiver", ((Element) node.getElementsByTagName("oeReceiver").item(0)).getAttribute("number"));
 						nodeAttributes.put("wc", ((Element) node.getElementsByTagName("wc").item(0)).getAttribute("number"));
 
-						templateNetPlan.addNode(xCoord, yCoord, name, nodeAttributes);
+						final Node n = templateNetPlan.addNode(xCoord, yCoord, name, nodeAttributes);
+						n.setPopulation(Double.parseDouble(node.getAttribute("nodePopulation")));
 					}
 
 					for (int i = 0; i < E; i++)

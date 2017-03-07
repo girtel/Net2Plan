@@ -325,6 +325,7 @@ public class SharedRiskGroup extends NetworkElement
 
 		for (Node node : nodes) node.cache_nodeSRGs.remove (this);
 		for (Link link : links) link.cache_srgs.remove (this);
+        for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		netPlan.cache_id2srgMap.remove (id);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.srgs , index);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
@@ -369,6 +370,8 @@ public class SharedRiskGroup extends NetworkElement
 
 	void checkCachesConsistency ()
 	{
+		super.checkCachesConsistency ();
+
 		for (Link link : links) if (!link.cache_srgs.contains(this)) throw new RuntimeException ("Bad");
 		for (Node node : nodes) if (!node.cache_nodeSRGs.contains(this)) throw new RuntimeException ("Bad");
 	}

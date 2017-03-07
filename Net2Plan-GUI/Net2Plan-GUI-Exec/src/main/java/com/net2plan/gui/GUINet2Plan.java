@@ -61,6 +61,7 @@ public class GUINet2Plan extends JFrame implements ActionListener {
     private JMenuItem exitItem, optionsItem, errorConsoleItem, classPathEditorItem, keyCombinationItem;
     private JMenuItem aboutItem, helpItem, javadocItem, javadocExamplesItem;
     private BidiMap<JMenuItem, Object> itemObject;
+    private IGUIModule runningModule;
 
     private final static WindowAdapter CLOSE_NET2PLAN;
     private final static String ABOUT_TEXT = "<html><p align='justify'>Welcome to "
@@ -109,7 +110,18 @@ public class GUINet2Plan extends JFrame implements ActionListener {
             } else {
                 Object object = itemObject.get(item);
 
-                WindowUtils.setWindowLeftSide(instance);
+                if (this.runningModule != null)
+                {
+                    final int result = JOptionPane.showConfirmDialog(instance, "Are you sure you want to exit the tool?\nAll unsaved changes will be lost", "Exit?", JOptionPane.YES_NO_OPTION);
+
+                    if (result == JOptionPane.YES_OPTION)
+                    {
+                        runningModule.stop();
+                    } else if (result == JOptionPane.NO_OPTION || result == JOptionPane.CLOSED_OPTION)
+                    {
+                        return;
+                    }
+                }
 
                 if (object != null) {
                     if (object instanceof Class) {
@@ -120,7 +132,11 @@ public class GUINet2Plan extends JFrame implements ActionListener {
                             module.start();
 
                             object = module;
+                            this.runningModule = module;
                         }
+                    } else
+                    {
+                        this.runningModule = null;
                     }
 
                     if (object instanceof JPanel) {

@@ -62,7 +62,6 @@ public class Link extends NetworkElement
 	Map<Route,Integer> cache_traversingRoutes; // for each traversing route, the number of times it traverses this link (in seqLinksRealPath). If the route has segments, their internal route counts also
 	Set<MulticastTree> cache_traversingTrees;
 
-	
 	Demand coupledLowerLayerDemand;
 	MulticastDemand coupledLowerLayerMulticastDemand;
 	
@@ -513,6 +512,8 @@ public class Link extends NetworkElement
 			for (Demand d : layer.demands) if (x_d_linkToRemove.get(d.index) > PRECISION_FACTOR) layer.updateHopByHopRoutingDemand(d);
 		}
 
+        for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
+
 		ErrorHandling.DEBUG = previousErrorHandling;
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		removeId();
@@ -542,6 +543,7 @@ public class Link extends NetworkElement
 
 	void checkCachesConsistency ()
 	{
+		super.checkCachesConsistency ();
 		if (layer.netPlan != this.netPlan) throw new RuntimeException ("Bad");
 		if (!layer.links.contains(this)) throw new RuntimeException ("Bad");
 		double check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments = 0;

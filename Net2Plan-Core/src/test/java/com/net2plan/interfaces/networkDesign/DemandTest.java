@@ -1,14 +1,29 @@
 package com.net2plan.interfaces.networkDesign;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.google.common.collect.Sets;
 import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
-import org.junit.*;
-
-import java.util.*;
-
-import static org.junit.Assert.*;
 
 public class DemandTest 
 {
@@ -65,6 +80,7 @@ public class DemandTest
 		np.checkCachesConsistency();
 	}
 
+
 	@After
 	public void tearDown() throws Exception 
 	{
@@ -81,6 +97,28 @@ public class DemandTest
 		assertEquals (d13.getRoutes() , new HashSet<Route> (Arrays.asList(r123a , segm13)));
 	}
 
+	@Test
+	public void testAddTag() 
+	{
+		d13.addTag ("t1"); d13.addTag ("t2"); d13.addTag ("t1"); 
+		d12.addTag("t1");
+		assertEquals (d13.getTags() , new HashSet<String> (Arrays.asList("t1" , "t2")));
+		assertEquals (np.getTaggedDemands ("t1" , d13.getLayer()) , Sets.newHashSet(d13 , d12));
+		assertEquals (np.getTaggedDemands ("xxx" , d13.getLayer()) , Sets.newHashSet());
+	}
+
+	@Test
+	public void testRemoveTag() 
+	{
+		d13.addTag ("t1"); d13.addTag ("t2"); d13.addTag ("t1"); 
+		d13.removeTag ("ssss");
+		assertEquals (d13.getTags() , new HashSet<String> (Arrays.asList("t1" , "t2")));
+		d13.removeTag ("t2");
+		assertEquals (d13.getTags() , new HashSet<String> (Arrays.asList("t1")));
+		d13.removeTag ("t1");
+		assertEquals (d13.getTags() , new HashSet<String> (Arrays.asList()));
+	}
+	
 	@Test
 	public void testGetRoutesAreBackup() 
 	{
