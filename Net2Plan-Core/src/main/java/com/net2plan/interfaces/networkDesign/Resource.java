@@ -433,6 +433,7 @@ public class Resource extends NetworkElement
 		if (!resourcesThisType.contains(this)) throw new RuntimeException ("Bad");
 		if (resourcesThisType.size() == 1) netPlan.cache_type2Resources.remove (type); else resourcesThisType.remove(this);
 		hostNode.cache_nodeResources.remove(this);
+        for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.resources , index);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		removeId ();
@@ -448,6 +449,8 @@ public class Resource extends NetworkElement
 
 	void checkCachesConsistency ()
 	{
+		super.checkCachesConsistency ();
+
 		if (!netPlan.cache_type2Resources.get(this.type).contains(this)) throw new RuntimeException ("Bad");
 
 		double accumOccupCap = 0;

@@ -63,6 +63,7 @@ public class NodeTest
 		this.n1 = this.np.addNode(0 , 0 , "node1" , null);
 		this.n2 = np.addNode(0 , 0 , "node2" , null);
 		this.n3 = np.addNode(0 , 0 , "node3" , null);
+		n1.setPopulation(100);
 		this.link12 = np.addLink(n1,n2,100,100,1,null,lowerLayer);
 		this.link23 = np.addLink(n2,n3,100,100,1,null,lowerLayer);
 		this.link13 = np.addLink(n1,n3,100,100,1,null,lowerLayer);
@@ -128,6 +129,15 @@ public class NodeTest
 		assertEquals(n1.getName() , "xxx");
 	}
 
+	@Test
+	public void testSetPopulation() 
+	{
+		assertEquals(n1.getPopulation(), 100 , 0);
+		n1.setPopulation(200);
+		assertEquals(n1.getPopulation(), 200 , 0);
+	}
+
+	
 	@Test
 	public void testGetEgressOfferedTraffic() 
 	{

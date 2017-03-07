@@ -16,6 +16,36 @@
 
 package com.net2plan.libraries;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
+import com.google.common.collect.Sets;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.utils.CollectionUtils;
+import com.net2plan.utils.Constants;
+import com.net2plan.utils.IntUtils;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.StringUtils;
+
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
@@ -23,11 +53,6 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.colt.matrix.tint.IntFactory2D;
 import cern.colt.matrix.tint.IntMatrix1D;
 import cern.colt.matrix.tint.IntMatrix2D;
-import com.google.common.collect.Sets;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.utils.*;
-
-import java.util.*;
 
 /**
  * Class to deal with WDM optical topologies in fixed-grid and flexi-grid networks, including wavelength assignment and regenerator placement.
@@ -111,6 +136,27 @@ import java.util.*;
  */
 public class WDMUtils
 {
+	
+	/** The type of recovery to be applied to this lightpath. This information can be used by the 
+	 * algorithms, and the decision of what to do lays on them.
+	 *
+	 */
+	public enum DemandRecoveryType
+	{
+		/** No reaction to failures to any route of the demand */
+		NONE("None"),
+		/** An attempt is made to reroute the failed lightpaths of the demand (backup or not, but this makes sense when the routes have no backup) */
+		RESTORATION("Restoration"),
+		/** To carry the traffic, first the primary is tried, then the backup routes in order. Unused routes have carried traffic zero. No revert action is made */
+//		PROTECTION_NOREVERT("ProtectionNoRevert"),
+		/** To carry the traffic, first the primary is tried, then the backup routes in order. Unused routes have carried traffic zero. If the primary becomes usable, traffic is reverted to it */
+		PROTECTION_REVERT("ProtectionRevert");
+		private final String label;
+		DemandRecoveryType(String label) { this.label = label; }
+		@Override
+		public String toString() { return label; }
+	}
+
 	
 	
 	/** This class is devoted to give easy access to the transponders information provided by the user in the 
@@ -657,6 +703,11 @@ public class WDMUtils
 	private final static String SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME = "seqFrequencySlotsInitialRoute";
 	
 	/**
+	 * The recovery type for the route object (lightpath).
+	 */
+	private final static String RECOVERYTYPE_ATTRIBUTE_NAME = "wdmDemandRecoveryType";
+
+	/**
 	 * Route/protection segment attribute name for sequence of regenerators occupied for the initial sequence of links (when the route was created)
 	 */
 	private final static String SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME = "seqRegeneratorsInitialRoute";
@@ -686,45 +737,40 @@ public class WDMUtils
 		return lp;
 	}
 
-//	/** Sets the given RSA as the primary path of the given route
-//	 * @param r the route
-//	 * @param rsa the RSA (traversed fibers, and slots to reserve in them)
-//	 */
-//	public static void setLightpathAsPrimaryPath (Route r , RSA rsa)
-//	{
-//		r.setPrimaryPath(rsa.seqLinks);
-//		setLightpathRSAAttributes (r , rsa , true);
-//	}
+	/** Sets the recovery type of the lightpath demand, to the one given
+	 * @param d the demand (representing all the lightpaths in it)
+	 * @param recoveryType the recovery type
+	 */
+	public static void setRecoveryType (Demand d , DemandRecoveryType recoveryType)
+	{
+		d.setAttribute(RECOVERYTYPE_ATTRIBUTE_NAME, recoveryType.toString());
+	}
 
-//	/** Creates a new lightpath with the given RSA, as a backup lighptath in the given route. 
-//	 * The attributes of the lightpath to store the WDM information are initialized appropriately
-//	 * @param r the route
-//	 * @param rsa the RSA (traversed fibers, and slots to reserve in them)
-//	 */
-//	public static void addLightpathAsBackupPath (Route r , RSA rsa)
-//	{
-//		r.addBackupPath(rsa.seqLinks);
-//		final int indexOfBackupPathAdded = r.getBackupPathList().size() - 1; 
-//		setLightpathRSAAttributes (r , rsa , false , indexOfBackupPathAdded);
-//	}
-//
-//	/** Removes a lightpath as backup path of a route (in the given index), updating also the information in theroute attribtues regarding the RSA
-//	 * @param r the route
-//	 * @param indexToRemove the index of the backup path to remove (in the backup path list of the route)
-//	 */
-//	public static void removeLightpathAsBackupPath (Route r , int indexToRemove)
-//	{
-//		final int originalNumBackupPaths = r.getBackupPathList().size();
-//		if ((indexToRemove < 0) || (indexToRemove >= originalNumBackupPaths)) throw new WDMException ("Wrong backup path index");
-//		r.removeBackupPath(indexToRemove);
-//		for (int index = indexToRemove + 1; index < originalNumBackupPaths ; index ++)
-//		{
-//			r.setAttribute(SEQUENCE_OF_FREQUENCYSLOTS_BACKUPPATH_ATTRIBUTE_NAME + (index-1), r.getAttribute(SEQUENCE_OF_FREQUENCYSLOTS_BACKUPPATH_ATTRIBUTE_NAME + index));
-//			r.setAttribute(SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + (index-1), r.getAttribute(SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + index));
-//		}
-//		r.removeAttribute(SEQUENCE_OF_FREQUENCYSLOTS_BACKUPPATH_ATTRIBUTE_NAME + (originalNumBackupPaths-1));
-//		r.removeAttribute(SEQUENCE_OF_REGENERATORS_BACKUPPATH_ATTRIBUTE_NAME + (originalNumBackupPaths-1));
-//	}
+	/** Sets the recovery type of the lightpath, to the one given. An exception can be thrown if the attribute of the demand storing this information exists, but has a wrong format
+	 * @param d the demand (representing all the lightpaths in it)
+	 * @param defaultRecovery if included, this default recovery type is returned when the demand has not the 
+	 * attribute with the recovery information
+	 * @return see above
+	 */
+	public static DemandRecoveryType getRecoveryType (Demand d , DemandRecoveryType ...defaultRecovery)
+	{
+		final String att = d.getAttribute(RECOVERYTYPE_ATTRIBUTE_NAME);
+		if (att == null)
+		{
+			if (defaultRecovery.length != 0) return defaultRecovery [0];
+			if (d.getRoutesHaveBackup().isEmpty()) 
+				return DemandRecoveryType.NONE; 
+			else 
+				return DemandRecoveryType.PROTECTION_REVERT; 
+		}
+		if (att.equals(DemandRecoveryType.NONE.toString())) return DemandRecoveryType.NONE;
+		if (att.equals(DemandRecoveryType.RESTORATION.toString())) return DemandRecoveryType.RESTORATION;
+//		if (att.equals(DemandRecoveryType.PROTECTION_NOREVERT.toString())) return DemandRecoveryType.PROTECTION_NOREVERT;
+		if (att.equals(DemandRecoveryType.PROTECTION_REVERT.toString())) return DemandRecoveryType.PROTECTION_REVERT;
+		throw new WDMException ("Wrong format of attribute: " + RECOVERYTYPE_ATTRIBUTE_NAME);
+	}
+
+	
 
 	/** Checks resource clashing: no frequency slot in the same fiber can be occupied by more than one lightpath, nor 
 	 * any slot of an index higher than the fiber capacity can be occupied. If a lightpath has as current route one of the backups, the clashing for this backup is not checked 
@@ -1037,7 +1083,7 @@ public class WDMUtils
 	{
 		final RSA primaryRSA = new RSA (r , true);
 		r.setPath(r.getInitialState().getFirst(), primaryRSA.seqLinks, Collections.nCopies(primaryRSA.seqLinks.size(), (double) primaryRSA.getNumSlots()));
-		setLightpathRSAAttributes(r, primaryRSA, true);
+		setLightpathRSAAttributes(r, primaryRSA, false);
 	}
 	
 	/**

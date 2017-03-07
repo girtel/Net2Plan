@@ -323,6 +323,8 @@ public class NetworkLayer extends NetworkElement
 	
 	void checkCachesConsistency ()
 	{
+		super.checkCachesConsistency ();
+
 		final int N = netPlan.nodes.size();
 		final int E = links.size ();
 		final int D = demands.size ();

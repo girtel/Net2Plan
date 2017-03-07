@@ -33,8 +33,8 @@ import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.ViewEditTopologyTablesPane;
-import com.net2plan.gui.plugins.networkDesign.viewEditWindows.WindowController;
 import com.net2plan.gui.plugins.networkDesign.viewReportsPane.ViewReportPane;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.UndoRedoManager;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
@@ -91,6 +91,9 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     private UndoRedoManager undoRedoManager;
 
     private NetPlan currentNetPlan;
+
+    private WindowController windowController;
+    private GUIWindow tableControlWindow;
 
     /**
      * Default constructor.
@@ -216,22 +219,19 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         executionPane = new OfflineExecutionPanel(this);
         whatIfAnalysisPane = new WhatIfAnalysisPane(this);
 
-        // Closing windows
-        WindowUtils.clearFloatingWindows();
-
         final JTabbedPane tabPane = new JTabbedPane();
-        tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.network), viewEditTopTables);
-        tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.offline), executionPane);
-        tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.online), onlineSimulationPane);
-        tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.whatif), whatIfAnalysisPane);
-        tabPane.add(WindowController.WindowToTab.getTabName(WindowController.WindowToTab.report), reportPane);
+        tabPane.add(NetworkDesignWindow.getWindowName(NetworkDesignWindow.network), viewEditTopTables);
+        tabPane.add(NetworkDesignWindow.getWindowName(NetworkDesignWindow.offline), executionPane);
+        tabPane.add(NetworkDesignWindow.getWindowName(NetworkDesignWindow.online), onlineSimulationPane);
+        tabPane.add(NetworkDesignWindow.getWindowName(NetworkDesignWindow.whatif), whatIfAnalysisPane);
+        tabPane.add(NetworkDesignWindow.getWindowName(NetworkDesignWindow.report), reportPane);
 
         // Installing customized mouse listener
         MouseListener[] ml = tabPane.getListeners(MouseListener.class);
 
-        for (int i = 0; i < ml.length; i++)
+        for (MouseListener mouseListener : ml)
         {
-            tabPane.removeMouseListener(ml[i]);
+            tabPane.removeMouseListener(mouseListener);
         }
 
         // Left click works as usual, right click brings up a pop-up menu.
@@ -267,30 +267,25 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                         {
                             final int selectedIndex = tabPane.getSelectedIndex();
                             final String tabName = tabPane.getTitleAt(selectedIndex);
-                            final JComponent selectedComponent = (JComponent) tabPane.getSelectedComponent();
 
                             // Pops up the selected tab.
-                            final WindowController.WindowToTab windowToTab = WindowController.WindowToTab.parseString(tabName);
+                            final NetworkDesignWindow networkDesignWindow = NetworkDesignWindow.parseString(tabName);
 
-                            if (windowToTab != null)
+                            if (networkDesignWindow != null)
                             {
-                                switch (windowToTab)
+                                switch (networkDesignWindow)
                                 {
                                     case offline:
-                                        WindowController.buildOfflineWindow(selectedComponent);
-                                        WindowController.showOfflineWindow(true);
+                                        windowController.showOfflineWindow(true);
                                         break;
                                     case online:
-                                        WindowController.buildOnlineWindow(selectedComponent);
-                                        WindowController.showOnlineWindow(true);
+                                        windowController.showOnlineWindow(true);
                                         break;
                                     case whatif:
-                                        WindowController.buildWhatifWindow(selectedComponent);
-                                        WindowController.showWhatifWindow(true);
+                                        windowController.showWhatifWindow(true);
                                         break;
                                     case report:
-                                        WindowController.buildReportWindow(selectedComponent);
-                                        WindowController.showReportWindow(true);
+                                        windowController.showReportWindow(true);
                                         break;
                                     default:
                                         return;
@@ -301,7 +296,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                         });
 
                         // Disabling the pop up button for the network state tab.
-                        if (WindowController.WindowToTab.parseString(tabPane.getTitleAt(tabPane.getSelectedIndex())) == WindowController.WindowToTab.network)
+                        if (NetworkDesignWindow.parseString(tabPane.getTitleAt(tabPane.getSelectedIndex())) == NetworkDesignWindow.network)
                         {
                             popWindow.setEnabled(false);
                         }
@@ -315,13 +310,29 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         });
 
         // Building windows
-        WindowController.buildTableControlWindow(tabPane);
-        WindowController.showTablesWindow(false);
+        this.tableControlWindow = new GUIWindow(tabPane)
+        {
+            @Override
+            public String getTitle()
+            {
+                return "Net2Plan - Design tables and control window";
+            }
+        };
+        this.tableControlWindow.showWindow(false);
+
+        // Building tab controller
+        this.windowController = new WindowController(executionPane, onlineSimulationPane, whatIfAnalysisPane, reportPane);
 
         addAllKeyCombinationActions();
         updateVisualizationAfterNewTopology();
     }
 
+    @Override
+    public void stop()
+    {
+        tableControlWindow.setVisible(false);
+        windowController.hideAllWindows();
+    }
 
     private JPanel configureLeftBottomPanel()
     {
@@ -464,6 +475,11 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     {
         netPlan.checkCachesConsistency();
         currentNetPlan = netPlan;
+    }
+
+    public void showTableControlWindow()
+    {
+        tableControlWindow.showWindow(true);
     }
 
     private void resetButton()
@@ -718,7 +734,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                WindowController.showTablesWindow(true);
+                tableControlWindow.showWindow(true);
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
 
@@ -905,6 +921,182 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                 case ZOOM_OUT:
                     topologyPanel.getCanvas().zoomOut();
                     break;
+            }
+        }
+    }
+
+    private class WindowController
+    {
+        private GUIWindow reportWindow;
+        private GUIWindow offlineWindow;
+        private GUIWindow onlineWindow;
+        private GUIWindow whatifWindow;
+
+        private final JComponent offlineWindowComponent, onlineWindowComponent;
+        private final JComponent whatitWindowComponent, reportWindowComponent;
+
+        WindowController(final JComponent offlineWindowComponent, final JComponent onlineWindowComponent, final JComponent whatifWindowComponent, final JComponent reportWindowComponent)
+        {
+            this.offlineWindowComponent = offlineWindowComponent;
+            this.onlineWindowComponent = onlineWindowComponent;
+            this.whatitWindowComponent = whatifWindowComponent;
+            this.reportWindowComponent = reportWindowComponent;
+        }
+
+        private void buildOfflineWindow(final JComponent component)
+        {
+            final String tabName = NetworkDesignWindow.getWindowName(NetworkDesignWindow.offline);
+
+            offlineWindow = new GUIWindow(component)
+            {
+                @Override
+                public String getTitle()
+                {
+                    return "Net2Plan - " + tabName;
+                }
+            };
+
+            offlineWindow.addWindowListener(new CloseWindowAdapter(tabName, component));
+        }
+
+        void showOfflineWindow(final boolean gainFocus)
+        {
+            buildOfflineWindow(offlineWindowComponent);
+
+            if (offlineWindow != null)
+            {
+                offlineWindow.showWindow(gainFocus);
+            }
+        }
+
+        private void buildOnlineWindow(final JComponent component)
+        {
+            final String tabName = NetworkDesignWindow.getWindowName(NetworkDesignWindow.online);
+
+            onlineWindow = new GUIWindow(component)
+            {
+                @Override
+                public String getTitle()
+                {
+                    return "Net2Plan - " + tabName;
+                }
+            };
+
+            onlineWindow.addWindowListener(new CloseWindowAdapter(tabName, component));
+        }
+
+        void showOnlineWindow(final boolean gainFocus)
+        {
+            buildOnlineWindow(onlineWindowComponent);
+
+            if (onlineWindow != null)
+            {
+                onlineWindow.showWindow(gainFocus);
+            }
+        }
+
+        private void buildWhatifWindow(final JComponent component)
+        {
+            final String tabName = NetworkDesignWindow.getWindowName(NetworkDesignWindow.whatif);
+
+            whatifWindow = new GUIWindow(component)
+            {
+                @Override
+                public String getTitle()
+                {
+                    return "Net2Plan - " + tabName;
+                }
+            };
+
+            whatifWindow.addWindowListener(new CloseWindowAdapter(tabName, component));
+        }
+
+        void showWhatifWindow(final boolean gainFocus)
+        {
+            buildWhatifWindow(whatitWindowComponent);
+            if (whatifWindow != null)
+            {
+                whatifWindow.showWindow(gainFocus);
+            }
+        }
+
+        private void buildReportWindow(final JComponent component)
+        {
+            final String tabName = NetworkDesignWindow.getWindowName(NetworkDesignWindow.report);
+
+            reportWindow = new GUIWindow(component)
+            {
+                @Override
+                public String getTitle()
+                {
+                    return "Net2Plan - " + tabName;
+                }
+            };
+
+            reportWindow.addWindowListener(new CloseWindowAdapter(tabName, component));
+        }
+
+        void showReportWindow(final boolean gainFocus)
+        {
+            buildReportWindow(reportWindowComponent);
+            if (reportWindow != null)
+            {
+                reportWindow.showWindow(gainFocus);
+            }
+        }
+
+        void hideAllWindows()
+        {
+            if (offlineWindow != null) offlineWindow.dispatchEvent(new WindowEvent(offlineWindow, WindowEvent.WINDOW_CLOSING));
+            if (onlineWindow != null) onlineWindow.dispatchEvent(new WindowEvent(onlineWindow, WindowEvent.WINDOW_CLOSING));
+            if (whatifWindow != null) whatifWindow.dispatchEvent(new WindowEvent(whatifWindow, WindowEvent.WINDOW_CLOSING));
+            if (reportWindow != null) reportWindow.dispatchEvent(new WindowEvent(reportWindow, WindowEvent.WINDOW_CLOSING));
+        }
+
+        private class CloseWindowAdapter extends WindowAdapter
+        {
+            private final String tabName;
+            private final JComponent component;
+
+            private final NetworkDesignWindow[] tabCorrectOrder =
+                    {NetworkDesignWindow.network, NetworkDesignWindow.offline, NetworkDesignWindow.online, NetworkDesignWindow.whatif, NetworkDesignWindow.report};
+
+            CloseWindowAdapter(final String tabName, final JComponent component)
+            {
+                this.tabName = tabName;
+                this.component = component;
+            }
+
+            @Override
+            public void windowClosing(WindowEvent e)
+            {
+                addTabToControlWindow(tabName, component);
+            }
+
+            private void addTabToControlWindow(final String newTabName, final JComponent newTabComponent)
+            {
+                final JTabbedPane tabPane = (JTabbedPane) tableControlWindow.getInnerComponent();
+
+                final Map<String, Component> toSortTabs = new HashMap<>();
+                toSortTabs.put(newTabName, newTabComponent);
+
+                for (int i = 0; i < tabPane.getTabCount(); i = 0)
+                {
+                    toSortTabs.put(tabPane.getTitleAt(i), tabPane.getComponentAt(i));
+                    tabPane.remove(i);
+                }
+
+                for (int i = 0; i < tabCorrectOrder.length; i++)
+                {
+                    final String tabName = NetworkDesignWindow.getWindowName(tabCorrectOrder[i]);
+
+                    if (toSortTabs.containsKey(tabName))
+                    {
+                        final Component tabComponent = toSortTabs.get(tabName);
+
+                        tabPane.addTab(tabName, tabComponent);
+                    }
+                }
             }
         }
     }

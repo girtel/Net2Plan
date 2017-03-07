@@ -21,7 +21,6 @@ import com.net2plan.gui.utils.FileDrop;
 import com.net2plan.gui.utils.JPopUpButton;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.gui.plugins.networkDesign.viewEditWindows.WindowController;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.GUINetworkDesign;
@@ -466,7 +465,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             callback.requestRedoAction();
         } else if (src == btn_tableControlWindow)
         {
-            WindowController.showTablesWindow(true);
+            callback.showTableControlWindow();
         } else if (src == btn_osmMap)
         {
             if (btn_osmMap.isSelected())

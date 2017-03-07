@@ -73,6 +73,9 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 					String startElementName = xmlStreamReader.getName().toString();
 					switch(startElementName)
 					{
+						case "tag":
+							netPlan.addTag(xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value")));
+							break;
 						case "attribute":
 							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
 							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
@@ -135,10 +138,12 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final double xCoord = getDouble ("xCoord");
 		final double yCoord = getDouble ("yCoord");
 		final String nodeName = getString ("name");
+		final double population = getDouble ("population");
 		boolean isUp = true; try { isUp = getBoolean ("isUp"); } catch (Exception e) {} 
 		//netPlan.nextNodeId = new MutableLong(nodeId);
 		Node newNode = netPlan.addNode(nodeId , xCoord, yCoord, nodeName, null);
 		newNode.setFailureState(isUp);
+		newNode.setPopulation(population);
 
 		/* read the icons information and put it in a map for later (layers are not created yet!) */
 		for (long layerId : getListLong("layersWithIconsDefined"))
@@ -172,6 +177,9 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 					String startElementName = xmlStreamReader.getName().toString();
 					switch(startElementName)
 					{
+						case "tag":
+							newDemand.addTag(xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value")));
+							break;
 						case "attribute":
 							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
 							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
@@ -380,6 +388,10 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 					String startElementName = xmlStreamReader.getName().toString();
 					switch(startElementName)
 					{
+						case "tag":
+							newLayer.addTag(xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value")));
+							break;
+
 						case "attribute":
 							newLayer.setAttribute(getString ("key"), getString ("name"));
 							break;
@@ -454,7 +466,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 							break;
 
 						default:
-							throw new RuntimeException("Bad");
+							throw new RuntimeException("Bad: " + startElementName);
 					}
 					break;
 
@@ -552,6 +564,10 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 					String startElementName = xmlStreamReader.getName().toString();
 					switch(startElementName)
 					{
+						case "tag":
+							updateElement.addTag(xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value")));
+							break;
+
 						case "attribute":
 							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
 							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));

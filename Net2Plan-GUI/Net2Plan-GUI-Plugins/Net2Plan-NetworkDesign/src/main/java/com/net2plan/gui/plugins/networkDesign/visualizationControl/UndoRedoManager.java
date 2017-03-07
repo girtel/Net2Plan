@@ -1,4 +1,4 @@
-package com.net2plan.gui.plugins.networkDesign;
+package com.net2plan.gui.plugins.networkDesign.visualizationControl;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
