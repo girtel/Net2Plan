@@ -24,7 +24,7 @@ package com.net2plan.gui.plugins;
 
 import com.net2plan.gui.plugins.networkDesign.GUIWindow;
 import com.net2plan.gui.plugins.networkDesign.NetworkDesignWindow;
-import com.net2plan.gui.plugins.networkDesign.UndoRedoManager;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.UndoRedoManager;
 import com.net2plan.gui.plugins.networkDesign.focusPane.FocusPane;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.IVisualizationCallback;
@@ -229,9 +229,9 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         // Installing customized mouse listener
         MouseListener[] ml = tabPane.getListeners(MouseListener.class);
 
-        for (int i = 0; i < ml.length; i++)
+        for (MouseListener mouseListener : ml)
         {
-            tabPane.removeMouseListener(ml[i]);
+            tabPane.removeMouseListener(mouseListener);
         }
 
         // Left click works as usual, right click brings up a pop-up menu.
@@ -267,7 +267,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                         {
                             final int selectedIndex = tabPane.getSelectedIndex();
                             final String tabName = tabPane.getTitleAt(selectedIndex);
-                            final JComponent selectedComponent = (JComponent) tabPane.getSelectedComponent();
 
                             // Pops up the selected tab.
                             final NetworkDesignWindow networkDesignWindow = NetworkDesignWindow.parseString(tabName);
@@ -321,6 +320,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         };
         this.tableControlWindow.showWindow(false);
 
+        // Building tab controller
         this.windowController = new WindowController(executionPane, onlineSimulationPane, whatIfAnalysisPane, reportPane);
 
         addAllKeyCombinationActions();
@@ -931,7 +931,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         private final JComponent offlineWindowComponent, onlineWindowComponent;
         private final JComponent whatitWindowComponent, reportWindowComponent;
 
-        public WindowController(final JComponent offlineWindowComponent, final JComponent onlineWindowComponent, final JComponent whatifWindowComponent, final JComponent reportWindowComponent)
+        WindowController(final JComponent offlineWindowComponent, final JComponent onlineWindowComponent, final JComponent whatifWindowComponent, final JComponent reportWindowComponent)
         {
             this.offlineWindowComponent = offlineWindowComponent;
             this.onlineWindowComponent = onlineWindowComponent;
@@ -955,7 +955,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             offlineWindow.addWindowListener(new CloseWindowAdapter(tabName, component));
         }
 
-        public void showOfflineWindow(final boolean gainFocus)
+        void showOfflineWindow(final boolean gainFocus)
         {
             buildOfflineWindow(offlineWindowComponent);
 
@@ -981,7 +981,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             onlineWindow.addWindowListener(new CloseWindowAdapter(tabName, component));
         }
 
-        public void showOnlineWindow(final boolean gainFocus)
+        void showOnlineWindow(final boolean gainFocus)
         {
             buildOnlineWindow(onlineWindowComponent);
 
@@ -1007,7 +1007,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             whatifWindow.addWindowListener(new CloseWindowAdapter(tabName, component));
         }
 
-        public void showWhatifWindow(final boolean gainFocus)
+        void showWhatifWindow(final boolean gainFocus)
         {
             buildWhatifWindow(whatitWindowComponent);
             if (whatifWindow != null)
