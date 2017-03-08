@@ -21,6 +21,11 @@ public class VisualizationSnapshot
     public VisualizationSnapshot(NetPlan netPlan)
     {
         this.netPlan = netPlan;
+        this.resetSnapshot();
+    }
+
+    public void resetSnapshot()
+    {
         this.mapCanvasLayerVisualizationOrder = new DualHashBidiMap<>();
         this.mapCanvasLayerVisibility = netPlan.getNetworkLayers().stream().collect(Collectors.toMap(layer -> layer, layer -> true));
         this.mapCanvasLinkVisibility = netPlan.getNetworkLayers().stream().collect(Collectors.toMap(layer -> layer, layer -> true));
@@ -41,6 +46,11 @@ public class VisualizationSnapshot
         return mapCanvasLayerVisualizationOrder;
     }
 
+    public void addLayerVisualizationOrder(NetworkLayer layer, int order)
+    {
+        mapCanvasLayerVisualizationOrder.put(layer, order);
+    }
+
     public int getCanvasLayerVisualizationOrder(NetworkLayer layer)
     {
         final Integer res = mapCanvasLayerVisualizationOrder.get(layer);
@@ -51,6 +61,12 @@ public class VisualizationSnapshot
     public Map<NetworkLayer, Boolean> getMapCanvasLayerVisibility()
     {
         return mapCanvasLayerVisibility;
+    }
+
+    public void addLayerVisibility(NetworkLayer layer, boolean visibility)
+    {
+        if (!mapCanvasLayerVisibility.containsKey(layer)) throw new RuntimeException("Layer does not belong to current NetPlan...");
+        mapCanvasLayerVisibility.put(layer, visibility);
     }
 
     public boolean getCanvasLayerVisibility(NetworkLayer layer)
@@ -70,6 +86,12 @@ public class VisualizationSnapshot
         final Boolean res = mapCanvasLinkVisibility.get(layer);
         if  (res == null) throw new RuntimeException("Layer not found...");
         return res;
+    }
+
+    public void addLinkVisibility(NetworkLayer layer, boolean visibility)
+    {
+        if (!mapCanvasLinkVisibility.containsKey(layer)) throw new RuntimeException("Layer does not belong to current NetPlan...");
+        mapCanvasLinkVisibility.put(layer, visibility);
     }
 
     public VisualizationSnapshot copy()
