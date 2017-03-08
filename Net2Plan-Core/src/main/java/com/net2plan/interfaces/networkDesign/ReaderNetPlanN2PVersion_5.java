@@ -139,12 +139,14 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final double yCoord = getDouble ("yCoord");
 		final String nodeName = getString ("name");
 		final double population = getDouble ("population");
+		String siteName = null; try { siteName = getString ("siteName"); } catch (Exception e) {}
 		boolean isUp = true; try { isUp = getBoolean ("isUp"); } catch (Exception e) {} 
 		//netPlan.nextNodeId = new MutableLong(nodeId);
 		Node newNode = netPlan.addNode(nodeId , xCoord, yCoord, nodeName, null);
 		newNode.setFailureState(isUp);
 		newNode.setPopulation(population);
-
+		if (siteName != null) newNode.setSiteName(siteName);
+		
 		/* read the icons information and put it in a map for later (layers are not created yet!) */
 		for (long layerId : getListLong("layersWithIconsDefined"))
 		{
