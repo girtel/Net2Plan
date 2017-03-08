@@ -181,7 +181,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         	originNode.getNetPlan().addLink(originNode , destinationNode , 0 , 0 , 200000 , null , layer);
         	callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-            callback.getUndoRedoNavigationManager().addNetPlanChange();
+            callback.addNetPlanChange();
         }
     }
 
@@ -205,7 +205,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         	originNode.getNetPlan().addLinkBidirectional(originNode , destinationNode , 0 , 0 , 200000 , null , layer);
         	callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-            callback.getUndoRedoNavigationManager().addNetPlanChange();
+            callback.addNetPlanChange();
         }
 
     }
@@ -237,7 +237,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         	callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
             callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-            callback.getUndoRedoNavigationManager().addNetPlanChange();
+            callback.addNetPlanChange();
          });
 
         topologySettingMenu.add(circularSetting);
@@ -297,7 +297,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
             link.remove();
         	callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-        	callback.getUndoRedoNavigationManager().addNetPlanChange();
+        	callback.addNetPlanChange();
         }
     }
 
