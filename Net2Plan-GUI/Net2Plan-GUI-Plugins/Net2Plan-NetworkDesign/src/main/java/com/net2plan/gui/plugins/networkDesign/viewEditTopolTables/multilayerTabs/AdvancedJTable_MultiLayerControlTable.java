@@ -1,18 +1,17 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.multilayerTabs;
 
 import com.google.common.collect.Lists;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.ColumnsAutoSizer;
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
 import com.net2plan.utils.StringUtils;
-import org.apache.commons.collections15.BidiMap;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -22,9 +21,7 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EventObject;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -295,7 +292,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                 final NetworkLayer selectedLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow(), COLUMN_INDEX));
                 final NetworkLayer neighbourLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow() - 1, COLUMN_INDEX));
 
-                final BidiMap<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = vs.getCanvasLayerOrderIndexMap(true);
+                final Map<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = vs.getCanvasLayerOrderIndexMap(true);
 
                 // Swap the selected layer with the one on top of it.
                 this.swap(layerOrderMapConsideringNonVisible, selectedLayer, neighbourLayer);
@@ -310,7 +307,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
                 final NetworkLayer selectedLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow(), COLUMN_INDEX));
                 final NetworkLayer neighbourLayer = netPlan.getNetworkLayer((int) getValueAt(getSelectedRow() + 1, COLUMN_INDEX));
 
-                final BidiMap<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = vs.getCanvasLayerOrderIndexMap(true);
+                final Map<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = vs.getCanvasLayerOrderIndexMap(true);
 
                 // Swap the selected layer with the one on top of it.
                 this.swap(layerOrderMapConsideringNonVisible, selectedLayer, neighbourLayer);
@@ -322,7 +319,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
         }
 
-        private <K, V> void swap(BidiMap<K, V> map, K k1, K k2)
+        private <K, V> void swap(Map<K, V> map, K k1, K k2)
         {
             final V value1 = map.get(k1);
             final V value2 = map.get(k2);
