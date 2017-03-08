@@ -59,7 +59,7 @@ public class VisualizationState
 
     public NetPlan getNetPlan()
     {
-        return this.getNetPlan();
+        return visualizationSnapshot.getNetPlan();
     }
 
     public VisualizationState(NetPlan currentNp, BidiMap<NetworkLayer, Integer> mapLayer2VisualizationOrder, Map<NetworkLayer, Boolean> layerVisibilityMap, int maxSizePickUndoList)
