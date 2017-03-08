@@ -80,7 +80,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
             "Total MULTICAST traffic leaving the network from this node",
             "Total traffic (unicast and multicast) in the node input links",
             "Total traffic (unicast and multicast) in the node output links",
-            "SRGs including this node", "The population using the node", "Node-specific attributes");
+            "SRGs including this node", "Total population in this node", "Node-specific attributes");
 
     private ArrayList<String> attributesColumnsNames;
     private boolean expandAttributes = false;
