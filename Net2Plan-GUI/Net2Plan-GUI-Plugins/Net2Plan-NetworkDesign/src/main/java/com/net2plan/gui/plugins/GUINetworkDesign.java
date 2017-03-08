@@ -147,7 +147,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         final Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> forward = undoRedoManager.getNavigationForwardElement();
         if (forward == null) return;
         this.currentNetPlan = forward.getFirst();
-        this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, forward.getSecond(), forward.getThird());
+         this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, forward.getSecond(), forward.getThird());
         updateVisualizationAfterNewTopology();
     }
 

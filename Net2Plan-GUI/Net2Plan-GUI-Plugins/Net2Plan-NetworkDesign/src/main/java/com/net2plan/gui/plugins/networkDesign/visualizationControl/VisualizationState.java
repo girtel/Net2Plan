@@ -336,6 +336,16 @@ public class VisualizationState
         return res;
     }
 
+    VisualizationSnapshot getSnapshot()
+    {
+        return visualizationSnapshot;
+    }
+
+    void loadSnapshot(final VisualizationSnapshot snapshot)
+    {
+        setCanvasLayerVisibilityAndOrder(snapshot.getNetPlan(), snapshot.getMapCanvasLayerVisualizationOrder(), snapshot.getMapCanvasLayerVisibility());
+    }
+
     /**
      * Implicitly it produces a reset of the picked state
      *
