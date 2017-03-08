@@ -48,6 +48,7 @@ public class VisualizationSnapshot
 
     public void addLayerVisualizationOrder(NetworkLayer layer, int order)
     {
+        if (!netPlan.getNetworkLayers().contains(layer)) throw new RuntimeException("Layer does not belong to current NetPlan...");
         mapCanvasLayerVisualizationOrder.put(layer, order);
     }
 
@@ -65,7 +66,7 @@ public class VisualizationSnapshot
 
     public void addLayerVisibility(NetworkLayer layer, boolean visibility)
     {
-        if (!mapCanvasLayerVisibility.containsKey(layer)) throw new RuntimeException("Layer does not belong to current NetPlan...");
+        if (!netPlan.getNetworkLayers().contains(layer)) throw new RuntimeException("Layer does not belong to current NetPlan...");
         mapCanvasLayerVisibility.put(layer, visibility);
     }
 
@@ -90,7 +91,7 @@ public class VisualizationSnapshot
 
     public void addLinkVisibility(NetworkLayer layer, boolean visibility)
     {
-        if (!mapCanvasLinkVisibility.containsKey(layer)) throw new RuntimeException("Layer does not belong to current NetPlan...");
+        if (!netPlan.getNetworkLayers().contains(layer)) throw new RuntimeException("Layer does not belong to current NetPlan...");
         mapCanvasLinkVisibility.put(layer, visibility);
     }
 

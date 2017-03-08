@@ -386,12 +386,6 @@ public class VisualizationState
             }
         }
 
-//        if (!mapLayer2VisualizationOrderInCanvas.keySet().containsAll(new HashSet<>(visualizationSnapshot.getNetPlan().getNetworkLayers()))
-//                || !this.layerVisibilityInCanvasMap.keySet().containsAll(new HashSet<>(visualizationSnapshot.getNetPlan().getNetworkLayers())))
-//        {
-//            throw new RuntimeException();
-//        }
-
         /* implicitly we restart the picking state */
         this.pickedElementType = null;
         this.pickedElementNotFR = null;
