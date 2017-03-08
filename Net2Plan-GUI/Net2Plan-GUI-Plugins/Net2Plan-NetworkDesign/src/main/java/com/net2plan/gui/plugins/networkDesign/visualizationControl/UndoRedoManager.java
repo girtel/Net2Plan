@@ -6,8 +6,7 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.utils.Triple;
 import org.apache.commons.collections15.BidiMap;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Map;
 
 /**
@@ -16,7 +15,7 @@ import java.util.Map;
 public class UndoRedoManager
 {
     private final GUINetworkDesign callback;
-    private List<VisualizationSnapshot> timeline;
+    private LinkedList<VisualizationSnapshot> timeline;
     private int timelineCursor;
     private int listMaxSize;
 
@@ -24,7 +23,7 @@ public class UndoRedoManager
 
     public UndoRedoManager(GUINetworkDesign callback, int listMaxSize)
     {
-        this.timeline = new ArrayList<>();
+        this.timeline = new LinkedList<>();
         this.timelineCursor = -1;
         this.callback = callback;
         this.listMaxSize = listMaxSize;
