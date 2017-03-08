@@ -85,11 +85,20 @@ public class VisualizationState
         this.setCanvasLayerVisibilityAndOrder(currentNp, mapLayer2VisualizationOrder, layerVisibilityMap);
     }
 
-	public boolean isWhatIfAnalysisActive () { return whatIfAnalysisActive; }
+    public boolean isWhatIfAnalysisActive()
+    {
+        return whatIfAnalysisActive;
+    }
 
-	public void setWhatIfAnalysisActive (boolean isWhatIfAnalysisActive) { this.whatIfAnalysisActive = isWhatIfAnalysisActive; }
+    public void setWhatIfAnalysisActive(boolean isWhatIfAnalysisActive)
+    {
+        this.whatIfAnalysisActive = isWhatIfAnalysisActive;
+    }
 
-	public ITableRowFilter getTableRowFilter () { return tableRowFilter; }
+    public ITableRowFilter getTableRowFilter()
+    {
+        return tableRowFilter;
+    }
 
     public void updateTableRowFilter(ITableRowFilter tableRowFilterToApply)
     {
@@ -331,10 +340,10 @@ public class VisualizationState
      * Implicitly it produces a reset of the picked state
      *
      * @param newCurrentNetPlan
-     * @param newLayerVisibilityOrderMap
+     * @param newLayerOrderMap
      * @param newLayerVisibilityMap
      */
-    public void setCanvasLayerVisibilityAndOrder(NetPlan newCurrentNetPlan, Map<NetworkLayer, Integer> newLayerVisibilityOrderMap,
+    public void setCanvasLayerVisibilityAndOrder(NetPlan newCurrentNetPlan, Map<NetworkLayer, Integer> newLayerOrderMap,
                                                  Map<NetworkLayer, Boolean> newLayerVisibilityMap)
     {
         if (newCurrentNetPlan == null) throw new RuntimeException("Trying to update an empty topology");
@@ -342,16 +351,28 @@ public class VisualizationState
         if (this.visualizationSnapshot.getNetPlan() != newCurrentNetPlan)
         {
             this.visualizationSnapshot.setNetPlan(newCurrentNetPlan);
+            this.visualizationSnapshot.resetSnapshot();
+
             tableRowFilter = null;
             nodesToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
             linksToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
+        } else
+        {
+            final Map<NetworkLayer, Boolean> mapCanvasLinkVisibility = this.visualizationSnapshot.getMapCanvasLinkVisibility();
+
+            // Resetting visualization snapshot to deafult values
+            this.visualizationSnapshot.resetSnapshot();
+
+            for (Map.Entry<NetworkLayer, Boolean> entry : mapCanvasLinkVisibility.entrySet())
+            {
+                visualizationSnapshot.addLinkVisibility(entry.getKey(), entry.getValue());
+            }
         }
 
-        this.visualizationSnapshot.resetSnapshot();
-
-        if (newLayerVisibilityOrderMap != null)
+        // Updating visualization snapshot
+        if (newLayerOrderMap != null)
         {
-            for (Map.Entry<NetworkLayer, Integer> entry : newLayerVisibilityOrderMap.entrySet())
+            for (Map.Entry<NetworkLayer, Integer> entry : newLayerOrderMap.entrySet())
             {
                 visualizationSnapshot.addLayerVisualizationOrder(entry.getKey(), entry.getValue());
             }
@@ -359,11 +380,10 @@ public class VisualizationState
 
         if (newLayerVisibilityMap != null)
         {
-            for (Map.Entry<NetworkLayer, Integer> entry : newLayerVisibilityOrderMap.entrySet())
+            for (Map.Entry<NetworkLayer, Boolean> entry : newLayerVisibilityMap.entrySet())
             {
-                visualizationSnapshot.addLayerVisualizationOrder(entry.getKey(), entry.getValue());
+                visualizationSnapshot.addLayerVisibility(entry.getKey(), entry.getValue());
             }
-
         }
 
 //        if (!mapLayer2VisualizationOrderInCanvas.keySet().containsAll(new HashSet<>(visualizationSnapshot.getNetPlan().getNetworkLayers()))
@@ -571,7 +591,8 @@ public class VisualizationState
         Set<GUILink> res = new HashSet<>();
         if (includeRegularLinks) res.addAll(cache_canvasRegularLinkMap.values());
         if (includeInterLayerLinks)
-            for (Node n : visualizationSnapshot.getNetPlan().getNodes()) res.addAll(this.cache_canvasIntraNodeGUILinks.get(n));
+            for (Node n : visualizationSnapshot.getNetPlan().getNodes())
+                res.addAll(this.cache_canvasIntraNodeGUILinks.get(n));
         return res;
     }
 
@@ -644,7 +665,8 @@ public class VisualizationState
     public NetworkLayer getCanvasNetworkLayerAtVisualizationOrderNotRemovingNonVisible(int visualizationOrder)
     {
         if (visualizationOrder < 0) throw new RuntimeException("");
-        if (visualizationOrder >= visualizationSnapshot.getNetPlan().getNumberOfLayers()) throw new RuntimeException("");
+        if (visualizationOrder >= visualizationSnapshot.getNetPlan().getNumberOfLayers())
+            throw new RuntimeException("");
         return visualizationSnapshot.getMapCanvasLayerVisualizationOrder().inverseBidiMap().get(visualizationOrder);
     }
 
@@ -934,7 +956,7 @@ public class VisualizationState
             drawColateralLinks(ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
             drawDownPropagationInterLayerLinks(ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
         }
-		/* Picked link the last, so overrides the rest */
+        /* Picked link the last, so overrides the rest */
         if (isRouteLayerVisibleInTheCanvas)
         {
             final GUINode gnOrigin = getCanvasAssociatedGUINode(pickedRoute.getIngressNode(), pickedRoute.getLayer());

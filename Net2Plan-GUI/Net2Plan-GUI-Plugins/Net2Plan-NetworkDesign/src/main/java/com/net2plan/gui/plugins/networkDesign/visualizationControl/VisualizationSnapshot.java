@@ -96,6 +96,6 @@ public class VisualizationSnapshot
 
     public VisualizationSnapshot copy()
     {
-        return null;
+        throw new UnsupportedOperationException("");
     }
 }
