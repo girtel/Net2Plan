@@ -74,12 +74,6 @@ public class UndoRedoManager
         timelineCursor++;
     }
 
-    public void resetManager()
-    {
-        this.timeline.clear();
-        this.timelineCursor = -1;
-    }
-
     /**
      * Returns the undo info in the navigation. Returns null if we are already in the first element. The NetPlan object returned is null if
      * there is no change respect to the current one
@@ -94,7 +88,7 @@ public class UndoRedoManager
         this.timelineCursor--;
 
         final TimelineState currentState = timeline.get(this.timelineCursor);
-        this.backupState = copyState(currentState);
+        this.backupState = currentState.copyState();
 
         return currentState.getStateDefinition();
     }
@@ -113,7 +107,7 @@ public class UndoRedoManager
         this.timelineCursor++;
 
         final TimelineState currentState = timeline.get(this.timelineCursor);
-        this.backupState = copyState(currentState);
+        this.backupState = currentState.copyState();
 
         return currentState.getStateDefinition();
     }
@@ -121,23 +115,6 @@ public class UndoRedoManager
     private boolean checkMovementValidity()
     {
         return !(timeline.isEmpty() || this.listMaxSize <= 1 || callback.inOnlineSimulationMode());
-    }
-
-    /**
-     * Copies a timeline state.
-     */
-    private TimelineState copyState(final TimelineState timelineState)
-    {
-        final Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> state = timelineState.getStateDefinition();
-        final NetPlan npCopy = state.getFirst().copy();
-
-        final BidiMap<NetworkLayer, Integer> cp_mapLayer2VisualizationOrder = new DualHashBidiMap<>();
-        cp_mapLayer2VisualizationOrder.putAll(state.getSecond());
-
-        final Map<NetworkLayer, Boolean> cp_layerVisibilityMap = new HashMap<>();
-        cp_layerVisibilityMap.putAll(state.getThird());
-
-        return new TimelineState(npCopy, cp_mapLayer2VisualizationOrder, cp_layerVisibilityMap);
     }
 
     private class TimelineState
@@ -156,6 +133,23 @@ public class UndoRedoManager
         private Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> getStateDefinition()
         {
             return Triple.unmodifiableOf(netPlan, layerOrderMap, layerVisibilityMap);
+        }
+
+        /**
+         * Returns a copy of this timeline state
+         */
+        private TimelineState copyState()
+        {
+            final Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> state = this.getStateDefinition();
+            final NetPlan npCopy = state.getFirst().copy();
+
+            final BidiMap<NetworkLayer, Integer> cp_mapLayer2VisualizationOrder = new DualHashBidiMap<>();
+            cp_mapLayer2VisualizationOrder.putAll(state.getSecond());
+
+            final Map<NetworkLayer, Boolean> cp_layerVisibilityMap = new HashMap<>();
+            cp_layerVisibilityMap.putAll(state.getThird());
+
+            return new TimelineState(npCopy, cp_mapLayer2VisualizationOrder, cp_layerVisibilityMap);
         }
     }
 }

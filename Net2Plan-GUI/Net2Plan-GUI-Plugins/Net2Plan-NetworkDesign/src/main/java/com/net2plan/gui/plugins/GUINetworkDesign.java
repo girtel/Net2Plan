@@ -122,11 +122,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         undoRedoManager.addNetPlanChange();
     }
 
-    public void resetTimelineNavigator()
-    {
-        undoRedoManager.resetManager();
-    }
-
     public WhatIfAnalysisPane getWhatIfAnalysisPane()
     {
         return whatIfAnalysisPane;
