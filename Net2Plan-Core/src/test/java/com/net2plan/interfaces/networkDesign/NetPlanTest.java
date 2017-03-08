@@ -22,6 +22,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import com.net2plan.interfaces.TestConstants;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
@@ -78,11 +79,14 @@ public class NetPlanTest
 		upperLayer.addTag("t1");
 		this.n1 = this.np.addNode(0 , 0 , "node1" , null);
 		n1.addTag("t1");
-		n1.setPopulation(100);
-		n1.setAttribute("att" , "1");
 		this.n2 = np.addNode(0 , 0 , "node2" , null);
 		n1.setPopulation(200);
 		this.n3 = np.addNode(0 , 0 , "node3" , null);
+		n1.setPopulation(100);
+		n1.setAttribute("att" , "1");
+		n1.setSiteName("s12");
+		n2.setSiteName("s12");
+		n3.setSiteName("s3");
 		this.n1.setUrlNodeIcon(lowerLayer , new URL ("file:/lowerIcon"));
 		this.link12 = np.addLink(n1,n2,100,100,1,null,lowerLayer);
 		this.link23 = np.addLink(n2,n3,100,100,1,null,lowerLayer);
@@ -158,6 +162,34 @@ public class NetPlanTest
 	public void testNetPlan()
 	{
 		this.np = new NetPlan ();
+	}
+
+	@Test
+	public void testGetSiteNames ()
+	{
+		assertEquals(np.getSiteNames() ,  Sets.newHashSet("s12", "s3"));
+		n3.setSiteName(null);
+		assertEquals(np.getSiteNames() ,  Sets.newHashSet("s12"));
+		n2.setSiteName(null);
+		assertEquals(np.getSiteNames() ,  Sets.newHashSet("s12"));
+	}
+
+	@Test
+	public void testGetSiteNodes ()
+	{
+		assertEquals(np.getSiteNames() ,  Sets.newHashSet("s12" , "s3"));
+		assertEquals(np.getSiteNodes("s12") ,  Sets.newHashSet(n1 , n2));
+		assertEquals(np.getSiteNodes("s3") ,  Sets.newHashSet(n3));
+		assertEquals(np.getSiteNodes("xxx") ,  Sets.newHashSet());
+		n3.setSiteName(null);
+		assertEquals(np.getSiteNames() ,  Sets.newHashSet("s12"));
+		assertEquals(np.getSiteNodes("s3") ,  Sets.newHashSet());
+		n2.setSiteName(null);
+		assertEquals(np.getSiteNames() ,  Sets.newHashSet("s12"));
+		assertEquals(np.getSiteNodes("s12") ,  Sets.newHashSet(n1));
+		n1.setSiteName(null);
+		assertEquals(np.getSiteNodes("s12") ,  Sets.newHashSet());
+		assertEquals(np.getSiteNames() ,  Sets.newHashSet());
 	}
 
 	@Test
