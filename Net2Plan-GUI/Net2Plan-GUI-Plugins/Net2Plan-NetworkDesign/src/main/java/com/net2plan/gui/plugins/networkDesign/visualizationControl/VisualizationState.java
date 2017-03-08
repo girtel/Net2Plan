@@ -353,7 +353,7 @@ public class VisualizationState
     {
         if (newCurrentNetPlan == null) throw new RuntimeException("Trying to update an empty topology");
 
-        if (this.this.getNetPlan() != newCurrentNetPlan)
+        if (this.getNetPlan() != newCurrentNetPlan)
         {
             this.visualizationSnapshot.setNetPlan(newCurrentNetPlan);
             this.visualizationSnapshot.resetSnapshot();
@@ -626,16 +626,16 @@ public class VisualizationState
      */
     public void recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals()
     {
-        this.setCanvasLayerVisibilityAndOrder(this.this.getNetPlan(), null, null);
+        this.setCanvasLayerVisibilityAndOrder(this.getNetPlan(), null, null);
     }
 
     public void setCanvasLayerVisibility(final NetworkLayer layer, final boolean isVisible)
     {
-        if (!this.this.getNetPlan().getNetworkLayers().contains(layer)) throw new RuntimeException();
+        if (!this.getNetPlan().getNetworkLayers().contains(layer)) throw new RuntimeException();
         BidiMap<NetworkLayer, Integer> new_layerVisiblityOrderMap = new DualHashBidiMap<>(this.visualizationSnapshot.getMapCanvasLayerVisualizationOrder());
         Map<NetworkLayer, Boolean> new_layerVisibilityMap = new HashMap<>(this.visualizationSnapshot.getMapCanvasLayerVisibility());
         new_layerVisibilityMap.put(layer, isVisible);
-        setCanvasLayerVisibilityAndOrder(this.this.getNetPlan(), new_layerVisiblityOrderMap, new_layerVisibilityMap);
+        setCanvasLayerVisibilityAndOrder(this.getNetPlan(), new_layerVisiblityOrderMap, new_layerVisibilityMap);
     }
 
     public boolean isLayerVisibleInCanvas(final NetworkLayer layer)
@@ -645,7 +645,7 @@ public class VisualizationState
 
     public void setLayerLinksVisibilityInCanvas(final NetworkLayer layer, final boolean showLinks)
     {
-        if (!this.this.getNetPlan().getNetworkLayers().contains(layer)) throw new RuntimeException();
+        if (!this.getNetPlan().getNetworkLayers().contains(layer)) throw new RuntimeException();
         visualizationSnapshot.getMapCanvasLinkVisibility().put(layer, showLinks);
     }
 
@@ -1424,8 +1424,8 @@ public class VisualizationState
 
     public static void checkNpToVsConsistency(VisualizationState vs, NetPlan np)
     {
-        if (vs.this.getNetPlan() != np)
-            throw new RuntimeException("inputVs.currentNp:" + vs.this.getNetPlan().hashCode() + ", inputNp: " + np.hashCode());
+        if (vs.getNetPlan() != np)
+            throw new RuntimeException("inputVs.currentNp:" + vs.getNetPlan().hashCode() + ", inputNp: " + np.hashCode());
         for (Node n : vs.nodesToHideInCanvasAsMandatedByUserInTable)
             if (n.getNetPlan() != np) throw new RuntimeException();
         for (Link e : vs.linksToHideInCanvasAsMandatedByUserInTable)
