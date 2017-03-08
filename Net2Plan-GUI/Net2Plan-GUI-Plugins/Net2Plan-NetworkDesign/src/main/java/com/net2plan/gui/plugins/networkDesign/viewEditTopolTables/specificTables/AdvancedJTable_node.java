@@ -280,14 +280,14 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                         	callback.getVisualizationState().setMandatedByTheUserToBeHiddenInCanvas(node , !((Boolean) newValue));
                         	callback.getVisualizationState ().pickNode(node);
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                            callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            callback.addNetPlanChange();
                             break;
 
                         case COLUMN_NAME:
                         	node.setName(newValue.toString());
                         	callback.getVisualizationState ().pickNode(node);
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                            callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            callback.addNetPlanChange();
                             break;
 
                         case COLUMN_STATE:
@@ -315,7 +315,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                             	callback.getVisualizationState ().pickNode(node);
                                 callback.updateVisualizationAfterPick();
-                                callback.getUndoRedoNavigationManager().addNetPlanChange();
+                                callback.addNetPlanChange();
                             }
                             break;
 
@@ -328,7 +328,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                         	callback.getVisualizationState ().pickNode(node);
                             callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            callback.addNetPlanChange();
                             break;
 
                         default:
@@ -452,7 +452,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                             	callback.getDesign().getNodeFromId((long) itemId).remove();
                                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                            	callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            	callback.addNetPlanChange();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -477,7 +477,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                         		for (Node n : rowsInTheTable) n.remove();
                             callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                        	callback.getUndoRedoNavigationManager().addNetPlanChange();
+                        	callback.addNetPlanChange();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -525,7 +525,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                     callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                 	callback.getVisualizationState ().pickNode(node);
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                    callback.getUndoRedoNavigationManager().addNetPlanChange();
+                    callback.addNetPlanChange();
 
                     if  (networkElementType == NetworkElementType.NODE) callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
                 } catch (Throwable ex) {
@@ -557,7 +557,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                     node.setXYPositionMap(new Point2D.Double(currentPosition.getY() , currentPosition.getX()));
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                 	callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-                	callback.getUndoRedoNavigationManager().addNetPlanChange();
+                	callback.addNetPlanChange();
                 }
             });
 
@@ -600,7 +600,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
 
                                 node.setXYPositionMap(new Point2D.Double(Double.parseDouble(node.getAttribute(lonAttribute)), Double.parseDouble(node.getAttribute(latAttribute))));
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                            	callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            	callback.addNetPlanChange();
                                 break;
                             } catch (Throwable ex) {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving coordinates from attributes");
@@ -645,7 +645,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                                 String name = selector.getSelectedItem().toString();
                                 netPlan.getNodeFromId(nodeId).setName(netPlan.getNodeFromId(nodeId).getAttribute(name));
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                            	callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            	callback.addNetPlanChange();
 
                                 break;
                             } catch (Throwable ex) {
@@ -680,7 +680,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                     }
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                     callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-                    callback.getUndoRedoNavigationManager().addNetPlanChange();
+                    callback.addNetPlanChange();
                 }
             });
 
@@ -722,7 +722,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                                 for (Node node : tableVisibleNodes)
                                     	node.setXYPositionMap(new Point2D.Double(Double.parseDouble(node.getAttribute(lonAttribute)), Double.parseDouble(node.getAttribute(latAttribute))));
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                            	callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            	callback.addNetPlanChange();
                                 break;
                             } catch (Throwable ex) {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving coordinates from attributes");
@@ -767,7 +767,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
 
                                 for (Node node : tableVisibleNodes) node.setName(node.getAttribute(name) != null? node.getAttribute(name) : "");
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                            	callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            	callback.addNetPlanChange();
                                 break;
                             } catch (Throwable ex) {
                                 ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving name from attribute");
