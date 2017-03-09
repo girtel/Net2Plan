@@ -1,5 +1,7 @@
 package com.net2plan.gui.utils;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
 import com.jom.OptimizationProblem.JOMSolver;
 import com.jom.SolverTester;
 import com.net2plan.interfaces.networkDesign.Configuration;
@@ -104,6 +106,24 @@ public class SolverCheckPanel extends JPanel implements ActionListener
             // Cleaning old dialogs
             stackPanel.removeAll();
             stackPanel.setVisible(false);
+
+            // Check for JOM version
+            final String jomVersion = SolverTester.class.getPackage().getImplementationVersion();
+
+            if (jomVersion != null)
+            {
+                final List<String> splittedVersion = Lists.newArrayList(Splitter.on(".").split(jomVersion));
+
+                if (Integer.parseInt(splittedVersion.get(1)) < 2 || Integer.parseInt(splittedVersion.get(3)) < 2)
+                {
+                    txt_info.append(ERROR_HEADER + "JOM library version is below 0.2.0.2." + NEW_LINE + "Please update your library to continue, current version is: " + jomVersion + NEW_LINE);
+                    return;
+                }
+            } else
+            {
+                txt_info.append(WARNING_HEADER + "JOM library version could not be detected. Correct functioning is not guaranteed." + NEW_LINE);
+                txt_info.append(NEW_LINE);
+            }
 
             // Getting OS
             final Pair<OS, String> foundOS = getOS();
