@@ -34,7 +34,7 @@ import java.util.TreeSet;
 
 import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Demand.DemandRecoveryType;
+import com.net2plan.interfaces.networkDesign.Demand.IntendedRecoveryType;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -727,7 +727,7 @@ public class WDMUtils
 	 * @param d the demand (representing all the lightpaths in it)
 	 * @param recoveryType the recovery type
 	 */
-	public static void setRecoveryType (Demand d , DemandRecoveryType recoveryType)
+	public static void setRecoveryType (Demand d , IntendedRecoveryType recoveryType)
 	{
 		d.setAttribute(RECOVERYTYPE_ATTRIBUTE_NAME, recoveryType.toString());
 	}
@@ -738,21 +738,21 @@ public class WDMUtils
 	 * attribute with the recovery information
 	 * @return see above
 	 */
-	public static DemandRecoveryType getRecoveryType (Demand d , DemandRecoveryType ...defaultRecovery)
+	public static IntendedRecoveryType getRecoveryType (Demand d , IntendedRecoveryType ...defaultRecovery)
 	{
 		final String att = d.getAttribute(RECOVERYTYPE_ATTRIBUTE_NAME);
 		if (att == null)
 		{
 			if (defaultRecovery.length != 0) return defaultRecovery [0];
 			if (d.getRoutesHaveBackup().isEmpty()) 
-				return DemandRecoveryType.NONE; 
+				return IntendedRecoveryType.NONE; 
 			else 
-				return DemandRecoveryType.PROTECTION_REVERT; 
+				return IntendedRecoveryType.PROTECTION_REVERT; 
 		}
-		if (att.equals(DemandRecoveryType.NONE.toString())) return DemandRecoveryType.NONE;
-		if (att.equals(DemandRecoveryType.RESTORATION.toString())) return DemandRecoveryType.RESTORATION;
+		if (att.equals(IntendedRecoveryType.NONE.toString())) return IntendedRecoveryType.NONE;
+		if (att.equals(IntendedRecoveryType.RESTORATION.toString())) return IntendedRecoveryType.RESTORATION;
 //		if (att.equals(DemandRecoveryType.PROTECTION_NOREVERT.toString())) return DemandRecoveryType.PROTECTION_NOREVERT;
-		if (att.equals(DemandRecoveryType.PROTECTION_REVERT.toString())) return DemandRecoveryType.PROTECTION_REVERT;
+		if (att.equals(IntendedRecoveryType.PROTECTION_REVERT.toString())) return IntendedRecoveryType.PROTECTION_REVERT;
 		throw new WDMException ("Wrong format of attribute: " + RECOVERYTYPE_ATTRIBUTE_NAME);
 	}
 

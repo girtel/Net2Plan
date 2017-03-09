@@ -94,7 +94,9 @@ public class NetPlanTest
 		link12.addTag("t1");
 		this.d13 = np.addDemand(n1 , n3 , 3 , null,lowerLayer);
 		d13.addTag("t1"); d13.addTag("t2");
+		d13.setIntendedRecoveryType(Demand.IntendedRecoveryType.NONE);
 		this.d12 = np.addDemand(n1, n2, 3 , null,lowerLayer);
+		d12.setIntendedRecoveryType(Demand.IntendedRecoveryType.PROTECTION_NOREVERT);
 		this.r12 = np.addRoute(d12,1,1.5,Collections.singletonList(link12),null);
 		r12.addTag("t1"); r12.addTag("t3");
 		np.addTag("t1");

@@ -5597,6 +5597,7 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("ingressNodeId", Long.toString(demand.ingressNode.id));
                     writer.writeAttribute("egressNodeId", Long.toString(demand.egressNode.id));
                     writer.writeAttribute("offeredTraffic", Double.toString(demand.offeredTraffic));
+                    writer.writeAttribute("intendedRecoveryType", demand.recoveryType.toString());
 
                     for (String type : demand.mandatorySequenceOfTraversedResourceTypes)
                     {
