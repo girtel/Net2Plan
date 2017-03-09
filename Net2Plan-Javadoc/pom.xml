@@ -139,7 +139,7 @@
                             <tagletArtifact>
                                 <groupId>com.net2plan</groupId>
                                 <artifactId>net2plan-javadoc</artifactId>
-                                <version>0.5.0.2-SNAPSHOT</version>
+                                <version>0.5.0.2</version>
                             </tagletArtifact>
                             <taglets>
                                 <taglet>
@@ -188,7 +188,7 @@
                             <docletArtifact>
                                 <groupId>com.net2plan</groupId>
                                 <artifactId>net2plan-javadoc</artifactId>
-                                <version>0.5.0.2-SNAPSHOT</version>
+                                <version>${project.version}</version>
                             </docletArtifact>
                             <detectOfflineLinks>false</detectOfflineLinks>
                             <includeDependencySources>true</includeDependencySources>
@@ -222,7 +222,7 @@
                             <docletArtifact>
                                 <groupId>com.net2plan</groupId>
                                 <artifactId>net2plan-javadoc</artifactId>
-                                <version>0.5.0.2-SNAPSHOT</version>
+                                <version>${project.version}</version>
                             </docletArtifact>
                             <detectOfflineLinks>false</detectOfflineLinks>
                             <includeDependencySources>true</includeDependencySources>
