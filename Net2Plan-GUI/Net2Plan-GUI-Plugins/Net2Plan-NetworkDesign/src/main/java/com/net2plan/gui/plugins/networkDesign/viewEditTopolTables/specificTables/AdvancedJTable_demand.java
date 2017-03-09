@@ -322,7 +322,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
     }
 
     @Override
-    public int getNumFixedLeftColumnsInDecoration() {
+    public int getNumberOfDecoratorColumns() {
         return 2;
     }
 

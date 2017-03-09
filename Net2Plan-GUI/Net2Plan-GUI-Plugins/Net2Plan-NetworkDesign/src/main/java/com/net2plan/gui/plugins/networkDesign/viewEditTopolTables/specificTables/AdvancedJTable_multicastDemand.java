@@ -291,7 +291,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
         	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
-    public int getNumFixedLeftColumnsInDecoration()
+    public int getNumberOfDecoratorColumns()
     {
         return 2;
     }
