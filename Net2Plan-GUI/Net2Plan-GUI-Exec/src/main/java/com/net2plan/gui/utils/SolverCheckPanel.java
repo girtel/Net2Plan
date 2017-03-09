@@ -297,12 +297,6 @@ public class SolverCheckPanel extends JPanel implements ActionListener
                         }
                     }
                 }
-
-                txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + solverPath + NEW_LINE);
-
-                txt_info.append(MESSAGE_HEADER + "Retrying..." + NEW_LINE);
-                txt_info.append(MESSAGE_HEADER + "Trying to find solver at default location..." + NEW_LINE);
-                checkSolverAtDefaultFolder(solver);
             } else
             {
                 message = callJOM(solver, dir.getAbsolutePath());
@@ -313,11 +307,14 @@ public class SolverCheckPanel extends JPanel implements ActionListener
                     txt_info.append(NEW_LINE);
                     showSaveDialog(solver, dir.getAbsolutePath());
                     return;
-                } else
-                {
-                    txt_info.append(WARNING_HEADER + "Solver " + solverNameUppercase + " could not be found at directory: " + dir.getAbsolutePath() + NEW_LINE);
                 }
             }
+
+            txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + solverPath + NEW_LINE);
+
+            txt_info.append(MESSAGE_HEADER + "Retrying..." + NEW_LINE);
+            txt_info.append(MESSAGE_HEADER + "Trying to find solver at default location..." + NEW_LINE);
+            checkSolverAtDefaultFolder(solver);
         }
 
         txt_info.append(NEW_LINE);
@@ -479,7 +476,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
             showSaveDialog(solver, solverDefaultPath);
         } else
         {
-            txt_info.append(ERROR_HEADER + "Solver " + solver.name().toUpperCase() + "could not be found in the system." + NEW_LINE);
+            txt_info.append(ERROR_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found in the system." + NEW_LINE);
             txt_info.append(NEW_LINE);
             txt_info.append(MESSAGE_HEADER + " * Check that the solver has been correctly installed on your system." + NEW_LINE);
             txt_info.append(MESSAGE_HEADER + " * If the solver has been installed in a custom path, make sure that Net2Plan's configuration is correctly pointing to the solver's binary file." + NEW_LINE);
