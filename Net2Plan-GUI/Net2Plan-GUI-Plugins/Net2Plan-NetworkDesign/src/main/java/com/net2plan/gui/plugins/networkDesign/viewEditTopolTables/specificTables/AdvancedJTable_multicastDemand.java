@@ -194,6 +194,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 if(!callback.getVisualizationState().isNetPlanEditable()) return false;
                 if(columnIndex >= netPlanViewTableHeader.length) return true;
+                if (rowIndex == getRowCount() - 1) return false;
                 if (getValueAt(rowIndex, columnIndex) == null) return false;
 
                 return columnIndex == COLUMN_OFFEREDTRAFFIC || columnIndex >= netPlanViewTableHeader.length;

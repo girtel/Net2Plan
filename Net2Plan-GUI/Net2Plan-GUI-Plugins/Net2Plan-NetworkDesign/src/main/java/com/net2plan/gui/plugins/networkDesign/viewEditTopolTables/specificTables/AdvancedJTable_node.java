@@ -241,7 +241,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
             {
                 if (!callback.getVisualizationState().isNetPlanEditable()) return false;
                 if (columnIndex >= netPlanViewTableHeader.length) return true;
-                //if (getRowCount() > 1 && rowIndex == getRowCount() - 1) return false;
+                if (rowIndex == getRowCount() - 1) return false;
                 if (getValueAt(rowIndex, columnIndex) == null) return false;
 
                 return columnIndex == COLUMN_SHOWHIDE || columnIndex == COLUMN_NAME || columnIndex == COLUMN_STATE || columnIndex == COLUMN_XCOORD
@@ -251,7 +251,6 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
             @Override
             public void setValueAt(Object newValue, int row, int column)
             {
-//				System.out.println ("set Value node, newValue: " + newValue + ", row: " + row + ", col: " + column);
                 Object oldValue = getValueAt(row, column);
 
 				/* If value doesn't change, exit from function */
@@ -262,8 +261,6 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                 if (getValueAt(row, 0) == null) row = row - 1;
                 final long nodeId = (Long) getValueAt(row, 0);
                 final Node node = netPlan.getNodeFromId(nodeId);
-                                /* Perform checks, if needed */
-//				System.out.println ("set Value node: " + node + ", newValue: " + newValue + ", row: " + row + ", col: " + column);
                 try
                 {
                     switch (column)

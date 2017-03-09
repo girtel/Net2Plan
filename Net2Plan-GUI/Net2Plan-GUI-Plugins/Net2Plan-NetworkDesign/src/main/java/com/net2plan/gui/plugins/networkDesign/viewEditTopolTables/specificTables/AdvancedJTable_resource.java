@@ -182,6 +182,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                 if (!callback.getVisualizationState().isNetPlanEditable()) return false;
                 if( columnIndex >= netPlanViewTableHeader.length) return true;
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
+                if (rowIndex == getRowCount() - 1) return false;
 
                 return columnIndex == COLUMN_NAME || columnIndex == COLUMN_CAPACITY || columnIndex == COLUMN_PROCESSINGTIME;
             }
