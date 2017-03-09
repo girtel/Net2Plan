@@ -213,7 +213,7 @@ public class Online_evProc_wdm extends IEventProcessor
 						if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
 						
 						final Demand wdmLayerDemand = addLpEvent.demand == null? currentNetPlan.addDemand(addLpEvent.ingressNode, addLpEvent.egressNode, lineRateThisLp_Gbps , null, wdmLayer) : addLpEvent.demand;
-						WDMUtils.setRecoveryType(wdmLayerDemand, Demand.IntendedRecoveryType.PROTECTION_REVERT);
+						wdmLayerDemand.setIntendedRecoveryType(Demand.IntendedRecoveryType.PROTECTION_REVERT);
 						final Route wdmLayerRoute = WDMUtils.addLightpath(wdmLayerDemand, rwa.getFirst(), lineRateThisLp_Gbps);
 						WDMUtils.allocateResources(rwa.getFirst() , wavelengthFiberOccupancy , null);
 
@@ -257,7 +257,7 @@ public class Online_evProc_wdm extends IEventProcessor
 					if (rwa != null)
 					{
 						final Demand wdmLayerDemand = addLpEvent.demand == null? currentNetPlan.addDemand(addLpEvent.ingressNode, addLpEvent.egressNode, lineRateThisLp_Gbps , null, wdmLayer) : addLpEvent.demand;
-						WDMUtils.setRecoveryType(wdmLayerDemand, isRestorationRecovery? Demand.IntendedRecoveryType.RESTORATION : Demand.IntendedRecoveryType.NONE);
+						wdmLayerDemand.setIntendedRecoveryType(isRestorationRecovery? Demand.IntendedRecoveryType.RESTORATION : Demand.IntendedRecoveryType.NONE);
 						final Route wdmLayerRoute = WDMUtils.addLightpath(wdmLayerDemand, rwa , lineRateThisLp_Gbps);
 						WDMUtils.allocateResources(rwa , wavelengthFiberOccupancy , null);
 						this.transponderTypeOfNewLps.put(wdmLayerRoute , transponderTypeUsed);
@@ -297,7 +297,8 @@ public class Online_evProc_wdm extends IEventProcessor
 				for (Route r : routesFromDownToUp)
 				{
 					final Demand wdmDemand = r.getDemand();
-					if (WDMUtils.getRecoveryType(wdmDemand, defaultRecoveryType) ==  Demand.IntendedRecoveryType.PROTECTION_REVERT)
+					final Demand.IntendedRecoveryType recoveryType = wdmDemand.getIntendedRecoveryType() == Demand.IntendedRecoveryType.NOTSPECIFIED? defaultRecoveryType : wdmDemand.getIntendedRecoveryType();
+					if (recoveryType ==  Demand.IntendedRecoveryType.PROTECTION_REVERT)
 					for (Route backup : r.getBackupRoutes())
 						backup.setCarriedTraffic(0, null); // primary to up => carried in backup to zero
 				}
@@ -305,7 +306,8 @@ public class Online_evProc_wdm extends IEventProcessor
 				/* Now take down routes one by one, and see what to do with them (if something)  */ 
 				for (Route r : currentNetPlan.getRoutesDown(wdmLayer))
 				{
-					final Demand.IntendedRecoveryType recovType = WDMUtils.getRecoveryType(r.getDemand(), defaultRecoveryType); 
+					final Demand wdmDemand = r.getDemand();
+					final Demand.IntendedRecoveryType recovType = wdmDemand.getIntendedRecoveryType() == Demand.IntendedRecoveryType.NOTSPECIFIED? defaultRecoveryType : wdmDemand.getIntendedRecoveryType();
 
 					if (recovType == Demand.IntendedRecoveryType.NONE) continue;
 

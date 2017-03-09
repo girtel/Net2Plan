@@ -305,7 +305,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				atLeastOneLpAdded = true;
 				totalCost += cost_p.get(best_pathIndex);
 				final Demand newWDMDemand = netPlan.addDemand(best_rsa.ingressNode , best_rsa.egressNode , lineRate_p.get(best_pathIndex) , null , wdmLayer);
-				WDMUtils.setRecoveryType(newWDMDemand, recoveryTypeNewLps);
+				newWDMDemand.setIntendedRecoveryType(recoveryTypeNewLps);
 				final Route lp = WDMUtils.addLightpath(newWDMDemand , best_rsa , lineRate_p.get(best_pathIndex));
 				final Link ipLink = newWDMDemand.coupleToNewLinkCreated(ipLayer);
 				final double ipTrafficToCarry = Math.min(lineRate_p.get(best_pathIndex) , ipDemand.getBlockedTraffic());
