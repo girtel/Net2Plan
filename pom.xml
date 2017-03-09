@@ -4,7 +4,7 @@
 
     <groupId>com.net2plan</groupId>
     <artifactId>net2plan</artifactId>
-    <version>0.5.0.2-SNAPSHOT</version>
+    <version>0.5.0.2</version>
     <packaging>pom</packaging>
     <url>http://www.net2plan.com</url>
 
@@ -201,5 +201,13 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <!-- Build helper: Version controller -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>2.3</version>
+            </plugin>
+        </plugins>
     </build>
 </project>
