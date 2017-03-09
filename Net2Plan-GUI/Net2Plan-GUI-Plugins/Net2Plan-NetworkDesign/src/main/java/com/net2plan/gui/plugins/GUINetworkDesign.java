@@ -117,9 +117,9 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         super(title);
     }
 
-    public UndoRedoManager getUndoRedoNavigationManager()
+    public void addNetPlanChange()
     {
-        return undoRedoManager;
+        undoRedoManager.addNetPlanChange();
     }
 
     public WhatIfAnalysisPane getWhatIfAnalysisPane()
@@ -147,7 +147,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         final Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> forward = undoRedoManager.getNavigationForwardElement();
         if (forward == null) return;
         this.currentNetPlan = forward.getFirst();
-        this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, forward.getSecond(), forward.getThird());
+         this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, forward.getSecond(), forward.getThird());
         updateVisualizationAfterNewTopology();
     }
 
@@ -469,9 +469,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     public void setCurrentNetPlanDoNotUpdateVisualization(NetPlan netPlan)
     {
         netPlan.checkCachesConsistency();
-//        if (onlineSimulationPane != null) onlineSimulationPane.getSimKernel().setNetPlan(netPlan);
         currentNetPlan = netPlan;
-//        netPlan.checkCachesConsistency();
     }
 
     public void showTableControlWindow()

@@ -182,6 +182,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                 if (!callback.getVisualizationState().isNetPlanEditable()) return false;
                 if( columnIndex >= netPlanViewTableHeader.length) return true;
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
+                if (rowIndex == getRowCount() - 1) return false;
 
                 return columnIndex == COLUMN_NAME || columnIndex == COLUMN_CAPACITY || columnIndex == COLUMN_PROCESSINGTIME;
             }
@@ -206,7 +207,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
                         	callback.getVisualizationState ().pickResource(res);
                             callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            callback.addNetPlanChange();
                             break;
 
                         case COLUMN_CAPACITY:
@@ -215,7 +216,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
                         	callback.getVisualizationState ().pickResource(res);
                             callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            callback.addNetPlanChange();
                             break;
 
                         case COLUMN_PROCESSINGTIME:
@@ -224,7 +225,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
                         	callback.getVisualizationState ().pickResource(res);
                             callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            callback.addNetPlanChange();
                             break;
 
                         default:
@@ -272,7 +273,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
     }
 
     @Override
-    public int getNumFixedLeftColumnsInDecoration() {
+    public int getNumberOfDecoratorColumns() {
         return 2;
     }
 
@@ -413,7 +414,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                                 callback.getDesign().getResourceFromId((Long)itemId).remove();
                                 callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            	callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            	callback.addNetPlanChange();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -446,7 +447,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                                     res.remove();
                                 callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            	callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            	callback.addNetPlanChange();
                                 break;
                             }
                         }catch (Throwable ex) {
@@ -473,7 +474,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                         		for (Resource r : rowsInTheTable) r.remove();
                             callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                        	callback.getUndoRedoNavigationManager().addNetPlanChange();
+                        	callback.addNetPlanChange();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -585,7 +586,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                                 0, capacityUnits, newBaseResources, 0, null);
                         callback.getVisualizationState().resetPickedState();
                     	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                    	callback.getUndoRedoNavigationManager().addNetPlanChange();
+                    	callback.addNetPlanChange();
                         break;
                     }
                 }catch (Throwable ex) {
@@ -649,7 +650,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                         res.setCapacity(res.getCapacity() , newCapMap);
                         callback.getVisualizationState().resetPickedState();
                         callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                        callback.getUndoRedoNavigationManager().addNetPlanChange();
+                        callback.addNetPlanChange();
                     } catch (Throwable ex) {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to base resources");
                     }
@@ -684,7 +685,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                     		r.setCapacity(cap , null);
                     callback.getVisualizationState().resetPickedState();
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                	callback.getUndoRedoNavigationManager().addNetPlanChange();
+                	callback.addNetPlanChange();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to resources");
                 }
@@ -717,7 +718,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                     		r.setProcessingTimeToTraversingTrafficInMs(procTime);
                     callback.getVisualizationState().resetPickedState();
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                	callback.getUndoRedoNavigationManager().addNetPlanChange();
+                	callback.addNetPlanChange();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set processing time to resources");
                 }

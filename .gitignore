@@ -28,3 +28,6 @@ doc/gen/
 
 *.releaseBackup
 *.stackdump
+
+# Test
+NUL

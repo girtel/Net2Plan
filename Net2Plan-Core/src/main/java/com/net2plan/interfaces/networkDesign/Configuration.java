@@ -21,6 +21,8 @@ import com.net2plan.utils.Triple;
 import java.io.*;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * <p>Class containing current Net2Plan-wide options, and methods to work with them.</p>
@@ -62,24 +64,24 @@ public class Configuration
 	private final static Map<String, String> options;
 
 	public static double precisionFactor = 0.001;
-	
+
 	static
 	{
 //		Set<String> canvasTypes = new LinkedHashSet<String>();
 //		for(Class<? extends Plugin> plugin : PluginSystem.getPlugins(ITopologyCanvas.class))
 //			canvasTypes.add(plugin.getName());
-		
+
 		defaultOptions = new LinkedList<Triple<String, String, String>>();
 		defaultOptions.add(Triple.unmodifiableOf("classpath", "", "Set of external libraries loaded at runtime (separated by semi-colon)"));
-		defaultOptions.add(Triple.unmodifiableOf("defaultRunnableCodePath", "#path# " + SystemUtils.getCurrentDir() + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "BuiltInExamples.jar", "Default path (either .jar file or folder) for external code (i.e. algorithms)"));
+		defaultOptions.add(Triple.unmodifiableOf("defaultRunnableCodePath", SystemUtils.getCurrentDir() + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "BuiltInExamples.jar", "Default path (either .jar file or folder) for external code (i.e. algorithms)"));
 		defaultOptions.add(Triple.unmodifiableOf("precisionFactor", "1e-3", "Precision factor for checks to overcome numeric errors"));
 //		defaultOptions.add(Triple.unmodifiableOf("topologyViewer", "#select# " + StringUtils.join(canvasTypes, " "), "Type of topology viewer (it requires reloading active tool)"));
 		defaultOptions.add(Triple.unmodifiableOf("xpressSolverLicenseFileName", "", "Default path for XPRESS solver license file (typically xpauth.xpr)"));
 		defaultOptions.add(Triple.unmodifiableOf("cplexSolverLibraryName", "", "Default path for cplex library (.dll/.so/.dylib file)"));
 		defaultOptions.add(Triple.unmodifiableOf("glpkSolverLibraryName", "", "Default path for glpk library (.dll/.so/.dylib file)"));
 		defaultOptions.add(Triple.unmodifiableOf("ipoptSolverLibraryName", "", "Default path for ipopt library (.dll/.so/.dylib file)"));
-		defaultOptions.add(Triple.unmodifiableOf("defaultILPSolver", "glpk", "Default solver for LP/ILP models"));
-		defaultOptions.add(Triple.unmodifiableOf("defaultNLPSolver", "ipopt", "Default solver for NLP models"));
+		defaultOptions.add(Triple.unmodifiableOf("defaultILPSolver", "#select# glpk cplex xpress", "Default solver for LP/ILP models"));
+		defaultOptions.add(Triple.unmodifiableOf("defaultNLPSolver", "#select# ipopt", "Default solver for NLP models"));
 		options = CommandLineParser.getParameters(defaultOptions, null);
 
 		optionsFile = new File(SystemUtils.getCurrentDir() + SystemUtils.getDirectorySeparator() + "options.ini");
@@ -136,16 +138,17 @@ public class Configuration
 	 */
 	public static Map<String, String> getNet2PlanOptions()
 	{
-		Map<String, String> map = new LinkedHashMap<String, String>();
-		for(Triple<String, String, String> parameter : defaultOptions)
-			map.put(parameter.getFirst(), getOption(parameter.getFirst()));
-		
+		final Map<String, String> map = new LinkedHashMap<String, String>();
+
+        for(Triple<String, String, String> parameter : defaultOptions)
+            map.put(parameter.getFirst(), getOption(parameter.getFirst()));
+
 		return map;
 	}
 
-	/** Goes through this map of parameters and, if both the parameters solverName and solverLibraryName exist, and solverLibraryName 
+	/** Goes through this map of parameters and, if both the parameters solverName and solverLibraryName exist, and solverLibraryName
 	 * equals "", then sets the value of such parameter to the default library file set by the user (in user-&gt;options) for such solver.
-	 * @param parameters The map of parameters, that may be modified in the solverLibraryName key 
+	 * @param parameters The map of parameters, that may be modified in the solverLibraryName key
 	 */
 	public static void updateSolverLibraryNameParameter (Map<String,String> parameters)
 	{
@@ -157,12 +160,12 @@ public class Configuration
 			parameters.put("solverLibraryName" , getDefaultSolverLibraryName(solverName));
 		}
 	}
-	
-	/** Returns the default name of the library file (to set as solverLibraryName in JOM calls), defined by the user 
+
+	/** Returns the default name of the library file (to set as solverLibraryName in JOM calls), defined by the user
 	 * for the given solver name. In the XPRESS solver case, this corresponds to the credentials for the license (xpauth.xpr file typically).
 	 * Throws an Exception if the solver name matches any of the accepted by JOM
 	 * @param solver The name of the solver (case insensitive)
-	 * @return The file name as defined by the user in the Net2Plan options for the 
+	 * @return The file name as defined by the user in the Net2Plan options for the
 	 */
 	public static String getDefaultSolverLibraryName (String solver)
 	{
@@ -173,29 +176,44 @@ public class Configuration
 		else if (s.equals("xpress")) return getOption("xpressSolverLicenseFileName");
 		else { final RuntimeException e = new Net2PlanException ("Unknown solver name: " + solver); e.printStackTrace (); throw e; }
 	}
-	
+
 	/**
-	 * <p>Returns the list of Net2Plan-wide parameters, where the first item of each element 
-	 * is the parameter name, the second one is the parameter value, and the third 
+	 * Sets the default name of the library file (to set as solverLibraryName in JOM calls).
+	 * @param solver Name of the solver
+ 	 * @param name The file name that will be defined at the Net2Plan options.
+	 */
+	public static void setDefaultSolverLibraryName(String solver, String name)
+	{
+		final String s = solver.toLowerCase();
+		if (s.equals("cplex")) setOption("cplexSolverLibraryName", name);
+		else if (s.equals("glpk")) setOption("glpkSolverLibraryName", name);
+		else if (s.equals("ipopt")) setOption("ipoptSolverLibraryName", name);
+		else if (s.equals("xpress")) setOption("xpressSolverLicenseFileName", name);
+		else { final RuntimeException e = new Net2PlanException ("Unknown solver name: " + solver); e.printStackTrace (); throw e; }
+	}
+
+	/**
+	 * <p>Returns the list of Net2Plan-wide parameters, where the first item of each element
+	 * is the parameter name, the second one is the parameter value, and the third
 	 * one is the parameter description.</p>
-	 * 
-	 * <p>It is possible to define type-specific parameters if the default value is set 
+	 *
+	 * <p>It is possible to define type-specific parameters if the default value is set
 	 * according to the following rules (but user is responsible of checking in its own code):</p>
-	 * 
+	 *
 	 * <ul>
-	 * <li>If the default value is #select#	and a set of space- or comma-separated values, 
-	 * the GUI will show a combobox with all the values, where the first one will be the 
-	 * selected one by default. For example: "#select# hops km" will allow choosing in the 
+	 * <li>If the default value is #select#	and a set of space- or comma-separated values,
+	 * the GUI will show a combobox with all the values, where the first one will be the
+	 * selected one by default. For example: "#select# hops km" will allow choosing in the
 	 * GUI between hops and km, where hops will be the default value.</li>
-	 * <li>If the default value is #boolean# and true or false, the GUI will show a checkbox, 
-	 * where the default value will be true or false, depending on the value accompanying to 
+	 * <li>If the default value is #boolean# and true or false, the GUI will show a checkbox,
+	 * where the default value will be true or false, depending on the value accompanying to
 	 * #boolean#. For example: "#boolean# true" will show a checkbox marked by default.</li>
-	 * <li>If the default value is #algorithm#, the GUI will prepare a new interface to 
-	 * select an algorithm as parameter. Three new fields will be added, including "_file", 
-	 * "_classname" and "_parameters" suffixes to the indicated parameter name, refer to 
-	 * the {@code .class} or {@code .jar} file where the code is located, the class name, 
-	 * and a set of parameters (pair of key-values separated by commas, where individual 
-	 * key and value are separated with an equal symbol. The same applies to reports (#report#), 
+	 * <li>If the default value is #algorithm#, the GUI will prepare a new interface to
+	 * select an algorithm as parameter. Three new fields will be added, including "_file",
+	 * "_classname" and "_parameters" suffixes to the indicated parameter name, refer to
+	 * the {@code .class} or {@code .jar} file where the code is located, the class name,
+	 * and a set of parameters (pair of key-values separated by commas, where individual
+	 * key and value are separated with an equal symbol. The same applies to reports (#report#),
 	 * event generators (#eventGenerator#) and event processors (#eventProcessor#).</li>
 	 * </ul>
 	 *
@@ -219,7 +237,22 @@ public class Configuration
 		if (!options.containsKey(option)) throw new RuntimeException("Unknown option '" + option + "'");
 
 		String value = options.get(option);
-		return value == null ? "" : value;
+
+		if (value != null)
+        {
+            final Pattern pattern = Pattern.compile("#(.*?)#");
+            final Matcher matcher = pattern.matcher(value);
+
+            if (matcher.find())
+            {
+                return value.replace(matcher.group(), "").trim();
+            } else
+            {
+                return value;
+            }
+        }
+
+        return "";
 	}
 
 	/**
@@ -251,14 +284,14 @@ public class Configuration
 			{
 				p.load(in);
 			}
-			
+
 			for (Entry<Object, Object> entry : p.entrySet())
 				options.put(entry.getKey().toString(), entry.getValue().toString());
 
 			check(options);
 
 			currentOptionsFile = f.getAbsoluteFile();
-			
+
 			if (options.containsKey("classpath"))
 			{
 				String classpath = options.get("classpath");
@@ -283,7 +316,7 @@ public class Configuration
 		}
 	}
 
-	
+
 	/**
 	 * Saves current options to the file system.
 	 *
@@ -307,7 +340,7 @@ public class Configuration
 			throw new RuntimeException(ex);
 		}
 	}
-	
+
 	/**
 	 * Puts the value for an option. If an option already exists, its value will be overriden.
 	 *
@@ -347,7 +380,7 @@ public class Configuration
 	{
 		Map<String, String> oldOptions = new LinkedHashMap<String, String>(options);
 		Configuration.options.putAll(options);
-		
+
 		try
 		{
 			check(Configuration.options);
