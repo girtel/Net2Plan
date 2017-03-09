@@ -4,7 +4,7 @@
 
     <groupId>com.net2plan</groupId>
     <artifactId>net2plan</artifactId>
-    <version>0.5.0.1</version>
+    <version>0.5.0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <url>http://www.net2plan.com</url>
 
@@ -49,6 +49,11 @@
             <artifactId>commons-lang3</artifactId>
             <version>3.4</version>
         </dependency>
+		<dependency>
+		    <groupId>org.apache.commons</groupId>
+		    <artifactId>commons-csv</artifactId>
+		    <version>1.4</version>
+		</dependency>
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>

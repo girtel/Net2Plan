@@ -166,6 +166,8 @@ public abstract class IGUIModule extends JPanel implements Plugin
 		configure(contentPane);
 	}
 
+	public abstract void stop();
+
 	/**
 	 * Asks the tool to configure itself once started.
 	 * 

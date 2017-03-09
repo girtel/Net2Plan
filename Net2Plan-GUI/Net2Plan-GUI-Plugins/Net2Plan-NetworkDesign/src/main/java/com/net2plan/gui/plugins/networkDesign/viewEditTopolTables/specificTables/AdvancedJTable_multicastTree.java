@@ -198,6 +198,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
                 if (!callback.getVisualizationState().isNetPlanEditable()) return false;
                 if (columnIndex >= netPlanViewTableHeader.length) return true;
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
+                if (rowIndex == getRowCount() - 1) return false;
 
                 return columnIndex == COLUMN_CARRIEDTRAFFIC || columnIndex == COLUMN_OCCUPIEDCAPACITY || columnIndex >= netPlanViewTableHeader.length;
             }
@@ -222,7 +223,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
                         	callback.getVisualizationState ().pickMulticastTree(tree);
                             callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            callback.addNetPlanChange();
                             break;
 
                         case COLUMN_OCCUPIEDCAPACITY:
@@ -230,7 +231,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
                             callback.getVisualizationState ().pickMulticastTree(tree);
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
                             callback.updateVisualizationAfterPick();
-                            callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            callback.addNetPlanChange();
                             break;
 
                         default:
@@ -284,7 +285,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
         	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
-    public int getNumFixedLeftColumnsInDecoration() {
+    public int getNumberOfDecoratorColumns() {
         return 2;
     }
 
@@ -361,7 +362,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
                                 netPlan.getMulticastTreeFromId((long) itemId).remove();
                                 callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
-                            	callback.getUndoRedoNavigationManager().addNetPlanChange();
+                            	callback.addNetPlanChange();
                             } catch (Throwable ex) {
                                 ErrorHandling.addErrorOrException(ex, getClass());
                                 ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
@@ -388,7 +389,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
                         		for (MulticastTree t : rowsInTheTable) t.remove();
                             callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
-                        	callback.getUndoRedoNavigationManager().addNetPlanChange();
+                        	callback.addNetPlanChange();
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
@@ -431,7 +432,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
                     createMulticastTreeGUI(callback);
                     callback.getVisualizationState().resetPickedState();
                 	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
-                	callback.getUndoRedoNavigationManager().addNetPlanChange();
+                	callback.addNetPlanChange();
                 } catch (Throwable ex) {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
@@ -560,7 +561,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
             }
             callback.getVisualizationState().resetPickedState();
         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
-        	callback.getUndoRedoNavigationManager().addNetPlanChange();
+        	callback.addNetPlanChange();
         }
     }
 

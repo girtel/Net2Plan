@@ -21,7 +21,6 @@ import com.net2plan.gui.utils.FileDrop;
 import com.net2plan.gui.utils.JPopUpButton;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.gui.plugins.networkDesign.viewEditWindows.WindowController;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.GUINetworkDesign;
@@ -419,7 +418,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
-            callback.getUndoRedoNavigationManager().addNetPlanChange();
+            callback.addNetPlanChange();
         } else if (src == btn_increaseInterLayerDistance)
         {
             if (vs.getCanvasNumberOfVisibleLayers() == 1) return;
@@ -466,7 +465,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             callback.requestRedoAction();
         } else if (src == btn_tableControlWindow)
         {
-            WindowController.showTablesWindow(true);
+            callback.showTableControlWindow();
         } else if (src == btn_osmMap)
         {
             if (btn_osmMap.isSelected())
@@ -573,15 +572,13 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             NetPlan aux = fc_netPlan.readNetPlan();
 
-            aux.checkCachesConsistency();
-
             callback.setCurrentNetPlanDoNotUpdateVisualization(aux);
             final VisualizationState vs = callback.getVisualizationState();
             Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
-            callback.getUndoRedoNavigationManager().addNetPlanChange();
+            callback.addNetPlanChange();
 
             // Reactivating the OSM Support
             if  (isOSMRunning)
@@ -619,7 +616,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
             callback.updateVisualizationAfterNewTopology();
-            callback.getUndoRedoNavigationManager().addNetPlanChange();
+            callback.addNetPlanChange();
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
@@ -673,7 +670,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                 }
                 callback.getVisualizationState().resetPickedState();
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND, NetworkElementType.MULTICAST_DEMAND));
-                callback.getUndoRedoNavigationManager().addNetPlanChange();
+                callback.addNetPlanChange();
             } catch (Throwable ex)
             {
                 callback.getDesign().assignFrom(aux_netPlan);

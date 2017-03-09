@@ -12,23 +12,6 @@ public final class WindowUtils
     {
     }
 
-    public static void clearFloatingWindows()
-    {
-        Window[] windows = Window.getWindows();
-
-        for (Window window : windows)
-        {
-            if (window instanceof JFrame)
-            {
-                if (!((JFrame) window).getTitle().equals("Net2Plan"))
-                {
-                    window.setVisible(false);
-                    window.dispose();
-                }
-            }
-        }
-    }
-
     public static void setFrameBottomRight(final JFrame frame)
     {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();

@@ -73,7 +73,7 @@ public class Demand extends NetworkElement
 	Demand (NetPlan netPlan , long id , int index , NetworkLayer layer , Node ingressNode , Node egressNode , double offeredTraffic , AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);
-		
+
 		if (ingressNode.equals (egressNode)) throw new Net2PlanException("Self-demands are not allowed");
 		if (offeredTraffic < 0) throw new Net2PlanException("Offered traffic must be non-negative");
 		
@@ -624,7 +624,7 @@ public class Demand extends NetworkElement
 			layer.forwardingRulesCurrentFailureState_x_de = DoubleFactory2D.sparse.appendRows(layer.forwardingRulesCurrentFailureState_x_de.viewPart(0, 0, index, E), layer.forwardingRulesCurrentFailureState_x_de.viewPart(index + 1, 0, layer.demands.size() - index - 1, E));
 			for (Link link : layer.links) { link.cache_carriedTraffic -= x_e.get(link.index); link.cache_occupiedCapacity -= x_e.get(link.index); }
 		}
-		
+        for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		netPlan.cache_id2DemandMap.remove(id);
 		NetPlan.removeNetworkElementAndShiftIndexes (layer.demands , index);
 		ingressNode.cache_nodeOutgoingDemands.remove (this);
@@ -708,6 +708,7 @@ public class Demand extends NetworkElement
 	 */
 	void checkCachesConsistency ()
 	{
+		super.checkCachesConsistency ();
 		double check_carriedTraffic = 0;
 		if (layer.routingType == RoutingType.SOURCE_ROUTING)
 		{
