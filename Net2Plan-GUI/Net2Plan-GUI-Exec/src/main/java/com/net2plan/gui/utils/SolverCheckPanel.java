@@ -488,7 +488,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
                 txt_info.append(MESSAGE_HEADER + " * Under windows, try installing your solver dll file under: c:/Windows/system32" + NEW_LINE);
             } else if (currentOS == OS.linux)
             {
-                txt_info.append(MESSAGE_HEADER + " * Under linux, try installing your solver using your distribution package manager." + NEW_LINE);
+                txt_info.append(MESSAGE_HEADER + " * Under linux, try installing the solver using your distribution package manager." + NEW_LINE);
             }
         }
     }
