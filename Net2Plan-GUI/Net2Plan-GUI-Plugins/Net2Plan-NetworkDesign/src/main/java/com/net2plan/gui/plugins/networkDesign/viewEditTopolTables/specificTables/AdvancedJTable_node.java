@@ -243,6 +243,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
             {
                 if (!callback.getVisualizationState().isNetPlanEditable()) return false;
                 if (columnIndex >= netPlanViewTableHeader.length) return true;
+                if (rowIndex == getRowCount() - 1) return false;
                 if (getValueAt(rowIndex, columnIndex) == null) return false;
 
                 return columnIndex == COLUMN_SHOWHIDE || columnIndex == COLUMN_NAME || columnIndex == COLUMN_STATE || columnIndex == COLUMN_XCOORD
@@ -252,7 +253,6 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
             @Override
             public void setValueAt(Object newValue, int row, int column)
             {
-//				System.out.println ("set Value node, newValue: " + newValue + ", row: " + row + ", col: " + column);
                 Object oldValue = getValueAt(row, column);
 
 				/* If value doesn't change, exit from function */
@@ -263,23 +263,21 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                 if (getValueAt(row, 0) == null) row = row - 1;
                 final long nodeId = (Long) getValueAt(row, 0);
                 final Node node = netPlan.getNodeFromId(nodeId);
-                                /* Perform checks, if needed */
-//				System.out.println ("set Value node: " + node + ", newValue: " + newValue + ", row: " + row + ", col: " + column);
                 try
                 {
                     switch (column)
                     {
                         case COLUMN_SHOWHIDE:
                             if (newValue == null) return;
-                        	if (!(Boolean) newValue)
+                            if (!(Boolean) newValue)
                             {
                                 callback.getVisualizationState().hideOnCanvas(node);
                             } else
                             {
                                 callback.getVisualizationState().showOnCanvas(node);
                             }
-                        	callback.getVisualizationState ().pickNode(node);
-                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                            callback.getVisualizationState().pickNode(node);
+                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                             callback.addNetPlanChange();
                             break;
 
@@ -397,7 +395,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
             rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter, columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
-    public int getNumFixedLeftColumnsInDecoration()
+    public int getNumberOfDecoratorColumns()
     {
         return 2;
     }
@@ -540,28 +538,24 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
 
     private JMenuItem getAddOption()
     {
-        JMenuItem addItem = addItem = new JMenuItem("Add " + networkElementType);
-        addItem.addActionListener(new ActionListener()
+        JMenuItem addItem = new JMenuItem("Add " + networkElementType);
+        addItem.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
+            NetPlan netPlan = callback.getDesign();
+
+            try
             {
-                NetPlan netPlan = callback.getDesign();
+                Node node = netPlan.addNode(0, 0, "Node " + netPlan.getNumberOfNodes(), null);
+                callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                callback.getVisualizationState().pickNode(node);
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                callback.addNetPlanChange();
 
-                try
-                {
-                    Node node = netPlan.addNode(0, 0, "Node " + netPlan.getNumberOfNodes(), null);
-                    callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                    callback.getVisualizationState().pickNode(node);
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                    callback.addNetPlanChange();
-
-                    if (networkElementType == NetworkElementType.NODE)
-                        callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-                } catch (Throwable ex)
-                {
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
-                }
+                if (networkElementType == NetworkElementType.NODE)
+                    callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
+            } catch (Throwable ex)
+            {
+                ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
             }
         });
         return addItem;

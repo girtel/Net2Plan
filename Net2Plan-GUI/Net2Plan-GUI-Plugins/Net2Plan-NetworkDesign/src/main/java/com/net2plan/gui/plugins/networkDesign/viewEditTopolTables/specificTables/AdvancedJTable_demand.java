@@ -220,7 +220,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
             {
                 if (!callback.getVisualizationState().isNetPlanEditable()) return false;
                 if (columnIndex >= netPlanViewTableHeader.length) return true;
-                if (rowIndex == getRowCount()) return false; // the last row is for the aggergated info
+                if (rowIndex == getRowCount() - 1) return false; // the last row is for the aggregated info
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
 
                 return columnIndex == COLUMN_OFFEREDTRAFFIC;
@@ -322,7 +322,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
     }
 
     @Override
-    public int getNumFixedLeftColumnsInDecoration() {
+    public int getNumberOfDecoratorColumns() {
         return 2;
     }
 

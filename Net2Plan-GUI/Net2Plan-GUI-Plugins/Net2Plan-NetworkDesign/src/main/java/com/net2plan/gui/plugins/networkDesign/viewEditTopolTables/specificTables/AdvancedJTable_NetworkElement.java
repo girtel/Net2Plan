@@ -116,7 +116,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
 
         this.getTableHeader().setReorderingAllowed(true);
         scroll = new JScrollPane(this);
-        this.decorator = new FixedColumnDecorator(scroll, getNumFixedLeftColumnsInDecoration());
+        this.decorator = new FixedColumnDecorator(scroll, getNumberOfDecoratorColumns());
         mainTable = decorator.getMainTable();
         fixedTable = decorator.getFixedTable();
 
@@ -858,7 +858,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
             fixedTable.getColumnModel().removeColumn(tc);
         }
         mainTable.createDefaultColumnsFromModel();
-        for (int i = 0; i < getNumFixedLeftColumnsInDecoration(); i++)
+        for (int i = 0; i < getNumberOfDecoratorColumns(); i++)
         {
             tc = mainTable.getColumnModel().getColumn(0);
             mainTable.getColumnModel().removeColumn(tc);
@@ -1141,7 +1141,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
 
     public abstract void setColumnRowSortingFixedAndNonFixedTable();
 
-    public abstract int getNumFixedLeftColumnsInDecoration();
+    public abstract int getNumberOfDecoratorColumns();
 
     public abstract ArrayList<String> getAttributesColumnsHeaders();
 

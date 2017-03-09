@@ -245,6 +245,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                 if (!vs.isNetPlanEditable()) return false;
                 if (columnIndex >= netPlanViewTableHeader.length) return true;
                 if (getValueAt(rowIndex,columnIndex) == null) return false;
+                if (rowIndex == getRowCount() - 1) return false;
                 switch (columnIndex) {
                     case COLUMN_ID:
                     case COLUMN_INDEX:
@@ -453,7 +454,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
         	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
-    public int getNumFixedLeftColumnsInDecoration() {
+    public int getNumberOfDecoratorColumns() {
         return 2;
     }
 
