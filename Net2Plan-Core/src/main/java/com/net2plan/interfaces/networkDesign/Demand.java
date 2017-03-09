@@ -59,6 +59,18 @@ public class Demand extends NetworkElement
 	Link coupledUpperLayerLink;
 	List<String> mandatorySequenceOfTraversedResourceTypes;
 
+	public enum DemandRecoveryType
+	{
+		/** No reaction to failures to any route of the demand */
+		NONE,
+		/** An attempt is made to reroute the failed lightpaths of the demand (backup or not, but this makes sense when the routes have no backup) */
+		RESTORATION,
+		/** To carry the traffic, first the primary is tried, then the backup routes in order. Unused routes have carried traffic zero. No revert action is made */
+		PROTECTION_NOREVERT,
+		/** To carry the traffic, first the primary is tried, then the backup routes in order. Unused routes have carried traffic zero. If the primary becomes usable, traffic is reverted to it */
+		PROTECTION_REVERT;
+	}
+	
 	/**
 	 * Generates a new Demand.
 	 * @param netPlan Design where this demand is attached

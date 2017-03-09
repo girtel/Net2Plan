@@ -34,6 +34,7 @@ import java.util.TreeSet;
 
 import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Demand.DemandRecoveryType;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -141,21 +142,6 @@ public class WDMUtils
 	 * algorithms, and the decision of what to do lays on them.
 	 *
 	 */
-	public enum DemandRecoveryType
-	{
-		/** No reaction to failures to any route of the demand */
-		NONE("None"),
-		/** An attempt is made to reroute the failed lightpaths of the demand (backup or not, but this makes sense when the routes have no backup) */
-		RESTORATION("Restoration"),
-		/** To carry the traffic, first the primary is tried, then the backup routes in order. Unused routes have carried traffic zero. No revert action is made */
-//		PROTECTION_NOREVERT("ProtectionNoRevert"),
-		/** To carry the traffic, first the primary is tried, then the backup routes in order. Unused routes have carried traffic zero. If the primary becomes usable, traffic is reverted to it */
-		PROTECTION_REVERT("ProtectionRevert");
-		private final String label;
-		DemandRecoveryType(String label) { this.label = label; }
-		@Override
-		public String toString() { return label; }
-	}
 
 	
 	
