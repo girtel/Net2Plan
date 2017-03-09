@@ -27,7 +27,11 @@ public class VisualizationSnapshot
 
     public void resetSnapshot()
     {
-        this.mapCanvasLayerVisualizationOrder = new DualHashBidiMap<>();
+        if (this.mapCanvasLayerVisualizationOrder == null || this.mapCanvasLayerVisualizationOrder.isEmpty())
+        {
+            final Map<NetworkLayer, Integer> aux_layerOrderMap = netPlan.getNetworkLayers().stream().collect(Collectors.toMap(layer -> layer, layer -> layer.getIndex()));
+            this.mapCanvasLayerVisualizationOrder = new DualHashBidiMap<>(aux_layerOrderMap);
+        }
         this.mapCanvasLayerVisibility = netPlan.getNetworkLayers().stream().collect(Collectors.toMap(layer -> layer, layer -> true));
         this.mapCanvasLinkVisibility = netPlan.getNetworkLayers().stream().collect(Collectors.toMap(layer -> layer, layer -> true));
     }

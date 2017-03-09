@@ -530,28 +530,24 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
 
     private JMenuItem getAddOption()
     {
-        JMenuItem addItem = addItem = new JMenuItem("Add " + networkElementType);
-        addItem.addActionListener(new ActionListener()
+        JMenuItem addItem = new JMenuItem("Add " + networkElementType);
+        addItem.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
+            NetPlan netPlan = callback.getDesign();
+
+            try
             {
-                NetPlan netPlan = callback.getDesign();
+                Node node = netPlan.addNode(0, 0, "Node " + netPlan.getNumberOfNodes(), null);
+                callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                callback.getVisualizationState().pickNode(node);
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                callback.addNetPlanChange();
 
-                try
-                {
-                    Node node = netPlan.addNode(0, 0, "Node " + netPlan.getNumberOfNodes(), null);
-                    callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                    callback.getVisualizationState().pickNode(node);
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                    callback.addNetPlanChange();
-
-                    if (networkElementType == NetworkElementType.NODE)
-                        callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-                } catch (Throwable ex)
-                {
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
-                }
+                if (networkElementType == NetworkElementType.NODE)
+                    callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
+            } catch (Throwable ex)
+            {
+                ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
             }
         });
         return addItem;
