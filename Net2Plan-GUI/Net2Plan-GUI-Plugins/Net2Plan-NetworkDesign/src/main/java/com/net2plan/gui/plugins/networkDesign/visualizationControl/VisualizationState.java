@@ -563,24 +563,31 @@ public class VisualizationState
         this.showInCanvasNonConnectedNodes = showNonConnectedNodes;
     }
 
-    public void setMandatedByTheUserToBeHiddenInCanvas(Node n, boolean shouldBeHidden)
+    public void hideOnCanvas(Node n)
     {
-        if (shouldBeHidden) nodesToHideInCanvasAsMandatedByUserInTable.add(n);
-        else nodesToHideInCanvasAsMandatedByUserInTable.remove(n);
+        nodesToHideInCanvasAsMandatedByUserInTable.add(n);
     }
 
-    public boolean isMandatedByTheUserToBeHiddenInCanvas(Node n)
+    public void showOnCanvas(Node n)
+    {
+        if (nodesToHideInCanvasAsMandatedByUserInTable.contains(n)) nodesToHideInCanvasAsMandatedByUserInTable.remove(n);
+    }
+
+    public boolean isHiddenOnCanvas(Node n)
     {
         return nodesToHideInCanvasAsMandatedByUserInTable.contains(n);
     }
 
-    public void setMandatedByTheUserToBeHiddenInCanvas(Link e, boolean shouldBeHiden)
+    public void hideOnCanvas(Link e)
     {
-        if (shouldBeHiden) linksToHideInCanvasAsMandatedByUserInTable.add(e);
-        else linksToHideInCanvasAsMandatedByUserInTable.remove(e);
+        linksToHideInCanvasAsMandatedByUserInTable.add(e);
+    }
+    public void showOnCanvas(Link e)
+    {
+        if (linksToHideInCanvasAsMandatedByUserInTable.contains(e)) linksToHideInCanvasAsMandatedByUserInTable.remove(e);
     }
 
-    public boolean isMandatedByTheUserToBeHiddenInCanvas(Link e)
+    public boolean isHiddenOnCanvas(Link e)
     {
         return linksToHideInCanvasAsMandatedByUserInTable.contains(e);
     }

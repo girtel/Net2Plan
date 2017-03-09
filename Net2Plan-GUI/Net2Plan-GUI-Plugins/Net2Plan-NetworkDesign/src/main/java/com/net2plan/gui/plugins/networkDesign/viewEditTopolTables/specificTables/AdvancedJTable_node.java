@@ -124,7 +124,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
             Object[] nodeData = new Object[netPlanViewTableHeader.length + attributesTitles.size()];
             nodeData[COLUMN_ID] = node.getId();
             nodeData[COLUMN_INDEX] = node.getIndex();
-            nodeData[COLUMN_SHOWHIDE] = !callback.getVisualizationState().isMandatedByTheUserToBeHiddenInCanvas(node);
+            nodeData[COLUMN_SHOWHIDE] = !callback.getVisualizationState().isHiddenOnCanvas(node);
             nodeData[COLUMN_NAME] = node.getName();
             nodeData[COLUMN_STATE] = node.isUp();
             nodeData[COLUMN_XCOORD] = node.getXYPositionMap().getX();
@@ -271,9 +271,15 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                     {
                         case COLUMN_SHOWHIDE:
                             if (newValue == null) return;
-                            callback.getVisualizationState().setMandatedByTheUserToBeHiddenInCanvas(node, !((Boolean) newValue));
-                            callback.getVisualizationState().pickNode(node);
-                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                        	if (!(Boolean) newValue)
+                            {
+                                callback.getVisualizationState().hideOnCanvas(node);
+                            } else
+                            {
+                                callback.getVisualizationState().showOnCanvas(node);
+                            }
+                        	callback.getVisualizationState ().pickNode(node);
+                        	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                             callback.addNetPlanChange();
                             break;
 
