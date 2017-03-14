@@ -365,7 +365,7 @@ public class VisualizationState
         {
             final Map<NetworkLayer, Boolean> mapCanvasLinkVisibility = this.visualizationSnapshot.getMapCanvasLinkVisibility();
 
-            // Resetting visualization snapshot to deafult values
+            // Resetting visualization snapshot to default values
             this.visualizationSnapshot.resetSnapshot();
 
             for (Map.Entry<NetworkLayer, Boolean> entry : mapCanvasLinkVisibility.entrySet())
