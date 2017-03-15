@@ -165,8 +165,14 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final long ingressNodeId = getLong ("ingressNodeId");
 		final long egressNodeId = getLong ("egressNodeId");
 		final double offeredTraffic = getDouble ("offeredTraffic");
-		Demand newDemand = netPlan.addDemand(demandId , netPlan.getNodeFromId(ingressNodeId), netPlan.getNodeFromId(egressNodeId), offeredTraffic, null , netPlan.getNetworkLayerFromId(layerId));
+		Demand.IntendedRecoveryType recoveryType;
+		try { recoveryType = Demand.IntendedRecoveryType.valueOf(getString("intendedRecoveryType")); } 
+		catch (XMLStreamException e) { recoveryType = Demand.IntendedRecoveryType.NOTSPECIFIED; }
+		catch (Exception e) { recoveryType = Demand.IntendedRecoveryType.UNKNOWNTYPE; }
 
+		Demand newDemand = netPlan.addDemand(demandId , netPlan.getNodeFromId(ingressNodeId), netPlan.getNodeFromId(egressNodeId), offeredTraffic, null , netPlan.getNetworkLayerFromId(layerId));
+		newDemand.setIntendedRecoveryType(recoveryType);
+		
 		List<String> mandatorySequenceOfTraversedResourceTypes = new LinkedList<String> ();
 		boolean finalElementRead = false;
 		while(xmlStreamReader.hasNext() && !finalElementRead)

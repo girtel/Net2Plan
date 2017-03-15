@@ -112,9 +112,9 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
             if (jomVersion != null)
             {
-                final List<String> splittedVersion = Lists.newArrayList(Splitter.on(".").split(jomVersion));
+                final List<String> splitVersion = Lists.newArrayList(Splitter.on(".").split(jomVersion));
 
-                if (Integer.parseInt(splittedVersion.get(1)) < 2 || Integer.parseInt(splittedVersion.get(3)) < 2)
+                if (Integer.parseInt(splitVersion.get(1)) < 2 || Integer.parseInt(splitVersion.get(3)) < 2)
                 {
                     txt_info.append(ERROR_HEADER + "JOM library version is below 0.2.0.2." + NEW_LINE + "Please update your library to continue, current version is: " + jomVersion + NEW_LINE);
                     return;

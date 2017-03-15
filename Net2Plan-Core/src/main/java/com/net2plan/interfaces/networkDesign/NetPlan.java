@@ -2872,7 +2872,7 @@ public class NetPlan extends NetworkElement
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         final int E = layer.links.size();
-        DoubleMatrix2D out = DoubleFactory2D.dense.make(E, E);
+        DoubleMatrix2D out = DoubleFactory2D.sparse.make(E, E);
         for (Link e_1 : layer.links)
         {
             final String idBidirPair_st = e_1.getAttribute(KEY_STRING_BIDIRECTIONALCOUPLE);
@@ -2898,7 +2898,7 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix2D getMatrixResource2ResourceUpperToBaseAssignment()
     {
         final int R = resources.size();
-        DoubleMatrix2D out = DoubleFactory2D.dense.make(R, R);
+        DoubleMatrix2D out = DoubleFactory2D.sparse.make(R, R);
         for (Resource upperResource : resources)
             for (Resource baseResource : upperResource.capacityIOccupyInBaseResource.keySet())
                 out.set(upperResource.index, baseResource.index, 1.0);
@@ -2914,7 +2914,7 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix2D getMatrixResource2ResourceUpperToBaseOccupation()
     {
         final int R = resources.size();
-        DoubleMatrix2D out = DoubleFactory2D.dense.make(R, R);
+        DoubleMatrix2D out = DoubleFactory2D.sparse.make(R, R);
         for (Resource upperResource : resources)
             for (Entry<Resource, Double> baseResource : upperResource.capacityIOccupyInBaseResource.entrySet())
                 out.set(upperResource.index, baseResource.getKey().index, baseResource.getValue());
@@ -5597,6 +5597,7 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("ingressNodeId", Long.toString(demand.ingressNode.id));
                     writer.writeAttribute("egressNodeId", Long.toString(demand.egressNode.id));
                     writer.writeAttribute("offeredTraffic", Double.toString(demand.offeredTraffic));
+                    writer.writeAttribute("intendedRecoveryType", demand.recoveryType.toString());
 
                     for (String type : demand.mandatorySequenceOfTraversedResourceTypes)
                     {

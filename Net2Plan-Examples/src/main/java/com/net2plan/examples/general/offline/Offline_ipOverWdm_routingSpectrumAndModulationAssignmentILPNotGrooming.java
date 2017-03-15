@@ -139,7 +139,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGroom
 	private InputParameter maxPropagationDelayMs = new InputParameter ("maxPropagationDelayMs", (double) -1 , "Maximum allowed propagation time of a lighptath in miliseconds. If non-positive, no limit is assumed");
 	private InputParameter bidirectionalTransponders = new InputParameter ("bidirectionalTransponders", true , "If true, the transponders used are bidirectional. Then, the number of lightpaths of each type from node 1 to node 2, equals the number of lightpahts from 2 to 1 (see that both directions can have different routes and slots)");
 	private NetworkLayer wdmLayer, ipLayer;
-	private WDMUtils.DemandRecoveryType recoveryTypeNewLps;
+	private Demand.IntendedRecoveryType recoveryTypeNewLps;
 
 	@Override
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters)
@@ -173,9 +173,9 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGroom
 		if (N == 0 || Ewdm == 0 || Dip == 0) throw new Net2PlanException("This algorithm requires a topology with links and a demand set");
 
 		if (networkRecoveryType.getString().equals("not-fault-tolerant") || networkRecoveryType.getString().equals("single-srg-tolerant-static-lp"))
-			recoveryTypeNewLps = WDMUtils.DemandRecoveryType.NONE;
+			recoveryTypeNewLps = Demand.IntendedRecoveryType.NONE;
 		else if (networkRecoveryType.getString().equals("1+1-srg-disjoint-lps"))
-			recoveryTypeNewLps = WDMUtils.DemandRecoveryType.PROTECTION_REVERT;
+			recoveryTypeNewLps = Demand.IntendedRecoveryType.PROTECTION_REVERT;
 		else throw new Net2PlanException ("Wrong input parameters");
 
 		/* Store transpoder info */

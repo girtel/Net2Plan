@@ -98,9 +98,10 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
         try {
             double execTime = (System.nanoTime() - start) / 1e9;
             final VisualizationState vs = mainWindow.getVisualizationState();
+            final NetPlan netPlan = mainWindow.getDesign();
     		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
-    				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
-    		vs.setCanvasLayerVisibilityAndOrder(mainWindow.getDesign() , res.getFirst() , res.getSecond());
+    				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (netPlan.getNetworkLayers()));
+    		vs.setCanvasLayerVisibilityAndOrder(netPlan, res.getFirst() , res.getSecond());
             mainWindow.updateVisualizationAfterNewTopology();
             mainWindow.addNetPlanChange();
             String outMessage = String.format("Algorithm executed successfully%nExecution time: %.3g s%nExit message: %s", execTime, out);

@@ -129,7 +129,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	private int N, Ewdm, Dip, S, T;
 	private boolean singleSRGToleranceNot11Type;
 	private DoubleMatrix2D frequencySlot2FiberOccupancy_se;
-	private WDMUtils.DemandRecoveryType recoveryTypeNewLps;
+	private Demand.IntendedRecoveryType recoveryTypeNewLps;
 	
 	@Override
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters)
@@ -166,9 +166,9 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		if (singleSRGToleranceNot11Type && (netPlan.getNumberOfSRGs() == 0)) throw new Net2PlanException ("No SRGs are defined, so there is no reason to use the single-SRG failure-tolerant design option");
 		
 		if (networkRecoveryType.getString().equals("not-fault-tolerant") || networkRecoveryType.getString().equals("single-srg-tolerant-static-lp"))
-			recoveryTypeNewLps = WDMUtils.DemandRecoveryType.NONE;
+			recoveryTypeNewLps = Demand.IntendedRecoveryType.NONE;
 		else if (networkRecoveryType.getString().equals("1+1-srg-disjoint-lps"))
-			recoveryTypeNewLps = WDMUtils.DemandRecoveryType.PROTECTION_REVERT;
+			recoveryTypeNewLps = Demand.IntendedRecoveryType.PROTECTION_REVERT;
 		else throw new Net2PlanException ("Wrong input parameters");
 		
 		/* Store transpoder info */
@@ -305,7 +305,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				atLeastOneLpAdded = true;
 				totalCost += cost_p.get(best_pathIndex);
 				final Demand newWDMDemand = netPlan.addDemand(best_rsa.ingressNode , best_rsa.egressNode , lineRate_p.get(best_pathIndex) , null , wdmLayer);
-				WDMUtils.setRecoveryType(newWDMDemand, recoveryTypeNewLps);
+				newWDMDemand.setIntendedRecoveryType(recoveryTypeNewLps);
 				final Route lp = WDMUtils.addLightpath(newWDMDemand , best_rsa , lineRate_p.get(best_pathIndex));
 				final Link ipLink = newWDMDemand.coupleToNewLinkCreated(ipLayer);
 				final double ipTrafficToCarry = Math.min(lineRate_p.get(best_pathIndex) , ipDemand.getBlockedTraffic());
