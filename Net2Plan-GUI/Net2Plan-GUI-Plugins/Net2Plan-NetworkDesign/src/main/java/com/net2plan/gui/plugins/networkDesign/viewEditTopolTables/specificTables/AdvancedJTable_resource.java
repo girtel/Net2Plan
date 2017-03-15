@@ -89,7 +89,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
             resData[COLUMN_UPPERRESOURCES] = joinUpperResourcesWithTheirCapacities(res);
             resData[COLUMN_BASERESOURCES] = joinBaseResourcesWithTheirCapacities(res);
             resData[COLUMN_PROCESSINGTIME] = res.getProcessingTimeToTraversingTrafficInMs();
-            resData[COLUMN_NAME] = res.getTags();
+            resData[COLUMN_TAGS] = res.getTags();
             resData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(res.getAttributes());
 
             for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesTitles.size();i++)
