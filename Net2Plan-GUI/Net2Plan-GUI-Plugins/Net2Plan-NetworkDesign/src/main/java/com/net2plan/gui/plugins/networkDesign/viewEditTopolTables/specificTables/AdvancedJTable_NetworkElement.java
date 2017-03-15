@@ -1292,8 +1292,9 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
     final protected void addPopupMenuAttributeOptions(final MouseEvent e, final int row, final Object itemId, JPopupMenu popup)
     {
         if (networkElementType == NetworkElementType.FORWARDING_RULE)
-            throw new RuntimeException("Bad. Forwarding rules have no attributes");
+            throw new RuntimeException("Forwarding rules have no attributes");
         JMenuItem addAttribute = new JMenuItem("Add/edit attribute");
+        popup.add(new JPopupMenu.Separator());
         addAttribute.addActionListener(new ActionListener()
         {
             @Override
@@ -1318,23 +1319,14 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                     String attribute, value;
                     try
                     {
-                        if (txt_key.getText().isEmpty()) throw new Exception("Please, insert an attribute name");
+                        if (txt_key.getText().isEmpty()) continue;
 
                         attribute = txt_key.getText();
                         value = txt_value.getText();
                         NetworkElement element = netPlan.getNetworkElement((long) itemId);
                         element.setAttribute(attribute, value);
 
-                        try
-                        {
-                            callback.updateVisualizationJustTables();
-                        } catch (Throwable ex)
-                        {
-                            ErrorHandling.addErrorOrException(ex, getClass());
-                            ErrorHandling.showErrorDialog("Unable to add attribute to " + networkElementType);
-
-                        }
-
+                        callback.updateVisualizationJustTables();
                     } catch (Throwable ex)
                     {
                         ErrorHandling.addErrorOrException(ex, getClass());
@@ -1361,11 +1353,6 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
 
                     switch (networkElementType)
                     {
-                        case FORWARDING_RULE:
-                            TableModel model = getModel();
-                            itemId = Pair.of((Long) model.getValueAt(itemIndex, 1), (Long) model.getValueAt(itemIndex, 2));
-                            break;
-
                         case LAYER:
                             itemId = netPlan.getNetworkLayers().get(itemIndex).getId();
                             break;
@@ -1606,13 +1593,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                                     throw new RuntimeException("Bad");
                             }
 
-                            try
-                            {
-                                callback.updateVisualizationJustTables();
-                            } catch (Throwable ex)
-                            {
-                                ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add attribute to all nodes");
-                            }
+                            callback.updateVisualizationJustTables();
                             break;
                         } catch (Throwable ex)
                         {
@@ -1891,10 +1872,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                     String tag;
                     try
                     {
-                        if (txt_name.getText().isEmpty())
-                        {
-                            continue;
-                        }
+                        if (txt_name.getText().isEmpty()) continue;
 
                         tag = txt_name.getText();
                         NetworkElement element = netPlan.getNetworkElement((long) itemId);
@@ -2250,8 +2228,6 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                 }
             });
             popup.add(removeTagAll);
-
-            popup.add(new JPopupMenu.Separator());
         }
     }
 
