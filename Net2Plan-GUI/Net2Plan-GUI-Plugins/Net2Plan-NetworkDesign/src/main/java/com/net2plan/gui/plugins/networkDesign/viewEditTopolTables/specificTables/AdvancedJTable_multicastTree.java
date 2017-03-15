@@ -79,6 +79,10 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
 
     }
 
+    public static int getBottleneckColumnIndex()
+    {
+        return COLUMN_BOTTLENECKUTILIZATION;
+    }
 
     public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) 
     {    	

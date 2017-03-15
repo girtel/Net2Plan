@@ -522,13 +522,13 @@ public class CellRenderers
 
             long routeId = (long) itemId;
             double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-            double bottleneckValue = (Double) table.getModel().getValueAt(rowIndexModel, AdvancedJTable_route.COLUMN_BOTTLENECKUTILIZATION);
+            double bottleneckValue = (Double) table.getModel().getValueAt(rowIndexModel, AdvancedJTable_route.getBottleneckColumnIndex());
             if (DoubleUtils.isEqualWithinAbsoluteTolerance(bottleneckValue, 1, PRECISION_FACTOR))
                 c.setBackground(Color.ORANGE);
             else if (bottleneckValue > 1)
             {
                 c.setBackground(Color.RED);
-                if (columnIndexModel == AdvancedJTable_route.COLUMN_BOTTLENECKUTILIZATION)
+                if (columnIndexModel == AdvancedJTable_route.getBottleneckColumnIndex())
                 {
                     c.setForeground(Color.WHITE);
                 }
@@ -585,7 +585,7 @@ public class CellRenderers
             NetPlan initialNetPlan = callback.getInitialDesign();
 
             long treeId = (long) itemId;
-            if (columnIndexModel == AdvancedJTable_multicastTree.COLUMN_BOTTLENECKUTILIZATION)
+            if (columnIndexModel == AdvancedJTable_multicastTree.getBottleneckColumnIndex())
             {
                 double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
                 double doubleValue = (Double) table.getModel().getValueAt(rowIndexModel, columnIndexModel);
