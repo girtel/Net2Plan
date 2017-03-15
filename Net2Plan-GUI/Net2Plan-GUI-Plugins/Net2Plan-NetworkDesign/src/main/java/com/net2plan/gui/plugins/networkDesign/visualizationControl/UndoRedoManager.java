@@ -4,7 +4,6 @@ import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.utils.Triple;
-import org.apache.commons.collections15.BidiMap;
 
 import java.util.LinkedList;
 import java.util.Map;
@@ -62,7 +61,7 @@ public class UndoRedoManager
      *
      * @return see above
      */
-    public Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> getNavigationBackElement()
+    public Triple<NetPlan, Map<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> getNavigationBackElement()
     {
         if (!checkMovementValidity()) return null;
         if (timelineCursor == 0) return null;
@@ -81,7 +80,7 @@ public class UndoRedoManager
      *
      * @return see above
      */
-    public Triple<NetPlan, BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> getNavigationForwardElement()
+    public Triple<NetPlan, Map<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> getNavigationForwardElement()
     {
         if (!checkMovementValidity()) return null;
         if (timelineCursor == timeline.size() - 1) return null;
