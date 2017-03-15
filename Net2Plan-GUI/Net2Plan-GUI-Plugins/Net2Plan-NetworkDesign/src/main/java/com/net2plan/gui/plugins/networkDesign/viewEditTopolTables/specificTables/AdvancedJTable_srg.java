@@ -62,7 +62,8 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
     private static final int COLUMN_AFFECTEDROUTES = 8;
     private static final int COLUMN_AFFECTEDBACKUPROUTES = 9;
     private static final int COLUMN_AFFECTEDTREES = 10;
-    private static final int COLUMN_ATTRIBUTES = 11;
+    private static final int COLUMN_TAGS = 11;
+    private static final int COLUMN_ATTRIBUTES = 12;
     private static int MAXNUMDECIMALSINAVAILABILITY = 7;
 
     public AdvancedJTable_srg(final GUINetworkDesign callback)
@@ -109,6 +110,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
             srgData[COLUMN_AFFECTEDROUTES] = numRoutes == 0 ? "none" : numRoutes + " (" + CollectionUtils.join(NetPlan.getIndexes(routeIds_thisSRG), ", ") + ")";
             srgData[COLUMN_AFFECTEDBACKUPROUTES] = numSegments == 0 ? "none" : numSegments + " (" + CollectionUtils.join(NetPlan.getIndexes(segmentIds_thisSRG), ", ") + ")";
             srgData[COLUMN_AFFECTEDTREES] = numMulticastTrees == 0 ? "none" : numMulticastTrees + " (" + CollectionUtils.join(NetPlan.getIndexes(treeIds_thisSRG), ", ") + ")";
+            srgData[COLUMN_TAGS] = srg.getTags();
             srgData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(srg.getAttributes());
 
             for (int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size(); i++)

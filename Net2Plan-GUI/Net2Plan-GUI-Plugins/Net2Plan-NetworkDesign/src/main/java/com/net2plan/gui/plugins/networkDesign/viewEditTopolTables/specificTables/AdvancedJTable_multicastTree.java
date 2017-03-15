@@ -54,13 +54,14 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
     private static final int COLUMN_WORSECASENUMHOPS = 11;
     private static final int COLUMN_WORSECASELENGTH = 12;
     private static final int COLUMN_WORSECASEPROPDELAY = 13;
-    public static final int COLUMN_BOTTLENECKUTILIZATION = 14;
-    private static final int COLUMN_ATTRIBUTES = 15;
+    private static final int COLUMN_BOTTLENECKUTILIZATION = 14;
+    private static final int COLUMN_TAGS = 15;
+    private static final int COLUMN_ATTRIBUTES = 16;
     private static final String netPlanViewTabName = "Multicast trees";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Multicast demand", "Ingress node", "Egress nodes",
             "Demand offered traffic", "Carried traffic", "Occupied capacity", "Set of links", "Number of links", "Set of nodes", "Worst case number of hops",
-            "Worst case length (km)", "Worst case propagation delay (ms)", "Bottleneck utilization", "Attributes");
-    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Multicast demand", "Ingress node", "Egress nodes", "Multicast demand offered traffic", "This multicast tree carried traffic", "Capacity occupied in the links (typically same as the carried traffic)", "Set of links in the tree", "Number of links in the tree (equal to the number of traversed nodes minus one)", "Set of traversed nodes (including ingress and egress ndoes)", "Number of hops of the longest path (in number of hops) to any egress node", "Length (km) of the longest path (in km) to any egress node", "Propagation demay (ms) of the longest path (in ms) to any egress node", "Highest utilization among all traversed links", "Multicast tree specific attributes");
+            "Worst case length (km)", "Worst case propagation delay (ms)", "Bottleneck utilization", "Tags", "Attributes");
+    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Multicast demand", "Ingress node", "Egress nodes", "Multicast demand offered traffic", "This multicast tree carried traffic", "Capacity occupied in the links (typically same as the carried traffic)", "Set of links in the tree", "Number of links in the tree (equal to the number of traversed nodes minus one)", "Set of traversed nodes (including ingress and egress ndoes)", "Number of hops of the longest path (in number of hops) to any egress node", "Length (km) of the longest path (in km) to any egress node", "Propagation demay (ms) of the longest path (in ms) to any egress node", "Highest utilization among all traversed links", "Multicast-tree specific tags", "Multicast-tree specific attributes");
 
     public AdvancedJTable_multicastTree(final GUINetworkDesign callback) {
         super(createTableModel(callback), callback, NetworkElementType.MULTICAST_TREE, true);
@@ -109,6 +110,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_NetworkElement
             treeData[COLUMN_WORSECASELENGTH] = tree.getTreeMaximumPathLengthInKm();
             treeData[COLUMN_WORSECASEPROPDELAY] = tree.getTreeMaximumPropagationDelayInMs();
             treeData[COLUMN_BOTTLENECKUTILIZATION] = maxUtilization;
+            treeData[COLUMN_TAGS] = tree.getTags();
             treeData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(tree.getAttributes());
 
             for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)

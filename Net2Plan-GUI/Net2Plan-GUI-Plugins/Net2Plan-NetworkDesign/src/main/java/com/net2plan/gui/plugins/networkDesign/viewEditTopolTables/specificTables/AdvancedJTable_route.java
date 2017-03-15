@@ -46,14 +46,15 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
     private static final int COLUMN_NUMHOPS = 10;
     private static final int COLUMN_LENGTH = 11;
     private static final int COLUMN_PROPDELAY = 12;
-    public static final int COLUMN_BOTTLENECKUTILIZATION = 13;
+    private static final int COLUMN_BOTTLENECKUTILIZATION = 13;
     private static final int COLUMN_ISBACKUP = 14;
     private static final int COLUMN_HASBACKUPROUTES = 15;
-    private static final int COLUMN_ATTRIBUTES = 16;
+    private static final int COLUMN_TAGS = 16;
+    private static final int COLUMN_ATTRIBUTES = 17;
     private static final String netPlanViewTabName = "Routes";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Demand", "Ingress node", "Egress node",
             "Demand offered traffic", "Carried traffic", "Occupied capacity", "Sequence of links/resources", "Sequence of nodes", "Number of hops", "Length (km)",
-            "Propagation delay (ms)", "Bottleneck utilization", "Is backup?", "Has backup?", "Attributes");
+            "Propagation delay (ms)", "Bottleneck utilization", "Is backup?", "Has backup?", "Tags", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf(
             "Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Demand", "Ingress node", "Egress node", "Demand offered traffic",
             "Carried traffic", "Occupied capacity", "Sequence of indexes of the links (Lxx) and resources (Rxx) traversed",
@@ -61,7 +62,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
             "Number of hops", "Total route length", "Propagation delay (ms)", "Highest utilization among all traversed links",
             "Indicates if this route is designated as a backup route, of other route for the same demand. If so, shows the index of the primary route that this route is backing up",
             "Indicates if this route has backup routes. If so, their indexes are shown in parenthesis",
-            "Route-specific attributes");
+            "Route-specific tags", "Route-specific attributes");
 
     public AdvancedJTable_route(final GUINetworkDesign callback)
     {
@@ -112,6 +113,7 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
             routeData[COLUMN_BOTTLENECKUTILIZATION] = maxUtilization;
             routeData[COLUMN_ISBACKUP] = (route.isBackupRoute() ? "yes (" + (CollectionUtils.join(NetPlan.getIndexes(route.getRoutesIAmBackup()), ", ")) + ")" : "no");
             routeData[COLUMN_HASBACKUPROUTES] = (route.hasBackupRoutes() ? "yes (" + (CollectionUtils.join(NetPlan.getIndexes(route.getBackupRoutes()), ", ")) + ")" : "no");
+            routeData[COLUMN_TAGS] = route.getTags();
             routeData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(route.getAttributes());
 
             for (int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size(); i++)

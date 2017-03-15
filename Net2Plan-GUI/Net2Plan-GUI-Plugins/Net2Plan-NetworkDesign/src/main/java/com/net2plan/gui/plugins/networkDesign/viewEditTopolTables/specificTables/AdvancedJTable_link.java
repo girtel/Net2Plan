@@ -70,7 +70,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
     public static final int COLUMN_NUMTREES = 17;
     public static final int COLUMN_SRGS = 18;
     public static final int COLUMN_COUPLEDTODEMAND = 19;
-    public static final int COLUMN_TAGS = 20
+    public static final int COLUMN_TAGS = 20;
     public static final int COLUMN_ATTRIBUTES = 21;
     private static final String netPlanViewTabName = "Links";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Show/Hide", "Origin node", "Destination node", "State", "Capacity", "Carried traffic", "Occupation BU routes", "Utilization", "Is bottleneck?", "Length (km)", "Propagation speed (km/s)", "Propagation delay (ms)", "# Routes", "# Segments", "# Forwarding rules", "# Multicast trees", "SRGs", "Coupled to demand", "Tags", "Attributes");
