@@ -1873,34 +1873,32 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
             // Tags controls
             popup.add(new JPopupMenu.Separator());
 
-            JMenuItem addTag = new JMenuItem("Add/edit tag");
+            JMenuItem addTag = new JMenuItem("Add tag");
             addTag.addActionListener(e1 ->
             {
-                JTextField txt_key = new JTextField(20);
-                JTextField txt_value = new JTextField(20);
+                JTextField txt_name = new JTextField(20);
 
                 JPanel pane = new JPanel();
-                pane.add(new JLabel("Attribute: "));
-                pane.add(txt_key);
-                pane.add(Box.createHorizontalStrut(15));
-                pane.add(new JLabel("Value: "));
-                pane.add(txt_value);
+                pane.add(new JLabel("Tag: "));
+                pane.add(txt_name);
 
                 NetPlan netPlan = callback.getDesign();
 
                 while (true)
                 {
-                    int result = JOptionPane.showConfirmDialog(null, pane, "Please enter an attribute name and its value", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    int result = JOptionPane.showConfirmDialog(null, pane, "Please enter tag name", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                     if (result != JOptionPane.OK_OPTION) return;
-                    String attribute, value;
+                    String tag;
                     try
                     {
-                        if (txt_key.getText().isEmpty()) throw new Exception("Please, insert an attribute name");
+                        if (txt_name.getText().isEmpty())
+                        {
+                            continue;
+                        }
 
-                        attribute = txt_key.getText();
-                        value = txt_value.getText();
+                        tag = txt_name.getText();
                         NetworkElement element = netPlan.getNetworkElement((long) itemId);
-                        element.setAttribute(attribute, value);
+                        element.addTag(tag);
 
                         try
                         {
@@ -1908,18 +1906,18 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                         } catch (Throwable ex)
                         {
                             ErrorHandling.addErrorOrException(ex, getClass());
-                            ErrorHandling.showErrorDialog("Unable to add attribute to " + networkElementType);
-
+                            ErrorHandling.showErrorDialog("Unable to add tag to " + networkElementType);
                         }
 
                     } catch (Throwable ex)
                     {
                         ErrorHandling.addErrorOrException(ex, getClass());
-                        ErrorHandling.showErrorDialog("Error adding/editing attribute");
+                        ErrorHandling.showErrorDialog("Error adding/editing tag");
                     }
                     break;
                 }
             });
+            popup.add(addTag);
 
             popup.add(new JPopupMenu.Separator());
         }
