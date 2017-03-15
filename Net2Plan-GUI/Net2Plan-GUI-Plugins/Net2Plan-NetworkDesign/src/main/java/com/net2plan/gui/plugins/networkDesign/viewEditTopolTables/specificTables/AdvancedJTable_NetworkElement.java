@@ -2025,7 +2025,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
 
             popup.add(removeTag);
 
-            JMenuItem addTagAll = new JMenuItem("Add tag to all");
+            JMenuItem addTagAll = new JMenuItem("Add tag to all " + networkElementType + "s");
             addTagAll.addActionListener(new ActionListener()
             {
                 @Override
@@ -2111,6 +2111,145 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
             });
 
             popup.add(addTagAll);
+
+            JMenuItem removeTagAll = new JMenuItem("Remove tag from all " + networkElementType + "s");
+
+            removeTagAll.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    NetPlan netPlan = callback.getDesign();
+
+                    try
+                    {
+                        Set<String> tagSet = new LinkedHashSet<String>();
+                        Collection<Long> itemIds;
+
+                        switch (networkElementType)
+                        {
+                            case LAYER:
+                                itemIds = netPlan.getNetworkLayerIds();
+                                for (long layerId : itemIds)
+                                    tagSet.addAll(netPlan.getNetworkLayerFromId(layerId).getTags());
+
+                                break;
+
+                            case NODE:
+                                itemIds = netPlan.getNodeIds();
+                                for (long nodeId : itemIds)
+                                    tagSet.addAll(netPlan.getNodeFromId(nodeId).getTags());
+
+                                break;
+
+                            case LINK:
+                                itemIds = netPlan.getLinkIds();
+                                for (long linkId : itemIds)
+                                    tagSet.addAll(netPlan.getLinkFromId(linkId).getTags());
+
+                                break;
+
+                            case DEMAND:
+                                itemIds = netPlan.getDemandIds();
+                                for (long demandId : itemIds)
+                                    tagSet.addAll(netPlan.getDemandFromId(demandId).getTags());
+
+                                break;
+
+                            case MULTICAST_DEMAND:
+                                itemIds = netPlan.getMulticastDemandIds();
+                                for (long demandId : itemIds)
+                                    tagSet.addAll(netPlan.getMulticastDemandFromId(demandId).getTags());
+
+                                break;
+
+                            case ROUTE:
+                                itemIds = netPlan.getRouteIds();
+                                for (long routeId : itemIds)
+                                    tagSet.addAll(netPlan.getRouteFromId(routeId).getTags());
+
+                                break;
+
+                            case MULTICAST_TREE:
+                                itemIds = netPlan.getMulticastTreeIds();
+                                for (long treeId : itemIds)
+                                    tagSet.addAll(netPlan.getMulticastTreeFromId(treeId).getTags());
+
+                                break;
+
+                            case SRG:
+                                itemIds = netPlan.getSRGIds();
+                                for (long srgId : itemIds)
+                                    tagSet.addAll(netPlan.getSRGFromId(srgId).getTags());
+
+                                break;
+
+                            default:
+                                throw new RuntimeException("Bad");
+                        }
+
+                        if (tagSet.isEmpty()) throw new Exception("No tag to remove");
+
+                        Object out = JOptionPane.showInputDialog(null, "Please, select a tag to remove", "Remove tag from all nodes", JOptionPane.QUESTION_MESSAGE, null, tagSet.toArray(new String[tagSet.size()]), tagSet.iterator().next());
+                        if (out == null) return;
+
+                        String tagToRemove = out.toString();
+
+                        switch (networkElementType)
+                        {
+                            case LAYER:
+                                for (long layerId : itemIds)
+                                    netPlan.getNetworkLayerFromId(layerId).removeTag(tagToRemove);
+                                break;
+
+                            case NODE:
+                                for (long nodeId : itemIds)
+                                    netPlan.getNodeFromId(nodeId).removeTag(tagToRemove);
+                                break;
+
+                            case LINK:
+                                for (long linkId : itemIds)
+                                    netPlan.getLinkFromId(linkId).removeTag(tagToRemove);
+                                break;
+
+                            case DEMAND:
+                                for (long demandId : itemIds)
+                                    netPlan.getDemandFromId(demandId).removeTag(tagToRemove);
+                                break;
+
+                            case MULTICAST_DEMAND:
+                                for (long demandId : itemIds)
+                                    netPlan.getMulticastDemandFromId(demandId).removeTag(tagToRemove);
+                                break;
+
+                            case ROUTE:
+                                for (long routeId : itemIds)
+                                    netPlan.getRouteFromId(routeId).removeTag(tagToRemove);
+                                break;
+
+                            case MULTICAST_TREE:
+                                for (long treeId : itemIds)
+                                    netPlan.getMulticastTreeFromId(treeId).removeTag(tagToRemove);
+                                break;
+
+                            case SRG:
+                                for (long srgId : itemIds)
+                                    netPlan.getSRGFromId(srgId).removeTag(tagToRemove);
+                                break;
+
+                            default:
+                                throw new RuntimeException("Bad");
+                        }
+
+                        callback.updateVisualizationJustTables();
+
+                    } catch (Throwable ex)
+                    {
+                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing tag from all " + networkElementType + "s");
+                    }
+                }
+            });
+            popup.add(removeTagAll);
 
             popup.add(new JPopupMenu.Separator());
         }
