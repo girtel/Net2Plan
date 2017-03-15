@@ -2025,6 +2025,93 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
 
             popup.add(removeTag);
 
+            JMenuItem addTagAll = new JMenuItem("Add tag to all");
+            addTagAll.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    JTextField txt_key = new JTextField(20);
+
+                    JPanel pane = new JPanel();
+                    pane.add(new JLabel("Tag: "));
+                    pane.add(txt_key);
+
+                    NetPlan netPlan = callback.getDesign();
+
+                    while (true)
+                    {
+                        int result = JOptionPane.showConfirmDialog(null, pane, "Please enter a tag name", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if (result != JOptionPane.OK_OPTION) return;
+                        String tag;
+                        try
+                        {
+                            if (txt_key.getText().isEmpty())
+                            {
+                                continue;
+                            }
+
+                            tag = txt_key.getText();
+
+                            switch (networkElementType)
+                            {
+                                case LAYER:
+                                    for (NetworkLayer element : netPlan.getNetworkLayers())
+                                        element.addTag(tag);
+                                    break;
+
+                                case NODE:
+                                    for (Node element : netPlan.getNodes())
+                                        element.addTag(tag);
+                                    break;
+
+                                case LINK:
+                                    for (Link element : netPlan.getLinks())
+                                        element.addTag(tag);
+                                    break;
+
+                                case DEMAND:
+                                    for (Demand element : netPlan.getDemands())
+                                        element.addTag(tag);
+                                    break;
+
+                                case MULTICAST_DEMAND:
+                                    for (MulticastDemand element : netPlan.getMulticastDemands())
+                                        element.addTag(tag);
+                                    break;
+
+                                case ROUTE:
+                                    for (Route element : netPlan.getRoutes())
+                                        element.addTag(tag);
+                                    break;
+
+                                case MULTICAST_TREE:
+                                    for (MulticastTree element : netPlan.getMulticastTrees())
+                                        element.addTag(tag);
+                                    break;
+
+                                case SRG:
+                                    for (SharedRiskGroup element : netPlan.getSRGs())
+                                        element.addTag(tag);
+                                    break;
+
+                                default:
+                                    throw new RuntimeException("Bad");
+                            }
+
+                            callback.updateVisualizationJustTables();
+                            break;
+                        } catch (Throwable ex)
+                        {
+                            ErrorHandling.showErrorDialog(ex.getMessage(), "Error adding/editing tag to all " + networkElementType + "s");
+                        }
+                    }
+                }
+
+            });
+
+            popup.add(addTagAll);
+
             popup.add(new JPopupMenu.Separator());
         }
     }
