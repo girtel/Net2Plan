@@ -64,8 +64,8 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
     public static final int COLUMN_OUTGOINGLINKTRAFFIC = 14;
     public static final int COLUMN_SRGS = 15;
     public static final int COLUMN_POPULATION = 16;
-    public static final int COLUMN_TAGS = 18;
-    public static final int COLUMN_ATTRIBUTES = 17;
+    public static final int COLUMN_TAGS = 17;
+    public static final int COLUMN_ATTRIBUTES = 18;
     private static final String netPlanViewTabName = "Nodes";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Show/Hide", "Name",
             "State", "xCoord / Longitude", "yCoord / Latitude", "Outgoing links", "Incoming links",

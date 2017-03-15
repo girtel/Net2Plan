@@ -1919,6 +1919,112 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
             });
             popup.add(addTag);
 
+            JMenuItem removeTag = new JMenuItem("Remove tag");
+
+            removeTag.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    NetPlan netPlan = callback.getDesign();
+
+                    try
+                    {
+                        int itemIndex = convertRowIndexToModel(row);
+                        Object itemId;
+
+                        String[] tagList;
+
+                        switch (networkElementType)
+                        {
+                            case LAYER:
+                            {
+                                NetworkLayer element = netPlan.getNetworkLayers().get(itemIndex);
+                                itemId = element.getId();
+                                tagList = StringUtils.toArray(element.getTags());
+                            }
+                            break;
+
+                            case NODE:
+                            {
+                                Node element = netPlan.getNodes().get(itemIndex);
+                                itemId = element.getId();
+                                tagList = StringUtils.toArray(element.getTags());
+                            }
+                            break;
+
+                            case LINK:
+                            {
+                                Link element = netPlan.getLinks().get(itemIndex);
+                                itemId = element.getId();
+                                tagList = StringUtils.toArray(element.getTags());
+                            }
+                            break;
+
+                            case DEMAND:
+                            {
+                                Demand element = netPlan.getDemands().get(itemIndex);
+                                itemId = element.getId();
+                                tagList = StringUtils.toArray(element.getTags());
+                            }
+                            break;
+
+                            case MULTICAST_DEMAND:
+                            {
+                                MulticastDemand element = netPlan.getMulticastDemands().get(itemIndex);
+                                itemId = element.getId();
+                                tagList = StringUtils.toArray(element.getTags());
+                            }
+                            break;
+
+                            case ROUTE:
+                            {
+                                Route element = netPlan.getRoutes().get(itemIndex);
+                                itemId = element.getId();
+                                tagList = StringUtils.toArray(element.getTags());
+                            }
+                            break;
+
+                            case MULTICAST_TREE:
+                            {
+                                MulticastTree element = netPlan.getMulticastTrees().get(itemIndex);
+                                itemId = element.getId();
+                                tagList = StringUtils.toArray(element.getTags());
+                            }
+                            break;
+
+                            case SRG:
+                            {
+                                SharedRiskGroup element = netPlan.getSRGs().get(itemIndex);
+                                itemId = element.getId();
+                                tagList = StringUtils.toArray(element.getTags());
+                            }
+                            break;
+
+                            default:
+                                throw new RuntimeException("Unknown network element");
+                        }
+
+                        if (tagList.length == 0) throw new Exception("No tag to remove");
+
+                        Object out = JOptionPane.showInputDialog(null, "Please, select a tag to remove", "Remove tag", JOptionPane.QUESTION_MESSAGE, null, tagList, tagList[0]);
+                        if (out == null) return;
+
+                        String tagToRemove = out.toString();
+                        NetworkElement element = netPlan.getNetworkElement((long) itemId);
+                        if (element == null) throw new RuntimeException("Bad");
+                        element.removeTag(tagToRemove);
+                        callback.updateVisualizationJustTables();
+
+                    } catch (Throwable ex)
+                    {
+                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing tag");
+                    }
+                }
+            });
+
+            popup.add(removeTag);
+
             popup.add(new JPopupMenu.Separator());
         }
     }
