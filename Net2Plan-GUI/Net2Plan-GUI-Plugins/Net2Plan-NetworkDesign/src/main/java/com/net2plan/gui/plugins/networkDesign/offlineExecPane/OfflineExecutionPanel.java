@@ -98,7 +98,7 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
         try {
             double execTime = (System.nanoTime() - start) / 1e9;
             final VisualizationState vs = mainWindow.getVisualizationState();
-            final NetPlan netPlan = mainWindow.getDesign().copy();
+            final NetPlan netPlan = mainWindow.getDesign();
     		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
     				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (netPlan.getNetworkLayers()));
     		vs.setCanvasLayerVisibilityAndOrder(netPlan, res.getFirst() , res.getSecond());
