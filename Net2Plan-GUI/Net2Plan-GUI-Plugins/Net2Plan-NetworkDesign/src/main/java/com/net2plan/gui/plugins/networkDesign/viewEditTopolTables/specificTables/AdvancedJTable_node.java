@@ -64,11 +64,12 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
     public static final int COLUMN_OUTGOINGLINKTRAFFIC = 14;
     public static final int COLUMN_SRGS = 15;
     public static final int COLUMN_POPULATION = 16;
+    public static final int COLUMN_TAGS = 18;
     public static final int COLUMN_ATTRIBUTES = 17;
     private static final String netPlanViewTabName = "Nodes";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Show/Hide", "Name",
             "State", "xCoord / Longitude", "yCoord / Latitude", "Outgoing links", "Incoming links",
-            "Ingress traffic", "Egress traffic", "Incoming traffic", "Outgoing traffic", "Ingress traffic (multicast)", "Egress traffic (multicast)", "SRGs", "Population", "Attributes");
+            "Ingress traffic", "Egress traffic", "Incoming traffic", "Outgoing traffic", "Ingress traffic (multicast)", "Egress traffic (multicast)", "SRGs", "Population", "Tags", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)",
             "Index (consecutive integer starting in zero)",
             "Indicates whether or not the node is visible in the topology canvas",
@@ -80,11 +81,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
             "Total MULTICAST traffic leaving the network from this node",
             "Total traffic (unicast and multicast) in the node input links",
             "Total traffic (unicast and multicast) in the node output links",
-            "SRGs including this node", "Total population in this node", "Node-specific attributes");
-
-    private ArrayList<String> attributesColumnsNames;
-    private boolean expandAttributes = false;
-    private Map<String, Boolean> hasBeenAddedEachAttColumn = new HashMap<>();
+            "SRGs including this node", "Total population in this node", "Node-specific tags", "Node-specific attributes");
 
     /**
      * Default constructor.
@@ -106,7 +103,6 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
         fixedTable.setDefaultRenderer(Integer.class, this.getDefaultRenderer(Integer.class));
         fixedTable.setDefaultRenderer(String.class, this.getDefaultRenderer(String.class));
         fixedTable.getTableHeader().setDefaultRenderer(new CellRenderers.FixedTableHeaderRenderer());
-
     }
 
 
@@ -139,6 +135,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
             nodeData[COLUMN_EGRESSMULTICASTTRAFFIC] = node.getEgressOfferedMulticastTraffic() + "(" + node.getEgressOfferedMulticastTraffic() + ")";
             nodeData[COLUMN_SRGS] = node.getSRGs().isEmpty() ? "none" : node.getSRGs().size() + " (" + CollectionUtils.join(currentState.getIndexes(node.getSRGs()), ", ") + ")";
             nodeData[COLUMN_POPULATION] = node.getPopulation();
+            nodeData[COLUMN_TAGS] = node.getTags();
             nodeData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(node.getAttributes());
             for (int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesTitles.size(); i++)
             {
@@ -417,27 +414,19 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
             final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this node traffic");
             submenuFilters.add(filterKeepElementsAffectedThisLayer);
             if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
-            filterKeepElementsAffectedThisLayer.addActionListener(new ActionListener()
+            filterKeepElementsAffectedThisLayer.addActionListener(e1 ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    if (selectedNodes.size() > 1) throw new RuntimeException();
-                    TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedNodes.get(0), callback.getDesign().getNetworkLayerDefault(), true);
-                    callback.getVisualizationState().updateTableRowFilter(filter);
-                    callback.updateVisualizationJustTables();
-                }
+                if (selectedNodes.size() > 1) throw new RuntimeException();
+                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedNodes.get(0), callback.getDesign().getNetworkLayerDefault(), true);
+                callback.getVisualizationState().updateTableRowFilter(filter);
+                callback.updateVisualizationJustTables();
             });
-            filterKeepElementsAffectedAllLayers.addActionListener(new ActionListener()
+            filterKeepElementsAffectedAllLayers.addActionListener(e2 ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    if (selectedNodes.size() > 1) throw new RuntimeException();
-                    TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedNodes.get(0), callback.getDesign().getNetworkLayerDefault(), false);
-                    callback.getVisualizationState().updateTableRowFilter(filter);
-                    callback.updateVisualizationJustTables();
-                }
+                if (selectedNodes.size() > 1) throw new RuntimeException();
+                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedNodes.get(0), callback.getDesign().getNetworkLayerDefault(), false);
+                callback.getVisualizationState().updateTableRowFilter(filter);
+                callback.updateVisualizationJustTables();
             });
             popup.add(submenuFilters);
             popup.addSeparator();

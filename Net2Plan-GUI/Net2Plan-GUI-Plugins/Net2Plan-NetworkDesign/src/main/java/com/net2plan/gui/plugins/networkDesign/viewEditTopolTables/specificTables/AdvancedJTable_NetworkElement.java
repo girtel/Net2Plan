@@ -12,12 +12,12 @@
 
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables;
 
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.AttributeEditor;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.FixedColumnDecorator;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
-import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -221,7 +221,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                                 mainTableMenu.add(attributesItem);
                                 break;
                             default:
-                                if(columnName.startsWith("Att:"))
+                                if (columnName.startsWith("Att:"))
                                 {
                                     mainTableMenu.add(new JPopupMenu.Separator());
                                     mainTableMenu.add(attributesItem);
@@ -792,7 +792,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
         String[] currentHeaders = getCurrentTableHeaders();
         ArrayList<String> currentHeadersList = new ArrayList<>();
 
-        for(int i = 0; i < currentHeaders.length;i++)
+        for (int i = 0; i < currentHeaders.length; i++)
         {
             currentHeadersList.add(currentHeaders[i]);
         }
@@ -805,7 +805,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
 
         for (String col : fixedTableColumns)
         {
-            if(!currentHeadersList.contains(col))
+            if (!currentHeadersList.contains(col))
                 continue;
             TableColumn mainTableCol = null;
             for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
@@ -826,14 +826,14 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
         }
         for (String col : mainTableColumns)
         {
-            if(!currentHeadersList.contains(col))
+            if (!currentHeadersList.contains(col))
                 continue;
             showColumn(col, 0, false);
         }
         indexForEachHiddenColumn.clear();
         for (Map.Entry<String, Integer> entry : hiddenColumnsMap.entrySet())
         {
-            if(!currentHeadersList.contains(entry.getKey()))
+            if (!currentHeadersList.contains(entry.getKey()))
                 continue;
             indexForEachHiddenColumn.put(entry.getKey(), entry.getValue());
         }
@@ -1156,7 +1156,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
         setEnabled(false);
         String[] header = getCurrentTableHeaders();
         ((DefaultTableModel) getModel()).setDataVector(new Object[1][header.length], header);
-        
+
         if (currentState.getRoutingType() == RoutingType.SOURCE_ROUTING && networkElementType.equals(NetworkElementType.FORWARDING_RULE))
             return;
         if (currentState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING && (networkElementType.equals(NetworkElementType.ROUTE)))
@@ -1177,7 +1177,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                 for (int c = 0; c < columnHeader.length; c++)
                     tips.setToolTip(getColumnModel().getColumn(c), columnTips[c]);
                 getTableHeader().addMouseMotionListener(tips);
-                
+
                 if (areAttributesInDifferentColums())
                 {
                     removeNewColumn("Attributes");
@@ -1219,9 +1219,9 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
 //            for (int columnId : getColumnsOfSpecialComparatorForSorting())
 //                ((DefaultRowSorter) getRowSorter()).setComparator(columnId, new ColumnComparator());
         }
-        
+
         // here update the number of entries label
-        
+
     }
 
     public class PopupMenuAdapter extends MouseAdapter
@@ -1241,7 +1241,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                     if (table.getModel().getValueAt(row, 0) == null)
                         row = row - 1;
                     if (table.getModel().getValueAt(row, 0) instanceof LastRowAggregatedValue)
-                    	auxItemId = null;
+                        auxItemId = null;
                     else if (networkElementType == NetworkElementType.FORWARDING_RULE)
                         auxItemId = Pair.of(Integer.parseInt(model.getValueAt(row, 1).toString().split(" ")[0]), Integer.parseInt(model.getValueAt(row, 2).toString().split(" ")[0]));
                     else
@@ -1327,7 +1327,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
 
                         try
                         {
-                        	callback.updateVisualizationJustTables();
+                            callback.updateVisualizationJustTables();
                         } catch (Throwable ex)
                         {
                             ErrorHandling.addErrorOrException(ex, getClass());
@@ -1869,45 +1869,104 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
             });
 
             popup.add(removeAttributes);
+
+            // Tags controls
+            popup.add(new JPopupMenu.Separator());
+
+            JMenuItem addTag = new JMenuItem("Add/edit tag");
+            addTag.addActionListener(e1 ->
+            {
+                JTextField txt_key = new JTextField(20);
+                JTextField txt_value = new JTextField(20);
+
+                JPanel pane = new JPanel();
+                pane.add(new JLabel("Attribute: "));
+                pane.add(txt_key);
+                pane.add(Box.createHorizontalStrut(15));
+                pane.add(new JLabel("Value: "));
+                pane.add(txt_value);
+
+                NetPlan netPlan = callback.getDesign();
+
+                while (true)
+                {
+                    int result = JOptionPane.showConfirmDialog(null, pane, "Please enter an attribute name and its value", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    if (result != JOptionPane.OK_OPTION) return;
+                    String attribute, value;
+                    try
+                    {
+                        if (txt_key.getText().isEmpty()) throw new Exception("Please, insert an attribute name");
+
+                        attribute = txt_key.getText();
+                        value = txt_value.getText();
+                        NetworkElement element = netPlan.getNetworkElement((long) itemId);
+                        element.setAttribute(attribute, value);
+
+                        try
+                        {
+                            callback.updateVisualizationJustTables();
+                        } catch (Throwable ex)
+                        {
+                            ErrorHandling.addErrorOrException(ex, getClass());
+                            ErrorHandling.showErrorDialog("Unable to add attribute to " + networkElementType);
+
+                        }
+
+                    } catch (Throwable ex)
+                    {
+                        ErrorHandling.addErrorOrException(ex, getClass());
+                        ErrorHandling.showErrorDialog("Error adding/editing attribute");
+                    }
+                    break;
+                }
+            });
+
+            popup.add(new JPopupMenu.Separator());
         }
     }
 
     static class ColumnComparator implements Comparator<Object>
     {
-    	private final boolean isDoubleWithParenthesis;
-    	private final RowSorter rs;
-    	public ColumnComparator(RowSorter rs , boolean isDoubleWithParenthesis) { this.rs = rs; this.isDoubleWithParenthesis = isDoubleWithParenthesis; }
+        private final boolean isDoubleWithParenthesis;
+        private final RowSorter rs;
+
+        public ColumnComparator(RowSorter rs, boolean isDoubleWithParenthesis)
+        {
+            this.rs = rs;
+            this.isDoubleWithParenthesis = isDoubleWithParenthesis;
+        }
+
         @Override
         public int compare(Object o1, Object o2)
         {
-        	
-        	if (o1 instanceof LastRowAggregatedValue) 
-        	{
-        		final boolean ascending = ((List<? extends SortKey>) rs.getSortKeys()).get(0).getSortOrder() == SortOrder.ASCENDING;
-        		return ascending? 1 : -1;
-        	}
-        	if (o2 instanceof LastRowAggregatedValue) 
-        	{
-        		final boolean ascending = ((List<? extends SortKey>) rs.getSortKeys()).get(0).getSortOrder() == SortOrder.ASCENDING;
-        		return ascending? -1 : 1;
-        	}
-        	if (o1 instanceof Boolean)
-        	{
+
+            if (o1 instanceof LastRowAggregatedValue)
+            {
+                final boolean ascending = ((List<? extends SortKey>) rs.getSortKeys()).get(0).getSortOrder() == SortOrder.ASCENDING;
+                return ascending ? 1 : -1;
+            }
+            if (o2 instanceof LastRowAggregatedValue)
+            {
+                final boolean ascending = ((List<? extends SortKey>) rs.getSortKeys()).get(0).getSortOrder() == SortOrder.ASCENDING;
+                return ascending ? -1 : 1;
+            }
+            if (o1 instanceof Boolean)
+            {
                 final Boolean oo1 = (Boolean) o1;
                 final Boolean oo2 = (Boolean) o2;
                 return oo1.compareTo(oo2);
-        	}
-        	if (o1 instanceof Number)
-        	{
+            }
+            if (o1 instanceof Number)
+            {
                 final Number oo1 = (Number) o1;
                 final Number oo2 = (Number) o2;
-                return new Double(oo1.doubleValue()).compareTo(new Double (oo2.doubleValue()));
-        	}
+                return new Double(oo1.doubleValue()).compareTo(new Double(oo2.doubleValue()));
+            }
             String oo1 = (String) o1;
             String oo2 = (String) o2;
             if (!isDoubleWithParenthesis)
-            	return oo1.compareTo(oo2);
-            
+                return oo1.compareTo(oo2);
+
             int pos1 = oo1.indexOf(" (");
             if (pos1 != -1) oo1 = oo1.substring(0, pos1);
 
@@ -1922,7 +1981,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                 return d1.compareTo(d2);
             } catch (Throwable e)
             {
-            	return oo1.compareTo(oo2);
+                return oo1.compareTo(oo2);
             }
         }
     }
@@ -1938,62 +1997,88 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
 
     public static class LastRowAggregatedValue implements Comparable
     {
-    	private String value;
-    	LastRowAggregatedValue () { value = "---"; }
-    	LastRowAggregatedValue (int val) { value = "" + val; }
-    	LastRowAggregatedValue (double val) { value = String.format("%.2f", val); }
-    	LastRowAggregatedValue (String value) { this.value = value; }
-    	String getValue () { return value; }
-    	public String toString () { return value; }
-		@Override
-		public int compareTo(Object arg0) 
-		{
-			return -1;
-		}
+        private String value;
+
+        LastRowAggregatedValue()
+        {
+            value = "---";
+        }
+
+        LastRowAggregatedValue(int val)
+        {
+            value = "" + val;
+        }
+
+        LastRowAggregatedValue(double val)
+        {
+            value = String.format("%.2f", val);
+        }
+
+        LastRowAggregatedValue(String value)
+        {
+            this.value = value;
+        }
+
+        String getValue()
+        {
+            return value;
+        }
+
+        public String toString()
+        {
+            return value;
+        }
+
+        @Override
+        public int compareTo(Object arg0)
+        {
+            return -1;
+        }
     }
 
-    /** Gets the selected elements in this table. 
+    /**
+     * Gets the selected elements in this table.
+     *
      * @return
      */
-    public Pair<List<NetworkElement>,List<Pair<Demand,Link>>> getSelectedElements ()
+    public Pair<List<NetworkElement>, List<Pair<Demand, Link>>> getSelectedElements()
     {
-    	final int [] rowIndexes = getSelectedRows();
-    	final List<NetworkElement> elementList = new ArrayList<> ();
-    	final List<Pair<Demand,Link>> frList = new ArrayList<> ();
-    	final NetPlan np = callback.getDesign();
-    	
-    	if (rowIndexes.length == 0) return Pair.of(elementList , frList);
-    	final int maxValidRowIndex = model.getRowCount() - 1 - (hasAggregationRow()? 1 : 0);
-    	final List<Integer> validRows = new ArrayList<Integer> (); 
-    	for (int a : rowIndexes) if ((a >= 0) && (a <= maxValidRowIndex)) validRows.add(a);
-    	
-    	if (networkElementType == NetworkElementType.FORWARDING_RULE)
-    	{
-    		for (int rowIndex : validRows)
-    		{
-    			final String demandInfo = (String) ((DefaultTableModel) getModel()).getValueAt (rowIndex , AdvancedJTable_forwardingRule.COLUMN_DEMAND);
-    			final String linkInfo = (String) ((DefaultTableModel) getModel()).getValueAt (rowIndex , AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK);
-    			final int demandIndex = Integer.parseInt(demandInfo.substring(0 , demandInfo.indexOf("(")).trim());
-    			final int linkIndex = Integer.parseInt(linkInfo.substring(0 , linkInfo.indexOf("(")).trim());
-    			frList.add(Pair.of(np.getDemand(demandIndex), np.getLink(linkIndex)));
-    		}
-    	}
-    	else
-    	{
-    		for (int rowIndex : validRows)
-    		{
-    	    	final long id = (long) ((DefaultTableModel) getModel()).getValueAt(rowIndex, 0);
-    			elementList.add(np.getNetworkElement(id));
-    		}
-    	}
-    	return Pair.of(elementList , frList);
+        final int[] rowIndexes = getSelectedRows();
+        final List<NetworkElement> elementList = new ArrayList<>();
+        final List<Pair<Demand, Link>> frList = new ArrayList<>();
+        final NetPlan np = callback.getDesign();
+
+        if (rowIndexes.length == 0) return Pair.of(elementList, frList);
+        final int maxValidRowIndex = model.getRowCount() - 1 - (hasAggregationRow() ? 1 : 0);
+        final List<Integer> validRows = new ArrayList<Integer>();
+        for (int a : rowIndexes) if ((a >= 0) && (a <= maxValidRowIndex)) validRows.add(a);
+
+        if (networkElementType == NetworkElementType.FORWARDING_RULE)
+        {
+            for (int rowIndex : validRows)
+            {
+                final String demandInfo = (String) ((DefaultTableModel) getModel()).getValueAt(rowIndex, AdvancedJTable_forwardingRule.COLUMN_DEMAND);
+                final String linkInfo = (String) ((DefaultTableModel) getModel()).getValueAt(rowIndex, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK);
+                final int demandIndex = Integer.parseInt(demandInfo.substring(0, demandInfo.indexOf("(")).trim());
+                final int linkIndex = Integer.parseInt(linkInfo.substring(0, linkInfo.indexOf("(")).trim());
+                frList.add(Pair.of(np.getDemand(demandIndex), np.getLink(linkIndex)));
+            }
+        } else
+        {
+            for (int rowIndex : validRows)
+            {
+                final long id = (long) ((DefaultTableModel) getModel()).getValueAt(rowIndex, 0);
+                elementList.add(np.getNetworkElement(id));
+            }
+        }
+        return Pair.of(elementList, frList);
     }
 
-    
-    public boolean hasAggregationRow ()
+
+    public boolean hasAggregationRow()
     {
-    	if (networkElementType.equals(networkElementType.LAYER)) return false;
-    	if (networkElementType.equals(networkElementType.NETWORK)) return false;
-    	return true;
+        if (networkElementType.equals(networkElementType.LAYER)) return false;
+        if (networkElementType.equals(networkElementType.NETWORK)) return false;
+        return true;
     }
 }
