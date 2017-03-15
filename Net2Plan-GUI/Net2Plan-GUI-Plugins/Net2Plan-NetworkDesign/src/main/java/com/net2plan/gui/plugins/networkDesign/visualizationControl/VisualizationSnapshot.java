@@ -1,6 +1,5 @@
 package com.net2plan.gui.plugins.networkDesign.visualizationControl;
 
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILayer;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.utils.Triple;

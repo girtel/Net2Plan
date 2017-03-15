@@ -354,11 +354,10 @@ public class VisualizationState
     {
         if (newCurrentNetPlan == null) throw new RuntimeException("Trying to update an empty topology");
 
+        this.visualizationSnapshot.resetSnapshot(newCurrentNetPlan);
+
         if (this.getNetPlan() != newCurrentNetPlan)
         {
-            this.visualizationSnapshot.resetSnapshot(newCurrentNetPlan);
-            this.visualizationSnapshot.resetSnapshot();
-
             tableRowFilter = null;
             nodesToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
             linksToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
