@@ -354,6 +354,8 @@ public class VisualizationState
     {
         if (newCurrentNetPlan == null) throw new RuntimeException("Trying to update an empty topology");
 
+        final Map<NetworkLayer, Boolean> mapCanvasLinkVisibility = this.visualizationSnapshot.getMapCanvasLinkVisibility();
+
         this.visualizationSnapshot.resetSnapshot(newCurrentNetPlan);
 
         if (this.getNetPlan() != newCurrentNetPlan)
@@ -361,17 +363,6 @@ public class VisualizationState
             tableRowFilter = null;
             nodesToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
             linksToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
-        } else
-        {
-            final Map<NetworkLayer, Boolean> mapCanvasLinkVisibility = this.visualizationSnapshot.getMapCanvasLinkVisibility();
-
-            // Resetting visualization snapshot to default values
-            this.visualizationSnapshot.resetSnapshot();
-
-            for (Map.Entry<NetworkLayer, Boolean> entry : mapCanvasLinkVisibility.entrySet())
-            {
-                visualizationSnapshot.addLinkVisibility(entry.getKey(), entry.getValue());
-            }
         }
 
         // Updating visualization snapshot
@@ -389,6 +380,11 @@ public class VisualizationState
             {
                 visualizationSnapshot.addLayerVisibility(entry.getKey(), entry.getValue());
             }
+        }
+
+        for (Map.Entry<NetworkLayer, Boolean> entry : mapCanvasLinkVisibility.entrySet())
+        {
+            visualizationSnapshot.addLinkVisibility(entry.getKey(), entry.getValue());
         }
 
         /* implicitly we restart the picking state */

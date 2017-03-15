@@ -22,13 +22,12 @@ public class VisualizationSnapshot
 
     public VisualizationSnapshot(NetPlan netPlan)
     {
-        this.netPlan = netPlan;
         this.layerList = new ArrayList<>();
         this.aux_layerToGUI = new HashMap<>();
-        this.resetSnapshot();
+        this.resetSnapshot(netPlan);
     }
 
-    public void resetSnapshot()
+    private void resetSnapshot()
     {
         // Building GUILayers
         final List<NetworkLayer> networkLayers = netPlan.getNetworkLayers();
