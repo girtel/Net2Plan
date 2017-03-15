@@ -384,6 +384,7 @@ public class VisualizationState
 
         for (Map.Entry<NetworkLayer, Boolean> entry : mapCanvasLinkVisibility.entrySet())
         {
+            if (!this.getNetPlan().getNetworkLayers().contains(entry.getKey())) continue;
             visualizationSnapshot.addLinkVisibility(entry.getKey(), entry.getValue());
         }
 
