@@ -1,14 +1,7 @@
 package com.net2plan.gui.utils;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
-import com.jom.OptimizationProblem.JOMSolver;
-import com.jom.SolverTester;
-import com.net2plan.interfaces.networkDesign.Configuration;
-import com.net2plan.utils.Pair;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -16,6 +9,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JToolBar;
+
+import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
+import com.jom.OptimizationProblem.JOMSolver;
+import com.jom.SolverTester;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.utils.Pair;
 
 /**
  * Created by Jorge San Emeterio on 2/03/17.
