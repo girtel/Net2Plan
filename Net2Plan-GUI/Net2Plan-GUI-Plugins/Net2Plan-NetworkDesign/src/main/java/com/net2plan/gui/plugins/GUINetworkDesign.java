@@ -313,6 +313,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                 return "Net2Plan - Design tables and control window";
             }
         };
+
+        this.tableControlWindow.setLocationRelativeTo(this);
         this.tableControlWindow.showWindow(false);
 
         // Building tab controller
@@ -961,6 +963,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             if (offlineWindow != null)
             {
                 offlineWindow.showWindow(gainFocus);
+                offlineWindow.setLocationRelativeTo(tableControlWindow);
             }
         }
 
@@ -987,6 +990,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             if (onlineWindow != null)
             {
                 onlineWindow.showWindow(gainFocus);
+                onlineWindow.setLocationRelativeTo(tableControlWindow);
             }
         }
 
@@ -1012,6 +1016,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             if (whatifWindow != null)
             {
                 whatifWindow.showWindow(gainFocus);
+                whatifWindow.setLocationRelativeTo(tableControlWindow);
             }
         }
 
@@ -1037,6 +1042,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             if (reportWindow != null)
             {
                 reportWindow.showWindow(gainFocus);
+                reportWindow.setLocationRelativeTo(tableControlWindow);
             }
         }
 

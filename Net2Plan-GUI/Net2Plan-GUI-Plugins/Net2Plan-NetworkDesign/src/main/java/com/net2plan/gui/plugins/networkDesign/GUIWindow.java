@@ -1,7 +1,6 @@
 package com.net2plan.gui.plugins.networkDesign;
 
 import com.net2plan.gui.GUINet2Plan;
-import com.net2plan.gui.utils.WindowUtils;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 
 import javax.swing.*;
@@ -31,8 +30,6 @@ public abstract class GUIWindow extends JFrame
     {
         if (component != null)
         {
-            WindowUtils.setWindowRightSide(this);
-
             this.setVisible(true);
             if (doGainFocus) this.requestFocusInWindow();
         } else
@@ -45,7 +42,6 @@ public abstract class GUIWindow extends JFrame
     {
         this.setTitle(this.getTitle());
         this.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        this.setSize(600, 600);
         this.setLayout(new BorderLayout());
         this.setVisible(false);
 
@@ -54,6 +50,7 @@ public abstract class GUIWindow extends JFrame
         URL iconURL = GUINet2Plan.class.getResource("/resources/gui/icon.png");
         ImageIcon icon = new ImageIcon(iconURL);
         this.setIconImage(icon.getImage());
+        this.pack();
     }
 
     public abstract String getTitle();
