@@ -386,8 +386,6 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
 
                         popup.add(removeItem);
                     }
-
-                    addPopupMenuAttributeOptions(e, row, itemId, popup);
                 }
                 if (networkElementType != NetworkElementType.LAYER) {
                     JMenuItem removeItems = new JMenuItem("Remove all " + networkElementType + "s in table");
@@ -412,6 +410,8 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_NetworkElemen
                     });
                     popup.add(removeItems);
                 }
+
+                addPopupMenuAttributeOptions(e, row, itemId, popup);
 
                 List<JComponent> extraOptions = getExtraOptions(row, itemId);
                 if (!extraOptions.isEmpty()) {

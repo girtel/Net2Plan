@@ -545,8 +545,6 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                     popup.add(removeItem);
                 }
 
-                addPopupMenuAttributeOptions(e, row, itemId, popup);
-
                 JMenuItem removeItems = new JMenuItem("Remove all " + networkElementType + "s in table");
 
                 removeItems.addActionListener(new ActionListener() {
@@ -570,6 +568,8 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                 });
 
                 popup.add(removeItems);
+
+                addPopupMenuAttributeOptions(e, row, itemId, popup);
 
                 List<JComponent> extraOptions = getExtraOptions(row, itemId);
                 if (!extraOptions.isEmpty()) {
