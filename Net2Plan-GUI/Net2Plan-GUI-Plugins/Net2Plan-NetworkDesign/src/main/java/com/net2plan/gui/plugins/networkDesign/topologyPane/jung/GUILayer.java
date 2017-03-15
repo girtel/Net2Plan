@@ -57,4 +57,9 @@ public class GUILayer
     {
         this.layerOrder = layerOrder;
     }
+
+    public NetworkLayer getAssociatedNetworkLayer()
+    {
+        return associatedNetworkLayer;
+    }
 }

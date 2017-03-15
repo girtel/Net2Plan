@@ -355,7 +355,7 @@ public class VisualizationState
 
         if (this.getNetPlan() != newCurrentNetPlan)
         {
-            this.visualizationSnapshot.setNetPlan(newCurrentNetPlan);
+            this.visualizationSnapshot.resetSnapshot(newCurrentNetPlan);
             this.visualizationSnapshot.resetSnapshot();
 
             tableRowFilter = null;
@@ -379,7 +379,7 @@ public class VisualizationState
         {
             for (Map.Entry<NetworkLayer, Integer> entry : newLayerOrderMap.entrySet())
             {
-                visualizationSnapshot.addLayerVisualizationOrder(entry.getKey(), entry.getValue());
+                visualizationSnapshot.setLayerVisualizationOrder(entry.getKey(), entry.getValue());
             }
         }
 
