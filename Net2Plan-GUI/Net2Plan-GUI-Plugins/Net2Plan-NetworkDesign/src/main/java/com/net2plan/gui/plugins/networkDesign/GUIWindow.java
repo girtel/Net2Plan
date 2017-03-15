@@ -43,14 +43,15 @@ public abstract class GUIWindow extends JFrame
         this.setTitle(this.getTitle());
         this.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         this.setLayout(new BorderLayout());
+        this.setSize(600, 800);
         this.setVisible(false);
+        this.setLocationRelativeTo(component.getParent());
 
         this.add(this.component, BorderLayout.CENTER);
 
         URL iconURL = GUINet2Plan.class.getResource("/resources/gui/icon.png");
         ImageIcon icon = new ImageIcon(iconURL);
         this.setIconImage(icon.getImage());
-        this.pack();
     }
 
     public abstract String getTitle();
