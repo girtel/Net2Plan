@@ -40,8 +40,8 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
     public static final String netPlanViewTabName = "Layers";
     public static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Name", "Routing type", "Number of links",
             "Number of demands", "Number of multicast demands", "Number of routes", "Number of forwarding rules", "Number of backup routes",
-            "Number of multicast trees", "Description", "Link capacity units name", "Demand traffic units name", "Attributes");
-    public static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Name", "Routing type", "Number of links", "Number of demands", "Number of multicast demands", "Number of routes", "Number of forwarding rules", "Number of routes that are designated as backup of other route", "Number of multicast trees", "Description", "Link capacity units name", "Demand traffic units name", "Attributes");
+            "Number of multicast trees", "Description", "Link capacity units name", "Demand traffic units name", "Tags", "Attributes");
+    public static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Name", "Routing type", "Number of links", "Number of demands", "Number of multicast demands", "Number of routes", "Number of forwarding rules", "Number of routes that are designated as backup of other route", "Number of multicast trees", "Description", "Link capacity units name", "Demand traffic units name", "Tags", "Attributes");
     public static final int COLUMN_ID = 0;
     public static final int COLUMN_INDEX = 1;
     public static final int COLUMN_NAME = 2;
@@ -56,7 +56,8 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
     public static final int COLUMN_DESCRIPTION = 11;
     public static final int COLUMN_LINKCAPUNITS = 12;
     public static final int COLUMN_DEMANDTRAFUNITS = 13;
-    public static final int COLUMN_ATTRIBUTES = 14;
+    public static final int COLUMN_TAGS = 14;
+    public static final int COLUMN_ATTRIBUTES = 15;
 
 
     public AdvancedJTable_layer(final GUINetworkDesign networkViewer) {
@@ -76,19 +77,20 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
             Object[] layerData = new Object[netPlanViewTableHeader.length];
             layerData[COLUMN_ID] = auxLayer.getId();
             layerData[COLUMN_INDEX] = auxLayer.getIndex();
-            layerData[2] = auxLayer.getName();
-            layerData[3] = currentState.getRoutingType(auxLayer);
-            layerData[4] = currentState.getNumberOfLinks(auxLayer);
-            layerData[5] = currentState.getNumberOfDemands(auxLayer);
-            layerData[6] = currentState.getNumberOfMulticastDemands(auxLayer);
-            layerData[7] = routingType_thisLayer == RoutingType.SOURCE_ROUTING ? currentState.getNumberOfRoutes(auxLayer) : 0;
-            layerData[8] = routingType_thisLayer == RoutingType.HOP_BY_HOP_ROUTING ? currentState.getNumberOfForwardingRules(auxLayer) : 0;
-            layerData[9] = routingType_thisLayer == RoutingType.SOURCE_ROUTING ? currentState.getRoutesAreBackup(auxLayer).size() : 0;
-            layerData[10] = currentState.getNumberOfMulticastTrees(auxLayer);
-            layerData[11] = auxLayer.getDescription();
-            layerData[12] = currentState.getLinkCapacityUnitsName(auxLayer);
-            layerData[13] = currentState.getDemandTrafficUnitsName(auxLayer);
-            layerData[14] = StringUtils.mapToString(auxLayer.getAttributes());
+            layerData[COLUMN_NAME] = auxLayer.getName();
+            layerData[COLUMN_ROUTINGTYPE] = currentState.getRoutingType(auxLayer);
+            layerData[COLUMN_NUMLINKS] = currentState.getNumberOfLinks(auxLayer);
+            layerData[COLUMN_NUMDEMANDS] = currentState.getNumberOfDemands(auxLayer);
+            layerData[COLUMN_NUMMULTICASTDEMANDS] = currentState.getNumberOfMulticastDemands(auxLayer);
+            layerData[COLUMN_NUMROUTES] = routingType_thisLayer == RoutingType.SOURCE_ROUTING ? currentState.getNumberOfRoutes(auxLayer) : 0;
+            layerData[COLUMN_NUMFORWARDINRULES] = routingType_thisLayer == RoutingType.HOP_BY_HOP_ROUTING ? currentState.getNumberOfForwardingRules(auxLayer) : 0;
+            layerData[COLUMN_NUMSEGMENTS] = routingType_thisLayer == RoutingType.SOURCE_ROUTING ? currentState.getRoutesAreBackup(auxLayer).size() : 0;
+            layerData[COLUMN_NUMTREES] = currentState.getNumberOfMulticastTrees(auxLayer);
+            layerData[COLUMN_DESCRIPTION] = auxLayer.getDescription();
+            layerData[COLUMN_LINKCAPUNITS] = currentState.getLinkCapacityUnitsName(auxLayer);
+            layerData[COLUMN_DEMANDTRAFUNITS] = currentState.getDemandTrafficUnitsName(auxLayer);
+            layerData[COLUMN_TAGS] = currentState.getTags();
+            layerData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(auxLayer.getAttributes());
             allLayerData.add(layerData);
         }
         return allLayerData;
@@ -198,11 +200,8 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
         if (!isTableEmpty()) {
             if (callback.getVisualizationState().isNetPlanEditable()) {
                 if (row != -1) {
-                    if (popup.getSubElements().length > 0) popup.addSeparator();
-
-                    if (networkElementType == NetworkElementType.LAYER && callback.getDesign().getNumberOfLayers() == 1) {
-
-                    } else {
+                    if (networkElementType != NetworkElementType.LAYER || callback.getDesign().getNumberOfLayers() != 1)
+                    {
                         JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
 
                         removeItem.addActionListener(new ActionListener() {
