@@ -309,9 +309,9 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         
         /* Add the popup menu option of the filters */
         final List<SharedRiskGroup> selectedSRGs = (List<SharedRiskGroup>) (List<?>) getSelectedElements().getFirst();
+        final JMenu submenuFilters = new JMenu("Filters");
         if (!selectedSRGs.isEmpty())
         {
-            final JMenu submenuFilters = new JMenu("Filters");
             final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements affected by this SRG");
             if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
             filterKeepElementsAffectedAllLayers.addActionListener(new ActionListener()
@@ -325,10 +325,16 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                     callback.updateVisualizationJustTables();
                 }
             });
-            popup.add(submenuFilters);
-            popup.addSeparator();
         }
+        final JMenuItem tagFilter = new JMenuItem("This layer: Keep elements of tag...");
+        submenuFilters.add(tagFilter);
+        tagFilter.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e) { dialogToFilterByTag (true); } });
+        final JMenuItem tagFilterAllLayers = new JMenuItem("All layers: Keep elements of tag...");
+        submenuFilters.add(tagFilterAllLayers);
+        tagFilterAllLayers.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e) { dialogToFilterByTag (false); } });
 
+        popup.add(submenuFilters);
+        popup.addSeparator();
 
         if (callback.getVisualizationState().isNetPlanEditable())
         {

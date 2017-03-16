@@ -265,9 +265,9 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
         
         /* Add the popup menu option of the filters */
         final List<Pair<Demand,Link>> selectedFRs = (List<Pair<Demand,Link>>) (List<?>) getSelectedElements().getSecond();
+    	final JMenu submenuFilters = new JMenu ("Filters");
         if (!selectedFRs.isEmpty()) 
         {
-        	final JMenu submenuFilters = new JMenu ("Filters");
             final JMenuItem filterKeepElementsAffectedThisLayer = new JMenuItem("This layer: Keep elements associated to this forwarding rule traffic");
             final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this forwarding rule traffic");
             submenuFilters.add(filterKeepElementsAffectedThisLayer);
@@ -294,9 +294,9 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
 					callback.updateVisualizationJustTables();
 				}
 			});
-            popup.add(submenuFilters);
-            popup.addSeparator();
         }
+        popup.add(submenuFilters);
+        popup.addSeparator();
 
         
         if (callback.getVisualizationState().isNetPlanEditable()) {

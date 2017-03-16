@@ -14,7 +14,9 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTable
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.AttributeEditor;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFTagBased;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.FixedColumnDecorator;
@@ -2377,4 +2379,33 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
         if (networkElementType.equals(networkElementType.NETWORK)) return false;
         return true;
     }
+
+    /* Dialog for filtering by tag */
+    protected void dialogToFilterByTag (boolean onlyInActiveLayer)
+    {
+        JTextField txt_tag = new JTextField(50);
+        JPanel pane = new JPanel();
+        pane.add(new JLabel("Tag: "));
+        pane.add(txt_tag);
+        while (true)
+        {
+            int result = JOptionPane.showConfirmDialog(null, pane, "Please enter a tag", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (result != JOptionPane.OK_OPTION) return;
+            String tag;
+            try
+            {
+                if (txt_tag.getText().isEmpty()) continue;
+                tag = txt_tag.getText();
+				ITableRowFilter filter = new TBFTagBased(callback.getDesign(), onlyInActiveLayer? callback.getDesign().getNetworkLayerDefault() : null , tag);
+				callback.getVisualizationState().updateTableRowFilter(filter);
+				callback.updateVisualizationJustTables();
+            } catch (Throwable ex)
+            {
+                ErrorHandling.addErrorOrException(ex, getClass());
+                ErrorHandling.showErrorDialog("Error adding filter");
+            }
+            break;
+        }
+    }
+
 }

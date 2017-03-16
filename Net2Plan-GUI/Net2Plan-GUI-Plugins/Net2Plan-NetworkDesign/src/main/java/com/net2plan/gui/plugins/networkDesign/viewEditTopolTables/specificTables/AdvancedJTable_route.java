@@ -336,9 +336,9 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
 
         /* Add the popup menu option of the filters */
         final List<Route> selectedRoutes = (List<Route>) (List<?>) getSelectedElements().getFirst();
+        final JMenu submenuFilters = new JMenu("Filters");
         if (!selectedRoutes.isEmpty())
         {
-            final JMenu submenuFilters = new JMenu("Filters");
             final JMenuItem filterKeepElementsAffectedThisLayer = new JMenuItem("This layer: Keep elements associated to this route traffic");
             final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this route traffic");
             submenuFilters.add(filterKeepElementsAffectedThisLayer);
@@ -365,9 +365,16 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
                     callback.updateVisualizationJustTables();
                 }
             });
-            popup.add(submenuFilters);
-            popup.addSeparator();
         }
+        final JMenuItem tagFilter = new JMenuItem("This layer: Keep elements of tag...");
+        submenuFilters.add(tagFilter);
+        tagFilter.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e) { dialogToFilterByTag (true); } });
+        final JMenuItem tagFilterAllLayers = new JMenuItem("All layers: Keep elements of tag...");
+        submenuFilters.add(tagFilterAllLayers);
+        tagFilterAllLayers.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e) { dialogToFilterByTag (false); } });
+
+        popup.add(submenuFilters);
+        popup.addSeparator();
 
         if (callback.getVisualizationState().isNetPlanEditable())
         {
