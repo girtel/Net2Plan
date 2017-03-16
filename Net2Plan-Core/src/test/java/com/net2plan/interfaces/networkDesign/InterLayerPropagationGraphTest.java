@@ -11,6 +11,7 @@ import java.util.Set;
 
 import static org.junit.Assert.*;
 
+@SuppressWarnings("unchecked")
 public class InterLayerPropagationGraphTest
 {
 	/* Layer 0: link 1->2->3, and 1->3 */

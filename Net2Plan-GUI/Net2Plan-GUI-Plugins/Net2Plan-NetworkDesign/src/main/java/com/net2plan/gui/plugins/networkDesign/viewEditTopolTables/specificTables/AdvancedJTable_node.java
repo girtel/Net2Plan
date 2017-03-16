@@ -63,11 +63,12 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
     public static final int COLUMN_INCOMINGLINKTRAFFIC = 13;
     public static final int COLUMN_OUTGOINGLINKTRAFFIC = 14;
     public static final int COLUMN_SRGS = 15;
-    public static final int COLUMN_ATTRIBUTES = 16;
+    public static final int COLUMN_POPULATION = 16;
+    public static final int COLUMN_ATTRIBUTES = 17;
     private static final String netPlanViewTabName = "Nodes";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Show/Hide", "Name",
             "State", "xCoord / Longitude", "yCoord / Latitude", "Outgoing links", "Incoming links",
-            "Ingress traffic", "Egress traffic", "Incoming traffic", "Outgoing traffic", "Ingress traffic (multicast)", "Egress traffic (multicast)", "SRGs", "Attributes");
+            "Ingress traffic", "Egress traffic", "Incoming traffic", "Outgoing traffic", "Ingress traffic (multicast)", "Egress traffic (multicast)", "SRGs", "Population", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)",
             "Index (consecutive integer starting in zero)",
             "Indicates whether or not the node is visible in the topology canvas",
@@ -79,7 +80,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
             "Total MULTICAST traffic leaving the network from this node",
             "Total traffic (unicast and multicast) in the node input links",
             "Total traffic (unicast and multicast) in the node output links",
-            "SRGs including this node", "Node-specific attributes");
+            "SRGs including this node", "Total population in this node", "Node-specific attributes");
 
     private ArrayList<String> attributesColumnsNames;
     private boolean expandAttributes = false;
@@ -137,6 +138,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
             nodeData[COLUMN_INGRESSMULTICASTTRAFFIC] = node.getIngressOfferedMulticastTraffic() + "(" + node.getIngressOfferedMulticastTraffic() + ")";
             nodeData[COLUMN_EGRESSMULTICASTTRAFFIC] = node.getEgressOfferedMulticastTraffic() + "(" + node.getEgressOfferedMulticastTraffic() + ")";
             nodeData[COLUMN_SRGS] = node.getSRGs().isEmpty() ? "none" : node.getSRGs().size() + " (" + CollectionUtils.join(currentState.getIndexes(node.getSRGs()), ", ") + ")";
+            nodeData[COLUMN_POPULATION] = node.getPopulation();
             nodeData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(node.getAttributes());
             for (int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesTitles.size(); i++)
             {
@@ -245,7 +247,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                 if (getValueAt(rowIndex, columnIndex) == null) return false;
 
                 return columnIndex == COLUMN_SHOWHIDE || columnIndex == COLUMN_NAME || columnIndex == COLUMN_STATE || columnIndex == COLUMN_XCOORD
-                        || columnIndex == COLUMN_YCOORD;
+                        || columnIndex == COLUMN_YCOORD || columnIndex == COLUMN_POPULATION;
             }
 
             @Override
@@ -328,6 +330,15 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                             callback.addNetPlanChange();
                             break;
 
+                        case COLUMN_POPULATION:
+                            if (newValue == null) return;
+                            String text = newValue.toString();
+                            double value = Double.parseDouble(text);
+
+                            node.setPopulation(value);
+                            callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.NODE));
+                            callback.getVisualizationState().pickNode(node);
+                            callback.addNetPlanChange();
                         default:
                             break;
                     }

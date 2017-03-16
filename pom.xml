@@ -158,7 +158,7 @@
         <dependency>
             <groupId>com.github.girtel</groupId>
             <artifactId>JOM</artifactId>
-            <version>0.2.0.1</version>
+            <version>0.2.0.2-hotfix.2</version>
         </dependency>
         <dependency>
             <groupId>com.sun</groupId>
@@ -198,6 +198,14 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>3.0.2</version>
+                    <configuration>
+                        <archive>
+                            <manifest>
+                                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                            </manifest>
+                        </archive>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

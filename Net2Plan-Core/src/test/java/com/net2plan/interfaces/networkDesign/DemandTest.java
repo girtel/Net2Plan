@@ -61,6 +61,7 @@ public class DemandTest
 		this.link23 = np.addLink(n2,n3,100,100,1,null,lowerLayer);
 		this.link13 = np.addLink(n1,n3,100,100,1,null,lowerLayer);
 		this.d13 = np.addDemand(n1 , n3 , 3 , null,lowerLayer);
+		d13.setIntendedRecoveryType(Demand.IntendedRecoveryType.NONE);
 		this.d12 = np.addDemand(n1, n2, 3 , null,lowerLayer);
 		this.r12 = np.addRoute(d12,1,1.5,Collections.singletonList(link12),null);
 		this.path13 = new LinkedList<Link> (); path13.add(link12); path13.add(link23);
@@ -95,6 +96,15 @@ public class DemandTest
 		assertEquals (scd123.getRoutes() , Collections.singleton(sc123));
 		r123b.remove ();
 		assertEquals (d13.getRoutes() , new HashSet<Route> (Arrays.asList(r123a , segm13)));
+	}
+
+	@Test
+	public void testGetRecoveryType() 
+	{
+		assertEquals (d13.getIntendedRecoveryType() , Demand.IntendedRecoveryType.NONE);
+		assertEquals (d12.getIntendedRecoveryType() , Demand.IntendedRecoveryType.NOTSPECIFIED);
+		d13.setIntendedRecoveryType(Demand.IntendedRecoveryType.PROTECTION_NOREVERT);
+		assertEquals (d13.getIntendedRecoveryType() , Demand.IntendedRecoveryType.PROTECTION_NOREVERT);
 	}
 
 	@Test

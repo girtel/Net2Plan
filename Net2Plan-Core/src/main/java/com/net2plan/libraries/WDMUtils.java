@@ -34,6 +34,7 @@ import java.util.TreeSet;
 
 import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Demand.IntendedRecoveryType;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -141,21 +142,6 @@ public class WDMUtils
 	 * algorithms, and the decision of what to do lays on them.
 	 *
 	 */
-	public enum DemandRecoveryType
-	{
-		/** No reaction to failures to any route of the demand */
-		NONE("None"),
-		/** An attempt is made to reroute the failed lightpaths of the demand (backup or not, but this makes sense when the routes have no backup) */
-		RESTORATION("Restoration"),
-		/** To carry the traffic, first the primary is tried, then the backup routes in order. Unused routes have carried traffic zero. No revert action is made */
-//		PROTECTION_NOREVERT("ProtectionNoRevert"),
-		/** To carry the traffic, first the primary is tried, then the backup routes in order. Unused routes have carried traffic zero. If the primary becomes usable, traffic is reverted to it */
-		PROTECTION_REVERT("ProtectionRevert");
-		private final String label;
-		DemandRecoveryType(String label) { this.label = label; }
-		@Override
-		public String toString() { return label; }
-	}
 
 	
 	
@@ -703,11 +689,6 @@ public class WDMUtils
 	private final static String SEQUENCE_OF_FREQUENCYSLOTS_INITIAL_ROUTE_ATTRIBUTE_NAME = "seqFrequencySlotsInitialRoute";
 	
 	/**
-	 * The recovery type for the route object (lightpath).
-	 */
-	private final static String RECOVERYTYPE_ATTRIBUTE_NAME = "wdmDemandRecoveryType";
-
-	/**
 	 * Route/protection segment attribute name for sequence of regenerators occupied for the initial sequence of links (when the route was created)
 	 */
 	private final static String SEQUENCE_OF_REGENERATORS_INITIAL_ROUTE_ATTRIBUTE_NAME = "seqRegeneratorsInitialRoute";
@@ -736,41 +717,6 @@ public class WDMUtils
 		setLightpathRSAAttributes (lp , rsa , true); // primary is initialized 
 		return lp;
 	}
-
-	/** Sets the recovery type of the lightpath demand, to the one given
-	 * @param d the demand (representing all the lightpaths in it)
-	 * @param recoveryType the recovery type
-	 */
-	public static void setRecoveryType (Demand d , DemandRecoveryType recoveryType)
-	{
-		d.setAttribute(RECOVERYTYPE_ATTRIBUTE_NAME, recoveryType.toString());
-	}
-
-	/** Sets the recovery type of the lightpath, to the one given. An exception can be thrown if the attribute of the demand storing this information exists, but has a wrong format
-	 * @param d the demand (representing all the lightpaths in it)
-	 * @param defaultRecovery if included, this default recovery type is returned when the demand has not the 
-	 * attribute with the recovery information
-	 * @return see above
-	 */
-	public static DemandRecoveryType getRecoveryType (Demand d , DemandRecoveryType ...defaultRecovery)
-	{
-		final String att = d.getAttribute(RECOVERYTYPE_ATTRIBUTE_NAME);
-		if (att == null)
-		{
-			if (defaultRecovery.length != 0) return defaultRecovery [0];
-			if (d.getRoutesHaveBackup().isEmpty()) 
-				return DemandRecoveryType.NONE; 
-			else 
-				return DemandRecoveryType.PROTECTION_REVERT; 
-		}
-		if (att.equals(DemandRecoveryType.NONE.toString())) return DemandRecoveryType.NONE;
-		if (att.equals(DemandRecoveryType.RESTORATION.toString())) return DemandRecoveryType.RESTORATION;
-//		if (att.equals(DemandRecoveryType.PROTECTION_NOREVERT.toString())) return DemandRecoveryType.PROTECTION_NOREVERT;
-		if (att.equals(DemandRecoveryType.PROTECTION_REVERT.toString())) return DemandRecoveryType.PROTECTION_REVERT;
-		throw new WDMException ("Wrong format of attribute: " + RECOVERYTYPE_ATTRIBUTE_NAME);
-	}
-
-	
 
 	/** Checks resource clashing: no frequency slot in the same fiber can be occupied by more than one lightpath, nor 
 	 * any slot of an index higher than the fiber capacity can be occupied. If a lightpath has as current route one of the backups, the clashing for this backup is not checked 

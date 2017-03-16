@@ -54,7 +54,7 @@ public class Node extends NetworkElement
 	Set<MulticastTree> cache_nodeAssociatedulticastTrees;
 	Set<Resource> cache_nodeResources;
 	Map<NetworkLayer,URL> mapLayer2URLSpecificIcon;
-
+	String siteName;
 
 	/**
 	 * Default constructor.
@@ -88,6 +88,7 @@ public class Node extends NetworkElement
 		this.cache_nodeAssociatedulticastTrees = new HashSet<MulticastTree> ();
 		this.mapLayer2URLSpecificIcon = new HashMap <> ();
 		this.population = 0;
+		this.siteName = null;
 	}
 	
 	void copyFrom (Node origin)
@@ -96,6 +97,7 @@ public class Node extends NetworkElement
 		if ((this.netPlan == null) || (origin.netPlan == null) || (this.netPlan == origin.netPlan)) throw new RuntimeException ("Bad");
 		this.name = origin.name;
 		this.population = origin.population;
+		this.siteName = origin.siteName;
 		this.nodeXYPositionMap = new UnmodifiablePoint2D(origin.nodeXYPositionMap.getX() , origin.nodeXYPositionMap.getY());
 		this.isUp = origin.isUp;
 		this.mapLayer2URLSpecificIcon.clear(); for (NetworkLayer l : origin.mapLayer2URLSpecificIcon.keySet()) this.mapLayer2URLSpecificIcon.put(this.netPlan.getNetworkLayerFromId(l.getId()) , origin.mapLayer2URLSpecificIcon.get(l));
@@ -118,6 +120,8 @@ public class Node extends NetworkElement
 		if (!this.nodeXYPositionMap.equals(e2.nodeXYPositionMap)) return false;
 		if (this.isUp != e2.isUp) return false;
 		if (this.population != e2.population) return false;
+		if ((this.siteName == null) != (e2.siteName == null)) return false;
+		if (this.siteName != null) if (!this.siteName.equals(e2.siteName)) return false;
 		
 		if (!NetPlan.isDeepCopy(this.mapLayer2URLSpecificIcon , e2.mapLayer2URLSpecificIcon)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_nodeIncomingLinks , e2.cache_nodeIncomingLinks)) return false;
@@ -132,7 +136,46 @@ public class Node extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.cache_nodeAssociatedulticastTrees , e2.cache_nodeAssociatedulticastTrees)) return false;
 		return true;
 	}
+	
+	
+	/** Sets the name of the site this node is associated to, removing previous site name information. If site is null, the current site name es 
+	 * removed, and the node becomes not attached to any site name.
+	 * @param site te site name
+	 */
+	public void setSiteName (String site)
+	{
+		if  ((site == null) && (this.siteName == null)) return;
+		if (site == null) 
+		{
+			if (this.siteName != null)
+			{
+				final Set<Node> nodesOldSiteNames = netPlan.cache_nodesPerSiteName.get(this.siteName);
+				nodesOldSiteNames.remove(this);
+				if (nodesOldSiteNames.isEmpty()) netPlan.cache_nodesPerSiteName.remove(this.siteName);
+			}
+			this.siteName = null;
+		}
+		else
+		{
+			if (site.equals(this.siteName)) return;
+			if (this.siteName != null) 
+			{
+				final Set<Node> nodesOldSiteNames = netPlan.cache_nodesPerSiteName.get(this.siteName);
+				nodesOldSiteNames.remove(this);
+				if (nodesOldSiteNames.isEmpty()) netPlan.cache_nodesPerSiteName.remove(this.siteName);
+			}
+			Set<Node> nodesThisNewSiteName = netPlan.cache_nodesPerSiteName.get(site);
+			if (nodesThisNewSiteName == null) { nodesThisNewSiteName = new HashSet<> (); netPlan.cache_nodesPerSiteName.put(site, nodesThisNewSiteName); } 
+			nodesThisNewSiteName.add(this);
+			this.siteName = site;
+		}
+	}
 
+	/** Returns the name of the site this node is associated to (or null if none)
+	 * @return see above
+	 */
+	public String getSiteName () { return this.siteName; }
+	
 	/** Sets the population of the node (must be non-negative)
 	 * @param population the population
 	 */
