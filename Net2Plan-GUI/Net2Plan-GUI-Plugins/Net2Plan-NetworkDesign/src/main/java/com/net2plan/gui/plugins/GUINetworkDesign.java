@@ -783,8 +783,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                 final GUILink gl = vs.getCanvasAssociatedGUILink((Link) e);
                 if (gl != null)
                 {
-                    gl.setArrowDrawPaint(color);
-                    gl.setArrowFillPaint(color);
                     gl.setEdgeDrawPaint(color);
                 }
             } else if (e instanceof Node)

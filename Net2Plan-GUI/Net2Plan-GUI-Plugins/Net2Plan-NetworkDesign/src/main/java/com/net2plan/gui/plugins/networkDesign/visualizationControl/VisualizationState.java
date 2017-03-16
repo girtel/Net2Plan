@@ -50,7 +50,9 @@ public class VisualizationState
     private Set<Link> linksToHideInCanvasAsMandatedByUserInTable;
 
     private VisualizationSnapshot visualizationSnapshot;
-
+    private float linkWidthIncreaseFactorRespectToDefault;
+    private float nodeSizeIncreaseFactorRespectToDefault;
+    
     /* These need is recomputed inside a rebuild */
     private Map<Node, Set<GUILink>> cache_canvasIntraNodeGUILinks;
     private Map<Link, GUILink> cache_canvasRegularLinkMap;
@@ -82,6 +84,8 @@ public class VisualizationState
         this.pickTimeLineManager = new PickTimeLineManager();
         this.pickedElementNotFR = null;
         this.pickedElementFR = null;
+        this.linkWidthIncreaseFactorRespectToDefault = 1;
+        this.nodeSizeIncreaseFactorRespectToDefault = 1;
 
         this.setCanvasLayerVisibilityAndOrder(currentNp, mapLayer2VisualizationOrder, layerVisibilityMap);
     }
@@ -415,15 +419,20 @@ public class VisualizationState
             for (int trueVisualizationOrderIndex = 0; trueVisualizationOrderIndex < cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.size(); trueVisualizationOrderIndex++)
             {
                 final NetworkLayer newLayer = cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.inverseBidiMap().get(trueVisualizationOrderIndex);
-                final GUINode gn = new GUINode(n, newLayer);
+                final double iconHeightIfNotActive = nodeSizeIncreaseFactorRespectToDefault * (getNetPlan().getNumberOfNodes() > 100? VisualizationConstants.DEFAULT_GUINODE_SHAPESIZE_MORETHAN100NODES : VisualizationConstants.DEFAULT_GUINODE_SHAPESIZE);
+                final GUINode gn = new GUINode(n, newLayer , iconHeightIfNotActive);
                 guiNodesThisNode.add(gn);
                 if (trueVisualizationOrderIndex > 0)
                 {
                     final GUINode lowerLayerGNode = guiNodesThisNode.get(trueVisualizationOrderIndex - 1);
                     final GUINode upperLayerGNode = guiNodesThisNode.get(trueVisualizationOrderIndex);
                     if (upperLayerGNode != gn) throw new RuntimeException();
-                    final GUILink glLowerToUpper = new GUILink(null, lowerLayerGNode, gn);
-                    final GUILink glUpperToLower = new GUILink(null, gn, lowerLayerGNode);
+                    final GUILink glLowerToUpper = new GUILink(null, lowerLayerGNode, gn , 
+                    		resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault) , 
+                    		resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault));
+                    final GUILink glUpperToLower = new GUILink(null, gn, lowerLayerGNode , 
+                    		resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault) , 
+                    		resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault));
                     intraNodeGUILinksThisNode.add(glLowerToUpper);
                     intraNodeGUILinksThisNode.add(glUpperToLower);
                     thisNodeInterLayerLinksInfoMap.put(Pair.of(trueVisualizationOrderIndex - 1, trueVisualizationOrderIndex), glLowerToUpper);
@@ -438,7 +447,9 @@ public class VisualizationState
             {
                 final GUINode gn1 = cache_mapNode2ListVerticallyStackedGUINodes.get(e.getOriginNode()).get(trueVisualizationOrderIndex);
                 final GUINode gn2 = cache_mapNode2ListVerticallyStackedGUINodes.get(e.getDestinationNode()).get(trueVisualizationOrderIndex);
-                final GUILink gl1 = new GUILink(e, gn1, gn2);
+                final GUILink gl1 = new GUILink(e, gn1, gn2 , 
+                	resizedBasicStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER, linkWidthIncreaseFactorRespectToDefault) , 
+        			resizedBasicStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault));
                 cache_canvasRegularLinkMap.put(e, gl1);
             }
         }
@@ -496,14 +507,32 @@ public class VisualizationState
 
     public void decreaseCanvasNodeSizeAll()
     {
+    	nodeSizeIncreaseFactorRespectToDefault *= VisualizationConstants.SCALE_OUT;
         for (GUINode gn : getCanvasAllGUINodes())
             gn.setIconHeightInNonActiveLayer(gn.getIconHeightInNotActiveLayer() * VisualizationConstants.SCALE_OUT);
     }
 
     public void increaseCanvasNodeSizeAll()
     {
+    	nodeSizeIncreaseFactorRespectToDefault *= VisualizationConstants.SCALE_IN;
         for (GUINode gn : getCanvasAllGUINodes())
             gn.setIconHeightInNonActiveLayer(gn.getIconHeightInNotActiveLayer() * VisualizationConstants.SCALE_IN);
+    }
+
+    public void decreaseCanvasLinkSizeAll()
+    {
+    	final float multFactor = VisualizationConstants.SCALE_OUT;
+    	linkWidthIncreaseFactorRespectToDefault *= multFactor;
+        for (GUILink e : getCanvasAllGUILinks(true, true))
+        	e.setEdgeStroke(resizedBasicStroke(e.getStrokeIfActiveLayer(), multFactor), resizedBasicStroke(e.getStrokeIfNotActiveLayer(), multFactor));
+    }
+
+    public void increaseCanvasLinkSizeAll()
+    {
+    	final float multFactor = VisualizationConstants.SCALE_IN;
+    	linkWidthIncreaseFactorRespectToDefault *= multFactor;
+        for (GUILink e : getCanvasAllGUILinks(true, true))
+        	e.setEdgeStroke(resizedBasicStroke(e.getStrokeIfActiveLayer(), multFactor), resizedBasicStroke(e.getStrokeIfNotActiveLayer(), multFactor));
     }
 
     public int getCanvasNumberOfVisibleLayers()
@@ -683,7 +712,7 @@ public class VisualizationState
     public int getCanvasVisualizationOrderNotRemovingNonVisible(NetworkLayer layer)
     {
         Integer res = visualizationSnapshot.getCanvasLayerVisualizationOrder(layer);
-        if (res == null) throw new RuntimeException("");
+        if (res == null) throw new RuntimeException();
         return res;
     }
 
@@ -863,11 +892,8 @@ public class VisualizationState
             final GUILink gl = getCanvasAssociatedGUILink(link);
             if (gl == null) continue;
             gl.setHasArrow(true);
-            gl.setArrowStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
-            gl.setEdgeStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
+            setCurrentDefaultEdgeStroke (gl , VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED , VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
             final Paint color = link.isDown() ? VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_FAILED : VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_FAILED;
-            gl.setArrowDrawPaint(color);
-            gl.setArrowFillPaint(color);
             gl.setEdgeDrawPaint(color);
             gl.setShownSeparated(true);
         }
@@ -1058,11 +1084,8 @@ public class VisualizationState
         {
             final GUILink gl = getCanvasAssociatedGUILink(pickedLink);
             gl.setHasArrow(true);
-            gl.setArrowStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
-            gl.setEdgeStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
+            setCurrentDefaultEdgeStroke (gl , VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED , VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
             final Paint color = pickedLink.isDown() ? VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_FAILED : VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED;
-            gl.setArrowDrawPaint(color);
-            gl.setArrowFillPaint(color);
             gl.setEdgeDrawPaint(color);
             gl.setShownSeparated(true);
         }
@@ -1143,11 +1166,8 @@ public class VisualizationState
         {
             final GUILink gl = getCanvasAssociatedGUILink(pickedLink);
             gl.setHasArrow(true);
-            gl.setArrowStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
-            gl.setEdgeStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
+            setCurrentDefaultEdgeStroke (gl , VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED , VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
             final Paint color = pickedLink.isDown() ? VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_FAILED : VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED;
-            gl.setArrowDrawPaint(color);
-            gl.setArrowFillPaint(color);
             gl.setEdgeDrawPaint(color);
             gl.setShownSeparated(true);
             gl.getOriginNode().setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
@@ -1184,22 +1204,16 @@ public class VisualizationState
         for (GUILink e : getCanvasAllGUILinks(true, false))
         {
             e.setHasArrow(VisualizationConstants.DEFAULT_REGGUILINK_HASARROW);
-            e.setArrowStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE);
-            e.setEdgeStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE);
+            setCurrentDefaultEdgeStroke (e , VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER , VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE);
             final boolean isDown = e.getAssociatedNetPlanLink().isDown();
             final Paint color = isDown ? VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_FAILED : VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR;
-            e.setArrowDrawPaint(color);
-            e.setArrowFillPaint(color);
             e.setEdgeDrawPaint(color);
             e.setShownSeparated(isDown);
         }
         for (GUILink e : getCanvasAllGUILinks(false, true))
         {
             e.setHasArrow(VisualizationConstants.DEFAULT_INTRANODEGUILINK_HASARROW);
-            e.setArrowStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE);
-            e.setEdgeStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE);
-            e.setArrowDrawPaint(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
-            e.setArrowFillPaint(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
+            setCurrentDefaultEdgeStroke (e , VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE , VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE);
             e.setEdgeDrawPaint(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
             e.setShownSeparated(false);
         }
@@ -1218,20 +1232,14 @@ public class VisualizationState
             if (!isLayerVisibleInCanvas(lowerLayer)) continue;
             for (GUILink interLayerLink : getCanvasIntraNodeGUILinkSequence(link.getOriginNode(), upperLayer, lowerLayer))
             {
-                interLayerLink.setArrowStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED, VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED);
-                interLayerLink.setEdgeStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED, VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED);
-                interLayerLink.setArrowDrawPaint(color);
-                interLayerLink.setArrowFillPaint(color);
+                setCurrentDefaultEdgeStroke (interLayerLink , VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED , VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED);
                 interLayerLink.setEdgeDrawPaint(color);
                 interLayerLink.setShownSeparated(false);
                 interLayerLink.setHasArrow(true);
             }
             for (GUILink interLayerLink : getCanvasIntraNodeGUILinkSequence(link.getDestinationNode(), lowerLayer, upperLayer))
             {
-                interLayerLink.setArrowStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED, VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED);
-                interLayerLink.setEdgeStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED, VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED);
-                interLayerLink.setArrowDrawPaint(color);
-                interLayerLink.setArrowFillPaint(color);
+                setCurrentDefaultEdgeStroke (interLayerLink , VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED , VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED);
                 interLayerLink.setEdgeDrawPaint(color);
                 interLayerLink.setShownSeparated(false);
                 interLayerLink.setHasArrow(true);
@@ -1245,11 +1253,8 @@ public class VisualizationState
         {
             final GUILink glColateral = getCanvasAssociatedGUILink(link);
             if (glColateral == null) continue;
-            glColateral.setArrowStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALACTVELAYER, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALNONACTIVELAYER);
-            glColateral.setEdgeStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALACTVELAYER, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALNONACTIVELAYER);
+            setCurrentDefaultEdgeStroke (glColateral , VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALACTVELAYER , VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALNONACTIVELAYER);
             final Paint color = link.isDown() ? VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_FAILED : colorIfNotFailedLink;
-            glColateral.setArrowDrawPaint(color);
-            glColateral.setArrowFillPaint(color);
             glColateral.setEdgeDrawPaint(color);
             glColateral.setShownSeparated(true);
             glColateral.setHasArrow(true);
@@ -1469,5 +1474,16 @@ public class VisualizationState
             if (vs.pickedElementFR.getFirst().getNetPlan() != np) throw new RuntimeException();
         if (vs.pickedElementFR != null)
             if (vs.pickedElementFR.getSecond().getNetPlan() != np) throw new RuntimeException();
+    }
+    
+    private static BasicStroke resizedBasicStroke (BasicStroke a , float multFactorSize)
+    {
+    	if (multFactorSize == 1) return a;
+    	return new BasicStroke(a.getLineWidth() * multFactorSize, a.getEndCap(), a.getLineJoin(), a.getMiterLimit(), a.getDashArray(), a.getDashPhase());
+    }
+
+    private void setCurrentDefaultEdgeStroke (GUILink e , BasicStroke a , BasicStroke na)
+    {
+    	e.setEdgeStroke(resizedBasicStroke(a, linkWidthIncreaseFactorRespectToDefault), resizedBasicStroke(na, linkWidthIncreaseFactorRespectToDefault));
     }
 }
