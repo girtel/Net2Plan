@@ -74,7 +74,7 @@ import java.util.List;
 public class GUINetworkDesign extends IGUIModule implements IVisualizationCallback
 {
     private final static String TITLE = "Offline network design & Online network simulation";
-    private final static int MAXSIZEUNDOLISTCHANGES = 10;
+    private final static int MAXSIZEUNDOLISTCHANGES = 0; // deactivate, not robust yet
     private final static int MAXSIZEUNDOLISTPICK = 10;
 
     private TopologyPanel topologyPanel;
