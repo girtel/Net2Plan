@@ -329,6 +329,8 @@ public class NetPlanViewTableComponent_layer extends JPanel {
     	this.insideUpdateView = true;
         layerAttributeTable.setEnabled(false);
         ((DefaultTableModel) layerAttributeTable.getModel()).setDataVector(new Object[1][attributeTableHeader.length], attributeTableHeader);
+        layerTagTable.setEnabled(false);
+        ((DefaultTableModel) layerTagTable.getModel()).setDataVector(new Object[1][tagTableHeader.length], tagTableHeader);
 
         if (currentState.getRoutingType() == RoutingType.SOURCE_ROUTING) sourceRoutingActivated.setSelected(true);
         else hopByHopRoutingActivated.setSelected(true);
@@ -346,6 +348,17 @@ public class NetPlanViewTableComponent_layer extends JPanel {
 
             ((DefaultTableModel) layerAttributeTable.getModel()).setDataVector(layerData, attributeTableHeader);
         }
+
+        // Tag data
+        final String[] tags = layer.getTags().toArray(new String[layer.getTags().size()]);
+        final Object[][] tagData = new Object[tags.length][1];
+
+        for (int i = 0; i < tagData.length; i++)
+        {
+            tagData[i][0] = tags[i];
+        }
+
+        ((DefaultTableModel) layerTagTable.getModel()).setDataVector(tagData, tagTableHeader);
 
         if (!txt_layerName.getText().equals(layer.getName())) txt_layerName.setText(layer.getName());
         if (!txt_layerDescription.getText().equals(layer.getDescription())) txt_layerDescription.setText(layer.getDescription());
