@@ -86,7 +86,20 @@ public class SingleElementTagEditor extends MouseAdapter
 
                 try
                 {
-                    Set<String> tagList = netPlan.getTags();
+                    Set<String> tagList;
+
+                    switch (type)
+                    {
+                        case NETWORK:
+                            tagList = netPlan.getTags();
+                            break;
+                        case LAYER:
+                            tagList = netPlan.getNetworkLayerDefault().getTags();
+                            break;
+                        default:
+                            throw new RuntimeException("Bad");
+                    }
+
                     final String[] tagArray = tagList.toArray(new String[tagList.size()]);
                     if (tagArray.length == 0) throw new Exception("No tag to remove");
 

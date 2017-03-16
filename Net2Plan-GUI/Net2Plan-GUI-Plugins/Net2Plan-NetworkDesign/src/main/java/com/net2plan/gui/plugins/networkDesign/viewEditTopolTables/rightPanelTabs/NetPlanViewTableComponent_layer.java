@@ -262,7 +262,7 @@ public class NetPlanViewTableComponent_layer extends JPanel
         }
 
         if (networkViewer.getVisualizationState().isNetPlanEditable())
-            layerTable.addMouseListener(new SingleElementTagEditor(networkViewer, NetworkElementType.LAYER));
+            layerTagTable.addMouseListener(new SingleElementTagEditor(networkViewer, NetworkElementType.LAYER));
 
         layerTagTable.getTableHeader().addMouseMotionListener(tagTips);
 
