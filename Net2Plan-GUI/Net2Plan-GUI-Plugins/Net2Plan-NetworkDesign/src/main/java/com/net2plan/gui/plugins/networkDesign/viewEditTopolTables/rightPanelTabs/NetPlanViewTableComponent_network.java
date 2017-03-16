@@ -75,6 +75,11 @@ public class NetPlanViewTableComponent_network extends JPanel {
         networkTagTable.getTableHeader().addMouseMotionListener(tagTips);
         networkTagTable.setAutoCreateRowSorter(true);
 
+        if (networkViewer.getVisualizationState().isNetPlanEditable())
+        {
+            networkTagTable.addMouseListener(new SingleElementTagEditor(networkViewer, NetworkElementType.NETWORK));
+        }
+
         JScrollPane sp_tags = new JScrollPane(networkTagTable);
         ScrollPaneLayout tagLayout = new FullScrollPaneLayout();
         sp_tags.setLayout(tagLayout);

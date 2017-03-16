@@ -261,6 +261,9 @@ public class NetPlanViewTableComponent_layer extends JPanel
             tagTips.setToolTip(col, tagTableTips[c]);
         }
 
+        if (networkViewer.getVisualizationState().isNetPlanEditable())
+            layerTable.addMouseListener(new SingleElementTagEditor(networkViewer, NetworkElementType.LAYER));
+
         layerTagTable.getTableHeader().addMouseMotionListener(tagTips);
 
         JScrollPane sp_tags = new JScrollPane(layerTagTable);

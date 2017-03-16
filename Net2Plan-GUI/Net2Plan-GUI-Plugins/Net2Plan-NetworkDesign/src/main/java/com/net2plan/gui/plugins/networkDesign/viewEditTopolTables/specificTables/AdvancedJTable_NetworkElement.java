@@ -1875,15 +1875,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                     NetworkElement element = netPlan.getNetworkElement((long) itemId);
                     element.addTag(tag);
 
-                    try
-                    {
-                        callback.updateVisualizationJustTables();
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.addErrorOrException(ex, getClass());
-                        ErrorHandling.showErrorDialog("Unable to add tag to " + networkElementType);
-                    }
-
+                    callback.updateVisualizationJustTables();
                 } catch (Throwable ex)
                 {
                     ErrorHandling.addErrorOrException(ex, getClass());
