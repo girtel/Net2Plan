@@ -172,6 +172,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		else throw new Net2PlanException ("Wrong input parameters");
 		
 		/* Store transpoder info */
+		WDMUtils.setFibersNumFrequencySlots(netPlan, S, wdmLayer);
 		this.tpInfo = new WDMUtils.TransponderTypesInfo(transponderTypesInfo.getString());
 		this.T = tpInfo.getNumTypes();
 
