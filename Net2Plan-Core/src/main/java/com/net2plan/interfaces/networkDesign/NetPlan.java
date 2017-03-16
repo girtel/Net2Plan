@@ -1890,6 +1890,29 @@ public class NetPlan extends NetworkElement
     }
 
     /**
+     * <p>Returns a deep copy of the current design, but restricting it to the given set of nodes (and thus keeping the same 
+     * ids of the network elements, but not necessarily the indexes). The links which are not between nodes in this set 
+     * are not included, as well as any route or tree traversing them, nor demands, resources, multicast demands etc. 
+     * affecting nodes that are not in the restricted set. Equivalent to making a copy, and then removing all the nodes not in 
+     * the restricted set.</p>
+     *
+     * @return Deep copy of the restricted current design
+     */
+    public NetPlan restrictedCopy(Set<Node> restrictedSet)
+    {
+        if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
+        NetPlan npCopy = this.copy();
+        Set<Long> restrictedSetIds = restrictedSet.stream().map(n->n.getId()).collect(Collectors.toSet());
+		for (Node n : new HashSet<> (npCopy.getNodes()))
+			if (!restrictedSetIds.contains(n.getId()))
+				n.remove();
+        if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
+        if (ErrorHandling.isDebugEnabled()) npCopy.checkCachesConsistency();
+        return npCopy;
+    }
+
+    
+    /**
      * <p>Removes all information from the current {@code NetPlan} and copy the information from the input {@code NetPlan}.</p>
      *
      * @param originNetPlan Network plan to be copied from
