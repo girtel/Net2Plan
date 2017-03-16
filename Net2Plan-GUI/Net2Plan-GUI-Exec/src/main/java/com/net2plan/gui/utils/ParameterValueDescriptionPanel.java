@@ -206,7 +206,7 @@ public class ParameterValueDescriptionPanel extends JPanel
                 final int rowModel = table.convertRowIndexToModel(row);
                 final TableModel model = table.getModel();
 
-                final String fileSeparator = "<>";
+                final String fileSeparator = ">";
                 final JFileChooser fileChooser = new JFileChooser();
                 fileChooser.setMultiSelectionEnabled(true);
                 fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);

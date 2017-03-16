@@ -8,9 +8,24 @@ package com.net2plan.examples.general.onlineSim;
  ******************************************************************************/
 
 
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import cern.jet.math.tdouble.DoubleFunctions;
-import com.net2plan.interfaces.networkDesign.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.libraries.GraphUtils;
@@ -18,10 +33,14 @@ import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.WDMUtils;
 import com.net2plan.libraries.WDMUtils.TransponderTypesInfo;
 import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.*;
+import com.net2plan.utils.InputParameter;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Quadruple;
+import com.net2plan.utils.RandomUtils;
+import com.net2plan.utils.Triple;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import cern.jet.math.tdouble.DoubleFunctions;
 
 /** Implements the reactions of a WDM network carrying lightpaths in a fixed or flexi grid of wavelengths. 
  * 
@@ -79,7 +98,7 @@ public class Online_evProc_wdm extends IEventProcessor
 	private boolean isAlternateRouting , isLeastCongestedRouting , isLoadSharing , isSrgDisjointAwareLpRouting;
 	private Random rng;
 	private int protectionTypeCode;
-	private WDMUtils.DemandRecoveryType defaultRecoveryType;
+	private Demand.IntendedRecoveryType defaultRecoveryType;
 
 	private double stat_trafficOfferedConnections , stat_trafficCarriedConnections;
 	private double stat_trafficAttemptedToRecoverConnections , stat_trafficSuccessfullyRecoveredConnections;
@@ -116,7 +135,7 @@ public class Online_evProc_wdm extends IEventProcessor
 		this.isLoadSharing = wdmRwaType.getString().equalsIgnoreCase("load-sharing");
 		this.rng = new Random(wdmRandomSeed.getLong () == -1? (long) RandomUtils.random(0, Long.MAX_VALUE - 1) : wdmRandomSeed.getLong ());
 		
-		this.defaultRecoveryType = isProtectionRecovery? WDMUtils.DemandRecoveryType.PROTECTION_REVERT : isRestorationRecovery? WDMUtils.DemandRecoveryType.RESTORATION : WDMUtils.DemandRecoveryType.NONE;
+		this.defaultRecoveryType = isProtectionRecovery? Demand.IntendedRecoveryType.PROTECTION_REVERT : isRestorationRecovery? Demand.IntendedRecoveryType.RESTORATION : Demand.IntendedRecoveryType.NONE;
 
 		if (wdmRemovePreviousLightpaths.getBoolean())
 		{
@@ -194,7 +213,7 @@ public class Online_evProc_wdm extends IEventProcessor
 						if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
 						
 						final Demand wdmLayerDemand = addLpEvent.demand == null? currentNetPlan.addDemand(addLpEvent.ingressNode, addLpEvent.egressNode, lineRateThisLp_Gbps , null, wdmLayer) : addLpEvent.demand;
-						WDMUtils.setRecoveryType(wdmLayerDemand, WDMUtils.DemandRecoveryType.PROTECTION_REVERT);
+						wdmLayerDemand.setIntendedRecoveryType(Demand.IntendedRecoveryType.PROTECTION_REVERT);
 						final Route wdmLayerRoute = WDMUtils.addLightpath(wdmLayerDemand, rwa.getFirst(), lineRateThisLp_Gbps);
 						WDMUtils.allocateResources(rwa.getFirst() , wavelengthFiberOccupancy , null);
 
@@ -238,7 +257,7 @@ public class Online_evProc_wdm extends IEventProcessor
 					if (rwa != null)
 					{
 						final Demand wdmLayerDemand = addLpEvent.demand == null? currentNetPlan.addDemand(addLpEvent.ingressNode, addLpEvent.egressNode, lineRateThisLp_Gbps , null, wdmLayer) : addLpEvent.demand;
-						WDMUtils.setRecoveryType(wdmLayerDemand, isRestorationRecovery? WDMUtils.DemandRecoveryType.RESTORATION : WDMUtils.DemandRecoveryType.NONE);
+						wdmLayerDemand.setIntendedRecoveryType(isRestorationRecovery? Demand.IntendedRecoveryType.RESTORATION : Demand.IntendedRecoveryType.NONE);
 						final Route wdmLayerRoute = WDMUtils.addLightpath(wdmLayerDemand, rwa , lineRateThisLp_Gbps);
 						WDMUtils.allocateResources(rwa , wavelengthFiberOccupancy , null);
 						this.transponderTypeOfNewLps.put(wdmLayerRoute , transponderTypeUsed);
@@ -278,7 +297,8 @@ public class Online_evProc_wdm extends IEventProcessor
 				for (Route r : routesFromDownToUp)
 				{
 					final Demand wdmDemand = r.getDemand();
-					if (WDMUtils.getRecoveryType(wdmDemand, defaultRecoveryType) ==  WDMUtils.DemandRecoveryType.PROTECTION_REVERT)
+					final Demand.IntendedRecoveryType recoveryType = wdmDemand.getIntendedRecoveryType() == Demand.IntendedRecoveryType.NOTSPECIFIED? defaultRecoveryType : wdmDemand.getIntendedRecoveryType();
+					if (recoveryType ==  Demand.IntendedRecoveryType.PROTECTION_REVERT)
 					for (Route backup : r.getBackupRoutes())
 						backup.setCarriedTraffic(0, null); // primary to up => carried in backup to zero
 				}
@@ -286,11 +306,12 @@ public class Online_evProc_wdm extends IEventProcessor
 				/* Now take down routes one by one, and see what to do with them (if something)  */ 
 				for (Route r : currentNetPlan.getRoutesDown(wdmLayer))
 				{
-					final WDMUtils.DemandRecoveryType recovType = WDMUtils.getRecoveryType(r.getDemand(), defaultRecoveryType); 
+					final Demand wdmDemand = r.getDemand();
+					final Demand.IntendedRecoveryType recovType = wdmDemand.getIntendedRecoveryType() == Demand.IntendedRecoveryType.NOTSPECIFIED? defaultRecoveryType : wdmDemand.getIntendedRecoveryType();
 
-					if (recovType == WDMUtils.DemandRecoveryType.NONE) continue;
+					if (recovType == Demand.IntendedRecoveryType.NONE) continue;
 
-					if (recovType == WDMUtils.DemandRecoveryType.PROTECTION_REVERT)
+					if (recovType == Demand.IntendedRecoveryType.PROTECTION_REVERT)
 					{
 						/* If is 1+1 protection, do nothing with backup routes that are down */
 						if (r.isBackupRoute()) continue;
@@ -308,7 +329,7 @@ public class Online_evProc_wdm extends IEventProcessor
 							}
 						}
 					}
-					else if (recovType == WDMUtils.DemandRecoveryType.RESTORATION)
+					else if (recovType == Demand.IntendedRecoveryType.RESTORATION)
 					{
 						this.stat_numAttemptedToRecoverConnections ++;
 						this.stat_trafficAttemptedToRecoverConnections += r.getCarriedTrafficInNoFailureState();

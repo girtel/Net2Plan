@@ -22,6 +22,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.net2plan.utils.Constants.RoutingType;
+import com.google.common.collect.Sets;
 import com.net2plan.utils.Pair;
 
 public class NodeTest 
@@ -63,6 +64,9 @@ public class NodeTest
 		this.n1 = this.np.addNode(0 , 0 , "node1" , null);
 		this.n2 = np.addNode(0 , 0 , "node2" , null);
 		this.n3 = np.addNode(0 , 0 , "node3" , null);
+		n1.setSiteName("s12");
+		n2.setSiteName("s12");
+		n3.setSiteName("s3");
 		n1.setPopulation(100);
 		this.link12 = np.addLink(n1,n2,100,100,1,null,lowerLayer);
 		this.link23 = np.addLink(n2,n3,100,100,1,null,lowerLayer);
@@ -110,7 +114,26 @@ public class NodeTest
 		assertEquals(n3.getName() , "node3");
 	}
 
+	@Test
+	public void testGetSiteName() 
+	{
+		assertEquals(n1.getSiteName() , "s12");
+		assertEquals(n2.getSiteName() , "s12");
+		assertEquals(n3.getSiteName() , "s3");
+	}
 	
+	@Test
+	public void testSetSiteName() 
+	{
+		assertEquals (np.getSiteNames() , Sets.newHashSet("s12" , "s3"));
+		n3.setSiteName("s4");
+		assertEquals (np.getSiteNames() , Sets.newHashSet("s12" , "s4"));
+		n3.setSiteName(null);
+		assertEquals (np.getSiteNames() , Sets.newHashSet("s12"));
+		assertEquals(n3.getSiteName() , null);
+		n1.setSiteName("s1");
+		assertEquals(n1.getSiteName() , "s1");
+	}
 
 	@Test
 	public void testSetUrlNodeIcon() throws Exception

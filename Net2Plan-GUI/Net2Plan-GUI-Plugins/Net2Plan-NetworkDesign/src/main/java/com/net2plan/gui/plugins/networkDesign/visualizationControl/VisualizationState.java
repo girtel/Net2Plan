@@ -11,6 +11,7 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 import edu.uci.ics.jung.visualization.FourPassImageShaper;
 import org.apache.commons.collections15.BidiMap;
+import org.apache.commons.collections15.MapUtils;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
 import javax.imageio.ImageIO;
@@ -353,25 +354,15 @@ public class VisualizationState
     {
         if (newCurrentNetPlan == null) throw new RuntimeException("Trying to update an empty topology");
 
+        final Map<NetworkLayer, Boolean> mapCanvasLinkVisibility = this.visualizationSnapshot.getMapCanvasLinkVisibility();
+
+        this.visualizationSnapshot.resetSnapshot(newCurrentNetPlan);
+
         if (this.getNetPlan() != newCurrentNetPlan)
         {
-            this.visualizationSnapshot.setNetPlan(newCurrentNetPlan);
-            this.visualizationSnapshot.resetSnapshot();
-
             tableRowFilter = null;
             nodesToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
             linksToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
-        } else
-        {
-            final Map<NetworkLayer, Boolean> mapCanvasLinkVisibility = this.visualizationSnapshot.getMapCanvasLinkVisibility();
-
-            // Resetting visualization snapshot to default values
-            this.visualizationSnapshot.resetSnapshot();
-
-            for (Map.Entry<NetworkLayer, Boolean> entry : mapCanvasLinkVisibility.entrySet())
-            {
-                visualizationSnapshot.addLinkVisibility(entry.getKey(), entry.getValue());
-            }
         }
 
         // Updating visualization snapshot
@@ -379,7 +370,7 @@ public class VisualizationState
         {
             for (Map.Entry<NetworkLayer, Integer> entry : newLayerOrderMap.entrySet())
             {
-                visualizationSnapshot.addLayerVisualizationOrder(entry.getKey(), entry.getValue());
+                visualizationSnapshot.setLayerVisualizationOrder(entry.getKey(), entry.getValue());
             }
         }
 
@@ -389,6 +380,12 @@ public class VisualizationState
             {
                 visualizationSnapshot.addLayerVisibility(entry.getKey(), entry.getValue());
             }
+        }
+
+        for (Map.Entry<NetworkLayer, Boolean> entry : mapCanvasLinkVisibility.entrySet())
+        {
+            if (!this.getNetPlan().getNetworkLayers().contains(entry.getKey())) continue;
+            visualizationSnapshot.addLinkVisibility(entry.getKey(), entry.getValue());
         }
 
         /* implicitly we restart the picking state */
@@ -403,7 +400,7 @@ public class VisualizationState
         this.cache_mapNode2ListVerticallyStackedGUINodes = new HashMap<>();
         for (int layerVisualizationOrderIncludingNonVisible = 0; layerVisualizationOrderIncludingNonVisible < this.getNetPlan().getNumberOfLayers(); layerVisualizationOrderIncludingNonVisible++)
         {
-            final NetworkLayer layer = visualizationSnapshot.getMapCanvasLayerVisualizationOrder().inverseBidiMap().get(layerVisualizationOrderIncludingNonVisible);
+            final NetworkLayer layer = MapUtils.invertMap(visualizationSnapshot.getMapCanvasLayerVisualizationOrder()).get(layerVisualizationOrderIncludingNonVisible);
             if (isLayerVisibleInCanvas(layer))
                 cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.put(layer, cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.size());
         }
@@ -673,7 +670,7 @@ public class VisualizationState
         if (visualizationOrder < 0) throw new RuntimeException("");
         if (visualizationOrder >= this.getNetPlan().getNumberOfLayers())
             throw new RuntimeException("");
-        return visualizationSnapshot.getMapCanvasLayerVisualizationOrder().inverseBidiMap().get(visualizationOrder);
+        return MapUtils.invertMap(visualizationSnapshot.getMapCanvasLayerVisualizationOrder()).get(visualizationOrder);
     }
 
     public int getCanvasVisualizationOrderRemovingNonVisible(NetworkLayer layer)
@@ -1292,7 +1289,7 @@ public class VisualizationState
 
     public List<NetworkLayer> getCanvasLayersInVisualizationOrder(boolean includeNonVisible)
     {
-        BidiMap<Integer, NetworkLayer> map = includeNonVisible ? visualizationSnapshot.getMapCanvasLayerVisualizationOrder().inverseBidiMap() : cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.inverseBidiMap();
+        BidiMap<Integer, NetworkLayer> map = includeNonVisible ? new DualHashBidiMap<>(MapUtils.invertMap(visualizationSnapshot.getMapCanvasLayerVisualizationOrder())) : cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.inverseBidiMap();
         List<NetworkLayer> res = new ArrayList<>();
         for (int vIndex = 0; vIndex < this.getNetPlan().getNumberOfLayers(); vIndex++)
             res.add(map.get(vIndex));

@@ -58,7 +58,24 @@ public class Demand extends NetworkElement
 	Set<Route> cache_routes;
 	Link coupledUpperLayerLink;
 	List<String> mandatorySequenceOfTraversedResourceTypes;
-
+	IntendedRecoveryType recoveryType;
+	
+	public enum IntendedRecoveryType
+	{
+		/** This information is not specified */
+		NOTSPECIFIED,
+		/** No reaction to failures to any route of the demand */
+		NONE,
+		/** An attempt is made to reroute the failed lightpaths of the demand (backup or not, but this makes sense when the routes have no backup) */
+		RESTORATION,
+		/** To carry the traffic, first the primary is tried, then the backup routes in order. Unused routes have carried traffic zero. No revert action is made */
+		PROTECTION_NOREVERT,
+		/** To carry the traffic, first the primary is tried, then the backup routes in order. Unused routes have carried traffic zero. If the primary becomes usable, traffic is reverted to it */
+		PROTECTION_REVERT,
+		/** When read from a file, an unknown type was read */
+		UNKNOWNTYPE;
+	}
+	
 	/**
 	 * Generates a new Demand.
 	 * @param netPlan Design where this demand is attached
@@ -86,6 +103,7 @@ public class Demand extends NetworkElement
 		this.cache_routes = new LinkedHashSet<Route> ();
 		this.coupledUpperLayerLink = null;
 		this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> ();
+		this.recoveryType = IntendedRecoveryType.NOTSPECIFIED;
 	}
 
 	/**
@@ -103,6 +121,7 @@ public class Demand extends NetworkElement
 		this.cache_routes = new LinkedHashSet<Route> ();
 		for (Route r : origin.cache_routes) this.cache_routes.add(this.netPlan.getRouteFromId(r.id));
 		this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> (origin.mandatorySequenceOfTraversedResourceTypes);
+		this.recoveryType = origin.recoveryType;
 	}
 
 
@@ -119,9 +138,20 @@ public class Demand extends NetworkElement
 		if ((this.coupledUpperLayerLink != null) && (coupledUpperLayerLink.id != e2.coupledUpperLayerLink.id)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_routes , e2.cache_routes)) return false;
 		if (!this.mandatorySequenceOfTraversedResourceTypes.equals(e2.mandatorySequenceOfTraversedResourceTypes)) return false;
+		if (this.recoveryType != e2.recoveryType) return false;
 		return true;
 	}
 
+	/** Returns the specified intended recovery type for this demand
+	 * @return see above
+	 */
+	public IntendedRecoveryType getIntendedRecoveryType () { return recoveryType; }
+	
+	/** Sets the intended recovery type for this demand
+	 * @param recoveryType the recovery type
+	 */
+	public void setIntendedRecoveryType (IntendedRecoveryType recoveryType) { this.recoveryType = recoveryType; }
+	
 	/**
 	 * <p>Returns the routes associated to this demand.</p>
 	 * <p><b>Important</b>: If network layer routing type is not {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, an exception is thrown.</p>
@@ -785,60 +815,6 @@ public class Demand extends NetworkElement
 		}
 		return Pair.of(resPrimary,resBackup);
 	}
-	
-	
-//	/** Returns the set of links in this layer that could potentially carry traffic of this demand, according to the routes/forwarding rules defined.
-//	 * The method returns  a pair of sets (disjoint or not), first set with the set of links potentially carrying primary traffic and 
-//	 * second with links in backup routes. Potentially carrying traffic means that 
-//	 * (i) in source routing, down routes are not included, but all up routes are considered even if the carry zero traffic, 
-//	 * (ii) in hop-by-hop routing the links are computed even if the demand offered traffic is zero, and all the links are considered primary.
-//	 * @param assumeNoFailureState in this case, the links are computed as if all network link/nodes are in no-failure state
-//	 * capacity in it
-//	 * @return see above
-//	 */
-//	public Pair<Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> getLinksUpperLayersPotentiallyCarryingTrafficThisDemand  (boolean assumeNoFailureState)
-//	{
-//		if (coupledUpperLayerLink == null) return Pair.of(new HashMap<> (), new HashMap <> ());
-//		
-//		Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
-//				coupledUpperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (assumeNoFailureState);
-//		Map<Demand,Set<Link>> upperLayerLinksPuttingUnicastTrafficThisLink = triple.getFirst();
-//		for (Demand d : triple.getSecond().keySet())
-//		{
-//			Set<Link> links = upperLayerLinksPuttingUnicastTrafficThisLink.get(d);
-//			if (links == null) { links = new HashSet<Link> (); upperLayerLinksPuttingUnicastTrafficThisLink.put(d, links); }
-//			links.addAll(triple.getSecond().get(d));
-//		}
-//		Map<Pair<MulticastDemand,Node>,Set<Link>> upperLayerLinksPuttingMulticastTrafficThisLink = triple.getThird();
-//		
-//		/* Add upper layer info*/
-//		final Map<Demand,Set<Link>> res_unicast = new HashMap<> (upperLayerLinksPuttingUnicastTrafficThisLink);
-//		final Map<Pair<MulticastDemand,Node>,Set<Link>> res_multicast = new HashMap<> (upperLayerLinksPuttingMulticastTrafficThisLink);
-//
-//		/* Propagate to two layers up, and accumulate results */
-//		for (Demand upperLayerDemand : upperLayerLinksPuttingUnicastTrafficThisLink.keySet())
-//		{
-//			if (upperLayerDemand.isCoupled())
-//			{
-//				Pair<Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_twoLayersUp = upperLayerDemand.getLinksUpperLayersPotentiallyCarryingTrafficThisDemand (assumeNoFailureState); 
-//				res_unicast.putAll(res_twoLayersUp.getFirst());
-//				res_multicast.putAll(res_twoLayersUp.getSecond());
-//			}
-//		}
-//		for (Pair<MulticastDemand,Node> upperLayerMDemandAndEgressNode : upperLayerLinksPuttingMulticastTrafficThisLink.keySet())
-//		{
-//			final MulticastDemand upperLayerMDemand = upperLayerMDemandAndEgressNode.getFirst();
-//			final Node mDemandEgressNode = upperLayerMDemandAndEgressNode.getSecond();
-//			if (upperLayerMDemand.isCoupled()) 
-//			{
-//				Pair<Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_twoLayersUp = upperLayerMDemand.getLinksUpperLayersPotentiallyCarryingTrafficThisDemandToEgressNode  (mDemandEgressNode , assumeNoFailureState);
-//				res_unicast.putAll(res_twoLayersUp.getFirst());
-//				res_multicast.putAll(res_twoLayersUp.getSecond());
-//			}
-//		}
-//		return Pair.of(res_unicast, res_multicast);
-//	}
-	
 	
 
 }

@@ -134,6 +134,7 @@ public class NetPlan extends NetworkElement
     Map<Long, SharedRiskGroup> cache_id2srgMap;
 
     Map<String,Set<NetworkElement>> cache_taggedElements;
+    Map<String,Set<Node>> cache_nodesPerSiteName;
 
     DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping> interLayerCoupling;
 
@@ -173,6 +174,7 @@ public class NetPlan extends NetworkElement
         this.cache_id2MulticastTreeMap = new HashMap<Long, MulticastTree>();
         
         this.cache_taggedElements = new HashMap<> ();
+        this.cache_nodesPerSiteName = new HashMap<> ();
         
         interLayerCoupling = new DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping>(DemandLinkMapping.class);
 
@@ -359,8 +361,12 @@ public class NetPlan extends NetworkElement
         } //return false;
         if (!this.tags.equals(np2.tags)) throw new RuntimeException("Bad. Tags: " + this.tags + ", otheR: " + np2.tags);
         if (!this.cache_taggedElements.keySet().equals(np2.cache_taggedElements.keySet())) throw new RuntimeException("Bad");
+        if (!this.cache_nodesPerSiteName.keySet().equals(np2.cache_nodesPerSiteName.keySet())) throw new RuntimeException("Bad");
         for (String tag : cache_taggedElements.keySet()) 
        		if (this.cache_taggedElements.get(tag).size() != np2.cache_taggedElements.get(tag).size())
+       			throw new RuntimeException("Bad");
+        for (String siteName : cache_nodesPerSiteName.keySet()) 
+       		if (this.cache_nodesPerSiteName.get(siteName).size() != np2.cache_nodesPerSiteName.get(siteName).size())
        			throw new RuntimeException("Bad");
         for (int cont = 0; cont < nodes.size(); cont++)
             if (!this.getNode(cont).isDeepCopy(np2.getNode(cont))) throw new RuntimeException("Bad"); //return false;
@@ -1505,7 +1511,8 @@ public class NetPlan extends NetworkElement
         this.cache_id2RouteMap = netPlan.cache_id2RouteMap;
         this.cache_id2MulticastTreeMap = netPlan.cache_id2MulticastTreeMap;
         this.cache_id2srgMap = netPlan.cache_id2srgMap;
-        this.cache_taggedElements = netPlan.cache_taggedElements; 
+        this.cache_taggedElements = netPlan.cache_taggedElements;
+        this.cache_nodesPerSiteName = netPlan.cache_nodesPerSiteName;
         this.interLayerCoupling = netPlan.interLayerCoupling;
         this.tags.clear(); this.tags.addAll(netPlan.tags);
         for (String tag : this.tags) // remove reference to origin netPlan in tags (the other network elements do not change, but NetPlan does) 
@@ -1912,6 +1919,7 @@ public class NetPlan extends NetworkElement
         this.cache_id2RouteMap = new HashMap<Long, Route>();
         this.cache_id2MulticastTreeMap = new HashMap<Long, MulticastTree>();
         this.cache_taggedElements = new HashMap<> ();
+        this.cache_nodesPerSiteName = new HashMap<> ();
         this.DEFAULT_ROUTING_TYPE = originNetPlan.DEFAULT_ROUTING_TYPE;
         this.isModifiable = true;
         this.networkDescription = originNetPlan.networkDescription;
@@ -1926,6 +1934,7 @@ public class NetPlan extends NetworkElement
         {
             Node newElement = new Node(this, originNode.id, originNode.index, originNode.nodeXYPositionMap.getX(), originNode.nodeXYPositionMap.getY(), originNode.name, originNode.attributes);
             for (String tag : originNode.getTags ()) newElement.addTag (tag);
+            newElement.setSiteName(originNode.siteName);
             cache_id2NodeMap.put(originNode.id, newElement);
             nodes.add(newElement);
             if (!originNode.isUp) cache_nodesDown.add(newElement);
@@ -2863,7 +2872,7 @@ public class NetPlan extends NetworkElement
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         final int E = layer.links.size();
-        DoubleMatrix2D out = DoubleFactory2D.dense.make(E, E);
+        DoubleMatrix2D out = DoubleFactory2D.sparse.make(E, E);
         for (Link e_1 : layer.links)
         {
             final String idBidirPair_st = e_1.getAttribute(KEY_STRING_BIDIRECTIONALCOUPLE);
@@ -2889,7 +2898,7 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix2D getMatrixResource2ResourceUpperToBaseAssignment()
     {
         final int R = resources.size();
-        DoubleMatrix2D out = DoubleFactory2D.dense.make(R, R);
+        DoubleMatrix2D out = DoubleFactory2D.sparse.make(R, R);
         for (Resource upperResource : resources)
             for (Resource baseResource : upperResource.capacityIOccupyInBaseResource.keySet())
                 out.set(upperResource.index, baseResource.index, 1.0);
@@ -2905,7 +2914,7 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix2D getMatrixResource2ResourceUpperToBaseOccupation()
     {
         final int R = resources.size();
-        DoubleMatrix2D out = DoubleFactory2D.dense.make(R, R);
+        DoubleMatrix2D out = DoubleFactory2D.sparse.make(R, R);
         for (Resource upperResource : resources)
             for (Entry<Resource, Double> baseResource : upperResource.capacityIOccupyInBaseResource.entrySet())
                 out.set(upperResource.index, baseResource.getKey().index, baseResource.getValue());
@@ -4751,6 +4760,24 @@ public class NetPlan extends NetworkElement
         return res;
     }
 
+    /** Given a site name, returns the set of nodes associated to that site, or an empty set if none
+     * @param siteName the name
+     * @return see above
+     */
+    public Set<Node> getSiteNodes (String siteName)
+    {
+    	final Set<Node> res = this.cache_nodesPerSiteName.get(siteName);
+    	if (res == null) return new HashSet<> (); else return res;
+    }
+
+    /** Returns the set of all site names defined in the network
+     * @return see above
+     */
+    public Set<String> getSiteNames ()
+    {
+    	return this.cache_nodesPerSiteName.keySet();
+    }
+    
     /** Returns the set of demands in the given layer with the given tag. If no layer is provided, the defaulf layer is assumed.
      * @param tag the tag
      * @param optionalLayerParameter the layer (optional)
@@ -5460,6 +5487,8 @@ public class NetPlan extends NetworkElement
                 writer.writeAttribute("yCoord", Double.toString(position.getY()));
                 writer.writeAttribute("name", node.name);
                 writer.writeAttribute("population", Double.toString(node.population));
+                if (node.siteName != null) writer.writeAttribute("siteName", node.siteName);
+                
                 writer.writeAttribute("isUp", Boolean.toString(node.isUp));
                 final Set<NetworkLayer> layersWithIcons = layers.stream().filter(l -> node.getUrlNodeIcon(l) != null).collect(Collectors.toSet());
                 final List<Long> idsLayersWithIcons = layersWithIcons.stream().map(l -> l.getId()).collect(Collectors.toList());
@@ -5568,6 +5597,7 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("ingressNodeId", Long.toString(demand.ingressNode.id));
                     writer.writeAttribute("egressNodeId", Long.toString(demand.egressNode.id));
                     writer.writeAttribute("offeredTraffic", Double.toString(demand.offeredTraffic));
+                    writer.writeAttribute("intendedRecoveryType", demand.recoveryType.toString());
 
                     for (String type : demand.mandatorySequenceOfTraversedResourceTypes)
                     {
@@ -7039,8 +7069,12 @@ public class NetPlan extends NetworkElement
         for (String tag : cache_taggedElements.keySet ())
         	for (NetworkElement e : cache_taggedElements.get(tag))
         		if (!e.tags.contains (tag)) throw new RuntimeException();
+        /* Check site names are correct */
+        for (String siteName : cache_nodesPerSiteName.keySet ())
+        	for (Node n : cache_nodesPerSiteName.get(siteName))
+        		if (!n.siteName.equals(siteName)) throw new RuntimeException();
 
-		/* What is in the cache is correct */
+        /* What is in the cache is correct */
         for (String type : cache_type2Resources.keySet())
             for (Resource r : cache_type2Resources.get(type))
                 if (!r.type.equals(type)) throw new RuntimeException("Bad");
