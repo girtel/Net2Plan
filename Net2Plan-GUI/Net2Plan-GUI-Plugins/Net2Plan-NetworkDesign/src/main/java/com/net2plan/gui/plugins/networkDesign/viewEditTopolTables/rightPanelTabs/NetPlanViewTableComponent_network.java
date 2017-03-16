@@ -1,8 +1,8 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs;
 
-import com.net2plan.gui.utils.*;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_layer;
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_layer;
+import com.net2plan.gui.utils.*;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.StringUtils;
@@ -12,6 +12,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import java.util.Map;
+import java.util.Set;
 
 public class NetPlanViewTableComponent_network extends JPanel {
     private final static String[] attributeTableHeader = StringUtils.arrayOf("Attribute", "Value");
@@ -146,6 +147,8 @@ public class NetPlanViewTableComponent_network extends JPanel {
 
         networkAttributeTable.setEnabled(false);
         ((DefaultTableModel) networkAttributeTable.getModel()).setDataVector(new Object[1][attributeTableHeader.length], attributeTableHeader);
+        networkTagTable.setEnabled(false);
+        ((DefaultTableModel) networkTagTable.getModel()).setDataVector(new Object[1][tagTableHeader.length], tagTableHeader);
 
         Map<String, String> networkAttributes = currentState.getAttributes();
         if (!networkAttributes.isEmpty()) {
@@ -158,6 +161,20 @@ public class NetPlanViewTableComponent_network extends JPanel {
             }
 
             ((DefaultTableModel) networkAttributeTable.getModel()).setDataVector(networkData, attributeTableHeader);
+        }
+
+        // Tag data
+        final Set<String> layerTags = currentState.getTags();
+        final String[] tagArray = layerTags.toArray(new String[layerTags.size()]);
+
+        if (!(tagArray.length == 0))
+        {
+            final Object[][] tagData = new Object[tagArray.length][1];
+            for (int i = 0; i < tagData.length; i++)
+            {
+                tagData[i][0] = tagArray[i];
+            }
+            ((DefaultTableModel) networkTagTable.getModel()).setDataVector(tagData, tagTableHeader);
         }
 
         txt_networkName.setText(currentState.getNetworkName());

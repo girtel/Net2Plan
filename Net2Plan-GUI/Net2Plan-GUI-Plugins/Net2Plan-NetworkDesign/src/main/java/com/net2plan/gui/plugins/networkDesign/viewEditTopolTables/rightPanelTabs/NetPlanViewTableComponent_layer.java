@@ -392,14 +392,15 @@ public class NetPlanViewTableComponent_layer extends JPanel
         }
 
         // Tag data
-        final String[] tags = layer.getTags().toArray(new String[layer.getTags().size()]);
+        final Set<String> layerTags = layer.getTags();
+        final String[] tagArray = layerTags.toArray(new String[layerTags.size()]);
 
-        if (!(tags.length == 0))
+        if (!(tagArray.length == 0))
         {
-            final Object[][] tagData = new Object[tags.length][1];
+            final Object[][] tagData = new Object[tagArray.length][1];
             for (int i = 0; i < tagData.length; i++)
             {
-                tagData[i][0] = tags[i];
+                tagData[i][0] = tagArray[i];
             }
             ((DefaultTableModel) layerTagTable.getModel()).setDataVector(tagData, tagTableHeader);
         }
