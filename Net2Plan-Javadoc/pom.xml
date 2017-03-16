@@ -139,7 +139,7 @@
                             <tagletArtifact>
                                 <groupId>com.net2plan</groupId>
                                 <artifactId>net2plan-javadoc</artifactId>
-                                <version>0.5.0.2</version>
+                                <version>${project.version}</version>
                             </tagletArtifact>
                             <taglets>
                                 <taglet>
