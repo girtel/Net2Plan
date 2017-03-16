@@ -17,8 +17,12 @@ public class NetPlanViewTableComponent_network extends JPanel {
     private final static String[] attributeTableHeader = StringUtils.arrayOf("Attribute", "Value");
     private final static String[] attributeTableTips = attributeTableHeader;
 
+    private final static String[] tagTableHeader = StringUtils.arrayOf("Tag");
+    private final static String[] tagTableTip = StringUtils.arrayOf("Name of the tag");
+
     private JTextField txt_networkName, txt_layerLinkCapacityUnits, txt_layerDemandTrafficUnits, txt_numLayers, txt_numNodes, txt_numSRGs;
     private JTextArea txt_networkDescription;
+    private AdvancedJTable networkTagTable;
     private AdvancedJTable networkAttributeTable;
     private AdvancedJTable_layer layerTable;
     private JScrollPane scrollPane;
@@ -59,18 +63,33 @@ public class NetPlanViewTableComponent_network extends JPanel {
             });
         }
 
+        networkTagTable = new AdvancedJTable(new ClassAwareTableModel(new Object[1][tagTableHeader.length], tagTableHeader));
+
+        ColumnHeaderToolTips tagTips = new ColumnHeaderToolTips();
+        for (int c = 0; c < tagTableHeader.length; c++) {
+            TableColumn col = networkTagTable.getColumnModel().getColumn(c);
+            tagTips.setToolTip(col, tagTableTip[c]);
+        }
+
+        networkTagTable.getTableHeader().addMouseMotionListener(tagTips);
+        networkTagTable.setAutoCreateRowSorter(true);
+
+        JScrollPane sp_tags = new JScrollPane(networkTagTable);
+        ScrollPaneLayout tagLayout = new FullScrollPaneLayout();
+        sp_tags.setLayout(tagLayout);
+        sp_tags.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+
+        //
+
         networkAttributeTable = new AdvancedJTable(new ClassAwareTableModel(new Object[1][attributeTableHeader.length], attributeTableHeader));
         if (networkViewer.getVisualizationState().isNetPlanEditable()) {
             networkAttributeTable.addMouseListener(new SingleElementAttributeEditor(networkViewer, NetworkElementType.NETWORK));
         }
 
-        String[] columnTips = attributeTableTips;
-        String[] columnHeader = attributeTableHeader;
-
         ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
-        for (int c = 0; c < columnHeader.length; c++) {
+        for (int c = 0; c < attributeTableHeader.length; c++) {
             TableColumn col = networkAttributeTable.getColumnModel().getColumn(c);
-            tips.setToolTip(col, columnTips[c]);
+            tips.setToolTip(col, attributeTableTips[c]);
         }
 
         networkAttributeTable.getTableHeader().addMouseMotionListener(tips);
@@ -103,6 +122,7 @@ public class NetPlanViewTableComponent_network extends JPanel {
         this.add(txt_networkName, "grow, wrap");
         this.add(new JLabel("Description"), "aligny top");
         this.add(new JScrollPane(txt_networkDescription), "grow, wrap, height 100::");
+        this.add(sp_tags, "grow, spanx, wrap");
         this.add(scrollPane, "grow, spanx 2, wrap");
         this.add(new JLabel("Number of layers"), "grow");
         this.add(txt_numLayers, "grow, wrap");
