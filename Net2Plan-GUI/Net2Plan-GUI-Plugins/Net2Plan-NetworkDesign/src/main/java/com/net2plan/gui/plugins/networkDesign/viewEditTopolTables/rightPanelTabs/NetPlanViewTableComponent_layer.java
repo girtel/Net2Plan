@@ -29,11 +29,15 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
-public class NetPlanViewTableComponent_layer extends JPanel {
+public class NetPlanViewTableComponent_layer extends JPanel
+{
     private final static String[] layerSummaryTableHeader = StringUtils.arrayOf("Metric", "Value");
     private final static String[] attributeTableHeader = StringUtils.arrayOf("Attribute", "Value");
     private final static String[] attributeTableTips = attributeTableHeader;
+    private final static String[] tagTableHeader = StringUtils.arrayOf("Tag");
+    private final static String[] tagTableTips = StringUtils.arrayOf("Name of the tag");
     private JTable layerAttributeTable;
+    private JTable layerTagTable;
     private JTextField txt_layerName, txt_layerLinkCapacityUnits, txt_layerDemandTrafficUnits;
     private JTextArea txt_layerDescription;
     private JRadioButton sourceRoutingActivated, hopByHopRoutingActivated;
@@ -43,10 +47,11 @@ public class NetPlanViewTableComponent_layer extends JPanel {
     private JButton forceUpdate;
     private final AdvancedJTable_layer layerTable;
     private boolean insideUpdateView;
-    
+
     private final GUINetworkDesign networkViewer;
 
-    public NetPlanViewTableComponent_layer(final GUINetworkDesign networkViewer, final AdvancedJTable_layer layerTable) {
+    public NetPlanViewTableComponent_layer(final GUINetworkDesign networkViewer, final AdvancedJTable_layer layerTable)
+    {
         super(new MigLayout("", "[grow]", "[][][][][][grow]"));
         this.layerTable = layerTable;
         this.networkViewer = networkViewer;
@@ -63,31 +68,36 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         hopByHopRoutingActivated = new JRadioButton("Hop-by-hop routing", false);
         hopByHopRoutingActivated.setEnabled(networkViewer.getVisualizationState().isNetPlanEditable());
 
-        if (networkViewer.getVisualizationState().isNetPlanEditable()) {
-            ItemListener itemRoutingTypeListener = new ItemListener() {
+        if (networkViewer.getVisualizationState().isNetPlanEditable())
+        {
+            ItemListener itemRoutingTypeListener = new ItemListener()
+            {
                 @Override
-                public void itemStateChanged(ItemEvent event) {
+                public void itemStateChanged(ItemEvent event)
+                {
                     JRadioButton button = (JRadioButton) event.getSource();
                     int state = event.getStateChange();
 
                     NetPlan netPlan = networkViewer.getDesign();
                     RoutingType previousRoutingType = netPlan.getRoutingType();
 
-                    if (button == sourceRoutingActivated && state == ItemEvent.SELECTED) {
+                    if (button == sourceRoutingActivated && state == ItemEvent.SELECTED)
+                    {
                         netPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
                         if (previousRoutingType != RoutingType.SOURCE_ROUTING)
                         {
-                        	networkViewer.getVisualizationState().resetPickedState();
+                            networkViewer.getVisualizationState().resetPickedState();
                             networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                             networkViewer.addNetPlanChange();
                         }
                     }
 
-                    if (button == hopByHopRoutingActivated && state == ItemEvent.SELECTED) {
+                    if (button == hopByHopRoutingActivated && state == ItemEvent.SELECTED)
+                    {
                         netPlan.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
                         if (previousRoutingType != RoutingType.HOP_BY_HOP_ROUTING)
                         {
-                        	networkViewer.getVisualizationState().resetPickedState();
+                            networkViewer.getVisualizationState().resetPickedState();
                             networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                             networkViewer.addNetPlanChange();
                         }
@@ -106,17 +116,22 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         txt_layerDescription.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
         txt_layerDemandTrafficUnits.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
         txt_layerLinkCapacityUnits.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
-        if (networkViewer.getVisualizationState().isNetPlanEditable()) {
-            txt_layerName.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) {
+        if (networkViewer.getVisualizationState().isNetPlanEditable())
+        {
+            txt_layerName.getDocument().addDocumentListener(new DocumentAdapter(networkViewer)
+            {
                 @Override
-                protected void updateInfo(String text) {
+                protected void updateInfo(String text)
+                {
 //					allowDocumentUpdate = false;
                     NetworkLayer layer = networkViewer.getDesign().getNetworkLayerDefault();
                     JTable table = (JTable) layerTable;
                     TableModel model = table.getModel();
                     int numRows = model.getRowCount();
-                    for (int row = 0; row < numRows; row++) {
-                        if ((Long) model.getValueAt(row, AdvancedJTable_layer.COLUMN_ID) == layer.getId()) {
+                    for (int row = 0; row < numRows; row++)
+                    {
+                        if ((Long) model.getValueAt(row, AdvancedJTable_layer.COLUMN_ID) == layer.getId())
+                        {
                             layer.setName(text);
                             model.setValueAt(text, row, AdvancedJTable_layer.COLUMN_NAME);
                         }
@@ -125,10 +140,12 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                 }
             });
 
-            txt_layerName.addActionListener(new ActionListener(){
+            txt_layerName.addActionListener(new ActionListener()
+            {
 
                 @Override
-                public void actionPerformed(ActionEvent e) {
+                public void actionPerformed(ActionEvent e)
+                {
                     if (!insideUpdateView)
                     {
                         networkViewer.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
@@ -137,25 +154,32 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                 }
             });
 
-            txt_layerLinkCapacityUnits.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) {
+            txt_layerLinkCapacityUnits.getDocument().addDocumentListener(new DocumentAdapter(networkViewer)
+            {
                 @Override
-                protected void updateInfo(String text) {
+                protected void updateInfo(String text)
+                {
 //					allowDocumentUpdate = false;
 
                     NetworkLayer layer = networkViewer.getDesign().getNetworkLayerDefault();
                     JTable table = (JTable) layerTable;
                     TableModel model = table.getModel();
                     int numRows = model.getRowCount();
-                    for (int row = 0; row < numRows; row++) {
-                        if ((Long) model.getValueAt(row, AdvancedJTable_layer.COLUMN_ID) == layer.getId()) {
+                    for (int row = 0; row < numRows; row++)
+                    {
+                        if ((Long) model.getValueAt(row, AdvancedJTable_layer.COLUMN_ID) == layer.getId())
+                        {
                             final String previousValue = model.getValueAt(row, AdvancedJTable_layer.COLUMN_LINKCAPUNITS).toString();
                             model.setValueAt(text, row, AdvancedJTable_layer.COLUMN_LINKCAPUNITS);
-                            if (!text.equals(model.getValueAt(row, AdvancedJTable_layer.COLUMN_LINKCAPUNITS).toString())) {
+                            if (!text.equals(model.getValueAt(row, AdvancedJTable_layer.COLUMN_LINKCAPUNITS).toString()))
+                            {
                                 final DocumentListener me = this;
 
-                                SwingUtilities.invokeLater(new Runnable() {
+                                SwingUtilities.invokeLater(new Runnable()
+                                {
                                     @Override
-                                    public void run() {
+                                    public void run()
+                                    {
                                         txt_layerLinkCapacityUnits.getDocument().removeDocumentListener(me);
                                         txt_layerLinkCapacityUnits.setText(previousValue);
                                         txt_layerLinkCapacityUnits.getDocument().addDocumentListener(me);
@@ -169,25 +193,32 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                 }
             });
 
-            txt_layerDemandTrafficUnits.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) {
+            txt_layerDemandTrafficUnits.getDocument().addDocumentListener(new DocumentAdapter(networkViewer)
+            {
                 @Override
-                protected void updateInfo(String text) {
+                protected void updateInfo(String text)
+                {
 //					allowDocumentUpdate = false;
 
                     NetworkLayer layer = networkViewer.getDesign().getNetworkLayerDefault();
                     JTable table = (JTable) layerTable;
                     TableModel model = table.getModel();
                     int numRows = model.getRowCount();
-                    for (int row = 0; row < numRows; row++) {
-                        if ((Long) model.getValueAt(row, AdvancedJTable_layer.COLUMN_ID) == layer.getId()) {
+                    for (int row = 0; row < numRows; row++)
+                    {
+                        if ((Long) model.getValueAt(row, AdvancedJTable_layer.COLUMN_ID) == layer.getId())
+                        {
                             final String previousValue = model.getValueAt(row, AdvancedJTable_layer.COLUMN_DEMANDTRAFUNITS).toString();
                             model.setValueAt(text, row, AdvancedJTable_layer.COLUMN_DEMANDTRAFUNITS);
-                            if (!text.equals(model.getValueAt(row, AdvancedJTable_layer.COLUMN_DEMANDTRAFUNITS).toString())) {
+                            if (!text.equals(model.getValueAt(row, AdvancedJTable_layer.COLUMN_DEMANDTRAFUNITS).toString()))
+                            {
                                 final DocumentListener me = this;
 
-                                SwingUtilities.invokeLater(new Runnable() {
+                                SwingUtilities.invokeLater(new Runnable()
+                                {
                                     @Override
-                                    public void run() {
+                                    public void run()
+                                    {
                                         txt_layerDemandTrafficUnits.getDocument().removeDocumentListener(me);
                                         txt_layerDemandTrafficUnits.setText(previousValue);
                                         txt_layerDemandTrafficUnits.getDocument().addDocumentListener(me);
@@ -201,9 +232,11 @@ public class NetPlanViewTableComponent_layer extends JPanel {
                 }
             });
 
-            txt_layerDescription.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) {
+            txt_layerDescription.getDocument().addDocumentListener(new DocumentAdapter(networkViewer)
+            {
                 @Override
-                protected void updateInfo(String text) {
+                protected void updateInfo(String text)
+                {
 //					allowDocumentUpdate = false;
 
                     NetworkLayer layer = networkViewer.getDesign().getNetworkLayerDefault();
@@ -218,37 +251,60 @@ public class NetPlanViewTableComponent_layer extends JPanel {
             });
         }
 
+        // Tag table
+        layerTagTable = new AdvancedJTable(new ClassAwareTableModel(new Object[1][tagTableHeader.length], tagTableHeader));
 
+        ColumnHeaderToolTips tagTips = new ColumnHeaderToolTips();
+        for (int c = 0; c < tagTableHeader.length; c++)
+        {
+            TableColumn col = layerTagTable.getColumnModel().getColumn(c);
+            tagTips.setToolTip(col, tagTableTips[c]);
+        }
+
+        if (networkViewer.getVisualizationState().isNetPlanEditable())
+            layerTagTable.addMouseListener(new SingleElementTagEditor(networkViewer, NetworkElementType.LAYER));
+
+        layerTagTable.getTableHeader().addMouseMotionListener(tagTips);
+
+        JScrollPane sp_tags = new JScrollPane(layerTagTable);
+        sp_tags.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+
+        ScrollPaneLayout tagLayout = new FullScrollPaneLayout();
+        sp_tags.setLayout(tagLayout);
+
+        KeyListener tagKey = new TableCursorNavigation();
+        layerTagTable.addKeyListener(tagKey);
+
+        // Attribute table
         layerAttributeTable = new AdvancedJTable(new ClassAwareTableModel(new Object[1][attributeTableHeader.length], attributeTableHeader));
         if (networkViewer.getVisualizationState().isNetPlanEditable())
             layerAttributeTable.addMouseListener(new SingleElementAttributeEditor(networkViewer, NetworkElementType.LAYER));
 
-        JTable table = layerAttributeTable;
-        String[] columnTips = attributeTableTips;
-        String[] columnHeader = attributeTableHeader;
         ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
-        for (int c = 0; c < columnHeader.length; c++) {
-            TableColumn col = table.getColumnModel().getColumn(c);
-            tips.setToolTip(col, columnTips[c]);
+        for (int c = 0; c < attributeTableHeader.length; c++)
+        {
+            TableColumn col = layerAttributeTable.getColumnModel().getColumn(c);
+            tips.setToolTip(col, attributeTableTips[c]);
         }
 
-        table.getTableHeader().addMouseMotionListener(tips);
+        layerAttributeTable.getTableHeader().addMouseMotionListener(tips);
 
-        JScrollPane scrollPane = new JScrollPane(table);
-        ScrollPaneLayout layout = new FullScrollPaneLayout();
-        scrollPane.setLayout(layout);
+        JScrollPane scrollPane = new JScrollPane(layerAttributeTable);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
+        ScrollPaneLayout layout = new FullScrollPaneLayout();
+        scrollPane.setLayout(layout);
+
         KeyListener cursorNavigation = new TableCursorNavigation();
+        layerAttributeTable.addKeyListener(cursorNavigation);
 
         layerSummaryTables = new ParamValueTable[4];
-        for (int i = 0; i < layerSummaryTables.length; i++) {
+        for (int i = 0; i < layerSummaryTables.length; i++)
+        {
             layerSummaryTables[i] = new ParamValueTable(layerSummaryTableHeader);
             layerSummaryTables[i].setAutoCreateRowSorter(true);
             layerSummaryTables[i].addKeyListener(cursorNavigation);
         }
-
-        table.addKeyListener(cursorNavigation);
 
         layerMetricsInfo = new JPanel();
         layerMetricsInfo.setLayout(new MigLayout("insets 0 0 0 0", "[grow]"));
@@ -277,14 +333,18 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         radioPanel.add(hopByHopRoutingActivated);
         layerPane.add(radioPanel, "grow, wrap");
 
+        layerPane.add(sp_tags, "grow, spanx");
+
         layerPane.add(scrollPane, "grow, spanx 2");
         JScrollPane layerInfoScrollPane = new JScrollPane(layerMetricsInfo);
         layerInfoScrollPane.setBorder(BorderFactory.createEmptyBorder());
 
         forceUpdate = new JButton("Update all metrics");
-        forceUpdate.addActionListener(new ActionListener() {
+        forceUpdate.addActionListener(new ActionListener()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 updateLayerMetrics(networkViewer.getDesign(), true);
             }
         });
@@ -307,21 +367,25 @@ public class NetPlanViewTableComponent_layer extends JPanel {
     }
 
 
-    public void updateNetPlanView(NetPlan currentState) 
+    public void updateNetPlanView(NetPlan currentState)
     {
-    	this.insideUpdateView = true;
+        this.insideUpdateView = true;
         layerAttributeTable.setEnabled(false);
         ((DefaultTableModel) layerAttributeTable.getModel()).setDataVector(new Object[1][attributeTableHeader.length], attributeTableHeader);
+        layerTagTable.setEnabled(false);
+        ((DefaultTableModel) layerTagTable.getModel()).setDataVector(new Object[1][tagTableHeader.length], tagTableHeader);
 
         if (currentState.getRoutingType() == RoutingType.SOURCE_ROUTING) sourceRoutingActivated.setSelected(true);
         else hopByHopRoutingActivated.setSelected(true);
 
         NetworkLayer layer = currentState.getNetworkLayerDefault();
         Map<String, String> layerAttributes = layer.getAttributes();
-        if (!layerAttributes.isEmpty()) {
+        if (!layerAttributes.isEmpty())
+        {
             int layerAttributeId = 0;
             Object[][] layerData = new Object[layerAttributes.size()][2];
-            for (Map.Entry<String, String> entry : layerAttributes.entrySet()) {
+            for (Map.Entry<String, String> entry : layerAttributes.entrySet())
+            {
                 layerData[layerAttributeId][0] = entry.getKey();
                 layerData[layerAttributeId][1] = entry.getValue();
                 layerAttributeId++;
@@ -330,17 +394,35 @@ public class NetPlanViewTableComponent_layer extends JPanel {
             ((DefaultTableModel) layerAttributeTable.getModel()).setDataVector(layerData, attributeTableHeader);
         }
 
+        // Tag data
+        final Set<String> layerTags = layer.getTags();
+        final String[] tagArray = layerTags.toArray(new String[layerTags.size()]);
+
+        if (!(tagArray.length == 0))
+        {
+            final Object[][] tagData = new Object[tagArray.length][1];
+            for (int i = 0; i < tagData.length; i++)
+            {
+                tagData[i][0] = tagArray[i];
+            }
+            ((DefaultTableModel) layerTagTable.getModel()).setDataVector(tagData, tagTableHeader);
+        }
+
         if (!txt_layerName.getText().equals(layer.getName())) txt_layerName.setText(layer.getName());
-        if (!txt_layerDescription.getText().equals(layer.getDescription())) txt_layerDescription.setText(layer.getDescription());
-        if (!txt_layerLinkCapacityUnits.getText().equals(currentState.getLinkCapacityUnitsName())) txt_layerLinkCapacityUnits.setText(currentState.getLinkCapacityUnitsName());
-        if (!txt_layerDemandTrafficUnits.getText().equals(currentState.getDemandTrafficUnitsName())) txt_layerDemandTrafficUnits.setText(currentState.getDemandTrafficUnitsName());
+        if (!txt_layerDescription.getText().equals(layer.getDescription()))
+            txt_layerDescription.setText(layer.getDescription());
+        if (!txt_layerLinkCapacityUnits.getText().equals(currentState.getLinkCapacityUnitsName()))
+            txt_layerLinkCapacityUnits.setText(currentState.getLinkCapacityUnitsName());
+        if (!txt_layerDemandTrafficUnits.getText().equals(currentState.getDemandTrafficUnitsName()))
+            txt_layerDemandTrafficUnits.setText(currentState.getDemandTrafficUnitsName());
 
         boolean hardComputations = currentState.getNumberOfNodes() <= 100;
         updateLayerMetrics(currentState, hardComputations);
-    	this.insideUpdateView = false;
+        this.insideUpdateView = false;
     }
 
-    private void updateLayerMetrics(NetPlan netPlan, boolean applyHardComputations) {
+    private void updateLayerMetrics(NetPlan netPlan, boolean applyHardComputations)
+    {
         List<Node> nodes = netPlan.getNodes();
         List<Link> links = netPlan.getLinks();
         int N = netPlan.getNumberOfNodes();
@@ -354,9 +436,11 @@ public class NetPlanViewTableComponent_layer extends JPanel {
 
         int E_limitedCapacityLinks = 0;
         double totalCapacityInstalled_limitedCapacityLinks = 0;
-        for (Link link : links) {
+        for (Link link : links)
+        {
             double u_e = link.getCapacity();
-            if (u_e < Double.MAX_VALUE) {
+            if (u_e < Double.MAX_VALUE)
+            {
                 E_limitedCapacityLinks++;
                 totalCapacityInstalled_limitedCapacityLinks += u_e;
             }
@@ -377,7 +461,8 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         topologyData.put("Node out-degree (max, min, avg)", String.format("%d, %d, %.3f", maxMinOutDegree[0], maxMinOutDegree[1], avgOutDegree));
         topologyData.put("All links are bidirectional (yes/no)", GraphUtils.isBidirectional(nodes, links) ? "Yes" : "No");
 
-        if (applyHardComputations) {
+        if (applyHardComputations)
+        {
             int networkDiameter_hops = (int) metrics.getDiameter();
             metrics.configureLinkCostMap((Map<Link, Double>) CollectionUtils.toMap(links, netPlan.getVectorLinkLengthInKm()));
             double networkDiameter_km = metrics.getDiameter();
@@ -385,7 +470,8 @@ public class NetPlanViewTableComponent_layer extends JPanel {
             double networkDiameter_ms = metrics.getDiameter();
 
             topologyData.put("Layer diameter (hops, km, ms)", String.format("%d, %.3f, %.3g", networkDiameter_hops, networkDiameter_km, networkDiameter_ms));
-        } else {
+        } else
+        {
             topologyData.put("Layer diameter (hops, km, ms)", "- (use 'Update all metrics' button)");
         }
 
@@ -416,7 +502,8 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         DoubleMatrix1D vector_rhoe = netPlan.getVectorLinkUtilization();
         double max_rho_e = vector_rhoe.size() == 0 ? 0 : vector_rhoe.getMaxLocation()[0];
         RoutingType routingType = netPlan.getRoutingType();
-        if (routingType == RoutingType.SOURCE_ROUTING) {
+        if (routingType == RoutingType.SOURCE_ROUTING)
+        {
             int R = netPlan.getNumberOfRoutes();
             boolean isUnicastRoutingBifurcated = netPlan.isUnicastRoutingBifurcated();
             boolean hasUnicastRoutingLoops = netPlan.hasUnicastRoutingLoops();
@@ -449,12 +536,14 @@ public class NetPlanViewTableComponent_layer extends JPanel {
             protectionData.put("% routes protected with SRG disjoint backup paths (w. end nodes, w.o. end nodes)", String.format("%.3f, %.3f", srgDisjointnessPercentage.getFirst(), srgDisjointnessPercentage.getSecond()));
 
             layerSummaryInfo.add(protectionData);
-        } else {
+        } else
+        {
             Map<String, Object> routingData = new LinkedHashMap<String, Object>();
             routingData.put("Network congestion - bottleneck utilization", String.format("%.3f", max_rho_e));
 
             RoutingCycleType routingCycleType = RoutingCycleType.LOOPLESS;
-            for (Demand demand : netPlan.getDemands()) {
+            for (Demand demand : netPlan.getDemands())
+            {
                 if (demand.getRoutingCycleType() != RoutingCycleType.LOOPLESS)
                     routingCycleType = demand.getRoutingCycleType();
                 if (routingCycleType == RoutingCycleType.CLOSED_CYCLES) break;
@@ -464,7 +553,8 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         }
 
         ListIterator<Map<String, Object>> it = layerSummaryInfo.listIterator();
-        while (it.hasNext()) {
+        while (it.hasNext())
+        {
             int tableId = it.nextIndex();
             layerSummaryTables[tableId].setData(it.next());
 
@@ -496,7 +586,8 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         layerMetricsInfo.add(new JLabel("Traffic"), "growx, wrap");
         layerMetricsInfo.add(new JScrollPane(layerSummaryTables[1]), "growx, wrap");
 
-        if (routingType == RoutingType.SOURCE_ROUTING) {
+        if (routingType == RoutingType.SOURCE_ROUTING)
+        {
             layerSummaryTables[2].setToolTipText(0, 0, "Indicates the number of defined routes");
             layerSummaryTables[2].setToolTipText(1, 0, "<html>Indicates whether the unicast routing is bifurcated, that is, if at least there are more than one active (up) route <u>carrying</u> traffic from any demand</html>");
             layerSummaryTables[2].setToolTipText(2, 0, "Indicates the network congestion, that is, the utilization of the busiest link");
@@ -518,7 +609,8 @@ public class NetPlanViewTableComponent_layer extends JPanel {
             layerMetricsInfo.add(new JScrollPane(layerSummaryTables[2]), "growx, wrap");
             layerMetricsInfo.add(new JLabel("Resilience information"), "growx, wrap");
             layerMetricsInfo.add(new JScrollPane(layerSummaryTables[3]), "growx");
-        } else {
+        } else
+        {
             layerSummaryTables[2].setToolTipText(0, 0, "Indicates the network congestion, that is, the utilization of the busiest link");
             layerSummaryTables[2].setToolTipText(1, 0, "Indicates whether the routing has loops, that is, if at least a route visits a node more than once");
 

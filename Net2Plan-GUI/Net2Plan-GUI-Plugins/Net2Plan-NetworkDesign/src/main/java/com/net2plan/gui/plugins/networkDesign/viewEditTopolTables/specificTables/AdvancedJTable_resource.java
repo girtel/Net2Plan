@@ -46,11 +46,11 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
     public static final int COLUMN_UPPERRESOURCES = 9;
     public static final int COLUMN_BASERESOURCES = 10;
     public static final int COLUMN_PROCESSINGTIME = 11;
-    public static final int COLUMN_ATTRIBUTES = 12;
+    public static final int COLUMN_TAGS = 12;
+    public static final int COLUMN_ATTRIBUTES = 13;
     private static final String netPlanViewTabName = "Resources";
-    private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique Identifier","Index","Name","Type","Host Node","Capacity","Cap. Units","Ocuppied capacity","Traversing Routes","Upper Resources","Base Resources","Processing Time","Attributes");
-    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique Identifier","Index","Name","Type","Host Node","Capacity","Cap. Units","Ocuppied capacity","Traversing Routes","Upper Resources","Base Resources","Processing Time","Attributes");
-//    private final String[] resourceTypes = StringUtils.arrayOf("Firewall","NAT","CPU","RAM");
+    private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique Identifier","Index","Name","Type","Host Node","Capacity","Cap. Units","Ocuppied capacity","Traversing Routes","Upper Resources","Base Resources","Processing Time", "Tags", "Attributes");
+    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique Identifier","Index","Name","Type","Host Node","Capacity","Cap. Units","Ocuppied capacity","Traversing Routes","Upper Resources","Base Resources","Processing Time", "Tags", "Attributes");
 
     public AdvancedJTable_resource(final GUINetworkDesign callback)
     {
@@ -68,7 +68,6 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
         fixedTable.getTableHeader().setDefaultRenderer(new CellRenderers.FixedTableHeaderRenderer());
         setEnabled(true);
     }
-
 
     @Override
     public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesTitles) 
@@ -90,6 +89,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
             resData[COLUMN_UPPERRESOURCES] = joinUpperResourcesWithTheirCapacities(res);
             resData[COLUMN_BASERESOURCES] = joinBaseResourcesWithTheirCapacities(res);
             resData[COLUMN_PROCESSINGTIME] = res.getProcessingTimeToTraversingTrafficInMs();
+            resData[COLUMN_TAGS] = res.getTags();
             resData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(res.getAttributes());
 
             for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesTitles.size();i++)
@@ -423,7 +423,6 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                     });
 
                     popup.add(removeItem);
-                    addPopupMenuAttributeOptions(e, row, itemId, popup);
                 }
                 JMenuItem removeItemsOfAType = new JMenuItem("Remove all table "+networkElementType+"s of a type");
                 removeItemsOfAType.addActionListener(new ActionListener() {
@@ -483,6 +482,8 @@ public class AdvancedJTable_resource extends AdvancedJTable_NetworkElement
                 });
 
                 popup.add(removeItems);
+
+                addPopupMenuAttributeOptions(e, row, itemId, popup);
 
                 List<JComponent> extraOptions = getExtraOptions(row, itemId);
                 if (!extraOptions.isEmpty()) {

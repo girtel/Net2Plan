@@ -48,9 +48,9 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
 {
     private static final String netPlanViewTabName = "Shared-risk groups";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "MTTF (days)", "MTTR (days)", "Availability",
-            "Nodes", "Links", "Links (other layers)", "# Affected routes", "# Affected backup routes", "# Affected multicast trees", "Attributes");
+            "Nodes", "Links", "Links (other layers)", "# Affected routes", "# Affected backup routes", "# Affected multicast trees", "Tags", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)",
-            "Index (consecutive integer starting in zero)", "Mean time to fail", "Mean time to repair", "Expected availability", "Nodes included into the shared-risk group", "Links (in this layer) included into the shared-risk group", "Links (in other layers) included into the shared-risk group", "# Affected routes (primary or backup)", "# Affected routes that are designated as backup routes", "# Affected multicast trees", "Attributes");
+            "Index (consecutive integer starting in zero)", "Mean time to fail", "Mean time to repair", "Expected availability", "Nodes included into the shared-risk group", "Links (in this layer) included into the shared-risk group", "Links (in other layers) included into the shared-risk group", "# Affected routes (primary or backup)", "# Affected routes that are designated as backup routes", "# Affected multicast trees", "Tags", "Attributes");
     private static final int COLUMN_ID = 0;
     private static final int COLUMN_INDEX = 1;
     private static final int COLUMN_MTTF = 2;
@@ -62,7 +62,8 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
     private static final int COLUMN_AFFECTEDROUTES = 8;
     private static final int COLUMN_AFFECTEDBACKUPROUTES = 9;
     private static final int COLUMN_AFFECTEDTREES = 10;
-    private static final int COLUMN_ATTRIBUTES = 11;
+    private static final int COLUMN_TAGS = 11;
+    private static final int COLUMN_ATTRIBUTES = 12;
     private static int MAXNUMDECIMALSINAVAILABILITY = 7;
 
     public AdvancedJTable_srg(final GUINetworkDesign callback)
@@ -109,6 +110,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
             srgData[COLUMN_AFFECTEDROUTES] = numRoutes == 0 ? "none" : numRoutes + " (" + CollectionUtils.join(NetPlan.getIndexes(routeIds_thisSRG), ", ") + ")";
             srgData[COLUMN_AFFECTEDBACKUPROUTES] = numSegments == 0 ? "none" : numSegments + " (" + CollectionUtils.join(NetPlan.getIndexes(segmentIds_thisSRG), ", ") + ")";
             srgData[COLUMN_AFFECTEDTREES] = numMulticastTrees == 0 ? "none" : numMulticastTrees + " (" + CollectionUtils.join(NetPlan.getIndexes(treeIds_thisSRG), ", ") + ")";
+            srgData[COLUMN_TAGS] = srg.getTags();
             srgData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(srg.getAttributes());
 
             for (int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size(); i++)
@@ -365,7 +367,6 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                     });
 
                     popup.add(removeItem);
-                    addPopupMenuAttributeOptions(e, row, itemId, popup);
                 }
                 JMenuItem removeItems = new JMenuItem("Remove all table " + networkElementType + "s");
 
@@ -394,6 +395,8 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
                 });
 
                 popup.add(removeItems);
+
+                addPopupMenuAttributeOptions(e, row, itemId, popup);
 
                 List<JComponent> extraOptions = getExtraOptions(row, itemId);
                 if (!extraOptions.isEmpty())

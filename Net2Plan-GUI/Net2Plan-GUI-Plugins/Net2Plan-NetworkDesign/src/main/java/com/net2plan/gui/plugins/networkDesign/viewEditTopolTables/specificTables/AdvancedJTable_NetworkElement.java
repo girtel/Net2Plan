@@ -12,12 +12,12 @@
 
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables;
 
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.AttributeEditor;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.FixedColumnDecorator;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
-import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -221,7 +221,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                                 mainTableMenu.add(attributesItem);
                                 break;
                             default:
-                                if(columnName.startsWith("Att:"))
+                                if (columnName.startsWith("Att:"))
                                 {
                                     mainTableMenu.add(new JPopupMenu.Separator());
                                     mainTableMenu.add(attributesItem);
@@ -792,7 +792,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
         String[] currentHeaders = getCurrentTableHeaders();
         ArrayList<String> currentHeadersList = new ArrayList<>();
 
-        for(int i = 0; i < currentHeaders.length;i++)
+        for (int i = 0; i < currentHeaders.length; i++)
         {
             currentHeadersList.add(currentHeaders[i]);
         }
@@ -805,7 +805,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
 
         for (String col : fixedTableColumns)
         {
-            if(!currentHeadersList.contains(col))
+            if (!currentHeadersList.contains(col))
                 continue;
             TableColumn mainTableCol = null;
             for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
@@ -826,14 +826,14 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
         }
         for (String col : mainTableColumns)
         {
-            if(!currentHeadersList.contains(col))
+            if (!currentHeadersList.contains(col))
                 continue;
             showColumn(col, 0, false);
         }
         indexForEachHiddenColumn.clear();
         for (Map.Entry<String, Integer> entry : hiddenColumnsMap.entrySet())
         {
-            if(!currentHeadersList.contains(entry.getKey()))
+            if (!currentHeadersList.contains(entry.getKey()))
                 continue;
             indexForEachHiddenColumn.put(entry.getKey(), entry.getValue());
         }
@@ -1156,7 +1156,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
         setEnabled(false);
         String[] header = getCurrentTableHeaders();
         ((DefaultTableModel) getModel()).setDataVector(new Object[1][header.length], header);
-        
+
         if (currentState.getRoutingType() == RoutingType.SOURCE_ROUTING && networkElementType.equals(NetworkElementType.FORWARDING_RULE))
             return;
         if (currentState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING && (networkElementType.equals(NetworkElementType.ROUTE)))
@@ -1177,7 +1177,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                 for (int c = 0; c < columnHeader.length; c++)
                     tips.setToolTip(getColumnModel().getColumn(c), columnTips[c]);
                 getTableHeader().addMouseMotionListener(tips);
-                
+
                 if (areAttributesInDifferentColums())
                 {
                     removeNewColumn("Attributes");
@@ -1219,9 +1219,9 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
 //            for (int columnId : getColumnsOfSpecialComparatorForSorting())
 //                ((DefaultRowSorter) getRowSorter()).setComparator(columnId, new ColumnComparator());
         }
-        
+
         // here update the number of entries label
-        
+
     }
 
     public class PopupMenuAdapter extends MouseAdapter
@@ -1241,7 +1241,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                     if (table.getModel().getValueAt(row, 0) == null)
                         row = row - 1;
                     if (table.getModel().getValueAt(row, 0) instanceof LastRowAggregatedValue)
-                    	auxItemId = null;
+                        auxItemId = null;
                     else if (networkElementType == NetworkElementType.FORWARDING_RULE)
                         auxItemId = Pair.of(Integer.parseInt(model.getValueAt(row, 1).toString().split(" ")[0]), Integer.parseInt(model.getValueAt(row, 2).toString().split(" ")[0]));
                     else
@@ -1292,8 +1292,9 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
     final protected void addPopupMenuAttributeOptions(final MouseEvent e, final int row, final Object itemId, JPopupMenu popup)
     {
         if (networkElementType == NetworkElementType.FORWARDING_RULE)
-            throw new RuntimeException("Bad. Forwarding rules have no attributes");
+            throw new RuntimeException("Forwarding rules have no attributes");
         JMenuItem addAttribute = new JMenuItem("Add/edit attribute");
+        popup.add(new JPopupMenu.Separator());
         addAttribute.addActionListener(new ActionListener()
         {
             @Override
@@ -1318,23 +1319,14 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                     String attribute, value;
                     try
                     {
-                        if (txt_key.getText().isEmpty()) throw new Exception("Please, insert an attribute name");
+                        if (txt_key.getText().isEmpty()) continue;
 
                         attribute = txt_key.getText();
                         value = txt_value.getText();
                         NetworkElement element = netPlan.getNetworkElement((long) itemId);
                         element.setAttribute(attribute, value);
 
-                        try
-                        {
-                        	callback.updateVisualizationJustTables();
-                        } catch (Throwable ex)
-                        {
-                            ErrorHandling.addErrorOrException(ex, getClass());
-                            ErrorHandling.showErrorDialog("Unable to add attribute to " + networkElementType);
-
-                        }
-
+                        callback.updateVisualizationJustTables();
                     } catch (Throwable ex)
                     {
                         ErrorHandling.addErrorOrException(ex, getClass());
@@ -1361,11 +1353,6 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
 
                     switch (networkElementType)
                     {
-                        case FORWARDING_RULE:
-                            TableModel model = getModel();
-                            itemId = Pair.of((Long) model.getValueAt(itemIndex, 1), (Long) model.getValueAt(itemIndex, 2));
-                            break;
-
                         case LAYER:
                             itemId = netPlan.getNetworkLayers().get(itemIndex).getId();
                             break;
@@ -1523,391 +1510,759 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
         popup.add(removeAttribute);
 
 
-        int numItems = getModel().getRowCount();
-        if (numItems > 1)
+        if (popup.getSubElements().length > 0) popup.addSeparator();
+
+        JMenuItem addAttributeAll = new JMenuItem("Add/edit attribute to all");
+        addAttributeAll.addActionListener(new ActionListener()
         {
-            if (popup.getSubElements().length > 0) popup.addSeparator();
-
-            JMenuItem addAttributeAll = new JMenuItem("Add/edit attribute to all");
-            addAttributeAll.addActionListener(new ActionListener()
+            @Override
+            public void actionPerformed(ActionEvent e)
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
+                JTextField txt_key = new JTextField(20);
+                JTextField txt_value = new JTextField(20);
+
+                JPanel pane = new JPanel();
+                pane.add(new JLabel("Attribute: "));
+                pane.add(txt_key);
+                pane.add(Box.createHorizontalStrut(15));
+                pane.add(new JLabel("Value: "));
+                pane.add(txt_value);
+
+                NetPlan netPlan = callback.getDesign();
+
+                while (true)
                 {
-                    JTextField txt_key = new JTextField(20);
-                    JTextField txt_value = new JTextField(20);
-
-                    JPanel pane = new JPanel();
-                    pane.add(new JLabel("Attribute: "));
-                    pane.add(txt_key);
-                    pane.add(Box.createHorizontalStrut(15));
-                    pane.add(new JLabel("Value: "));
-                    pane.add(txt_value);
-
-                    NetPlan netPlan = callback.getDesign();
-
-                    while (true)
-                    {
-                        int result = JOptionPane.showConfirmDialog(null, pane, "Please enter an attribute name and its value", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                        if (result != JOptionPane.OK_OPTION) return;
-                        String attribute, value;
-                        try
-                        {
-                            if (txt_key.getText().isEmpty()) throw new Exception("Please, insert an attribute name");
-
-                            attribute = txt_key.getText();
-                            value = txt_value.getText();
-
-                            switch (networkElementType)
-                            {
-                                case LAYER:
-                                    for (NetworkLayer element : netPlan.getNetworkLayers())
-                                        element.setAttribute(attribute, value);
-                                    break;
-
-                                case NODE:
-                                    for (Node element : netPlan.getNodes())
-                                    {
-                                        element.setAttribute(attribute, value);
-                                    }
-                                    break;
-
-                                case LINK:
-                                    for (Link element : netPlan.getLinks())
-                                        element.setAttribute(attribute, value);
-                                    break;
-
-                                case DEMAND:
-                                    for (Demand element : netPlan.getDemands())
-                                        element.setAttribute(attribute, value);
-                                    break;
-
-                                case MULTICAST_DEMAND:
-                                    for (MulticastDemand element : netPlan.getMulticastDemands())
-                                        element.setAttribute(attribute, value);
-                                    break;
-
-                                case ROUTE:
-                                    for (Route element : netPlan.getRoutes())
-                                        element.setAttribute(attribute, value);
-                                    break;
-
-                                case MULTICAST_TREE:
-                                    for (MulticastTree element : netPlan.getMulticastTrees())
-                                        element.setAttribute(attribute, value);
-                                    break;
-
-                                case SRG:
-                                    for (SharedRiskGroup element : netPlan.getSRGs())
-                                        element.setAttribute(attribute, value);
-                                    break;
-
-                                default:
-                                    throw new RuntimeException("Bad");
-                            }
-
-                            try
-                            {
-                                callback.updateVisualizationJustTables();
-                            } catch (Throwable ex)
-                            {
-                                ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add attribute to all nodes");
-                            }
-                            break;
-                        } catch (Throwable ex)
-                        {
-                            ErrorHandling.showErrorDialog(ex.getMessage(), "Error adding/editing attribute to all " + networkElementType + "s");
-                        }
-                    }
-                }
-
-            });
-
-            popup.add(addAttributeAll);
-
-            JMenuItem viewAttributesAll = new JMenuItem("View/edit attributes from all");
-            viewAttributesAll.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
+                    int result = JOptionPane.showConfirmDialog(null, pane, "Please enter an attribute name and its value", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    if (result != JOptionPane.OK_OPTION) return;
+                    String attribute, value;
                     try
                     {
-                        JDialog dialog = new AttributeEditor(callback, networkElementType);
-                        dialog.setVisible(true);
-                        callback.updateVisualizationJustTables();
+                        if (txt_key.getText().isEmpty()) throw new Exception("Please, insert an attribute name");
 
-                    } catch (Throwable ex)
-                    {
-                        ex.printStackTrace();
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying attributes");
-                    }
-                }
-            });
-
-            popup.add(viewAttributesAll);
-
-            JMenuItem removeAttributeAll = new JMenuItem("Remove attribute from all " + networkElementType + "s");
-
-            removeAttributeAll.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    NetPlan netPlan = callback.getDesign();
-
-                    try
-                    {
-                        Set<String> attributeSet = new LinkedHashSet<String>();
-                        Collection<Long> itemIds;
+                        attribute = txt_key.getText();
+                        value = txt_value.getText();
 
                         switch (networkElementType)
                         {
                             case LAYER:
-                                itemIds = netPlan.getNetworkLayerIds();
-                                for (long layerId : itemIds)
-                                    attributeSet.addAll(netPlan.getNetworkLayerFromId(layerId).getAttributes().keySet());
-
+                                for (NetworkLayer element : netPlan.getNetworkLayers())
+                                    element.setAttribute(attribute, value);
                                 break;
 
                             case NODE:
-                                itemIds = netPlan.getNodeIds();
-                                for (long nodeId : itemIds)
-                                    attributeSet.addAll(netPlan.getNodeFromId(nodeId).getAttributes().keySet());
-
-                                break;
-
-                            case LINK:
-                                itemIds = netPlan.getLinkIds();
-                                for (long linkId : itemIds)
-                                    attributeSet.addAll(netPlan.getLinkFromId(linkId).getAttributes().keySet());
-
-                                break;
-
-                            case DEMAND:
-                                itemIds = netPlan.getDemandIds();
-                                for (long demandId : itemIds)
-                                    attributeSet.addAll(netPlan.getDemandFromId(demandId).getAttributes().keySet());
-
-                                break;
-
-                            case MULTICAST_DEMAND:
-                                itemIds = netPlan.getMulticastDemandIds();
-                                for (long demandId : itemIds)
-                                    attributeSet.addAll(netPlan.getMulticastDemandFromId(demandId).getAttributes().keySet());
-
-                                break;
-
-                            case ROUTE:
-                                itemIds = netPlan.getRouteIds();
-                                for (long routeId : itemIds)
-                                    attributeSet.addAll(netPlan.getRouteFromId(routeId).getAttributes().keySet());
-
-                                break;
-
-                            case MULTICAST_TREE:
-                                itemIds = netPlan.getMulticastTreeIds();
-                                for (long treeId : itemIds)
-                                    attributeSet.addAll(netPlan.getMulticastTreeFromId(treeId).getAttributes().keySet());
-
-                                break;
-
-                            case SRG:
-                                itemIds = netPlan.getSRGIds();
-                                for (long srgId : itemIds)
-                                    attributeSet.addAll(netPlan.getSRGFromId(srgId).getAttributes().keySet());
-
-                                break;
-
-                            default:
-                                throw new RuntimeException("Bad");
-                        }
-
-                        if (attributeSet.isEmpty()) throw new Exception("No attribute to remove");
-
-                        Object out = JOptionPane.showInputDialog(null, "Please, select an attribute to remove", "Remove attribute from all nodes", JOptionPane.QUESTION_MESSAGE, null, attributeSet.toArray(new String[attributeSet.size()]), attributeSet.iterator().next());
-                        if (out == null) return;
-
-                        String attributeToRemove = out.toString();
-
-                        switch (networkElementType)
-                        {
-                            case LAYER:
-                                for (long layerId : itemIds)
-                                    netPlan.getNetworkLayerFromId(layerId).removeAttribute(attributeToRemove);
-                                break;
-
-                            case NODE:
-                                for (long nodeId : itemIds)
-                                    netPlan.getNodeFromId(nodeId).removeAttribute(attributeToRemove);
-                                break;
-
-                            case LINK:
-                                for (long linkId : itemIds)
-                                    netPlan.getLinkFromId(linkId).removeAttribute(attributeToRemove);
-                                break;
-
-                            case DEMAND:
-                                for (long demandId : itemIds)
-                                    netPlan.getDemandFromId(demandId).removeAttribute(attributeToRemove);
-                                break;
-
-                            case MULTICAST_DEMAND:
-                                for (long demandId : itemIds)
-                                    netPlan.getMulticastDemandFromId(demandId).removeAttribute(attributeToRemove);
-                                break;
-
-                            case ROUTE:
-                                for (long routeId : itemIds)
-                                    netPlan.getRouteFromId(routeId).removeAttribute(attributeToRemove);
-                                break;
-
-                            case MULTICAST_TREE:
-                                for (long treeId : itemIds)
-                                    netPlan.getMulticastTreeFromId(treeId).removeAttribute(attributeToRemove);
-                                break;
-
-                            case SRG:
-                                for (long srgId : itemIds)
-                                    netPlan.getSRGFromId(srgId).removeAttribute(attributeToRemove);
-                                break;
-
-                            default:
-                                throw new RuntimeException("Bad");
-                        }
-
-                        callback.updateVisualizationJustTables();
-
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attribute from all " + networkElementType + "s");
-                    }
-                }
-            });
-
-            popup.add(removeAttributeAll);
-
-            JMenuItem removeAttributes = new JMenuItem("Remove all attributes from all " + networkElementType + "s");
-
-            removeAttributes.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    NetPlan netPlan = callback.getDesign();
-                    ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
-                    try
-                    {
-                        switch (networkElementType)
-                        {
-                            case LAYER:
-                                Collection<Long> layerIds = netPlan.getNetworkLayerIds();
-                                for (long layerId : layerIds)
-                                    netPlan.getNetworkLayerFromId(layerId).removeAllAttributes();
-                                break;
-
-                            case NODE:
-                                Collection<Long> nodeIds = netPlan.getNodeIds();
-                                for (long nodeId : nodeIds)
+                                for (Node element : netPlan.getNodes())
                                 {
-                                    netPlan.getNodeFromId(nodeId).removeAllAttributes();
+                                    element.setAttribute(attribute, value);
                                 }
                                 break;
 
                             case LINK:
-                                Collection<Long> linkIds = netPlan.getLinkIds();
-                                for (long linkId : linkIds)
-                                    netPlan.getLinkFromId(linkId).removeAllAttributes();
+                                for (Link element : netPlan.getLinks())
+                                    element.setAttribute(attribute, value);
                                 break;
 
                             case DEMAND:
-                                Collection<Long> demandIds = netPlan.getDemandIds();
-                                for (long demandId : demandIds)
-                                    netPlan.getDemandFromId(demandId).removeAllAttributes();
+                                for (Demand element : netPlan.getDemands())
+                                    element.setAttribute(attribute, value);
                                 break;
 
                             case MULTICAST_DEMAND:
-                                Collection<Long> multicastDemandIds = netPlan.getMulticastDemandIds();
-                                for (long demandId : multicastDemandIds)
-                                    netPlan.getMulticastDemandFromId(demandId).removeAllAttributes();
+                                for (MulticastDemand element : netPlan.getMulticastDemands())
+                                    element.setAttribute(attribute, value);
                                 break;
 
                             case ROUTE:
-                                Collection<Long> routeIds = netPlan.getRouteIds();
-                                for (long routeId : routeIds)
-                                    netPlan.getRouteFromId(routeId).removeAllAttributes();
+                                for (Route element : netPlan.getRoutes())
+                                    element.setAttribute(attribute, value);
                                 break;
 
                             case MULTICAST_TREE:
-                                Collection<Long> treeIds = netPlan.getMulticastTreeIds();
-                                for (long treeId : treeIds)
-                                    netPlan.getMulticastTreeFromId(treeId).removeAllAttributes();
+                                for (MulticastTree element : netPlan.getMulticastTrees())
+                                    element.setAttribute(attribute, value);
                                 break;
 
                             case SRG:
-                                Collection<Long> srgIds = netPlan.getSRGIds();
-                                for (long srgId : srgIds)
-                                    netPlan.getSRGFromId(srgId).removeAllAttributes();
+                                for (SharedRiskGroup element : netPlan.getSRGs())
+                                    element.setAttribute(attribute, value);
                                 break;
 
                             default:
                                 throw new RuntimeException("Bad");
                         }
 
-                        if (areAttributesInDifferentColums())
-                        {
-                            recoverRemovedColumn("Attributes");
-                            expandAttributes = false;
-                            attributesItem.setSelected(false);
-                        }
                         callback.updateVisualizationJustTables();
+                        break;
                     } catch (Throwable ex)
                     {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attributes");
+                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error adding/editing attribute to all " + networkElementType + "s");
                     }
                 }
-            });
+            }
 
-            popup.add(removeAttributes);
-        }
+        });
+
+        popup.add(addAttributeAll);
+
+        JMenuItem viewAttributesAll = new JMenuItem("View/edit attributes from all");
+        viewAttributesAll.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                try
+                {
+                    JDialog dialog = new AttributeEditor(callback, networkElementType);
+                    dialog.setVisible(true);
+                    callback.updateVisualizationJustTables();
+
+                } catch (Throwable ex)
+                {
+                    ex.printStackTrace();
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying attributes");
+                }
+            }
+        });
+
+        popup.add(viewAttributesAll);
+
+        JMenuItem removeAttributeAll = new JMenuItem("Remove attribute from all " + networkElementType + "s");
+
+        removeAttributeAll.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                NetPlan netPlan = callback.getDesign();
+
+                try
+                {
+                    Set<String> attributeSet = new LinkedHashSet<String>();
+                    Collection<Long> itemIds;
+
+                    switch (networkElementType)
+                    {
+                        case LAYER:
+                            itemIds = netPlan.getNetworkLayerIds();
+                            for (long layerId : itemIds)
+                                attributeSet.addAll(netPlan.getNetworkLayerFromId(layerId).getAttributes().keySet());
+
+                            break;
+
+                        case NODE:
+                            itemIds = netPlan.getNodeIds();
+                            for (long nodeId : itemIds)
+                                attributeSet.addAll(netPlan.getNodeFromId(nodeId).getAttributes().keySet());
+
+                            break;
+
+                        case LINK:
+                            itemIds = netPlan.getLinkIds();
+                            for (long linkId : itemIds)
+                                attributeSet.addAll(netPlan.getLinkFromId(linkId).getAttributes().keySet());
+
+                            break;
+
+                        case DEMAND:
+                            itemIds = netPlan.getDemandIds();
+                            for (long demandId : itemIds)
+                                attributeSet.addAll(netPlan.getDemandFromId(demandId).getAttributes().keySet());
+
+                            break;
+
+                        case MULTICAST_DEMAND:
+                            itemIds = netPlan.getMulticastDemandIds();
+                            for (long demandId : itemIds)
+                                attributeSet.addAll(netPlan.getMulticastDemandFromId(demandId).getAttributes().keySet());
+
+                            break;
+
+                        case ROUTE:
+                            itemIds = netPlan.getRouteIds();
+                            for (long routeId : itemIds)
+                                attributeSet.addAll(netPlan.getRouteFromId(routeId).getAttributes().keySet());
+
+                            break;
+
+                        case MULTICAST_TREE:
+                            itemIds = netPlan.getMulticastTreeIds();
+                            for (long treeId : itemIds)
+                                attributeSet.addAll(netPlan.getMulticastTreeFromId(treeId).getAttributes().keySet());
+
+                            break;
+
+                        case SRG:
+                            itemIds = netPlan.getSRGIds();
+                            for (long srgId : itemIds)
+                                attributeSet.addAll(netPlan.getSRGFromId(srgId).getAttributes().keySet());
+
+                            break;
+
+                        default:
+                            throw new RuntimeException("Bad");
+                    }
+
+                    if (attributeSet.isEmpty()) throw new Exception("No attribute to remove");
+
+                    Object out = JOptionPane.showInputDialog(null, "Please, select an attribute to remove", "Remove attribute from all nodes", JOptionPane.QUESTION_MESSAGE, null, attributeSet.toArray(new String[attributeSet.size()]), attributeSet.iterator().next());
+                    if (out == null) return;
+
+                    String attributeToRemove = out.toString();
+
+                    switch (networkElementType)
+                    {
+                        case LAYER:
+                            for (long layerId : itemIds)
+                                netPlan.getNetworkLayerFromId(layerId).removeAttribute(attributeToRemove);
+                            break;
+
+                        case NODE:
+                            for (long nodeId : itemIds)
+                                netPlan.getNodeFromId(nodeId).removeAttribute(attributeToRemove);
+                            break;
+
+                        case LINK:
+                            for (long linkId : itemIds)
+                                netPlan.getLinkFromId(linkId).removeAttribute(attributeToRemove);
+                            break;
+
+                        case DEMAND:
+                            for (long demandId : itemIds)
+                                netPlan.getDemandFromId(demandId).removeAttribute(attributeToRemove);
+                            break;
+
+                        case MULTICAST_DEMAND:
+                            for (long demandId : itemIds)
+                                netPlan.getMulticastDemandFromId(demandId).removeAttribute(attributeToRemove);
+                            break;
+
+                        case ROUTE:
+                            for (long routeId : itemIds)
+                                netPlan.getRouteFromId(routeId).removeAttribute(attributeToRemove);
+                            break;
+
+                        case MULTICAST_TREE:
+                            for (long treeId : itemIds)
+                                netPlan.getMulticastTreeFromId(treeId).removeAttribute(attributeToRemove);
+                            break;
+
+                        case SRG:
+                            for (long srgId : itemIds)
+                                netPlan.getSRGFromId(srgId).removeAttribute(attributeToRemove);
+                            break;
+
+                        default:
+                            throw new RuntimeException("Bad");
+                    }
+
+                    callback.updateVisualizationJustTables();
+
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attribute from all " + networkElementType + "s");
+                }
+            }
+        });
+
+        popup.add(removeAttributeAll);
+
+        JMenuItem removeAttributes = new JMenuItem("Remove all attributes from all " + networkElementType + "s");
+
+        removeAttributes.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                NetPlan netPlan = callback.getDesign();
+                ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
+                try
+                {
+                    switch (networkElementType)
+                    {
+                        case LAYER:
+                            Collection<Long> layerIds = netPlan.getNetworkLayerIds();
+                            for (long layerId : layerIds)
+                                netPlan.getNetworkLayerFromId(layerId).removeAllAttributes();
+                            break;
+
+                        case NODE:
+                            Collection<Long> nodeIds = netPlan.getNodeIds();
+                            for (long nodeId : nodeIds)
+                            {
+                                netPlan.getNodeFromId(nodeId).removeAllAttributes();
+                            }
+                            break;
+
+                        case LINK:
+                            Collection<Long> linkIds = netPlan.getLinkIds();
+                            for (long linkId : linkIds)
+                                netPlan.getLinkFromId(linkId).removeAllAttributes();
+                            break;
+
+                        case DEMAND:
+                            Collection<Long> demandIds = netPlan.getDemandIds();
+                            for (long demandId : demandIds)
+                                netPlan.getDemandFromId(demandId).removeAllAttributes();
+                            break;
+
+                        case MULTICAST_DEMAND:
+                            Collection<Long> multicastDemandIds = netPlan.getMulticastDemandIds();
+                            for (long demandId : multicastDemandIds)
+                                netPlan.getMulticastDemandFromId(demandId).removeAllAttributes();
+                            break;
+
+                        case ROUTE:
+                            Collection<Long> routeIds = netPlan.getRouteIds();
+                            for (long routeId : routeIds)
+                                netPlan.getRouteFromId(routeId).removeAllAttributes();
+                            break;
+
+                        case MULTICAST_TREE:
+                            Collection<Long> treeIds = netPlan.getMulticastTreeIds();
+                            for (long treeId : treeIds)
+                                netPlan.getMulticastTreeFromId(treeId).removeAllAttributes();
+                            break;
+
+                        case SRG:
+                            Collection<Long> srgIds = netPlan.getSRGIds();
+                            for (long srgId : srgIds)
+                                netPlan.getSRGFromId(srgId).removeAllAttributes();
+                            break;
+
+                        default:
+                            throw new RuntimeException("Bad");
+                    }
+
+                    if (areAttributesInDifferentColums())
+                    {
+                        recoverRemovedColumn("Attributes");
+                        expandAttributes = false;
+                        attributesItem.setSelected(false);
+                    }
+                    callback.updateVisualizationJustTables();
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attributes");
+                }
+            }
+        });
+
+        popup.add(removeAttributes);
+
+        // Tags controls
+        popup.add(new JPopupMenu.Separator());
+
+        JMenuItem addTag = new JMenuItem("Add tag");
+        addTag.addActionListener(e1 ->
+        {
+            JTextField txt_name = new JTextField(20);
+
+            JPanel pane = new JPanel();
+            pane.add(new JLabel("Tag: "));
+            pane.add(txt_name);
+
+            NetPlan netPlan = callback.getDesign();
+
+            while (true)
+            {
+                int result = JOptionPane.showConfirmDialog(null, pane, "Please enter tag name", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (result != JOptionPane.OK_OPTION) return;
+                String tag;
+                try
+                {
+                    if (txt_name.getText().isEmpty()) continue;
+
+                    tag = txt_name.getText();
+                    NetworkElement element = netPlan.getNetworkElement((long) itemId);
+                    element.addTag(tag);
+
+                    callback.updateVisualizationJustTables();
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.addErrorOrException(ex, getClass());
+                    ErrorHandling.showErrorDialog("Error adding/editing tag");
+                }
+                break;
+            }
+        });
+        popup.add(addTag);
+
+        JMenuItem removeTag = new JMenuItem("Remove tag");
+
+        removeTag.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                NetPlan netPlan = callback.getDesign();
+
+                try
+                {
+                    int itemIndex = convertRowIndexToModel(row);
+                    Object itemId;
+
+                    String[] tagList;
+
+                    switch (networkElementType)
+                    {
+                        case LAYER:
+                        {
+                            NetworkLayer element = netPlan.getNetworkLayers().get(itemIndex);
+                            itemId = element.getId();
+                            tagList = StringUtils.toArray(element.getTags());
+                        }
+                        break;
+
+                        case NODE:
+                        {
+                            Node element = netPlan.getNodes().get(itemIndex);
+                            itemId = element.getId();
+                            tagList = StringUtils.toArray(element.getTags());
+                        }
+                        break;
+
+                        case LINK:
+                        {
+                            Link element = netPlan.getLinks().get(itemIndex);
+                            itemId = element.getId();
+                            tagList = StringUtils.toArray(element.getTags());
+                        }
+                        break;
+
+                        case DEMAND:
+                        {
+                            Demand element = netPlan.getDemands().get(itemIndex);
+                            itemId = element.getId();
+                            tagList = StringUtils.toArray(element.getTags());
+                        }
+                        break;
+
+                        case MULTICAST_DEMAND:
+                        {
+                            MulticastDemand element = netPlan.getMulticastDemands().get(itemIndex);
+                            itemId = element.getId();
+                            tagList = StringUtils.toArray(element.getTags());
+                        }
+                        break;
+
+                        case ROUTE:
+                        {
+                            Route element = netPlan.getRoutes().get(itemIndex);
+                            itemId = element.getId();
+                            tagList = StringUtils.toArray(element.getTags());
+                        }
+                        break;
+
+                        case MULTICAST_TREE:
+                        {
+                            MulticastTree element = netPlan.getMulticastTrees().get(itemIndex);
+                            itemId = element.getId();
+                            tagList = StringUtils.toArray(element.getTags());
+                        }
+                        break;
+
+                        case SRG:
+                        {
+                            SharedRiskGroup element = netPlan.getSRGs().get(itemIndex);
+                            itemId = element.getId();
+                            tagList = StringUtils.toArray(element.getTags());
+                        }
+                        break;
+
+                        default:
+                            throw new RuntimeException("Unknown network element");
+                    }
+
+                    if (tagList.length == 0) throw new Exception("No tag to remove");
+
+                    Object out = JOptionPane.showInputDialog(null, "Please, select a tag to remove", "Remove tag", JOptionPane.QUESTION_MESSAGE, null, tagList, tagList[0]);
+                    if (out == null) return;
+
+                    String tagToRemove = out.toString();
+                    NetworkElement element = netPlan.getNetworkElement((long) itemId);
+                    if (element == null) throw new RuntimeException("Bad");
+                    element.removeTag(tagToRemove);
+                    callback.updateVisualizationJustTables();
+
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing tag");
+                }
+            }
+        });
+
+        popup.add(removeTag);
+
+        JMenuItem addTagAll = new JMenuItem("Add tag to all " + networkElementType + "s");
+        addTagAll.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                JTextField txt_key = new JTextField(20);
+
+                JPanel pane = new JPanel();
+                pane.add(new JLabel("Tag: "));
+                pane.add(txt_key);
+
+                NetPlan netPlan = callback.getDesign();
+
+                while (true)
+                {
+                    int result = JOptionPane.showConfirmDialog(null, pane, "Please enter a tag name", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    if (result != JOptionPane.OK_OPTION) return;
+                    String tag;
+                    try
+                    {
+                        if (txt_key.getText().isEmpty())
+                        {
+                            continue;
+                        }
+
+                        tag = txt_key.getText();
+
+                        switch (networkElementType)
+                        {
+                            case LAYER:
+                                for (NetworkLayer element : netPlan.getNetworkLayers())
+                                    element.addTag(tag);
+                                break;
+
+                            case NODE:
+                                for (Node element : netPlan.getNodes())
+                                    element.addTag(tag);
+                                break;
+
+                            case LINK:
+                                for (Link element : netPlan.getLinks())
+                                    element.addTag(tag);
+                                break;
+
+                            case DEMAND:
+                                for (Demand element : netPlan.getDemands())
+                                    element.addTag(tag);
+                                break;
+
+                            case MULTICAST_DEMAND:
+                                for (MulticastDemand element : netPlan.getMulticastDemands())
+                                    element.addTag(tag);
+                                break;
+
+                            case ROUTE:
+                                for (Route element : netPlan.getRoutes())
+                                    element.addTag(tag);
+                                break;
+
+                            case MULTICAST_TREE:
+                                for (MulticastTree element : netPlan.getMulticastTrees())
+                                    element.addTag(tag);
+                                break;
+
+                            case SRG:
+                                for (SharedRiskGroup element : netPlan.getSRGs())
+                                    element.addTag(tag);
+                                break;
+
+                            default:
+                                throw new RuntimeException("Bad");
+                        }
+
+                        callback.updateVisualizationJustTables();
+                        break;
+                    } catch (Throwable ex)
+                    {
+                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error adding/editing tag to all " + networkElementType + "s");
+                    }
+                }
+            }
+
+        });
+
+        popup.addSeparator();
+
+        popup.add(addTagAll);
+
+        JMenuItem removeTagAll = new JMenuItem("Remove tag from all " + networkElementType + "s");
+
+        removeTagAll.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                NetPlan netPlan = callback.getDesign();
+
+                try
+                {
+                    Set<String> tagSet = new LinkedHashSet<String>();
+                    Collection<Long> itemIds;
+
+                    switch (networkElementType)
+                    {
+                        case LAYER:
+                            itemIds = netPlan.getNetworkLayerIds();
+                            for (long layerId : itemIds)
+                                tagSet.addAll(netPlan.getNetworkLayerFromId(layerId).getTags());
+
+                            break;
+
+                        case NODE:
+                            itemIds = netPlan.getNodeIds();
+                            for (long nodeId : itemIds)
+                                tagSet.addAll(netPlan.getNodeFromId(nodeId).getTags());
+
+                            break;
+
+                        case LINK:
+                            itemIds = netPlan.getLinkIds();
+                            for (long linkId : itemIds)
+                                tagSet.addAll(netPlan.getLinkFromId(linkId).getTags());
+
+                            break;
+
+                        case DEMAND:
+                            itemIds = netPlan.getDemandIds();
+                            for (long demandId : itemIds)
+                                tagSet.addAll(netPlan.getDemandFromId(demandId).getTags());
+
+                            break;
+
+                        case MULTICAST_DEMAND:
+                            itemIds = netPlan.getMulticastDemandIds();
+                            for (long demandId : itemIds)
+                                tagSet.addAll(netPlan.getMulticastDemandFromId(demandId).getTags());
+
+                            break;
+
+                        case ROUTE:
+                            itemIds = netPlan.getRouteIds();
+                            for (long routeId : itemIds)
+                                tagSet.addAll(netPlan.getRouteFromId(routeId).getTags());
+
+                            break;
+
+                        case MULTICAST_TREE:
+                            itemIds = netPlan.getMulticastTreeIds();
+                            for (long treeId : itemIds)
+                                tagSet.addAll(netPlan.getMulticastTreeFromId(treeId).getTags());
+
+                            break;
+
+                        case SRG:
+                            itemIds = netPlan.getSRGIds();
+                            for (long srgId : itemIds)
+                                tagSet.addAll(netPlan.getSRGFromId(srgId).getTags());
+
+                            break;
+
+                        default:
+                            throw new RuntimeException("Bad");
+                    }
+
+                    if (tagSet.isEmpty()) throw new Exception("No tag to remove");
+
+                    Object out = JOptionPane.showInputDialog(null, "Please, select a tag to remove", "Remove tag from all nodes", JOptionPane.QUESTION_MESSAGE, null, tagSet.toArray(new String[tagSet.size()]), tagSet.iterator().next());
+                    if (out == null) return;
+
+                    String tagToRemove = out.toString();
+
+                    switch (networkElementType)
+                    {
+                        case LAYER:
+                            for (long layerId : itemIds)
+                                netPlan.getNetworkLayerFromId(layerId).removeTag(tagToRemove);
+                            break;
+
+                        case NODE:
+                            for (long nodeId : itemIds)
+                                netPlan.getNodeFromId(nodeId).removeTag(tagToRemove);
+                            break;
+
+                        case LINK:
+                            for (long linkId : itemIds)
+                                netPlan.getLinkFromId(linkId).removeTag(tagToRemove);
+                            break;
+
+                        case DEMAND:
+                            for (long demandId : itemIds)
+                                netPlan.getDemandFromId(demandId).removeTag(tagToRemove);
+                            break;
+
+                        case MULTICAST_DEMAND:
+                            for (long demandId : itemIds)
+                                netPlan.getMulticastDemandFromId(demandId).removeTag(tagToRemove);
+                            break;
+
+                        case ROUTE:
+                            for (long routeId : itemIds)
+                                netPlan.getRouteFromId(routeId).removeTag(tagToRemove);
+                            break;
+
+                        case MULTICAST_TREE:
+                            for (long treeId : itemIds)
+                                netPlan.getMulticastTreeFromId(treeId).removeTag(tagToRemove);
+                            break;
+
+                        case SRG:
+                            for (long srgId : itemIds)
+                                netPlan.getSRGFromId(srgId).removeTag(tagToRemove);
+                            break;
+
+                        default:
+                            throw new RuntimeException("Bad");
+                    }
+
+                    callback.updateVisualizationJustTables();
+
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing tag from all " + networkElementType + "s");
+                }
+            }
+        });
+        popup.add(removeTagAll);
     }
 
     static class ColumnComparator implements Comparator<Object>
     {
-    	private final boolean isDoubleWithParenthesis;
-    	private final RowSorter rs;
-    	public ColumnComparator(RowSorter rs , boolean isDoubleWithParenthesis) { this.rs = rs; this.isDoubleWithParenthesis = isDoubleWithParenthesis; }
+        private final boolean isDoubleWithParenthesis;
+        private final RowSorter rs;
+
+        public ColumnComparator(RowSorter rs, boolean isDoubleWithParenthesis)
+        {
+            this.rs = rs;
+            this.isDoubleWithParenthesis = isDoubleWithParenthesis;
+        }
+
         @Override
         public int compare(Object o1, Object o2)
         {
-        	
-        	if (o1 instanceof LastRowAggregatedValue) 
-        	{
-        		final boolean ascending = ((List<? extends SortKey>) rs.getSortKeys()).get(0).getSortOrder() == SortOrder.ASCENDING;
-        		return ascending? 1 : -1;
-        	}
-        	if (o2 instanceof LastRowAggregatedValue) 
-        	{
-        		final boolean ascending = ((List<? extends SortKey>) rs.getSortKeys()).get(0).getSortOrder() == SortOrder.ASCENDING;
-        		return ascending? -1 : 1;
-        	}
-        	if (o1 instanceof Boolean)
-        	{
+
+            if (o1 instanceof LastRowAggregatedValue)
+            {
+                final boolean ascending = ((List<? extends SortKey>) rs.getSortKeys()).get(0).getSortOrder() == SortOrder.ASCENDING;
+                return ascending ? 1 : -1;
+            }
+            if (o2 instanceof LastRowAggregatedValue)
+            {
+                final boolean ascending = ((List<? extends SortKey>) rs.getSortKeys()).get(0).getSortOrder() == SortOrder.ASCENDING;
+                return ascending ? -1 : 1;
+            }
+            if (o1 instanceof Boolean)
+            {
                 final Boolean oo1 = (Boolean) o1;
                 final Boolean oo2 = (Boolean) o2;
                 return oo1.compareTo(oo2);
-        	}
-        	if (o1 instanceof Number)
-        	{
+            }
+            if (o1 instanceof Number)
+            {
                 final Number oo1 = (Number) o1;
                 final Number oo2 = (Number) o2;
-                return new Double(oo1.doubleValue()).compareTo(new Double (oo2.doubleValue()));
-        	}
+                return new Double(oo1.doubleValue()).compareTo(new Double(oo2.doubleValue()));
+            }
             String oo1 = (String) o1;
             String oo2 = (String) o2;
             if (!isDoubleWithParenthesis)
-            	return oo1.compareTo(oo2);
-            
+                return oo1.compareTo(oo2);
+
             int pos1 = oo1.indexOf(" (");
             if (pos1 != -1) oo1 = oo1.substring(0, pos1);
 
@@ -1922,7 +2277,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
                 return d1.compareTo(d2);
             } catch (Throwable e)
             {
-            	return oo1.compareTo(oo2);
+                return oo1.compareTo(oo2);
             }
         }
     }
@@ -1938,62 +2293,88 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
 
     public static class LastRowAggregatedValue implements Comparable
     {
-    	private String value;
-    	LastRowAggregatedValue () { value = "---"; }
-    	LastRowAggregatedValue (int val) { value = "" + val; }
-    	LastRowAggregatedValue (double val) { value = String.format("%.2f", val); }
-    	LastRowAggregatedValue (String value) { this.value = value; }
-    	String getValue () { return value; }
-    	public String toString () { return value; }
-		@Override
-		public int compareTo(Object arg0) 
-		{
-			return -1;
-		}
+        private String value;
+
+        LastRowAggregatedValue()
+        {
+            value = "---";
+        }
+
+        LastRowAggregatedValue(int val)
+        {
+            value = "" + val;
+        }
+
+        LastRowAggregatedValue(double val)
+        {
+            value = String.format("%.2f", val);
+        }
+
+        LastRowAggregatedValue(String value)
+        {
+            this.value = value;
+        }
+
+        String getValue()
+        {
+            return value;
+        }
+
+        public String toString()
+        {
+            return value;
+        }
+
+        @Override
+        public int compareTo(Object arg0)
+        {
+            return -1;
+        }
     }
 
-    /** Gets the selected elements in this table. 
+    /**
+     * Gets the selected elements in this table.
+     *
      * @return
      */
-    public Pair<List<NetworkElement>,List<Pair<Demand,Link>>> getSelectedElements ()
+    public Pair<List<NetworkElement>, List<Pair<Demand, Link>>> getSelectedElements()
     {
-    	final int [] rowIndexes = getSelectedRows();
-    	final List<NetworkElement> elementList = new ArrayList<> ();
-    	final List<Pair<Demand,Link>> frList = new ArrayList<> ();
-    	final NetPlan np = callback.getDesign();
-    	
-    	if (rowIndexes.length == 0) return Pair.of(elementList , frList);
-    	final int maxValidRowIndex = model.getRowCount() - 1 - (hasAggregationRow()? 1 : 0);
-    	final List<Integer> validRows = new ArrayList<Integer> (); 
-    	for (int a : rowIndexes) if ((a >= 0) && (a <= maxValidRowIndex)) validRows.add(a);
-    	
-    	if (networkElementType == NetworkElementType.FORWARDING_RULE)
-    	{
-    		for (int rowIndex : validRows)
-    		{
-    			final String demandInfo = (String) ((DefaultTableModel) getModel()).getValueAt (rowIndex , AdvancedJTable_forwardingRule.COLUMN_DEMAND);
-    			final String linkInfo = (String) ((DefaultTableModel) getModel()).getValueAt (rowIndex , AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK);
-    			final int demandIndex = Integer.parseInt(demandInfo.substring(0 , demandInfo.indexOf("(")).trim());
-    			final int linkIndex = Integer.parseInt(linkInfo.substring(0 , linkInfo.indexOf("(")).trim());
-    			frList.add(Pair.of(np.getDemand(demandIndex), np.getLink(linkIndex)));
-    		}
-    	}
-    	else
-    	{
-    		for (int rowIndex : validRows)
-    		{
-    	    	final long id = (long) ((DefaultTableModel) getModel()).getValueAt(rowIndex, 0);
-    			elementList.add(np.getNetworkElement(id));
-    		}
-    	}
-    	return Pair.of(elementList , frList);
+        final int[] rowIndexes = getSelectedRows();
+        final List<NetworkElement> elementList = new ArrayList<>();
+        final List<Pair<Demand, Link>> frList = new ArrayList<>();
+        final NetPlan np = callback.getDesign();
+
+        if (rowIndexes.length == 0) return Pair.of(elementList, frList);
+        final int maxValidRowIndex = model.getRowCount() - 1 - (hasAggregationRow() ? 1 : 0);
+        final List<Integer> validRows = new ArrayList<Integer>();
+        for (int a : rowIndexes) if ((a >= 0) && (a <= maxValidRowIndex)) validRows.add(a);
+
+        if (networkElementType == NetworkElementType.FORWARDING_RULE)
+        {
+            for (int rowIndex : validRows)
+            {
+                final String demandInfo = (String) ((DefaultTableModel) getModel()).getValueAt(rowIndex, AdvancedJTable_forwardingRule.COLUMN_DEMAND);
+                final String linkInfo = (String) ((DefaultTableModel) getModel()).getValueAt(rowIndex, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK);
+                final int demandIndex = Integer.parseInt(demandInfo.substring(0, demandInfo.indexOf("(")).trim());
+                final int linkIndex = Integer.parseInt(linkInfo.substring(0, linkInfo.indexOf("(")).trim());
+                frList.add(Pair.of(np.getDemand(demandIndex), np.getLink(linkIndex)));
+            }
+        } else
+        {
+            for (int rowIndex : validRows)
+            {
+                final long id = (long) ((DefaultTableModel) getModel()).getValueAt(rowIndex, 0);
+                elementList.add(np.getNetworkElement(id));
+            }
+        }
+        return Pair.of(elementList, frList);
     }
 
-    
-    public boolean hasAggregationRow ()
+
+    public boolean hasAggregationRow()
     {
-    	if (networkElementType.equals(networkElementType.LAYER)) return false;
-    	if (networkElementType.equals(networkElementType.NETWORK)) return false;
-    	return true;
+        if (networkElementType.equals(networkElementType.LAYER)) return false;
+        if (networkElementType.equals(networkElementType.NETWORK)) return false;
+        return true;
     }
 }

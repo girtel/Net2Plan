@@ -60,13 +60,14 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
     private static final int COLUMN_BIFURCATED = 11;
     private static final int COLUMN_NUMROUTES = 12;
     private static final int COLUMN_MAXE2ELATENCY = 13;
-    private static final int COLUMN_ATTRIBUTES = 14;
+    private static final int COLUMN_TAGS = 14;
+    private static final int COLUMN_ATTRIBUTES = 15;
     private static final String netPlanViewTabName = "Demands";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index",
     		"Ingress node", "Egress node", "Coupled to link",
             "Offered traffic", "Carried traffic", "% Lost traffic",
             "Is Service Chain","Service types","Routing cycles", "Bifurcated",
-            "# Routes (#BU)", "Max e2e latency (ms)", "Attributes");
+            "# Routes (#BU)", "Max e2e latency (ms)", "Tags", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf(
     		"Unique identifier (never repeated in the same netPlan object, never changes, long)",
     		"Index (consecutive integer starting in zero)",
@@ -79,7 +80,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
     		"Is Service Chain","Service Types",
     		"Indicates whether there are routing cycles: loopless (no cycle in some route), open cycles (traffic reaches egress node after some cycles in some route), closed cycles (traffic does not reach the egress node in some route)",
     		"Indicates whether the demand has more than one associated route",
-    		"Number of associated routes (in parenthesis, the number out of them that are designated as backup routes)", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", "Demand-specific attributes");
+    		"Number of associated routes (in parenthesis, the number out of them that are designated as backup routes)", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", "Demand-specific tags", "Demand-specific attributes");
 
     private NetPlan currentTopology = null;
 //    private final String[] resourceTypes = StringUtils.arrayOf("Firewall","NAT","CPU","RAM");
@@ -146,6 +147,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
             if (isSourceRouting) { accum_numRoutes += routes_thisDemand.size(); accum_numBackupRoutes += routes_thisDemand.stream().filter(e->e.isBackupRoute()).count(); }
             demandData[COLUMN_NUMROUTES] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + routes_thisDemand.stream().filter(e->e.isBackupRoute()).count() + ")";
             demandData[COLUMN_MAXE2ELATENCY] = demand.getWorstCasePropagationTimeInMs(); accum_worstCasePropDelayMs = Math.max(accum_worstCasePropDelayMs, demand.getWorstCasePropagationTimeInMs());
+            demandData[COLUMN_TAGS] = demand.getTags();
             demandData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(demand.getAttributes());
             for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size();i++)
             {
@@ -415,8 +417,6 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                     });
 
                     popup.add(removeItem);
-
-                    addPopupMenuAttributeOptions(e, row, itemId, popup);
                 }
 
                 JMenuItem removeItems = new JMenuItem("Remove all " + networkElementType + "s in the table");
@@ -443,6 +443,8 @@ public class AdvancedJTable_demand extends AdvancedJTable_NetworkElement
                 });
 
                 popup.add(removeItems);
+
+                addPopupMenuAttributeOptions(e, row, itemId, popup);
 
                 List<JComponent> extraOptions = getExtraOptions(row, itemId);
                 if (!extraOptions.isEmpty()) {
