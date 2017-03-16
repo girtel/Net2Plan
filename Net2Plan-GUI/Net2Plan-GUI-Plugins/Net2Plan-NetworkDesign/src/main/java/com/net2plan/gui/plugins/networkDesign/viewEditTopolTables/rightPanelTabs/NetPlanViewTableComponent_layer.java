@@ -33,7 +33,10 @@ public class NetPlanViewTableComponent_layer extends JPanel {
     private final static String[] layerSummaryTableHeader = StringUtils.arrayOf("Metric", "Value");
     private final static String[] attributeTableHeader = StringUtils.arrayOf("Attribute", "Value");
     private final static String[] attributeTableTips = attributeTableHeader;
+    private final static String[] tagTableHeader = StringUtils.arrayOf("Tag");
+    private final static String[] tagTableTips = StringUtils.arrayOf("Name of the tag");
     private JTable layerAttributeTable;
+    private JTable layerTagTable;
     private JTextField txt_layerName, txt_layerLinkCapacityUnits, txt_layerDemandTrafficUnits;
     private JTextArea txt_layerDescription;
     private JRadioButton sourceRoutingActivated, hopByHopRoutingActivated;
@@ -43,7 +46,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
     private JButton forceUpdate;
     private final AdvancedJTable_layer layerTable;
     private boolean insideUpdateView;
-    
+
     private final GUINetworkDesign networkViewer;
 
     public NetPlanViewTableComponent_layer(final GUINetworkDesign networkViewer, final AdvancedJTable_layer layerTable) {
@@ -218,23 +221,35 @@ public class NetPlanViewTableComponent_layer extends JPanel {
             });
         }
 
+        // Tag table
+        layerTagTable = new AdvancedJTable(new ClassAwareTableModel(new Object[1][tagTableHeader.length], tagTableHeader));
+
+        ColumnHeaderToolTips tagTips = new ColumnHeaderToolTips();
+        for (int c = 0; c < tagTableHeader.length; c++) {
+            TableColumn col = layerTagTable.getColumnModel().getColumn(c);
+            tagTips.setToolTip(col, tagTableTips[c]);
+        }
+
+        layerTagTable.getTableHeader().addMouseMotionListener(tagTips);
+
+        JScrollPane sp_tags = new JScrollPane(layerTagTable);
+        ScrollPaneLayout tagLayout = new FullScrollPaneLayout();
+        sp_tags.setLayout(tagLayout);
+        sp_tags.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
         layerAttributeTable = new AdvancedJTable(new ClassAwareTableModel(new Object[1][attributeTableHeader.length], attributeTableHeader));
         if (networkViewer.getVisualizationState().isNetPlanEditable())
             layerAttributeTable.addMouseListener(new SingleElementAttributeEditor(networkViewer, NetworkElementType.LAYER));
 
-        JTable table = layerAttributeTable;
-        String[] columnTips = attributeTableTips;
-        String[] columnHeader = attributeTableHeader;
         ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
-        for (int c = 0; c < columnHeader.length; c++) {
-            TableColumn col = table.getColumnModel().getColumn(c);
-            tips.setToolTip(col, columnTips[c]);
+        for (int c = 0; c < attributeTableHeader.length; c++) {
+            TableColumn col = layerAttributeTable.getColumnModel().getColumn(c);
+            tips.setToolTip(col, attributeTableTips[c]);
         }
 
-        table.getTableHeader().addMouseMotionListener(tips);
+        layerAttributeTable.getTableHeader().addMouseMotionListener(tips);
 
-        JScrollPane scrollPane = new JScrollPane(table);
+        JScrollPane scrollPane = new JScrollPane(layerAttributeTable);
         ScrollPaneLayout layout = new FullScrollPaneLayout();
         scrollPane.setLayout(layout);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -248,7 +263,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
             layerSummaryTables[i].addKeyListener(cursorNavigation);
         }
 
-        table.addKeyListener(cursorNavigation);
+        layerAttributeTable.addKeyListener(cursorNavigation);
 
         layerMetricsInfo = new JPanel();
         layerMetricsInfo.setLayout(new MigLayout("insets 0 0 0 0", "[grow]"));
@@ -276,6 +291,8 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         radioPanel.add(sourceRoutingActivated);
         radioPanel.add(hopByHopRoutingActivated);
         layerPane.add(radioPanel, "grow, wrap");
+
+        layerPane.add(sp_tags, "grow, spanx");
 
         layerPane.add(scrollPane, "grow, spanx 2");
         JScrollPane layerInfoScrollPane = new JScrollPane(layerMetricsInfo);
@@ -307,7 +324,7 @@ public class NetPlanViewTableComponent_layer extends JPanel {
     }
 
 
-    public void updateNetPlanView(NetPlan currentState) 
+    public void updateNetPlanView(NetPlan currentState)
     {
     	this.insideUpdateView = true;
         layerAttributeTable.setEnabled(false);
