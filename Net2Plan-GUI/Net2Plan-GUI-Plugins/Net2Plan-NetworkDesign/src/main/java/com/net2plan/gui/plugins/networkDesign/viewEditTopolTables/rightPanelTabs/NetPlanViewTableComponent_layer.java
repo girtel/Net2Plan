@@ -233,10 +233,15 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         layerTagTable.getTableHeader().addMouseMotionListener(tagTips);
 
         JScrollPane sp_tags = new JScrollPane(layerTagTable);
-        ScrollPaneLayout tagLayout = new FullScrollPaneLayout();
-        sp_tags.setLayout(tagLayout);
         sp_tags.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
+        ScrollPaneLayout tagLayout = new FullScrollPaneLayout();
+        sp_tags.setLayout(tagLayout);
+
+        KeyListener tagKey = new TableCursorNavigation();
+        layerTagTable.addKeyListener(tagKey);
+
+        // Attribute table
         layerAttributeTable = new AdvancedJTable(new ClassAwareTableModel(new Object[1][attributeTableHeader.length], attributeTableHeader));
         if (networkViewer.getVisualizationState().isNetPlanEditable())
             layerAttributeTable.addMouseListener(new SingleElementAttributeEditor(networkViewer, NetworkElementType.LAYER));
@@ -250,11 +255,13 @@ public class NetPlanViewTableComponent_layer extends JPanel {
         layerAttributeTable.getTableHeader().addMouseMotionListener(tips);
 
         JScrollPane scrollPane = new JScrollPane(layerAttributeTable);
-        ScrollPaneLayout layout = new FullScrollPaneLayout();
-        scrollPane.setLayout(layout);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
+        ScrollPaneLayout layout = new FullScrollPaneLayout();
+        scrollPane.setLayout(layout);
+
         KeyListener cursorNavigation = new TableCursorNavigation();
+        layerAttributeTable.addKeyListener(cursorNavigation);
 
         layerSummaryTables = new ParamValueTable[4];
         for (int i = 0; i < layerSummaryTables.length; i++) {
@@ -262,8 +269,6 @@ public class NetPlanViewTableComponent_layer extends JPanel {
             layerSummaryTables[i].setAutoCreateRowSorter(true);
             layerSummaryTables[i].addKeyListener(cursorNavigation);
         }
-
-        layerAttributeTable.addKeyListener(cursorNavigation);
 
         layerMetricsInfo = new JPanel();
         layerMetricsInfo.setLayout(new MigLayout("insets 0 0 0 0", "[grow]"));
