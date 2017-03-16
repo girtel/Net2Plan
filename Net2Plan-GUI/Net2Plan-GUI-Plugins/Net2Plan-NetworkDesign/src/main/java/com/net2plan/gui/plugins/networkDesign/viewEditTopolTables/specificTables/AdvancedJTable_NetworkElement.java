@@ -2077,6 +2077,8 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
 
         });
 
+        popup.addSeparator();
+
         popup.add(addTagAll);
 
         JMenuItem removeTagAll = new JMenuItem("Remove tag from all " + networkElementType + "s");

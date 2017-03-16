@@ -8,6 +8,7 @@ import com.net2plan.internal.ErrorHandling;
 import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -76,10 +77,7 @@ public class SingleElementTagEditor extends MouseAdapter
             });
             popupMenu.add(addTag);
 
-            popupMenu.addSeparator();
-
             JMenuItem removeTag = new JMenuItem("Remove tag");
-
             removeTag.addActionListener(e2 ->
             {
                 NetPlan netPlan = networkDesign.getDesign();
@@ -128,6 +126,53 @@ public class SingleElementTagEditor extends MouseAdapter
             });
 
             popupMenu.add(removeTag);
+
+            JMenuItem removeAllTag = new JMenuItem("Remove all tags");
+            removeAllTag.addActionListener(e2 ->
+            {
+                NetPlan netPlan = networkDesign.getDesign();
+
+                try
+                {
+                    Set<String> tagList;
+
+                    switch (type)
+                    {
+                        case NETWORK:
+                            tagList = netPlan.getTags();
+                            break;
+                        case LAYER:
+                            tagList = netPlan.getNetworkLayerDefault().getTags();
+                            break;
+                        default:
+                            throw new RuntimeException("Bad");
+                    }
+
+                    if (tagList.size() == 0) throw new Exception("No tag to remove");
+
+                    final HashSet<String> auxList = new HashSet<>(tagList);
+                    switch (type)
+                    {
+                        case NETWORK:
+                            for (String tag : auxList)
+                                netPlan.removeTag(tag);
+                            break;
+                        case LAYER:
+                            for (String tag : auxList)
+                                netPlan.getNetworkLayerDefault().removeTag(tag);
+                            break;
+                        default:
+                            throw new RuntimeException("Bad");
+                    }
+
+                    networkDesign.updateVisualizationJustTables();
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing tag");
+                }
+            });
+            popupMenu.addSeparator();
+            popupMenu.add(removeAllTag);
 
             popupMenu.show(e.getComponent(), e.getX(), e.getY());
         }
