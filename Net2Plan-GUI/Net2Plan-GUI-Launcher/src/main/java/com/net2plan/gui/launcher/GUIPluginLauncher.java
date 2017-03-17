@@ -1,5 +1,7 @@
 package com.net2plan.gui.launcher;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.ClassPath;
 import com.net2plan.gui.GUINet2Plan;
 import com.net2plan.gui.launcher.utils.GUIRobot;
 import com.net2plan.internal.plugins.IGUIModule;
@@ -41,12 +43,22 @@ public class GUIPluginLauncher
             final CommandLine cmd = parser.parse(options, args);
             final String inputPlugin = cmd.getOptionValue("tool");
 
-            final Object plugin = Class.forName(inputPlugin).newInstance();
+            // Scan for the given plugin
+            ClassLoader cl = GUIPluginLauncher.class.getClassLoader();
+            final ImmutableSet<ClassPath.ClassInfo> classesInNet2Plan = ClassPath.from(cl).getTopLevelClassesRecursive("com.net2plan.gui");
 
-            if (!(plugin instanceof IGUIModule))
+            Object plugin = null;
+            for (ClassPath.ClassInfo classInfo : classesInNet2Plan)
             {
-                throw new ParseException("");
+                if (classInfo.getSimpleName().equalsIgnoreCase(inputPlugin))
+                {
+                    System.out.println(classInfo);
+                    Class.forName(classInfo.getClass().toString()).newInstance();
+                    break;
+                }
             }
+
+            if (plugin == null || !(plugin instanceof IGUIModule)) throw new RuntimeException();
 
             currentPlugin = (IGUIModule) plugin;
 
