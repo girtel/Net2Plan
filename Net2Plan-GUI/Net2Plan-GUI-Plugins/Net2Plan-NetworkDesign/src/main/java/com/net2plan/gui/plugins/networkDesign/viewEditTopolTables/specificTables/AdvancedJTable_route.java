@@ -4,12 +4,13 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTable
 
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.utils.*;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
+import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
+import com.net2plan.gui.utils.*;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -117,7 +118,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
             routeData[COLUMN_BOTTLENECKUTILIZATION] = maxUtilization;
             routeData[COLUMN_ISBACKUP] = (route.isBackupRoute() ? "yes (" + (CollectionUtils.join(NetPlan.getIndexes(route.getRoutesIAmBackup()), ", ")) + ")" : "no");
             routeData[COLUMN_HASBACKUPROUTES] = (route.hasBackupRoutes() ? "yes (" + (CollectionUtils.join(NetPlan.getIndexes(route.getBackupRoutes()), ", ")) + ")" : "no");
-            routeData[COLUMN_TAGS] = route.getTags();
+            routeData[COLUMN_TAGS] = StringUtils.listToString(Lists.newArrayList(route.getTags()));
             routeData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(route.getAttributes());
 
             for (int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesColumns.size(); i++)

@@ -1,14 +1,15 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
-import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -89,7 +90,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
             resData[COLUMN_UPPERRESOURCES] = joinUpperResourcesWithTheirCapacities(res);
             resData[COLUMN_BASERESOURCES] = joinBaseResourcesWithTheirCapacities(res);
             resData[COLUMN_PROCESSINGTIME] = res.getProcessingTimeToTraversingTrafficInMs();
-            resData[COLUMN_TAGS] = res.getTags();
+            resData[COLUMN_TAGS] = StringUtils.listToString(Lists.newArrayList(res.getTags()));
             resData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(res.getAttributes());
 
             for(int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesTitles.size();i++)
