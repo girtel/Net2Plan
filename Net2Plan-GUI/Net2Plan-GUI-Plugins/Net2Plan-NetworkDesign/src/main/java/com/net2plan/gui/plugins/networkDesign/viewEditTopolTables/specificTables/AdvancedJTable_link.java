@@ -738,7 +738,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             netPlan.getLinkFromId(linkId).getCoupledDemand().decouple();
-                            model.setValueAt("", row, 20);
+                            model.setValueAt("", row, COLUMN_COUPLEDTODEMAND);
                             callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK , NetworkElementType.DEMAND));
                         	callback.addNetPlanChange();
@@ -1066,7 +1066,7 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                             	else
                             		link.getCoupledDemand().decouple();
                             int numRows = model.getRowCount();
-                            for (int i = 0; i < numRows; i++) model.setValueAt("", i, 20);
+                            for (int i = 0; i < numRows; i++) model.setValueAt("", i, COLUMN_COUPLEDTODEMAND);
                             callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK , NetworkElementType.DEMAND));
                         	callback.addNetPlanChange();
@@ -1150,13 +1150,6 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                     callback.addNetPlanChange();
                 }
-//                @Override
-//                public void actionPerformed(ActionEvent e) {
-//                    int numRows = model.getRowCount();
-//                    for (int row = 0; row < numRows; row++)
-//                        if (model.getValueAt(row, COLUMN_SHOWHIDE) != null)
-//                            model.setValueAt(true, row, COLUMN_SHOWHIDE);
-//                }
             });
 
             options.add(showAllLinks);
@@ -1179,13 +1172,6 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                     callback.addNetPlanChange();
                 }
-//                @Override
-//                public void actionPerformed(ActionEvent e) {
-//                    int numRows = model.getRowCount();
-//                    for (int row = 0; row < numRows; row++)
-//                        if (model.getValueAt(row, COLUMN_SHOWHIDE) != null)
-//                            model.setValueAt(false, row, COLUMN_SHOWHIDE);
-//                }
             });
 
             options.add(hideAllLinks);
