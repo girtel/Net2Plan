@@ -2383,20 +2383,24 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
     /* Dialog for filtering by tag */
     protected void dialogToFilterByTag (boolean onlyInActiveLayer)
     {
-        JTextField txt_tag = new JTextField(50);
+        JTextField txt_tagContains = new JTextField(30);
+        JTextField txt_tagDoesNotContain = new JTextField(30);
         JPanel pane = new JPanel();
-        pane.add(new JLabel("Tag: "));
-        pane.add(txt_tag);
+        pane.add(new JLabel("Has tag that contains: "));
+        pane.add(txt_tagContains);
+        pane.add(Box.createHorizontalStrut(15));
+        pane.add(new JLabel("AND does NOT have tag that contains: "));
+        pane.add(txt_tagDoesNotContain);
         while (true)
         {
-            int result = JOptionPane.showConfirmDialog(null, pane, "Please enter a tag", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+            int result = JOptionPane.showConfirmDialog(null, pane, "Filter elements by tag", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (result != JOptionPane.OK_OPTION) return;
-            String tag;
             try
             {
-                if (txt_tag.getText().isEmpty()) continue;
-                tag = txt_tag.getText();
-				ITableRowFilter filter = new TBFTagBased(callback.getDesign(), onlyInActiveLayer? callback.getDesign().getNetworkLayerDefault() : null , tag);
+                if (txt_tagContains.getText().isEmpty() && txt_tagDoesNotContain.getText().isEmpty()) continue;
+				final ITableRowFilter filter = new TBFTagBased(
+						callback.getDesign(), onlyInActiveLayer? callback.getDesign().getNetworkLayerDefault() : null , 
+								txt_tagContains.getText() , txt_tagDoesNotContain.getText());
 				callback.getVisualizationState().updateTableRowFilter(filter);
 				callback.updateVisualizationJustTables();
             } catch (Throwable ex)
