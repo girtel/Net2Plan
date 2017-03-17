@@ -290,6 +290,36 @@ public class StringUtils
 
 		return string.toString();
 	}
+
+	/**
+	 * Ouputs entries from a {@code Map} to a {@code String}. Default
+	 * separator between list entries is ', '.
+	 * @param list Input list
+	 * @return {@code String} representing the list.
+	 */
+	public static String listToString(List list)
+	{
+		return listToString(list, ", ");
+	}
+
+	/**
+	 * Outputs entries from a {@code List} to a {@code String}.
+	 * @param list Input list
+	 * @param entrySeparator Separator between list entries.
+	 * @return {@code String} representing the list.
+	 */
+	public static String listToString(List list, String entrySeparator)
+	{
+		StringBuilder string = new StringBuilder();
+
+		for (Object entry : list)
+		{
+			if (string.length() > 0) string.append(entrySeparator);
+			string.append(entry);
+		}
+
+		return string.toString();
+	}
 	
 	/**
 	 * Outputs an {@code String} to a file.

@@ -2284,15 +2284,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    static class ExpandAttributesListener implements ItemListener
-    {
-        @Override
-        public void itemStateChanged(ItemEvent e)
-        {
-
-        }
-    }
-
     public static class LastRowAggregatedValue implements Comparable
     {
         private String value;

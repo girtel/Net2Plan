@@ -135,7 +135,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             nodeData[COLUMN_EGRESSMULTICASTTRAFFIC] = node.getEgressOfferedMulticastTraffic() + "(" + node.getEgressOfferedMulticastTraffic() + ")";
             nodeData[COLUMN_SRGS] = node.getSRGs().isEmpty() ? "none" : node.getSRGs().size() + " (" + CollectionUtils.join(currentState.getIndexes(node.getSRGs()), ", ") + ")";
             nodeData[COLUMN_POPULATION] = node.getPopulation();
-            nodeData[COLUMN_TAGS] = node.getTags();
+            nodeData[COLUMN_TAGS] = ;
             nodeData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(node.getAttributes());
             for (int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesTitles.size(); i++)
             {
