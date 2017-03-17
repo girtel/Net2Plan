@@ -52,8 +52,7 @@ public class GUIPluginLauncher
             {
                 if (classInfo.getSimpleName().equalsIgnoreCase(inputPlugin))
                 {
-                    System.out.println(classInfo);
-                    Class.forName(classInfo.getClass().toString()).newInstance();
+                    plugin = Class.forName(classInfo.toString()).newInstance();
                     break;
                 }
             }
