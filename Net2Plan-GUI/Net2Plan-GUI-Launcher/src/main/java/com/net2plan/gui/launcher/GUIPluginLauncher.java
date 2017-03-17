@@ -1,8 +1,7 @@
 package com.net2plan.gui.launcher;
 
 import com.net2plan.gui.GUINet2Plan;
-import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.GUITrafficDesign;
+import com.net2plan.gui.launcher.utils.GUIRobot;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.plugins.PluginSystem;
 import org.apache.commons.cli.*;
@@ -15,27 +14,7 @@ import java.awt.event.KeyEvent;
  */
 public class GUIPluginLauncher
 {
-    private enum Plugin
-    {
-        NetworkDesign,
-        TrafficDesign,
-        Unknown;
-
-        public static Plugin parseText(String text)
-        {
-            switch (text.toLowerCase())
-            {
-                case "networkdesign":
-                case "guinetworkdesign":
-                    return NetworkDesign;
-                case "trafficdesign":
-                case "guitrafficdesign":
-                    return NetworkDesign;
-                default:
-                    return Unknown;
-            }
-        }
-    }
+    private static IGUIModule currentPlugin;
 
     public static void main(String[] args)
     {
@@ -47,41 +26,33 @@ public class GUIPluginLauncher
             // Parse input parameter
             options = new Options();
 
-            final Option input = new Option("p", "plugin", true, "Plugin to be launched");
-            input.setRequired(true);
+            final Option pluginOption = new Option("t", "tool", true, "Tool/Plugin to be launched");
+            pluginOption.setRequired(true);
 
-            options.addOption(input);
+            final Option pluginParamOption = new Option("p", "param", true, "Tool/Plugin specific parameters");
+            pluginParamOption.setRequired(false);
+
+            options.addOption(pluginOption);
+            options.addOption(pluginParamOption);
 
             parser = new DefaultParser();
             formatter = new HelpFormatter();
 
             final CommandLine cmd = parser.parse(options, args);
-            final String inputPlugin = cmd.getOptionValue("plugin");
+            final String inputPlugin = cmd.getOptionValue("tool");
 
-            final Plugin plugin = Plugin.parseText(inputPlugin);
+            final Object plugin = Class.forName(inputPlugin).newInstance();
 
-            if (plugin == Plugin.Unknown)
+            if (!(plugin instanceof IGUIModule))
             {
-                // TODO: Build message
-                throw new ParseException("Unknown plugin: " + inputPlugin);
+                throw new ParseException("");
             }
 
-            final Class<? extends IGUIModule> toLoadClass;
-            switch (plugin)
-            {
-                case NetworkDesign:
-                    toLoadClass = GUINetworkDesign.class;
-                    break;
-                case TrafficDesign:
-                    toLoadClass = GUITrafficDesign.class;
-                    break;
-                default:
-                case Unknown:
-                    throw new RuntimeException();
-            }
+            currentPlugin = (IGUIModule) plugin;
 
             GUINet2Plan.main(args);
-            PluginSystem.addPlugin(IGUIModule.class, toLoadClass);
+            PluginSystem.addPlugin(IGUIModule.class, currentPlugin.getClass());
+            PluginSystem.loadExternalPlugins();
             GUINet2Plan.refreshMenu();
 
             runPlugin();
@@ -99,10 +70,11 @@ public class GUIPluginLauncher
 
     private static void runPlugin() throws AWTException
     {
-        final Robot robot = new Robot();
+        final GUIRobot robot = new GUIRobot();
         robot.setAutoDelay(40);
         robot.setAutoWaitForIdle(true);
 
+        // Showing the tool
         robot.keyPress(KeyEvent.VK_ALT);
         robot.keyPress(KeyEvent.VK_1);
 
@@ -110,6 +82,8 @@ public class GUIPluginLauncher
 
         robot.keyRelease(KeyEvent.VK_1);
         robot.keyRelease(KeyEvent.VK_ALT);
+
+        // Tool specific actions
 
 //        robot.keyPress(KeyEvent.VK_ALT);
 //        robot.keyPress(KeyEvent.VK_F4);
