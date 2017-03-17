@@ -75,11 +75,11 @@ public class TBFTagBased extends ITableRowFilter
 		if (!this.tagContainsName.isEmpty())
 		{
 			msg +=  "Has tag that contains: " + this.tagContainsName;
-			if (!this.tagDoesNotContainName.isEmpty()) msg += " AND has tag that does NOT contain " + this.tagDoesNotContainName;
+			if (!this.tagDoesNotContainName.isEmpty()) msg += " AND does NOT have tag containing " + this.tagDoesNotContainName;
 		}
 		else
 			if (!this.tagDoesNotContainName.isEmpty())
-				msg +=  "Has tag that does NOT contain: " + this.tagDoesNotContainName;
+				msg +=  "Does NOT have tag containing: " + this.tagDoesNotContainName;
 		return ((restrictToThisLayer!=null)? "(Affecting to layer " + getLayerName(restrictToThisLayer) + ") ": "") + msg;
 	} 
 	private static String getLayerName (NetworkLayer layer) { return layer.getName().equals("")? "Layer " + layer.getIndex() : layer.getName(); } 
@@ -90,13 +90,13 @@ public class TBFTagBased extends ITableRowFilter
 		for (NetworkElement e : list)
 		{
 			boolean containsOk = this.tagContainsName.isEmpty();
-			boolean doesNotCountainOk = this.tagDoesNotContainName.isEmpty();
+			boolean doesNotCountainOk = true;
 			for (String tag : e.getTags())
 			{
 				if (!this.tagContainsName.isEmpty())
 					if (tag.contains(tagContainsName)) containsOk = true; 
 				if (!this.tagDoesNotContainName.isEmpty())
-					if (!tag.contains(tagDoesNotContainName)) doesNotCountainOk = true;
+					if (tag.contains(tagDoesNotContainName)) { doesNotCountainOk = false; break; }
 				if (containsOk && doesNotCountainOk) break;
 			}
 			if (containsOk && doesNotCountainOk) res.add(e);

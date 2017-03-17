@@ -18,6 +18,7 @@ import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement.LastRowAggregatedValue;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
@@ -556,7 +557,6 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                 }
 
                 JMenuItem removeItems = new JMenuItem("Remove all " + networkElementType + "s in table");
-
                 removeItems.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
@@ -576,8 +576,23 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
                         }
                     }
                 });
-
                 popup.add(removeItems);
+
+                JMenuItem hideAllLinksFilteredOut = new JMenuItem("Hide all links filtered out");
+                hideAllLinksFilteredOut.addActionListener(new ActionListener()
+                {
+                    @Override
+                    public void actionPerformed(ActionEvent e)
+                    {
+                    	Set<Link> rowVisibleLinksSet = new HashSet<> (linkRowsInTheTable);
+                        for (Link link : callback.getDesign().getLinks())
+                        	if (!rowVisibleLinksSet.contains(link)) 
+                        		callback.getVisualizationState().hideOnCanvas(link);
+                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
+                        callback.addNetPlanChange();
+                    }
+                });
+                popup.add(hideAllLinksFilteredOut);
 
                 addPopupMenuAttributeOptions(e, row, itemId, popup);
 
@@ -1118,27 +1133,59 @@ public class AdvancedJTable_link extends AdvancedJTable_NetworkElement
         if (numRows > 1) 
         {
             JMenuItem showAllLinks = new JMenuItem("Show all links");
-            showAllLinks.addActionListener(new ActionListener() {
+            showAllLinks.addActionListener(new ActionListener() 
+            {
                 @Override
-                public void actionPerformed(ActionEvent e) {
-                    int numRows = model.getRowCount();
+                public void actionPerformed(ActionEvent e)
+                {
+                    final int numRows = model.getRowCount();
                     for (int row = 0; row < numRows; row++)
                         if (model.getValueAt(row, COLUMN_SHOWHIDE) != null)
-                            model.setValueAt(true, row, COLUMN_SHOWHIDE);
+                        {
+                        	if (model.getValueAt(row, 0) instanceof LastRowAggregatedValue) continue;
+                            final long linkId = (Long) model.getValueAt(row, 0);
+                            final Link link = callback.getDesign().getLinkFromId(linkId);
+                            callback.getVisualizationState().showOnCanvas(link);
+                        }
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
+                    callback.addNetPlanChange();
                 }
+//                @Override
+//                public void actionPerformed(ActionEvent e) {
+//                    int numRows = model.getRowCount();
+//                    for (int row = 0; row < numRows; row++)
+//                        if (model.getValueAt(row, COLUMN_SHOWHIDE) != null)
+//                            model.setValueAt(true, row, COLUMN_SHOWHIDE);
+//                }
             });
 
             options.add(showAllLinks);
 
             JMenuItem hideAllLinks = new JMenuItem("Hide all links");
-            hideAllLinks.addActionListener(new ActionListener() {
+            hideAllLinks.addActionListener(new ActionListener() 
+            {
                 @Override
-                public void actionPerformed(ActionEvent e) {
-                    int numRows = model.getRowCount();
+                public void actionPerformed(ActionEvent e)
+                {
+                    final int numRows = model.getRowCount();
                     for (int row = 0; row < numRows; row++)
                         if (model.getValueAt(row, COLUMN_SHOWHIDE) != null)
-                            model.setValueAt(false, row, COLUMN_SHOWHIDE);
+                        {
+                        	if (model.getValueAt(row, 0) instanceof LastRowAggregatedValue) continue;
+                            final long linkId = (Long) model.getValueAt(row, 0);
+                            final Link link = callback.getDesign().getLinkFromId(linkId);
+                            callback.getVisualizationState().hideOnCanvas(link);
+                        }
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
+                    callback.addNetPlanChange();
                 }
+//                @Override
+//                public void actionPerformed(ActionEvent e) {
+//                    int numRows = model.getRowCount();
+//                    for (int row = 0; row < numRows; row++)
+//                        if (model.getValueAt(row, COLUMN_SHOWHIDE) != null)
+//                            model.setValueAt(false, row, COLUMN_SHOWHIDE);
+//                }
             });
 
             options.add(hideAllLinks);
