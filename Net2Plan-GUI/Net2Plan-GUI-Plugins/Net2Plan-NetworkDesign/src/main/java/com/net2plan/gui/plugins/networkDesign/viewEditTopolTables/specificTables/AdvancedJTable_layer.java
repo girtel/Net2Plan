@@ -35,7 +35,7 @@ import java.util.*;
 /**
  */
 @SuppressWarnings("unchecked")
-public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
+public class AdvancedJTable_layer extends AdvancedJTable_networkElement
 {
     public static final String netPlanViewTabName = "Layers";
     public static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Name", "Routing type", "Number of links",
@@ -173,7 +173,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_NetworkElement
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet();
         final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
         for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
-        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
+        	rowSorter.setComparator(col, new AdvancedJTable_networkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumberOfDecoratorColumns() {

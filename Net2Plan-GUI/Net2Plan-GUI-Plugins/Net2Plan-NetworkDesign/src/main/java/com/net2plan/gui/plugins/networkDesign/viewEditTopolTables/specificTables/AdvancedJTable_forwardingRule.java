@@ -37,7 +37,7 @@ import java.util.*;
 /**
  */
 @SuppressWarnings("unchecked")
-public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
+public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
 {
     private static final String netPlanViewTabName = "Forwarding rules";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Node", "Demand", "Outgoing link", "Splitting ratio", "Carried traffic");
@@ -230,12 +230,12 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_NetworkElement
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_NODE , COLUMN_DEMAND , COLUMN_OUTGOINGLINK);
         DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
         for (int col = 0; col <= COLUMN_CARRIEDTRAFFIC ; col ++)
-        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
+        	rowSorter.setComparator(col, new AdvancedJTable_networkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
         fixedTable.setAutoCreateRowSorter(true);
         fixedTable.setRowSorter(this.getRowSorter());
         rowSorter = ((DefaultRowSorter) fixedTable.getRowSorter());
         for (int col = 0; col <= COLUMN_CARRIEDTRAFFIC ; col ++)
-        	rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
+        	rowSorter.setComparator(col, new AdvancedJTable_networkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumberOfDecoratorColumns() {

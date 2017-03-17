@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 /**
  */
 @SuppressWarnings("unchecked")
-public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
+public class AdvancedJTable_srg extends AdvancedJTable_networkElement
 {
     private static final String netPlanViewTabName = "Shared-risk groups";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "MTTF (days)", "MTTR (days)", "Availability",
@@ -276,12 +276,12 @@ public class AdvancedJTable_srg extends AdvancedJTable_NetworkElement
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_AFFECTEDROUTES, COLUMN_AFFECTEDBACKUPROUTES, COLUMN_AFFECTEDTREES);
         DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
         for (int col = 0; col <= COLUMN_ATTRIBUTES; col++)
-            rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter, columnsWithDoubleAndThenParenthesis.contains(col)));
+            rowSorter.setComparator(col, new AdvancedJTable_networkElement.ColumnComparator(rowSorter, columnsWithDoubleAndThenParenthesis.contains(col)));
         fixedTable.setAutoCreateRowSorter(true);
         fixedTable.setRowSorter(this.getRowSorter());
         rowSorter = ((DefaultRowSorter) fixedTable.getRowSorter());
         for (int col = 0; col <= COLUMN_ATTRIBUTES; col++)
-            rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter, columnsWithDoubleAndThenParenthesis.contains(col)));
+            rowSorter.setComparator(col, new AdvancedJTable_networkElement.ColumnComparator(rowSorter, columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumberOfDecoratorColumns()
