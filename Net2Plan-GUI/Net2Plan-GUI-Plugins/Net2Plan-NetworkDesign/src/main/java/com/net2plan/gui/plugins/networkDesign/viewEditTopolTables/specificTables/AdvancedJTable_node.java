@@ -438,7 +438,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
 
         popup.add(submenuFilters);
         popup.addSeparator();
-
+        
         if (callback.getVisualizationState().isNetPlanEditable())
         {
             popup.add(getAddOption());
@@ -477,7 +477,6 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                     popup.add(removeItem);
                 }
                 JMenuItem removeItems = new JMenuItem("Remove all " + networkElementType + "s in the table");
-
                 removeItems.addActionListener(new ActionListener()
                 {
                     @Override
@@ -501,8 +500,29 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
                         }
                     }
                 });
-
                 popup.add(removeItems);
+
+                JMenuItem removeAllNodesFilteredOut = new JMenuItem("Remove all nodes filtered out");
+                removeAllNodesFilteredOut.addActionListener(new ActionListener()
+                {
+                    @Override
+                    public void actionPerformed(ActionEvent e)
+                    {
+                        NetPlan netPlan = callback.getDesign();
+                        try
+                        {
+                            for (Node n : new ArrayList<> (netPlan.getNodes())) if (!rowsInTheTable.contains(n)) n.remove();
+                            callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                            callback.addNetPlanChange();
+                        } catch (Throwable ex)
+                        {
+                            ex.printStackTrace();
+                            ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to complete this action");
+                        }
+                    }
+                });
+                popup.add(removeAllNodesFilteredOut);
 
                 addPopupMenuAttributeOptions(e, row, itemId, popup);
 
