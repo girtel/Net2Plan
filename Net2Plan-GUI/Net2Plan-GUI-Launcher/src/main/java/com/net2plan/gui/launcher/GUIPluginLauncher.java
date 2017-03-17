@@ -8,8 +8,8 @@ import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.plugins.PluginSystem;
 import org.apache.commons.cli.*;
 
+import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 
 /**
  * Created by Jorge San Emeterio on 17/03/17.
@@ -63,7 +63,6 @@ public class GUIPluginLauncher
 
             GUINet2Plan.main(args);
             PluginSystem.addPlugin(IGUIModule.class, currentPlugin.getClass());
-            PluginSystem.loadExternalPlugins();
             GUINet2Plan.refreshMenu();
 
             runPlugin();
@@ -86,13 +85,13 @@ public class GUIPluginLauncher
         robot.setAutoWaitForIdle(true);
 
         // Showing the tool
-        robot.keyPress(KeyEvent.VK_ALT);
-        robot.keyPress(KeyEvent.VK_1);
+        final KeyStroke pluginKeyStroke = currentPlugin.getKeyStroke();
+
+        robot.keyPress(pluginKeyStroke.getKeyCode());
 
         robot.delay(1000);
 
-        robot.keyRelease(KeyEvent.VK_1);
-        robot.keyRelease(KeyEvent.VK_ALT);
+        robot.keyRelease(pluginKeyStroke.getKeyCode()1);
 
         // Tool specific actions
 
