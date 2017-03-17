@@ -292,7 +292,7 @@ public class StringUtils
 	}
 
 	/**
-	 * Ouputs entries from a {@code Map} to a {@code String}. Default
+	 * Outputs entries from a {@code Map} to a {@code String}. Default
 	 * separator between list entries is ', '.
 	 * @param list Input list
 	 * @return {@code String} representing the list.
