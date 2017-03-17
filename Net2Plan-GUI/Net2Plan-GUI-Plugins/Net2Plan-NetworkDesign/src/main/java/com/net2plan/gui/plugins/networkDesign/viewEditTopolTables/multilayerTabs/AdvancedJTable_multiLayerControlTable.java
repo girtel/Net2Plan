@@ -28,7 +28,7 @@ import java.util.List;
  * @author Jorge San Emeterio
  * @date 19-Jan-17
  */
-public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
+public class AdvancedJTable_multiLayerControlTable extends AdvancedJTable
 {
     private final GUINetworkDesign callback;
 
@@ -59,7 +59,7 @@ public class AdvancedJTable_MultiLayerControlTable extends AdvancedJTable
             "Is the active layer?"
     );
 
-    public AdvancedJTable_MultiLayerControlTable(final GUINetworkDesign callback)
+    public AdvancedJTable_multiLayerControlTable(final GUINetworkDesign callback)
     {
         super();
 

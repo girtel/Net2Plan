@@ -26,7 +26,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 {
 	private final GUINetworkDesign callback;
     private final JTabbedPane netPlanView;
-    private final Map<Constants.NetworkElementType, AdvancedJTable_NetworkElement> netPlanViewTable;
+    private final Map<Constants.NetworkElementType, AdvancedJTable_networkElement> netPlanViewTable;
     private final Map<Constants.NetworkElementType, JComponent> netPlanViewTableComponent;
     private final Map<Constants.NetworkElementType, JLabel> netPlanViewTableNumEntriesLabel;
 
@@ -36,7 +36,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 		
 		this.callback = callback;
 
-        netPlanViewTable = new EnumMap<Constants.NetworkElementType, AdvancedJTable_NetworkElement>(Constants.NetworkElementType.class);
+        netPlanViewTable = new EnumMap<Constants.NetworkElementType, AdvancedJTable_networkElement>(Constants.NetworkElementType.class);
         netPlanViewTableComponent = new EnumMap<Constants.NetworkElementType, JComponent>(Constants.NetworkElementType.class);
         netPlanViewTableNumEntriesLabel = new EnumMap<Constants.NetworkElementType, JLabel>(Constants.NetworkElementType.class);
 
@@ -112,7 +112,7 @@ public class ViewEditTopologyTablesPane extends JPanel
         
 	}
 
-	public Map<Constants.NetworkElementType,AdvancedJTable_NetworkElement> currentTables(){
+	public Map<Constants.NetworkElementType,AdvancedJTable_networkElement> currentTables(){
 
 	    return netPlanViewTable;
     }
@@ -142,10 +142,10 @@ public class ViewEditTopologyTablesPane extends JPanel
                 JScrollPane scrollPane = new JScrollPane(netPlanViewTable.get(elementType));
                 scrollPane.setLayout(new FullScrollPaneLayout());
                 scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-                if(netPlanViewTable.get(elementType) instanceof AdvancedJTable_NetworkElement)
+                if(netPlanViewTable.get(elementType) instanceof AdvancedJTable_networkElement)
                 {
-                    scrollPane.setRowHeaderView(((AdvancedJTable_NetworkElement) netPlanViewTable.get(elementType)).getFixedTable());
-                    scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER, ((AdvancedJTable_NetworkElement) netPlanViewTable.get(elementType)).getFixedTable().getTableHeader());
+                    scrollPane.setRowHeaderView(((AdvancedJTable_networkElement) netPlanViewTable.get(elementType)).getFixedTable());
+                    scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER, ((AdvancedJTable_networkElement) netPlanViewTable.get(elementType)).getFixedTable().getTableHeader());
                     scrollPane.getRowHeader().addChangeListener(new ChangeListener(){
 
                         @Override
@@ -164,7 +164,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
 	public JTabbedPane getNetPlanView () { return netPlanView; }
 	
-    public Map<Constants.NetworkElementType, AdvancedJTable_NetworkElement> getNetPlanViewTable () { return netPlanViewTable; }
+    public Map<Constants.NetworkElementType, AdvancedJTable_networkElement> getNetPlanViewTable () { return netPlanViewTable; }
 
     public void updateView ()
     {
@@ -189,11 +189,11 @@ public class ViewEditTopologyTablesPane extends JPanel
         currentState.checkCachesConsistency();
         
         /* update the required tables */
-        for (Map.Entry<Constants.NetworkElementType,AdvancedJTable_NetworkElement> entry : netPlanViewTable.entrySet())
+        for (Map.Entry<Constants.NetworkElementType,AdvancedJTable_networkElement> entry : netPlanViewTable.entrySet())
         {
             if (layer.isSourceRouting() && entry.getKey() == Constants.NetworkElementType.FORWARDING_RULE) continue;
             if (!layer.isSourceRouting() && (entry.getKey() == Constants.NetworkElementType.ROUTE)) continue;
-            final AdvancedJTable_NetworkElement table = entry.getValue();
+            final AdvancedJTable_networkElement table = entry.getValue();
             table.updateView(currentState);
             final JLabel label = netPlanViewTableNumEntriesLabel.get(entry.getKey());
             if (label != null)
@@ -219,7 +219,7 @@ public class ViewEditTopologyTablesPane extends JPanel
      */
     public void selectViewItem (Constants.NetworkElementType type, Object itemId)
     {
-        AdvancedJTable_NetworkElement table = netPlanViewTable.get(type);
+        AdvancedJTable_networkElement table = netPlanViewTable.get(type);
         int tabIndex = netPlanView.getSelectedIndex();
         int col = 0;
         if (netPlanView.getTitleAt(tabIndex).equals(type == Constants.NetworkElementType.NETWORK ? "Network" : table.getTabName())) {
@@ -274,7 +274,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 //	@Override
 //	public void actionPerformed(ActionEvent e)
 //	{
-//		final AdvancedJTable_NetworkElement table = netPlanViewTable.get(elementType);
+//		final AdvancedJTable_networkElement table = netPlanViewTable.get(elementType);
 //		final int  [] selectedElements = table.getSelectedRows();
 //		if (selectedElements.length == 0) return;
 //		if (selectedElements.length > 1) throw new RuntimeException("MULTIPLE SELECTIONS NOT IMPLEMENTED");
