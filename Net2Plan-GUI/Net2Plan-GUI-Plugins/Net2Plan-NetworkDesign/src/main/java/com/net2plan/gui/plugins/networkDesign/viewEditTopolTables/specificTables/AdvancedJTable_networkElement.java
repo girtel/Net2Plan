@@ -61,7 +61,7 @@ import java.util.*;
  * @since 0.2.0
  */
 @SuppressWarnings("unchecked")
-public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
+public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 {
     protected final TableModel model;
     protected final GUINetworkDesign callback;
@@ -95,7 +95,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
      * @param networkElementType Network element type
      * @since 0.2.0
      */
-    public AdvancedJTable_NetworkElement(TableModel model, final GUINetworkDesign networkViewer, NetworkElementType networkElementType, boolean canExpandAttributes)
+    public AdvancedJTable_networkElement(TableModel model, final GUINetworkDesign networkViewer, NetworkElementType networkElementType, boolean canExpandAttributes)
     {
         super(model);
         this.model = model;
@@ -744,7 +744,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
      */
     private void loadTableState()
     {
-//        Map<NetworkElementType, AdvancedJTable_NetworkElement> currentTables = callback.getTables();
+//        Map<NetworkElementType, AdvancedJTable_networkElement> currentTables = callback.getTables();
 //        HashMap<NetworkElementType, TableState> tStateMap = null;
 //        try
 //        {
@@ -753,7 +753,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
 //        {
 //            e.printStackTrace();
 //        }
-//        for (Map.Entry<NetworkElementType, AdvancedJTable_NetworkElement> entry : currentTables.entrySet())
+//        for (Map.Entry<NetworkElementType, AdvancedJTable_networkElement> entry : currentTables.entrySet())
 //        {
 //            entry.getValue().updateTableFromTableState(tStateMap.get(entry.getValue().getNetworkElementType()));
 //        }
@@ -767,7 +767,7 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
      */
     private void saveTableState() throws XMLStreamException
     {
-//        Map<NetworkElementType, AdvancedJTable_NetworkElement> currentTables = callback.getTables();
+//        Map<NetworkElementType, AdvancedJTable_networkElement> currentTables = callback.getTables();
 //        TableStateController.saveTableState(currentTables);
     }
 
@@ -2281,15 +2281,6 @@ public abstract class AdvancedJTable_NetworkElement extends AdvancedJTable
             {
                 return oo1.compareTo(oo2);
             }
-        }
-    }
-
-    static class ExpandAttributesListener implements ItemListener
-    {
-        @Override
-        public void itemStateChanged(ItemEvent e)
-        {
-
         }
     }
 

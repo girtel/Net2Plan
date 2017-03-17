@@ -12,6 +12,7 @@
 
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
@@ -46,7 +47,7 @@ import java.util.*;
 /**
  */
 @SuppressWarnings("unchecked")
-public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
+public class AdvancedJTable_node extends AdvancedJTable_networkElement
 {
     public static final int COLUMN_ID = 0;
     public static final int COLUMN_INDEX = 1;
@@ -138,7 +139,7 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
             nodeData[COLUMN_EGRESSMULTICASTTRAFFIC] = node.getEgressOfferedMulticastTraffic() + "(" + node.getEgressOfferedMulticastTraffic() + ")";
             nodeData[COLUMN_SRGS] = node.getSRGs().isEmpty() ? "none" : node.getSRGs().size() + " (" + CollectionUtils.join(currentState.getIndexes(node.getSRGs()), ", ") + ")";
             nodeData[COLUMN_POPULATION] = node.getPopulation();
-            nodeData[COLUMN_TAGS] = node.getTags();
+            nodeData[COLUMN_TAGS] = StringUtils.listToString(Lists.newArrayList(node.getTags()));
             nodeData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(node.getAttributes());
             for (int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesTitles.size(); i++)
             {
@@ -386,12 +387,12 @@ public class AdvancedJTable_node extends AdvancedJTable_NetworkElement
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_OUTLINKS, COLUMN_INLINKS, COLUMN_INGRESSTRAFFIC, COLUMN_EGRESSTRAFFIC, COLUMN_INGRESSMULTICASTTRAFFIC, COLUMN_EGRESSMULTICASTTRAFFIC);
         DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
         for (int col = 0; col <= COLUMN_ATTRIBUTES; col++)
-            rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter, columnsWithDoubleAndThenParenthesis.contains(col)));
+            rowSorter.setComparator(col, new AdvancedJTable_networkElement.ColumnComparator(rowSorter, columnsWithDoubleAndThenParenthesis.contains(col)));
         fixedTable.setAutoCreateRowSorter(true);
         fixedTable.setRowSorter(this.getRowSorter());
         rowSorter = ((DefaultRowSorter) fixedTable.getRowSorter());
         for (int col = 0; col <= COLUMN_ATTRIBUTES; col++)
-            rowSorter.setComparator(col, new AdvancedJTable_NetworkElement.ColumnComparator(rowSorter, columnsWithDoubleAndThenParenthesis.contains(col)));
+            rowSorter.setComparator(col, new AdvancedJTable_networkElement.ColumnComparator(rowSorter, columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
     public int getNumberOfDecoratorColumns()
