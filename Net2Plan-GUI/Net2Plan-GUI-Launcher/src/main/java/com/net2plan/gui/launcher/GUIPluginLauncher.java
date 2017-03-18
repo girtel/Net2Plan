@@ -7,6 +7,7 @@ import com.net2plan.gui.GUINet2Plan;
 import com.net2plan.gui.launcher.utils.GUIRobot;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.plugins.PluginSystem;
+import jdk.nashorn.internal.runtime.ParserException;
 import org.apache.commons.cli.*;
 
 import javax.swing.*;
@@ -48,7 +49,7 @@ public class GUIPluginLauncher
 
             // Scan for the given plugin
             ClassLoader cl = GUIPluginLauncher.class.getClassLoader();
-            final ImmutableSet<ClassPath.ClassInfo> classesInNet2Plan = ClassPath.from(cl).getTopLevelClassesRecursive("com.net2plan.gui");
+            final ImmutableSet<ClassPath.ClassInfo> classesInNet2Plan = ClassPath.from(cl).getTopLevelClasses("com.net2plan.gui.plugins");
 
             Object plugin = null;
             for (ClassPath.ClassInfo classInfo : classesInNet2Plan)
