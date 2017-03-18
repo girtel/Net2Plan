@@ -1,5 +1,6 @@
 package com.net2plan.gui.launcher;
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
 import com.net2plan.gui.GUINet2Plan;
@@ -10,6 +11,8 @@ import org.apache.commons.cli.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 
 /**
  * Created by Jorge San Emeterio on 17/03/17.
@@ -87,11 +90,15 @@ public class GUIPluginLauncher
         // Showing the tool
         final KeyStroke pluginKeyStroke = currentPlugin.getKeyStroke();
 
+        final int keyModifier = getKeyModifier(pluginKeyStroke);
+
+        robot.keyPress(keyModifier);
         robot.keyPress(pluginKeyStroke.getKeyCode());
 
         robot.delay(1000);
 
-        robot.keyRelease(pluginKeyStroke.getKeyCode()1);
+        robot.keyRelease(pluginKeyStroke.getKeyCode());
+        robot.keyRelease(keyModifier);
 
         // Tool specific actions
 
@@ -107,5 +114,20 @@ public class GUIPluginLauncher
 //        robot.keyRelease(KeyEvent.VK_CONTROL);
     }
 
+    private static int getKeyModifier(final KeyStroke keyStroke)
+    {
+        final String modifierString = keyStroke.toString().split("pressed")[0].trim();
 
+        switch (modifierString)
+        {
+            case "alt":
+                return KeyEvent.VK_ALT;
+            case "shift":
+                return KeyEvent.VK_SHIFT;
+            case "ctrl":
+                return KeyEvent.VK_CONTROL;
+            default:
+                return -1;
+        }
+    }
 }
