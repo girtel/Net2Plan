@@ -10,9 +10,12 @@ public class GUIRobot extends Robot
     public GUIRobot() throws AWTException
     {
         super();
+
+        this.setAutoDelay(40);
+        this.setAutoWaitForIdle(true);
     }
 
-    private void type(int i, int m)
+    public void type(int i, int m)
     {
         this.delay(40);
         this.keyPress(m);
@@ -21,14 +24,14 @@ public class GUIRobot extends Robot
         this.keyRelease(i);
     }
 
-    private void type(int i)
+    public void type(int i)
     {
         this.delay(40);
         this.keyPress(i);
         this.keyRelease(i);
     }
 
-    private void type(String s)
+    public void type(String s)
     {
         byte[] bytes = s.getBytes();
         for (byte b : bytes)

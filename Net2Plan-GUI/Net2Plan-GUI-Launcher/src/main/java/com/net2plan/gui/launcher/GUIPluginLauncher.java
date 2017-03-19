@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
 import com.net2plan.gui.GUINet2Plan;
 import com.net2plan.gui.launcher.utils.GUIRobot;
+import com.net2plan.gui.launcher.wrapper.IGUIPluginWrapper;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.plugins.PluginSystem;
 import jdk.nashorn.internal.runtime.ParserException;
@@ -14,6 +15,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -41,6 +43,7 @@ public class GUIPluginLauncher
 
             final Option pluginParamOption = new Option("p", "param", true, "Tool/Plugin specific parameters");
             pluginParamOption.setRequired(false);
+            pluginParamOption.setValueSeparator('=');
 
             options.addOption(pluginOption);
             options.addOption(modeParamOption);
@@ -62,8 +65,11 @@ public class GUIPluginLauncher
                 if (classInfo.getSimpleName().equals(inputPlugin))
                 {
                     final Object instance = Class.forName(classInfo.toString()).newInstance();
-                    if(instance instanceof IGUIModule) plugin = (IGUIModule) instance;
-                    break;
+                    if (instance instanceof IGUIModule)
+                    {
+                        plugin = (IGUIModule) instance;
+                        break;
+                    }
                 }
             }
 
@@ -79,34 +85,41 @@ public class GUIPluginLauncher
             runPlugin();
 
             // Parse mode and params
-            int mode = 1;
 
             // Looking for plugin wrapper
             final ImmutableSet<ClassPath.ClassInfo> wrappers = ClassPath.from(cl).getTopLevelClasses("com.net2plan.gui.launcher.wrapper");
 
-            Object wrapper = null;
+            IGUIPluginWrapper wrapper = null;
             for (ClassPath.ClassInfo classInfo : wrappers)
             {
                 final String className = classInfo.getSimpleName();
-                if (className.equals(inputPlugin) && className.contains("Wrapper"))
+                if (className.contains(inputPlugin) && className.contains("Wrapper"))
                 {
-                    wrapper = Class.forName(classInfo.toString()).newInstance();
-                    break;
+                    final Object instance = Class.forName(classInfo.toString()).newInstance();
+                    if (instance instanceof IGUIPluginWrapper)
+                    {
+                        wrapper = (IGUIPluginWrapper) instance;
+                        break;
+                    }
                 }
             }
 
-            if (wrapper != null && cmd.hasOption("mode"))
+            if (wrapper != null)
             {
-                mode = Integer.parseInt(cmd.getOptionValue("mode"));
+                int mode = 1;
+                Map<String, String> parameters = new HashMap<>();
 
-                if (cmd.hasOption("param"))
+                if (cmd.hasOption("mode"))
                 {
-                    parseParameters(cmd.getOptionValue("param"), pluginParamOption.getValueSeparator());
+                    mode = Integer.parseInt(cmd.getOptionValue("mode"));
+                    if (cmd.hasOption("param")) parameters = parseParameters(cmd.getOptionValue("param"), pluginParamOption.getValueSeparator());
                 }
 
-                
+                wrapper.launchMode(mode, parameters);
+            } else
+            {
+                System.err.println("Debug wrapper not found for class: " + inputPlugin);
             }
-
         } catch (ParseException e)
         {
             System.err.println(e.getMessage());
@@ -123,8 +136,6 @@ public class GUIPluginLauncher
     private static void runPlugin() throws AWTException
     {
         final GUIRobot robot = new GUIRobot();
-        robot.setAutoDelay(40);
-        robot.setAutoWaitForIdle(true);
 
         // Showing the tool
         final KeyStroke pluginKeyStroke = currentPlugin.getKeyStroke();
