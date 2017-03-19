@@ -50,8 +50,9 @@ public class GUINetworkDesignWrapper implements IGUIPluginWrapper
 
             robot.delay(200);
 
-            robot.type(netplanURL);
-            robot.type(KeyEvent.VK_INSERT);
+            robot.copy(netplanURL);
+            robot.paste();
+            robot.type(KeyEvent.VK_ENTER);
         } catch (AWTException e)
         {
             e.printStackTrace();
