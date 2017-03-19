@@ -59,7 +59,7 @@ public class GUIPluginLauncher
             IGUIModule plugin = null;
             for (ClassPath.ClassInfo classInfo : classesInNet2Plan)
             {
-                if (classInfo.getSimpleName().equalsIgnoreCase(inputPlugin))
+                if (classInfo.getSimpleName().equals(inputPlugin))
                 {
                     final Object instance = Class.forName(classInfo.toString()).newInstance();
                     if(instance instanceof IGUIModule) plugin = (IGUIModule) instance;
@@ -87,7 +87,8 @@ public class GUIPluginLauncher
             Object wrapper = null;
             for (ClassPath.ClassInfo classInfo : wrappers)
             {
-                if (classInfo.getSimpleName().equalsIgnoreCase(inputPlugin))
+                final String className = classInfo.getSimpleName();
+                if (className.equals(inputPlugin) && className.contains("Wrapper"))
                 {
                     wrapper = Class.forName(classInfo.toString()).newInstance();
                     break;
@@ -100,19 +101,22 @@ public class GUIPluginLauncher
 
                 if (cmd.hasOption("param"))
                 {
-
+                    parseParameters(cmd.getOptionValue("param"), pluginParamOption.getValueSeparator());
                 }
+
+                
             }
 
         } catch (ParseException e)
         {
-            System.out.println(e.getMessage());
+            System.err.println(e.getMessage());
             formatter.printHelp("utility-name", options);
 
-            System.exit(0);
+            System.exit(1);
         } catch (Exception e)
         {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
+            System.exit(1);
         }
     }
 
@@ -136,9 +140,9 @@ public class GUIPluginLauncher
         robot.keyRelease(keyModifier);
     }
 
-    private static Map<String, String> getParameters()
+    private static Map<String, String> parseParameters(final String parameter, final char separator)
     {
-        return null;
+        return Splitter.on(",").withKeyValueSeparator(separator).split(parameter);
     }
 
     private static int getKeyModifier(final KeyStroke keyStroke)
