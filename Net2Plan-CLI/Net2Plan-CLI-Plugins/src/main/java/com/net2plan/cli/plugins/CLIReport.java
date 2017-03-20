@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.cli.tools;
+package com.net2plan.cli.plugins;
 
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IReport;
