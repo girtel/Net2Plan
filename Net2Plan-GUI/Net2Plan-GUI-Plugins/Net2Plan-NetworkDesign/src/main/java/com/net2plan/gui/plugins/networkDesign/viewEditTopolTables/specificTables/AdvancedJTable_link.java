@@ -474,7 +474,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, final Object[] itemId)
+    public void doPopup(final MouseEvent e, final int row, final Object[] itemIds)
     {
         JPopupMenu popup = new JPopupMenu();
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
@@ -541,7 +541,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                             NetPlan netPlan = callback.getDesign();
 
                             try {
-                                Link link = netPlan.getLinkFromId((long) itemId);
+                                Link link = netPlan.getLinkFromId((long) itemIds);
                                 link.remove();
                                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
@@ -594,9 +594,9 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 });
                 popup.add(hideAllLinksFilteredOut);
 
-                addPopupMenuAttributeOptions(e, row, itemId, popup);
+                addPopupMenuAttributeOptions(e, row, itemIds, popup);
 
-                List<JComponent> extraOptions = getExtraOptions(row, itemId);
+                List<JComponent> extraOptions = getExtraOptions(row, itemIds);
                 if (!extraOptions.isEmpty()) {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
                     for (JComponent item : extraOptions) popup.add(item);

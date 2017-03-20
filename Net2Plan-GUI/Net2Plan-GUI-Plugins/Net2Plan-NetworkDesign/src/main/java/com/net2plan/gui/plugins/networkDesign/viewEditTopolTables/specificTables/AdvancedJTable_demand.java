@@ -341,7 +341,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         return attColumnsHeaders;
     }
 
-    public void doPopup(final MouseEvent e, final int row, final Object[] itemId)
+    public void doPopup(final MouseEvent e, final int row, final Object[] itemIds)
     {
         JPopupMenu popup = new JPopupMenu();
 
@@ -412,7 +412,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
                             try
                             {
-                            	final Demand demand = netPlan.getDemandFromId((long) itemId);
+                            	final Demand demand = netPlan.getDemandFromId((long) itemIds);
                             	demand.remove();
                             	callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
@@ -452,9 +452,9 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
                 popup.add(removeItems);
 
-                addPopupMenuAttributeOptions(e, row, itemId, popup);
+                addPopupMenuAttributeOptions(e, row, itemIds, popup);
 
-                List<JComponent> extraOptions = getExtraOptions(row, itemId);
+                List<JComponent> extraOptions = getExtraOptions(row, itemIds);
                 if (!extraOptions.isEmpty()) {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
                     for (JComponent item : extraOptions) popup.add(item);

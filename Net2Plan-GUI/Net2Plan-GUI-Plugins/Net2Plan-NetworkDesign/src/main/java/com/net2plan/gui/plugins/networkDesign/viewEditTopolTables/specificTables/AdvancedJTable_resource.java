@@ -353,7 +353,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
 
     }
     @Override
-    public void doPopup(MouseEvent e, int row, Object[] itemId) {
+    public void doPopup(MouseEvent e, int row, Object[] itemIds) {
 
         JPopupMenu popup = new JPopupMenu();
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
@@ -419,7 +419,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                         public void actionPerformed(ActionEvent e) 
                         {
                             try {
-                                callback.getDesign().getResourceFromId((Long)itemId).remove();
+                                callback.getDesign().getResourceFromId((Long) itemIds).remove();
                                 callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
                             	callback.addNetPlanChange();
@@ -491,9 +491,9 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
 
                 popup.add(removeItems);
 
-                addPopupMenuAttributeOptions(e, row, itemId, popup);
+                addPopupMenuAttributeOptions(e, row, itemIds, popup);
 
-                List<JComponent> extraOptions = getExtraOptions(row, itemId);
+                List<JComponent> extraOptions = getExtraOptions(row, itemIds);
                 if (!extraOptions.isEmpty()) {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
                     for (JComponent item : extraOptions) popup.add(item);

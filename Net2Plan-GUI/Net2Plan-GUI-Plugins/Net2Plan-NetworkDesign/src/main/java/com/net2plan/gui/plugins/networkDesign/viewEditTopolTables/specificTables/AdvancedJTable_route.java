@@ -329,7 +329,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, final Object[] itemId)
+    public void doPopup(final MouseEvent e, final int row, final Object[] itemIds)
     {
         JPopupMenu popup = new JPopupMenu();
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
@@ -402,7 +402,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                             NetPlan netPlan = callback.getDesign();
                             try
                             {
-                                netPlan.getRouteFromId((long) itemId).remove();
+                                netPlan.getRouteFromId((long) itemIds).remove();
                                 callback.getVisualizationState().resetPickedState();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                                 callback.addNetPlanChange();
@@ -445,9 +445,9 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
                 popup.add(removeItems);
 
-                addPopupMenuAttributeOptions(e, row, itemId, popup);
+                addPopupMenuAttributeOptions(e, row, itemIds, popup);
 
-                List<JComponent> extraOptions = getExtraOptions(row, itemId);
+                List<JComponent> extraOptions = getExtraOptions(row, itemIds);
                 if (!extraOptions.isEmpty())
                 {
                     if (popup.getSubElements().length > 0) popup.addSeparator();

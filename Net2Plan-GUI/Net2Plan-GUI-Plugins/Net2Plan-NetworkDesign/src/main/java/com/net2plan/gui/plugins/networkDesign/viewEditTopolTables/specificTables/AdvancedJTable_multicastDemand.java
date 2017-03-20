@@ -312,7 +312,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     }
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, final Object[] itemId)
+    public void doPopup(final MouseEvent e, final int row, final Object[] itemIds)
     {
         JPopupMenu popup = new JPopupMenu();
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
@@ -383,7 +383,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                                 NetPlan netPlan = callback.getDesign();
 
                                 try {
-                                    netPlan.getMulticastDemandFromId((long) itemId).remove();
+                                    netPlan.getMulticastDemandFromId((long) itemIds).remove();
                                     callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
                                 	callback.addNetPlanChange();
@@ -421,9 +421,9 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                     popup.add(removeItems);
                 }
 
-                addPopupMenuAttributeOptions(e, row, itemId, popup);
+                addPopupMenuAttributeOptions(e, row, itemIds, popup);
 
-                List<JComponent> extraOptions = getExtraOptions(row, itemId);
+                List<JComponent> extraOptions = getExtraOptions(row, itemIds);
                 if (!extraOptions.isEmpty()) {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
                     for (JComponent item : extraOptions) popup.add(item);

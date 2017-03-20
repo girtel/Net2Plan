@@ -257,7 +257,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
-    public void doPopup(final MouseEvent e, final int row, final Object[] itemId) {
+    public void doPopup(final MouseEvent e, final int row, final Object[] itemIds) {
         JPopupMenu popup = new JPopupMenu();
 
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
@@ -317,7 +317,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
                             NetPlan netPlan = callback.getDesign();
 
                             try {
-                                netPlan.setForwardingRule(netPlan.getDemandFromId(((Pair<Long, Long>) itemId).getFirst()), netPlan.getLinkFromId(((Pair<Long, Long>) itemId).getSecond()), 0);
+                                netPlan.setForwardingRule(netPlan.getDemandFromId(((Pair<Long, Long>) itemIds).getFirst()), netPlan.getLinkFromId(((Pair<Long, Long>) itemIds).getSecond()), 0);
                                 callback.getVisualizationState().resetPickedState();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.FORWARDING_RULE));
                                 callback.addNetPlanChange();
@@ -356,7 +356,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
                 popup.add(removeItems);
 
 
-                List<JComponent> extraOptions = getExtraOptions(row, itemId);
+                List<JComponent> extraOptions = getExtraOptions(row, itemIds);
                 if (!extraOptions.isEmpty()) {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
                     for (JComponent item : extraOptions) popup.add(item);

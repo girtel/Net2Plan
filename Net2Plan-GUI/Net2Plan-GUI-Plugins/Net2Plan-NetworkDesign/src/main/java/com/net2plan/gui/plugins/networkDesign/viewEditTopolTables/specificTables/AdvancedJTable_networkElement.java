@@ -1146,7 +1146,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public abstract ArrayList<String> getAttributesColumnsHeaders();
 
-    public abstract void doPopup(final MouseEvent e, final int row, final Object[] itemId);
+    public abstract void doPopup(final MouseEvent e, final int row, final Object[] itemIds);
 
     public abstract void showInCanvas(MouseEvent e, Object itemId);
 
