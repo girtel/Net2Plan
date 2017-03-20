@@ -1,20 +1,19 @@
 package com.net2plan.cli.plugins.launcher;
 
 import com.net2plan.cli.plugins.CLINetworkDesign;
-import org.apache.commons.cli.ParseException;
 
 /**
  * Created by Jorge San Emeterio on 20/03/17.
  */
-public class CLIAlgorithmLauncher extends CLINetworkDesign
+public class CLIAlgorithmLauncher
 {
     public static void main(String[] args)
     {
         try
         {
-            CLIAlgorithmLauncher algorithmLauncher = new CLIAlgorithmLauncher();
-            algorithmLauncher.executeFromCommandLine(args);
-        } catch (ParseException e)
+            CLINetworkDesign networkDesign = new CLINetworkDesign();
+            networkDesign.executeFromCommandLine(args);
+        } catch (Exception e)
         {
             e.printStackTrace();
         }
