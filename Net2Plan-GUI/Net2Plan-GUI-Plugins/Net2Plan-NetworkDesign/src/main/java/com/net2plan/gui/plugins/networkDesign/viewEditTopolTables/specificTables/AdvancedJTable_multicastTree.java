@@ -85,8 +85,8 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
         return COLUMN_BOTTLENECKUTILIZATION;
     }
 
-    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) 
-    {    	
+    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns)
+    {
     	final List<MulticastTree> rowVisibleTrees = getVisibleElementsInTable ();
         List<Object[]> allTreeData = new LinkedList<Object[]>();
         for (MulticastTree tree : rowVisibleTrees)
@@ -179,7 +179,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
         return netPlanViewTableTips;
     }
 
-    public boolean hasElements() 
+    public boolean hasElements()
     {
     	final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
     	final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
@@ -278,7 +278,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable() 
+    public void setColumnRowSortingFixedAndNonFixedTable()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet();
@@ -317,16 +317,16 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
         /* Add the popup menu option of the filters */
         final List<MulticastTree> selectedTrees = (List<MulticastTree>) (List<?>) getSelectedElements().getFirst();
     	final JMenu submenuFilters = new JMenu ("Filters");
-        if (!selectedTrees.isEmpty()) 
+        if (!selectedTrees.isEmpty())
         {
             final JMenuItem filterKeepElementsAffectedThisLayer = new JMenuItem("This layer: Keep elements associated to this tree traffic");
             final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this tree traffic");
             submenuFilters.add(filterKeepElementsAffectedThisLayer);
             if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
-            filterKeepElementsAffectedThisLayer.addActionListener(new ActionListener() 
+            filterKeepElementsAffectedThisLayer.addActionListener(new ActionListener()
             {
 				@Override
-				public void actionPerformed(ActionEvent e) 
+				public void actionPerformed(ActionEvent e)
 				{
 					if (selectedTrees.size() > 1) throw new RuntimeException ();
 					TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedTrees.get(0), true);
@@ -334,10 +334,10 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
 					callback.updateVisualizationJustTables();
 				}
 			});
-            filterKeepElementsAffectedAllLayers.addActionListener(new ActionListener() 
+            filterKeepElementsAffectedAllLayers.addActionListener(new ActionListener()
             {
 				@Override
-				public void actionPerformed(ActionEvent e) 
+				public void actionPerformed(ActionEvent e)
 				{
 					if (selectedTrees.size() > 1) throw new RuntimeException ();
 					TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedTrees.get(0), false);
@@ -373,7 +373,10 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
                         public void actionPerformed(ActionEvent e) {
                             NetPlan netPlan = callback.getDesign();
                             try {
-                                netPlan.getMulticastTreeFromId((long) itemIds).remove();
+                                for (Object itemId : itemIds)
+                                {
+                                    netPlan.getMulticastTreeFromId((long) itemId).remove();
+                                }
                                 callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
                             	callback.addNetPlanChange();
@@ -524,7 +527,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) 
+        public void actionPerformed(ActionEvent e)
         {
             NetPlan netPlan = callback.getDesign();
             List<Link> links = netPlan.getLinks();
