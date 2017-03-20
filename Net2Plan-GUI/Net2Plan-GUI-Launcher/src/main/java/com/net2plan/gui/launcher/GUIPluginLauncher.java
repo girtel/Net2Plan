@@ -6,6 +6,7 @@ import com.google.common.reflect.ClassPath;
 import com.net2plan.gui.GUINet2Plan;
 import com.net2plan.gui.launcher.utils.GUIRobot;
 import com.net2plan.gui.launcher.wrapper.IGUIPluginWrapper;
+import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.plugins.PluginSystem;
 import jdk.nashorn.internal.runtime.ParserException;
@@ -13,7 +14,6 @@ import org.apache.commons.cli.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,7 +59,6 @@ public class GUIPluginLauncher
             ClassLoader cl = GUIPluginLauncher.class.getClassLoader();
             final ImmutableSet<ClassPath.ClassInfo> classesInNet2Plan = ClassPath.from(cl).getTopLevelClasses("com.net2plan.gui.plugins");
 
-            IGUIModule plugin = null;
             for (ClassPath.ClassInfo classInfo : classesInNet2Plan)
             {
                 if (classInfo.getSimpleName().equals(inputPlugin))
@@ -67,15 +66,16 @@ public class GUIPluginLauncher
                     final Object instance = Class.forName(classInfo.toString()).newInstance();
                     if (instance instanceof IGUIModule)
                     {
-                        plugin = (IGUIModule) instance;
+                        currentPlugin = (IGUIModule) instance;
                         break;
                     }
                 }
             }
 
             // Plugin not found
-            if (plugin == null) throw new ParserException("Plugin: " + inputPlugin + " not found.");
-            currentPlugin = plugin;
+            if (currentPlugin == null) throw new ParserException("Plugin: " + inputPlugin + " could not be found...");
+
+            // Do no longer launch ParserException
 
             // Run Net2Plan
             GUINet2Plan.main(args);
@@ -93,7 +93,7 @@ public class GUIPluginLauncher
             for (ClassPath.ClassInfo classInfo : wrappers)
             {
                 final String className = classInfo.getSimpleName();
-                if (className.contains(inputPlugin) && className.contains("Wrapper"))
+                if (className.equals(inputPlugin + "Wrapper"))
                 {
                     final Object instance = Class.forName(classInfo.toString()).newInstance();
                     if (instance instanceof IGUIPluginWrapper)
@@ -107,8 +107,8 @@ public class GUIPluginLauncher
             if (wrapper != null)
             {
                 int mode = 1;
-                Map<String, String> parameters = new HashMap<>();
 
+                Map<String, String> parameters = new HashMap<>();
                 if (cmd.hasOption("mode"))
                 {
                     mode = Integer.parseInt(cmd.getOptionValue("mode"));
@@ -118,7 +118,7 @@ public class GUIPluginLauncher
                 wrapper.launchMode(mode, parameters);
             } else
             {
-                System.err.println("Debug wrapper not found for class: " + inputPlugin);
+                ErrorHandling.showErrorDialog("Debug wrapper not found for class: " + inputPlugin);
             }
         } catch (ParseException e)
         {
@@ -128,8 +128,8 @@ public class GUIPluginLauncher
             System.exit(1);
         } catch (Exception e)
         {
-            System.err.println(e.getMessage());
-            System.exit(1);
+            ErrorHandling.showErrorDialog("An error happened while running launcher.\nCheck console for more details.");
+            e.printStackTrace();
         }
     }
 
@@ -142,10 +142,12 @@ public class GUIPluginLauncher
 
         final int keyModifier = getKeyModifier(pluginKeyStroke);
 
+        if (keyModifier == -1) throw new RuntimeException("Unreadable key modifier: " + pluginKeyStroke);
+
         robot.keyPress(keyModifier);
         robot.keyPress(pluginKeyStroke.getKeyCode());
 
-        robot.delay(1000);
+        robot.delay(200);
 
         robot.keyRelease(pluginKeyStroke.getKeyCode());
         robot.keyRelease(keyModifier);
@@ -153,7 +155,7 @@ public class GUIPluginLauncher
 
     private static Map<String, String> parseParameters(final String parameter, final char separator)
     {
-        return Splitter.on(",").withKeyValueSeparator(separator).split(parameter);
+        return Splitter.on(" ").withKeyValueSeparator(separator).split(parameter);
     }
 
     private static int getKeyModifier(final KeyStroke keyStroke)

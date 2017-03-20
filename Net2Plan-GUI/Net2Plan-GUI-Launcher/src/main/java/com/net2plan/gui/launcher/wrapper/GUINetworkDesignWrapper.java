@@ -1,7 +1,6 @@
 package com.net2plan.gui.launcher.wrapper;
 
 import com.net2plan.gui.launcher.utils.GUIRobot;
-import org.apache.commons.cli.ParseException;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -22,7 +21,7 @@ public class GUINetworkDesignWrapper implements IGUIPluginWrapper
         switch (mode)
         {
             default:
-                System.err.println("Unknown mode: " + mode + " in wrapper: " + this.getClass().getName());
+                throw new RuntimeException("Unknown mode: " + mode + " in wrapper: " + this.getClass().getName());
             case 1:
                 return;
             case 2:
@@ -35,10 +34,9 @@ public class GUINetworkDesignWrapper implements IGUIPluginWrapper
     {
         final String netplanURL = parameters.get("netplan");
 
-        GUIRobot robot = null;
         try
         {
-            robot = new GUIRobot();
+            GUIRobot robot = new GUIRobot();
 
             // Close table window
             robot.type(KeyEvent.VK_F4, KeyEvent.VK_ALT);
@@ -55,7 +53,7 @@ public class GUINetworkDesignWrapper implements IGUIPluginWrapper
             robot.type(KeyEvent.VK_ENTER);
         } catch (AWTException e)
         {
-            e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
         }
     }
 }
