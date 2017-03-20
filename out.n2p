@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<network description="" name="" version="5" nextElementId="2">
-	<layer id="1" name="Layer 0" description="" isDefaultLayer="true" linkCapacityUnitsName="" demandTrafficUnitsName="">
-		<sourceRouting>
-		</sourceRouting>
-	</layer>
-</network>
