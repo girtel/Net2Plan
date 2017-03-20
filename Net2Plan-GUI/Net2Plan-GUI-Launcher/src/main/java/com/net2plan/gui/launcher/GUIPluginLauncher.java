@@ -25,41 +25,43 @@ public class GUIPluginLauncher
 {
     private static IGUIModule currentPlugin;
 
+    private final static Options OPTIONS;
+
+    static
+    {
+        // Parse input parameter
+        OPTIONS = new Options();
+
+        final Option pluginOption = new Option("t", "tool", true, "Class name of the tool/plugin");
+        pluginOption.setRequired(true);
+        pluginOption.setType(PatternOptionBuilder.CLASS_VALUE);
+        pluginOption.setArgName("Tool/Plugin");
+        OPTIONS.addOption(pluginOption);
+
+        final Option modeParamOption = new Option("m", "mode", true, "Tool/Plugin launch mode");
+        modeParamOption.setRequired(false);
+        modeParamOption.setType(PatternOptionBuilder.NUMBER_VALUE);
+        modeParamOption.setArgName("Launch mode");
+        OPTIONS.addOption(modeParamOption);
+
+        final Option pluginParamOption = new Option("p", "param", true, "Tool/Plugin launch mode parameters");
+        pluginParamOption.setRequired(false);
+        pluginParamOption.setArgName("property=value");
+        pluginParamOption.setValueSeparator('=');
+        OPTIONS.addOption(pluginParamOption);
+    }
+
     public static void main(String[] args)
     {
-        Options options = null;
-        CommandLineParser parser = null;
-        HelpFormatter formatter = null;
+        CommandLineParser parser = new DefaultParser();
+        HelpFormatter formatter = new HelpFormatter();
         try
         {
-            // Parse input parameter
-            options = new Options();
-
-            final Option pluginOption = new Option("t", "tool", true, "Tool/Plugin to be launched");
-            pluginOption.setRequired(true);
-            pluginOption.setType(PatternOptionBuilder.CLASS_VALUE);
-            pluginOption.setArgName("Tool/Plugin");
-            options.addOption(pluginOption);
-
-            final Option modeParamOption = new Option("m", "mode", true, "Tool/Plugin launch mode");
-            pluginOption.setRequired(false);
-            pluginOption.setType(PatternOptionBuilder.NUMBER_VALUE);
-            pluginOption.setArgName("Launch mode");
-            options.addOption(modeParamOption);
-
-            final Option pluginParamOption = new Option("p", "param", true, "Tool/Plugin specific parameters");
-            pluginParamOption.setRequired(false);
-            pluginParamOption.setArgName("property=value");
-            pluginParamOption.setValueSeparator('=');
-            options.addOption(pluginParamOption);
-
-            parser = new DefaultParser();
-            formatter = new HelpFormatter();
-
-            final CommandLine cmd = parser.parse(options, args);
-            final String inputPlugin = cmd.getOptionValue("tool");
+            final CommandLine cmd = parser.parse(OPTIONS, args);
 
             // Scan for the given plugin
+            final String inputPlugin = cmd.getOptionValue("tool");
+
             ClassLoader cl = GUIPluginLauncher.class.getClassLoader();
             final ImmutableSet<ClassPath.ClassInfo> classesInNet2Plan = ClassPath.from(cl).getTopLevelClasses("com.net2plan.gui.plugins");
 
@@ -116,7 +118,8 @@ public class GUIPluginLauncher
                 if (cmd.hasOption("mode"))
                 {
                     mode = Integer.parseInt(cmd.getOptionValue("mode"));
-                    if (cmd.hasOption("param")) parameters = parseParameters(cmd.getOptionValue("param"), pluginParamOption.getValueSeparator());
+                    if (cmd.hasOption("param"))
+                        parameters = parseParameters(cmd.getOptionValue("param"), OPTIONS.getOption("param").getValueSeparator());
                 }
 
                 wrapper.launchMode(mode, parameters);
@@ -127,7 +130,7 @@ public class GUIPluginLauncher
         } catch (ParseException e)
         {
             System.err.println(e.getMessage());
-            formatter.printHelp("utility-name", options);
+            formatter.printHelp("utility-name", OPTIONS);
 
             System.exit(1);
         } catch (Exception e)
