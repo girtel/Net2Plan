@@ -224,16 +224,16 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                         	if (newOfferedTraffic < 0) throw new Net2PlanException ("The demand offered traffic cannot be negative");
                             if (callback.getVisualizationState().isWhatIfAnalysisActive())
                             {
-                            	final WhatIfAnalysisPane whatIfPane = callback.getWhatIfAnalysisPane(); 
-                            	synchronized (whatIfPane) 
+                            	final WhatIfAnalysisPane whatIfPane = callback.getWhatIfAnalysisPane();
+                            	synchronized (whatIfPane)
                             	{
                             		whatIfPane.whatIfDemandOfferedTrafficModified(demand , newOfferedTraffic);
-                            		if (whatIfPane.getLastWhatIfExecutionException() != null) throw whatIfPane.getLastWhatIfExecutionException(); 
+                            		if (whatIfPane.getLastWhatIfExecutionException() != null) throw whatIfPane.getLastWhatIfExecutionException();
                             		whatIfPane.wait(); // wait until the simulation ends
-                            		if (whatIfPane.getLastWhatIfExecutionException() != null) throw whatIfPane.getLastWhatIfExecutionException(); 
+                            		if (whatIfPane.getLastWhatIfExecutionException() != null) throw whatIfPane.getLastWhatIfExecutionException();
 
                                     final VisualizationState vs = callback.getVisualizationState();
-                            		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+                            		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res =
                             				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
                             		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
                                     callback.updateVisualizationAfterNewTopology();
@@ -383,7 +383,10 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                                 NetPlan netPlan = callback.getDesign();
 
                                 try {
-                                    netPlan.getMulticastDemandFromId((long) itemIds).remove();
+                                    for (Object itemId : itemIds)
+                                    {
+                                        netPlan.getMulticastDemandFromId((long) itemId).remove();
+                                    }
                                     callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
                                 	callback.addNetPlanChange();
