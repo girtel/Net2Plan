@@ -425,7 +425,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
             mainTable.getColumnModel().addColumnModelListener(new TableColumnModelListener()
             {
-
                 @Override
                 public void columnAdded(TableColumnModelEvent e)
                 {
@@ -439,9 +438,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 @Override
                 public void columnMoved(TableColumnModelEvent e)
                 {
-
                     checkNewIndexes();
-
                 }
 
                 @Override
@@ -454,8 +451,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 {
                 }
             });
-
-
         }
 
         this.setRowSelectionAllowed(true);
@@ -1251,7 +1246,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     else if (networkElementType == NetworkElementType.FORWARDING_RULE)
                         auxItemId = Pair.of(Integer.parseInt(model.getValueAt(row, 1).toString().split(" ")[0]), Integer.parseInt(model.getValueAt(row, 2).toString().split(" ")[0]));
                     else
-                        auxItemId = (Long) model.getValueAt(row, 0);
+                        auxItemId = model.getValueAt(row, 0);
                 }
             }
 
@@ -1269,14 +1264,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 return;
             }
 
-            SwingUtilities.invokeLater(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    showInCanvas(e, itemId);
-                }
-            });
+            //  SwingUtilities.invokeLater(() -> showInCanvas(e, itemId));
         }
 
         private JTable getTable(MouseEvent e)

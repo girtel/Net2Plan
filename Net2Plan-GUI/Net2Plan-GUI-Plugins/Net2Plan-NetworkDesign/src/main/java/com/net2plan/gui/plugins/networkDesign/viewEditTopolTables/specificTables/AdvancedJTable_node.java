@@ -34,7 +34,6 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.collections15.BidiMap;
-import org.apache.commons.math3.ml.neuralnet.UpdateAction;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
