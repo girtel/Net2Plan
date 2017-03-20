@@ -25,6 +25,9 @@ public class GUINetworkDesignWrapper implements IGUIPluginWrapper
             case 1:
                 return;
             case 2:
+                if (!parameters.containsKey("netplan") || parameters.get("netplan") == null || parameters.get("netplan").isEmpty())
+                    throw new RuntimeException("NetPlan parameter is needed for launching mode 2 of: " + this.getClass().getName());
+
                 mode2();
                 break;
         }

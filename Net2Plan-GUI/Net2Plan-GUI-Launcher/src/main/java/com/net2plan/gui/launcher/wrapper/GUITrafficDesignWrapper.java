@@ -17,7 +17,7 @@ public class GUITrafficDesignWrapper implements IGUIPluginWrapper
         switch (mode)
         {
             default:
-                System.err.println("Unknown mode: " + mode + " in wrapper: " + this.getClass().getName());
+                throw new RuntimeException("Unknown mode: " + mode + " in wrapper: " + this.getClass().getName());
             case 1:
                 return;
         }
