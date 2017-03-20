@@ -402,7 +402,10 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                             NetPlan netPlan = callback.getDesign();
                             try
                             {
-                                netPlan.getRouteFromId((long) itemIds).remove();
+                                for (Object itemId : itemIds)
+                                {
+                                    netPlan.getRouteFromId((long) itemId).remove();
+                                }
                                 callback.getVisualizationState().resetPickedState();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                                 callback.addNetPlanChange();
