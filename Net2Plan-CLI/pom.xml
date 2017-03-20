@@ -15,6 +15,7 @@
     <modules>
         <module>Net2Plan-CLI-Exec</module>
         <module>Net2Plan-CLI-Plugins</module>
+        <module>Net2Plan-CLI-Launcher</module>
     </modules>
 
     <dependencyManagement>
