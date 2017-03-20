@@ -419,7 +419,10 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                         public void actionPerformed(ActionEvent e) 
                         {
                             try {
-                                callback.getDesign().getResourceFromId((Long) itemIds).remove();
+                                for (Object itemId : itemIds)
+                                {
+                                    callback.getDesign().getResourceFromId((Long) itemId).remove();
+                                }
                                 callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
                             	callback.addNetPlanChange();
