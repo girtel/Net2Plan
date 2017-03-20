@@ -1,5 +1,6 @@
 package com.net2plan.cli.plugins.launcher;
 
+import com.net2plan.cli.plugins.CLINetworkDesign;
 import org.apache.commons.cli.ParseException;
 
 /**
@@ -11,8 +12,8 @@ public class CLIAlgorithmLauncher extends CLINetworkDesign
     {
         try
         {
-            CLIAlgorithmLauncher algoritmLauncher = new CLIAlgorithmLauncher();
-            algoritmLauncher.executeFromCommandLine(args);
+            CLIAlgorithmLauncher algorithmLauncher = new CLIAlgorithmLauncher();
+            algorithmLauncher.executeFromCommandLine(args);
         } catch (ParseException e)
         {
             e.printStackTrace();
