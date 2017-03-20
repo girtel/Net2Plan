@@ -329,10 +329,22 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         }
         final JMenuItem tagFilter = new JMenuItem("This layer: Keep elements of tag...");
         submenuFilters.add(tagFilter);
-        tagFilter.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e) { dialogToFilterByTag (true); } });
+        tagFilter.addActionListener(new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                dialogToFilterByTag(true);
+            }
+        });
         final JMenuItem tagFilterAllLayers = new JMenuItem("All layers: Keep elements of tag...");
         submenuFilters.add(tagFilterAllLayers);
-        tagFilterAllLayers.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e) { dialogToFilterByTag (false); } });
+        tagFilterAllLayers.addActionListener(new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                dialogToFilterByTag(false);
+            }
+        });
 
         popup.add(submenuFilters);
         popup.addSeparator();
@@ -361,7 +373,10 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
                             NetPlan netPlan = callback.getDesign();
                             try
                             {
-                                netPlan.getSRGFromId((long) itemIds).remove();
+                                for (Object itemId : itemIds)
+                                {
+                                    netPlan.getSRGFromId((long) itemId).remove();
+                                }
                                 callback.getVisualizationState().resetPickedState();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
                                 callback.addNetPlanChange();
