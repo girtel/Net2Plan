@@ -317,6 +317,10 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
                             NetPlan netPlan = callback.getDesign();
 
                             try {
+                                for (Pair<Demand, Link> selectedFR : selectedFRs)
+                                {
+                                    
+                                }
                                 netPlan.setForwardingRule(netPlan.getDemandFromId(((Pair<Long, Long>) itemIds).getFirst()), netPlan.getLinkFromId(((Pair<Long, Long>) itemIds).getSecond()), 0);
                                 callback.getVisualizationState().resetPickedState();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.FORWARDING_RULE));

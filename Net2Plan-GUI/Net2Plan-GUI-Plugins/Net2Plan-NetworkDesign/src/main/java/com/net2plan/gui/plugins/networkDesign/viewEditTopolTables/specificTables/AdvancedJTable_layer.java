@@ -210,7 +210,10 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
                                 NetPlan netPlan = callback.getDesign();
 
                                 try {
-                                    netPlan.removeNetworkLayer(netPlan.getNetworkLayerFromId((long) itemIds));
+                                    for (Object itemId : itemIds)
+                                    {
+                                        netPlan.removeNetworkLayer(netPlan.getNetworkLayerFromId((long) itemId));
+                                    }
 
                                     final VisualizationState vs = callback.getVisualizationState();
                             		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res =
