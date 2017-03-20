@@ -37,16 +37,20 @@ public class GUIPluginLauncher
 
             final Option pluginOption = new Option("t", "tool", true, "Tool/Plugin to be launched");
             pluginOption.setRequired(true);
+            pluginOption.setType(PatternOptionBuilder.CLASS_VALUE);
+            pluginOption.setArgName("Tool/Plugin");
+            options.addOption(pluginOption);
 
             final Option modeParamOption = new Option("m", "mode", true, "Tool/Plugin launch mode");
             pluginOption.setRequired(false);
+            pluginOption.setType(PatternOptionBuilder.NUMBER_VALUE);
+            pluginOption.setArgName("Launch mode");
+            options.addOption(modeParamOption);
 
             final Option pluginParamOption = new Option("p", "param", true, "Tool/Plugin specific parameters");
             pluginParamOption.setRequired(false);
+            pluginParamOption.setArgName("property=value");
             pluginParamOption.setValueSeparator('=');
-
-            options.addOption(pluginOption);
-            options.addOption(modeParamOption);
             options.addOption(pluginParamOption);
 
             parser = new DefaultParser();
