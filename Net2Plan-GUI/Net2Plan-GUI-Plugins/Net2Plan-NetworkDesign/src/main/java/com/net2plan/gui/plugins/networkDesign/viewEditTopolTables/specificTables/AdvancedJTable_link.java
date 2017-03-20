@@ -94,13 +94,13 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
 
 
-    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) 
+    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns)
     {
     	final boolean isSourceRouting = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING;
     	final List<Link> rowVisibleLinks = getVisibleElementsInTable ();
         final double max_rho_e = currentState.getLinks().stream().mapToDouble(e->e.getUtilization()).max().orElse(0);
         List<Object[]> allLinkData = new LinkedList<Object[]>();
-        for (Link link : rowVisibleLinks) 
+        for (Link link : rowVisibleLinks)
         {
             Set<SharedRiskGroup> srgIds_thisLink = link.getSRGs();
             Set<Route> traversingRoutes = isSourceRouting ? link.getTraversingRoutes() : new LinkedHashSet<Route>();
@@ -186,7 +186,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         aggregatedData [COLUMN_COUPLEDTODEMAND] = new LastRowAggregatedValue(aggNumCouplings);
         allLinkData.add(aggregatedData);
 
-        
+
         return allLinkData;
     }
 
@@ -324,16 +324,16 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                             final boolean isLinkUp = (Boolean) newValue;
                             if (vs.isWhatIfAnalysisActive())
                             {
-                            	final WhatIfAnalysisPane whatIfPane = callback.getWhatIfAnalysisPane(); 
-                            	synchronized (whatIfPane) 
+                            	final WhatIfAnalysisPane whatIfPane = callback.getWhatIfAnalysisPane();
+                            	synchronized (whatIfPane)
                             	{
                             		whatIfPane.whatIfLinkNodesFailureStateChanged(null, null, isLinkUp? Sets.newHashSet(link): null, isLinkUp? null : Sets.newHashSet(link));
-                            		if (whatIfPane.getLastWhatIfExecutionException() != null) throw whatIfPane.getLastWhatIfExecutionException(); 
+                            		if (whatIfPane.getLastWhatIfExecutionException() != null) throw whatIfPane.getLastWhatIfExecutionException();
                             		whatIfPane.wait(); // wait until the simulation ends
-                            		if (whatIfPane.getLastWhatIfExecutionException() != null) throw whatIfPane.getLastWhatIfExecutionException(); 
+                            		if (whatIfPane.getLastWhatIfExecutionException() != null) throw whatIfPane.getLastWhatIfExecutionException();
 
                                     final VisualizationState vs = callback.getVisualizationState();
-                            		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+                            		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res =
                             				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
                             		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
                                     callback.updateVisualizationAfterNewTopology();
@@ -444,7 +444,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable() 
+    public void setColumnRowSortingFixedAndNonFixedTable()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_ORIGINNODE , COLUMN_DESTNODE , COLUMN_NUMROUTES , COLUMN_NUMSEGMENTS , COLUMN_NUMFORWRULES , COLUMN_NUMTREES);
@@ -483,16 +483,16 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         /* Add the popup menu option of the filters */
         final List<Link> selectedLinks = (List<Link>) (List<?>) getSelectedElements().getFirst();
     	final JMenu submenuFilters = new JMenu ("Filters");
-        if (!selectedLinks.isEmpty()) 
+        if (!selectedLinks.isEmpty())
         {
             final JMenuItem filterKeepElementsAffectedThisLayer = new JMenuItem("This layer: Keep elements associated to this link traffic");
             final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this link traffic");
             submenuFilters.add(filterKeepElementsAffectedThisLayer);
             if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
-            filterKeepElementsAffectedThisLayer.addActionListener(new ActionListener() 
+            filterKeepElementsAffectedThisLayer.addActionListener(new ActionListener()
             {
 				@Override
-				public void actionPerformed(ActionEvent e) 
+				public void actionPerformed(ActionEvent e)
 				{
 					if (selectedLinks.size() > 1) throw new RuntimeException ();
 					TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedLinks.get(0), true);
@@ -500,10 +500,10 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 					callback.updateVisualizationJustTables();
 				}
 			});
-            filterKeepElementsAffectedAllLayers.addActionListener(new ActionListener() 
+            filterKeepElementsAffectedAllLayers.addActionListener(new ActionListener()
             {
 				@Override
-				public void actionPerformed(ActionEvent e) 
+				public void actionPerformed(ActionEvent e)
 				{
 					if (selectedLinks.size() > 1) throw new RuntimeException ();
 					TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedLinks.get(0), false);
@@ -522,7 +522,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         popup.add(submenuFilters);
         popup.addSeparator();
 
-        
+
         if (callback.getVisualizationState().isNetPlanEditable()) {
             popup.add(getAddOption());
             for (JComponent item : getExtraAddOptions())
@@ -541,8 +541,11 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                             NetPlan netPlan = callback.getDesign();
 
                             try {
-                                Link link = netPlan.getLinkFromId((long) itemIds);
-                                link.remove();
+                                for (Object itemId : itemIds)
+                                {
+                                    Link link = netPlan.getLinkFromId((long) itemId);
+                                    link.remove();
+                                }
                                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                                 callback.addNetPlanChange();
@@ -586,7 +589,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                     {
                     	Set<Link> rowVisibleLinksSet = new HashSet<> (linkRowsInTheTable);
                         for (Link link : callback.getDesign().getLinks())
-                        	if (!rowVisibleLinksSet.contains(link)) 
+                        	if (!rowVisibleLinksSet.contains(link))
                         		callback.getVisualizationState().hideOnCanvas(link);
                         callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                         callback.addNetPlanChange();
@@ -614,7 +617,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, Object itemId) 
+    public void showInCanvas(MouseEvent e, Object itemId)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         final Link link = callback.getDesign().getLinkFromId((long) itemId);
@@ -660,7 +663,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         return options;
     }
 
-    private List<JComponent> getExtraOptions(final int row, final Object itemId) 
+    private List<JComponent> getExtraOptions(final int row, final Object itemId)
     {
         List<JComponent> options = new LinkedList<JComponent>();
 
@@ -879,16 +882,16 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             JMenuItem caFixValue = new JMenuItem("Set capacity to all");
             caFixValue.addActionListener(new ActionListener() {
                 @Override
-                public void actionPerformed(ActionEvent e) 
+                public void actionPerformed(ActionEvent e)
                 {
                     double u_e;
 
-                    while (true) 
+                    while (true)
                     {
                         String str = JOptionPane.showInputDialog(null, "Capacity value", "Set capacity to all table links", JOptionPane.QUESTION_MESSAGE);
                         if (str == null) return;
 
-                        try 
+                        try
                         {
                             u_e = Double.parseDouble(str);
                             if (u_e < 0) throw new NumberFormatException();
@@ -981,11 +984,11 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             JMenuItem lengthToEuclidean_allLinks = new JMenuItem("Set all table link lengths to node-pair Euclidean distance");
             lengthToEuclidean_allLinks.addActionListener(new ActionListener() {
                 @Override
-                public void actionPerformed(ActionEvent e) 
+                public void actionPerformed(ActionEvent e)
                 {
-                    try 
+                    try
                     {
-                        for (Link link : rowVisibleLinks) 
+                        for (Link link : rowVisibleLinks)
                             link.setLengthInKm(netPlan.getNodePairEuclideanDistance(link.getOriginNode(), link.getDestinationNode()));
                     	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                     	callback.addNetPlanChange();
@@ -1058,10 +1061,10 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                     JMenuItem decoupleAllLinksItem = new JMenuItem("Decouple all table links");
                     decoupleAllLinksItem.addActionListener(new ActionListener() {
                         @Override
-                        public void actionPerformed(ActionEvent e) 
+                        public void actionPerformed(ActionEvent e)
                         {
-                            for (Link link : coupledLinks) 
-                            	if (link.getCoupledDemand() == null) 
+                            for (Link link : coupledLinks)
+                            	if (link.getCoupledDemand() == null)
                             		link.getCoupledMulticastDemand().decouple();
                             	else
                             		link.getCoupledDemand().decouple();
@@ -1126,14 +1129,14 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         return options;
     }
 
-    private List<JComponent> getForcedOptions() 
+    private List<JComponent> getForcedOptions()
     {
         List<JComponent> options = new LinkedList<JComponent>();
         final int numRows = model.getRowCount();
-        if (numRows > 1) 
+        if (numRows > 1)
         {
             JMenuItem showAllLinks = new JMenuItem("Show all links");
-            showAllLinks.addActionListener(new ActionListener() 
+            showAllLinks.addActionListener(new ActionListener()
             {
                 @Override
                 public void actionPerformed(ActionEvent e)
@@ -1155,7 +1158,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             options.add(showAllLinks);
 
             JMenuItem hideAllLinks = new JMenuItem("Hide all links");
-            hideAllLinks.addActionListener(new ActionListener() 
+            hideAllLinks.addActionListener(new ActionListener()
             {
                 @Override
                 public void actionPerformed(ActionEvent e)
@@ -1180,7 +1183,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         return options;
     }
 
-    private class FullMeshTopologyActionListener implements ActionListener 
+    private class FullMeshTopologyActionListener implements ActionListener
     {
         private final boolean euclidean;
 
