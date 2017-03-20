@@ -412,8 +412,11 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
                             try
                             {
-                            	final Demand demand = netPlan.getDemandFromId((long) itemIds);
-                            	demand.remove();
+                                for (Object itemId : itemIds)
+                                {
+                                    final Demand demand = netPlan.getDemandFromId((long) itemId);
+                                    demand.remove();
+                                }
                             	callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                             	callback.addNetPlanChange();
