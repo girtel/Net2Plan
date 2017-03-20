@@ -1,9 +1,8 @@
-package com.net2plan.gui.launcher.utils;
+package com.net2plan.gui.utils;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
 import java.awt.event.KeyEvent;
 
 /**

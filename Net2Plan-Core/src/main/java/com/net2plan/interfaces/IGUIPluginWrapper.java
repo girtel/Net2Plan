@@ -1,4 +1,4 @@
-package com.net2plan.gui.launcher.wrapper;
+package com.net2plan.interfaces;
 
 import java.util.Map;
 

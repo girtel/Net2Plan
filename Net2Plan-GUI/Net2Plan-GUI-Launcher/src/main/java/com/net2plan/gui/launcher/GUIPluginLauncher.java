@@ -4,8 +4,8 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
 import com.net2plan.gui.GUINet2Plan;
-import com.net2plan.gui.launcher.utils.GUIRobot;
-import com.net2plan.gui.launcher.wrapper.IGUIPluginWrapper;
+import com.net2plan.gui.utils.GUIRobot;
+import com.net2plan.interfaces.IGUIPluginWrapper;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.plugins.PluginSystem;
@@ -87,7 +87,7 @@ public class GUIPluginLauncher
             // Parse mode and params
 
             // Looking for plugin wrapper
-            final ImmutableSet<ClassPath.ClassInfo> wrappers = ClassPath.from(cl).getTopLevelClasses("com.net2plan.gui.launcher.wrapper");
+            final ImmutableSet<ClassPath.ClassInfo> wrappers = ClassPath.from(cl).getTopLevelClasses("com.net2plan.gui.plugins.debug");
 
             IGUIPluginWrapper wrapper = null;
             for (ClassPath.ClassInfo classInfo : wrappers)
