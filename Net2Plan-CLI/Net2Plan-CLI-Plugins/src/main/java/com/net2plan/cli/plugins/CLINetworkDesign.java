@@ -119,7 +119,7 @@ public class CLINetworkDesign extends ICLIModule
         File outputFile = (File) cli.getParsedOptionValue("output-file");
 
         IAlgorithm algorithm;
-        if (!classFile.getName().equals("launch-internal"))
+        if (!classFile.getName().equals("internal-algorithm"))
             algorithm = ClassLoaderUtils.getInstance(classFile, className, IAlgorithm.class);
         else
             algorithm = ClassUtils.findAlgorithm(className);
