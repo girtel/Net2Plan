@@ -118,9 +118,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
         this.getTableHeader().setReorderingAllowed(true);
 
-        this.setRowSelectionAllowed(true);
-        this.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-
         scroll = new JScrollPane(this);
         this.decorator = new FixedColumnDecorator(scroll, getNumberOfDecoratorColumns());
         mainTable = decorator.getMainTable();
@@ -460,6 +457,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
 
         }
+
+        this.setRowSelectionAllowed(true);
+        this.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     }
 
     /**
