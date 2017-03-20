@@ -257,7 +257,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
-    public void doPopup(final MouseEvent e, final int row, final Object itemId) {
+    public void doPopup(final MouseEvent e, final int row, final Object[] itemId) {
         JPopupMenu popup = new JPopupMenu();
 
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();

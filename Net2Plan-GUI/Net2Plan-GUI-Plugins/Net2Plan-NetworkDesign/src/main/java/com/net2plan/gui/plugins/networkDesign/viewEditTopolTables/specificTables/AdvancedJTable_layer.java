@@ -188,7 +188,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
 
 
     @Override
-    public void doPopup(MouseEvent e, int row, final Object itemId) {
+    public void doPopup(MouseEvent e, int row, final Object[] itemId) {
         JPopupMenu popup = new JPopupMenu();
 
         if (callback.getVisualizationState().isNetPlanEditable()) {

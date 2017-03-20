@@ -353,7 +353,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
 
     }
     @Override
-    public void doPopup(MouseEvent e, int row, Object itemId) {
+    public void doPopup(MouseEvent e, int row, Object[] itemId) {
 
         JPopupMenu popup = new JPopupMenu();
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();

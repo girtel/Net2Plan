@@ -341,7 +341,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         return attColumnsHeaders;
     }
 
-    public void doPopup(final MouseEvent e, final int row, final Object itemId)
+    public void doPopup(final MouseEvent e, final int row, final Object[] itemId)
     {
         JPopupMenu popup = new JPopupMenu();
 

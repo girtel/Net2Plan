@@ -1146,7 +1146,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public abstract ArrayList<String> getAttributesColumnsHeaders();
 
-    public abstract void doPopup(final MouseEvent e, final int row, final Object itemId);
+    public abstract void doPopup(final MouseEvent e, final int row, final Object[] itemId);
 
     public abstract void showInCanvas(MouseEvent e, Object itemId);
 
@@ -1230,35 +1230,44 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         @Override
         public void mouseClicked(final MouseEvent e)
         {
-            Object auxItemId = null;
+            List<Object> itemList = new ArrayList<>();
+
             int row = -1;
+
             if (hasElements())
             {
                 JTable table = getTable(e);
                 row = table.rowAtPoint(e.getPoint());
-                if (row != -1)
+
+                final int[] selectedRows = table.getSelectedRows();
+                for (int selectedRow : selectedRows)
                 {
-                    row = table.convertRowIndexToModel(row);
-                    if (table.getModel().getValueAt(row, 0) == null)
-                        row = row - 1;
-                    if (table.getModel().getValueAt(row, 0) instanceof LastRowAggregatedValue)
-                        auxItemId = null;
-                    else if (networkElementType == NetworkElementType.FORWARDING_RULE)
-                        auxItemId = Pair.of(Integer.parseInt(model.getValueAt(row, 1).toString().split(" ")[0]), Integer.parseInt(model.getValueAt(row, 2).toString().split(" ")[0]));
-                    else
-                        auxItemId = model.getValueAt(row, 0);
+                    Object auxItemId = null;
+                    if (selectedRow != -1)
+                    {
+                        selectedRow = table.convertRowIndexToModel(selectedRow);
+                        if (table.getModel().getValueAt(selectedRow, 0) == null)
+                            selectedRow = selectedRow - 1;
+                        if (table.getModel().getValueAt(selectedRow, 0) instanceof LastRowAggregatedValue)
+                            auxItemId = null;
+                        else if (networkElementType == NetworkElementType.FORWARDING_RULE)
+                            auxItemId = Pair.of(Integer.parseInt(model.getValueAt(selectedRow, 1).toString().split(" ")[0]), Integer.parseInt(model.getValueAt(selectedRow, 2).toString().split(" ")[0]));
+                        else
+                            auxItemId = model.getValueAt(selectedRow, 0);
+                    }
+
+                    itemList.add(auxItemId);
                 }
             }
 
-            final Object itemId = auxItemId;
-
             if (SwingUtilities.isRightMouseButton(e))
             {
-                doPopup(e, row, itemId);
+                doPopup(e, row, itemList.toArray());
                 return;
             }
 
-            if (itemId == null)
+            // if (itemId == null)
+            if (itemList.isEmpty())
             {
                 callback.resetPickedStateAndUpdateView();
                 return;
@@ -1287,6 +1296,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     {
         if (networkElementType == NetworkElementType.FORWARDING_RULE)
             throw new RuntimeException("Forwarding rules have no attributes");
+
         JMenuItem addAttribute = new JMenuItem("Add/edit attribute");
         popup.add(new JPopupMenu.Separator());
         addAttribute.addActionListener(new ActionListener()
@@ -2364,7 +2374,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     }
 
     /* Dialog for filtering by tag */
-    protected void dialogToFilterByTag (boolean onlyInActiveLayer)
+    protected void dialogToFilterByTag(boolean onlyInActiveLayer)
     {
         JTextField txt_tagContains = new JTextField(30);
         JTextField txt_tagDoesNotContain = new JTextField(30);
@@ -2381,11 +2391,11 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             try
             {
                 if (txt_tagContains.getText().isEmpty() && txt_tagDoesNotContain.getText().isEmpty()) continue;
-				final ITableRowFilter filter = new TBFTagBased(
-						callback.getDesign(), onlyInActiveLayer? callback.getDesign().getNetworkLayerDefault() : null , 
-								txt_tagContains.getText() , txt_tagDoesNotContain.getText());
-				callback.getVisualizationState().updateTableRowFilter(filter);
-				callback.updateVisualizationJustTables();
+                final ITableRowFilter filter = new TBFTagBased(
+                        callback.getDesign(), onlyInActiveLayer ? callback.getDesign().getNetworkLayerDefault() : null,
+                        txt_tagContains.getText(), txt_tagDoesNotContain.getText());
+                callback.getVisualizationState().updateTableRowFilter(filter);
+                callback.updateVisualizationJustTables();
             } catch (Throwable ex)
             {
                 ErrorHandling.addErrorOrException(ex, getClass());

@@ -401,7 +401,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, final Object itemId)
+    public void doPopup(final MouseEvent e, final int row, final Object[] itemId)
     {
         JPopupMenu popup = new JPopupMenu();
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
@@ -464,7 +464,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                         {
                             try
                             {
-                                callback.getDesign().getNodeFromId((long) itemId).remove();
+                                // callback.getDesign().getNodeFromId((long) itemId).remove();
                                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                                 callback.addNetPlanChange();
