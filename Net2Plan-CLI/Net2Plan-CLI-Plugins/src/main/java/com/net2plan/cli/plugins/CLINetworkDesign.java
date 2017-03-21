@@ -54,23 +54,27 @@ public class CLINetworkDesign extends ICLIModule
         trafficLayer.setArgName("layer");
         OPTIONS.addOption(trafficLayer);
 
+        Option internalSearch = new Option(null, "internal-search", false, "Decides if the algorithm is searched in the given file or in the application class-path");
+        internalSearch.setRequired(false);
+        OPTIONS.addOption(internalSearch);
+
         Option classFile = new Option(null, "class-file", true, ".class/.jar file containing the algorithm");
         classFile.setType(PatternOptionBuilder.FILE_VALUE);
         classFile.setArgName("file");
         classFile.setRequired(true);
         OPTIONS.addOption(classFile);
 
+        Option packageName = new Option(null, "package-name", true, "Name of the package containing the algorithm");
+        packageName.setType(PatternOptionBuilder.STRING_VALUE);
+        packageName.setArgName("packagename");
+        packageName.setRequired(true);
+        OPTIONS.addOption(packageName);
+
         Option className = new Option(null, "class-name", true, "Class name of the algorithm (package name could be omitted)");
         className.setType(PatternOptionBuilder.STRING_VALUE);
         className.setArgName("classname");
         className.setRequired(true);
         OPTIONS.addOption(className);
-
-        Option packageName = new Option(null, "package-name", true, "Name of the package containing the algorithm");
-        packageName.setType(PatternOptionBuilder.STRING_VALUE);
-        packageName.setArgName("packagename");
-        packageName.setRequired(false);
-        OPTIONS.addOption(packageName);
 
         Option outputFile = new Option(null, "output-file", true, ".n2p file where saving the resulting design");
         outputFile.setType(PatternOptionBuilder.FILE_VALUE);
@@ -125,12 +129,11 @@ public class CLINetworkDesign extends ICLIModule
         File outputFile = (File) cli.getParsedOptionValue("output-file");
 
         IAlgorithm algorithm;
-        if (!classFile.getName().equals("internal-algorithm"))
+        if (!cli.hasOption("internal-search"))
         {
             algorithm = ClassLoaderUtils.getInstance(classFile, className, IAlgorithm.class);
         } else
         {
-            if (!cli.hasOption("package-name")) throw new ParseException("--package-name parameter is required for internal algorithm loading.");
             algorithm = ClassUtils.findAlgorithm(className, cli.getOptionValue("package-name"));
         }
 

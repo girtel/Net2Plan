@@ -29,6 +29,7 @@ public class CLIAlgorithmLauncherTest
         paramMap.put("--output-file", DEFAULT_OUTPUT);
 
         final List<String> args = new LinkedList<>();
+        args.add("--internal-search");
         for (Map.Entry<String, String> entry : paramMap.entrySet())
         {
             args.add(entry.getKey());
@@ -48,6 +49,7 @@ public class CLIAlgorithmLauncherTest
         paramMap.put("--output-file", DEFAULT_OUTPUT);
 
         final List<String> args = new LinkedList<>();
+        args.add("--internal-search");
         for (Map.Entry<String, String> entry : paramMap.entrySet())
         {
             args.add(entry.getKey());
@@ -67,6 +69,7 @@ public class CLIAlgorithmLauncherTest
         paramMap.put("--output-file", DEFAULT_OUTPUT);
 
         final List<String> args = new LinkedList<>();
+        args.add("--internal-search");
         for (Map.Entry<String, String> entry : paramMap.entrySet())
         {
             args.add(entry.getKey());
@@ -86,6 +89,7 @@ public class CLIAlgorithmLauncherTest
         paramMap.put("--class-name", DEFAULT_ALGORITHM);
 
         final List<String> args = new LinkedList<>();
+        args.add("--internal-search");
         for (Map.Entry<String, String> entry : paramMap.entrySet())
         {
             args.add(entry.getKey());
