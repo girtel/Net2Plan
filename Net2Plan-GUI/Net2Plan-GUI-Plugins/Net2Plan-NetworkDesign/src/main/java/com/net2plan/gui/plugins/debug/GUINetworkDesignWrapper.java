@@ -1,6 +1,6 @@
 package com.net2plan.gui.plugins.debug;
 
-import com.net2plan.gui.utils.GUIRobot;
+import com.net2plan.gui.utils.Robot;
 import com.net2plan.interfaces.IGUIPluginWrapper;
 
 import java.awt.*;
@@ -40,7 +40,7 @@ public class GUINetworkDesignWrapper implements IGUIPluginWrapper
 
         try
         {
-            GUIRobot robot = new GUIRobot();
+            Robot robot = new Robot();
 
             // Close table window
             robot.type(KeyEvent.VK_F4, KeyEvent.VK_ALT);

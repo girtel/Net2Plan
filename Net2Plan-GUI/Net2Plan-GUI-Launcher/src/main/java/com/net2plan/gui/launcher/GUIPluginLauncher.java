@@ -4,7 +4,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
 import com.net2plan.gui.GUINet2Plan;
-import com.net2plan.gui.utils.GUIRobot;
+import com.net2plan.gui.utils.Robot;
 import com.net2plan.interfaces.IGUIPluginWrapper;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
@@ -142,7 +142,7 @@ public class GUIPluginLauncher
 
     private static void runPlugin() throws AWTException
     {
-        final GUIRobot robot = new GUIRobot();
+        final Robot robot = new Robot();
 
         // Showing the tool
         final KeyStroke pluginKeyStroke = currentPlugin.getKeyStroke();
