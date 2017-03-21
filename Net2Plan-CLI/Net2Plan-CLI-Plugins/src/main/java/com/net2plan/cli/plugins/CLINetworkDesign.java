@@ -33,7 +33,7 @@ import java.util.Map;
 public class CLINetworkDesign extends ICLIModule
 {
     private final static String TITLE = "Offline network design";
-    protected final static Options OPTIONS;
+    private final static Options OPTIONS;
 
     static
     {
@@ -53,6 +53,10 @@ public class CLINetworkDesign extends ICLIModule
         trafficLayer.setType(PatternOptionBuilder.NUMBER_VALUE);
         trafficLayer.setArgName("layer");
         OPTIONS.addOption(trafficLayer);
+
+        Option internalSearch = new Option(null, "package-search", true, "(Optional) Search for algorithm in the application's class-path. Looks for the algorithm under the given package name. Class-file is unused under this context.");
+        internalSearch.setRequired(false);
+        OPTIONS.addOption(internalSearch);
 
         Option classFile = new Option(null, "class-file", true, ".class/.jar file containing the algorithm");
         classFile.setType(PatternOptionBuilder.FILE_VALUE);
@@ -119,19 +123,15 @@ public class CLINetworkDesign extends ICLIModule
         File outputFile = (File) cli.getParsedOptionValue("output-file");
 
         IAlgorithm algorithm;
-        if (!classFile.getName().equals("internal-algorithm"))
+        if (!cli.hasOption("package-search"))
+        {
             algorithm = ClassLoaderUtils.getInstance(classFile, className, IAlgorithm.class);
-        else
-            algorithm = ClassUtils.findAlgorithm(className);
-
-        List<Triple<String, String, String>> defaultAlgorithmParameters = null;
-        try
+        } else
         {
-            defaultAlgorithmParameters = algorithm.getParameters();
-        } catch (UnsupportedOperationException ignored)
-        {
+            algorithm = ClassUtils.findAlgorithm(className, cli.getOptionValue("package-search"));
         }
 
+        List<Triple<String, String, String>> defaultAlgorithmParameters = algorithm.getParameters();
         Map<String, String> algorithmParameters = CommandLineParser.getParameters(defaultAlgorithmParameters, cli.getOptionProperties("alg-param"));
         Configuration.updateSolverLibraryNameParameter(algorithmParameters); // put default path to libraries if solverLibraryName is ""
         Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
