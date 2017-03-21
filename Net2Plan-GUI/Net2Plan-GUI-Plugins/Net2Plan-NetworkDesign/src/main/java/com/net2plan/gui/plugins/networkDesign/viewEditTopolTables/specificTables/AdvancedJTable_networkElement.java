@@ -1262,6 +1262,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
             if (SwingUtilities.isRightMouseButton(e))
             {
+                // List is empty || Right clicking with shift pressed
+                if  (itemList.isEmpty() || ((e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0))
+                    this.getTable(e).setRowSelectionInterval(row, row);
                 doPopup(e, row, itemList.toArray());
                 return;
             }
