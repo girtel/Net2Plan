@@ -578,28 +578,22 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         final List<Node> selectedNodes = (List<Node>) super.getSelectedElements().getFirst();
 
         List<JComponent> options = new LinkedList<JComponent>();
-        final int numRows = model.getRowCount();
-        final List<Node> tableVisibleNodes = getVisibleElementsInTable();
 
         if (itemId != null)
         {
             JMenuItem switchCoordinates = new JMenuItem("Switch node coordinates from (x,y) to (y,x)");
 
-            switchCoordinates.addActionListener(new ActionListener()
+            switchCoordinates.addActionListener(e ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
+                for (Node node : selectedNodes)
                 {
-                    for (Node node : selectedNodes)
-                    {
-                        Point2D currentPosition = node.getXYPositionMap();
-                        node.setXYPositionMap(new Point2D.Double(currentPosition.getY(), currentPosition.getX()));
-                    }
-
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                    callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-                    callback.addNetPlanChange();
+                    Point2D currentPosition = node.getXYPositionMap();
+                    node.setXYPositionMap(new Point2D.Double(currentPosition.getY(), currentPosition.getX()));
                 }
+
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
+                callback.addNetPlanChange();
             });
 
             options.add(switchCoordinates);
@@ -608,8 +602,6 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
             xyPositionFromAttributes.addActionListener(e ->
             {
-                NetPlan netPlan = callback.getDesign();
-
                 Set<String> attributeSet = new LinkedHashSet<>();
                 for (Node selectedNode : selectedNodes)
                     attributeSet.addAll(selectedNode.getAttributes().keySet());
@@ -689,57 +681,47 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
             options.add(nameFromAttribute);
         }
-        
+
         return options;
     }
 
     private List<JComponent> getForcedOptions()
     {
-        List<JComponent> options = new LinkedList<JComponent>();
+        List<JComponent> options = new LinkedList<>();
 
         final int numRows = model.getRowCount();
         if (numRows > 1)
         {
             JMenuItem showAllNodes = new JMenuItem("Show all nodes");
-            showAllNodes.addActionListener(new ActionListener()
+            showAllNodes.addActionListener(e ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    final int numRows = model.getRowCount();
-                    for (int row = 0; row < numRows; row++)
-                        if (model.getValueAt(row, COLUMN_SHOWHIDE) != null)
-                        {
-                            if (model.getValueAt(row, 0) instanceof LastRowAggregatedValue) continue;
-                            final long nodeId = (Long) model.getValueAt(row, 0);
-                            final Node node = callback.getDesign().getNodeFromId(nodeId);
-                            callback.getVisualizationState().showOnCanvas(node);
-                        }
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                    callback.addNetPlanChange();
-                }
+                for (int row = 0; row < numRows; row++)
+                    if (model.getValueAt(row, COLUMN_SHOWHIDE) != null)
+                    {
+                        if (model.getValueAt(row, 0) instanceof LastRowAggregatedValue) continue;
+                        final long nodeId = (Long) model.getValueAt(row, 0);
+                        final Node node = callback.getDesign().getNodeFromId(nodeId);
+                        callback.getVisualizationState().showOnCanvas(node);
+                    }
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                callback.addNetPlanChange();
             });
 
             options.add(showAllNodes);
 
             JMenuItem hideAllNodes = new JMenuItem("Hide all nodes");
-            hideAllNodes.addActionListener(new ActionListener()
+            hideAllNodes.addActionListener(e ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    final int numRows = model.getRowCount();
-                    for (int row = 0; row < numRows; row++)
-                        if (model.getValueAt(row, COLUMN_SHOWHIDE) != null)
-                        {
-                            if (model.getValueAt(row, 0) instanceof LastRowAggregatedValue) continue;
-                            final long nodeId = (Long) model.getValueAt(row, 0);
-                            final Node node = callback.getDesign().getNodeFromId(nodeId);
-                            callback.getVisualizationState().hideOnCanvas(node);
-                        }
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                    callback.addNetPlanChange();
-                }
+                for (int row = 0; row < numRows; row++)
+                    if (model.getValueAt(row, COLUMN_SHOWHIDE) != null)
+                    {
+                        if (model.getValueAt(row, 0) instanceof LastRowAggregatedValue) continue;
+                        final long nodeId = (Long) model.getValueAt(row, 0);
+                        final Node node = callback.getDesign().getNodeFromId(nodeId);
+                        callback.getVisualizationState().hideOnCanvas(node);
+                    }
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                callback.addNetPlanChange();
             });
 
             options.add(hideAllNodes);
