@@ -54,7 +54,7 @@ public class CLINetworkDesign extends ICLIModule
         trafficLayer.setArgName("layer");
         OPTIONS.addOption(trafficLayer);
 
-        Option internalSearch = new Option(null, "package-search", true, "(Optional) Search for algorithm in the application's class-path. Looks for the algorithm under the given package name.");
+        Option internalSearch = new Option(null, "package-search", true, "(Optional) Search for algorithm in the application's class-path. Looks for the algorithm under the given package name. Class-file is unused under this context.");
         internalSearch.setRequired(false);
         OPTIONS.addOption(internalSearch);
 
