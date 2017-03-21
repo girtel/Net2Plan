@@ -1349,68 +1349,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         });
         popup.add(addAttribute);
 
-        JMenuItem viewAttributes = new JMenuItem("View/edit attributes");
-        viewAttributes.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                try
-                {
-                    NetPlan netPlan = callback.getDesign();
-                    int itemIndex = convertRowIndexToModel(row);
-                    Object itemId;
-
-                    switch (networkElementType)
-                    {
-                        case LAYER:
-                            itemId = netPlan.getNetworkLayers().get(itemIndex).getId();
-                            break;
-
-                        case NODE:
-                            itemId = netPlan.getNodes().get(itemIndex).getId();
-                            break;
-
-                        case LINK:
-                            itemId = netPlan.getLinks().get(itemIndex).getId();
-                            break;
-
-                        case DEMAND:
-                            itemId = netPlan.getDemands().get(itemIndex).getId();
-                            break;
-
-                        case MULTICAST_DEMAND:
-                            itemId = netPlan.getMulticastDemands().get(itemIndex).getId();
-                            break;
-
-                        case ROUTE:
-                            itemId = netPlan.getRoutes().get(itemIndex).getId();
-                            break;
-
-                        case MULTICAST_TREE:
-                            itemId = netPlan.getMulticastTrees().get(itemIndex).getId();
-                            break;
-
-                        case SRG:
-                            itemId = netPlan.getSRGs().get(itemIndex).getId();
-                            break;
-
-                        default:
-                            throw new RuntimeException("Bad");
-                    }
-
-                    JDialog dialog = new AttributeEditor(callback, networkElementType, itemId);
-                    dialog.setVisible(true);
-                    callback.updateVisualizationJustTables();
-                } catch (Throwable ex)
-                {
-                    ex.printStackTrace();
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying attributes");
-                }
-            }
-        });
-        popup.add(viewAttributes);
-
         JMenuItem removeAttribute = new JMenuItem("Remove attribute");
 
         removeAttribute.addActionListener(new ActionListener()
@@ -1425,77 +1363,13 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     int itemIndex = convertRowIndexToModel(row);
                     Object itemId;
 
-                    String[] attributeList;
-
-                    switch (networkElementType)
+                    final Set<String> attributes = new HashSet<>();
+                    for (NetworkElement selectedElement : selectedElements)
                     {
-                        case LAYER:
-                        {
-                            NetworkLayer element = netPlan.getNetworkLayers().get(itemIndex);
-                            itemId = element.getId();
-                            attributeList = StringUtils.toArray(element.getAttributes().keySet());
-                        }
-                        break;
-
-                        case NODE:
-                        {
-                            Node element = netPlan.getNodes().get(itemIndex);
-                            itemId = element.getId();
-                            attributeList = StringUtils.toArray(element.getAttributes().keySet());
-                        }
-                        break;
-
-                        case LINK:
-                        {
-                            Link element = netPlan.getLinks().get(itemIndex);
-                            itemId = element.getId();
-                            attributeList = StringUtils.toArray(element.getAttributes().keySet());
-                        }
-                        break;
-
-                        case DEMAND:
-                        {
-                            Demand element = netPlan.getDemands().get(itemIndex);
-                            itemId = element.getId();
-                            attributeList = StringUtils.toArray(element.getAttributes().keySet());
-                        }
-                        break;
-
-                        case MULTICAST_DEMAND:
-                        {
-                            MulticastDemand element = netPlan.getMulticastDemands().get(itemIndex);
-                            itemId = element.getId();
-                            attributeList = StringUtils.toArray(element.getAttributes().keySet());
-                        }
-                        break;
-
-                        case ROUTE:
-                        {
-                            Route element = netPlan.getRoutes().get(itemIndex);
-                            itemId = element.getId();
-                            attributeList = StringUtils.toArray(element.getAttributes().keySet());
-                        }
-                        break;
-
-                        case MULTICAST_TREE:
-                        {
-                            MulticastTree element = netPlan.getMulticastTrees().get(itemIndex);
-                            itemId = element.getId();
-                            attributeList = StringUtils.toArray(element.getAttributes().keySet());
-                        }
-                        break;
-
-                        case SRG:
-                        {
-                            SharedRiskGroup element = netPlan.getSRGs().get(itemIndex);
-                            itemId = element.getId();
-                            attributeList = StringUtils.toArray(element.getAttributes().keySet());
-                        }
-                        break;
-
-                        default:
-                            throw new RuntimeException("Bad");
+                        attributes.addAll(selectedElement.getAttributes().keySet());
                     }
+
+                    String[] attributeList = StringUtils.toArray(attributes);
 
                     if (attributeList.length == 0) throw new Exception("No attribute to remove");
 
@@ -1572,7 +1446,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         popup.add(viewAttributesAll);
 
         // Tags controls
-        popup.add(new JPopupMenu.Separator());
+        popup.addSeparator();
 
         JMenuItem addTag = new JMenuItem("Add tag");
         addTag.addActionListener(e1 ->
@@ -1624,77 +1498,14 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     int itemIndex = convertRowIndexToModel(row);
                     Object itemId;
 
-                    String[] tagList;
-
-                    switch (networkElementType)
+                    final Set<String> tags = new HashSet<>();
+                    for (NetworkElement selectedElement : selectedElements)
                     {
-                        case LAYER:
-                        {
-                            NetworkLayer element = netPlan.getNetworkLayers().get(itemIndex);
-                            itemId = element.getId();
-                            tagList = StringUtils.toArray(element.getTags());
-                        }
-                        break;
-
-                        case NODE:
-                        {
-                            Node element = netPlan.getNodes().get(itemIndex);
-                            itemId = element.getId();
-                            tagList = StringUtils.toArray(element.getTags());
-                        }
-                        break;
-
-                        case LINK:
-                        {
-                            Link element = netPlan.getLinks().get(itemIndex);
-                            itemId = element.getId();
-                            tagList = StringUtils.toArray(element.getTags());
-                        }
-                        break;
-
-                        case DEMAND:
-                        {
-                            Demand element = netPlan.getDemands().get(itemIndex);
-                            itemId = element.getId();
-                            tagList = StringUtils.toArray(element.getTags());
-                        }
-                        break;
-
-                        case MULTICAST_DEMAND:
-                        {
-                            MulticastDemand element = netPlan.getMulticastDemands().get(itemIndex);
-                            itemId = element.getId();
-                            tagList = StringUtils.toArray(element.getTags());
-                        }
-                        break;
-
-                        case ROUTE:
-                        {
-                            Route element = netPlan.getRoutes().get(itemIndex);
-                            itemId = element.getId();
-                            tagList = StringUtils.toArray(element.getTags());
-                        }
-                        break;
-
-                        case MULTICAST_TREE:
-                        {
-                            MulticastTree element = netPlan.getMulticastTrees().get(itemIndex);
-                            itemId = element.getId();
-                            tagList = StringUtils.toArray(element.getTags());
-                        }
-                        break;
-
-                        case SRG:
-                        {
-                            SharedRiskGroup element = netPlan.getSRGs().get(itemIndex);
-                            itemId = element.getId();
-                            tagList = StringUtils.toArray(element.getTags());
-                        }
-                        break;
-
-                        default:
-                            throw new RuntimeException("Unknown network element");
+                        final Set<String> elementTags = selectedElement.getTags();
+                        tags.addAll(elementTags);
                     }
+
+                    String[] tagList = StringUtils.toArray(tags);
 
                     if (tagList.length == 0) throw new Exception("No tag to remove");
 
