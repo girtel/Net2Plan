@@ -1,6 +1,7 @@
 package com.net2plan.cli.plugins.launcher;
 
 import com.net2plan.cli.plugins.CLINetworkDesign;
+import org.apache.commons.cli.ParseException;
 
 /**
  * Launcher using the CLI version of Net2Plan that helps the debugging of algorithms.
@@ -9,15 +10,9 @@ import com.net2plan.cli.plugins.CLINetworkDesign;
  */
 public class CLIAlgorithmLauncher
 {
-    public static void main(String[] args)
+    public static void main(String[] args) throws ParseException
     {
-        try
-        {
-            CLINetworkDesign networkDesign = new CLINetworkDesign();
-            networkDesign.executeFromCommandLine(args);
-        } catch (Exception e)
-        {
-            e.printStackTrace();
-        }
+        CLINetworkDesign networkDesign = new CLINetworkDesign();
+        networkDesign.executeFromCommandLine(args);
     }
 }
