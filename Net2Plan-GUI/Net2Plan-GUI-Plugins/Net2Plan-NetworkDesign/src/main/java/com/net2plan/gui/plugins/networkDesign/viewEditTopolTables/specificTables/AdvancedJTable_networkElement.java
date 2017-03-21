@@ -1880,7 +1880,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     if (txt_name.getText().isEmpty()) continue;
 
                     tag = txt_name.getText();
-                    
+
                     for (Object itemId : itemIds)
                     {
                         NetworkElement element = netPlan.getNetworkElement((long) itemId);
@@ -2340,12 +2340,13 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
      *
      * @return
      */
-    public Pair<List<NetworkElement>, List<Pair<Demand, Link>>> getSelectedElements()
+    public Pair<List<? extends NetworkElement>, List<Pair<Demand, Link>>> getSelectedElements()
     {
-        final int[] rowIndexes = getSelectedRows();
+        final int[] rowIndexes = this.getSelectedRows();
+        final NetPlan np = callback.getDesign();
+
         final List<NetworkElement> elementList = new ArrayList<>();
         final List<Pair<Demand, Link>> frList = new ArrayList<>();
-        final NetPlan np = callback.getDesign();
 
         if (rowIndexes.length == 0) return Pair.of(elementList, frList);
         final int maxValidRowIndex = model.getRowCount() - 1 - (hasAggregationRow() ? 1 : 0);

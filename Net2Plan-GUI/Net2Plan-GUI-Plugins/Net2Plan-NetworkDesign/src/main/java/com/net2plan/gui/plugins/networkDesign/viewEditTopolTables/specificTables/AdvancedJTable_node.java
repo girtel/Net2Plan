@@ -403,19 +403,24 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     @Override
     public void doPopup(final MouseEvent e, final int row, final Object[] itemIds)
     {
-        JPopupMenu popup = new JPopupMenu();
+        final JPopupMenu popup = new JPopupMenu();
+
+        // Table filters
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        final List<Node> rowsInTheTable = getVisibleElementsInTable();
+
+        final List<Node> rowsInTheTable = this.getVisibleElementsInTable(); // Only visible rows
+        final List<Node> selectedNodes = (List<Node>) super.getSelectedElements().getFirst();
 
         /* Add the popup menu option of the filters */
-        final List<Node> selectedNodes = (List<Node>) (List<?>) getSelectedElements().getFirst();
         final JMenu submenuFilters = new JMenu("Filters");
         if (!selectedNodes.isEmpty())
         {
             final JMenuItem filterKeepElementsAffectedThisLayer = new JMenuItem("This layer: Keep elements associated to this node traffic");
             final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this node traffic");
+
             submenuFilters.add(filterKeepElementsAffectedThisLayer);
             if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
+
             filterKeepElementsAffectedThisLayer.addActionListener(e1 ->
             {
                 if (selectedNodes.size() > 1) throw new RuntimeException();
@@ -423,7 +428,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                 callback.getVisualizationState().updateTableRowFilter(filter);
                 callback.updateVisualizationJustTables();
             });
-            filterKeepElementsAffectedAllLayers.addActionListener(e2 ->
+            filterKeepElementsAffectedAllLayers.addActionListener(e1 ->
             {
                 if (selectedNodes.size() > 1) throw new RuntimeException();
                 TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedNodes.get(0), callback.getDesign().getNetworkLayerDefault(), false);
@@ -431,44 +436,31 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                 callback.updateVisualizationJustTables();
             });
         }
+
         final JMenuItem tagFilter = new JMenuItem("This layer: Keep elements of tag...");
         submenuFilters.add(tagFilter);
-        tagFilter.addActionListener(new ActionListener()
-        {
-            public void actionPerformed(ActionEvent e)
-            {
-                dialogToFilterByTag(true);
-            }
-        });
+
+        tagFilter.addActionListener(e1 -> dialogToFilterByTag(true));
         final JMenuItem tagFilterAllLayers = new JMenuItem("All layers: Keep elements of tag...");
         submenuFilters.add(tagFilterAllLayers);
-        tagFilterAllLayers.addActionListener(new ActionListener()
-        {
-            public void actionPerformed(ActionEvent e)
-            {
-                dialogToFilterByTag(false);
-            }
-        });
+        tagFilterAllLayers.addActionListener(e1 -> dialogToFilterByTag(false));
 
         popup.add(submenuFilters);
         popup.addSeparator();
 
+        // Popup buttons
         if (callback.getVisualizationState().isNetPlanEditable())
         {
-            popup.add(getAddOption());
-            for (JComponent item : getExtraAddOptions())
-                popup.add(item);
-        }
+            popup.add(this.getAddOption());
+            for (JComponent item : getExtraAddOptions()) popup.add(item);
 
-        if (!rowsInTheTable.isEmpty())
-        {
-            if (callback.getVisualizationState().isNetPlanEditable())
+            if (!rowsInTheTable.isEmpty())
             {
                 if (row != -1)
                 {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
 
-                    JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
+                    JMenuItem removeItem = new JMenuItem("Remove selected " + networkElementType);
                     removeItem.addActionListener(new ActionListener()
                     {
                         @Override
@@ -476,11 +468,10 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                         {
                             try
                             {
-                                for (Object itemId : itemIds)
-                                {
-                                    callback.getDesign().getNodeFromId((long) itemId).remove();
-                                    callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                                }
+                                for (Node selectedNode : selectedNodes)
+                                    selectedNode.remove();
+
+                                callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                                 callback.addNetPlanChange();
                             } catch (Throwable ex)
@@ -493,68 +484,35 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
                     popup.add(removeItem);
                 }
-                JMenuItem removeItems = new JMenuItem("Remove all " + networkElementType + "s in the table");
-                removeItems.addActionListener(new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        NetPlan netPlan = callback.getDesign();
-
-                        try
-                        {
-                            if (rf == null)
-                                netPlan.removeAllNodes();
-                            else
-                                for (Node n : rowsInTheTable) n.remove();
-                            callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                            callback.addNetPlanChange();
-                        } catch (Throwable ex)
-                        {
-                            ex.printStackTrace();
-                            ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
-                        }
-                    }
-                });
-                popup.add(removeItems);
 
                 JMenuItem removeAllNodesFilteredOut = new JMenuItem("Remove all nodes filtered out");
-                removeAllNodesFilteredOut.addActionListener(new ActionListener()
+                removeAllNodesFilteredOut.addActionListener(e1 ->
                 {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
+                    NetPlan netPlan = callback.getDesign();
+                    try
                     {
-                        NetPlan netPlan = callback.getDesign();
-                        try
-                        {
-                            for (Node n : new ArrayList<>(netPlan.getNodes()))
-                                if (!rowsInTheTable.contains(n)) n.remove();
-                            callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                            callback.addNetPlanChange();
-                        } catch (Throwable ex)
-                        {
-                            ex.printStackTrace();
-                            ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to complete this action");
-                        }
+                        for (Node n : new ArrayList<>(netPlan.getNodes()))
+                            if (!rowsInTheTable.contains(n)) n.remove();
+                        callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                        callback.addNetPlanChange();
+                    } catch (Throwable ex)
+                    {
+                        ex.printStackTrace();
+                        ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to complete this action");
                     }
                 });
                 popup.add(removeAllNodesFilteredOut);
 
                 JMenuItem hideAllNodesFilteredOut = new JMenuItem("Hide all nodes filtered out");
-                hideAllNodesFilteredOut.addActionListener(new ActionListener()
+                hideAllNodesFilteredOut.addActionListener(e1 ->
                 {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        Set<Node> rowsInTheTableSet = new HashSet<Node>(rowsInTheTable);
-                        for (Node n : callback.getDesign().getNodes())
-                            if (!rowsInTheTableSet.contains(n))
-                                callback.getVisualizationState().hideOnCanvas(n);
-                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                        callback.addNetPlanChange();
-                    }
+                    Set<Node> rowsInTheTableSet = new HashSet<>(rowsInTheTable);
+                    for (Node n : callback.getDesign().getNodes())
+                        if (!rowsInTheTableSet.contains(n))
+                            callback.getVisualizationState().hideOnCanvas(n);
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                    callback.addNetPlanChange();
                 });
                 popup.add(hideAllNodesFilteredOut);
 
