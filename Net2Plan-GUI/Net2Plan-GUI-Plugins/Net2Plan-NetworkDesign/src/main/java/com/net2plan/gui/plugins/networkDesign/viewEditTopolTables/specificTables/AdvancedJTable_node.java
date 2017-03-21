@@ -405,9 +405,6 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     {
         final JPopupMenu popup = new JPopupMenu();
 
-        // Table filters
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-
         final List<Node> rowsInTheTable = this.getVisibleElementsInTable(); // Only visible rows
         final List<Node> selectedNodes = (List<Node>) super.getSelectedElements().getFirst();
 
@@ -578,286 +575,121 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
     private List<JComponent> getExtraOptions(final int row, final Object itemId)
     {
+        final List<Node> selectedNodes = (List<Node>) super.getSelectedElements().getFirst();
+
         List<JComponent> options = new LinkedList<JComponent>();
         final int numRows = model.getRowCount();
         final List<Node> tableVisibleNodes = getVisibleElementsInTable();
 
         if (itemId != null)
         {
-            JMenuItem switchCoordinates_thisNode = new JMenuItem("Switch node coordinates from (x,y) to (y,x)");
+            JMenuItem switchCoordinates = new JMenuItem("Switch node coordinates from (x,y) to (y,x)");
 
-            switchCoordinates_thisNode.addActionListener(new ActionListener()
+            switchCoordinates.addActionListener(new ActionListener()
             {
                 @Override
                 public void actionPerformed(ActionEvent e)
                 {
-                    NetPlan netPlan = callback.getDesign();
-                    Node node = netPlan.getNodeFromId((long) itemId);
-                    Point2D currentPosition = node.getXYPositionMap();
-                    node.setXYPositionMap(new Point2D.Double(currentPosition.getY(), currentPosition.getX()));
+                    for (Node node : selectedNodes)
+                    {
+                        Point2D currentPosition = node.getXYPositionMap();
+                        node.setXYPositionMap(new Point2D.Double(currentPosition.getY(), currentPosition.getX()));
+                    }
+
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                     callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
                     callback.addNetPlanChange();
                 }
             });
 
-            options.add(switchCoordinates_thisNode);
+            options.add(switchCoordinates);
 
-            JMenuItem xyPositionFromAttributes_thisNode = new JMenuItem("Set node coordinates from attributes");
+            JMenuItem xyPositionFromAttributes = new JMenuItem("Set node coordinates from attributes");
 
-            xyPositionFromAttributes_thisNode.addActionListener(new ActionListener()
+            xyPositionFromAttributes.addActionListener(e ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
+                NetPlan netPlan = callback.getDesign();
+
+                Set<String> attributeSet = new LinkedHashSet<>();
+                for (Node selectedNode : selectedNodes)
+                    attributeSet.addAll(selectedNode.getAttributes().keySet());
+
+                try
                 {
-                    NetPlan netPlan = callback.getDesign();
+                    if (attributeSet.isEmpty()) throw new Exception("No attribute to select");
 
-                    Set<String> attributeSet = new LinkedHashSet<String>();
-                    Node node = netPlan.getNodeFromId((long) itemId);
-                    attributeSet.addAll(node.getAttributes().keySet());
-
-                    try
+                    final JComboBox latSelector = new WiderJComboBox();
+                    final JComboBox lonSelector = new WiderJComboBox();
+                    for (String attribute : attributeSet)
                     {
-                        if (attributeSet.isEmpty()) throw new Exception("No attribute to select");
-
-                        final JComboBox latSelector = new WiderJComboBox();
-                        final JComboBox lonSelector = new WiderJComboBox();
-                        for (String attribute : attributeSet)
-                        {
-                            latSelector.addItem(attribute);
-                            lonSelector.addItem(attribute);
-                        }
-
-                        JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[][]"));
-                        pane.add(new JLabel("X-coordinate / Longitude: "));
-                        pane.add(lonSelector, "growx, wrap");
-                        pane.add(new JLabel("Y-coordinate / Latitude: "));
-                        pane.add(latSelector, "growx, wrap");
-
-                        while (true)
-                        {
-                            int result = JOptionPane.showConfirmDialog(null, pane, "Please select the attributes for coordinates", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                            if (result != JOptionPane.OK_OPTION) return;
-
-                            try
-                            {
-                                String latAttribute = latSelector.getSelectedItem().toString();
-                                String lonAttribute = lonSelector.getSelectedItem().toString();
-
-                                node.setXYPositionMap(new Point2D.Double(Double.parseDouble(node.getAttribute(lonAttribute)), Double.parseDouble(node.getAttribute(latAttribute))));
-                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                                callback.addNetPlanChange();
-                                break;
-                            } catch (Throwable ex)
-                            {
-                                ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving coordinates from attributes");
-                                break;
-                            }
-                        }
-                        callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving coordinates from attributes");
+                        latSelector.addItem(attribute);
+                        lonSelector.addItem(attribute);
                     }
-                }
-            });
 
-            options.add(xyPositionFromAttributes_thisNode);
+                    JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[][]"));
+                    pane.add(new JLabel("X-coordinate / Longitude: "));
+                    pane.add(lonSelector, "growx, wrap");
+                    pane.add(new JLabel("Y-coordinate / Latitude: "));
+                    pane.add(latSelector, "growx, wrap");
 
-            JMenuItem nameFromAttribute_thisNode = new JMenuItem("Set node name from attribute");
-            nameFromAttribute_thisNode.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    NetPlan netPlan = callback.getDesign();
+                    int result = JOptionPane.showConfirmDialog(null, pane, "Please select the attributes for coordinates", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    if (result != JOptionPane.OK_OPTION) return;
 
-                    Set<String> attributeSet = new LinkedHashSet<String>();
-                    long nodeId = (long) itemId;
-                    attributeSet.addAll(netPlan.getNodeFromId(nodeId).getAttributes().keySet());
+                    String latAttribute = latSelector.getSelectedItem().toString();
+                    String lonAttribute = lonSelector.getSelectedItem().toString();
 
-                    try
-                    {
-                        if (attributeSet.isEmpty()) throw new Exception("No attribute to select");
+                    for (Node node : selectedNodes)
+                        node.setXYPositionMap(new Point2D.Double(Double.parseDouble(node.getAttribute(lonAttribute)), Double.parseDouble(node.getAttribute(latAttribute))));
 
-                        final JComboBox selector = new WiderJComboBox();
-                        for (String attribute : attributeSet)
-                            selector.addItem(attribute);
-
-                        JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[]"));
-                        pane.add(new JLabel("Name: "));
-                        pane.add(selector, "growx, wrap");
-
-                        while (true)
-                        {
-                            int result = JOptionPane.showConfirmDialog(null, pane, "Please select the attribute for name", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                            if (result != JOptionPane.OK_OPTION) return;
-
-                            try
-                            {
-                                String name = selector.getSelectedItem().toString();
-                                netPlan.getNodeFromId(nodeId).setName(netPlan.getNodeFromId(nodeId).getAttribute(name));
-                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                                callback.addNetPlanChange();
-
-                                break;
-                            } catch (Throwable ex)
-                            {
-                                ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving name from attribute");
-                                break;
-                            }
-                        }
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving name from attribute");
-                    }
-                }
-            });
-
-            options.add(nameFromAttribute_thisNode);
-        }
-
-        if (numRows > 1)
-        {
-            if (!options.isEmpty()) options.add(new JPopupMenu.Separator());
-
-            JMenuItem switchCoordinates_allNodes = new JMenuItem("Switch all table node coordinates from (x,y) to (y,x)");
-
-            switchCoordinates_allNodes.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    for (Node n : tableVisibleNodes)
-                    {
-                        Point2D currentPosition = n.getXYPositionMap();
-                        double newX = currentPosition.getY();
-                        double newY = currentPosition.getX();
-                        Point2D newPosition = new Point2D.Double(newX, newY);
-                        n.setXYPositionMap(newPosition);
-                    }
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                    callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
                     callback.addNetPlanChange();
-                }
-            });
 
-            options.add(switchCoordinates_allNodes);
-
-            JMenuItem xyPositionFromAttributes_allNodes = new JMenuItem("Set all table node coordinates from attributes");
-
-            xyPositionFromAttributes_allNodes.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
+                    callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
+                } catch (Throwable ex)
                 {
-                    Set<String> attributeSet = new LinkedHashSet<String>();
-                    for (Node node : tableVisibleNodes)
-                        attributeSet.addAll(node.getAttributes().keySet());
-
-                    try
-                    {
-                        if (attributeSet.isEmpty()) throw new Exception("No attribute to select");
-
-                        final JComboBox latSelector = new WiderJComboBox();
-                        final JComboBox lonSelector = new WiderJComboBox();
-                        for (String attribute : attributeSet)
-                        {
-                            latSelector.addItem(attribute);
-                            lonSelector.addItem(attribute);
-                        }
-
-                        JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[][]"));
-                        pane.add(new JLabel("X-coordinate / Longitude: "));
-                        pane.add(lonSelector, "growx, wrap");
-                        pane.add(new JLabel("Y-coordinate / Latitude: "));
-                        pane.add(latSelector, "growx, wrap");
-
-                        while (true)
-                        {
-                            int result = JOptionPane.showConfirmDialog(null, pane, "Please select the attributes for coordinates", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                            if (result != JOptionPane.OK_OPTION) return;
-
-                            try
-                            {
-                                String latAttribute = latSelector.getSelectedItem().toString();
-                                String lonAttribute = lonSelector.getSelectedItem().toString();
-
-                                for (Node node : tableVisibleNodes)
-                                    node.setXYPositionMap(new Point2D.Double(Double.parseDouble(node.getAttribute(lonAttribute)), Double.parseDouble(node.getAttribute(latAttribute))));
-                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                                callback.addNetPlanChange();
-                                break;
-                            } catch (Throwable ex)
-                            {
-                                ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving coordinates from attributes");
-                                break;
-                            }
-                        }
-                        callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving coordinates from attributes");
-                    }
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving coordinates from attributes");
                 }
             });
+            options.add(xyPositionFromAttributes);
 
-            options.add(xyPositionFromAttributes_allNodes);
-
-            JMenuItem nameFromAttribute_allNodes = new JMenuItem("Set all table node names from attribute");
-            nameFromAttribute_allNodes.addActionListener(new ActionListener()
+            JMenuItem nameFromAttribute = new JMenuItem("Set node name from attribute");
+            nameFromAttribute.addActionListener(e ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
+                Set<String> attributeSet = new LinkedHashSet<String>();
+                for (Node selectedNode : selectedNodes)
+                    attributeSet.addAll(selectedNode.getAttributes().keySet());
+
+                try
                 {
+                    if (attributeSet.isEmpty()) throw new Exception("No attribute to select");
 
-                    Set<String> attributeSet = new LinkedHashSet<String>();
-                    for (Node node : tableVisibleNodes)
-                        attributeSet.addAll(node.getAttributes().keySet());
+                    final JComboBox selector = new WiderJComboBox();
+                    for (String attribute : attributeSet)
+                        selector.addItem(attribute);
 
-                    try
-                    {
-                        if (attributeSet.isEmpty()) throw new Exception("No attribute to select");
+                    JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[]"));
+                    pane.add(new JLabel("Name: "));
+                    pane.add(selector, "growx, wrap");
 
-                        final JComboBox selector = new WiderJComboBox();
-                        for (String attribute : attributeSet)
-                            selector.addItem(attribute);
+                    int result = JOptionPane.showConfirmDialog(null, pane, "Please select the attribute for name", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    if (result != JOptionPane.OK_OPTION) return;
 
-                        JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[]"));
-                        pane.add(new JLabel("Name: "));
-                        pane.add(selector, "growx, wrap");
+                    String name = selector.getSelectedItem().toString();
 
-                        while (true)
-                        {
-                            int result = JOptionPane.showConfirmDialog(null, pane, "Please select the attribute for name", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                            if (result != JOptionPane.OK_OPTION) return;
+                    for (Node node : selectedNodes)
+                        node.setName(node.getAttribute(name));
 
-                            try
-                            {
-                                String name = selector.getSelectedItem().toString();
-
-                                for (Node node : tableVisibleNodes)
-                                    node.setName(node.getAttribute(name) != null ? node.getAttribute(name) : "");
-                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                                callback.addNetPlanChange();
-                                break;
-                            } catch (Throwable ex)
-                            {
-                                ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving name from attribute");
-                                break;
-                            }
-                        }
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving name from attribute");
-                    }
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                    callback.addNetPlanChange();
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving name from attribute");
                 }
             });
 
-            options.add(nameFromAttribute_allNodes);
+            options.add(nameFromAttribute);
         }
-
-
+        
         return options;
     }
 
