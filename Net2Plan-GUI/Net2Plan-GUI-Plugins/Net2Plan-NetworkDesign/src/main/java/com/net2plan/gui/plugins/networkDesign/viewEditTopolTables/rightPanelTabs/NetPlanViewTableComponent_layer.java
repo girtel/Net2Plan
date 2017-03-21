@@ -1,12 +1,52 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs;
 
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyListener;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
+
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.ScrollPaneLayout;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
+
 import com.google.common.collect.Sets;
-import com.net2plan.gui.plugins.networkDesign.ParamValueTable;
-import com.net2plan.gui.utils.*;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_layer;
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.gui.plugins.networkDesign.ParamValueTable;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_layer;
+import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.ColumnHeaderToolTips;
+import com.net2plan.gui.utils.FullScrollPaneLayout;
+import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
+import com.net2plan.gui.utils.TableCursorNavigation;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.libraries.GraphTheoryMetrics;
 import com.net2plan.libraries.GraphUtils;
@@ -17,17 +57,9 @@ import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
-import net.miginfocom.swing.MigLayout;
 
-import javax.swing.*;
-import javax.swing.event.DocumentListener;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
-import java.util.List;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import net.miginfocom.swing.MigLayout;
 
 public class NetPlanViewTableComponent_layer extends JPanel
 {
@@ -459,7 +491,7 @@ public class NetPlanViewTableComponent_layer extends JPanel
         topologyData.put("Number of nodes", N);
         topologyData.put("Number of links", E);
         topologyData.put("Node out-degree (max, min, avg)", String.format("%d, %d, %.3f", maxMinOutDegree[0], maxMinOutDegree[1], avgOutDegree));
-        topologyData.put("All links are bidirectional (yes/no)", GraphUtils.isBidirectional(nodes, links) ? "Yes" : "No");
+        topologyData.put("All links are bidirectional (yes/no)", applyHardComputations? (GraphUtils.isBidirectional(nodes, links) ? "Yes" : "No") : "-");
 
         if (applyHardComputations)
         {
@@ -561,7 +593,6 @@ public class NetPlanViewTableComponent_layer extends JPanel
             AdvancedJTable.setVisibleRowCount(layerSummaryTables[tableId], layerSummaryTables[tableId].getRowCount());
             AdvancedJTable.setWidthAsPercentages(layerSummaryTables[tableId], 0.7, 0.3);
         }
-
         layerSummaryTables[0].setToolTipText(0, 0, "Indicates the number of defined nodes in the network");
         layerSummaryTables[0].setToolTipText(1, 0, "Indicates the number of defined links in this layer");
         layerSummaryTables[0].setToolTipText(2, 0, "Indicates the maximum/minimum/average value for the out-degree, that is, the number of outgoing links per node");

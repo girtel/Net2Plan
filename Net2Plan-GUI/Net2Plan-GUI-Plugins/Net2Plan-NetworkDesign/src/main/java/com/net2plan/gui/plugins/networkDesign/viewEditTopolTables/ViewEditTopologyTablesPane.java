@@ -1,25 +1,43 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables;
 
 
-import com.net2plan.gui.utils.FullScrollPaneLayout;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.*;
-import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.internal.Constants;
-import com.net2plan.utils.Pair;
-
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.table.TableModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.EnumMap;
 import java.util.Map;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.table.TableModel;
+
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_demand;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_forwardingRule;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_layer;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_link;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_multicastDemand;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_multicastTree;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_node;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_resource;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_route;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_srg;
+import com.net2plan.gui.utils.FullScrollPaneLayout;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.internal.Constants;
+import com.net2plan.internal.ErrorHandling;
+import com.net2plan.utils.Pair;
 
 @SuppressWarnings("unchecked")
 public class ViewEditTopologyTablesPane extends JPanel
@@ -29,11 +47,12 @@ public class ViewEditTopologyTablesPane extends JPanel
     private final Map<Constants.NetworkElementType, AdvancedJTable_networkElement> netPlanViewTable;
     private final Map<Constants.NetworkElementType, JComponent> netPlanViewTableComponent;
     private final Map<Constants.NetworkElementType, JLabel> netPlanViewTableNumEntriesLabel;
-
+    private long time;
+    
 	public ViewEditTopologyTablesPane (GUINetworkDesign callback , LayoutManager layout)
 	{
 		super (layout);
-		
+
 		this.callback = callback;
 
         netPlanViewTable = new EnumMap<Constants.NetworkElementType, AdvancedJTable_networkElement>(Constants.NetworkElementType.class);
@@ -107,59 +126,11 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         this.add(netPlanView, BorderLayout.CENTER);
 
-//        this.add(new JLabel ("Number of entries"), BorderLayout.NORTH);
-        
-        
 	}
 
 	public Map<Constants.NetworkElementType,AdvancedJTable_networkElement> currentTables(){
 
 	    return netPlanViewTable;
-    }
-
-	public void resetTables()
-    {
-        netPlanViewTable.clear();
-        netPlanViewTableComponent.clear();
-
-        netPlanViewTable.put(Constants.NetworkElementType.NODE, new AdvancedJTable_node(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.LINK, new AdvancedJTable_link(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.DEMAND, new AdvancedJTable_demand(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.ROUTE, new AdvancedJTable_route(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.FORWARDING_RULE, new AdvancedJTable_forwardingRule(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.MULTICAST_DEMAND, new AdvancedJTable_multicastDemand(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.MULTICAST_TREE, new AdvancedJTable_multicastTree(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.SRG, new AdvancedJTable_srg(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.RESOURCE, new AdvancedJTable_resource(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.LAYER, new AdvancedJTable_layer(callback));
-
-        for (Constants.NetworkElementType elementType : Constants.NetworkElementType.values()) {
-            if (elementType == Constants.NetworkElementType.NETWORK) {
-                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_network(callback, (AdvancedJTable_layer) netPlanViewTable.get(Constants.NetworkElementType.LAYER)));
-            } else if (elementType == Constants.NetworkElementType.LAYER) {
-                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_layer(callback, (AdvancedJTable_layer) netPlanViewTable.get(Constants.NetworkElementType.LAYER)));
-            } else {
-                JScrollPane scrollPane = new JScrollPane(netPlanViewTable.get(elementType));
-                scrollPane.setLayout(new FullScrollPaneLayout());
-                scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-                if(netPlanViewTable.get(elementType) instanceof AdvancedJTable_networkElement)
-                {
-                    scrollPane.setRowHeaderView(((AdvancedJTable_networkElement) netPlanViewTable.get(elementType)).getFixedTable());
-                    scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER, ((AdvancedJTable_networkElement) netPlanViewTable.get(elementType)).getFixedTable().getTableHeader());
-                    scrollPane.getRowHeader().addChangeListener(new ChangeListener(){
-
-                        @Override
-                        public void stateChanged(ChangeEvent e)
-                        {
-                            JViewport viewport = (JViewport) e.getSource();
-                            scrollPane.getVerticalScrollBar().setValue(viewport.getViewPosition().y);
-                        }
-                    });
-                }
-                netPlanViewTableComponent.put(elementType, scrollPane);
-            }
-        }
-
     }
 
 	public JTabbedPane getNetPlanView () { return netPlanView; }
@@ -171,7 +142,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 		/* Load current network state */
         final NetPlan currentState = callback.getDesign();
         final NetworkLayer layer = currentState.getNetworkLayerDefault();
-        currentState.checkCachesConsistency();
+        if (ErrorHandling.isDebugEnabled()) currentState.checkCachesConsistency();
 
         final int selectedTabIndex = netPlanView.getSelectedIndex();
         netPlanView.removeAll();
@@ -186,8 +157,8 @@ public class ViewEditTopologyTablesPane extends JPanel
         if ((selectedTabIndex < netPlanView.getTabCount()) && (selectedTabIndex >= 0))
             netPlanView.setSelectedIndex(selectedTabIndex);
 
-        currentState.checkCachesConsistency();
-        
+        if (ErrorHandling.isDebugEnabled()) currentState.checkCachesConsistency();
+
         /* update the required tables */
         for (Map.Entry<Constants.NetworkElementType,AdvancedJTable_networkElement> entry : netPlanViewTable.entrySet())
         {
@@ -204,7 +175,6 @@ public class ViewEditTopologyTablesPane extends JPanel
             	else
             		label.setText("Number of entries: " + numEntries);
             }
-            
         }
         ((NetPlanViewTableComponent_layer) netPlanViewTableComponent.get(Constants.NetworkElementType.LAYER)).updateNetPlanView(currentState);
         ((NetPlanViewTableComponent_network) netPlanViewTableComponent.get(Constants.NetworkElementType.NETWORK)).updateNetPlanView(currentState);
