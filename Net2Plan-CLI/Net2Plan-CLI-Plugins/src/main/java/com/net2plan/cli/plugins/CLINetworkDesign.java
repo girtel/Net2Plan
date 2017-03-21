@@ -33,7 +33,7 @@ import java.util.Map;
 public class CLINetworkDesign extends ICLIModule
 {
     private final static String TITLE = "Offline network design";
-    protected final static Options OPTIONS;
+    private final static Options OPTIONS;
 
     static
     {
@@ -54,7 +54,7 @@ public class CLINetworkDesign extends ICLIModule
         trafficLayer.setArgName("layer");
         OPTIONS.addOption(trafficLayer);
 
-        Option internalSearch = new Option(null, "internal-search", false, "(Optional) Search for algorithm in the application's class-path");
+        Option internalSearch = new Option(null, "package-search", true, "(Optional) Search for algorithm in the application's class-path. Looks for the algorithm under the given package name.");
         internalSearch.setRequired(false);
         OPTIONS.addOption(internalSearch);
 
@@ -63,12 +63,6 @@ public class CLINetworkDesign extends ICLIModule
         classFile.setArgName("file");
         classFile.setRequired(true);
         OPTIONS.addOption(classFile);
-
-        Option packageName = new Option(null, "package-name", true, "Package containing the algorithm");
-        packageName.setType(PatternOptionBuilder.STRING_VALUE);
-        packageName.setArgName("packagename");
-        packageName.setRequired(true);
-        OPTIONS.addOption(packageName);
 
         Option className = new Option(null, "class-name", true, "Class name of the algorithm (package name could be omitted)");
         className.setType(PatternOptionBuilder.STRING_VALUE);
@@ -129,12 +123,12 @@ public class CLINetworkDesign extends ICLIModule
         File outputFile = (File) cli.getParsedOptionValue("output-file");
 
         IAlgorithm algorithm;
-        if (!cli.hasOption("internal-search"))
+        if (!cli.hasOption("package-search"))
         {
             algorithm = ClassLoaderUtils.getInstance(classFile, className, IAlgorithm.class);
         } else
         {
-            algorithm = ClassUtils.findAlgorithm(className, cli.getOptionValue("package-name"));
+            algorithm = ClassUtils.findAlgorithm(className, cli.getOptionValue("package-search"));
         }
 
         List<Triple<String, String, String>> defaultAlgorithmParameters = algorithm.getParameters();

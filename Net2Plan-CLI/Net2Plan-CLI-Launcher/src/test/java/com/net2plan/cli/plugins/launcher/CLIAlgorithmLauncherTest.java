@@ -24,27 +24,7 @@ public class CLIAlgorithmLauncherTest
     {
         final Map<String, String> paramMap = new HashMap<>();
 
-        paramMap.put("--package-name", DEFAULT_PACKAGE);
-        paramMap.put("--class-name", DEFAULT_ALGORITHM);
-        paramMap.put("--output-file", DEFAULT_OUTPUT);
-
-        final List<String> args = new LinkedList<>();
-        args.add("--internal-search");
-        for (Map.Entry<String, String> entry : paramMap.entrySet())
-        {
-            args.add(entry.getKey());
-            args.add(entry.getValue());
-        }
-
-        CLIAlgorithmLauncher.main(StringUtils.toArray(args));
-    }
-
-    @Test(expected = ParseException.class)
-    public void launchNoPackageNameParam() throws ParseException
-    {
-        final Map<String, String> paramMap = new HashMap<>();
-
-        paramMap.put("--class-file", DEFAULT_FILE);
+        paramMap.put("--package-search", DEFAULT_PACKAGE);
         paramMap.put("--class-name", DEFAULT_ALGORITHM);
         paramMap.put("--output-file", DEFAULT_OUTPUT);
 
@@ -65,7 +45,7 @@ public class CLIAlgorithmLauncherTest
         final Map<String, String> paramMap = new HashMap<>();
 
         paramMap.put("--class-file", DEFAULT_FILE);
-        paramMap.put("--package-name", DEFAULT_PACKAGE);
+        paramMap.put("--package-search", DEFAULT_PACKAGE);
         paramMap.put("--output-file", DEFAULT_OUTPUT);
 
         final List<String> args = new LinkedList<>();
@@ -85,7 +65,7 @@ public class CLIAlgorithmLauncherTest
         final Map<String, String> paramMap = new HashMap<>();
 
         paramMap.put("--class-file", DEFAULT_FILE);
-        paramMap.put("--package-name", DEFAULT_PACKAGE);
+        paramMap.put("--package-search", DEFAULT_PACKAGE);
         paramMap.put("--class-name", DEFAULT_ALGORITHM);
 
         final List<String> args = new LinkedList<>();
