@@ -54,20 +54,24 @@ public class CLINetworkDesign extends ICLIModule
         trafficLayer.setArgName("layer");
         OPTIONS.addOption(trafficLayer);
 
-        Option internalSearch = new Option(null, "package-search", true, "(Optional) Search for algorithm in the application's class-path. Looks for the algorithm under the given package name. Class-file is unused under this context.");
-        internalSearch.setRequired(false);
-        OPTIONS.addOption(internalSearch);
+        OptionGroup group = new OptionGroup();
+        group.setRequired(true);
+
+        Option packageSearch = new Option(null, "package-name", true, "Search for algorithm under the given package in the application's class-path");
+        packageSearch.setType(PatternOptionBuilder.STRING_VALUE);
+        packageSearch.setArgName("package");
 
         Option classFile = new Option(null, "class-file", true, ".class/.jar file containing the algorithm");
         classFile.setType(PatternOptionBuilder.FILE_VALUE);
         classFile.setArgName("file");
-        classFile.setRequired(true);
-        OPTIONS.addOption(classFile);
+
+        group.addOption(packageSearch);
+        group.addOption(classFile);
+        OPTIONS.addOptionGroup(group);
 
         Option className = new Option(null, "class-name", true, "Class name of the algorithm (package name could be omitted)");
         className.setType(PatternOptionBuilder.STRING_VALUE);
         className.setArgName("classname");
-        className.setRequired(true);
         OPTIONS.addOption(className);
 
         Option outputFile = new Option(null, "output-file", true, ".n2p file where saving the resulting design");
@@ -123,12 +127,12 @@ public class CLINetworkDesign extends ICLIModule
         File outputFile = (File) cli.getParsedOptionValue("output-file");
 
         IAlgorithm algorithm;
-        if (!cli.hasOption("package-search"))
+        if (!cli.hasOption("package-name"))
         {
             algorithm = ClassLoaderUtils.getInstance(classFile, className, IAlgorithm.class);
         } else
         {
-            algorithm = ClassUtils.findAlgorithm(className, cli.getOptionValue("package-search"));
+            algorithm = ClassUtils.findAlgorithm(className, cli.getOptionValue("package-name"));
         }
 
         List<Triple<String, String, String>> defaultAlgorithmParameters = algorithm.getParameters();
