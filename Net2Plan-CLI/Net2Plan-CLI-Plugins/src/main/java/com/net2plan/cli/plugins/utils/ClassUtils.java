@@ -13,9 +13,8 @@ public final class ClassUtils
 {
     private ClassUtils() {}
 
-    public static IAlgorithm findAlgorithm(final String algorithmName)
+    public static IAlgorithm findAlgorithm(final String algorithmName, final String packageName)
     {
-        String packageName = "com.net2plan.examples";
         Reflections reflections = new Reflections(packageName);
         Set<Class<? extends IAlgorithm>> algorithms = reflections.getSubTypesOf(IAlgorithm.class);
 

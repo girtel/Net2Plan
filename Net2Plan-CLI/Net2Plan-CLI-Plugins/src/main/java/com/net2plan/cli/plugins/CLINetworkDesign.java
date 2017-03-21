@@ -66,6 +66,12 @@ public class CLINetworkDesign extends ICLIModule
         className.setRequired(true);
         OPTIONS.addOption(className);
 
+        Option packageName = new Option(null, "package-name", true, "Name of the package containing the algorithm");
+        packageName.setType(PatternOptionBuilder.STRING_VALUE);
+        packageName.setArgName("packagename");
+        packageName.setRequired(false);
+        OPTIONS.addOption(packageName);
+
         Option outputFile = new Option(null, "output-file", true, ".n2p file where saving the resulting design");
         outputFile.setType(PatternOptionBuilder.FILE_VALUE);
         outputFile.setArgName("file");
@@ -120,18 +126,15 @@ public class CLINetworkDesign extends ICLIModule
 
         IAlgorithm algorithm;
         if (!classFile.getName().equals("internal-algorithm"))
+        {
             algorithm = ClassLoaderUtils.getInstance(classFile, className, IAlgorithm.class);
-        else
-            algorithm = ClassUtils.findAlgorithm(className);
-
-        List<Triple<String, String, String>> defaultAlgorithmParameters = null;
-        try
+        } else
         {
-            defaultAlgorithmParameters = algorithm.getParameters();
-        } catch (UnsupportedOperationException ignored)
-        {
+            if (!cli.hasOption("package-name")) throw new RuntimeException("--package-name parameter is required for internal loading.");
+            algorithm = ClassUtils.findAlgorithm(className, cli.getOptionValue("package-name"));
         }
 
+        List<Triple<String, String, String>> defaultAlgorithmParameters = algorithm.getParameters();
         Map<String, String> algorithmParameters = CommandLineParser.getParameters(defaultAlgorithmParameters, cli.getOptionProperties("alg-param"));
         Configuration.updateSolverLibraryNameParameter(algorithmParameters); // put default path to libraries if solverLibraryName is ""
         Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
