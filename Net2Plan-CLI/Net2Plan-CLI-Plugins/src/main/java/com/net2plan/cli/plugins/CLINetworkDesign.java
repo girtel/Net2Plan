@@ -54,7 +54,7 @@ public class CLINetworkDesign extends ICLIModule
         trafficLayer.setArgName("layer");
         OPTIONS.addOption(trafficLayer);
 
-        Option internalSearch = new Option(null, "internal-search", false, "Decides if the algorithm is searched in the given file or in the application class-path");
+        Option internalSearch = new Option(null, "internal-search", false, "(Optional) Search for algorithm in the application's class-path");
         internalSearch.setRequired(false);
         OPTIONS.addOption(internalSearch);
 
@@ -64,7 +64,7 @@ public class CLINetworkDesign extends ICLIModule
         classFile.setRequired(true);
         OPTIONS.addOption(classFile);
 
-        Option packageName = new Option(null, "package-name", true, "Name of the package containing the algorithm");
+        Option packageName = new Option(null, "package-name", true, "Package containing the algorithm");
         packageName.setType(PatternOptionBuilder.STRING_VALUE);
         packageName.setArgName("packagename");
         packageName.setRequired(true);
