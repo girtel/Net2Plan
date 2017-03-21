@@ -8,9 +8,9 @@ import java.awt.event.KeyEvent;
 /**
  * Created by Jorge San Emeterio on 17/03/17.
  */
-public class GUIRobot extends Robot
+public class Robot extends java.awt.Robot
 {
-    public GUIRobot() throws AWTException
+    public Robot() throws AWTException
     {
         super();
 
