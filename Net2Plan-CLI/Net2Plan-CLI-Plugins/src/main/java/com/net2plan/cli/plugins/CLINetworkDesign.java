@@ -130,7 +130,7 @@ public class CLINetworkDesign extends ICLIModule
             algorithm = ClassLoaderUtils.getInstance(classFile, className, IAlgorithm.class);
         } else
         {
-            if (!cli.hasOption("package-name")) throw new RuntimeException("--package-name parameter is required for internal loading.");
+            if (!cli.hasOption("package-name")) throw new ParseException("--package-name parameter is required for internal algorithm loading.");
             algorithm = ClassUtils.findAlgorithm(className, cli.getOptionValue("package-name"));
         }
 
