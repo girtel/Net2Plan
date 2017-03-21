@@ -1292,7 +1292,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     }
 
 
-    final protected void addPopupMenuAttributeOptions(final MouseEvent e, final int row, final Object itemId, JPopupMenu popup)
+    final protected void addPopupMenuAttributeOptions(final MouseEvent e, final int row, final Object[] itemIds, JPopupMenu popup)
     {
         if (networkElementType == NetworkElementType.FORWARDING_RULE)
             throw new RuntimeException("Forwarding rules have no attributes");
@@ -1327,8 +1327,12 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
                         attribute = txt_key.getText();
                         value = txt_value.getText();
-                        NetworkElement element = netPlan.getNetworkElement((long) itemId);
-                        element.setAttribute(attribute, value);
+
+                        for (Object itemId : itemIds)
+                        {
+                            NetworkElement element = netPlan.getNetworkElement((long) itemId);
+                            element.setAttribute(attribute, value);
+                        }
 
                         callback.updateVisualizationJustTables();
                     } catch (Throwable ex)
@@ -1876,8 +1880,12 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     if (txt_name.getText().isEmpty()) continue;
 
                     tag = txt_name.getText();
-                    NetworkElement element = netPlan.getNetworkElement((long) itemId);
-                    element.addTag(tag);
+                    
+                    for (Object itemId : itemIds)
+                    {
+                        NetworkElement element = netPlan.getNetworkElement((long) itemId);
+                        element.addTag(tag);
+                    }
 
                     callback.updateVisualizationJustTables();
                 } catch (Throwable ex)
