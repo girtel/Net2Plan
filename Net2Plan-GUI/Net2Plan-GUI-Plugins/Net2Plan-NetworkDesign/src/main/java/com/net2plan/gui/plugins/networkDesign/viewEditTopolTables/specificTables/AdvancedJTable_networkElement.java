@@ -1423,7 +1423,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
         popup.addSeparator();
 
-        JMenuItem viewAttributesAll = new JMenuItem("View/edit attributes from all");
+        JMenuItem viewAttributesAll = new JMenuItem("View/edit attributes");
         viewAttributesAll.addActionListener(new ActionListener()
         {
             @Override

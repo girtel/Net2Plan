@@ -483,9 +483,10 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                     });
 
                     popup.add(removeItem);
+                    popup.addSeparator();
                 }
 
-                JMenuItem removeAllNodesFilteredOut = new JMenuItem("Remove all nodes filtered out");
+                JMenuItem removeAllNodesFilteredOut = new JMenuItem("Remove all filtered out nodes");
                 removeAllNodesFilteredOut.addActionListener(e1 ->
                 {
                     NetPlan netPlan = callback.getDesign();
@@ -504,7 +505,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                 });
                 popup.add(removeAllNodesFilteredOut);
 
-                JMenuItem hideAllNodesFilteredOut = new JMenuItem("Hide all nodes filtered out");
+                JMenuItem hideAllNodesFilteredOut = new JMenuItem("Hide all filtered out nodes");
                 hideAllNodesFilteredOut.addActionListener(e1 ->
                 {
                     Set<Node> rowsInTheTableSet = new HashSet<>(rowsInTheTable);
