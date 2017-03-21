@@ -460,7 +460,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                 {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
 
-                    JMenuItem removeItem = new JMenuItem("Remove selected " + networkElementType);
+                    JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
                     removeItem.addActionListener(new ActionListener()
                     {
                         @Override
