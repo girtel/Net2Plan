@@ -14,17 +14,15 @@ import java.util.Map;
  */
 public class CLIAlgorithmLauncherTest
 {
-    private final static String DEFAULT_FILE = "internal-algorithm";
     private final static String DEFAULT_PACKAGE = "com.net2plan.examples";
     private final static String DEFAULT_ALGORITHM = "Offline_Example_Algorithm";
     private final static String DEFAULT_OUTPUT = "out.n2p";
 
     @Test(expected = ParseException.class)
-    public void launchNoClassFileParam() throws ParseException
+    public void launchNoOptionParam() throws ParseException
     {
         final Map<String, String> paramMap = new HashMap<>();
 
-        paramMap.put("--package-search", DEFAULT_PACKAGE);
         paramMap.put("--class-name", DEFAULT_ALGORITHM);
         paramMap.put("--output-file", DEFAULT_OUTPUT);
 
@@ -43,8 +41,7 @@ public class CLIAlgorithmLauncherTest
     {
         final Map<String, String> paramMap = new HashMap<>();
 
-        paramMap.put("--class-file", DEFAULT_FILE);
-        paramMap.put("--package-search", DEFAULT_PACKAGE);
+        paramMap.put("--package-name", DEFAULT_PACKAGE);
         paramMap.put("--output-file", DEFAULT_OUTPUT);
 
         final List<String> args = new LinkedList<>();
@@ -62,9 +59,28 @@ public class CLIAlgorithmLauncherTest
     {
         final Map<String, String> paramMap = new HashMap<>();
 
-        paramMap.put("--class-file", DEFAULT_FILE);
-        paramMap.put("--package-search", DEFAULT_PACKAGE);
+        paramMap.put("--package-name", DEFAULT_PACKAGE);
         paramMap.put("--class-name", DEFAULT_ALGORITHM);
+
+        final List<String> args = new LinkedList<>();
+        for (Map.Entry<String, String> entry : paramMap.entrySet())
+        {
+            args.add(entry.getKey());
+            args.add(entry.getValue());
+        }
+
+        CLIAlgorithmLauncher.main(StringUtils.toArray(args));
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void launchBothOptionParam() throws ParseException
+    {
+        final Map<String, String> paramMap = new HashMap<>();
+
+        paramMap.put("--class-file", "null");
+        paramMap.put("--package-name", DEFAULT_PACKAGE);
+        paramMap.put("--class-name", DEFAULT_ALGORITHM);
+        paramMap.put("--output-file", DEFAULT_OUTPUT);
 
         final List<String> args = new LinkedList<>();
         for (Map.Entry<String, String> entry : paramMap.entrySet())

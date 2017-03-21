@@ -72,6 +72,7 @@ public class CLINetworkDesign extends ICLIModule
         Option className = new Option(null, "class-name", true, "Class name of the algorithm (package name could be omitted)");
         className.setType(PatternOptionBuilder.STRING_VALUE);
         className.setArgName("classname");
+        className.setRequired(true);
         OPTIONS.addOption(className);
 
         Option outputFile = new Option(null, "output-file", true, ".n2p file where saving the resulting design");
