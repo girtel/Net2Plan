@@ -10,9 +10,15 @@ import org.apache.commons.cli.ParseException;
  */
 public class CLIAlgorithmLauncher
 {
-    public static void main(String[] args) throws ParseException
+    public static void main(String[] args)
     {
-        CLINetworkDesign networkDesign = new CLINetworkDesign();
-        networkDesign.executeFromCommandLine(args);
+        try
+        {
+            CLINetworkDesign networkDesign = new CLINetworkDesign();
+            networkDesign.executeFromCommandLine(args);
+        } catch (ParseException e)
+        {
+            e.printStackTrace();
+        }
     }
 }

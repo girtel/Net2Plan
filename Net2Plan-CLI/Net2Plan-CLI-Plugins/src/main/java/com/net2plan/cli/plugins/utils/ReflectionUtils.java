@@ -9,9 +9,9 @@ import java.util.Set;
 /**
  * Created by Jorge San Emeterio on 20/03/17.
  */
-public final class ClassUtils
+public final class ReflectionUtils
 {
-    private ClassUtils() {}
+    private ReflectionUtils() {}
 
     public static IAlgorithm findAlgorithm(final String algorithmName, final String packageName)
     {

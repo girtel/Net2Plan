@@ -1,4 +1,4 @@
-package com.net2plan.cli.plugins.launcher;
+package com.net2plan.cli.plugins;
 
 import com.net2plan.utils.StringUtils;
 import org.apache.commons.cli.ParseException;
@@ -10,13 +10,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by Jorge San Emeterio on 21/03/17.
+ * Created by Jorge San Emeterio on 22/03/17.
  */
-public class CLIAlgorithmLauncherTest
+public class CLINetworkDesignTest
 {
     private final static String DEFAULT_PACKAGE = "com.net2plan.examples";
     private final static String DEFAULT_ALGORITHM = "Offline_Example_Algorithm";
     private final static String DEFAULT_OUTPUT = "out.n2p";
+
+    private final static CLINetworkDesign networkDesign = new CLINetworkDesign();
 
     @Test(expected = ParseException.class)
     public void launchNoOptionParam() throws ParseException
@@ -33,7 +35,7 @@ public class CLIAlgorithmLauncherTest
             args.add(entry.getValue());
         }
 
-        CLIAlgorithmLauncher.main(StringUtils.toArray(args));
+        networkDesign.executeFromCommandLine(StringUtils.toArray(args));
     }
 
     @Test(expected = ParseException.class)
@@ -51,7 +53,7 @@ public class CLIAlgorithmLauncherTest
             args.add(entry.getValue());
         }
 
-        CLIAlgorithmLauncher.main(StringUtils.toArray(args));
+        networkDesign.executeFromCommandLine(StringUtils.toArray(args));
     }
 
     @Test(expected = ParseException.class)
@@ -69,7 +71,7 @@ public class CLIAlgorithmLauncherTest
             args.add(entry.getValue());
         }
 
-        CLIAlgorithmLauncher.main(StringUtils.toArray(args));
+        networkDesign.executeFromCommandLine(StringUtils.toArray(args));
     }
 
     @Test(expected = RuntimeException.class)
@@ -89,6 +91,6 @@ public class CLIAlgorithmLauncherTest
             args.add(entry.getValue());
         }
 
-        CLIAlgorithmLauncher.main(StringUtils.toArray(args));
+        networkDesign.executeFromCommandLine(StringUtils.toArray(args));
     }
 }

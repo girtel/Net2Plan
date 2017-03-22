@@ -12,7 +12,7 @@
 
 package com.net2plan.cli.plugins;
 
-import com.net2plan.cli.plugins.utils.ClassUtils;
+import com.net2plan.cli.plugins.utils.ReflectionUtils;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.plugins.ICLIModule;
@@ -133,7 +133,7 @@ public class CLINetworkDesign extends ICLIModule
             algorithm = ClassLoaderUtils.getInstance(classFile, className, IAlgorithm.class);
         } else
         {
-            algorithm = ClassUtils.findAlgorithm(className, cli.getOptionValue("package-name"));
+            algorithm = ReflectionUtils.findAlgorithm(className, cli.getOptionValue("package-name"));
         }
 
         List<Triple<String, String, String>> defaultAlgorithmParameters = algorithm.getParameters();
