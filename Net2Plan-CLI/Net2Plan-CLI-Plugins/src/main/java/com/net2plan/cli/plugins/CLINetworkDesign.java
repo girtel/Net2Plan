@@ -12,7 +12,6 @@
 
 package com.net2plan.cli.plugins;
 
-import com.net2plan.cli.plugins.utils.ClassUtils;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.plugins.ICLIModule;
@@ -20,10 +19,13 @@ import com.net2plan.utils.ClassLoaderUtils;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
 import org.apache.commons.cli.*;
+import org.reflections.Reflections;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Offline network design tool (CLI mode).
@@ -32,6 +34,19 @@ import java.util.Map;
  */
 public class CLINetworkDesign extends ICLIModule
 {
+    public static void main(String[] args)
+    {
+        try
+        {
+            CLINetworkDesign networkDesign = new CLINetworkDesign();
+            networkDesign.executeFromCommandLine(args);
+        } catch (ParseException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+
     private final static String TITLE = "Offline network design";
     private final static Options OPTIONS;
 
@@ -54,15 +69,20 @@ public class CLINetworkDesign extends ICLIModule
         trafficLayer.setArgName("layer");
         OPTIONS.addOption(trafficLayer);
 
-        Option internalSearch = new Option(null, "package-search", true, "(Optional) Search for algorithm in the application's class-path. Looks for the algorithm under the given package name. Class-file is unused under this context.");
-        internalSearch.setRequired(false);
-        OPTIONS.addOption(internalSearch);
+        OptionGroup group = new OptionGroup();
+        group.setRequired(true);
+
+        Option packageSearch = new Option(null, "package-name", true, "Search for algorithm under the given package in the application's class-path");
+        packageSearch.setType(PatternOptionBuilder.STRING_VALUE);
+        packageSearch.setArgName("package");
 
         Option classFile = new Option(null, "class-file", true, ".class/.jar file containing the algorithm");
         classFile.setType(PatternOptionBuilder.FILE_VALUE);
         classFile.setArgName("file");
-        classFile.setRequired(true);
-        OPTIONS.addOption(classFile);
+
+        group.addOption(packageSearch);
+        group.addOption(classFile);
+        OPTIONS.addOptionGroup(group);
 
         Option className = new Option(null, "class-name", true, "Class name of the algorithm (package name could be omitted)");
         className.setType(PatternOptionBuilder.STRING_VALUE);
@@ -123,12 +143,12 @@ public class CLINetworkDesign extends ICLIModule
         File outputFile = (File) cli.getParsedOptionValue("output-file");
 
         IAlgorithm algorithm;
-        if (!cli.hasOption("package-search"))
+        if (!cli.hasOption("package-name"))
         {
             algorithm = ClassLoaderUtils.getInstance(classFile, className, IAlgorithm.class);
         } else
         {
-            algorithm = ClassUtils.findAlgorithm(className, cli.getOptionValue("package-search"));
+            algorithm = findAlgorithm(className, cli.getOptionValue("package-name"));
         }
 
         List<Triple<String, String, String>> defaultAlgorithmParameters = algorithm.getParameters();
@@ -202,5 +222,38 @@ public class CLINetworkDesign extends ICLIModule
     public int getPriority()
     {
         return Integer.MAX_VALUE;
+    }
+
+    private static IAlgorithm findAlgorithm(final String algorithmName, final String packageName)
+    {
+        Reflections reflections = new Reflections(packageName);
+        Set<Class<? extends IAlgorithm>> algorithms = reflections.getSubTypesOf(IAlgorithm.class);
+
+        IAlgorithm algorithm = null;
+        try
+        {
+            for (Class<?> algorithmClass : algorithms)
+            {
+                if (algorithmClass.getSimpleName().equals(algorithmName))
+                {
+                    final Class<?> classDefinition = Class.forName(algorithmClass.getName());
+                    final Constructor<?> constructor = classDefinition.getConstructor();
+                    final Object object = constructor.newInstance();
+
+                    if (object instanceof IAlgorithm)
+                    {
+                        algorithm = (IAlgorithm) object;
+                        break;
+                    }
+                }
+            }
+
+            if (algorithm == null) throw new Exception("Algorithm not found: " + algorithmName + " at " + packageName);
+
+            return algorithm;
+        } catch (Exception e)
+        {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 }

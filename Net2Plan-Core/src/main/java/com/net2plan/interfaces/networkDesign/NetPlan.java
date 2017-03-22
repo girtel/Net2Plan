@@ -1884,7 +1884,6 @@ public class NetPlan extends NetworkElement
         if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
         netPlan.copyFrom(this);
 //		System.out.println ("************** En el copy () *********************************************************");
-        if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
         return netPlan;
     }

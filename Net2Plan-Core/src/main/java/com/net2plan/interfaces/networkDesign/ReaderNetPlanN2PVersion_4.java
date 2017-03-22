@@ -21,6 +21,7 @@
 package com.net2plan.interfaces.networkDesign;
 
 import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.LongUtils;
 import org.codehaus.stax2.XMLStreamReader2;
 
@@ -57,7 +58,7 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 
 //		System.out.println ("End ReaderNetPlan_v4: " + netPlan + " ----------- ");
 		
-		netPlan.checkCachesConsistency();
+		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 
 	protected void parseNetwork(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException

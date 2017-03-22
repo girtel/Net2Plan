@@ -5,7 +5,7 @@ import java.util.Map;
 /**
  * Created by Jorge San Emeterio on 19/03/2017.
  */
-public interface IGUIPluginWrapper
+public interface IGUIModeWrapper
 {
-    void launchMode(int mode, Map<String, String> parameters);
+    void launchRoutine(int mode, Map<String, String> parameters);
 }

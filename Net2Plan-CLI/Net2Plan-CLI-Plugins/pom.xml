@@ -18,5 +18,11 @@
             <groupId>com.net2plan</groupId>
             <artifactId>net2plan-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-examples</artifactId>
+            <version>0.5.0.4-SNAPSHOT</version>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
 </project>

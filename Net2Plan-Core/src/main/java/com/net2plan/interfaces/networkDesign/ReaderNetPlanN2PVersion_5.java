@@ -20,6 +20,8 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import com.net2plan.internal.ErrorHandling;
+import com.net2plan.libraries.ProfileUtils;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.LongUtils;
@@ -43,15 +45,18 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 	
 	public void create(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
 	{
+		ProfileUtils.printTime("" , -1);
 		this.hasAlreadyReadOneLayer = false;
 		this.xmlStreamReader = xmlStreamReader;
 		this.backupRouteIdsMap = new HashMap<Route,List<Long>> ();
 		this.nodeAndLayerToIconURLMap = new HashMap<> ();
+
 		parseNetwork(netPlan);
 
 //		System.out.println ("End ReaderNetPlan_v5: " + netPlan + " ----------- ");
 		
-		netPlan.checkCachesConsistency();
+		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+		ProfileUtils.printTime("Reading n2p file");
 	}
 
 	protected void parseNetwork(NetPlan netPlan) throws XMLStreamException

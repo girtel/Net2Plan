@@ -470,7 +470,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @Override
     public void setCurrentNetPlanDoNotUpdateVisualization(NetPlan netPlan)
     {
-        netPlan.checkCachesConsistency();
+    	if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
         currentNetPlan = netPlan;
     }
 
