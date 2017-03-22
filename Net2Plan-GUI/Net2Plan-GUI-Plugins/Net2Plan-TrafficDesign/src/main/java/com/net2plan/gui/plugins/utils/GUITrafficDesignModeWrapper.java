@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * Created by Jorge San Emeterio on 19/03/2017.
  */
-public class GUITrafficDesignWrapper implements IGUIModeWrapper
+public class GUITrafficDesignModeWrapper implements IGUIModeWrapper
 {
     private Map<String, String> parameters;
 

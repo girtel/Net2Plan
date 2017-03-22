@@ -78,7 +78,8 @@ public class GUIPluginLauncher
             currentPlugin = pluginPair.getFirst();
 
             // Plugin not found
-            if (currentPlugin == null) throw new ParserException("Plugin: " + inputPlugin + " could not be found at package: " + packageName);
+            if (currentPlugin == null)
+                throw new ParserException("Plugin: " + inputPlugin + " could not be found at package: " + packageName);
 
             // Exceptions are grabbed by N2P from now on.
 
@@ -130,18 +131,12 @@ public class GUIPluginLauncher
 
         // Showing the tool
         final KeyStroke pluginKeyStroke = currentPlugin.getKeyStroke();
-
         final int keyModifier = getKeyModifier(pluginKeyStroke);
 
-        if (keyModifier == -1) throw new RuntimeException("Unreadable key modifier: " + pluginKeyStroke);
-
-        robot.keyPress(keyModifier);
-        robot.keyPress(pluginKeyStroke.getKeyCode());
-
-        robot.delay(200);
-
-        robot.keyRelease(pluginKeyStroke.getKeyCode());
-        robot.keyRelease(keyModifier);
+        if (keyModifier == -1) // No modifier
+            robot.type(pluginKeyStroke.getKeyCode());
+        else
+            robot.type(pluginKeyStroke.getKeyCode(), keyModifier);
     }
 
     private static Map<String, String> parseParameters(final String parameter, final char separator)
