@@ -10,4 +10,18 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>net2plan-launcher</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.net2plan.net2plan-cli</groupId>
+            <artifactId>net2plan-cli-exec</artifactId>
+            <version>0.5.0.4-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-gui-launcher</artifactId>
+            <version>0.5.0.4-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 </project>

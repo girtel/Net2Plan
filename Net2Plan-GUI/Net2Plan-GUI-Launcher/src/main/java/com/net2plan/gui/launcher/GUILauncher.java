@@ -113,7 +113,7 @@ public class GUILauncher
                 // Plugin not found
                 if (currentPlugin == null)
                 {
-                    formatter.printHelp("utility-name", R_OPTIONS);
+                    formatter.printHelp("GUILauncher", R_OPTIONS);
                     throw new ParseException("Plugin: " + inputPlugin + " could not be found at package: " + packageName);
                 }
 
@@ -155,7 +155,7 @@ public class GUILauncher
         } catch (ParseException e)
         {
             System.err.println(e.getMessage());
-            formatter.printHelp("utility-name", OPTIONS);
+            formatter.printHelp("GUILauncher", OPTIONS);
         } catch (Exception e)
         {
             ErrorHandling.showErrorDialog("An error happened while running launcher.\nCheck console for more details.");
