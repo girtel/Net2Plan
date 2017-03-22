@@ -74,38 +74,38 @@ public class GUILauncher
                 //New options
                 final Options R_OPTIONS = new Options();
 
-                final Option plugin = new Option(null, "tool", true, "Class name of the tool/plugin");
+                final Option plugin = new Option(null, "plugin", true, "Class name of the tool/plugin");
                 plugin.setRequired(true);
                 plugin.setType(PatternOptionBuilder.CLASS_VALUE);
                 plugin.setArgName("Tool/Plugin");
                 R_OPTIONS.addOption(plugin);
 
-                final Option routine = new Option(null, "mode", true, "Tool/Plugin launch mode");
+                final Option routine = new Option(null, "routine", true, "(Optional) Tool/Plugin launch mode. By default launches mode 1.");
                 routine.setRequired(false);
                 routine.setType(PatternOptionBuilder.NUMBER_VALUE);
                 routine.setArgName("Launch mode");
                 R_OPTIONS.addOption(routine);
 
-                final Option packageURL = new Option(null, "package", true, "Name of the package containing the tool");
+                final Option packageURL = new Option(null, "package-name", true, "(Optional) Name of the package containing the tool");
                 packageURL.setRequired(false);
                 packageURL.setArgName("Package name");
                 packageURL.setType(PatternOptionBuilder.STRING_VALUE);
                 R_OPTIONS.addOption(packageURL);
 
-                final Option param = new Option(null, "param", true, "Tool/Plugin launch mode parameters");
+                final Option param = new Option(null, "tool-param", true, "(Optional) Tool/Plugin launch mode parameters. Each pair key-value separated by spaces.");
                 param.setRequired(false);
-                param.setArgName("Property=Value");
+                param.setArgName("property=value");
                 param.setValueSeparator('=');
                 R_OPTIONS.addOption(param);
 
                 final CommandLine cmd = parser.parse(R_OPTIONS, robot_args, true);
 
                 // Scan for the given plugin
-                final String inputPlugin = cmd.getOptionValue("tool");
+                final String inputPlugin = cmd.getOptionValue("plugin");
 
                 // Default package
                 String packageName = "com.net2plan.gui.plugins";
-                if (cmd.hasOption("package")) packageName = cmd.getOptionValue("package");
+                if (cmd.hasOption("package-name")) packageName = cmd.getOptionValue("package-name");
 
                 final Pair<IGUIModule, IGUIModeWrapper> pluginPair = findPlugin(inputPlugin, packageName);
                 currentPlugin = pluginPair.getFirst();
@@ -136,14 +136,14 @@ public class GUILauncher
                     int mode = 1;
 
                     Map<String, String> parameters = new HashMap<>();
-                    if (cmd.hasOption("mode"))
+                    if (cmd.hasOption("routine"))
                     {
-                        mode = Integer.parseInt(cmd.getOptionValue("mode"));
-                        if (cmd.hasOption("param"))
-                            parameters = parseParameters(cmd.getOptionValue("param"), R_OPTIONS.getOption("param").getValueSeparator());
+                        mode = Integer.parseInt(cmd.getOptionValue("routine"));
+                        if (cmd.hasOption("tool-param"))
+                            parameters = parseParameters(cmd.getOptionValue("tool-param"), R_OPTIONS.getOption("tool-param").getValueSeparator());
                     }
 
-                    wrapper.launchMode(mode, parameters);
+                    wrapper.launchRoutine(mode, parameters);
                 } else
                 {
                     ErrorHandling.showErrorDialog("Debug wrapper not found for class: " + inputPlugin);

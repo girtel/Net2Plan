@@ -7,5 +7,5 @@ import java.util.Map;
  */
 public interface IGUIModeWrapper
 {
-    void launchMode(int mode, Map<String, String> parameters);
+    void launchRoutine(int mode, Map<String, String> parameters);
 }

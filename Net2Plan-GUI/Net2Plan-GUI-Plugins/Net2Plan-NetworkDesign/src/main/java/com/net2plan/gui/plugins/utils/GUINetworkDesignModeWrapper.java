@@ -15,7 +15,7 @@ public class GUINetworkDesignModeWrapper implements IGUIModeWrapper
     private Map<String, String> parameters;
 
     @Override
-    public void launchMode(final int mode, final Map<String, String> parameters)
+    public void launchRoutine(final int mode, final Map<String, String> parameters)
     {
         this.parameters = parameters;
 

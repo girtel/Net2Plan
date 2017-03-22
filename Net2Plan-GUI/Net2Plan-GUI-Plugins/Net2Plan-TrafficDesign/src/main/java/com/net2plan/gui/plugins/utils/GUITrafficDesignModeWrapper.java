@@ -12,7 +12,7 @@ public class GUITrafficDesignModeWrapper implements IGUIModeWrapper
     private Map<String, String> parameters;
 
     @Override
-    public void launchMode(int mode, Map<String, String> parameters)
+    public void launchRoutine(int mode, Map<String, String> parameters)
     {
         this.parameters = parameters;
 
