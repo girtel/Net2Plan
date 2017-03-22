@@ -8,7 +8,7 @@ import org.apache.commons.cli.ParseException;
  * This main class receives the same input parameters as the CLINetworkDesign tool.
  * Algorithm packages need to be module dependencies in order for the program to find them.
  */
-public class CLIAlgorithmLauncher
+public class CLINetworkDesignLauncher
 {
     public static void main(String[] args)
     {
