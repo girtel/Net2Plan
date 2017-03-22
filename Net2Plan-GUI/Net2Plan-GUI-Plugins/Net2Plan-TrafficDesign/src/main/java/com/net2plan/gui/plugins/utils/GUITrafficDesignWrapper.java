@@ -1,13 +1,13 @@
-package com.net2plan.gui.plugins.debug;
+package com.net2plan.gui.plugins.utils;
 
-import com.net2plan.interfaces.IGUIPluginWrapper;
+import com.net2plan.interfaces.IGUIModeWrapper;
 
 import java.util.Map;
 
 /**
  * Created by Jorge San Emeterio on 19/03/2017.
  */
-public class GUITrafficDesignWrapper implements IGUIPluginWrapper
+public class GUITrafficDesignWrapper implements IGUIModeWrapper
 {
     private Map<String, String> parameters;
 

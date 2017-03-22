@@ -5,18 +5,22 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
 import com.net2plan.gui.GUINet2Plan;
 import com.net2plan.gui.utils.Robot;
-import com.net2plan.interfaces.IGUIPluginWrapper;
+import com.net2plan.interfaces.IGUIModeWrapper;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.plugins.PluginSystem;
+import com.net2plan.utils.Pair;
 import jdk.nashorn.internal.runtime.ParserException;
 import org.apache.commons.cli.*;
+import org.reflections.Reflections;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by Jorge San Emeterio on 17/03/17.
@@ -93,18 +97,18 @@ public class GUIPluginLauncher
             // Parse mode and params
 
             // Looking for plugin wrapper
-            final ImmutableSet<ClassPath.ClassInfo> wrappers = ClassPath.from(cl).getTopLevelClasses("com.net2plan.gui.plugins.debug");
+            final ImmutableSet<ClassPath.ClassInfo> wrappers = ClassPath.from(cl).getTopLevelClasses("com.net2plan.gui.plugins.utils");
 
-            IGUIPluginWrapper wrapper = null;
+            IGUIModeWrapper wrapper = null;
             for (ClassPath.ClassInfo classInfo : wrappers)
             {
                 final String className = classInfo.getSimpleName();
                 if (className.equals(inputPlugin + "Wrapper"))
                 {
                     final Object instance = Class.forName(classInfo.toString()).newInstance();
-                    if (instance instanceof IGUIPluginWrapper)
+                    if (instance instanceof IGUIModeWrapper)
                     {
-                        wrapper = (IGUIPluginWrapper) instance;
+                        wrapper = (IGUIModeWrapper) instance;
                         break;
                     }
                 }
@@ -179,6 +183,49 @@ public class GUIPluginLauncher
                 return KeyEvent.VK_CONTROL;
             default:
                 return -1;
+        }
+    }
+
+    private static Pair<IGUIModule, IGUIModeWrapper> findPlugin(final String pluginName, final String packageName)
+    {
+        Reflections reflections = new Reflections(packageName);
+        Set<Class<? extends IGUIModule>> modules = reflections.getSubTypesOf(IGUIModule.class);
+        Set<Class<? extends IGUIModeWrapper>> wrappers = reflections.getSubTypesOf(IGUIModeWrapper.class);
+
+        IGUIModule module = null;
+        IGUIModeWrapper moduleWrapper = null;
+        try
+        {
+            for (Class<? extends IGUIModule> moduleClass : modules)
+            {
+                if (moduleClass.getSimpleName().equals(pluginName))
+                {
+                    final Class<?> classDefinition = Class.forName(moduleClass.getName());
+                    final Constructor<?> constructor = classDefinition.getConstructor();
+
+                    module = (IGUIModule) constructor.newInstance();
+                    break;
+                }
+            }
+
+            if (module == null) return Pair.unmodifiableOf(null, null);
+
+            for (Class<? extends IGUIModeWrapper> wrap : wrappers)
+            {
+                if (wrap.getSimpleName().equals(pluginName + "ModeWrapper"))
+                {
+                    final Class<?> classDefinition = Class.forName(wrap.getName());
+                    final Constructor<?> constructor = classDefinition.getConstructor();
+
+                    moduleWrapper = (IGUIModeWrapper) constructor.newInstance();
+                    break;
+                }
+            }
+
+            return Pair.unmodifiableOf(module, moduleWrapper);
+        } catch (Exception e)
+        {
+            throw new RuntimeException(e.getMessage());
         }
     }
 }
