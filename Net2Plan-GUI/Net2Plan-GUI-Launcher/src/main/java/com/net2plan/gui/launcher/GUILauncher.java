@@ -86,17 +86,17 @@ public class GUILauncher
                 routine.setArgName("Launch mode");
                 R_OPTIONS.addOption(routine);
 
-                final Option param = new Option(null, "param", true, "Tool/Plugin launch mode parameters");
-                param.setRequired(false);
-                param.setArgName("Property=Value");
-                param.setValueSeparator('=');
-                R_OPTIONS.addOption(param);
-
                 final Option packageURL = new Option(null, "package", true, "Name of the package containing the tool");
                 packageURL.setRequired(false);
                 packageURL.setArgName("Package name");
                 packageURL.setType(PatternOptionBuilder.STRING_VALUE);
                 R_OPTIONS.addOption(packageURL);
+
+                final Option param = new Option(null, "param", true, "Tool/Plugin launch mode parameters");
+                param.setRequired(false);
+                param.setArgName("Property=Value");
+                param.setValueSeparator('=');
+                R_OPTIONS.addOption(param);
 
                 final CommandLine cmd = parser.parse(R_OPTIONS, robot_args, true);
 
