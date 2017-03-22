@@ -2,14 +2,16 @@ package com.net2plan.gui.launcher;
 
 import com.google.common.base.Splitter;
 import com.net2plan.gui.GUINet2Plan;
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.GUITrafficDesign;
 import com.net2plan.gui.utils.Robot;
 import com.net2plan.interfaces.IGUIModeWrapper;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.plugins.PluginSystem;
 import com.net2plan.utils.Pair;
-import jdk.nashorn.internal.runtime.ParserException;
 import org.apache.commons.cli.*;
+import org.apache.commons.lang.ArrayUtils;
 import org.reflections.Reflections;
 
 import javax.swing.*;
@@ -28,51 +30,23 @@ public class GUILauncher
     private static IGUIModule currentPlugin;
 
     private final static Options OPTIONS;
+    private final static OptionGroup LAUNCH_TYPE;
 
     static
     {
         // Parse input parameter
         OPTIONS = new Options();
 
-        final OptionGroup launchType = new OptionGroup();
-        launchType.setRequired(true);
+        LAUNCH_TYPE = new OptionGroup();
+        LAUNCH_TYPE.setRequired(true);
 
         final Option vanilla = new Option("v", "vanilla", false, "Launch GUI as if it was executed from outside.");
-
-        final OptionGroup robotGroup = new OptionGroup();
-        robotGroup.setRequired(true);
+        LAUNCH_TYPE.addOption(vanilla);
 
         final Option robot = new Option("r", "robot", false, "Launch GUI under an automated tool.");
-        robotGroup.addOption(robot);
+        LAUNCH_TYPE.addOption(robot);
 
-        final Option plugin = new Option("t", "tool", true, "Class name of the tool/plugin");
-        plugin.setRequired(true);
-        plugin.setType(PatternOptionBuilder.CLASS_VALUE);
-        plugin.setArgName("Tool/Plugin");
-        robotGroup.addOption(plugin);
-
-        final Option routine = new Option("m", "mode", true, "Tool/Plugin launch mode");
-        routine.setRequired(false);
-        routine.setType(PatternOptionBuilder.NUMBER_VALUE);
-        routine.setArgName("Launch mode");
-        robotGroup.addOption(routine);
-
-        final Option param = new Option(null, "param", true, "Tool/Plugin launch mode parameters");
-        param.setRequired(false);
-        param.setArgName("Property=Value");
-        param.setValueSeparator('=');
-        robotGroup.addOption(param);
-
-        final Option packageURL = new Option(null, "package", true, "Name of the package containing the tool");
-        packageURL.setRequired(false);
-        packageURL.setArgName("Package name");
-        packageURL.setType(PatternOptionBuilder.STRING_VALUE);
-        robotGroup.addOption(packageURL);
-
-        launchType.addOption(vanilla);
-        launchType.addOption(robot);
-
-        OPTIONS.addOptionGroup(launchType);
+        OPTIONS.addOptionGroup(LAUNCH_TYPE);
     }
 
     public static void main(String[] args)
@@ -81,59 +55,107 @@ public class GUILauncher
         HelpFormatter formatter = new HelpFormatter();
         try
         {
-            final CommandLine cmd = parser.parse(OPTIONS, args);
+            parser.parse(OPTIONS, args, true);
 
-            // Scan for the given plugin
-            final String inputPlugin = cmd.getOptionValue("tool");
-
-            // Default package
-            String packageName = "com.net2plan.gui.plugins";
-            if (cmd.hasOption("package")) packageName = cmd.getOptionValue("package");
-
-            final Pair<IGUIModule, IGUIModeWrapper> pluginPair = findPlugin(inputPlugin, packageName);
-            currentPlugin = pluginPair.getFirst();
-
-            // Plugin not found
-            if (currentPlugin == null)
-                throw new ParserException("Plugin: " + inputPlugin + " could not be found at package: " + packageName);
-
-            // Exceptions are grabbed by N2P from now on.
-
-            // Run Net2Plan
-            GUINet2Plan.main(args);
-            PluginSystem.addPlugin(IGUIModule.class, currentPlugin.getClass());
-            GUINet2Plan.refreshMenu();
-
-            runPlugin();
-
-            // Parse mode and params
-
-            // Looking for plugin wrapper
-            final IGUIModeWrapper wrapper = pluginPair.getSecond();
-
-            if (wrapper != null)
+            if (LAUNCH_TYPE.getSelected().equals("v"))
             {
-                int mode = 1;
+                // Vanilla launcher
+                GUINet2Plan.main(args);
+                PluginSystem.addPlugin(IGUIModule.class, GUINetworkDesign.class);
+                PluginSystem.addPlugin(IGUIModule.class, GUITrafficDesign.class);
+                PluginSystem.loadExternalPlugins();
+                GUINet2Plan.refreshMenu();
+            } else if (LAUNCH_TYPE.getSelected().equals("r"))
+            {
+                // Robot launcher
 
-                Map<String, String> parameters = new HashMap<>();
-                if (cmd.hasOption("mode"))
+                final String[] robot_args = (String[]) ArrayUtils.removeElement(args, "-r");
+
+                //New options
+                final Options R_OPTIONS = new Options();
+
+                final Option plugin = new Option(null, "tool", true, "Class name of the tool/plugin");
+                plugin.setRequired(true);
+                plugin.setType(PatternOptionBuilder.CLASS_VALUE);
+                plugin.setArgName("Tool/Plugin");
+                R_OPTIONS.addOption(plugin);
+
+                final Option routine = new Option(null, "mode", true, "Tool/Plugin launch mode");
+                routine.setRequired(false);
+                routine.setType(PatternOptionBuilder.NUMBER_VALUE);
+                routine.setArgName("Launch mode");
+                R_OPTIONS.addOption(routine);
+
+                final Option param = new Option(null, "param", true, "Tool/Plugin launch mode parameters");
+                param.setRequired(false);
+                param.setArgName("Property=Value");
+                param.setValueSeparator('=');
+                R_OPTIONS.addOption(param);
+
+                final Option packageURL = new Option(null, "package", true, "Name of the package containing the tool");
+                packageURL.setRequired(false);
+                packageURL.setArgName("Package name");
+                packageURL.setType(PatternOptionBuilder.STRING_VALUE);
+                R_OPTIONS.addOption(packageURL);
+
+                final CommandLine cmd = parser.parse(R_OPTIONS, robot_args, true);
+
+                // Scan for the given plugin
+                final String inputPlugin = cmd.getOptionValue("tool");
+
+                // Default package
+                String packageName = "com.net2plan.gui.plugins";
+                if (cmd.hasOption("package")) packageName = cmd.getOptionValue("package");
+
+                final Pair<IGUIModule, IGUIModeWrapper> pluginPair = findPlugin(inputPlugin, packageName);
+                currentPlugin = pluginPair.getFirst();
+
+                // Plugin not found
+                if (currentPlugin == null)
                 {
-                    mode = Integer.parseInt(cmd.getOptionValue("mode"));
-                    if (cmd.hasOption("param"))
-                        parameters = parseParameters(cmd.getOptionValue("param"), OPTIONS.getOption("param").getValueSeparator());
+                    formatter.printHelp("utility-name", R_OPTIONS);
+                    throw new ParseException("Plugin: " + inputPlugin + " could not be found at package: " + packageName);
                 }
 
-                wrapper.launchMode(mode, parameters);
+                // Exceptions are grabbed by N2P from now on.
+
+                // Run Net2Plan
+                GUINet2Plan.main(new String[0]);
+                PluginSystem.addPlugin(IGUIModule.class, currentPlugin.getClass());
+                GUINet2Plan.refreshMenu();
+
+                runPlugin();
+
+                // Parse mode and params
+
+                // Looking for plugin wrapper
+                final IGUIModeWrapper wrapper = pluginPair.getSecond();
+
+                if (wrapper != null)
+                {
+                    int mode = 1;
+
+                    Map<String, String> parameters = new HashMap<>();
+                    if (cmd.hasOption("mode"))
+                    {
+                        mode = Integer.parseInt(cmd.getOptionValue("mode"));
+                        if (cmd.hasOption("param"))
+                            parameters = parseParameters(cmd.getOptionValue("param"), R_OPTIONS.getOption("param").getValueSeparator());
+                    }
+
+                    wrapper.launchMode(mode, parameters);
+                } else
+                {
+                    ErrorHandling.showErrorDialog("Debug wrapper not found for class: " + inputPlugin);
+                }
             } else
             {
-                ErrorHandling.showErrorDialog("Debug wrapper not found for class: " + inputPlugin);
+                throw new ParseException("Unknown launch option: " + LAUNCH_TYPE.getSelected());
             }
         } catch (ParseException e)
         {
             System.err.println(e.getMessage());
             formatter.printHelp("utility-name", OPTIONS);
-
-            System.exit(1);
         } catch (Exception e)
         {
             ErrorHandling.showErrorDialog("An error happened while running launcher.\nCheck console for more details.");
