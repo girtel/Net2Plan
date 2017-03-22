@@ -1,8 +1,6 @@
 package com.net2plan.gui.launcher;
 
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.ClassPath;
 import com.net2plan.gui.GUINet2Plan;
 import com.net2plan.gui.utils.Robot;
 import com.net2plan.interfaces.IGUIModeWrapper;
@@ -48,11 +46,17 @@ public class GUIPluginLauncher
         mode.setArgName("Launch mode");
         OPTIONS.addOption(mode);
 
-        final Option param = new Option("p", "param", true, "Tool/Plugin launch mode parameters");
+        final Option param = new Option(null, "param", true, "Tool/Plugin launch mode parameters");
         param.setRequired(false);
-        param.setArgName("property=value");
+        param.setArgName("Property=Value");
         param.setValueSeparator('=');
         OPTIONS.addOption(param);
+
+        final Option packageURL = new Option(null, "package", true, "Name of the package containing the tool");
+        packageURL.setRequired(false);
+        packageURL.setArgName("Package name");
+        packageURL.setType(PatternOptionBuilder.STRING_VALUE);
+        OPTIONS.addOption(packageURL);
     }
 
     public static void main(String[] args)
@@ -66,26 +70,17 @@ public class GUIPluginLauncher
             // Scan for the given plugin
             final String inputPlugin = cmd.getOptionValue("tool");
 
-            ClassLoader cl = GUIPluginLauncher.class.getClassLoader();
-            final ImmutableSet<ClassPath.ClassInfo> classesInNet2Plan = ClassPath.from(cl).getTopLevelClasses("com.net2plan.gui.plugins");
+            // Default package
+            String packageName = "com.net2plan.gui.plugins";
+            if (cmd.hasOption("package")) packageName = cmd.getOptionValue("package");
 
-            for (ClassPath.ClassInfo classInfo : classesInNet2Plan)
-            {
-                if (classInfo.getSimpleName().equals(inputPlugin))
-                {
-                    final Object instance = Class.forName(classInfo.toString()).newInstance();
-                    if (instance instanceof IGUIModule)
-                    {
-                        currentPlugin = (IGUIModule) instance;
-                        break;
-                    }
-                }
-            }
+            final Pair<IGUIModule, IGUIModeWrapper> pluginPair = findPlugin(inputPlugin, packageName);
+            currentPlugin = pluginPair.getFirst();
 
             // Plugin not found
-            if (currentPlugin == null) throw new ParserException("Plugin: " + inputPlugin + " could not be found...");
+            if (currentPlugin == null) throw new ParserException("Plugin: " + inputPlugin + " could not be found at package: " + packageName);
 
-            // Do no longer launch ParserException
+            // Exceptions are grabbed by N2P from now on.
 
             // Run Net2Plan
             GUINet2Plan.main(args);
@@ -97,22 +92,7 @@ public class GUIPluginLauncher
             // Parse mode and params
 
             // Looking for plugin wrapper
-            final ImmutableSet<ClassPath.ClassInfo> wrappers = ClassPath.from(cl).getTopLevelClasses("com.net2plan.gui.plugins.utils");
-
-            IGUIModeWrapper wrapper = null;
-            for (ClassPath.ClassInfo classInfo : wrappers)
-            {
-                final String className = classInfo.getSimpleName();
-                if (className.equals(inputPlugin + "Wrapper"))
-                {
-                    final Object instance = Class.forName(classInfo.toString()).newInstance();
-                    if (instance instanceof IGUIModeWrapper)
-                    {
-                        wrapper = (IGUIModeWrapper) instance;
-                        break;
-                    }
-                }
-            }
+            final IGUIModeWrapper wrapper = pluginPair.getSecond();
 
             if (wrapper != null)
             {
