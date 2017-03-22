@@ -1,7 +1,7 @@
-package com.net2plan.gui.plugins.debug;
+package com.net2plan.gui.plugins.utils;
 
 import com.net2plan.gui.utils.Robot;
-import com.net2plan.interfaces.IGUIPluginWrapper;
+import com.net2plan.interfaces.IGUIModeWrapper;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -10,12 +10,12 @@ import java.util.Map;
 /**
  * Created by Jorge San Emeterio on 18/03/2017.
  */
-public class GUINetworkDesignWrapper implements IGUIPluginWrapper
+public class GUINetworkDesignModeWrapper implements IGUIModeWrapper
 {
     private Map<String, String> parameters;
 
     @Override
-    public void launchMode(final int mode, final Map<String, String> parameters)
+    public void launchRoutine(final int mode, final Map<String, String> parameters)
     {
         this.parameters = parameters;
 
