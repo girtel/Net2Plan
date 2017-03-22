@@ -14,7 +14,7 @@
     <dependencies>
         <dependency>
             <groupId>com.net2plan.net2plan-cli</groupId>
-            <artifactId>net2plan-cli-exec</artifactId>
+            <artifactId>net2plan-cli-plugins</artifactId>
             <version>0.5.0.4-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

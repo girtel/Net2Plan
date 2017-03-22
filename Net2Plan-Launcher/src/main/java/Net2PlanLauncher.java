@@ -1,4 +1,4 @@
-import com.net2plan.cli.CLINet2Plan;
+import com.net2plan.cli.plugins.CLINetworkDesign;
 import com.net2plan.gui.launcher.GUILauncher;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang.ArrayUtils;
@@ -37,7 +37,7 @@ public class Net2PlanLauncher
 
             if (GROUP_DIRECTION.getSelected().equals("CLI"))
             {
-                CLINet2Plan.main((String[]) ArrayUtils.removeElement(args, "--CLI"));
+                CLINetworkDesign.main((String[]) ArrayUtils.removeElement(args, "--CLI"));
             } else if (GROUP_DIRECTION.getSelected().equals("GUI"))
             {
                 GUILauncher.main((String[]) ArrayUtils.removeElement(args, "--GUI"));
