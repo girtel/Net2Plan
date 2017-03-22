@@ -18,7 +18,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by Jorge San Emeterio on 2/03/17.
+ * @author Jorge San Emeterio Villalain
+ * @date 2/03/17
  */
 public class SolverCheckPanel extends JPanel implements ActionListener
 {
