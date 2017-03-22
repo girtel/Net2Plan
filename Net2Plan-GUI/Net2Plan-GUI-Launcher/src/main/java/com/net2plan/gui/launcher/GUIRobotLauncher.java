@@ -23,7 +23,7 @@ import java.util.Set;
 /**
  * Created by Jorge San Emeterio on 17/03/17.
  */
-public class GUIPluginLauncher
+public class GUIRobotLauncher
 {
     private static IGUIModule currentPlugin;
 
