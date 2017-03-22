@@ -23,7 +23,7 @@
                 <groupId>com.net2plan</groupId>
                 <artifactId>net2plan-core</artifactId>
                 <version>0.5.0.4-SNAPSHOT</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

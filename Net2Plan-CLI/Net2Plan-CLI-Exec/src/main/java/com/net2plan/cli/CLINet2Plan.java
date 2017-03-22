@@ -41,7 +41,6 @@ public class CLINet2Plan {
     private final Map<String, Class<? extends ICLIModule>> modes = new LinkedHashMap<String, Class<? extends ICLIModule>>();
     private final Options options = new Options();
 
-    
     /**
      * Default constructor.
      *

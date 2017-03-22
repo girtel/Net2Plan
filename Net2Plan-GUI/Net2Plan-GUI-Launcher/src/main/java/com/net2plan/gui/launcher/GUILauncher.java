@@ -34,29 +34,45 @@ public class GUILauncher
         // Parse input parameter
         OPTIONS = new Options();
 
+        final OptionGroup launchType = new OptionGroup();
+        launchType.setRequired(true);
+
+        final Option vanilla = new Option("v", "vanilla", false, "Launch GUI as if it was executed from outside.");
+
+        final OptionGroup robotGroup = new OptionGroup();
+        robotGroup.setRequired(true);
+
+        final Option robot = new Option("r", "robot", false, "Launch GUI under an automated tool.");
+        robotGroup.addOption(robot);
+
         final Option plugin = new Option("t", "tool", true, "Class name of the tool/plugin");
         plugin.setRequired(true);
         plugin.setType(PatternOptionBuilder.CLASS_VALUE);
         plugin.setArgName("Tool/Plugin");
-        OPTIONS.addOption(plugin);
+        robotGroup.addOption(plugin);
 
-        final Option mode = new Option("m", "mode", true, "Tool/Plugin launch mode");
-        mode.setRequired(false);
-        mode.setType(PatternOptionBuilder.NUMBER_VALUE);
-        mode.setArgName("Launch mode");
-        OPTIONS.addOption(mode);
+        final Option routine = new Option("m", "mode", true, "Tool/Plugin launch mode");
+        routine.setRequired(false);
+        routine.setType(PatternOptionBuilder.NUMBER_VALUE);
+        routine.setArgName("Launch mode");
+        robotGroup.addOption(routine);
 
         final Option param = new Option(null, "param", true, "Tool/Plugin launch mode parameters");
         param.setRequired(false);
         param.setArgName("Property=Value");
         param.setValueSeparator('=');
-        OPTIONS.addOption(param);
+        robotGroup.addOption(param);
 
         final Option packageURL = new Option(null, "package", true, "Name of the package containing the tool");
         packageURL.setRequired(false);
         packageURL.setArgName("Package name");
         packageURL.setType(PatternOptionBuilder.STRING_VALUE);
-        OPTIONS.addOption(packageURL);
+        robotGroup.addOption(packageURL);
+
+        launchType.addOption(vanilla);
+        launchType.addOption(robot);
+
+        OPTIONS.addOptionGroup(launchType);
     }
 
     public static void main(String[] args)
