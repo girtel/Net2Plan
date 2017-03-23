@@ -62,34 +62,8 @@ class PickTimeLineManager
             this.timeLine.clear();
             this.currentElementInTimelineCursor = -1;
         }
-        
-        // Synchronizing timeline and netPlan
-        List<Pair<NetworkElement, Pair<Demand, Link>>> cleanedUpTimeline = new ArrayList<>(timeLine);
-        for (Pair<NetworkElement, Pair<Demand, Link>> pair : timeLine)
-        {
-            final NetworkElement element = pair.getFirst();
-            final Pair<Demand, Link> FR = pair.getSecond();
 
-            if (pair.getFirst() != null)
-            {
-                if (netPlan.getNetworkElement(element.getId()) == null)
-                {
-                    cleanedUpTimeline.remove(pair);
-                    currentElementInTimelineCursor--;
-                }
-            } else if (pair.getSecond() != null)
-            {
-                if (netPlan.getDemandFromId(FR.getFirst().getId()) == null || netPlan.getLinkFromId(FR.getSecond().getId()) == null)
-                {
-                    cleanedUpTimeline.remove(pair);
-                    currentElementInTimelineCursor--;
-                }
-            } else
-            {
-                throw new RuntimeException();
-            }
-        }
-        timeLine = cleanedUpTimeline;
+        cleanUpTimeline();
 
         if (this.timelineMaxSize <= 1) return; // nothing is stored since nothing will be retrieved
         if ((pickedForwardingRule == null) && (pickedNetworkElement == null)) return;
@@ -144,6 +118,37 @@ class PickTimeLineManager
 
         // NOTE: The cursor does not depend on the timeline, which may cause them to desynchronize.
         currentElementInTimelineCursor++;
+    }
+
+    private void cleanUpTimeline()
+    {
+        // Synchronizing timeline and netPlan
+        List<Pair<NetworkElement, Pair<Demand, Link>>> cleanedUpTimeline = new ArrayList<>(timeLine);
+        for (Pair<NetworkElement, Pair<Demand, Link>> pair : timeLine)
+        {
+            final NetworkElement element = pair.getFirst();
+            final Pair<Demand, Link> FR = pair.getSecond();
+
+            if (pair.getFirst() != null)
+            {
+                if (netPlan.getNetworkElement(element.getId()) == null)
+                {
+                    cleanedUpTimeline.remove(pair);
+                    currentElementInTimelineCursor--;
+                }
+            } else if (pair.getSecond() != null)
+            {
+                if (netPlan.getDemandFromId(FR.getFirst().getId()) == null || netPlan.getLinkFromId(FR.getSecond().getId()) == null)
+                {
+                    cleanedUpTimeline.remove(pair);
+                    currentElementInTimelineCursor--;
+                }
+            } else
+            {
+                throw new RuntimeException();
+            }
+        }
+        timeLine = cleanedUpTimeline;
     }
 
     Pair<NetworkElement, Pair<Demand, Link>> getPickNavigationBackElement()
