@@ -174,7 +174,6 @@ public class PickTimeLineManagerTest
         assertEquals(null, timeLineManager.getPickNavigationForwardElement());
         assertEquals(netPlan.getNode(1), timeLineManager.getPickNavigationBackElement());
 
-
         // Forwarding rule
         final NetPlan aux = netPlan.copy();
 
