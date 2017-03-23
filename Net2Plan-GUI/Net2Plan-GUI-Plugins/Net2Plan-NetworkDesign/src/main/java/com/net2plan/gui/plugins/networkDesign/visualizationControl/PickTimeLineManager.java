@@ -46,16 +46,6 @@ class PickTimeLineManager
         this.currentElementInTimelineCursor = -1;
     }
 
-    private void updateTimeline(final NetPlan currentNp, final Pair<Demand, Link> element)
-    {
-        updateTimeline(currentNp, element);
-    }
-
-    private void updateTimeline(final NetPlan currentNp, final NetworkElement element)
-    {
-        updateTimeline(currentNp, element);
-    }
-
     private <T> void updateTimeline(final NetPlan currentNp, final T element)
     {
         if (this.timelineMaxSize <= 1) return;

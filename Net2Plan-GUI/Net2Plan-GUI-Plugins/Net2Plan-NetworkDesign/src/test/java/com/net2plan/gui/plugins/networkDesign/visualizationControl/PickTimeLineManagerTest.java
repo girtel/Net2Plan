@@ -58,7 +58,7 @@ public class PickTimeLineManagerTest
     @Test
     public void addElement() throws Exception
     {
-        throw new UnsupportedOperationException("");
+        timeLineManager.addElement(netPlan, netPlan.getNode(0));
     }
 
     @Test
