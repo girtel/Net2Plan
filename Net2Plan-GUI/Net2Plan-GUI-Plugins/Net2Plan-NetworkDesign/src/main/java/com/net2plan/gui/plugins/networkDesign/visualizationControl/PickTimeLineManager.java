@@ -50,11 +50,18 @@ class PickTimeLineManager
     {
         if (this.timelineMaxSize <= 1) return;
         if (element == null) throw new RuntimeException("Cannot add a null element.");
-        if (netPlan == null) throw new RuntimeException("NetPlan is set to null.");
+        if (currentNp == null) throw new RuntimeException("Cannot update with a null NetPlan.");
 
         // Check pointer validity
-        if (!(currentElementInTimelineCursor >= 0 && currentElementInTimelineCursor < timeLine.size()))
-            throw new RuntimeException("Timeline cursor has been misplaced.");
+        if (!timeLine.isEmpty())
+        {
+            if (!(currentElementInTimelineCursor >= 0 && currentElementInTimelineCursor < timeLine.size()))
+                throw new RuntimeException("Timeline cursor has been misplaced.");
+        } else
+        {
+            if (currentElementInTimelineCursor != -1)
+                throw new RuntimeException("Timeline cursor has been misplaced.");
+        }
 
         // Updating netPlan
         if (netPlan != currentNp)
@@ -116,6 +123,7 @@ class PickTimeLineManager
                 {
                     newTimeLine.remove(networkElement);
                     currentElementInTimelineCursor--;
+                    continue;
                 }
 
                 np = networkElement.getNetPlan();
@@ -127,6 +135,7 @@ class PickTimeLineManager
                 {
                     newTimeLine.remove(forwardingRule);
                     currentElementInTimelineCursor--;
+                    continue;
                 }
 
                 np = forwardingRule.getFirst().getNetPlan();
@@ -156,6 +165,10 @@ class PickTimeLineManager
     {
         if (timeLine.isEmpty() || this.timelineMaxSize <= 1) return null;
         if (currentElementInTimelineCursor == 0) return null; // End of the timeline, there is no more past.
+
+        // Clean the timeline before giving anything
+        cleanDuty();
+
         return timeLine.get(--currentElementInTimelineCursor);
     }
 
@@ -163,6 +176,9 @@ class PickTimeLineManager
     {
         if (timeLine.isEmpty() || this.timelineMaxSize <= 1) return null;
         if (currentElementInTimelineCursor == timeLine.size() - 1) return null;
+
+        // Clean the timeline before giving anything
+        cleanDuty();
 
         return timeLine.get(++currentElementInTimelineCursor);
     }
