@@ -28,7 +28,7 @@ import java.util.List;
 class PickTimeLineManager
 {
     private NetPlan netPlan;
-    private List<?> timeLine;
+    private List<Object> timeLine;
     private int currentElementInTimelineCursor;
 
     private final int timelineMaxSize;
@@ -76,7 +76,9 @@ class PickTimeLineManager
         } else
         {
             // Same topology
-            cleanUpDuty();
+
+            // Sanity check
+            cleanDuty();
 
             // Do not add the same element that is currently be clicked upon.
             if (element.equals(timeLine.get(currentElementInTimelineCursor))) return;
@@ -95,23 +97,23 @@ class PickTimeLineManager
         }
 
         /* Add the elements at the end of the list */
-        timeLine.add(Pair.of(pickedNetworkElement, pickedForwardingRule));
+        timeLine.add(element);
+        currentElementInTimelineCursor++;
 
         // Remove the oldest pick if the list get too big.
-        while (timeLine.size() > timelineMaxSize)
+        if (timeLine.size() > timelineMaxSize)
         {
             timeLine.remove(0);
-            currentElementInTimelineCursor = timeLine.size() - 1;
+            currentElementInTimelineCursor--;
         }
-
-        // NOTE: The cursor does not depend on the timeline, which may cause them to desynchronize.
-        currentElementInTimelineCursor++;
     }
 
     @SuppressWarnings("unchecked")
-    private void cleanUpDuty()
+    private void cleanDuty()
     {
-        final List<?> newTimeLine = new ArrayList<>(timeLine);
+        if (timeLine.size() > timelineMaxSize) throw new RuntimeException("Timeline is over its capacity.");
+
+        final List<Object> newTimeLine = new ArrayList<>(timeLine);
         for (int index = 0; index < timeLine.size(); index++)
         {
             final Object o = timeLine.get(index);
@@ -131,7 +133,7 @@ class PickTimeLineManager
             {
                 final Pair<Demand, Link> forwardingRule = (Pair<Demand, Link>) o;
 
-                if (netPlan.getDemandFromId(forwardingRule.getFirst().getId()) == null || np.getLinkFromId(forwardingRule.getSecond().getId()) == null)
+                if (netPlan.getDemandFromId(forwardingRule.getFirst().getId()) == null || netPlan.getLinkFromId(forwardingRule.getSecond().getId()) == null)
                 {
                     newTimeLine.remove(forwardingRule);
                     currentElementInTimelineCursor--;
@@ -160,35 +162,28 @@ class PickTimeLineManager
         this.timeLine = new ArrayList<>(newTimeLine);
     }
 
-    Pair<NetworkElement, Pair<Demand, Link>> getPickNavigationBackElement()
+    Object getPickNavigationBackElement()
     {
-        if (timeLine.isEmpty()) return null;
-        if (this.timelineMaxSize <= 1) return null; // Empty timeline, nothing can be returned
+        if (timeLine.isEmpty() || this.timelineMaxSize <= 1) return null;
         if (currentElementInTimelineCursor == 0) return null; // End of the timeline, there is no more past.
-        this.currentElementInTimelineCursor--; // Retrieving prior element
-        return timeLine.get(this.currentElementInTimelineCursor);
+        return timeLine.get(--currentElementInTimelineCursor);
     }
 
-    Pair<NetworkElement, Pair<Demand, Link>> getPickNavigationForwardElement()
+    Object getPickNavigationForwardElement()
     {
-        if (timeLine.isEmpty()) return null;
-        if (this.timelineMaxSize <= 1) return null; // nothing is stored since nothing will be retrieved
-        if (currentElementInTimelineCursor >= timeLine.size() - 1) return null;
-        this.currentElementInTimelineCursor++;
-        return timeLine.get(this.currentElementInTimelineCursor);
+        if (timeLine.isEmpty() || this.timelineMaxSize <= 1) return null;
+        if (currentElementInTimelineCursor == timeLine.size() - 1) return null;
+
+        return timeLine.get(++currentElementInTimelineCursor);
     }
 
     void addElement(final NetPlan currentNp, final NetworkElement element)
     {
-        this.pickedForwardingRule = null;
-        this.pickedNetworkElement = element;
-        updateTimeline(currentNp);
+        updateTimeline(currentNp, element);
     }
 
     void addElement(final NetPlan currentNp, final Pair<Demand, Link> forwardingRule)
     {
-        this.pickedForwardingRule = forwardingRule;
-        this.pickedNetworkElement = null;
-        updateTimeline(currentNp);
+        updateTimeline(currentNp, forwardingRule);
     }
 }
