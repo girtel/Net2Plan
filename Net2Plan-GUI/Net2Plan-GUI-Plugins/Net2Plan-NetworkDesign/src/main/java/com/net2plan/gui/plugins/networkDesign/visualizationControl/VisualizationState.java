@@ -1421,12 +1421,12 @@ public class VisualizationState
         }
     }
 
-    public Pair<NetworkElement, Pair<Demand, Link>> getPickNavigationBackElement()
+    public Object getPickNavigationBackElement()
     {
         return pickTimeLineManager.getPickNavigationBackElement();
     }
 
-    public Pair<NetworkElement, Pair<Demand, Link>> getPickNavigationForwardElement()
+    public Object getPickNavigationForwardElement()
     {
         return pickTimeLineManager.getPickNavigationForwardElement();
     }
