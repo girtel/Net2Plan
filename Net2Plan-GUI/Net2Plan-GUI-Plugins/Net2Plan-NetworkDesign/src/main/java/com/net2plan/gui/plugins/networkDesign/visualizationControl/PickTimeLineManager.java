@@ -28,83 +28,71 @@ import java.util.List;
 class PickTimeLineManager
 {
     private NetPlan netPlan;
-
-    private List<Pair<NetworkElement, Pair<Demand, Link>>> timeLine;
+    private List<?> timeLine;
     private int currentElementInTimelineCursor;
-    private int timelineMaxSize;
 
-    private NetworkElement pickedNetworkElement;
-    private Pair<Demand, Link> pickedForwardingRule;
+    private final int timelineMaxSize;
 
     PickTimeLineManager()
     {
-        this.timeLine = new ArrayList<>(timelineMaxSize + 1);
-        this.currentElementInTimelineCursor = -1;
-        this.timelineMaxSize = 10;
-
-        this.pickedNetworkElement = null;
-        this.pickedForwardingRule = null;
+        this(10);
     }
 
-    /**
-     * Update timeline after new pick or reset
-     *
-     * @param currentNp Current NetPlan
-     */
-    private void updateTimeline(final NetPlan currentNp)
+    PickTimeLineManager(final int timelineMaxSize)
     {
+        this.timelineMaxSize = timelineMaxSize;
+
+        this.timeLine = new ArrayList<>(timelineMaxSize + 1);
+        this.currentElementInTimelineCursor = -1;
+    }
+
+    private void updateTimeline(final NetPlan currentNp, final Pair<Demand, Link> element)
+    {
+        updateTimeline(currentNp, element);
+    }
+
+    private void updateTimeline(final NetPlan currentNp, final NetworkElement element)
+    {
+        updateTimeline(currentNp, element);
+    }
+
+    private <T> void updateTimeline(final NetPlan currentNp, final T element)
+    {
+        if (this.timelineMaxSize <= 1) return;
+        if (element == null) throw new RuntimeException("Cannot add a null element.");
+        if (netPlan == null) throw new RuntimeException("NetPlan is set to null.");
+
+        // Check pointer validity
+        if (!(currentElementInTimelineCursor >= 0 && currentElementInTimelineCursor < timeLine.size()))
+            throw new RuntimeException("Timeline cursor has been misplaced.");
+
         // Updating netPlan
-        if (netPlan == null) this.netPlan = currentNp;
         if (netPlan != currentNp)
         {
             this.netPlan = currentNp;
 
             this.timeLine.clear();
             this.currentElementInTimelineCursor = -1;
-        }
-
-        cleanUpTimeline();
-
-        if (this.timelineMaxSize <= 1) return; // nothing is stored since nothing will be retrieved
-        if ((pickedForwardingRule == null) && (pickedNetworkElement == null)) return;
-
-        if (!timeLine.isEmpty())
+        } else
         {
+            // Same topology
+            cleanUpDuty();
+
             // Do not add the same element that is currently be clicked upon.
-            if (Pair.unmodifiableOf(this.pickedNetworkElement, pickedForwardingRule).equals(timeLine.get(currentElementInTimelineCursor)))
-            {
-                return;
-            }
+            if (element.equals(timeLine.get(currentElementInTimelineCursor))) return;
 
             // If the new element if different from what is stored, remove all the elements that were stored
-            if (currentElementInTimelineCursor != timeLine.size() - 1)
+            if (currentElementInTimelineCursor != (timeLine.size() - 1))
             {
                 final int nextElementCursorIndex = currentElementInTimelineCursor + 1;
-                final Pair<NetworkElement, Pair<Demand, Link>> nextTimelineElement = timeLine.get(nextElementCursorIndex);
-                if (nextTimelineElement.getFirst() != pickedNetworkElement || nextTimelineElement.getSecond() != pickedForwardingRule)
-                {
+
+                final Object nextTimelineElement = timeLine.get(nextElementCursorIndex);
+                final Object currentTimelineElement = timeLine.get(currentElementInTimelineCursor);
+
+                if (nextTimelineElement != currentTimelineElement)
                     timeLine.subList(nextElementCursorIndex, timeLine.size()).clear();
-                }
             }
         }
-
-        // Cleaning duty
-        final List<Pair<NetworkElement, Pair<Demand, Link>>> newTimeLine = new ArrayList<>();
-        for (int index = 0; index < timeLine.size(); index++)
-        {
-            final NetworkElement ne = timeLine.get(index).getFirst();
-            final Pair<Demand, Link> fr = timeLine.get(index).getSecond();
-
-            // Do not add this pick if the last if the same as this one.
-            if ((index > 0) && (timeLine.get(index).equals(timeLine.get(index - 1)))) continue;
-
-            // This element does not belong to this NetPlan
-            if (ne != null && ne.getNetPlan() != netPlan) continue;
-            if (fr != null && ((fr.getFirst().getNetPlan() != netPlan) || (fr.getSecond().getNetPlan() != netPlan)))
-                continue;
-            newTimeLine.add(timeLine.get(index));
-        }
-        this.timeLine = new ArrayList<>(newTimeLine);
 
         /* Add the elements at the end of the list */
         timeLine.add(Pair.of(pickedNetworkElement, pickedForwardingRule));
@@ -120,35 +108,56 @@ class PickTimeLineManager
         currentElementInTimelineCursor++;
     }
 
-    private void cleanUpTimeline()
+    @SuppressWarnings("unchecked")
+    private void cleanUpDuty()
     {
-        // Synchronizing timeline and netPlan
-        List<Pair<NetworkElement, Pair<Demand, Link>>> cleanedUpTimeline = new ArrayList<>(timeLine);
-        for (Pair<NetworkElement, Pair<Demand, Link>> pair : timeLine)
+        final List<?> newTimeLine = new ArrayList<>(timeLine);
+        for (int index = 0; index < timeLine.size(); index++)
         {
-            final NetworkElement element = pair.getFirst();
-            final Pair<Demand, Link> FR = pair.getSecond();
+            final Object o = timeLine.get(index);
+            final NetPlan np;
 
-            if (pair.getFirst() != null)
+            if (o instanceof NetworkElement)
             {
-                if (netPlan.getNetworkElement(element.getId()) == null)
+                final NetworkElement networkElement = (NetworkElement) o;
+                if (netPlan.getNetworkElement(networkElement.getId()) == null)
                 {
-                    cleanedUpTimeline.remove(pair);
+                    newTimeLine.remove(networkElement);
                     currentElementInTimelineCursor--;
                 }
-            } else if (pair.getSecond() != null)
+
+                np = networkElement.getNetPlan();
+            } else if (o instanceof Pair)
             {
-                if (netPlan.getDemandFromId(FR.getFirst().getId()) == null || netPlan.getLinkFromId(FR.getSecond().getId()) == null)
+                final Pair<Demand, Link> forwardingRule = (Pair<Demand, Link>) o;
+
+                if (netPlan.getDemandFromId(forwardingRule.getFirst().getId()) == null || np.getLinkFromId(forwardingRule.getSecond().getId()) == null)
                 {
-                    cleanedUpTimeline.remove(pair);
+                    newTimeLine.remove(forwardingRule);
                     currentElementInTimelineCursor--;
                 }
+
+                np = forwardingRule.getFirst().getNetPlan();
             } else
             {
-                throw new RuntimeException();
+                throw new RuntimeException("Unknown object in the timeline.");
+            }
+
+            // This element does not belong to this NetPlan
+            if (this.netPlan != np)
+                throw new RuntimeException("The current timeline contains elements from other topologies.");
+
+            // Do not have duplicate elements next to each other
+            if (index != timeLine.size() - 1)
+            {
+                if (o == timeLine.get(index + 1))
+                {
+                    newTimeLine.remove(o);
+                    currentElementInTimelineCursor--;
+                }
             }
         }
-        timeLine = cleanedUpTimeline;
+        this.timeLine = new ArrayList<>(newTimeLine);
     }
 
     Pair<NetworkElement, Pair<Demand, Link>> getPickNavigationBackElement()
