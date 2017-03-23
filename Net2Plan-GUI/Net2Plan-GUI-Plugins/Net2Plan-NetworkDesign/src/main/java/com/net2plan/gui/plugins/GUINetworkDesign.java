@@ -351,13 +351,13 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         final ActionListener action = e ->
         {
-            Pair<NetworkElement, Pair<Demand, Link>> backOrForward;
+            Object backOrForward;
             do
             {
                 backOrForward = (e.getSource() == btn_pickNavigationUndo) ? GUINetworkDesign.this.getVisualizationState().getPickNavigationBackElement() : GUINetworkDesign.this.getVisualizationState().getPickNavigationForwardElement();
                 if (backOrForward == null) break;
-                final NetworkElement ne = backOrForward.getFirst(); // For network elements
-                final Pair<Demand, Link> fr = backOrForward.getSecond(); // For forwarding rules
+                final NetworkElement ne = backOrForward instanceof NetworkElement ? (NetworkElement) backOrForward : null; // For network elements
+                final Pair<Demand, Link> fr = backOrForward instanceof Pair ? (Pair) backOrForward : null; // For forwarding rules
                 if (ne != null)
                 {
                     if (ne.getNetPlan() != GUINetworkDesign.this.getDesign()) continue;
@@ -374,10 +374,13 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             } while (true);
             if (backOrForward != null)
             {
-                if (backOrForward.getFirst() != null)
-                    GUINetworkDesign.this.getVisualizationState().pickElement(backOrForward.getFirst());
-                else if (backOrForward.getSecond() != null)
-                    GUINetworkDesign.this.getVisualizationState().pickForwardingRule(backOrForward.getSecond());
+                final NetworkElement ne = backOrForward instanceof NetworkElement ? (NetworkElement) backOrForward : null; // For network elements
+                final Pair<Demand, Link> fr = backOrForward instanceof Pair ? (Pair) backOrForward: null; // For forwarding rules
+
+                if (ne != null)
+                    GUINetworkDesign.this.getVisualizationState().pickElement(ne);
+                else if (fr != null)
+                    GUINetworkDesign.this.getVisualizationState().pickForwardingRule(fr);
                 else GUINetworkDesign.this.getVisualizationState().resetPickedState();
 
                 GUINetworkDesign.this.updateVisualizationAfterPick();

@@ -19,6 +19,8 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+
 /**
  * @author Jorge San Emeterio Villalain
  * @date 23/03/17
@@ -46,25 +48,22 @@ public class PickTimeLineManagerTest
     @Test
     public void getPickNavigationBackElement() throws Exception
     {
-        throw new UnsupportedOperationException("");
+        timeLineManager.addElement(netPlan, netPlan.getNode(0));
+        timeLineManager.addElement(netPlan, netPlan.getNode(1));
+        timeLineManager.addElement(netPlan, netPlan.getNode(2));
+
+        assertEquals(netPlan.getNode(1), timeLineManager.getPickNavigationBackElement());
     }
 
     @Test
     public void getPickNavigationForwardElement() throws Exception
     {
-        throw new UnsupportedOperationException("");
-    }
-
-    @Test
-    public void addElement() throws Exception
-    {
         timeLineManager.addElement(netPlan, netPlan.getNode(0));
-    }
+        timeLineManager.addElement(netPlan, netPlan.getNode(1));
+        timeLineManager.addElement(netPlan, netPlan.getNode(2));
 
-    @Test
-    public void addForwardingRule() throws Exception
-    {
-        throw new UnsupportedOperationException("");
-    }
+        timeLineManager.getPickNavigationBackElement();
 
+        assertEquals(netPlan.getNode(2), timeLineManager.getPickNavigationForwardElement());
+    }
 }
