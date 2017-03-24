@@ -20,7 +20,7 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.utils.Pair;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -34,8 +34,8 @@ public class PickTimeLineManagerTest
     private static NetPlan netPlan;
     private static PickTimeLineManager timeLineManager;
 
-    @BeforeClass
-    public static void setUp()
+    @Before
+    public void setUp()
     {
         netPlan = new NetPlan();
 
@@ -103,15 +103,13 @@ public class PickTimeLineManagerTest
     @Test
     public void removeMiddleElement()
     {
-        final NetPlan aux = netPlan.copy();
+        timeLineManager.addElement(netPlan, netPlan.getNode(0));
+        timeLineManager.addElement(netPlan, netPlan.getNode(1));
+        timeLineManager.addElement(netPlan, netPlan.getNode(2));
 
-        timeLineManager.addElement(aux, aux.getNode(0));
-        timeLineManager.addElement(aux, aux.getNode(1));
-        timeLineManager.addElement(aux, aux.getNode(2));
+        netPlan.getNode(1).remove();
 
-        aux.getNode(1).remove();
-
-        assertEquals(aux.getNode(0), timeLineManager.getPickNavigationBackElement());
+        assertEquals(netPlan.getNode(0), timeLineManager.getPickNavigationBackElement());
     }
 
     @Test
@@ -147,17 +145,15 @@ public class PickTimeLineManagerTest
     @Test
     public void addForwardingRule()
     {
-        final NetPlan aux = netPlan.copy();
-
-        final Link link = aux.addLink(aux.getNode(0), aux.getNode(1), 0, 0, 1e3, null);
-        final Demand demand = aux.addDemand(aux.getNode(0), aux.getNode(1), 0, null);
+        final Link link = netPlan.addLink(netPlan.getNode(0), netPlan.getNode(1), 0, 0, 1e3, null);
+        final Demand demand = netPlan.addDemand(netPlan.getNode(0), netPlan.getNode(1), 0, null);
 
         final Pair<Demand, Link> forwardingRule = Pair.unmodifiableOf(demand, link);
 
-        timeLineManager.addElement(aux, aux.getNode(0));
-        timeLineManager.addElement(aux, forwardingRule);
+        timeLineManager.addElement(netPlan, netPlan.getNode(0));
+        timeLineManager.addElement(netPlan, forwardingRule);
 
-        assertEquals(aux.getNode(0), timeLineManager.getPickNavigationBackElement());
+        assertEquals(netPlan.getNode(0), timeLineManager.getPickNavigationBackElement());
         assertEquals(forwardingRule, timeLineManager.getPickNavigationForwardElement());
         assertEquals(null, timeLineManager.getPickNavigationForwardElement());
     }
@@ -171,21 +167,25 @@ public class PickTimeLineManagerTest
         timeLineManager.addElement(netPlan, netPlan.getNode(1));
         timeLineManager.addElement(netPlan, netPlan.getNode(2));
 
-        assertEquals(null, timeLineManager.getPickNavigationForwardElement());
-        assertEquals(netPlan.getNode(1), timeLineManager.getPickNavigationBackElement());
+        timeLineManager.getPickNavigationBackElement();
 
-        // Forwarding rule
-        final NetPlan aux = netPlan.copy();
+        assertEquals(netPlan.getNode(0), timeLineManager.getPickNavigationBackElement());
 
-        timeLineManager = new PickTimeLineManager();
+        timeLineManager.getPickNavigationForwardElement();
 
-        final Link link = aux.addLink(aux.getNode(0), aux.getNode(1), 0, 0, 1e3, null);
-        final Demand demand = aux.addDemand(aux.getNode(0), aux.getNode(1), 0, null);
+        assertEquals(netPlan.getNode(2), timeLineManager.getPickNavigationForwardElement());
+    }
+
+    @Test
+    public void repeatAdditionForwardingRule()
+    {
+        final Link link = netPlan.addLink(netPlan.getNode(0), netPlan.getNode(1), 0, 0, 1e3, null);
+        final Demand demand = netPlan.addDemand(netPlan.getNode(0), netPlan.getNode(1), 0, null);
 
         final Pair<Demand, Link> forwardingRule = Pair.unmodifiableOf(demand, link);
 
-        timeLineManager.addElement(aux, forwardingRule);
-        timeLineManager.addElement(aux, forwardingRule);
+        timeLineManager.addElement(netPlan, forwardingRule);
+        timeLineManager.addElement(netPlan, forwardingRule);
 
         assertEquals(null, timeLineManager.getPickNavigationBackElement());
         assertEquals(null, timeLineManager.getPickNavigationForwardElement());
