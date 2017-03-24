@@ -53,7 +53,7 @@ public class Net2PlanLauncher
 
             if (GROUP_DIRECTION.getSelected().equals("CLI"))
             {
-                CLINetworkDesign.main((String[]) ArrayUtils.removeElement(args, "--CLI"));
+                CLILauncher.main((String[]) ArrayUtils.removeElement(args, "--CLI"));
             } else if (GROUP_DIRECTION.getSelected().equals("GUI"))
             {
                 GUILauncher.main((String[]) ArrayUtils.removeElement(args, "--GUI"));
