@@ -61,7 +61,7 @@ public class Link extends NetworkElement
 	Set<SharedRiskGroup> cache_srgs;
 	Map<Route,Integer> cache_traversingRoutes; // for each traversing route, the number of times it traverses this link (in seqLinksRealPath). If the route has segments, their internal route counts also
 	Set<MulticastTree> cache_traversingTrees;
-
+	Map<Demand,Triple<Double,Double,Double>> cache_frOptionalCarriedOccupiedPerTraversingDemandCurrentState;
 	Demand coupledLowerLayerDemand;
 	MulticastDemand coupledLowerLayerMulticastDemand;
 	

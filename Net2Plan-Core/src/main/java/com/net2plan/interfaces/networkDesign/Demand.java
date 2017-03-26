@@ -12,14 +12,21 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import cern.colt.list.tdouble.DoubleArrayList;
-import cern.colt.list.tint.IntArrayList;
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
-import cern.jet.math.tdouble.DoublePlusMultSecond;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
+
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.libraries.GraphUtils;
@@ -28,10 +35,16 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Quadruple;
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
+import com.net2plan.utils.Triple;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import cern.colt.list.tdouble.DoubleArrayList;
+import cern.colt.list.tint.IntArrayList;
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
+import cern.jet.math.tdouble.DoublePlusMultSecond;
 
 /** <p>This class contains a representation of a unicast demand. Unicast demands are defined by its initial and end node, the network layer they belong to, 
  * and their offered traffic. When the routing in the network layer is the type {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, demands are carried
@@ -55,7 +68,9 @@ public class Demand extends NetworkElement
 	double carriedTraffic;
 	RoutingCycleType routingCycleType;
 	
+	
 	Set<Route> cache_routes;
+	Map<Link,Triple<Double,Double,Double>> cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState;
 	Link coupledUpperLayerLink;
 	List<String> mandatorySequenceOfTraversedResourceTypes;
 	IntendedRecoveryType recoveryType;
@@ -104,6 +119,7 @@ public class Demand extends NetworkElement
 		this.coupledUpperLayerLink = null;
 		this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> ();
 		this.recoveryType = IntendedRecoveryType.NOTSPECIFIED;
+		this.cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState = new HashMap<> ();
 	}
 
 	/**
@@ -122,6 +138,9 @@ public class Demand extends NetworkElement
 		for (Route r : origin.cache_routes) this.cache_routes.add(this.netPlan.getRouteFromId(r.id));
 		this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> (origin.mandatorySequenceOfTraversedResourceTypes);
 		this.recoveryType = origin.recoveryType;
+		this.cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState.clear();
+		for (Link originLink : origin.cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState.keySet())
+			this.cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState.put(netPlan.getLinkFromId(originLink.id), origin.cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState.get(originLink));
 	}
 
 
@@ -139,6 +158,7 @@ public class Demand extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.cache_routes , e2.cache_routes)) return false;
 		if (!this.mandatorySequenceOfTraversedResourceTypes.equals(e2.mandatorySequenceOfTraversedResourceTypes)) return false;
 		if (this.recoveryType != e2.recoveryType) return false;
+		if (!NetPlan.isDeepCopy(this.cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState , e2.cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState)) return false;
 		return true;
 	}
 
@@ -268,20 +288,9 @@ public class Demand extends NetworkElement
 	 */
 	public boolean isTraversingOversubscribedLinks ()
 	{
-		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-		if (layer.routingType == RoutingType.SOURCE_ROUTING)
-		{
-			for (Route r : this.cache_routes)
-				for (Link e : r.cache_seqLinksRealPath) 
-					if (e.isOversubscribed()) return true;
-		}
-		else
-		{
-			if (this.routingCycleType == RoutingCycleType.CLOSED_CYCLES) return true;
-			for (Link e : layer.links) 
-				if (layer.forwardingRulesCurrentFailureState_x_de.get(index,e.index) > PRECISION_FACTOR) 
-					if (e.isOversubscribed()) return true;
-		}
+		for (Link e : cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState.keySet())
+			if (cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState.get(e).getSecond() > Configuration.precisionFactor)
+				if (e.isOversubscribed()) return true;
 		return false;
 	}
 	
@@ -342,11 +351,13 @@ public class Demand extends NetworkElement
 	{
 		if (layer.routingType == RoutingType.SOURCE_ROUTING)
 			return this.cache_routes.size () >= 2;
-		for (Node node : netPlan.nodes)
-		{
-			int numOutLinksCarryingTraffic = 0; for (Link e : node.getOutgoingLinks(layer)) if (layer.forwardingRulesCurrentFailureState_x_de.get(index,e.index) > 0) numOutLinksCarryingTraffic ++;
-			if (numOutLinksCarryingTraffic > 1) return true;
-		}
+		final Set<Node> initialLinkNodes = new HashSet<> ();
+		for (Link e : cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState.keySet())
+			if (cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState.get(e).getSecond() > Configuration.precisionFactor)
+			{
+				if (initialLinkNodes.contains(e.getOriginNode())) return true; // two out links of this node carry traffic
+				initialLinkNodes.add(e.getOriginNode());
+			}
 		return false;
 	}
 
@@ -397,10 +408,8 @@ public class Demand extends NetworkElement
 		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
 
 		Map<Pair<Demand,Link>,Double> res = new HashMap<Pair<Demand,Link>,Double> ();
-		IntArrayList es = new IntArrayList (); DoubleArrayList vals = new DoubleArrayList ();
-		layer.forwardingRulesNoFailureState_f_de.viewRow (index). getNonZeros(es,vals);
-		for (int cont = 0 ; cont < es.size () ; cont ++)
-			res.put (Pair.of (this, layer.links.get(es.get(cont))) , vals.get(cont));
+		for (Entry<Link,Triple<Double,Double,Double>> entry : cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState.entrySet())
+			res.put(Pair.of(this, entry.getKey()), entry.getValue().getFirst());
 		return res;
 	}
 
