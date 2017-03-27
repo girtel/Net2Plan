@@ -515,6 +515,51 @@ public class GraphUtils
 	}
 
 	
+//	public static List<Pair<List<Link>,Double>> convert_xe2xpNoLoops (Node ingress , Node egress , Map<Link,Triple<Double,Double,Double>> frInfo , NetworkLayer... optionalLayerParameter)
+//	{
+//        final NetworkLayer layer = ingress.getNetPlan().checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+//		List<List<Link>> res = new ArrayList<> ();
+//		for (Link outLink : ingress.getOutgoingLinks(layer))
+//		{
+//			final Triple<Double,Double,Double> thisFr = frInfo.get(outLink);
+//			if (thisFr == null) continue;
+//			if (thisFr.getFirst() == 0) continue;
+//			res.add(Arrays.asList(outLink));
+//			if (outLink.getDestinationNode() ==  egress) continue;
+//			
+//		}
+//		return res;
+//	}
+//	private static void recursive_convert_xe2xpNoLoops (List<List<Link>> initialList , Set<Integer> pathIdsToContinue , Node ingress , Node egress , Set<Link> frLinks , NetworkLayer... optionalLayerParameter)
+//	{
+//		List<>boolean atLeastOnePahtAdded = false;
+//		for (int pathId : pathIdsToContinue)
+//		{
+//			final List<Link> path = initialList.get(pathId);
+//			final Node endNode = path.get(path.size() - 1).getDestinationNode(); 
+//			if (endNode == egress) { pathIdsToContinue.remove(pathId); continue; }
+//			boolean pathAlreadyContinued = false;
+//			for (Link e : frLinks)
+//				if (e.getOriginNode() == endNode)
+//				{
+//					if (pathAlreadyContinued) 
+//					path.add(e); atLeastOnePahtAdded = true; 
+//				}
+//		}
+//        final NetworkLayer layer = ingress.getNetPlan().checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+//		List<List<Link>> res = new ArrayList<> ();
+//		for (Link outLink : ingress.getOutgoingLinks(layer))
+//		{
+//			final Triple<Double,Double,Double> thisFr = frInfo.get(outLink);
+//			if (thisFr == null) continue;
+//			if (thisFr.getFirst() == 0) continue;
+//			res.add(Arrays.asList(outLink));
+//			if (outLink.getDestinationNode() ==  egress) continue;
+//			
+//		}
+//		return res;
+//	}
+	
 	/** Converts the routing in the form x_de into a set of loopless routes. If the x_de matrix has open or closed loops, they are removed
 	 * from the routing. The resulting routing (after removing the cycles if any) of each demand uses the same of less bandwidth than the original routing.
 	 * @param nodes List of nodes

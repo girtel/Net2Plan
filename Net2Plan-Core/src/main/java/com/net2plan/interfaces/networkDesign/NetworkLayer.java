@@ -12,18 +12,25 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Quadruple;
+import com.net2plan.utils.Triple;
 
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import cern.colt.matrix.tdouble.algo.SparseDoubleAlgebra;
+import cern.colt.matrix.tdouble.impl.SparseCCDoubleMatrix2D;
+import cern.jet.math.tdouble.DoubleFunctions;
 
 /** <p>This class contains a representation of a network layer. This is an structure which contains a set of demands, multicast demands and links. 
  * It also is characterized by a routing type, which can be {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, or
@@ -49,10 +56,10 @@ public class NetworkLayer extends NetworkElement
 	ArrayList<Route> routes;
 	ArrayList<MulticastTree> multicastTrees;
 
-	DoubleMatrix2D forwardingRulesNoFailureState_f_de; // splitting ratios
-	DoubleMatrix2D forwardingRulesCurrentFailureState_x_de; // carried traffics (both routings)
-	DoubleMatrix2D forwardingRules_Aout_ne; // 1 if link e is outgoing from n, 0 otherwise
-	DoubleMatrix2D forwardingRules_Ain_ne; // 1 if link e is incominng from n, 0 otherwise
+//	DoubleMatrix2D forwardingRulesNoFailureState_f_de; // splitting ratios
+//	DoubleMatrix2D forwardingRulesCurrentFailureState_x_de; // carried traffics (both routings)
+//	DoubleMatrix2D forwardingRules_Aout_ne; // 1 if link e is outgoing from n, 0 otherwise
+//	DoubleMatrix2D forwardingRules_Ain_ne; // 1 if link e is incominng from n, 0 otherwise
 	Set<Link> cache_linksDown;
 	Set<Link> cache_coupledLinks;
 	Set<Demand> cache_coupledDemands;
@@ -85,10 +92,10 @@ public class NetworkLayer extends NetworkElement
 
 		this.cache_routesDown = new HashSet<Route> ();
 		this.cache_multicastTreesDown = new HashSet<MulticastTree> ();
-		this.forwardingRulesNoFailureState_f_de = null;
-		this.forwardingRulesCurrentFailureState_x_de = null;
-		this.forwardingRules_Aout_ne = null;
-		this.forwardingRules_Ain_ne = null;
+//		this.forwardingRulesNoFailureState_f_de = null;
+//		this.forwardingRulesCurrentFailureState_x_de = null;
+//		this.forwardingRules_Aout_ne = null;
+//		this.forwardingRules_Ain_ne = null;
 	}
 
 	void copyFrom (NetworkLayer origin)
@@ -110,17 +117,17 @@ public class NetworkLayer extends NetworkElement
 //		for (ProtectionSegment s : origin.protectionSegments) this.protectionSegments.add((ProtectionSegment) this.netPlan.getPeerElementInThisNetPlan (s));
 		if (origin.routingType == routingType.HOP_BY_HOP_ROUTING)
 		{
-			this.forwardingRulesNoFailureState_f_de = origin.forwardingRulesNoFailureState_f_de.copy();
-			this.forwardingRulesCurrentFailureState_x_de = origin.forwardingRulesCurrentFailureState_x_de.copy();
-			this.forwardingRules_Aout_ne = origin.forwardingRules_Aout_ne.copy();
-			this.forwardingRules_Ain_ne = origin.forwardingRules_Ain_ne.copy();
+//			this.forwardingRulesNoFailureState_f_de = origin.forwardingRulesNoFailureState_f_de.copy();
+//			this.forwardingRulesCurrentFailureState_x_de = origin.forwardingRulesCurrentFailureState_x_de.copy();
+//			this.forwardingRules_Aout_ne = origin.forwardingRules_Aout_ne.copy();
+//			this.forwardingRules_Ain_ne = origin.forwardingRules_Ain_ne.copy();
 		}
 		else
 		{
-			this.forwardingRulesNoFailureState_f_de = null;
-			this.forwardingRulesCurrentFailureState_x_de = null;
-			this.forwardingRules_Aout_ne = null;
-			this.forwardingRules_Ain_ne = null;
+//			this.forwardingRulesNoFailureState_f_de = null;
+//			this.forwardingRulesCurrentFailureState_x_de = null;
+//			this.forwardingRules_Aout_ne = null;
+//			this.forwardingRules_Ain_ne = null;
 		}
 		
 		this.cache_linksDown.clear (); for (Link e : origin.cache_linksDown) this.cache_linksDown.add(this.netPlan.getLinkFromId (e.id));
@@ -167,10 +174,10 @@ public class NetworkLayer extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.routes , e2.routes)) return false;
 		if (!NetPlan.isDeepCopy(this.multicastTrees , e2.multicastTrees)) return false;
 		if (!NetPlan.isDeepCopy(this.multicastTrees , e2.multicastTrees)) return false;
-		if ((this.forwardingRulesNoFailureState_f_de != null) && (!this.forwardingRulesNoFailureState_f_de.equals(e2.forwardingRulesNoFailureState_f_de))) return false;
-		if ((this.forwardingRulesCurrentFailureState_x_de != null) && (!this.forwardingRulesCurrentFailureState_x_de.equals(e2.forwardingRulesCurrentFailureState_x_de))) return false;
-		if ((this.forwardingRules_Aout_ne != null) && (!this.forwardingRules_Aout_ne.equals(e2.forwardingRules_Aout_ne))) return false;
-		if ((this.forwardingRules_Ain_ne != null) && (!this.forwardingRules_Ain_ne.equals(e2.forwardingRules_Ain_ne))) return false;
+//		if ((this.forwardingRulesNoFailureState_f_de != null) && (!this.forwardingRulesNoFailureState_f_de.equals(e2.forwardingRulesNoFailureState_f_de))) return false;
+//		if ((this.forwardingRulesCurrentFailureState_x_de != null) && (!this.forwardingRulesCurrentFailureState_x_de.equals(e2.forwardingRulesCurrentFailureState_x_de))) return false;
+//		if ((this.forwardingRules_Aout_ne != null) && (!this.forwardingRules_Aout_ne.equals(e2.forwardingRules_Aout_ne))) return false;
+//		if ((this.forwardingRules_Ain_ne != null) && (!this.forwardingRules_Ain_ne.equals(e2.forwardingRules_Ain_ne))) return false;
 		if (!NetPlan.isDeepCopy(this.cache_linksDown , e2.cache_linksDown)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_coupledLinks , e2.cache_coupledLinks)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_coupledDemands , e2.cache_coupledDemands)) return false;
@@ -349,4 +356,41 @@ public class NetworkLayer extends NetworkElement
 	}
 
 
+	/**
+	 * <p>Computes the row of the fundamental matrix of the absorbing Markov chain in the current hop-by-hop routing, for the
+	 * given ingress node.</p>
+	 * <p>Returns a {@link com.net2plan.utils.Triple Triple} object where:</p>
+	 * <ol type="i">
+	 *     <li>the row associated to the ingress node fundamental matrix (1xN, where N is the number of nodes)</li>
+	 *     <li>the type of routing of the demand (loopless, or close cycles. Open cycles are not detected)</li>
+	 *     <li>the fraction of demand traffic that arrives to the destination node and is absorbed there (it may be less than one if the routing has cycles that involve the destination node)</li>
+	 * </ol>
+	 * <p><b>Important: </b>If the routing type is not {@link com.net2plan.utils.Constants.RoutingType#HOP_BY_HOP_ROUTING HOP_BY_HOP_ROUTING}, an exception is thrown.</p>
+	 * @param forwardingRulesToUse_f_e if null, the current forwarding rules in the no failure state are used. If not null, this row defines the forwarding rules to apply in the matrix computation
+	 * @return See description above
+	 */
+	public Triple<DoubleMatrix1D, RoutingCycleType,  Double> computeRoutingFundamentalVector(DoubleMatrix1D forwardingRulesToUse_f_e , Node ingressNode , Node egressNode)
+	{
+		this.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+
+		final int N = netPlan.nodes.size ();
+		final int E = links.size();
+		DoubleMatrix1D f_e = forwardingRulesToUse_f_e;
+		DoubleMatrix2D q_nn1 = DoubleFactory2D.sparse.make(N,E);
+		forwardingRules_Ain_ne.zMult(DoubleFactory2D.sparse.diagonal(f_e) , q_nn1);
+		DoubleMatrix2D q_nn2transpose = new SparseCCDoubleMatrix2D (N,N);//DoubleFactory2D.sparse.make(N,N);
+		q_nn1.zMult(forwardingRules_Aout_ne , q_nn2transpose , 1 , 0 , false , true);
+		final double s_n = egressNode == null? -1 : 1 - q_nn2transpose.viewColumn(egressNode.index).zSum();
+		q_nn2transpose.assign(DoubleFunctions.neg);
+		for (int n = 0; n < N ; n ++) q_nn2transpose.setQuick(n, n, q_nn2transpose.getQuick(n, n) + 1);//iMinusQTransposed.set(n, n, 1.0);
+		DoubleMatrix1D Mv;
+		try 
+		{
+			DoubleMatrix1D e_k = DoubleFactory1D.sparse.make(N); e_k.set(ingressNode.index, 1.0);
+			Mv = new SparseDoubleAlgebra().solve(q_nn2transpose, e_k);
+		}
+		catch(IllegalArgumentException e) { e.printStackTrace(); return Triple.of (null , RoutingCycleType.CLOSED_CYCLES , s_n) ; }
+
+		return Triple.of(Mv, RoutingCycleType.LOOPLESS , s_n);
+	}
 }

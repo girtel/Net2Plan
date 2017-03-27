@@ -1,4 +1,13 @@
+CACHES:
+	- WORST PROPAGATION CACHE
+	- FORW RULES PER NODE & DEMAND
+	- 
+
+
 /*******************************************************************************
+
+
+ * 
  * Copyright (c) 2016 Pablo Pavon-Marino.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Lesser Public License v2.1
@@ -13,6 +22,7 @@
 package com.net2plan.interfaces.networkDesign;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -70,10 +80,12 @@ public class Demand extends NetworkElement
 	
 	
 	Set<Route> cache_routes;
-	Map<Link,Triple<Double,Double,Double>> cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState;
+	Map<Link,Triple<Double,Double,Double>> cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState; // cannot be an entry if zero in FR
+	Map<Node,Link> cache_linksWithNonZeroFr; 
 	Link coupledUpperLayerLink;
 	List<String> mandatorySequenceOfTraversedResourceTypes;
 	IntendedRecoveryType recoveryType;
+	double cache_worstCasePropagationTimeMs;
 	
 	public enum IntendedRecoveryType
 	{
@@ -120,6 +132,8 @@ public class Demand extends NetworkElement
 		this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> ();
 		this.recoveryType = IntendedRecoveryType.NOTSPECIFIED;
 		this.cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState = new HashMap<> ();
+		this.cache_linksWithNonZeroFr = new HashMap<> ();
+		this.cache_worstCasePropagationTimeMs = 0;
 	}
 
 	/**
@@ -138,9 +152,13 @@ public class Demand extends NetworkElement
 		for (Route r : origin.cache_routes) this.cache_routes.add(this.netPlan.getRouteFromId(r.id));
 		this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> (origin.mandatorySequenceOfTraversedResourceTypes);
 		this.recoveryType = origin.recoveryType;
+		this.cache_worstCasePropagationTimeMs = origin.cache_worstCasePropagationTimeMs;
 		this.cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState.clear();
 		for (Link originLink : origin.cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState.keySet())
 			this.cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState.put(netPlan.getLinkFromId(originLink.id), origin.cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState.get(originLink));
+		this.cache_linksWithNonZeroFr.clear();
+		for (Entry<Node,Link> entry : origin.cache_linksWithNonZeroFr.entrySet())
+			this.cache_linksWithNonZeroFr.put(netPlan.getNodeFromId(entry.getKey().id), netPlan.getLinkFromId(entry.getValue().id));
 	}
 
 
@@ -152,6 +170,7 @@ public class Demand extends NetworkElement
 		if (egressNode.id != e2.egressNode.id) return false;
 		if (this.offeredTraffic != e2.offeredTraffic) return false;
 		if (this.carriedTraffic != e2.carriedTraffic) return false;
+		if (this.cache_worstCasePropagationTimeMs != e2.cache_worstCasePropagationTimeMs) return false;
 		if (this.routingCycleType != e2.routingCycleType) return false;
 		if ((this.coupledUpperLayerLink == null) != (e2.coupledUpperLayerLink == null)) return false; 
 		if ((this.coupledUpperLayerLink != null) && (coupledUpperLayerLink.id != e2.coupledUpperLayerLink.id)) return false;
@@ -233,54 +252,82 @@ public class Demand extends NetworkElement
 	 * */
 	public double getWorstCasePropagationTimeInMs ()
 	{
-		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-		double maxPropTimeInMs = 0;
-		if (layer.routingType == RoutingType.SOURCE_ROUTING)
-		{
-			for (Route r : this.cache_routes)
-			{
-				double timeInMs = 0; 
-				for (Link e : r.cache_seqLinksRealPath) 
-					if (e.isCoupled()) 
-						timeInMs += e.coupledLowerLayerDemand.getWorstCasePropagationTimeInMs();
-					else
-						timeInMs += e.getPropagationDelayInMs();
-				maxPropTimeInMs = Math.max (maxPropTimeInMs , timeInMs);
-			}
-		}
-		else
-		{
-			if (this.routingCycleType == RoutingCycleType.CLOSED_CYCLES) return Double.MAX_VALUE;
-			if (this.routingCycleType == RoutingCycleType.OPEN_CYCLES) return Double.MAX_VALUE;
-			List<Demand> justThisDemand = new LinkedList<Demand> (); justThisDemand.add(this);
-			List<Demand> d_p = new LinkedList<Demand> ();
-			List<Double> x_p = new LinkedList<Double> ();
-			List<List<Link>> pathList = new LinkedList<List<Link>> ();
-			GraphUtils.convert_xde2xp(netPlan.nodes, layer.links , justThisDemand , layer.forwardingRulesCurrentFailureState_x_de , d_p, x_p, pathList);
-			Iterator<Demand> it_demand = d_p.iterator();
-			Iterator<Double> it_xp = x_p.iterator();
-			Iterator<List<Link>> it_pathList = pathList.iterator();
-			while (it_demand.hasNext())
-			{
-				final Demand d = it_demand.next();
-				final double trafficInPath = it_xp.next();
-				final List<Link> seqLinks = it_pathList.next();
-				if (trafficInPath > PRECISION_FACTOR)
-				{
-					double propTimeThisSeqLinks = 0; 
-					for (Link e : seqLinks) 
-						if (e.isCoupled()) 
-							propTimeThisSeqLinks += e.coupledLowerLayerDemand.getWorstCasePropagationTimeInMs();
-						else
-							propTimeThisSeqLinks += e.getPropagationDelayInMs();
-					maxPropTimeInMs = Math.max(propTimeThisSeqLinks , propTimeThisSeqLinks);
-				}
-			}
-		}
-		return maxPropTimeInMs;
+		return cache_worstCasePropagationTimeMs;
+//		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
+//		double maxPropTimeInMs = 0;
+//		if (layer.routingType == RoutingType.SOURCE_ROUTING)
+//		{
+//			for (Route r : this.cache_routes)
+//			{
+//				double timeInMs = 0; 
+//				for (Link e : r.cache_seqLinksRealPath) 
+//					if (e.isCoupled()) 
+//						timeInMs += e.coupledLowerLayerDemand.getWorstCasePropagationTimeInMs();
+//					else
+//						timeInMs += e.getPropagationDelayInMs();
+//				maxPropTimeInMs = Math.max (maxPropTimeInMs , timeInMs);
+//			}
+//		}
+//		else
+//		{
+//			if (this.routingCycleType == RoutingCycleType.CLOSED_CYCLES) return Double.MAX_VALUE;
+//			if (this.routingCycleType == RoutingCycleType.OPEN_CYCLES) return Double.MAX_VALUE;
+//			List<Demand> d_p = new LinkedList<Demand> ();
+//			List<Double> x_p = new LinkedList<Double> ();
+//			List<List<Link>> pathList = new LinkedList<List<Link>> ();
+//			GraphUtils.convert_xde2xp(netPlan.nodes, layer.links , Arrays.asList(this) , layer.forwardingRulesCurrentFailureState_x_de , d_p, x_p, pathList);
+//			Iterator<Demand> it_demand = d_p.iterator();
+//			Iterator<Double> it_xp = x_p.iterator();
+//			Iterator<List<Link>> it_pathList = pathList.iterator();
+//			while (it_demand.hasNext())
+//			{
+//				final Demand d = it_demand.next();
+//				final double trafficInPath = it_xp.next();
+//				final List<Link> seqLinks = it_pathList.next();
+//				if (trafficInPath > PRECISION_FACTOR)
+//				{
+//					double propTimeThisSeqLinks = 0; 
+//					for (Link e : seqLinks) 
+//						if (e.isCoupled()) 
+//							propTimeThisSeqLinks += e.coupledLowerLayerDemand.getWorstCasePropagationTimeInMs();
+//						else
+//							propTimeThisSeqLinks += e.getPropagationDelayInMs();
+//					maxPropTimeInMs = Math.max(propTimeThisSeqLinks , propTimeThisSeqLinks);
+//				}
+//			}
+		
+//		ERRROR: si acoplado a multicast, no da buenos valores de getWorseCase
+//		}
+//		return maxPropTimeInMs;
 	}
 
-
+	private double recursiveWCPropapagationDelay ()
+	{
+		final Map<Node,Double> inNodes = new HashMap<> ();
+		inNodes.put(this.ingressNode, 0.0);
+		do
+		{
+			for (Node n : new ArrayList<> (inNodes.keySet()))
+			{
+				if (n == egressNode) continue;
+				double wcSoFar = inNodes.get(n);
+				for (Link e : cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState.keySet())
+					if (e.getOriginNode() == n)
+						if (cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState.get(e).getFirst() > 0)
+						{
+							final double thisPathCost = wcSoFar + e.getPropagationDelayInMs();
+							if (inNodes.containsKey(e.getDestinationNode()))
+								inNodes.put(e.getDestinationNode(), Math.max(inNodes.get(e.getDestinationNode()) , thisPathCost));
+							else
+								inNodes.put(e.getDestinationNode(), thisPathCost);
+						}
+				inNodes.remove(n);
+			}
+			
+			if (inNodes.isEmpty()) return Double.MAX_VALUE;
+			if ((inNodes.size() == 1) && (inNodes.keySet().iterator().next() == this.egressNode)) return inNodes.get(egressNode);
+		} while (true);
+	}
 
 	/**
 	 * <p>Returns {@code true} if the traffic of the demand is traversing an oversubscribed link, {@code false} otherwise.</p>
@@ -438,13 +485,9 @@ public class Demand extends NetworkElement
 	 * @return The demand routing cycle type
 	 * @see com.net2plan.utils.Constants.RoutingCycleType
 	 */
-
 	public RoutingCycleType getRoutingCycleType()
 	{
-		checkAttachedToNetPlanObject ();
-		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) return routingCycleType;
-		for (Route r : cache_routes) if (r.hasLoops()) return RoutingCycleType.OPEN_CYCLES;
-		return RoutingCycleType.LOOPLESS;
+		return routingCycleType;
 	}
 
 
@@ -591,6 +634,7 @@ public class Demand extends NetworkElement
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+		this.cache_frOptionalCarriedOccupiedPerTraversingLinkCurrentState.clear();
 		layer.forwardingRulesNoFailureState_f_de.viewRow (this.index).assign(0);
 		layer.updateHopByHopRoutingDemand(this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
@@ -680,10 +724,11 @@ public class Demand extends NetworkElement
 	public void setOfferedTraffic(double offeredTraffic)
 	{
 		offeredTraffic = NetPlan.adjustToTolerance(offeredTraffic);
+		if (offeredTraffic == this.offeredTraffic) return;
 		netPlan.checkIsModifiable();
 		if (offeredTraffic < 0) throw new Net2PlanException("Offered traffic must be greater or equal than zero");
 		this.offeredTraffic = offeredTraffic;
-		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) layer.updateHopByHopRoutingDemand(this);
+		if (!layer.isSourceRouting()) layer.updateHopByHopRoutingDemand(this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 
@@ -695,6 +740,7 @@ public class Demand extends NetworkElement
 	@Override
 	public String toString () { return "d" + index + " (id " + id + ")"; }
 	
+
 	/**
 	 * <p>Computes the fundamental matrix of the absorbing Markov chain in the current hop-by-hop routing, for the
 	 * given demand.</p>
@@ -709,39 +755,13 @@ public class Demand extends NetworkElement
 	 * @param forwardingRulesToUse_f_e if null, the current forwarding rules in the no failure state are used. If not null, this row defines the forwarding rules to apply in the matrix computation
 	 * @return See description above
 	 */
-	public Quadruple<DoubleMatrix2D, RoutingCycleType,  Double , DoubleMatrix1D> computeRoutingFundamentalMatrixDemand(DoubleMatrix1D forwardingRulesToUse_f_e)
+	public Triple<DoubleMatrix1D, RoutingCycleType,  Double> computeRoutingFundamentalVectorDemand(DoubleMatrix1D forwardingRulesToUse_f_e)
 	{
-		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
-
-		final int N = netPlan.nodes.size ();
 		DoubleMatrix1D f_e = forwardingRulesToUse_f_e == null? layer.forwardingRulesNoFailureState_f_de.viewRow(index) : forwardingRulesToUse_f_e;
-		/* q_n1n2 is the fraction of the traffic in n1 that is routed to n2 */
-		DoubleMatrix2D q_nn = layer.forwardingRules_Aout_ne.zMult(DoubleFactory2D.sparse.diagonal(f_e) , null);
-		q_nn = q_nn.zMult(layer.forwardingRules_Ain_ne , null , 1 , 0 , false , true);
-		DoubleMatrix1D sumOut_n = q_nn.zMult(DoubleFactory1D.dense.make(N , 1.0) , null); // sum of the rules outgoing from the node
-		DoubleMatrix1D i_n = DoubleFactory1D.dense.make (N); // dropped
-		double s_n = -1;
-		for (int n = 0 ; n < N ; n ++)
-		{
-			if ((sumOut_n.get(n) < -1E-5) || (sumOut_n.get(n) > 1+1E-5)) throw new RuntimeException ("Bad");
-			if (n == egressNode.index)
-				s_n = 1 - sumOut_n.get(n);
-			else
-				i_n.set (n , 1 - sumOut_n.get(n));
-		}
-		DoubleMatrix2D iMinusQ = DoubleFactory2D.dense.identity(N);
-		iMinusQ.assign(q_nn , DoublePlusMultSecond.minusMult(1));
-		DoubleMatrix2D M;
-		try { M = new DenseDoubleAlgebra().inverse(iMinusQ); }
-		catch(IllegalArgumentException e) { return Quadruple.of (null , RoutingCycleType.CLOSED_CYCLES , s_n , i_n) ; }
-
-		for (int contN = 0; contN < N; contN++)
-			if (Math.abs(M.get(contN, contN) - 1) > 1e-5)
-				return Quadruple.of(M, RoutingCycleType.OPEN_CYCLES , s_n , i_n);
-		
-		return Quadruple.of(M, RoutingCycleType.LOOPLESS , s_n , i_n);
+		return layer.computeRoutingFundamentalVector(f_e, this.ingressNode, this.egressNode);
 	}
 
+	
 	/**
 	 * <p>Checks the consistency of the cache. If it is incosistent, throws a {@code RuntimeException} </p>
 	 */
