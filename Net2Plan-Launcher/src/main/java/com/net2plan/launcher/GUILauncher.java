@@ -107,7 +107,7 @@ public class GUILauncher
                 packageURL.setType(PatternOptionBuilder.STRING_VALUE);
                 R_OPTIONS.addOption(packageURL);
 
-                final Option param = new Option(null, "plugin-param", true, "(Optional) Tool/Plugin launch mode parameters. Each pair key-value separated by spaces.");
+                final Option param = new Option(null, "tool-param", true, "(Optional) Tool/Plugin launch mode parameters. Each pair key-value separated by spaces.");
                 param.setRequired(false);
                 param.setArgName("property=value");
                 param.setValueSeparator('=');
@@ -154,8 +154,8 @@ public class GUILauncher
                     if (cmd.hasOption("routine"))
                     {
                         mode = Integer.parseInt(cmd.getOptionValue("routine"));
-                        if (cmd.hasOption("plugin-param"))
-                            parameters = parseParameters(cmd.getOptionValue("plugin-param"), R_OPTIONS.getOption("plugin-param").getValueSeparator());
+                        if (cmd.hasOption("tool-param"))
+                            parameters = parseParameters(cmd.getOptionValue("tool-param"), R_OPTIONS.getOption("tool-param").getValueSeparator());
                     }
 
                     wrapper.launchRoutine(mode, parameters);
