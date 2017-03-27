@@ -1,5 +1,21 @@
+/*
+ * ******************************************************************************
+ *  * Copyright (c) 2017 Pablo Pavon-Marino.
+ *  * All rights reserved. This program and the accompanying materials
+ *  * are made available under the terms of the GNU Lesser Public License v3.0
+ *  * which accompanies this distribution, and is available at
+ *  * http://www.gnu.org/licenses/lgpl.html
+ *  *
+ *  * Contributors:
+ *  *     Pablo Pavon-Marino - Jose-Luis Izquierdo-Zaragoza, up to version 0.3.1
+ *  *     Pablo Pavon-Marino - from version 0.4.0 onwards
+ *  *     Pablo Pavon Marino - Jorge San Emeterio Villalain, from version 0.4.1 onwards
+ *  *****************************************************************************
+ */
+
+package com.net2plan.launcher;
+
 import com.net2plan.cli.plugins.CLINetworkDesign;
-import com.net2plan.gui.launcher.GUILauncher;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang.ArrayUtils;
 
@@ -37,7 +53,7 @@ public class Net2PlanLauncher
 
             if (GROUP_DIRECTION.getSelected().equals("CLI"))
             {
-                CLINetworkDesign.main((String[]) ArrayUtils.removeElement(args, "--CLI"));
+                CLILauncher.main((String[]) ArrayUtils.removeElement(args, "--CLI"));
             } else if (GROUP_DIRECTION.getSelected().equals("GUI"))
             {
                 GUILauncher.main((String[]) ArrayUtils.removeElement(args, "--GUI"));

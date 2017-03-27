@@ -11,6 +11,9 @@
 
     <artifactId>net2plan-launcher</artifactId>
 
+    <!--Net2Plan launcher will not be deployed as a jar-->
+    <!--It is a tool to launch Net2Plan from the IDE-->
+    <!--Net2Plan launcher needs its dependencies to be within compile as it will use them from the IDE-->
     <dependencies>
         <dependency>
             <groupId>com.net2plan.net2plan-cli</groupId>
@@ -19,9 +22,28 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>com.net2plan</groupId>
-            <artifactId>net2plan-gui-launcher</artifactId>
+            <groupId>com.net2plan.net2plan-gui</groupId>
+            <artifactId>net2plan-gui-exec</artifactId>
             <version>0.5.0.4-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-gui.net2plan-gui-plugins</groupId>
+            <artifactId>net2plan-gui-plugins-networkDesign</artifactId>
+            <version>0.5.0.4-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-gui.net2plan-gui-plugins</groupId>
+            <artifactId>net2plan-gui-plugins-trafficDesign</artifactId>
+            <version>0.5.0.4-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-examples</artifactId>
+            <version>0.5.0.4-SNAPSHOT</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>

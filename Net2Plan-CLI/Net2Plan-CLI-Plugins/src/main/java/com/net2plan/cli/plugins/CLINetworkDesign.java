@@ -34,19 +34,6 @@ import java.util.Set;
  */
 public class CLINetworkDesign extends ICLIModule
 {
-    public static void main(String[] args)
-    {
-        try
-        {
-            CLINetworkDesign networkDesign = new CLINetworkDesign();
-            networkDesign.executeFromCommandLine(args);
-        } catch (ParseException e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-
     private final static String TITLE = "Offline network design";
     private final static Options OPTIONS;
 
