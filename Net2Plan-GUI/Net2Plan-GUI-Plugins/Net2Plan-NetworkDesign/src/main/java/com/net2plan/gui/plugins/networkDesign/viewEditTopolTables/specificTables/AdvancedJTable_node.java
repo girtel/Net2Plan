@@ -12,6 +12,33 @@
 
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.swing.DefaultRowSorter;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.table.TableModel;
+
+import org.apache.commons.collections15.BidiMap;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
@@ -23,8 +50,10 @@ import com.net2plan.gui.plugins.networkDesign.visualizationControl.Visualization
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -32,16 +61,8 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
-import net.miginfocom.swing.MigLayout;
-import org.apache.commons.collections15.BidiMap;
 
-import javax.swing.*;
-import javax.swing.table.TableModel;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
-import java.util.*;
+import net.miginfocom.swing.MigLayout;
 
 /**
  */
@@ -275,14 +296,14 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                             {
                                 callback.getVisualizationState().showOnCanvas(node);
                             }
-                            callback.getVisualizationState().pickNode(node);
+                            callback.getVisualizationState().pickNode(Arrays.asList(node));
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                             callback.addNetPlanChange();
                             break;
 
                         case COLUMN_NAME:
                             node.setName(newValue.toString());
-                            callback.getVisualizationState().pickNode(node);
+                            callback.getVisualizationState().pickNode(Arrays.asList(node));
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                             callback.addNetPlanChange();
                             break;
@@ -311,7 +332,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                             {
                                 node.setFailureState(isNodeUp);
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                                callback.getVisualizationState().pickNode(node);
+                                callback.getVisualizationState().pickNode(Arrays.asList(node));
                                 callback.updateVisualizationAfterPick();
                                 callback.addNetPlanChange();
                             }
@@ -324,7 +345,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                                     new Point2D.Double(node.getXYPositionMap().getX(), Double.parseDouble(newValue.toString()));
                             node.setXYPositionMap(newPosition);
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                            callback.getVisualizationState().pickNode(node);
+                            callback.getVisualizationState().pickNode(Arrays.asList(node));
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -336,7 +357,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
                             node.setPopulation(value);
                             callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.NODE));
-                            callback.getVisualizationState().pickNode(node);
+                            callback.getVisualizationState().pickNode(Arrays.asList(node));
                             callback.addNetPlanChange();
                         default:
                             break;
@@ -401,12 +422,12 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, final Object[] itemIds)
+    public void doPopup(final MouseEvent e, final int row, final Pair<List<? extends NetworkElement>, List<Pair<Demand, Link>>> selection)
     {
         final JPopupMenu popup = new JPopupMenu();
 
         final List<Node> rowsInTheTable = this.getVisibleElementsInTable(); // Only visible rows
-        final List<Node> selectedNodes = (List<Node>) super.getSelectedElements().getFirst();
+        final List<Node> selectedNodes = (List<Node>) selection.getFirst();
 
         /* Add the popup menu option of the filters */
         final JMenu submenuFilters = new JMenu("Filters");
@@ -536,10 +557,10 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, Object itemId)
+    public void showInCanvas(MouseEvent e, final Pair<List<? extends NetworkElement>, List<Pair<Demand, Link>>>  selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
-        callback.getVisualizationState().pickNode(callback.getDesign().getNodeFromId((long) itemId));
+        callback.getVisualizationState().pickNode((List<Node>) selection.getFirst());
         callback.updateVisualizationAfterPick();
     }
 
@@ -554,7 +575,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             {
                 Node node = netPlan.addNode(0, 0, "Node " + netPlan.getNumberOfNodes(), null);
                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                callback.getVisualizationState().pickNode(node);
+                callback.getVisualizationState().pickNode(Arrays.asList(node));
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                 callback.addNetPlanChange();
 

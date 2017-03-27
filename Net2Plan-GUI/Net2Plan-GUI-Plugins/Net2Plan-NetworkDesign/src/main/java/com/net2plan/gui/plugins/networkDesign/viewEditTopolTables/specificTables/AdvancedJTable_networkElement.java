@@ -1146,9 +1146,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public abstract ArrayList<String> getAttributesColumnsHeaders();
 
-    public abstract void doPopup(final MouseEvent e, final int row, final Object[] itemIds);
+    public abstract void doPopup(final MouseEvent e, final int row, final Pair<List<? extends NetworkElement>, List<Pair<Demand, Link>>>  selection);
 
-    public abstract void showInCanvas(MouseEvent e, Object itemId);
+    public abstract void showInCanvas(MouseEvent e, final Pair<List<? extends NetworkElement>, List<Pair<Demand, Link>>>  selection);
 
 
     public void updateView(NetPlan currentState)
@@ -1246,37 +1246,32 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     if (selectedRow != -1)
                     {
                         selectedRow = table.convertRowIndexToModel(selectedRow);
-                        if (table.getModel().getValueAt(selectedRow, 0) == null)
-                            selectedRow = selectedRow - 1;
-                        if (table.getModel().getValueAt(selectedRow, 0) instanceof LastRowAggregatedValue)
-                            auxItemId = null;
-                        else if (networkElementType == NetworkElementType.FORWARDING_RULE)
+                        if (table.getModel().getValueAt(selectedRow, 0) instanceof LastRowAggregatedValue) continue;
+                        if (networkElementType == NetworkElementType.FORWARDING_RULE)
                             auxItemId = Pair.of(Integer.parseInt(model.getValueAt(selectedRow, 1).toString().split(" ")[0]), Integer.parseInt(model.getValueAt(selectedRow, 2).toString().split(" ")[0]));
                         else
                             auxItemId = model.getValueAt(selectedRow, 0);
                     }
-
                     itemList.add(auxItemId);
                 }
             }
 
+            final Pair<List<? extends NetworkElement>, List<Pair<Demand, Link>>> selection = getSelectedElements();
+            final boolean nothingSelected = selection.getFirst().isEmpty() && selection.getSecond().isEmpty(); 
             if (SwingUtilities.isRightMouseButton(e))
             {
                 // List is empty || Right clicking with shift pressed
-                if  (itemList.isEmpty() || ((e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0))
+                if  (nothingSelected || ((e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0))
                     this.getTable(e).setRowSelectionInterval(row, row);
-                doPopup(e, row, itemList.toArray());
+                doPopup(e, row, selection);
                 return;
             }
 
-            // if (itemId == null)
-            if (itemList.isEmpty())
-            {
+            /* Here if only left button */
+            if (nothingSelected)
                 callback.resetPickedStateAndUpdateView();
-                return;
-            }
-
-            //  SwingUtilities.invokeLater(() -> showInCanvas(e, itemId));
+            else
+            	SwingUtilities.invokeLater(() -> showInCanvas(e, selection));
         }
 
         private JTable getTable(MouseEvent e)
