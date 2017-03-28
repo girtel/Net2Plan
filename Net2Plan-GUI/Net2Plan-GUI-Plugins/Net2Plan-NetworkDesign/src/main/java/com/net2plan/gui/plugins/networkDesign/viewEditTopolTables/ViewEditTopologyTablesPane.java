@@ -20,7 +20,7 @@ import java.awt.event.ActionListener;
 import java.util.EnumMap;
 import java.util.Map;
 
-import static com.net2plan.internal.Constants.*;
+import static com.net2plan.internal.Constants.NetworkElementType;
 
 @SuppressWarnings("unchecked")
 public class ViewEditTopologyTablesPane extends JPanel
@@ -232,35 +232,10 @@ public class ViewEditTopologyTablesPane extends JPanel
     {
         AdvancedJTable_networkElement table = netPlanViewTable.get(type);
 
-        if (type == NetworkElementType.FORWARDING_RULE)
-        {
+        final NetPlan netPlan = callback.getDesign();
+        int itemIndex = netPlan.getNetworkElement((Long) itemId).getIndex();
 
-        } else
-        {
-        }
-
-        TableModel model = table.getModel();
-        int numRows = model.getRowCount();
-        for (int row = 0; row < numRows; row++)
-        {
-            Object obj = model.getValueAt(row, 0);
-            if (obj == null) continue;
-
-            if (type == NetworkElementType.FORWARDING_RULE)
-            {
-                obj = Pair.of(
-                        Integer.parseInt(model.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_DEMAND).toString().split(" ")[0]),
-                        Integer.parseInt(model.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK).toString().split(" ")[0]));
-                if (!obj.equals(itemId)) continue;
-            } else if ((long) obj != (long) itemId)
-            {
-                continue;
-            }
-
-            row = table.convertRowIndexToView(row);
-            table.changeSelection(row, 0, false, true);
-            return;
-        }
+        table.addRowSelectionInterval(table.convertRowIndexToModel(itemIndex), table.convertRowIndexToModel(itemIndex));
     }
 
     public void clearSelection(NetworkElementType type)
