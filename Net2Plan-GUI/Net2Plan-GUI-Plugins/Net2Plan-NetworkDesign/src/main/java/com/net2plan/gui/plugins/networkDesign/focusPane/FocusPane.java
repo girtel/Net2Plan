@@ -65,7 +65,7 @@ public class FocusPane extends JPanel
 		}
 		else if (elementType == NetworkElementType.FORWARDING_RULE)
 		{
-			final Pair<Demand,Link> fr = vs.getPickedForwardingRule();
+			final Pair<Demand,Link> fr = vs.getPickedForwardingRule().get(0);
 //			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
 //			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getForwardingRuleInfoTables(fr), null) , BorderLayout.CENTER);

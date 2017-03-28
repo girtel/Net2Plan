@@ -764,11 +764,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     {
         if (vs.getPickedElementType() != null) // can be null if picked a resource type
         {
-            if (vs.getPickedNetworkElement() != null)
-                selectNetPlanViewItem(vs.getPickedElementType(), vs.getPickedNetworkElement().getId());
+            if (vs.getPickedNetworkElement() != null)  selectNetPlanViewItem(vs.getPickedElementType(), vs.getPickedNetworkElement().get(0).getId());
             else
             {
-                final Pair<Demand, Link> fr = vs.getPickedForwardingRule();
+                final Pair<Demand, Link> fr = vs.getPickedForwardingRule().get(0);
                 selectNetPlanViewItem(vs.getPickedElementType(), Pair.of(fr.getFirst().getIndex(), fr.getSecond().getIndex()));
             }
         }
