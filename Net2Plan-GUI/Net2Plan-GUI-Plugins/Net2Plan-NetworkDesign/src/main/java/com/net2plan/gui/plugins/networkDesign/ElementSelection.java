@@ -39,8 +39,14 @@ public class ElementSelection
     private final List<NetworkElement> networkElementList;
     private final List<Pair<Demand, Link>> forwardingRuleList;
 
+    private final SelectionType selectionType;
+
+    public enum SelectionType {EMPTY, NETWORK_ELEMENT, FORWARDING_RULE}
+
     public ElementSelection()
     {
+        selectionType = SelectionType.EMPTY;
+
         this.elementType = null;
         this.networkElementList = Collections.unmodifiableList(Collections.emptyList());
         this.forwardingRuleList = Collections.unmodifiableList(Collections.emptyList());
@@ -49,8 +55,9 @@ public class ElementSelection
     public ElementSelection(@NotNull final NetworkElementType elementType, final List<? extends NetworkElement> networkElements)
     {
         if (elementType == null) throw new NullPointerException();
-
         this.elementType = elementType;
+
+        selectionType = SelectionType.NETWORK_ELEMENT;
 
         final NetworkElementType aux = getElementType(networkElements);
         if (aux != this.elementType) throw new RuntimeException("Given element type and list do not match up");
@@ -61,6 +68,8 @@ public class ElementSelection
 
     public ElementSelection(final List<Pair<Demand, Link>> forwardingRuleList)
     {
+        selectionType = SelectionType.FORWARDING_RULE;
+
         this.elementType = NetworkElementType.FORWARDING_RULE;
 
         this.networkElementList = Collections.unmodifiableList(Collections.emptyList());
@@ -69,6 +78,8 @@ public class ElementSelection
 
     public boolean addElement(final NetworkElement element)
     {
+        if (selectionType == SelectionType.EMPTY) throw new UnsupportedOperationException("Trying to add an element to a non-editable selection.");
+        if (selectionType != SelectionType.NETWORK_ELEMENT) return false;
         if (elementType == null) return false;
         if (NetworkElementType.getType(element) != elementType) return false;
 
@@ -78,6 +89,8 @@ public class ElementSelection
 
     public boolean addForwardingRule(final Pair<Demand, Link> forwardingRule)
     {
+        if (selectionType == SelectionType.EMPTY) throw new UnsupportedOperationException("Trying to add an element to a non-editable selection.");
+        if (selectionType != SelectionType.FORWARDING_RULE) return false;
         if (elementType == null) return false;
         if (elementType != NetworkElementType.FORWARDING_RULE) return false;
 
@@ -87,6 +100,8 @@ public class ElementSelection
 
     public boolean addElements(final List<? extends NetworkElement> elements)
     {
+        if (selectionType == SelectionType.EMPTY) throw new UnsupportedOperationException("Trying to add an element to a non-editable selection.");
+        if (selectionType != SelectionType.NETWORK_ELEMENT) return false;
         if (elementType == null) return false;
 
         boolean res = true;
@@ -107,11 +122,18 @@ public class ElementSelection
 
     public boolean addForwardingRules(final List<Pair<Demand, Link>> forwardingRules)
     {
+        if (selectionType == SelectionType.EMPTY) throw new UnsupportedOperationException("Trying to add an element to a non-editable selection.");
+        if (selectionType != SelectionType.FORWARDING_RULE) return false;
         if (elementType == null) return false;
         if (elementType != NetworkElementType.FORWARDING_RULE) return false;
 
         this.forwardingRuleList.addAll(forwardingRules);
         return true;
+    }
+
+    public boolean isEmpty()
+    {
+        return selectionType == SelectionType.EMPTY;
     }
 
     public List<? extends NetworkElement> getNetworkElements()
@@ -128,6 +150,11 @@ public class ElementSelection
     public NetworkElementType getElementType()
     {
         return elementType;
+    }
+
+    public SelectionType getSelectionType()
+    {
+        return selectionType;
     }
 
     @Nullable
