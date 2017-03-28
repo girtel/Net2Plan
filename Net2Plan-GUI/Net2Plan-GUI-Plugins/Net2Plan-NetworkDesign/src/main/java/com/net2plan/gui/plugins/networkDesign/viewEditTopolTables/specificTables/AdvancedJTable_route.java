@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
+import com.net2plan.gui.plugins.networkDesign.ElementHolder;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.*;
@@ -329,14 +330,16 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, final Object[] itemIds)
+    public void doPopup(final MouseEvent e, final int row, final ElementHolder selection)
     {
         JPopupMenu popup = new JPopupMenu();
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final List<Route> routeRowsInTheTable = getVisibleElementsInTable();
 
         /* Add the popup menu option of the filters */
-        final List<Route> selectedRoutes = (List<Route>) (List<?>) getSelectedElements().getFirst();
+        if (selection.getElementType() != NetworkElementType.ROUTE) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+
+        final List<Route> selectedRoutes = (List<Route>) selection.getNetworkElements();
         final JMenu submenuFilters = new JMenu("Filters");
         if (!selectedRoutes.isEmpty())
         {
@@ -402,10 +405,9 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                             NetPlan netPlan = callback.getDesign();
                             try
                             {
-                                for (Object itemId : itemIds)
-                                {
-                                    netPlan.getRouteFromId((long) itemId).remove();
-                                }
+                                for (Route selectedRoute : selectedRoutes)
+                                    selectedRoute.remove();
+
                                 callback.getVisualizationState().resetPickedState();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                                 callback.addNetPlanChange();
@@ -448,9 +450,9 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
                 popup.add(removeItems);
 
-                addPopupMenuAttributeOptions(e, row, itemIds, popup);
+                addPopupMenuAttributeOptions(e, row, selection, popup);
 
-                List<JComponent> extraOptions = getExtraOptions(row, itemIds);
+                List<JComponent> extraOptions = getExtraOptions(row, selection);
                 if (!extraOptions.isEmpty())
                 {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
@@ -470,10 +472,12 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, Object itemId)
+    public void showInCanvas(MouseEvent e, ElementHolder selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
-        callback.getVisualizationState().pickRoute(callback.getDesign().getRouteFromId((long) itemId));
+        if (selection.getElementType() != NetworkElementType.NODE) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+
+        callback.getVisualizationState().pickRoute((List<Route>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
@@ -916,13 +920,15 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         }
     }
 
-    private List<JComponent> getExtraOptions(final int row, final Object itemId)
+    private List<JComponent> getExtraOptions(final int row, final ElementHolder selection)
     {
         List<JComponent> options = new LinkedList<JComponent>();
 
         final int numRows = model.getRowCount();
         final NetPlan netPlan = callback.getDesign();
 
+        // TODO
+        Integer itemId = 1;
         if (itemId != null)
         {
             JMenuItem viewEditBackupRoutes = new JMenuItem("View/edit backup routes");

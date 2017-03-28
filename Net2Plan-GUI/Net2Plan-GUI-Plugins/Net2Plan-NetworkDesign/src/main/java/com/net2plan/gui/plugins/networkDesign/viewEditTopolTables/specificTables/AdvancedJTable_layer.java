@@ -13,12 +13,11 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables;
 
 import com.google.common.collect.Sets;
-import com.net2plan.gui.plugins.networkDesign.ElementHolder;
-import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.ElementHolder;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -215,8 +214,6 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         if (callback.getVisualizationState().isNetPlanEditable())
         {
             popup.add(getAddOption());
-            for (JComponent item : getExtraAddOptions())
-                popup.add(item);
         }
 
         if (!isTableEmpty())
@@ -260,27 +257,15 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
 
                     addPopupMenuAttributeOptions(e, row, selection, popup);
                 }
-                List<JComponent> extraOptions = getExtraOptions(row, selection);
-                if (!extraOptions.isEmpty())
-                {
-                    if (popup.getSubElements().length > 0) popup.addSeparator();
-                    for (JComponent item : extraOptions) popup.add(item);
-                }
             }
 
-            List<JComponent> forcedOptions = getForcedOptions();
-            if (!forcedOptions.isEmpty())
-            {
-                if (popup.getSubElements().length > 0) popup.addSeparator();
-                for (JComponent item : forcedOptions) popup.add(item);
-            }
         }
 
         popup.show(e.getComponent(), e.getX(), e.getY());
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, Object itemId)
+    public void showInCanvas(MouseEvent e, ElementHolder selection)
     {
         return;
     }
@@ -318,21 +303,6 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         });
 
         return addItem;
-    }
-
-    private List<JComponent> getExtraAddOptions()
-    {
-        return new LinkedList<JComponent>();
-    }
-
-    private List<JComponent> getExtraOptions(final int row, final ElementHolder selection)
-    {
-        return new LinkedList<JComponent>();
-    }
-
-    private List<JComponent> getForcedOptions()
-    {
-        return new LinkedList<JComponent>();
     }
 }
 
