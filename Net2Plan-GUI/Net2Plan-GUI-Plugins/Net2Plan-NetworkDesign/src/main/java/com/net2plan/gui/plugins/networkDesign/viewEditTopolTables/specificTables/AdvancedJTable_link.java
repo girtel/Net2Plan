@@ -18,6 +18,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
+import com.net2plan.gui.plugins.networkDesign.ElementHolder;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
@@ -474,14 +475,16 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, final Object[] itemIds)
+    public void doPopup(final MouseEvent e, final int row, ElementHolder selection)
     {
         JPopupMenu popup = new JPopupMenu();
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final List<Link> linkRowsInTheTable = getVisibleElementsInTable();
 
         /* Add the popup menu option of the filters */
-        final List<Link> selectedLinks = (List<Link>) (List<?>) getSelectedElements().getFirst();
+        if (selection.getElementType() != NetworkElementType.LINK) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+        final List<Link> selectedLinks = (List<Link>) selection.getNetworkElements();
+
     	final JMenu submenuFilters = new JMenu ("Filters");
         if (!selectedLinks.isEmpty())
         {

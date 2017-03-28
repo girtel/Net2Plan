@@ -773,6 +773,51 @@ public class VisualizationState
         return pickedElementFR;
     }
 
+    public void pickNode(Node node)
+    {
+        pickNode(Collections.singletonList(node));
+    }
+
+    public void pickLink(Link link)
+    {
+        pickLink(Collections.singletonList(link));
+    }
+
+    public void pickDemand(Demand demand)
+    {
+        pickDemand(Collections.singletonList(demand));
+    }
+
+    public void pickSRG(SharedRiskGroup srg)
+    {
+        pickSRG(Collections.singletonList(srg));
+    }
+
+    public void pickMulticastDemand(MulticastDemand multicastDemand)
+    {
+        pickMulticastDemand(Collections.singletonList(multicastDemand));
+    }
+
+    public void pickRoute(Route route)
+    {
+        pickRoute(Collections.singletonList(route));
+    }
+
+    public void pickMulticastTree(MulticastTree tree)
+    {
+        pickMulticastTree(Collections.singletonList(tree));
+    }
+
+    public void pickResource(Resource resource)
+    {
+        pickResource(Collections.singletonList(resource));
+    }
+
+    public void pickForwardingRule(Pair<Demand, Link> fr)
+    {
+        pickForwardingRule(Collections.singletonList(fr));
+    }
+
     public void pickLayer(NetworkLayer pickedLayer)
     {
         resetPickedState();
