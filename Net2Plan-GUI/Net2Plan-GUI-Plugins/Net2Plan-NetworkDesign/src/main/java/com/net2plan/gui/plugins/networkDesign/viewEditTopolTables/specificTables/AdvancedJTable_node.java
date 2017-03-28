@@ -514,9 +514,9 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                 });
                 popup.add(hideAllNodesFilteredOut);
 
-                addPopupMenuAttributeOptions(e, row, new Object[0], popup);
+                addPopupMenuAttributeOptions(e, row, selection, popup);
 
-                List<JComponent> extraOptions = getExtraOptions(row, new Object[0]);
+                List<JComponent> extraOptions = getExtraOptions(row, selection);
                 if (!extraOptions.isEmpty())
                 {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
@@ -575,13 +575,13 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         return new LinkedList<JComponent>();
     }
 
-    private List<JComponent> getExtraOptions(final int row, final Object itemId)
+    private List<JComponent> getExtraOptions(final int row, final ElementHolder selection)
     {
-        final List<Node> selectedNodes = (List<Node>) super.getSelectedElements().getFirst();
+        final List<Node> selectedNodes = (List<Node>) selection.getNetworkElements();
 
-        List<JComponent> options = new LinkedList<JComponent>();
+        List<JComponent> options = new LinkedList<>();
 
-        if (itemId != null)
+        if (!selectedNodes.isEmpty())
         {
             JMenuItem switchCoordinates = new JMenuItem("Switch node coordinates from (x,y) to (y,x)");
 

@@ -1279,12 +1279,11 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     }
 
 
-    final protected void addPopupMenuAttributeOptions(final MouseEvent e, final int row, final Object[] itemIds, JPopupMenu popup)
+    final protected void addPopupMenuAttributeOptions(final MouseEvent e, final int row, ElementHolder selection, JPopupMenu popup)
     {
-        if (networkElementType == NetworkElementType.FORWARDING_RULE)
-            throw new RuntimeException("Forwarding rules have no attributes");
+        if (networkElementType == NetworkElementType.FORWARDING_RULE) throw new RuntimeException("Forwarding rules have no attributes");
 
-        final List<? extends NetworkElement> selectedElements = this.getSelectedElements().getFirst();
+        final List<? extends NetworkElement> selectedElements = selection.getNetworkElements();
 
         JMenuItem addAttribute = new JMenuItem("Add/edit attribute");
         popup.add(new JPopupMenu.Separator());
