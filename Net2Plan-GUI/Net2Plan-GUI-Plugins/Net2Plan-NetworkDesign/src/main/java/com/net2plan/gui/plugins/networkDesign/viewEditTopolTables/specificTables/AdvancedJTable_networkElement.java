@@ -1235,8 +1235,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         public void mouseClicked(final MouseEvent e)
         {
             int row = -1;
-            if (hasElements())
-                row = getTable(e).rowAtPoint(e.getPoint());
+            if (hasElements()) row = getTable(e).rowAtPoint(e.getPoint());
 
             final Pair<List<NetworkElement>, List<Pair<Demand, Link>>> selection = getSelectedElements();
             final boolean nothingSelected = selection.getFirst().isEmpty() && selection.getSecond().isEmpty();

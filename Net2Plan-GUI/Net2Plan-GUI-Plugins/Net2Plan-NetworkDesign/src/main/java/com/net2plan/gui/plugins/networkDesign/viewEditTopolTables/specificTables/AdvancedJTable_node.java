@@ -16,6 +16,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
+import com.net2plan.gui.plugins.networkDesign.ElementHolder;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
@@ -398,12 +399,14 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, final Pair<List<? extends NetworkElement>, List<Pair<Demand, Link>>> selection)
+    public void doPopup(final MouseEvent e, final int row, ElementHolder selection)
     {
         final JPopupMenu popup = new JPopupMenu();
 
         final List<Node> rowsInTheTable = this.getVisibleElementsInTable(); // Only visible rows
-        final List<Node> selectedNodes = (List<Node>) selection.getFirst();
+
+        if (selection.getElementType() != NetworkElementType.NODE) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+        final List<Node> selectedNodes = (List<Node>) selection.getNetworkElements();
 
         /* Add the popup menu option of the filters */
         final JMenu submenuFilters = new JMenu("Filters");
@@ -533,10 +536,12 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, final Pair<List<? extends NetworkElement>, List<Pair<Demand, Link>>>  selection)
+    public void showInCanvas(MouseEvent e, ElementHolder selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
-        callback.getVisualizationState().pickNode((List<Node>) selection.getFirst());
+        if (selection.getElementType() != NetworkElementType.NODE) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+
+        callback.getVisualizationState().pickNode((List<Node>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 

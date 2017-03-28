@@ -46,7 +46,7 @@ public class ElementHolder
         this.forwardingRuleList = Collections.unmodifiableList(Collections.emptyList());
     }
 
-    public ElementHolder(@NotNull final NetworkElementType elementType, final List<NetworkElement> networkElements)
+    public ElementHolder(@NotNull final NetworkElementType elementType, final List<? extends NetworkElement> networkElements)
     {
         if (elementType == null) throw new NullPointerException();
 
@@ -85,7 +85,7 @@ public class ElementHolder
         return true;
     }
 
-    public boolean addElements(final List<NetworkElement> elements)
+    public boolean addElements(final List<? extends NetworkElement> elements)
     {
         if (elementType == null) return false;
 
@@ -114,7 +114,7 @@ public class ElementHolder
         return true;
     }
 
-    public List<NetworkElement> getNetworkElements()
+    public List<? extends NetworkElement> getNetworkElements()
     {
         return Collections.unmodifiableList(networkElementList);
     }
