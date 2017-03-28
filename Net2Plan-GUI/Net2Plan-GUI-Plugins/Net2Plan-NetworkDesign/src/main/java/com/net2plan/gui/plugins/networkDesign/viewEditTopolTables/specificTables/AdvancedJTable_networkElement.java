@@ -1233,35 +1233,43 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         @Override
         public void mouseClicked(final MouseEvent e)
         {
-            int row = -1;
-            if (hasElements()) row = getTable(e).rowAtPoint(e.getPoint());
-
-            final Pair<List<NetworkElement>, List<Pair<Demand, Link>>> selection = getSelectedElements();
-            final boolean nothingSelected = selection.getFirst().isEmpty() && selection.getSecond().isEmpty();
-
-            // Checking for selection type
-            final ElementSelection elementHolder;
-
-            if (!nothingSelected)
+            try
             {
-                if (!selection.getFirst().isEmpty()) elementHolder = new ElementSelection(ElementSelection.getElementType(selection.getFirst()), selection.getFirst());
-                else if (!selection.getSecond().isEmpty()) elementHolder = new ElementSelection(selection.getSecond());
-                else elementHolder = new ElementSelection();
-            } else
-            {
-                elementHolder = new ElementSelection();
-            }
+                int row = -1;
+                if (hasElements()) row = getTable(e).rowAtPoint(e.getPoint());
 
-            if (SwingUtilities.isRightMouseButton(e))
+                final Pair<List<NetworkElement>, List<Pair<Demand, Link>>> selection = getSelectedElements();
+                final boolean nothingSelected = selection.getFirst().isEmpty() && selection.getSecond().isEmpty();
+
+                // Checking for selection type
+                final ElementSelection elementHolder;
+
+                if (!nothingSelected)
+                {
+                    if (!selection.getFirst().isEmpty())
+                        elementHolder = new ElementSelection(ElementSelection.getElementType(selection.getFirst()), selection.getFirst());
+                    else if (!selection.getSecond().isEmpty())
+                        elementHolder = new ElementSelection(selection.getSecond());
+                    else elementHolder = new ElementSelection();
+                } else
+                {
+                    elementHolder = new ElementSelection();
+                }
+
+                if (SwingUtilities.isRightMouseButton(e))
+                {
+                    doPopup(e, row, elementHolder);
+                } else
+                {
+                    if (elementHolder.isEmpty())
+                        callback.resetPickedStateAndUpdateView();
+                    else
+                        SwingUtilities.invokeLater(() -> showInCanvas(e, elementHolder));
+                }
+            } catch (Exception ex)
             {
-                if (nothingSelected) this.getTable(e).setRowSelectionInterval(row, row);
-                doPopup(e, row, elementHolder);
-            } else
-            {
-                if (elementHolder.isEmpty())
-                    callback.resetPickedStateAndUpdateView();
-                else
-                    SwingUtilities.invokeLater(() -> showInCanvas(e, elementHolder));
+                ErrorHandling.showErrorDialog("The GUI has suffered a problem. Please see the console for more information.", "Error");
+                ex.printStackTrace();
             }
         }
 
@@ -1283,7 +1291,8 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     final protected void addPopupMenuAttributeOptions(final MouseEvent e, final int row, ElementSelection selection, JPopupMenu popup)
     {
-        if (networkElementType == NetworkElementType.FORWARDING_RULE) throw new RuntimeException("Forwarding rules have no attributes");
+        if (networkElementType == NetworkElementType.FORWARDING_RULE)
+            throw new RuntimeException("Forwarding rules have no attributes");
 
         final List<? extends NetworkElement> selectedElements = selection.getNetworkElements();
 

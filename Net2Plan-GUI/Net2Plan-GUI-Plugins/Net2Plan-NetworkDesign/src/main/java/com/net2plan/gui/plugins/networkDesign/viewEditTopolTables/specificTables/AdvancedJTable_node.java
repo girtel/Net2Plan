@@ -404,8 +404,6 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         final JPopupMenu popup = new JPopupMenu();
 
         final List<Node> rowsInTheTable = this.getVisibleElementsInTable(); // Only visible rows
-
-        if (selection.getElementType() != NetworkElementType.NODE) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
         final List<Node> selectedNodes = (List<Node>) selection.getNetworkElements();
 
         /* Add the popup menu option of the filters */

@@ -40,88 +40,88 @@ public class FocusPane extends JPanel
 
 	public void updateView ()
 	{
-		final VisualizationState vs = callback.getVisualizationState();
-		final NetworkElementType elementType = vs.getPickedElementType();
-
-		/* Check if remove everything */
-		if (elementType == null) { this.removeAll(); this.revalidate(); this.repaint(); return; }
-
-		this.removeAll(); this.revalidate(); this.repaint();
-
-		/* Here if there is something new to show */
-		if (elementType == NetworkElementType.ROUTE)
-		{
-			final Route r = (Route) vs.getPickedNetworkElement();
-			final FigureLinkSequencePanel fig = new FigureLinkSequencePanel(callback , r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing(), r.getCarriedTraffic(), "Route " + r.getIndex() );
-			this.add(fig , BorderLayout.WEST);
-			this.add(createPanelInfo(getRouteInfoTables(r), r) , BorderLayout.CENTER);
-		}
-		else if (elementType == NetworkElementType.DEMAND)
-		{
-			final Demand d = (Demand) vs.getPickedNetworkElement();
-			final FigureDemandSequencePanel fig = new FigureDemandSequencePanel(callback, d, "Demand " + d.getIndex());
-			this.add(fig , BorderLayout.WEST);
-			this.add(createPanelInfo(getDemandInfoTables(d), d) , BorderLayout.CENTER);
-		}
-		else if (elementType == NetworkElementType.FORWARDING_RULE)
-		{
-			final Pair<Demand,Link> fr = vs.getPickedForwardingRule().get(0);
-//			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
+//		final VisualizationState vs = callback.getVisualizationState();
+//		final NetworkElementType elementType = vs.getPickedElementType();
+//
+//		/* Check if remove everything */
+//		if (elementType == null) { this.removeAll(); this.revalidate(); this.repaint(); return; }
+//
+//		this.removeAll(); this.revalidate(); this.repaint();
+//
+//		/* Here if there is something new to show */
+//		if (elementType == NetworkElementType.ROUTE)
+//		{
+//			final Route r = (Route) vs.getPickedNetworkElement();
+//			final FigureLinkSequencePanel fig = new FigureLinkSequencePanel(callback , r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing(), r.getCarriedTraffic(), "Route " + r.getIndex() );
 //			this.add(fig , BorderLayout.WEST);
-			this.add(createPanelInfo(getForwardingRuleInfoTables(fr), null) , BorderLayout.CENTER);
-		}
-		else if (elementType == NetworkElementType.LAYER)
-		{
-			final NetworkLayer layer = (NetworkLayer) vs.getPickedNetworkElement();
-//			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
+//			this.add(createPanelInfo(getRouteInfoTables(r), r) , BorderLayout.CENTER);
+//		}
+//		else if (elementType == NetworkElementType.DEMAND)
+//		{
+//			final Demand d = (Demand) vs.getPickedNetworkElement();
+//			final FigureDemandSequencePanel fig = new FigureDemandSequencePanel(callback, d, "Demand " + d.getIndex());
 //			this.add(fig , BorderLayout.WEST);
-			this.add(createPanelInfo(getLayerInfoTables(layer), layer) , BorderLayout.CENTER);
-		}
-		else if (elementType == NetworkElementType.LINK)
-		{
-			final Link e = (Link) vs.getPickedNetworkElement();
-			final FigureLinkSequencePanel fig = new FigureLinkSequencePanel(callback , Arrays.asList(e) , e.getLayer() , Arrays.asList(e.getOccupiedCapacity()), e.getCarriedTraffic(), "Link " + e.getIndex());
-			this.add(fig , BorderLayout.WEST);
-			this.add(createPanelInfo(getLinkInfoTables(e), e) , BorderLayout.CENTER);
-		}
-		else if (elementType == NetworkElementType.MULTICAST_DEMAND)
-		{
-			final MulticastDemand md = (MulticastDemand) vs.getPickedNetworkElement();
-			final FigureMulticastDemandSequencePanel fig = new FigureMulticastDemandSequencePanel(callback, md, "Multicast demand " + md.getIndex());
-			this.add(fig , BorderLayout.WEST);
-			this.add(createPanelInfo(getMulticastDemandInfoTables(md), md) , BorderLayout.CENTER);
-		}
-		else if (elementType == NetworkElementType.MULTICAST_TREE)
-		{
-			final MulticastTree t = (MulticastTree) vs.getPickedNetworkElement();
-			final FigureMulticastTreePanel fig = new FigureMulticastTreePanel(callback , t , "Multicast tree " + t.getIndex() , t.getCarriedTraffic());
-			this.add(fig , BorderLayout.WEST);
-			this.add(createPanelInfo(getMulticastTreeInfoTables(t), t) , BorderLayout.CENTER);
-		}
-		else if (elementType == NetworkElementType.NODE)
-		{
-			final Node n = (Node) vs.getPickedNetworkElement();
-			final FigureNodeSequencePanel fig = new FigureNodeSequencePanel(callback , n , n.getNetPlan().getNetworkLayerDefault() , "Node " + n.getIndex());
-			this.add(fig , BorderLayout.WEST);
-			this.add(createPanelInfo(getNodeInfoTables(n , n.getNetPlan().getNetworkLayerDefault()), n) , BorderLayout.CENTER);
-		}
-		else if (elementType == NetworkElementType.RESOURCE)
-		{
-			final Resource r = (Resource) vs.getPickedNetworkElement();
-			final FigureResourcePanel fig = new FigureResourcePanel(callback , r , getResourceName(r));
-			this.add(fig , BorderLayout.WEST);
-			this.add(createPanelInfo(getResourceInfoTables(r), r) , BorderLayout.CENTER);
-		}
-		else if (elementType == NetworkElementType.SRG)
-		{
-			final SharedRiskGroup srg = (SharedRiskGroup) vs.getPickedNetworkElement();
-			final FigureSRGSequencePanel fig = new FigureSRGSequencePanel(callback, srg, "Shared risk group " + srg.getIndex());
-			this.add(fig , BorderLayout.WEST);
-			this.add(createPanelInfo(getSRGInfoTables(srg), srg) , BorderLayout.CENTER);
-		} else throw new RuntimeException();
-
-		this.revalidate();
-		this.repaint ();
+//			this.add(createPanelInfo(getDemandInfoTables(d), d) , BorderLayout.CENTER);
+//		}
+//		else if (elementType == NetworkElementType.FORWARDING_RULE)
+//		{
+//			final Pair<Demand,Link> fr = vs.getPickedForwardingRule().get(0);
+////			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
+////			this.add(fig , BorderLayout.WEST);
+//			this.add(createPanelInfo(getForwardingRuleInfoTables(fr), null) , BorderLayout.CENTER);
+//		}
+//		else if (elementType == NetworkElementType.LAYER)
+//		{
+//			final NetworkLayer layer = (NetworkLayer) vs.getPickedNetworkElement();
+////			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
+////			this.add(fig , BorderLayout.WEST);
+//			this.add(createPanelInfo(getLayerInfoTables(layer), layer) , BorderLayout.CENTER);
+//		}
+//		else if (elementType == NetworkElementType.LINK)
+//		{
+//			final Link e = (Link) vs.getPickedNetworkElement();
+//			final FigureLinkSequencePanel fig = new FigureLinkSequencePanel(callback , Arrays.asList(e) , e.getLayer() , Arrays.asList(e.getOccupiedCapacity()), e.getCarriedTraffic(), "Link " + e.getIndex());
+//			this.add(fig , BorderLayout.WEST);
+//			this.add(createPanelInfo(getLinkInfoTables(e), e) , BorderLayout.CENTER);
+//		}
+//		else if (elementType == NetworkElementType.MULTICAST_DEMAND)
+//		{
+//			final MulticastDemand md = (MulticastDemand) vs.getPickedNetworkElement();
+//			final FigureMulticastDemandSequencePanel fig = new FigureMulticastDemandSequencePanel(callback, md, "Multicast demand " + md.getIndex());
+//			this.add(fig , BorderLayout.WEST);
+//			this.add(createPanelInfo(getMulticastDemandInfoTables(md), md) , BorderLayout.CENTER);
+//		}
+//		else if (elementType == NetworkElementType.MULTICAST_TREE)
+//		{
+//			final MulticastTree t = (MulticastTree) vs.getPickedNetworkElement();
+//			final FigureMulticastTreePanel fig = new FigureMulticastTreePanel(callback , t , "Multicast tree " + t.getIndex() , t.getCarriedTraffic());
+//			this.add(fig , BorderLayout.WEST);
+//			this.add(createPanelInfo(getMulticastTreeInfoTables(t), t) , BorderLayout.CENTER);
+//		}
+//		else if (elementType == NetworkElementType.NODE)
+//		{
+//			final Node n = (Node) vs.getPickedNetworkElement();
+//			final FigureNodeSequencePanel fig = new FigureNodeSequencePanel(callback , n , n.getNetPlan().getNetworkLayerDefault() , "Node " + n.getIndex());
+//			this.add(fig , BorderLayout.WEST);
+//			this.add(createPanelInfo(getNodeInfoTables(n , n.getNetPlan().getNetworkLayerDefault()), n) , BorderLayout.CENTER);
+//		}
+//		else if (elementType == NetworkElementType.RESOURCE)
+//		{
+//			final Resource r = (Resource) vs.getPickedNetworkElement();
+//			final FigureResourcePanel fig = new FigureResourcePanel(callback , r , getResourceName(r));
+//			this.add(fig , BorderLayout.WEST);
+//			this.add(createPanelInfo(getResourceInfoTables(r), r) , BorderLayout.CENTER);
+//		}
+//		else if (elementType == NetworkElementType.SRG)
+//		{
+//			final SharedRiskGroup srg = (SharedRiskGroup) vs.getPickedNetworkElement();
+//			final FigureSRGSequencePanel fig = new FigureSRGSequencePanel(callback, srg, "Shared risk group " + srg.getIndex());
+//			this.add(fig , BorderLayout.WEST);
+//			this.add(createPanelInfo(getSRGInfoTables(srg), srg) , BorderLayout.CENTER);
+//		} else throw new RuntimeException();
+//
+//		this.revalidate();
+//		this.repaint ();
 	}
 
 	private List<Triple<String,String,String>> getLayerInfoTables (NetworkLayer layer)

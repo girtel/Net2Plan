@@ -764,19 +764,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
     @Override
-    public void updateVisualizationAfterPick()
-    {
-        if (vs.getPickedElementType() != null) // can be null if picked a resource type
-                selectNetPlanViewItem(vs.getPickedElementType(), null);
-
-        for (NetworkElement networkElement : vs.getPickedNetworkElement())
-            viewEditTopTables.selectItem(NetworkElementType.getType(networkElement), networkElement.getId());
-
-        topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
-        focusPanel.updateView();
-    }
-
-    @Override
     public void putTransientColorInElementTopologyCanvas(Collection<? extends NetworkElement> linksAndNodes, Color color)
     {
         for (NetworkElement e : linksAndNodes)
@@ -799,6 +786,19 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         }
 
         resetPickedStateAndUpdateView();
+    }
+
+    @Override
+    public void updateVisualizationAfterPick()
+    {
+        if (vs.getPickedElementType() != null) // can be null if picked a resource type
+            selectNetPlanViewItem(vs.getPickedElementType(), null);
+
+        for (NetworkElement networkElement : vs.getPickedNetworkElement())
+            viewEditTopTables.selectItem(NetworkElementType.getType(networkElement), networkElement.getId());
+
+        topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
+        focusPanel.updateView();
     }
 
     @Override
