@@ -1154,7 +1154,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public abstract void showInCanvas(MouseEvent e, ElementSelection selection);
 
-
     public void updateView(NetPlan currentState)
     {
         saveColumnsPositions();
@@ -1253,13 +1252,16 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 elementHolder = new ElementSelection();
             }
 
-            if (nothingSelected) callback.resetPickedStateAndUpdateView();
-            else SwingUtilities.invokeLater(() -> showInCanvas(e, elementHolder));
-
             if (SwingUtilities.isRightMouseButton(e))
             {
                 if (nothingSelected) this.getTable(e).setRowSelectionInterval(row, row);
                 doPopup(e, row, elementHolder);
+            } else
+            {
+                if (elementHolder.isEmpty())
+                    callback.resetPickedStateAndUpdateView();
+                else
+                    SwingUtilities.invokeLater(() -> showInCanvas(e, elementHolder));
             }
         }
 
