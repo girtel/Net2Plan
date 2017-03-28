@@ -1154,6 +1154,12 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public abstract void showInCanvas(MouseEvent e, ElementSelection selection);
 
+    protected abstract List<JComponent> getExtraAddOptions();
+
+    protected abstract List<JComponent> getForcedOptions();
+
+    protected abstract List<JComponent> getExtraOptions(final ElementSelection selection);
+
     public void updateView(NetPlan currentState)
     {
         saveColumnsPositions();

@@ -403,6 +403,9 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     {
         final JPopupMenu popup = new JPopupMenu();
 
+        if (selection.getElementType() != null && selection.getElementType() != NetworkElementType.NODE)
+            throw new RuntimeException("Unmatched selected items with table, selected items are of type: " + selection.getElementType());
+
         final List<Node> rowsInTheTable = this.getVisibleElementsInTable(); // Only visible rows
         final List<Node> selectedNodes = (List<Node>) selection.getNetworkElements();
 
@@ -451,7 +454,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
             if (!rowsInTheTable.isEmpty())
             {
-                if (row != -1)
+                if (!selectedNodes.isEmpty())
                 {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
 
@@ -514,7 +517,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
                 addPopupMenuAttributeOptions(e, row, selection, popup);
 
-                List<JComponent> extraOptions = getExtraOptions(row, selection);
+                List<JComponent> extraOptions = getExtraOptions(selection);
                 if (!extraOptions.isEmpty())
                 {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
@@ -537,7 +540,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     public void showInCanvas(MouseEvent e, ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
-        if (selection.getElementType() != NetworkElementType.NODE) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+        if (selection.getElementType() != NetworkElementType.NODE) throw new RuntimeException("Unmatched selected items with table, selected items are of type: " + selection.getElementType());
 
         callback.getVisualizationState().pickNode((List<Node>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
@@ -568,12 +571,14 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         return addItem;
     }
 
-    private List<JComponent> getExtraAddOptions()
+    @Override
+    protected List<JComponent> getExtraAddOptions()
     {
         return new LinkedList<JComponent>();
     }
 
-    private List<JComponent> getExtraOptions(final int row, final ElementSelection selection)
+    @Override
+    protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
         final List<Node> selectedNodes = (List<Node>) selection.getNetworkElements();
 
@@ -685,7 +690,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         return options;
     }
 
-    private List<JComponent> getForcedOptions()
+    @Override
+    protected List<JComponent> getForcedOptions()
     {
         List<JComponent> options = new LinkedList<>();
 
