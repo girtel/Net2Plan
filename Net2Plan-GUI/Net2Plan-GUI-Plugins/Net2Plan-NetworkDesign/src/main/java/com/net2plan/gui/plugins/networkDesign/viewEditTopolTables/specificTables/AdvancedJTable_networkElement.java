@@ -30,6 +30,7 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
+import com.sun.istack.internal.NotNull;
 
 import javax.swing.*;
 import javax.swing.RowSorter.SortKey;
@@ -1154,10 +1155,13 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public abstract void showInCanvas(MouseEvent e, ElementSelection selection);
 
+    @NotNull
     protected abstract List<JComponent> getExtraAddOptions();
 
+    @NotNull
     protected abstract List<JComponent> getForcedOptions();
 
+    @NotNull
     protected abstract List<JComponent> getExtraOptions(final ElementSelection selection);
 
     public void updateView(NetPlan currentState)

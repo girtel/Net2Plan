@@ -270,6 +270,24 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         return;
     }
 
+    @Override
+    protected List<JComponent> getExtraAddOptions()
+    {
+        return new ArrayList<>();
+    }
+
+    @Override
+    protected List<JComponent> getForcedOptions()
+    {
+        return null;
+    }
+
+    @Override
+    protected List<JComponent> getExtraOptions(ElementSelection selection)
+    {
+        return null;
+    }
+
     private boolean isTableEmpty()
     {
         return false;

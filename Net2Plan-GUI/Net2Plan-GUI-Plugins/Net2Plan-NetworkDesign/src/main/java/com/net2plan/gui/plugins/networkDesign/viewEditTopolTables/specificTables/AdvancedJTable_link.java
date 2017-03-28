@@ -599,7 +599,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
                 addPopupMenuAttributeOptions(e, row, selection, popup);
 
-                List<JComponent> extraOptions = getExtraOptions(row, selection);
+                List<JComponent> extraOptions = getExtraOptions(selection);
                 if (!extraOptions.isEmpty()) {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
                     for (JComponent item : extraOptions) popup.add(item);
@@ -647,7 +647,8 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         return addItem;
     }
 
-    private List<JComponent> getExtraAddOptions() {
+    @Override
+    protected List<JComponent> getExtraAddOptions() {
         List<JComponent> options = new LinkedList<JComponent>();
         NetPlan netPlan = callback.getDesign();
 
@@ -664,7 +665,8 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         return options;
     }
 
-    private List<JComponent> getExtraOptions(final int row, final ElementSelection selection)
+    @Override
+    protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
         List<JComponent> options = new LinkedList<>();
 
@@ -743,8 +745,9 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                     decoupleLinkItem.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            netPlan.getLinkFromId(linkId).getCoupledDemand().decouple();
-                            model.setValueAt("", row, COLUMN_COUPLEDTODEMAND);
+                            final Link link = netPlan.getLinkFromId(linkId);
+                            link.getCoupledDemand().decouple();
+                            model.setValueAt("", AdvancedJTable_link.this.convertRowIndexToModel(link.getIndex()), COLUMN_COUPLEDTODEMAND);
                             callback.getVisualizationState().resetPickedState();
                         	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK , NetworkElementType.DEMAND));
                         	callback.addNetPlanChange();
@@ -1132,7 +1135,8 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         return options;
     }
 
-    private List<JComponent> getForcedOptions()
+    @Override
+    protected List<JComponent> getForcedOptions()
     {
         List<JComponent> options = new LinkedList<JComponent>();
         final int numRows = model.getRowCount();

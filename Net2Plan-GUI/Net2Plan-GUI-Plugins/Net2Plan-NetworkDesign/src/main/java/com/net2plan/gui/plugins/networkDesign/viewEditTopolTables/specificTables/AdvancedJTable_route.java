@@ -794,7 +794,8 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         c.setMaximumSize(max);
     }
 
-    private List<JComponent> getExtraAddOptions()
+    @Override
+    protected List<JComponent> getExtraAddOptions()
     {
         List<JComponent> options = new LinkedList<JComponent>();
         NetPlan netPlan = callback.getDesign();
@@ -1151,9 +1152,16 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         callback.resetPickedStateAndUpdateView();
     }
 
-    private List<JComponent> getForcedOptions()
+    @Override
+    protected List<JComponent> getForcedOptions()
     {
-        return new LinkedList<JComponent>();
+        return new LinkedList<>();
+    }
+
+    @Override
+    protected List<JComponent> getExtraOptions(ElementSelection selection)
+    {
+        return new LinkedList<>();
     }
 
     private static String getSequenceLinkResourceIndexes(Route r)
