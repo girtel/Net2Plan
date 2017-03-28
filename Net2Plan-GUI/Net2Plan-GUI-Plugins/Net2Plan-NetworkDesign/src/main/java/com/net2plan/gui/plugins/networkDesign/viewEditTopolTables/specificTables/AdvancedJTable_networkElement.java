@@ -1150,9 +1150,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public abstract ArrayList<String> getAttributesColumnsHeaders();
 
-    public abstract void doPopup(final MouseEvent e, final int row, final Pair<List<? extends NetworkElement>, List<Pair<Demand, Link>>> selection);
+    public abstract void doPopup(final MouseEvent e, final int row, ElementHolder selection);
 
-    public abstract void showInCanvas(MouseEvent e, final Pair<List<? extends NetworkElement>, List<Pair<Demand, Link>>> selection);
+    public abstract void showInCanvas(MouseEvent e, ElementHolder selection);
 
 
     public void updateView(NetPlan currentState)
@@ -1241,33 +1241,26 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             final Pair<List<NetworkElement>, List<Pair<Demand, Link>>> selection = getSelectedElements();
             final boolean nothingSelected = selection.getFirst().isEmpty() && selection.getSecond().isEmpty();
 
+            // Checking for selection type
+            final ElementHolder elementHolder;
+
+            if (!nothingSelected)
+            {
+                if (!selection.getFirst().isEmpty()) elementHolder = new ElementHolder(ElementHolder.getElementType(selection.getFirst()), selection.getFirst());
+                else if (!selection.getSecond().isEmpty()) elementHolder = new ElementHolder(selection.getSecond());
+                else elementHolder = new ElementHolder();
+            } else
+            {
+                elementHolder = new ElementHolder();
+            }
+
+            if (nothingSelected) callback.resetPickedStateAndUpdateView();
+            else SwingUtilities.invokeLater(() -> showInCanvas(e, elementHolder));
+
             if (SwingUtilities.isRightMouseButton(e))
             {
                 if (nothingSelected) this.getTable(e).setRowSelectionInterval(row, row);
-                doPopup(e, row, selection);
-                return;
-            }
-
-            /* Here if only left button */
-            if (nothingSelected)
-            {
-                callback.resetPickedStateAndUpdateView();
-            } else
-            {
-                final ElementHolder elementHolder;
-
-                if (selection.getFirst().isEmpty())
-                {
-                     elementHolder = new ElementHolder(selection.getSecond());
-                } else if (selection.getSecond().isEmpty())
-                {
-                    final NetworkElementType listElementType = ElementHolder.getElementType(selection.getFirst());
-                    if (listElementType == null) throw new RuntimeException("Cannot select different element types at once.");
-
-                    elementHolder = new ElementHolder(listElementType, selection.getFirst());
-                }
-
-                SwingUtilities.invokeLater(() -> showInCanvas(e, selection));
+                doPopup(e, row, elementHolder);
             }
         }
 

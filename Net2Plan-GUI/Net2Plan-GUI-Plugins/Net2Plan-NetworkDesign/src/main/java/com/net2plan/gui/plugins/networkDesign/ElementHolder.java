@@ -19,6 +19,7 @@ import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.utils.Pair;
+import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
 
 import java.util.ArrayList;
@@ -38,27 +39,21 @@ public class ElementHolder
     private final List<NetworkElement> networkElementList;
     private final List<Pair<Demand, Link>> forwardingRuleList;
 
-    public ElementHolder(final NetworkElementType elementType)
+    public ElementHolder()
     {
-        this.elementType = elementType;
-
-        if (elementType == NetworkElementType.FORWARDING_RULE)
-        {
-            this.networkElementList = Collections.unmodifiableList(Collections.emptyList());
-            this.forwardingRuleList = new ArrayList<>();
-        } else
-        {
-            this.networkElementList = new ArrayList<>();
-            this.forwardingRuleList = Collections.unmodifiableList(Collections.emptyList());
-        }
+        this.elementType = null;
+        this.networkElementList = Collections.unmodifiableList(Collections.emptyList());
+        this.forwardingRuleList = Collections.unmodifiableList(Collections.emptyList());
     }
 
-    public ElementHolder(final NetworkElementType elementType, final List<NetworkElement> networkElements)
+    public ElementHolder(@NotNull final NetworkElementType elementType, final List<NetworkElement> networkElements)
     {
+        if (elementType == null) throw new NullPointerException();
+
         this.elementType = elementType;
 
         final NetworkElementType aux = getElementType(networkElements);
-        if (aux != elementType) throw new RuntimeException("Given element type and list do not match up");
+        if (aux != this.elementType) throw new RuntimeException("Given element type and list do not match up");
 
         this.networkElementList = new ArrayList<>(networkElements);
         this.forwardingRuleList = Collections.unmodifiableList(Collections.emptyList());
@@ -69,25 +64,31 @@ public class ElementHolder
         this.elementType = NetworkElementType.FORWARDING_RULE;
 
         this.networkElementList = Collections.unmodifiableList(Collections.emptyList());
-        this.forwardingRuleList = new ArrayList<>();
+        this.forwardingRuleList = new ArrayList<>(forwardingRuleList);
     }
 
     public boolean addElement(final NetworkElement element)
     {
+        if (elementType == null) return false;
         if (NetworkElementType.getType(element) != elementType) return false;
+
         networkElementList.add(element);
         return true;
     }
 
     public boolean addForwardingRule(final Pair<Demand, Link> forwardingRule)
     {
+        if (elementType == null) return false;
         if (elementType != NetworkElementType.FORWARDING_RULE) return false;
+
         forwardingRuleList.add(forwardingRule);
         return true;
     }
 
     public boolean addElements(final List<NetworkElement> elements)
     {
+        if (elementType == null) return false;
+
         boolean res = true;
 
         for (NetworkElement element : elements)
@@ -104,10 +105,12 @@ public class ElementHolder
         return res;
     }
 
-    public boolean addForwardingRules(final List<Pair<Demand, Link>> forwardingRuleList)
+    public boolean addForwardingRules(final List<Pair<Demand, Link>> forwardingRules)
     {
+        if (elementType == null) return false;
         if (elementType != NetworkElementType.FORWARDING_RULE) return false;
-        forwardingRuleList.addAll(forwardingRuleList);
+
+        this.forwardingRuleList.addAll(forwardingRules);
         return true;
     }
 
@@ -115,7 +118,13 @@ public class ElementHolder
     {
         return Collections.unmodifiableList(networkElementList);
     }
-    public List<Pair<Demand, Link>> getForwardingRules() { return Collections.unmodifiableList(forwardingRuleList); }
+
+    public List<Pair<Demand, Link>> getForwardingRules()
+    {
+        return Collections.unmodifiableList(forwardingRuleList);
+    }
+
+    @Nullable
     public NetworkElementType getElementType()
     {
         return elementType;
