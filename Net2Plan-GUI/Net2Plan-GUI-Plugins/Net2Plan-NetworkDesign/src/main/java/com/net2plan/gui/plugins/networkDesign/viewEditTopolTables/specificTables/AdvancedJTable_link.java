@@ -544,11 +544,8 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                             NetPlan netPlan = callback.getDesign();
 
                             try {
-                                for (Object itemId : itemIds)
-                                {
-                                    Link link = netPlan.getLinkFromId((long) itemId);
-                                    link.remove();
-                                }
+                                for (Link selectedLink : selectedLinks) selectedLink.remove();
+
                                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
                                 callback.addNetPlanChange();
@@ -600,9 +597,9 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 });
                 popup.add(hideAllLinksFilteredOut);
 
-                addPopupMenuAttributeOptions(e, row, itemIds, popup);
+                addPopupMenuAttributeOptions(e, row, selection, popup);
 
-                List<JComponent> extraOptions = getExtraOptions(row, itemIds);
+                List<JComponent> extraOptions = getExtraOptions(row, selection);
                 if (!extraOptions.isEmpty()) {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
                     for (JComponent item : extraOptions) popup.add(item);
@@ -620,11 +617,12 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, Object itemId)
+    public void showInCanvas(MouseEvent e, ElementHolder selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
-        final Link link = callback.getDesign().getLinkFromId((long) itemId);
-        callback.getVisualizationState ().pickLink(link);
+        if (selection.getElementType() != NetworkElementType.LINK) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+
+        callback.getVisualizationState ().pickLink((List<Link>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
@@ -666,13 +664,15 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         return options;
     }
 
-    private List<JComponent> getExtraOptions(final int row, final Object itemId)
+    private List<JComponent> getExtraOptions(final int row, final ElementHolder selection)
     {
-        List<JComponent> options = new LinkedList<JComponent>();
+        List<JComponent> options = new LinkedList<>();
 
         final List<Link> rowVisibleLinks = getVisibleElementsInTable();
         final NetPlan netPlan = callback.getDesign();
 
+        // TODO
+        final Integer itemId = 1;
         if (itemId != null) {
             final long linkId = (long) itemId;
 

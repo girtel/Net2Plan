@@ -13,10 +13,12 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables;
 
 import com.google.common.collect.Sets;
+import com.net2plan.gui.plugins.networkDesign.ElementHolder;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -60,7 +62,8 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
     public static final int COLUMN_ATTRIBUTES = 15;
 
 
-    public AdvancedJTable_layer(final GUINetworkDesign networkViewer) {
+    public AdvancedJTable_layer(final GUINetworkDesign networkViewer)
+    {
         super(createTableModel(networkViewer), networkViewer, NetworkElementType.LAYER, false);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
@@ -69,10 +72,12 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
     }
 
 
-    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns) {
+    public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns)
+    {
         NetworkLayer layer = currentState.getNetworkLayerDefault();
         List<Object[]> allLayerData = new LinkedList<Object[]>();
-        for (NetworkLayer auxLayer : currentState.getNetworkLayers()) {
+        for (NetworkLayer auxLayer : currentState.getNetworkLayers())
+        {
             RoutingType routingType_thisLayer = currentState.getRoutingType(auxLayer);
             Object[] layerData = new Object[netPlanViewTableHeader.length];
             layerData[COLUMN_ID] = auxLayer.getId();
@@ -96,32 +101,37 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         return allLayerData;
     }
 
-    public String getTabName() {
+    public String getTabName()
+    {
         return netPlanViewTabName;
     }
 
-    public String[] getTableHeaders() {
+    public String[] getTableHeaders()
+    {
         return netPlanViewTableHeader;
     }
 
-    public String[] getCurrentTableHeaders(){
+    public String[] getCurrentTableHeaders()
+    {
         ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
         String[] headers = new String[netPlanViewTableHeader.length + attColumnsHeaders.size()];
-        for(int i = 0; i < headers.length ;i++)
+        for (int i = 0; i < headers.length; i++)
         {
-            if(i<netPlanViewTableHeader.length)
+            if (i < netPlanViewTableHeader.length)
             {
                 headers[i] = netPlanViewTableHeader[i];
-            }
-            else{
-                headers[i] = "Att: "+attColumnsHeaders.get(i - netPlanViewTableHeader.length);
+            } else
+            {
+                headers[i] = "Att: " + attColumnsHeaders.get(i - netPlanViewTableHeader.length);
             }
         }
 
 
         return headers;
     }
-    public String[] getTableTips() {
+
+    public String[] getTableTips()
+    {
         return netPlanViewTableTips;
     }
 
@@ -140,17 +150,21 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
 //        return new int[]{};
 //    }
 
-    private static TableModel createTableModel(final GUINetworkDesign networkViewer) {
-        TableModel layerTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader) {
+    private static TableModel createTableModel(final GUINetworkDesign networkViewer)
+    {
+        TableModel layerTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader)
+        {
             private static final long serialVersionUID = 1L;
 
             @Override
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
+            public boolean isCellEditable(int rowIndex, int columnIndex)
+            {
                 return columnIndex >= netPlanViewTableHeader.length;
             }
 
             @Override
-            public void setValueAt(Object newValue, int row, int column) {
+            public void setValueAt(Object newValue, int row, int column)
+            {
                 Object oldValue = getValueAt(row, column);
                 /* If value doesn't change, exit from function */
                 if (newValue != null && newValue.equals(oldValue)) return;
@@ -162,21 +176,24 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         return layerTableModel;
     }
 
-    private void setDefaultCellRenderers(final GUINetworkDesign networkViewer) {
+    private void setDefaultCellRenderers(final GUINetworkDesign networkViewer)
+    {
     }
 
-    private void setSpecificCellRenderers() {
+    private void setSpecificCellRenderers()
+    {
     }
 
     public void setColumnRowSortingFixedAndNonFixedTable()
     {
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet();
         final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
-        for (int col = 0; col <= COLUMN_ATTRIBUTES ; col ++)
-        	rowSorter.setComparator(col, new AdvancedJTable_networkElement.ColumnComparator(rowSorter , columnsWithDoubleAndThenParenthesis.contains(col)));
+        for (int col = 0; col <= COLUMN_ATTRIBUTES; col++)
+            rowSorter.setComparator(col, new AdvancedJTable_networkElement.ColumnComparator(rowSorter, columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
-    public int getNumberOfDecoratorColumns() {
+    public int getNumberOfDecoratorColumns()
+    {
         return 2;
     }
 
@@ -188,40 +205,50 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
 
 
     @Override
-    public void doPopup(MouseEvent e, int row, final Object[] itemIds) {
+    public void doPopup(MouseEvent e, int row, final ElementHolder selection)
+    {
         JPopupMenu popup = new JPopupMenu();
 
-        if (callback.getVisualizationState().isNetPlanEditable()) {
+        if (selection.getElementType() != NetworkElementType.LAYER) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+        final List<NetworkLayer> layers = (List<NetworkLayer>) selection.getNetworkElements();
+
+        if (callback.getVisualizationState().isNetPlanEditable())
+        {
             popup.add(getAddOption());
             for (JComponent item : getExtraAddOptions())
                 popup.add(item);
         }
 
-        if (!isTableEmpty()) {
-            if (callback.getVisualizationState().isNetPlanEditable()) {
-                if (row != -1) {
+        if (!isTableEmpty())
+        {
+            if (callback.getVisualizationState().isNetPlanEditable())
+            {
+                if (row != -1)
+                {
                     if (networkElementType != NetworkElementType.LAYER || callback.getDesign().getNumberOfLayers() != 1)
                     {
                         JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
 
-                        removeItem.addActionListener(new ActionListener() {
+                        removeItem.addActionListener(new ActionListener()
+                        {
                             @Override
-                            public void actionPerformed(ActionEvent e) {
+                            public void actionPerformed(ActionEvent e)
+                            {
                                 NetPlan netPlan = callback.getDesign();
 
-                                try {
-                                    for (Object itemId : itemIds)
-                                    {
-                                        netPlan.removeNetworkLayer(netPlan.getNetworkLayerFromId((long) itemId));
-                                    }
+                                try
+                                {
+                                    for (NetworkLayer layer : layers)
+                                        netPlan.removeNetworkLayer(layer);
 
                                     final VisualizationState vs = callback.getVisualizationState();
-                            		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res =
-                    				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
-                    		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
+                                    Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+                                            vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
+                                    vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
                                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                                     callback.addNetPlanChange();
-                                } catch (Throwable ex) {
+                                } catch (Throwable ex)
+                                {
                                     ErrorHandling.addErrorOrException(ex, getClass());
                                     ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
                                 }
@@ -231,17 +258,19 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
                         popup.add(removeItem);
                     }
 
-                    addPopupMenuAttributeOptions(e, row, itemIds, popup);
+                    addPopupMenuAttributeOptions(e, row, selection, popup);
                 }
-                List<JComponent> extraOptions = getExtraOptions(row, itemIds);
-                if (!extraOptions.isEmpty()) {
+                List<JComponent> extraOptions = getExtraOptions(row, selection);
+                if (!extraOptions.isEmpty())
+                {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
                     for (JComponent item : extraOptions) popup.add(item);
                 }
             }
 
             List<JComponent> forcedOptions = getForcedOptions();
-            if (!forcedOptions.isEmpty()) {
+            if (!forcedOptions.isEmpty())
+            {
                 if (popup.getSubElements().length > 0) popup.addSeparator();
                 for (JComponent item : forcedOptions) popup.add(item);
             }
@@ -251,31 +280,38 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, Object itemId) {
+    public void showInCanvas(MouseEvent e, Object itemId)
+    {
         return;
     }
 
-    private boolean isTableEmpty() {
+    private boolean isTableEmpty()
+    {
         return false;
     }
 
-    private JMenuItem getAddOption() {
+    private JMenuItem getAddOption()
+    {
         JMenuItem addItem = new JMenuItem("Add " + networkElementType);
 
-        addItem.addActionListener(new ActionListener() {
+        addItem.addActionListener(new ActionListener()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 NetPlan netPlan = callback.getDesign();
 
-                try {
-                    netPlan.addLayer("Layer " + netPlan.getNumberOfLayers(), null, null, null, null , null);
+                try
+                {
+                    netPlan.addLayer("Layer " + netPlan.getNumberOfLayers(), null, null, null, null, null);
                     final VisualizationState vs = callback.getVisualizationState();
-            		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (callback.getDesign().getNetworkLayers()));
-            		vs.setCanvasLayerVisibilityAndOrder(callback.getDesign() , res.getFirst() , res.getSecond());
+                    Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res = vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
+                    vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
                     callback.addNetPlanChange();
-                } catch (Throwable ex) {
-                	ex.printStackTrace();
+                } catch (Throwable ex)
+                {
+                    ex.printStackTrace();
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
                 }
             }
@@ -284,15 +320,18 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         return addItem;
     }
 
-    private List<JComponent> getExtraAddOptions() {
+    private List<JComponent> getExtraAddOptions()
+    {
         return new LinkedList<JComponent>();
     }
 
-    private List<JComponent> getExtraOptions(final int row, final Object itemId) {
+    private List<JComponent> getExtraOptions(final int row, final ElementHolder selection)
+    {
         return new LinkedList<JComponent>();
     }
 
-    private List<JComponent> getForcedOptions() {
+    private List<JComponent> getForcedOptions()
+    {
         return new LinkedList<JComponent>();
     }
 }
