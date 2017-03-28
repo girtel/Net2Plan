@@ -14,13 +14,17 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTable
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.AttributeEditor;
+import com.net2plan.gui.plugins.networkDesign.ElementHolder;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFTagBased;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.FixedColumnDecorator;
-import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
@@ -1146,9 +1150,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public abstract ArrayList<String> getAttributesColumnsHeaders();
 
-    public abstract void doPopup(final MouseEvent e, final int row, final Pair<List<? extends NetworkElement>, List<Pair<Demand, Link>>>  selection);
+    public abstract void doPopup(final MouseEvent e, final int row, final Pair<List<? extends NetworkElement>, List<Pair<Demand, Link>>> selection);
 
-    public abstract void showInCanvas(MouseEvent e, final Pair<List<? extends NetworkElement>, List<Pair<Demand, Link>>>  selection);
+    public abstract void showInCanvas(MouseEvent e, final Pair<List<? extends NetworkElement>, List<Pair<Demand, Link>>> selection);
 
 
     public void updateView(NetPlan currentState)
@@ -1230,48 +1234,41 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         @Override
         public void mouseClicked(final MouseEvent e)
         {
-            List<Object> itemList = new ArrayList<>();
-
             int row = -1;
-
             if (hasElements())
-            {
-                JTable table = getTable(e);
-                row = table.rowAtPoint(e.getPoint());
+                row = getTable(e).rowAtPoint(e.getPoint());
 
-                final int[] selectedRows = table.getSelectedRows();
-                for (int selectedRow : selectedRows)
-                {
-                    Object auxItemId = null;
-                    if (selectedRow != -1)
-                    {
-                        selectedRow = table.convertRowIndexToModel(selectedRow);
-                        if (table.getModel().getValueAt(selectedRow, 0) instanceof LastRowAggregatedValue) continue;
-                        if (networkElementType == NetworkElementType.FORWARDING_RULE)
-                            auxItemId = Pair.of(Integer.parseInt(model.getValueAt(selectedRow, 1).toString().split(" ")[0]), Integer.parseInt(model.getValueAt(selectedRow, 2).toString().split(" ")[0]));
-                        else
-                            auxItemId = model.getValueAt(selectedRow, 0);
-                    }
-                    itemList.add(auxItemId);
-                }
-            }
+            final Pair<List<NetworkElement>, List<Pair<Demand, Link>>> selection = getSelectedElements();
+            final boolean nothingSelected = selection.getFirst().isEmpty() && selection.getSecond().isEmpty();
 
-            final Pair<List<? extends NetworkElement>, List<Pair<Demand, Link>>> selection = getSelectedElements();
-            final boolean nothingSelected = selection.getFirst().isEmpty() && selection.getSecond().isEmpty(); 
             if (SwingUtilities.isRightMouseButton(e))
             {
-                // List is empty || Right clicking with shift pressed
-                if  (nothingSelected || ((e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0))
-                    this.getTable(e).setRowSelectionInterval(row, row);
+                if (nothingSelected) this.getTable(e).setRowSelectionInterval(row, row);
                 doPopup(e, row, selection);
                 return;
             }
 
             /* Here if only left button */
             if (nothingSelected)
+            {
                 callback.resetPickedStateAndUpdateView();
-            else
-            	SwingUtilities.invokeLater(() -> showInCanvas(e, selection));
+            } else
+            {
+                final ElementHolder elementHolder;
+
+                if (selection.getFirst().isEmpty())
+                {
+                     elementHolder = new ElementHolder(selection.getSecond());
+                } else if (selection.getSecond().isEmpty())
+                {
+                    final NetworkElementType listElementType = ElementHolder.getElementType(selection.getFirst());
+                    if (listElementType == null) throw new RuntimeException("Cannot select different element types at once.");
+
+                    elementHolder = new ElementHolder(listElementType, selection.getFirst());
+                }
+
+                SwingUtilities.invokeLater(() -> showInCanvas(e, selection));
+            }
         }
 
         private JTable getTable(MouseEvent e)
@@ -1634,7 +1631,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
      *
      * @return
      */
-    public Pair<List<? extends NetworkElement>, List<Pair<Demand, Link>>> getSelectedElements()
+    public Pair<List<NetworkElement>, List<Pair<Demand, Link>>> getSelectedElements()
     {
         final int[] rowIndexes = this.getSelectedRows();
         final NetPlan np = callback.getDesign();
