@@ -14,7 +14,7 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTable
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.AttributeEditor;
-import com.net2plan.gui.plugins.networkDesign.ElementHolder;
+import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFTagBased;
@@ -1150,9 +1150,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public abstract ArrayList<String> getAttributesColumnsHeaders();
 
-    public abstract void doPopup(final MouseEvent e, final int row, ElementHolder selection);
+    public abstract void doPopup(final MouseEvent e, final int row, ElementSelection selection);
 
-    public abstract void showInCanvas(MouseEvent e, ElementHolder selection);
+    public abstract void showInCanvas(MouseEvent e, ElementSelection selection);
 
 
     public void updateView(NetPlan currentState)
@@ -1241,16 +1241,16 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             final boolean nothingSelected = selection.getFirst().isEmpty() && selection.getSecond().isEmpty();
 
             // Checking for selection type
-            final ElementHolder elementHolder;
+            final ElementSelection elementHolder;
 
             if (!nothingSelected)
             {
-                if (!selection.getFirst().isEmpty()) elementHolder = new ElementHolder(ElementHolder.getElementType(selection.getFirst()), selection.getFirst());
-                else if (!selection.getSecond().isEmpty()) elementHolder = new ElementHolder(selection.getSecond());
-                else elementHolder = new ElementHolder();
+                if (!selection.getFirst().isEmpty()) elementHolder = new ElementSelection(ElementSelection.getElementType(selection.getFirst()), selection.getFirst());
+                else if (!selection.getSecond().isEmpty()) elementHolder = new ElementSelection(selection.getSecond());
+                else elementHolder = new ElementSelection();
             } else
             {
-                elementHolder = new ElementHolder();
+                elementHolder = new ElementSelection();
             }
 
             if (nothingSelected) callback.resetPickedStateAndUpdateView();
@@ -1279,7 +1279,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     }
 
 
-    final protected void addPopupMenuAttributeOptions(final MouseEvent e, final int row, ElementHolder selection, JPopupMenu popup)
+    final protected void addPopupMenuAttributeOptions(final MouseEvent e, final int row, ElementSelection selection, JPopupMenu popup)
     {
         if (networkElementType == NetworkElementType.FORWARDING_RULE) throw new RuntimeException("Forwarding rules have no attributes");
 

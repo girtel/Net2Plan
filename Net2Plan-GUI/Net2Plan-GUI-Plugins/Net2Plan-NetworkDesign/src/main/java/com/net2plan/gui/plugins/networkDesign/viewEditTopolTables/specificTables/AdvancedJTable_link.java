@@ -18,7 +18,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
-import com.net2plan.gui.plugins.networkDesign.ElementHolder;
+import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
@@ -475,7 +475,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, ElementHolder selection)
+    public void doPopup(final MouseEvent e, final int row, ElementSelection selection)
     {
         JPopupMenu popup = new JPopupMenu();
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
@@ -617,7 +617,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, ElementHolder selection)
+    public void showInCanvas(MouseEvent e, ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.LINK) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
@@ -664,7 +664,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         return options;
     }
 
-    private List<JComponent> getExtraOptions(final int row, final ElementHolder selection)
+    private List<JComponent> getExtraOptions(final int row, final ElementSelection selection)
     {
         List<JComponent> options = new LinkedList<>();
 

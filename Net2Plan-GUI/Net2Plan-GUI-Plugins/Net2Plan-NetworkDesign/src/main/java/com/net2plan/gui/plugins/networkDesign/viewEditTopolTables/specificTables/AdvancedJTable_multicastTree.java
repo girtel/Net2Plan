@@ -19,7 +19,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
-import com.net2plan.gui.plugins.networkDesign.ElementHolder;
+import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.ClassAwareTableModel;
@@ -309,14 +309,16 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, final ElementHolder itemIds)
+    public void doPopup(final MouseEvent e, final int row, final ElementSelection selection)
     {
         JPopupMenu popup = new JPopupMenu();
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final List<MulticastTree> rowsInTheTable = getVisibleElementsInTable();
 
+        if (selection.getElementType() != NetworkElementType.MULTICAST_TREE) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+
         /* Add the popup menu option of the filters */
-        final List<MulticastTree> selectedTrees = (List<MulticastTree>) (List<?>) getSelectedElements().getFirst();
+        final List<MulticastTree> selectedTrees = (List<MulticastTree>) selection.getNetworkElements();
     	final JMenu submenuFilters = new JMenu ("Filters");
         if (!selectedTrees.isEmpty())
         {
@@ -374,10 +376,10 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
                         public void actionPerformed(ActionEvent e) {
                             NetPlan netPlan = callback.getDesign();
                             try {
-                                for (Object itemId : itemIds)
-                                {
-                                    netPlan.getMulticastTreeFromId((long) itemId).remove();
-                                }
+
+                                for (MulticastTree selectedTree : selectedTrees)
+                                    selectedTree.remove();
+
                                 callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
                             	callback.addNetPlanChange();
@@ -415,19 +417,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
 
                 popup.add(removeItems);
 
-                addPopupMenuAttributeOptions(e, row, itemIds, popup);
-
-                List<JComponent> extraOptions = getExtraOptions(row, itemIds);
-                if (!extraOptions.isEmpty()) {
-                    if (popup.getSubElements().length > 0) popup.addSeparator();
-                    for (JComponent item : extraOptions) popup.add(item);
-                }
-            }
-
-            List<JComponent> forcedOptions = getForcedOptions();
-            if (!forcedOptions.isEmpty()) {
-                if (popup.getSubElements().length > 0) popup.addSeparator();
-                for (JComponent item : forcedOptions) popup.add(item);
+                addPopupMenuAttributeOptions(e, row, selection, popup);
             }
         }
 
@@ -435,9 +425,11 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, Object itemId) {
+    public void showInCanvas(MouseEvent e, ElementSelection selection) {
         if (getVisibleElementsInTable().isEmpty()) return;
-        callback.getVisualizationState ().pickMulticastTree(callback.getDesign().getMulticastTreeFromId((long) itemId));
+        if (selection.getElementType() != NetworkElementType.MULTICAST_TREE) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+
+        callback.getVisualizationState ().pickMulticastTree((List<MulticastTree>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
@@ -583,13 +575,6 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
         }
     }
 
-    private List<JComponent> getExtraOptions(final int row, final Object itemId) {
-        return new LinkedList<JComponent>();
-    }
-
-    private List<JComponent> getForcedOptions() {
-        return new LinkedList<JComponent>();
-    }
     private List<MulticastTree> getVisibleElementsInTable ()
     {
     	final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();

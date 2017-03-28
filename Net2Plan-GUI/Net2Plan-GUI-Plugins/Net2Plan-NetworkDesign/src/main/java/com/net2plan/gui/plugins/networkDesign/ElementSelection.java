@@ -32,21 +32,21 @@ import static com.net2plan.internal.Constants.NetworkElementType;
  * @author Jorge San Emeterio Villalain
  * @date 28/03/17
  */
-public class ElementHolder
+public class ElementSelection
 {
     private NetworkElementType elementType;
 
     private final List<NetworkElement> networkElementList;
     private final List<Pair<Demand, Link>> forwardingRuleList;
 
-    public ElementHolder()
+    public ElementSelection()
     {
         this.elementType = null;
         this.networkElementList = Collections.unmodifiableList(Collections.emptyList());
         this.forwardingRuleList = Collections.unmodifiableList(Collections.emptyList());
     }
 
-    public ElementHolder(@NotNull final NetworkElementType elementType, final List<? extends NetworkElement> networkElements)
+    public ElementSelection(@NotNull final NetworkElementType elementType, final List<? extends NetworkElement> networkElements)
     {
         if (elementType == null) throw new NullPointerException();
 
@@ -59,7 +59,7 @@ public class ElementHolder
         this.forwardingRuleList = Collections.unmodifiableList(Collections.emptyList());
     }
 
-    public ElementHolder(final List<Pair<Demand, Link>> forwardingRuleList)
+    public ElementSelection(final List<Pair<Demand, Link>> forwardingRuleList)
     {
         this.elementType = NetworkElementType.FORWARDING_RULE;
 

@@ -16,7 +16,7 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
-import com.net2plan.gui.plugins.networkDesign.ElementHolder;
+import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.ClassAwareTableModel;
@@ -250,7 +250,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
     }
 
 
-    public void showInCanvas(MouseEvent e, ElementHolder selection)
+    public void showInCanvas(MouseEvent e, ElementSelection selection)
     {
         if (selection.getElementType() != NetworkElementType.FORWARDING_RULE) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
@@ -259,7 +259,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
-    public void doPopup(final MouseEvent e, final int row, final ElementHolder selection) {
+    public void doPopup(final MouseEvent e, final int row, final ElementSelection selection) {
         JPopupMenu popup = new JPopupMenu();
 
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();

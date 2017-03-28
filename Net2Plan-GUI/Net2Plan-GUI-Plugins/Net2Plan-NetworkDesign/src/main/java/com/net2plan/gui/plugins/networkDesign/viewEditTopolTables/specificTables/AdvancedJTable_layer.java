@@ -14,7 +14,7 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTable
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.ElementHolder;
+import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -204,7 +204,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
 
 
     @Override
-    public void doPopup(MouseEvent e, int row, final ElementHolder selection)
+    public void doPopup(MouseEvent e, int row, final ElementSelection selection)
     {
         JPopupMenu popup = new JPopupMenu();
 
@@ -265,7 +265,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, ElementHolder selection)
+    public void showInCanvas(MouseEvent e, ElementSelection selection)
     {
         return;
     }

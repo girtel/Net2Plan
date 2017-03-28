@@ -30,7 +30,7 @@ public class ElementHolderTest
 {
     private NetPlan netPlan;
     private List<NetworkElement> networkElements;
-    private ElementHolder elementHolder;
+    private ElementSelection elementHolder;
 
     @Before
     public void setUp()
@@ -55,6 +55,6 @@ public class ElementHolderTest
     {
         networkElements.clear();
         networkElements.addAll(netPlan.getNodes());
-        elementHolder = new ElementHolder(networkElements, new ArrayList<>());
+        elementHolder = new ElementSelection(networkElements, new ArrayList<>());
     }
 }

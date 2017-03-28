@@ -16,6 +16,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
+import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
@@ -341,12 +342,14 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         return attColumnsHeaders;
     }
 
-    public void doPopup(final MouseEvent e, final int row, final Object[] itemIds)
+    public void doPopup(final MouseEvent e, final int row, final ElementSelection selection)
     {
         JPopupMenu popup = new JPopupMenu();
 
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final List<Demand> demandRowsInTheTable = getVisibleElementsInTable();
+
+        if (selection.getElementType() != NetworkElementType.DEMAND) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
         /* Add the popup menu option of the filters */
         final List<Demand> selectedDemands = (List<Demand>) (List<?>) getSelectedElements().getFirst();
