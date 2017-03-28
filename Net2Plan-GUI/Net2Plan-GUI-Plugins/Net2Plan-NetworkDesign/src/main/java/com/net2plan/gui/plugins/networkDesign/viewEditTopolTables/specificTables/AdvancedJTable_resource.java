@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
+import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.AdvancedJTable;
@@ -353,14 +354,16 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
 
     }
     @Override
-    public void doPopup(MouseEvent e, int row, Object[] itemIds) {
+    public void doPopup(MouseEvent e, int row, ElementSelection selection) {
 
         JPopupMenu popup = new JPopupMenu();
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final List<Resource> rowsInTheTable = getVisibleElementsInTable();
 
+        if (selection.getElementType() != NetworkElementType.RESOURCE) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+
         /* Add the popup menu option of the filters */
-        final List<Resource> selectedResources = (List<Resource>) (List<?>) getSelectedElements().getFirst();
+        final List<Resource> selectedResources = (List<Resource>) selection.getNetworkElements();
     	final JMenu submenuFilters = new JMenu ("Filters");
         if (!selectedResources.isEmpty()) 
         {
@@ -419,10 +422,9 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                         public void actionPerformed(ActionEvent e) 
                         {
                             try {
-                                for (Object itemId : itemIds)
-                                {
-                                    callback.getDesign().getResourceFromId((Long) itemId).remove();
-                                }
+                                for (Resource selectedResource : selectedResources)
+                                    selectedResource.remove();
+
                                 callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
                             	callback.addNetPlanChange();
@@ -494,9 +496,9 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
 
                 popup.add(removeItems);
 
-                addPopupMenuAttributeOptions(e, row, itemIds, popup);
+                addPopupMenuAttributeOptions(e, row, selection, popup);
 
-                List<JComponent> extraOptions = getExtraOptions(row, itemIds);
+                List<JComponent> extraOptions = getExtraOptions(row, selection);
                 if (!extraOptions.isEmpty()) {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
                     for (JComponent item : extraOptions) popup.add(item);
@@ -615,9 +617,12 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return options;
     }
 
-    private List<JComponent> getExtraOptions(final int row, final Object itemId) {
+    private List<JComponent> getExtraOptions(final int row, final ElementSelection selection) {
         List<JComponent> options = new LinkedList<JComponent>();
         final List<Resource> rowsInTheTable = getVisibleElementsInTable();
+
+        // TODO
+        Number itemId = 1;
 
         JMenuItem capacityInBaseResources = new JMenuItem("Set capacity to base resources");
         capacityInBaseResources.addActionListener(new ActionListener() {
@@ -747,10 +752,12 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
 
 
     @Override
-    public void showInCanvas(MouseEvent e, Object itemId) 
+    public void showInCanvas(MouseEvent e, ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
-    	callback.getVisualizationState ().pickResource(callback.getDesign().getResourceFromId((long) itemId));
+        if (selection.getElementType() != NetworkElementType.RESOURCE) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+
+        callback.getVisualizationState ().pickResource((List<Resource>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 

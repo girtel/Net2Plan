@@ -16,6 +16,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
+import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.AdvancedJTable;
@@ -302,14 +303,17 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, final Object[] itemIds)
+    public void doPopup(final MouseEvent e, final int row, final ElementSelection selection)
     {
         JPopupMenu popup = new JPopupMenu();
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final List<SharedRiskGroup> rowsInTheTable = getVisibleElementsInTable();
+
+        if (selection.getElementType() != NetworkElementType.SRG) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+
         
         /* Add the popup menu option of the filters */
-        final List<SharedRiskGroup> selectedSRGs = (List<SharedRiskGroup>) (List<?>) getSelectedElements().getFirst();
+        final List<SharedRiskGroup> selectedSRGs = (List<SharedRiskGroup>) selection.getNetworkElements();
         final JMenu submenuFilters = new JMenu("Filters");
         if (!selectedSRGs.isEmpty())
         {
@@ -373,10 +377,9 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
                             NetPlan netPlan = callback.getDesign();
                             try
                             {
-                                for (Object itemId : itemIds)
-                                {
-                                    netPlan.getSRGFromId((long) itemId).remove();
-                                }
+                                for (SharedRiskGroup selectedSRG : selectedSRGs)
+                                    selectedSRG.remove();
+
                                 callback.getVisualizationState().resetPickedState();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
                                 callback.addNetPlanChange();
@@ -418,9 +421,9 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
 
                 popup.add(removeItems);
 
-                addPopupMenuAttributeOptions(e, row, itemIds, popup);
+                addPopupMenuAttributeOptions(e, row, selection, popup);
 
-                List<JComponent> extraOptions = getExtraOptions(row, itemIds);
+                List<JComponent> extraOptions = getExtraOptions(row, selection);
                 if (!extraOptions.isEmpty())
                 {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
@@ -440,11 +443,12 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, Object itemId)
+    public void showInCanvas(MouseEvent e, ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
-        final SharedRiskGroup srg = callback.getDesign().getSRGFromId((long) itemId);
-        callback.getVisualizationState().pickSRG(srg);
+        if (selection.getElementType() != NetworkElementType.SRG) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+
+        callback.getVisualizationState().pickSRG((List<SharedRiskGroup>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
@@ -577,13 +581,15 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         return options;
     }
 
-    private List<JComponent> getExtraOptions(final int row, final Object itemId)
+    private List<JComponent> getExtraOptions(final int row, final ElementSelection selection)
     {
         final List<SharedRiskGroup> rowsInTheTable = getVisibleElementsInTable();
         List<JComponent> options = new LinkedList<JComponent>();
 
         final int numRows = model.getRowCount();
 
+        //TODO
+        Integer itemId = 1;
         if (itemId != null)
         {
             JMenuItem editSRG = new JMenuItem("View/edit SRG");

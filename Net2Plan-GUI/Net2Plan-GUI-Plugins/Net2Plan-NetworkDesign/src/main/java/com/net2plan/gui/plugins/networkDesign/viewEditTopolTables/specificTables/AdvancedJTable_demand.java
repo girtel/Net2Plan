@@ -352,7 +352,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         if (selection.getElementType() != NetworkElementType.DEMAND) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
         /* Add the popup menu option of the filters */
-        final List<Demand> selectedDemands = (List<Demand>) (List<?>) getSelectedElements().getFirst();
+        final List<Demand> selectedDemands = (List<Demand>) selection.getNetworkElements();
     	final JMenu submenuFilters = new JMenu ("Filters");
         if (!selectedDemands.isEmpty())
         {
@@ -415,11 +415,9 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
                             try
                             {
-                                for (Object itemId : itemIds)
-                                {
-                                    final Demand demand = netPlan.getDemandFromId((long) itemId);
-                                    demand.remove();
-                                }
+                                for (Demand selectedDemand : selectedDemands)
+                                    selectedDemand.remove();
+
                             	callback.getVisualizationState().resetPickedState();
                             	callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                             	callback.addNetPlanChange();
@@ -458,9 +456,9 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
                 popup.add(removeItems);
 
-                addPopupMenuAttributeOptions(e, row, itemIds, popup);
+                addPopupMenuAttributeOptions(e, row, selection, popup);
 
-                List<JComponent> extraOptions = getExtraOptions(row, itemIds);
+                List<JComponent> extraOptions = getExtraOptions(row, selection);
                 if (!extraOptions.isEmpty()) {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
                     for (JComponent item : extraOptions) popup.add(item);
@@ -478,9 +476,11 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         popup.show(e.getComponent(), e.getX(), e.getY());
     }
 
-    public void showInCanvas(MouseEvent e, Object itemId)
+    public void showInCanvas(MouseEvent e, ElementSelection selection)
     {
-    	callback.getVisualizationState ().pickDemand(callback.getDesign().getDemandFromId((long)itemId));
+        if (selection.getElementType() != NetworkElementType.DEMAND) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+
+        callback.getVisualizationState ().pickDemand((List<Demand>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
@@ -631,11 +631,14 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         return !callback.getDesign().hasDemands();
     }
 
-    private List<JComponent> getExtraOptions(final int row, final Object itemId) {
+    private List<JComponent> getExtraOptions(final int row, final ElementSelection selection) {
         List<JComponent> options = new LinkedList<JComponent>();
         final int numRows = model.getRowCount();
         final NetPlan netPlan = callback.getDesign();
         final List<Demand> tableVisibleDemands = getVisibleElementsInTable ();
+
+        // TODO
+        Number itemId = 1;
 
         JMenuItem offeredTrafficToAll = new JMenuItem("Set offered traffic to all");
         offeredTrafficToAll.addActionListener(new ActionListener() {
