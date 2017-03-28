@@ -763,14 +763,14 @@ public class VisualizationState
         return pickedElementType;
     }
 
-    public List<? extends NetworkElement> getPickedNetworkElement()
+    public List<NetworkElement> getPickedNetworkElement()
     {
-        return pickedElementNotFR;
+        return Collections.unmodifiableList(pickedElementNotFR);
     }
 
     public List<Pair<Demand, Link>> getPickedForwardingRule()
     {
-        return pickedElementFR;
+        return Collections.unmodifiableList(pickedElementFR);
     }
 
     public void pickNode(Node node)
@@ -1249,7 +1249,19 @@ public class VisualizationState
                 gl.getDestinationNode().setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
             }
         }
-        	
+    }
+
+    public void pickElement(NetworkElement es)
+    {
+        if (es instanceof Node) pickNode((Node) es);
+        else if (es instanceof Link) pickLink((Link) es);
+        else if (es instanceof Demand) pickDemand((Demand) es);
+        else if (es instanceof Route) pickRoute((Route) es);
+        else if (es instanceof MulticastDemand) pickMulticastDemand((MulticastDemand) es);
+        else if (es instanceof MulticastTree) pickMulticastTree((MulticastTree) es);
+        else if (es instanceof Resource) pickResource((Resource) es);
+        else if (es instanceof SharedRiskGroup) pickSRG((SharedRiskGroup) es);
+        else throw new RuntimeException();
     }
 
     public void pickElement(List<? extends NetworkElement> es)
