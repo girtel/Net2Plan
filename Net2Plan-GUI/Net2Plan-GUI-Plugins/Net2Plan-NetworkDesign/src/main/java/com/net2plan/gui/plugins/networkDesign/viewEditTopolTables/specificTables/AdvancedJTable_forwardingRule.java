@@ -504,7 +504,8 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         }
     }
 
-    private List<JComponent> getExtraAddOptions() {
+    @Override
+    protected List<JComponent> getExtraAddOptions() {
         List<JComponent> options = new LinkedList<JComponent>();
         NetPlan netPlan = callback.getDesign();
 
@@ -526,6 +527,18 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         if (!netPlan.hasLinks() || !netPlan.hasDemands()) ecmpRouting.setEnabled(false);
 
         return options;
+    }
+
+    @Override
+    protected List<JComponent> getForcedOptions()
+    {
+        return new LinkedList<>();
+    }
+
+    @Override
+    protected List<JComponent> getExtraOptions(ElementSelection selection)
+    {
+        return new LinkedList<>();
     }
 
     private List<Pair<Demand,Link>> getVisibleElementsInTable ()

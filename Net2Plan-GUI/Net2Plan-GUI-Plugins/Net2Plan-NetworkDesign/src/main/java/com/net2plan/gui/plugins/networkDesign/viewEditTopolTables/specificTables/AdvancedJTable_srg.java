@@ -478,7 +478,8 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         return addItem;
     }
 
-    private List<JComponent> getExtraAddOptions()
+    @Override
+    protected List<JComponent> getExtraAddOptions()
     {
         List<JComponent> options = new LinkedList<JComponent>();
         NetPlan netPlan = callback.getDesign();
@@ -857,9 +858,16 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         dialog.setVisible(true);
     }
 
-    private List<JComponent> getForcedOptions()
+    @Override
+    protected List<JComponent> getForcedOptions()
     {
-        return new LinkedList<JComponent>();
+        return new LinkedList<>();
+    }
+
+    @Override
+    protected List<JComponent> getExtraOptions(ElementSelection selection)
+    {
+        return new LinkedList<>();
     }
 
     private List<SharedRiskGroup> getVisibleElementsInTable()

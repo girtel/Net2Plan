@@ -520,7 +520,8 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         }
     }
 
-    private List<JComponent> getExtraAddOptions() {
+    @Override
+    protected List<JComponent> getExtraAddOptions() {
         List<JComponent> options = new LinkedList<JComponent>();
         NetPlan netPlan = callback.getDesign();
         if (netPlan.getNumberOfNodes() >= 2) {
@@ -674,8 +675,15 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         return options;
     }
 
-    private List<JComponent> getForcedOptions() {
-        return new LinkedList<JComponent>();
+    @Override
+    protected List<JComponent> getForcedOptions() {
+        return new LinkedList<>();
+    }
+
+    @Override
+    protected List<JComponent> getExtraOptions(ElementSelection selection)
+    {
+        return new LinkedList<>();
     }
 
     private class BroadcastDemandPerNodeActionListener implements ActionListener {

@@ -611,10 +611,9 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return addItem;
     }
 
-    private List<JComponent> getExtraAddOptions() {
-        List<JComponent> options = new LinkedList<JComponent>();
-
-        return options;
+    @Override
+    protected List<JComponent> getExtraAddOptions() {
+        return new LinkedList<>();
     }
 
     private List<JComponent> getExtraOptions(final int row, final ElementSelection selection) {
@@ -746,8 +745,15 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return options;
     }
 
-    private List<JComponent> getForcedOptions() {
-        return new LinkedList<JComponent>();
+    @Override
+    protected List<JComponent> getForcedOptions() {
+        return new LinkedList<>();
+    }
+
+    @Override
+    protected List<JComponent> getExtraOptions(ElementSelection selection)
+    {
+        return new LinkedList<>();
     }
 
 

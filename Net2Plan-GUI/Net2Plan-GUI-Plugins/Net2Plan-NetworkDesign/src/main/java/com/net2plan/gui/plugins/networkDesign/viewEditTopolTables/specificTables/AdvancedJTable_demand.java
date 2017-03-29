@@ -484,7 +484,8 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
-    private List<JComponent> getExtraAddOptions() {
+    @Override
+    protected List<JComponent> getExtraAddOptions() {
         List<JComponent> options = new LinkedList<JComponent>();
         NetPlan netPlan = callback.getDesign();
 
@@ -1013,8 +1014,15 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         return options;
     }
 
-    private List<JComponent> getForcedOptions() {
-        return new LinkedList<JComponent>();
+    @Override
+    protected List<JComponent> getForcedOptions() {
+        return new LinkedList<>();
+    }
+
+    @Override
+    protected List<JComponent> getExtraOptions(ElementSelection selection)
+    {
+        return new LinkedList<>();
     }
 
     private String joinTraversedResourcesTypes(Demand d)

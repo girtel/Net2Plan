@@ -487,7 +487,8 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
         }
     }
 
-    private List<JComponent> getExtraAddOptions() {
+    @Override
+    protected List<JComponent> getExtraAddOptions() {
         List<JComponent> options = new LinkedList<JComponent>();
         NetPlan netPlan = callback.getDesign();
 
@@ -508,6 +509,18 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
 
 
         return options;
+    }
+
+    @Override
+    protected List<JComponent> getForcedOptions()
+    {
+        return new LinkedList<>();
+    }
+
+    @Override
+    protected List<JComponent> getExtraOptions(ElementSelection selection)
+    {
+        return new LinkedList<>();
     }
 
     private class MulticastTreeMinE2EActionListener implements ActionListener {
