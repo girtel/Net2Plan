@@ -1152,6 +1152,8 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     protected abstract List<JComponent> getExtraAddOptions();
 
+    protected abstract JMenuItem getAddOption();
+
     protected abstract List<JComponent> getForcedOptions(ElementSelection selection);
 
     protected abstract List<JComponent> getExtraOptions(ElementSelection selection);

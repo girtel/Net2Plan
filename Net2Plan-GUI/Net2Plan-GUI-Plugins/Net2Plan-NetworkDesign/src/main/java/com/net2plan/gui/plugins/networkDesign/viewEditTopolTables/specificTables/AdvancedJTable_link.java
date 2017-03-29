@@ -626,7 +626,8 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
-    private JMenuItem getAddOption() {
+    @Override
+    protected JMenuItem getAddOption() {
         JMenuItem addItem = new JMenuItem("Add " + networkElementType);
         ;
         addItem.addActionListener(new ActionListener() {

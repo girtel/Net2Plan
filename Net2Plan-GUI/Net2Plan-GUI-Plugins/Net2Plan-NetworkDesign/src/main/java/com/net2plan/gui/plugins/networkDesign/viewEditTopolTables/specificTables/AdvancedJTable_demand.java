@@ -499,8 +499,8 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         return options;
     }
 
-
-    private JMenuItem getAddOption()
+    @Override
+    protected JMenuItem getAddOption()
     {
         final NetworkElementType networkElementType = NetworkElementType.DEMAND;
         JMenuItem addItem = new JMenuItem("Add " + networkElementType);

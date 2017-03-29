@@ -515,7 +515,8 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         popup.show(e.getComponent(), e.getX(), e.getY());
     }
 
-    private JMenuItem getAddOption() {
+    @Override
+    protected JMenuItem getAddOption() {
         JMenuItem addItem = addItem = new JMenuItem("Add " + networkElementType);
         addItem.addActionListener(new ActionListener() {
             @Override

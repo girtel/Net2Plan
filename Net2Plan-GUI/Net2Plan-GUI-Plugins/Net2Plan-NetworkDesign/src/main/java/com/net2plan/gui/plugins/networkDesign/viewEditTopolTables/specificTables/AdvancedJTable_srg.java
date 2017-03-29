@@ -452,7 +452,8 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
-    private JMenuItem getAddOption()
+    @Override
+    protected JMenuItem getAddOption()
     {
         JMenuItem addItem = new JMenuItem("Add " + networkElementType);
 

@@ -293,7 +293,8 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         return false;
     }
 
-    private JMenuItem getAddOption()
+    @Override
+    protected JMenuItem getAddOption()
     {
         JMenuItem addItem = new JMenuItem("Add " + networkElementType);
 
