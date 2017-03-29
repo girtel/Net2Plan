@@ -676,7 +676,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     }
 
     @Override
-    protected List<JComponent> getForcedOptions() {
+    protected List<JComponent> getForcedOptions(ElementSelection selection) {
         return new LinkedList<>();
     }
 

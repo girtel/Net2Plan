@@ -399,7 +399,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, ElementSelection selection)
+    protected void doPopup(final MouseEvent e, final int row, ElementSelection selection)
     {
         final JPopupMenu popup = new JPopupMenu();
 
@@ -454,15 +454,14 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         if (callback.getVisualizationState().isNetPlanEditable())
         {
             popup.add(this.getAddOption());
+
             for (JComponent item : getExtraAddOptions()) popup.add(item);
 
             if (!rowsInTheTable.isEmpty())
             {
                 if (!selectedNodes.isEmpty())
                 {
-                    if (popup.getSubElements().length > 0) popup.addSeparator();
-
-                    JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
+                    JMenuItem removeItem = new JMenuItem("Remove selected" + networkElementType);
                     removeItem.addActionListener(new ActionListener()
                     {
                         @Override
@@ -470,9 +469,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                         {
                             try
                             {
-                                for (Node selectedNode : selectedNodes)
-                                    selectedNode.remove();
-
+                                for (Node selectedNode : selectedNodes) selectedNode.remove();
                                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                                 callback.addNetPlanChange();
@@ -487,6 +484,15 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                     popup.add(removeItem);
                     popup.addSeparator();
                 }
+
+                List<JComponent> forcedOptions = getForcedOptions();
+                if (!forcedOptions.isEmpty())
+                {
+                    if (popup.getSubElements().length > 0) popup.addSeparator();
+                    for (JComponent item : forcedOptions) popup.add(item);
+                }
+
+                if (popup.getSubElements().length > 0) popup.addSeparator();
 
                 JMenuItem removeAllNodesFilteredOut = new JMenuItem("Remove all filtered out nodes");
                 removeAllNodesFilteredOut.addActionListener(e1 ->
@@ -528,20 +534,13 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                     for (JComponent item : extraOptions) popup.add(item);
                 }
             }
-
-            List<JComponent> forcedOptions = getForcedOptions();
-            if (!forcedOptions.isEmpty())
-            {
-                if (popup.getSubElements().length > 0) popup.addSeparator();
-                for (JComponent item : forcedOptions) popup.add(item);
-            }
         }
 
         popup.show(e.getComponent(), e.getX(), e.getY());
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, ElementSelection selection)
+    protected void showInCanvas(MouseEvent e, ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.NODE)
@@ -696,14 +695,14 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     }
 
     @Override
-    protected List<JComponent> getForcedOptions()
+    protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
         List<JComponent> options = new LinkedList<>();
 
         final int numRows = model.getRowCount();
         if (numRows > 1)
         {
-            JMenuItem showAllNodes = new JMenuItem("Show all nodes");
+            JMenuItem showAllNodes = new JMenuItem("Show selected");
             showAllNodes.addActionListener(e ->
             {
                 for (int row = 0; row < numRows; row++)

@@ -746,7 +746,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     }
 
     @Override
-    protected List<JComponent> getForcedOptions() {
+    protected List<JComponent> getForcedOptions(ElementSelection selection) {
         return new LinkedList<>();
     }
 

@@ -1136,7 +1136,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
     }
 
     @Override
-    protected List<JComponent> getForcedOptions()
+    protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
         List<JComponent> options = new LinkedList<JComponent>();
         final int numRows = model.getRowCount();

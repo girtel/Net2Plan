@@ -530,7 +530,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
     }
 
     @Override
-    protected List<JComponent> getForcedOptions()
+    protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
         return new LinkedList<>();
     }
