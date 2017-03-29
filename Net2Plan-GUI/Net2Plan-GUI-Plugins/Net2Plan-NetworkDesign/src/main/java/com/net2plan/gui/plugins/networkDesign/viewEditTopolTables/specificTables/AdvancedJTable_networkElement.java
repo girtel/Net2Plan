@@ -1477,10 +1477,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         {
             try
             {
-                JDialog dialog = new AttributeEditor(callback, networkElementType);
+                JDialog dialog = new AttributeEditor(callback, selection);
                 dialog.setVisible(true);
                 callback.updateVisualizationJustTables();
-
             } catch (Throwable ex)
             {
                 ex.printStackTrace();
