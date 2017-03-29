@@ -556,16 +556,12 @@ public class AttributeEditor extends JDialog implements ActionListener
         if (table.getModel().getColumnCount() > 2)
         {
             JButton viewAll = new JButton("View all " + type.toString() + "s");
-            viewAll.addActionListener(new ActionListener()
+            viewAll.addActionListener(e ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    getContentPane().remove(pane);
-                    getContentPane().revalidate();
+                getContentPane().remove(pane);
+                getContentPane().revalidate();
 
-                    tch.showAll();
-                }
+                tch.showAll();
             });
 
             pane.add(viewAll);

@@ -21,6 +21,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualiza
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.FixedColumnDecorator;
+import com.net2plan.gui.utils.TableColumnHider;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -1258,6 +1259,8 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     {
         assert popup != null;
         assert selection != null;
+        assert networkElementType != NetworkElementType.FORWARDING_RULE;
+        assert selection.getElementType() != NetworkElementType.FORWARDING_RULE;
 
         if (networkElementType == NetworkElementType.FORWARDING_RULE) return;
 
@@ -1470,24 +1473,24 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
             popup.add(removeAttributes);
             popup.addSeparator();
+
+            JMenuItem editAttributes = new JMenuItem("Edit attributes");
+            editAttributes.addActionListener(e1 ->
+            {
+                try
+                {
+                    JDialog dialog = new AttributeEditor(callback, selection);
+                    dialog.setVisible(true);
+                    callback.updateVisualizationJustTables();
+                } catch (Throwable ex)
+                {
+                    ex.printStackTrace();
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying attributes");
+                }
+            });
+
+            popup.add(editAttributes);
         }
-
-        JMenuItem viewAttributesAll = new JMenuItem("Edit attributes");
-        viewAttributesAll.addActionListener(e1 ->
-        {
-            try
-            {
-                JDialog dialog = new AttributeEditor(callback, selection);
-                dialog.setVisible(true);
-                callback.updateVisualizationJustTables();
-            } catch (Throwable ex)
-            {
-                ex.printStackTrace();
-                ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying attributes");
-            }
-        });
-
-        popup.add(viewAttributesAll);
     }
 
     static class ColumnComparator implements Comparator<Object>
