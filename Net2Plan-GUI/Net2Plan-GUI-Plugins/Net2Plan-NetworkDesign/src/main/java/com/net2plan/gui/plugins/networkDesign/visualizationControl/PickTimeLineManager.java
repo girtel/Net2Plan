@@ -29,7 +29,7 @@ class PickTimeLineManager
 {
     private NetPlan netPlan;
     private List<Object> timeLine;
-    private int currentElementInTimelineCursor;
+    private int timelineCursor;
 
     private final int timelineMaxSize;
 
@@ -43,7 +43,7 @@ class PickTimeLineManager
         this.timelineMaxSize = timelineMaxSize;
 
         this.timeLine = new ArrayList<>(timelineMaxSize + 1);
-        this.currentElementInTimelineCursor = -1;
+        this.timelineCursor = -1;
     }
 
     private <T> void updateTimeline(final NetPlan currentNp, final T element)
@@ -55,11 +55,11 @@ class PickTimeLineManager
         // Check pointer validity
         if (!timeLine.isEmpty())
         {
-            if (!(currentElementInTimelineCursor >= 0 && currentElementInTimelineCursor < timeLine.size()))
+            if (!(timelineCursor >= 0 && timelineCursor < timeLine.size()))
                 throw new RuntimeException("Timeline cursor has been misplaced.");
         } else
         {
-            if (currentElementInTimelineCursor != -1)
+            if (timelineCursor != -1)
                 throw new RuntimeException("Timeline cursor has been misplaced.");
         }
 
@@ -69,7 +69,7 @@ class PickTimeLineManager
             this.netPlan = currentNp;
 
             this.timeLine.clear();
-            this.currentElementInTimelineCursor = -1;
+            this.timelineCursor = -1;
         } else
         {
             // Same topology
@@ -77,31 +77,35 @@ class PickTimeLineManager
             // Sanity check
             cleanDuty();
 
-            // Do not add the same element that is currently be clicked upon.
-            if (element.equals(timeLine.get(currentElementInTimelineCursor))) return;
-
-            // If the new element if different from what is stored, remove all the elements that were stored
-            if (currentElementInTimelineCursor != (timeLine.size() - 1))
+            // Clean duty can leave the timeline empty.
+            if (!(timeLine.isEmpty() && timelineCursor == -1))
             {
-                final int nextElementCursorIndex = currentElementInTimelineCursor + 1;
+                // Do not add the same element that is currently be clicked upon.
+                if (element.equals(timeLine.get(timelineCursor))) return;
 
-                final Object nextTimelineElement = timeLine.get(nextElementCursorIndex);
-                final Object currentTimelineElement = timeLine.get(currentElementInTimelineCursor);
+                // If the new element if different from what is stored, remove all the elements that were stored
+                if (timelineCursor != (timeLine.size() - 1))
+                {
+                    final int nextElementCursorIndex = timelineCursor + 1;
 
-                if (nextTimelineElement != currentTimelineElement)
-                    timeLine.subList(nextElementCursorIndex, timeLine.size()).clear();
+                    final Object nextTimelineElement = timeLine.get(nextElementCursorIndex);
+                    final Object currentTimelineElement = timeLine.get(timelineCursor);
+
+                    if (nextTimelineElement != currentTimelineElement)
+                        timeLine.subList(nextElementCursorIndex, timeLine.size()).clear();
+                }
             }
         }
 
         /* Add the elements at the end of the list */
         timeLine.add(element);
-        currentElementInTimelineCursor++;
+        timelineCursor++;
 
         // Remove the oldest pick if the list get too big.
         if (timeLine.size() > timelineMaxSize)
         {
             timeLine.remove(0);
-            currentElementInTimelineCursor--;
+            timelineCursor--;
         }
     }
 
@@ -122,7 +126,7 @@ class PickTimeLineManager
                 if (netPlan.getNetworkElement(networkElement.getId()) == null)
                 {
                     newTimeLine.remove(networkElement);
-                    currentElementInTimelineCursor--;
+                    timelineCursor--;
                     continue;
                 }
 
@@ -134,7 +138,7 @@ class PickTimeLineManager
                 if (netPlan.getDemandFromId(forwardingRule.getFirst().getId()) == null || netPlan.getLinkFromId(forwardingRule.getSecond().getId()) == null)
                 {
                     newTimeLine.remove(forwardingRule);
-                    currentElementInTimelineCursor--;
+                    timelineCursor--;
                     continue;
                 }
 
@@ -154,7 +158,7 @@ class PickTimeLineManager
                 if (o == timeLine.get(index + 1))
                 {
                     newTimeLine.remove(o);
-                    currentElementInTimelineCursor--;
+                    timelineCursor--;
                 }
             }
         }
@@ -164,23 +168,23 @@ class PickTimeLineManager
     Object getPickNavigationBackElement()
     {
         if (timeLine.isEmpty() || this.timelineMaxSize <= 1) return null;
-        if (currentElementInTimelineCursor == 0) return null; // End of the timeline, there is no more past.
+        if (timelineCursor == 0) return null; // End of the timeline, there is no more past.
 
         // Clean the timeline before giving anything
         cleanDuty();
 
-        return timeLine.get(--currentElementInTimelineCursor);
+        return timeLine.get(--timelineCursor);
     }
 
     Object getPickNavigationForwardElement()
     {
         if (timeLine.isEmpty() || this.timelineMaxSize <= 1) return null;
-        if (currentElementInTimelineCursor == timeLine.size() - 1) return null;
+        if (timelineCursor == timeLine.size() - 1) return null;
 
         // Clean the timeline before giving anything
         cleanDuty();
 
-        return timeLine.get(++currentElementInTimelineCursor);
+        return timeLine.get(++timelineCursor);
     }
 
     void addElement(final NetPlan currentNp, final NetworkElement element)
