@@ -352,6 +352,8 @@ public class Link extends NetworkElement
 	 */
 	public double getPropagationDelayInMs()
 	{
+		if (coupledLowerLayerDemand != null) return coupledLowerLayerDemand.getWorstCasePropagationTimeInMs();
+		if (coupledLowerLayerMulticastDemand != null) return coupledLowerLayerMulticastDemand.getWorseCasePropagationTimeInMs();
 		return ((propagationSpeedInKmPerSecond == Double.MAX_VALUE) || (propagationSpeedInKmPerSecond <= 0))? 0 : 1000 * lengthInKm / propagationSpeedInKmPerSecond;
 	}
 

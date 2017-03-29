@@ -99,7 +99,6 @@ public class Route extends NetworkElement
 		if (cache_hasLoops) demand.routingCycleType = RoutingCycleType.OPEN_CYCLES;
 		this.cache_propagationDelayMs = 0;
 		this.updatePropagationAndProcessingDelayInMiliseconds();
-		demand.cache_worstCasePropagationTimeMs = Math.max(demand.cache_worstCasePropagationTimeMs, this.cache_propagationDelayMs);
 	}
 
 	boolean isDeepCopy (Route e2)
@@ -382,6 +381,7 @@ public class Route extends NetworkElement
 			else if (e instanceof Resource)
 				cache_propagationDelayMs += ((Resource) e).processingTimeToTraversingTrafficInMs;
 		}
+		demand.cache_worstCasePropagationTimeMs = Math.max(demand.cache_worstCasePropagationTimeMs, this.cache_propagationDelayMs);
 	}
 
 	/** Returns the route average propagation speed in km per second, as the ratio between the total route length and the total route delay 
@@ -636,7 +636,6 @@ public class Route extends NetworkElement
 		if (cache_hasLoops) demand.routingCycleType = RoutingCycleType.OPEN_CYCLES;
 
 		this.updatePropagationAndProcessingDelayInMiliseconds();
-		demand.cache_worstCasePropagationTimeMs = Math.max(demand.cache_worstCasePropagationTimeMs, this.cache_propagationDelayMs);
 		
 		setCarriedTraffic (newCarriedTraffic , newOccupationInformation);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
