@@ -19,8 +19,6 @@ import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.utils.Pair;
-import com.sun.istack.internal.NotNull;
-import com.sun.istack.internal.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,7 +50,7 @@ public class ElementSelection
         this.forwardingRuleList = Collections.unmodifiableList(Collections.emptyList());
     }
 
-    public ElementSelection(@NotNull final NetworkElementType elementType, final List<? extends NetworkElement> networkElements)
+    public ElementSelection(final NetworkElementType elementType, final List<? extends NetworkElement> networkElements)
     {
         if (elementType == null) throw new NullPointerException();
         this.elementType = elementType;
@@ -146,7 +144,6 @@ public class ElementSelection
         return Collections.unmodifiableList(forwardingRuleList);
     }
 
-    @Nullable
     public NetworkElementType getElementType()
     {
         return elementType;
@@ -157,7 +154,6 @@ public class ElementSelection
         return selectionType;
     }
 
-    @Nullable
     public static NetworkElementType getElementType(final List<? extends NetworkElement> networkElements)
     {
         NetworkElementType res = null, aux = null;

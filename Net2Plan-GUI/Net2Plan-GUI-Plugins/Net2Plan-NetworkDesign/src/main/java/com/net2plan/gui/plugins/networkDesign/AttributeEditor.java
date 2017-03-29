@@ -17,11 +17,13 @@ import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.TableColumnHider;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.SwingUtils;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -30,6 +32,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 
 /**
  * Utility to edit attributes from a set of elements (i.e. nodes, links, and so on).
@@ -57,8 +60,6 @@ public class AttributeEditor extends JDialog implements ActionListener {
         final Set<String> attributes = new HashSet<String>();
         String dialogHeader;
 
-        
-        
         switch (type) {
             case LAYER:
             {
@@ -454,6 +455,23 @@ public class AttributeEditor extends JDialog implements ActionListener {
         setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
         pack();
         setLocationRelativeTo(null);
+    }
+
+    /**
+     * Constructor that allows to show a selection of items.
+     *
+     * @param callback Reference to the handler of the network design
+     * @param selection List of the selected elements.
+     */
+    public AttributeEditor(final GUINetworkDesign callback, ElementSelection selection)
+    {
+        this(callback, selection.getElementType());
+
+        @Nonnull Object a = null;
+
+        final List<? extends NetworkElement> networkElements = selection.getNetworkElements();
+
+        final TableColumnHider hider = new TableColumnHider(table);
     }
 
     /**

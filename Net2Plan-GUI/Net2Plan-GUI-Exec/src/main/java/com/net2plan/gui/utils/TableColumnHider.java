@@ -26,7 +26,6 @@ import java.util.*;
  */
 public class TableColumnHider {
     private final TableColumnModel tcm;
-    private final Set<String> hiddenColumns;
     private final Map<String, TableColumn> allColumns;
 
     /**
@@ -44,8 +43,6 @@ public class TableColumnHider {
             String columnIdentifier = tcm.getColumn(i).getIdentifier().toString();
             allColumns.put(columnIdentifier, tableColumn);
         }
-
-        hiddenColumns = new LinkedHashSet<String>();
     }
 
     /**
@@ -57,7 +54,6 @@ public class TableColumnHider {
     public void hide(String columnName) {
         int index = tcm.getColumnIndex(columnName);
         TableColumn column = tcm.getColumn(index);
-        hiddenColumns.add(columnName);
         tcm.removeColumn(column);
     }
 
@@ -86,8 +82,6 @@ public class TableColumnHider {
      * @since 0.3.0
      */
     public void show(String columnName) {
-        hiddenColumns.remove(columnName);
-
         for (TableColumn tc : allColumns.values()) tcm.removeColumn(tc);
         for (TableColumn tc : allColumns.values()) {
             String columnIdentifier = tc.getIdentifier().toString();
@@ -101,8 +95,6 @@ public class TableColumnHider {
      * @since 0.3.0
      */
     public void showAll() {
-        hiddenColumns.clear();
-
         for (TableColumn tc : allColumns.values()) tcm.removeColumn(tc);
         for (TableColumn tc : allColumns.values()) tcm.addColumn(tc);
     }

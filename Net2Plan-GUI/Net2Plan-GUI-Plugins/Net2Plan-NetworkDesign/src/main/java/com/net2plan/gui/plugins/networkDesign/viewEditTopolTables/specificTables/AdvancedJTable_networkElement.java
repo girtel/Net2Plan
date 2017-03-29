@@ -73,6 +73,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     protected final JTable mainTable;
     protected final JTable fixedTable;
+
     private final JPopupMenu fixedTableMenu, mainTableMenu;
     private final JMenu showMenu;
     private final JMenuItem showAllItem, hideAllItem, resetItem, saveStateItem, loadStateItem;
@@ -83,13 +84,11 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     private JCheckBoxMenuItem lockColumn, unfixCheckBox, attributesItem, hideColumn;
     private ArrayList<JMenuItem> hiddenHeaderItems;
 
-    private final FixedColumnDecorator decorator;
     private final JScrollPane scroll;
+    private final FixedColumnDecorator decorator;
 
     private ArrayList<String> attributesColumnsNames;
     private boolean expandAttributes = false;
-    private NetPlan currentTopology = null;
-    private Map<String, Boolean> hasBeenAddedEachAttColumn = new HashMap<>();
 
     /**
      * Constructor that allows to set the table model.
@@ -154,12 +153,10 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         loadStateItem = new JMenuItem("Load tables visualization profile");
         saveStateItem = new JMenuItem("Save tables visualization profile");
 
-
         if (canExpandAttributes)
         {
             this.getModel().addTableModelListener(new TableModelListener()
             {
-
                 @Override
                 public void tableChanged(TableModelEvent e)
                 {
@@ -175,13 +172,8 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                             {
                                 value = getModel().getValueAt(selectedRow, changedColumn);
                                 if (value != null)
-                                {
-                                    currentTopology.getNetworkElement((Long) getModel().
-                                            getValueAt(selectedRow, 0)).setAttribute(title, (String) value);
-                                }
-
+                                    callback.getDesign().getNetworkElement((Long) getModel().getValueAt(selectedRow, 0)).setAttribute(title, (String) value);
                             }
-
                         }
                         callback.updateVisualizationJustTables();
                     }
@@ -344,121 +336,120 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                                 }
                             });
                         }
-
                     }
                 }
 
             });
-            showAllItem.addActionListener(new ActionListener()
-            {
 
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-
-
-                    showAllColumns();
-                    checkNewIndexes();
-                }
-            });
-            hideAllItem.addActionListener(new ActionListener()
-            {
-
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-
-                    hideAllColumns();
-                    checkNewIndexes();
-
-                }
-            });
-            resetItem.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    resetColumnsPositions();
-                    checkNewIndexes();
-                }
-            });
-            loadStateItem.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    loadTableState();
-                }
-            });
-            saveStateItem.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-
-                    try
-                    {
-                        saveTableState();
-                    } catch (XMLStreamException e1)
-                    {
-                        e1.printStackTrace();
-                    }
-                }
-            });
-
-            attributesItem.addItemListener(new ItemListener()
-            {
-                @Override
-                public void itemStateChanged(ItemEvent e)
-                {
-                    if (attributesItem.isSelected())
-                    {
-                        if (!areAttributesInDifferentColums())
-                        {
-                            attributesInDifferentColumns();
-                        }
-                    } else
-                    {
-                        if (areAttributesInDifferentColums())
-                        {
-                            attributesInOneColumn();
-                        }
-                    }
-                }
-            });
-
-            mainTable.getColumnModel().addColumnModelListener(new TableColumnModelListener()
-            {
-                @Override
-                public void columnAdded(TableColumnModelEvent e)
-                {
-                }
-
-                @Override
-                public void columnRemoved(TableColumnModelEvent e)
-                {
-                }
-
-                @Override
-                public void columnMoved(TableColumnModelEvent e)
-                {
-                    checkNewIndexes();
-                }
-
-                @Override
-                public void columnMarginChanged(ChangeEvent e)
-                {
-                }
-
-                @Override
-                public void columnSelectionChanged(ListSelectionEvent e)
-                {
-                }
-            });
+            this.buildAttributeControls();
         }
 
         this.setRowSelectionAllowed(true);
         this.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    }
+
+    private void buildAttributeControls()
+    {
+        showAllItem.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                showAllColumns();
+                checkNewIndexes();
+            }
+        });
+        hideAllItem.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                hideAllColumns();
+                checkNewIndexes();
+            }
+        });
+        resetItem.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                resetColumnsPositions();
+                checkNewIndexes();
+            }
+        });
+        loadStateItem.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                loadTableState();
+            }
+        });
+        saveStateItem.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                try
+                {
+                    saveTableState();
+                } catch (XMLStreamException ex)
+                {
+                    ErrorHandling.showErrorDialog("Error");
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        attributesItem.addItemListener(new ItemListener()
+        {
+            @Override
+            public void itemStateChanged(ItemEvent e)
+            {
+                if (attributesItem.isSelected())
+                {
+                    if (!areAttributesInDifferentColums())
+                    {
+                        attributesInDifferentColumns();
+                    }
+                } else
+                {
+                    if (areAttributesInDifferentColums())
+                    {
+                        attributesInOneColumn();
+                    }
+                }
+            }
+        });
+
+        mainTable.getColumnModel().addColumnModelListener(new TableColumnModelListener()
+        {
+            @Override
+            public void columnAdded(TableColumnModelEvent e)
+            {
+            }
+
+            @Override
+            public void columnRemoved(TableColumnModelEvent e)
+            {
+            }
+
+            @Override
+            public void columnMoved(TableColumnModelEvent e)
+            {
+                checkNewIndexes();
+            }
+
+            @Override
+            public void columnMarginChanged(ChangeEvent e)
+            {
+            }
+
+            @Override
+            public void columnSelectionChanged(ListSelectionEvent e)
+            {
+            }
+        });
     }
 
     /**
@@ -966,7 +957,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     private void attributesInDifferentColumns()
     {
-        currentTopology = callback.getDesign();
         saveColumnsPositions();
         attributesColumnsNames = getAttributesColumnsHeaders();
         boolean attributesColumnInMainTable = false;
@@ -1014,7 +1004,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     private void attributesInOneColumn()
     {
-        currentTopology = callback.getDesign();
         saveColumnsPositions();
         attributesColumnsNames = getAttributesColumnsHeaders();
         int attributesCounter = 0;
@@ -1127,40 +1116,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     {
         return fixedTable;
     }
-
-    public abstract List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesTitles);
-
-    public abstract String getTabName();
-
-    public abstract String[] getTableHeaders();
-
-    public abstract String[] getCurrentTableHeaders();
-
-    public abstract String[] getTableTips();
-
-    public abstract boolean hasElements();
-
-    public abstract int getAttributesColumnIndex();
-
-//    public abstract int[] getColumnsOfSpecialComparatorForSorting();
-
-    public abstract void setColumnRowSortingFixedAndNonFixedTable();
-
-    public abstract int getNumberOfDecoratorColumns();
-
-    public abstract ArrayList<String> getAttributesColumnsHeaders();
-
-    protected abstract List<JComponent> getExtraAddOptions();
-
-    protected abstract JMenuItem getAddOption();
-
-    protected abstract List<JComponent> getForcedOptions(ElementSelection selection);
-
-    protected abstract List<JComponent> getExtraOptions(ElementSelection selection);
-
-    protected abstract void doPopup(final MouseEvent e, final int row, ElementSelection selection);
-
-    protected abstract void showInCanvas(MouseEvent e, ElementSelection selection);
 
     public void updateView(NetPlan currentState)
     {
@@ -1717,4 +1672,35 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
+    public abstract List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesTitles);
+
+    public abstract String getTabName();
+
+    public abstract String[] getTableHeaders();
+
+    public abstract String[] getCurrentTableHeaders();
+
+    public abstract String[] getTableTips();
+
+    public abstract boolean hasElements();
+
+    public abstract int getAttributesColumnIndex();
+
+    public abstract void setColumnRowSortingFixedAndNonFixedTable();
+
+    public abstract int getNumberOfDecoratorColumns();
+
+    public abstract ArrayList<String> getAttributesColumnsHeaders();
+
+    protected abstract List<JComponent> getExtraAddOptions();
+
+    protected abstract JMenuItem getAddOption();
+
+    protected abstract List<JComponent> getForcedOptions(ElementSelection selection);
+
+    protected abstract List<JComponent> getExtraOptions(ElementSelection selection);
+
+    protected abstract void doPopup(final MouseEvent e, final int row, ElementSelection selection);
+
+    protected abstract void showInCanvas(MouseEvent e, ElementSelection selection);
 }
