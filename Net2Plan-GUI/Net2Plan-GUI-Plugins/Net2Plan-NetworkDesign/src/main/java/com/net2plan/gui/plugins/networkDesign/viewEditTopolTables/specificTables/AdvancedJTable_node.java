@@ -401,6 +401,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     @Override
     protected void doPopup(final MouseEvent e, final int row, ElementSelection selection)
     {
+        assert selection != null;
+
         final JPopupMenu popup = new JPopupMenu();
 
         if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
@@ -461,7 +463,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             {
                 if (!selectedNodes.isEmpty())
                 {
-                    JMenuItem removeItem = new JMenuItem("Remove selected" + networkElementType);
+                    JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
                     removeItem.addActionListener(new ActionListener()
                     {
                         @Override
@@ -485,12 +487,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                     popup.addSeparator();
                 }
 
-                List<JComponent> forcedOptions = getForcedOptions();
-                if (!forcedOptions.isEmpty())
-                {
-                    if (popup.getSubElements().length > 0) popup.addSeparator();
-                    for (JComponent item : forcedOptions) popup.add(item);
-                }
+                List<JComponent> forcedOptions = getForcedOptions(selection);
+                for (JComponent item : forcedOptions) popup.add(item);
 
                 if (popup.getSubElements().length > 0) popup.addSeparator();
 
@@ -525,14 +523,10 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                 });
                 popup.add(hideAllNodesFilteredOut);
 
-                addPopupMenuAttributeOptions(e, row, selection, popup);
-
                 List<JComponent> extraOptions = getExtraOptions(selection);
-                if (!extraOptions.isEmpty())
-                {
-                    if (popup.getSubElements().length > 0) popup.addSeparator();
-                    for (JComponent item : extraOptions) popup.add(item);
-                }
+                for (JComponent item : extraOptions) popup.add(item);
+
+                addPopupMenuAttributeOptions(e, row, selection, popup);
             }
         }
 
@@ -589,6 +583,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
+        assert selection != null;
+
         final List<Node> selectedNodes = (List<Node>) selection.getNetworkElements();
 
         List<JComponent> options = new LinkedList<>();
@@ -611,52 +607,6 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             });
 
             options.add(switchCoordinates);
-
-            JMenuItem xyPositionFromAttributes = new JMenuItem("Set node coordinates from attributes");
-
-            xyPositionFromAttributes.addActionListener(e ->
-            {
-                Set<String> attributeSet = new LinkedHashSet<>();
-                for (Node selectedNode : selectedNodes)
-                    attributeSet.addAll(selectedNode.getAttributes().keySet());
-
-                try
-                {
-                    if (attributeSet.isEmpty()) throw new Exception("No attribute to select");
-
-                    final JComboBox latSelector = new WiderJComboBox();
-                    final JComboBox lonSelector = new WiderJComboBox();
-                    for (String attribute : attributeSet)
-                    {
-                        latSelector.addItem(attribute);
-                        lonSelector.addItem(attribute);
-                    }
-
-                    JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[][]"));
-                    pane.add(new JLabel("X-coordinate / Longitude: "));
-                    pane.add(lonSelector, "growx, wrap");
-                    pane.add(new JLabel("Y-coordinate / Latitude: "));
-                    pane.add(latSelector, "growx, wrap");
-
-                    int result = JOptionPane.showConfirmDialog(null, pane, "Please select the attributes for coordinates", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                    if (result != JOptionPane.OK_OPTION) return;
-
-                    String latAttribute = latSelector.getSelectedItem().toString();
-                    String lonAttribute = lonSelector.getSelectedItem().toString();
-
-                    for (Node node : selectedNodes)
-                        node.setXYPositionMap(new Point2D.Double(Double.parseDouble(node.getAttribute(lonAttribute)), Double.parseDouble(node.getAttribute(latAttribute))));
-
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                    callback.addNetPlanChange();
-
-                    callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-                } catch (Throwable ex)
-                {
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving coordinates from attributes");
-                }
-            });
-            options.add(xyPositionFromAttributes);
 
             JMenuItem nameFromAttribute = new JMenuItem("Set node name from attribute");
             nameFromAttribute.addActionListener(e ->
@@ -702,44 +652,43 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
+        assert selection != null;
+
         List<JComponent> options = new LinkedList<>();
 
         final int numRows = model.getRowCount();
         if (numRows > 1)
         {
-            JMenuItem showAllNodes = new JMenuItem("Show selected");
-            showAllNodes.addActionListener(e ->
+            if (!selection.isEmpty())
             {
-                for (int row = 0; row < numRows; row++)
-                    if (model.getValueAt(row, COLUMN_SHOWHIDE) != null)
+                final List<Node> nodes = (List<Node>) selection.getNetworkElements();
+
+                JMenuItem showSelected = new JMenuItem("Show");
+                showSelected.addActionListener(e ->
+                {
+                    for (Node node : nodes)
                     {
-                        if (model.getValueAt(row, 0) instanceof LastRowAggregatedValue) continue;
-                        final long nodeId = (Long) model.getValueAt(row, 0);
-                        final Node node = callback.getDesign().getNodeFromId(nodeId);
                         callback.getVisualizationState().showOnCanvas(node);
                     }
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                callback.addNetPlanChange();
-            });
 
-            options.add(showAllNodes);
+                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.NODE));
+                    callback.addNetPlanChange();
+                });
 
-            JMenuItem hideAllNodes = new JMenuItem("Hide all nodes");
-            hideAllNodes.addActionListener(e ->
-            {
-                for (int row = 0; row < numRows; row++)
-                    if (model.getValueAt(row, COLUMN_SHOWHIDE) != null)
-                    {
-                        if (model.getValueAt(row, 0) instanceof LastRowAggregatedValue) continue;
-                        final long nodeId = (Long) model.getValueAt(row, 0);
-                        final Node node = callback.getDesign().getNodeFromId(nodeId);
+                options.add(showSelected);
+
+                JMenuItem hideSelected = new JMenuItem("Hide");
+                hideSelected.addActionListener(e ->
+                {
+                    for (Node node : nodes)
                         callback.getVisualizationState().hideOnCanvas(node);
-                    }
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                callback.addNetPlanChange();
-            });
 
-            options.add(hideAllNodes);
+                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.NODE));
+                    callback.addNetPlanChange();
+                });
+
+                options.add(hideSelected);
+            }
         }
 
         return options;

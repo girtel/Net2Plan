@@ -435,7 +435,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                 }
             }
 
-            List<JComponent> forcedOptions = getForcedOptions();
+            List<JComponent> forcedOptions = getForcedOptions(selection);
             if (!forcedOptions.isEmpty()) {
                 if (popup.getSubElements().length > 0) popup.addSeparator();
                 for (JComponent item : forcedOptions) popup.add(item);

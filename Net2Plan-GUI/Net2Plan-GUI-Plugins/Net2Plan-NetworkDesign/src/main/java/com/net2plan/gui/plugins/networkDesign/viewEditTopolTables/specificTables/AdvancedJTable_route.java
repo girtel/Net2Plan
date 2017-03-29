@@ -460,7 +460,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                 }
             }
 
-            List<JComponent> forcedOptions = getForcedOptions();
+            List<JComponent> forcedOptions = getForcedOptions(selection);
             if (!forcedOptions.isEmpty())
             {
                 if (popup.getSubElements().length > 0) popup.addSeparator();

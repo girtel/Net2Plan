@@ -1297,242 +1297,241 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-
     final protected void addPopupMenuAttributeOptions(final MouseEvent e, final int row, ElementSelection selection, JPopupMenu popup)
     {
-        if (networkElementType == NetworkElementType.FORWARDING_RULE)
-            throw new RuntimeException("Forwarding rules have no attributes");
+        assert popup != null;
+        assert selection != null;
+
+        if (networkElementType == NetworkElementType.FORWARDING_RULE) return;
 
         final List<? extends NetworkElement> selectedElements = selection.getNetworkElements();
 
-        JMenuItem addAttribute = new JMenuItem("Add/edit attribute");
-        popup.add(new JPopupMenu.Separator());
-        addAttribute.addActionListener(new ActionListener()
+        popup.addSeparator();
+
+        if (!selectedElements.isEmpty())
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
+            // Tags controls
+            JMenuItem addTag = new JMenuItem("Add tag");
+            addTag.addActionListener(e1 ->
             {
-                JTextField txt_key = new JTextField(20);
-                JTextField txt_value = new JTextField(20);
+                JTextField txt_name = new JTextField(20);
 
                 JPanel pane = new JPanel();
-                pane.add(new JLabel("Attribute: "));
-                pane.add(txt_key);
-                pane.add(Box.createHorizontalStrut(15));
-                pane.add(new JLabel("Value: "));
-                pane.add(txt_value);
+                pane.add(new JLabel("Tag: "));
+                pane.add(txt_name);
 
                 NetPlan netPlan = callback.getDesign();
 
                 while (true)
                 {
-                    int result = JOptionPane.showConfirmDialog(null, pane, "Please enter an attribute name and its value", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    int result = JOptionPane.showConfirmDialog(null, pane, "Please enter tag name", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                     if (result != JOptionPane.OK_OPTION) return;
-                    String attribute, value;
+                    String tag;
                     try
                     {
-                        if (txt_key.getText().isEmpty())
-                        {
-                            ErrorHandling.showWarningDialog("Please, insert an attribute name.", "Message");
-                            continue;
-                        }
+                        if (txt_name.getText().isEmpty()) continue;
 
-                        attribute = txt_key.getText();
-                        value = txt_value.getText();
+                        tag = txt_name.getText();
 
                         for (NetworkElement selectedElement : selectedElements)
-                            selectedElement.setAttribute(attribute, value);
+                            selectedElement.addTag(tag);
 
                         callback.updateVisualizationJustTables();
                     } catch (Throwable ex)
                     {
                         ErrorHandling.addErrorOrException(ex, getClass());
-                        ErrorHandling.showErrorDialog("Error adding/editing attribute");
+                        ErrorHandling.showErrorDialog("Error adding/editing tag");
                     }
                     break;
                 }
-            }
-        });
-        popup.add(addAttribute);
+            });
+            popup.add(addTag);
 
-        JMenuItem removeAttribute = new JMenuItem("Remove attribute");
+            JMenuItem removeTag = new JMenuItem("Remove tag");
 
-        removeAttribute.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
+            removeTag.addActionListener(new ActionListener()
             {
-                NetPlan netPlan = callback.getDesign();
-
-                try
+                @Override
+                public void actionPerformed(ActionEvent e)
                 {
-                    int itemIndex = convertRowIndexToModel(row);
-                    Object itemId;
+                    NetPlan netPlan = callback.getDesign();
 
-                    final Set<String> attributes = new HashSet<>();
-                    for (NetworkElement selectedElement : selectedElements)
+                    try
                     {
-                        attributes.addAll(selectedElement.getAttributes().keySet());
-                    }
+                        int itemIndex = convertRowIndexToModel(row);
+                        Object itemId;
 
-                    String[] attributeList = StringUtils.toArray(attributes);
+                        final Set<String> tags = new HashSet<>();
+                        for (NetworkElement selectedElement : selectedElements)
+                        {
+                            final Set<String> elementTags = selectedElement.getTags();
+                            tags.addAll(elementTags);
+                        }
 
-                    if (attributeList.length == 0) throw new Exception("No attribute to remove");
+                        String[] tagList = StringUtils.toArray(tags);
 
-                    Object out = JOptionPane.showInputDialog(null, "Please, select an attribute to remove", "Remove attribute", JOptionPane.QUESTION_MESSAGE, null, attributeList, attributeList[0]);
-                    if (out == null) return;
+                        if (tagList.length == 0) throw new Exception("No tag to remove");
 
-                    String attributeToRemove = out.toString();
+                        Object out = JOptionPane.showInputDialog(null, "Please, select a tag to remove", "Remove tag", JOptionPane.QUESTION_MESSAGE, null, tagList, tagList[0]);
+                        if (out == null) return;
 
-                    for (NetworkElement selectedElement : selectedElements)
-                        selectedElement.removeAttribute(attributeToRemove);
+                        String tagToRemove = out.toString();
 
-                    callback.updateVisualizationJustTables();
-                } catch (Throwable ex)
-                {
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attribute");
-                }
-            }
-        });
-        popup.add(removeAttribute);
+                        for (NetworkElement selectedElement : selectedElements)
+                            selectedElement.removeTag(tagToRemove);
 
-        JMenuItem removeAttributes = new JMenuItem("Remove all attributes");
+                        callback.updateVisualizationJustTables();
 
-        removeAttributes.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                NetPlan netPlan = callback.getDesign();
-                ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
-                try
-                {
-                    for (NetworkElement selectedElement : selectedElements)
-                        selectedElement.removeAllAttributes();
-
-                    if (areAttributesInDifferentColums())
+                    } catch (Throwable ex)
                     {
-                        recoverRemovedColumn("Attributes");
-                        expandAttributes = false;
-                        attributesItem.setSelected(false);
+                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing tag");
                     }
-
-                    callback.updateVisualizationJustTables();
-                } catch (Throwable ex)
-                {
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attributes");
                 }
-            }
-        });
+            });
 
-        popup.add(removeAttributes);
+            popup.add(removeTag);
 
-        popup.addSeparator();
-
-        JMenuItem viewAttributesAll = new JMenuItem("View/edit attributes");
-        viewAttributesAll.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
+            JMenuItem addAttribute = new JMenuItem("Add/Update attribute");
+            popup.add(new JPopupMenu.Separator());
+            addAttribute.addActionListener(new ActionListener()
             {
-                try
+                @Override
+                public void actionPerformed(ActionEvent e)
                 {
-                    JDialog dialog = new AttributeEditor(callback, networkElementType);
-                    dialog.setVisible(true);
-                    callback.updateVisualizationJustTables();
+                    JTextField txt_key = new JTextField(20);
+                    JTextField txt_value = new JTextField(20);
 
-                } catch (Throwable ex)
-                {
-                    ex.printStackTrace();
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying attributes");
+                    JPanel pane = new JPanel();
+                    pane.add(new JLabel("Attribute: "));
+                    pane.add(txt_key);
+                    pane.add(Box.createHorizontalStrut(15));
+                    pane.add(new JLabel("Value: "));
+                    pane.add(txt_value);
+
+                    NetPlan netPlan = callback.getDesign();
+
+                    while (true)
+                    {
+                        int result = JOptionPane.showConfirmDialog(null, pane, "Please enter an attribute name and its value", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if (result != JOptionPane.OK_OPTION) return;
+                        String attribute, value;
+                        try
+                        {
+                            if (txt_key.getText().isEmpty())
+                            {
+                                ErrorHandling.showWarningDialog("Please, insert an attribute name.", "Message");
+                                continue;
+                            }
+
+                            attribute = txt_key.getText();
+                            value = txt_value.getText();
+
+                            for (NetworkElement selectedElement : selectedElements)
+                                selectedElement.setAttribute(attribute, value);
+
+                            callback.updateVisualizationJustTables();
+                        } catch (Throwable ex)
+                        {
+                            ErrorHandling.addErrorOrException(ex, getClass());
+                            ErrorHandling.showErrorDialog("Error adding/editing attribute");
+                        }
+                        break;
+                    }
                 }
+            });
+            popup.add(addAttribute);
+
+            JMenuItem removeAttribute = new JMenuItem("Remove attribute");
+
+            removeAttribute.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    NetPlan netPlan = callback.getDesign();
+
+                    try
+                    {
+                        int itemIndex = convertRowIndexToModel(row);
+                        Object itemId;
+
+                        final Set<String> attributes = new HashSet<>();
+                        for (NetworkElement selectedElement : selectedElements)
+                        {
+                            attributes.addAll(selectedElement.getAttributes().keySet());
+                        }
+
+                        String[] attributeList = StringUtils.toArray(attributes);
+
+                        if (attributeList.length == 0) throw new Exception("No attribute to remove");
+
+                        Object out = JOptionPane.showInputDialog(null, "Please, select an attribute to remove", "Remove attribute", JOptionPane.QUESTION_MESSAGE, null, attributeList, attributeList[0]);
+                        if (out == null) return;
+
+                        String attributeToRemove = out.toString();
+
+                        for (NetworkElement selectedElement : selectedElements)
+                            selectedElement.removeAttribute(attributeToRemove);
+
+                        callback.updateVisualizationJustTables();
+                    } catch (Throwable ex)
+                    {
+                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attribute");
+                    }
+                }
+            });
+            popup.add(removeAttribute);
+
+            JMenuItem removeAttributes = new JMenuItem("Remove all attributes");
+
+            removeAttributes.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    NetPlan netPlan = callback.getDesign();
+                    ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
+                    try
+                    {
+                        for (NetworkElement selectedElement : selectedElements)
+                            selectedElement.removeAllAttributes();
+
+                        if (areAttributesInDifferentColums())
+                        {
+                            recoverRemovedColumn("Attributes");
+                            expandAttributes = false;
+                            attributesItem.setSelected(false);
+                        }
+
+                        callback.updateVisualizationJustTables();
+                    } catch (Throwable ex)
+                    {
+                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attributes");
+                    }
+                }
+            });
+
+            popup.add(removeAttributes);
+            popup.addSeparator();
+        }
+
+        JMenuItem viewAttributesAll = new JMenuItem("Edit attributes");
+        viewAttributesAll.addActionListener(e1 ->
+        {
+            try
+            {
+                JDialog dialog = new AttributeEditor(callback, networkElementType);
+                dialog.setVisible(true);
+                callback.updateVisualizationJustTables();
+
+            } catch (Throwable ex)
+            {
+                ex.printStackTrace();
+                ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying attributes");
             }
         });
 
         popup.add(viewAttributesAll);
-
-        // Tags controls
-        popup.addSeparator();
-
-        JMenuItem addTag = new JMenuItem("Add tag");
-        addTag.addActionListener(e1 ->
-        {
-            JTextField txt_name = new JTextField(20);
-
-            JPanel pane = new JPanel();
-            pane.add(new JLabel("Tag: "));
-            pane.add(txt_name);
-
-            NetPlan netPlan = callback.getDesign();
-
-            while (true)
-            {
-                int result = JOptionPane.showConfirmDialog(null, pane, "Please enter tag name", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                if (result != JOptionPane.OK_OPTION) return;
-                String tag;
-                try
-                {
-                    if (txt_name.getText().isEmpty()) continue;
-
-                    tag = txt_name.getText();
-
-                    for (NetworkElement selectedElement : selectedElements)
-                        selectedElement.addTag(tag);
-
-                    callback.updateVisualizationJustTables();
-                } catch (Throwable ex)
-                {
-                    ErrorHandling.addErrorOrException(ex, getClass());
-                    ErrorHandling.showErrorDialog("Error adding/editing tag");
-                }
-                break;
-            }
-        });
-        popup.add(addTag);
-
-        JMenuItem removeTag = new JMenuItem("Remove tag");
-
-        removeTag.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                NetPlan netPlan = callback.getDesign();
-
-                try
-                {
-                    int itemIndex = convertRowIndexToModel(row);
-                    Object itemId;
-
-                    final Set<String> tags = new HashSet<>();
-                    for (NetworkElement selectedElement : selectedElements)
-                    {
-                        final Set<String> elementTags = selectedElement.getTags();
-                        tags.addAll(elementTags);
-                    }
-
-                    String[] tagList = StringUtils.toArray(tags);
-
-                    if (tagList.length == 0) throw new Exception("No tag to remove");
-
-                    Object out = JOptionPane.showInputDialog(null, "Please, select a tag to remove", "Remove tag", JOptionPane.QUESTION_MESSAGE, null, tagList, tagList[0]);
-                    if (out == null) return;
-
-                    String tagToRemove = out.toString();
-
-                    for (NetworkElement selectedElement : selectedElements)
-                        selectedElement.removeTag(tagToRemove);
-
-                    callback.updateVisualizationJustTables();
-
-                } catch (Throwable ex)
-                {
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing tag");
-                }
-            }
-        });
-
-        popup.add(removeTag);
     }
 
     static class ColumnComparator implements Comparator<Object>

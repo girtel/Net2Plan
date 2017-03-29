@@ -505,7 +505,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                 }
             }
 
-            List<JComponent> forcedOptions = getForcedOptions();
+            List<JComponent> forcedOptions = getForcedOptions(selection);
             if (!forcedOptions.isEmpty()) {
                 if (popup.getSubElements().length > 0) popup.addSeparator();
                 for (JComponent item : forcedOptions) popup.add(item);
