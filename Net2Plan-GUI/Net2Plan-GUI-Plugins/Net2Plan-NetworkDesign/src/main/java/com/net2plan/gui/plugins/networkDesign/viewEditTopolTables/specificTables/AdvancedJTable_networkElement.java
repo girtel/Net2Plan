@@ -1269,9 +1269,12 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 if (SwingUtilities.isRightMouseButton(e))
                 {
                     doPopup(e, row, elementHolder);
-                } else
+                    return;
+                }
+
+                if (SwingUtilities.isLeftMouseButton(e))
                 {
-                    if (elementHolder.isEmpty())
+                    if (nothingSelected)
                         callback.resetPickedStateAndUpdateView();
                     else
                         SwingUtilities.invokeLater(() -> showInCanvas(e, elementHolder));

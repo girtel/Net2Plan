@@ -403,8 +403,11 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     {
         final JPopupMenu popup = new JPopupMenu();
 
-        if (selection.getElementType() != null && selection.getElementType() != NetworkElementType.NODE)
-            throw new RuntimeException("Unmatched selected items with table, selected items are of type: " + selection.getElementType());
+        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        {
+            if (selection.getElementType() != NetworkElementType.NODE)
+                throw new RuntimeException("Unmatched selected items with table, selected items are of type: " + selection.getElementType());
+        }
 
         final List<Node> rowsInTheTable = this.getVisibleElementsInTable(); // Only visible rows
         final List<Node> selectedNodes = (List<Node>) selection.getNetworkElements();
@@ -436,14 +439,15 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         }
 
         final JMenuItem tagFilter = new JMenuItem("This layer: Keep elements of tag...");
+        tagFilter.addActionListener(e1 -> dialogToFilterByTag(true));
         submenuFilters.add(tagFilter);
 
-        tagFilter.addActionListener(e1 -> dialogToFilterByTag(true));
         final JMenuItem tagFilterAllLayers = new JMenuItem("All layers: Keep elements of tag...");
-        submenuFilters.add(tagFilterAllLayers);
         tagFilterAllLayers.addActionListener(e1 -> dialogToFilterByTag(false));
+        submenuFilters.add(tagFilterAllLayers);
 
         popup.add(submenuFilters);
+
         popup.addSeparator();
 
         // Popup buttons
@@ -540,7 +544,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     public void showInCanvas(MouseEvent e, ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
-        if (selection.getElementType() != NetworkElementType.NODE) throw new RuntimeException("Unmatched selected items with table, selected items are of type: " + selection.getElementType());
+        if (selection.getElementType() != NetworkElementType.NODE)
+            throw new RuntimeException("Unmatched selected items with table, selected items are of type: " + selection.getElementType());
 
         callback.getVisualizationState().pickNode((List<Node>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
@@ -574,7 +579,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
-        return new LinkedList<JComponent>();
+        return new LinkedList<>();
     }
 
     @Override

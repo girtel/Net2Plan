@@ -45,7 +45,7 @@ public class ElementSelection
 
     public ElementSelection()
     {
-        selectionType = SelectionType.EMPTY;
+        this.selectionType = SelectionType.EMPTY;
 
         this.elementType = null;
         this.networkElementList = Collections.unmodifiableList(Collections.emptyList());
@@ -57,7 +57,7 @@ public class ElementSelection
         if (elementType == null) throw new NullPointerException();
         this.elementType = elementType;
 
-        selectionType = SelectionType.NETWORK_ELEMENT;
+        this.selectionType = SelectionType.NETWORK_ELEMENT;
 
         final NetworkElementType aux = getElementType(networkElements);
         if (aux != this.elementType) throw new RuntimeException("Given element type and list do not match up");
@@ -68,9 +68,9 @@ public class ElementSelection
 
     public ElementSelection(final List<Pair<Demand, Link>> forwardingRuleList)
     {
-        selectionType = SelectionType.FORWARDING_RULE;
-
         this.elementType = NetworkElementType.FORWARDING_RULE;
+
+        this.selectionType = SelectionType.FORWARDING_RULE;
 
         this.networkElementList = Collections.unmodifiableList(Collections.emptyList());
         this.forwardingRuleList = new ArrayList<>(forwardingRuleList);
@@ -133,7 +133,7 @@ public class ElementSelection
 
     public boolean isEmpty()
     {
-        return selectionType == SelectionType.EMPTY;
+        return selectionType == SelectionType.EMPTY || (networkElementList.isEmpty() && forwardingRuleList.isEmpty());
     }
 
     public List<? extends NetworkElement> getNetworkElements()
