@@ -134,6 +134,23 @@ public class MulticastDemand extends NetworkElement
 	}
 
 	/**
+	 * <p>Returns the worst case end-to-end length in km of this demand traffic. 
+	 * This is the worse end-to-end length in km for each of the paths from the origin 
+	 * node to each output node, among all the trees carrying traffic
+	 * of this demand. In multilayer designs, when the traffic of a multicast tree traverses a link 
+	 * that is coupled to a lower layer demand,
+	 * the link length taken is the worst case length of the underlying demand.</p>
+	 * @return see above
+	 */
+	public double getWorstCaseLengthInKm ()
+	{
+		double maxLengthInKm = 0;
+		for (MulticastTree t : this.cache_multicastTrees)
+			maxLengthInKm = Math.max(maxLengthInKm, t.getTreeMaximumPathLengthInKm()); 
+		return maxLengthInKm;
+	}
+
+	/**
 	 * <p>Returns {@code true} if the traffic of the demand is traversing an oversubscribed {@link com.net2plan.interfaces.networkDesign.Link Link}.</p>
 	 * @return {@code True} if the traffic of the demand is traversing an oversubscribed, {@code false} otherwise
 	 */
@@ -432,10 +449,9 @@ public class MulticastDemand extends NetworkElement
 	 * defined, in any multicast tree. If one of these paths contains a failed link, none of these 
 	 * links of such multicast tree are considered.
 	 * @param egressNode the egress node
-	 * @param assumeNoFailureState in this case, the links are computed as if all network link/nodes are in no-failure state
 	 * @return see above
 	 */
-	public Set<Link> getLinksThisLayerPotentiallyCarryingTraffic  (Node egressNode , boolean assumeNoFailureState)
+	public Set<Link> getLinksThisLayerPotentiallyCarryingTraffic  (Node egressNode)
 	{
 		checkAttachedToNetPlanObject();
 		if (!this.egressNodes.contains(egressNode)) throw new Net2PlanException ("This is not an egress node of the multicast demand");
@@ -444,7 +460,7 @@ public class MulticastDemand extends NetworkElement
 		for (MulticastTree t : cache_multicastTrees)
 		{
 			List<Link> pathToTarget = t.getSeqLinksToEgressNode(egressNode);
-			if (!assumeNoFailureState && !netPlan.isUp(pathToTarget)) continue;
+			if (!netPlan.isUp(pathToTarget)) continue;
 			res.addAll(pathToTarget);
 		}
 		return res;

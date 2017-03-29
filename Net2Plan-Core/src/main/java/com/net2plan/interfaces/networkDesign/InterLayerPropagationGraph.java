@@ -34,14 +34,9 @@ public class InterLayerPropagationGraph
 		public String toString () { return "d: " + d  + ", e: " + e + ", MD: " + mdn; }
 	}
 
-	private final boolean assumeNonFailureState;
 	private final Set<IPGNode> initialIPGVertices;
 	private Map<Demand,IPGNode> demand2IGPVertexMap;
 	
-	public boolean isAssumeNonFailureState() 
-	{
-		return this.assumeNonFailureState;
-	}
 	public Set<IPGNode> getInitialIPGVertices() 
 	{
 		return this.initialIPGVertices;
@@ -70,9 +65,8 @@ public class InterLayerPropagationGraph
 	private final boolean upWardsTrueDownwardsFalse;
 	private final DirectedAcyclicGraph<IPGNode, Object> interLayerPropagationGraph;
 	public InterLayerPropagationGraph (Set<Demand> initialDemands , Set<Link> initialLinks ,
-			Set<Pair<MulticastDemand,Node>> initialMDemands , boolean upWards , boolean assumeNonFailureState)
+			Set<Pair<MulticastDemand,Node>> initialMDemands , boolean upWards)
 	{
-		this.assumeNonFailureState = assumeNonFailureState;
 		this.interLayerPropagationGraph  = new DirectedAcyclicGraph<IPGNode, Object>(Object.class);
 		this.demand2IGPVertexMap = new HashMap<> ();
 		this.link2IGPVertexMap = new HashMap<> ();
@@ -125,14 +119,14 @@ public class InterLayerPropagationGraph
 		else if (initialNode.isDemand())
 		{
 			final Demand d = initialNode.getDemand();
-			Pair<Set<Link>,Set<Link>> thisLayerLinksTraversingSameTrafficInfo = d.getLinksThisLayerPotentiallyCarryingTraffic(this.assumeNonFailureState);
+			Pair<Set<Link>,Set<Link>> thisLayerLinksTraversingSameTrafficInfo = d.getLinksThisLayerPotentiallyCarryingTraffic();
 			for (Link downGraphNodeLink : Sets.union(thisLayerLinksTraversingSameTrafficInfo.getFirst(), thisLayerLinksTraversingSameTrafficInfo.getSecond()))
 				addEdgeAddingNewVertexAndPropagatingIfNeeded(downGraphNodeLink, initialNode, this.upWardsTrueDownwardsFalse);
 		}
 		else if (initialNode.isMulticastFlow())
 		{
 			final Pair<MulticastDemand,Node> mPair = initialNode.getMulticastDemandAndNode();
-			final Set<Link> downGraphNodeLinks = mPair.getFirst().getLinksThisLayerPotentiallyCarryingTraffic(mPair.getSecond(), this.assumeNonFailureState);
+			final Set<Link> downGraphNodeLinks = mPair.getFirst().getLinksThisLayerPotentiallyCarryingTraffic(mPair.getSecond());
 			for (Link e : downGraphNodeLinks)
 				addEdgeAddingNewVertexAndPropagatingIfNeeded(e, initialNode, this.upWardsTrueDownwardsFalse);
 		}
@@ -151,7 +145,7 @@ public class InterLayerPropagationGraph
 		{
 			final Link e = initialNode.getLink();
 			Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> thisLayerLinksTraversingSameTrafficInfo = 
-					e.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (this.assumeNonFailureState);
+					e.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  ();
 			final Set<Demand> demandsPuttingPrimaryOrBackupTraffic = Sets.union(thisLayerLinksTraversingSameTrafficInfo.getFirst().keySet() , thisLayerLinksTraversingSameTrafficInfo.getSecond().keySet());
 			final Set<Pair<MulticastDemand,Node>> mDemandsAndNodesPuttingTraffic = thisLayerLinksTraversingSameTrafficInfo.getThird().keySet();
 			for (Demand upGraphNodeDemand : demandsPuttingPrimaryOrBackupTraffic)

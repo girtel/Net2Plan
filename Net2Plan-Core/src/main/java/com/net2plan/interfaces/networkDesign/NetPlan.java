@@ -459,11 +459,6 @@ public class NetPlan extends NetworkElement
         egressNode.cache_nodeIncomingDemands.add(demand);
         ingressNode.cache_nodeOutgoingDemands.add(demand);
 
-        if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
-        {
-            layer.forwardingRulesNoFailureState_f_de = DoubleFactory2D.sparse.appendRow(layer.forwardingRulesNoFailureState_f_de, DoubleFactory1D.sparse.make(layer.links.size()));
-            layer.forwardingRulesCurrentFailureState_x_de = DoubleFactory2D.sparse.appendRow(layer.forwardingRulesCurrentFailureState_x_de, DoubleFactory1D.sparse.make(layer.links.size()));
-        }
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return demand;
     }
@@ -647,16 +642,6 @@ public class NetPlan extends NetworkElement
         originNode.cache_nodeOutgoingLinks.add(link);
         destinationNode.cache_nodeIncomingLinks.add(link);
 
-        if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
-        {
-            layer.forwardingRulesNoFailureState_f_de = DoubleFactory2D.sparse.appendColumn(layer.forwardingRulesNoFailureState_f_de, DoubleFactory1D.sparse.make(layer.demands.size()));
-            layer.forwardingRulesCurrentFailureState_x_de = DoubleFactory2D.sparse.appendColumn(layer.forwardingRulesCurrentFailureState_x_de, DoubleFactory1D.sparse.make(layer.demands.size()));
-            layer.forwardingRules_Aout_ne = DoubleFactory2D.sparse.appendColumn(layer.forwardingRules_Aout_ne, DoubleFactory1D.sparse.make(netPlan.nodes.size()));
-            layer.forwardingRules_Ain_ne = DoubleFactory2D.sparse.appendColumn(layer.forwardingRules_Ain_ne, DoubleFactory1D.sparse.make(netPlan.nodes.size()));
-            layer.forwardingRules_Aout_ne.set(originNode.index, layer.forwardingRules_Aout_ne.columns() - 1, 1.0);
-            layer.forwardingRules_Ain_ne.set(destinationNode.index, layer.forwardingRules_Ain_ne.columns() - 1, 1.0);
-        }
-
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return link;
     }
@@ -838,15 +823,6 @@ public class NetPlan extends NetworkElement
         nodes.add(node);
         cache_id2NodeMap.put(nodeId, node);
 
-        for (NetworkLayer layer : layers)
-        {
-            final int E = layer.links.size();
-            if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
-            {
-                layer.forwardingRules_Aout_ne = DoubleFactory2D.sparse.appendRow(layer.forwardingRules_Aout_ne, DoubleFactory1D.sparse.make(E));
-                layer.forwardingRules_Ain_ne = DoubleFactory2D.sparse.appendRow(layer.forwardingRules_Ain_ne, DoubleFactory1D.sparse.make(E));
-            }
-        }
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return node;
     }
@@ -1400,8 +1376,8 @@ public class NetPlan extends NetworkElement
                 throw new RuntimeException("Unknown parameter " + parameter);
         }
 
-        final DoubleMatrix2D Aout_ne = (layer.routingType == RoutingType.SOURCE_ROUTING) ? getMatrixNodeLinkOutgoingIncidence(layer) : layer.forwardingRules_Aout_ne;
-        final DoubleMatrix2D Ain_ne = (layer.routingType == RoutingType.SOURCE_ROUTING) ? getMatrixNodeLinkIncomingIncidence(layer) : layer.forwardingRules_Ain_ne;
+        final DoubleMatrix2D Aout_ne = getMatrixNodeLinkOutgoingIncidence(layer);
+        final DoubleMatrix2D Ain_ne = getMatrixNodeLinkIncomingIncidence(layer);
 
         for (MulticastDemand d : layer.multicastDemands)
         {
@@ -2231,7 +2207,8 @@ public class NetPlan extends NetworkElement
         checkInThisNetPlan(demand);
         checkInThisNetPlanAndLayer(link, demand.layer);
         demand.layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
-        return demand.layer.forwardingRulesCurrentFailureState_x_de.get(demand.index, link.index);
+        final Pair<Double,Double> traff = demand.cacheHbH_normCarriedOccupiedPerLinkCurrentState.get(link);
+        return traff == null? 0 : traff.getSecond();
     }
 
     /**
@@ -2248,12 +2225,9 @@ public class NetPlan extends NetworkElement
         layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
 
         Map<Pair<Demand, Link>, Double> res = new HashMap<Pair<Demand, Link>, Double>();
-        IntArrayList ds = new IntArrayList();
-        IntArrayList es = new IntArrayList();
-        DoubleArrayList vals = new DoubleArrayList();
-        layer.forwardingRulesNoFailureState_f_de.getNonZeros(ds, es, vals);
-        for (int cont = 0; cont < ds.size(); cont++)
-            res.put(Pair.of(layer.demands.get(ds.get(cont)), layer.links.get(es.get(cont))), vals.get(cont));
+        for (Demand d : netPlan.getDemands())
+        	for (Entry<Link,Double> fr : d.cacheHbH_frs.entrySet())
+        		res.put(Pair.of(d, fr.getKey()), fr.getValue());
         return res;
     }
 
@@ -2270,7 +2244,8 @@ public class NetPlan extends NetworkElement
         checkInThisNetPlanAndLayer(demand, layer);
         checkInThisNetPlanAndLayer(link, layer);
         layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
-        return layer.forwardingRulesNoFailureState_f_de.get(demand.index, link.index);
+        final Double fr = demand.cacheHbH_frs.get(link);
+        return fr == null? 0 : fr;
     }
 
     /**
@@ -2647,12 +2622,19 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix2D getMatrixDemand2LinkTrafficCarried(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
-            return layer.forwardingRulesCurrentFailureState_x_de.copy();
         DoubleMatrix2D x_de = DoubleFactory2D.sparse.make(layer.demands.size(), layer.links.size());
-        for (Route r : layer.routes)
-            for (Link e : r.cache_seqLinksRealPath)
-                x_de.set(r.demand.index, e.index, x_de.get(r.demand.index, e.index) + r.getCarriedTraffic());
+        if (layer.isSourceRouting())
+        {
+            for (Route r : layer.routes)
+                for (Link e : r.cache_seqLinksRealPath)
+                    x_de.set(r.demand.index, e.index, x_de.get(r.demand.index, e.index) + r.getCarriedTraffic());
+        }
+        else
+        {
+        	for (Demand d : layer.demands)
+        		for (Entry<Link,Pair<Double,Double>> xde : d.cacheHbH_normCarriedOccupiedPerLinkCurrentState.entrySet())
+        			x_de.set(d.index, xde.getKey().index, xde.getValue().getSecond());
+        }
         return x_de;
     }
 
@@ -2735,7 +2717,14 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix2D getMatrixDemandBasedForwardingRules(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) return layer.forwardingRulesNoFailureState_f_de.copy();
+        if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
+        {
+        	final DoubleMatrix2D f_de = DoubleFactory2D.sparse.make(layer.demands.size() , layer.links.size());
+        	for (Demand d : layer.demands)
+        		for (Entry<Link,Double> fde : d.cacheHbH_frs.entrySet())
+        			f_de.set(d.index, fde.getKey().index, fde.getValue());
+        	return f_de;
+        }
         else
             return GraphUtils.convert_xde2fde(nodes, layer.links, layer.demands, GraphUtils.convert_xp2xde(layer.links, layer.demands, layer.routes));
     }
@@ -2752,7 +2741,7 @@ public class NetPlan extends NetworkElement
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayer);
         DoubleMatrix2D x_te = null;
         if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
-            x_te = GraphUtils.convert_xde2xte(nodes, layer.links, layer.demands, layer.forwardingRulesNoFailureState_f_de);
+            x_te = GraphUtils.convert_xde2xte(nodes, layer.links, layer.demands, getMatrixDemandBasedForwardingRules(layer));
         else
             x_te = GraphUtils.convert_xp2xte(nodes, layer.links, layer.demands, layer.routes);
         return GraphUtils.convert_xte2fte(nodes, layer.links, x_te);
@@ -3811,11 +3800,7 @@ public class NetPlan extends NetworkElement
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
-        IntArrayList ds = new IntArrayList();
-        IntArrayList es = new IntArrayList();
-        DoubleArrayList vals = new DoubleArrayList();
-        layer.forwardingRulesNoFailureState_f_de.getNonZeros(ds, es, vals);
-        return ds.size();
+        return layer.demands.stream().mapToInt(d->d.cacheHbH_frs.size()).sum();
     }
 
     /**
@@ -4948,11 +4933,7 @@ public class NetPlan extends NetworkElement
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
-        IntArrayList rows = new IntArrayList();
-        IntArrayList cols = new IntArrayList();
-        DoubleArrayList vals = new DoubleArrayList();
-        layer.forwardingRulesNoFailureState_f_de.getNonZeros(rows, cols, vals);
-        return (rows.size() != 0);
+        return getNumberOfForwardingRules(layer) > 0;
     }
 
     /**
@@ -5216,16 +5197,21 @@ public class NetPlan extends NetworkElement
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
 
-        layer.forwardingRulesNoFailureState_f_de = DoubleFactory2D.sparse.make(layer.demands.size(), layer.links.size());
-        layer.forwardingRulesCurrentFailureState_x_de = DoubleFactory2D.sparse.make(layer.demands.size(), layer.links.size());
         for (Demand d : layer.demands)
         {
+        	d.cacheHbH_frs.clear();
+        	d.cacheHbH_linksPerNodeWithNonZeroFr.clear();
+        	d.cacheHbH_normCarriedOccupiedPerLinkCurrentState.clear();
+        	d.cache_worstCaseLengthInKm = Double.MAX_VALUE;
+        	d.cache_worstCasePropagationTimeMs = Double.MAX_VALUE;
             d.routingCycleType = RoutingCycleType.LOOPLESS;
             d.carriedTraffic = 0;
             if (d.coupledUpperLayerLink != null) d.coupledUpperLayerLink.capacity = d.carriedTraffic;
         }
         for (Link e : layer.links)
         {
+        	e.cacheHbH_frs.clear();
+        	e.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.clear();
             e.cache_carriedTraffic = e.getMulticastCarriedTraffic();
             e.cache_occupiedCapacity = e.getMulticastOccupiedLinkCapacity();
         }
@@ -5751,22 +5737,18 @@ public class NetPlan extends NetworkElement
                 {
                     XMLUtils.indent(writer, 2);
                     writer.writeStartElement("hopByHopRouting");
-                    IntArrayList rows = new IntArrayList();
-                    IntArrayList cols = new IntArrayList();
-                    DoubleArrayList vals = new DoubleArrayList();
-                    layer.forwardingRulesNoFailureState_f_de.getNonZeros(rows, cols, vals);
-                    for (int cont = 0; cont < rows.size(); cont++)
-                    {
-                        final int indexDemand = rows.get(cont);
-                        final int indexLink = cols.get(cont);
-                        final double splittingRatio = vals.get(cont);
-                        XMLUtils.indent(writer, 3);
-                        writer.writeEmptyElement("forwardingRule");
-                        writer.writeAttribute("demandId", Long.toString(layer.demands.get(indexDemand).id));
-                        writer.writeAttribute("linkId", Long.toString(layer.links.get(indexLink).id));
-                        writer.writeAttribute("splittingRatio", Double.toString(splittingRatio));
-                    }
-
+                    for (Demand d : layer.demands)
+                    	for (Entry<Link,Double> fr : d.cacheHbH_frs.entrySet())
+                    	{
+                            final int indexDemand = d.index;
+                            final int indexLink = fr.getKey().index;
+                            final double splittingRatio = fr.getValue();
+                            XMLUtils.indent(writer, 3);
+                            writer.writeEmptyElement("forwardingRule");
+                            writer.writeAttribute("demandId", Long.toString(layer.demands.get(indexDemand).id));
+                            writer.writeAttribute("linkId", Long.toString(layer.links.get(indexLink).id));
+                            writer.writeAttribute("splittingRatio", Double.toString(splittingRatio));
+                    	}
                     XMLUtils.indent(writer, 2);
                     writer.writeEndElement();
                 }
@@ -5954,25 +5936,26 @@ public class NetPlan extends NetworkElement
                     affectedLinks.addAll(node.cache_nodeIncomingLinks);
                 }
 
-        Set<NetworkLayer> affectedLayersHopByHopRouting = new HashSet<NetworkLayer>();
+        Set<Demand> affectedDemandsHopByHopRouting = new HashSet<>();
         Set<Route> affectedRoutesSourceRouting = new HashSet<Route>();
         Set<MulticastTree> affectedTrees = new HashSet<MulticastTree>();
 
+        System.out.println("affectedLinks: " + affectedLinks);
         for (Link link : affectedLinks)
         {
             if (link.layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
             {
-                affectedLayersHopByHopRouting.add(link.layer);
+            	affectedDemandsHopByHopRouting.addAll(link.cacheHbH_frs.keySet());
             } else
             {
                 affectedRoutesSourceRouting.addAll(link.cache_traversingRoutes.keySet());
             }
             affectedTrees.addAll(link.cache_traversingTrees);
         }
+        System.out.println("affectedDemandsHopByHopRouting: " + affectedDemandsHopByHopRouting);
 
 //		System.out.println ("affected routes: " + affectedRoutesSourceRouting);
-        for (NetworkLayer affectedLayer : affectedLayersHopByHopRouting)
-            for (Demand d : affectedLayer.demands) d.layer.updateHopByHopRoutingDemand(d);
+        for (Demand d : affectedDemandsHopByHopRouting) d.updateHopByHopRoutingToGivenFrs(d.cacheHbH_frs);
         netPlan.updateFailureStateRoutesAndTrees(affectedRoutesSourceRouting);
         netPlan.updateFailureStateRoutesAndTrees(affectedTrees);
 
@@ -6017,29 +6000,20 @@ public class NetPlan extends NetworkElement
         checkIsModifiable();
         checkInThisNetPlan(demand);
         final NetworkLayer layer = demand.layer;
-        final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
         checkInThisNetPlanAndLayer(link, demand.layer);
         layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
         if (splittingRatio < 0) throw new Net2PlanException("Splitting ratio must be greater or equal than zero");
         if (splittingRatio > 1) throw new Net2PlanException("Splitting ratio must be lower or equal than one");
-        double sumOutFde = 0;
-        for (Link e : link.originNode.getOutgoingLinks(layer))
-            sumOutFde += layer.forwardingRulesNoFailureState_f_de.get(demand.index, e.index);
-        final double previousValueFr = layer.forwardingRulesNoFailureState_f_de.get(demand.index, link.index);
-        if (sumOutFde + splittingRatio - previousValueFr > 1 + PRECISION_FACTOR)
+        final double sumOutFde = demand.cacheHbH_frs.entrySet().stream().filter(e->e.getKey().getOriginNode().equals(link.getOriginNode())).mapToDouble(e->e.getValue()).sum();
+        Double previousValueFr = demand.cacheHbH_frs.get(link); if (previousValueFr == null) previousValueFr = 0.0;
+        if (sumOutFde + splittingRatio - previousValueFr > 1 + Configuration.precisionFactor)
             throw new Net2PlanException("The sum of splitting factors for outgoing links cannot exceed one");
-
-        final double oldSplittingRatio = layer.forwardingRulesNoFailureState_f_de.get(demand.index, link.index);
-        layer.forwardingRulesNoFailureState_f_de.set(demand.index, link.index, splittingRatio);
-        try
-        {
-            layer.updateHopByHopRoutingDemand(demand);
-        } catch (Exception e)
-        {
-            layer.forwardingRulesNoFailureState_f_de.set(demand.index, link.index, oldSplittingRatio);
-            throw e;
-        }
-
+        Map<Link,Double> newFrs = new HashMap<> (demand.cacheHbH_frs);
+        if (splittingRatio == 0)
+        	newFrs.remove(link);
+        else
+        	newFrs.put(link ,  splittingRatio);
+        demand.updateHopByHopRoutingToGivenFrs(newFrs);
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return previousValueFr;
     }
@@ -6063,42 +6037,45 @@ public class NetPlan extends NetworkElement
         NetworkLayer layer = demands.iterator().next().layer;
         checkInThisNetPlanAndLayer(demands, layer);
         checkInThisNetPlanAndLayer(links, layer);
-        for (double sf : splittingFactors)
-            if ((sf < 0) || (sf > 1))
-                throw new Net2PlanException("Splitting ratio must be greater or equal than zero and lower or equal than one");
-        layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
-
-        final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-        DoubleMatrix2D original_fde = layer.forwardingRulesNoFailureState_f_de.copy();
-
+        
+        /* Initialize the map with existing demands */
+        Map<Demand,Map<Link,Double>> newForwardingRules = new HashMap<> ();
+        for (Demand d : layer.demands) newForwardingRules.put(d, d.cacheHbH_frs);
+        
+        /* Update with new demands */
         Iterator<Demand> it_d = demands.iterator();
         Iterator<Link> it_e = links.iterator();
         Iterator<Double> it_sf = splittingFactors.iterator();
-        Set<Demand> modifiedDemands = new HashSet<Demand>();
         while (it_d.hasNext())
         {
             final Demand demand = it_d.next();
             final Link link = it_e.next();
             final double splittingFactor = it_sf.next();
-            if (includeUnusedRules || (splittingFactor > 1E-5))
-            {
-                if (splittingFactor != layer.forwardingRulesNoFailureState_f_de.get(demand.index, link.index))
-                {
-                    layer.forwardingRulesNoFailureState_f_de.set(demand.index, link.index, splittingFactor);
-                    modifiedDemands.add(demand);
-                }
-            }
+            if (splittingFactor < Configuration.precisionFactor) continue;
+            if (splittingFactor > 1 || splittingFactor < 0) throw new Net2PlanException ("Split factors must be between 0 and 1");
+            Map<Link,Double> frMap = newForwardingRules.get(demand);
+            if (frMap == null) { frMap = new HashMap <> (); newForwardingRules.put(demand, frMap); }
+            frMap.put(link, splittingFactor);
         }
 
-        DoubleMatrix2D A_dn = layer.forwardingRulesNoFailureState_f_de.zMult(layer.forwardingRules_Aout_ne, null, 1, 0, false, true); // traffic of demand d that leaves node n
-        if (A_dn.size() > 0) if (A_dn.getMaxLocation()[0] > 1 + PRECISION_FACTOR)
+        /* Check if the update rules are valid */
+        final Map<Pair<Node,Demand>,Double> sumOutFrs = new HashMap<> ();
+        for (Demand d : newForwardingRules.keySet())
         {
-            layer.forwardingRulesNoFailureState_f_de = original_fde;
-            throw new Net2PlanException("The sum of the splitting factors of the output links of a node cannot exceed one");
+        	for (Entry<Link,Double> fr : newForwardingRules.get(d).entrySet())
+        	{
+        		final Link e = fr.getKey();
+        		final double split = fr.getValue();
+                Double sumOutSoFar = sumOutFrs.get(Pair.of(e.getOriginNode(), d));
+                sumOutFrs.put(Pair.of(e.getOriginNode(), d), split + (sumOutSoFar == null? 0 : sumOutSoFar));
+        	}
         }
-
-        for (Demand demand : modifiedDemands)
-            layer.updateHopByHopRoutingDemand(demand);
+        for (double val : sumOutFrs.values()) if (val > 1 + Configuration.precisionFactor)
+        	throw new Net2PlanException ();
+        
+        for (Demand d : newForwardingRules.keySet())
+        	d.updateHopByHopRoutingToGivenFrs(newForwardingRules.get(d));
+        
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 
@@ -6120,21 +6097,37 @@ public class NetPlan extends NetworkElement
         int E = layer.links.size();
         if (f_de.rows() != D || f_de.columns() != E)
             throw new Net2PlanException("'f_de' should be a " + D + " x" + E + " matrix (demands x links)");
+        
         if ((D == 0) || (E == 0))
-        {
-            layer.forwardingRulesNoFailureState_f_de = f_de;
             return;
-        }
+
         if ((D > 0) && (E > 0))
             if ((f_de.getMinLocation()[0] < -1e-3) || (f_de.getMaxLocation()[0] > 1 + 1e-3))
                 throw new Net2PlanException("Splitting ratios must be greater or equal than zero and lower or equal than one");
-        final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-        DoubleMatrix2D A_dn = layer.forwardingRulesNoFailureState_f_de.zMult(layer.forwardingRules_Aout_ne, null, 1, 0, false, true); // traffic of demand d that leaves node n
-        if (A_dn.size() > 0) if (A_dn.getMaxLocation()[0] > 1 + PRECISION_FACTOR)
+        final DoubleMatrix2D Aout_ne = netPlan.getMatrixNodeLinkOutgoingIncidence(layer);
+        final DoubleMatrix2D A_dn = f_de.zMult(Aout_ne, null, 1, 0, false, true); // traffic of demand d that leaves node n
+        if (A_dn.size() > 0) if (A_dn.getMaxLocation()[0] > 1 + Configuration.precisionFactor)
             throw new Net2PlanException("The sum of the splitting factors of the output links of a node cannot exceed one");
 
-        layer.forwardingRulesNoFailureState_f_de = f_de;
-        for (Demand d : layer.demands) layer.updateHopByHopRoutingDemand(d);
+        IntArrayList ds = new IntArrayList();
+        IntArrayList es = new IntArrayList();
+        DoubleArrayList splits = new DoubleArrayList();
+        f_de.getNonZeros(ds, es, splits);
+        Map<Demand,Map<Link,Double>> newFrs = new HashMap<> ();
+        for (int cont = 0; cont < ds.size() ; cont ++)
+        {
+            final Demand demand = layer.demands.get(ds.get(cont));
+            final Link link = layer.links.get(es.get(cont));
+            final double splittingFactor = splits.get(cont);
+            if (splittingFactor < Configuration.precisionFactor) continue;
+            if (splittingFactor > 1 || splittingFactor < 0) throw new Net2PlanException ("Split factors must be between 0 and 1");
+            Map<Link,Double> frMap = newFrs.get(demand);
+            if (frMap == null) { frMap = new HashMap <> (); newFrs.put(demand, frMap); }
+            frMap.put(link, splittingFactor);
+        }
+
+        for (Demand d : layer.demands)
+        	d.updateHopByHopRoutingToGivenFrs(newFrs.containsKey(d)? newFrs.get(d) : new HashMap<> ());
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 
@@ -6415,47 +6408,59 @@ public class NetPlan extends NetworkElement
         {
             case HOP_BY_HOP_ROUTING:
             {
-                layer.forwardingRulesCurrentFailureState_x_de = GraphUtils.convert_xp2xde(layer.links, layer.demands, layer.routes);
-                layer.forwardingRules_Aout_ne = this.getMatrixNodeLinkOutgoingIncidence(layer);
-                layer.forwardingRules_Ain_ne = this.getMatrixNodeLinkIncomingIncidence(layer);
-                layer.forwardingRulesNoFailureState_f_de = DoubleFactory2D.sparse.make(layer.demands.size(), layer.links.size());
-                DoubleMatrix2D A_dn = layer.forwardingRulesCurrentFailureState_x_de.zMult(layer.forwardingRules_Aout_ne, null, 1, 0, false, true); // traffic of demand d that leaves node n
+            	Map<Demand,Map<Link,Double>> newFrs = GraphUtils.convert_xp2fdeMap(layer.demands, layer.routes);
+//                layer.forwardingRulesCurrentFailureState_x_de = GraphUtils.convert_xp2xde(layer.links, layer.demands, layer.routes);
+//                layer.forwardingRulesNoFailureState_f_de = DoubleFactory2D.sparse.make(layer.demands.size(), layer.links.size());
+//                DoubleMatrix2D A_dn = layer.forwardingRulesCurrentFailureState_x_de.zMult(layer.forwardingRules_Aout_ne, null, 1, 0, false, true); // traffic of demand d that leaves node n
                 removeAllRoutes(layer);
                 layer.routingType = RoutingType.HOP_BY_HOP_ROUTING;
-
-                IntArrayList ds = new IntArrayList();
-                IntArrayList es = new IntArrayList();
-                DoubleArrayList trafs = new DoubleArrayList();
-                layer.forwardingRulesCurrentFailureState_x_de.getNonZeros(ds, es, trafs);
-                for (int cont = 0; cont < ds.size(); cont++)
-                {
-                    final int d = ds.get(cont);
-                    final int e = es.get(cont);
-                    double outTraf = A_dn.get(d, layer.links.get(e).originNode.index);
-                    layer.forwardingRulesNoFailureState_f_de.set(d, e, outTraf == 0 ? 0 : trafs.get(cont) / outTraf);
-                }
-                /* update link and demand carried traffics, and demand routing cycle type */
-                layer.forwardingRulesCurrentFailureState_x_de.assign(0); // this is recomputed inside next call
-                for (Demand d : layer.demands) layer.updateHopByHopRoutingDemand(d);
-
+                System.out.println(newFrs);
+                for (Demand d : layer.demands)
+                	d.updateHopByHopRoutingToGivenFrs(newFrs.get(d));
+//                
+//                IntArrayList ds = new IntArrayList();
+//                IntArrayList es = new IntArrayList();
+//                DoubleArrayList trafs = new DoubleArrayList();
+//                layer.forwardingRulesCurrentFailureState_x_de.getNonZeros(ds, es, trafs);
+//                for (int cont = 0; cont < ds.size(); cont++)
+//                {
+//                    final int d = ds.get(cont);
+//                    final int e = es.get(cont);
+//                    double outTraf = A_dn.get(d, layer.links.get(e).originNode.index);
+//                    layer.forwardingRulesNoFailureState_f_de.set(d, e, outTraf == 0 ? 0 : trafs.get(cont) / outTraf);
+//                }
+//                /* update link and demand carried traffics, and demand routing cycle type */
+//                layer.forwardingRulesCurrentFailureState_x_de.assign(0); // this is recomputed inside next call
+//                for (Demand d : layer.demands) layer.updateHopByHopRoutingDemand(d);
+//
                 break;
             }
 
             case SOURCE_ROUTING:
             {
-                layer.routingType = RoutingType.SOURCE_ROUTING;
                 if (!layer.routes.isEmpty()) throw new RuntimeException ();
+                final DoubleMatrix2D trafficInLinks_xde = getMatrixDemand2LinkTrafficCarried(layer);
+                System.out.println("trafficInLinks_xde: " + trafficInLinks_xde);
+                layer.routingType = RoutingType.SOURCE_ROUTING;
                 for (Link e : layer.links)
                 {
                     e.cache_carriedTraffic = e.getMulticastCarriedTraffic();
                     e.cache_occupiedCapacity = e.getMulticastOccupiedLinkCapacity();
+                	e.cacheHbH_frs.clear();
+                	e.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.clear ();
                 }
-                for (Demand d : layer.demands) d.carriedTraffic = 0;
+                for (Demand d : layer.demands)
+                {
+                	d.carriedTraffic = 0;
+                	d.cacheHbH_frs.clear();
+                	d.cacheHbH_linksPerNodeWithNonZeroFr.clear();
+                	d.cacheHbH_normCarriedOccupiedPerLinkCurrentState.clear();
+                }
 
                 List<Demand> d_p = new LinkedList<Demand>();
                 List<Double> x_p = new LinkedList<Double>();
                 List<List<Link>> pathList = new LinkedList<List<Link>>();
-                GraphUtils.convert_xde2xp(nodes, layer.links, layer.demands, layer.forwardingRulesCurrentFailureState_x_de, d_p, x_p, pathList);
+                GraphUtils.convert_xde2xp(nodes, layer.links, layer.demands, trafficInLinks_xde , d_p, x_p, pathList);
                 Iterator<Demand> it_demand = d_p.iterator();
                 Iterator<Double> it_xp = x_p.iterator();
                 Iterator<List<Link>> it_pathList = pathList.iterator();
@@ -6466,12 +6471,6 @@ public class NetPlan extends NetworkElement
                     final List<Link> seqLinks = it_pathList.next();
                     addRoute(d, trafficInPath, trafficInPath, seqLinks, null);
                 }
-
-				/* Remove previous 'hop-by-hop' routing information */
-                layer.forwardingRulesNoFailureState_f_de = null;
-                layer.forwardingRulesCurrentFailureState_x_de = null;
-                layer.forwardingRules_Ain_ne = null;
-                layer.forwardingRules_Aout_ne = null;
                 break;
             }
 
@@ -6528,7 +6527,7 @@ public class NetPlan extends NetworkElement
         for (Demand d : layer.demands)
         {
             d.offeredTraffic = offeredTrafficVector.get(d.index);
-            if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) layer.updateHopByHopRoutingDemand(d);
+            if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) d.updateHopByHopRoutingToGivenFrs(d.cacheHbH_frs);
         }
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
@@ -6850,9 +6849,9 @@ public class NetPlan extends NetworkElement
                 netPlanInformation.append("--------------------------------");
                 netPlanInformation.append(NEWLINE).append(NEWLINE);
                 netPlanInformation.append("f_de: ").append(NEWLINE);
-                netPlanInformation.append(DoubleFactory2D.dense.make(layer.forwardingRulesNoFailureState_f_de.toArray())).append(NEWLINE);
+                netPlanInformation.append(DoubleFactory2D.dense.make(getMatrixDemandBasedForwardingRules(layer).toArray())).append(NEWLINE);
                 netPlanInformation.append("x_de: ").append(NEWLINE);
-                netPlanInformation.append(layer.forwardingRulesCurrentFailureState_x_de).append(NEWLINE);
+                netPlanInformation.append(DoubleFactory2D.dense.make(getMatrixDemand2LinkTrafficCarried(layer).toArray())).append(NEWLINE);
             }
         }
 
@@ -7126,8 +7125,8 @@ public class NetPlan extends NetworkElement
                     for (int e = 0; e < layer.links.size(); e++)
                     {
                         final Link link = layer.links.get(e);
-                        final double f_de = layer.forwardingRulesNoFailureState_f_de.get(d, e);
-                        final double x_de = layer.forwardingRulesCurrentFailureState_x_de.get(d, e);
+                        final double f_de = getForwardingRuleSplittingFactor(demand, link);
+                        final double x_de = getForwardingRuleCarriedTraffic(demand, link);
                         if (f_de < 0) throw new RuntimeException("Bad");
                         if (f_de > 1) throw new RuntimeException("Bad");
                         final Node a_e = layer.links.get(e).originNode;
@@ -7135,14 +7134,13 @@ public class NetPlan extends NetworkElement
                         double linkInitialNodeOutRules = 0;
                         for (Link outLink : a_e.getOutgoingLinks(layer))
                         {
-                            final int out_a_e = outLink.index;
-                            linkInitialNodeOutTraffic += layer.forwardingRulesCurrentFailureState_x_de.get(d, out_a_e);
-                            linkInitialNodeOutRules += layer.forwardingRulesNoFailureState_f_de.get(d, out_a_e);
+                            linkInitialNodeOutTraffic += getForwardingRuleCarriedTraffic(demand, outLink); 
+                            linkInitialNodeOutRules += getForwardingRuleSplittingFactor(demand, outLink); 
                         }
                         final boolean linkUp = link.isUp && link.originNode.isUp && link.destinationNode.isUp;
                         double linkInitialNodeInTraffic = (link.originNode == demand.ingressNode) ? demand.offeredTraffic : 0;
                         for (Link inLink : a_e.getIncomingLinks(layer))
-                            linkInitialNodeInTraffic += layer.forwardingRulesCurrentFailureState_x_de.get(d, inLink.index);
+                            linkInitialNodeInTraffic += getForwardingRuleCarriedTraffic (demand, inLink);
                         if (linkInitialNodeOutRules > 1 + 1E-3) throw new RuntimeException("Bad");
                         if (!linkUp && (x_de > 1E-3))
                             throw new RuntimeException("Bad. outTraffic: " + linkInitialNodeOutTraffic + " and link " + link + " is down. NetPlan: " + this);

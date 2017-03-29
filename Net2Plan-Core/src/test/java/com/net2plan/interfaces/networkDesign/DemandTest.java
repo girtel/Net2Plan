@@ -279,18 +279,25 @@ public class DemandTest
 		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
 		assertEquals (scd123.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
 		scd123.remove();
+		System.out.println("1");
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		System.out.println("2");
 		assertEquals (d12.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
 		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
 		np.setRoutingType(RoutingType.SOURCE_ROUTING , lowerLayer);
+		System.out.println("3");
 		Link link21 = np.addLink(n2,n1,100,100,1,null,lowerLayer);
 		List<Link> path1213 = new LinkedList<Link> (); path1213.add(link12); path1213.add(link21); path1213.add(link13); 
 		Route r1213 = np.addRoute(d13,1,1.5,path1213,null);
 		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.OPEN_CYCLES);
+		System.out.println("3.9");
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		System.out.println("4");
 		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.OPEN_CYCLES);
+		System.out.println("5");
 		d12.removeAllForwardingRules();
 		np.setForwardingRule(d12, link12 , 1);
+		System.out.println("6");
 		try { np.setForwardingRule(d12, link21 , 1); fail ("An exception should be here"); } catch (ClosedCycleRoutingException e) {} 
 	}
 
@@ -399,6 +406,7 @@ public class DemandTest
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		np.checkCachesConsistency();
 		np.setRoutingType(RoutingType.SOURCE_ROUTING , lowerLayer);
+		np.checkCachesConsistency();
 		assertEquals(d12.getRoutes().size() , 1);
 		assertEquals(d12.getRoutes().iterator().next().getSeqLinks() , Collections.singletonList(link12));
 	}

@@ -752,6 +752,49 @@ public class GraphUtils
 		return x_de;
 	}
 
+	/** Given a path-based routing, returns the forwarding rules map: fraction of traffic for each demand incoming to the link 
+	 * initial node (or produced in it) forwarded to the link. The link 
+	 * occupation information is not used, only the route carried traffic (the one if the network had no failures)
+	 * @param demands List of demands
+	 * @param routes List of routes
+	 * @return see above */
+	public static Map<Demand,Map<Link,Double>> convert_xp2fdeMap(List<Demand> demands, List<Route> routes)
+	{
+		Map<Pair<Demand,Node>,Double> xdeSumMap = new HashMap<> ();
+		Map<Demand,Map<Link,Double>> xdeMap = new HashMap<> ();
+		for (Demand d : demands) xdeMap.put(d, new HashMap<> ());
+		for (Route route : routes)
+		{
+			if (route.getCarriedTrafficInNoFailureState() == 0) continue;
+			final Demand d = route.getDemand();
+			final Map<Link,Double> xdeMapThisDemand = xdeMap.get(d);
+			if (xdeMapThisDemand == null) throw new Net2PlanException ("The demand list should contain at least all the demands of the routes");
+			for (Link e : route.getSeqLinks())
+			{
+				final Node initNode = e.getOriginNode();
+				final Double sumSoFarAllOutLinks = xdeSumMap.get(Pair.of(d, initNode));
+				final Double sumSoFarThisOutLink = xdeMapThisDemand.get(e);
+				final double sumAllOutLinks = route.getCarriedTrafficInNoFailureState() + (sumSoFarAllOutLinks == null? 0 : sumSoFarAllOutLinks);
+				final double sumThisOutLink = route.getCarriedTrafficInNoFailureState() + (sumSoFarThisOutLink == null? 0 : sumSoFarThisOutLink);
+				xdeSumMap.put(Pair.of(d, initNode) , sumAllOutLinks);
+				xdeMapThisDemand.put(e, sumThisOutLink);
+			}
+		}
+
+		/* From xde to fde */
+		for (Demand d : demands)
+		{
+			final Map<Link,Double> xdeMapThisDemand = xdeMap.get(d);
+			for (Link e : new ArrayList<> (xdeMapThisDemand.keySet()))
+			{
+				final double totalTrafficOut = xdeSumMap.get(Pair.of(d, e.getOriginNode()));
+				final double thisLinkTrafficOut = xdeMapThisDemand.get(e);
+				xdeMapThisDemand.put(e, thisLinkTrafficOut / totalTrafficOut);
+			}
+		}
+		return xdeMap;
+	}
+
 	/** Returns the carried traffic per link.
 	 * 
 	 * @param x_te For each destination node <i>t</i> (<i>t = 0</i> refers to the first node in {@code nodeIds}, <i>t = 1</i> refers to the second one, and so on), and each link <i>e</i> (<i>e = 0</i> refers to the first link in {@code linkMap.keySet()}, <i>e = 1</i> refers to the second one, and so on), {@code f_te[t][e]} represents the traffic targeted to node <i>t</i> that arrives (or is generated in) node <i>a(e)</i> (the origin node of link <i>e</i>), that is forwarded through link <i>e</i>
@@ -1269,31 +1312,35 @@ public class GraphUtils
 	 * @param egressNode egress node
 	 * @return see above
 	 */
-	public static double computeWorstCasePropagationDelayMsForLoopLess (Map<Link,Double> frs , Map<Node,Set<Link>> outFrs , Node ingressNode , Node egressNode)
+	public static Pair<Double,Double> computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess (Map<Link,Double> frs , Map<Node,Set<Link>> outFrs , Node ingressNode , Node egressNode)
 	{
-		final Map<Node,Double> inNodes = new HashMap<> ();
-		inNodes.put(ingressNode, 0.0);
+		final Map<Node,Pair<Double,Double>> inNodes = new HashMap<> ();
+		inNodes.put(ingressNode, Pair.of(0.0, 0.0));
 		do
 		{
 			for (Node n : new ArrayList<> (inNodes.keySet()))
 			{
 				if (n == egressNode) continue;
-				final double wcSoFar = inNodes.get(n);
+				final Pair<Double,Double> wcSoFar = inNodes.get(n);
 				final Set<Link> outgoingFrsThisNode = outFrs == null? frs.keySet() : outFrs.get(n);
 				if (outgoingFrsThisNode != null) 
 					for (Link e : outgoingFrsThisNode)
-						if (frs.get(e) > 0)
+					{
+						if (frs.containsKey(e))
 						{
-							final double thisPathCost = wcSoFar + e.getPropagationDelayInMs();
+							final double thisPathCost_wc = wcSoFar.getFirst() + e.getPropagationDelayInMs();
+							final double thisPathCost_length = wcSoFar.getSecond() + e.getLengthInKm();
 							if (inNodes.containsKey(e.getDestinationNode()))
-								inNodes.put(e.getDestinationNode(), Math.max(inNodes.get(e.getDestinationNode()) , thisPathCost));
+								inNodes.put(e.getDestinationNode(), Pair.of(Math.max(inNodes.get(e.getDestinationNode()).getFirst() , thisPathCost_wc) , 
+												Math.max(inNodes.get(e.getDestinationNode()).getSecond() , thisPathCost_length)));
 							else
-								inNodes.put(e.getDestinationNode(), thisPathCost);
+								inNodes.put(e.getDestinationNode(), Pair.of(thisPathCost_wc , thisPathCost_length));
 						}
+					}
 				inNodes.remove(n);
 			}
 			
-			if (inNodes.isEmpty()) return Double.MAX_VALUE;
+			if (inNodes.isEmpty()) return Pair.of(Double.MAX_VALUE , Double.MAX_VALUE);
 			if ((inNodes.size() == 1) && (inNodes.keySet().iterator().next() == egressNode)) return inNodes.get(egressNode);
 		} while (true);
 	}
@@ -1316,6 +1363,7 @@ public class GraphUtils
 	 */
 	public static Triple<DoubleMatrix1D, RoutingCycleType,  Double> computeRoutingFundamentalVector(Map<Link,Double> frs , Node ingressNode , Node egressNode)
 	{
+//		System.out.println("---------------------");
 		final int N = ingressNode.getNetPlan ().getNumberOfNodes();
 		DoubleMatrix2D eyeMinusQ_nn = new SparseCCDoubleMatrix2D (N,N);
 		for (Entry<Link,Double> frInfo : frs.entrySet())
@@ -1323,34 +1371,38 @@ public class GraphUtils
 			final int n1 = frInfo.getKey().getOriginNode().getIndex ();
 			final int n2 = frInfo.getKey().getDestinationNode().getIndex ();
 			final double splitFactor = frInfo.getValue();
-			eyeMinusQ_nn.setQuick(n1, n2 , eyeMinusQ_nn.getQuick(n1,n2) - splitFactor);
+			eyeMinusQ_nn.setQuick(n2, n1 , eyeMinusQ_nn.getQuick(n2,n1) - splitFactor);
 		}
-		final double s_n = egressNode == null? -1 : 1 - eyeMinusQ_nn.viewColumn(egressNode.getIndex ()).zSum();
+		final double s_n = egressNode == null? -1 : 1 + eyeMinusQ_nn.viewColumn(egressNode.getIndex ()).zSum();
 		for (int n = 0; n < N ; n ++) eyeMinusQ_nn.setQuick(n, n, 1+eyeMinusQ_nn.getQuick(n,n));
 		DoubleMatrix1D Mv;
 		try 
 		{
 			DoubleMatrix1D e_k = DoubleFactory1D.sparse.make(N); e_k.set(ingressNode.getIndex (), 1.0);
+//			System.out.println(eyeMinusQ_nn);
 			Mv = new SparseDoubleAlgebra().solve(eyeMinusQ_nn, e_k);
 		}
 		catch(IllegalArgumentException e) { e.printStackTrace(); return Triple.of (null , RoutingCycleType.CLOSED_CYCLES , s_n) ; }
 		
-//		final int E = links.size();
-//		DoubleMatrix1D f_e = forwardingRulesToUse_f_e;
+//		final NetPlan netPlan = ingressNode.getNetPlan();
+//		final NetworkLayer layer = frs.keySet().iterator().next().getLayer();
+//		final int E = netPlan.getNumberOfLinks(layer);
+//		DoubleMatrix1D f_e = DoubleFactory1D.dense.make(E);
+//		for (Link e : frs.keySet()) f_e.set(e.getIndex(), frs.get(e));
 //		DoubleMatrix2D q_nn1 = DoubleFactory2D.sparse.make(N,E);
-//		forwardingRules_Ain_ne.zMult(DoubleFactory2D.sparse.diagonal(f_e) , q_nn1);
+//		netPlan.getMatrixNodeLinkIncomingIncidence(layer).zMult(DoubleFactory2D.sparse.diagonal(f_e) , q_nn1);
 //		DoubleMatrix2D q_nn2transpose = new SparseCCDoubleMatrix2D (N,N);//DoubleFactory2D.sparse.make(N,N);
-//		q_nn1.zMult(forwardingRules_Aout_ne , q_nn2transpose , 1 , 0 , false , true);
-//		final double s_n = egressNode == null? -1 : 1 - q_nn2transpose.viewColumn(egressNode.index).zSum();
+//		q_nn1.zMult(netPlan.getMatrixNodeLinkOutgoingIncidence(layer) , q_nn2transpose , 1 , 0 , false , true);
+//		final double s_n2 = egressNode == null? -1 : 1 - q_nn2transpose.viewColumn(egressNode.getIndex()).zSum();
 //		q_nn2transpose.assign(DoubleFunctions.neg);
 //		for (int n = 0; n < N ; n ++) q_nn2transpose.setQuick(n, n, q_nn2transpose.getQuick(n, n) + 1);//iMinusQTransposed.set(n, n, 1.0);
-//		DoubleMatrix1D Mv;
 //		try 
 //		{
-//			DoubleMatrix1D e_k = DoubleFactory1D.sparse.make(N); e_k.set(ingressNode.index, 1.0);
+//			DoubleMatrix1D e_k = DoubleFactory1D.sparse.make(N); e_k.set(ingressNode.getIndex(), 1.0);
+//			System.out.println(q_nn2transpose);
 //			Mv = new SparseDoubleAlgebra().solve(q_nn2transpose, e_k);
 //		}
-//		catch(IllegalArgumentException e) { e.printStackTrace(); return Triple.of (null , RoutingCycleType.CLOSED_CYCLES , s_n) ; }
+//		catch(IllegalArgumentException e) { e.printStackTrace(); return Triple.of (null , RoutingCycleType.CLOSED_CYCLES , s_n2) ; }
 //
 		return Triple.of(Mv, RoutingCycleType.LOOPLESS , s_n);
 	}

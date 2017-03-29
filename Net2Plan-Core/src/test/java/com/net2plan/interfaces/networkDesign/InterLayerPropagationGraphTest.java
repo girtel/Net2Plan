@@ -96,26 +96,19 @@ public class InterLayerPropagationGraphTest
 		this.demand23_L0_CL2.coupleToUpperLayerLink(link23_L2_cL0);
 		try { demand12_L2.coupleToUpperLayerLink(link12_L0); fail (); } catch (Exception e) {} 
 		
-		this.g_demand23_L2_up = new InterLayerPropagationGraph(Sets.newHashSet(demand23_L2) , null , null , true , true);
-		this.g_demand23_L2_down = new InterLayerPropagationGraph(Sets.newHashSet(demand23_L2) , null , null , false , true);
-		this.g_mDemand123_L2_N1_up = new InterLayerPropagationGraph(null ,null , Sets.newHashSet(Pair.of(mDemand123_L2 , n2)) , true , true);
-		this.g_mDemand123_L2_N1_down = new InterLayerPropagationGraph(null ,null , Sets.newHashSet(Pair.of(mDemand123_L2 , n2)) , false , true);
-		this.g_link12_L0_up = new InterLayerPropagationGraph(null , Sets.newHashSet(link12_L0) , null , true , true);
-		this.g_link12_L0_down = new InterLayerPropagationGraph(null , Sets.newHashSet(link12_L0) , null , false , true);
-		this.g_link13_L0_up = new InterLayerPropagationGraph(null , Sets.newHashSet(link13_L0) , null , true , true);
-		this.g_link13_L0_down = new InterLayerPropagationGraph(null , Sets.newHashSet(link13_L0) , null , false , true);
+		this.g_demand23_L2_up = new InterLayerPropagationGraph(Sets.newHashSet(demand23_L2) , null , null , true);
+		this.g_demand23_L2_down = new InterLayerPropagationGraph(Sets.newHashSet(demand23_L2) , null , null , false);
+		this.g_mDemand123_L2_N1_up = new InterLayerPropagationGraph(null ,null , Sets.newHashSet(Pair.of(mDemand123_L2 , n2)) , true);
+		this.g_mDemand123_L2_N1_down = new InterLayerPropagationGraph(null ,null , Sets.newHashSet(Pair.of(mDemand123_L2 , n2)) , false);
+		this.g_link12_L0_up = new InterLayerPropagationGraph(null , Sets.newHashSet(link12_L0) , null , true);
+		this.g_link12_L0_down = new InterLayerPropagationGraph(null , Sets.newHashSet(link12_L0) , null , false);
+		this.g_link13_L0_up = new InterLayerPropagationGraph(null , Sets.newHashSet(link13_L0) , null , true);
+		this.g_link13_L0_down = new InterLayerPropagationGraph(null , Sets.newHashSet(link13_L0) , null , false);
 	}
 
 	@After
 	public void tearDown() throws Exception
 	{
-	}
-
-	@Test
-	public void testIsAssumeNonFailureState()
-	{
-		assertTrue (g_demand23_L2_up.isAssumeNonFailureState());
-		assertTrue (g_demand23_L2_down.isAssumeNonFailureState());
 	}
 
 	@Test

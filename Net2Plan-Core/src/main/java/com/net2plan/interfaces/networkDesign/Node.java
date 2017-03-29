@@ -12,18 +12,25 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import cern.colt.list.tdouble.DoubleArrayList;
-import cern.colt.list.tint.IntArrayList;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
+import java.awt.geom.Point2D;
+import java.net.URL;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.UnmodifiablePoint2D;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
-import java.awt.geom.Point2D;
-import java.net.URL;
-import java.util.*;
+import cern.colt.list.tdouble.DoubleArrayList;
+import cern.colt.list.tint.IntArrayList;
 
 
 /** <p>This class contains a representation of a node.
@@ -733,14 +740,6 @@ public class Node extends NetworkElement
 		for (MulticastDemand demand : new LinkedList<MulticastDemand> (cache_nodeIncomingMulticastDemands)) demand.remove ();
 		for (MulticastDemand demand : new LinkedList<MulticastDemand> (cache_nodeOutgoingMulticastDemands)) demand.remove ();
 
-		for (NetworkLayer layer : netPlan.layers)
-		{
-			if (layer.routingType != RoutingType.HOP_BY_HOP_ROUTING) continue;
-			final int E = layer.links.size ();
-			layer.forwardingRules_Aout_ne = DoubleFactory2D.sparse.appendRows(layer.forwardingRules_Aout_ne.viewPart(0, 0, index , E).copy () , layer.forwardingRules_Aout_ne.viewPart(index + 1, 0 , netPlan.nodes.size() - index - 1 , E).copy ());
-			layer.forwardingRules_Ain_ne = DoubleFactory2D.sparse.appendRows(layer.forwardingRules_Ain_ne.viewPart(0, 0, index , E), layer.forwardingRules_Ain_ne.viewPart(index + 1, 0 , netPlan.nodes.size() - index - 1 , E));
-		}
-
 		netPlan.cache_id2NodeMap.remove (id);
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.nodes , this.index);
@@ -767,12 +766,8 @@ public class Node extends NetworkElement
 		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
 		Map<Pair<Demand,Link>,Double> res = new HashMap<Pair<Demand,Link>,Double> ();
 		for (Link e : getOutgoingLinks(layer))
-		{
-			IntArrayList ds = new IntArrayList (); DoubleArrayList vals = new DoubleArrayList ();
-			layer.forwardingRulesNoFailureState_f_de.viewColumn(e.index).getNonZeros(ds,vals);
-			for (int cont = 0 ; cont < ds.size () ; cont ++)
-				res.put (Pair.of (layer.demands.get(ds.get(cont)) , e) , vals.get(cont));
-		}
+			for (Entry<Demand,Double> entry : e.cacheHbH_frs.entrySet())
+				res.put(Pair.of(entry.getKey(), e), entry.getValue());
 		return res;
 	}
 
@@ -789,8 +784,11 @@ public class Node extends NetworkElement
 		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
 		Map<Pair<Demand,Link>,Double> res = new HashMap<Pair<Demand,Link>,Double> ();
 		for (Link e : getOutgoingLinks(layer))
-			if (layer.forwardingRulesNoFailureState_f_de.get(demand.index , e.index) > 0)
-				res.put (Pair.of (demand , e) , layer.forwardingRulesNoFailureState_f_de.get(demand.index , e.index));
+		{
+			final Double splitFactor = demand.cacheHbH_frs.get(e);
+			if (splitFactor != null)
+				res.put (Pair.of(demand, e) , splitFactor);
+		}
 		return res;
 	}
 	

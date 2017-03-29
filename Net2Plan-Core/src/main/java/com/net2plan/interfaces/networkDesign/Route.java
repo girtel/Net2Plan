@@ -371,7 +371,7 @@ public class Route extends NetworkElement
 	{
 		return cache_propagationDelayMs;
 	}
-	private void updatePropagationAndProcessingDelayInMiliseconds ()
+	void updatePropagationAndProcessingDelayInMiliseconds ()
 	{
 		this.cache_propagationDelayMs = 0; 
 		for (NetworkElement e : currentPath)
@@ -548,6 +548,8 @@ public class Route extends NetworkElement
 	{
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		netPlan.checkIsModifiable();
+		final double oldRouteCarriedTrafficIfNotFailing = this.currentCarriedTrafficIfNotFailing; 
+		final boolean isThisRouteDown = this.isDown();
 		if (linkAndResourcesOccupationInformation == null)
 			linkAndResourcesOccupationInformation = new ArrayList<Double> (this.currentLinksAndResourcesOccupationIfNotFailing); //Collections.nCopies(this.currentPath.size(), newCarriedTraffic);
 		if (linkAndResourcesOccupationInformation.size() != this.currentPath.size()) throw new Net2PlanException ("Wrong vector size"); 
@@ -573,14 +575,15 @@ public class Route extends NetworkElement
 		/* Now the update of the links and resources occupation */
 		this.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap = updateLinkResourceOccupationCache ();
 
+		demand.carriedTraffic = 0; for (Route r : demand.cache_routes) demand.carriedTraffic += r.getCarriedTraffic();
+		if (demand.coupledUpperLayerLink != null) demand.coupledUpperLayerLink.capacity = demand.carriedTraffic;
+
 		for (NetworkElement e : cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.keySet())
 			if (e instanceof Resource)
 				((Resource) e).addTraversingRoute(this , cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.get(e));
 			else if (e instanceof Link)
 				((Link) e).updateLinkTrafficAndOccupation();
 		
-		demand.carriedTraffic = 0; for (Route r : demand.cache_routes) demand.carriedTraffic += r.getCarriedTraffic();
-		if (demand.coupledUpperLayerLink != null) demand.coupledUpperLayerLink.capacity = demand.carriedTraffic;
 		
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
