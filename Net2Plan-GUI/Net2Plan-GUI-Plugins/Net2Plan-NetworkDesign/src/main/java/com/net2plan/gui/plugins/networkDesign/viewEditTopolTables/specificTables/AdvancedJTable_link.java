@@ -720,74 +720,72 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         {
             if (netPlan.isMultilayer())
             {
-                long linkId = 1;
-                // TODO: Check what to do in this case.
-                Link link = netPlan.getLinkFromId(linkId);
-                if (link.getCoupledDemand() != null)
+                JMenuItem decoupleLinkItem = new JMenuItem("Decouple coupled selected links");
+                decoupleLinkItem.addActionListener(e ->
                 {
-                    JMenuItem decoupleLinkItem = new JMenuItem("Decouple link (if coupled to unicast demand)");
-                    decoupleLinkItem.addActionListener(e ->
+                    for (Link link1 : selectedLinks)
                     {
-                        final Link link1 = netPlan.getLinkFromId(linkId);
                         link1.getCoupledDemand().decouple();
                         model.setValueAt("", AdvancedJTable_link.this.convertRowIndexToModel(link1.getIndex()), COLUMN_COUPLEDTODEMAND);
-                        callback.getVisualizationState().resetPickedState();
-                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK, NetworkElementType.DEMAND));
-                        callback.addNetPlanChange();
-                    });
+                    }
+                    callback.getVisualizationState().resetPickedState();
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK, NetworkElementType.DEMAND));
+                    callback.addNetPlanChange();
+                });
+                options.add(decoupleLinkItem);
 
-                    options.add(decoupleLinkItem);
-                } else
+                JMenuItem createLowerLayerDemandFromLinkItem = new JMenuItem("Create lower layer coupled demand from uncoupled selected links");
+                createLowerLayerDemandFromLinkItem.addActionListener(new ActionListener()
                 {
-                    JMenuItem createLowerLayerDemandFromLinkItem = new JMenuItem("Create lower layer demand from link");
-                    createLowerLayerDemandFromLinkItem.addActionListener(new ActionListener()
+                    @Override
+                    public void actionPerformed(ActionEvent e)
                     {
-                        @Override
-                        public void actionPerformed(ActionEvent e)
+                        Collection<Long> layerIds = netPlan.getNetworkLayerIds();
+                        final JComboBox layerSelector = new WiderJComboBox();
+                        for (long layerId : layerIds)
                         {
-                            Collection<Long> layerIds = netPlan.getNetworkLayerIds();
-                            final JComboBox layerSelector = new WiderJComboBox();
-                            for (long layerId : layerIds)
+                            if (layerId == netPlan.getNetworkLayerDefault().getId()) continue;
+
+                            final String layerName = netPlan.getNetworkLayerFromId(layerId).getName();
+                            String layerLabel = "Layer " + layerId;
+                            if (!layerName.isEmpty()) layerLabel += " (" + layerName + ")";
+
+                            layerSelector.addItem(StringLabeller.of(layerId, layerLabel));
+                        }
+
+                        layerSelector.setSelectedIndex(0);
+
+                        JPanel pane = new JPanel();
+                        pane.add(new JLabel("Select layer: "));
+                        pane.add(layerSelector);
+
+                        while (true)
+                        {
+                            int result = JOptionPane.showConfirmDialog(null, pane, "Please select the lower layer to create the demand", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                            if (result != JOptionPane.OK_OPTION) return;
+
+                            try
                             {
-                                if (layerId == netPlan.getNetworkLayerDefault().getId()) continue;
-
-                                final String layerName = netPlan.getNetworkLayerFromId(layerId).getName();
-                                String layerLabel = "Layer " + layerId;
-                                if (!layerName.isEmpty()) layerLabel += " (" + layerName + ")";
-
-                                layerSelector.addItem(StringLabeller.of(layerId, layerLabel));
-                            }
-
-                            layerSelector.setSelectedIndex(0);
-
-                            JPanel pane = new JPanel();
-                            pane.add(new JLabel("Select layer: "));
-                            pane.add(layerSelector);
-
-                            while (true)
+                                final long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
+                                for (Link link : selectedLinks)
+                                    if (!link.isCoupled())
+                                        link.coupleToNewDemandCreated(netPlan.getNetworkLayerFromId(layerId));
+                                callback.getVisualizationState().resetPickedState();
+                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND));
+                                callback.addNetPlanChange();
+                                break;
+                            } catch (Throwable ex)
                             {
-                                int result = JOptionPane.showConfirmDialog(null, pane, "Please select the lower layer to create the demand", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                                if (result != JOptionPane.OK_OPTION) return;
-
-                                try
-                                {
-                                    long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
-                                    Link link = netPlan.getLinkFromId(linkId);
-                                    netPlan.addDemand(link.getOriginNode(), link.getDestinationNode(), link.getCapacity(), link.getAttributes(), netPlan.getNetworkLayerFromId(layerId));
-                                    callback.getVisualizationState().resetPickedState();
-                                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND));
-                                    callback.addNetPlanChange();
-                                    break;
-                                } catch (Throwable ex)
-                                {
-                                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating lower layer demand from link");
-                                }
+                                ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating lower layer demand from link");
                             }
                         }
-                    });
+                    }
+                });
 
-                    options.add(createLowerLayerDemandFromLinkItem);
+                options.add(createLowerLayerDemandFromLinkItem);
 
+                if (selectedLinks.size() == 1)
+                {
                     JMenuItem coupleLinkToDemand = new JMenuItem("Couple link to lower layer demand");
                     coupleLinkToDemand.addActionListener(new ActionListener()
                     {
