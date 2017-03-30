@@ -373,15 +373,20 @@ public class Route extends NetworkElement
 	}
 	void updatePropagationAndProcessingDelayInMiliseconds ()
 	{
-		this.cache_propagationDelayMs = 0; 
+		this.cache_propagationDelayMs = 0;
+		double thisRouteLengthKm = 0;
 		for (NetworkElement e : currentPath)
 		{
 			if (e instanceof Link)
+			{
 				cache_propagationDelayMs += ((Link) e).getPropagationDelayInMs();
+				thisRouteLengthKm += ((Link) e).getLengthInKm();
+			}
 			else if (e instanceof Resource)
 				cache_propagationDelayMs += ((Resource) e).processingTimeToTraversingTrafficInMs;
 		}
 		demand.cache_worstCasePropagationTimeMs = Math.max(demand.cache_worstCasePropagationTimeMs, this.cache_propagationDelayMs);
+		demand.cache_worstCaseLengthInKm = Math.max(demand.cache_worstCaseLengthInKm, thisRouteLengthKm);
 	}
 
 	/** Returns the route average propagation speed in km per second, as the ratio between the total route length and the total route delay 
