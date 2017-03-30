@@ -696,40 +696,36 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         options.add(offeredTraffic);
 
         JMenuItem scaleOfferedTraffic = new JMenuItem("Scale offered traffic");
-        scaleOfferedTraffic.addActionListener(new ActionListener()
+        scaleOfferedTraffic.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
+            double scalingFactor;
+
+            while (true)
             {
-                double scalingFactor;
-
-                while (true)
-                {
-                    String str = JOptionPane.showInputDialog(null, "Scaling factor to multiply to selected offered traffics", "Scale offered traffic", JOptionPane.QUESTION_MESSAGE);
-                    if (str == null) return;
-
-                    try
-                    {
-                        scalingFactor = Double.parseDouble(str);
-                        if (scalingFactor < 0) throw new RuntimeException();
-
-                        break;
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog("Please, introduce a non-negative number", "Error setting offered traffic");
-                    }
-                }
+                String str = JOptionPane.showInputDialog(null, "Scaling factor to multiply to selected offered traffics", "Scale offered traffic", JOptionPane.QUESTION_MESSAGE);
+                if (str == null) return;
 
                 try
                 {
-                    for (Demand d : selectedDemands) d.setOfferedTraffic(d.getOfferedTraffic() * scalingFactor);
-                    callback.getVisualizationState().resetPickedState();
-                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                    callback.addNetPlanChange();
+                    scalingFactor = Double.parseDouble(str);
+                    if (scalingFactor < 0) throw new RuntimeException();
+
+                    break;
                 } catch (Throwable ex)
                 {
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to scale demand offered traffics");
+                    ErrorHandling.showErrorDialog("Please, introduce a non-negative number", "Error setting offered traffic");
                 }
+            }
+
+            try
+            {
+                for (Demand d : selectedDemands) d.setOfferedTraffic(d.getOfferedTraffic() * scalingFactor);
+                callback.getVisualizationState().resetPickedState();
+                callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
+                callback.addNetPlanChange();
+            } catch (Throwable ex)
+            {
+                ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to scale demand offered traffics");
             }
         });
         options.add(scaleOfferedTraffic);
