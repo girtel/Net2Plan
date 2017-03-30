@@ -34,7 +34,6 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.collections15.BidiMap;
-import org.apache.commons.math3.ml.neuralnet.UpdateAction;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -580,9 +579,11 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         {
             NetPlan netPlan = callback.getDesign();
 
+            String nodeName = "Node " + netPlan.getNumberOfNodes();
+
             try
             {
-                Node node = netPlan.addNode(0, 0, "Node " + netPlan.getNumberOfNodes(), null);
+                Node node = netPlan.addNode(0, 0, nodeName, null);
                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                 callback.getVisualizationState().pickNode(node);
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
@@ -593,6 +594,9 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             } catch (Throwable ex)
             {
                 ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
+
+                final Node node = netPlan.getNodeByName(nodeName);
+                if (node != null) node.remove();
             }
         });
         return addItem;

@@ -53,7 +53,7 @@ public class GUILauncher
         OPTIONS = new Options();
 
         LAUNCH_TYPE = new OptionGroup();
-        LAUNCH_TYPE.setRequired(true);
+        LAUNCH_TYPE.setRequired(false);
 
         final Option vanilla = new Option("v", "vanilla", false, "Launch GUI as if it was executed from outside.");
         LAUNCH_TYPE.addOption(vanilla);
@@ -70,7 +70,9 @@ public class GUILauncher
         HelpFormatter formatter = new HelpFormatter();
         try
         {
-            parser.parse(OPTIONS, args, true);
+            parser.parse(OPTIONS, args, false);
+
+            if (LAUNCH_TYPE.getSelected() == null) LAUNCH_TYPE.setSelected(OPTIONS.getOption("v"));
 
             if (LAUNCH_TYPE.getSelected().equals("v"))
             {
@@ -107,7 +109,7 @@ public class GUILauncher
                 packageURL.setType(PatternOptionBuilder.STRING_VALUE);
                 R_OPTIONS.addOption(packageURL);
 
-                final Option param = new Option(null, "plugin-param", true, "(Optional) Tool/Plugin launch mode parameters. Each pair key-value separated by spaces.");
+                final Option param = new Option(null, "tool-param", true, "(Optional) Tool/Plugin launch mode parameters. Each pair key-value separated by spaces.");
                 param.setRequired(false);
                 param.setArgName("property=value");
                 param.setValueSeparator('=');
@@ -154,8 +156,8 @@ public class GUILauncher
                     if (cmd.hasOption("routine"))
                     {
                         mode = Integer.parseInt(cmd.getOptionValue("routine"));
-                        if (cmd.hasOption("plugin-param"))
-                            parameters = parseParameters(cmd.getOptionValue("plugin-param"), R_OPTIONS.getOption("plugin-param").getValueSeparator());
+                        if (cmd.hasOption("tool-param"))
+                            parameters = parseParameters(cmd.getOptionValue("tool-param"), R_OPTIONS.getOption("tool-param").getValueSeparator());
                     }
 
                     wrapper.launchRoutine(mode, parameters);
