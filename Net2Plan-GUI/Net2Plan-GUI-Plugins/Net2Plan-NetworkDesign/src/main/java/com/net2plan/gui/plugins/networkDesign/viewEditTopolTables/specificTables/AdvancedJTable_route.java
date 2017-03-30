@@ -424,27 +424,23 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
                 JMenuItem removeItems = new JMenuItem("Remove all table " + networkElementType + "s");
 
-                removeItems.addActionListener(new ActionListener()
+                removeItems.addActionListener(e1 ->
                 {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        final NetPlan netPlan = callback.getDesign();
+                    final NetPlan netPlan = callback.getDesign();
 
-                        try
-                        {
-                            if (rf == null)
-                                netPlan.removeAllRoutes();
-                            else
-                                for (Route r : routeRowsInTheTable) r.remove();
-                            callback.getVisualizationState().resetPickedState();
-                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                            callback.addNetPlanChange();
-                        } catch (Throwable ex)
-                        {
-                            ex.printStackTrace();
-                            ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
-                        }
+                    try
+                    {
+                        if (rf == null)
+                            netPlan.removeAllRoutes();
+                        else
+                            for (Route r : routeRowsInTheTable) r.remove();
+                        callback.getVisualizationState().resetPickedState();
+                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
+                        callback.addNetPlanChange();
+                    } catch (Throwable ex)
+                    {
+                        ex.printStackTrace();
+                        ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
                     }
                 });
 
