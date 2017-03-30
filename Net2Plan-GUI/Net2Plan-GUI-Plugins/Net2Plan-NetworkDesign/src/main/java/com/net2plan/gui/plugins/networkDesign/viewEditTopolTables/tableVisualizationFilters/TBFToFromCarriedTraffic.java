@@ -32,7 +32,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 
 		demandsAllLayers.add(demand);
 		
-		final Pair<Set<Link>,Set<Link>> thisLayerPropagation = demand.getLinksThisLayerPotentiallyCarryingTraffic(false);
+		final Pair<Set<Link>,Set<Link>> thisLayerPropagation = demand.getLinksThisLayerPotentiallyCarryingTraffic();
 		linksAllLayers.addAll(thisLayerPropagation.getFirst());
 		linksAllLayers.addAll(thisLayerPropagation.getSecond());
 		if (!onlyThisLayer) updatePropagationDownWards (linksAllLayers , linksAllLayers , demandsAllLayers , mDemandsAllLayers);
@@ -57,7 +57,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 		linksAllLayers.add(link);
 		
 		Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> thisLayerTraversalInfo = 
-				link.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink(false);
+				link.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
 		linksAllLayers.addAll(thisLayerTraversalInfo.getFirst().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet()));
 		linksAllLayers.addAll(thisLayerTraversalInfo.getSecond().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet()));
 		linksAllLayers.addAll(thisLayerTraversalInfo.getThird().values().stream().flatMap(set->set.stream()).collect (Collectors.toSet()));
@@ -236,7 +236,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 
 		final Set<Link> thisLayerPropagation = new HashSet<> ();
 		for (Node egressNode : demand.getEgressNodes())
-			thisLayerPropagation.addAll(demand.getLinksThisLayerPotentiallyCarryingTraffic(egressNode , false));
+			thisLayerPropagation.addAll(demand.getLinksThisLayerPotentiallyCarryingTraffic(egressNode));
 		linksAllLayers.addAll(thisLayerPropagation);
 
 		if (!onlyThisLayer) updatePropagationDownWards (linksAllLayers , linksAllLayers , demandsAllLayers , mDemandsAllLayers);
@@ -319,7 +319,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 		{
 			final Pair<Set<Demand>,Set<Pair<MulticastDemand,Node>>> downInfo = getDownCoupling (linksToPropagateDown);
 			if (downInfo.getFirst().isEmpty() && downInfo.getSecond().isEmpty()) return;
-			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (downInfo.getFirst() , null , downInfo.getSecond() , false , false);
+			final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (downInfo.getFirst() , null , downInfo.getSecond() , false);
 			linksAllLayersToUpdate.addAll(ipg.getLinksInGraph());
 			demandsAllLayersToUpdate.addAll(ipg.getDemandsInGraph());
 			mDemandsAllLayersToUpdate.addAll(ipg.getMulticastDemandFlowsInGraph().stream().map(p->p.getFirst()).collect(Collectors.toSet()));
@@ -338,7 +338,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
     					mDemandsAllEgressNodes.add(Pair.of(md , n));
     		final Set<Link> initialUpperLinks = getUpCoupling(demandsToPropagateUp , mDemandsAllEgressNodes);
     		if (initialUpperLinks.isEmpty()) return;
-    		final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , initialUpperLinks , null , true , false);
+    		final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph (null , initialUpperLinks , null , true);
 			linksAllLayersToUpdate.addAll(ipg.getLinksInGraph());
 			demandsAllLayersToUpdate.addAll(ipg.getDemandsInGraph());
 			mDemandsAllLayersToUpdate.addAll(ipg.getMulticastDemandFlowsInGraph().stream().map(p->p.getFirst()).collect(Collectors.toSet()));

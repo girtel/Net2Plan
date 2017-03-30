@@ -24,6 +24,7 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.Version;
 import com.net2plan.internal.XMLUtils;
 import com.net2plan.libraries.GraphUtils;
+import com.net2plan.libraries.ProfileUtils;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Constants.RoutingCycleType;
@@ -5310,6 +5311,8 @@ public class NetPlan extends NetworkElement
         for (NetworkLayer layer : layers)
             if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
                 removeAllForwardingRules(layer); // to speed up things
+            else
+            	removeAllRoutes(layer); // to speed up things
         for (Node n : new ArrayList<Node>(nodes)) n.remove();
 		ErrorHandling.DEBUG = previousErrorHandling;
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
@@ -5322,10 +5325,38 @@ public class NetPlan extends NetworkElement
      */
     public void removeAllRoutes(NetworkLayer... optionalLayerParameter)
     {
+		checkAttachedToNetPlanObject();
         checkIsModifiable();
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-        for (Route r : new ArrayList<Route>(layer.routes)) r.remove();
+//        for (Route r : new ArrayList<> (netPlan.getRoutes(layer))) r.remove();
+        
+        for (Route r : netPlan.getRoutes(layer))
+        {
+        	for (Resource res : r.getSeqResourcesTraversed())
+        		res.removeTraversingRoute(r);
+    		for (Node node : r.cache_seqNodesRealPath) node.cache_nodeAssociatedRoutes.remove(r);
+    		netPlan.cache_id2RouteMap.remove(r.id);
+    		layer.cache_routesDown.remove (r);
+            for (String tag : r.tags) netPlan.cache_taggedElements.get(tag).remove(r);
+            r.removeId();
+        }
+        for (Demand d : netPlan.getDemands(layer))
+        {
+        	d.carriedTraffic = 0;
+        	d.routingCycleType = RoutingCycleType.LOOPLESS;
+        	if (d.coupledUpperLayerLink != null) d.coupledUpperLayerLink.capacity = 0;
+    		d.cache_routes.clear ();
+    		d.cache_worstCasePropagationTimeMs = 0;        
+    		d.cache_worstCaseLengthInKm = 0;
+    	}
+        for (Link e : netPlan.getLinks(layer))
+        {
+        	e.cache_traversingRoutes.clear ();
+        	e.updateLinkTrafficAndOccupation(); // to include multicast
+        }
+        layer.routes.clear();
+		
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 
@@ -5940,7 +5971,6 @@ public class NetPlan extends NetworkElement
         Set<Route> affectedRoutesSourceRouting = new HashSet<Route>();
         Set<MulticastTree> affectedTrees = new HashSet<MulticastTree>();
 
-        System.out.println("affectedLinks: " + affectedLinks);
         for (Link link : affectedLinks)
         {
             if (link.layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
@@ -5952,7 +5982,6 @@ public class NetPlan extends NetworkElement
             }
             affectedTrees.addAll(link.cache_traversingTrees);
         }
-        System.out.println("affectedDemandsHopByHopRouting: " + affectedDemandsHopByHopRouting);
 
 //		System.out.println ("affected routes: " + affectedRoutesSourceRouting);
         for (Demand d : affectedDemandsHopByHopRouting) d.updateHopByHopRoutingToGivenFrs(d.cacheHbH_frs);
@@ -6409,38 +6438,19 @@ public class NetPlan extends NetworkElement
             case HOP_BY_HOP_ROUTING:
             {
             	Map<Demand,Map<Link,Double>> newFrs = GraphUtils.convert_xp2fdeMap(layer.demands, layer.routes);
-//                layer.forwardingRulesCurrentFailureState_x_de = GraphUtils.convert_xp2xde(layer.links, layer.demands, layer.routes);
-//                layer.forwardingRulesNoFailureState_f_de = DoubleFactory2D.sparse.make(layer.demands.size(), layer.links.size());
-//                DoubleMatrix2D A_dn = layer.forwardingRulesCurrentFailureState_x_de.zMult(layer.forwardingRules_Aout_ne, null, 1, 0, false, true); // traffic of demand d that leaves node n
                 removeAllRoutes(layer);
                 layer.routingType = RoutingType.HOP_BY_HOP_ROUTING;
-                System.out.println(newFrs);
                 for (Demand d : layer.demands)
                 	d.updateHopByHopRoutingToGivenFrs(newFrs.get(d));
-//                
-//                IntArrayList ds = new IntArrayList();
-//                IntArrayList es = new IntArrayList();
-//                DoubleArrayList trafs = new DoubleArrayList();
-//                layer.forwardingRulesCurrentFailureState_x_de.getNonZeros(ds, es, trafs);
-//                for (int cont = 0; cont < ds.size(); cont++)
-//                {
-//                    final int d = ds.get(cont);
-//                    final int e = es.get(cont);
-//                    double outTraf = A_dn.get(d, layer.links.get(e).originNode.index);
-//                    layer.forwardingRulesNoFailureState_f_de.set(d, e, outTraf == 0 ? 0 : trafs.get(cont) / outTraf);
-//                }
-//                /* update link and demand carried traffics, and demand routing cycle type */
-//                layer.forwardingRulesCurrentFailureState_x_de.assign(0); // this is recomputed inside next call
-//                for (Demand d : layer.demands) layer.updateHopByHopRoutingDemand(d);
-//
                 break;
             }
 
             case SOURCE_ROUTING:
             {
+            	ProfileUtils.printTime("Start setRoutingType -- to SR");
                 if (!layer.routes.isEmpty()) throw new RuntimeException ();
                 final DoubleMatrix2D trafficInLinks_xde = getMatrixDemand2LinkTrafficCarried(layer);
-                System.out.println("trafficInLinks_xde: " + trafficInLinks_xde);
+            	ProfileUtils.printTime("Start setRoutingType -- to SR -- 1");
                 layer.routingType = RoutingType.SOURCE_ROUTING;
                 for (Link e : layer.links)
                 {
@@ -6457,6 +6467,7 @@ public class NetPlan extends NetworkElement
                 	d.cacheHbH_normCarriedOccupiedPerLinkCurrentState.clear();
                 }
 
+            	ProfileUtils.printTime("Start setRoutingType -- to SR -- 2");
                 List<Demand> d_p = new LinkedList<Demand>();
                 List<Double> x_p = new LinkedList<Double>();
                 List<List<Link>> pathList = new LinkedList<List<Link>>();
@@ -6464,6 +6475,7 @@ public class NetPlan extends NetworkElement
                 Iterator<Demand> it_demand = d_p.iterator();
                 Iterator<Double> it_xp = x_p.iterator();
                 Iterator<List<Link>> it_pathList = pathList.iterator();
+            	ProfileUtils.printTime("Start setRoutingType -- to SR -- 3");
                 while (it_demand.hasNext())
                 {
                     final Demand d = it_demand.next();
@@ -6471,6 +6483,7 @@ public class NetPlan extends NetworkElement
                     final List<Link> seqLinks = it_pathList.next();
                     addRoute(d, trafficInPath, trafficInPath, seqLinks, null);
                 }
+            	ProfileUtils.printTime("Start setRoutingType -- to SR -- 4");
                 break;
             }
 

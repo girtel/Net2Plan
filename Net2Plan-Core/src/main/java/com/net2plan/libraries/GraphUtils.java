@@ -1315,27 +1315,40 @@ public class GraphUtils
 	public static Pair<Double,Double> computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess (Map<Link,Double> frs , Map<Node,Set<Link>> outFrs , Node ingressNode , Node egressNode)
 	{
 		final Map<Node,Pair<Double,Double>> inNodes = new HashMap<> ();
+		final Set<Node> nonEgressNodesReceivingLinks = new HashSet<> (); 
 		inNodes.put(ingressNode, Pair.of(0.0, 0.0));
 		do
 		{
 			for (Node n : new ArrayList<> (inNodes.keySet()))
 			{
-				if (n == egressNode) continue;
+				if (n == egressNode)
+				{
+					final Set<Link> outFrsEgressNode = outFrs.get(n);
+					if (outFrsEgressNode == null) continue;
+					/* check if there are outgoing links of the egress node carrying traffic => cycle */
+					for (Link e : outFrsEgressNode) if (frs.get(e) > 0) return Pair.of(Double.MAX_VALUE,Double.MAX_VALUE);
+					continue;
+				}
+				
+				/* If the node already received an input link (or is the ingress for the second time) => cycle */
+				if (nonEgressNodesReceivingLinks.add(n) == false) return Pair.of(Double.MAX_VALUE,Double.MAX_VALUE);
+				
+				/* Usual loop */
 				final Pair<Double,Double> wcSoFar = inNodes.get(n);
 				final Set<Link> outgoingFrsThisNode = outFrs == null? frs.keySet() : outFrs.get(n);
 				if (outgoingFrsThisNode != null) 
 					for (Link e : outgoingFrsThisNode)
 					{
-						if (frs.containsKey(e))
-						{
-							final double thisPathCost_wc = wcSoFar.getFirst() + e.getPropagationDelayInMs();
-							final double thisPathCost_length = wcSoFar.getSecond() + e.getLengthInKm();
-							if (inNodes.containsKey(e.getDestinationNode()))
-								inNodes.put(e.getDestinationNode(), Pair.of(Math.max(inNodes.get(e.getDestinationNode()).getFirst() , thisPathCost_wc) , 
-												Math.max(inNodes.get(e.getDestinationNode()).getSecond() , thisPathCost_length)));
-							else
-								inNodes.put(e.getDestinationNode(), Pair.of(thisPathCost_wc , thisPathCost_length));
-						}
+						final Double splitFactor = frs.get(e);
+						if (splitFactor == null) continue;
+						if (splitFactor == 0) continue;
+						final double thisPathCost_wc = wcSoFar.getFirst() + e.getPropagationDelayInMs();
+						final double thisPathCost_length = wcSoFar.getSecond() + e.getLengthInKm();
+						if (inNodes.containsKey(e.getDestinationNode()))
+							inNodes.put(e.getDestinationNode(), Pair.of(Math.max(inNodes.get(e.getDestinationNode()).getFirst() , thisPathCost_wc) , 
+											Math.max(inNodes.get(e.getDestinationNode()).getSecond() , thisPathCost_length)));
+						else
+							inNodes.put(e.getDestinationNode(), Pair.of(thisPathCost_wc , thisPathCost_length));
 					}
 				inNodes.remove(n);
 			}
@@ -1361,7 +1374,7 @@ public class GraphUtils
 	 * @param egressNode the egress node
 	 * @return See description above
 	 */
-	public static Triple<DoubleMatrix1D, RoutingCycleType,  Double> computeRoutingFundamentalVector(Map<Link,Double> frs , Node ingressNode , Node egressNode)
+	public static Quintuple<DoubleMatrix1D, RoutingCycleType,  Double , Double , Double> computeRoutingFundamentalVector(Map<Link,Double> frs , Map<Node,Set<Link>> outFrs , Node ingressNode , Node egressNode)
 	{
 //		System.out.println("---------------------");
 		final int N = ingressNode.getNetPlan ().getNumberOfNodes();
@@ -1382,7 +1395,11 @@ public class GraphUtils
 //			System.out.println(eyeMinusQ_nn);
 			Mv = new SparseDoubleAlgebra().solve(eyeMinusQ_nn, e_k);
 		}
-		catch(IllegalArgumentException e) { e.printStackTrace(); return Triple.of (null , RoutingCycleType.CLOSED_CYCLES , s_n) ; }
+		catch(IllegalArgumentException e) { return Quintuple.of (null , RoutingCycleType.CLOSED_CYCLES , s_n , Double.MAX_VALUE , Double.MAX_VALUE) ; }
+		
+		Pair<Double,Double> wcPropAndLength = computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess(frs, outFrs, ingressNode, egressNode);
+		final RoutingCycleType routingCycleType = wcPropAndLength.getFirst() == Double.MAX_VALUE? RoutingCycleType.OPEN_CYCLES : RoutingCycleType.LOOPLESS;
+		return Quintuple.of(Mv, routingCycleType , s_n , wcPropAndLength.getFirst() , wcPropAndLength.getSecond());
 		
 //		final NetPlan netPlan = ingressNode.getNetPlan();
 //		final NetworkLayer layer = frs.keySet().iterator().next().getLayer();
@@ -1404,7 +1421,6 @@ public class GraphUtils
 //		}
 //		catch(IllegalArgumentException e) { e.printStackTrace(); return Triple.of (null , RoutingCycleType.CLOSED_CYCLES , s_n2) ; }
 //
-		return Triple.of(Mv, RoutingCycleType.LOOPLESS , s_n);
 	}
 
 	

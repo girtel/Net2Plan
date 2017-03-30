@@ -102,31 +102,16 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         List<Object[]> allLinkData = new LinkedList<Object[]>();
         for (Link link : rowVisibleLinks) 
         {
-            Set<SharedRiskGroup> srgIds_thisLink = link.getSRGs();
-            Set<Route> traversingRoutes = isSourceRouting ? link.getTraversingRoutes() : new LinkedHashSet<Route>();
-            Set<Route> traversingBURoutes = isSourceRouting ? link.getTraversingBackupRoutes() : new LinkedHashSet<Route>();
-            Set<MulticastTree> traversingMulticastTrees = link.getTraversingTrees();
-            DoubleMatrix1D forwardingRules = !isSourceRouting ? currentState.getMatrixDemandBasedForwardingRules().viewColumn(link.getIndex()).copy() : DoubleFactory1D.sparse.make(currentState.getNumberOfDemands(), 0);
-            int numRoutes = traversingRoutes.size();
-            int numSegments = traversingBURoutes.size();
-            int numForwardingRules = 0;
-            for (int d = 0; d < forwardingRules.size(); d++) if (forwardingRules.get(d) != 0) numForwardingRules++;
-            int numMulticastTrees = traversingMulticastTrees.size();
+            final Set<SharedRiskGroup> srgIds_thisLink = link.getSRGs();
+            final Demand coupledDemand = link.getCoupledDemand();
+            final MulticastDemand coupledMulticastDemand = link.getCoupledMulticastDemand();
 
-            String routesString = numRoutes + (numRoutes > 0 ? " (" + CollectionUtils.join(NetPlan.getIndexes(traversingRoutes), ", ") + ")" : "");
-            String segmentsString = numSegments + (numSegments > 0 ? " (" + CollectionUtils.join(NetPlan.getIndexes(traversingBURoutes), ", ") + ")" : "");
-            String multicastTreesString = numMulticastTrees + (numMulticastTrees > 0 ? " (" + CollectionUtils.join(NetPlan.getIndexes(traversingMulticastTrees), ", ") + ")" : "");
-            StringBuilder forwardingRulesString = new StringBuilder(Integer.toString(numForwardingRules));
+            final Node originNode = link.getOriginNode();
+            final Node destinationNode = link.getDestinationNode();
+            final String originNodeName = originNode.getName();
+            final String destinationNodeName = destinationNode.getName();
 
-            Demand coupledDemand = link.getCoupledDemand();
-            MulticastDemand coupledMulticastDemand = link.getCoupledMulticastDemand();
-
-            Node originNode = link.getOriginNode();
-            Node destinationNode = link.getDestinationNode();
-            String originNodeName = originNode.getName();
-            String destinationNodeName = destinationNode.getName();
-
-            double rho_e = link.getOccupiedCapacity() == 0 ? 0 : link.getCapacity() == 0 ? Double.MAX_VALUE : link.getOccupiedCapacity() / link.getCapacity();
+            final double rho_e = link.getOccupiedCapacity() == 0 ? 0 : link.getCapacity() == 0 ? Double.MAX_VALUE : link.getOccupiedCapacity() / link.getCapacity();
             Object[] linkData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
             linkData[COLUMN_ID] = link.getId();
             linkData[COLUMN_INDEX] = link.getIndex();
@@ -142,10 +127,10 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             linkData[COLUMN_LENGTH] = link.getLengthInKm();
             linkData[COLUMN_PROPSPEED] = link.getPropagationSpeedInKmPerSecond();
             linkData[COLUMN_PROPDELAYMS] = link.getPropagationDelayInMs();
-            linkData[COLUMN_NUMROUTES] = routesString;
-            linkData[COLUMN_NUMSEGMENTS] = segmentsString;
-            linkData[COLUMN_NUMFORWRULES] = forwardingRulesString.toString();
-            linkData[COLUMN_NUMTREES] = multicastTreesString.toString();
+            linkData[COLUMN_NUMROUTES] = isSourceRouting? "" + link.getNumberOfTraversingRoutes() : "--";
+            linkData[COLUMN_NUMSEGMENTS] = isSourceRouting? "" + link.getNumberOfTraversingBackupRoutes() : "--";
+            linkData[COLUMN_NUMFORWRULES] = isSourceRouting? "--" : "" + link.getNumberOfForwardingRules();
+            linkData[COLUMN_NUMTREES] = "" + link.getNumberOfTraversingTrees();
             linkData[COLUMN_SRGS] = srgIds_thisLink.isEmpty() ? "none" : srgIds_thisLink.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(srgIds_thisLink), ", ") + ")";
             linkData[COLUMN_COUPLEDTODEMAND] = coupledDemand != null ? "d" + coupledDemand.getIndex() + " (layer " + coupledDemand.getLayer() + ")" : (coupledMulticastDemand == null ? "" : "d" + coupledMulticastDemand.getIndex() + " (layer " + coupledMulticastDemand.getLayer() + ")");
             linkData[COLUMN_TAGS] = StringUtils.listToString(Lists.newArrayList(link.getTags()));

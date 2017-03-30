@@ -519,7 +519,13 @@ public class Route extends NetworkElement
         	for (Route r : demand.cache_routes) demand.cache_worstCasePropagationTimeMs = Math.max(demand.cache_worstCasePropagationTimeMs, r.cache_propagationDelayMs);
         }
         
-		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+        if (demand.cache_worstCaseLengthInKm <= this.getLengthInKm())
+        {
+        	demand.cache_worstCaseLengthInKm = 0;
+        	for (Route r : demand.cache_routes) demand.cache_worstCaseLengthInKm = Math.max(demand.cache_worstCaseLengthInKm, r.getLengthInKm());
+        }
+
+        if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		removeId();
 	}
 

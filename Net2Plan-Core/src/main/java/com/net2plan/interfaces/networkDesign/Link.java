@@ -273,6 +273,14 @@ public class Link extends NetworkElement
 		return getTraversingRoutes().stream ().filter(e->e.isBackupRoute()).collect(Collectors.toSet());
 	}
 	
+	/** Returns the set number of routes traversing the link that are designated as backup of other route
+	 * @return see above
+	 */
+	public int getNumberOfTraversingBackupRoutes ()
+	{
+		return (int) getTraversingRoutes().stream ().filter(e->e.isBackupRoute()).count();
+	}
+
 	/**
 	 * <p>Returns the link utilization, measured as the ratio between the total occupied capacity in the link and the total link capacity.</p>
 	 * @return The utilization as described above. If the link has zero capacity and strictly positive occupied capacity, Double.POSITIVE_INFINITY is returned 
@@ -428,12 +436,40 @@ public class Link extends NetworkElement
 	}
 
 	/**
+	 * <p>Returns the number of routes traversing this link. 
+	 * @return see above
+	 */
+	public int getNumberOfTraversingRoutes()
+	{
+		layer.checkRoutingType (RoutingType.SOURCE_ROUTING);
+		return cache_traversingRoutes.size();
+	}
+
+	/**
 	 * <p>Returns the {@link com.net2plan.interfaces.networkDesign.MulticastTree Multicast Trees} traversing the link.</p>
 	 * @return An unmodifiable {@code Set} of traversing multicast trees. If no tree exists, an empty set is returned
 	 */
 	public Set<MulticastTree> getTraversingTrees()
 	{
 		return Collections.unmodifiableSet(cache_traversingTrees);
+	}
+
+	/**
+	 * Returns the number of multicast trees traversing this link
+	 * @return see above
+	 */
+	public int getNumberOfTraversingTrees()
+	{
+		return cache_traversingTrees.size();
+	}
+	
+	/** Returns the number of forwarding rules defined for this link (with non-zero split factor)
+	 * @return see above
+	 */
+	public int getNumberOfForwardingRules ()
+	{
+		layer.checkRoutingType (RoutingType.HOP_BY_HOP_ROUTING);
+		return cacheHbH_frs.size();
 	}
 
 	/**
@@ -592,8 +628,8 @@ public class Link extends NetworkElement
 		}
 		else 
 		{
-			System.out.println(cacheHbH_frs.keySet());
-			System.out.println(cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.keySet());
+//			System.out.println(cacheHbH_frs.keySet());
+//			System.out.println(cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.keySet());
 			if (!cacheHbH_frs.keySet().containsAll(cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.keySet())) throw new RuntimeException();
 
 			for (Demand d : this.cacheHbH_frs.keySet())
@@ -605,12 +641,12 @@ public class Link extends NetworkElement
 			}
 			for (Demand d : this.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.keySet())
 			{
-				System.out.println("Demand " + d + ", cache frs: " + d.cacheHbH_frs);
+//				System.out.println("Demand " + d + ", cache frs: " + d.cacheHbH_frs);
 				final double normTraffic =  this.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.get(d).getFirst();
 				final double cap =  this.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.get(d).getSecond();
 				if (!d.cacheHbH_normCarriedOccupiedPerLinkCurrentState.get(this).equals(Pair.of(normTraffic, cap))) throw new RuntimeException ();
-				System.out.println("Nomr " + normTraffic + ", d.carried " + d.carriedTraffic + ", capOccupied: " + cap);
-				if (Math.abs(normTraffic * d.carriedTraffic - cap) > 1e-3) throw new RuntimeException();
+//				System.out.println("Nomr " + normTraffic + ", d.carried " + d.carriedTraffic + ", capOccupied: " + cap);
+				if (Math.abs(normTraffic * d.offeredTraffic - cap) > 1e-3) throw new RuntimeException();
 				check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments += cap;
 				check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments += cap;
 			}
@@ -651,7 +687,7 @@ public class Link extends NetworkElement
 		{
 			for (Entry<Demand,Pair<Double,Double>> entry : this.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.entrySet())
 			{
-				this.cache_carriedTraffic += entry.getValue().getFirst();
+				this.cache_carriedTraffic += entry.getValue().getSecond();
 				this.cache_occupiedCapacity += entry.getValue().getSecond();
 			}
 		}

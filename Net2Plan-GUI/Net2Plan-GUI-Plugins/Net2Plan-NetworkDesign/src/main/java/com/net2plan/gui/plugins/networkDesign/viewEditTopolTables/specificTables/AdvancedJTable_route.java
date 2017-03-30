@@ -42,9 +42,9 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     private static final int COLUMN_DEMANDOFFEREDTRAFFIC = 5;
     private static final int COLUMN_CARRIEDTRAFFIC = 6;
     private static final int COLUMN_OCCUPIEDCAPACITY = 7;
-    private static final int COLUMN_SEQUENCEOFLINKSANDRESOURCES = 8;
-    private static final int COLUMN_SEQUENCEOFNODES = 9;
-    private static final int COLUMN_NUMHOPS = 10;
+    private static final int COLUMN_SEQUENCEOFNODES = 8;
+    private static final int COLUMN_NUMHOPS = 9;
+    private static final int COLUMN_NUMBEROFTRAVRESOURCES = 10;
     private static final int COLUMN_LENGTH = 11;
     private static final int COLUMN_PROPDELAY = 12;
     private static final int COLUMN_BOTTLENECKUTILIZATION = 13;
@@ -54,13 +54,14 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     private static final int COLUMN_ATTRIBUTES = 17;
     private static final String netPlanViewTabName = "Routes";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Demand", "Ingress node", "Egress node",
-            "Demand offered traffic", "Carried traffic", "Occupied capacity", "Sequence of links/resources", "Sequence of nodes", "Number of hops", "Length (km)",
+            "Demand offered traffic", "Carried traffic", "Occupied capacity", "Sequence of nodes", 
+            "# links", "# resources", "Length (km)",
             "Propagation delay (ms)", "Bottleneck utilization", "Is backup?", "Has backup?", "Tags", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf(
             "Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Demand", "Ingress node", "Egress node", "Demand offered traffic",
-            "Carried traffic", "Occupied capacity", "Sequence of indexes of the links (Lxx) and resources (Rxx) traversed",
+            "Carried traffic", "Occupied capacity", 
             "Sequence of nodes traversed, in parenthesis the indexes of the resources in each node",
-            "Number of hops", "Total route length", "Propagation delay (ms)", "Highest utilization among all traversed links",
+            "Number of traversed links", "Number of traversed resources" , "Total route length", "Propagation delay (ms)", "Highest utilization among all traversed links",
             "Indicates if this route is designated as a backup route, of other route for the same demand. If so, shows the index of the primary route that this route is backing up",
             "Indicates if this route has backup routes. If so, their indexes are shown in parenthesis",
             "Route-specific tags", "Route-specific attributes");
@@ -107,12 +108,12 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
             routeData[COLUMN_DEMAND] = demand.getIndex();
             routeData[COLUMN_INGRESSNODE] = ingressNode.getIndex() + (ingressNodeName.isEmpty() ? "" : " (" + ingressNodeName + ")");
             routeData[COLUMN_EGRESSNODE] = egressNode.getIndex() + (egressNodeName.isEmpty() ? "" : " (" + egressNodeName + ")");
+            routeData[COLUMN_SEQUENCEOFNODES] = getSequenceNodeIndexesWithResourceInfo(route);
             routeData[COLUMN_DEMANDOFFEREDTRAFFIC] = demand.getOfferedTraffic();
             routeData[COLUMN_CARRIEDTRAFFIC] = route.getCarriedTraffic();
             routeData[COLUMN_OCCUPIEDCAPACITY] = getSequenceOccupiedCapacities(route);
-            routeData[COLUMN_SEQUENCEOFLINKSANDRESOURCES] = getSequenceLinkResourceIndexes(route);
-            routeData[COLUMN_SEQUENCEOFNODES] = getSequenceNodeIndexesWithResourceInfo(route);
             routeData[COLUMN_NUMHOPS] = route.getNumberOfHops();
+            routeData[COLUMN_NUMBEROFTRAVRESOURCES] = route.getSeqResourcesTraversed().size();
             routeData[COLUMN_LENGTH] = route.getLengthInKm();
             routeData[COLUMN_PROPDELAY] = route.getPropagationDelayInMiliseconds();
             routeData[COLUMN_BOTTLENECKUTILIZATION] = maxUtilization;
