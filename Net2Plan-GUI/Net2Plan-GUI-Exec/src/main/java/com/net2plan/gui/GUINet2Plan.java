@@ -12,7 +12,10 @@
 
 package com.net2plan.gui;
 
-import com.net2plan.gui.utils.*;
+import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.ClassPathEditor;
+import com.net2plan.gui.utils.ColumnFitAdapter;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.ErrorHandling;
@@ -63,6 +66,9 @@ public class GUINet2Plan extends JFrame implements ActionListener {
     private BidiMap<JMenuItem, Object> itemObject;
     private IGUIModule runningModule;
 
+    private static InputMap inputMap;
+    private static ActionMap actionMap;
+
     private final static WindowAdapter CLOSE_NET2PLAN;
     private final static String ABOUT_TEXT = "<html><p align='justify'>Welcome to "
             + "Net2Plan " + Version.getVersion() + ": an open-source multilayer network planner "
@@ -82,6 +88,16 @@ public class GUINet2Plan extends JFrame implements ActionListener {
      * @since 0.2.0
      */
     private GUINet2Plan() {
+    }
+
+    public static void addGlobalActions(InputMap iMap, ActionMap aMap)
+    {
+        for (KeyStroke keyStroke : inputMap.allKeys())
+        {
+            final Object o = inputMap.get(keyStroke);
+            iMap.put(keyStroke, inputMap.get(keyStroke));
+            aMap.put(o, actionMap.get(o));
+        }
     }
 
     @Override
@@ -438,9 +454,66 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         container.add(showAbout(), "align center");
         container.revalidate();
 
+        addKeyCombinations();
+
         new JFileChooser(); /* Do not remove! It is used to avoid slow JFileChooser first-time loading once Net2Plan is shown to the user */
 
         setVisible(true);
+    }
+
+    private void addKeyCombinations()
+    {
+        inputMap = new InputMap();
+        actionMap = new ActionMap();
+
+        String javaConsole = errorConsoleItem.getText();
+        final KeyStroke consoleStroke = errorConsoleItem.getRegisteredKeyStrokes()[0];
+        inputMap.put(consoleStroke, javaConsole);
+        actionMap.put(javaConsole, new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent)
+            {
+                ErrorHandling.showConsole();
+            }
+        });
+
+        String options = optionsItem.getText();
+        final KeyStroke optionsStroke = optionsItem.getRegisteredKeyStrokes()[0];
+        inputMap.put(optionsStroke, options);
+        actionMap.put(options, new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent)
+            {
+                JDialog dialog = new GUIConfiguration();
+                dialog.setVisible(true);
+            }
+        });
+
+        String help = helpItem.getText();
+        final KeyStroke helpStroke = helpItem.getRegisteredKeyStrokes()[0];
+        inputMap.put(helpStroke, help);
+        actionMap.put(help, new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent)
+            {
+                loadHelp();
+            }
+        });
+
+        String keys = keyCombinationItem.getText();
+        final KeyStroke keyStroke = keyCombinationItem.getRegisteredKeyStrokes()[0];
+        inputMap.put(keyStroke, keys);
+        actionMap.put(keys, new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent)
+            {
+                showKeyCombinations();
+            }
+        });
     }
 
     /**
