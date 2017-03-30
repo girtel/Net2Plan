@@ -33,7 +33,6 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.collections15.BidiMap;
-import org.apache.commons.collections15.SetUtils;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -786,7 +785,6 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                 final String[] optionsArray = new String[]{"Set to selected demand", "Set to all demands", "Cancel"};
                 int result = JOptionPane.showOptionDialog(null, pane, "Set traversed resource types", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, optionsArray, optionsArray[0]);
                 if ((result != 0) && (result != 1)) return;
-                final boolean setToAllDemands = (result == 1);
                 List<String> newTraversedResourcesTypes = new LinkedList<>();
                 for (int j = 0; j < table.getRowCount(); j++)
                 {
@@ -867,7 +865,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                             long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
                             for (Demand d : selectedDemands)
                                 if (!d.isCoupled())
-                                        d.coupleToNewLinkCreated(netPlan.getNetworkLayerFromId(layerId));
+                                    d.coupleToNewLinkCreated(netPlan.getNetworkLayerFromId(layerId));
                             callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND, NetworkElementType.LINK));
                             callback.addNetPlanChange();
@@ -954,20 +952,24 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
                             try
                             {
-                                long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
-                                long linkId;
                                 try
                                 {
-                                    linkId = (long) ((StringLabeller) linkSelector.getSelectedItem()).getObject();
+                                    Long linkId = (Long) ((StringLabeller) linkSelector.getSelectedItem()).getObject();
+                                    if (linkId == null) throw new NullPointerException();
+
+                                    final Link link = netPlan.getLinkFromId(linkId);
+                                    if (link == null) throw new NullPointerException();
+
+                                    for (Demand selectedDemand : selectedDemands)
+                                        selectedDemand.coupleToUpperLayerLink(link);
+
+                                    callback.getVisualizationState().resetPickedState();
+                                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND, NetworkElementType.LINK));
+                                    callback.addNetPlanChange();
                                 } catch (Throwable ex)
                                 {
                                     throw new RuntimeException("No link was selected");
                                 }
-
-                                netPlan.getDemandFromId(demandId).coupleToUpperLayerLink(netPlan.getLinkFromId(linkId));
-                                callback.getVisualizationState().resetPickedState();
-                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND, NetworkElementType.LINK));
-                                callback.addNetPlanChange();
                                 break;
                             } catch (Throwable ex)
                             {
