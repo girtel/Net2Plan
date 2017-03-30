@@ -809,35 +809,64 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         });
         options.add(setServiceTypes);
 
-        int row = 1;
         if (netPlan.isMultilayer())
         {
-            JMenuItem decoupleDemandItem = new JMenuItem("Decouple demand");
-            decoupleDemandItem.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    for (Demand d : selectedDemands)
-                    {
-                        if (d.isCoupled()) d.decouple();
-                        model.setValueAt("", row, COLUMN_COUPLEDTOLINK);
-                    }
-                    callback.getVisualizationState().resetPickedState();
-                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                    callback.addNetPlanChange();
-                }
-            });
-            options.add(decoupleDemandItem);
+            options.add(new JPopupMenu.Separator());
 
             JMenuItem createUpperLayerLinkFromDemandItem = new JMenuItem("Create and couple upper layer links from uncoupled demands");
-            createUpperLayerLinkFromDemandItem.addActionListener(new ActionListener()
+            createUpperLayerLinkFromDemandItem.addActionListener(e ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
+                Collection<Long> layerIds = netPlan.getNetworkLayerIds();
+                final JComboBox layerSelector = new WiderJComboBox();
+                for (long layerId : layerIds)
+                {
+                    if (layerId == netPlan.getNetworkLayerDefault().getId()) continue;
+
+                    final String layerName = netPlan.getNetworkLayerFromId(layerId).getName();
+                    String layerLabel = "Layer " + layerId;
+                    if (!layerName.isEmpty()) layerLabel += " (" + layerName + ")";
+
+                    layerSelector.addItem(StringLabeller.of(layerId, layerLabel));
+                }
+
+                layerSelector.setSelectedIndex(0);
+
+                JPanel pane = new JPanel();
+                pane.add(new JLabel("Select layer: "));
+                pane.add(layerSelector);
+
+                while (true)
+                {
+                    int result = JOptionPane.showConfirmDialog(null, pane, "Please select the upper layer to create the link", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    if (result != JOptionPane.OK_OPTION) return;
+
+                    try
+                    {
+                        long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
+                        for (Demand d : selectedDemands)
+                            if (!d.isCoupled())
+                                d.coupleToNewLinkCreated(netPlan.getNetworkLayerFromId(layerId));
+                        callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND, NetworkElementType.LINK));
+                        callback.addNetPlanChange();
+                        break;
+                    } catch (Throwable ex)
+                    {
+                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating upper layer link from demand");
+                    }
+                }
+            });
+
+            options.add(createUpperLayerLinkFromDemandItem);
+
+            if (selectedDemands.size() == 1)
+            {
+                JMenuItem coupleDemandToLink = new JMenuItem("Couple demand to upper layer link");
+                coupleDemandToLink.addActionListener(e ->
                 {
                     Collection<Long> layerIds = netPlan.getNetworkLayerIds();
                     final JComboBox layerSelector = new WiderJComboBox();
+                    final JComboBox linkSelector = new WiderJComboBox();
                     for (long layerId : layerIds)
                     {
                         if (layerId == netPlan.getNetworkLayerDefault().getId()) continue;
@@ -849,48 +878,108 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                         layerSelector.addItem(StringLabeller.of(layerId, layerLabel));
                     }
 
+                    layerSelector.addItemListener(e1 ->
+                    {
+                        if (layerSelector.getSelectedIndex() >= 0)
+                        {
+                            long selectedLayerId = (Long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
+                            NetworkLayer selectedLayer = netPlan.getNetworkLayerFromId(selectedLayerId);
+
+                            linkSelector.removeAllItems();
+                            Collection<Link> links_thisLayer = netPlan.getLinks(selectedLayer);
+                            for (Link link : links_thisLayer)
+                            {
+                                if (link.isCoupled()) continue;
+
+                                String originNodeName = link.getOriginNode().getName();
+                                String destinationNodeName = link.getDestinationNode().getName();
+
+                                linkSelector.addItem(StringLabeller.unmodifiableOf(link.getId(), "e" + link.getIndex() + " [n" + link.getOriginNode().getIndex() + " (" + originNodeName + ") -> n" + link.getDestinationNode().getIndex() + " (" + destinationNodeName + ")]"));
+                            }
+                        }
+
+                        if (linkSelector.getItemCount() == 0)
+                        {
+                            linkSelector.setEnabled(false);
+                        } else
+                        {
+                            linkSelector.setSelectedIndex(0);
+                            linkSelector.setEnabled(true);
+                        }
+                    });
+
+                    layerSelector.setSelectedIndex(-1);
                     layerSelector.setSelectedIndex(0);
 
-                    JPanel pane = new JPanel();
+                    JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[][]"));
                     pane.add(new JLabel("Select layer: "));
-                    pane.add(layerSelector);
+                    pane.add(layerSelector, "growx, wrap");
+                    pane.add(new JLabel("Select link: "));
+                    pane.add(linkSelector, "growx, wrap");
 
                     while (true)
                     {
-                        int result = JOptionPane.showConfirmDialog(null, pane, "Please select the upper layer to create the link", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        int result = JOptionPane.showConfirmDialog(null, pane, "Please select the upper layer link", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                         if (result != JOptionPane.OK_OPTION) return;
 
                         try
                         {
-                            long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
-                            for (Demand d : selectedDemands)
-                                if (!d.isCoupled())
-                                    d.coupleToNewLinkCreated(netPlan.getNetworkLayerFromId(layerId));
-                            callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                            try
+                            {
+                                Long linkId = (Long) ((StringLabeller) linkSelector.getSelectedItem()).getObject();
+                                if (linkId == null) throw new NullPointerException();
+
+                                final Link link = netPlan.getLinkFromId(linkId);
+                                if (link == null) throw new NullPointerException();
+
+                                for (Demand selectedDemand : selectedDemands)
+                                    selectedDemand.coupleToUpperLayerLink(link);
+                            } catch (Throwable ex)
+                            {
+                                throw new RuntimeException("No link was selected");
+                            }
+
+                            callback.getVisualizationState().resetPickedState();
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND, NetworkElementType.LINK));
                             callback.addNetPlanChange();
                             break;
                         } catch (Throwable ex)
                         {
-                            ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating upper layer link from demand");
+                            ErrorHandling.showErrorDialog(ex.getMessage(), "Error coupling upper layer link to demand");
                         }
                     }
-                }
-            });
+                });
 
-            options.add(createUpperLayerLinkFromDemandItem);
+                options.add(coupleDemandToLink);
+            }
 
-            if (selectedDemands.size() == 1)
+            JMenuItem decoupleDemandItem = new JMenuItem("Decouple demand");
+            decoupleDemandItem.addActionListener(e ->
             {
-                JMenuItem coupleDemandToLink = new JMenuItem("Couple demand to upper layer link");
-                coupleDemandToLink.addActionListener(new ActionListener()
+                for (Demand d : selectedDemands)
                 {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
+                    if (d.isCoupled()) d.decouple();
+                    model.setValueAt("", d.getIndex(), COLUMN_COUPLEDTOLINK);
+                }
+                callback.getVisualizationState().resetPickedState();
+                callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
+                callback.addNetPlanChange();
+            });
+            options.add(decoupleDemandItem);
+
+            if (numRows > 1)
+            {
+                JMenuItem createUpperLayerLinksFromDemandsItem = null;
+
+                final Set<Demand> coupledDemands = tableVisibleDemands.stream().filter(Demand::isCoupled).collect(Collectors.toSet());
+
+                if (coupledDemands.size() < tableVisibleDemands.size())
+                {
+                    createUpperLayerLinksFromDemandsItem = new JMenuItem("Create upper layer links from uncoupled demands");
+                    createUpperLayerLinksFromDemandsItem.addActionListener(e ->
                     {
                         Collection<Long> layerIds = netPlan.getNetworkLayerIds();
                         final JComboBox layerSelector = new WiderJComboBox();
-                        final JComboBox linkSelector = new WiderJComboBox();
                         for (long layerId : layerIds)
                         {
                             if (layerId == netPlan.getNetworkLayerDefault().getId()) continue;
@@ -902,171 +991,42 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                             layerSelector.addItem(StringLabeller.of(layerId, layerLabel));
                         }
 
-                        layerSelector.addItemListener(new ItemListener()
-                        {
-                            @Override
-                            public void itemStateChanged(ItemEvent e)
-                            {
-                                if (layerSelector.getSelectedIndex() >= 0)
-                                {
-                                    long selectedLayerId = (Long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
-                                    NetworkLayer selectedLayer = netPlan.getNetworkLayerFromId(selectedLayerId);
-
-                                    linkSelector.removeAllItems();
-                                    Collection<Link> links_thisLayer = netPlan.getLinks(selectedLayer);
-                                    for (Link link : links_thisLayer)
-                                    {
-                                        if (link.isCoupled()) continue;
-
-                                        String originNodeName = link.getOriginNode().getName();
-                                        String destinationNodeName = link.getDestinationNode().getName();
-
-                                        linkSelector.addItem(StringLabeller.unmodifiableOf(link.getId(), "e" + link.getIndex() + " [n" + link.getOriginNode().getIndex() + " (" + originNodeName + ") -> n" + link.getDestinationNode().getIndex() + " (" + destinationNodeName + ")]"));
-                                    }
-                                }
-
-                                if (linkSelector.getItemCount() == 0)
-                                {
-                                    linkSelector.setEnabled(false);
-                                } else
-                                {
-                                    linkSelector.setSelectedIndex(0);
-                                    linkSelector.setEnabled(true);
-                                }
-                            }
-                        });
-
-                        layerSelector.setSelectedIndex(-1);
                         layerSelector.setSelectedIndex(0);
 
-                        JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[][]"));
+                        JPanel pane = new JPanel();
                         pane.add(new JLabel("Select layer: "));
-                        pane.add(layerSelector, "growx, wrap");
-                        pane.add(new JLabel("Select link: "));
-                        pane.add(linkSelector, "growx, wrap");
+                        pane.add(layerSelector);
 
                         while (true)
                         {
-                            int result = JOptionPane.showConfirmDialog(null, pane, "Please select the upper layer link", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                            int result = JOptionPane.showConfirmDialog(null, pane, "Please select the upper layer to create links", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                             if (result != JOptionPane.OK_OPTION) return;
 
                             try
                             {
-                                try
-                                {
-                                    Long linkId = (Long) ((StringLabeller) linkSelector.getSelectedItem()).getObject();
-                                    if (linkId == null) throw new NullPointerException();
+                                long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
+                                NetworkLayer layer = netPlan.getNetworkLayerFromId(layerId);
+                                for (Demand demand : tableVisibleDemands)
+                                    if (!demand.isCoupled())
+                                        demand.coupleToNewLinkCreated(layer);
 
-                                    final Link link = netPlan.getLinkFromId(linkId);
-                                    if (link == null) throw new NullPointerException();
-
-                                    for (Demand selectedDemand : selectedDemands)
-                                        selectedDemand.coupleToUpperLayerLink(link);
-                                } catch (Throwable ex)
-                                {
-                                    throw new RuntimeException("No link was selected");
-                                }
-
-                                callback.getVisualizationState().resetPickedState();
+                                callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND, NetworkElementType.LINK));
                                 callback.addNetPlanChange();
                                 break;
                             } catch (Throwable ex)
                             {
-                                ErrorHandling.showErrorDialog(ex.getMessage(), "Error coupling upper layer link to demand");
-                            }
-                        }
-                    }
-                });
-
-                options.add(coupleDemandToLink);
-            }
-
-            if (numRows > 1)
-            {
-                JMenuItem decoupleAllDemandsItem = null;
-                JMenuItem createUpperLayerLinksFromDemandsItem = null;
-
-                final Set<Demand> coupledDemands = tableVisibleDemands.stream().filter(d -> d.isCoupled()).collect(Collectors.toSet());
-                if (!coupledDemands.isEmpty())
-                {
-                    decoupleAllDemandsItem = new JMenuItem("Decouple all demands");
-                    decoupleAllDemandsItem.addActionListener(new ActionListener()
-                    {
-                        @Override
-                        public void actionPerformed(ActionEvent e)
-                        {
-                            for (Demand d : new LinkedHashSet<Demand>(coupledDemands))
-                                d.decouple();
-                            int numRows = model.getRowCount();
-                            for (int i = 0; i < numRows; i++) model.setValueAt("", i, 3);
-                            callback.getVisualizationState().resetPickedState();
-                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND));
-                            callback.addNetPlanChange();
-                        }
-                    });
-                }
-
-                if (coupledDemands.size() < tableVisibleDemands.size())
-                {
-                    createUpperLayerLinksFromDemandsItem = new JMenuItem("Create upper layer links from uncoupled demands");
-                    createUpperLayerLinksFromDemandsItem.addActionListener(new ActionListener()
-                    {
-                        @Override
-                        public void actionPerformed(ActionEvent e)
-                        {
-                            Collection<Long> layerIds = netPlan.getNetworkLayerIds();
-                            final JComboBox layerSelector = new WiderJComboBox();
-                            for (long layerId : layerIds)
-                            {
-                                if (layerId == netPlan.getNetworkLayerDefault().getId()) continue;
-
-                                final String layerName = netPlan.getNetworkLayerFromId(layerId).getName();
-                                String layerLabel = "Layer " + layerId;
-                                if (!layerName.isEmpty()) layerLabel += " (" + layerName + ")";
-
-                                layerSelector.addItem(StringLabeller.of(layerId, layerLabel));
-                            }
-
-                            layerSelector.setSelectedIndex(0);
-
-                            JPanel pane = new JPanel();
-                            pane.add(new JLabel("Select layer: "));
-                            pane.add(layerSelector);
-
-                            while (true)
-                            {
-                                int result = JOptionPane.showConfirmDialog(null, pane, "Please select the upper layer to create links", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                                if (result != JOptionPane.OK_OPTION) return;
-
-                                try
-                                {
-                                    long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
-                                    NetworkLayer layer = netPlan.getNetworkLayerFromId(layerId);
-                                    for (Demand demand : tableVisibleDemands)
-                                        if (!demand.isCoupled())
-                                            demand.coupleToNewLinkCreated(layer);
-
-                                    callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND, NetworkElementType.LINK));
-                                    callback.addNetPlanChange();
-                                    break;
-                                } catch (Throwable ex)
-                                {
-                                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating upper layer links");
-                                }
+                                ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating upper layer links");
                             }
                         }
                     });
                 }
 
-                if (!options.isEmpty() && (decoupleAllDemandsItem != null || createUpperLayerLinksFromDemandsItem != null))
+                if (!options.isEmpty() && createUpperLayerLinksFromDemandsItem != null)
                 {
                     options.add(new JPopupMenu.Separator());
-                    if (decoupleAllDemandsItem != null) options.add(decoupleAllDemandsItem);
-                    if (createUpperLayerLinksFromDemandsItem != null) options.add(createUpperLayerLinksFromDemandsItem);
+                    options.add(createUpperLayerLinksFromDemandsItem);
                 }
-
             }
         }
 
