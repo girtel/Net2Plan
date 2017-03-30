@@ -1266,10 +1266,10 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
         final List<? extends NetworkElement> selectedElements = selection.getNetworkElements();
 
-        popup.addSeparator();
-
         if (!selectedElements.isEmpty())
         {
+            popup.addSeparator();
+
             // Tags controls
             JMenuItem addTag = new JMenuItem("Add tag");
             addTag.addActionListener(e1 ->
