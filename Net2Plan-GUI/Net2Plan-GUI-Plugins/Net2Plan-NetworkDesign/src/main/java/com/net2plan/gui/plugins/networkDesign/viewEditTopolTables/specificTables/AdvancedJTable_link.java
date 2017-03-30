@@ -787,93 +787,89 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 if (selectedLinks.size() == 1)
                 {
                     JMenuItem coupleLinkToDemand = new JMenuItem("Couple link to lower layer demand");
-                    coupleLinkToDemand.addActionListener(new ActionListener()
+                    coupleLinkToDemand.addActionListener(e ->
                     {
-                        @Override
-                        public void actionPerformed(ActionEvent e)
+                        Collection<Long> layerIds = netPlan.getNetworkLayerIds();
+                        final JComboBox layerSelector = new WiderJComboBox();
+                        final JComboBox demandSelector = new WiderJComboBox();
+                        for (long layerId : layerIds)
                         {
-                            Collection<Long> layerIds = netPlan.getNetworkLayerIds();
-                            final JComboBox layerSelector = new WiderJComboBox();
-                            final JComboBox demandSelector = new WiderJComboBox();
-                            for (long layerId : layerIds)
+                            if (layerId == netPlan.getNetworkLayerDefault().getId()) continue;
+
+                            final String layerName = netPlan.getNetworkLayerFromId(layerId).getName();
+                            String layerLabel = "Layer " + layerId;
+                            if (!layerName.isEmpty()) layerLabel += " (" + layerName + ")";
+
+                            layerSelector.addItem(StringLabeller.of(layerId, layerLabel));
+                        }
+
+                        layerSelector.addItemListener(e1 ->
+                        {
+                            if (layerSelector.getSelectedIndex() >= 0)
                             {
-                                if (layerId == netPlan.getNetworkLayerDefault().getId()) continue;
+                                long selectedLayerId = (Long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
 
-                                final String layerName = netPlan.getNetworkLayerFromId(layerId).getName();
-                                String layerLabel = "Layer " + layerId;
-                                if (!layerName.isEmpty()) layerLabel += " (" + layerName + ")";
+                                demandSelector.removeAllItems();
+                                for (Demand demand : netPlan.getDemands(netPlan.getNetworkLayerFromId(selectedLayerId)))
+                                {
+                                    if (demand.isCoupled()) continue;
 
-                                layerSelector.addItem(StringLabeller.of(layerId, layerLabel));
+                                    long ingressNodeId = demand.getIngressNode().getId();
+                                    long egressNodeId = demand.getEgressNode().getId();
+                                    String ingressNodeName = demand.getIngressNode().getName();
+                                    String egressNodeName = demand.getEgressNode().getName();
+
+                                    demandSelector.addItem(StringLabeller.unmodifiableOf(demand.getId(), "d" + demand.getId() + " [n" + ingressNodeId + " (" + ingressNodeName + ") -> n" + egressNodeId + " (" + egressNodeName + ")]"));
+                                }
                             }
 
-                            layerSelector.addItemListener(new ItemListener()
+                            if (demandSelector.getItemCount() == 0)
                             {
-                                @Override
-                                public void itemStateChanged(ItemEvent e)
-                                {
-                                    if (layerSelector.getSelectedIndex() >= 0)
-                                    {
-                                        long selectedLayerId = (Long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
-
-                                        demandSelector.removeAllItems();
-                                        for (Demand demand : netPlan.getDemands(netPlan.getNetworkLayerFromId(selectedLayerId)))
-                                        {
-                                            if (demand.isCoupled()) continue;
-
-                                            long ingressNodeId = demand.getIngressNode().getId();
-                                            long egressNodeId = demand.getEgressNode().getId();
-                                            String ingressNodeName = demand.getIngressNode().getName();
-                                            String egressNodeName = demand.getEgressNode().getName();
-
-                                            demandSelector.addItem(StringLabeller.unmodifiableOf(demand.getId(), "d" + demand.getId() + " [n" + ingressNodeId + " (" + ingressNodeName + ") -> n" + egressNodeId + " (" + egressNodeName + ")]"));
-                                        }
-                                    }
-
-                                    if (demandSelector.getItemCount() == 0)
-                                    {
-                                        demandSelector.setEnabled(false);
-                                    } else
-                                    {
-                                        demandSelector.setSelectedIndex(0);
-                                        demandSelector.setEnabled(true);
-                                    }
-                                }
-                            });
-
-                            layerSelector.setSelectedIndex(-1);
-                            layerSelector.setSelectedIndex(0);
-
-                            JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[][]"));
-                            pane.add(new JLabel("Select layer: "));
-                            pane.add(layerSelector, "growx, wrap");
-                            pane.add(new JLabel("Select demand: "));
-                            pane.add(demandSelector, "growx, wrap");
-
-                            while (true)
+                                demandSelector.setEnabled(false);
+                            } else
                             {
-                                int result = JOptionPane.showConfirmDialog(null, pane, "Please select the lower layer demand", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                                if (result != JOptionPane.OK_OPTION) return;
+                                demandSelector.setSelectedIndex(0);
+                                demandSelector.setEnabled(true);
+                            }
+                        });
 
+                        layerSelector.setSelectedIndex(-1);
+                        layerSelector.setSelectedIndex(0);
+
+                        JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[][]"));
+                        pane.add(new JLabel("Select layer: "));
+                        pane.add(layerSelector, "growx, wrap");
+                        pane.add(new JLabel("Select demand: "));
+                        pane.add(demandSelector, "growx, wrap");
+
+                        while (true)
+                        {
+                            int result = JOptionPane.showConfirmDialog(null, pane, "Please select the lower layer demand", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                            if (result != JOptionPane.OK_OPTION) return;
+
+                            try
+                            {
                                 try
                                 {
-                                    long demandId;
-                                    try
-                                    {
-                                        demandId = (long) ((StringLabeller) demandSelector.getSelectedItem()).getObject();
-                                    } catch (Throwable ex)
-                                    {
-                                        throw new RuntimeException("No demand was selected");
-                                    }
+                                    final Long demandId = (Long) ((StringLabeller) demandSelector.getSelectedItem()).getObject();
+                                    if (demandId == null) throw new NullPointerException();
+                                    final Demand demand = netPlan.getDemandFromId(demandId);
+                                    if (demand == null) throw new NullPointerException();
 
-                                    netPlan.getDemandFromId(demandId).coupleToUpperLayerLink(netPlan.getLinkFromId(linkId));
-                                    callback.getVisualizationState().resetPickedState();
-                                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK, NetworkElementType.DEMAND));
-                                    callback.addNetPlanChange();
-                                    break;
+                                    final Link link = selectedLinks.get(0);
+                                    demand.coupleToUpperLayerLink(link);
                                 } catch (Throwable ex)
                                 {
-                                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error coupling lower layer demand to link");
+                                    throw new RuntimeException("No demand was selected");
                                 }
+                                
+                                callback.getVisualizationState().resetPickedState();
+                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK, NetworkElementType.DEMAND));
+                                callback.addNetPlanChange();
+                                break;
+                            } catch (Throwable ex)
+                            {
+                                ErrorHandling.showErrorDialog(ex.getMessage(), "Error coupling lower layer demand to link");
                             }
                         }
                     });

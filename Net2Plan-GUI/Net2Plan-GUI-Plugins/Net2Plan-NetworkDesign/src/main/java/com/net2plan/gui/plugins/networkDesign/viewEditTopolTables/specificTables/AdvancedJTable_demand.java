@@ -962,14 +962,14 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
                                     for (Demand selectedDemand : selectedDemands)
                                         selectedDemand.coupleToUpperLayerLink(link);
-
-                                    callback.getVisualizationState().resetPickedState();
-                                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND, NetworkElementType.LINK));
-                                    callback.addNetPlanChange();
                                 } catch (Throwable ex)
                                 {
                                     throw new RuntimeException("No link was selected");
                                 }
+
+                                callback.getVisualizationState().resetPickedState();
+                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND, NetworkElementType.LINK));
+                                callback.addNetPlanChange();
                                 break;
                             } catch (Throwable ex)
                             {
