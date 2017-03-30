@@ -50,7 +50,6 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.libraries.GraphTheoryMetrics;
 import com.net2plan.libraries.GraphUtils;
-import com.net2plan.libraries.ProfileUtils;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.TrafficComputationEngine;
 import com.net2plan.utils.CollectionUtils;
@@ -116,7 +115,6 @@ public class NetPlanViewTableComponent_layer extends JPanel
 
                     if (button == sourceRoutingActivated && state == ItemEvent.SELECTED)
                     {
-                    	ProfileUtils.printTime("Button hop by hop - 1 -a");
                         netPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
                         if (previousRoutingType != RoutingType.SOURCE_ROUTING)
                         {
