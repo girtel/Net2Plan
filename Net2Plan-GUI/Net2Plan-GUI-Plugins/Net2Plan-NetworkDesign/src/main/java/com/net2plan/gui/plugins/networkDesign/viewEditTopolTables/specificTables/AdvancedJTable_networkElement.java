@@ -32,6 +32,7 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.event.*;
@@ -1696,10 +1697,13 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public abstract ArrayList<String> getAttributesColumnsHeaders();
 
+    @Nonnull
     protected abstract List<JComponent> getExtraAddOptions();
 
+    @Nonnull
     protected abstract JMenuItem getAddOption();
 
+    @Nonnull
     protected abstract List<JComponent> getForcedOptions(ElementSelection selection);
 
     protected abstract List<JComponent> getExtraOptions(ElementSelection selection);
