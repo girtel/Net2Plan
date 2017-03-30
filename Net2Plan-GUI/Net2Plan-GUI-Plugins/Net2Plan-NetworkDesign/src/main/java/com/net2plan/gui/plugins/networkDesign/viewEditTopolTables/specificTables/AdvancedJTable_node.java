@@ -457,8 +457,6 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         {
             popup.add(this.getAddOption());
 
-            for (JComponent item : getExtraAddOptions()) popup.add(item);
-
             if (!rowsInTheTable.isEmpty())
             {
                 if (!selectedNodes.isEmpty())
@@ -486,6 +484,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                     popup.add(removeItem);
                     popup.addSeparator();
                 }
+
+                for (JComponent item : getExtraAddOptions()) popup.add(item);
 
                 List<JComponent> forcedOptions = getForcedOptions(selection);
                 for (JComponent item : forcedOptions) popup.add(item);

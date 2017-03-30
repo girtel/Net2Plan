@@ -991,6 +991,36 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 });
                 options.add(setLength);
 
+                JMenuItem lengthToEuclidean = new JMenuItem("Set link length to node-pair Euclidean distance");
+                lengthToEuclidean.addActionListener(e ->
+                {
+                    for (Link link : selectedLinks)
+                    {
+                        Node originNode = link.getOriginNode();
+                        Node destinationNode = link.getDestinationNode();
+                        double euclideanDistance = netPlan.getNodePairEuclideanDistance(originNode, destinationNode);
+                        link.setLengthInKm(euclideanDistance);
+                    }
+                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
+                    callback.addNetPlanChange();
+                });
+                options.add(lengthToEuclidean);
+
+                JMenuItem lengthToHaversine = new JMenuItem("Set link length to node-pair Haversine distance (longitude-latitude) in km");
+                lengthToHaversine.addActionListener(e ->
+                {
+                    for (Link link : selectedLinks)
+                    {
+                        Node originNode = link.getOriginNode();
+                        Node destinationNode = link.getDestinationNode();
+                        double haversineDistanceInKm = netPlan.getNodePairHaversineDistanceInKm(originNode, destinationNode);
+                        link.setLengthInKm(haversineDistanceInKm);
+                    }
+                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
+                    callback.addNetPlanChange();
+                });
+                options.add(lengthToHaversine);
+
                 JMenuItem scaleLength = new JMenuItem("Scale link length");
                 scaleLength.addActionListener(e ->
                 {
@@ -1021,36 +1051,6 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 });
 
                 options.add(scaleLength);
-
-                JMenuItem lengthToEuclidean = new JMenuItem("Set link length to node-pair Euclidean distance");
-                lengthToEuclidean.addActionListener(e ->
-                {
-                    for (Link link : selectedLinks)
-                    {
-                        Node originNode = link.getOriginNode();
-                        Node destinationNode = link.getDestinationNode();
-                        double euclideanDistance = netPlan.getNodePairEuclideanDistance(originNode, destinationNode);
-                        link.setLengthInKm(euclideanDistance);
-                    }
-                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
-                    callback.addNetPlanChange();
-                });
-                options.add(lengthToEuclidean);
-
-                JMenuItem lengthToHaversine = new JMenuItem("Set link length to node-pair Haversine distance (longitude-latitude) in km");
-                lengthToHaversine.addActionListener(e ->
-                {
-                    for (Link link : selectedLinks)
-                    {
-                        Node originNode = link.getOriginNode();
-                        Node destinationNode = link.getDestinationNode();
-                        double haversineDistanceInKm = netPlan.getNodePairHaversineDistanceInKm(originNode, destinationNode);
-                        link.setLengthInKm(haversineDistanceInKm);
-                    }
-                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
-                    callback.addNetPlanChange();
-                });
-                options.add(lengthToHaversine);
 
                 if (netPlan.isMultilayer())
                 {
