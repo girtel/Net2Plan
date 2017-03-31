@@ -71,6 +71,7 @@ import java.util.List;
 /**
  * @author Pablo
  */
+@SuppressWarnings("unchecked")
 public class GUINetworkDesign extends IGUIModule implements IVisualizationCallback
 {
     private final static String TITLE = "Offline network design & Online network simulation";
@@ -740,7 +741,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             {
                 tableControlWindow.showWindow(true);
             }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK + ActionEvent.SHIFT_MASK));
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.SHIFT_MASK | InputEvent.ALT_MASK));
 
         viewEditTopTables.setInputMap(WHEN_IN_FOCUSED_WINDOW, this.getInputMap(WHEN_IN_FOCUSED_WINDOW));
         viewEditTopTables.setActionMap(this.getActionMap());
