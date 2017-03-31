@@ -529,9 +529,33 @@ public class Link extends NetworkElement
 	public Link getBidirectionalPair()
 	{
 		checkAttachedToNetPlanObject();
-		return (Link) netPlan.getNetworkElementByAttribute(layer.links , netPlan.KEY_STRING_BIDIRECTIONALCOUPLE, "" + this.id);
+		return (Link) NetPlan.getNetworkElementByAttribute(layer.links , NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE, "" + this.id);
 	}
 
+	/**
+	 * Returns true if the link is bidirectional. That is, it has an associated link in the other direction
+	 * @return see above
+	 */
+	public boolean isBidirectional()
+	{
+		checkAttachedToNetPlanObject();
+		return NetPlan.getNetworkElementByAttribute(layer.links , NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE, "" + this.id) != null;
+	}
+
+	/**
+	 * Creates a link in the opposite direction as this, and with the same attributes, and associate both as bidirectional pairs.
+	 * If this link is already a bidirectional link, makes nothing and returns null
+	 * @return the newly created link
+	 */
+	public Link createBidirectionalPair ()
+	{
+		checkAttachedToNetPlanObject();
+		if (this.isBidirectional()) return null;
+		final Link e = netPlan.addLink(this.destinationNode, this.originNode, this.getCapacity(), this.getLengthInKm(), this.getPropagationDelayInMs(), this.attributes, this.layer);
+        e.setAttribute(NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE, "" + this.id);
+		return e;
+	}
+	
 	/**
 	 * <p>Removes the link. The routing is updated removing any associated routes, protection segments, multicast trees or forwarding rules.</p>
 	 * <p>If the link is coupled to a unicast or multicast demand, it is first decoupled. In the multicast case, this means that the multicast
