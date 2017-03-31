@@ -590,145 +590,164 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return new LinkedList<>();
     }
 
-    private List<JComponent> getExtraOptions(final int row, final ElementSelection selection)
+    @Override
+    protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
-        List<JComponent> options = new LinkedList<JComponent>();
+        assert selection != null;
+
+        List<JComponent> options = new LinkedList<>();
         final List<Resource> rowsInTheTable = getVisibleElementsInTable();
+        final List<Resource> selectedResources = (List<Resource>) selection.getNetworkElements();
 
         JMenuItem capacityInBaseResources = new JMenuItem("Set capacity to base resources");
-        capacityInBaseResources.addActionListener(new ActionListener()
+        capacityInBaseResources.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
+            try
             {
+                final Set<Resource> baseResources = new HashSet<>();
+                for (Resource res : selectedResources)
+                    baseResources.addAll(res.getBaseResources());
 
-                NetPlan netPlan = callback.getDesign();
-
-                try
+                if (baseResources.size() == 0)
                 {
+                    JOptionPane.showMessageDialog(null, "Selected resources has not got any base resources.");
+                    return;
+                }
 
-                    Resource res = netPlan.getResourceFromId((Long) itemId);
-                    List<Resource> baseResources = new LinkedList<>(res.getBaseResources());
-                    if (baseResources.size() == 0)
+                JPanel pane = new JPanel(new BorderLayout());
+                Object[][] data = {null, null, null};
+                String[] headers = StringUtils.arrayOf("Index", "Type", "Capacity");
+                TableModel tm = new ClassAwareTableModelImpl(data, headers, Collections.singleton(2));
+                AdvancedJTable table = new AdvancedJTable(tm);
+                Object[][] newData = new Object[baseResources.size()][headers.length];
+
+                final List<Resource> baseResourcesList = new ArrayList<>(baseResources);
+                final StringBuilder indexBuilder = new StringBuilder();
+                for (Resource res : selectedResources)
+                {
+                    indexBuilder.append(res.getIndex());
+                    indexBuilder.append(" ");
+
+                    for (int i = 0; i < baseResourcesList.size(); i++)
                     {
-                        JOptionPane.showMessageDialog(null, "This resource hasn't any base resource");
-                        return;
+                        final Resource r = baseResourcesList.get(i);
+                        newData[i][0] = r.getIndex();
+                        newData[i][1] = r.getType();
+                        newData[i][2] = res.getCapacityOccupiedInBaseResource(r);
                     }
-                    JPanel pane = new JPanel();
-                    Object[][] data = {null, null, null};
-                    String[] headers = StringUtils.arrayOf("Index", "Type", "Capacity");
-                    TableModel tm = new ClassAwareTableModelImpl(data, headers, new HashSet<Integer>(Arrays.asList(2)));
-                    AdvancedJTable table = new AdvancedJTable(tm);
-                    Object[][] newData = new Object[baseResources.size()][headers.length];
-                    int counter = 0;
-                    for (Resource r : baseResources)
-                    {
-                        newData[counter][0] = r.getIndex();
-                        newData[counter][1] = r.getType();
-                        newData[counter][2] = res.getCapacityOccupiedInBaseResource(r);
-                        counter++;
-                    }
-                    pane.setLayout(new BorderLayout());
-                    pane.add(new JLabel("Setting the occupied capacity in base resource of index: " + res.getIndex()), BorderLayout.NORTH);
-                    pane.add(new JScrollPane(table), BorderLayout.CENTER);
-                    ((DefaultTableModel) table.getModel()).setDataVector(newData, headers);
-                    int result = JOptionPane.showConfirmDialog(null, pane, "Set capacity to base resources", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                    if (result != JOptionPane.OK_OPTION) return;
+                }
+                pane.add(new JLabel("Setting the occupied capacity in base resource of index: " + indexBuilder.toString().trim()), BorderLayout.NORTH);
+                pane.add(new JScrollPane(table), BorderLayout.CENTER);
+
+                ((DefaultTableModel) table.getModel()).setDataVector(newData, headers);
+                int result = JOptionPane.showConfirmDialog(null, pane, "Set capacity to base resources", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (result != JOptionPane.OK_OPTION) return;
+
+                for (Resource res : selectedResources)
+                {
+                    final Set<Resource> resBaseResources = res.getBaseResources();
+
                     Map<Resource, Double> newCapMap = new HashMap<>();
                     for (int t = 0; t < table.getRowCount(); t++)
-                        newCapMap.put(baseResources.get(t), Double.parseDouble((String) table.getModel().getValueAt(t, 2)));
+                    {
+                        if (resBaseResources.contains(baseResourcesList.get(t)))
+                        {
+                            // TODO: The given value should never be a string
+                            final Object value = table.getModel().getValueAt(t, 2);
+                            assert value instanceof Double;
+                        }
+                            newCapMap.put(baseResourcesList.get(t), Double.parseDouble((String) table.getModel().getValueAt(t, 2)));
+                    }
+
                     res.setCapacity(res.getCapacity(), newCapMap);
-                    callback.getVisualizationState().resetPickedState();
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                    callback.addNetPlanChange();
-                } catch (Throwable ex)
-                {
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to base resources");
                 }
+
+                callback.getVisualizationState().resetPickedState();
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
+                callback.addNetPlanChange();
+            } catch (Throwable ex)
+            {
+                ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to base resources");
             }
-
-
         });
         options.add(capacityInBaseResources);
 
         JMenuItem setCapacityToAll = new JMenuItem("Set capacity to all (base resources occupation unchanged)");
-        setCapacityToAll.addActionListener(new ActionListener()
+        setCapacityToAll.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
+            NetPlan netPlan = callback.getDesign();
+            double cap;
+            while (true)
             {
-                NetPlan netPlan = callback.getDesign();
-                double cap;
-                while (true)
-                {
-                    String str = JOptionPane.showInputDialog(null, "Capacity value", "Set capacity to all table resources", JOptionPane.QUESTION_MESSAGE);
-                    if (str == null) return;
-
-                    try
-                    {
-                        cap = Double.parseDouble(str);
-                        if (cap < 0) throw new RuntimeException();
-
-                        break;
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog("Please, introduce a non-negative number", "Error setting capacity");
-                    }
-                }
+                String str = JOptionPane.showInputDialog(null, "Capacity value", "Set capacity to all table resources", JOptionPane.QUESTION_MESSAGE);
+                if (str == null) return;
 
                 try
                 {
-                    for (Resource r : rowsInTheTable)
-                        r.setCapacity(cap, null);
-                    callback.getVisualizationState().resetPickedState();
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                    callback.addNetPlanChange();
+                    cap = Double.parseDouble(str);
+                    if (cap < 0) throw new RuntimeException();
+
+                    break;
                 } catch (Throwable ex)
                 {
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to resources");
+                    ErrorHandling.showErrorDialog("Please, introduce a non-negative number", "Error setting capacity");
                 }
+            }
+
+            try
+            {
+                for (Resource r : rowsInTheTable)
+                    r.setCapacity(cap, null);
+                callback.getVisualizationState().resetPickedState();
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
+                callback.addNetPlanChange();
+            } catch (Throwable ex)
+            {
+                ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to resources");
             }
         });
         options.add(setCapacityToAll);
 
         JMenuItem setTraversingTimeToAll = new JMenuItem("Set processing time to all table resources");
-        setTraversingTimeToAll.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                NetPlan netPlan = callback.getDesign();
-                double procTime;
-                while (true)
-                {
-                    String str = JOptionPane.showInputDialog(null, "Processing time in miliseconds value", "Set processing time in miliseconds to all resources", JOptionPane.QUESTION_MESSAGE);
-                    if (str == null) return;
+        setTraversingTimeToAll.addActionListener(new
 
-                    try
-                    {
-                        procTime = Double.parseDouble(str);
-                        if (procTime < 0) throw new RuntimeException();
+                                                         ActionListener()
+                                                         {
+                                                             @Override
+                                                             public void actionPerformed(ActionEvent e)
+                                                             {
+                                                                 NetPlan netPlan = callback.getDesign();
+                                                                 double procTime;
+                                                                 while (true)
+                                                                 {
+                                                                     String str = JOptionPane.showInputDialog(null, "Processing time in miliseconds value", "Set processing time in miliseconds to all resources", JOptionPane.QUESTION_MESSAGE);
+                                                                     if (str == null) return;
 
-                        break;
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog("Please, introduce a non-negative number", "Error setting processing time");
-                    }
-                }
+                                                                     try
+                                                                     {
+                                                                         procTime = Double.parseDouble(str);
+                                                                         if (procTime < 0) throw new RuntimeException();
 
-                try
-                {
-                    for (Resource r : rowsInTheTable)
-                        r.setProcessingTimeToTraversingTrafficInMs(procTime);
-                    callback.getVisualizationState().resetPickedState();
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                    callback.addNetPlanChange();
-                } catch (Throwable ex)
-                {
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set processing time to resources");
-                }
-            }
-        });
+                                                                         break;
+                                                                     } catch (Throwable ex)
+                                                                     {
+                                                                         ErrorHandling.showErrorDialog("Please, introduce a non-negative number", "Error setting processing time");
+                                                                     }
+                                                                 }
+
+                                                                 try
+                                                                 {
+                                                                     for (Resource r : rowsInTheTable)
+                                                                         r.setProcessingTimeToTraversingTrafficInMs(procTime);
+                                                                     callback.getVisualizationState().resetPickedState();
+                                                                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
+                                                                     callback.addNetPlanChange();
+                                                                 } catch (Throwable ex)
+                                                                 {
+                                                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set processing time to resources");
+                                                                 }
+                                                             }
+                                                         });
         options.add(setTraversingTimeToAll);
 
         return options;
