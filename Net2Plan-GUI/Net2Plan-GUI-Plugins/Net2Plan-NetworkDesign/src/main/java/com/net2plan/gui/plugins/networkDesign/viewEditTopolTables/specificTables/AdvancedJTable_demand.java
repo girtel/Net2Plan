@@ -448,10 +448,13 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
                     popup.add(removeItem);
                 }
+            }
 
-                if (!getExtraAddOptions().isEmpty()) popup.addSeparator();
-                for (JComponent item : getExtraAddOptions()) popup.add(item);
+            if (!getExtraAddOptions().isEmpty()) popup.addSeparator();
+            for (JComponent item : getExtraAddOptions()) popup.add(item);
 
+            if (!demandRowsInTheTable.isEmpty() && !selectedDemands.isEmpty())
+            {
                 List<JComponent> forcedOptions = getForcedOptions(selection);
                 if (!forcedOptions.isEmpty())
                 {
@@ -469,7 +472,6 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                 addPopupMenuAttributeOptions(e, row, selection, popup);
             }
         }
-
 
         popup.show(e.getComponent(), e.getX(), e.getY());
     }
@@ -1068,6 +1070,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
             super.setValueAt(value, row, column);
 
         }
+
     }
 
     private List<Demand> getVisibleElementsInTable()

@@ -521,47 +521,27 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this link traffic");
             submenuFilters.add(filterKeepElementsAffectedThisLayer);
             if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
-            filterKeepElementsAffectedThisLayer.addActionListener(new ActionListener()
+            filterKeepElementsAffectedThisLayer.addActionListener(e1 ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    if (selectedLinks.size() > 1) throw new RuntimeException();
-                    TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedLinks.get(0), true);
-                    callback.getVisualizationState().updateTableRowFilter(filter);
-                    callback.updateVisualizationJustTables();
-                }
+                if (selectedLinks.size() > 1) throw new RuntimeException();
+                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedLinks.get(0), true);
+                callback.getVisualizationState().updateTableRowFilter(filter);
+                callback.updateVisualizationJustTables();
             });
-            filterKeepElementsAffectedAllLayers.addActionListener(new ActionListener()
+            filterKeepElementsAffectedAllLayers.addActionListener(e1 ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    if (selectedLinks.size() > 1) throw new RuntimeException();
-                    TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedLinks.get(0), false);
-                    callback.getVisualizationState().updateTableRowFilter(filter);
-                    callback.updateVisualizationJustTables();
-                }
+                if (selectedLinks.size() > 1) throw new RuntimeException();
+                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedLinks.get(0), false);
+                callback.getVisualizationState().updateTableRowFilter(filter);
+                callback.updateVisualizationJustTables();
             });
         }
         final JMenuItem tagFilter = new JMenuItem("This layer: Keep elements of tag...");
         submenuFilters.add(tagFilter);
-        tagFilter.addActionListener(new ActionListener()
-        {
-            public void actionPerformed(ActionEvent e)
-            {
-                dialogToFilterByTag(true);
-            }
-        });
+        tagFilter.addActionListener(e1 -> dialogToFilterByTag(true));
         final JMenuItem tagFilterAllLayers = new JMenuItem("All layers: Keep elements of tag...");
         submenuFilters.add(tagFilterAllLayers);
-        tagFilterAllLayers.addActionListener(new ActionListener()
-        {
-            public void actionPerformed(ActionEvent e)
-            {
-                dialogToFilterByTag(false);
-            }
-        });
+        tagFilterAllLayers.addActionListener(e1 -> dialogToFilterByTag(false));
 
         popup.add(submenuFilters);
         popup.addSeparator();
@@ -598,10 +578,13 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
                     popup.add(removeItem);
                 }
+            }
 
-                if (!getExtraAddOptions().isEmpty()) popup.addSeparator();
-                for (JComponent item : getExtraAddOptions()) popup.add(item);
+            if (!getExtraAddOptions().isEmpty()) popup.addSeparator();
+            for (JComponent item : getExtraAddOptions()) popup.add(item);
 
+            if (!linkRowsInTheTable.isEmpty() && !selectedLinks.isEmpty())
+            {
                 List<JComponent> forcedOptions = getForcedOptions(selection);
                 if (!forcedOptions.isEmpty()) popup.addSeparator();
                 for (JComponent item : forcedOptions) popup.add(item);
