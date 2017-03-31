@@ -426,8 +426,6 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
             {
                 if (!selectedResources.isEmpty())
                 {
-                    if (popup.getSubElements().length > 0) popup.addSeparator();
-
                     JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
                     removeItem.addActionListener(new ActionListener()
                     {
@@ -452,11 +450,21 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
 
                     popup.add(removeItem);
                 }
+            }
 
-                for (JComponent item : getExtraAddOptions())
-                    popup.add(item);
+            for (JComponent item : getExtraAddOptions())
+                popup.add(item);
 
-                List<JComponent> extraOptions = getExtraOptions(row, selection);
+            if (!rowsInTheTable.isEmpty() && !selectedResources.isEmpty())
+            {
+                List<JComponent> forcedOptions = getForcedOptions(selection);
+                if (!forcedOptions.isEmpty())
+                {
+                    if (popup.getSubElements().length > 0) popup.addSeparator();
+                    for (JComponent item : forcedOptions) popup.add(item);
+                }
+
+                List<JComponent> extraOptions = getExtraOptions(selection);
                 if (!extraOptions.isEmpty())
                 {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
@@ -464,13 +472,6 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                 }
 
                 addPopupMenuAttributeOptions(e, row, selection, popup);
-            }
-
-            List<JComponent> forcedOptions = getForcedOptions(selection);
-            if (!forcedOptions.isEmpty())
-            {
-                if (popup.getSubElements().length > 0) popup.addSeparator();
-                for (JComponent item : forcedOptions) popup.add(item);
             }
         }
 
@@ -593,9 +594,6 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     {
         List<JComponent> options = new LinkedList<JComponent>();
         final List<Resource> rowsInTheTable = getVisibleElementsInTable();
-
-        // TODO
-        Number itemId = 1;
 
         JMenuItem capacityInBaseResources = new JMenuItem("Set capacity to base resources");
         capacityInBaseResources.addActionListener(new ActionListener()
@@ -743,13 +741,6 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     }
 
     @Override
-    protected List<JComponent> getExtraOptions(ElementSelection selection)
-    {
-        return new LinkedList<>();
-    }
-
-
-    @Override
     public void showInCanvas(MouseEvent e, ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
@@ -823,6 +814,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
             setSelected(value != null && Boolean.parseBoolean(value.toString()));
             return this;
         }
+
     }
 
     private List<Resource> getVisibleElementsInTable()
