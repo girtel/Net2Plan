@@ -480,6 +480,7 @@ public class GUINet2Plan extends JFrame implements ActionListener {
      */
     private void addKeyCombination(final JMenuItem menuItem)
     {
+        assert menuItem != null;
         assert inputMap != null;
         assert actionMap != null;
 
