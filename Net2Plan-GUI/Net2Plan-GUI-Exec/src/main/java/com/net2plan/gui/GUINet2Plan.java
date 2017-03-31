@@ -406,15 +406,7 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         optionsItem = new JMenuItem("Options");
         optionsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.ALT_DOWN_MASK));
         optionsItem.addActionListener(this);
-        addKeyCombination(optionsItem, new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent)
-            {
-                JDialog dialog = new GUIConfiguration();
-                dialog.setVisible(true);
-            }
-        });
+        addKeyCombination(optionsItem);
         file.add(optionsItem);
 
         classPathEditorItem = new JMenuItem("Classpath editor");
@@ -424,27 +416,13 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         errorConsoleItem = new JMenuItem("Show Java console");
         errorConsoleItem.addActionListener(this);
         errorConsoleItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F12, InputEvent.ALT_DOWN_MASK));
-        addKeyCombination(errorConsoleItem, new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent)
-            {
-                ErrorHandling.showConsole();
-            }
-        });
+        addKeyCombination(errorConsoleItem);
         file.add(errorConsoleItem);
 
         exitItem = new JMenuItem("Exit");
         exitItem.addActionListener(this);
         exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, InputEvent.ALT_DOWN_MASK));
-        addKeyCombination(exitItem, new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent)
-            {
-                askForClose();
-            }
-        });
+        addKeyCombination(exitItem);
         file.add(exitItem);
 
 		/* Help menu */
@@ -460,14 +438,7 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         helpItem = new JMenuItem("User's guide");
         helpItem.addActionListener(this);
         helpItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, KeyEvent.VK_UNDEFINED));
-        addKeyCombination(helpItem, new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent)
-            {
-                loadHelp();
-            }
-        });
+        addKeyCombination(helpItem);
         help.add(helpItem);
 
         javadocItem = new JMenuItem("Library API Javadoc");
@@ -481,14 +452,7 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         keyCombinationItem = new JMenuItem("Show tool key combinations");
         keyCombinationItem.addActionListener(this);
         keyCombinationItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K, KeyEvent.ALT_DOWN_MASK));
-        addKeyCombination(keyCombinationItem, new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent)
-            {
-                showKeyCombinations();
-            }
-        });
+        addKeyCombination(keyCombinationItem);
         help.add(keyCombinationItem);
 
         usedKeyStrokes = new LinkedHashSet<>();
@@ -502,7 +466,7 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         setVisible(true);
     }
 
-    private void addKeyCombination(final JMenuItem menuItem, final Action action)
+    private void addKeyCombination(final JMenuItem menuItem)
     {
         assert inputMap != null;
         assert actionMap != null;
@@ -513,7 +477,14 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         for (KeyStroke keyStroke : keyStrokes)
         {
             inputMap.put(keyStroke, itemMessage);
-            actionMap.put(itemMessage, action);
+            actionMap.put(itemMessage, new AbstractAction()
+            {
+                @Override
+                public void actionPerformed(ActionEvent actionEvent)
+                {
+                    menuItem.doClick();
+                }
+            });
         }
     }
 
