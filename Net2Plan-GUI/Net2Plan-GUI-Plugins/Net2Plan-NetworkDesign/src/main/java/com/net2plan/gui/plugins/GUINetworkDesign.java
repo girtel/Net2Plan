@@ -66,12 +66,9 @@ import java.util.List;
  * based on constrained optimization formulations (i.e. ILPs) can be fast-prototyped
  * using the open-source Java Optimization Modeler library, to interface
  * to a number of external solvers such as GPLK, CPLEX or IPOPT.
- */
-
-/**
+ *
  * @author Pablo
  */
-@SuppressWarnings("unchecked")
 public class GUINetworkDesign extends IGUIModule implements IVisualizationCallback
 {
     private final static String TITLE = "Offline network design & Online network simulation";

@@ -510,7 +510,6 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         }
 
         JPopupMenu popup = new JPopupMenu();
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final List<Link> linkRowsInTheTable = getVisibleElementsInTable();
 
         final List<Link> selectedLinks = (List<Link>) selection.getNetworkElements();

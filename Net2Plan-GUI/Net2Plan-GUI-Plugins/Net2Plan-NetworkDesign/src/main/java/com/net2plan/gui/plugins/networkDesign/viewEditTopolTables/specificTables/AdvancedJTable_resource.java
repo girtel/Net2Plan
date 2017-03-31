@@ -27,7 +27,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Created by César on 13/12/2016.
@@ -376,6 +375,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         assert selection != null;
 
         JPopupMenu popup = new JPopupMenu();
+
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final List<Resource> rowsInTheTable = getVisibleElementsInTable();
 
@@ -421,15 +421,10 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         if (callback.getVisualizationState().isNetPlanEditable())
         {
             popup.add(getAddOption());
-            for (JComponent item : getExtraAddOptions())
-                popup.add(item);
-        }
 
-        if (!rowsInTheTable.isEmpty())
-        {
-            if (callback.getVisualizationState().isNetPlanEditable())
+            if (!rowsInTheTable.isEmpty())
             {
-                if (row != -1)
+                if (!selectedResources.isEmpty())
                 {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
 
@@ -457,73 +452,9 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
 
                     popup.add(removeItem);
                 }
-                JMenuItem removeItemsOfAType = new JMenuItem("Remove all table " + networkElementType + "s of a type");
-                removeItemsOfAType.addActionListener(new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        NetPlan netPlan = callback.getDesign();
-                        JComboBox typeSelector = new WiderJComboBox();
-                        final Set<String> resourceTypes = rowsInTheTable.stream().map(ee -> ee.getType()).collect(Collectors.toSet());
-                        for (String type : resourceTypes)
-                            typeSelector.addItem(type);
-                        try
-                        {
-                            JPanel pane = new JPanel();
-                            pane.add(new JLabel("Resource Type"));
-                            pane.add(typeSelector);
-                            while (true)
-                            {
-                                int result = JOptionPane.showConfirmDialog(null, pane, "Please choose the type of " + networkElementType + " to remove", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                                if (result != JOptionPane.OK_OPTION) return;
-                                final String typeToRemove = typeSelector.getSelectedItem().toString();
-                                final List<Resource> resourcesToRemove = rowsInTheTable.stream().filter(r -> r.getType().equals(typeToRemove)).collect(Collectors.toList());
-                                for (Resource res : resourcesToRemove)
-                                    res.remove();
-                                callback.getVisualizationState().resetPickedState();
-                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                                callback.addNetPlanChange();
-                                break;
-                            }
-                        } catch (Throwable ex)
-                        {
-                            ErrorHandling.addErrorOrException(ex, getClass());
-                            ErrorHandling.showErrorDialog("Unable to remove " + networkElementType + "s");
-                        }
 
-                    }
-                });
-                popup.add(removeItemsOfAType);
-                JMenuItem removeItems = new JMenuItem("Remove all table " + networkElementType + "s");
-
-                removeItems.addActionListener(new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        NetPlan netPlan = callback.getDesign();
-
-                        try
-                        {
-                            if (rf == null)
-                                netPlan.removeAllResources();
-                            else
-                                for (Resource r : rowsInTheTable) r.remove();
-                            callback.getVisualizationState().resetPickedState();
-                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            callback.addNetPlanChange();
-                        } catch (Throwable ex)
-                        {
-                            ex.printStackTrace();
-                            ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
-                        }
-                    }
-                });
-
-                popup.add(removeItems);
-
-                addPopupMenuAttributeOptions(e, row, selection, popup);
+                for (JComponent item : getExtraAddOptions())
+                    popup.add(item);
 
                 List<JComponent> extraOptions = getExtraOptions(row, selection);
                 if (!extraOptions.isEmpty())
@@ -531,6 +462,8 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                     if (popup.getSubElements().length > 0) popup.addSeparator();
                     for (JComponent item : extraOptions) popup.add(item);
                 }
+
+                addPopupMenuAttributeOptions(e, row, selection, popup);
             }
 
             List<JComponent> forcedOptions = getForcedOptions(selection);
