@@ -12,7 +12,10 @@
 
 package com.net2plan.gui;
 
-import com.net2plan.gui.utils.*;
+import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.ClassPathEditor;
+import com.net2plan.gui.utils.ColumnFitAdapter;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.ErrorHandling;
@@ -26,8 +29,6 @@ import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.SwingUtils;
 import net.miginfocom.swing.MigLayout;
-import org.apache.commons.collections15.BidiMap;
-import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -40,6 +41,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -60,8 +62,11 @@ public class GUINet2Plan extends JFrame implements ActionListener {
     private JMenuBar menu;
     private JMenuItem exitItem, optionsItem, errorConsoleItem, classPathEditorItem, keyCombinationItem;
     private JMenuItem aboutItem, helpItem, javadocItem, javadocExamplesItem;
-    private BidiMap<JMenuItem, Object> itemObject;
+    private Map<JMenuItem, Object> itemObject;
     private IGUIModule runningModule;
+
+    private static InputMap inputMap;
+    private static ActionMap actionMap;
 
     private final static WindowAdapter CLOSE_NET2PLAN;
     private final static String ABOUT_TEXT = "<html><p align='justify'>Welcome to "
@@ -82,6 +87,23 @@ public class GUINet2Plan extends JFrame implements ActionListener {
      * @since 0.2.0
      */
     private GUINet2Plan() {
+    }
+
+    /**
+     * Adds Net2Plan's global key combinations to a given input and action map.
+     * The added actions correspond to the ones that are found on the top menu at the main window.
+     * Useful for adding these actions to new windows that are not contained within GUINet2Plan.
+     * @param iMap Input window input map.
+     * @param aMap Input window action map.
+     */
+    public static void addGlobalActions(InputMap iMap, ActionMap aMap)
+    {
+        for (KeyStroke keyStroke : inputMap.allKeys())
+        {
+            final Object o = inputMap.get(keyStroke);
+            iMap.put(keyStroke, inputMap.get(keyStroke));
+            aMap.put(o, actionMap.get(o));
+        }
     }
 
     @Override
@@ -361,7 +383,10 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setMinimumSize(new Dimension(800, 600));
 
-        itemObject = new DualHashBidiMap<JMenuItem, Object>();
+        itemObject = new HashMap<>();
+
+        inputMap = new InputMap();
+        actionMap = new ActionMap();
 
         URL iconURL = GUINet2Plan.class.getResource("/resources/gui/icon.png");
         ImageIcon icon = new ImageIcon(iconURL);
@@ -388,6 +413,7 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         optionsItem = new JMenuItem("Options");
         optionsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.ALT_DOWN_MASK));
         optionsItem.addActionListener(this);
+        addKeyCombination(optionsItem);
         file.add(optionsItem);
 
         classPathEditorItem = new JMenuItem("Classpath editor");
@@ -397,11 +423,13 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         errorConsoleItem = new JMenuItem("Show Java console");
         errorConsoleItem.addActionListener(this);
         errorConsoleItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F12, InputEvent.ALT_DOWN_MASK));
+        addKeyCombination(errorConsoleItem);
         file.add(errorConsoleItem);
 
         exitItem = new JMenuItem("Exit");
         exitItem.addActionListener(this);
         exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, InputEvent.ALT_DOWN_MASK));
+        addKeyCombination(exitItem);
         file.add(exitItem);
 
 		/* Help menu */
@@ -417,6 +445,7 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         helpItem = new JMenuItem("User's guide");
         helpItem.addActionListener(this);
         helpItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, KeyEvent.VK_UNDEFINED));
+        addKeyCombination(helpItem);
         help.add(helpItem);
 
         javadocItem = new JMenuItem("Library API Javadoc");
@@ -430,9 +459,10 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         keyCombinationItem = new JMenuItem("Show tool key combinations");
         keyCombinationItem.addActionListener(this);
         keyCombinationItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K, KeyEvent.ALT_DOWN_MASK));
+        addKeyCombination(keyCombinationItem);
         help.add(keyCombinationItem);
 
-        usedKeyStrokes = new LinkedHashSet<KeyStroke>();
+        usedKeyStrokes = new LinkedHashSet<>();
         refreshMenu();
 
         container.add(showAbout(), "align center");
@@ -441,6 +471,34 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         new JFileChooser(); /* Do not remove! It is used to avoid slow JFileChooser first-time loading once Net2Plan is shown to the user */
 
         setVisible(true);
+    }
+
+    /**
+     * Adds a key combination to the registry of global actions.
+     * Saves into the input map a copy of the keystrokes contained within the menu item and a call to the action listener of it.
+     * @param menuItem Input menu item.
+     */
+    private void addKeyCombination(final JMenuItem menuItem)
+    {
+        assert menuItem != null;
+        assert inputMap != null;
+        assert actionMap != null;
+
+        String itemMessage = menuItem.getText();
+        final KeyStroke[] keyStrokes = menuItem.getRegisteredKeyStrokes();
+
+        for (KeyStroke keyStroke : keyStrokes)
+        {
+            inputMap.put(keyStroke, itemMessage);
+            actionMap.put(itemMessage, new AbstractAction()
+            {
+                @Override
+                public void actionPerformed(ActionEvent actionEvent)
+                {
+                    menuItem.doClick();
+                }
+            });
+        }
     }
 
     /**
