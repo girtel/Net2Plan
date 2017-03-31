@@ -29,8 +29,6 @@ import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.SwingUtils;
 import net.miginfocom.swing.MigLayout;
-import org.apache.commons.collections15.BidiMap;
-import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -43,6 +41,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -63,7 +62,7 @@ public class GUINet2Plan extends JFrame implements ActionListener {
     private JMenuBar menu;
     private JMenuItem exitItem, optionsItem, errorConsoleItem, classPathEditorItem, keyCombinationItem;
     private JMenuItem aboutItem, helpItem, javadocItem, javadocExamplesItem;
-    private BidiMap<JMenuItem, Object> itemObject;
+    private Map<JMenuItem, Object> itemObject;
     private IGUIModule runningModule;
 
     private static InputMap inputMap;
@@ -377,7 +376,10 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setMinimumSize(new Dimension(800, 600));
 
-        itemObject = new DualHashBidiMap<JMenuItem, Object>();
+        itemObject = new HashMap<>();
+
+        inputMap = new InputMap();
+        actionMap = new ActionMap();
 
         URL iconURL = GUINet2Plan.class.getResource("/resources/gui/icon.png");
         ImageIcon icon = new ImageIcon(iconURL);
@@ -404,6 +406,15 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         optionsItem = new JMenuItem("Options");
         optionsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.ALT_DOWN_MASK));
         optionsItem.addActionListener(this);
+        addKeyCombination(optionsItem, new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent)
+            {
+                JDialog dialog = new GUIConfiguration();
+                dialog.setVisible(true);
+            }
+        });
         file.add(optionsItem);
 
         classPathEditorItem = new JMenuItem("Classpath editor");
@@ -413,11 +424,27 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         errorConsoleItem = new JMenuItem("Show Java console");
         errorConsoleItem.addActionListener(this);
         errorConsoleItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F12, InputEvent.ALT_DOWN_MASK));
+        addKeyCombination(errorConsoleItem, new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent)
+            {
+                ErrorHandling.showConsole();
+            }
+        });
         file.add(errorConsoleItem);
 
         exitItem = new JMenuItem("Exit");
         exitItem.addActionListener(this);
         exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, InputEvent.ALT_DOWN_MASK));
+        addKeyCombination(exitItem, new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent)
+            {
+                askForClose();
+            }
+        });
         file.add(exitItem);
 
 		/* Help menu */
@@ -433,6 +460,14 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         helpItem = new JMenuItem("User's guide");
         helpItem.addActionListener(this);
         helpItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, KeyEvent.VK_UNDEFINED));
+        addKeyCombination(helpItem, new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent)
+            {
+                loadHelp();
+            }
+        });
         help.add(helpItem);
 
         javadocItem = new JMenuItem("Library API Javadoc");
@@ -446,67 +481,7 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         keyCombinationItem = new JMenuItem("Show tool key combinations");
         keyCombinationItem.addActionListener(this);
         keyCombinationItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K, KeyEvent.ALT_DOWN_MASK));
-        help.add(keyCombinationItem);
-
-        usedKeyStrokes = new LinkedHashSet<KeyStroke>();
-        refreshMenu();
-
-        container.add(showAbout(), "align center");
-        container.revalidate();
-
-        addKeyCombinations();
-
-        new JFileChooser(); /* Do not remove! It is used to avoid slow JFileChooser first-time loading once Net2Plan is shown to the user */
-
-        setVisible(true);
-    }
-
-    private void addKeyCombinations()
-    {
-        inputMap = new InputMap();
-        actionMap = new ActionMap();
-
-        String javaConsole = errorConsoleItem.getText();
-        final KeyStroke consoleStroke = errorConsoleItem.getRegisteredKeyStrokes()[0];
-        inputMap.put(consoleStroke, javaConsole);
-        actionMap.put(javaConsole, new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent)
-            {
-                ErrorHandling.showConsole();
-            }
-        });
-
-        String options = optionsItem.getText();
-        final KeyStroke optionsStroke = optionsItem.getRegisteredKeyStrokes()[0];
-        inputMap.put(optionsStroke, options);
-        actionMap.put(options, new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent)
-            {
-                JDialog dialog = new GUIConfiguration();
-                dialog.setVisible(true);
-            }
-        });
-
-        String help = helpItem.getText();
-        final KeyStroke helpStroke = helpItem.getRegisteredKeyStrokes()[0];
-        inputMap.put(helpStroke, help);
-        actionMap.put(help, new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent)
-            {
-                loadHelp();
-            }
-        });
-
-        String keys = keyCombinationItem.getText();
-        final KeyStroke keyStroke = keyCombinationItem.getRegisteredKeyStrokes()[0];
-        inputMap.put(keyStroke, keys);
-        actionMap.put(keys, new AbstractAction()
+        addKeyCombination(keyCombinationItem, new AbstractAction()
         {
             @Override
             public void actionPerformed(ActionEvent actionEvent)
@@ -514,6 +489,32 @@ public class GUINet2Plan extends JFrame implements ActionListener {
                 showKeyCombinations();
             }
         });
+        help.add(keyCombinationItem);
+
+        usedKeyStrokes = new LinkedHashSet<>();
+        refreshMenu();
+
+        container.add(showAbout(), "align center");
+        container.revalidate();
+
+        new JFileChooser(); /* Do not remove! It is used to avoid slow JFileChooser first-time loading once Net2Plan is shown to the user */
+
+        setVisible(true);
+    }
+
+    private void addKeyCombination(final JMenuItem menuItem, final Action action)
+    {
+        assert inputMap != null;
+        assert actionMap != null;
+
+        String itemMessage = menuItem.getText();
+        final KeyStroke[] keyStrokes = menuItem.getRegisteredKeyStrokes();
+
+        for (KeyStroke keyStroke : keyStrokes)
+        {
+            inputMap.put(keyStroke, itemMessage);
+            actionMap.put(itemMessage, action);
+        }
     }
 
     /**
