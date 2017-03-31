@@ -89,6 +89,13 @@ public class GUINet2Plan extends JFrame implements ActionListener {
     private GUINet2Plan() {
     }
 
+    /**
+     * Adds Net2Plan's global key combinations to a given input and action map.
+     * The added actions correspond to the ones that are found on the top menu at the main window.
+     * Useful for adding these actions to new windows that are not contained within GUINet2Plan.
+     * @param iMap Input window input map.
+     * @param aMap Input window action map.
+     */
     public static void addGlobalActions(InputMap iMap, ActionMap aMap)
     {
         for (KeyStroke keyStroke : inputMap.allKeys())
@@ -466,6 +473,11 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         setVisible(true);
     }
 
+    /**
+     * Adds a key combination to the registry of global actions.
+     * Saves into the input map a copy of the keystrokes contained within the menu item and a call to the action listener of it.
+     * @param menuItem Input menu item.
+     */
     private void addKeyCombination(final JMenuItem menuItem)
     {
         assert inputMap != null;
