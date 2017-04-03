@@ -16,6 +16,7 @@ import com.net2plan.internal.Constants;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -56,7 +57,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     public AdvancedJTable_resource(final GUINetworkDesign callback)
     {
         super(createTableModel(callback), callback, Constants.NetworkElementType.RESOURCE, true);
-        setDefaultCellRenderers(callback);
+        setDefaultCellRenderers();
         setSpecificCellRenderers();
         setColumnRowSortingFixedAndNonFixedTable();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
@@ -261,7 +262,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     {
     }
 
-    private void setDefaultCellRenderers(final GUINetworkDesign callback)
+    private void setDefaultCellRenderers()
     {
         setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
         setDefaultRenderer(Double.class, new CellRenderers.NumberCellRenderer());
@@ -610,7 +611,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
 
                 if (baseResources.size() == 0)
                 {
-                    JOptionPane.showMessageDialog(null, "Selected resources has not got any base resources.");
+                    JOptionPane.showMessageDialog(null, "Selected resources does not have any base resources.");
                     return;
                 }
 
@@ -636,13 +637,14 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                         newData[i][2] = res.getCapacityOccupiedInBaseResource(r);
                     }
                 }
-                pane.add(new JLabel("Setting the occupied capacity in base resource of index: " + indexBuilder.toString().trim()), BorderLayout.NORTH);
+                pane.add(new JLabel("Setting the occupied capacity in base resource for index: " + indexBuilder.toString().trim()), BorderLayout.NORTH);
                 pane.add(new JScrollPane(table), BorderLayout.CENTER);
 
                 ((DefaultTableModel) table.getModel()).setDataVector(newData, headers);
                 int result = JOptionPane.showConfirmDialog(null, pane, "Set capacity to base resources", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                 if (result != JOptionPane.OK_OPTION) return;
 
+                final Map<Resource, Map<Resource, Double>> valueMap = new HashMap<>();
                 for (Resource res : selectedResources)
                 {
                     final Set<Resource> resBaseResources = res.getBaseResources();
@@ -652,15 +654,16 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                     {
                         if (resBaseResources.contains(baseResourcesList.get(t)))
                         {
-                            // TODO: The given value should never be a string
-                            final Object value = table.getModel().getValueAt(t, 2);
-                            assert value instanceof Double;
+                            final String valueAt = table.getModel().getValueAt(t, 2).toString();
+                            if (!NumberUtils.isNumber(valueAt)) throw new RuntimeException("Invalid value found for resource: " + baseResourcesList.get(t).getName() + ".\nNo changes where made.");
+                            newCapMap.put(baseResourcesList.get(t), Double.parseDouble(valueAt));
                         }
-                            newCapMap.put(baseResourcesList.get(t), Double.parseDouble((String) table.getModel().getValueAt(t, 2)));
                     }
-
-                    res.setCapacity(res.getCapacity(), newCapMap);
+                    valueMap.put(res, newCapMap);
                 }
+
+                for (Resource res : selectedResources)
+                    res.setCapacity(res.getCapacity(), valueMap.get(res));
 
                 callback.getVisualizationState().resetPickedState();
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
