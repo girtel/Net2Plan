@@ -482,104 +482,95 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     @Override
     protected JMenuItem getAddOption()
     {
-        JMenuItem addItem = addItem = new JMenuItem("Add " + networkElementType);
-        addItem.addActionListener(new ActionListener()
+        JMenuItem addItem = new JMenuItem("Add " + networkElementType);
+        addItem.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
+            NetPlan netPlan = callback.getDesign();
+
+            try
             {
-                NetPlan netPlan = callback.getDesign();
 
-                try
+                JComboBox hostNodeSelector = new WiderJComboBox();
+                JTextField capUnitsField = new JTextField(20);
+                JTextField typeSelector = new JTextField(20);
+
+                for (Node n : netPlan.getNodes())
                 {
-
-                    JComboBox hostNodeSelector = new WiderJComboBox();
-                    JTextField capUnitsField = new JTextField(20);
-                    JTextField typeSelector = new JTextField(20);
-
-                    for (Node n : netPlan.getNodes())
-                    {
-                        final String nodeName = n.getName();
-                        String nodeLabel = "Node " + n.getIndex();
-                        if (!nodeName.isEmpty()) nodeLabel += " (" + nodeName + ")";
-                        hostNodeSelector.addItem(StringLabeller.of(n.getId(), nodeLabel));
-                    }
-                    Node hostNode = null;
-                    String capacityUnits = "";
-                    String resType = "";
-                    JPanel pane = new JPanel();
-                    pane.add(new JLabel("Resource Type"));
-                    pane.add(typeSelector);
-                    pane.add(Box.createHorizontalStrut(30));
-                    pane.add(new JLabel("Host Node"));
-                    pane.add(hostNodeSelector);
-                    pane.add(Box.createHorizontalStrut(30));
-                    pane.add(new JLabel("Capacity Units"));
-                    pane.add(capUnitsField);
-                    while (true)
-                    {
-                        int result = JOptionPane.showConfirmDialog(null, pane, "Please enter parameters for the new " + networkElementType, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                        if (result != JOptionPane.OK_OPTION) return;
-                        hostNode = netPlan.getNodeFromId((Long) ((StringLabeller) hostNodeSelector.getSelectedItem()).getObject());
-                        capacityUnits = capUnitsField.getText();
-                        resType = typeSelector.getText();
-                        break;
-                    }
-                    JPanel panel = new JPanel();
-                    Object[][] data = {null, null, null};
-                    String[] headers = StringUtils.arrayOf("Base Resource", "Is Base Resource", "Capacity");
-                    TableModel tm = new ClassAwareTableModelImpl(data, headers, new HashSet<Integer>(Arrays.asList(1, 2)));
-                    AdvancedJTable table = new AdvancedJTable(tm);
-                    int baseResCounter = 0;
-                    for (Resource r : netPlan.getResources())
-                    {
-                        if (r.getHostNode().toString().equals(hostNode.toString()))
-                        {
-                            baseResCounter++;
-                        }
-                    }
-                    Object[][] newData = new Object[baseResCounter][headers.length];
-                    int counter = 0;
-                    for (Resource r : netPlan.getResources())
-                    {
-                        if (r.getHostNode().toString().equals(hostNode.toString()))
-                        {
-                            newData[counter][0] = r.getName();
-                            newData[counter][1] = false;
-                            newData[counter][2] = 0;
-                            addCheckboxCellEditor(false, counter, 1, table);
-                            counter++;
-                        }
-                    }
-                    panel.setLayout(new BorderLayout());
-                    panel.add(new JLabel("Set new resource base resources"), BorderLayout.NORTH);
-                    panel.add(new JScrollPane(table), BorderLayout.CENTER);
-                    ((DefaultTableModel) table.getModel()).setDataVector(newData, headers);
-                    while (true)
-                    {
-                        int result = JOptionPane.showConfirmDialog(null, panel, "Set base resources", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                        if (result != JOptionPane.OK_OPTION) return;
-                        Map<Resource, Double> newBaseResources = new HashMap<>();
-                        for (int j = 0; j < table.getRowCount(); j++)
-                        {
-                            Resource r = netPlan.getResource(j);
-                            String capacity = table.getModel().getValueAt(j, 2).toString();
-                            boolean isBaseResource = (boolean) table.getModel().getValueAt(j, 1);
-                            if (isBaseResource)
-                                newBaseResources.put(r, Double.parseDouble(capacity));
-
-                        }
-                        netPlan.addResource(resType, "Resource n_" + netPlan.getResources().size(), hostNode,
-                                0, capacityUnits, newBaseResources, 0, null);
-                        callback.getVisualizationState().resetPickedState();
-                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                        callback.addNetPlanChange();
-                        break;
-                    }
-                } catch (Throwable ex)
-                {
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
+                    final String nodeName = n.getName();
+                    String nodeLabel = "Node " + n.getIndex();
+                    if (!nodeName.isEmpty()) nodeLabel += " (" + nodeName + ")";
+                    hostNodeSelector.addItem(StringLabeller.of(n.getId(), nodeLabel));
                 }
+                Node hostNode;
+                String capacityUnits;
+                String resType;
+                JPanel pane = new JPanel();
+                pane.add(new JLabel("Resource Type"));
+                pane.add(typeSelector);
+                pane.add(Box.createHorizontalStrut(30));
+                pane.add(new JLabel("Host Node"));
+                pane.add(hostNodeSelector);
+                pane.add(Box.createHorizontalStrut(30));
+                pane.add(new JLabel("Capacity Units"));
+                pane.add(capUnitsField);
+
+                int result = JOptionPane.showConfirmDialog(null, pane, "Please enter parameters for the new " + networkElementType, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (result != JOptionPane.OK_OPTION) return;
+                hostNode = netPlan.getNodeFromId((Long) ((StringLabeller) hostNodeSelector.getSelectedItem()).getObject());
+                capacityUnits = capUnitsField.getText();
+                resType = typeSelector.getText();
+
+                JPanel panel = new JPanel();
+                Object[][] data = {null, null, null};
+                String[] headers = StringUtils.arrayOf("Base Resource", "Is Base Resource", "Capacity");
+                TableModel tm = new ClassAwareTableModelImpl(data, headers, new HashSet<Integer>(Arrays.asList(1, 2)));
+                AdvancedJTable table = new AdvancedJTable(tm);
+                int baseResCounter = 0;
+                for (Resource r : netPlan.getResources())
+                {
+                    if (r.getHostNode().toString().equals(hostNode.toString()))
+                    {
+                        baseResCounter++;
+                    }
+                }
+                Object[][] newData = new Object[baseResCounter][headers.length];
+                int counter = 0;
+                for (Resource r : netPlan.getResources())
+                {
+                    if (r.getHostNode().toString().equals(hostNode.toString()))
+                    {
+                        newData[counter][0] = r.getName();
+                        newData[counter][1] = false;
+                        newData[counter][2] = 0;
+                        addCheckboxCellEditor(false, counter, 1, table);
+                        counter++;
+                    }
+                }
+
+                panel.setLayout(new BorderLayout());
+                panel.add(new JLabel("Set new resource base resources"), BorderLayout.NORTH);
+                panel.add(new JScrollPane(table), BorderLayout.CENTER);
+                ((DefaultTableModel) table.getModel()).setDataVector(newData, headers);
+                int option = JOptionPane.showConfirmDialog(null, panel, "Set base resources", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (option != JOptionPane.OK_OPTION) return;
+                Map<Resource, Double> newBaseResources = new HashMap<>();
+                for (int j = 0; j < table.getRowCount(); j++)
+                {
+                    Resource r = netPlan.getResource(j);
+                    String capacity = table.getModel().getValueAt(j, 2).toString();
+                    boolean isBaseResource = (boolean) table.getModel().getValueAt(j, 1);
+                    if (isBaseResource)
+                        newBaseResources.put(r, Double.parseDouble(capacity));
+
+                }
+                netPlan.addResource(resType, "Resource n_" + netPlan.getResources().size(), hostNode,
+                        0, capacityUnits, newBaseResources, 0, null);
+                callback.getVisualizationState().resetPickedState();
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
+                callback.addNetPlanChange();
+            } catch (Throwable ex)
+            {
+                ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
             }
         });
         return addItem;
@@ -655,7 +646,8 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                         if (resBaseResources.contains(baseResourcesList.get(t)))
                         {
                             final String valueAt = table.getModel().getValueAt(t, 2).toString();
-                            if (!NumberUtils.isNumber(valueAt)) throw new RuntimeException("Invalid value found for resource: " + baseResourcesList.get(t).getName() + ".\nNo changes where made.");
+                            if (!NumberUtils.isNumber(valueAt))
+                                throw new RuntimeException("Invalid value found for resource: " + baseResourcesList.get(t).getName());
                             newCapMap.put(baseResourcesList.get(t), Double.parseDouble(valueAt));
                         }
                     }
@@ -675,83 +667,75 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         });
         options.add(capacityInBaseResources);
 
-        JMenuItem setCapacityToAll = new JMenuItem("Set capacity to all (base resources occupation unchanged)");
-        setCapacityToAll.addActionListener(e ->
+        JMenuItem setCapacity = new JMenuItem("Set capacity (base resources occupation unchanged)");
+        setCapacity.addActionListener(e ->
         {
-            NetPlan netPlan = callback.getDesign();
             double cap;
             while (true)
             {
-                String str = JOptionPane.showInputDialog(null, "Capacity value", "Set capacity to all table resources", JOptionPane.QUESTION_MESSAGE);
-                if (str == null) return;
+                String str = JOptionPane.showInputDialog(null, "Capacity value", "Set capacity to selected table resources", JOptionPane.QUESTION_MESSAGE);
+                if (str == null) continue;
 
                 try
                 {
                     cap = Double.parseDouble(str);
-                    if (cap < 0) throw new RuntimeException();
-
+                    if (cap < 0) throw new RuntimeException("Please, introduce a non-negative number");
                     break;
                 } catch (Throwable ex)
                 {
-                    ErrorHandling.showErrorDialog("Please, introduce a non-negative number", "Error setting capacity");
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error setting capacity");
                 }
             }
 
             try
             {
-                for (Resource r : rowsInTheTable)
+                for (Resource r : selectedResources)
                     r.setCapacity(cap, null);
+
                 callback.getVisualizationState().resetPickedState();
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
                 callback.addNetPlanChange();
             } catch (Throwable ex)
             {
-                ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set capacity to resources");
+                ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set processing time to resources");
             }
         });
-        options.add(setCapacityToAll);
+        options.add(setCapacity);
 
-        JMenuItem setTraversingTimeToAll = new JMenuItem("Set processing time to all table resources");
-        setTraversingTimeToAll.addActionListener(new
+        JMenuItem setTraversingTime = new JMenuItem("Set processing time");
+        setTraversingTime.addActionListener(e ->
+        {
+            double procTime;
+            while (true)
+            {
+                String str = JOptionPane.showInputDialog(null, "Processing time in milliseconds", "Set processing time in milliseconds", JOptionPane.QUESTION_MESSAGE);
+                if (str == null) return;
 
-                                                         ActionListener()
-                                                         {
-                                                             @Override
-                                                             public void actionPerformed(ActionEvent e)
-                                                             {
-                                                                 NetPlan netPlan = callback.getDesign();
-                                                                 double procTime;
-                                                                 while (true)
-                                                                 {
-                                                                     String str = JOptionPane.showInputDialog(null, "Processing time in miliseconds value", "Set processing time in miliseconds to all resources", JOptionPane.QUESTION_MESSAGE);
-                                                                     if (str == null) return;
+                try
+                {
+                    procTime = Double.parseDouble(str);
+                    if (procTime < 0) throw new RuntimeException("Please, introduce a non-negative number");
+                    break;
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error setting processing time");
+                }
+            }
 
-                                                                     try
-                                                                     {
-                                                                         procTime = Double.parseDouble(str);
-                                                                         if (procTime < 0) throw new RuntimeException();
+            try
+            {
+                for (Resource r : selectedResources)
+                    r.setProcessingTimeToTraversingTrafficInMs(procTime);
 
-                                                                         break;
-                                                                     } catch (Throwable ex)
-                                                                     {
-                                                                         ErrorHandling.showErrorDialog("Please, introduce a non-negative number", "Error setting processing time");
-                                                                     }
-                                                                 }
-
-                                                                 try
-                                                                 {
-                                                                     for (Resource r : rowsInTheTable)
-                                                                         r.setProcessingTimeToTraversingTrafficInMs(procTime);
-                                                                     callback.getVisualizationState().resetPickedState();
-                                                                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                                                                     callback.addNetPlanChange();
-                                                                 } catch (Throwable ex)
-                                                                 {
-                                                                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set processing time to resources");
-                                                                 }
-                                                             }
-                                                         });
-        options.add(setTraversingTimeToAll);
+                callback.getVisualizationState().resetPickedState();
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
+                callback.addNetPlanChange();
+            } catch (Throwable ex)
+            {
+                ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set processing time to resources");
+            }
+        });
+        options.add(setTraversingTime);
 
         return options;
     }
