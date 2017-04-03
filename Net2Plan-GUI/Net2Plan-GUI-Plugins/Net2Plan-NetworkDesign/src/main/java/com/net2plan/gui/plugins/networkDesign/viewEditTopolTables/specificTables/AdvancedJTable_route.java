@@ -1054,7 +1054,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                         ": path = " + getSequenceLinkResourceIndexes(backupRoute) +
                         ", seq. nodes = " + getSequenceNodeIndexesWithResourceInfo(backupRoute) +
                         ", occupied capacity = " + getSequenceOccupiedCapacities(backupRoute);
-                backupRouteSelector.addItem(StringLabeller.of(backupRoute, segmentLabel));
+                backupRouteSelector.addItem(StringLabeller.of(backupRoute.getId(), segmentLabel));
             }
 
             if (backupRouteSelector.getItemCount() == 0)
