@@ -381,8 +381,10 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         if (callback.getVisualizationState().isNetPlanEditable())
         {
             popup.add(getAddOption());
-            for (JComponent item : getExtraAddOptions())
-                popup.add(item);
+
+            if (callback.getDesign().hasDemands())
+                for (JComponent item : getExtraAddOptions())
+                    popup.add(item);
         }
 
         if (!routeRowsInTheTable.isEmpty())
@@ -935,6 +937,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                     } catch (Throwable ex)
                     {
                         ErrorHandling.showErrorDialog(ex.getMessage(), "Error viewing/editing backup routes");
+                        ex.printStackTrace();
                     }
                 }
             });
@@ -1098,7 +1101,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                     ": path = " + getSequenceLinkResourceIndexes(backupRoute) +
                     ", seq. nodes = " + getSequenceNodeIndexesWithResourceInfo(backupRoute) +
                     ", occupied capacity = " + getSequenceOccupiedCapacities(backupRoute);
-            backupRouteSelector.addItem(StringLabeller.of(backupRoute, segmentLabel));
+            backupRouteSelector.addItem(StringLabeller.of(backupRoute.getId(), segmentLabel));
         }
 
         if (backupRouteSelector.getItemCount() == 0)
