@@ -17,6 +17,8 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.internal.Constants;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.util.Collection;
@@ -27,34 +29,36 @@ import java.util.Set;
  */
 public interface IVisualizationCallback
 {
-	void resetPickedStateAndUpdateView ();
+    void resetPickedStateAndUpdateView();
 
-    void putTransientColorInElementTopologyCanvas (Collection<? extends NetworkElement> linksAndNodes , Color color);
+    void putTransientColorInElementTopologyCanvas(Collection<? extends NetworkElement> linksAndNodes, Color color);
 
-	void updateVisualizationJustTables ();
+    void updateVisualizationJustTables();
 
-	void updateVisualizationJustCanvasLinkNodeVisibilityOrColor ();
+    void updateVisualizationJustCanvasLinkNodeVisibilityOrColor();
 
-	void updateVisualizationAfterNewTopology ();
+    void updateVisualizationAfterNewTopology();
 
-	NetPlan getDesign();
+    @Nonnull
+    NetPlan getDesign();
 
+    @Nullable
     NetPlan getInitialDesign();
 
-	void updateVisualizationAfterChanges (Set<Constants.NetworkElementType> modificationsMade);
+    void updateVisualizationAfterChanges(Set<Constants.NetworkElementType> modificationsMade);
 
     boolean inOnlineSimulationMode();
 
-	void setCurrentNetPlanDoNotUpdateVisualization(NetPlan netPlan);
+    void setCurrentNetPlanDoNotUpdateVisualization(NetPlan netPlan);
 
-	void updateVisualizationAfterPick();
+    void updateVisualizationAfterPick();
 
-	// TODO: Rethink if this one is needed...
-	void moveNodeTo(GUINode guiNode, Point2D toPoint);
+    // TODO: Rethink if this one is needed...
+    void moveNodeTo(GUINode guiNode, Point2D toPoint);
 
-	void runCanvasOperation(ITopologyCanvas.CanvasOperation... canvasOperation);
+    void runCanvasOperation(ITopologyCanvas.CanvasOperation... canvasOperation);
 
-	void requestUndoAction();
+    void requestUndoAction();
 
-	void requestRedoAction();
+    void requestRedoAction();
 }

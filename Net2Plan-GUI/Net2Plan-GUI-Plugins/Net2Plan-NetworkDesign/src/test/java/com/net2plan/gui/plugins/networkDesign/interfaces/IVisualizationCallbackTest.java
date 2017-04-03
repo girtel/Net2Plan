@@ -13,21 +13,34 @@
  *  *****************************************************************************
  */
 
-package com.net2plan.gui.plugins;
+package com.net2plan.gui.plugins.networkDesign.interfaces;
 
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import org.junit.BeforeClass;
+import org.junit.Test;
+
+import javax.swing.*;
+
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Jorge San Emeterio Villalain
  * @date 3/04/17
  */
-public class GUINetworkDesignTest
+public class IVisualizationCallbackTest
 {
-    private GUINetworkDesign callback;
+    private static IVisualizationCallback callback;
 
     @BeforeClass
-    public void setUp()
+    public static void setUp()
     {
-        this.callback = new GUINetworkDesign();
+        callback = new GUINetworkDesign();
+        ((GUINetworkDesign) callback).configure(new JPanel());
+    }
+
+    @Test
+    public void getDesignTest()
+    {
+        assertNotNull(callback.getDesign());
     }
 }

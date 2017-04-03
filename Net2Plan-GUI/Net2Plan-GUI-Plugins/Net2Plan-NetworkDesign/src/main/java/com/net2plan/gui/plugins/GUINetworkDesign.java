@@ -52,6 +52,8 @@ import net.miginfocom.swing.MigLayout;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
@@ -454,6 +456,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         return Integer.MAX_VALUE;
     }
 
+    @Nonnull
     @Override
     public NetPlan getDesign()
     {
@@ -461,6 +464,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         else return currentNetPlan;
     }
 
+    @Nullable
     @Override
     public NetPlan getInitialDesign()
     {
