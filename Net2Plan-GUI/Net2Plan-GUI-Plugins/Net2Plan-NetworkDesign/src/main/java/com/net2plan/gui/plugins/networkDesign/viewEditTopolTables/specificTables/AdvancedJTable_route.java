@@ -366,8 +366,10 @@ public class AdvancedJTable_route extends AdvancedJTable_NetworkElement
         if (callback.getVisualizationState().isNetPlanEditable())
         {
             popup.add(getAddOption());
-            for (JComponent item : getExtraAddOptions())
-                popup.add(item);
+
+            if (callback.getDesign().hasDemands())
+                for (JComponent item : getExtraAddOptions())
+                    popup.add(item);
         }
 
         if (!routeRowsInTheTable.isEmpty())
