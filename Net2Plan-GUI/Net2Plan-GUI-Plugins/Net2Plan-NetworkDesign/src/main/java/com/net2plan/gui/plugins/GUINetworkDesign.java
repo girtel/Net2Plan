@@ -545,26 +545,29 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @SuppressWarnings("unchecked")
     private void selectNetPlanViewItem(NetworkElementType type, Object itemId)
     {
-        NetworkLayer elementLayer = null;
-        if (type.equals(NetworkElementType.LINK))
-            elementLayer = getDesign().getLinkFromId((long) itemId).getLayer();
-        else if (type.equals(NetworkElementType.DEMAND))
-            elementLayer = getDesign().getDemandFromId((long) itemId).getLayer();
-        else if (type.equals(NetworkElementType.FORWARDING_RULE))
-            elementLayer = getDesign().getDemand(((Pair<Integer, Integer>) itemId).getFirst()).getLayer();
-        else if (type.equals(NetworkElementType.MULTICAST_DEMAND))
-            elementLayer = getDesign().getMulticastDemandFromId((long) itemId).getLayer();
-        else if (type.equals(NetworkElementType.MULTICAST_TREE))
-            elementLayer = getDesign().getMulticastTreeFromId((long) itemId).getLayer();
-        else if (type.equals(NetworkElementType.ROUTE))
-            elementLayer = getDesign().getRouteFromId((long) itemId).getLayer();
-
-        if (elementLayer != null)
+        if (itemId != null)
         {
-            if (elementLayer != getDesign().getNetworkLayerDefault())
+            NetworkLayer elementLayer = null;
+            if (type.equals(NetworkElementType.LINK))
+                elementLayer = getDesign().getLinkFromId((long) itemId).getLayer();
+            else if (type.equals(NetworkElementType.DEMAND))
+                elementLayer = getDesign().getDemandFromId((long) itemId).getLayer();
+            else if (type.equals(NetworkElementType.FORWARDING_RULE))
+                elementLayer = getDesign().getDemand(((Pair<Integer, Integer>) itemId).getFirst()).getLayer();
+            else if (type.equals(NetworkElementType.MULTICAST_DEMAND))
+                elementLayer = getDesign().getMulticastDemandFromId((long) itemId).getLayer();
+            else if (type.equals(NetworkElementType.MULTICAST_TREE))
+                elementLayer = getDesign().getMulticastTreeFromId((long) itemId).getLayer();
+            else if (type.equals(NetworkElementType.ROUTE))
+                elementLayer = getDesign().getRouteFromId((long) itemId).getLayer();
+
+            if (elementLayer != null)
             {
-                getDesign().setNetworkLayerDefault(elementLayer);
-                viewEditTopTables.updateView();
+                if (elementLayer != getDesign().getNetworkLayerDefault())
+                {
+                    getDesign().setNetworkLayerDefault(elementLayer);
+                    viewEditTopTables.updateView();
+                }
             }
         }
         topologyPanel.updateMultilayerVisibilityAndOrderPanel();
