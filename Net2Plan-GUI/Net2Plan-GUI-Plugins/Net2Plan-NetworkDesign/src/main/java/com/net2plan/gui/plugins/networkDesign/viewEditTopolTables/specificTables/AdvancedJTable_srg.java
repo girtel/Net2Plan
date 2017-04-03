@@ -305,50 +305,40 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
     @Override
     public void doPopup(final MouseEvent e, final int row, final ElementSelection selection)
     {
-        JPopupMenu popup = new JPopupMenu();
+        assert selection != null;
+
+        final JPopupMenu popup = new JPopupMenu();
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final List<SharedRiskGroup> rowsInTheTable = getVisibleElementsInTable();
 
-        if (selection.getElementType() != NetworkElementType.SRG) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        {
+            if (selection.getElementType() != NetworkElementType.SRG)
+                throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+        }
 
-        
         /* Add the popup menu option of the filters */
         final List<SharedRiskGroup> selectedSRGs = (List<SharedRiskGroup>) selection.getNetworkElements();
+
         final JMenu submenuFilters = new JMenu("Filters");
         if (!selectedSRGs.isEmpty())
         {
             final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements affected by this SRG");
             if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
-            filterKeepElementsAffectedAllLayers.addActionListener(new ActionListener()
+            filterKeepElementsAffectedAllLayers.addActionListener(e1 ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    if (selectedSRGs.size() > 1) throw new RuntimeException();
-                    TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedSRGs.get(0));
-                    callback.getVisualizationState().updateTableRowFilter(filter);
-                    callback.updateVisualizationJustTables();
-                }
+                if (selectedSRGs.size() > 1) throw new RuntimeException();
+                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedSRGs.get(0));
+                callback.getVisualizationState().updateTableRowFilter(filter);
+                callback.updateVisualizationJustTables();
             });
         }
         final JMenuItem tagFilter = new JMenuItem("This layer: Keep elements of tag...");
         submenuFilters.add(tagFilter);
-        tagFilter.addActionListener(new ActionListener()
-        {
-            public void actionPerformed(ActionEvent e)
-            {
-                dialogToFilterByTag(true);
-            }
-        });
+        tagFilter.addActionListener(e1 -> dialogToFilterByTag(true));
         final JMenuItem tagFilterAllLayers = new JMenuItem("All layers: Keep elements of tag...");
         submenuFilters.add(tagFilterAllLayers);
-        tagFilterAllLayers.addActionListener(new ActionListener()
-        {
-            public void actionPerformed(ActionEvent e)
-            {
-                dialogToFilterByTag(false);
-            }
-        });
+        tagFilterAllLayers.addActionListener(e1 -> dialogToFilterByTag(false));
 
         popup.add(submenuFilters);
         popup.addSeparator();
@@ -356,30 +346,20 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         if (callback.getVisualizationState().isNetPlanEditable())
         {
             popup.add(getAddOption());
-            for (JComponent item : getExtraAddOptions())
-                popup.add(item);
-        }
 
-        if (!rowsInTheTable.isEmpty())
-        {
-            if (callback.getVisualizationState().isNetPlanEditable())
+            if (!rowsInTheTable.isEmpty())
             {
-                if (row != -1)
+                if (!selectedSRGs.isEmpty())
                 {
-                    if (popup.getSubElements().length > 0) popup.addSeparator();
-
                     JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
                     removeItem.addActionListener(new ActionListener()
                     {
                         @Override
                         public void actionPerformed(ActionEvent e)
                         {
-                            NetPlan netPlan = callback.getDesign();
                             try
                             {
-                                for (SharedRiskGroup selectedSRG : selectedSRGs)
-                                    selectedSRG.remove();
-
+                                for (SharedRiskGroup selectedSRG : selectedSRGs) selectedSRG.remove();
                                 callback.getVisualizationState().resetPickedState();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
                                 callback.addNetPlanChange();
@@ -393,49 +373,32 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
 
                     popup.add(removeItem);
                 }
-                JMenuItem removeItems = new JMenuItem("Remove all table " + networkElementType + "s");
+            }
 
-                removeItems.addActionListener(new ActionListener()
+            final List<JComponent> extraAddOptions = getExtraAddOptions();
+            if (!extraAddOptions.isEmpty())
+            {
+                popup.addSeparator();
+                for (JComponent item : extraAddOptions) popup.add(item);
+            }
+
+            if (!rowsInTheTable.isEmpty() && !selectedSRGs.isEmpty())
+            {
+                List<JComponent> forcedOptions = getForcedOptions(selection);
+                if (!forcedOptions.isEmpty())
                 {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        NetPlan netPlan = callback.getDesign();
+                    if (popup.getSubElements().length > 0) popup.addSeparator();
+                    for (JComponent item : forcedOptions) popup.add(item);
+                }
 
-                        try
-                        {
-                            if (rf == null)
-                                netPlan.removeAllSRGs();
-                            else
-                                for (SharedRiskGroup srg : rowsInTheTable) srg.remove();
-                            callback.getVisualizationState().resetPickedState();
-                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
-                            callback.addNetPlanChange();
-                        } catch (Throwable ex)
-                        {
-                            ex.printStackTrace();
-                            ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
-                        }
-                    }
-                });
-
-                popup.add(removeItems);
-
-                addPopupMenuAttributeOptions(e, row, selection, popup);
-
-                List<JComponent> extraOptions = getExtraOptions(row, selection);
+                List<JComponent> extraOptions = getExtraOptions(selection);
                 if (!extraOptions.isEmpty())
                 {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
                     for (JComponent item : extraOptions) popup.add(item);
                 }
-            }
 
-            List<JComponent> forcedOptions = getForcedOptions(selection);
-            if (!forcedOptions.isEmpty())
-            {
-                if (popup.getSubElements().length > 0) popup.addSeparator();
-                for (JComponent item : forcedOptions) popup.add(item);
+                addPopupMenuAttributeOptions(e, row, selection, popup);
             }
         }
 
@@ -446,7 +409,8 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
     public void showInCanvas(MouseEvent e, ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
-        if (selection.getElementType() != NetworkElementType.SRG) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+        if (selection.getElementType() != NetworkElementType.SRG)
+            throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
         callback.getVisualizationState().pickSRG((List<SharedRiskGroup>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
@@ -583,122 +547,112 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         return options;
     }
 
-    private List<JComponent> getExtraOptions(final int row, final ElementSelection selection)
+    @Override
+    protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
+        assert selection != null;
+
+        final List<SharedRiskGroup> selectedSRGs = (List<SharedRiskGroup>) selection.getNetworkElements();
         final List<SharedRiskGroup> rowsInTheTable = getVisibleElementsInTable();
-        List<JComponent> options = new LinkedList<JComponent>();
+        final List<JComponent> options = new LinkedList<JComponent>();
 
-        final int numRows = model.getRowCount();
-
-        //TODO
-        Integer itemId = 1;
-        if (itemId != null)
+        if (!selectedSRGs.isEmpty())
         {
             JMenuItem editSRG = new JMenuItem("View/edit SRG");
-            editSRG.addActionListener(new ActionListener()
+            editSRG.addActionListener(e ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
+                try
                 {
-                    try
-                    {
-                        viewEditSRGGUI(callback, (long) itemId);
-                        callback.getVisualizationState().resetPickedState();
-                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
-                        callback.addNetPlanChange();
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error viewing/editing SRG");
-                    }
+                    viewEditSRGGUI(callback, selectedSRGs);
+
+                    callback.getVisualizationState().resetPickedState();
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                    callback.addNetPlanChange();
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error viewing/editing SRG");
                 }
             });
 
             options.add(editSRG);
         }
 
-        if (numRows > 1)
+        if (!rowsInTheTable.isEmpty())
         {
             if (!options.isEmpty()) options.add(new JPopupMenu.Separator());
 
-            JMenuItem mttfValue = new JMenuItem("Set MTTF to all");
-            mttfValue.addActionListener(new ActionListener()
+            JMenuItem mttfValue = new JMenuItem("Set MTTF");
+            mttfValue.addActionListener(e ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
+                double mttf;
+
+                while (true)
                 {
-                    double mttf;
-
-                    while (true)
-                    {
-                        String str = JOptionPane.showInputDialog(null, "MTTF (in hours, zero or negative value means no failure)", "Set MTTF to all SRGs", JOptionPane.QUESTION_MESSAGE);
-                        if (str == null) return;
-
-                        try
-                        {
-                            mttf = Double.parseDouble(str);
-                            break;
-                        } catch (NumberFormatException ex)
-                        {
-                            ErrorHandling.showErrorDialog("Non-valid MTTF value", "Error setting MTTF value");
-                        } catch (Throwable ex)
-                        {
-                            ErrorHandling.showErrorDialog(ex.getMessage(), "Error setting MTTF");
-                        }
-                    }
+                    String str = JOptionPane.showInputDialog(null, "MTTF (in hours, zero or negative value means no failure)", "Set MTTF to selected SRGs", JOptionPane.QUESTION_MESSAGE);
+                    if (str == null) return;
 
                     try
                     {
-                        for (SharedRiskGroup srg : rowsInTheTable) srg.setMeanTimeToFailInHours(mttf);
-                        callback.getVisualizationState().resetPickedState();
-                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
-                        callback.addNetPlanChange();
+                        mttf = Double.parseDouble(str);
+                        break;
+                    } catch (NumberFormatException ex)
+                    {
+                        ErrorHandling.showErrorDialog("Non-valid MTTF value", "Error setting MTTF value");
                     } catch (Throwable ex)
                     {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set MTTF to all SRGs");
+                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error setting MTTF");
                     }
+                }
+
+                try
+                {
+                    for (SharedRiskGroup srg : selectedSRGs) srg.setMeanTimeToFailInHours(mttf);
+
+                    callback.getVisualizationState().resetPickedState();
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                    callback.addNetPlanChange();
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set MTTF to selected SRGs");
                 }
             });
 
             options.add(mttfValue);
 
-            JMenuItem mttrValue = new JMenuItem("Set MTTR to all");
-            mttrValue.addActionListener(new ActionListener()
+            JMenuItem mttrValue = new JMenuItem("Set MTTR");
+            mttrValue.addActionListener(e ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
+                double mttr;
+
+                while (true)
                 {
-                    double mttr;
-
-                    while (true)
-                    {
-                        String str = JOptionPane.showInputDialog(null, "MTTR (in hours)", "Set MTTR to all SRGs", JOptionPane.QUESTION_MESSAGE);
-                        if (str == null) return;
-
-                        try
-                        {
-                            mttr = Double.parseDouble(str);
-                            if (mttr <= 0) throw new NumberFormatException();
-
-                            break;
-                        } catch (NumberFormatException ex)
-                        {
-                            ErrorHandling.showErrorDialog("Non-valid MTTR value. Please, introduce a non-zero non-negative number", "Error setting MTTR value");
-                        } catch (Throwable ex)
-                        {
-                            ErrorHandling.showErrorDialog(ex.getMessage(), "Error setting MTTR");
-                        }
-                    }
+                    String str = JOptionPane.showInputDialog(null, "MTTR (in hours)", "Set MTTR to selected SRGs", JOptionPane.QUESTION_MESSAGE);
+                    if (str == null) return;
 
                     try
                     {
-                        for (SharedRiskGroup srg : rowsInTheTable) srg.setMeanTimeToRepairInHours(mttr);
-                        callback.getVisualizationState().resetPickedState();
-                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
-                        callback.addNetPlanChange();
+                        mttr = Double.parseDouble(str);
+                        if (mttr <= 0) throw new NumberFormatException();
+
+                        break;
+                    } catch (NumberFormatException ex)
+                    {
+                        ErrorHandling.showErrorDialog("Non-valid MTTR value. Please, introduce a non-zero non-negative number", "Error setting MTTR value");
                     } catch (Throwable ex)
                     {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set MTTR to all SRGs");
+                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error setting MTTR");
                     }
+                }
+
+                try
+                {
+                    for (SharedRiskGroup srg : selectedSRGs) srg.setMeanTimeToRepairInHours(mttr);
+                    callback.getVisualizationState().resetPickedState();
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
+                    callback.addNetPlanChange();
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set MTTR to selected SRGs");
                 }
             });
 
@@ -710,163 +664,159 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
     }
 
 
-    private static void viewEditSRGGUI(final GUINetworkDesign callback, final long srgId)
+    private static void viewEditSRGGUI(final GUINetworkDesign callback, final List<SharedRiskGroup> selection)
     {
+        assert selection != null;
+
         final NetPlan netPlan = callback.getDesign();
-        final SharedRiskGroup srg = netPlan.getSRGFromId(srgId);
-        callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
-        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
 
-        final int N = netPlan.getNumberOfNodes();
-        final int E = netPlan.getNumberOfLinks();
-        final Object[][] nodeData = new Object[N == 0 ? 1 : N][3];
-        final Object[][] linkData = new Object[E == 0 ? 1 : E][4];
-
-        if (N > 0)
+        for (SharedRiskGroup srg : selection)
         {
-            int n = 0;
-            Iterator<Node> nodeIt = netPlan.getNodes().iterator();
-            while (nodeIt.hasNext())
+            long srgId = srg.getId();
+
+            callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
+            callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
+
+            final int N = netPlan.getNumberOfNodes();
+            final int E = netPlan.getNumberOfLinks();
+            final Object[][] nodeData = new Object[N == 0 ? 1 : N][3];
+            final Object[][] linkData = new Object[E == 0 ? 1 : E][4];
+
+            if (N > 0)
             {
-                Node node = nodeIt.next();
-                nodeData[n] = new Object[3];
-                nodeData[n][0] = node.getId();
-                nodeData[n][1] = node.getName();
-                nodeData[n][2] = srg.getNodes().contains(node);
-
-                n++;
-            }
-        }
-
-        if (E > 0)
-        {
-            int e = 0;
-            Iterator<Link> linkIt = netPlan.getLinks().iterator();
-            while (linkIt.hasNext())
-            {
-                Link link = linkIt.next();
-
-                linkData[e] = new Object[4];
-                linkData[e][0] = link.getId();
-                linkData[e][1] = link.getOriginNode().getId() + (link.getOriginNode().getName().isEmpty() ? "" : " (" + link.getOriginNode().getName() + ")");
-                linkData[e][2] = link.getDestinationNode().getId() + (link.getDestinationNode().getName().isEmpty() ? "" : " (" + link.getDestinationNode().getName() + ")");
-                linkData[e][3] = srg.getLinksAllLayers().contains(link);
-
-                e++;
-            }
-        }
-
-        final DefaultTableModel nodeModel = new ClassAwareTableModel(nodeData, new String[]{"Id", "Name", "Included in the SRG"})
-        {
-            @Override
-            public boolean isCellEditable(int rowIndex, int columnIndex)
-            {
-                return columnIndex == 2;
-            }
-
-            @Override
-            public void setValueAt(Object aValue, int row, int column)
-            {
-                if (column == 2)
+                int n = 0;
+                for (Node node : netPlan.getNodes())
                 {
-                    boolean value = (boolean) aValue;
-                    Node node = netPlan.getNodeFromId((long) getValueAt(row, 0));
-                    if (value && !srg.getNodes().contains(node))
-                    {
-                        netPlan.getSRGFromId(srgId).addNode(node);
-                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
-                        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
-                    } else if (!value && srg.getNodes().contains(node))
-                    {
-                        netPlan.getSRGFromId(srgId).removeNode(node);
-                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
-                        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
-                    }
+                    nodeData[n] = new Object[3];
+                    nodeData[n][0] = node.getId();
+                    nodeData[n][1] = node.getName();
+                    nodeData[n][2] = srg.getNodes().contains(node);
+
+                    n++;
+                }
+            }
+
+            if (E > 0)
+            {
+                int e = 0;
+                for (Link link : netPlan.getLinks())
+                {
+                    linkData[e] = new Object[4];
+                    linkData[e][0] = link.getId();
+                    linkData[e][1] = link.getOriginNode().getId() + (link.getOriginNode().getName().isEmpty() ? "" : " (" + link.getOriginNode().getName() + ")");
+                    linkData[e][2] = link.getDestinationNode().getId() + (link.getDestinationNode().getName().isEmpty() ? "" : " (" + link.getDestinationNode().getName() + ")");
+                    linkData[e][3] = srg.getLinksAllLayers().contains(link);
+
+                    e++;
+                }
+            }
+
+            final DefaultTableModel nodeModel = new ClassAwareTableModel(nodeData, new String[]{"Id", "Name", "Included in the SRG"})
+            {
+                @Override
+                public boolean isCellEditable(int rowIndex, int columnIndex)
+                {
+                    return columnIndex == 2;
                 }
 
-                super.setValueAt(aValue, row, column);
-            }
-        };
-
-        final DefaultTableModel linkModel = new ClassAwareTableModel(linkData, new String[]{"Id", "Origin node", "Destination node", "Included in the SRG"})
-        {
-            @Override
-            public boolean isCellEditable(int rowIndex, int columnIndex)
-            {
-                return columnIndex == 3;
-            }
-
-            @Override
-            public void setValueAt(Object aValue, int row, int column)
-            {
-                if (column == 3)
+                @Override
+                public void setValueAt(Object aValue, int row, int column)
                 {
-                    boolean value = (boolean) aValue;
-                    Link link = netPlan.getLinkFromId((long) getValueAt(row, 0));
-                    if (value && !srg.getLinksAllLayers().contains(link))
+                    if (column == 2)
                     {
-                        srg.addLink(link);
-                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
-                        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
-                    } else if (!value && srg.getLinksAllLayers().contains(link))
-                    {
-                        srg.removeLink(link);
-                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
-                        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
+                        boolean value = (boolean) aValue;
+                        Node node = netPlan.getNodeFromId((long) getValueAt(row, 0));
+                        if (value && !srg.getNodes().contains(node))
+                        {
+                            netPlan.getSRGFromId(srgId).addNode(node);
+                            callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
+                            callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
+                        } else if (!value && srg.getNodes().contains(node))
+                        {
+                            netPlan.getSRGFromId(srgId).removeNode(node);
+                            callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
+                            callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
+                        }
                     }
+
+                    super.setValueAt(aValue, row, column);
+                }
+            };
+
+            final DefaultTableModel linkModel = new ClassAwareTableModel(linkData, new String[]{"Id", "Origin node", "Destination node", "Included in the SRG"})
+            {
+                @Override
+                public boolean isCellEditable(int rowIndex, int columnIndex)
+                {
+                    return columnIndex == 3;
                 }
 
-                super.setValueAt(aValue, row, column);
-            }
-        };
+                @Override
+                public void setValueAt(Object aValue, int row, int column)
+                {
+                    if (column == 3)
+                    {
+                        boolean value = (boolean) aValue;
+                        Link link = netPlan.getLinkFromId((long) getValueAt(row, 0));
+                        if (value && !srg.getLinksAllLayers().contains(link))
+                        {
+                            srg.addLink(link);
+                            callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
+                            callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
+                        } else if (!value && srg.getLinksAllLayers().contains(link))
+                        {
+                            srg.removeLink(link);
+                            callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
+                            callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
+                        }
+                    }
 
-        final JTable nodeTable = new AdvancedJTable(nodeModel);
-        final JTable linkTable = new AdvancedJTable(linkModel);
+                    super.setValueAt(aValue, row, column);
+                }
+            };
 
-        nodeTable.setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
-        nodeTable.setDefaultRenderer(Double.class, new CellRenderers.UnfocusableCellRenderer());
-        nodeTable.setDefaultRenderer(Object.class, new CellRenderers.UnfocusableCellRenderer());
-        nodeTable.setDefaultRenderer(Float.class, new CellRenderers.UnfocusableCellRenderer());
-        nodeTable.setDefaultRenderer(Long.class, new CellRenderers.UnfocusableCellRenderer());
-        nodeTable.setDefaultRenderer(Integer.class, new CellRenderers.UnfocusableCellRenderer());
-        nodeTable.setDefaultRenderer(String.class, new CellRenderers.UnfocusableCellRenderer());
+            final JTable nodeTable = new AdvancedJTable(nodeModel);
+            final JTable linkTable = new AdvancedJTable(linkModel);
 
-        linkTable.setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
-        linkTable.setDefaultRenderer(Double.class, new CellRenderers.UnfocusableCellRenderer());
-        linkTable.setDefaultRenderer(Object.class, new CellRenderers.UnfocusableCellRenderer());
-        linkTable.setDefaultRenderer(Float.class, new CellRenderers.UnfocusableCellRenderer());
-        linkTable.setDefaultRenderer(Long.class, new CellRenderers.UnfocusableCellRenderer());
-        linkTable.setDefaultRenderer(Integer.class, new CellRenderers.UnfocusableCellRenderer());
-        linkTable.setDefaultRenderer(String.class, new CellRenderers.UnfocusableCellRenderer());
+            nodeTable.setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
+            nodeTable.setDefaultRenderer(Double.class, new CellRenderers.UnfocusableCellRenderer());
+            nodeTable.setDefaultRenderer(Object.class, new CellRenderers.UnfocusableCellRenderer());
+            nodeTable.setDefaultRenderer(Float.class, new CellRenderers.UnfocusableCellRenderer());
+            nodeTable.setDefaultRenderer(Long.class, new CellRenderers.UnfocusableCellRenderer());
+            nodeTable.setDefaultRenderer(Integer.class, new CellRenderers.UnfocusableCellRenderer());
+            nodeTable.setDefaultRenderer(String.class, new CellRenderers.UnfocusableCellRenderer());
 
-        JScrollPane nodeScrollPane = new JScrollPane(nodeTable);
-        JScrollPane linkScrollPane = new JScrollPane(linkTable);
+            linkTable.setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
+            linkTable.setDefaultRenderer(Double.class, new CellRenderers.UnfocusableCellRenderer());
+            linkTable.setDefaultRenderer(Object.class, new CellRenderers.UnfocusableCellRenderer());
+            linkTable.setDefaultRenderer(Float.class, new CellRenderers.UnfocusableCellRenderer());
+            linkTable.setDefaultRenderer(Long.class, new CellRenderers.UnfocusableCellRenderer());
+            linkTable.setDefaultRenderer(Integer.class, new CellRenderers.UnfocusableCellRenderer());
+            linkTable.setDefaultRenderer(String.class, new CellRenderers.UnfocusableCellRenderer());
+
+            JScrollPane nodeScrollPane = new JScrollPane(nodeTable);
+            JScrollPane linkScrollPane = new JScrollPane(linkTable);
 
 
-        final JDialog dialog = new JDialog();
-        dialog.setLayout(new MigLayout("", "[grow]", "[][grow][][grow]"));
-        dialog.add(new JLabel("Nodes"), "growx, wrap");
-        dialog.add(nodeScrollPane, "grow, wrap");
-        dialog.add(new JLabel("Links"), "growx, wrap");
-        dialog.add(linkScrollPane, "grow");
+            final JDialog dialog = new JDialog();
+            dialog.setLayout(new MigLayout("", "[grow]", "[][grow][][grow]"));
+            dialog.add(new JLabel("Nodes"), "growx, wrap");
+            dialog.add(nodeScrollPane, "grow, wrap");
+            dialog.add(new JLabel("Links"), "growx, wrap");
+            dialog.add(linkScrollPane, "grow");
 
-        dialog.setTitle("View/edit SRG " + srgId);
-        SwingUtils.configureCloseDialogOnEscape(dialog);
-        dialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(new Dimension(500, 300));
-        dialog.setLocationRelativeTo(null);
-        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        dialog.setVisible(true);
+            dialog.setTitle("View/edit SRG " + srgId);
+            SwingUtils.configureCloseDialogOnEscape(dialog);
+            dialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
+            dialog.setSize(new Dimension(500, 300));
+            dialog.setLocationRelativeTo(null);
+            dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            dialog.setVisible(true);
+        }
     }
 
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
-    {
-        return new LinkedList<>();
-    }
-
-    @Override
-    protected List<JComponent> getExtraOptions(ElementSelection selection)
     {
         return new LinkedList<>();
     }

@@ -580,8 +580,12 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 }
             }
 
-            if (!getExtraAddOptions().isEmpty()) popup.addSeparator();
-            for (JComponent item : getExtraAddOptions()) popup.add(item);
+            final List<JComponent> extraAddOptions = getExtraAddOptions();
+            if (!extraAddOptions.isEmpty())
+            {
+                popup.addSeparator();
+                for (JComponent item : extraAddOptions) popup.add(item);
+            }
 
             if (!linkRowsInTheTable.isEmpty() && !selectedLinks.isEmpty())
             {
