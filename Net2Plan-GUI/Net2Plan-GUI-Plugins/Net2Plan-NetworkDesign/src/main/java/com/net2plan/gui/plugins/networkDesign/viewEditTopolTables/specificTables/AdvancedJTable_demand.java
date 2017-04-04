@@ -370,9 +370,8 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
     {
         assert selection != null;
 
-        JPopupMenu popup = new JPopupMenu();
+        final JPopupMenu popup = new JPopupMenu();
 
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final List<Demand> demandRowsInTheTable = this.getVisibleElementsInTable();
 
         if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
@@ -424,7 +423,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
             {
                 if (!selectedDemands.isEmpty())
                 {
-                    JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
+                    JMenuItem removeItem = new JMenuItem("Remove selected " + networkElementType + "s");
 
                     removeItem.addActionListener(new ActionListener()
                     {
@@ -534,7 +533,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         return new LinkedList<>();
     }
 
-    public static void createLinkDemandGUI(final NetworkElementType networkElementType, final GUINetworkDesign callback)
+    static void createLinkDemandGUI(final NetworkElementType networkElementType, final GUINetworkDesign callback)
     {
         final NetPlan netPlan = callback.getDesign();
         final JComboBox originNodeSelector = new WiderJComboBox();
@@ -647,12 +646,6 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         }
     }
 
-
-    private boolean isTableEmpty()
-    {
-        return !callback.getDesign().hasDemands();
-    }
-
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -662,7 +655,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         final List<Demand> tableVisibleDemands = getVisibleElementsInTable();
         final List<Demand> selectedDemands = (List<Demand>) selection.getNetworkElements();
 
-        JMenuItem offeredTraffic = new JMenuItem("Set offered traffic");
+        JMenuItem offeredTraffic = new JMenuItem("Set offered traffic to selected");
         offeredTraffic.addActionListener(e ->
         {
             double h_d;
@@ -697,7 +690,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         });
         options.add(offeredTraffic);
 
-        JMenuItem scaleOfferedTraffic = new JMenuItem("Scale offered traffic");
+        JMenuItem scaleOfferedTraffic = new JMenuItem("Scale offered traffic to selected");
         scaleOfferedTraffic.addActionListener(e ->
         {
             double scalingFactor;
@@ -732,7 +725,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         });
         options.add(scaleOfferedTraffic);
 
-        JMenuItem setServiceTypes = new JMenuItem("Set traversed resource types (to one or all demands in the table)");
+        JMenuItem setServiceTypes = new JMenuItem("Set traversed resource types (to selected or all demands in the table)");
         setServiceTypes.addActionListener(e ->
         {
             try
@@ -951,7 +944,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                 options.add(coupleDemandToLink);
             }
 
-            JMenuItem decoupleDemandItem = new JMenuItem("Decouple demand");
+            JMenuItem decoupleDemandItem = new JMenuItem("Decouple selected demands");
             decoupleDemandItem.addActionListener(e ->
             {
                 for (Demand d : selectedDemands)
