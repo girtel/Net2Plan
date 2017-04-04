@@ -51,6 +51,12 @@ public class FocusPane extends JPanel
 
 		this.removeAll(); this.revalidate(); this.repaint();
 
+		/* Do nothing if more than one element is picked */
+        if (pickedElement != null)
+        	if (pickedElement.size () > 1) return;
+        if (pickedForwardingRule != null)
+        	if (pickedForwardingRule.size () > 1) return;
+
 		/* Here if there is something new to show */
 		if (elementType == NetworkElementType.ROUTE)
 		{
