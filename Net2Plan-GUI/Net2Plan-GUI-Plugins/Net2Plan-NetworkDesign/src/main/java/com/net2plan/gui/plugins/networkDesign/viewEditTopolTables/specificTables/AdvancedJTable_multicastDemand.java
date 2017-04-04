@@ -353,16 +353,30 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
             if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
             filterKeepElementsAffectedThisLayer.addActionListener(e1 ->
             {
-                if (selectedDemands.size() > 1) throw new RuntimeException();
-                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedDemands.get(0), true);
-                callback.getVisualizationState().updateTableRowFilter(filter);
+            	if (selectedDemands.isEmpty()) return;
+            	TBFToFromCarriedTraffic filter = null;
+            	for (MulticastDemand mdemand : selectedDemands)
+            	{
+            		if (filter == null)
+            			filter = new TBFToFromCarriedTraffic(mdemand, true);
+            		else
+            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(mdemand, true));
+            	}
+                callback.getVisualizationState().updateTableRowFilter(filter , true);
                 callback.updateVisualizationJustTables();
             });
             filterKeepElementsAffectedAllLayers.addActionListener(e1 ->
             {
-                if (selectedDemands.size() > 1) throw new RuntimeException();
-                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedDemands.get(0), false);
-                callback.getVisualizationState().updateTableRowFilter(filter);
+            	if (selectedDemands.isEmpty()) return;
+            	TBFToFromCarriedTraffic filter = null;
+            	for (MulticastDemand mdemand : selectedDemands)
+            	{
+            		if (filter == null)
+            			filter = new TBFToFromCarriedTraffic(mdemand, false);
+            		else
+            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(mdemand, false));
+            	}
+                callback.getVisualizationState().updateTableRowFilter(filter , true);
                 callback.updateVisualizationJustTables();
             });
         }

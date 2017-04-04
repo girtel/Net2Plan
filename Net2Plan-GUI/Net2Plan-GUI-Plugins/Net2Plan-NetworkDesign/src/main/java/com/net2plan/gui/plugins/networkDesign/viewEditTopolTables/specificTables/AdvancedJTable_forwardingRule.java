@@ -281,9 +281,16 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
 				@Override
 				public void actionPerformed(ActionEvent e) 
 				{
-					if (selectedFRs.size() > 1) throw new RuntimeException ();
-					TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedFRs.get(0), true);
-					callback.getVisualizationState().updateTableRowFilter(filter);
+	            	if (selectedFRs.isEmpty()) return;
+	            	TBFToFromCarriedTraffic filter = null;
+	            	for (Pair<Demand,Link> fr : selectedFRs)
+	            	{
+	            		if (filter == null)
+	            			filter = new TBFToFromCarriedTraffic(fr, true);
+	            		else
+	            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(fr, true));
+	            	}
+					callback.getVisualizationState().updateTableRowFilter(filter , true);
 					callback.updateVisualizationJustTables();
 				}
 			});
@@ -292,9 +299,16 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
 				@Override
 				public void actionPerformed(ActionEvent e) 
 				{
-					if (selectedFRs.size() > 1) throw new RuntimeException ();
-					TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedFRs.get(0), false);
-					callback.getVisualizationState().updateTableRowFilter(filter);
+	            	if (selectedFRs.isEmpty()) return;
+	            	TBFToFromCarriedTraffic filter = null;
+	            	for (Pair<Demand,Link> fr : selectedFRs)
+	            	{
+	            		if (filter == null)
+	            			filter = new TBFToFromCarriedTraffic(fr, false);
+	            		else
+	            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(fr, false));
+	            	}
+					callback.getVisualizationState().updateTableRowFilter(filter , true);
 					callback.updateVisualizationJustTables();
 				}
 			});

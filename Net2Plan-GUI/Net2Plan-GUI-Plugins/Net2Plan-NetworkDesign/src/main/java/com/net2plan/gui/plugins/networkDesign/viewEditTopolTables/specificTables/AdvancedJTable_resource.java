@@ -396,16 +396,30 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
             if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
             filterKeepElementsAffectedThisLayer.addActionListener(e1 ->
             {
-                if (selectedResources.size() > 1) throw new RuntimeException();
-                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedResources.get(0), callback.getDesign().getNetworkLayerDefault(), true);
-                callback.getVisualizationState().updateTableRowFilter(filter);
+            	if (selectedResources.isEmpty()) return;
+            	TBFToFromCarriedTraffic filter = null;
+            	for (Resource resource : selectedResources)
+            	{
+            		if (filter == null)
+            			filter = new TBFToFromCarriedTraffic(resource, callback.getDesign().getNetworkLayerDefault(), true);
+            		else
+            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(resource, callback.getDesign().getNetworkLayerDefault(), true));
+            	}
+                callback.getVisualizationState().updateTableRowFilter(filter , true);
                 callback.updateVisualizationJustTables();
             });
             filterKeepElementsAffectedAllLayers.addActionListener(e1 ->
             {
-                if (selectedResources.size() > 1) throw new RuntimeException();
-                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedResources.get(0), callback.getDesign().getNetworkLayerDefault(), false);
-                callback.getVisualizationState().updateTableRowFilter(filter);
+            	if (selectedResources.isEmpty()) return;
+            	TBFToFromCarriedTraffic filter = null;
+            	for (Resource resource : selectedResources)
+            	{
+            		if (filter == null)
+            			filter = new TBFToFromCarriedTraffic(resource, callback.getDesign().getNetworkLayerDefault(), false);
+            		else
+            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(resource, callback.getDesign().getNetworkLayerDefault(), false));
+            	}
+                callback.getVisualizationState().updateTableRowFilter(filter , true);
                 callback.updateVisualizationJustTables();
             });
         }

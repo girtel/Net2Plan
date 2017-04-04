@@ -523,16 +523,30 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
             filterKeepElementsAffectedThisLayer.addActionListener(e1 ->
             {
-                if (selectedLinks.size() > 1) throw new RuntimeException();
-                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedLinks.get(0), true);
-                callback.getVisualizationState().updateTableRowFilter(filter);
+            	if (selectedLinks.isEmpty()) return;
+            	TBFToFromCarriedTraffic filter = null;
+            	for (Link link : selectedLinks)
+            	{
+            		if (filter == null)
+            			filter = new TBFToFromCarriedTraffic(link, true);
+            		else
+            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(link, true));
+            	}
+                callback.getVisualizationState().updateTableRowFilter(filter , true);
                 callback.updateVisualizationJustTables();
             });
             filterKeepElementsAffectedAllLayers.addActionListener(e1 ->
             {
-                if (selectedLinks.size() > 1) throw new RuntimeException();
-                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedLinks.get(0), false);
-                callback.getVisualizationState().updateTableRowFilter(filter);
+            	if (selectedLinks.isEmpty()) return;
+            	TBFToFromCarriedTraffic filter = null;
+            	for (Link link : selectedLinks)
+            	{
+            		if (filter == null)
+            			filter = new TBFToFromCarriedTraffic(link, false);
+            		else
+            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(link, false));
+            	}
+                callback.getVisualizationState().updateTableRowFilter(filter , true);
                 callback.updateVisualizationJustTables();
             });
         }

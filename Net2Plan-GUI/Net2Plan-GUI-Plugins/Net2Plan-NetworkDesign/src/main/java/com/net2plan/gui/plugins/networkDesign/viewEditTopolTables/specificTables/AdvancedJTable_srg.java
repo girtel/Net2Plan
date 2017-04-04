@@ -327,9 +327,16 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
             if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
             filterKeepElementsAffectedAllLayers.addActionListener(e1 ->
             {
-                if (selectedSRGs.size() > 1) throw new RuntimeException();
-                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedSRGs.get(0));
-                callback.getVisualizationState().updateTableRowFilter(filter);
+            	if (selectedSRGs.isEmpty()) return;
+            	TBFToFromCarriedTraffic filter = null;
+            	for (SharedRiskGroup srg : selectedSRGs)
+            	{
+            		if (filter == null)
+            			filter = new TBFToFromCarriedTraffic(srg);
+            		else
+            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(srg));
+            	}
+                callback.getVisualizationState().updateTableRowFilter(filter , true);
                 callback.updateVisualizationJustTables();
             });
         }

@@ -1589,7 +1589,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 final ITableRowFilter filter = new TBFTagBased(
                         callback.getDesign(), onlyInActiveLayer ? callback.getDesign().getNetworkLayerDefault() : null,
                         txt_tagContains.getText(), txt_tagDoesNotContain.getText());
-                callback.getVisualizationState().updateTableRowFilter(filter);
+                callback.getVisualizationState().updateTableRowFilter(filter , true);
                 callback.updateVisualizationJustTables();
             } catch (Throwable ex)
             {
