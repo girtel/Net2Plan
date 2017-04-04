@@ -1,9 +1,9 @@
 package com.net2plan.gui.plugins.networkDesign.visualizationControl;
 
 import com.google.common.collect.Sets;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.ImageUtils;
@@ -14,6 +14,7 @@ import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.MapUtils;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
+import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -31,8 +32,8 @@ public class VisualizationState
     private PickTimeLineManager pickTimeLineManager;
 
     private NetworkElementType pickedElementType;
-    private List<? extends NetworkElement> pickedElementNotFR;
-    private List<Pair<Demand, Link>> pickedElementFR;
+    private List<? extends NetworkElement> pickedElement;
+    private List<Pair<Demand, Link>> pickedForwardingRule;
 
     private boolean showInCanvasNodeNames;
     private boolean showInCanvasLinkLabels;
@@ -82,8 +83,8 @@ public class VisualizationState
         this.interLayerSpaceInPixels = 50;
         this.tableRowFilter = null;
         this.pickTimeLineManager = new PickTimeLineManager();
-        this.pickedElementNotFR = null;
-        this.pickedElementFR = null;
+        this.pickedElement = null;
+        this.pickedForwardingRule = null;
         this.linkWidthIncreaseFactorRespectToDefault = 1;
         this.nodeSizeIncreaseFactorRespectToDefault = 1;
 
@@ -394,8 +395,8 @@ public class VisualizationState
 
         /* implicitly we restart the picking state */
         this.pickedElementType = null;
-        this.pickedElementNotFR = null;
-        this.pickedElementFR = null;
+        this.pickedElement = null;
+        this.pickedForwardingRule = null;
 
         this.cache_canvasIntraNodeGUILinks = new HashMap<>();
         this.cache_canvasRegularLinkMap = new HashMap<>();
@@ -763,14 +764,16 @@ public class VisualizationState
         return pickedElementType;
     }
 
+    @Nullable
     public List<NetworkElement> getPickedNetworkElement()
     {
-        return Collections.unmodifiableList(pickedElementNotFR);
+        return pickedElement == null ? null : Collections.unmodifiableList(pickedElement);
     }
 
+    @Nullable
     public List<Pair<Demand, Link>> getPickedForwardingRule()
     {
-        return Collections.unmodifiableList(pickedElementFR);
+        return pickedForwardingRule == null ? null : Collections.unmodifiableList(pickedForwardingRule);
     }
 
     public void pickNode(Node node)
@@ -822,8 +825,8 @@ public class VisualizationState
     {
         resetPickedState();
         this.pickedElementType = NetworkElementType.LAYER;
-        this.pickedElementFR = null;
-        this.pickedElementNotFR = Arrays.asList(pickedLayer);
+        this.pickedForwardingRule = null;
+        this.pickedElement = Arrays.asList(pickedLayer);
         pickTimeLineManager.addElement(this.getNetPlan(), pickedLayer);
     }
 
@@ -831,8 +834,8 @@ public class VisualizationState
     {
         resetPickedState();
         this.pickedElementType = NetworkElementType.DEMAND;
-        this.pickedElementFR = null;
-        this.pickedElementNotFR = pickedDemands;
+        this.pickedForwardingRule = null;
+        this.pickedElement = pickedDemands;
         if (pickedDemands.size() == 1) pickTimeLineManager.addElement(this.getNetPlan(), pickedDemands.get(0));
         
         for (Demand pickedDemand : pickedDemands)
@@ -893,8 +896,8 @@ public class VisualizationState
     {
         resetPickedState();
         this.pickedElementType = NetworkElementType.SRG;
-        this.pickedElementFR = null;
-        this.pickedElementNotFR = pickedSRGs;
+        this.pickedForwardingRule = null;
+        this.pickedElement = pickedSRGs;
         if (pickedSRGs.size() == 1)pickTimeLineManager.addElement(this.getNetPlan(), pickedSRGs.get(0));
 
         for (SharedRiskGroup pickedSRG : pickedSRGs)
@@ -963,8 +966,8 @@ public class VisualizationState
     {
         resetPickedState();
         this.pickedElementType = NetworkElementType.MULTICAST_DEMAND;
-        this.pickedElementFR = null;
-        this.pickedElementNotFR = pickedDemands;
+        this.pickedForwardingRule = null;
+        this.pickedElement = pickedDemands;
         if (pickedDemands.size() == 1) pickTimeLineManager.addElement(this.getNetPlan(), pickedDemands.get(0));
 
         for (MulticastDemand pickedDemand : pickedDemands)
@@ -1018,8 +1021,8 @@ public class VisualizationState
     {
         resetPickedState();
         this.pickedElementType = NetworkElementType.ROUTE;
-        this.pickedElementFR = null;
-        this.pickedElementNotFR = pickedRoutes;
+        this.pickedForwardingRule = null;
+        this.pickedElement = pickedRoutes;
         if (pickedRoutes.size() == 1) pickTimeLineManager.addElement(this.getNetPlan(), pickedRoutes.get(0));
 
         for (Route pickedRoute : pickedRoutes)
@@ -1060,8 +1063,8 @@ public class VisualizationState
     {
         resetPickedState();
         this.pickedElementType = NetworkElementType.MULTICAST_TREE;
-        this.pickedElementFR = null;
-        this.pickedElementNotFR = pickedTrees;
+        this.pickedForwardingRule = null;
+        this.pickedElement = pickedTrees;
         if (pickedTrees.size() == 1) pickTimeLineManager.addElement(this.getNetPlan(), pickedTrees.get(0));
 
         for (MulticastTree pickedTree : pickedTrees)
@@ -1109,8 +1112,8 @@ public class VisualizationState
     {
         resetPickedState();
         this.pickedElementType = NetworkElementType.LINK;
-        this.pickedElementFR = null;
-        this.pickedElementNotFR = pickedLinks;
+        this.pickedForwardingRule = null;
+        this.pickedElement = pickedLinks;
         if (pickedLinks.size() == 1) pickTimeLineManager.addElement(this.getNetPlan(), pickedLinks.get(0));
 
         for (Link pickedLink : pickedLinks)
@@ -1160,8 +1163,8 @@ public class VisualizationState
     {
         resetPickedState();
         this.pickedElementType = NetworkElementType.NODE;
-        this.pickedElementFR = null;
-        this.pickedElementNotFR = pickedNodes;
+        this.pickedForwardingRule = null;
+        this.pickedElement = pickedNodes;
         if (pickedNodes.size() == 1) pickTimeLineManager.addElement(this.getNetPlan(), pickedNodes.get(0));
 
         for (Node pickedNode : pickedNodes)
@@ -1184,8 +1187,8 @@ public class VisualizationState
     {
         resetPickedState();
         this.pickedElementType = NetworkElementType.RESOURCE;
-        this.pickedElementFR = null;
-        this.pickedElementNotFR = pickedResources;
+        this.pickedForwardingRule = null;
+        this.pickedElement = pickedResources;
         if (pickedResources.size() == 1) pickTimeLineManager.addElement(this.getNetPlan(), pickedResources.get(0));
 
         for (Resource pickedResource : pickedResources)
@@ -1202,8 +1205,8 @@ public class VisualizationState
     {
         resetPickedState();
         this.pickedElementType = NetworkElementType.FORWARDING_RULE;
-        this.pickedElementFR = pickedFRs;
-        this.pickedElementNotFR = null;
+        this.pickedForwardingRule = pickedFRs;
+        this.pickedElement = null;
         if (pickedFRs.size() == 1) pickTimeLineManager.addElement(this.getNetPlan(), pickedFRs.get(0));
 
         for (Pair<Demand,Link> pickedFR : pickedFRs)
@@ -1280,8 +1283,8 @@ public class VisualizationState
     public void resetPickedState()
     {
         this.pickedElementType = null;
-        this.pickedElementNotFR = null;
-        this.pickedElementFR = null;
+        this.pickedElement = null;
+        this.pickedForwardingRule = null;
 
         for (GUINode n : getCanvasAllGUINodes())
         {
@@ -1410,10 +1413,10 @@ public class VisualizationState
         if (showLowerLayerPropagation == this.showInCanvasLowerLayerPropagation) return;
         this.showInCanvasLowerLayerPropagation = showLowerLayerPropagation;
         if (pickedElementType != null)
-            if (pickedElementNotFR != null)
-                this.pickElement(pickedElementNotFR);
+            if (pickedElement != null)
+                this.pickElement(pickedElement);
             else
-                this.pickForwardingRule(pickedElementFR);
+                this.pickForwardingRule(pickedForwardingRule);
     }
 
 
@@ -1442,10 +1445,10 @@ public class VisualizationState
         if (showUpperLayerPropagation == this.showInCanvasUpperLayerPropagation) return;
         this.showInCanvasUpperLayerPropagation = showUpperLayerPropagation;
         if (pickedElementType != null)
-            if (pickedElementNotFR != null)
-                this.pickElement(pickedElementNotFR);
+            if (pickedElement != null)
+                this.pickElement(pickedElement);
             else
-                this.pickForwardingRule(pickedElementFR);
+                this.pickForwardingRule(pickedForwardingRule);
     }
 
     /**
@@ -1456,10 +1459,10 @@ public class VisualizationState
         if (showThisLayerPropagation == this.showInCanvasThisLayerPropagation) return;
         this.showInCanvasThisLayerPropagation = showThisLayerPropagation;
         if (pickedElementType != null)
-            if (pickedElementNotFR != null)
-                this.pickElement(pickedElementNotFR);
+            if (pickedElement != null)
+                this.pickElement(pickedElement);
             else
-                this.pickForwardingRule(pickedElementFR);
+                this.pickForwardingRule(pickedForwardingRule);
     }
 
     public Map<NetworkLayer, Boolean> getCanvasLayerVisibilityMap()
@@ -1556,12 +1559,12 @@ public class VisualizationState
             if (e.getNetPlan() != np) throw new RuntimeException();
         for (List<GUINode> list : vs.cache_mapNode2ListVerticallyStackedGUINodes.values())
             for (GUINode gn : list) if (gn.getAssociatedNode().getNetPlan() != np) throw new RuntimeException();
-        if (vs.pickedElementNotFR != null) if (!vs.pickedElementNotFR.isEmpty()) if (vs.pickedElementNotFR.get(0).getNetPlan() != np) throw new RuntimeException();
-        if (vs.pickedElementFR != null)
-        	if (!vs.pickedElementFR.isEmpty())
+        if (vs.pickedElement != null) if (!vs.pickedElement.isEmpty()) if (vs.pickedElement.get(0).getNetPlan() != np) throw new RuntimeException();
+        if (vs.pickedForwardingRule != null)
+        	if (!vs.pickedForwardingRule.isEmpty())
         	{
-        		if (vs.pickedElementFR.get(0).getFirst().getNetPlan() != np) throw new RuntimeException();
-                if (vs.pickedElementFR.get(0).getSecond().getNetPlan() != np) throw new RuntimeException();
+        		if (vs.pickedForwardingRule.get(0).getFirst().getNetPlan() != np) throw new RuntimeException();
+                if (vs.pickedForwardingRule.get(0).getSecond().getNetPlan() != np) throw new RuntimeException();
         	}
     }
     
