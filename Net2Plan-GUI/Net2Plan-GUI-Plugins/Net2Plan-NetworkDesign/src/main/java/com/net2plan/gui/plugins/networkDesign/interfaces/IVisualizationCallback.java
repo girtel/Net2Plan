@@ -12,16 +12,12 @@
 
 package com.net2plan.gui.plugins.networkDesign.interfaces;
 
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.internal.Constants;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.awt.*;
-import java.awt.geom.Point2D;
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -29,15 +25,15 @@ import java.util.Set;
  */
 public interface IVisualizationCallback
 {
-    void resetPickedStateAndUpdateView();
-
-    void putTransientColorInElementTopologyCanvas(Collection<? extends NetworkElement> linksAndNodes, Color color);
-
     void updateVisualizationJustTables();
 
     void updateVisualizationJustCanvasLinkNodeVisibilityOrColor();
 
     void updateVisualizationAfterNewTopology();
+
+    void updateVisualizationAfterChanges(Set<Constants.NetworkElementType> modificationsMade);
+
+    void updateVisualizationAfterPick();
 
     @Nonnull
     NetPlan getDesign();
@@ -45,20 +41,8 @@ public interface IVisualizationCallback
     @Nullable
     NetPlan getInitialDesign();
 
-    void updateVisualizationAfterChanges(Set<Constants.NetworkElementType> modificationsMade);
+    @Nonnull
+    VisualizationState getVisualizationState();
 
     boolean inOnlineSimulationMode();
-
-    void setCurrentNetPlanDoNotUpdateVisualization(NetPlan netPlan);
-
-    void updateVisualizationAfterPick();
-
-    // TODO: Rethink if this one is needed...
-    void moveNodeTo(GUINode guiNode, Point2D toPoint);
-
-    void runCanvasOperation(ITopologyCanvas.CanvasOperation... canvasOperation);
-
-    void requestUndoAction();
-
-    void requestRedoAction();
 }
