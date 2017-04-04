@@ -195,8 +195,9 @@ public class FigureForwardingRuleSequencePanel extends FigureSequencePanel
         drawnNodes.add(originNode);
         drawnNodes.add(destinationNode);
 
-        final DrawLine LinkDL = new DrawLine(originNode, destinationNode, originNode.posEast(), destinationNode.posWest());
-        DrawLine.addLineToGraphics(g2d, LinkDL, fontMetrics, regularInterlineSpacePixels, lineStroke);
+        final DrawLine linkDL = new DrawLine(originNode, destinationNode, link, originNode.posEast(), destinationNode.posWest(), link.getOccupiedCapacity());
+        DrawLine.addLineToGraphics(g2d, linkDL, fontMetrics, regularInterlineSpacePixels);
+        drawnLines.add(linkDL);
         preferredSize = new Dimension(windowDimension.width + XYMARGIN, windowDimension.height + XYMARGIN);
     }
 
