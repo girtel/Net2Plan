@@ -782,7 +782,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         resetPickedStateAndUpdateView();
     }
 
-    public void runCanvasOperation(ITopologyCanvas.CanvasOperation... canvasOperation)
+    public void runCanvasOperation(@Nonnull ITopologyCanvas.CanvasOperation... canvasOperation)
     {
         // NOTE: The operations should executed in the same order as their are brought.
         for (ITopologyCanvas.CanvasOperation operation : canvasOperation)
