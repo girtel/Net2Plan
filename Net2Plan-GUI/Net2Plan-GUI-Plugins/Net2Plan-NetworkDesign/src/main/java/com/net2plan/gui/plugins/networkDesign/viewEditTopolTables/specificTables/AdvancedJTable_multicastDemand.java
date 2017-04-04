@@ -386,7 +386,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                 {
                     if (networkElementType != NetworkElementType.LAYER || callback.getDesign().getNumberOfLayers() != 1)
                     {
-                        JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
+                        JMenuItem removeItem = new JMenuItem("Remove selected " + networkElementType + "s");
 
                         removeItem.addActionListener(new ActionListener()
                         {
@@ -558,7 +558,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
         final List<MulticastDemand> selectedDemands = (List<MulticastDemand>) selection.getNetworkElements();
 
-        JMenuItem offeredTraffic = new JMenuItem("Set offered traffic");
+        JMenuItem offeredTraffic = new JMenuItem("Set offered traffic to selected");
         offeredTraffic.addActionListener(e ->
         {
             double h_d;
@@ -655,7 +655,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                 }
             }
 
-            JMenuItem decoupleDemandItem = new JMenuItem("Decouple multicast demand");
+            JMenuItem decoupleDemandItem = new JMenuItem("Decouple selected multicast demands");
             decoupleDemandItem.addActionListener(e ->
             {
                 for (MulticastDemand selectedDemand : selectedDemands)
