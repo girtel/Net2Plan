@@ -409,9 +409,13 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
                 }
             }
 
-            popup.addSeparator();
-            for (JComponent item : getExtraAddOptions())
-                popup.add(item);
+            final List<JComponent> extraAddOptions = getExtraAddOptions();
+            if (!extraAddOptions.isEmpty())
+            {
+                popup.addSeparator();
+                for (JComponent item : getExtraAddOptions())
+                    popup.add(item);
+            }
 
             if (!rowsInTheTable.isEmpty() && !selectedTrees.isEmpty())
             {
