@@ -187,13 +187,14 @@ public class FigureForwardingRuleSequencePanel extends FigureSequencePanel
         g2d.setFont(plainFont);
 
         DrawNode.addNodeToGraphics(g2d, originNode, initialDnTopLeftPosition, fontMetrics, regularInterlineSpacePixels, null);
-        DrawNode.addNodeToGraphics(g2d, destinationNode, new Point(initialDnTopLeftPosition.x + xSeparationDnCenters, initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
+        final Dimension windowDimension = DrawNode.addNodeToGraphics(g2d, destinationNode, new Point(initialDnTopLeftPosition.x + xSeparationDnCenters, initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
 
         drawnNodes.add(originNode);
         drawnNodes.add(destinationNode);
 
         final DrawLine LinkDL = new DrawLine(originNode, destinationNode, originNode.posEast(), destinationNode.posWest());
         DrawLine.addLineToGraphics(g2d, LinkDL, fontMetrics, regularInterlineSpacePixels, lineStroke);
+        preferredSize = new Dimension(windowDimension.width + XYMARGIN, windowDimension.height + XYMARGIN);
     }
 
     private int addIconJump(int graphicsRow)
