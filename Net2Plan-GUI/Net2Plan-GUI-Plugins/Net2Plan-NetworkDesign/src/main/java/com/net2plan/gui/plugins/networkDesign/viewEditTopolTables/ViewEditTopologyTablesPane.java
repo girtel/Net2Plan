@@ -97,7 +97,7 @@ public class ViewEditTopologyTablesPane extends JPanel
                         @Override
                         public void actionPerformed(ActionEvent e)
                         {
-                            callback.getVisualizationState().updateTableRowFilter(null);
+                            callback.getVisualizationState().updateTableRowFilter(null , true);
                             callback.updateVisualizationJustTables();
                             callback.resetPickedStateAndUpdateView();
                         }
