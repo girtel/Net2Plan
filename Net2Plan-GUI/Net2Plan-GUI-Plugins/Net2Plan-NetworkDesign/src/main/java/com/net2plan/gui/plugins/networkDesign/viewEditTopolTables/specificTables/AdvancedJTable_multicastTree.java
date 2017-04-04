@@ -387,7 +387,6 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
                         @Override
                         public void actionPerformed(ActionEvent e)
                         {
-                            NetPlan netPlan = callback.getDesign();
                             try
                             {
 

@@ -556,14 +556,14 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         final List<SharedRiskGroup> rowsInTheTable = getVisibleElementsInTable();
         final List<JComponent> options = new LinkedList<JComponent>();
 
-        if (!selectedSRGs.isEmpty())
+        if (!selectedSRGs.isEmpty() && selectedSRGs.size() == 1)
         {
             JMenuItem editSRG = new JMenuItem("View/edit SRG");
             editSRG.addActionListener(e ->
             {
                 try
                 {
-                    viewEditSRGGUI(callback, selectedSRGs);
+                    viewEditSRGGUI(callback, selectedSRGs.get(0));
 
                     callback.getVisualizationState().resetPickedState();
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.SRG));
@@ -664,155 +664,152 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
     }
 
 
-    private static void viewEditSRGGUI(final GUINetworkDesign callback, final List<SharedRiskGroup> selection)
+    private static void viewEditSRGGUI(final GUINetworkDesign callback, final SharedRiskGroup srg)
     {
-        assert selection != null;
+        assert srg != null;
 
         final NetPlan netPlan = callback.getDesign();
 
-        for (SharedRiskGroup srg : selection)
+        long srgId = srg.getId();
+
+        callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
+        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
+
+        final int N = netPlan.getNumberOfNodes();
+        final int E = netPlan.getNumberOfLinks();
+        final Object[][] nodeData = new Object[N == 0 ? 1 : N][3];
+        final Object[][] linkData = new Object[E == 0 ? 1 : E][4];
+
+        if (N > 0)
         {
-            long srgId = srg.getId();
-
-            callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
-            callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
-
-            final int N = netPlan.getNumberOfNodes();
-            final int E = netPlan.getNumberOfLinks();
-            final Object[][] nodeData = new Object[N == 0 ? 1 : N][3];
-            final Object[][] linkData = new Object[E == 0 ? 1 : E][4];
-
-            if (N > 0)
+            int n = 0;
+            for (Node node : netPlan.getNodes())
             {
-                int n = 0;
-                for (Node node : netPlan.getNodes())
-                {
-                    nodeData[n] = new Object[3];
-                    nodeData[n][0] = node.getId();
-                    nodeData[n][1] = node.getName();
-                    nodeData[n][2] = srg.getNodes().contains(node);
+                nodeData[n] = new Object[3];
+                nodeData[n][0] = node.getId();
+                nodeData[n][1] = node.getName();
+                nodeData[n][2] = srg.getNodes().contains(node);
 
-                    n++;
-                }
+                n++;
             }
-
-            if (E > 0)
-            {
-                int e = 0;
-                for (Link link : netPlan.getLinks())
-                {
-                    linkData[e] = new Object[4];
-                    linkData[e][0] = link.getId();
-                    linkData[e][1] = link.getOriginNode().getId() + (link.getOriginNode().getName().isEmpty() ? "" : " (" + link.getOriginNode().getName() + ")");
-                    linkData[e][2] = link.getDestinationNode().getId() + (link.getDestinationNode().getName().isEmpty() ? "" : " (" + link.getDestinationNode().getName() + ")");
-                    linkData[e][3] = srg.getLinksAllLayers().contains(link);
-
-                    e++;
-                }
-            }
-
-            final DefaultTableModel nodeModel = new ClassAwareTableModel(nodeData, new String[]{"Id", "Name", "Included in the SRG"})
-            {
-                @Override
-                public boolean isCellEditable(int rowIndex, int columnIndex)
-                {
-                    return columnIndex == 2;
-                }
-
-                @Override
-                public void setValueAt(Object aValue, int row, int column)
-                {
-                    if (column == 2)
-                    {
-                        boolean value = (boolean) aValue;
-                        Node node = netPlan.getNodeFromId((long) getValueAt(row, 0));
-                        if (value && !srg.getNodes().contains(node))
-                        {
-                            netPlan.getSRGFromId(srgId).addNode(node);
-                            callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
-                            callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
-                        } else if (!value && srg.getNodes().contains(node))
-                        {
-                            netPlan.getSRGFromId(srgId).removeNode(node);
-                            callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
-                            callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
-                        }
-                    }
-
-                    super.setValueAt(aValue, row, column);
-                }
-            };
-
-            final DefaultTableModel linkModel = new ClassAwareTableModel(linkData, new String[]{"Id", "Origin node", "Destination node", "Included in the SRG"})
-            {
-                @Override
-                public boolean isCellEditable(int rowIndex, int columnIndex)
-                {
-                    return columnIndex == 3;
-                }
-
-                @Override
-                public void setValueAt(Object aValue, int row, int column)
-                {
-                    if (column == 3)
-                    {
-                        boolean value = (boolean) aValue;
-                        Link link = netPlan.getLinkFromId((long) getValueAt(row, 0));
-                        if (value && !srg.getLinksAllLayers().contains(link))
-                        {
-                            srg.addLink(link);
-                            callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
-                            callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
-                        } else if (!value && srg.getLinksAllLayers().contains(link))
-                        {
-                            srg.removeLink(link);
-                            callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
-                            callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
-                        }
-                    }
-
-                    super.setValueAt(aValue, row, column);
-                }
-            };
-
-            final JTable nodeTable = new AdvancedJTable(nodeModel);
-            final JTable linkTable = new AdvancedJTable(linkModel);
-
-            nodeTable.setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
-            nodeTable.setDefaultRenderer(Double.class, new CellRenderers.UnfocusableCellRenderer());
-            nodeTable.setDefaultRenderer(Object.class, new CellRenderers.UnfocusableCellRenderer());
-            nodeTable.setDefaultRenderer(Float.class, new CellRenderers.UnfocusableCellRenderer());
-            nodeTable.setDefaultRenderer(Long.class, new CellRenderers.UnfocusableCellRenderer());
-            nodeTable.setDefaultRenderer(Integer.class, new CellRenderers.UnfocusableCellRenderer());
-            nodeTable.setDefaultRenderer(String.class, new CellRenderers.UnfocusableCellRenderer());
-
-            linkTable.setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
-            linkTable.setDefaultRenderer(Double.class, new CellRenderers.UnfocusableCellRenderer());
-            linkTable.setDefaultRenderer(Object.class, new CellRenderers.UnfocusableCellRenderer());
-            linkTable.setDefaultRenderer(Float.class, new CellRenderers.UnfocusableCellRenderer());
-            linkTable.setDefaultRenderer(Long.class, new CellRenderers.UnfocusableCellRenderer());
-            linkTable.setDefaultRenderer(Integer.class, new CellRenderers.UnfocusableCellRenderer());
-            linkTable.setDefaultRenderer(String.class, new CellRenderers.UnfocusableCellRenderer());
-
-            JScrollPane nodeScrollPane = new JScrollPane(nodeTable);
-            JScrollPane linkScrollPane = new JScrollPane(linkTable);
-
-
-            final JDialog dialog = new JDialog();
-            dialog.setLayout(new MigLayout("", "[grow]", "[][grow][][grow]"));
-            dialog.add(new JLabel("Nodes"), "growx, wrap");
-            dialog.add(nodeScrollPane, "grow, wrap");
-            dialog.add(new JLabel("Links"), "growx, wrap");
-            dialog.add(linkScrollPane, "grow");
-
-            dialog.setTitle("View/edit SRG " + srgId);
-            SwingUtils.configureCloseDialogOnEscape(dialog);
-            dialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
-            dialog.setSize(new Dimension(500, 300));
-            dialog.setLocationRelativeTo(null);
-            dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            dialog.setVisible(true);
         }
+
+        if (E > 0)
+        {
+            int e = 0;
+            for (Link link : netPlan.getLinks())
+            {
+                linkData[e] = new Object[4];
+                linkData[e][0] = link.getId();
+                linkData[e][1] = link.getOriginNode().getId() + (link.getOriginNode().getName().isEmpty() ? "" : " (" + link.getOriginNode().getName() + ")");
+                linkData[e][2] = link.getDestinationNode().getId() + (link.getDestinationNode().getName().isEmpty() ? "" : " (" + link.getDestinationNode().getName() + ")");
+                linkData[e][3] = srg.getLinksAllLayers().contains(link);
+
+                e++;
+            }
+        }
+
+        final DefaultTableModel nodeModel = new ClassAwareTableModel(nodeData, new String[]{"Id", "Name", "Included in the SRG"})
+        {
+            @Override
+            public boolean isCellEditable(int rowIndex, int columnIndex)
+            {
+                return columnIndex == 2;
+            }
+
+            @Override
+            public void setValueAt(Object aValue, int row, int column)
+            {
+                if (column == 2)
+                {
+                    boolean value = (boolean) aValue;
+                    Node node = netPlan.getNodeFromId((long) getValueAt(row, 0));
+                    if (value && !srg.getNodes().contains(node))
+                    {
+                        netPlan.getSRGFromId(srgId).addNode(node);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
+                    } else if (!value && srg.getNodes().contains(node))
+                    {
+                        netPlan.getSRGFromId(srgId).removeNode(node);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
+                    }
+                }
+
+                super.setValueAt(aValue, row, column);
+            }
+        };
+
+        final DefaultTableModel linkModel = new ClassAwareTableModel(linkData, new String[]{"Id", "Origin node", "Destination node", "Included in the SRG"})
+        {
+            @Override
+            public boolean isCellEditable(int rowIndex, int columnIndex)
+            {
+                return columnIndex == 3;
+            }
+
+            @Override
+            public void setValueAt(Object aValue, int row, int column)
+            {
+                if (column == 3)
+                {
+                    boolean value = (boolean) aValue;
+                    Link link = netPlan.getLinkFromId((long) getValueAt(row, 0));
+                    if (value && !srg.getLinksAllLayers().contains(link))
+                    {
+                        srg.addLink(link);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
+                    } else if (!value && srg.getLinksAllLayers().contains(link))
+                    {
+                        srg.removeLink(link);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getNodes(), Color.ORANGE);
+                        callback.putTransientColorInElementTopologyCanvas(srg.getLinksAllLayers(), Color.ORANGE);
+                    }
+                }
+
+                super.setValueAt(aValue, row, column);
+            }
+        };
+
+        final JTable nodeTable = new AdvancedJTable(nodeModel);
+        final JTable linkTable = new AdvancedJTable(linkModel);
+
+        nodeTable.setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
+        nodeTable.setDefaultRenderer(Double.class, new CellRenderers.UnfocusableCellRenderer());
+        nodeTable.setDefaultRenderer(Object.class, new CellRenderers.UnfocusableCellRenderer());
+        nodeTable.setDefaultRenderer(Float.class, new CellRenderers.UnfocusableCellRenderer());
+        nodeTable.setDefaultRenderer(Long.class, new CellRenderers.UnfocusableCellRenderer());
+        nodeTable.setDefaultRenderer(Integer.class, new CellRenderers.UnfocusableCellRenderer());
+        nodeTable.setDefaultRenderer(String.class, new CellRenderers.UnfocusableCellRenderer());
+
+        linkTable.setDefaultRenderer(Boolean.class, new CellRenderers.CheckBoxRenderer());
+        linkTable.setDefaultRenderer(Double.class, new CellRenderers.UnfocusableCellRenderer());
+        linkTable.setDefaultRenderer(Object.class, new CellRenderers.UnfocusableCellRenderer());
+        linkTable.setDefaultRenderer(Float.class, new CellRenderers.UnfocusableCellRenderer());
+        linkTable.setDefaultRenderer(Long.class, new CellRenderers.UnfocusableCellRenderer());
+        linkTable.setDefaultRenderer(Integer.class, new CellRenderers.UnfocusableCellRenderer());
+        linkTable.setDefaultRenderer(String.class, new CellRenderers.UnfocusableCellRenderer());
+
+        JScrollPane nodeScrollPane = new JScrollPane(nodeTable);
+        JScrollPane linkScrollPane = new JScrollPane(linkTable);
+
+
+        final JDialog dialog = new JDialog();
+        dialog.setLayout(new MigLayout("", "[grow]", "[][grow][][grow]"));
+        dialog.add(new JLabel("Nodes"), "growx, wrap");
+        dialog.add(nodeScrollPane, "grow, wrap");
+        dialog.add(new JLabel("Links"), "growx, wrap");
+        dialog.add(linkScrollPane, "grow");
+
+        dialog.setTitle("View/edit SRG " + srgId);
+        SwingUtils.configureCloseDialogOnEscape(dialog);
+        dialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(new Dimension(500, 300));
+        dialog.setLocationRelativeTo(null);
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        dialog.setVisible(true);
     }
 
     @Override
