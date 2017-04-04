@@ -46,6 +46,9 @@ public class FocusPane extends JPanel
         final List<NetworkElement> pickedElement = vs.getPickedNetworkElement();
         final List<Pair<Demand, Link>> pickedForwardingRule = vs.getPickedForwardingRule();
 
+        if (pickedElement != null && pickedElement.size() > 1) return;
+        if (pickedForwardingRule != null && pickedForwardingRule.size() > 1) return;
+
 		/* Check if remove everything */
 		if (elementType == null) { this.removeAll(); this.revalidate(); this.repaint(); return; }
 

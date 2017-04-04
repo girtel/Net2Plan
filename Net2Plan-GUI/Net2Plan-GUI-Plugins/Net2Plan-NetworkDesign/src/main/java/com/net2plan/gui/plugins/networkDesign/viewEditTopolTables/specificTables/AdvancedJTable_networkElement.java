@@ -1219,7 +1219,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             popup.addSeparator();
 
             // Tags controls
-            JMenuItem addTag = new JMenuItem("Add tag");
+            JMenuItem addTag = new JMenuItem("Add tag to selected");
             addTag.addActionListener(e1 ->
             {
                 JTextField txt_name = new JTextField(20);
@@ -1253,7 +1253,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             });
             popup.add(addTag);
 
-            JMenuItem removeTag = new JMenuItem("Remove tag");
+            JMenuItem removeTag = new JMenuItem("Remove tag to selected");
 
             removeTag.addActionListener(new ActionListener()
             {
@@ -1292,7 +1292,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
             popup.add(removeTag);
 
-            JMenuItem addAttribute = new JMenuItem("Add/Update attribute");
+            JMenuItem addAttribute = new JMenuItem("Add/Update attribute to selected");
             popup.add(new JPopupMenu.Separator());
             addAttribute.addActionListener(new ActionListener()
             {
@@ -1340,7 +1340,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             });
             popup.add(addAttribute);
 
-            JMenuItem removeAttribute = new JMenuItem("Remove attribute");
+            JMenuItem removeAttribute = new JMenuItem("Remove attribute from selected");
 
             removeAttribute.addActionListener(new ActionListener()
             {
@@ -1376,7 +1376,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             });
             popup.add(removeAttribute);
 
-            JMenuItem removeAttributes = new JMenuItem("Remove all attributes");
+            JMenuItem removeAttributes = new JMenuItem("Remove all attributes from selected");
 
             removeAttributes.addActionListener(new ActionListener()
             {
@@ -1406,7 +1406,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             popup.add(removeAttributes);
             popup.addSeparator();
 
-            JMenuItem editAttributes = new JMenuItem("Edit attributes");
+            JMenuItem editAttributes = new JMenuItem("Edit attributes from selected");
             editAttributes.addActionListener(e1 ->
             {
                 try
