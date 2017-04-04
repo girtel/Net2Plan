@@ -283,8 +283,9 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
 
         final List<Pair<Demand, Link>> frRowsInTheTable = getVisibleElementsInTable();
 
-        if (selection.getElementType() != NetworkElementType.FORWARDING_RULE)
-            throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+            if (selection.getElementType() != NetworkElementType.FORWARDING_RULE)
+                throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
         /* Add the popup menu option of the filters */
         final List<Pair<Demand, Link>> selectedFRs = selection.getForwardingRules();

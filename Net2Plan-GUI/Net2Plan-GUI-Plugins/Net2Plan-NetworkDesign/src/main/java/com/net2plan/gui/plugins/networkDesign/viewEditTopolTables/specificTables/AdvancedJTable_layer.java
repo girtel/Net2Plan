@@ -206,9 +206,14 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
     @Override
     public void doPopup(MouseEvent e, int row, final ElementSelection selection)
     {
-        JPopupMenu popup = new JPopupMenu();
+        assert selection != null;
 
-        if (selection.getElementType() != NetworkElementType.LAYER) throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+        final JPopupMenu popup = new JPopupMenu();
+
+        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+            if (selection.getElementType() != NetworkElementType.LAYER)
+                throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+
         final List<NetworkLayer> layers = (List<NetworkLayer>) selection.getNetworkElements();
 
         if (callback.getVisualizationState().isNetPlanEditable())
