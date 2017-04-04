@@ -76,6 +76,9 @@ public class FigureForwardingRuleSequencePanel extends FigureSequencePanel
         final Graphics2D g2d = (Graphics2D) graphics;
         g2d.setColor(Color.black);
 
+        textRow = 0;
+        iconRow = 0;
+
     	/* Initial messages */
         g2d.setFont(headerFont);
         final int fontHeightTitle = g2d.getFontMetrics().getHeight();
@@ -108,8 +111,6 @@ public class FigureForwardingRuleSequencePanel extends FigureSequencePanel
 
         // Drawing node
         g2d.setFont(plainFont);
-        fontMetrics = g2d.getFontMetrics();
-        regularInterlineSpacePixels = fontMetrics.getHeight();
 
         iconRow = textRow;
         iconRow = addLineJump(iconRow);
