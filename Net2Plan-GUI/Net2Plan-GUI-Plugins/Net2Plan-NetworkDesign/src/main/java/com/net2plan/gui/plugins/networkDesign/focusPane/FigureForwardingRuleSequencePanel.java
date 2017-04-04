@@ -135,11 +135,11 @@ public class FigureForwardingRuleSequencePanel extends FigureSequencePanel
         final DrawNode ingressNode = new DrawNode(demandIngress, demand.getLayer(), maxIconSize);
         final DrawNode egressNode = new DrawNode(demandEgress, demand.getLayer(), maxIconSize);
 
-        textRow = addIconJump(textRow);
+        textRow = addIconJump(iconRow);
+        textRow = addLineJump(textRow);
         textRow = addLineJump(textRow);
 
         iconRow = addLineJump(textRow);
-        iconRow = addLineJump(iconRow);
 
         int topCoordinateLineNodes = maxIconSize + (generalMessage.size() * regularInterlineSpacePixels) + (maxNumberOfTagsPerNodeNorResource * regularInterlineSpacePixels) * iconRow;
         Point initialDnTopLeftPosition = new Point(maxIconSize, topCoordinateLineNodes);
@@ -172,11 +172,11 @@ public class FigureForwardingRuleSequencePanel extends FigureSequencePanel
         final DrawNode originNode = new DrawNode(linkOrigin, link.getLayer(), maxIconSize);
         final DrawNode destinationNode = new DrawNode(linkDestination, link.getLayer(), maxIconSize);
 
-        textRow = addIconJump(textRow);
+        textRow = addIconJump(iconRow);
+        textRow = addLineJump(textRow);
         textRow = addLineJump(textRow);
 
         iconRow = addLineJump(textRow);
-        iconRow = addLineJump(iconRow);
 
         int topCoordinateLineNodes = maxIconSize + (generalMessage.size() * regularInterlineSpacePixels) + (maxNumberOfTagsPerNodeNorResource * regularInterlineSpacePixels) * iconRow;
         Point initialDnTopLeftPosition = new Point(maxIconSize, topCoordinateLineNodes);
