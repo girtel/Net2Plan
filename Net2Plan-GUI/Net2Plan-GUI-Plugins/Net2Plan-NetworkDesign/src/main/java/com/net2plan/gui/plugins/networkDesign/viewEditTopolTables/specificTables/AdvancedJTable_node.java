@@ -527,6 +527,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                 popup.add(hideAllNodesFilteredOut);
 
                 List<JComponent> extraOptions = getExtraOptions(selection);
+                if (!extraOptions.isEmpty()) popup.addSeparator();
                 for (JComponent item : extraOptions) popup.add(item);
 
                 addPopupMenuAttributeOptions(e, row, selection, popup);

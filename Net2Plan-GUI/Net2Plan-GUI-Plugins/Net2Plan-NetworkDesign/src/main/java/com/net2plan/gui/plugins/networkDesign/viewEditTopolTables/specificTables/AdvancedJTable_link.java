@@ -555,7 +555,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             {
                 if (!selectedLinks.isEmpty())
                 {
-                    JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
+                    JMenuItem removeItem = new JMenuItem("Remove selected " + networkElementType + "s");
                     removeItem.addActionListener(new ActionListener()
                     {
                         @Override
@@ -863,7 +863,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             {
                 if (!options.isEmpty()) options.add(new JPopupMenu.Separator());
 
-                JMenuItem caFixValue = new JMenuItem("Set capacity");
+                JMenuItem caFixValue = new JMenuItem("Set capacity to selected");
                 caFixValue.addActionListener(e ->
                 {
                     double u_e;
@@ -898,7 +898,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
                 options.add(caFixValue);
 
-                JMenuItem caFixValueUtilization = new JMenuItem("Set capacity to match a given utilization");
+                JMenuItem caFixValueUtilization = new JMenuItem("Set capacity from selected to match a given utilization");
                 caFixValueUtilization.addActionListener(e ->
                 {
                     double utilization;
@@ -933,7 +933,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
                 options.add(caFixValueUtilization);
 
-                JMenuItem setLength = new JMenuItem("Set link length");
+                JMenuItem setLength = new JMenuItem("Set selected link length");
                 setLength.addActionListener(e ->
                 {
                     double l_e;
@@ -967,7 +967,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 });
                 options.add(setLength);
 
-                JMenuItem lengthToEuclidean = new JMenuItem("Set link length to node-pair Euclidean distance");
+                JMenuItem lengthToEuclidean = new JMenuItem("Set selected link length to node-pair Euclidean distance");
                 lengthToEuclidean.addActionListener(e ->
                 {
                     for (Link link : selectedLinks)
@@ -982,7 +982,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 });
                 options.add(lengthToEuclidean);
 
-                JMenuItem lengthToHaversine = new JMenuItem("Set link length to node-pair Haversine distance (longitude-latitude) in km");
+                JMenuItem lengthToHaversine = new JMenuItem("Set selected link length to node-pair Haversine distance (longitude-latitude) in km");
                 lengthToHaversine.addActionListener(e ->
                 {
                     for (Link link : selectedLinks)
@@ -997,7 +997,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 });
                 options.add(lengthToHaversine);
 
-                JMenuItem scaleLength = new JMenuItem("Scale link length");
+                JMenuItem scaleLength = new JMenuItem("Scale selected link length");
                 scaleLength.addActionListener(e ->
                 {
                     double scaleFactor;
@@ -1033,35 +1033,10 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                     final Set<Link> coupledLinks = rowVisibleLinks.stream().filter(e -> e.isCoupled()).collect(Collectors.toSet());
                     if (!coupledLinks.isEmpty())
                     {
-                        JMenuItem decoupleAllLinksItem = new JMenuItem("Decouple all table links");
-                        decoupleAllLinksItem.addActionListener(new ActionListener()
+                        if (coupledLinks.size() < rowVisibleLinks.size())
                         {
-                            @Override
-                            public void actionPerformed(ActionEvent e)
-                            {
-                                for (Link link : coupledLinks)
-                                    if (link.getCoupledDemand() == null)
-                                        link.getCoupledMulticastDemand().decouple();
-                                    else
-                                        link.getCoupledDemand().decouple();
-                                int numRows = model.getRowCount();
-                                for (int i = 0; i < numRows; i++) model.setValueAt("", i, COLUMN_COUPLEDTODEMAND);
-                                callback.getVisualizationState().resetPickedState();
-                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK, NetworkElementType.DEMAND));
-                                callback.addNetPlanChange();
-                            }
-                        });
-
-                        options.add(decoupleAllLinksItem);
-                    }
-
-                    if (coupledLinks.size() < rowVisibleLinks.size())
-                    {
-                        JMenuItem createLowerLayerDemandsFromLinksItem = new JMenuItem("Create lower layer unicast demands from uncoupled links");
-                        createLowerLayerDemandsFromLinksItem.addActionListener(new ActionListener()
-                        {
-                            @Override
-                            public void actionPerformed(ActionEvent e)
+                            JMenuItem createLowerLayerDemandsFromLinksItem = new JMenuItem("Create lower layer unicast demands from uncoupled links");
+                            createLowerLayerDemandsFromLinksItem.addActionListener(e ->
                             {
                                 final JComboBox layerSelector = new WiderJComboBox();
                                 for (NetworkLayer layer : netPlan.getNetworkLayers())
@@ -1102,10 +1077,10 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                                         ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating lower layer demands");
                                     }
                                 }
-                            }
-                        });
+                            });
 
-                        options.add(createLowerLayerDemandsFromLinksItem);
+                            options.add(createLowerLayerDemandsFromLinksItem);
+                        }
                     }
                 }
             }
@@ -1123,7 +1098,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         List<JComponent> options = new LinkedList<>();
         if (!selection.isEmpty())
         {
-            JMenuItem showLinks = new JMenuItem("Show");
+            JMenuItem showLinks = new JMenuItem("Show selected");
             showLinks.addActionListener(e ->
             {
                 for (Link link : links)
@@ -1135,7 +1110,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
             options.add(showLinks);
 
-            JMenuItem hideLinks = new JMenuItem("Hide");
+            JMenuItem hideLinks = new JMenuItem("Hide selected");
             hideLinks.addActionListener(e ->
             {
                 for (Link link : links)
