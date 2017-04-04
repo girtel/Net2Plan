@@ -16,13 +16,11 @@
 package com.net2plan.gui.plugins.networkDesign.interfaces;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.interfaces.networkDesign.NetPlan;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.swing.*;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
@@ -49,10 +47,8 @@ public class IVisualizationCallbackTest
     }
 
     @Test
-    public void setDesignTest()
+    public void getVisualizationState()
     {
-        final NetPlan netPlan = new NetPlan();
-        callback.setCurrentNetPlanDoNotUpdateVisualization(netPlan);
-        assertEquals(netPlan, callback.getDesign());
+        assertNotNull(callback.getVisualizationState());
     }
 }

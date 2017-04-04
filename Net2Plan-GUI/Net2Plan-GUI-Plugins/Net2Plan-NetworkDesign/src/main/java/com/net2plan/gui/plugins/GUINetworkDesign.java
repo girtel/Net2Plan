@@ -127,7 +127,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         return whatIfAnalysisPane;
     }
 
-    @Override
     public void requestUndoAction()
     {
         if (inOnlineSimulationMode()) return;
@@ -139,7 +138,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         updateVisualizationAfterNewTopology();
     }
 
-    @Override
     public void requestRedoAction()
     {
         if (inOnlineSimulationMode()) return;
@@ -202,7 +200,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
 
-        setCurrentNetPlanDoNotUpdateVisualization(currentNetPlan);
+        setDesign(currentNetPlan);
         Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res = VisualizationState.generateCanvasDefaultVisualizationLayerInfo(getDesign());
         vs.setCanvasLayerVisibilityAndOrder(getDesign(), res.getFirst(), res.getSecond());
 
@@ -314,14 +312,20 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             }
         };
 
-        this.tableControlWindow.setLocationRelativeTo(this);
-        this.tableControlWindow.showWindow(false);
-
         // Building tab controller
         this.windowController = new WindowController(executionPane, onlineSimulationPane, whatIfAnalysisPane, reportPane);
 
         addAllKeyCombinationActions();
         updateVisualizationAfterNewTopology();
+    }
+
+    @Override
+    public void start()
+    {
+        super.start();
+
+        this.tableControlWindow.setLocationRelativeTo(this);
+        this.tableControlWindow.showWindow(false);
     }
 
     @Override
@@ -472,11 +476,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         else return null;
     }
 
-    @Override
-    public void setCurrentNetPlanDoNotUpdateVisualization(NetPlan netPlan)
+    public void setDesign(NetPlan netPlan)
     {
     	if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-        currentNetPlan = netPlan;
+        this.currentNetPlan = netPlan;
     }
 
     public void showTableControlWindow()
@@ -503,10 +506,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                         break;
                 }
                 onlineSimulationPane.getSimKernel().reset();
-                setCurrentNetPlanDoNotUpdateVisualization(onlineSimulationPane.getSimKernel().getCurrentNetPlan());
+                setDesign(onlineSimulationPane.getSimKernel().getCurrentNetPlan());
             } else
             {
-                setCurrentNetPlanDoNotUpdateVisualization(new NetPlan());
+                setDesign(new NetPlan());
                 //algorithmSelector.reset();
                 executionPane.reset();
             }
@@ -523,8 +526,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         undoRedoManager.addNetPlanChange();
     }
 
-
-    @Override
     public void resetPickedStateAndUpdateView()
     {
         vs.resetPickedState();
@@ -758,6 +759,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         whatIfAnalysisPane.setActionMap(this.getActionMap());
     }
 
+    @Nonnull
     public VisualizationState getVisualizationState()
     {
         return vs;
@@ -780,7 +782,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         focusPanel.updateView();
     }
 
-    @Override
     public void putTransientColorInElementTopologyCanvas(Collection<? extends NetworkElement> linksAndNodes, Color color)
     {
         for (NetworkElement e : linksAndNodes)
@@ -863,7 +864,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         viewEditTopTables.updateView();
     }
 
-    @Override
     public void moveNodeTo(final GUINode guiNode, final Point2D toPoint)
     {
         if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("NetPlan is not editable");
@@ -906,7 +906,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         canvas.refresh();
     }
 
-    @Override
     public void runCanvasOperation(ITopologyCanvas.CanvasOperation... canvasOperation)
     {
         // NOTE: The operations should executed in the same order as their are brought.

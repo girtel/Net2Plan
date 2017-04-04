@@ -170,7 +170,7 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
 
         if (reason instanceof EndSimulationException)
         {
-            callback.setCurrentNetPlanDoNotUpdateVisualization(simKernel.getCurrentNetPlan());
+            callback.setDesign(simKernel.getCurrentNetPlan());
             synchronized (this)
             {
                 this.lastWhatIfExecutionException = null;
