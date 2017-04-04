@@ -109,36 +109,22 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         super(title);
     }
 
-    public void addNetPlanChange()
+    @Override
+    public void start()
     {
-        undoRedoManager.addNetPlanChange();
+        // Default start
+        super.start();
+
+        // Additional commands
+        this.tableControlWindow.setLocationRelativeTo(this);
+        this.tableControlWindow.showWindow(false);
     }
 
-    public WhatIfAnalysisPane getWhatIfAnalysisPane()
+    @Override
+    public void stop()
     {
-        return whatIfAnalysisPane;
-    }
-
-    public void requestUndoAction()
-    {
-        if (inOnlineSimulationMode()) return;
-
-        final Triple<NetPlan, Map<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> back = undoRedoManager.getNavigationBackElement();
-        if (back == null) return;
-        this.currentNetPlan = back.getFirst();
-        this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, back.getSecond(), back.getThird());
-        updateVisualizationAfterNewTopology();
-    }
-
-    public void requestRedoAction()
-    {
-        if (inOnlineSimulationMode()) return;
-
-        final Triple<NetPlan, Map<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> forward = undoRedoManager.getNavigationForwardElement();
-        if (forward == null) return;
-        this.currentNetPlan = forward.getFirst();
-         this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, forward.getSecond(), forward.getThird());
-        updateVisualizationAfterNewTopology();
+        tableControlWindow.setVisible(false);
+        windowController.hideAllWindows();
     }
 
     @Override
@@ -311,24 +297,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         updateVisualizationAfterNewTopology();
     }
 
-    @Override
-    public void start()
-    {
-        // Default start
-        super.start();
-
-        // Additional commands
-        this.tableControlWindow.setLocationRelativeTo(this);
-        this.tableControlWindow.showWindow(false);
-    }
-
-    @Override
-    public void stop()
-    {
-        tableControlWindow.setVisible(false);
-        windowController.hideAllWindows();
-    }
-
     private JPanel configureLeftBottomPanel()
     {
         this.focusPanel = new FocusPane(this);
@@ -470,10 +438,48 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         else return null;
     }
 
-    public void setDesign(NetPlan netPlan)
+    public WhatIfAnalysisPane getWhatIfAnalysisPane()
+    {
+        return whatIfAnalysisPane;
+    }
+
+    public void addNetPlanChange()
+    {
+        undoRedoManager.addNetPlanChange();
+    }
+
+    public void requestUndoAction()
+    {
+        if (inOnlineSimulationMode()) return;
+
+        final Triple<NetPlan, Map<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> back = undoRedoManager.getNavigationBackElement();
+        if (back == null) return;
+        this.currentNetPlan = back.getFirst();
+        this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, back.getSecond(), back.getThird());
+        updateVisualizationAfterNewTopology();
+    }
+
+    public void requestRedoAction()
+    {
+        if (inOnlineSimulationMode()) return;
+
+        final Triple<NetPlan, Map<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> forward = undoRedoManager.getNavigationForwardElement();
+        if (forward == null) return;
+        this.currentNetPlan = forward.getFirst();
+        this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, forward.getSecond(), forward.getThird());
+        updateVisualizationAfterNewTopology();
+    }
+
+    public void setDesign(@Nonnull NetPlan netPlan)
     {
     	if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
         this.currentNetPlan = netPlan;
+    }
+
+    @Nonnull
+    public VisualizationState getVisualizationState()
+    {
+        return vs;
     }
 
     public void showTableControlWindow()
@@ -573,13 +579,12 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
      * @return {@code true} if the initial {@code NetPlan} object is stored. Otherwise, {@code false}.
      * @since 0.3.0
      */
+    @Override
     public boolean inOnlineSimulationMode()
     {
         if (onlineSimulationPane == null) return false;
         final SimState simState = onlineSimulationPane.getSimKernel().getSimCore().getSimulationState();
-        if (simState == SimState.PAUSED || simState == SimState.RUNNING || simState == SimState.STEP)
-            return true;
-        else return false;
+        return simState == SimState.PAUSED || simState == SimState.RUNNING || simState == SimState.STEP;
     }
 
     private void addAllKeyCombinationActions()
@@ -753,29 +758,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         whatIfAnalysisPane.setActionMap(this.getActionMap());
     }
 
-    @Nonnull
-    public VisualizationState getVisualizationState()
-    {
-        return vs;
-    }
-
-    @Override
-    public void updateVisualizationAfterPick()
-    {
-        if (vs.getPickedElementType() != null) // can be null if picked a resource type
-        {
-            if (vs.getPickedNetworkElement() != null)
-                selectNetPlanViewItem(vs.getPickedElementType(), vs.getPickedNetworkElement().getId());
-            else
-            {
-                final Pair<Demand, Link> fr = vs.getPickedForwardingRule();
-                selectNetPlanViewItem(vs.getPickedElementType(), Pair.of(fr.getFirst().getIndex(), fr.getSecond().getIndex()));
-            }
-        }
-        topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
-        focusPanel.updateView();
-    }
-
     public void putTransientColorInElementTopologyCanvas(Collection<? extends NetworkElement> linksAndNodes, Color color)
     {
         for (NetworkElement e : linksAndNodes)
@@ -798,6 +780,43 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         }
 
         resetPickedStateAndUpdateView();
+    }
+
+    public void runCanvasOperation(ITopologyCanvas.CanvasOperation... canvasOperation)
+    {
+        // NOTE: The operations should executed in the same order as their are brought.
+        for (ITopologyCanvas.CanvasOperation operation : canvasOperation)
+        {
+            switch (operation)
+            {
+                case ZOOM_ALL:
+                    topologyPanel.getCanvas().zoomAll();
+                    break;
+                case ZOOM_IN:
+                    topologyPanel.getCanvas().zoomIn();
+                    break;
+                case ZOOM_OUT:
+                    topologyPanel.getCanvas().zoomOut();
+                    break;
+            }
+        }
+    }
+
+    @Override
+    public void updateVisualizationAfterPick()
+    {
+        if (vs.getPickedElementType() != null) // can be null if picked a resource type
+        {
+            if (vs.getPickedNetworkElement() != null)
+                selectNetPlanViewItem(vs.getPickedElementType(), vs.getPickedNetworkElement().getId());
+            else
+            {
+                final Pair<Demand, Link> fr = vs.getPickedForwardingRule();
+                selectNetPlanViewItem(vs.getPickedElementType(), Pair.of(fr.getFirst().getIndex(), fr.getSecond().getIndex()));
+            }
+        }
+        topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
+        focusPanel.updateView();
     }
 
     @Override
@@ -856,26 +875,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     public void updateVisualizationJustTables()
     {
         viewEditTopTables.updateView();
-    }
-
-    public void runCanvasOperation(ITopologyCanvas.CanvasOperation... canvasOperation)
-    {
-        // NOTE: The operations should executed in the same order as their are brought.
-        for (ITopologyCanvas.CanvasOperation operation : canvasOperation)
-        {
-            switch (operation)
-            {
-                case ZOOM_ALL:
-                    topologyPanel.getCanvas().zoomAll();
-                    break;
-                case ZOOM_IN:
-                    topologyPanel.getCanvas().zoomIn();
-                    break;
-                case ZOOM_OUT:
-                    topologyPanel.getCanvas().zoomOut();
-                    break;
-            }
-        }
     }
 
     private class WindowController

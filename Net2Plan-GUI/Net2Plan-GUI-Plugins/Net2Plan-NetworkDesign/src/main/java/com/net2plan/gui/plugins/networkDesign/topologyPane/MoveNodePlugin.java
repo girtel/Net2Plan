@@ -23,6 +23,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
+import java.util.List;
 
 /**
  * Plugin that enables to move nodes.
@@ -76,6 +77,7 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
     public void mouseDragged(MouseEvent e) {
         if (startVertex != null) {
             final Point p = e.getPoint();
+
             this.moveNodeTo(startVertex, p);
 
             e.consume();
@@ -124,7 +126,7 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
         callback.updateVisualizationJustTables();
 
         // Updating GUINodes position having in mind the selected layer.
-        final java.util.List<GUINode> guiNodes = vs.getCanvasVerticallyStackedGUINodes(node);
+        final List<GUINode> guiNodes = vs.getCanvasVerticallyStackedGUINodes(node);
         final int selectedLayerVisualizationOrder = vs.getCanvasVisualizationOrderRemovingNonVisible(guiNode.getLayer());
 
         for (GUINode stackedGUINode : guiNodes)
