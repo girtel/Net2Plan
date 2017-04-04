@@ -427,7 +427,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
             {
                 if (!selectedResources.isEmpty())
                 {
-                    JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
+                    JMenuItem removeItem = new JMenuItem("Remove selected " + networkElementType + "s");
                     removeItem.addActionListener(new ActionListener()
                     {
                         @Override
@@ -591,7 +591,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         final List<Resource> rowsInTheTable = getVisibleElementsInTable();
         final List<Resource> selectedResources = (List<Resource>) selection.getNetworkElements();
 
-        JMenuItem capacityInBaseResources = new JMenuItem("Set capacity to base resources");
+        JMenuItem capacityInBaseResources = new JMenuItem("Set capacity to base resources from selected");
         capacityInBaseResources.addActionListener(e ->
         {
             try
@@ -667,7 +667,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         });
         options.add(capacityInBaseResources);
 
-        JMenuItem setCapacity = new JMenuItem("Set capacity (base resources occupation unchanged)");
+        JMenuItem setCapacity = new JMenuItem("Set capacity to selected (base resources occupation unchanged)");
         setCapacity.addActionListener(e ->
         {
             double cap;
@@ -702,7 +702,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         });
         options.add(setCapacity);
 
-        JMenuItem setTraversingTime = new JMenuItem("Set processing time");
+        JMenuItem setTraversingTime = new JMenuItem("Set processing time to selected");
         setTraversingTime.addActionListener(e ->
         {
             double procTime;

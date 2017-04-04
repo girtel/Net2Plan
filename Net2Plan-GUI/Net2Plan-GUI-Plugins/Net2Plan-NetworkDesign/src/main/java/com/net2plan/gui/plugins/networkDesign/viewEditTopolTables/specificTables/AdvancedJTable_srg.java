@@ -351,7 +351,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
             {
                 if (!selectedSRGs.isEmpty())
                 {
-                    JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
+                    JMenuItem removeItem = new JMenuItem("Remove selected " + networkElementType + "s");
                     removeItem.addActionListener(new ActionListener()
                     {
                         @Override
@@ -581,7 +581,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         {
             if (!options.isEmpty()) options.add(new JPopupMenu.Separator());
 
-            JMenuItem mttfValue = new JMenuItem("Set MTTF");
+            JMenuItem mttfValue = new JMenuItem("Set MTTF to selected");
             mttfValue.addActionListener(e ->
             {
                 double mttf;
@@ -619,7 +619,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
 
             options.add(mttfValue);
 
-            JMenuItem mttrValue = new JMenuItem("Set MTTR");
+            JMenuItem mttrValue = new JMenuItem("Set MTTR to selected");
             mttrValue.addActionListener(e ->
             {
                 double mttr;
