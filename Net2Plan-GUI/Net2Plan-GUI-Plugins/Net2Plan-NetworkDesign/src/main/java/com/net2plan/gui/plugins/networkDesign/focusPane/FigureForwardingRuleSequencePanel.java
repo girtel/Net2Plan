@@ -111,6 +111,8 @@ public class FigureForwardingRuleSequencePanel extends FigureSequencePanel
 
         // Drawing node
         g2d.setFont(plainFont);
+        fontMetrics = g2d.getFontMetrics();
+        regularInterlineSpacePixels = fontMetrics.getHeight();
 
         iconRow = textRow;
         iconRow = addLineJump(iconRow);
