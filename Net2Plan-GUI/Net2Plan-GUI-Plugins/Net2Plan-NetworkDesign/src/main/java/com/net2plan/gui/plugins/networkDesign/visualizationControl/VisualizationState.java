@@ -106,7 +106,7 @@ public class VisualizationState
         return tableRowFilter;
     }
 
-    public void updateTableRowFilter(ITableRowFilter tableRowFilterToApply)
+    public void updateTableRowFilter(ITableRowFilter tableRowFilterToApply , boolean applyAndTrueApplyOrFalse)
     {
         if (tableRowFilterToApply == null)
         {
@@ -118,7 +118,10 @@ public class VisualizationState
             this.tableRowFilter = tableRowFilterToApply;
             return;
         }
-        this.tableRowFilter.recomputeApplyingShowIf_ThisAndThat(tableRowFilterToApply);
+        if (applyAndTrueApplyOrFalse)
+        	this.tableRowFilter.recomputeApplyingShowIf_ThisAndThat(tableRowFilterToApply);
+        else
+        	this.tableRowFilter.recomputeApplyingShowIf_ThisOrThat(tableRowFilterToApply);
     }
 
     public boolean isVisibleInCanvas(GUINode gn)

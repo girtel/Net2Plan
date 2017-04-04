@@ -28,6 +28,7 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.CollectionUtils;
@@ -429,16 +430,30 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
             filterKeepElementsAffectedThisLayer.addActionListener(e1 ->
             {
-                if (selectedNodes.size() > 1) throw new RuntimeException();
-                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedNodes.get(0), callback.getDesign().getNetworkLayerDefault(), true);
-                callback.getVisualizationState().updateTableRowFilter(filter);
+            	if (selectedNodes.isEmpty()) return;
+            	TBFToFromCarriedTraffic filter = null;
+            	for (Node node : selectedNodes)
+            	{
+            		if (filter == null)
+            			filter = new TBFToFromCarriedTraffic(node, callback.getDesign().getNetworkLayerDefault(), true);
+            		else
+            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(node, callback.getDesign().getNetworkLayerDefault(), true));
+            	}
+                callback.getVisualizationState().updateTableRowFilter(filter , true);
                 callback.updateVisualizationJustTables();
             });
             filterKeepElementsAffectedAllLayers.addActionListener(e1 ->
             {
-                if (selectedNodes.size() > 1) throw new RuntimeException();
-                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedNodes.get(0), callback.getDesign().getNetworkLayerDefault(), false);
-                callback.getVisualizationState().updateTableRowFilter(filter);
+            	if (selectedNodes.isEmpty()) return;
+            	TBFToFromCarriedTraffic filter = null;
+            	for (Node node : selectedNodes)
+            	{
+            		if (filter == null)
+            			filter = new TBFToFromCarriedTraffic(node, callback.getDesign().getNetworkLayerDefault(), false);
+            		else
+            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(node, callback.getDesign().getNetworkLayerDefault(), false));
+            	}
+                callback.getVisualizationState().updateTableRowFilter(filter , true);
                 callback.updateVisualizationJustTables();
             });
         }

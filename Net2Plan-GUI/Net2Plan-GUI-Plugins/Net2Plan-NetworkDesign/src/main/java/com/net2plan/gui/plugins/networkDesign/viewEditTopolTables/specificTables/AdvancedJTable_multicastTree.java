@@ -350,16 +350,30 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
             if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
             filterKeepElementsAffectedThisLayer.addActionListener(e1 ->
             {
-                if (selectedTrees.size() > 1) throw new RuntimeException();
-                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedTrees.get(0), true);
-                callback.getVisualizationState().updateTableRowFilter(filter);
+            	if (selectedTrees.isEmpty()) return;
+            	TBFToFromCarriedTraffic filter = null;
+            	for (MulticastTree tree : selectedTrees)
+            	{
+            		if (filter == null)
+            			filter = new TBFToFromCarriedTraffic(tree, true);
+            		else
+            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(tree, true));
+            	}
+                callback.getVisualizationState().updateTableRowFilter(filter , true);
                 callback.updateVisualizationJustTables();
             });
             filterKeepElementsAffectedAllLayers.addActionListener(e1 ->
             {
-                if (selectedTrees.size() > 1) throw new RuntimeException();
-                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedTrees.get(0), false);
-                callback.getVisualizationState().updateTableRowFilter(filter);
+            	if (selectedTrees.isEmpty()) return;
+            	TBFToFromCarriedTraffic filter = null;
+            	for (MulticastTree tree : selectedTrees)
+            	{
+            		if (filter == null)
+            			filter = new TBFToFromCarriedTraffic(tree, false);
+            		else
+            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(tree, false));
+            	}
+                callback.getVisualizationState().updateTableRowFilter(filter , true);
                 callback.updateVisualizationJustTables();
             });
         }

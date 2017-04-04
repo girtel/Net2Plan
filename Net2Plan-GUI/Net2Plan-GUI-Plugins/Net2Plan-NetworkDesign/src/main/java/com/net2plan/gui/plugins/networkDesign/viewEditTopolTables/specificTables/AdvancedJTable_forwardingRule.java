@@ -296,20 +296,42 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
             final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this forwarding rule traffic");
             submenuFilters.add(filterKeepElementsAffectedThisLayer);
             if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
-            filterKeepElementsAffectedThisLayer.addActionListener(e1 ->
+            filterKeepElementsAffectedThisLayer.addActionListener(new ActionListener() 
             {
-                if (selectedFRs.size() > 1) throw new RuntimeException();
-                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedFRs.get(0), true);
-                callback.getVisualizationState().updateTableRowFilter(filter);
-                callback.updateVisualizationJustTables();
-            });
-            filterKeepElementsAffectedAllLayers.addActionListener(e1 ->
+				@Override
+				public void actionPerformed(ActionEvent e) 
+				{
+	            	if (selectedFRs.isEmpty()) return;
+	            	TBFToFromCarriedTraffic filter = null;
+	            	for (Pair<Demand,Link> fr : selectedFRs)
+	            	{
+	            		if (filter == null)
+	            			filter = new TBFToFromCarriedTraffic(fr, true);
+	            		else
+	            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(fr, true));
+	            	}
+					callback.getVisualizationState().updateTableRowFilter(filter , true);
+					callback.updateVisualizationJustTables();
+				}
+			});
+            filterKeepElementsAffectedAllLayers.addActionListener(new ActionListener() 
             {
-                if (selectedFRs.size() > 1) throw new RuntimeException();
-                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedFRs.get(0), false);
-                callback.getVisualizationState().updateTableRowFilter(filter);
-                callback.updateVisualizationJustTables();
-            });
+				@Override
+				public void actionPerformed(ActionEvent e) 
+				{
+	            	if (selectedFRs.isEmpty()) return;
+	            	TBFToFromCarriedTraffic filter = null;
+	            	for (Pair<Demand,Link> fr : selectedFRs)
+	            	{
+	            		if (filter == null)
+	            			filter = new TBFToFromCarriedTraffic(fr, false);
+	            		else
+	            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(fr, false));
+	            	}
+					callback.getVisualizationState().updateTableRowFilter(filter , true);
+					callback.updateVisualizationJustTables();
+				}
+			});
         }
         popup.add(submenuFilters);
         popup.addSeparator();
