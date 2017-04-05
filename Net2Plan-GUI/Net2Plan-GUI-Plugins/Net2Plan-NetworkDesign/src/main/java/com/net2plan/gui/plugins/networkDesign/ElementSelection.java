@@ -99,6 +99,7 @@ public class ElementSelection
         this.forwardingRuleList = new ArrayList<>(forwardingRuleList);
     }
 
+<<<<<<< HEAD
     
     
     public boolean addElement(final NetworkElement element)
@@ -156,6 +157,8 @@ public class ElementSelection
         return true;
     }
 
+=======
+>>>>>>> 4a8b9356b49f6f2fb4ed057f3de1e66cbd184fc9
     public boolean isEmpty()
     {
         return selectionType == SelectionType.EMPTY || (networkElementList.isEmpty() && forwardingRuleList.isEmpty());

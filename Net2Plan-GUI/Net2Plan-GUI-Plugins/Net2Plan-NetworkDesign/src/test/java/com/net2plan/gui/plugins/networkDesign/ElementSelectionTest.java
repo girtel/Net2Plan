@@ -17,12 +17,10 @@ package com.net2plan.gui.plugins.networkDesign;
 
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.utils.Pair;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -64,33 +62,5 @@ public class ElementSelectionTest
         assertEquals(ElementSelection.SelectionType.EMPTY, elementSelection.getSelectionType());
         assertTrue(elementSelection.getNetworkElements().isEmpty());
         assertTrue(elementSelection.getForwardingRules().isEmpty());
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void addElementToEmptySelection()
-    {
-        elementSelection = new ElementSelection();
-        elementSelection.addElement(netPlan.getNodeByName("Node 1"));
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void addElementsToEmptySelection()
-    {
-        elementSelection = new ElementSelection();
-        elementSelection.addElements(Arrays.asList(netPlan.getNodeByName("Node 1"), netPlan.getNodeByName("Node 2")));
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void addForwardingRuleToEmptySelection()
-    {
-        elementSelection = new ElementSelection();
-        elementSelection.addForwardingRule(Pair.of(netPlan.getDemand(0), netPlan.getLink(0)));
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void addForwardingRulesToEmptySelection()
-    {
-        elementSelection = new ElementSelection();
-        elementSelection.addForwardingRules(Arrays.asList(Pair.of(netPlan.getDemand(0), netPlan.getLink(0)), Pair.of(netPlan.getDemand(0), netPlan.getLink(0))));
     }
 }
