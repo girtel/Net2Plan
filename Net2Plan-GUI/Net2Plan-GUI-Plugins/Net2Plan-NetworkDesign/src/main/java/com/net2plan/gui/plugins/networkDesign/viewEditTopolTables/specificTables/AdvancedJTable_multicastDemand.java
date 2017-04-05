@@ -400,7 +400,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                 {
                     if (networkElementType != NetworkElementType.LAYER || callback.getDesign().getNumberOfLayers() != 1)
                     {
-                        JMenuItem removeItem = new JMenuItem("Remove selected " + networkElementType + "s");
+                        JMenuItem removeItem = new JMenuItem("Remove selected multicast demands");
 
                         removeItem.addActionListener(new ActionListener()
                         {
@@ -572,7 +572,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
         final List<MulticastDemand> selectedDemands = (List<MulticastDemand>) selection.getNetworkElements();
 
-        JMenuItem offeredTraffic = new JMenuItem("Set offered traffic to selected");
+        JMenuItem offeredTraffic = new JMenuItem("Set selected multicast demands offered traffic");
         offeredTraffic.addActionListener(e ->
         {
             double h_d;
@@ -616,7 +616,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
                 if (coupledDemands.size() < visibleRows.size())
                 {
-                    createUpperLayerLinksFromDemandsItem = new JMenuItem("Create and couple upper layer links from uncoupled demands");
+                    createUpperLayerLinksFromDemandsItem = new JMenuItem("Create and couple upper layer links from uncoupled multicast demands in selection");
                     createUpperLayerLinksFromDemandsItem.addActionListener(e ->
                     {
                         List<Long> layerIds = netPlan.getNetworkLayerIds();
@@ -647,7 +647,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                             {
                                 long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
                                 NetworkLayer layer = netPlan.getNetworkLayerFromId(layerId);
-                                for (MulticastDemand demand : visibleRows)
+                                for (MulticastDemand demand : selectedDemands)
                                     if (!demand.isCoupled())
                                         demand.coupleToNewLinksCreated(layer);
                                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();

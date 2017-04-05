@@ -402,7 +402,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
             {
                 if (!selectedRoutes.isEmpty())
                 {
-                    JMenuItem removeItem = new JMenuItem("Remove selected " + networkElementType + "s");
+                    JMenuItem removeItem = new JMenuItem("Remove selected routes");
 
                     removeItem.addActionListener(new ActionListener()
                     {

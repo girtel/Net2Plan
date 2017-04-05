@@ -441,7 +441,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
             {
                 if (!selectedResources.isEmpty())
                 {
-                    JMenuItem removeItem = new JMenuItem("Remove selected " + networkElementType + "s");
+                    JMenuItem removeItem = new JMenuItem("Remove selected resources");
                     removeItem.addActionListener(new ActionListener()
                     {
                         @Override
@@ -602,10 +602,9 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         assert selection != null;
 
         List<JComponent> options = new LinkedList<>();
-        final List<Resource> rowsInTheTable = getVisibleElementsInTable();
         final List<Resource> selectedResources = (List<Resource>) selection.getNetworkElements();
 
-        JMenuItem capacityInBaseResources = new JMenuItem("Set capacity to base resources from selected");
+        JMenuItem capacityInBaseResources = new JMenuItem("Set capacity to base resources from selection");
         capacityInBaseResources.addActionListener(e ->
         {
             try
@@ -681,7 +680,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         });
         options.add(capacityInBaseResources);
 
-        JMenuItem setCapacity = new JMenuItem("Set capacity to selected (base resources occupation unchanged)");
+        JMenuItem setCapacity = new JMenuItem("Set capacity to selected resources (base resources occupation unchanged)");
         setCapacity.addActionListener(e ->
         {
             double cap;
@@ -716,7 +715,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         });
         options.add(setCapacity);
 
-        JMenuItem setTraversingTime = new JMenuItem("Set processing time to selected");
+        JMenuItem setTraversingTime = new JMenuItem("Set selected resources processing time");
         setTraversingTime.addActionListener(e ->
         {
             double procTime;

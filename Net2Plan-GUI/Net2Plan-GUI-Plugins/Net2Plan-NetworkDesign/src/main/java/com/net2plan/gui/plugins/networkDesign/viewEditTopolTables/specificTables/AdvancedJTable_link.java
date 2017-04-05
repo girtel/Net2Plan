@@ -42,7 +42,9 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -569,7 +571,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             {
                 if (!selectedLinks.isEmpty())
                 {
-                    JMenuItem removeItem = new JMenuItem("Remove selected " + networkElementType + "s");
+                    JMenuItem removeItem = new JMenuItem("Remove selected links");
                     removeItem.addActionListener(new ActionListener()
                     {
                         @Override
@@ -720,7 +722,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         {
             if (netPlan.isMultilayer())
             {
-                JMenuItem decoupleLinkItem = new JMenuItem("Decouple coupled selected links");
+                JMenuItem decoupleLinkItem = new JMenuItem("Decouple coupled links from selection");
                 decoupleLinkItem.addActionListener(e ->
                 {
                     for (Link link1 : selectedLinks)
@@ -734,7 +736,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 });
                 options.add(decoupleLinkItem);
 
-                JMenuItem createLowerLayerDemandFromLinkItem = new JMenuItem("Create lower layer coupled demand from uncoupled selected links");
+                JMenuItem createLowerLayerDemandFromLinkItem = new JMenuItem("Create lower layer coupled demand from uncoupled links in selection");
                 createLowerLayerDemandFromLinkItem.addActionListener(e ->
                 {
                     Collection<Long> layerIds = netPlan.getNetworkLayerIds();
@@ -779,6 +781,59 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 });
 
                 options.add(createLowerLayerDemandFromLinkItem);
+
+                final Set<Link> coupledLinks = rowVisibleLinks.stream().filter(Link::isCoupled).collect(Collectors.toSet());
+                if (!coupledLinks.isEmpty())
+                {
+                    if (coupledLinks.size() < rowVisibleLinks.size())
+                    {
+                        JMenuItem createLowerLayerDemandsFromLinksItem = new JMenuItem("Create lower layer unicast demands from uncoupled links in selection");
+                        createLowerLayerDemandsFromLinksItem.addActionListener(e ->
+                        {
+                            final JComboBox layerSelector = new WiderJComboBox();
+                            for (NetworkLayer layer : netPlan.getNetworkLayers())
+                            {
+                                if (layer.getId() == netPlan.getNetworkLayerDefault().getId()) continue;
+
+                                final String layerName = layer.getName();
+                                String layerLabel = "Layer " + layer.getId();
+                                if (!layerName.isEmpty()) layerLabel += " (" + layerName + ")";
+
+                                layerSelector.addItem(StringLabeller.of(layer.getId(), layerLabel));
+                            }
+
+                            layerSelector.setSelectedIndex(0);
+
+                            JPanel pane = new JPanel();
+                            pane.add(new JLabel("Select layer: "));
+                            pane.add(layerSelector);
+
+                            while (true)
+                            {
+                                int result = JOptionPane.showConfirmDialog(null, pane, "Please select the lower layer to create demands", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                                if (result != JOptionPane.OK_OPTION) return;
+
+                                try
+                                {
+                                    long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
+                                    NetworkLayer layer = netPlan.getNetworkLayerFromId(layerId);
+                                    for (Link link : selectedLinks)
+                                        if (!link.isCoupled())
+                                            link.coupleToNewDemandCreated(layer);
+                                    callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK, NetworkElementType.DEMAND));
+                                    callback.addNetPlanChange();
+                                    break;
+                                } catch (Throwable ex)
+                                {
+                                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating lower layer demands");
+                                }
+                            }
+                        });
+
+                        options.add(createLowerLayerDemandsFromLinksItem);
+                    }
+                }
 
                 if (selectedLinks.size() == 1)
                 {
@@ -877,7 +932,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             {
                 if (!options.isEmpty()) options.add(new JPopupMenu.Separator());
 
-                JMenuItem caFixValue = new JMenuItem("Set capacity to selected");
+                JMenuItem caFixValue = new JMenuItem("Set selected links capacity");
                 caFixValue.addActionListener(e ->
                 {
                     double u_e;
@@ -912,7 +967,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
                 options.add(caFixValue);
 
-                JMenuItem caFixValueUtilization = new JMenuItem("Set capacity from selected to match a given utilization");
+                JMenuItem caFixValueUtilization = new JMenuItem("Set selected links capacity to match a given utilization");
                 caFixValueUtilization.addActionListener(e ->
                 {
                     double utilization;
@@ -947,7 +1002,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
                 options.add(caFixValueUtilization);
 
-                JMenuItem setLength = new JMenuItem("Set selected link length");
+                JMenuItem setLength = new JMenuItem("Set selected links length");
                 setLength.addActionListener(e ->
                 {
                     double l_e;
@@ -981,7 +1036,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 });
                 options.add(setLength);
 
-                JMenuItem lengthToEuclidean = new JMenuItem("Set selected link length to node-pair Euclidean distance");
+                JMenuItem lengthToEuclidean = new JMenuItem("Set selected links length to node-pair Euclidean distance");
                 lengthToEuclidean.addActionListener(e ->
                 {
                     for (Link link : selectedLinks)
@@ -996,7 +1051,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 });
                 options.add(lengthToEuclidean);
 
-                JMenuItem lengthToHaversine = new JMenuItem("Set selected link length to node-pair Haversine distance (longitude-latitude) in km");
+                JMenuItem lengthToHaversine = new JMenuItem("Set selected links length to node-pair Haversine distance (longitude-latitude) in km");
                 lengthToHaversine.addActionListener(e ->
                 {
                     for (Link link : selectedLinks)
@@ -1011,7 +1066,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 });
                 options.add(lengthToHaversine);
 
-                JMenuItem scaleLength = new JMenuItem("Scale selected link length");
+                JMenuItem scaleLength = new JMenuItem("Scale selected links length");
                 scaleLength.addActionListener(e ->
                 {
                     double scaleFactor;
@@ -1041,62 +1096,6 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 });
 
                 options.add(scaleLength);
-
-                if (netPlan.isMultilayer())
-                {
-                    final Set<Link> coupledLinks = rowVisibleLinks.stream().filter(e -> e.isCoupled()).collect(Collectors.toSet());
-                    if (!coupledLinks.isEmpty())
-                    {
-                        if (coupledLinks.size() < rowVisibleLinks.size())
-                        {
-                            JMenuItem createLowerLayerDemandsFromLinksItem = new JMenuItem("Create lower layer unicast demands from uncoupled links");
-                            createLowerLayerDemandsFromLinksItem.addActionListener(e ->
-                            {
-                                final JComboBox layerSelector = new WiderJComboBox();
-                                for (NetworkLayer layer : netPlan.getNetworkLayers())
-                                {
-                                    if (layer.getId() == netPlan.getNetworkLayerDefault().getId()) continue;
-
-                                    final String layerName = layer.getName();
-                                    String layerLabel = "Layer " + layer.getId();
-                                    if (!layerName.isEmpty()) layerLabel += " (" + layerName + ")";
-
-                                    layerSelector.addItem(StringLabeller.of(layer.getId(), layerLabel));
-                                }
-
-                                layerSelector.setSelectedIndex(0);
-
-                                JPanel pane = new JPanel();
-                                pane.add(new JLabel("Select layer: "));
-                                pane.add(layerSelector);
-
-                                while (true)
-                                {
-                                    int result = JOptionPane.showConfirmDialog(null, pane, "Please select the lower layer to create demands", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                                    if (result != JOptionPane.OK_OPTION) return;
-
-                                    try
-                                    {
-                                        long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
-                                        NetworkLayer layer = netPlan.getNetworkLayerFromId(layerId);
-                                        for (Link link : rowVisibleLinks)
-                                            if (!link.isCoupled())
-                                                link.coupleToNewDemandCreated(layer);
-                                        callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK, NetworkElementType.DEMAND));
-                                        callback.addNetPlanChange();
-                                        break;
-                                    } catch (Throwable ex)
-                                    {
-                                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error creating lower layer demands");
-                                    }
-                                }
-                            });
-
-                            options.add(createLowerLayerDemandsFromLinksItem);
-                        }
-                    }
-                }
             }
         }
         return options;
@@ -1112,7 +1111,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         List<JComponent> options = new LinkedList<>();
         if (!selection.isEmpty())
         {
-            JMenuItem showLinks = new JMenuItem("Show selected");
+            JMenuItem showLinks = new JMenuItem("Show selected links");
             showLinks.addActionListener(e ->
             {
                 for (Link link : links)
@@ -1124,7 +1123,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
             options.add(showLinks);
 
-            JMenuItem hideLinks = new JMenuItem("Hide selected");
+            JMenuItem hideLinks = new JMenuItem("Hide selected links");
             hideLinks.addActionListener(e ->
             {
                 for (Link link : links)

@@ -28,7 +28,6 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.CollectionUtils;
@@ -479,7 +478,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             {
                 if (!selectedNodes.isEmpty())
                 {
-                    JMenuItem removeItem = new JMenuItem("Remove selected " + networkElementType + "s");
+                    JMenuItem removeItem = new JMenuItem("Remove selected nodes");
                     removeItem.addActionListener(new ActionListener()
                     {
                         @Override
@@ -611,7 +610,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
         if (!selectedNodes.isEmpty())
         {
-            JMenuItem switchCoordinates = new JMenuItem("Switch node coordinates from (x,y) to (y,x) to selected");
+            JMenuItem switchCoordinates = new JMenuItem("Switch selected nodes' coordinates from (x,y) to (y,x)");
 
             switchCoordinates.addActionListener(e ->
             {
@@ -628,7 +627,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
             options.add(switchCoordinates);
 
-            JMenuItem nameFromAttribute = new JMenuItem("Set node name from attribute to selected");
+            JMenuItem nameFromAttribute = new JMenuItem("Set selected nodes' name from attribute");
             nameFromAttribute.addActionListener(e ->
             {
                 Set<String> attributeSet = new LinkedHashSet<String>();
@@ -683,7 +682,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             {
                 final List<Node> nodes = (List<Node>) selection.getNetworkElements();
 
-                JMenuItem showSelected = new JMenuItem("Show selected");
+                JMenuItem showSelected = new JMenuItem("Show selected nodes");
                 showSelected.addActionListener(e ->
                 {
                     for (Node node : nodes)
@@ -697,7 +696,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
                 options.add(showSelected);
 
-                JMenuItem hideSelected = new JMenuItem("Hide selected");
+                JMenuItem hideSelected = new JMenuItem("Hide selected nodes");
                 hideSelected.addActionListener(e ->
                 {
                     for (Node node : nodes)

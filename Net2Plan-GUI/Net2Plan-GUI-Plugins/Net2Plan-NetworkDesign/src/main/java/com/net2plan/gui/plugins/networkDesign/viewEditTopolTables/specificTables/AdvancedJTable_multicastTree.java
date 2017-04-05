@@ -395,7 +395,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
             {
                 if (!selectedTrees.isEmpty())
                 {
-                    JMenuItem removeItem = new JMenuItem("Remove selected " + networkElementType + "s");
+                    JMenuItem removeItem = new JMenuItem("Remove selected multicast trees");
                     removeItem.addActionListener(new ActionListener()
                     {
                         @Override

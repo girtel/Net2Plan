@@ -437,7 +437,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
             {
                 if (!selectedDemands.isEmpty())
                 {
-                    JMenuItem removeItem = new JMenuItem("Remove selected " + networkElementType + "s");
+                    JMenuItem removeItem = new JMenuItem("Remove selected demands");
 
                     removeItem.addActionListener(new ActionListener()
                     {
@@ -669,7 +669,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         final List<Demand> tableVisibleDemands = getVisibleElementsInTable();
         final List<Demand> selectedDemands = (List<Demand>) selection.getNetworkElements();
 
-        JMenuItem offeredTraffic = new JMenuItem("Set offered traffic to selected");
+        JMenuItem offeredTraffic = new JMenuItem("Set selected demands offered traffic");
         offeredTraffic.addActionListener(e ->
         {
             double h_d;
@@ -704,7 +704,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         });
         options.add(offeredTraffic);
 
-        JMenuItem scaleOfferedTraffic = new JMenuItem("Scale offered traffic to selected");
+        JMenuItem scaleOfferedTraffic = new JMenuItem("Scale selected demands offered traffic");
         scaleOfferedTraffic.addActionListener(e ->
         {
             double scalingFactor;
@@ -818,7 +818,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         {
             options.add(new JPopupMenu.Separator());
 
-            JMenuItem createUpperLayerLinkFromDemandItem = new JMenuItem("Create and couple upper layer links from uncoupled demands");
+            JMenuItem createUpperLayerLinkFromDemandItem = new JMenuItem("Create and couple upper layer links from uncoupled demands in selection");
             createUpperLayerLinkFromDemandItem.addActionListener(e ->
             {
                 Collection<Long> layerIds = netPlan.getNetworkLayerIds();
@@ -866,7 +866,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
             if (selectedDemands.size() == 1)
             {
-                JMenuItem coupleDemandToLink = new JMenuItem("Couple demand to upper layer link");
+                JMenuItem coupleDemandToLink = new JMenuItem("Couple selected demands to upper layer link");
                 coupleDemandToLink.addActionListener(e ->
                 {
                     Collection<Long> layerIds = netPlan.getNetworkLayerIds();
@@ -980,7 +980,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
                 if (coupledDemands.size() < tableVisibleDemands.size())
                 {
-                    createUpperLayerLinksFromDemandsItem = new JMenuItem("Create upper layer links from uncoupled demands");
+                    createUpperLayerLinksFromDemandsItem = new JMenuItem("Create upper layer links from uncoupled demands in selection");
                     createUpperLayerLinksFromDemandsItem.addActionListener(e ->
                     {
                         Collection<Long> layerIds = netPlan.getNetworkLayerIds();
@@ -1011,7 +1011,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                             {
                                 long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
                                 NetworkLayer layer = netPlan.getNetworkLayerFromId(layerId);
-                                for (Demand demand : tableVisibleDemands)
+                                for (Demand demand : selectedDemands)
                                     if (!demand.isCoupled())
                                         demand.coupleToNewLinkCreated(layer);
 

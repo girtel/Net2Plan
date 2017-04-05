@@ -1219,7 +1219,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             popup.addSeparator();
 
             // Tags controls
-            JMenuItem addTag = new JMenuItem("Add tag to selected");
+            JMenuItem addTag = new JMenuItem("Add tag to selection");
             addTag.addActionListener(e1 ->
             {
                 JTextField txt_name = new JTextField(20);
@@ -1253,7 +1253,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             });
             popup.add(addTag);
 
-            JMenuItem removeTag = new JMenuItem("Remove tag to selected");
+            JMenuItem removeTag = new JMenuItem("Remove tag from selection");
 
             removeTag.addActionListener(new ActionListener()
             {
@@ -1292,7 +1292,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
             popup.add(removeTag);
 
-            JMenuItem addAttribute = new JMenuItem("Add/Update attribute to selected");
+            JMenuItem addAttribute = new JMenuItem("Add/Update attribute to selection");
             popup.add(new JPopupMenu.Separator());
             addAttribute.addActionListener(new ActionListener()
             {
@@ -1340,7 +1340,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             });
             popup.add(addAttribute);
 
-            JMenuItem removeAttribute = new JMenuItem("Remove attribute from selected");
+            JMenuItem removeAttribute = new JMenuItem("Remove attribute from selection");
 
             removeAttribute.addActionListener(new ActionListener()
             {
@@ -1376,37 +1376,33 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             });
             popup.add(removeAttribute);
 
-            JMenuItem removeAttributes = new JMenuItem("Remove all attributes from selected");
+            JMenuItem removeAttributes = new JMenuItem("Remove all attributes from selection");
 
-            removeAttributes.addActionListener(new ActionListener()
+            removeAttributes.addActionListener(e1 ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
+                try
                 {
-                    try
-                    {
-                        for (NetworkElement selectedElement : selectedElements)
-                            selectedElement.removeAllAttributes();
+                    for (NetworkElement selectedElement : selectedElements)
+                        selectedElement.removeAllAttributes();
 
-                        if (isAttributeCellExpanded())
-                        {
-                            recoverRemovedColumn("Attributes");
-                            expandAttributes = false;
-                            attributesItem.setSelected(false);
-                        }
-
-                        callback.updateVisualizationJustTables();
-                    } catch (Throwable ex)
+                    if (isAttributeCellExpanded())
                     {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attributes");
+                        recoverRemovedColumn("Attributes");
+                        expandAttributes = false;
+                        attributesItem.setSelected(false);
                     }
+
+                    callback.updateVisualizationJustTables();
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attributes");
                 }
             });
 
             popup.add(removeAttributes);
             popup.addSeparator();
 
-            JMenuItem editAttributes = new JMenuItem("Edit attributes from selected");
+            JMenuItem editAttributes = new JMenuItem("Edit attributes from selection");
             editAttributes.addActionListener(e1 ->
             {
                 try
