@@ -1559,31 +1559,31 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     }
 
     /* Dialog for filtering by tag */
-    protected void dialogToFilterByTag(boolean onlyInActiveLayer)
+    protected void dialogToFilterByTag(boolean onlyInActiveLayer , FilterCombinationType filterCombinationType)
     {
         JTextField txt_tagContains = new JTextField(30);
         JTextField txt_tagDoesNotContain = new JTextField(30);
         JPanel pane = new JPanel(new GridLayout(-1, 1));
-        pane.add(new JLabel("Has tag: "));
+        pane.add(new JLabel("Has tag (could be empty): "));
         pane.add(txt_tagContains);
-        pane.add(new JLabel("Does not have tag: "));
+        pane.add(new JLabel("AND does not have tag (could be empty): "));
         pane.add(txt_tagDoesNotContain);
 
-        ButtonGroup typeGroup = new ButtonGroup();
-        JRadioButton AND_Option, OR_Option;
-        AND_Option = new JRadioButton("AND");
-        AND_Option.setSelected(true);
-        OR_Option = new JRadioButton("OR");
-        OR_Option.setSelected(false);
-        typeGroup.add(AND_Option);
-        typeGroup.add(OR_Option);
+//        ButtonGroup typeGroup = new ButtonGroup();
+//        JRadioButton AND_Option, OR_Option;
+//        AND_Option = new JRadioButton("AND");
+//        AND_Option.setSelected(true);
+//        OR_Option = new JRadioButton("OR");
+//        OR_Option.setSelected(false);
+//        typeGroup.add(AND_Option);
+//        typeGroup.add(OR_Option);
 
-        JPanel aux = new JPanel();
-        aux.setLayout(new BoxLayout(aux, BoxLayout.PAGE_AXIS));
-
-        pane.add(new JLabel("Filter type: "));
-        pane.add(AND_Option);
-        pane.add(OR_Option);
+//        JPanel aux = new JPanel();
+//        aux.setLayout(new BoxLayout(aux, BoxLayout.PAGE_AXIS));
+//
+//        pane.add(new JLabel("Filter type: "));
+//        pane.add(AND_Option);
+//        pane.add(OR_Option);
 
         while (true)
         {
@@ -1597,12 +1597,12 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     continue;
                 }
 
-                assert AND_Option.isSelected() || OR_Option.isSelected();
+//                assert AND_Option.isSelected() || OR_Option.isSelected();
 
                 final ITableRowFilter filter = new TBFTagBased(
                         callback.getDesign(), onlyInActiveLayer ? callback.getDesign().getNetworkLayerDefault() : null,
-                        txt_tagContains.getText(), txt_tagDoesNotContain.getText(), OR_Option.isSelected() ? FilterType.OR : FilterType.AND);
-                callback.getVisualizationState().updateTableRowFilter(filter, true);
+                        txt_tagContains.getText(), txt_tagDoesNotContain.getText());
+                callback.getVisualizationState().updateTableRowFilter(filter, filterCombinationType);
                 callback.updateVisualizationJustTables();
             } catch (Throwable ex)
             {

@@ -2,6 +2,7 @@ package com.net2plan.gui.plugins.networkDesign.visualizationControl;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.interfaces.networkDesign.*;
@@ -106,7 +107,7 @@ public class VisualizationState
         return tableRowFilter;
     }
 
-    public void updateTableRowFilter(ITableRowFilter tableRowFilterToApply , boolean applyAndTrueApplyOrFalse)
+    public void updateTableRowFilter(ITableRowFilter tableRowFilterToApply , FilterCombinationType filterCombinationType)
     {
         if (tableRowFilterToApply == null)
         {
@@ -118,10 +119,16 @@ public class VisualizationState
             this.tableRowFilter = tableRowFilterToApply;
             return;
         }
-        if (applyAndTrueApplyOrFalse)
-        	this.tableRowFilter.recomputeApplyingShowIf_ThisAndThat(tableRowFilterToApply);
-        else
-        	this.tableRowFilter.recomputeApplyingShowIf_ThisOrThat(tableRowFilterToApply);
+        switch (filterCombinationType)
+        {
+        	case INCLUDEIF_AND: 
+        		this.tableRowFilter.recomputeApplyingShowIf_ThisAndThat(tableRowFilterToApply);
+        		break;
+        	case INCLUDEIF_OR: 
+            	this.tableRowFilter.recomputeApplyingShowIf_ThisOrThat(tableRowFilterToApply);
+            	break;
+            default: throw new RuntimeException ();
+        }
     }
 
     public boolean isVisibleInCanvas(GUINode gn)

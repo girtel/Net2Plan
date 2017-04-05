@@ -11,16 +11,14 @@ public class TBFTagBased extends ITableRowFilter
 {
     private final NetworkLayer restrictToThisLayer;
     private final String tagContainsName, tagDoesNotContainName;
-    private final FilterType filterType;
 
-    public TBFTagBased(NetPlan netPlan, NetworkLayer restrictToThisLayer, String tagContainsName, String tagDoesNotContainName, FilterType filterType)
+    public TBFTagBased(NetPlan netPlan, NetworkLayer restrictToThisLayer, String tagContainsName, String tagDoesNotContainName)
     {
         super(netPlan);
 
         this.restrictToThisLayer = restrictToThisLayer;
         this.tagContainsName = tagContainsName;
         this.tagDoesNotContainName = tagDoesNotContainName;
-        this.filterType = filterType;
 
         if (restrictToThisLayer != null)
             if (restrictToThisLayer.getNetPlan() != this.netPlan) throw new RuntimeException();
@@ -87,16 +85,17 @@ public class TBFTagBased extends ITableRowFilter
 
             boolean containsOk = this.tagContainsName.isEmpty() || tags.contains(tagContainsName);
             boolean doesNotContainOk = this.tagDoesNotContainName.isEmpty() || !tags.contains(tagDoesNotContainName);
-
-            switch (filterType)
-            {
-                case AND:
-                    if (containsOk && doesNotContainOk) res.add(e);
-                    break;
-                case OR:
-                    if (containsOk || doesNotContainOk) res.add(e);
-                    break;
-            }
+            if (containsOk && doesNotContainOk) res.add(e);
+            
+//            switch (filterType)
+//            {
+//                case AND:
+//                    if (containsOk && doesNotContainOk) res.add(e);
+//                    break;
+//                case OR:
+//                    if (containsOk || doesNotContainOk) res.add(e);
+//                    break;
+//            }
         }
         return res;
     }

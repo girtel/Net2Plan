@@ -15,16 +15,19 @@
 
 package com.net2plan.gui.plugins.networkDesign;
 
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.utils.Pair;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.utils.Pair;
 
 /**
  * @author Jorge San Emeterio Villalain
@@ -50,6 +53,28 @@ public class ElementSelection
         this.forwardingRuleList = Collections.unmodifiableList(Collections.emptyList());
     }
 
+    public NetworkLayer getLayer () 
+    {
+    	if (selectionType == SelectionType.EMPTY) return null;
+    	switch (elementType)
+    	{
+		case DEMAND: 
+			return ((Demand) networkElementList.get(0)).getLayer();
+		case LINK:
+			return ((Link) networkElementList.get(0)).getLayer();
+		case MULTICAST_DEMAND:
+			return ((MulticastDemand) networkElementList.get(0)).getLayer();
+		case MULTICAST_TREE:
+			return ((MulticastTree) networkElementList.get(0)).getLayer();
+		case ROUTE:
+			return ((Route) networkElementList.get(0)).getLayer();
+		case FORWARDING_RULE:
+			return ((Demand) forwardingRuleList.get(0).getFirst()).getLayer();
+		default:
+			return null;
+    	}
+    } 
+    
     public ElementSelection(final NetworkElementType elementType, final List<? extends NetworkElement> networkElements)
     {
         if (elementType == null) throw new NullPointerException();
@@ -74,6 +99,8 @@ public class ElementSelection
         this.forwardingRuleList = new ArrayList<>(forwardingRuleList);
     }
 
+    
+    
     public boolean addElement(final NetworkElement element)
     {
         if (selectionType == SelectionType.EMPTY) throw new UnsupportedOperationException("Trying to add an element to a non-editable selection.");
