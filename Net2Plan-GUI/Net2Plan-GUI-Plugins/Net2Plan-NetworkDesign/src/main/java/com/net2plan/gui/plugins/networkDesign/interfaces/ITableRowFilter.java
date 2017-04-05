@@ -2,11 +2,9 @@ package com.net2plan.gui.plugins.networkDesign.interfaces;
 
 import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.libraries.SRGUtils;
 import com.net2plan.utils.Pair;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
 public abstract class ITableRowFilter
@@ -22,6 +20,8 @@ public abstract class ITableRowFilter
 	protected final Map<NetworkLayer,List<SharedRiskGroup>> vSRGs;
 	protected final NetPlan netPlan;
 	protected List<String> chainOfDescriptionsPreviousFiltersComposingThis;
+
+	public enum FilterType { AND, OR };
 	
 	/* Baseline constructor: everything is filtered out */
 	public ITableRowFilter (NetPlan netPlan)

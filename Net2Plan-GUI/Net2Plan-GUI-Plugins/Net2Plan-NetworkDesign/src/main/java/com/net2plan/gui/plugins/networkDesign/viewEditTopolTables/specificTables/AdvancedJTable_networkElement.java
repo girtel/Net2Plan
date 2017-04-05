@@ -44,6 +44,8 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
+import static com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.*;
+
 
 /**
  * <p>Extended version of the {@code JTable} class. It presents the following
@@ -1255,7 +1257,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             });
             popup.add(addTag);
 
-            JMenuItem removeTag = new JMenuItem("Remove tag"  + (networkElementType == NetworkElementType.LAYER ? "" : " from selected elements"));
+            JMenuItem removeTag = new JMenuItem("Remove tag" + (networkElementType == NetworkElementType.LAYER ? "" : " from selected elements"));
 
             removeTag.addActionListener(e1 ->
             {
@@ -1370,7 +1372,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             });
             popup.add(removeAttribute);
 
-            JMenuItem removeAttributes = new JMenuItem("Remove all attributes"  + (networkElementType == NetworkElementType.LAYER ? "" : " from selected elements"));
+            JMenuItem removeAttributes = new JMenuItem("Remove all attributes" + (networkElementType == NetworkElementType.LAYER ? "" : " from selected elements"));
 
             removeAttributes.addActionListener(e1 ->
             {
@@ -1595,10 +1597,12 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     continue;
                 }
 
+                assert AND_Option.isSelected() || OR_Option.isSelected();
+
                 final ITableRowFilter filter = new TBFTagBased(
                         callback.getDesign(), onlyInActiveLayer ? callback.getDesign().getNetworkLayerDefault() : null,
-                        txt_tagContains.getText(), txt_tagDoesNotContain.getText());
-                callback.getVisualizationState().updateTableRowFilter(filter , true);
+                        txt_tagContains.getText(), txt_tagDoesNotContain.getText(), OR_Option.isSelected() ? FilterType.OR : FilterType.AND);
+                callback.getVisualizationState().updateTableRowFilter(filter, true);
                 callback.updateVisualizationJustTables();
             } catch (Throwable ex)
             {
