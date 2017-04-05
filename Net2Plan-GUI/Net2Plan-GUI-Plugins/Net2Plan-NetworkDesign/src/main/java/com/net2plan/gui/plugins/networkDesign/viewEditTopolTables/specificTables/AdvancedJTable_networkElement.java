@@ -1219,7 +1219,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             popup.addSeparator();
 
             // Tags controls
-            JMenuItem addTag = new JMenuItem("Add tag to selection");
+            JMenuItem addTag = new JMenuItem("Add tag" + (networkElementType == NetworkElementType.LAYER ? "" : " to selected elements"));
             addTag.addActionListener(e1 ->
             {
                 JTextField txt_name = new JTextField(20);
@@ -1253,46 +1253,42 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             });
             popup.add(addTag);
 
-            JMenuItem removeTag = new JMenuItem("Remove tag from selection");
+            JMenuItem removeTag = new JMenuItem("Remove tag"  + (networkElementType == NetworkElementType.LAYER ? "" : " from selected elements"));
 
-            removeTag.addActionListener(new ActionListener()
+            removeTag.addActionListener(e1 ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
+                try
                 {
-                    try
+                    final Set<String> tags = new HashSet<>();
+                    for (NetworkElement selectedElement : selectedElements)
                     {
-                        final Set<String> tags = new HashSet<>();
-                        for (NetworkElement selectedElement : selectedElements)
-                        {
-                            final Set<String> elementTags = selectedElement.getTags();
-                            tags.addAll(elementTags);
-                        }
-
-                        String[] tagList = StringUtils.toArray(tags);
-
-                        if (tagList.length == 0) throw new Exception("No tag to remove");
-
-                        Object out = JOptionPane.showInputDialog(null, "Please, select a tag to remove", "Remove tag", JOptionPane.QUESTION_MESSAGE, null, tagList, tagList[0]);
-                        if (out == null) return;
-
-                        String tagToRemove = out.toString();
-
-                        for (NetworkElement selectedElement : selectedElements)
-                            selectedElement.removeTag(tagToRemove);
-
-                        callback.updateVisualizationJustTables();
-
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing tag");
+                        final Set<String> elementTags = selectedElement.getTags();
+                        tags.addAll(elementTags);
                     }
+
+                    String[] tagList = StringUtils.toArray(tags);
+
+                    if (tagList.length == 0) throw new Exception("No tag to remove");
+
+                    Object out = JOptionPane.showInputDialog(null, "Please, select a tag to remove", "Remove tag", JOptionPane.QUESTION_MESSAGE, null, tagList, tagList[0]);
+                    if (out == null) return;
+
+                    String tagToRemove = out.toString();
+
+                    for (NetworkElement selectedElement : selectedElements)
+                        selectedElement.removeTag(tagToRemove);
+
+                    callback.updateVisualizationJustTables();
+
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing tag");
                 }
             });
 
             popup.add(removeTag);
 
-            JMenuItem addAttribute = new JMenuItem("Add/Update attribute to selection");
+            JMenuItem addAttribute = new JMenuItem("Add/Update attribute" + (networkElementType == NetworkElementType.LAYER ? "" : " to selected elements"));
             popup.add(new JPopupMenu.Separator());
             addAttribute.addActionListener(new ActionListener()
             {
@@ -1340,43 +1336,39 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             });
             popup.add(addAttribute);
 
-            JMenuItem removeAttribute = new JMenuItem("Remove attribute from selection");
+            JMenuItem removeAttribute = new JMenuItem("Remove attribute" + (networkElementType == NetworkElementType.LAYER ? "" : " from selected elements"));
 
-            removeAttribute.addActionListener(new ActionListener()
+            removeAttribute.addActionListener(e1 ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
+                try
                 {
-                    try
+                    final Set<String> attributes = new HashSet<>();
+                    for (NetworkElement selectedElement : selectedElements)
                     {
-                        final Set<String> attributes = new HashSet<>();
-                        for (NetworkElement selectedElement : selectedElements)
-                        {
-                            attributes.addAll(selectedElement.getAttributes().keySet());
-                        }
-
-                        String[] attributeList = StringUtils.toArray(attributes);
-
-                        if (attributeList.length == 0) throw new Exception("No attribute to remove");
-
-                        Object out = JOptionPane.showInputDialog(null, "Please, select an attribute to remove", "Remove attribute", JOptionPane.QUESTION_MESSAGE, null, attributeList, attributeList[0]);
-                        if (out == null) return;
-
-                        String attributeToRemove = out.toString();
-
-                        for (NetworkElement selectedElement : selectedElements)
-                            selectedElement.removeAttribute(attributeToRemove);
-
-                        callback.updateVisualizationJustTables();
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attribute");
+                        attributes.addAll(selectedElement.getAttributes().keySet());
                     }
+
+                    String[] attributeList = StringUtils.toArray(attributes);
+
+                    if (attributeList.length == 0) throw new Exception("No attribute to remove");
+
+                    Object out = JOptionPane.showInputDialog(null, "Please, select an attribute to remove", "Remove attribute", JOptionPane.QUESTION_MESSAGE, null, attributeList, attributeList[0]);
+                    if (out == null) return;
+
+                    String attributeToRemove = out.toString();
+
+                    for (NetworkElement selectedElement : selectedElements)
+                        selectedElement.removeAttribute(attributeToRemove);
+
+                    callback.updateVisualizationJustTables();
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error removing attribute");
                 }
             });
             popup.add(removeAttribute);
 
-            JMenuItem removeAttributes = new JMenuItem("Remove all attributes from selection");
+            JMenuItem removeAttributes = new JMenuItem("Remove all attributes"  + (networkElementType == NetworkElementType.LAYER ? "" : " from selected elements"));
 
             removeAttributes.addActionListener(e1 ->
             {
@@ -1402,7 +1394,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             popup.add(removeAttributes);
             popup.addSeparator();
 
-            JMenuItem editAttributes = new JMenuItem("Edit attributes from selection");
+            JMenuItem editAttributes = new JMenuItem("Edit attributes" + (networkElementType == NetworkElementType.LAYER ? "" : " from selected elements"));
             editAttributes.addActionListener(e1 ->
             {
                 try
