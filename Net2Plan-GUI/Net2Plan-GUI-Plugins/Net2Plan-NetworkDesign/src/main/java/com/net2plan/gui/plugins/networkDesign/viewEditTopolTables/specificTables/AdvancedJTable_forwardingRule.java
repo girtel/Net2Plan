@@ -20,6 +20,7 @@ import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.JScrollPopupMenu;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.*;
@@ -279,8 +280,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
     {
         assert selection != null;
 
-        final JPopupMenu popup = new JPopupMenu();
-
+        final JScrollPopupMenu popup = new JScrollPopupMenu(20);
         final List<Pair<Demand, Link>> frRowsInTheTable = getVisibleElementsInTable();
 
         if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)

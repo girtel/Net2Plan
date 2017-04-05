@@ -22,6 +22,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualiza
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.JScrollPopupMenu;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.*;
@@ -331,8 +332,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     {
         assert selection != null;
 
-        JPopupMenu popup = new JPopupMenu();
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+        final JScrollPopupMenu popup = new JScrollPopupMenu(20);
         final List<MulticastDemand> demandRowsInTheTable = this.getVisibleElementsInTable();
 
         if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)

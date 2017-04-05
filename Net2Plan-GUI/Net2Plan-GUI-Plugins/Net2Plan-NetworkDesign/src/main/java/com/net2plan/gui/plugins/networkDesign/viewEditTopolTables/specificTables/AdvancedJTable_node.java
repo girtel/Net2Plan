@@ -23,6 +23,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualiza
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.JScrollPopupMenu;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -406,7 +407,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     {
         assert selection != null;
 
-        final JPopupMenu popup = new JPopupMenu();
+        final JScrollPopupMenu popup = new JScrollPopupMenu(20);
 
         if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
         {

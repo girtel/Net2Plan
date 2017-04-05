@@ -334,8 +334,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     {
         assert selection != null;
 
-        final JPopupMenu popup = new JPopupMenu();
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+        final JScrollPopupMenu popup = new JScrollPopupMenu(20);
         final List<Route> routeRowsInTheTable = getVisibleElementsInTable();
 
         /* Add the popup menu option of the filters */

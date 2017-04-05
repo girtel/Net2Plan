@@ -17,6 +17,7 @@ import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.JScrollPopupMenu;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -209,7 +210,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
     {
         assert selection != null;
 
-        final JPopupMenu popup = new JPopupMenu();
+        final JScrollPopupMenu popup = new JScrollPopupMenu(20);
 
         if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
             if (selection.getElementType() != NetworkElementType.LAYER)

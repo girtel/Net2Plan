@@ -24,6 +24,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualiza
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.JScrollPopupMenu;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.*;
@@ -494,7 +495,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         ArrayList<String> attColumnsHeaders = new ArrayList<>();
         for (Link link : getVisibleElementsInTable())
             for (Map.Entry<String, String> entry : link.getAttributes().entrySet())
-                if (attColumnsHeaders.contains(entry.getKey()) == false)
+                if (!attColumnsHeaders.contains(entry.getKey()))
                     attColumnsHeaders.add(entry.getKey());
         return attColumnsHeaders;
     }
@@ -511,7 +512,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
         }
 
-        JPopupMenu popup = new JPopupMenu();
+        final JScrollPopupMenu popup = new JScrollPopupMenu(20);
         final List<Link> linkRowsInTheTable = getVisibleElementsInTable();
 
         final List<Link> selectedLinks = (List<Link>) selection.getNetworkElements();

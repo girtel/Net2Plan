@@ -23,6 +23,7 @@ import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.JScrollPopupMenu;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
@@ -328,8 +329,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
     {
         assert selection != null;
 
-        JPopupMenu popup = new JPopupMenu();
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+        final JScrollPopupMenu popup = new JScrollPopupMenu(20);
         final List<MulticastTree> rowsInTheTable = getVisibleElementsInTable();
 
         if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
