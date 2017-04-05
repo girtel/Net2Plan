@@ -73,7 +73,7 @@ public class ElementSelection
         this.networkElementList = Collections.unmodifiableList(Collections.emptyList());
         this.forwardingRuleList = new ArrayList<>(forwardingRuleList);
     }
-    
+
     public boolean isEmpty()
     {
         return selectionType == SelectionType.EMPTY || (networkElementList.isEmpty() && forwardingRuleList.isEmpty());
