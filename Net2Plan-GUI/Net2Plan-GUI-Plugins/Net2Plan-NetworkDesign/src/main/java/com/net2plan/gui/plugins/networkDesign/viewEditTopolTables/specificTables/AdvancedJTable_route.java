@@ -21,6 +21,7 @@ import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.SwingUtils;
 import net.miginfocom.swing.MigLayout;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
@@ -330,7 +331,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, final ElementSelection selection)
+    public void doPopup(final MouseEvent e, final ElementSelection selection)
     {
         assert selection != null;
 
@@ -450,7 +451,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                     for (JComponent item : extraOptions) popup.add(item);
                 }
 
-                addPopupMenuAttributeOptions(e, row, selection, popup);
+                addPopupMenuAttributeOptions(e, selection, popup);
             }
         }
 
@@ -468,6 +469,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
+    @Nonnull
     @Override
     protected JMenuItem getAddOption()
     {
@@ -762,6 +764,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         c.setMaximumSize(max);
     }
 
+    @Nonnull
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
@@ -889,6 +892,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
     }
 
+    @Nonnull
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -1110,6 +1114,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         callback.resetPickedStateAndUpdateView();
     }
 
+    @Nonnull
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {

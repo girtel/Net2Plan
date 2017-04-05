@@ -27,6 +27,7 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import org.apache.commons.collections15.BidiMap;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.awt.event.ActionEvent;
@@ -206,7 +207,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
 
 
     @Override
-    public void doPopup(MouseEvent e, int row, final ElementSelection selection)
+    public void doPopup(MouseEvent e, final ElementSelection selection)
     {
         assert selection != null;
 
@@ -216,7 +217,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
             if (selection.getElementType() != NetworkElementType.LAYER)
                 throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        final List<NetworkLayer> layers = (List<NetworkLayer>) selection.getNetworkElements();
+        final List<NetworkLayer> selectedLayers = (List<NetworkLayer>) selection.getNetworkElements();
 
         if (callback.getVisualizationState().isNetPlanEditable())
         {
@@ -227,7 +228,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         {
             if (callback.getVisualizationState().isNetPlanEditable())
             {
-                if (row != -1)
+                if (!selectedLayers.isEmpty())
                 {
                     if (networkElementType != NetworkElementType.LAYER || callback.getDesign().getNumberOfLayers() != 1)
                     {
@@ -242,7 +243,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
 
                                 try
                                 {
-                                    for (NetworkLayer layer : layers)
+                                    for (NetworkLayer layer : selectedLayers)
                                         netPlan.removeNetworkLayer(layer);
 
                                     final VisualizationState vs = callback.getVisualizationState();
@@ -262,7 +263,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
                         popup.add(removeItem);
                     }
 
-                    addPopupMenuAttributeOptions(e, row, selection, popup);
+                    addPopupMenuAttributeOptions(e, selection, popup);
                 }
             }
 
@@ -277,18 +278,21 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         return;
     }
 
+    @Nonnull
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
         return new ArrayList<>();
     }
 
+    @Nonnull
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
         return null;
     }
 
+    @Nonnull
     @Override
     protected List<JComponent> getExtraOptions(ElementSelection selection)
     {
@@ -300,6 +304,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         return false;
     }
 
+    @Nonnull
     @Override
     protected JMenuItem getAddOption()
     {

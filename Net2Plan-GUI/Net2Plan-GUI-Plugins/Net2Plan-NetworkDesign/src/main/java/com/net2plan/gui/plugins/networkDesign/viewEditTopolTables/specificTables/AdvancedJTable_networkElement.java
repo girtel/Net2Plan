@@ -1170,7 +1170,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
                 if (SwingUtilities.isRightMouseButton(e))
                 {
-                    doPopup(e, row, elementHolder);
+                    doPopup(e, elementHolder);
                     return;
                 }
 
@@ -1203,7 +1203,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    final protected void addPopupMenuAttributeOptions(final MouseEvent e, final int row, ElementSelection selection, JPopupMenu popup)
+    final protected void addPopupMenuAttributeOptions(final MouseEvent e, ElementSelection selection, JPopupMenu popup)
     {
         assert popup != null;
         assert selection != null;
@@ -1617,9 +1617,10 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     @Nonnull
     protected abstract List<JComponent> getForcedOptions(ElementSelection selection);
 
+    @Nonnull
     protected abstract List<JComponent> getExtraOptions(ElementSelection selection);
 
-    protected abstract void doPopup(final MouseEvent e, final int row, ElementSelection selection);
+    protected abstract void doPopup(final MouseEvent e, ElementSelection selection);
 
     protected abstract void showInCanvas(MouseEvent e, ElementSelection selection);
 }

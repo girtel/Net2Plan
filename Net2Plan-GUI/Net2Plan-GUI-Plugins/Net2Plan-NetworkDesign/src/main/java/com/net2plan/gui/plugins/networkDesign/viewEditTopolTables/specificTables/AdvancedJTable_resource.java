@@ -15,6 +15,7 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
@@ -368,7 +369,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void doPopup(MouseEvent e, int row, ElementSelection selection)
+    public void doPopup(MouseEvent e, ElementSelection selection)
     {
         assert selection != null;
 
@@ -481,13 +482,14 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                     for (JComponent item : extraOptions) popup.add(item);
                 }
 
-                addPopupMenuAttributeOptions(e, row, selection, popup);
+                addPopupMenuAttributeOptions(e, selection, popup);
             }
         }
 
         popup.show(e.getComponent(), e.getX(), e.getY());
     }
 
+    @Nonnull
     @Override
     protected JMenuItem getAddOption()
     {
@@ -585,12 +587,14 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return addItem;
     }
 
+    @Nonnull
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
         return new LinkedList<>();
     }
 
+    @Nonnull
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -748,6 +752,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return options;
     }
 
+    @Nonnull
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {

@@ -31,6 +31,7 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import net.miginfocom.swing.MigLayout;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.awt.event.*;
@@ -276,7 +277,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
-    public void doPopup(final MouseEvent e, final int row, final ElementSelection selection)
+    public void doPopup(final MouseEvent e, final ElementSelection selection)
     {
         assert selection != null;
 
@@ -376,6 +377,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         popup.show(e.getComponent(), e.getX(), e.getY());
     }
 
+    @Nonnull
     @Override
     protected JMenuItem getAddOption()
     {
@@ -529,6 +531,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         }
     }
 
+    @Nonnull
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
@@ -557,12 +560,14 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         return options;
     }
 
+    @Nonnull
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
         return new LinkedList<>();
     }
 
+    @Nonnull
     @Override
     protected List<JComponent> getExtraOptions(ElementSelection selection)
     {

@@ -37,6 +37,7 @@ import com.net2plan.utils.StringUtils;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.collections15.BidiMap;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.awt.event.ActionEvent;
@@ -403,7 +404,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
 
     @Override
-    protected void doPopup(final MouseEvent e, final int row, ElementSelection selection)
+    protected void doPopup(final MouseEvent e, ElementSelection selection)
     {
         assert selection != null;
 
@@ -545,7 +546,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                 if (!extraOptions.isEmpty()) popup.addSeparator();
                 for (JComponent item : extraOptions) popup.add(item);
 
-                addPopupMenuAttributeOptions(e, row, selection, popup);
+                addPopupMenuAttributeOptions(e, selection, popup);
             }
         }
 
@@ -563,6 +564,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
+    @Nonnull
     @Override
     protected JMenuItem getAddOption()
     {
@@ -594,12 +596,14 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         return addItem;
     }
 
+    @Nonnull
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
         return new LinkedList<>();
     }
 
+    @Nonnull
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -669,6 +673,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         return options;
     }
 
+    @Nonnull
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
