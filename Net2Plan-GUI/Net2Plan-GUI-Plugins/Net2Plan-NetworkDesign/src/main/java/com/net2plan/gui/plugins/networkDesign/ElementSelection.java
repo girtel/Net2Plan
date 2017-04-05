@@ -73,62 +73,7 @@ public class ElementSelection
         this.networkElementList = Collections.unmodifiableList(Collections.emptyList());
         this.forwardingRuleList = new ArrayList<>(forwardingRuleList);
     }
-
-    public boolean addElement(final NetworkElement element)
-    {
-        if (selectionType == SelectionType.EMPTY) throw new UnsupportedOperationException("Trying to add an element to a non-editable selection.");
-        if (selectionType != SelectionType.NETWORK_ELEMENT) return false;
-        if (elementType == null) return false;
-        if (NetworkElementType.getType(element) != elementType) return false;
-
-        networkElementList.add(element);
-        return true;
-    }
-
-    public boolean addForwardingRule(final Pair<Demand, Link> forwardingRule)
-    {
-        if (selectionType == SelectionType.EMPTY) throw new UnsupportedOperationException("Trying to add an element to a non-editable selection.");
-        if (selectionType != SelectionType.FORWARDING_RULE) return false;
-        if (elementType == null) return false;
-        if (elementType != NetworkElementType.FORWARDING_RULE) return false;
-
-        forwardingRuleList.add(forwardingRule);
-        return true;
-    }
-
-    public boolean addElements(final List<? extends NetworkElement> elements)
-    {
-        if (selectionType == SelectionType.EMPTY) throw new UnsupportedOperationException("Trying to add an element to a non-editable selection.");
-        if (selectionType != SelectionType.NETWORK_ELEMENT) return false;
-        if (elementType == null) return false;
-
-        boolean res = true;
-
-        for (NetworkElement element : elements)
-        {
-            if (NetworkElementType.getType(element) != elementType)
-            {
-                res = false;
-                continue;
-            }
-
-            networkElementList.add(element);
-        }
-
-        return res;
-    }
-
-    public boolean addForwardingRules(final List<Pair<Demand, Link>> forwardingRules)
-    {
-        if (selectionType == SelectionType.EMPTY) throw new UnsupportedOperationException("Trying to add an element to a non-editable selection.");
-        if (selectionType != SelectionType.FORWARDING_RULE) return false;
-        if (elementType == null) return false;
-        if (elementType != NetworkElementType.FORWARDING_RULE) return false;
-
-        this.forwardingRuleList.addAll(forwardingRules);
-        return true;
-    }
-
+    
     public boolean isEmpty()
     {
         return selectionType == SelectionType.EMPTY || (networkElementList.isEmpty() && forwardingRuleList.isEmpty());
