@@ -11,9 +11,15 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public class TBFSelectionBased extends ITableRowFilter
 {
-    public TBFSelectionBased(NetPlan netPlan, ElementSelection elementSelection)
+    public TBFSelectionBased(NetPlan netPlan, ElementSelection elementSelection, boolean invertSelection)
     {
         super(netPlan);
+
+        if (invertSelection)
+        {
+            elementSelection = elementSelection.invertSelection();
+            if (elementSelection == null) throw new RuntimeException("A problem occurred while trying to apply a filter.");
+        }
 
         // Selections can only be done at the active layer.
         final NetworkLayer layer = netPlan.getNetworkLayerDefault();
