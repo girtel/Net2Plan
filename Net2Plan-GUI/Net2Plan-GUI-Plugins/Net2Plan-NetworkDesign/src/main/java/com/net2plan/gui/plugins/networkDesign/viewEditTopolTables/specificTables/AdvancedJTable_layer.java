@@ -68,12 +68,13 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         setSpecificCellRenderers();
         this.getTableHeader().setReorderingAllowed(false);
         setAutoCreateRowSorter(true);
+
+        this.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     }
 
 
     public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns)
     {
-        NetworkLayer layer = currentState.getNetworkLayerDefault();
         List<Object[]> allLayerData = new LinkedList<Object[]>();
         for (NetworkLayer auxLayer : currentState.getNetworkLayers())
         {

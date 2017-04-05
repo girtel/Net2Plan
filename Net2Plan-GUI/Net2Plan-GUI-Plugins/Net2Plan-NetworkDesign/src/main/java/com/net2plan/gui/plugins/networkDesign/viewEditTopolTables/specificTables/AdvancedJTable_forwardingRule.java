@@ -340,7 +340,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         {
             if (callback.getVisualizationState().isNetPlanEditable())
             {
-                if (row != -1)
+                if (!selectedFRs.isEmpty())
                 {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
 
