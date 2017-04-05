@@ -361,7 +361,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         currentTopology = callback.getDesign();
         for (Demand demand : getVisibleElementsInTable())
             for (Map.Entry<String, String> entry : demand.getAttributes().entrySet())
-                if (attColumnsHeaders.contains(entry.getKey()) == false)
+                if (!attColumnsHeaders.contains(entry.getKey()))
                     attColumnsHeaders.add(entry.getKey());
         return attColumnsHeaders;
     }
@@ -385,6 +385,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
     	final NetPlan netPlan = callback.getDesign();
     	final boolean isMultilayerDesign = netPlan.isMultilayer();
+
     	for (boolean applyJustToThisLayer : isMultilayerDesign? new boolean [] {true , false} : new boolean [] {true})
     	{
             JMenu submenuFilters = null;
