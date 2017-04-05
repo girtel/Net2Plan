@@ -296,42 +296,34 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
             final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this forwarding rule traffic");
             submenuFilters.add(filterKeepElementsAffectedThisLayer);
             if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
-            filterKeepElementsAffectedThisLayer.addActionListener(new ActionListener() 
+            filterKeepElementsAffectedThisLayer.addActionListener(e1 ->
             {
-				@Override
-				public void actionPerformed(ActionEvent e) 
-				{
-	            	if (selectedFRs.isEmpty()) return;
-	            	TBFToFromCarriedTraffic filter = null;
-	            	for (Pair<Demand,Link> fr : selectedFRs)
-	            	{
-	            		if (filter == null)
-	            			filter = new TBFToFromCarriedTraffic(fr, true);
-	            		else
-	            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(fr, true));
-	            	}
-					callback.getVisualizationState().updateTableRowFilter(filter , true);
-					callback.updateVisualizationJustTables();
-				}
-			});
-            filterKeepElementsAffectedAllLayers.addActionListener(new ActionListener() 
+                if (selectedFRs.isEmpty()) return;
+                TBFToFromCarriedTraffic filter = null;
+                for (Pair<Demand, Link> fr : selectedFRs)
+                {
+                    if (filter == null)
+                        filter = new TBFToFromCarriedTraffic(fr, true);
+                    else
+                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(fr, true));
+                }
+                callback.getVisualizationState().updateTableRowFilter(filter, true);
+                callback.updateVisualizationJustTables();
+            });
+            filterKeepElementsAffectedAllLayers.addActionListener(e1 ->
             {
-				@Override
-				public void actionPerformed(ActionEvent e) 
-				{
-	            	if (selectedFRs.isEmpty()) return;
-	            	TBFToFromCarriedTraffic filter = null;
-	            	for (Pair<Demand,Link> fr : selectedFRs)
-	            	{
-	            		if (filter == null)
-	            			filter = new TBFToFromCarriedTraffic(fr, false);
-	            		else
-	            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(fr, false));
-	            	}
-					callback.getVisualizationState().updateTableRowFilter(filter , true);
-					callback.updateVisualizationJustTables();
-				}
-			});
+                if (selectedFRs.isEmpty()) return;
+                TBFToFromCarriedTraffic filter = null;
+                for (Pair<Demand, Link> fr : selectedFRs)
+                {
+                    if (filter == null)
+                        filter = new TBFToFromCarriedTraffic(fr, false);
+                    else
+                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(fr, false));
+                }
+                callback.getVisualizationState().updateTableRowFilter(filter, true);
+                callback.updateVisualizationJustTables();
+            });
         }
         popup.add(submenuFilters);
         popup.addSeparator();
@@ -352,7 +344,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
                 {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
 
-                    JMenuItem removeItem = new JMenuItem("Remove selected " + networkElementType + "s");
+                    JMenuItem removeItem = new JMenuItem("Remove selected forwarding rules");
                     removeItem.addActionListener(new ActionListener()
                     {
                         @Override
@@ -388,21 +380,17 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
     protected JMenuItem getAddOption()
     {
         JMenuItem addItem = new JMenuItem("Add " + networkElementType);
-        addItem.addActionListener(new ActionListener()
+        addItem.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
+            try
             {
-                try
-                {
-                    createForwardingRuleGUI(callback);
-                    callback.getVisualizationState().resetPickedState();
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.FORWARDING_RULE));
-                    callback.addNetPlanChange();
-                } catch (Throwable ex)
-                {
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
-                }
+                createForwardingRuleGUI(callback);
+                callback.getVisualizationState().resetPickedState();
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.FORWARDING_RULE));
+                callback.addNetPlanChange();
+            } catch (Throwable ex)
+            {
+                ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
             }
         });
 
