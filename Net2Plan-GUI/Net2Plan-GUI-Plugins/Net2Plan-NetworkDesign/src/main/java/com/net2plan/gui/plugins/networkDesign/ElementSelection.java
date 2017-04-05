@@ -17,10 +17,12 @@ package com.net2plan.gui.plugins.networkDesign;
 
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -99,6 +101,81 @@ public class ElementSelection
     public SelectionType getSelectionType()
     {
         return selectionType;
+    }
+
+    @Nullable
+    public ElementSelection invertSelection()
+    {
+        if (selectionType == SelectionType.EMPTY) return null;
+
+        final ElementSelection elementSelection;
+        if (selectionType == SelectionType.NETWORK_ELEMENT)
+        {
+            // Check all elements belong to the same NetPlan
+            NetPlan netPlan = null;
+            for (NetworkElement networkElement : networkElementList)
+            {
+                if (netPlan == null) netPlan = networkElement.getNetPlan();
+                else if (netPlan != networkElement.getNetPlan()) return null;
+            }
+            if (netPlan == null) return null;
+
+            final List<NetworkElement> invertedElements;
+            switch (elementType)
+            {
+                case NODE:
+                    invertedElements = new ArrayList<>(netPlan.getNodes());
+                    invertedElements.removeAll(getNetworkElements());
+                    break;
+                case LINK:
+                    invertedElements = new ArrayList<>(netPlan.getLinks());
+                    invertedElements.removeAll(getNetworkElements());
+                    break;
+                case DEMAND:
+                    invertedElements = new ArrayList<>(netPlan.getDemands());
+                    invertedElements.removeAll(getNetworkElements());
+                    break;
+                case MULTICAST_DEMAND:
+                    invertedElements = new ArrayList<>(netPlan.getMulticastDemands());
+                    invertedElements.removeAll(getNetworkElements());
+                    break;
+                case ROUTE:
+                    invertedElements = new ArrayList<>(netPlan.getRoutes());
+                    invertedElements.removeAll(getNetworkElements());
+                    break;
+                case MULTICAST_TREE:
+                    invertedElements = new ArrayList<>(netPlan.getMulticastTrees());
+                    invertedElements.removeAll(getNetworkElements());
+                    break;
+                case RESOURCE:
+                    invertedElements = new ArrayList<>(netPlan.getResources());
+                    invertedElements.removeAll(getNetworkElements());
+                    break;
+                case SRG:
+                    invertedElements = new ArrayList<>(netPlan.getSRGs());
+                    invertedElements.removeAll(getNetworkElements());
+                    break;
+                default:
+                    return null;
+            }
+
+            elementSelection = new ElementSelection(elementType, invertedElements);
+        } else
+        {
+            NetPlan netPlan = null;
+            for (Pair<Demand, Link> forwardingRule : forwardingRuleList)
+            {
+                if (netPlan == null) netPlan = forwardingRule.getFirst().getNetPlan();
+                else if (netPlan != forwardingRule.getFirst().getNetPlan()) return null;
+            }
+            if (netPlan == null) return null;
+
+            final List<Pair<Demand, Link>> forwardingRules = new ArrayList<>(netPlan.getForwardingRules().keySet());
+            forwardingRules.removeAll(getForwardingRules());
+            elementSelection = new ElementSelection(forwardingRules);
+        }
+
+        return elementSelection;
     }
 
     public static NetworkElementType getElementType(final List<? extends NetworkElement> networkElements)
