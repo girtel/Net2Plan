@@ -39,8 +39,10 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.xml.stream.XMLStreamException;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 
 /**
@@ -1551,9 +1553,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public boolean hasAggregationRow()
     {
-        if (networkElementType.equals(networkElementType.LAYER)) return false;
-        if (networkElementType.equals(networkElementType.NETWORK)) return false;
-        return true;
+        return !networkElementType.equals(NetworkElementType.LAYER) && !networkElementType.equals(NetworkElementType.NETWORK);
     }
 
     /* Dialog for filtering by tag */
@@ -1561,19 +1561,40 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     {
         JTextField txt_tagContains = new JTextField(30);
         JTextField txt_tagDoesNotContain = new JTextField(30);
-        JPanel pane = new JPanel();
-        pane.add(new JLabel("Has tag that contains: "));
+        JPanel pane = new JPanel(new GridLayout(-1, 1));
+        pane.add(new JLabel("Has tag: "));
         pane.add(txt_tagContains);
-        pane.add(Box.createHorizontalStrut(15));
-        pane.add(new JLabel("AND does NOT have tag that contains: "));
+        pane.add(new JLabel("Does not have tag: "));
         pane.add(txt_tagDoesNotContain);
+
+        ButtonGroup typeGroup = new ButtonGroup();
+        JRadioButton AND_Option, OR_Option;
+        AND_Option = new JRadioButton("AND");
+        AND_Option.setSelected(true);
+        OR_Option = new JRadioButton("OR");
+        OR_Option.setSelected(false);
+        typeGroup.add(AND_Option);
+        typeGroup.add(OR_Option);
+
+        JPanel aux = new JPanel();
+        aux.setLayout(new BoxLayout(aux, BoxLayout.PAGE_AXIS));
+
+        pane.add(new JLabel("Filter type: "));
+        pane.add(AND_Option);
+        pane.add(OR_Option);
+
         while (true)
         {
             int result = JOptionPane.showConfirmDialog(null, pane, "Filter elements by tag", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (result != JOptionPane.OK_OPTION) return;
             try
             {
-                if (txt_tagContains.getText().isEmpty() && txt_tagDoesNotContain.getText().isEmpty()) continue;
+                if (txt_tagContains.getText().isEmpty() && txt_tagDoesNotContain.getText().isEmpty())
+                {
+                    ErrorHandling.showErrorDialog("At least one input tag is required", "Invalid input");
+                    continue;
+                }
+
                 final ITableRowFilter filter = new TBFTagBased(
                         callback.getDesign(), onlyInActiveLayer ? callback.getDesign().getNetworkLayerDefault() : null,
                         txt_tagContains.getText(), txt_tagDoesNotContain.getText());
