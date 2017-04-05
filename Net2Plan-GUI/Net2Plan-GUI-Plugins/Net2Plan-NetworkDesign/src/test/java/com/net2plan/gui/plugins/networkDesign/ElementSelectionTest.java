@@ -17,14 +17,15 @@ package com.net2plan.gui.plugins.networkDesign;
 
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.internal.Constants.NetworkElementType;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Jorge San Emeterio Villalain
@@ -52,6 +53,25 @@ public class ElementSelectionTest
         netPlan.addLink(netPlan.getNodeByName("Node 1"), netPlan.getNodeByName("Node 2"), 0, 0, 1e3, null);
 
         netPlan.addDemand(netPlan.getNodeByName("Node 1"), netPlan.getNodeByName("Node 2"), 0, null);
+    }
+
+    @Test
+    public void inverTest()
+    {
+        final List<Node> selectedNodes = new ArrayList<>();
+        selectedNodes.add(netPlan.getNodeByName("Node 1"));
+        selectedNodes.add(netPlan.getNodeByName("Node 2"));
+        elementSelection = new ElementSelection(NetworkElementType.NODE, selectedNodes);
+
+        final ElementSelection invertedSelection = this.elementSelection.invertSelection();
+
+        assertNotNull(invertedSelection);
+        assertEquals(invertedSelection.getSelectionType(), ElementSelection.SelectionType.NETWORK_ELEMENT);
+        assertEquals(invertedSelection.getElementType(), NetworkElementType.NODE);
+
+        final List<? extends NetworkElement> networkElements = invertedSelection.getNetworkElements();
+
+        assertArrayEquals(new Node[] {netPlan.getNodeByName("Node 3")}, networkElements.toArray());
     }
 
     @Test
