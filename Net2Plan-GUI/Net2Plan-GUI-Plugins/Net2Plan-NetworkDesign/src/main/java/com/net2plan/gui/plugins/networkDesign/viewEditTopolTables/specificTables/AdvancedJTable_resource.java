@@ -6,7 +6,6 @@ import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.*;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants;
@@ -383,51 +382,11 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         /* Add the popup menu option of the filters */
         final List<Resource> selectedResources = (List<Resource>) selection.getNetworkElements();
 
-        final JMenu submenuFilters = new JMenu("Filters");
-        if (!selectedResources.isEmpty())
+        if (!rowsInTheTable.isEmpty())
         {
-            final JMenuItem filterKeepElementsAffectedThisLayer = new JMenuItem("This layer: Keep elements associated to this resource traffic");
-            final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this resource traffic");
-            submenuFilters.add(filterKeepElementsAffectedThisLayer);
-            if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
-            filterKeepElementsAffectedThisLayer.addActionListener(e1 ->
-            {
-            	if (selectedResources.isEmpty()) return;
-            	TBFToFromCarriedTraffic filter = null;
-            	for (Resource resource : selectedResources)
-            	{
-            		if (filter == null)
-            			filter = new TBFToFromCarriedTraffic(resource, callback.getDesign().getNetworkLayerDefault(), true);
-            		else
-            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(resource, callback.getDesign().getNetworkLayerDefault(), true));
-            	}
-                callback.getVisualizationState().updateTableRowFilter(filter , true);
-                callback.updateVisualizationJustTables();
-            });
-            filterKeepElementsAffectedAllLayers.addActionListener(e1 ->
-            {
-            	if (selectedResources.isEmpty()) return;
-            	TBFToFromCarriedTraffic filter = null;
-            	for (Resource resource : selectedResources)
-            	{
-            		if (filter == null)
-            			filter = new TBFToFromCarriedTraffic(resource, callback.getDesign().getNetworkLayerDefault(), false);
-            		else
-            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(resource, callback.getDesign().getNetworkLayerDefault(), false));
-            	}
-                callback.getVisualizationState().updateTableRowFilter(filter , true);
-                callback.updateVisualizationJustTables();
-            });
+            addFilterOptions(e, selection, popup);
+            popup.addSeparator();
         }
-        final JMenuItem tagFilter = new JMenuItem("This layer: Keep elements of tag...");
-        submenuFilters.add(tagFilter);
-        tagFilter.addActionListener(e1 -> dialogToFilterByTag(true));
-        final JMenuItem tagFilterAllLayers = new JMenuItem("All layers: Keep elements of tag...");
-        submenuFilters.add(tagFilterAllLayers);
-        tagFilterAllLayers.addActionListener(e1 -> dialogToFilterByTag(false));
-
-        popup.add(submenuFilters);
-        popup.addSeparator();
 
         if (callback.getVisualizationState().isNetPlanEditable())
         {

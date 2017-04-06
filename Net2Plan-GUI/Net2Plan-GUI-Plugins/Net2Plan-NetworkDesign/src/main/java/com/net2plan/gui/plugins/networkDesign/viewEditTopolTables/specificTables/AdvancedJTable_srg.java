@@ -18,7 +18,6 @@ import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.JScrollPopupMenu;
@@ -321,35 +320,11 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         /* Add the popup menu option of the filters */
         final List<SharedRiskGroup> selectedSRGs = (List<SharedRiskGroup>) selection.getNetworkElements();
 
-        final JMenu submenuFilters = new JMenu("Filters");
-        if (!selectedSRGs.isEmpty())
+        if (!rowsInTheTable.isEmpty())
         {
-            final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements affected by this SRG");
-            if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
-            filterKeepElementsAffectedAllLayers.addActionListener(e1 ->
-            {
-            	if (selectedSRGs.isEmpty()) return;
-            	TBFToFromCarriedTraffic filter = null;
-            	for (SharedRiskGroup srg : selectedSRGs)
-            	{
-            		if (filter == null)
-            			filter = new TBFToFromCarriedTraffic(srg);
-            		else
-            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(srg));
-            	}
-                callback.getVisualizationState().updateTableRowFilter(filter , true);
-                callback.updateVisualizationJustTables();
-            });
+            addFilterOptions(e, selection, popup);
+            popup.addSeparator();
         }
-        final JMenuItem tagFilter = new JMenuItem("This layer: Keep elements of tag...");
-        submenuFilters.add(tagFilter);
-        tagFilter.addActionListener(e1 -> dialogToFilterByTag(true));
-        final JMenuItem tagFilterAllLayers = new JMenuItem("All layers: Keep elements of tag...");
-        submenuFilters.add(tagFilterAllLayers);
-        tagFilterAllLayers.addActionListener(e1 -> dialogToFilterByTag(false));
-
-        popup.add(submenuFilters);
-        popup.addSeparator();
 
         if (callback.getVisualizationState().isNetPlanEditable())
         {

@@ -349,50 +349,11 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         final List<Route> selectedRoutes = (List<Route>) selection.getNetworkElements();
 
         final JMenu submenuFilters = new JMenu("Filters");
-        if (!selectedRoutes.isEmpty())
+        if (!routeRowsInTheTable.isEmpty())
         {
-            final JMenuItem filterKeepElementsAffectedThisLayer = new JMenuItem("This layer: Keep elements associated to this route traffic");
-            final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this route traffic");
-            submenuFilters.add(filterKeepElementsAffectedThisLayer);
-            if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
-            filterKeepElementsAffectedThisLayer.addActionListener(e1 ->
-            {
-            	if (selectedRoutes.isEmpty()) return;
-            	TBFToFromCarriedTraffic filter = null;
-            	for (Route route : selectedRoutes)
-            	{
-            		if (filter == null)
-            			filter = new TBFToFromCarriedTraffic(route, true);
-            		else
-            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(route, true));
-            	}
-                callback.getVisualizationState().updateTableRowFilter(filter , true);
-                callback.updateVisualizationJustTables();
-            });
-            filterKeepElementsAffectedAllLayers.addActionListener(e1 ->
-            {
-            	if (selectedRoutes.isEmpty()) return;
-            	TBFToFromCarriedTraffic filter = null;
-            	for (Route route : selectedRoutes)
-            	{
-            		if (filter == null)
-            			filter = new TBFToFromCarriedTraffic(route, false);
-            		else
-            			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(route, false));
-            	}
-                callback.getVisualizationState().updateTableRowFilter(filter , true);
-                callback.updateVisualizationJustTables();
-            });
+            addFilterOptions(e, selection, popup);
+            popup.addSeparator();
         }
-        final JMenuItem tagFilter = new JMenuItem("This layer: Keep elements of tag...");
-        submenuFilters.add(tagFilter);
-        tagFilter.addActionListener(e1 -> dialogToFilterByTag(true));
-        final JMenuItem tagFilterAllLayers = new JMenuItem("All layers: Keep elements of tag...");
-        submenuFilters.add(tagFilterAllLayers);
-        tagFilterAllLayers.addActionListener(e1 -> dialogToFilterByTag(false));
-
-        popup.add(submenuFilters);
-        popup.addSeparator();
 
         if (callback.getVisualizationState().isNetPlanEditable())
         {

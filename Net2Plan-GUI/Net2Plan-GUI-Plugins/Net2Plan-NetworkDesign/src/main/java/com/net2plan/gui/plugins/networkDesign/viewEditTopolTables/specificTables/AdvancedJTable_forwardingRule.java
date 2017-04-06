@@ -18,7 +18,6 @@ import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.JScrollPopupMenu;
 import com.net2plan.gui.utils.StringLabeller;
@@ -290,56 +289,17 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
 
         /* Add the popup menu option of the filters */
         final List<Pair<Demand, Link>> selectedFRs = selection.getForwardingRules();
-        final JMenu submenuFilters = new JMenu("Filters");
-        if (!selectedFRs.isEmpty())
+        if (!frRowsInTheTable.isEmpty())
         {
-            final JMenuItem filterKeepElementsAffectedThisLayer = new JMenuItem("This layer: Keep elements associated to this forwarding rule traffic");
-            final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this forwarding rule traffic");
-            submenuFilters.add(filterKeepElementsAffectedThisLayer);
-            if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
-            filterKeepElementsAffectedThisLayer.addActionListener(e1 ->
-            {
-                if (selectedFRs.isEmpty()) return;
-                TBFToFromCarriedTraffic filter = null;
-                for (Pair<Demand, Link> fr : selectedFRs)
-                {
-                    if (filter == null)
-                        filter = new TBFToFromCarriedTraffic(fr, true);
-                    else
-                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(fr, true));
-                }
-                callback.getVisualizationState().updateTableRowFilter(filter, true);
-                callback.updateVisualizationJustTables();
-            });
-            filterKeepElementsAffectedAllLayers.addActionListener(e1 ->
-            {
-                if (selectedFRs.isEmpty()) return;
-                TBFToFromCarriedTraffic filter = null;
-                for (Pair<Demand, Link> fr : selectedFRs)
-                {
-                    if (filter == null)
-                        filter = new TBFToFromCarriedTraffic(fr, false);
-                    else
-                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(fr, false));
-                }
-                callback.getVisualizationState().updateTableRowFilter(filter, true);
-                callback.updateVisualizationJustTables();
-            });
+            addFilterOptions(e, selection, popup);
+            popup.addSeparator();
         }
-        popup.add(submenuFilters);
-        popup.addSeparator();
-
 
         if (callback.getVisualizationState().isNetPlanEditable())
         {
             popup.add(getAddOption());
-            for (JComponent item : getExtraAddOptions())
-                popup.add(item);
-        }
 
-        if (!frRowsInTheTable.isEmpty())
-        {
-            if (callback.getVisualizationState().isNetPlanEditable())
+            if (!frRowsInTheTable.isEmpty())
             {
                 if (!selectedFRs.isEmpty())
                 {
@@ -372,6 +332,9 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
                     popup.add(removeItem);
                 }
             }
+
+            for (JComponent item : getExtraAddOptions())
+                popup.add(item);
         }
 
         popup.show(e.getComponent(), e.getX(), e.getY());
