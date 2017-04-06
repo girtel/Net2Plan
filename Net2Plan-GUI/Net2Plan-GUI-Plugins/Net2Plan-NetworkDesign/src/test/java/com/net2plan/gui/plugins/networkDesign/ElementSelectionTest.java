@@ -56,7 +56,7 @@ public class ElementSelectionTest
     }
 
     @Test
-    public void inverTest()
+    public void invertTest()
     {
         final List<Node> selectedNodes = new ArrayList<>();
         selectedNodes.add(netPlan.getNodeByName("Node 1"));

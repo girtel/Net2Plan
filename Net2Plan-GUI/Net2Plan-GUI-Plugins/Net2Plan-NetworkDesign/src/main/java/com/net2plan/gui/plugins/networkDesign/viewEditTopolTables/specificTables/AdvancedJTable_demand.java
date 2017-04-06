@@ -383,71 +383,84 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         /* Add the popup menu option of the filters */
         final List<Demand> selectedDemands = (List<Demand>) selection.getNetworkElements();
 
-    	final NetPlan netPlan = callback.getDesign();
-    	final boolean isMultilayerDesign = netPlan.isMultilayer();
+        final NetPlan netPlan = callback.getDesign();
+        final boolean isMultilayerDesign = netPlan.isMultilayer();
 
-    	for (boolean applyJustToThisLayer : isMultilayerDesign? new boolean [] {true , false} : new boolean [] {true})
-    	{
-            JMenu submenuFilters = null;
-            if (applyJustToThisLayer)
-            	submenuFilters = new JMenu("Apply filter to this layer");
-            else 
-            	submenuFilters = new JMenu("Apply filter to all layers");
-    		
-	        for (FilterCombinationType filterCombinationType : FilterCombinationType.values())
-	        {
-	            JMenu filterCombinationSubMenu = null;
-	            switch (filterCombinationType)
-	            {
-		            case INCLUDEIF_AND: filterCombinationSubMenu = new JMenu("Filter (add elements that...)"); break;
-		            case INCLUDEIF_OR: filterCombinationSubMenu = new JMenu("Filter (keep elements that...)"); break;
-		            default: throw new RuntimeException ();
-	            }
-                final JMenuItem trafficBasedFilterMenu = new JMenuItem("Elements associated to this demand traffic");
-                filterCombinationSubMenu.add(trafficBasedFilterMenu);
-                trafficBasedFilterMenu.addActionListener(e1 ->
-                {
-                	if (selectedDemands.isEmpty()) return;
-                	TBFToFromCarriedTraffic filter = null;
-                	for (Demand d : selectedDemands)
-                	{
-                		if (filter == null)
-                			filter = new TBFToFromCarriedTraffic(d, applyJustToThisLayer);
-                		else
-                			filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(d, applyJustToThisLayer));
-                	}
-                    callback.getVisualizationState().updateTableRowFilter(filter , filterCombinationType);
-                    callback.updateVisualizationJustTables();
-                });
-	            final JMenuItem tagFilterMenu = new JMenuItem("Elements with tag...");
-	            filterCombinationSubMenu.add(tagFilterMenu);
-	            tagFilterMenu.addActionListener(e1 -> dialogToFilterByTag(applyJustToThisLayer , filterCombinationType));
-	
-	            popup.add(submenuFilters);
-	        }        		
-    	}
-    	
-        if (!selectedDemands.isEmpty())
+        if (!demandRowsInTheTable.isEmpty())
         {
-            final JMenu submenuFilters_filterIn = new JMenu("Keep only selected elements in this table");
-            submenuFilters_filterIn.addActionListener(e1 ->
+            for (boolean applyJustToThisLayer : isMultilayerDesign ? new boolean[]{true, false} : new boolean[]{true})
             {
-            	TBFSelectionBased filter = new TBFSelectionBased(callback.getDesign(), selection);
-                callback.getVisualizationState().updateTableRowFilter(filter , FilterCombinationType.INCLUDEIF_AND);
-                callback.updateVisualizationJustTables();
-            });
-            final JMenu submenuFilters_filterOut = new JMenu("Filter-out selected elements in this table");
-            submenuFilters_filterOut.addActionListener(e1 ->
-            {
-            	TBFSelectionBased filter = new TBFSelectionBased(callback.getDesign(), selection);
-                callback.getVisualizationState().updateTableRowFilter(filter , FilterCombinationType.INCLUDEIF_AND);
-                callback.updateVisualizationJustTables();
-            });
-        	
-            popup.add(submenuFilters);
+                final JMenu submenuFilters;
+                if (applyJustToThisLayer)
+                    submenuFilters = new JMenu("Apply filter to this layer");
+                else
+                    submenuFilters = new JMenu("Apply filter to all layers");
+
+                for (FilterCombinationType filterCombinationType : FilterCombinationType.values())
+                {
+                    final JMenu filterCombinationSubMenu;
+                    switch (filterCombinationType)
+                    {
+                        case INCLUDEIF_AND:
+                            filterCombinationSubMenu = new JMenu("Add elements that...)");
+                            break;
+                        case INCLUDEIF_OR:
+                            filterCombinationSubMenu = new JMenu("Keep elements that...)");
+                            break;
+                        default:
+                            throw new RuntimeException();
+                    }
+
+                    final JMenuItem trafficBasedFilterMenu = new JMenuItem("Elements associated to this demand traffic");
+                    filterCombinationSubMenu.add(trafficBasedFilterMenu);
+                    trafficBasedFilterMenu.addActionListener(e1 ->
+                    {
+                        if (selectedDemands.isEmpty()) return;
+                        TBFToFromCarriedTraffic filter = null;
+                        for (Demand d : selectedDemands)
+                        {
+                            if (filter == null)
+                                filter = new TBFToFromCarriedTraffic(d, applyJustToThisLayer);
+                            else
+                                filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(d, applyJustToThisLayer));
+                        }
+                        callback.getVisualizationState().updateTableRowFilter(filter, filterCombinationType);
+                        callback.updateVisualizationJustTables();
+                    });
+                    final JMenuItem tagFilterMenu = new JMenuItem("Elements with tag...");
+                    filterCombinationSubMenu.add(tagFilterMenu);
+                    tagFilterMenu.addActionListener(e1 -> dialogToFilterByTag(applyJustToThisLayer, filterCombinationType));
+                }
+
+                if (applyJustToThisLayer && !selectedDemands.isEmpty())
+                {
+                    final JMenuItem submenuFilters_filterIn = new JMenu("Keep only selected elements in this table");
+                    submenuFilters_filterIn.addActionListener(e1 ->
+                    {
+                        TBFSelectionBased filter = new TBFSelectionBased(callback.getDesign(), selection);
+                        callback.getVisualizationState().updateTableRowFilter(filter, FilterCombinationType.INCLUDEIF_AND);
+                        callback.updateVisualizationJustTables();
+                    });
+                    final JMenuItem submenuFilters_filterOut = new JMenu("Filter-out selected elements in this table");
+                    submenuFilters_filterOut.addActionListener(e1 ->
+                    {
+                        final ElementSelection invertedSelection = selection.invertSelection();
+                        if (invertedSelection == null) throw new Net2PlanException("Could not invert selection for the given elements.");
+
+                        TBFSelectionBased filter = new TBFSelectionBased(callback.getDesign(), invertedSelection);
+                        callback.getVisualizationState().updateTableRowFilter(filter, FilterCombinationType.INCLUDEIF_AND);
+                        callback.updateVisualizationJustTables();
+                    });
+
+                    submenuFilters.add(submenuFilters_filterIn);
+                    submenuFilters.add(submenuFilters_filterOut);
+                }
+
+                popup.add(submenuFilters);
+            }
+
+            popup.addSeparator();
         }
-        
-        popup.addSeparator();
 
         if (callback.getVisualizationState().isNetPlanEditable())
         {
