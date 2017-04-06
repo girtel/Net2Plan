@@ -51,9 +51,9 @@ public class TBFTagBasedTest
         link0 = netPlan.addLink(node1, node2, 0, 0, 1e3, null);
         link1 = netPlan.addLink(node2, node3, 0, 0, 1e3, null);
 
-        link0.addTag("Hola");
-        link1.addTag("Hola");
-        link1.addTag("Mundo");
+        link0.addTag("Hello");
+        link1.addTag("Hello");
+        link1.addTag("World");
 
         netPlan.setNetworkLayerDefault(netPlan.getNetworkLayer("Layer 1"));
 
@@ -63,10 +63,10 @@ public class TBFTagBasedTest
         link10 = netPlan.addLink(node10, node11, 0, 0, 1e3, null);
         link11 = netPlan.addLink(node11, node10, 0, 0, 1e3, null);
 
-        link10.addTag("Que");
-        link10.addTag("Tal");
-        link11.addTag("Hola");
-        link11.addTag("Que");
+        link10.addTag("How");
+        link10.addTag("You");
+        link11.addTag("Hello");
+        link11.addTag("How");
 
         netPlan.setNetworkLayerDefault(netPlan.getNetworkLayer("Layer 0"));
     }
@@ -74,7 +74,7 @@ public class TBFTagBasedTest
     @Test
     public void layerFilterContainsTagTest()
     {
-        filter = new TBFTagBased(netPlan, layer0, "Mundo", "");
+        filter = new TBFTagBased(netPlan, layer0, "World", "");
 
         final Link[] links = {link1};
 
@@ -84,7 +84,7 @@ public class TBFTagBasedTest
     @Test
     public void layerFilterNotContainsTagTest()
     {
-        filter = new TBFTagBased(netPlan, layer0, "", "Hola");
+        filter = new TBFTagBased(netPlan, layer0, "", "Hello");
 
         final Link[] links = {};
 
@@ -94,7 +94,7 @@ public class TBFTagBasedTest
     @Test
     public void layerFilterCombinationTest()
     {
-        filter = new TBFTagBased(netPlan, netPlan.getNetworkLayer("Layer 0"), "Hola", "Mundo");
+        filter = new TBFTagBased(netPlan, netPlan.getNetworkLayer("Layer 0"), "Hello", "World");
 
         final Link[] links = {link0};
 
@@ -104,7 +104,7 @@ public class TBFTagBasedTest
     @Test
     public void allLayersFilterContainsTagTest()
     {
-        filter = new TBFTagBased(netPlan, null, "Hola", "");
+        filter = new TBFTagBased(netPlan, null, "Hello", "");
 
         final Link[] links0 = {link0, link1};
         final Link[] links1 = {link11};
@@ -116,7 +116,7 @@ public class TBFTagBasedTest
     @Test
     public void allLayersFilterNotContainsTagTest()
     {
-        filter = new TBFTagBased(netPlan, null, "", "Hola");
+        filter = new TBFTagBased(netPlan, null, "", "Hello");
 
         final Link[] links0 = {};
         final Link[] links1 = {link10};
@@ -128,7 +128,7 @@ public class TBFTagBasedTest
     @Test
     public void allLayersFilterCombinationTest()
     {
-        filter = new TBFTagBased(netPlan, null, "Hola", "Mundo");
+        filter = new TBFTagBased(netPlan, null, "Hello", "World");
 
         final Link[] links0 = {link0};
         final Link[] links1 = {link11};
@@ -136,4 +136,6 @@ public class TBFTagBasedTest
         Assert.assertArrayEquals(links0, filter.getVisibleLinks(layer0).toArray());
         Assert.assertArrayEquals(links1, filter.getVisibleLinks(layer1).toArray());
     }
+
+
 }
