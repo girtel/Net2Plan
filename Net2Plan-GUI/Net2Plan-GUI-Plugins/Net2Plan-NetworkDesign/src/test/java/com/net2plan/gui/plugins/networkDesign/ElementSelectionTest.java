@@ -75,6 +75,24 @@ public class ElementSelectionTest
     }
 
     @Test
+    public void invertEmptySelectionTest()
+    {
+        elementSelection = new ElementSelection();
+        final ElementSelection invertSelection = this.elementSelection.invertSelection();
+
+        assertNull(invertSelection);
+    }
+
+    @Test
+    public void invertInvalidElementTypeTest()
+    {
+        elementSelection = new ElementSelection(NetworkElementType.LAYER, netPlan.getNetworkLayers());
+        final ElementSelection invertSelection = this.elementSelection.invertSelection();
+
+        assertNull(invertSelection);
+    }
+
+    @Test
     public void buildEmptySelection()
     {
         elementSelection = new ElementSelection();
