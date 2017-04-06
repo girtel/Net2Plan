@@ -16,29 +16,22 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters;
 
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
-import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.internal.Constants;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.assertArrayEquals;
 
 /**
  * @author Jorge San Emeterio Villalain
  * @date 6/04/17
  */
-public class TBFSelectionBasedTest
+public class TBFToFromCarriedTrafficTest
 {
     private static NetPlan netPlan;
     private static NetworkLayer layer;
     private static ElementSelection selection;
-    private static TBFSelectionBased filter;
+    private static TBFToFromCarriedTraffic filter;
 
     @BeforeClass
     public static void setUp()
@@ -57,42 +50,8 @@ public class TBFSelectionBasedTest
     }
 
     @Test
-    public void filterNodeTest()
+    public void filterTest()
     {
-        final List<Node> nodeList = new ArrayList<>();
-        nodeList.add(netPlan.getNodeByName("Node 1"));
-        nodeList.add(netPlan.getNodeByName("Node 2"));
 
-        selection = new ElementSelection(Constants.NetworkElementType.NODE, nodeList);
-
-        filter = new TBFSelectionBased(netPlan, selection);
-
-        assertArrayEquals(nodeList.toArray(), filter.getVisibleNodes(layer).toArray());
-        assertArrayEquals(netPlan.getLinks(layer).toArray(), filter.getVisibleLinks(layer).toArray());
-    }
-
-    @Test
-    public void filterLinkTest()
-    {
-        final List<Link> linkList = new ArrayList<>();
-        linkList.add(netPlan.getLink(0));
-
-        selection = new ElementSelection(Constants.NetworkElementType.LINK, linkList);
-
-        filter = new TBFSelectionBased(netPlan, selection);
-
-        assertArrayEquals(linkList.toArray(), filter.getVisibleLinks(layer).toArray());
-        assertArrayEquals(netPlan.getNodes().toArray(), filter.getVisibleNodes(layer).toArray());
-    }
-
-    @Test
-    public void filterNoSelectionTest()
-    {
-        selection = new ElementSelection();
-
-        filter = new TBFSelectionBased(netPlan, selection);
-
-        assertArrayEquals(netPlan.getNodes().toArray(), filter.getVisibleNodes(layer).toArray());
-        assertArrayEquals(netPlan.getLinks().toArray(), filter.getVisibleLinks(layer).toArray());
     }
 }

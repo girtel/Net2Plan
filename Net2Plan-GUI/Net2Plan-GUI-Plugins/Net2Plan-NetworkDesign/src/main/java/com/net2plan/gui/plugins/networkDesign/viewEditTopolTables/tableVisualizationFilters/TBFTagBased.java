@@ -3,16 +3,18 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualiz
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.interfaces.networkDesign.*;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+@SuppressWarnings("unchecked")
 public class TBFTagBased extends ITableRowFilter
 {
     private final NetworkLayer restrictToThisLayer;
     private final String tagContainsName, tagDoesNotContainName;
 
-    public TBFTagBased(NetPlan netPlan, NetworkLayer restrictToThisLayer, String tagContainsName, String tagDoesNotContainName)
+    public TBFTagBased(NetPlan netPlan, @Nullable NetworkLayer restrictToThisLayer, String tagContainsName, String tagDoesNotContainName)
     {
         super(netPlan);
 
@@ -86,16 +88,6 @@ public class TBFTagBased extends ITableRowFilter
             boolean containsOk = this.tagContainsName.isEmpty() || tags.contains(tagContainsName);
             boolean doesNotContainOk = this.tagDoesNotContainName.isEmpty() || !tags.contains(tagDoesNotContainName);
             if (containsOk && doesNotContainOk) res.add(e);
-            
-//            switch (filterType)
-//            {
-//                case AND:
-//                    if (containsOk && doesNotContainOk) res.add(e);
-//                    break;
-//                case OR:
-//                    if (containsOk || doesNotContainOk) res.add(e);
-//                    break;
-//            }
         }
         return res;
     }
