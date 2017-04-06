@@ -93,6 +93,7 @@ public class ViewEditTopologyTablesPane extends JPanel
                     final JPanel buttonsPanel = new JPanel();
                     final JButton resetTableRowFilters = new JButton("Reset VFs");
                     buttonsPanel.add(resetTableRowFilters, BorderLayout.EAST);
+
                     resetTableRowFilters.addActionListener(new ActionListener()
                     {
                         @Override

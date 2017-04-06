@@ -5,23 +5,21 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.net2plan.gui.plugins.networkDesign.ElementSelection.*;
 
 @SuppressWarnings("unchecked")
 public class TBFSelectionBased extends ITableRowFilter
 {
-    public TBFSelectionBased(NetPlan netPlan, ElementSelection elementSelection)
+    public TBFSelectionBased(@Nonnull NetPlan netPlan, @Nonnull ElementSelection elementSelection)
     {
         super(netPlan);
 
-        assert netPlan != null;
-        assert elementSelection != null;
-
         // Selections can only be done at the active layer.
         final NetworkLayer layer = netPlan.getNetworkLayerDefault();
-
-        final NetworkElementType selectionType = elementSelection.getElementType();
 
         vDemands.put(layer, netPlan.getDemands(layer));
         vLinks.put(layer, netPlan.getLinks(layer));
@@ -35,6 +33,10 @@ public class TBFSelectionBased extends ITableRowFilter
             vRoutes.put(layer, netPlan.getRoutes(layer));
         else
             vFRs.put(layer, new ArrayList<>(netPlan.getForwardingRules(layer).keySet()));
+
+        if (elementSelection.getSelectionType() == SelectionType.EMPTY) return;
+
+        final NetworkElementType selectionType = elementSelection.getElementType();
 
         switch (selectionType)
         {

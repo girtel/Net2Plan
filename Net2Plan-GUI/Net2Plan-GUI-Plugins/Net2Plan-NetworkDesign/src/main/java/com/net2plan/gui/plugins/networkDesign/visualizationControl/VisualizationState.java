@@ -102,6 +102,7 @@ public class VisualizationState
         this.whatIfAnalysisActive = isWhatIfAnalysisActive;
     }
 
+    @Nullable
     public ITableRowFilter getTableRowFilter()
     {
         return tableRowFilter;
