@@ -43,6 +43,7 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
+import static com.net2plan.gui.plugins.networkDesign.ElementSelection.*;
 import static com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
 
 
@@ -1162,7 +1163,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 if (!nothingSelected)
                 {
                     if (!selection.getFirst().isEmpty())
-                        elementHolder = new ElementSelection(ElementSelection.getElementType(selection.getFirst()), selection.getFirst());
+                        elementHolder = new ElementSelection(getElementType(selection.getFirst()), selection.getFirst());
                     else if (!selection.getSecond().isEmpty())
                         elementHolder = new ElementSelection(selection.getSecond());
                     else elementHolder = new ElementSelection();
@@ -1600,8 +1601,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         final NetPlan netPlan = callback.getDesign();
         final boolean isMultilayerDesign = netPlan.isMultilayer();
 
-        final List<? extends NetworkElement> selectedElements = selection.getNetworkElements();
-
         for (boolean applyJustToThisLayer : isMultilayerDesign ? new boolean[]{true, false} : new boolean[]{true})
         {
             final JMenu submenuFilters;
@@ -1625,19 +1624,87 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                         throw new RuntimeException();
                 }
 
-                final JMenuItem trafficBasedFilterMenu = new JMenuItem("Elements associated to this demand traffic");
+                final JMenuItem trafficBasedFilterMenu = new JMenuItem("Elements affected by these " + networkElementType + "s");
                 filterCombinationSubMenu.add(trafficBasedFilterMenu);
                 trafficBasedFilterMenu.addActionListener(e1 ->
                 {
-                    if (selectedElements.isEmpty()) return;
+                    if (selection.getSelectionType() == SelectionType.EMPTY) return;
                     TBFToFromCarriedTraffic filter = null;
-                    for (NetworkElement element: selectedElements)
+
+                    if (selection.getSelectionType() == SelectionType.NETWORK_ELEMENT)
                     {
-                        if (filter == null)
-                            filter = new TBFToFromCarriedTraffic(element, applyJustToThisLayer);
-                        else
-                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(element, applyJustToThisLayer));
+                        final List<? extends NetworkElement> selectedElements = selection.getNetworkElements();
+                        final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
+                        for (NetworkElement element : selectedElements)
+                        {
+                            switch (NetworkElementType.getType(element))
+                            {
+                                case NODE:
+                                    if (filter == null)
+                                        filter = new TBFToFromCarriedTraffic((Node) element, layer, applyJustToThisLayer);
+                                    else
+                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Node) element, layer, applyJustToThisLayer));
+                                    break;
+                                case LINK:
+                                    if (filter == null)
+                                        filter = new TBFToFromCarriedTraffic((Link) element, applyJustToThisLayer);
+                                    else
+                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Link) element, applyJustToThisLayer));
+                                    break;
+                                case DEMAND:
+                                    if (filter == null)
+                                        filter = new TBFToFromCarriedTraffic((Demand) element, applyJustToThisLayer);
+                                    else
+                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Demand) element, applyJustToThisLayer));
+                                    break;
+                                case MULTICAST_DEMAND:
+                                    if (filter == null)
+                                        filter = new TBFToFromCarriedTraffic((MulticastDemand) element, applyJustToThisLayer);
+                                    else
+                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((MulticastDemand) element, applyJustToThisLayer));
+                                    break;
+                                case ROUTE:
+                                    if (filter == null)
+                                        filter = new TBFToFromCarriedTraffic((Route) element, applyJustToThisLayer);
+                                    else
+                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Route) element, applyJustToThisLayer));
+                                    break;
+                                case MULTICAST_TREE:
+                                    if (filter == null)
+                                        filter = new TBFToFromCarriedTraffic((MulticastTree) element, applyJustToThisLayer);
+                                    else
+                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((MulticastTree) element, applyJustToThisLayer));
+                                    break;
+                                case RESOURCE:
+                                    if (filter == null)
+                                        filter = new TBFToFromCarriedTraffic((Resource) element, layer, applyJustToThisLayer);
+                                    else
+                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Resource) element, layer, applyJustToThisLayer));
+                                    break;
+                                case SRG:
+                                    if (filter == null)
+                                        filter = new TBFToFromCarriedTraffic((SharedRiskGroup) element);
+                                    else
+                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((SharedRiskGroup) element));
+                                    break;
+                                default:
+                                    // TODO: Control exceptions on filters.
+                                    throw new RuntimeException();
+                            }
+                        }
+                    } else
+                    {
+                        final List<Pair<Demand, Link>> forwardingRules = selection.getForwardingRules();
+
+                        for (Pair<Demand, Link> forwardingRule : forwardingRules)
+                        {
+                            if (filter == null)
+                                filter = new TBFToFromCarriedTraffic(forwardingRule, applyJustToThisLayer);
+                            else
+                                filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(forwardingRule, applyJustToThisLayer));
+                        }
                     }
+
                     callback.getVisualizationState().updateTableRowFilter(filter, filterCombinationType);
                     callback.updateVisualizationJustTables();
                 });
@@ -1646,7 +1713,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 tagFilterMenu.addActionListener(e1 -> dialogToFilterByTag(applyJustToThisLayer, filterCombinationType));
             }
 
-            if (applyJustToThisLayer && !selectedElements.isEmpty())
+            if (applyJustToThisLayer)
             {
                 final JMenuItem submenuFilters_filterIn = new JMenu("Keep only selected elements in this table");
                 submenuFilters_filterIn.addActionListener(e1 ->
