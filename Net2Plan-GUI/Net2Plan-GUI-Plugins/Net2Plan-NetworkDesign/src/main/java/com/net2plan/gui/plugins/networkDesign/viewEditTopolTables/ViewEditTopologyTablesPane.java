@@ -2,6 +2,7 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables;
 
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.*;
@@ -97,7 +98,7 @@ public class ViewEditTopologyTablesPane extends JPanel
                         @Override
                         public void actionPerformed(ActionEvent e)
                         {
-                            callback.getVisualizationState().updateTableRowFilter(null , true);
+                            callback.getVisualizationState().updateTableRowFilter(null , FilterCombinationType.INCLUDEIF_AND);
                             callback.updateVisualizationJustTables();
                             callback.resetPickedStateAndUpdateView();
                         }
