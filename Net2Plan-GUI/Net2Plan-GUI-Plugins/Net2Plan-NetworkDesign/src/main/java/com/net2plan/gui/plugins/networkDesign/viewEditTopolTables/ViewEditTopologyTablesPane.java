@@ -103,6 +103,7 @@ public class ViewEditTopologyTablesPane extends JPanel
                             callback.resetPickedStateAndUpdateView();
                         }
                     });
+                    buttonsPanel.setOpaque(false);
                     labelsPanel.add(buttonsPanel, BorderLayout.EAST);
                 }
 

@@ -1605,9 +1605,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         {
             final JMenu submenuFilters;
             if (applyJustToThisLayer)
-                submenuFilters = new JMenu("Apply filter to this layer");
+                submenuFilters = new JMenu("Filters: Apply to this layer");
             else
-                submenuFilters = new JMenu("Apply filter to all layers");
+                submenuFilters = new JMenu("Filters: Apply to all layers");
 
             for (FilterCombinationType filterCombinationType : FilterCombinationType.values())
             {
@@ -1615,16 +1615,16 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 switch (filterCombinationType)
                 {
                     case INCLUDEIF_AND:
-                        filterCombinationSubMenu = new JMenu("Add elements that...)");
+                        filterCombinationSubMenu = new JMenu("Add elements that...");
                         break;
                     case INCLUDEIF_OR:
-                        filterCombinationSubMenu = new JMenu("Keep elements that...)");
+                        filterCombinationSubMenu = new JMenu("Keep elements that...");
                         break;
                     default:
                         throw new RuntimeException();
                 }
 
-                final JMenuItem trafficBasedFilterMenu = new JMenuItem("Elements affected by these " + networkElementType + "s");
+                final JMenuItem trafficBasedFilterMenu = new JMenuItem("Are affected by these " + networkElementType + "s");
                 filterCombinationSubMenu.add(trafficBasedFilterMenu);
                 trafficBasedFilterMenu.addActionListener(e1 ->
                 {
@@ -1708,21 +1708,23 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     callback.getVisualizationState().updateTableRowFilter(filter, filterCombinationType);
                     callback.updateVisualizationJustTables();
                 });
-                final JMenuItem tagFilterMenu = new JMenuItem("Elements with tag...");
+                final JMenuItem tagFilterMenu = new JMenuItem("Have tag...");
                 filterCombinationSubMenu.add(tagFilterMenu);
                 tagFilterMenu.addActionListener(e1 -> dialogToFilterByTag(applyJustToThisLayer, filterCombinationType));
+
+                submenuFilters.add(filterCombinationSubMenu);
             }
 
             if (applyJustToThisLayer)
             {
-                final JMenuItem submenuFilters_filterIn = new JMenu("Keep only selected elements in this table");
+                final JMenuItem submenuFilters_filterIn = new JMenuItem("Keep only selected elements in this table");
                 submenuFilters_filterIn.addActionListener(e1 ->
                 {
                     TBFSelectionBased filter = new TBFSelectionBased(callback.getDesign(), selection);
                     callback.getVisualizationState().updateTableRowFilter(filter, FilterCombinationType.INCLUDEIF_AND);
                     callback.updateVisualizationJustTables();
                 });
-                final JMenuItem submenuFilters_filterOut = new JMenu("Filter-out selected elements in this table");
+                final JMenuItem submenuFilters_filterOut = new JMenuItem("Filter-out selected elements in this table");
                 submenuFilters_filterOut.addActionListener(e1 ->
                 {
                     final ElementSelection invertedSelection = selection.invertSelection();
