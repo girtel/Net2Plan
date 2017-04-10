@@ -36,7 +36,6 @@ import static org.junit.Assert.assertNotNull;
 public class GUINetworkDesignTest
 {
     private static GUINetworkDesign callback;
-    private static NetPlan netPlan;
 
     @BeforeClass
     public static void setUp()
@@ -44,7 +43,7 @@ public class GUINetworkDesignTest
         callback = new GUINetworkDesign();
         callback.configure(new JPanel());
 
-        netPlan = new NetPlan();
+        final NetPlan netPlan = new NetPlan();
         callback.setDesign(netPlan);
         final Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> pair = VisualizationState.generateCanvasDefaultVisualizationLayerInfo(netPlan);
         callback.getVisualizationState().setCanvasLayerVisibilityAndOrder(callback.getDesign(), pair.getFirst(), pair.getSecond());
