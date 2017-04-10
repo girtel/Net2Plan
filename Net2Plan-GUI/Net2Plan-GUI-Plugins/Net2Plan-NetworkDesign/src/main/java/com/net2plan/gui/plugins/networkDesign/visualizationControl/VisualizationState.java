@@ -883,7 +883,11 @@ public class VisualizationState
                 final Set<Link> linksPrimary = thisLayerPropInfo.get(link).getFirst().values().stream().flatMap(set -> set.stream()).collect(Collectors.toSet());
                 final Set<Link> linksBackup = thisLayerPropInfo.get(link).getSecond().values().stream().flatMap(set -> set.stream()).collect(Collectors.toSet());
                 final Set<Link> linksMulticast = thisLayerPropInfo.get(link).getThird().values().stream().flatMap(set -> set.stream()).collect(Collectors.toSet());
-                drawColateralLinks(Sets.union(Sets.union(linksPrimary, linksBackup), linksMulticast), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES);
+                final Set<Link> links = new HashSet<> ();
+                if (linksPrimary != null) links.addAll(linksPrimary);
+                if (linksBackup != null) links.addAll(linksBackup);
+                if (linksMulticast != null) links.addAll(linksMulticast);
+                drawColateralLinks(links, VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES);
             }
         }
         if (showInCanvasLowerLayerPropagation && (this.getNetPlan().getNumberOfLayers() > 1))
@@ -1084,7 +1088,11 @@ public class VisualizationState
             final Set<Link> linksPrimary = thisLayerTraversalInfo.getFirst().values().stream().flatMap(set -> set.stream()).collect(Collectors.toSet());
             final Set<Link> linksBackup = thisLayerTraversalInfo.getSecond().values().stream().flatMap(set -> set.stream()).collect(Collectors.toSet());
             final Set<Link> linksMulticast = thisLayerTraversalInfo.getThird().values().stream().flatMap(set -> set.stream()).collect(Collectors.toSet());
-            drawColateralLinks(Sets.union(Sets.union(linksPrimary, linksBackup), linksMulticast), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+            final Set<Link> links = new HashSet<> ();
+            if (linksPrimary != null) links.addAll(linksPrimary);
+            if (linksBackup != null) links.addAll(linksBackup);
+            if (linksMulticast != null) links.addAll(linksMulticast);
+            drawColateralLinks(links, VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
         }
         if (showInCanvasLowerLayerPropagation && (this.getNetPlan().getNumberOfLayers() > 1) && pickedLink.isCoupled())
         {
@@ -1167,9 +1175,10 @@ public class VisualizationState
         {
             final Triple<Map<Demand, Set<Link>>, Map<Demand, Set<Link>>, Map<Pair<MulticastDemand, Node>, Set<Link>>> triple =
                     pickedLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
-            final Set<Link> linksPrimary = triple.getFirst().get(pickedDemand);
-            final Set<Link> linksBackup = triple.getSecond().get(pickedDemand);
-            drawColateralLinks(Sets.union(linksPrimary, linksBackup), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+            final Set<Link> links = new HashSet<> ();
+            if (triple.getFirst().containsKey(pickedDemand)) links.addAll(triple.getFirst().get(pickedDemand));
+            if (triple.getSecond().containsKey(pickedDemand)) links.addAll(triple.getSecond().get(pickedDemand));
+            drawColateralLinks(links, VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
         }
         if (showInCanvasLowerLayerPropagation && (this.getNetPlan().getNumberOfLayers() > 1) && pickedLink.isCoupled())
         {
