@@ -43,6 +43,4 @@ public interface IVisualizationCallback
 
     @Nonnull
     VisualizationState getVisualizationState();
-
-    boolean inOnlineSimulationMode();
 }
