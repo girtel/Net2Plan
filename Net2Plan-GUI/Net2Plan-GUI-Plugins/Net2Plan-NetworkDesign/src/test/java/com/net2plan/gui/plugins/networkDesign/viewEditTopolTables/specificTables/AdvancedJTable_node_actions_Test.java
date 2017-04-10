@@ -18,13 +18,15 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTable
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.swing.*;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.junit.Assert.*;
 
 /**
  * @author Jorge San Emeterio Villalain
@@ -68,7 +70,7 @@ public class AdvancedJTable_node_actions_Test
         showSelection.doClick();
 
         for (Node node : selection)
-            Assert.assertFalse(networkDesign.getVisualizationState().isHiddenOnCanvas(node));
+            assertFalse(networkDesign.getVisualizationState().isHiddenOnCanvas(node));
     }
 
     @Test
@@ -81,6 +83,26 @@ public class AdvancedJTable_node_actions_Test
         hideItem.doClick();
 
         for (Node node : selection)
-            Assert.assertTrue(networkDesign.getVisualizationState().isHiddenOnCanvas(node));
+            assertTrue(networkDesign.getVisualizationState().isHiddenOnCanvas(node));
+    }
+
+    @Test
+    public void switchCoordinatesTest()
+    {
+        final List<Point2D> expected = new ArrayList<>();
+        for (Node node : selection)
+        {
+            final Point2D point = node.getXYPositionMap();
+            expected.add(new Point2D.Double(point.getY(), point.getX()));
+        }
+
+        final JMenuItem switchCoordinates = new AdvancedJTable_node.SwitchCoordinatesMenuItem(networkDesign, selection);
+        switchCoordinates.doClick();
+
+        final List<Point2D> result = new ArrayList<>();
+        for (Node node : selection)
+            result.add(node.getXYPositionMap());
+
+        assertArrayEquals(expected.toArray(), result.toArray());
     }
 }

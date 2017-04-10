@@ -569,59 +569,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
         if (!selectedNodes.isEmpty())
         {
-            JMenuItem switchCoordinates = new JMenuItem("Switch selected nodes' coordinates from (x,y) to (y,x)");
-
-            switchCoordinates.addActionListener(e ->
-            {
-                for (Node node : selectedNodes)
-                {
-                    Point2D currentPosition = node.getXYPositionMap();
-                    node.setXYPositionMap(new Point2D.Double(currentPosition.getY(), currentPosition.getX()));
-                }
-
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-                callback.addNetPlanChange();
-            });
-
-            options.add(switchCoordinates);
-
-            JMenuItem nameFromAttribute = new JMenuItem("Set selected nodes' name from attribute");
-            nameFromAttribute.addActionListener(e ->
-            {
-                Set<String> attributeSet = new LinkedHashSet<String>();
-                for (Node selectedNode : selectedNodes)
-                    attributeSet.addAll(selectedNode.getAttributes().keySet());
-
-                try
-                {
-                    if (attributeSet.isEmpty()) throw new Exception("No attribute to select");
-
-                    final JComboBox selector = new WiderJComboBox();
-                    for (String attribute : attributeSet)
-                        selector.addItem(attribute);
-
-                    JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[]"));
-                    pane.add(new JLabel("Name: "));
-                    pane.add(selector, "growx, wrap");
-
-                    int result = JOptionPane.showConfirmDialog(null, pane, "Please select the attribute for name", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                    if (result != JOptionPane.OK_OPTION) return;
-
-                    String name = selector.getSelectedItem().toString();
-
-                    for (Node node : selectedNodes)
-                        node.setName(node.getAttribute(name));
-
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                    callback.addNetPlanChange();
-                } catch (Throwable ex)
-                {
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving name from attribute");
-                }
-            });
-
-            options.add(nameFromAttribute);
+            options.add(new SwitchCoordinatesMenuItem(callback, selectedNodes));
+            options.add(new NameFromAttributeMenuItem(callback, selectedNodes));
         }
 
         return options;
@@ -688,6 +637,67 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
                 callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.NODE));
                 callback.addNetPlanChange();
+            });
+        }
+    }
+
+    static class SwitchCoordinatesMenuItem extends JMenuItem
+    {
+        SwitchCoordinatesMenuItem(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        {
+            this.setText("Switch selected nodes' coordinates from (x,y) to (y,x)");
+            this.addActionListener(e ->
+            {
+                for (Node node : nodes)
+                {
+                    Point2D currentPosition = node.getXYPositionMap();
+                    node.setXYPositionMap(new Point2D.Double(currentPosition.getY(), currentPosition.getX()));
+                }
+
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
+                callback.addNetPlanChange();
+            });
+        }
+    }
+
+    static class NameFromAttributeMenuItem extends JMenuItem
+    {
+        NameFromAttributeMenuItem(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        {
+            this.setText("Set selected nodes' name from attribute");
+            this.addActionListener(e ->
+            {
+                Set<String> attributeSet = new LinkedHashSet<String>();
+                for (Node selectedNode : nodes)
+                    attributeSet.addAll(selectedNode.getAttributes().keySet());
+
+                try
+                {
+                    if (attributeSet.isEmpty()) throw new Exception("No attribute to select");
+
+                    final JComboBox selector = new WiderJComboBox();
+                    for (String attribute : attributeSet)
+                        selector.addItem(attribute);
+
+                    JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[]"));
+                    pane.add(new JLabel("Name: "));
+                    pane.add(selector, "growx, wrap");
+
+                    int result = JOptionPane.showConfirmDialog(null, pane, "Please select the attribute for name", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    if (result != JOptionPane.OK_OPTION) return;
+
+                    String name = selector.getSelectedItem().toString();
+
+                    for (Node node : nodes)
+                        node.setName(node.getAttribute(name));
+
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                    callback.addNetPlanChange();
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving name from attribute");
+                }
             });
         }
     }
