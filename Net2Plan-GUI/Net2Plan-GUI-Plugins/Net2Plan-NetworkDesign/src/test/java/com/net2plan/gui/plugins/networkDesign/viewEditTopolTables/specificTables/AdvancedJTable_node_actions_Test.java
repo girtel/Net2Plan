@@ -18,7 +18,7 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTable
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -39,8 +39,8 @@ public class AdvancedJTable_node_actions_Test
     private static NetPlan netPlan;
     private static List<Node> selection;
 
-    @BeforeClass
-    public static void setUp()
+    @Before
+    public void setUp()
     {
         networkDesign = new GUINetworkDesign();
         networkDesign.configure(new JPanel());
@@ -49,8 +49,6 @@ public class AdvancedJTable_node_actions_Test
 
         final Node node1 = netPlan.addNode(0, 0, "Node 1", null);
         final Node node2 = netPlan.addNode(0, 0, "Node 2", null);
-        netPlan.addNode(0, 0, "Node 3", null);
-        netPlan.addNode(0, 0, "Node 4", null);
 
         selection = new ArrayList<>();
         selection.add(node1);
@@ -66,7 +64,7 @@ public class AdvancedJTable_node_actions_Test
         for (Node node : selection)
             networkDesign.getVisualizationState().hideOnCanvas(node);
 
-        final JMenuItem showSelection = new AdvancedJTable_node.ShowSelectionMenuItem(networkDesign, selection);
+        final JMenuItem showSelection = new AdvancedJTable_node.MenuItem_ShowSelection(networkDesign, selection);
         showSelection.doClick();
 
         for (Node node : selection)
@@ -79,7 +77,7 @@ public class AdvancedJTable_node_actions_Test
         for (Node node : selection)
             networkDesign.getVisualizationState().showOnCanvas(node);
 
-        final JMenuItem hideItem = new AdvancedJTable_node.HideSelectionMenuItem(networkDesign, selection);
+        final JMenuItem hideItem = new AdvancedJTable_node.MenuItem_HideSelection(networkDesign, selection);
         hideItem.doClick();
 
         for (Node node : selection)
@@ -96,7 +94,7 @@ public class AdvancedJTable_node_actions_Test
             expected.add(new Point2D.Double(point.getY(), point.getX()));
         }
 
-        final JMenuItem switchCoordinates = new AdvancedJTable_node.SwitchCoordinatesMenuItem(networkDesign, selection);
+        final JMenuItem switchCoordinates = new AdvancedJTable_node.MenuItem_SwitchCoordinates(networkDesign, selection);
         switchCoordinates.doClick();
 
         final List<Point2D> result = new ArrayList<>();
@@ -104,5 +102,18 @@ public class AdvancedJTable_node_actions_Test
             result.add(node.getXYPositionMap());
 
         assertArrayEquals(expected.toArray(), result.toArray());
+    }
+
+    @Test
+    public void removeNodesTest()
+    {
+        for (Node node : selection)
+            assertNotNull(netPlan.getNodeFromId(node.getId()));
+
+        final JMenuItem removeSelected = new AdvancedJTable_node.MenuItem_RemoveNodes(networkDesign, selection);
+        removeSelected.doClick();
+
+        for (Node node : selection)
+            assertNull(netPlan.getNodeFromId(node.getId()));
     }
 }

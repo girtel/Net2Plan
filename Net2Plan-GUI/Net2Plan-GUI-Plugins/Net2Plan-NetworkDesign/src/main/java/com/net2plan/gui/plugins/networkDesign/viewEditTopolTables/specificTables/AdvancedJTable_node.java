@@ -434,27 +434,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             {
                 if (!selectedNodes.isEmpty())
                 {
-                    JMenuItem removeItem = new JMenuItem("Remove selected nodes");
-                    removeItem.addActionListener(new ActionListener()
-                    {
-                        @Override
-                        public void actionPerformed(ActionEvent e)
-                        {
-                            try
-                            {
-                                for (Node selectedNode : selectedNodes) selectedNode.remove();
-                                callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                                callback.addNetPlanChange();
-                            } catch (Throwable ex)
-                            {
-                                ErrorHandling.addErrorOrException(ex, getClass());
-                                ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
-                            }
-                        }
-                    });
-
-                    popup.add(removeItem);
+                    popup.add(new MenuItem_RemoveNodes(callback, selectedNodes));
                     popup.addSeparator();
                 }
 
@@ -462,39 +442,6 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
                 List<JComponent> forcedOptions = getForcedOptions(selection);
                 for (JComponent item : forcedOptions) popup.add(item);
-
-                if (popup.getSubElements().length > 0) popup.addSeparator();
-
-                JMenuItem removeAllNodesFilteredOut = new JMenuItem("Remove all filtered out nodes");
-                removeAllNodesFilteredOut.addActionListener(e1 ->
-                {
-                    NetPlan netPlan = callback.getDesign();
-                    try
-                    {
-                        for (Node n : new ArrayList<>(netPlan.getNodes()))
-                            if (!rowsInTheTable.contains(n)) n.remove();
-                        callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                        callback.addNetPlanChange();
-                    } catch (Throwable ex)
-                    {
-                        ex.printStackTrace();
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to complete this action");
-                    }
-                });
-                popup.add(removeAllNodesFilteredOut);
-
-                JMenuItem hideAllNodesFilteredOut = new JMenuItem("Hide all filtered out nodes");
-                hideAllNodesFilteredOut.addActionListener(e1 ->
-                {
-                    Set<Node> rowsInTheTableSet = new HashSet<>(rowsInTheTable);
-                    for (Node n : callback.getDesign().getNodes())
-                        if (!rowsInTheTableSet.contains(n))
-                            callback.getVisualizationState().hideOnCanvas(n);
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                    callback.addNetPlanChange();
-                });
-                popup.add(hideAllNodesFilteredOut);
 
                 List<JComponent> extraOptions = getExtraOptions(selection);
                 if (!extraOptions.isEmpty()) popup.addSeparator();
@@ -569,8 +516,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
         if (!selectedNodes.isEmpty())
         {
-            options.add(new SwitchCoordinatesMenuItem(callback, selectedNodes));
-            options.add(new NameFromAttributeMenuItem(callback, selectedNodes));
+            options.add(new MenuItem_SwitchCoordinates(callback, selectedNodes));
+            options.add(new MenuItem_NameFromAttribute(callback, selectedNodes));
         }
 
         return options;
@@ -591,8 +538,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             {
                 final List<Node> nodes = (List<Node>) selection.getNetworkElements();
 
-                options.add(new ShowSelectionMenuItem(callback, nodes));
-                options.add(new HideSelectionMenuItem(callback, nodes));
+                options.add(new MenuItem_ShowSelection(callback, nodes));
+                options.add(new MenuItem_HideSelection(callback, nodes));
             }
         }
 
@@ -606,9 +553,9 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         return rf == null ? callback.getDesign().getNodes() : rf.getVisibleNodes(layer);
     }
 
-    static class ShowSelectionMenuItem extends JMenuItem
+    static class MenuItem_ShowSelection extends JMenuItem
     {
-        ShowSelectionMenuItem(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        MenuItem_ShowSelection(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
         {
             this.setText("Show selected nodes");
 
@@ -625,9 +572,9 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         }
     }
 
-    static class HideSelectionMenuItem extends JMenuItem
+    static class MenuItem_HideSelection extends JMenuItem
     {
-        HideSelectionMenuItem(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        MenuItem_HideSelection(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
         {
             this.setText("Hide selected nodes");
             this.addActionListener(e ->
@@ -641,9 +588,9 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         }
     }
 
-    static class SwitchCoordinatesMenuItem extends JMenuItem
+    static class MenuItem_SwitchCoordinates extends JMenuItem
     {
-        SwitchCoordinatesMenuItem(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        MenuItem_SwitchCoordinates(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
         {
             this.setText("Switch selected nodes' coordinates from (x,y) to (y,x)");
             this.addActionListener(e ->
@@ -661,9 +608,9 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         }
     }
 
-    static class NameFromAttributeMenuItem extends JMenuItem
+    static class MenuItem_NameFromAttribute extends JMenuItem
     {
-        NameFromAttributeMenuItem(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        MenuItem_NameFromAttribute(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
         {
             this.setText("Set selected nodes' name from attribute");
             this.addActionListener(e ->
@@ -697,6 +644,32 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                 } catch (Throwable ex)
                 {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving name from attribute");
+                }
+            });
+        }
+    }
+
+    static class MenuItem_RemoveNodes extends JMenuItem
+    {
+        MenuItem_RemoveNodes(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        {
+            this.setText("Remove selected nodes");
+            this.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    try
+                    {
+                        for (Node selectedNode : nodes) selectedNode.remove();
+                        callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                        callback.addNetPlanChange();
+                    } catch (Throwable ex)
+                    {
+                        ErrorHandling.addErrorOrException(ex, getClass());
+                        ErrorHandling.showErrorDialog("Unable to remove nodes");
+                    }
                 }
             });
         }
