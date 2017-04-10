@@ -16,15 +16,14 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.internal.Constants;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.swing.*;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,13 +32,10 @@ import java.util.List;
  */
 public class AdvancedJTable_node_actions_Test
 {
-    private static AdvancedJTable_node nodeTable;
-    private static List<JComponent> forcedList;
-
     private static GUINetworkDesign networkDesign;
-    private static NetPlan netPlan;
 
-    private static ElementSelection selection;
+    private static NetPlan netPlan;
+    private static List<Node> selection;
 
     @BeforeClass
     public static void setUp()
@@ -48,19 +44,43 @@ public class AdvancedJTable_node_actions_Test
         networkDesign.configure(new JPanel());
 
         netPlan = new NetPlan();
+
         final Node node1 = netPlan.addNode(0, 0, "Node 1", null);
         final Node node2 = netPlan.addNode(0, 0, "Node 2", null);
-        final Node node3 = netPlan.addNode(0, 0, "Node 3", null);
+        netPlan.addNode(0, 0, "Node 3", null);
+        netPlan.addNode(0, 0, "Node 4", null);
 
-        nodeTable = new AdvancedJTable_node(networkDesign);
+        selection = new ArrayList<>();
+        selection.add(node1);
+        selection.add(node2);
 
-        selection = new ElementSelection(Constants.NetworkElementType.NODE, Arrays.asList(node1, node2));
-
-        forcedList = nodeTable.getForcedOptions(selection);
+        networkDesign.setCurrentNetPlanDoNotUpdateVisualization(netPlan);
+        networkDesign.updateVisualizationAfterNewTopology();
     }
 
     @Test
     public void showNodeTest()
     {
+        for (Node node : selection)
+            networkDesign.getVisualizationState().hideOnCanvas(node);
+
+        final JMenuItem showSelection = new AdvancedJTable_node.ShowSelectionMenuItem(networkDesign, selection);
+        showSelection.doClick();
+
+        for (Node node : selection)
+            Assert.assertFalse(networkDesign.getVisualizationState().isHiddenOnCanvas(node));
+    }
+
+    @Test
+    public void hideNodeTest()
+    {
+        for (Node node : selection)
+            networkDesign.getVisualizationState().showOnCanvas(node);
+
+        final JMenuItem hideItem = new AdvancedJTable_node.HideSelectionMenuItem(networkDesign, selection);
+        hideItem.doClick();
+
+        for (Node node : selection)
+            Assert.assertTrue(networkDesign.getVisualizationState().isHiddenOnCanvas(node));
     }
 }

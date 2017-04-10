@@ -642,31 +642,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             {
                 final List<Node> nodes = (List<Node>) selection.getNetworkElements();
 
-                JMenuItem showSelected = new JMenuItem("Show selected nodes");
-                showSelected.addActionListener(e ->
-                {
-                    for (Node node : nodes)
-                    {
-                        callback.getVisualizationState().showOnCanvas(node);
-                    }
-
-                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.NODE));
-                    callback.addNetPlanChange();
-                });
-
-                options.add(showSelected);
-
-                JMenuItem hideSelected = new JMenuItem("Hide selected nodes");
-                hideSelected.addActionListener(e ->
-                {
-                    for (Node node : nodes)
-                        callback.getVisualizationState().hideOnCanvas(node);
-
-                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.NODE));
-                    callback.addNetPlanChange();
-                });
-
-                options.add(hideSelected);
+                options.add(new ShowSelectionMenuItem(callback, nodes));
+                options.add(new HideSelectionMenuItem(callback, nodes));
             }
         }
 
@@ -678,5 +655,40 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
         return rf == null ? callback.getDesign().getNodes() : rf.getVisibleNodes(layer);
+    }
+
+    static class ShowSelectionMenuItem extends JMenuItem
+    {
+        ShowSelectionMenuItem(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        {
+            this.setText("Show selected nodes");
+
+            this.addActionListener(e ->
+            {
+                for (Node node : nodes)
+                {
+                    callback.getVisualizationState().showOnCanvas(node);
+                }
+
+                callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.NODE));
+                callback.addNetPlanChange();
+            });
+        }
+    }
+
+    static class HideSelectionMenuItem extends JMenuItem
+    {
+        HideSelectionMenuItem(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        {
+            this.setText("Hide selected nodes");
+            this.addActionListener(e ->
+            {
+                for (Node node : nodes)
+                    callback.getVisualizationState().hideOnCanvas(node);
+
+                callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.NODE));
+                callback.addNetPlanChange();
+            });
+        }
     }
 }
