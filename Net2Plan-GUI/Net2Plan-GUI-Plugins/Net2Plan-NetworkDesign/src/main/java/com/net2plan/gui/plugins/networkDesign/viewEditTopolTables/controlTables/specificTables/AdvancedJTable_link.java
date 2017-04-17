@@ -532,28 +532,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             {
                 if (!selectedLinks.isEmpty())
                 {
-                    JMenuItem removeItem = new JMenuItem("Remove selected links");
-                    removeItem.addActionListener(new ActionListener()
-                    {
-                        @Override
-                        public void actionPerformed(ActionEvent e)
-                        {
-                            try
-                            {
-                                for (Link selectedLink : selectedLinks) selectedLink.remove();
-
-                                callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                                callback.addNetPlanChange();
-                            } catch (Throwable ex)
-                            {
-                                ErrorHandling.addErrorOrException(ex, getClass());
-                                ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
-                            }
-                        }
-                    });
-
-                    popup.add(removeItem);
+                    popup.add(new MenuItem_RemoveLinks(callback, selectedLinks));
                 }
             }
 
@@ -569,39 +548,6 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 List<JComponent> forcedOptions = getForcedOptions(selection);
                 if (!forcedOptions.isEmpty()) popup.addSeparator();
                 for (JComponent item : forcedOptions) popup.add(item);
-
-                popup.addSeparator();
-                JMenuItem removeItems = new JMenuItem("Remove all filtered out links");
-                removeItems.addActionListener(e1 ->
-                {
-                    NetPlan netPlan = callback.getDesign();
-                    try
-                    {
-                        for (Link l : new ArrayList<>(netPlan.getLinks()))
-                            if (!linkRowsInTheTable.contains(l)) l.remove();
-
-                        callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                        callback.addNetPlanChange();
-                    } catch (Throwable ex)
-                    {
-                        ex.printStackTrace();
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to complete this action");
-                    }
-                });
-                popup.add(removeItems);
-
-                JMenuItem hideAllLinksFilteredOut = new JMenuItem("Hide all filtered out links");
-                hideAllLinksFilteredOut.addActionListener(e1 ->
-                {
-                    Set<Link> rowVisibleLinksSet = new HashSet<>(linkRowsInTheTable);
-                    for (Link link : callback.getDesign().getLinks())
-                        if (!rowVisibleLinksSet.contains(link))
-                            callback.getVisualizationState().hideOnCanvas(link);
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                    callback.addNetPlanChange();
-                });
-                popup.add(hideAllLinksFilteredOut);
 
                 List<JComponent> extraOptions = getExtraOptions(selection);
                 if (!extraOptions.isEmpty()) popup.addSeparator();
@@ -686,19 +632,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         {
             if (netPlan.isMultilayer())
             {
-                JMenuItem decoupleLinkItem = new JMenuItem("Decouple coupled links from selection");
-                decoupleLinkItem.addActionListener(e ->
-                {
-                    for (Link link1 : selectedLinks)
-                    {
-                        link1.getCoupledDemand().decouple();
-                        model.setValueAt("", AdvancedJTable_link.this.convertRowIndexToModel(link1.getIndex()), COLUMN_COUPLEDTODEMAND);
-                    }
-                    callback.getVisualizationState().resetPickedState();
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK, NetworkElementType.DEMAND));
-                    callback.addNetPlanChange();
-                });
-                options.add(decoupleLinkItem);
+                options.add(new MenuItem_DecoupleLinks(callback, selectedLinks));
 
                 JMenuItem createLowerLayerDemandFromLinkItem = new JMenuItem("Create lower layer coupled demand from uncoupled links in selection");
                 createLowerLayerDemandFromLinkItem.addActionListener(e ->
@@ -1076,35 +1010,14 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         List<JComponent> options = new LinkedList<>();
         if (!selection.isEmpty())
         {
-            JMenuItem showLinks = new JMenuItem("Show selected links");
-            showLinks.addActionListener(e ->
-            {
-                for (Link link : links)
-                    callback.getVisualizationState().showOnCanvas(link);
-
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                callback.addNetPlanChange();
-            });
-
-            options.add(showLinks);
-
-            JMenuItem hideLinks = new JMenuItem("Hide selected links");
-            hideLinks.addActionListener(e ->
-            {
-                for (Link link : links)
-                    callback.getVisualizationState().hideOnCanvas(link);
-
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                callback.addNetPlanChange();
-            });
-
-            options.add(hideLinks);
+            options.add(new MenuItem_ShowLinks(callback, links));
+            options.add(new MenuItem_HideLinks(callback, links));
         }
 
         return options;
     }
 
-    private class FullMeshTopologyActionListener implements ActionListener
+    class FullMeshTopologyActionListener implements ActionListener
     {
         private final boolean euclidean;
 
@@ -1144,11 +1057,86 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     }
 
-
     private List<Link> getVisibleElementsInTable()
     {
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
         return rf == null ? callback.getDesign().getLinks(layer) : rf.getVisibleLinks(layer);
+    }
+
+    static class MenuItem_RemoveLinks extends JMenuItem
+    {
+        MenuItem_RemoveLinks(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> selectedLinks)
+        {
+            this.setText("Remove selected links");
+            this.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    try
+                    {
+                        for (Link selectedLink : selectedLinks) selectedLink.remove();
+
+                        callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
+                        callback.addNetPlanChange();
+                    } catch (Throwable ex)
+                    {
+                        ErrorHandling.addErrorOrException(ex, getClass());
+                        ErrorHandling.showErrorDialog("Unable to remove links");
+                    }
+                }
+            });
+        }
+    }
+
+    static class MenuItem_ShowLinks extends JMenuItem
+    {
+        MenuItem_ShowLinks(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> links)
+        {
+            this.setText("Show selected links");
+            this.addActionListener(e ->
+            {
+                for (Link link : links)
+                    callback.getVisualizationState().showOnCanvas(link);
+
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
+                callback.addNetPlanChange();
+            });
+        }
+    }
+
+    static class MenuItem_HideLinks extends JMenuItem
+    {
+        MenuItem_HideLinks(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> links)
+        {
+            this.setText("Hide selected links");
+            this.addActionListener(e ->
+            {
+                for (Link link : links)
+                    callback.getVisualizationState().hideOnCanvas(link);
+
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
+                callback.addNetPlanChange();
+            });
+        }
+    }
+
+    static class MenuItem_DecoupleLinks extends JMenuItem
+    {
+        MenuItem_DecoupleLinks(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> selectedLinks)
+        {
+            this.setText("Decouple coupled links from selection");
+            this.addActionListener(e ->
+            {
+                for (Link link : selectedLinks)
+                    link.getCoupledDemand().decouple();
+
+                callback.getVisualizationState().resetPickedState();
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
+                callback.addNetPlanChange();
+            });
+        }
     }
 }
