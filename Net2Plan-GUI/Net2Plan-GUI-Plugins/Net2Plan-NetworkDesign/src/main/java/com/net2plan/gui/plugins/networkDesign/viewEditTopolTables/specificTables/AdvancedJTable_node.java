@@ -670,8 +670,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                 {
                     Node node = netPlan.addNode(0, 0, nodeName, null);
                     callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                    callback.getVisualizationState().pickNode(node);
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                    callback.getVisualizationState().pickNode(node);
                     callback.addNetPlanChange();
                     callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
                 } catch (Throwable ex)
