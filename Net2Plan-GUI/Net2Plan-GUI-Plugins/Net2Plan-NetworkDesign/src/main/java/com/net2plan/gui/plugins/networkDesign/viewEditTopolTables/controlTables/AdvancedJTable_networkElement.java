@@ -1807,43 +1807,43 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                         {
                             case NODE:
                                 final List<Node> visibleNodes = tableRowFilter.getVisibleNodes(netPlan.getNetworkLayerDefault());
-                                for (Node node : netPlan.getNodes())
+                                for (Node node : new ArrayList<>(netPlan.getNodes()))
                                     if (!visibleNodes.contains(node)) node.remove();
                                 break;
                             case LINK:
                                 final List<Link> visibleLinks = tableRowFilter.getVisibleLinks(netPlan.getNetworkLayerDefault());
-                                for (Link link : netPlan.getLinks())
+                                for (Link link : new ArrayList<>(netPlan.getLinks()))
                                     if (!visibleLinks.contains(link)) link.remove();
                                 break;
                             case DEMAND:
                                 final List<Demand> visibleDemands = tableRowFilter.getVisibleDemands(netPlan.getNetworkLayerDefault());
-                                for (Demand demand : netPlan.getDemands())
+                                for (Demand demand : new ArrayList<>(netPlan.getDemands()))
                                     if (!visibleDemands.contains(demand)) demand.remove();
                                 break;
                             case MULTICAST_DEMAND:
                                 final List<MulticastDemand> visibleMulticastDemands = tableRowFilter.getVisibleMulticastDemands(netPlan.getNetworkLayerDefault());
-                                for (MulticastDemand multicastDemand : netPlan.getMulticastDemands())
+                                for (MulticastDemand multicastDemand : new ArrayList<>(netPlan.getMulticastDemands()))
                                     if (!visibleMulticastDemands.contains(multicastDemand))
                                         multicastDemand.remove();
                                 break;
                             case ROUTE:
                                 final List<Route> visibleRoutes = tableRowFilter.getVisibleRoutes(netPlan.getNetworkLayerDefault());
-                                for (Route route : netPlan.getRoutes())
+                                for (Route route : new ArrayList<>(netPlan.getRoutes()))
                                     if (!visibleRoutes.contains(route)) route.remove();
                                 break;
                             case MULTICAST_TREE:
                                 final List<MulticastTree> visibleMulticastTrees = tableRowFilter.getVisibleMulticastTrees(netPlan.getNetworkLayerDefault());
-                                for (MulticastTree tree : netPlan.getMulticastTrees())
+                                for (MulticastTree tree : new ArrayList<>(netPlan.getMulticastTrees()))
                                     if (!visibleMulticastTrees.contains(tree)) tree.remove();
                                 break;
                             case RESOURCE:
                                 final List<Resource> visibleResources = tableRowFilter.getVisibleResources(netPlan.getNetworkLayerDefault());
-                                for (Resource resource : netPlan.getResources())
+                                for (Resource resource : new ArrayList<>(netPlan.getResources()))
                                     if (!visibleResources.contains(resource)) resource.remove();
                                 break;
                             case SRG:
                                 final List<SharedRiskGroup> visibleSRGs = tableRowFilter.getVisibleSRGs(netPlan.getNetworkLayerDefault());
-                                for (SharedRiskGroup sharedRiskGroup : netPlan.getSRGs())
+                                for (SharedRiskGroup sharedRiskGroup : new ArrayList<>(netPlan.getSRGs()))
                                     if (!visibleSRGs.contains(sharedRiskGroup)) sharedRiskGroup.remove();
                                 break;
                             default:
