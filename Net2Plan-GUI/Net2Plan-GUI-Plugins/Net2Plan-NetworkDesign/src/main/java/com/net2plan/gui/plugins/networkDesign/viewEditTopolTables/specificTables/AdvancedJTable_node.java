@@ -469,32 +469,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     @Override
     protected JMenuItem getAddOption()
     {
-        JMenuItem addItem = new JMenuItem("Add " + networkElementType);
-        addItem.addActionListener(e ->
-        {
-            NetPlan netPlan = callback.getDesign();
-
-            String nodeName = "Node " + netPlan.getNumberOfNodes();
-
-            try
-            {
-                Node node = netPlan.addNode(0, 0, nodeName, null);
-                callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                callback.getVisualizationState().pickNode(node);
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                callback.addNetPlanChange();
-
-                if (networkElementType == NetworkElementType.NODE)
-                    callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-            } catch (Throwable ex)
-            {
-                ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
-
-                final Node node = netPlan.getNodeByName(nodeName);
-                if (node != null) node.remove();
-            }
-        });
-        return addItem;
+        return new MenuItem_AddNode(callback);
     }
 
     @Nonnull
@@ -670,6 +645,41 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                         ErrorHandling.addErrorOrException(ex, getClass());
                         ErrorHandling.showErrorDialog("Unable to remove nodes");
                     }
+                }
+            });
+        }
+    }
+
+    static class MenuItem_AddNode extends JMenuItem
+    {
+        MenuItem_AddNode(@Nonnull GUINetworkDesign callback)
+        {
+            this.setText("Add node");
+            this.addActionListener(e ->
+            {
+                NetPlan netPlan = callback.getDesign();
+
+                int index = netPlan.getNumberOfNodes();
+                String nodeName = "Node " + index;
+
+                // Check for name validity
+                while (netPlan.getNodeByName(nodeName) != null)
+                    nodeName = "Node " + (index++);
+
+                try
+                {
+                    Node node = netPlan.addNode(0, 0, nodeName, null);
+                    callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                    callback.getVisualizationState().pickNode(node);
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                    callback.addNetPlanChange();
+                    callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add node");
+
+                    final Node node = netPlan.getNodeByName(nodeName);
+                    if (node != null) node.remove();
                 }
             });
         }

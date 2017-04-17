@@ -116,4 +116,15 @@ public class AdvancedJTable_node_actions_Test
         for (Node node : selection)
             assertNull(netPlan.getNodeFromId(node.getId()));
     }
+
+    @Test
+    public void addNodeTest()
+    {
+        int numberOfNodes = netPlan.getNumberOfNodes();
+
+        final JMenuItem addNode = new AdvancedJTable_node.MenuItem_AddNode(networkDesign);
+        addNode.doClick();
+
+        assertEquals(numberOfNodes + 1, netPlan.getNumberOfNodes());
+    }
 }
