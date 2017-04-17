@@ -1,6 +1,6 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles;
 
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.XMLUtils;
 import com.net2plan.utils.Pair;

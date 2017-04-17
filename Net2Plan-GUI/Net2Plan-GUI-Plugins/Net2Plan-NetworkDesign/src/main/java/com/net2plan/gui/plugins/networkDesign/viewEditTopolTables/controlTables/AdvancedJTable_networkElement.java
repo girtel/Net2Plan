@@ -10,13 +10,15 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables;
+package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.AttributeEditor;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_forwardingRule;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_layer;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFSelectionBased;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFTagBased;
@@ -1153,9 +1155,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         {
             try
             {
-                int row = -1;
-                if (hasElements()) row = getTable(e).rowAtPoint(e.getPoint());
-
                 final Pair<List<NetworkElement>, List<Pair<Demand, Link>>> selection = getSelectedElements();
                 final boolean nothingSelected = selection.getFirst().isEmpty() && selection.getSecond().isEmpty();
 
@@ -1419,7 +1418,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    static class ColumnComparator implements Comparator<Object>
+    public static class ColumnComparator implements Comparator<Object>
     {
         private final boolean isDoubleWithParenthesis;
         private final RowSorter rs;
@@ -1484,22 +1483,22 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     {
         private String value;
 
-        LastRowAggregatedValue()
+        public LastRowAggregatedValue()
         {
             value = "---";
         }
 
-        LastRowAggregatedValue(int val)
+        public LastRowAggregatedValue(int val)
         {
             value = "" + val;
         }
 
-        LastRowAggregatedValue(double val)
+        public LastRowAggregatedValue(double val)
         {
             value = String.format("%.2f", val);
         }
 
-        LastRowAggregatedValue(String value)
+        public LastRowAggregatedValue(String value)
         {
             this.value = value;
         }
@@ -1747,9 +1746,57 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         if (networkElementType != NetworkElementType.FORWARDING_RULE && networkElementType != NetworkElementType.NETWORK && networkElementType != NetworkElementType.LAYER)
         {
             popup.addSeparator();
+            popup.add(new MenuItem_RemovedFiltered(callback, networkElementType));
 
-            final JMenuItem removeAllNodesFilteredOut = new JMenuItem("Remove all filtered out " + networkElementType + "s");
-            removeAllNodesFilteredOut.addActionListener(e1 ->
+            if (networkElementType == NetworkElementType.NODE || networkElementType == NetworkElementType.LINK)
+                popup.add(new MenuItem_HideFiltered(callback, networkElementType));
+        }
+    }
+
+    public abstract List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesTitles);
+
+    public abstract String getTabName();
+
+    public abstract String[] getTableHeaders();
+
+    public abstract String[] getCurrentTableHeaders();
+
+    public abstract String[] getTableTips();
+
+    public abstract boolean hasElements();
+
+    public abstract int getAttributesColumnIndex();
+
+    public abstract void setColumnRowSortingFixedAndNonFixedTable();
+
+    public abstract int getNumberOfDecoratorColumns();
+
+    public abstract ArrayList<String> getAttributesColumnsHeaders();
+
+    @Nonnull
+    protected abstract List<JComponent> getExtraAddOptions();
+
+    @Nonnull
+    protected abstract JMenuItem getAddOption();
+
+    @Nonnull
+    protected abstract List<JComponent> getForcedOptions(ElementSelection selection);
+
+    @Nonnull
+    protected abstract List<JComponent> getExtraOptions(ElementSelection selection);
+
+    protected abstract void doPopup(final MouseEvent e, ElementSelection selection);
+
+    protected abstract void showInCanvas(MouseEvent e, ElementSelection selection);
+
+    static class MenuItem_RemovedFiltered extends JMenuItem
+    {
+        MenuItem_RemovedFiltered(@Nonnull GUINetworkDesign callback, @Nonnull NetworkElementType networkElementType)
+        {
+            final NetPlan netPlan = callback.getDesign();
+
+            this.setText("Remove all filtered out " + networkElementType + "s");
+            this.addActionListener(e1 ->
             {
                 try
                 {
@@ -1813,76 +1860,42 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to complete this action");
                 }
             });
-            popup.add(removeAllNodesFilteredOut);
-
-            if (networkElementType == NetworkElementType.NODE || networkElementType == NetworkElementType.LINK)
-            {
-                final JMenuItem hideAllNodesFilteredOut = new JMenuItem("Hide all filtered out " + networkElementType + "s");
-                hideAllNodesFilteredOut.addActionListener(e1 ->
-                {
-                    final ITableRowFilter tableRowFilter = callback.getVisualizationState().getTableRowFilter();
-                    if (tableRowFilter != null)
-                    {
-                        switch (networkElementType)
-                        {
-                            case NODE:
-                                final List<Node> visibleNodes = tableRowFilter.getVisibleNodes(netPlan.getNetworkLayerDefault());
-                                for (Node node : netPlan.getNodes())
-                                    if (!visibleNodes.contains(node))
-                                        callback.getVisualizationState().hideOnCanvas(node);
-                                break;
-                            case LINK:
-                                final List<Link> visibleLinks = tableRowFilter.getVisibleLinks(netPlan.getNetworkLayerDefault());
-                                for (Link link : netPlan.getLinks())
-                                    if (!visibleLinks.contains(link))
-                                        callback.getVisualizationState().hideOnCanvas(link);
-                                break;
-                            default:
-                                return;
-                        }
-                    }
-
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(networkElementType));
-                    callback.addNetPlanChange();
-                });
-                popup.add(hideAllNodesFilteredOut);
-            }
         }
     }
 
-    public abstract List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesTitles);
+    static class MenuItem_HideFiltered extends JMenuItem
+    {
+        MenuItem_HideFiltered(@Nonnull GUINetworkDesign callback, @Nonnull NetworkElementType networkElementType)
+        {
+            final NetPlan netPlan = callback.getDesign();
+            this.setText("Hide all filtered out " + networkElementType + "s");
+            this.addActionListener(e1 ->
+            {
+                final ITableRowFilter tableRowFilter = callback.getVisualizationState().getTableRowFilter();
+                if (tableRowFilter != null)
+                {
+                    switch (networkElementType)
+                    {
+                        case NODE:
+                            final List<Node> visibleNodes = tableRowFilter.getVisibleNodes(netPlan.getNetworkLayerDefault());
+                            for (Node node : netPlan.getNodes())
+                                if (!visibleNodes.contains(node))
+                                    callback.getVisualizationState().hideOnCanvas(node);
+                            break;
+                        case LINK:
+                            final List<Link> visibleLinks = tableRowFilter.getVisibleLinks(netPlan.getNetworkLayerDefault());
+                            for (Link link : netPlan.getLinks())
+                                if (!visibleLinks.contains(link))
+                                    callback.getVisualizationState().hideOnCanvas(link);
+                            break;
+                        default:
+                            return;
+                    }
+                }
 
-    public abstract String getTabName();
-
-    public abstract String[] getTableHeaders();
-
-    public abstract String[] getCurrentTableHeaders();
-
-    public abstract String[] getTableTips();
-
-    public abstract boolean hasElements();
-
-    public abstract int getAttributesColumnIndex();
-
-    public abstract void setColumnRowSortingFixedAndNonFixedTable();
-
-    public abstract int getNumberOfDecoratorColumns();
-
-    public abstract ArrayList<String> getAttributesColumnsHeaders();
-
-    @Nonnull
-    protected abstract List<JComponent> getExtraAddOptions();
-
-    @Nonnull
-    protected abstract JMenuItem getAddOption();
-
-    @Nonnull
-    protected abstract List<JComponent> getForcedOptions(ElementSelection selection);
-
-    @Nonnull
-    protected abstract List<JComponent> getExtraOptions(ElementSelection selection);
-
-    protected abstract void doPopup(final MouseEvent e, ElementSelection selection);
-
-    protected abstract void showInCanvas(MouseEvent e, ElementSelection selection);
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(networkElementType));
+                callback.addNetPlanChange();
+            });
+        }
+    }
 }
