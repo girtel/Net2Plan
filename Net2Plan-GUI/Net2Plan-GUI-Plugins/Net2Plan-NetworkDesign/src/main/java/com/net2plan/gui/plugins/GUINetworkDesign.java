@@ -471,8 +471,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @Override
     public void setCurrentNetPlanDoNotUpdateVisualization(NetPlan netPlan)
     {
+        if (netPlan == null) throw new NullPointerException();
         if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
         currentNetPlan = netPlan;
+        vs.setCanvasLayerVisibilityAndOrder(netPlan, null, null);
     }
 
     public void showTableControlWindow()
