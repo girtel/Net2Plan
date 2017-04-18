@@ -609,8 +609,8 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             options.add(fullMeshEuclidean);
             options.add(fullMeshHaversine);
 
-            fullMeshEuclidean.addActionListener(new FullMeshTopologyActionListener(true));
-            fullMeshHaversine.addActionListener(new FullMeshTopologyActionListener(false));
+            fullMeshEuclidean.addActionListener(new FullMeshTopologyActionListener(callback, true));
+            fullMeshHaversine.addActionListener(new FullMeshTopologyActionListener(callback, false));
         }
 
         return options;
@@ -934,35 +934,9 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 });
                 options.add(setLength);
 
-                JMenuItem lengthToEuclidean = new JMenuItem("Set selected links length to node-pair Euclidean distance");
-                lengthToEuclidean.addActionListener(e ->
-                {
-                    for (Link link : selectedLinks)
-                    {
-                        Node originNode = link.getOriginNode();
-                        Node destinationNode = link.getDestinationNode();
-                        double euclideanDistance = netPlan.getNodePairEuclideanDistance(originNode, destinationNode);
-                        link.setLengthInKm(euclideanDistance);
-                    }
-                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
-                    callback.addNetPlanChange();
-                });
-                options.add(lengthToEuclidean);
+                options.add(new MenuItem_LengthToEuclidean(callback, selectedLinks));
 
-                JMenuItem lengthToHaversine = new JMenuItem("Set selected links length to node-pair Haversine distance (longitude-latitude) in km");
-                lengthToHaversine.addActionListener(e ->
-                {
-                    for (Link link : selectedLinks)
-                    {
-                        Node originNode = link.getOriginNode();
-                        Node destinationNode = link.getDestinationNode();
-                        double haversineDistanceInKm = netPlan.getNodePairHaversineDistanceInKm(originNode, destinationNode);
-                        link.setLengthInKm(haversineDistanceInKm);
-                    }
-                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
-                    callback.addNetPlanChange();
-                });
-                options.add(lengthToHaversine);
+                options.add(new MenuItem_LengthToHaversine(callback, selectedLinks));
 
                 JMenuItem scaleLength = new JMenuItem("Scale selected links length");
                 scaleLength.addActionListener(e ->
@@ -1017,18 +991,22 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         return options;
     }
 
-    class FullMeshTopologyActionListener implements ActionListener
+    static class FullMeshTopologyActionListener implements ActionListener
     {
+        private final GUINetworkDesign callback;
         private final boolean euclidean;
 
-        public FullMeshTopologyActionListener(boolean euclidean)
+        public FullMeshTopologyActionListener(GUINetworkDesign callback, boolean euclidean)
         {
+            this.callback = callback;
             this.euclidean = euclidean;
         }
 
         @Override
         public void actionPerformed(ActionEvent e)
         {
+            assert callback != null;
+
             NetPlan netPlan = callback.getDesign();
 
             // Ask for current element removal
@@ -1135,6 +1113,50 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
                 callback.getVisualizationState().resetPickedState();
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
+                callback.addNetPlanChange();
+            });
+        }
+    }
+
+    static class MenuItem_LengthToEuclidean extends JMenuItem
+    {
+        MenuItem_LengthToEuclidean(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> selectedLinks)
+        {
+            this.setText("Set selected links length to node-pair Euclidean distance");
+            this.addActionListener(e ->
+            {
+                final NetPlan netPlan = callback.getDesign();
+
+                for (Link link : selectedLinks)
+                {
+                    Node originNode = link.getOriginNode();
+                    Node destinationNode = link.getDestinationNode();
+                    double euclideanDistance = netPlan.getNodePairEuclideanDistance(originNode, destinationNode);
+                    link.setLengthInKm(euclideanDistance);
+                }
+                callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
+                callback.addNetPlanChange();
+            });
+        }
+    }
+
+    static class MenuItem_LengthToHaversine extends JMenuItem
+    {
+        MenuItem_LengthToHaversine(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> selectedLinks)
+        {
+            this.setText("Set selected links length to node-pair Haversine distance (longitude-latitude) in km");
+            this.addActionListener(e ->
+            {
+                final NetPlan netPlan = callback.getDesign();
+
+                for (Link link : selectedLinks)
+                {
+                    Node originNode = link.getOriginNode();
+                    Node destinationNode = link.getDestinationNode();
+                    double haversineDistanceInKm = netPlan.getNodePairHaversineDistanceInKm(originNode, destinationNode);
+                    link.setLengthInKm(haversineDistanceInKm);
+                }
+                callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
                 callback.addNetPlanChange();
             });
         }

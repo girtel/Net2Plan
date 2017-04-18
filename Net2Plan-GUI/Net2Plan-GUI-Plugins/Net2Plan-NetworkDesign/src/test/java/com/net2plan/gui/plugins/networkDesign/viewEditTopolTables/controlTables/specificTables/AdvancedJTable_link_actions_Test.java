@@ -11,6 +11,7 @@ import org.junit.Test;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 
@@ -20,6 +21,8 @@ import static org.junit.Assert.*;
  */
 public class AdvancedJTable_link_actions_Test
 {
+    private static final double DELTA = 1e-15;
+
     private static GUINetworkDesign networkDesign;
     private static List<Link> selection;
 
@@ -88,7 +91,7 @@ public class AdvancedJTable_link_actions_Test
     }
 
     @Test
-    public void decoupleLinksButton()
+    public void decoupleLinksButtonTest()
     {
         final NetworkLayer networkLayer = netPlan.addLayer("Layer 1", "", "", "", null, null);
 
@@ -103,5 +106,62 @@ public class AdvancedJTable_link_actions_Test
 
         for (Link link : selection)
             assertFalse(link.isCoupled());
+    }
+
+    @Test
+    public void lengthToEuclideanTest()
+    {
+        final JMenuItem euclideanLength = new AdvancedJTable_link.MenuItem_LengthToEuclidean(networkDesign, selection);
+        euclideanLength.doClick();
+
+        for (Link link : selection)
+        {
+            final Node originNode = link.getOriginNode();
+            final Node destinationNode = link.getDestinationNode();
+
+            final double euclideanDistance = netPlan.getNodePairEuclideanDistance(originNode, destinationNode);
+
+            assertEquals(euclideanDistance, link.getLengthInKm(), DELTA);
+        }
+    }
+
+    @Test
+    public void lengthToHaversineTest()
+    {
+        final JMenuItem haversineButton = new AdvancedJTable_link.MenuItem_LengthToHaversine(networkDesign, selection);
+        haversineButton.doClick();
+
+        for (Link link : selection)
+        {
+            final Node originNode = link.getOriginNode();
+            final Node destinationNode = link.getDestinationNode();
+
+            final double distance = netPlan.getNodePairHaversineDistanceInKm(originNode, destinationNode);
+
+            assertEquals(distance, link.getLengthInKm(), DELTA);
+        }
+    }
+
+    @Test
+    public void generateMatrixTest()
+    {
+        netPlan.removeAllLinks();
+
+        final JButton meshButton = new JButton();
+        meshButton.addActionListener(new AdvancedJTable_link.FullMeshTopologyActionListener(networkDesign, true));
+        meshButton.doClick();
+
+        final List<Link> links = netPlan.getLinks();
+        assertTrue(links.size() == 2);
+
+        for (Link link : links)
+            assertNotNull(link.getBidirectionalPair());
+
+        final Node node1 = netPlan.getNodeByName("Node 1");
+        final Node node2 = netPlan.getNodeByName("Node 2");
+
+        final Set<Link> pairLinks = netPlan.getNodePairLinks(node1, node2, true);
+        assertFalse(pairLinks.isEmpty());
+        assertTrue(pairLinks.size() == 2);
     }
 }
