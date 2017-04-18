@@ -49,7 +49,6 @@ import java.util.List;
  */
 public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener, ActionListener
 {
-
     private final GUINetworkDesign callback;
     private JTextArea simInfo;
     private Thread simThread;
@@ -76,17 +75,15 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
         simulationConfigurationPanel.setParameters(simKernel.getSimulationParameters());
 
         final JPanel upperButtonPlusLabelPanel = new JPanel();
-        btn_whatIfActivated = new JToggleButton("What-if Activated");
-        btn_whatIfActivated.setToolTipText("Is active or not the what-if analysis tool");
+        btn_whatIfActivated = new JToggleButton("Toggle What-If Mode");
+        btn_whatIfActivated.setToolTipText("Activate/Deactivate What-if analysis tool");
         btn_whatIfActivated.addActionListener(this);
         btn_whatIfActivated.setFocusable(false);
         btn_whatIfActivated.setSelected(!callback.getVisualizationState().isWhatIfAnalysisActive());
         // Negate the last selection and run the listener.
         btn_whatIfActivated.doClick();
         upperButtonPlusLabelPanel.setLayout(new BorderLayout());
-        upperButtonPlusLabelPanel.add(btn_whatIfActivated, BorderLayout.WEST);
-        upperButtonPlusLabelPanel.add(new JLabel("If pushed, the what-if analysis tool is activated"), BorderLayout.CENTER);
-        upperButtonPlusLabelPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+        upperButtonPlusLabelPanel.add(btn_whatIfActivated, BorderLayout.CENTER);
 
         final JTextArea upperText = new JTextArea();
         upperText.setFont(new JLabel().getFont());
@@ -109,8 +106,18 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
         );
         this.setLayout(new BorderLayout());
         this.add(upperButtonPlusLabelPanel, BorderLayout.NORTH);
-        this.add(upperText, BorderLayout.CENTER);
-        this.add(eventProcessorPanel, BorderLayout.SOUTH);
+
+        final JSplitPane aux_Panel = new JSplitPane();
+        aux_Panel.setLeftComponent(new JScrollPane(upperText));
+        aux_Panel.setRightComponent(eventProcessorPanel);
+
+        aux_Panel.setOrientation(JSplitPane.VERTICAL_SPLIT);
+        aux_Panel.setResizeWeight(0.3);
+        aux_Panel.setEnabled(false);
+        aux_Panel.setDividerLocation(0.3);
+        aux_Panel.setDividerSize(0      );
+
+        this.add(aux_Panel, BorderLayout.CENTER);
     }
 
     public Throwable getLastWhatIfExecutionException()
