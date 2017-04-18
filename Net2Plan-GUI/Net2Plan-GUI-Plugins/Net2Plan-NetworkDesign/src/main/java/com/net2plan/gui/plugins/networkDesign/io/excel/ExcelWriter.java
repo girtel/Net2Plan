@@ -1,11 +1,11 @@
 package com.net2plan.gui.plugins.networkDesign.io.excel;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.CreationHelper;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -17,24 +17,19 @@ import java.io.IOException;
  */
 public class ExcelWriter
 {
-    private File saveFile;
-    private Net2PlanExcelExtension fileExtension;
+    private static File file;
+    private static ExcelExtension fileExtension;
+    private static Object[][] data;
 
-    public ExcelWriter(final File file, final Net2PlanExcelExtension extension)
+    public static void writeToFile(@Nonnull File file, @Nonnull Object[][] data) throws ExcelParserException
     {
-        this.saveFile = file;
-        this.fileExtension = extension;
-    }
+        final ExcelExtension fileExtension = ExcelExtension.parseString(FilenameUtils.getExtension(file.getAbsolutePath()));
 
-    public ExcelWriter(final File file, final String extension)
-    {
-        this.saveFile = file;
-        this.fileExtension = Net2PlanExcelExtension.parseString(extension);
-    }
+        ExcelWriter.file = file;
+        ExcelWriter.fileExtension = fileExtension;
+        ExcelWriter.data = data;
 
-    public void writeFile()
-    {
-        switch (fileExtension)
+        switch (ExcelWriter.fileExtension)
         {
             case OLE2:
                 writeOLE2();
@@ -42,106 +37,69 @@ public class ExcelWriter
             case OOXML:
                 writeOOXML();
                 break;
+            default:
+                throw new ExcelParserException();
         }
     }
 
-    private void writeOLE2()
+    private static void writeOLE2()
     {
         final Workbook workbook = new HSSFWorkbook();
 
         doWrite(workbook);
     }
 
-    private void writeOOXML()
+    private static void writeOOXML()
     {
         final Workbook workbook = new XSSFWorkbook();
 
         doWrite(workbook);
     }
 
-    private void doWrite(final Workbook workbook)
+    private static void doWrite(@Nonnull final Workbook workbook)
     {
-
         final CreationHelper helper = workbook.getCreationHelper();
         final Sheet sheet = workbook.createSheet();
 
-//        row.createCell(1).setCellValue(1.2);
-//        row.createCell(2).setCellValue(
-//                createHelper.createRichTextString("This is a string"));
+        int rowNum = 0;
+        for (Object[] dataRow : data)
+        {
+            final Row row = sheet.createRow(rowNum++);
 
+            int colNum = 0;
+            for (Object field : dataRow)
+            {
+                final Cell cell = row.createCell(colNum++);
+
+                cell.setCellValue(helper.createRichTextString(field.toString()));
+            }
+        }
+
+        FileOutputStream fileOut = null;
         try
         {
-            if (!saveFile.exists())
-            {
-                saveFile.mkdirs();
-            }
+            file.getParentFile().mkdirs();
 
-            final FileOutputStream fileOut = new FileOutputStream(saveFile);
+            fileOut = new FileOutputStream(file);
             workbook.write(fileOut);
-            fileOut.close();
-
         } catch (FileNotFoundException e)
         {
             e.printStackTrace();
         } catch (IOException e)
         {
             e.printStackTrace();
-        }
-    }
-
-    public void setSaveFile(final File file)
-    {
-        this.saveFile = file;
-    }
-
-    public void setFileExtension(final Net2PlanExcelExtension extension)
-    {
-        this.fileExtension = extension;
-    }
-
-    public void setFileExtension(final String extension)
-    {
-        this.fileExtension = Net2PlanExcelExtension.parseString(extension);
-    }
-
-    public enum Net2PlanExcelExtension
-    {
-        OLE2("xls"),
-        OOXML("xlsx");
-
-        private final String text;
-
-        Net2PlanExcelExtension(final String text)
+        } finally
         {
-            this.text = text;
-        }
+            try
+            {
+                workbook.close();
 
-        public static Net2PlanExcelExtension parseString(final String txt)
-        {
-            if (txt.toLowerCase().equals(Net2PlanExcelExtension.OLE2))
+                if (fileOut != null)
+                    fileOut.close();
+            } catch (IOException e)
             {
-                return Net2PlanExcelExtension.OLE2;
-            } else if (txt.toLowerCase().equals(Net2PlanExcelExtension.OOXML))
-            {
-                return Net2PlanExcelExtension.OOXML;
+                e.printStackTrace();
             }
-
-            final StringBuilder builder = new StringBuilder();
-            builder.append("Unknown file extension: " + txt + "\n");
-            builder.append("Available extensions are: \n");
-
-            for (Net2PlanExcelExtension value : Net2PlanExcelExtension.values())
-            {
-                builder.append("- " + value + "\n");
-            }
-
-            throw new ExcelParserException(builder.toString());
-        }
-
-        @Override
-        public String toString()
-        {
-            return text;
         }
     }
 }
