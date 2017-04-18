@@ -12,11 +12,6 @@
 
 package com.net2plan.utils;
 
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.internal.SystemUtils;
-
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -30,6 +25,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.internal.SystemUtils;
 
 /**
  * <p>Class to deal with dynamic Java class loading from .class/.jar files.</p>
@@ -48,19 +49,26 @@ public class ClassLoaderUtils
 	 * Returns a Java class from a .class file. It does the best to guess the classpath and fully qualified name of the class.
 	 *
 	 * @param classFile .class file
+	 * @param classLoaderToUse If null, creates a new class loader. If not, loads classes from it
 	 * @return Class defined in the .class file
 	 * @since 0.2.0
 	 */
-	private static Class getClassFromClassFile(File classFile)
+	private static Class getClassFromClassFile(File classFile , ClassLoader classLoaderToUse)
 	{
 		try
 		{
 			Pair<File, String> aux = getClasspathAndQualifiedNameFromClassFile(classFile);
 
 			new URL("http://localhost/").openConnection().setDefaultUseCaches(false);
-			URLClassLoader ucl = new URLClassLoader(new URL[] { aux.getFirst().toURI().toURL() });
-
-			return ucl.loadClass(aux.getSecond());
+			if (classLoaderToUse == null)
+			{
+				URLClassLoader ucl = new URLClassLoader(new URL[] { aux.getFirst().toURI().toURL() });
+				return ucl.loadClass(aux.getSecond());
+			}
+			else
+			{
+				return classLoaderToUse.loadClass(aux.getSecond());
+			}
 		}
 		catch (IOException | ClassNotFoundException e)
 		{
@@ -72,10 +80,11 @@ public class ClassLoaderUtils
 	 * Returns a list of Java classes from a .class/.jar file.
 	 *
 	 * @param file .class/.jar file
+	 * @param classLoaderToUse If null, creates a new class loader. If not, loads classes from it
 	 * @return List of found Java classes
 	 * @since 0.2.0
 	 */
-	private static List<Class> getClassesFromFile(File file)
+	private static List<Class> getClassesFromFile(File file , ClassLoader classLoaderToUse)
 	{
 		List<Class> classes = new LinkedList<Class>();
 
@@ -83,11 +92,11 @@ public class ClassLoaderUtils
 		switch (extension)
 		{
 			case "jar":
-				classes.addAll(getClassesFromJar(file));
+				classes.addAll(getClassesFromJar(file , classLoaderToUse));
 				break;
 
 			case "class":
-				classes.add(getClassFromClassFile(file));
+				classes.add(getClassFromClassFile(file , classLoaderToUse));
 				break;
 
 			default:
@@ -108,11 +117,12 @@ public class ClassLoaderUtils
 	 * @param <T> Class type
 	 * @param file .class/.jar file
 	 * @param _class Reference to the class
+	 * @param classLoaderToUse If null, creates a new class loader. If not, loads classes from it
 	 * @return List of found Java classes implementing/extending {@code _class}
 	 */
-	public static <T> List<Class<T>> getClassesFromFile(File file, Class<T> _class)
+	public static <T> List<Class<T>> getClassesFromFile(File file, Class<T> _class , ClassLoader classLoaderToUse)
 	{
-		List<Class> allClasses = getClassesFromFile(file);
+		List<Class> allClasses = getClassesFromFile(file , classLoaderToUse);
 		List<Class<T>> classes = new LinkedList<Class<T>>();
 
 //		System.out.println (allClasses);
@@ -135,10 +145,11 @@ public class ClassLoaderUtils
 	 *
 	 * @param classFile .class/.jar file
 	 * @param qualifiedName Fully qualified name of the class ({@code package.className})
+	 * @param classLoaderToUse If null, creates a new class loader. If not, loads classes from it
 	 * @return Java class
 	 * @since 0.2.0
 	 */
-	private static Class getClassFromFile(File classFile, String qualifiedName)
+	private static Class getClassFromFile(File classFile, String qualifiedName , ClassLoader classLoaderToUse)
 	{
 		if (!classFile.exists()) throw new Net2PlanException(classFile + " does not exist");
 		if (!classFile.isFile()) throw new Net2PlanException(classFile + " is not a valid file (e.g. it is a directory)");
@@ -150,20 +161,27 @@ public class ClassLoaderUtils
 				try
 				{
 					new URL("http://localhost/").openConnection().setDefaultUseCaches(false);
-					URLClassLoader ucl = new URLClassLoader(new URL[] { classFile.toURI().toURL() }, ClassLoader.getSystemClassLoader());
-					return ucl.loadClass(qualifiedName);
+					if (classLoaderToUse == null)
+					{
+						URLClassLoader ucl = new URLClassLoader(new URL[] { classFile.toURI().toURL() }, ClassLoader.getSystemClassLoader());
+						return ucl.loadClass(qualifiedName);
+					}
+					else
+					{
+						return classLoaderToUse.loadClass(qualifiedName);
+					}
 				}
 				catch (ClassNotFoundException e)
 				{
 					try
 					{
-						List<Class> classesInFile = getClassesFromFile(classFile);
+						List<Class> classesInFile = getClassesFromFile(classFile , classLoaderToUse);
 						Iterator<Class> it = classesInFile.iterator();
 						while (it.hasNext())
 						{
 							Class aux = it.next();
 							if (aux.getName().endsWith(qualifiedName))
-								return getClassFromFile(classFile, aux.getName());
+								return getClassFromFile(classFile, aux.getName(),classLoaderToUse);
 						}
 
 						throw new RuntimeException(e);
@@ -178,7 +196,7 @@ public class ClassLoaderUtils
 					throw new RuntimeException(e);
 				}
 			case "class":
-				return getClassFromClassFile(classFile);
+				return getClassFromClassFile(classFile , classLoaderToUse);
 
 			default:
 				throw new RuntimeException("'file' is not a valid Java file (.jar or .class)");
@@ -192,12 +210,13 @@ public class ClassLoaderUtils
 	 * @param file .class/.jar file
 	 * @param className the class name
 	 * @param _class Reference to the class
+	 * @param classLoaderToUse If null, creates a new class loader. If not, loads classes from it
 	 * @return Class defined in the .class file
 	 * @since 0.2.0
 	 */
-	private static <T> Class<T> getClassFromFile(File file, String className, Class<T> _class)
+	private static <T> Class<T> getClassFromFile(File file, String className, Class<T> _class , ClassLoader classLoaderToUse)
 	{
-		Class aux = getClassFromFile(file, className);
+		Class aux = getClassFromFile(file, className , classLoaderToUse);
 		if (_class.isAssignableFrom(aux)) return (Class<T>) aux;
 
 		throw new RuntimeException("File '" + file + "' doesn't contain any Java class named '" + className + "' of the required type (" + _class.getName() + ")");
@@ -207,15 +226,16 @@ public class ClassLoaderUtils
 	 * Returns a list of Java classes from a .jar file
 	 *
 	 * @param jarFile .jar file
+	 * @param classLoaderToUse If null, creates a new class loader. If not, loads classes from it
 	 * @return List of found Java classes
 	 * @since 0.2.0
 	 */
-	private static List<Class> getClassesFromJar(File jarFile)
+	private static List<Class> getClassesFromJar(File jarFile , ClassLoader classLoaderToUse)
 	{
 		try
 		{
 			new URL("http://localhost/").openConnection().setDefaultUseCaches(false);
-			URLClassLoader cl = new URLClassLoader(new URL[] { jarFile.toURI().toURL() }, ClassLoader.getSystemClassLoader());
+			ClassLoader cl = (classLoaderToUse != null)? classLoaderToUse : new URLClassLoader(new URL[] { jarFile.toURI().toURL() }, ClassLoader.getSystemClassLoader());
 
 			List<Class> classes = new LinkedList<Class>();
 			try (JarInputStream jar = new JarInputStream(new FileInputStream(jarFile)))
@@ -258,10 +278,11 @@ public class ClassLoaderUtils
 	 * Tries to guess what are the classpath and fully qualified name of a .class Java file
 	 *
 	 * @param classFile .class file
+	 * @param classLoaderToUse if not null, use it. If null, create a new one
 	 * @return An object pair in which the first element is the classpath of the class, and the second one is the fully qualified name
 	 * @since 0.2.0
 	 */
-	private static Pair<File, String> getClasspathAndQualifiedNameFromClassFile(File classFile)
+	public static Pair<File, String> getClasspathAndQualifiedNameFromClassFile(File classFile)
 	{
 		String className = SystemUtils.getFilename(classFile);
 		File fullPath = classFile.getAbsoluteFile().getParentFile();
@@ -314,13 +335,14 @@ public class ClassLoaderUtils
 	 * @param file .class/.jar file
 	 * @param className the class name
 	 * @param _class Reference to the class
+	 * @param classLoaderToUse If null, creates a new class loader. If not, loads classes from it
 	 * @return An instance of the given class from 
 	 */
-	public static <T> T getInstance(File file, String className, Class<T> _class)
+	public static <T> T getInstance(File file, String className, Class<T> _class , ClassLoader classLoaderToUse)
 	{
 		try
 		{
-			return getClassFromFile(file, className, _class).newInstance();
+			return getClassFromFile(file, className, _class , classLoaderToUse).newInstance();
 		}
 		catch (InstantiationException | IllegalAccessException e)
 		{
@@ -328,6 +350,28 @@ public class ClassLoaderUtils
 		}
 	}
 
+	/**
+	 * Returns a new instance for the desired class from a given file.
+	 * 
+	 * @param <T> Class type
+	 * @param file .class/.jar file
+	 * @param className the class name
+	 * @param _class Reference to the class
+	 * @return An instance of the given class from 
+	 */
+	public static <T> T getInstance(File file, String className, Class<T> _class , URLClassLoader classLoaderToUpdate)
+	{
+		try
+		{
+			return getClassFromFile(file, className, _class , classLoaderToUpdate).newInstance();
+		}
+		catch (InstantiationException | IllegalAccessException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+
+	
 	/**
 	 * Given a fully qualified class name returns the package and class names.
 	 * 

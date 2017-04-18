@@ -84,7 +84,7 @@ public class CLIReport extends ICLIModule {
 
         File outputFile = (File) cli.getParsedOptionValue("output-file");
 
-        IReport report = ClassLoaderUtils.getInstance(classFile, className, IReport.class);
+        IReport report = ClassLoaderUtils.getInstance(classFile, className, IReport.class , null);
 
         List<Triple<String, String, String>> defaultReportParameters = null;
         try {
