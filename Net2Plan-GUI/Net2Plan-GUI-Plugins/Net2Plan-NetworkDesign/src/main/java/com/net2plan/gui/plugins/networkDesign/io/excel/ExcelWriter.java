@@ -7,10 +7,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 
 /**
  * @author Jorge San Emeterio
@@ -21,19 +18,20 @@ public class ExcelWriter
     private static File file;
     private static Object[][] data;
     private static String sheetName;
+    private static boolean overwriteFile;
     private static ExcelExtension fileExtension;
 
-    public static void writeToFile(@Nonnull File file, @Nullable Object[][] data) throws ExcelParserException
+    public static void writeToFile(@Nonnull File file, @Nullable Object[][] data, boolean overwrite) throws ExcelParserException
     {
-        writeToFile(file, null, data);
+        writeToFile(file, null, data, overwrite);
     }
 
-    public static void writeToFile(@Nonnull File file, @Nullable String sheetName, @Nullable Object[][] data) throws ExcelParserException
+    public static void writeToFile(@Nonnull File file, @Nullable String sheetName, @Nullable Object[][] data, boolean overwrite) throws ExcelParserException
     {
-
         ExcelWriter.file = file;
         ExcelWriter.data = data;
         ExcelWriter.sheetName = sheetName;
+        ExcelWriter.overwriteFile = overwrite;
 
         try
         {
@@ -59,16 +57,35 @@ public class ExcelWriter
 
     private static void writeOLE2()
     {
-        final Workbook workbook = new HSSFWorkbook();
-
-        doWrite(workbook);
+        final Workbook workbook;
+        try
+        {
+            if (overwriteFile)
+                workbook = new HSSFWorkbook();
+            else
+                workbook = WorkbookFactory.create(new FileInputStream(file.getAbsoluteFile()));
+            doWrite(workbook);
+        } catch (Exception e)
+        {
+            throw new ExcelParserException(e.getMessage());
+        }
     }
 
     private static void writeOOXML()
     {
-        final Workbook workbook = new XSSFWorkbook();
+        final Workbook workbook;
+        try
+        {
+            if (overwriteFile)
+                workbook = new XSSFWorkbook();
+            else
+                workbook = new XSSFWorkbook(new FileInputStream(file.getAbsoluteFile()));
 
-        doWrite(workbook);
+            doWrite(workbook);
+        } catch (Exception e)
+        {
+            throw new ExcelParserException(e.getMessage());
+        }
     }
 
     private static void doWrite(@Nonnull final Workbook workbook)

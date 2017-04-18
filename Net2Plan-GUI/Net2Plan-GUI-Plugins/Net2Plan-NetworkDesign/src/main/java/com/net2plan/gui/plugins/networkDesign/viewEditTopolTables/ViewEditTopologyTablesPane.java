@@ -13,7 +13,6 @@ import com.net2plan.internal.Constants;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Pair;
 
-import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableModel;
@@ -125,8 +124,21 @@ public class ViewEditTopologyTablesPane extends JPanel
             {
                 final File file = fileChooser.getSelectedFile();
 
+                boolean overwriteFile;
+                if (file.exists())
+                {
+                    int option = JOptionPane.showConfirmDialog(null, "File already exists.\nOverwrite?", "Warning", JOptionPane.YES_NO_CANCEL_OPTION);
+
+                    if (option == JOptionPane.YES_OPTION) overwriteFile = true;
+                    else if (option == JOptionPane.NO_OPTION) overwriteFile = false;
+                    else return;
+                } else
+                {
+                    overwriteFile = true;
+                }
+
                 for (AdvancedJTable_networkElement table : netPlanViewTable.values())
-                    table.writeTableToFile(file);
+                    table.writeTableToFile(file, overwriteFile);
             }
         });
 
@@ -236,13 +248,5 @@ public class ViewEditTopologyTablesPane extends JPanel
         }
 
         throw new RuntimeException(type + " " + itemId + " does not exist");
-    }
-
-    public void saveAllTablesToExcel(@Nonnull File file)
-    {
-        for (AdvancedJTable_networkElement table : netPlanViewTable.values())
-        {
-            table.writeTableToFile(file);
-        }
     }
 }

@@ -2411,11 +2411,11 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    public void writeTableToFile(@Nonnull File file)
+    public void writeTableToFile(@Nonnull File file, boolean overwrite)
     {
         try
         {
-            ExcelWriter.writeToFile(file, this.getTabName(), buildData());
+            ExcelWriter.writeToFile(file, this.getTabName(), buildData(), overwrite);
             ErrorHandling.showMessageDialog("Excel file successfully written", "Finished writing into file");
         } catch (Exception e)
         {
