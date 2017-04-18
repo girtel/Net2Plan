@@ -30,12 +30,19 @@ public class ExcelWriter
 
     public static void writeToFile(@Nonnull File file, @Nullable String sheetName, @Nullable Object[][] data) throws ExcelParserException
     {
-        final ExcelExtension fileExtension = ExcelExtension.parseString(FilenameUtils.getExtension(file.getAbsolutePath()));
 
         ExcelWriter.file = file;
         ExcelWriter.data = data;
         ExcelWriter.sheetName = sheetName;
-        ExcelWriter.fileExtension = fileExtension;
+
+        try
+        {
+            ExcelWriter.fileExtension = ExcelExtension.parseString(FilenameUtils.getExtension(file.getAbsolutePath()));
+        } catch (ExcelParserException e)
+        {
+            // Retro-compatible by default
+            ExcelWriter.fileExtension = ExcelExtension.OLE2;
+        }
 
         switch (ExcelWriter.fileExtension)
         {

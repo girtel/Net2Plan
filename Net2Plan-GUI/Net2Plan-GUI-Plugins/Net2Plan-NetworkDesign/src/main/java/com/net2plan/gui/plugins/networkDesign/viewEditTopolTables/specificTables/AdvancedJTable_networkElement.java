@@ -15,7 +15,6 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTable
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.AttributeEditor;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
-import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelExtension;
 import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelWriter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFTagBased;
@@ -33,7 +32,6 @@ import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.event.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
@@ -77,6 +75,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     private final JPopupMenu fixedTableMenu, mainTableMenu;
     private final JMenu showMenu;
     private final JMenuItem showAllItem, hideAllItem, resetItem, saveStateItem, loadStateItem;
+
     private final ArrayList<TableColumn> hiddenColumns, shownColumns, removedColumns;
     private ArrayList<String> hiddenColumnsNames, hiddenColumnsAux;
     private final Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn;
@@ -90,7 +89,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     private ArrayList<String> attributesColumnsNames;
     private boolean expandAttributes = false;
     private NetPlan currentTopology = null;
-    private Map<String, Boolean> hasBeenAddedEachAttColumn = new HashMap<>();
 
     /**
      * Constructor that allows to set the table model.
@@ -145,6 +143,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         resetItem = new JMenuItem("Reset columns positions");
         loadStateItem = new JMenuItem("Load tables visualization profile");
         saveStateItem = new JMenuItem("Save tables visualization profile");
+
 
         if (canExpandAttributes)
         {
@@ -287,26 +286,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                         fixedTableMenu.add(showAllItem);
                         fixedTableMenu.add(hideAllItem);
 
-                        final JMenuItem writeToFile = new JMenuItem("Write table");
-                        writeToFile.addActionListener(ev ->
-                        {
-                            final JFileChooser fileChooser = new JFileChooser();
-                            final FileNameExtensionFilter filter = new FileNameExtensionFilter("Excel Files", ExcelExtension.OLE2.toString(), ExcelExtension.OOXML.toString());
-                            fileChooser.setFileFilter(filter);
-
-                            final int res = fileChooser.showSaveDialog(null);
-
-                            if (res == JFileChooser.APPROVE_OPTION)
-                            {
-                                final File file = fileChooser.getSelectedFile();
-
-                                writeTableToFile(file);
-                            }
-                        });
-                        fixedTableMenu.add(writeToFile);
-
                         checkNewIndexes();
                         updateShowMenu();
+
                         TableColumn clickedColumn = fixedTable.getColumnModel().getColumn(fixedTable.columnAtPoint(e.getPoint()));
                         int clickedColumnIndex = fixedTable.getColumnModel().getColumnIndex(clickedColumn.getIdentifier());
                         showMenu.setEnabled(true);
@@ -2429,18 +2411,17 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    protected void writeTableToFile(@Nonnull File file)
+    public void writeTableToFile(@Nonnull File file)
     {
         try
         {
             ExcelWriter.writeToFile(file, this.getTabName(), buildData());
-            ErrorHandling.showMessageDialog("Excel file successfully written", "Finished");
+            ErrorHandling.showMessageDialog("Excel file successfully written", "Finished writing into file");
         } catch (Exception e)
         {
             ErrorHandling.showErrorDialog("Error");
             e.printStackTrace();
         }
-
     }
 
     private Object[][] buildData()
