@@ -114,17 +114,20 @@ public class VisualizationState
         this.tableRowFilter = null;
     }
 
-    public void updateTableRowFilter(@Nonnull ITableRowFilter tableRowFilterToApply, @Nullable FilterCombinationType filterCombinationType)
+    public void updateTableRowFilter(@Nullable ITableRowFilter tableRowFilterToApply, @Nullable FilterCombinationType filterCombinationType)
     {
-        if (tableRowFilterToApply == null) throw new NullPointerException();
-        if (filterCombinationType == null) filterCombinationType = FilterCombinationType.INCLUDEIF_AND;
+    	/* If clicked reset button, remove all existing filters */
+    	if (tableRowFilterToApply == null) { this.tableRowFilter = null; return; }
 
-        if (this.tableRowFilter == null)
+    	/* This is the first filter  */
+        if (this.tableRowFilter == null) // when clicked reset button
         {
             this.tableRowFilter = tableRowFilterToApply;
             return;
         }
 
+    	/* This is a concatenation of filters */
+    	if (filterCombinationType == null) filterCombinationType = FilterCombinationType.INCLUDEIF_AND;
         switch (filterCombinationType)
         {
             case INCLUDEIF_AND:
@@ -785,15 +788,15 @@ public class VisualizationState
     }
 
     @Nullable
-    public List<NetworkElement> getPickedNetworkElement()
+    public List<NetworkElement> getPickedNetworkElements()
     {
-        return pickedElement == null ? null : Collections.unmodifiableList(pickedElement);
+        return pickedElement == null ? new ArrayList<> () : Collections.unmodifiableList(pickedElement);
     }
 
     @Nullable
-    public List<Pair<Demand, Link>> getPickedForwardingRule()
+    public List<Pair<Demand, Link>> getPickedForwardingRules()
     {
-        return pickedForwardingRule == null ? null : Collections.unmodifiableList(pickedForwardingRule);
+        return pickedForwardingRule == null ? new ArrayList<> () : Collections.unmodifiableList(pickedForwardingRule);
     }
 
     public void pickNode(Node node)

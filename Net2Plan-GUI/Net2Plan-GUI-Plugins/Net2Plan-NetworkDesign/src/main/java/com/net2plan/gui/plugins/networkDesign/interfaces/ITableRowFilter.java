@@ -124,17 +124,15 @@ public abstract class ITableRowFilter
 	
 	private final List<? extends Object> filterAnd (List<? extends Object> l1 , List<? extends Object> l2)
 	{
-		final Set<? extends Object> resSet = Sets.intersection(new HashSet<> (l1) , new HashSet<> (l2)); 
-		List<Object> resList = new LinkedList<> ();
-		for (Object o : l1) if (resSet.contains(o)) resList.add(o); // keep the same order as in List 1
+		final List<Object> resList = new LinkedList<> ();
+		for (Object o : l1) if (l2.contains(o)) resList.add(o); // keep the same order as in List 1
 		return resList;
 	}
 
 	private final List<? extends Object> filterOr (List<? extends Object> l1 , List<? extends Object> l2)
 	{
-		List<Object> resList = new LinkedList<> ();
-		for (Object o : l1) if (l2.contains(o)) resList.add(o); // first put the ones in l1
-		for (Object o : l2) if (!l1.contains(o)) resList.add(o); // then the ones in l2, not added before 
+		final List<Object> resList = new ArrayList<> (l1);
+		for (Object o : l2) if (!l1.contains(o)) resList.add(o); // first the ones in l1, then the ones in l2-l1 
 		return resList;
 	}
 

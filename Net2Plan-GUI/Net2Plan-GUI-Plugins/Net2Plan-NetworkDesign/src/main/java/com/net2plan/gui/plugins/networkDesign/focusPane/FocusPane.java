@@ -43,11 +43,12 @@ public class FocusPane extends JPanel
 		final VisualizationState vs = callback.getVisualizationState();
 		final NetworkElementType elementType = vs.getPickedElementType();
 
-        final List<NetworkElement> pickedElement = vs.getPickedNetworkElement();
-        final List<Pair<Demand, Link>> pickedForwardingRule = vs.getPickedForwardingRule();
+        final List<NetworkElement> pickedElement = vs.getPickedNetworkElements();
+        final List<Pair<Demand, Link>> pickedForwardingRule = vs.getPickedForwardingRules();
 
-        if (pickedElement != null && pickedElement.size() > 1) return;
-        if (pickedForwardingRule != null && pickedForwardingRule.size() > 1) return;
+		/* Do nothing if more than one element is picked */
+        if (pickedElement.size() > 1) return;
+        if (pickedForwardingRule.size() > 1) return;
 
 		/* Check if remove everything */
 		if (elementType == null) { this.removeAll(); this.revalidate(); this.repaint(); return; }
@@ -55,10 +56,8 @@ public class FocusPane extends JPanel
 		this.removeAll(); this.revalidate(); this.repaint();
 
 		/* Do nothing if more than one element is picked */
-        if (pickedElement != null)
-        	if (pickedElement.size () > 1) return;
-        if (pickedForwardingRule != null)
-        	if (pickedForwardingRule.size () > 1) return;
+        if (pickedElement.size() > 1) return;
+        if (pickedForwardingRule.size() > 1) return;
 
 		/* Here if there is something new to show */
 		if (elementType == NetworkElementType.ROUTE)
@@ -77,7 +76,7 @@ public class FocusPane extends JPanel
 		}
 		else if (elementType == NetworkElementType.FORWARDING_RULE)
 		{
-			final Pair<Demand,Link> fr = vs.getPickedForwardingRule().get(0);
+			final Pair<Demand,Link> fr = vs.getPickedForwardingRules().get(0);
 //			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
 //			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getForwardingRuleInfoTables(fr), null) , BorderLayout.CENTER);

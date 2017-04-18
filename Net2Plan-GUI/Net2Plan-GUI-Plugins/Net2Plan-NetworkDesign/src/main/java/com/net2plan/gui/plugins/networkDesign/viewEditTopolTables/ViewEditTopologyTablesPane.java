@@ -1,28 +1,48 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables;
 
 
-import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.*;
-import com.net2plan.gui.utils.FullScrollPaneLayout;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.internal.Constants;
-import com.net2plan.internal.ErrorHandling;
-import com.net2plan.utils.Pair;
-
-import javax.swing.*;
-import javax.swing.table.TableModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.EnumMap;
 import java.util.Map;
 
-import static com.net2plan.internal.Constants.NetworkElementType;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.table.TableModel;
+
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_demand;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_forwardingRule;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_layer;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_link;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_multicastDemand;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_multicastTree;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_node;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_resource;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_route;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_srg;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
+import com.net2plan.gui.utils.FullScrollPaneLayout;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.internal.Constants;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.internal.ErrorHandling;
+import com.net2plan.utils.Pair;
 
 @SuppressWarnings("unchecked")
 public class ViewEditTopologyTablesPane extends JPanel
@@ -207,7 +227,7 @@ public class ViewEditTopologyTablesPane extends JPanel
         }
 
         TableModel model = table.getModel();
-        int numRows = model.getRowCount();
+        final int numRows = model.getRowCount();
         for (int row = 0; row < numRows; row++)
         {
             Object obj = model.getValueAt(row, 0);
@@ -232,15 +252,109 @@ public class ViewEditTopologyTablesPane extends JPanel
         throw new RuntimeException(type + " " + itemId + " does not exist");
     }
 
-    public void selectItem(NetworkElementType type, Object itemId)
+    public void selectItem(NetworkElementType type, Pair<Demand,Link> fr)
     {
-        AdvancedJTable_networkElement table = netPlanViewTable.get(type);
-
-        final NetPlan netPlan = callback.getDesign();
-        int itemIndex = netPlan.getNetworkElement((Long) itemId).getIndex();
-
-        table.addRowSelectionInterval(table.convertRowIndexToModel(itemIndex), table.convertRowIndexToModel(itemIndex));
+        final AdvancedJTable_networkElement table = netPlanViewTable.get(type);
+        final TableModel model = table.getModel();
+        final int numRows = model.getRowCount();
+        for (int row = 0; row < numRows; row++)
+        {
+        	final Object demandInTable = model.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_DEMAND);
+        	final Object linkInTable = model.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK);
+        	if (demandInTable == null) continue;
+        	if (linkInTable == null) continue;
+        	final Pair<Integer,Integer> obj = Pair.of(
+                Integer.parseInt(demandInTable.toString().split(" ")[0]),Integer.parseInt(linkInTable.toString().split(" ")[0]));
+            if (obj.equals(fr)) 
+            {
+                table.addRowSelectionInterval(table.convertRowIndexToModel(row), table.convertRowIndexToModel(row));
+            	return;
+            }
+        }
     }
+    
+    public void selectItem (NetworkElementType type, NetworkElement element)
+    {
+        final AdvancedJTable_networkElement table = netPlanViewTable.get(type);
+        final TableModel model = table.getModel();
+        final int numRows = model.getRowCount();
+        for (int row = 0; row < numRows; row++)
+        {
+        	final Object idTableObject = model.getValueAt(row, 0);
+        	if (idTableObject == null) continue;
+            if ((long) idTableObject == element.getId()) 
+            {
+                table.addRowSelectionInterval(table.convertRowIndexToModel(row), table.convertRowIndexToModel(row));
+            	return;
+            }
+        }
+    }
+
+    
+//    public void selectItem(NetworkElementType type, Object itemId)
+//    {
+//        AdvancedJTable_networkElement table = netPlanViewTable.get(type);
+//
+//        final NetPlan netPlan = callback.getDesign();
+//        final int numRows = table.getRowCount();
+////        if (type == NetworkElementType.FORWARDING_RULE)
+////        {
+////        	final Pair<Integer,Integer> fr = (Pair<Integer,Integer>) itemId;  
+////            for (int row = 0; row < numRows; row++)
+////            {
+////            	final Pair<Integer,Integer> obj = Pair.of(
+////                    Integer.parseInt(table.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_DEMAND).toString().split(" ")[0]),
+////                    Integer.parseInt(table.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK).toString().split(" ")[0]));
+////                if (obj.equals(fr)) return 
+////                } else if ((long) obj != (long) itemId)
+////                {
+////                    continue;
+////                }
+////
+////                row = table.convertRowIndexToView(row);
+////                table.changeSelection(row, col, false, true);
+////                return;
+////            }
+////        }
+////        else
+////        {
+////        	
+////        }
+////        
+////        for (int row = 0; row < numRows; row++)
+////        {
+////            Object obj = table.getValueAt(row, 0);
+////            if (obj == null) continue;
+////            if (type == NetworkElementType.FORWARDING_RULE)
+////            {
+////                obj = Pair.of(
+////                        Integer.parseInt(table.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_DEMAND).toString().split(" ")[0]),
+////                        Integer.parseInt(table.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK).toString().split(" ")[0]));
+////                if (!obj.equals(itemId)) continue;
+////            } else if ((long) obj != (long) itemId)
+////            {
+////                continue;
+////            }
+////
+////            row = table.convertRowIndexToView(row);
+////            table.changeSelection(row, col, false, true);
+////            return;
+////        }
+////
+////        if (type == NetworkElementType.FORWARDING_RULE)
+////        {
+////        	for (int row = 0; )
+////        }
+////        else
+////        {
+////        	
+////        }
+////        
+////        int itemIndex = netPlan.getNetworkElement((Long) itemId).getIndex();
+////        System.out.println("select Item: " + type + ", itemId: " + itemId + " --> " + itemIndex);
+//
+////        table.addRowSelectionInterval(table.convertRowIndexToModel(itemIndex), table.convertRowIndexToModel(itemIndex));
+//    }
 
     public void clearSelection(NetworkElementType type)
     {

@@ -797,8 +797,11 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         if (vs.getPickedElementType() != null) // can be null if picked a resource type
             selectNetPlanViewItem(vs.getPickedElementType(), null);
 
-        for (NetworkElement networkElement : vs.getPickedNetworkElement())
-            viewEditTopTables.selectItem(NetworkElementType.getType(networkElement), networkElement.getId());
+        for (NetworkElement networkElement : vs.getPickedNetworkElements())
+            viewEditTopTables.selectItem(NetworkElementType.getType(networkElement), networkElement);
+
+        for (Pair<Demand,Link> fr : vs.getPickedForwardingRules())
+            viewEditTopTables.selectItem(NetworkElementType.FORWARDING_RULE, fr);
 
         topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
         focusPanel.updateView();
@@ -807,6 +810,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @Override
     public void updateVisualizationAfterNewTopology()
     {
+        vs.updateTableRowFilter(null, null);
         topologyPanel.updateMultilayerVisibilityAndOrderPanel();
         topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
         topologyPanel.getCanvas().zoomAll();

@@ -23,6 +23,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFile
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFSelectionBased;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFTagBased;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.FixedColumnDecorator;
@@ -1599,6 +1600,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     protected void addFilterOptions(MouseEvent e, ElementSelection selection, JPopupMenu popup)
     {
         final NetPlan netPlan = callback.getDesign();
+        final VisualizationState vs = callback.getVisualizationState();
         final boolean isMultilayerDesign = netPlan.isMultilayer();
 
         for (boolean applyJustToThisLayer : isMultilayerDesign ? new boolean[]{true, false} : new boolean[]{true})
@@ -1609,15 +1611,15 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             else
                 submenuFilters = new JMenu("Filters: Apply to all layers");
 
-            for (FilterCombinationType filterCombinationType : FilterCombinationType.values())
+            for (FilterCombinationType filterCombinationType : vs.getTableRowFilter() == null? new FilterCombinationType [] { FilterCombinationType.INCLUDEIF_AND } : FilterCombinationType.values())
             {
                 final JMenu filterCombinationSubMenu;
                 switch (filterCombinationType)
                 {
-                    case INCLUDEIF_AND:
+                    case INCLUDEIF_OR:
                         filterCombinationSubMenu = new JMenu("Add elements that...");
                         break;
-                    case INCLUDEIF_OR:
+                    case INCLUDEIF_AND:
                         filterCombinationSubMenu = new JMenu("Keep elements that...");
                         break;
                     default:
