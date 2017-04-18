@@ -6,6 +6,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -18,16 +19,18 @@ import java.io.IOException;
 public class ExcelWriter
 {
     private static File file;
-    private static ExcelExtension fileExtension;
     private static Object[][] data;
+    private static String sheetName;
+    private static ExcelExtension fileExtension;
 
-    public static void writeToFile(@Nonnull File file, @Nonnull Object[][] data) throws ExcelParserException
+    public static void writeToFile(@Nonnull File file, @Nullable String sheetName, @Nullable Object[][] data) throws ExcelParserException
     {
         final ExcelExtension fileExtension = ExcelExtension.parseString(FilenameUtils.getExtension(file.getAbsolutePath()));
 
         ExcelWriter.file = file;
-        ExcelWriter.fileExtension = fileExtension;
         ExcelWriter.data = data;
+        ExcelWriter.sheetName = sheetName;
+        ExcelWriter.fileExtension = fileExtension;
 
         switch (ExcelWriter.fileExtension)
         {
@@ -61,17 +64,22 @@ public class ExcelWriter
         final CreationHelper helper = workbook.getCreationHelper();
         final Sheet sheet = workbook.createSheet();
 
+        if (sheetName != null) workbook.setSheetName(workbook.getSheetIndex(sheet), sheetName);
+
         int rowNum = 0;
-        for (Object[] dataRow : data)
+        if (data != null)
         {
-            final Row row = sheet.createRow(rowNum++);
-
-            int colNum = 0;
-            for (Object field : dataRow)
+            for (Object[] dataRow : data)
             {
-                final Cell cell = row.createCell(colNum++);
+                final Row row = sheet.createRow(rowNum++);
 
-                cell.setCellValue(helper.createRichTextString(field.toString()));
+                int colNum = 0;
+                for (Object field : dataRow)
+                {
+                    final Cell cell = row.createCell(colNum++);
+
+                    cell.setCellValue(helper.createRichTextString(field.toString()));
+                }
             }
         }
 
