@@ -235,6 +235,17 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
         return rf == null ? callback.getDesign().hasLinks(layer) : rf.hasLinks(layer);
     }
+    
+    public int getNumberOfElements (boolean consideringFilters)
+    {
+        final NetPlan np = callback.getDesign();
+        final NetworkLayer layer = np.getNetworkLayerDefault();
+    	if (!consideringFilters) return np.getNumberOfLinks(layer);
+    	
+        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+        return rf.getNumberOfLinks(layer);
+    }
+
 
     @Override
     public int getAttributesColumnIndex()

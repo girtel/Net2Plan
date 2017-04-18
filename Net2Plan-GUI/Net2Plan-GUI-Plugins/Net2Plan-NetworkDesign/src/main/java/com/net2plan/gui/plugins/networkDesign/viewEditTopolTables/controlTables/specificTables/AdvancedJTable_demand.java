@@ -227,6 +227,17 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
         return rf == null ? callback.getDesign().hasDemands(layer) : rf.hasDemands(layer);
     }
+    
+    public int getNumberOfElements (boolean consideringFilters)
+    {
+        final NetPlan np = callback.getDesign();
+        final NetworkLayer layer = np.getNetworkLayerDefault();
+    	if (!consideringFilters) return np.getNumberOfDemands(layer);
+    	
+        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+        return rf.getNumberOfDemands(layer);
+    }
+    
 
     private static TableModel createTableModel(final GUINetworkDesign callback)
     {

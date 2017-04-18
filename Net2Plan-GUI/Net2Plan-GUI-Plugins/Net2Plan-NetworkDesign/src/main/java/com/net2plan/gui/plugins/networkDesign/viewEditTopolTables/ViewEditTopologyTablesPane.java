@@ -190,7 +190,7 @@ public class ViewEditTopologyTablesPane extends JPanel
             {
                 final int numEntries = table.getModel().getRowCount() - 1; // last colums is for the aggregation
                 if (callback.getVisualizationState().getTableRowFilter() != null)
-                    label.setText("Number of entries: " + numEntries + ", FILTERED VIEW: " + callback.getVisualizationState().getTableRowFilter().getDescription());
+                    label.setText("Number of entries: " + numEntries + " / " + table.getNumberOfElements(false) +  ", FILTERED VIEW: " + callback.getVisualizationState().getTableRowFilter().getDescription());
                 else
                     label.setText("Number of entries: " + numEntries);
             }
@@ -290,71 +290,6 @@ public class ViewEditTopologyTablesPane extends JPanel
         }
     }
 
-    
-//    public void selectItem(NetworkElementType type, Object itemId)
-//    {
-//        AdvancedJTable_networkElement table = netPlanViewTable.get(type);
-//
-//        final NetPlan netPlan = callback.getDesign();
-//        final int numRows = table.getRowCount();
-////        if (type == NetworkElementType.FORWARDING_RULE)
-////        {
-////        	final Pair<Integer,Integer> fr = (Pair<Integer,Integer>) itemId;  
-////            for (int row = 0; row < numRows; row++)
-////            {
-////            	final Pair<Integer,Integer> obj = Pair.of(
-////                    Integer.parseInt(table.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_DEMAND).toString().split(" ")[0]),
-////                    Integer.parseInt(table.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK).toString().split(" ")[0]));
-////                if (obj.equals(fr)) return 
-////                } else if ((long) obj != (long) itemId)
-////                {
-////                    continue;
-////                }
-////
-////                row = table.convertRowIndexToView(row);
-////                table.changeSelection(row, col, false, true);
-////                return;
-////            }
-////        }
-////        else
-////        {
-////        	
-////        }
-////        
-////        for (int row = 0; row < numRows; row++)
-////        {
-////            Object obj = table.getValueAt(row, 0);
-////            if (obj == null) continue;
-////            if (type == NetworkElementType.FORWARDING_RULE)
-////            {
-////                obj = Pair.of(
-////                        Integer.parseInt(table.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_DEMAND).toString().split(" ")[0]),
-////                        Integer.parseInt(table.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK).toString().split(" ")[0]));
-////                if (!obj.equals(itemId)) continue;
-////            } else if ((long) obj != (long) itemId)
-////            {
-////                continue;
-////            }
-////
-////            row = table.convertRowIndexToView(row);
-////            table.changeSelection(row, col, false, true);
-////            return;
-////        }
-////
-////        if (type == NetworkElementType.FORWARDING_RULE)
-////        {
-////        	for (int row = 0; )
-////        }
-////        else
-////        {
-////        	
-////        }
-////        
-////        int itemIndex = netPlan.getNetworkElement((Long) itemId).getIndex();
-////        System.out.println("select Item: " + type + ", itemId: " + itemId + " --> " + itemIndex);
-//
-////        table.addRowSelectionInterval(table.convertRowIndexToModel(itemIndex), table.convertRowIndexToModel(itemIndex));
-//    }
 
     public void clearSelection(NetworkElementType type)
     {

@@ -1767,6 +1767,8 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public abstract boolean hasElements();
 
+    public abstract int getNumberOfElements (boolean consideringFilters);
+
     public abstract int getAttributesColumnIndex();
 
     public abstract void setColumnRowSortingFixedAndNonFixedTable();

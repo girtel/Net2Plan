@@ -146,6 +146,15 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
         return rf == null ? callback.getDesign().hasForwardingRules(layer) : rf.hasForwardingRules(layer);
     }
+    
+    public int getNumberOfElements (boolean consideringFilters)
+    {
+        final NetPlan np = callback.getDesign();
+        final NetworkLayer layer = np.getNetworkLayerDefault();
+    	if (!consideringFilters) return np.getNumberOfForwardingRules(layer);
+        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+        return rf.getNumberOfForwardingRules(layer);
+    }
 
     @Override
     public int getAttributesColumnIndex()

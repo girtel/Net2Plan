@@ -193,6 +193,16 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
         final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
         return rf == null ? callback.getDesign().hasMulticastTrees(layer) : rf.hasMulticastTrees(layer);
     }
+    public int getNumberOfElements (boolean consideringFilters)
+    {
+        final NetPlan np = callback.getDesign();
+        final NetworkLayer layer = np.getNetworkLayerDefault();
+    	if (!consideringFilters) return np.getNumberOfMulticastTrees(layer);
+    	
+        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+        return rf.getNumberOfMulticastTrees(layer);
+    }
+
 
     @Override
     public int getAttributesColumnIndex()

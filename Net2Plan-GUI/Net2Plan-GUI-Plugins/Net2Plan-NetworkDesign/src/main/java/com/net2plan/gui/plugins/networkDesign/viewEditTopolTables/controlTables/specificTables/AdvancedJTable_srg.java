@@ -190,6 +190,16 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         return rf == null ? callback.getDesign().hasSRGs() : rf.hasSRGs(layer);
     }
 
+    public int getNumberOfElements (boolean consideringFilters)
+    {
+        final NetPlan np = callback.getDesign();
+        final NetworkLayer layer = np.getNetworkLayerDefault();
+    	if (!consideringFilters) return np.getNumberOfSRGs();
+    	
+        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+        return rf.getNumberOfSRGs(layer);
+    }
+
     @Override
     public int getAttributesColumnIndex()
     {
