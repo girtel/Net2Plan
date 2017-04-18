@@ -137,8 +137,20 @@ public class ViewEditTopologyTablesPane extends JPanel
                     overwriteFile = true;
                 }
 
-                for (AdvancedJTable_networkElement table : netPlanViewTable.values())
-                    table.writeTableToFile(file, overwriteFile);
+                try
+                {
+                    for (AdvancedJTable_networkElement table : netPlanViewTable.values())
+                    {
+                        table.writeTableToFile(file, overwriteFile);
+                    }
+
+                    ErrorHandling.showMessageDialog("Excel file successfully written", "Finished writing into file");
+                } catch (Exception e)
+                {
+                    ErrorHandling.showErrorDialog("Error");
+                    e.printStackTrace();
+                    file.delete();
+                }
             }
         });
 

@@ -33,13 +33,14 @@ public class ExcelWriter
         ExcelWriter.sheetName = sheetName;
         ExcelWriter.overwriteFile = overwrite;
 
-        try
+        final String extension = FilenameUtils.getExtension(file.getAbsolutePath());
+        if (extension.isEmpty())
         {
-            ExcelWriter.fileExtension = ExcelExtension.parseString(FilenameUtils.getExtension(file.getAbsolutePath()));
-        } catch (ExcelParserException e)
-        {
-            // Retro-compatible by default
             ExcelWriter.fileExtension = ExcelExtension.OLE2;
+            ExcelWriter.file = new File(file.getAbsoluteFile(), ExcelWriter.fileExtension.toString());
+        } else
+        {
+            ExcelWriter.fileExtension = ExcelExtension.parseString(extension);
         }
 
         switch (ExcelWriter.fileExtension)
