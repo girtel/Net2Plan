@@ -37,7 +37,7 @@ public class ExcelWriter
         if (extension.isEmpty())
         {
             ExcelWriter.fileExtension = ExcelExtension.OLE2;
-            ExcelWriter.file = new File(file.getAbsoluteFile(), ExcelWriter.fileExtension.toString());
+            ExcelWriter.file = new File(file.getAbsolutePath() + "." + ExcelWriter.fileExtension.toString());
         } else
         {
             ExcelWriter.fileExtension = ExcelExtension.parseString(extension);
@@ -92,9 +92,14 @@ public class ExcelWriter
     private static void doWrite(@Nonnull final Workbook workbook)
     {
         final CreationHelper helper = workbook.getCreationHelper();
-        final Sheet sheet = workbook.createSheet();
+        
+        workbook.setActiveSheet(workbook.getNumberOfSheets());
 
-        if (sheetName != null) workbook.setSheetName(workbook.getSheetIndex(sheet), sheetName);
+        final Sheet sheet;
+        if (sheetName != null)
+            sheet = workbook.createSheet(sheetName);
+        else
+            sheet = workbook.createSheet();
 
         int rowNum = 0;
         if (data != null)

@@ -149,7 +149,6 @@ public class ViewEditTopologyTablesPane extends JPanel
                 {
                     ErrorHandling.showErrorDialog("Error");
                     e.printStackTrace();
-                    file.delete();
                 }
             }
         });
