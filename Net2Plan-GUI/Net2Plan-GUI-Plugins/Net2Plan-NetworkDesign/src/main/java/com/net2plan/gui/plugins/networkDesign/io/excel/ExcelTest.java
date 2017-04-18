@@ -19,7 +19,7 @@ public class ExcelTest
 
         try
         {
-            ExcelWriter.writeToFile(file, "Hola", data, false);
+            ExcelWriter.writeToFile(file, "Hola", data);
         } catch (ExcelParserException e)
         {
             e.printStackTrace();

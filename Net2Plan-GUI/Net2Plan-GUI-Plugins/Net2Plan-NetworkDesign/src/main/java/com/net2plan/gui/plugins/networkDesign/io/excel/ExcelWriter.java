@@ -23,6 +23,11 @@ public class ExcelWriter
     private static String sheetName;
     private static ExcelExtension fileExtension;
 
+    public static void writeToFile(@Nonnull File file, @Nullable Object[][] data) throws ExcelParserException
+    {
+        writeToFile(file, null, data);
+    }
+
     public static void writeToFile(@Nonnull File file, @Nullable String sheetName, @Nullable Object[][] data) throws ExcelParserException
     {
         final ExcelExtension fileExtension = ExcelExtension.parseString(FilenameUtils.getExtension(file.getAbsolutePath()));

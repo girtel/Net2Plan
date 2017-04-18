@@ -15,6 +15,8 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTable
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.AttributeEditor;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
+import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelParserException;
+import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelWriter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFTagBased;
 import com.net2plan.gui.utils.AdvancedJTable;
@@ -27,6 +29,7 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.event.*;
@@ -35,6 +38,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.xml.stream.XMLStreamException;
 import java.awt.event.*;
+import java.io.File;
 import java.util.*;
 
 
@@ -2408,4 +2412,28 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
+    protected void writeToFile(@Nonnull File file)
+    {
+        try
+        {
+            ExcelWriter.writeToFile(file, this.getTabName(), buildData());
+        } catch (ExcelParserException e)
+        {
+            ErrorHandling.showErrorDialog("Error");
+            e.printStackTrace();
+        }
+    }
+
+    private Object[][] buildData()
+    {
+        Object[][] data = new Object[this.getColumnCount()][];
+
+        // Headers
+        for(int i = 0; i < this.getColumnCount(); i++)
+        {
+            data[0][i] = this.getColumnName(i);
+        }
+
+        return data;
+    }
 }
