@@ -2418,10 +2418,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     private Object[][] buildData()
     {
-
         final int fixedColumnCount = fixedTable.getColumnCount();
         final int mainColumnCount = mainTable.getColumnCount();
-        final int rowCount = this.getRowCount();
+        final int rowCount = this.hasElements() ? this.getRowCount() : 0;
 
         Object[][] data = new Object[rowCount + 1][fixedColumnCount + mainColumnCount];
 

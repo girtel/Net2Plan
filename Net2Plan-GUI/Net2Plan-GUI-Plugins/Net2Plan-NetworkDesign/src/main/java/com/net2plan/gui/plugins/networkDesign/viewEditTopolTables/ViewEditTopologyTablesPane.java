@@ -21,6 +21,8 @@ import java.io.File;
 import java.util.EnumMap;
 import java.util.Map;
 
+import static com.net2plan.utils.Constants.*;
+
 @SuppressWarnings("unchecked")
 public class ViewEditTopologyTablesPane extends JPanel
 {
@@ -139,12 +141,22 @@ public class ViewEditTopologyTablesPane extends JPanel
 
                 try
                 {
+                    final NetPlan netPlan = callback.getDesign();
+
                     for (AdvancedJTable_networkElement table : netPlanViewTable.values())
                     {
+                        if (table instanceof AdvancedJTable_forwardingRule)
+                            if (netPlan.getRoutingType() != RoutingType.HOP_BY_HOP_ROUTING)
+                                continue;
+
+                        if (table instanceof AdvancedJTable_route)
+                            if (netPlan.getRoutingType() != RoutingType.SOURCE_ROUTING)
+                                continue;
+
                         table.writeTableToFile(file, overwriteFile);
                     }
 
-                    ErrorHandling.showMessageDialog("Excel file successfully written", "Finished writing into file");
+                    ErrorHandling.showInformationDialog("Excel file successfully written", "Finished writing into file");
                 } catch (Exception e)
                 {
                     ErrorHandling.showErrorDialog("Error");

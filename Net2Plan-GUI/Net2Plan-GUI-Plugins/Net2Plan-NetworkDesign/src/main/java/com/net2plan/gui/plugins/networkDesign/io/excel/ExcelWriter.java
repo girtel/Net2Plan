@@ -21,11 +21,6 @@ public class ExcelWriter
     private static boolean overwriteFile;
     private static ExcelExtension fileExtension;
 
-    public static void writeToFile(@Nonnull File file, @Nullable Object[][] data, boolean overwrite) throws ExcelParserException
-    {
-        writeToFile(file, null, data, overwrite);
-    }
-
     public static void writeToFile(@Nonnull File file, @Nullable String sheetName, @Nullable Object[][] data, boolean overwrite) throws ExcelParserException
     {
         ExcelWriter.file = file;
@@ -89,11 +84,12 @@ public class ExcelWriter
         }
     }
 
-    private static void doWrite(@Nonnull final Workbook workbook)
+    private static void doWrite(Workbook workbook)
     {
         final CreationHelper helper = workbook.getCreationHelper();
         
-        workbook.setActiveSheet(workbook.getNumberOfSheets());
+        if (workbook.getNumberOfSheets() > 0)
+            workbook.setActiveSheet(workbook.getNumberOfSheets());
 
         final Sheet sheet;
         if (sheetName != null)
