@@ -123,7 +123,7 @@ public class RunnableSelector extends JPanel {
                     String className = (String) ((StringLabeller) algorithmSelector.getSelectedItem()).getObject();
                     Class<? extends IExternal> _class = implementations.get(className);
 
-                    IExternal instance = ClassLoaderUtils.getInstance(fileName, className, _class);
+                    IExternal instance = ClassLoaderUtils.getInstance(fileName, className, _class , null);
                     String aux_description = null;
                     try {
                         aux_description = instance.getDescription();
@@ -302,7 +302,7 @@ public class RunnableSelector extends JPanel {
             if (!f.isAbsolute()) f = new File(SystemUtils.getCurrentDir(), f.getPath());
 
             Map<String, Class> aux_implementations = new TreeMap<String, Class>();
-            List<Class<IExternal>> aux = ClassLoaderUtils.getClassesFromFile(f, IExternal.class);
+            List<Class<IExternal>> aux = ClassLoaderUtils.getClassesFromFile(f, IExternal.class , null);
             for (Class<IExternal> implementation : aux) {
                 Iterator<Class<? extends IExternal>> it = _classes.iterator();
 

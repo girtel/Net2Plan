@@ -250,7 +250,7 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
             };
 
             Triple<File, String, Class> aux = eventProcessorPanel.getRunnable();
-            IExternal eventProcessor = ClassLoaderUtils.getInstance(aux.getFirst(), aux.getSecond(), simKernel.getEventProcessorClass());
+            IExternal eventProcessor = ClassLoaderUtils.getInstance(aux.getFirst(), aux.getSecond(), simKernel.getEventProcessorClass() , null);
             Map<String, String> eventProcessorParameters = eventProcessorPanel.getRunnableParameters();
 //			IExternal eventProcessor = new Online_evProc_ipOverWdm();
 //			Map<String, String> eventProcessorParameters = InputParameter.getDefaultParameters(eventProcessor.getParameters());
