@@ -33,7 +33,8 @@ public class ViewEditTopologyTablesPane extends JPanel
     private final Map<Constants.NetworkElementType, JComponent> netPlanViewTableComponent;
     private final Map<Constants.NetworkElementType, JLabel> netPlanViewTableNumEntriesLabel;
 
-    private final JToolBar tableToolBar;
+    private final JMenuBar menuBar;
+    private final JMenu exportMenu;
 
     public ViewEditTopologyTablesPane(GUINetworkDesign callback, LayoutManager layout)
     {
@@ -112,9 +113,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         this.add(netPlanView, BorderLayout.CENTER);
 
-        tableToolBar = new JToolBar(JToolBar.HORIZONTAL);
-
-        final JMenuItem writeToExcel = new JMenuItem("Write table to Excel");
+        final JMenuItem writeToExcel = new JMenuItem("To excel");
         writeToExcel.addActionListener(ev ->
         {
             final JFileChooser fileChooser = new JFileChooser();
@@ -168,11 +167,14 @@ public class ViewEditTopologyTablesPane extends JPanel
             }
         });
 
-        tableToolBar.add(writeToExcel);
-        final JPanel auxPanel = new JPanel(new BorderLayout());
-        auxPanel.add(tableToolBar);
+        menuBar = new JMenuBar();
 
-        this.add(tableToolBar, BorderLayout.SOUTH);
+        exportMenu = new JMenu("Export...");
+        exportMenu.add(writeToExcel);
+
+        menuBar.add(exportMenu);
+
+        this.add(menuBar, BorderLayout.SOUTH);
     }
 
     public Map<Constants.NetworkElementType, AdvancedJTable_networkElement> getNetPlanViewTable()
