@@ -22,19 +22,18 @@ public class ExcelWriter
 
     public static void writeToFile(@Nonnull File file, @Nullable String sheetName, @Nullable Object[][] data) throws ExcelParserException
     {
+        // Reboot
+        ExcelWriter.file = null;
+        ExcelWriter.data = null;
+        ExcelWriter.sheetName = null;
+        ExcelWriter.fileExtension = null;
+
         ExcelWriter.file = file;
         ExcelWriter.data = data;
         ExcelWriter.sheetName = sheetName;
+        ExcelWriter.fileExtension = ExcelExtension.parseString(FilenameUtils.getExtension(file.getAbsolutePath()));
 
-        final String extension = FilenameUtils.getExtension(file.getAbsolutePath());
-        if (extension.isEmpty())
-        {
-            ExcelWriter.fileExtension = ExcelExtension.OLE2;
-            ExcelWriter.file = new File(file.getAbsolutePath() + "." + ExcelWriter.fileExtension.toString());
-        } else
-        {
-            ExcelWriter.fileExtension = ExcelExtension.parseString(extension);
-        }
+        assert ExcelWriter.fileExtension != null;
 
         switch (ExcelWriter.fileExtension)
         {
@@ -56,13 +55,10 @@ public class ExcelWriter
         {
             // Trying to open file
             workbook = WorkbookFactory.create(new FileInputStream(file.getAbsoluteFile()));
-        } catch (FileNotFoundException e)
+        } catch (Exception e)
         {
             // No file was found
             workbook = new HSSFWorkbook();
-        } catch (Exception e)
-        {
-            throw new ExcelParserException(e.getMessage());
         }
 
         doWrite(workbook);
@@ -74,13 +70,10 @@ public class ExcelWriter
         try
         {
             workbook = new XSSFWorkbook(new FileInputStream(file.getAbsoluteFile()));
-        } catch (FileNotFoundException e)
+        } catch (Exception e)
         {
             // No file was found
             workbook = new XSSFWorkbook();
-        } catch (Exception e)
-        {
-            throw new ExcelParserException(e.getMessage());
         }
         doWrite(workbook);
     }
@@ -112,7 +105,8 @@ public class ExcelWriter
                 {
                     final Cell cell = row.createCell(colNum++);
 
-                    cell.setCellValue(helper.createRichTextString(field.toString()));
+                    final String fieldContent = field != null ? field.toString() : "null";
+                    cell.setCellValue(helper.createRichTextString(fieldContent));
                 }
             }
         }
@@ -126,10 +120,10 @@ public class ExcelWriter
             workbook.write(fileOut);
         } catch (FileNotFoundException e)
         {
-            e.printStackTrace();
+            throw new ExcelParserException(e.getMessage());
         } catch (IOException e)
         {
-            e.printStackTrace();
+            throw new ExcelParserException(e.getMessage());
         } finally
         {
             try
@@ -140,7 +134,7 @@ public class ExcelWriter
                     fileOut.close();
             } catch (IOException e)
             {
-                e.printStackTrace();
+                throw new ExcelParserException(e.getMessage());
             }
         }
     }
