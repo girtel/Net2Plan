@@ -2411,9 +2411,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    public void writeTableToFile(@Nonnull File file, boolean overwrite)
+    public void writeTableToFile(@Nonnull File file)
     {
-        ExcelWriter.writeToFile(file, this.getTabName(), buildData(), overwrite);
+        ExcelWriter.writeToFile(file, this.getTabName(), buildData());
     }
 
     private Object[][] buildData()

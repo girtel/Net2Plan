@@ -126,17 +126,14 @@ public class ViewEditTopologyTablesPane extends JPanel
             {
                 final File file = fileChooser.getSelectedFile();
 
-                boolean overwriteFile;
                 if (file.exists())
                 {
                     int option = JOptionPane.showConfirmDialog(null, "File already exists.\nOverwrite?", "Warning", JOptionPane.YES_NO_CANCEL_OPTION);
 
-                    if (option == JOptionPane.YES_OPTION) overwriteFile = true;
-                    else if (option == JOptionPane.NO_OPTION) overwriteFile = false;
-                    else return;
-                } else
-                {
-                    overwriteFile = true;
+                    if (option == JOptionPane.YES_OPTION)
+                        file.delete();
+                    else
+                        return;
                 }
 
                 try
@@ -153,7 +150,7 @@ public class ViewEditTopologyTablesPane extends JPanel
                             if (netPlan.getRoutingType() != RoutingType.SOURCE_ROUTING)
                                 continue;
 
-                        table.writeTableToFile(file, overwriteFile);
+                        table.writeTableToFile(file);
                     }
 
                     ErrorHandling.showInformationDialog("Excel file successfully written", "Finished writing into file");

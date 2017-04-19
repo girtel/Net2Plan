@@ -18,15 +18,13 @@ public class ExcelWriter
     private static File file;
     private static Object[][] data;
     private static String sheetName;
-    private static boolean overwriteFile;
     private static ExcelExtension fileExtension;
 
-    public static void writeToFile(@Nonnull File file, @Nullable String sheetName, @Nullable Object[][] data, boolean overwrite) throws ExcelParserException
+    public static void writeToFile(@Nonnull File file, @Nullable String sheetName, @Nullable Object[][] data) throws ExcelParserException
     {
         ExcelWriter.file = file;
         ExcelWriter.data = data;
         ExcelWriter.sheetName = sheetName;
-        ExcelWriter.overwriteFile = overwrite;
 
         final String extension = FilenameUtils.getExtension(file.getAbsolutePath());
         if (extension.isEmpty())
@@ -53,43 +51,48 @@ public class ExcelWriter
 
     private static void writeOLE2()
     {
-        final Workbook workbook;
+        Workbook workbook;
         try
         {
-            if (overwriteFile)
-                workbook = new HSSFWorkbook();
-            else
-                workbook = WorkbookFactory.create(new FileInputStream(file.getAbsoluteFile()));
-            doWrite(workbook);
+            // Trying to open file
+            workbook = WorkbookFactory.create(new FileInputStream(file.getAbsoluteFile()));
+        } catch (FileNotFoundException e)
+        {
+            // No file was found
+            workbook = new HSSFWorkbook();
         } catch (Exception e)
         {
             throw new ExcelParserException(e.getMessage());
         }
+
+        doWrite(workbook);
     }
 
     private static void writeOOXML()
     {
-        final Workbook workbook;
+        Workbook workbook;
         try
         {
-            if (overwriteFile)
-                workbook = new XSSFWorkbook();
-            else
-                workbook = new XSSFWorkbook(new FileInputStream(file.getAbsoluteFile()));
-
-            doWrite(workbook);
+            workbook = new XSSFWorkbook(new FileInputStream(file.getAbsoluteFile()));
+        } catch (FileNotFoundException e)
+        {
+            // No file was found
+            workbook = new XSSFWorkbook();
         } catch (Exception e)
         {
             throw new ExcelParserException(e.getMessage());
         }
+        doWrite(workbook);
     }
 
     private static void doWrite(Workbook workbook)
     {
+        assert workbook != null;
+
         final CreationHelper helper = workbook.getCreationHelper();
-        
-        if (workbook.getNumberOfSheets() > 0)
-            workbook.setActiveSheet(workbook.getNumberOfSheets());
+
+        if (workbook.getActiveSheetIndex() > 0)
+            workbook.setActiveSheet(workbook.getActiveSheetIndex() + 1);
 
         final Sheet sheet;
         if (sheetName != null)
