@@ -2,7 +2,6 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables;
 
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelExtension;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.*;
@@ -12,8 +11,10 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Pair;
+import com.net2plan.utils.SwingUtils;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableModel;
 import java.awt.*;
@@ -21,7 +22,7 @@ import java.io.File;
 import java.util.EnumMap;
 import java.util.Map;
 
-import static com.net2plan.utils.Constants.*;
+import static com.net2plan.utils.Constants.RoutingType;
 
 @SuppressWarnings("unchecked")
 public class ViewEditTopologyTablesPane extends JPanel
@@ -117,14 +118,19 @@ public class ViewEditTopologyTablesPane extends JPanel
         writeToExcel.addActionListener(ev ->
         {
             final JFileChooser fileChooser = new JFileChooser();
-            final FileNameExtensionFilter filter = new FileNameExtensionFilter("Excel Files (*.xls, *.xlsx)", ExcelExtension.OLE2.toString(), ExcelExtension.OOXML.toString());
-            fileChooser.setFileFilter(filter);
+            fileChooser.setAcceptAllFileFilterUsed(false);
+            fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
+
+            FileFilter xlsFilter = new FileNameExtensionFilter("Excel 2003 file (*.xls)", "xls");
+            FileFilter xlsxFilter = new FileNameExtensionFilter("Excel 2007 file (*.xlsx)", "xlsx");
+            fileChooser.addChoosableFileFilter(xlsFilter);
+            fileChooser.addChoosableFileFilter(xlsxFilter);
 
             final int res = fileChooser.showSaveDialog(null);
 
             if (res == JFileChooser.APPROVE_OPTION)
             {
-                final File file = fileChooser.getSelectedFile();
+                final File file = SwingUtils.getSelectedFileWithExtension(fileChooser);
 
                 if (file.exists())
                 {
