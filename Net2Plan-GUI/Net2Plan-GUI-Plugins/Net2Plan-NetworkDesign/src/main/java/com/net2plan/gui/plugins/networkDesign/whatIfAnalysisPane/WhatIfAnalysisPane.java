@@ -50,7 +50,6 @@ import java.util.List;
 public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener, ActionListener
 {
     private final GUINetworkDesign callback;
-    private JTextArea simInfo;
     private Thread simThread;
     private ParameterValueDescriptionPanel simulationConfigurationPanel;
     private RunnableSelector eventProcessorPanel;

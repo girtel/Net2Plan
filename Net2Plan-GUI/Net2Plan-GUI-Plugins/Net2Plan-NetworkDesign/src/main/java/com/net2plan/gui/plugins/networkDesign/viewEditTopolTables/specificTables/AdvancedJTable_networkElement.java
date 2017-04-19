@@ -15,6 +15,7 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTable
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.AttributeEditor;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
+import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelWriter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFTagBased;
 import com.net2plan.gui.utils.AdvancedJTable;
@@ -27,6 +28,7 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.event.*;
@@ -35,6 +37,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.xml.stream.XMLStreamException;
 import java.awt.event.*;
+import java.io.File;
 import java.util.*;
 
 
@@ -72,6 +75,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     private final JPopupMenu fixedTableMenu, mainTableMenu;
     private final JMenu showMenu;
     private final JMenuItem showAllItem, hideAllItem, resetItem, saveStateItem, loadStateItem;
+
     private final ArrayList<TableColumn> hiddenColumns, shownColumns, removedColumns;
     private ArrayList<String> hiddenColumnsNames, hiddenColumnsAux;
     private final Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn;
@@ -85,7 +89,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     private ArrayList<String> attributesColumnsNames;
     private boolean expandAttributes = false;
     private NetPlan currentTopology = null;
-    private Map<String, Boolean> hasBeenAddedEachAttColumn = new HashMap<>();
 
     /**
      * Constructor that allows to set the table model.
@@ -285,6 +288,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
                         checkNewIndexes();
                         updateShowMenu();
+
                         TableColumn clickedColumn = fixedTable.getColumnModel().getColumn(fixedTable.columnAtPoint(e.getPoint()));
                         int clickedColumnIndex = fixedTable.getColumnModel().getColumnIndex(clickedColumn.getIdentifier());
                         showMenu.setEnabled(true);
@@ -1090,14 +1094,13 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     private void setTips()
     {
-        String [] columnHeader = getTableHeaders();
-        String [] columnTips = getTableTips();
+        String[] columnHeader = getTableHeaders();
+        String[] columnTips = getTableTips();
         ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
         for (int c = 0; c < columnHeader.length; c++)
         {
             TableColumn col = getColumnModel().getColumn(c);
             String tip = columnTips[c];
-            System.out.println("Columna "+col.getHeaderValue().toString()+" tiene la tip "+tip);
             tips.setToolTip(col, tip);
         }
 
@@ -2377,7 +2380,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     }
 
     /* Dialog for filtering by tag */
-    protected void dialogToFilterByTag (boolean onlyInActiveLayer)
+    protected void dialogToFilterByTag(boolean onlyInActiveLayer)
     {
         JTextField txt_tagContains = new JTextField(30);
         JTextField txt_tagDoesNotContain = new JTextField(30);
@@ -2394,11 +2397,11 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             try
             {
                 if (txt_tagContains.getText().isEmpty() && txt_tagDoesNotContain.getText().isEmpty()) continue;
-				final ITableRowFilter filter = new TBFTagBased(
-						callback.getDesign(), onlyInActiveLayer? callback.getDesign().getNetworkLayerDefault() : null , 
-								txt_tagContains.getText() , txt_tagDoesNotContain.getText());
-				callback.getVisualizationState().updateTableRowFilter(filter);
-				callback.updateVisualizationJustTables();
+                final ITableRowFilter filter = new TBFTagBased(
+                        callback.getDesign(), onlyInActiveLayer ? callback.getDesign().getNetworkLayerDefault() : null,
+                        txt_tagContains.getText(), txt_tagDoesNotContain.getText());
+                callback.getVisualizationState().updateTableRowFilter(filter);
+                callback.updateVisualizationJustTables();
             } catch (Throwable ex)
             {
                 ErrorHandling.addErrorOrException(ex, getClass());
@@ -2408,4 +2411,36 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
+    public void writeTableToFile(@Nonnull File file)
+    {
+        ExcelWriter.writeToFile(file, this.getTabName(), buildData());
+    }
+
+    private Object[][] buildData()
+    {
+        final int fixedColumnCount = fixedTable.getColumnCount();
+        final int mainColumnCount = mainTable.getColumnCount();
+        final int rowCount = this.hasElements() ? this.getRowCount() : 0;
+
+        Object[][] data = new Object[rowCount + 1][fixedColumnCount + mainColumnCount];
+
+        // Headers
+        for (int i = 0; i < fixedColumnCount; i++)
+            data[0][i] = fixedTable.getColumnName(i);
+
+        for (int i = 0; i < mainColumnCount; i++)
+            data[0][fixedColumnCount + i] = mainTable.getColumnName(i);
+
+        // Values
+        for (int i = 0; i < rowCount; i++)
+        {
+            for (int j = 0; j < fixedColumnCount; j++)
+                data[i + 1][j] = fixedTable.getValueAt(i, j);
+
+            for (int j = 0; j < mainColumnCount; j++)
+                data[i + 1][fixedColumnCount + j] = mainTable.getValueAt(i, j);
+        }
+
+        return data;
+    }
 }
