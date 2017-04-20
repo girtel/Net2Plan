@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables;
+package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -18,6 +18,7 @@ import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;

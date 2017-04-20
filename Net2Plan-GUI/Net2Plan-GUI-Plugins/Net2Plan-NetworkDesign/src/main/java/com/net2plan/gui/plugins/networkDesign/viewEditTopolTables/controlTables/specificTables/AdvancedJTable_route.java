@@ -1,6 +1,6 @@
 
 
-package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables;
+package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables;
 
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
@@ -9,6 +9,7 @@ import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.*;
 import com.net2plan.interfaces.networkDesign.*;

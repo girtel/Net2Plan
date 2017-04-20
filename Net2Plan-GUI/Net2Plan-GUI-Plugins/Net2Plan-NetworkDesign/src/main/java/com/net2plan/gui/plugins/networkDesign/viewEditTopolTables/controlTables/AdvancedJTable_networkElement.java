@@ -10,12 +10,14 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables;
+package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.AttributeEditor;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelWriter;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_forwardingRule;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_layer;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFTagBased;
 import com.net2plan.gui.utils.AdvancedJTable;
@@ -2231,7 +2233,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         popup.add(removeTagAll);
     }
 
-    static class ColumnComparator implements Comparator<Object>
+    public static class ColumnComparator implements Comparator<Object>
     {
         private final boolean isDoubleWithParenthesis;
         private final RowSorter rs;
@@ -2296,22 +2298,22 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     {
         private String value;
 
-        LastRowAggregatedValue()
+        public LastRowAggregatedValue()
         {
             value = "---";
         }
 
-        LastRowAggregatedValue(int val)
+        public LastRowAggregatedValue(int val)
         {
             value = "" + val;
         }
 
-        LastRowAggregatedValue(double val)
+        public LastRowAggregatedValue(double val)
         {
             value = String.format("%.2f", val);
         }
 
-        LastRowAggregatedValue(String value)
+        public LastRowAggregatedValue(String value)
         {
             this.value = value;
         }
