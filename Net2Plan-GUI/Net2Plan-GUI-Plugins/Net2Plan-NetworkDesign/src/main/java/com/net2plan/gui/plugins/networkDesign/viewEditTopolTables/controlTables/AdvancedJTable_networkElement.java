@@ -17,6 +17,7 @@ import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.AttributeEditor;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
+import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelWriter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_forwardingRule;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_layer;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
@@ -44,6 +45,7 @@ import javax.swing.table.TableModel;
 import javax.xml.stream.XMLStreamException;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -1753,6 +1755,39 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             if (networkElementType == NetworkElementType.NODE || networkElementType == NetworkElementType.LINK)
                 popup.add(new MenuItem_HideFiltered(callback, networkElementType));
         }
+    }
+
+    public void writeTableToFile(@Nonnull File file)
+    {
+        ExcelWriter.writeToFile(file, this.getTabName(), buildData());
+    }
+
+    private Object[][] buildData()
+    {
+        final int fixedColumnCount = fixedTable.getColumnCount();
+        final int mainColumnCount = mainTable.getColumnCount();
+        final int rowCount = this.hasElements() ? this.getRowCount() : 0;
+
+        Object[][] data = new Object[rowCount + 1][fixedColumnCount + mainColumnCount];
+
+        // Headers
+        for (int i = 0; i < fixedColumnCount; i++)
+            data[0][i] = fixedTable.getColumnName(i);
+
+        for (int i = 0; i < mainColumnCount; i++)
+            data[0][fixedColumnCount + i] = mainTable.getColumnName(i);
+
+        // Values
+        for (int i = 0; i < rowCount; i++)
+        {
+            for (int j = 0; j < fixedColumnCount; j++)
+                data[i + 1][j] = fixedTable.getValueAt(i, j);
+
+            for (int j = 0; j < mainColumnCount; j++)
+                data[i + 1][fixedColumnCount + j] = mainTable.getValueAt(i, j);
+        }
+
+        return data;
     }
 
     public abstract List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesTitles);

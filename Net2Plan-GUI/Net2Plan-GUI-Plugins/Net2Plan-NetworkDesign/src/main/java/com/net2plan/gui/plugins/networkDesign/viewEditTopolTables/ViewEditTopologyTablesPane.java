@@ -112,7 +112,7 @@ public class ViewEditTopologyTablesPane extends JPanel
                     buttonsPanel.add(resetTableRowFilters, BorderLayout.EAST);
                     resetTableRowFilters.addActionListener(e ->
                     {
-                        callback.getVisualizationState().updateTableRowFilter(null);
+                        callback.getVisualizationState().updateTableRowFilter(null, FilterCombinationType.INCLUDEIF_AND);
                         callback.updateVisualizationJustTables();
                         callback.resetPickedStateAndUpdateView();
                     });
