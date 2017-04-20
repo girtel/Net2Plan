@@ -1872,6 +1872,7 @@ public class NetPlan extends NetworkElement
      * affecting nodes that are not in the restricted set. Equivalent to making a copy, and then removing all the nodes not in 
      * the restricted set.</p>
      *
+     * @param restrictedSet Restricted set of nodes.
      * @return Deep copy of the restricted current design
      */
     public NetPlan restrictedCopy(Set<Node> restrictedSet)

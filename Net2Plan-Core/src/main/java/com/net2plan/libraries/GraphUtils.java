@@ -1370,7 +1370,8 @@ public class GraphUtils
 	 *     <li>the fraction of demand traffic that arrives to the destination node and is absorbed there (it may be less than one if the routing has cycles that involve the destination node)</li>
 	 * </ol>
 	 * @param frs the forwarding rules applicable
-	 * @param ingressNode the ingress node 
+	 * @param outFrs output forwarding rule
+	 * @param ingressNode the ingress node
 	 * @param egressNode the egress node
 	 * @return See description above
 	 */

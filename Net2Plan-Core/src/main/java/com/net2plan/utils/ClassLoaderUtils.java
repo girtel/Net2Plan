@@ -12,6 +12,11 @@
 
 package com.net2plan.utils;
 
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.internal.SystemUtils;
+
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -25,12 +30,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
-
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
-
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.internal.SystemUtils;
 
 /**
  * <p>Class to deal with dynamic Java class loading from .class/.jar files.</p>
@@ -278,7 +277,6 @@ public class ClassLoaderUtils
 	 * Tries to guess what are the classpath and fully qualified name of a .class Java file
 	 *
 	 * @param classFile .class file
-	 * @param classLoaderToUse if not null, use it. If null, create a new one
 	 * @return An object pair in which the first element is the classpath of the class, and the second one is the fully qualified name
 	 * @since 0.2.0
 	 */
@@ -357,7 +355,8 @@ public class ClassLoaderUtils
 	 * @param file .class/.jar file
 	 * @param className the class name
 	 * @param _class Reference to the class
-	 * @return An instance of the given class from 
+	 * @param classLoaderToUpdate Class loader to be updated
+	 * @return An instance of the given class from
 	 */
 	public static <T> T getInstance(File file, String className, Class<T> _class , URLClassLoader classLoaderToUpdate)
 	{
