@@ -85,7 +85,6 @@ public class GUILauncher
             } else if (LAUNCH_TYPE.getSelected().equals("r"))
             {
                 // Robot launcher
-
                 final String[] robot_args = (String[]) ArrayUtils.removeElement(args, "-r");
 
                 //New options

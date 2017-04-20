@@ -131,9 +131,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 		/* add the popup menu listener (this) */
         addMouseListener(new PopupMenuMouseAdapter());
 
-        // List change event
-        this.getSelectionModel().addListSelectionListener(new TableChangeEvent());
-
         this.getTableHeader().setReorderingAllowed(true);
 
         scroll = new JScrollPane(this);
@@ -1161,26 +1158,26 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         {
             try
             {
+                final ElementSelection selection = getSelectedElements();
+
                 if (SwingUtilities.isRightMouseButton(e))
-                    getPopup(getSelectedElements()).show(e.getComponent(), e.getX(), e.getY());
+                {
+                    getPopup(selection).show(e.getComponent(), e.getX(), e.getY());
+                    return;
+                }
+
+                if (SwingUtilities.isLeftMouseButton(e))
+                {
+                    if (selection.isEmpty())
+                        callback.resetPickedStateAndUpdateView();
+                    else
+                        SwingUtilities.invokeLater(() -> showInCanvas(selection));
+                }
             } catch (Exception ex)
             {
-                ErrorHandling.showErrorDialog("Error");
+                ErrorHandling.showErrorDialog("The GUI has suffered a problem. Please see the console for more information.", "Error");
                 ex.printStackTrace();
             }
-        }
-    }
-
-    private class TableChangeEvent implements ListSelectionListener
-    {
-        @Override
-        public void valueChanged(ListSelectionEvent listSelectionEvent)
-        {
-            final ElementSelection selection = getSelectedElements();
-            if (selection.isEmpty())
-                callback.resetPickedStateAndUpdateView();
-            else
-                SwingUtilities.invokeLater(() -> showInCanvas(selection));
         }
     }
 
@@ -1503,27 +1500,29 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         final List<NetworkElement> elementList = new ArrayList<>();
         final List<Pair<Demand, Link>> frList = new ArrayList<>();
 
-        if (rowIndexes.length == 0) return new ElementSelection();
-        final int maxValidRowIndex = model.getRowCount() - 1 - (hasAggregationRow() ? 1 : 0);
-        final List<Integer> validRows = new ArrayList<Integer>();
-        for (int a : rowIndexes) if ((a >= 0) && (a <= maxValidRowIndex)) validRows.add(a);
+        if (rowIndexes.length != 0)
+        {
+            final int maxValidRowIndex = model.getRowCount() - 1 - (hasAggregationRow() ? 1 : 0);
+            final List<Integer> validRows = new ArrayList<Integer>();
+            for (int a : rowIndexes) if ((a >= 0) && (a <= maxValidRowIndex)) validRows.add(a);
 
-        if (networkElementType == NetworkElementType.FORWARDING_RULE)
-        {
-            for (int rowIndex : validRows)
+            if (networkElementType == NetworkElementType.FORWARDING_RULE)
             {
-                final String demandInfo = (String) ((DefaultTableModel) getModel()).getValueAt(rowIndex, AdvancedJTable_forwardingRule.COLUMN_DEMAND);
-                final String linkInfo = (String) ((DefaultTableModel) getModel()).getValueAt(rowIndex, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK);
-                final int demandIndex = Integer.parseInt(demandInfo.substring(0, demandInfo.indexOf("(")).trim());
-                final int linkIndex = Integer.parseInt(linkInfo.substring(0, linkInfo.indexOf("(")).trim());
-                frList.add(Pair.of(np.getDemand(demandIndex), np.getLink(linkIndex)));
-            }
-        } else
-        {
-            for (int rowIndex : validRows)
+                for (int rowIndex : validRows)
+                {
+                    final String demandInfo = (String) ((DefaultTableModel) getModel()).getValueAt(rowIndex, AdvancedJTable_forwardingRule.COLUMN_DEMAND);
+                    final String linkInfo = (String) ((DefaultTableModel) getModel()).getValueAt(rowIndex, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK);
+                    final int demandIndex = Integer.parseInt(demandInfo.substring(0, demandInfo.indexOf("(")).trim());
+                    final int linkIndex = Integer.parseInt(linkInfo.substring(0, linkInfo.indexOf("(")).trim());
+                    frList.add(Pair.of(np.getDemand(demandIndex), np.getLink(linkIndex)));
+                }
+            } else
             {
-                final long id = (long) getModel().getValueAt(rowIndex, 0);
-                elementList.add(np.getNetworkElement(id));
+                for (int rowIndex : validRows)
+                {
+                    final long id = (long) getModel().getValueAt(rowIndex, 0);
+                    elementList.add(np.getNetworkElement(id));
+                }
             }
         }
 
