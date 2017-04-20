@@ -132,77 +132,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 		/* add the popup menu listener (this) */
         addMouseListener(new PopupMenuMouseAdapter());
 
-        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.SHIFT_DOWN_MASK), "shiftUpArrow");
-        this.getActionMap().put("shiftUpArrow", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent)
-            {
-                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-                final int upRow = Ints.min(table.getSelectedRows());
-                final int downRow = Ints.max(table.getSelectedRows());
-
-                table.setRowSelectionInterval(upRow - 1, downRow);
-
-                final ElementSelection selectedElements = getSelectedElements();
-                if (selectedElements.isEmpty()) return;
-                SwingUtilities.invokeLater(() -> showInCanvas(selectedElements));
-            }
-        });
-
-        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "upArrow");
-        this.getActionMap().put("upArrow", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-                final int upRow = Ints.min(table.getSelectedRows());
-
-                int row = upRow - 1;
-                table.setRowSelectionInterval(row, row);
-
-                final ElementSelection selectedElements = getSelectedElements();
-                if (selectedElements.isEmpty()) return;
-                SwingUtilities.invokeLater(() -> showInCanvas(selectedElements));
-            }
-        });
-
-        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK), "shiftDownArrow");
-        this.getActionMap().put("shiftDownArrow", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent)
-            {
-                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-                final int upRow = Ints.min(table.getSelectedRows());
-                final int downRow = Ints.max(table.getSelectedRows());
-
-                table.setRowSelectionInterval(upRow, downRow + 1);
-
-                final ElementSelection selectedElements = getSelectedElements();
-                if (selectedElements.isEmpty()) return;
-                SwingUtilities.invokeLater(() -> showInCanvas(selectedElements));
-            }
-        });
-
-        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "downArrow");
-        this.getActionMap().put("downArrow", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-                final int downRow = Ints.max(table.getSelectedRows());
-
-                int row = downRow + 1;
-                table.setRowSelectionInterval(row, row);
-
-                final ElementSelection selectedElements = getSelectedElements();
-                if (selectedElements.isEmpty()) return;
-                SwingUtilities.invokeLater(() -> showInCanvas(selectedElements));
-            }
-        });
+        addKeyboardActions();
 
         this.getTableHeader().setReorderingAllowed(true);
 
@@ -506,6 +436,89 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             @Override
             public void columnSelectionChanged(ListSelectionEvent e)
             {
+            }
+        });
+    }
+
+    private void addKeyboardActions()
+    {
+        // Key input
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.SHIFT_DOWN_MASK), "shiftUpArrow");
+        this.getActionMap().put("shiftUpArrow", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent)
+            {
+                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
+                final int upRow = Ints.min(table.getSelectedRows());
+                final int downRow = Ints.max(table.getSelectedRows());
+
+                int row = upRow - 1;
+                if (row < 0) return;
+                table.setRowSelectionInterval(row, downRow);
+
+                final ElementSelection selectedElements = getSelectedElements();
+                if (selectedElements.isEmpty()) return;
+                SwingUtilities.invokeLater(() -> showInCanvas(selectedElements));
+            }
+        });
+
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "upArrow");
+        this.getActionMap().put("upArrow", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
+                final int upRow = Ints.min(table.getSelectedRows());
+
+                int row = upRow - 1;
+                if (row < 0) return;
+                table.setRowSelectionInterval(row, row);
+
+                final ElementSelection selectedElements = getSelectedElements();
+                if (selectedElements.isEmpty()) return;
+                SwingUtilities.invokeLater(() -> showInCanvas(selectedElements));
+            }
+        });
+
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK), "shiftDownArrow");
+        this.getActionMap().put("shiftDownArrow", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent)
+            {
+                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
+                final int upRow = Ints.min(table.getSelectedRows());
+                final int downRow = Ints.max(table.getSelectedRows());
+
+                int row = downRow + 1;
+                if (hasAggregationRow() && row == (table.getRowCount() - 1)) return;
+                table.setRowSelectionInterval(upRow, row);
+
+                final ElementSelection selectedElements = getSelectedElements();
+                if (selectedElements.isEmpty()) return;
+                SwingUtilities.invokeLater(() -> showInCanvas(selectedElements));
+            }
+        });
+
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "downArrow");
+        this.getActionMap().put("downArrow", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
+                final int downRow = Ints.max(table.getSelectedRows());
+
+                int row = downRow + 1;
+
+                if (hasAggregationRow() && row == table.getRowCount() - 1) return;
+                table.setRowSelectionInterval(row, row);
+
+                final ElementSelection selectedElements = getSelectedElements();
+                if (selectedElements.isEmpty()) return;
+                SwingUtilities.invokeLater(() -> showInCanvas(selectedElements));
             }
         });
     }
@@ -1248,23 +1261,8 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 }
             } catch (Exception ex)
             {
-                ErrorHandling.showErrorDialog("The GUI has suffered a problem. Please see the console for more information.", "Error");
+                ErrorHandling.showErrorDialog("The GUI has suffered a problem.\nPlease see the console for more information.", "Error");
                 ex.printStackTrace();
-            }
-        }
-    }
-
-    private class KeyboardListener extends KeyAdapter
-    {
-        @Override
-        public void keyReleased(final KeyEvent evt)
-        {
-            final int keyCode = evt.getKeyCode();
-            if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN)
-            {
-                final ElementSelection selection = getSelectedElements();
-                if (selection.isEmpty()) return;
-                SwingUtilities.invokeLater(() -> showInCanvas(selection));
             }
         }
     }
