@@ -53,7 +53,7 @@ public class GUILauncher
         OPTIONS = new Options();
 
         LAUNCH_TYPE = new OptionGroup();
-        LAUNCH_TYPE.setRequired(true);
+        LAUNCH_TYPE.setRequired(false);
 
         final Option vanilla = new Option("v", "vanilla", false, "Launch GUI as if it was executed from outside.");
         LAUNCH_TYPE.addOption(vanilla);
@@ -70,7 +70,9 @@ public class GUILauncher
         HelpFormatter formatter = new HelpFormatter();
         try
         {
-            parser.parse(OPTIONS, args, true);
+            parser.parse(OPTIONS, args, false);
+
+            if (LAUNCH_TYPE.getSelected() == null) LAUNCH_TYPE.setSelected(OPTIONS.getOption("v"));
 
             if (LAUNCH_TYPE.getSelected().equals("v"))
             {

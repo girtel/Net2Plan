@@ -32,9 +32,9 @@ public class FigureNodeSequencePanel extends FigureSequencePanel
     }
 
     @Override
-    protected void paintComponent(Graphics grphcs)
+    protected void paintComponent(Graphics graphics)
     {
-        final Graphics2D g2d = (Graphics2D) grphcs;
+        final Graphics2D g2d = (Graphics2D) graphics;
         g2d.setColor(Color.black);
 
         int currentXYStartOfText = 40;

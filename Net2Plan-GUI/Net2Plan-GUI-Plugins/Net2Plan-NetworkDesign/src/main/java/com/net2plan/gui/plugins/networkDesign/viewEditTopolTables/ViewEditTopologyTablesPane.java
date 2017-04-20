@@ -1,23 +1,6 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables;
 
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.LayoutManager;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.EnumMap;
-import java.util.Map;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.table.TableModel;
-
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
@@ -43,6 +26,18 @@ import com.net2plan.internal.Constants;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Pair;
+import com.net2plan.utils.SwingUtils;
+
+import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.TableModel;
+import java.awt.*;
+import java.io.File;
+import java.util.EnumMap;
+import java.util.Map;
+
+import static com.net2plan.utils.Constants.RoutingType;
 
 @SuppressWarnings("unchecked")
 public class ViewEditTopologyTablesPane extends JPanel
@@ -52,7 +47,9 @@ public class ViewEditTopologyTablesPane extends JPanel
     private final Map<Constants.NetworkElementType, AdvancedJTable_networkElement> netPlanViewTable;
     private final Map<Constants.NetworkElementType, JComponent> netPlanViewTableComponent;
     private final Map<Constants.NetworkElementType, JLabel> netPlanViewTableNumEntriesLabel;
-    private long time;
+
+    private final JMenuBar menuBar;
+    private final JMenu exportMenu;
 
     public ViewEditTopologyTablesPane(GUINetworkDesign callback, LayoutManager layout)
     {
@@ -60,21 +57,20 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         this.callback = callback;
 
-        netPlanViewTable = new EnumMap<Constants.NetworkElementType, AdvancedJTable_networkElement>(NetworkElementType.class);
-        netPlanViewTableComponent = new EnumMap<Constants.NetworkElementType, JComponent>(NetworkElementType.class);
-        netPlanViewTableNumEntriesLabel = new EnumMap<Constants.NetworkElementType, JLabel>(NetworkElementType.class);
+        netPlanViewTable = new EnumMap<>(Constants.NetworkElementType.class);
+        netPlanViewTableComponent = new EnumMap<>(Constants.NetworkElementType.class);
+        netPlanViewTableNumEntriesLabel = new EnumMap<>(Constants.NetworkElementType.class);
 
-//        mainWindow.allowDocumentUpdate = mainWindow.isEditable();
-        netPlanViewTable.put(NetworkElementType.NODE, new AdvancedJTable_node(callback));
-        netPlanViewTable.put(NetworkElementType.LINK, new AdvancedJTable_link(callback));
-        netPlanViewTable.put(NetworkElementType.DEMAND, new AdvancedJTable_demand(callback));
-        netPlanViewTable.put(NetworkElementType.ROUTE, new AdvancedJTable_route(callback));
-        netPlanViewTable.put(NetworkElementType.FORWARDING_RULE, new AdvancedJTable_forwardingRule(callback));
-        netPlanViewTable.put(NetworkElementType.MULTICAST_DEMAND, new AdvancedJTable_multicastDemand(callback));
-        netPlanViewTable.put(NetworkElementType.MULTICAST_TREE, new AdvancedJTable_multicastTree(callback));
-        netPlanViewTable.put(NetworkElementType.SRG, new AdvancedJTable_srg(callback));
-        netPlanViewTable.put(NetworkElementType.RESOURCE, new AdvancedJTable_resource(callback));
-        netPlanViewTable.put(NetworkElementType.LAYER, new AdvancedJTable_layer(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.NODE, new AdvancedJTable_node(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.LINK, new AdvancedJTable_link(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.DEMAND, new AdvancedJTable_demand(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.ROUTE, new AdvancedJTable_route(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.FORWARDING_RULE, new AdvancedJTable_forwardingRule(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.MULTICAST_DEMAND, new AdvancedJTable_multicastDemand(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.MULTICAST_TREE, new AdvancedJTable_multicastTree(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.SRG, new AdvancedJTable_srg(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.RESOURCE, new AdvancedJTable_resource(callback));
+        netPlanViewTable.put(Constants.NetworkElementType.LAYER, new AdvancedJTable_layer(callback));
 
         netPlanViewTableNumEntriesLabel.put(NetworkElementType.NODE, new JLabel("Number of entries: "));
         netPlanViewTableNumEntriesLabel.put(NetworkElementType.LINK, new JLabel("Number of entries: "));
@@ -114,16 +110,11 @@ public class ViewEditTopologyTablesPane extends JPanel
                     final JPanel buttonsPanel = new JPanel();
                     final JButton resetTableRowFilters = new JButton("Reset VFs");
                     buttonsPanel.add(resetTableRowFilters, BorderLayout.EAST);
-
-                    resetTableRowFilters.addActionListener(new ActionListener()
+                    resetTableRowFilters.addActionListener(e ->
                     {
-                        @Override
-                        public void actionPerformed(ActionEvent e)
-                        {
-                            callback.getVisualizationState().updateTableRowFilter(null , FilterCombinationType.INCLUDEIF_AND);
-                            callback.updateVisualizationJustTables();
-                            callback.resetPickedStateAndUpdateView();
-                        }
+                        callback.getVisualizationState().updateTableRowFilter(null);
+                        callback.updateVisualizationJustTables();
+                        callback.resetPickedStateAndUpdateView();
                     });
                     buttonsPanel.setOpaque(false);
                     labelsPanel.add(buttonsPanel, BorderLayout.EAST);
@@ -138,17 +129,68 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         this.add(netPlanView, BorderLayout.CENTER);
 
-    }
+        final JMenuItem writeToExcel = new JMenuItem("To excel");
+        writeToExcel.addActionListener(ev ->
+        {
+            final JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setAcceptAllFileFilterUsed(false);
+            fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
 
-    public Map<Constants.NetworkElementType, AdvancedJTable_networkElement> currentTables()
-    {
+            FileFilter xlsFilter = new FileNameExtensionFilter("Excel 2003 file (*.xls)", "xls");
+            FileFilter xlsxFilter = new FileNameExtensionFilter("Excel 2007 file (*.xlsx)", "xlsx");
+            fileChooser.addChoosableFileFilter(xlsFilter);
+            fileChooser.addChoosableFileFilter(xlsxFilter);
 
-        return netPlanViewTable;
-    }
+            final int res = fileChooser.showSaveDialog(null);
 
-    public JTabbedPane getNetPlanView()
-    {
-        return netPlanView;
+            if (res == JFileChooser.APPROVE_OPTION)
+            {
+                final File file = SwingUtils.getSelectedFileWithExtension(fileChooser);
+
+                if (file.exists())
+                {
+                    int option = JOptionPane.showConfirmDialog(null, "File already exists.\nOverwrite?", "Warning", JOptionPane.YES_NO_CANCEL_OPTION);
+
+                    if (option == JOptionPane.YES_OPTION)
+                        file.delete();
+                    else
+                        return;
+                }
+
+                try
+                {
+                    final NetPlan netPlan = callback.getDesign();
+
+                    for (AdvancedJTable_networkElement table : netPlanViewTable.values())
+                    {
+                        if (table instanceof AdvancedJTable_forwardingRule)
+                            if (netPlan.getRoutingType() != RoutingType.HOP_BY_HOP_ROUTING)
+                                continue;
+
+                        if (table instanceof AdvancedJTable_route)
+                            if (netPlan.getRoutingType() != RoutingType.SOURCE_ROUTING)
+                                continue;
+
+                        table.writeTableToFile(file);
+                    }
+
+                    ErrorHandling.showInformationDialog("Excel file successfully written", "Finished writing into file");
+                } catch (Exception e)
+                {
+                    ErrorHandling.showErrorDialog("Error");
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        menuBar = new JMenuBar();
+
+        exportMenu = new JMenu("Export...");
+        exportMenu.add(writeToExcel);
+
+        menuBar.add(exportMenu);
+
+        this.add(menuBar, BorderLayout.SOUTH);
     }
 
     public Map<Constants.NetworkElementType, AdvancedJTable_networkElement> getNetPlanViewTable()
@@ -190,7 +232,7 @@ public class ViewEditTopologyTablesPane extends JPanel
             {
                 final int numEntries = table.getModel().getRowCount() - 1; // last colums is for the aggregation
                 if (callback.getVisualizationState().getTableRowFilter() != null)
-                    label.setText("Number of entries: " + numEntries + " / " + table.getNumberOfElements(false) +  ", FILTERED VIEW: " + callback.getVisualizationState().getTableRowFilter().getDescription());
+                    label.setText("Number of entries: " + numEntries + ", FILTERED VIEW: " + callback.getVisualizationState().getTableRowFilter().getDescription());
                 else
                     label.setText("Number of entries: " + numEntries);
             }
@@ -297,39 +339,4 @@ public class ViewEditTopologyTablesPane extends JPanel
         table.clearSelection();
     }
 
-    public void showMainTab()
-    {
-        getNetPlanView().setSelectedIndex(0);
-    }
 }
-
-
-//final JButton applyIntersectFilter = new JButton ("AND filter");
-//buttonsPanel.add(applyIntersectFilter , BorderLayout.CENTER);
-//applyIntersectFilter.addActionListener(new ActionListener()
-//{
-//	@Override
-//	public void actionPerformed(ActionEvent e)
-//	{
-//		final AdvancedJTable_networkElement table = netPlanViewTable.get(elementType);
-//		final int  [] selectedElements = table.getSelectedRows();
-//		if (selectedElements.length == 0) return;
-//		if (selectedElements.length > 1) throw new RuntimeException("MULTIPLE SELECTIONS NOT IMPLEMENTED");
-//		if (elementType != Constants.NetworkElementType.FORWARDING_RULE)
-//		{
-//			final List<NetworkElement> selectedNetElements = new LinkedList<NetworkElement> ();
-//			for (int row : selectedElements) selectedNetElements.add(callback.getDesign().getNetworkElement((long) table.getValueAt(row , 0)));
-//
-//
-//			PABLO: HACER EL FILTRO GENERICO QUE LO LLAMAS SIN SABER DE DONDE ES LA TABLA, CON EL UP DOWN Y TODA LA HISTORIA
-//		}
-//		
-//		ITableRowFilter filter = callback.getVisualizationState().getTableRowFilter();
-//		if (filter == null)
-//			filter = new TBFToFromCarriedTraffic(pickedDemand , showInCanvasThisLayerPropagation , showInCanvasLowerLayerPropagation , showInCanvasUpperLayerPropagation);
-//		
-//		callback.getVisualizationState().setTableRowFilter(null);
-//		callback.updateVisualizationJustTables();
-//		callback.resetPickedStateAndUpdateView();
-//	}
-//});

@@ -22,6 +22,8 @@ import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
+import cern.colt.matrix.tdouble.algo.SparseDoubleAlgebra;
+import cern.colt.matrix.tdouble.impl.SparseCCDoubleMatrix2D;
 import cern.jet.math.tdouble.DoubleFunctions;
 import cern.jet.math.tdouble.DoublePlusMultFirst;
 import com.jom.OptimizationProblem;
@@ -29,6 +31,8 @@ import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.*;
 import com.net2plan.utils.Constants.CheckRoutingCycleType;
 import com.net2plan.utils.Constants.RoutingCycleType;
+import com.net2plan.utils.Constants.RoutingType;
+
 import edu.uci.ics.jung.algorithms.filters.EdgePredicateFilter;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.algorithms.layout.StaticLayout;
@@ -63,6 +67,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 /** <p>Auxiliary static methods to work with graphs.</p>
@@ -515,6 +520,51 @@ public class GraphUtils
 	}
 
 	
+//	public static List<Pair<List<Link>,Double>> convert_xe2xpNoLoops (Node ingress , Node egress , Map<Link,Triple<Double,Double,Double>> frInfo , NetworkLayer... optionalLayerParameter)
+//	{
+//        final NetworkLayer layer = ingress.getNetPlan().checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+//		List<List<Link>> res = new ArrayList<> ();
+//		for (Link outLink : ingress.getOutgoingLinks(layer))
+//		{
+//			final Triple<Double,Double,Double> thisFr = frInfo.get(outLink);
+//			if (thisFr == null) continue;
+//			if (thisFr.getFirst() == 0) continue;
+//			res.add(Arrays.asList(outLink));
+//			if (outLink.getDestinationNode() ==  egress) continue;
+//			
+//		}
+//		return res;
+//	}
+//	private static void recursive_convert_xe2xpNoLoops (List<List<Link>> initialList , Set<Integer> pathIdsToContinue , Node ingress , Node egress , Set<Link> frLinks , NetworkLayer... optionalLayerParameter)
+//	{
+//		List<>boolean atLeastOnePahtAdded = false;
+//		for (int pathId : pathIdsToContinue)
+//		{
+//			final List<Link> path = initialList.get(pathId);
+//			final Node endNode = path.get(path.size() - 1).getDestinationNode(); 
+//			if (endNode == egress) { pathIdsToContinue.remove(pathId); continue; }
+//			boolean pathAlreadyContinued = false;
+//			for (Link e : frLinks)
+//				if (e.getOriginNode() == endNode)
+//				{
+//					if (pathAlreadyContinued) 
+//					path.add(e); atLeastOnePahtAdded = true; 
+//				}
+//		}
+//        final NetworkLayer layer = ingress.getNetPlan().checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+//		List<List<Link>> res = new ArrayList<> ();
+//		for (Link outLink : ingress.getOutgoingLinks(layer))
+//		{
+//			final Triple<Double,Double,Double> thisFr = frInfo.get(outLink);
+//			if (thisFr == null) continue;
+//			if (thisFr.getFirst() == 0) continue;
+//			res.add(Arrays.asList(outLink));
+//			if (outLink.getDestinationNode() ==  egress) continue;
+//			
+//		}
+//		return res;
+//	}
+	
 	/** Converts the routing in the form x_de into a set of loopless routes. If the x_de matrix has open or closed loops, they are removed
 	 * from the routing. The resulting routing (after removing the cycles if any) of each demand uses the same of less bandwidth than the original routing.
 	 * @param nodes List of nodes
@@ -700,6 +750,49 @@ public class GraphUtils
 			}
 		}
 		return x_de;
+	}
+
+	/** Given a path-based routing, returns the forwarding rules map: fraction of traffic for each demand incoming to the link 
+	 * initial node (or produced in it) forwarded to the link. The link 
+	 * occupation information is not used, only the route carried traffic (the one if the network had no failures)
+	 * @param demands List of demands
+	 * @param routes List of routes
+	 * @return see above */
+	public static Map<Demand,Map<Link,Double>> convert_xp2fdeMap(List<Demand> demands, List<Route> routes)
+	{
+		Map<Pair<Demand,Node>,Double> xdeSumMap = new HashMap<> ();
+		Map<Demand,Map<Link,Double>> xdeMap = new HashMap<> ();
+		for (Demand d : demands) xdeMap.put(d, new HashMap<> ());
+		for (Route route : routes)
+		{
+			if (route.getCarriedTrafficInNoFailureState() == 0) continue;
+			final Demand d = route.getDemand();
+			final Map<Link,Double> xdeMapThisDemand = xdeMap.get(d);
+			if (xdeMapThisDemand == null) throw new Net2PlanException ("The demand list should contain at least all the demands of the routes");
+			for (Link e : route.getSeqLinks())
+			{
+				final Node initNode = e.getOriginNode();
+				final Double sumSoFarAllOutLinks = xdeSumMap.get(Pair.of(d, initNode));
+				final Double sumSoFarThisOutLink = xdeMapThisDemand.get(e);
+				final double sumAllOutLinks = route.getCarriedTrafficInNoFailureState() + (sumSoFarAllOutLinks == null? 0 : sumSoFarAllOutLinks);
+				final double sumThisOutLink = route.getCarriedTrafficInNoFailureState() + (sumSoFarThisOutLink == null? 0 : sumSoFarThisOutLink);
+				xdeSumMap.put(Pair.of(d, initNode) , sumAllOutLinks);
+				xdeMapThisDemand.put(e, sumThisOutLink);
+			}
+		}
+
+		/* From xde to fde */
+		for (Demand d : demands)
+		{
+			final Map<Link,Double> xdeMapThisDemand = xdeMap.get(d);
+			for (Link e : new ArrayList<> (xdeMapThisDemand.keySet()))
+			{
+				final double totalTrafficOut = xdeSumMap.get(Pair.of(d, e.getOriginNode()));
+				final double thisLinkTrafficOut = xdeMapThisDemand.get(e);
+				xdeMapThisDemand.put(e, thisLinkTrafficOut / totalTrafficOut);
+			}
+		}
+		return xdeMap;
 	}
 
 	/** Returns the carried traffic per link.
@@ -1209,6 +1302,128 @@ public class GraphUtils
 		return A_ne;
 	}
 
+	/** Computes the worst case propagation delay in ms for the given forwarding rules, from the ingress to the 
+	 * egress node (assuming there is traffic between the end nodes). If the traffic does not arrive to the destination, 
+	 * Double.MAX_VALUE is returned. The function assumes that the routing has no cycles (open nor closed). If that is not 
+	 * the case, results can be invalid
+	 * @param frs forwarding rules to apply
+	 * @param outFrs if not null, provides information on the forwarding rules that can exist outgoing from each node (useful for improving the running time)
+	 * @param ingressNode ingress node
+	 * @param egressNode egress node
+	 * @return see above
+	 */
+	public static Pair<Double,Double> computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess (Map<Link,Double> frs , Map<Node,Set<Link>> outFrs , Node ingressNode , Node egressNode)
+	{
+		final Map<Node,Pair<Double,Double>> inNodes = new HashMap<> ();
+		final Set<Node> nonEgressNodesReceivingLinks = new HashSet<> (); 
+		inNodes.put(ingressNode, Pair.of(0.0, 0.0));
+		do
+		{
+			for (Node n : new ArrayList<> (inNodes.keySet()))
+			{
+				if (n == egressNode)
+				{
+					final Set<Link> outFrsEgressNode = outFrs.get(n);
+					if (outFrsEgressNode == null) continue;
+					/* check if there are outgoing links of the egress node carrying traffic => cycle */
+					for (Link e : outFrsEgressNode) if (frs.get(e) > 0) return Pair.of(Double.MAX_VALUE,Double.MAX_VALUE);
+					continue;
+				}
+				
+				/* If the node already received an input link (or is the ingress for the second time) => cycle */
+				if (nonEgressNodesReceivingLinks.add(n) == false) return Pair.of(Double.MAX_VALUE,Double.MAX_VALUE);
+				
+				/* Usual loop */
+				final Pair<Double,Double> wcSoFar = inNodes.get(n);
+				final Set<Link> outgoingFrsThisNode = outFrs == null? frs.keySet() : outFrs.get(n);
+				if (outgoingFrsThisNode != null) 
+					for (Link e : outgoingFrsThisNode)
+					{
+						final Double splitFactor = frs.get(e);
+						if (splitFactor == null) continue;
+						if (splitFactor == 0) continue;
+						final double thisPathCost_wc = wcSoFar.getFirst() + e.getPropagationDelayInMs();
+						final double thisPathCost_length = wcSoFar.getSecond() + e.getLengthInKm();
+						if (inNodes.containsKey(e.getDestinationNode()))
+							inNodes.put(e.getDestinationNode(), Pair.of(Math.max(inNodes.get(e.getDestinationNode()).getFirst() , thisPathCost_wc) , 
+											Math.max(inNodes.get(e.getDestinationNode()).getSecond() , thisPathCost_length)));
+						else
+							inNodes.put(e.getDestinationNode(), Pair.of(thisPathCost_wc , thisPathCost_length));
+					}
+				inNodes.remove(n);
+			}
+			
+			if (inNodes.isEmpty()) return Pair.of(Double.MAX_VALUE , Double.MAX_VALUE);
+			if ((inNodes.size() == 1) && (inNodes.keySet().iterator().next() == egressNode)) return inNodes.get(egressNode);
+		} while (true);
+	}
+
+	
+	
+	/**
+	 * <p>Computes the row of the fundamental matrix of the absorbing Markov chain in the current hop-by-hop routing, for the
+	 * given ingress node.</p>
+	 * <p>Returns a {@link com.net2plan.utils.Triple Triple} object where:</p>
+	 * <ol type="i">
+	 *     <li>the row associated to the ingress node fundamental matrix (1xN, where N is the number of nodes)</li>
+	 *     <li>the type of routing of the demand (loopless, or close cycles. Open cycles are not detected)</li>
+	 *     <li>the fraction of demand traffic that arrives to the destination node and is absorbed there (it may be less than one if the routing has cycles that involve the destination node)</li>
+	 * </ol>
+	 * @param frs the forwarding rules applicable
+	 * @param ingressNode the ingress node 
+	 * @param egressNode the egress node
+	 * @return See description above
+	 */
+	public static Quintuple<DoubleMatrix1D, RoutingCycleType,  Double , Double , Double> computeRoutingFundamentalVector(Map<Link,Double> frs , Map<Node,Set<Link>> outFrs , Node ingressNode , Node egressNode)
+	{
+//		System.out.println("---------------------");
+		final int N = ingressNode.getNetPlan ().getNumberOfNodes();
+		DoubleMatrix2D eyeMinusQ_nn = new SparseCCDoubleMatrix2D (N,N);
+		for (Entry<Link,Double> frInfo : frs.entrySet())
+		{
+			final int n1 = frInfo.getKey().getOriginNode().getIndex ();
+			final int n2 = frInfo.getKey().getDestinationNode().getIndex ();
+			final double splitFactor = frInfo.getValue();
+			eyeMinusQ_nn.setQuick(n2, n1 , eyeMinusQ_nn.getQuick(n2,n1) - splitFactor);
+		}
+		final double s_n = egressNode == null? -1 : 1 + eyeMinusQ_nn.viewColumn(egressNode.getIndex ()).zSum();
+		for (int n = 0; n < N ; n ++) eyeMinusQ_nn.setQuick(n, n, 1+eyeMinusQ_nn.getQuick(n,n));
+		DoubleMatrix1D Mv;
+		try 
+		{
+			DoubleMatrix1D e_k = DoubleFactory1D.sparse.make(N); e_k.set(ingressNode.getIndex (), 1.0);
+//			System.out.println(eyeMinusQ_nn);
+			Mv = new SparseDoubleAlgebra().solve(eyeMinusQ_nn, e_k);
+		}
+		catch(IllegalArgumentException e) { return Quintuple.of (null , RoutingCycleType.CLOSED_CYCLES , s_n , Double.MAX_VALUE , Double.MAX_VALUE) ; }
+		
+		Pair<Double,Double> wcPropAndLength = computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess(frs, outFrs, ingressNode, egressNode);
+		final RoutingCycleType routingCycleType = wcPropAndLength.getFirst() == Double.MAX_VALUE? RoutingCycleType.OPEN_CYCLES : RoutingCycleType.LOOPLESS;
+		return Quintuple.of(Mv, routingCycleType , s_n , wcPropAndLength.getFirst() , wcPropAndLength.getSecond());
+		
+//		final NetPlan netPlan = ingressNode.getNetPlan();
+//		final NetworkLayer layer = frs.keySet().iterator().next().getLayer();
+//		final int E = netPlan.getNumberOfLinks(layer);
+//		DoubleMatrix1D f_e = DoubleFactory1D.dense.make(E);
+//		for (Link e : frs.keySet()) f_e.set(e.getIndex(), frs.get(e));
+//		DoubleMatrix2D q_nn1 = DoubleFactory2D.sparse.make(N,E);
+//		netPlan.getMatrixNodeLinkIncomingIncidence(layer).zMult(DoubleFactory2D.sparse.diagonal(f_e) , q_nn1);
+//		DoubleMatrix2D q_nn2transpose = new SparseCCDoubleMatrix2D (N,N);//DoubleFactory2D.sparse.make(N,N);
+//		q_nn1.zMult(netPlan.getMatrixNodeLinkOutgoingIncidence(layer) , q_nn2transpose , 1 , 0 , false , true);
+//		final double s_n2 = egressNode == null? -1 : 1 - q_nn2transpose.viewColumn(egressNode.getIndex()).zSum();
+//		q_nn2transpose.assign(DoubleFunctions.neg);
+//		for (int n = 0; n < N ; n ++) q_nn2transpose.setQuick(n, n, q_nn2transpose.getQuick(n, n) + 1);//iMinusQTransposed.set(n, n, 1.0);
+//		try 
+//		{
+//			DoubleMatrix1D e_k = DoubleFactory1D.sparse.make(N); e_k.set(ingressNode.getIndex(), 1.0);
+//			System.out.println(q_nn2transpose);
+//			Mv = new SparseDoubleAlgebra().solve(q_nn2transpose, e_k);
+//		}
+//		catch(IllegalArgumentException e) { e.printStackTrace(); return Triple.of (null , RoutingCycleType.CLOSED_CYCLES , s_n2) ; }
+//
+	}
+
+	
 	/** <p>Given a list of Network Element, it computes the node-network element incoming incidence matrix. This is a matrix with as many rows as nodes, and as many columns as network elements. Position (<i>n</i>, <i>e</i>) has a 1 if element <i>e</i> (<i>e = 0</i> refers to the first element n {@code elements}, <i>e = 1</i> refers to the second one, and so on) is terminated in node <i>n</i> (<i>n = 0</i> refers to the first node in {@code nodes}, <i>n = 1</i> refers to the second one, and so on), and 0 otherwise.</p>
 	 * 
 	 * @param nodes List of nodes

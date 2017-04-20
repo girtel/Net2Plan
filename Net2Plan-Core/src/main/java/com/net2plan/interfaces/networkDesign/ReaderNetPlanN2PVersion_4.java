@@ -21,6 +21,10 @@
 package com.net2plan.interfaces.networkDesign;
 
 import com.net2plan.utils.Constants.RoutingType;
+
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.LongUtils;
 import org.codehaus.stax2.XMLStreamReader2;
@@ -317,13 +321,13 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 	}
 	
 	
-	protected void parseForwardingRule(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
+	protected void parseForwardingRule(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader , DoubleMatrix2D f_de) throws XMLStreamException
 	{
 		long linkId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "linkId"));
 		long demandId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "demandId"));
 		double splittingRatio = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "splittingRatio"));
 
-		mapOldId2Layer.get(layerId).forwardingRulesNoFailureState_f_de.set (mapOldId2Demand.get(demandId).index , mapOldId2Link.get(linkId).index  , splittingRatio);
+		f_de.set (mapOldId2Demand.get(demandId).index , mapOldId2Link.get(linkId).index  , splittingRatio);
 
 		while(xmlStreamReader.hasNext())
 		{
@@ -357,6 +361,10 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 	protected void parseHopByHopRouting(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
 	{
 		netPlan.setRoutingType (RoutingType.HOP_BY_HOP_ROUTING , mapOldId2Layer.get(layerId) );
+		final NetworkLayer layer = mapOldId2Layer.get(layerId);
+		final int D = netPlan.getNumberOfDemands(layer);
+		final int E = netPlan.getNumberOfLinks(layer);
+		DoubleMatrix2D f_de = DoubleFactory2D.sparse.make (D,E);
 
 		while(xmlStreamReader.hasNext())
 		{
@@ -369,7 +377,7 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 					switch(startElementName)
 					{
 						case "forwardingRule":
-							parseForwardingRule(netPlan, layerId, xmlStreamReader);
+							parseForwardingRule(netPlan, layerId, xmlStreamReader , f_de);
 							break;
 
 						default:
@@ -382,8 +390,8 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 					if (endElementName.equals("hopByHopRouting")) 
 					{ 
 						NetworkLayer thisLayer = mapOldId2Layer.get(layerId); 
-						netPlan.setForwardingRules(netPlan.getMatrixDemandBasedForwardingRules(thisLayer).copy() , thisLayer); 
-						return; 
+						netPlan.setForwardingRules(f_de , thisLayer); 
+						return;
 					}
 					break;
 			}

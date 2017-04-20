@@ -127,7 +127,6 @@ public class Constants
 		 * get (or send traffic) from a node to another one; it is sufficient for 
 		 * the ingress node to know only how to get (or send traffic) to the 
 		 * "next hop", and so on until the destination is reached.
-		 * 
 		 */
 		HOP_BY_HOP_ROUTING("Hop-by-hop routing");
 		

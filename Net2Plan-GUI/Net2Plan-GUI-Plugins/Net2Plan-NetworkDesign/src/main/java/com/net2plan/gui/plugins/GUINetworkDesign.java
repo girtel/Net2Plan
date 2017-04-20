@@ -22,6 +22,7 @@
 
 package com.net2plan.gui.plugins;
 
+import com.net2plan.gui.GUINet2Plan;
 import com.net2plan.gui.plugins.networkDesign.GUIWindow;
 import com.net2plan.gui.plugins.networkDesign.NetworkDesignWindow;
 import com.net2plan.gui.plugins.networkDesign.focusPane.FocusPane;
@@ -744,6 +745,8 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                 tableControlWindow.showWindow(true);
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.SHIFT_MASK | InputEvent.ALT_MASK));
+
+        GUINet2Plan.addGlobalActions(this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW), this.getActionMap());
 
         viewEditTopTables.setInputMap(WHEN_IN_FOCUSED_WINDOW, this.getInputMap(WHEN_IN_FOCUSED_WINDOW));
         viewEditTopTables.setActionMap(this.getActionMap());

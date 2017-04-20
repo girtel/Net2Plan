@@ -20,12 +20,18 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.Pair;
-import org.codehaus.stax2.XMLStreamReader2;
+import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
+
+import org.codehaus.stax2.XMLStreamReader2;
+
+import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Pair;
+
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 class ReaderNetPlanN2PVersion_3 extends ReaderNetPlanN2PVersion_2
 {
@@ -103,13 +109,13 @@ class ReaderNetPlanN2PVersion_3 extends ReaderNetPlanN2PVersion_2
 		throw new RuntimeException("'Layer' element not parsed correctly (end tag not found)");
 	}
 
-	protected void parseForwardingRule(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
+	protected void parseForwardingRule(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader , DoubleMatrix2D f_de) throws XMLStreamException
 	{
 		long linkId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "linkId"));
 		long demandId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "demandId"));
 		double splittingRatio = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "splittingRatio"));
 
-		mapOldId2Layer.get(layerId).forwardingRulesNoFailureState_f_de.set (mapOldId2Demand.get(Pair.of (layerId,demandId)).index , mapOldId2Link.get(Pair.of(layerId , linkId)).index  , splittingRatio);
+		f_de.set (mapOldId2Demand.get(Pair.of (layerId,demandId)).index , mapOldId2Link.get(Pair.of(layerId , linkId)).index  , splittingRatio);
 
 		while(xmlStreamReader.hasNext())
 		{
@@ -143,7 +149,11 @@ class ReaderNetPlanN2PVersion_3 extends ReaderNetPlanN2PVersion_2
 	protected void parseHopByHopRouting(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
 	{
 		netPlan.setRoutingType (RoutingType.HOP_BY_HOP_ROUTING , mapOldId2Layer.get(layerId));
-
+		final NetworkLayer layer = mapOldId2Layer.get(layerId);
+		final int D = netPlan.getNumberOfDemands(layer);
+		final int E = netPlan.getNumberOfLinks(layer);
+		DoubleMatrix2D f_de = DoubleFactory2D.sparse.make (D,E);
+		
 		while(xmlStreamReader.hasNext())
 		{
 			xmlStreamReader.next();
@@ -155,7 +165,7 @@ class ReaderNetPlanN2PVersion_3 extends ReaderNetPlanN2PVersion_2
 					switch(startElementName)
 					{
 						case "forwardingRule":
-							parseForwardingRule(netPlan, layerId, xmlStreamReader);
+							parseForwardingRule(netPlan, layerId, xmlStreamReader , f_de);
 							break;
 
 						default:
@@ -168,7 +178,8 @@ class ReaderNetPlanN2PVersion_3 extends ReaderNetPlanN2PVersion_2
 					if (endElementName.equals("hopByHopRouting")) 
 					{ 
 						NetworkLayer thisLayer = mapOldId2Layer.get(layerId); 
-						netPlan.setForwardingRules(netPlan.getMatrixDemandBasedForwardingRules(thisLayer).copy() , thisLayer); 
+						
+						netPlan.setForwardingRules(f_de , thisLayer); 
 						return; 
 					}
 					break;

@@ -1,4 +1,13 @@
+//CACHES:
+//	- WORST PROPAGATION CACHE
+//	- FORW RULES PER NODE & DEMAND
+//	- 
+
+
 /*******************************************************************************
+
+
+ * 
  * Copyright (c) 2016 Pablo Pavon-Marino.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Lesser Public License v2.1
@@ -12,26 +21,31 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import cern.colt.list.tdouble.DoubleArrayList;
-import cern.colt.list.tint.IntArrayList;
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
-import cern.jet.math.tdouble.DoublePlusMultSecond;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
+
+import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.libraries.GraphUtils;
+import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
-import com.net2plan.utils.Quadruple;
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
+import com.net2plan.utils.Quintuple;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 
 /** <p>This class contains a representation of a unicast demand. Unicast demands are defined by its initial and end node, the network layer they belong to, 
  * and their offered traffic. When the routing in the network layer is the type {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, demands are carried
@@ -55,10 +69,17 @@ public class Demand extends NetworkElement
 	double carriedTraffic;
 	RoutingCycleType routingCycleType;
 	
+	
 	Set<Route> cache_routes;
 	Link coupledUpperLayerLink;
 	List<String> mandatorySequenceOfTraversedResourceTypes;
 	IntendedRecoveryType recoveryType;
+
+	double cache_worstCasePropagationTimeMs;
+	double cache_worstCaseLengthInKm;
+	Map<Link,Double> cacheHbH_frs; // cannot be an entry if zero in FR
+	Map<Link,Pair<Double,Double>> cacheHbH_normCarriedOccupiedPerLinkCurrentState; // norm carried is respect to demand total CARRIED traffic, occupied capacity is absolute
+	Map<Node,Set<Link>> cacheHbH_linksPerNodeWithNonZeroFr; 
 	
 	public enum IntendedRecoveryType
 	{
@@ -104,6 +125,11 @@ public class Demand extends NetworkElement
 		this.coupledUpperLayerLink = null;
 		this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> ();
 		this.recoveryType = IntendedRecoveryType.NOTSPECIFIED;
+		this.cacheHbH_frs = new HashMap<> ();
+		this.cacheHbH_normCarriedOccupiedPerLinkCurrentState = new HashMap<> ();
+		this.cacheHbH_linksPerNodeWithNonZeroFr = new HashMap<> ();
+		this.cache_worstCasePropagationTimeMs = 0;
+		this.cache_worstCaseLengthInKm = 0;
 	}
 
 	/**
@@ -122,6 +148,17 @@ public class Demand extends NetworkElement
 		for (Route r : origin.cache_routes) this.cache_routes.add(this.netPlan.getRouteFromId(r.id));
 		this.mandatorySequenceOfTraversedResourceTypes = new ArrayList<String> (origin.mandatorySequenceOfTraversedResourceTypes);
 		this.recoveryType = origin.recoveryType;
+		this.cache_worstCasePropagationTimeMs = origin.cache_worstCasePropagationTimeMs;
+		this.cache_worstCaseLengthInKm = origin.cache_worstCaseLengthInKm;
+		this.cacheHbH_frs.clear();
+		for (Link originLink : origin.cacheHbH_frs.keySet())
+			this.cacheHbH_frs.put(netPlan.getLinkFromId(originLink.id), origin.cacheHbH_frs.get(originLink));
+		this.cacheHbH_normCarriedOccupiedPerLinkCurrentState.clear();
+		for (Link originLink : origin.cacheHbH_normCarriedOccupiedPerLinkCurrentState.keySet())
+			this.cacheHbH_normCarriedOccupiedPerLinkCurrentState.put(netPlan.getLinkFromId(originLink.id), origin.cacheHbH_normCarriedOccupiedPerLinkCurrentState.get(originLink));
+		this.cacheHbH_linksPerNodeWithNonZeroFr.clear();
+		for (Entry<Node,Set<Link>> entry : origin.cacheHbH_linksPerNodeWithNonZeroFr.entrySet())
+			this.cacheHbH_linksPerNodeWithNonZeroFr.put(netPlan.getNodeFromId(entry.getKey().id), (Set<Link>) (Set<?>) netPlan.translateCollectionToThisNetPlan(entry.getValue()));
 	}
 
 
@@ -133,12 +170,16 @@ public class Demand extends NetworkElement
 		if (egressNode.id != e2.egressNode.id) return false;
 		if (this.offeredTraffic != e2.offeredTraffic) return false;
 		if (this.carriedTraffic != e2.carriedTraffic) return false;
+		if (this.cache_worstCasePropagationTimeMs != e2.cache_worstCasePropagationTimeMs) return false;
+		if (this.cache_worstCaseLengthInKm != e2.cache_worstCaseLengthInKm) return false;
 		if (this.routingCycleType != e2.routingCycleType) return false;
 		if ((this.coupledUpperLayerLink == null) != (e2.coupledUpperLayerLink == null)) return false; 
 		if ((this.coupledUpperLayerLink != null) && (coupledUpperLayerLink.id != e2.coupledUpperLayerLink.id)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_routes , e2.cache_routes)) return false;
 		if (!this.mandatorySequenceOfTraversedResourceTypes.equals(e2.mandatorySequenceOfTraversedResourceTypes)) return false;
 		if (this.recoveryType != e2.recoveryType) return false;
+		if (!NetPlan.isDeepCopy(this.cacheHbH_frs , e2.cacheHbH_frs)) return false;
+		if (!NetPlan.isDeepCopy(this.cacheHbH_normCarriedOccupiedPerLinkCurrentState , e2.cacheHbH_normCarriedOccupiedPerLinkCurrentState)) return false;
 		return true;
 	}
 
@@ -202,7 +243,22 @@ public class Demand extends NetworkElement
 	{
 		return getRoutes ().stream().filter(e -> !e.isBackupRoute()).collect(Collectors.toSet());
 	}
-
+	
+	/** 
+	 * <p>Returns the worse case end-to-end length in km of the demand traffic. If the routing is source routing, this is the worst length 
+	 * (summing the link lengths in km) for all the routes carrying traffic. If the routing is hop-by-hop and loopless, 
+	 * the paths followed are computed and the worst case length among all the paths is returned. 
+	 * If the hop-by-hop routing has loops, {@code Double.MAX_VALUE} is returned. In multilayer design, when the
+	 * traffic of a demand traverses a link that is coupled to a lower layer demand, the link length taken is the 
+	 * worst case length of the lower layer demand
+	 * of the underlying demand.</p>
+	 * @return see above
+	 */
+	public double getWorstCaseLengthInKm ()
+	{
+		return cache_worstCaseLengthInKm;
+	}
+	
 	/**
 	 * <p>Returns the worse case end-to-end propagation time of the demand traffic. If the routing is source routing, this is the worse propagation time
 	 * (summing the link latencies) for all the routes carrying traffic. If the routing is hop-by-hop and loopless, the paths followed are computed and 
@@ -213,54 +269,82 @@ public class Demand extends NetworkElement
 	 * */
 	public double getWorstCasePropagationTimeInMs ()
 	{
-		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-		double maxPropTimeInMs = 0;
-		if (layer.routingType == RoutingType.SOURCE_ROUTING)
-		{
-			for (Route r : this.cache_routes)
-			{
-				double timeInMs = 0; 
-				for (Link e : r.cache_seqLinksRealPath) 
-					if (e.isCoupled()) 
-						timeInMs += e.coupledLowerLayerDemand.getWorstCasePropagationTimeInMs();
-					else
-						timeInMs += e.getPropagationDelayInMs();
-				maxPropTimeInMs = Math.max (maxPropTimeInMs , timeInMs);
-			}
-		}
-		else
-		{
-			if (this.routingCycleType == RoutingCycleType.CLOSED_CYCLES) return Double.MAX_VALUE;
-			if (this.routingCycleType == RoutingCycleType.OPEN_CYCLES) return Double.MAX_VALUE;
-			List<Demand> justThisDemand = new LinkedList<Demand> (); justThisDemand.add(this);
-			List<Demand> d_p = new LinkedList<Demand> ();
-			List<Double> x_p = new LinkedList<Double> ();
-			List<List<Link>> pathList = new LinkedList<List<Link>> ();
-			GraphUtils.convert_xde2xp(netPlan.nodes, layer.links , justThisDemand , layer.forwardingRulesCurrentFailureState_x_de , d_p, x_p, pathList);
-			Iterator<Demand> it_demand = d_p.iterator();
-			Iterator<Double> it_xp = x_p.iterator();
-			Iterator<List<Link>> it_pathList = pathList.iterator();
-			while (it_demand.hasNext())
-			{
-				final Demand d = it_demand.next();
-				final double trafficInPath = it_xp.next();
-				final List<Link> seqLinks = it_pathList.next();
-				if (trafficInPath > PRECISION_FACTOR)
-				{
-					double propTimeThisSeqLinks = 0; 
-					for (Link e : seqLinks) 
-						if (e.isCoupled()) 
-							propTimeThisSeqLinks += e.coupledLowerLayerDemand.getWorstCasePropagationTimeInMs();
-						else
-							propTimeThisSeqLinks += e.getPropagationDelayInMs();
-					maxPropTimeInMs = Math.max(propTimeThisSeqLinks , propTimeThisSeqLinks);
-				}
-			}
-		}
-		return maxPropTimeInMs;
+		return cache_worstCasePropagationTimeMs;
+//		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
+//		double maxPropTimeInMs = 0;
+//		if (layer.routingType == RoutingType.SOURCE_ROUTING)
+//		{
+//			for (Route r : this.cache_routes)
+//			{
+//				double timeInMs = 0; 
+//				for (Link e : r.cache_seqLinksRealPath) 
+//					if (e.isCoupled()) 
+//						timeInMs += e.coupledLowerLayerDemand.getWorstCasePropagationTimeInMs();
+//					else
+//						timeInMs += e.getPropagationDelayInMs();
+//				maxPropTimeInMs = Math.max (maxPropTimeInMs , timeInMs);
+//			}
+//		}
+//		else
+//		{
+//			if (this.routingCycleType == RoutingCycleType.CLOSED_CYCLES) return Double.MAX_VALUE;
+//			if (this.routingCycleType == RoutingCycleType.OPEN_CYCLES) return Double.MAX_VALUE;
+//			List<Demand> d_p = new LinkedList<Demand> ();
+//			List<Double> x_p = new LinkedList<Double> ();
+//			List<List<Link>> pathList = new LinkedList<List<Link>> ();
+//			GraphUtils.convert_xde2xp(netPlan.nodes, layer.links , Arrays.asList(this) , layer.forwardingRulesCurrentFailureState_x_de , d_p, x_p, pathList);
+//			Iterator<Demand> it_demand = d_p.iterator();
+//			Iterator<Double> it_xp = x_p.iterator();
+//			Iterator<List<Link>> it_pathList = pathList.iterator();
+//			while (it_demand.hasNext())
+//			{
+//				final Demand d = it_demand.next();
+//				final double trafficInPath = it_xp.next();
+//				final List<Link> seqLinks = it_pathList.next();
+//				if (trafficInPath > PRECISION_FACTOR)
+//				{
+//					double propTimeThisSeqLinks = 0; 
+//					for (Link e : seqLinks) 
+//						if (e.isCoupled()) 
+//							propTimeThisSeqLinks += e.coupledLowerLayerDemand.getWorstCasePropagationTimeInMs();
+//						else
+//							propTimeThisSeqLinks += e.getPropagationDelayInMs();
+//					maxPropTimeInMs = Math.max(propTimeThisSeqLinks , propTimeThisSeqLinks);
+//				}
+//			}
+		
+//		ERRROR: si acoplado a multicast, no da buenos valores de getWorseCase
+//		}
+//		return maxPropTimeInMs;
 	}
 
-
+//	private double recursiveWCPropapagationDelay ()
+//	{
+//		final Map<Node,Double> inNodes = new HashMap<> ();
+//		inNodes.put(this.ingressNode, 0.0);
+//		do
+//		{
+//			for (Node n : new ArrayList<> (inNodes.keySet()))
+//			{
+//				if (n == egressNode) continue;
+//				double wcSoFar = inNodes.get(n);
+//				for (Link e : cache_frOptionalNormCarriedOccupiedPerLinkCurrentState.keySet())
+//					if (e.getOriginNode() == n)
+//						if (cache_frOptionalNormCarriedOccupiedPerLinkCurrentState.get(e).getFirst() > 0)
+//						{
+//							final double thisPathCost = wcSoFar + e.getPropagationDelayInMs();
+//							if (inNodes.containsKey(e.getDestinationNode()))
+//								inNodes.put(e.getDestinationNode(), Math.max(inNodes.get(e.getDestinationNode()) , thisPathCost));
+//							else
+//								inNodes.put(e.getDestinationNode(), thisPathCost);
+//						}
+//				inNodes.remove(n);
+//			}
+//			
+//			if (inNodes.isEmpty()) return Double.MAX_VALUE;
+//			if ((inNodes.size() == 1) && (inNodes.keySet().iterator().next() == this.egressNode)) return inNodes.get(egressNode);
+//		} while (true);
+//	}
 
 	/**
 	 * <p>Returns {@code true} if the traffic of the demand is traversing an oversubscribed link, {@code false} otherwise.</p>
@@ -268,18 +352,17 @@ public class Demand extends NetworkElement
 	 */
 	public boolean isTraversingOversubscribedLinks ()
 	{
-		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-		if (layer.routingType == RoutingType.SOURCE_ROUTING)
+		if (layer.isSourceRouting())
 		{
-			for (Route r : this.cache_routes)
-				for (Link e : r.cache_seqLinksRealPath) 
-					if (e.isOversubscribed()) return true;
+			for (Route r : cache_routes)
+				for (Link e : r.getSeqLinks())
+					if (e.isOversubscribed())
+						return true;
 		}
 		else
 		{
-			if (this.routingCycleType == RoutingCycleType.CLOSED_CYCLES) return true;
-			for (Link e : layer.links) 
-				if (layer.forwardingRulesCurrentFailureState_x_de.get(index,e.index) > PRECISION_FACTOR) 
+			for (Link e : cacheHbH_normCarriedOccupiedPerLinkCurrentState.keySet())
+				if (cacheHbH_normCarriedOccupiedPerLinkCurrentState.get(e).getFirst() > Configuration.precisionFactor)
 					if (e.isOversubscribed()) return true;
 		}
 		return false;
@@ -342,11 +425,13 @@ public class Demand extends NetworkElement
 	{
 		if (layer.routingType == RoutingType.SOURCE_ROUTING)
 			return this.cache_routes.size () >= 2;
-		for (Node node : netPlan.nodes)
-		{
-			int numOutLinksCarryingTraffic = 0; for (Link e : node.getOutgoingLinks(layer)) if (layer.forwardingRulesCurrentFailureState_x_de.get(index,e.index) > 0) numOutLinksCarryingTraffic ++;
-			if (numOutLinksCarryingTraffic > 1) return true;
-		}
+		final Set<Node> initialLinkNodes = new HashSet<> ();
+		for (Link e : cacheHbH_normCarriedOccupiedPerLinkCurrentState.keySet())
+			if (cacheHbH_normCarriedOccupiedPerLinkCurrentState.get(e).getFirst() > Configuration.precisionFactor)
+			{
+				if (initialLinkNodes.contains(e.getOriginNode())) return true; // two out links of this node carry traffic
+				initialLinkNodes.add(e.getOriginNode());
+			}
 		return false;
 	}
 
@@ -395,12 +480,9 @@ public class Demand extends NetworkElement
 	{
 		checkAttachedToNetPlanObject ();
 		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
-
 		Map<Pair<Demand,Link>,Double> res = new HashMap<Pair<Demand,Link>,Double> ();
-		IntArrayList es = new IntArrayList (); DoubleArrayList vals = new DoubleArrayList ();
-		layer.forwardingRulesNoFailureState_f_de.viewRow (index). getNonZeros(es,vals);
-		for (int cont = 0 ; cont < es.size () ; cont ++)
-			res.put (Pair.of (this, layer.links.get(es.get(cont))) , vals.get(cont));
+		for (Entry<Link,Double> entry : cacheHbH_frs.entrySet())
+			res.put(Pair.of(this, entry.getKey()), entry.getValue());
 		return res;
 	}
 
@@ -429,13 +511,9 @@ public class Demand extends NetworkElement
 	 * @return The demand routing cycle type
 	 * @see com.net2plan.utils.Constants.RoutingCycleType
 	 */
-
 	public RoutingCycleType getRoutingCycleType()
 	{
-		checkAttachedToNetPlanObject ();
-		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) return routingCycleType;
-		for (Route r : cache_routes) if (r.hasLoops()) return RoutingCycleType.OPEN_CYCLES;
-		return RoutingCycleType.LOOPLESS;
+		return routingCycleType;
 	}
 
 
@@ -582,8 +660,7 @@ public class Demand extends NetworkElement
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
-		layer.forwardingRulesNoFailureState_f_de.viewRow (this.index).assign(0);
-		layer.updateHopByHopRoutingDemand(this);
+		this.updateHopByHopRoutingToGivenFrs(new HashMap<> ());
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 
@@ -648,11 +725,14 @@ public class Demand extends NetworkElement
 			for (Route route : new HashSet<Route> (cache_routes)) route.remove();
 		else
 		{
-			final int E = layer.links.size ();
-			layer.forwardingRulesNoFailureState_f_de = DoubleFactory2D.sparse.appendRows(layer.forwardingRulesNoFailureState_f_de.viewPart(0, 0, index, E), layer.forwardingRulesNoFailureState_f_de.viewPart(index + 1, 0, layer.demands.size() - index - 1, E));
-			DoubleMatrix1D x_e = layer.forwardingRulesCurrentFailureState_x_de.viewRow (index).copy ();
-			layer.forwardingRulesCurrentFailureState_x_de = DoubleFactory2D.sparse.appendRows(layer.forwardingRulesCurrentFailureState_x_de.viewPart(0, 0, index, E), layer.forwardingRulesCurrentFailureState_x_de.viewPart(index + 1, 0, layer.demands.size() - index - 1, E));
-			for (Link link : layer.links) { link.cache_carriedTraffic -= x_e.get(link.index); link.cache_occupiedCapacity -= x_e.get(link.index); }
+			for (Link e : this.cacheHbH_frs.keySet()) e.cacheHbH_frs.remove(this);
+			for (Link e : this.cacheHbH_normCarriedOccupiedPerLinkCurrentState.keySet())
+			{
+				final double x_deOccup = this.cacheHbH_normCarriedOccupiedPerLinkCurrentState.get(e).getSecond();
+				e.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.remove(this);
+				e.cache_carriedTraffic -= x_deOccup; 
+				e.cache_occupiedCapacity -= x_deOccup; 
+			}
 		}
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		netPlan.cache_id2DemandMap.remove(id);
@@ -671,10 +751,11 @@ public class Demand extends NetworkElement
 	public void setOfferedTraffic(double offeredTraffic)
 	{
 		offeredTraffic = NetPlan.adjustToTolerance(offeredTraffic);
+		if (offeredTraffic == this.offeredTraffic) return;
 		netPlan.checkIsModifiable();
 		if (offeredTraffic < 0) throw new Net2PlanException("Offered traffic must be greater or equal than zero");
 		this.offeredTraffic = offeredTraffic;
-		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) layer.updateHopByHopRoutingDemand(this);
+		if (!layer.isSourceRouting()) updateHopByHopRoutingToGivenFrs(this.cacheHbH_frs);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 
@@ -686,52 +767,6 @@ public class Demand extends NetworkElement
 	@Override
 	public String toString () { return "d" + index + " (id " + id + ")"; }
 	
-	/**
-	 * <p>Computes the fundamental matrix of the absorbing Markov chain in the current hop-by-hop routing, for the
-	 * given demand.</p>
-	 * <p>Returns a {@link com.net2plan.utils.Quadruple Quadruple} object where:</p>
-	 * <ol type="i">
-	 *     <li>the fundamental matrix (NxN, where N is the number of nodes)</li>
-	 *     <li>the type of routing of the demand (loopless, with open cycles or with close cycles)</li>
-	 *     <li>the fraction of demand traffic that arrives to the destination node and is absorbed there (it may be less than one if the routing has cycles that involve the destination node)</li>
-	 *     <li>an array with fraction of the traffic that arrives to each node, that is dropped (this happens only in nodes different to the destination, when the sum of the forwarding percentages on the outupt links is less than one)</li>
-	 * </ol>
-	 * <p><b>Important: </b>If the routing type is not {@link com.net2plan.utils.Constants.RoutingType#HOP_BY_HOP_ROUTING HOP_BY_HOP_ROUTING}, an exception is thrown.</p>
-	 * @param forwardingRulesToUse_f_e if null, the current forwarding rules in the no failure state are used. If not null, this row defines the forwarding rules to apply in the matrix computation
-	 * @return See description above
-	 */
-	public Quadruple<DoubleMatrix2D, RoutingCycleType,  Double , DoubleMatrix1D> computeRoutingFundamentalMatrixDemand(DoubleMatrix1D forwardingRulesToUse_f_e)
-	{
-		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
-
-		final int N = netPlan.nodes.size ();
-		DoubleMatrix1D f_e = forwardingRulesToUse_f_e == null? layer.forwardingRulesNoFailureState_f_de.viewRow(index) : forwardingRulesToUse_f_e;
-		/* q_n1n2 is the fraction of the traffic in n1 that is routed to n2 */
-		DoubleMatrix2D q_nn = layer.forwardingRules_Aout_ne.zMult(DoubleFactory2D.sparse.diagonal(f_e) , null);
-		q_nn = q_nn.zMult(layer.forwardingRules_Ain_ne , null , 1 , 0 , false , true);
-		DoubleMatrix1D sumOut_n = q_nn.zMult(DoubleFactory1D.dense.make(N , 1.0) , null); // sum of the rules outgoing from the node
-		DoubleMatrix1D i_n = DoubleFactory1D.dense.make (N); // dropped
-		double s_n = -1;
-		for (int n = 0 ; n < N ; n ++)
-		{
-			if ((sumOut_n.get(n) < -1E-5) || (sumOut_n.get(n) > 1+1E-5)) throw new RuntimeException ("Bad");
-			if (n == egressNode.index)
-				s_n = 1 - sumOut_n.get(n);
-			else
-				i_n.set (n , 1 - sumOut_n.get(n));
-		}
-		DoubleMatrix2D iMinusQ = DoubleFactory2D.dense.identity(N);
-		iMinusQ.assign(q_nn , DoublePlusMultSecond.minusMult(1));
-		DoubleMatrix2D M;
-		try { M = new DenseDoubleAlgebra().inverse(iMinusQ); }
-		catch(IllegalArgumentException e) { return Quadruple.of (null , RoutingCycleType.CLOSED_CYCLES , s_n , i_n) ; }
-
-		for (int contN = 0; contN < N; contN++)
-			if (Math.abs(M.get(contN, contN) - 1) > 1e-5)
-				return Quadruple.of(M, RoutingCycleType.OPEN_CYCLES , s_n , i_n);
-		
-		return Quadruple.of(M, RoutingCycleType.LOOPLESS , s_n , i_n);
-	}
 
 	/**
 	 * <p>Checks the consistency of the cache. If it is incosistent, throws a {@code RuntimeException} </p>
@@ -739,6 +774,39 @@ public class Demand extends NetworkElement
 	void checkCachesConsistency ()
 	{
 		super.checkCachesConsistency ();
+		if (!layer.isSourceRouting())
+		{
+			if (!cacheHbH_frs.keySet().containsAll(cacheHbH_normCarriedOccupiedPerLinkCurrentState.keySet())) throw new RuntimeException();
+			
+			for (Link e : this.cacheHbH_frs.keySet())
+			{
+				final double splitFactor = cacheHbH_frs.get(e);
+				if (!this.cacheHbH_linksPerNodeWithNonZeroFr.get(e.getOriginNode()).contains(e)) throw new RuntimeException ();
+				if (e.cacheHbH_frs.get(this) != splitFactor) throw new RuntimeException ();
+				if (splitFactor <= Configuration.precisionFactor) throw new RuntimeException();
+				if (splitFactor > 1)throw new RuntimeException();
+			}
+			for (Link e : this.cacheHbH_normCarriedOccupiedPerLinkCurrentState.keySet())
+			{
+				final double normTraffic =  this.cacheHbH_normCarriedOccupiedPerLinkCurrentState.get(e).getFirst();
+				if (normTraffic < Configuration.precisionFactor) throw new RuntimeException();
+				final double cap =  this.cacheHbH_normCarriedOccupiedPerLinkCurrentState.get(e).getSecond();
+				if (!e.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.get(this).equals(Pair.of(normTraffic, cap))) throw new RuntimeException ();
+				if (Math.abs(normTraffic * offeredTraffic - cap) > 1e-3) throw new RuntimeException ();
+			}
+			for (Node n : this.cacheHbH_linksPerNodeWithNonZeroFr.keySet())
+			{
+				double sumFactors = 0;
+				for (Link e : cacheHbH_linksPerNodeWithNonZeroFr.get(n))
+				{
+					if (this.cacheHbH_frs.get(e) == null) 
+						throw new RuntimeException();
+					sumFactors += cacheHbH_frs.get(e);
+				}
+				if (sumFactors > 1 + Configuration.precisionFactor) throw new RuntimeException();
+			}
+		}
+		
 		double check_carriedTraffic = 0;
 		if (layer.routingType == RoutingType.SOURCE_ROUTING)
 		{
@@ -750,65 +818,47 @@ public class Demand extends NetworkElement
 		}
 		else
 		{
-			for (Link e : egressNode.getIncomingLinks(layer)) check_carriedTraffic += layer.forwardingRulesCurrentFailureState_x_de.get(index,e.index);
-			for (Link e : egressNode.getOutgoingLinks(layer)) check_carriedTraffic -= layer.forwardingRulesCurrentFailureState_x_de.get(index,e.index);
+			for (Pair<Double,Double> pair : this.cacheHbH_normCarriedOccupiedPerLinkCurrentState.values())
+				if (Math.abs(pair.getFirst() * this.offeredTraffic - pair.getSecond()) > 1e-3) throw new RuntimeException ();
+			for (Link e : egressNode.getIncomingLinks(layer)) if (cacheHbH_normCarriedOccupiedPerLinkCurrentState.containsKey(e)) check_carriedTraffic += this.offeredTraffic * this.cacheHbH_normCarriedOccupiedPerLinkCurrentState.get(e).getFirst ();
+			for (Link e : egressNode.getOutgoingLinks(layer)) if (cacheHbH_normCarriedOccupiedPerLinkCurrentState.containsKey(e)) check_carriedTraffic -= this.offeredTraffic * this.cacheHbH_normCarriedOccupiedPerLinkCurrentState.get(e).getFirst ();
 		}
 		if (Math.abs(carriedTraffic - check_carriedTraffic) > 1e-3) throw new RuntimeException ("Bad, carriedTraffic: " + carriedTraffic + ", check_carriedTraffic: " + check_carriedTraffic);
 		if (coupledUpperLayerLink != null)
 			if (!coupledUpperLayerLink.coupledLowerLayerDemand.equals (this)) throw new RuntimeException ("Bad");
 		if (!layer.demands.contains(this)) throw new RuntimeException ("Bad");
+		
+		if ((routingCycleType != RoutingCycleType.LOOPLESS) && (!layer.isSourceRouting()))
+		{
+			if (cache_worstCasePropagationTimeMs != Double.MAX_VALUE) throw new RuntimeException ();
+			if (cache_worstCaseLengthInKm != Double.MAX_VALUE) throw new RuntimeException ();
+		}
 	}
 
-	/** Returns the set of links in this layer that could potentially carry traffic of this demand, according to the routes/forwarding rules defined.
+	/** Returns the set of links in this layer that could potentially carry traffic of this demand, according to the routes/forwarding rules defined, 
+	 * if the routes had carried traffic / (hop-by-hop) the demand had offered traffic different to zero.
 	 * The method returns  a pair of sets (disjoint or not), first set with the set of links potentially carrying primary traffic and 
 	 * second with links in backup routes. Potentially carrying traffic means that 
 	 * (i) in source routing, down routes are not included, but all up routes are considered even if the carry zero traffic, 
-	 * (ii) in hop-by-hop routing the links are computed even if the demand offered traffic is zero, and all the links are considered primary.
-	 * @param assumeNoFailureState in this case, the links are computed as if all network link/nodes are in no-failure state
-	 * capacity in it
+	 * (ii) in hop-by-hop routing the links are computed even if the demand offered traffic is zero, 
+	 * and all the links are considered primary. Naturally, forwarding rules of failed links apply as zero
 	 * @return see above
 	 */
-	public Pair<Set<Link>,Set<Link>> getLinksThisLayerPotentiallyCarryingTraffic  (boolean assumeNoFailureState)
+	public Pair<Set<Link>,Set<Link>> getLinksThisLayerPotentiallyCarryingTraffic  ()
 	{
-		final double tolerance = Configuration.precisionFactor;
-		Set<Link> resPrimary = new HashSet<> ();
-		Set<Link> resBackup = new HashSet<> ();
+		final Set<Link> resPrimary = new HashSet<> ();
+		final Set<Link> resBackup = new HashSet<> ();
 		if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
 		{
-			final boolean someLinksFailed = !layer.cache_linksDown.isEmpty() || !netPlan.cache_nodesDown.isEmpty();
-			DoubleMatrix1D x_e = null;
-			if (someLinksFailed)
-			{
-				DoubleMatrix1D f_e = layer.forwardingRulesNoFailureState_f_de.viewRow(index).copy();
-				if (!assumeNoFailureState)
-				{
-					for (Link e : layer.cache_linksDown) f_e.set(e.index, 0);
-					for (Node n : netPlan.cache_nodesDown)
-					{
-						for (Link e : n.getOutgoingLinks(layer)) f_e.set(e.index, 0);
-						for (Link e : n.getIncomingLinks(layer)) f_e.set(e.index, 0);
-					}
-				}
-				Quadruple<DoubleMatrix2D, RoutingCycleType , Double , DoubleMatrix1D> fundMatrixComputation = computeRoutingFundamentalMatrixDemand (f_e);
-				DoubleMatrix2D M = fundMatrixComputation.getFirst ();
-				x_e = DoubleFactory1D.dense.make(layer.links.size());
-				for (Link link : layer.links)
-				{
-					final double newXdeTrafficOneUnit = M.get (ingressNode.index , link.originNode.index) * f_e.get (link.index);
-					x_e.set(link.index , newXdeTrafficOneUnit);
-				}			
-			}
-			else
-			{
-				x_e = layer.forwardingRulesCurrentFailureState_x_de.viewRow(getIndex()); 
-			}
-			for (int e = 0 ; e < x_e.size() ; e ++) if (x_e.get(e) > tolerance) resPrimary.add(layer.links.get(e));
+			for (Entry<Link,Pair<Double,Double>> entry : this.cacheHbH_normCarriedOccupiedPerLinkCurrentState.entrySet())
+				if (entry.getValue().getFirst() > Configuration.precisionFactor)
+					resPrimary.add(entry.getKey());
 		}
 		else
 		{
 			for (Route r : cache_routes)
 			{
-				if (!assumeNoFailureState && r.isDown()) continue;
+				if (r.isDown()) continue;
 				for (Link e : r.getSeqLinks()) 
 					if (r.isBackupRoute()) resBackup.add(e); else resPrimary.add(e);
 			}
@@ -816,5 +866,83 @@ public class Demand extends NetworkElement
 		return Pair.of(resPrimary,resBackup);
 	}
 	
+	/* Updates all the network state, to the new situation where the hop-by-hop routing of a demand has changed */
+	void updateHopByHopRoutingToGivenFrs (Map<Link,Double> newFrsWithoutZeros)
+	{
+		final Set<Link> affectedLinks = Sets.union(newFrsWithoutZeros.keySet() , cacheHbH_frs.keySet());
+		
+		/* set 0 in the down links and the link in-out from the down nodes (they do not send traffic) */
+		/* update the cache per node (include failed links if fr > 0) */
+		Map<Link,Double> frsToApply = new HashMap<> ();
+		Map<Node,Set<Link>> tentativeCacheHbH_linksPerNodeWithNonZeroFr = new HashMap<> (); // tentative since if closed cycles => not used
+		for (Entry<Link,Double> fr : newFrsWithoutZeros.entrySet())
+		{
+			final Link e = fr.getKey();
+			final Node a_e = e.getOriginNode();
+			final double f_e = fr.getValue();
+			if (f_e == 0) continue;
+			Set<Link> set = tentativeCacheHbH_linksPerNodeWithNonZeroFr.get(a_e); if (set == null) { set = new HashSet<> (); tentativeCacheHbH_linksPerNodeWithNonZeroFr.put(a_e, set); }
+			set.add(e);
+			if (e.isDown() || e.getOriginNode().isDown() || e.getDestinationNode().isDown()) continue;
+			frsToApply.put(e, f_e);
+		}
+		
+		Quintuple<DoubleMatrix1D, RoutingCycleType , Double , Double , Double> fundMatrixComputation = 
+				GraphUtils.computeRoutingFundamentalVector(frsToApply, tentativeCacheHbH_linksPerNodeWithNonZeroFr , ingressNode ,  egressNode);
+		if (fundMatrixComputation.getSecond() == RoutingCycleType.CLOSED_CYCLES) 
+			throw new ClosedCycleRoutingException("Closed routing cycle for demand " + this); 
+		DoubleMatrix1D M = fundMatrixComputation.getFirst ();
+		this.routingCycleType = fundMatrixComputation.getSecond();
+		double s_egressNode = fundMatrixComputation.getThird();
+		this.cache_worstCasePropagationTimeMs = fundMatrixComputation.getFourth();
+		this.cache_worstCaseLengthInKm = fundMatrixComputation.getFifth();
+
+		/* update different caches */
+//		System.out.println(offeredTraffic);
+//		System.out.println(M.get(egressNode.index));
+//		System.out.println(M);
+//		System.out.println("s_egress: "  + s_egressNode);
+		this.cacheHbH_linksPerNodeWithNonZeroFr = tentativeCacheHbH_linksPerNodeWithNonZeroFr;
+		carriedTraffic = offeredTraffic * M.get(egressNode.index) * s_egressNode;
+		if (coupledUpperLayerLink != null) coupledUpperLayerLink.capacity = carriedTraffic;
+
+		if (carriedTraffic > offeredTraffic + 1E-5) throw new RuntimeException ("Bad");
+		
+		/* update the xde caches (link and demand), and the link occupations */
+		for (Link link : affectedLinks)
+		{
+			Double new_fde = frsToApply.get(link); if (new_fde == null) new_fde = 0.0;
+			final Pair<Double,Double> oldOccupInfo = cacheHbH_normCarriedOccupiedPerLinkCurrentState.get(link);
+			final double oldXdeOccup = oldOccupInfo == null? 0 : oldOccupInfo.getSecond(); //layer.forwardingRulesCurrentFailureState_x_de.get (demand.index , link.index);
+			final double newXdeNormalized = M.get (link.originNode.index) * new_fde; //fowardingRulesThisFailureState_f_e.get (link.index);
+			final double newXdeOccup = offeredTraffic * newXdeNormalized; //fowardingRulesThisFailureState_f_e.get (link.index);
+			if (newXdeNormalized < -1E-5) throw new RuntimeException ("Bad");
+			//System.out.println("Demand " + this + ", link " + link + ", xdeNorm: " + newXdeNormalized + ", newXdeOccup: " + newXdeOccup);
+			if (newXdeNormalized <= Configuration.precisionFactor)
+			{
+				cacheHbH_normCarriedOccupiedPerLinkCurrentState.remove(link);
+				link.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.remove(this);
+			}
+			else
+			{
+				cacheHbH_normCarriedOccupiedPerLinkCurrentState.put(link, Pair.of(newXdeNormalized, newXdeOccup));
+				link.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.put(this, Pair.of(newXdeNormalized, newXdeOccup));
+			}
+			link.cache_carriedTraffic += newXdeOccup - oldXdeOccup; // in hop-by-hop carried traffic is the same as occupied capacity
+			link.cache_occupiedCapacity += newXdeOccup - oldXdeOccup;
+			if ((newXdeNormalized > 1e-3) && (!link.isUp)) throw new RuntimeException ("Bad");
+		}
+		
+		/* update the cache_frs in the link and demand */
+		for (Link e : this.cacheHbH_frs.keySet())
+			e.cacheHbH_frs.remove(this);
+		this.cacheHbH_frs = new HashMap<> (newFrsWithoutZeros);
+		for (Entry<Link,Double> fr : this.cacheHbH_frs.entrySet())
+			fr.getKey().cacheHbH_frs.put(this , fr.getValue());
+		
+		/* update the routing cycle type */
+//		System.out.println ("updateHopByHopRoutingDemand demand: " + demand + ", this demand x_e: " + forwardingRules_x_de.viewRow(demand.index));
+	}
+
 
 }

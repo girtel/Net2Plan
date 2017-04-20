@@ -132,7 +132,7 @@ public class CLINetworkDesign extends ICLIModule
         IAlgorithm algorithm;
         if (!cli.hasOption("package-name"))
         {
-            algorithm = ClassLoaderUtils.getInstance(classFile, className, IAlgorithm.class);
+            algorithm = ClassLoaderUtils.getInstance(classFile, className, IAlgorithm.class , null);
         } else
         {
             algorithm = findAlgorithm(className, cli.getOptionValue("package-name"));
