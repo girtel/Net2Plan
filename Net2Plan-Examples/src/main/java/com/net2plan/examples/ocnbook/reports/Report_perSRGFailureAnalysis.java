@@ -99,7 +99,7 @@ public class Report_perSRGFailureAnalysis implements IReport
 		NetPlan npForProducingAllFailures = netPlan.copy ();
 		Set<Link> npForProducingAllFailures_linksAllLayers = new HashSet<Link> (); for (NetworkLayer layer : npForProducingAllFailures.getNetworkLayers()) npForProducingAllFailures_linksAllLayers.addAll (npForProducingAllFailures.getLinks (layer));
 
-		this.algorithm = ClassLoaderUtils.getInstance(new File(algorithmFile), algorithmName, IEventProcessor.class);
+		this.algorithm = ClassLoaderUtils.getInstance(new File(algorithmFile), algorithmName, IEventProcessor.class , null);
 		this.algorithm.initialize(npForProducingAllFailures , algorithmParameters , reportParameters , net2planParameters);
 
 		/* Compute the other network states */

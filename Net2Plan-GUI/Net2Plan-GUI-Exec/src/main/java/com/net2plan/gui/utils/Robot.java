@@ -5,9 +5,6 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 
-/**
- * Created by Jorge San Emeterio on 17/03/17.
- */
 public class Robot extends java.awt.Robot
 {
     public Robot() throws AWTException

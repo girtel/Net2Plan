@@ -2,11 +2,9 @@ package com.net2plan.gui.plugins.networkDesign.interfaces;
 
 import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.libraries.SRGUtils;
 import com.net2plan.utils.Pair;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
 public abstract class ITableRowFilter
@@ -22,6 +20,8 @@ public abstract class ITableRowFilter
 	protected final Map<NetworkLayer,List<SharedRiskGroup>> vSRGs;
 	protected final NetPlan netPlan;
 	protected List<String> chainOfDescriptionsPreviousFiltersComposingThis;
+
+	public enum FilterCombinationType { INCLUDEIF_AND, INCLUDEIF_OR };
 	
 	/* Baseline constructor: everything is filtered out */
 	public ITableRowFilter (NetPlan netPlan)
@@ -102,11 +102,37 @@ public abstract class ITableRowFilter
 		chainOfDescriptionsPreviousFiltersComposingThis.add(that.getDescription());
 	}
 	
+	public final void recomputeApplyingShowIf_ThisOrThat (ITableRowFilter that)
+	{
+		if (this.netPlan != that.netPlan) throw new RuntimeException();
+		if (!this.netPlan.getNetworkLayers().equals(that.netPlan.getNetworkLayers())) throw new RuntimeException();
+		for (NetworkLayer layer : this.netPlan.getNetworkLayers())
+		{
+			vDemands.put(layer , (List<Demand>) filterOr(this.vDemands.get(layer) , that.vDemands.get(layer)));
+			vFRs.put(layer , (List<Pair<Demand,Link>>) filterOr(this.vFRs.get(layer) , that.vFRs.get(layer)));
+			vLinks.put(layer , (List<Link>) filterOr(this.vLinks.get(layer) , that.vLinks.get(layer)));
+			vMDemands.put(layer , (List<MulticastDemand>) filterOr(this.vMDemands.get(layer) , that.vMDemands.get(layer)));
+			vTrees.put(layer , (List<MulticastTree>) filterOr(this.vTrees.get(layer) , that.vTrees.get(layer)));
+			vNodes.put(layer , (List<Node>) filterOr(this.vNodes.get(layer) , that.vNodes.get(layer)));
+			vResources.put(layer , (List<Resource>) filterOr(this.vResources.get(layer) , that.vResources.get(layer)));
+			vRoutes.put(layer , (List<Route>) filterOr(this.vRoutes.get(layer) , that.vRoutes.get(layer)));
+			vSRGs.put(layer , (List<SharedRiskGroup>) filterOr(this.vSRGs.get(layer) , that.vSRGs.get(layer)));
+		}
+		chainOfDescriptionsPreviousFiltersComposingThis.add(that.getDescription());
+	}
+
+	
 	private final List<? extends Object> filterAnd (List<? extends Object> l1 , List<? extends Object> l2)
 	{
-		final Set<? extends Object> resSet = Sets.intersection(new HashSet<> (l1) , new HashSet<> (l2)); 
-		List<Object> resList = new LinkedList<> ();
-		for (Object o : l1) if (resSet.contains(o)) resList.add(o); // keep the same order as in List 1
+		final List<Object> resList = new LinkedList<> ();
+		for (Object o : l1) if (l2.contains(o)) resList.add(o); // keep the same order as in List 1
+		return resList;
+	}
+
+	private final List<? extends Object> filterOr (List<? extends Object> l1 , List<? extends Object> l2)
+	{
+		final List<Object> resList = new ArrayList<> (l1);
+		for (Object o : l2) if (!l1.contains(o)) resList.add(o); // first the ones in l1, then the ones in l2-l1 
 		return resList;
 	}
 

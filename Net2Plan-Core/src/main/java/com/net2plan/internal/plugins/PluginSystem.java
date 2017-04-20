@@ -126,7 +126,7 @@ public class PluginSystem
 					for(Class<? extends Plugin> _class : PLUGINS.keySet())
 					{
 //						System.out.println("Plugin type: " + _class + ", IN FILE: " + file);
-						for(Class<? extends Plugin> plugin : ClassLoaderUtils.getClassesFromFile(file, _class))
+						for(Class<? extends Plugin> plugin : ClassLoaderUtils.getClassesFromFile(file, _class , null))
 						{
 //							System.out.print (" -- class found in the file: " + plugin);
 							if (!PLUGINS.get(_class).contains(plugin))

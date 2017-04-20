@@ -156,7 +156,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final double xCoord = getDouble ("xCoord");
 		final double yCoord = getDouble ("yCoord");
 		final String nodeName = getString ("name");
-		final double population = getDouble ("population");
+		double population = 0; try { population = getDouble ("population"); } catch (Exception e) {}
 		String siteName = null; try { siteName = getString ("siteName"); } catch (Exception e) {}
 		boolean isUp = true; try { isUp = getBoolean ("isUp"); } catch (Exception e) {} 
 		//netPlan.nextNodeId = new MutableLong(nodeId);

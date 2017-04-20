@@ -12,27 +12,36 @@
 
 package com.net2plan.cli.plugins;
 
+import static com.net2plan.internal.sim.SimKernel.runSimulation;
+
+import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.PatternOptionBuilder;
+
 import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.IExternal;
+import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.ICLIModule;
 import com.net2plan.internal.sim.SimKernel;
 import com.net2plan.utils.ClassLoaderUtils;
 import com.net2plan.utils.HTMLUtils;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
-import org.apache.commons.cli.*;
-
-import java.io.File;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-
-import static com.net2plan.internal.sim.SimKernel.runSimulation;
 
 /**
  * Online simulation tool (CLI mode).
@@ -116,8 +125,29 @@ public class CLIOnlineSimulation extends ICLIModule {
         File provisioningClassFile = (File) cli.getParsedOptionValue("processor-class-file");
         String provisioningClassName = (String) cli.getParsedOptionValue("processor-class-name");
 
-        IExternal aux_eventGenerator = ClassLoaderUtils.getInstance(generatorClassFile, generatorClassName, IEventGenerator.class);
-        IExternal aux_eventProcessor = ClassLoaderUtils.getInstance(provisioningClassFile, provisioningClassName, IEventProcessor.class);
+
+        File classFileForClassLoader_generator;
+        File classFileForClassLoader_processor;
+        switch (SystemUtils.getExtension(generatorClassFile).toLowerCase(Locale.getDefault()))
+        {
+        case "jar": classFileForClassLoader_generator = generatorClassFile; break;
+        case "class": classFileForClassLoader_generator = ClassLoaderUtils.getClasspathAndQualifiedNameFromClassFile(generatorClassFile).getFirst(); break;
+        default: throw new Net2PlanException ("'file' is not a valid Java file (.jar or .class)");
+        }
+        switch (SystemUtils.getExtension(provisioningClassFile).toLowerCase(Locale.getDefault()))
+        {
+        case "jar": classFileForClassLoader_processor = provisioningClassFile; break;
+        case "class": classFileForClassLoader_processor = ClassLoaderUtils.getClasspathAndQualifiedNameFromClassFile(provisioningClassFile).getFirst(); break;
+        default: throw new Net2PlanException ("'file' is not a valid Java file (.jar or .class)");
+        }
+        
+        URLClassLoader ucl = null;
+        try 
+        {
+        	ucl = new URLClassLoader(new URL[] { classFileForClassLoader_generator.toURI().toURL() , classFileForClassLoader_processor.toURI().toURL() }, ClassLoader.getSystemClassLoader());
+        } catch (Exception e) { throw new Net2PlanException ("Unable to create the URL for class loading. Wrong file name.");  }
+        IExternal aux_eventGenerator = ClassLoaderUtils.getInstance(generatorClassFile, generatorClassName, IEventGenerator.class , ucl);
+        IExternal aux_eventProcessor = ClassLoaderUtils.getInstance(provisioningClassFile, provisioningClassName, IEventProcessor.class , ucl);
 
 		/* Read simulation, event generator and event processor parameters */
         Properties customSimulationParameters = cli.getOptionProperties("sim-param");

@@ -1,6 +1,6 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles;
 
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.XMLUtils;
 import com.net2plan.utils.Pair;
@@ -186,7 +186,7 @@ public final class TableStateController
                 writer.writeEndElement();
                 XMLUtils.indent(writer, 2);
                 writer.writeStartElement("attributesState");
-                writer.writeAttribute("expandAttributes", String.valueOf(table.areAttributesInDifferentColums()));
+                writer.writeAttribute("expandAttributes", String.valueOf(table.isAttributeCellExpanded()));
                 writer.writeEndElement();
 
                 XMLUtils.indent(writer, 1);
