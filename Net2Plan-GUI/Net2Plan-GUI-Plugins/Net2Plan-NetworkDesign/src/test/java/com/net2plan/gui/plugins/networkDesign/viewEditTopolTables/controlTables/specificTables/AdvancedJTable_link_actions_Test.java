@@ -44,7 +44,7 @@ public class AdvancedJTable_link_actions_Test
         selection = new ArrayList<>();
         selection.add(link);
 
-        networkDesign.setCurrentNetPlanDoNotUpdateVisualization(netPlan);
+        networkDesign.setDesign(netPlan);
         networkDesign.updateVisualizationAfterNewTopology();
     }
 

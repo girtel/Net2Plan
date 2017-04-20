@@ -587,7 +587,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
      * @return {@code true} if the initial {@code NetPlan} object is stored. Otherwise, {@code false}.
      * @since 0.3.0
      */
-    @Override
     public boolean inOnlineSimulationMode()
     {
         if (onlineSimulationPane == null) return false;
@@ -846,6 +845,26 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         {
             viewEditTopTables.updateView();
             focusPanel.updateView();
+        }
+    }
+
+    public void runCanvasOperation(@Nonnull ITopologyCanvas.CanvasOperation... canvasOperation)
+    {
+        // NOTE: The operations should executed in the same order as their are brought.
+        for (ITopologyCanvas.CanvasOperation operation : canvasOperation)
+        {
+            switch (operation)
+            {
+                case ZOOM_ALL:
+                    topologyPanel.getCanvas().zoomAll();
+                    break;
+                case ZOOM_IN:
+                    topologyPanel.getCanvas().zoomIn();
+                    break;
+                case ZOOM_OUT:
+                    topologyPanel.getCanvas().zoomOut();
+                    break;
+            }
         }
     }
 
