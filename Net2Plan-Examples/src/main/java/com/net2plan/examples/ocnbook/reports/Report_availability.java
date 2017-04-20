@@ -187,7 +187,7 @@ public class Report_availability implements IReport
 		if (!netPlan.getLinksDownAllLayers().isEmpty() || !netPlan.getNodesDown().isEmpty()) throw new RuntimeException ("Bad");
 
 		NetPlan auxNetPlan = netPlan.copy ();
-		this.algorithm = ClassLoaderUtils.getInstance(new File(algorithmFile), algorithmName, IEventProcessor.class);
+		this.algorithm = ClassLoaderUtils.getInstance(new File(algorithmFile), algorithmName, IEventProcessor.class , null);
 		this.algorithm.initialize(auxNetPlan , algorithmParameters , reportParameters , net2planParameters);
 		Set<Link> initialLinksDownAllLayers = auxNetPlan.getLinksDownAllLayers();
 		Set<Node> initialNodesDown = auxNetPlan.getNodesDown();

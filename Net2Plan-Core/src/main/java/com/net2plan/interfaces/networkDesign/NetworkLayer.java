@@ -12,18 +12,24 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.net2plan.internal.AttributeMap;
+import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Quadruple;
+import com.net2plan.utils.Triple;
 
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 /** <p>This class contains a representation of a network layer. This is an structure which contains a set of demands, multicast demands and links. 
  * It also is characterized by a routing type, which can be {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, or
@@ -49,10 +55,10 @@ public class NetworkLayer extends NetworkElement
 	ArrayList<Route> routes;
 	ArrayList<MulticastTree> multicastTrees;
 
-	DoubleMatrix2D forwardingRulesNoFailureState_f_de; // splitting ratios
-	DoubleMatrix2D forwardingRulesCurrentFailureState_x_de; // carried traffics (both routings)
-	DoubleMatrix2D forwardingRules_Aout_ne; // 1 if link e is outgoing from n, 0 otherwise
-	DoubleMatrix2D forwardingRules_Ain_ne; // 1 if link e is incominng from n, 0 otherwise
+//	DoubleMatrix2D forwardingRulesNoFailureState_f_de; // splitting ratios
+//	DoubleMatrix2D forwardingRulesCurrentFailureState_x_de; // carried traffics (both routings)
+//	DoubleMatrix2D forwardingRules_Aout_ne; // 1 if link e is outgoing from n, 0 otherwise
+//	DoubleMatrix2D forwardingRules_Ain_ne; // 1 if link e is incominng from n, 0 otherwise
 	Set<Link> cache_linksDown;
 	Set<Link> cache_coupledLinks;
 	Set<Demand> cache_coupledDemands;
@@ -85,10 +91,10 @@ public class NetworkLayer extends NetworkElement
 
 		this.cache_routesDown = new HashSet<Route> ();
 		this.cache_multicastTreesDown = new HashSet<MulticastTree> ();
-		this.forwardingRulesNoFailureState_f_de = null;
-		this.forwardingRulesCurrentFailureState_x_de = null;
-		this.forwardingRules_Aout_ne = null;
-		this.forwardingRules_Ain_ne = null;
+//		this.forwardingRulesNoFailureState_f_de = null;
+//		this.forwardingRulesCurrentFailureState_x_de = null;
+//		this.forwardingRules_Aout_ne = null;
+//		this.forwardingRules_Ain_ne = null;
 	}
 
 	void copyFrom (NetworkLayer origin)
@@ -110,17 +116,17 @@ public class NetworkLayer extends NetworkElement
 //		for (ProtectionSegment s : origin.protectionSegments) this.protectionSegments.add((ProtectionSegment) this.netPlan.getPeerElementInThisNetPlan (s));
 		if (origin.routingType == routingType.HOP_BY_HOP_ROUTING)
 		{
-			this.forwardingRulesNoFailureState_f_de = origin.forwardingRulesNoFailureState_f_de.copy();
-			this.forwardingRulesCurrentFailureState_x_de = origin.forwardingRulesCurrentFailureState_x_de.copy();
-			this.forwardingRules_Aout_ne = origin.forwardingRules_Aout_ne.copy();
-			this.forwardingRules_Ain_ne = origin.forwardingRules_Ain_ne.copy();
+//			this.forwardingRulesNoFailureState_f_de = origin.forwardingRulesNoFailureState_f_de.copy();
+//			this.forwardingRulesCurrentFailureState_x_de = origin.forwardingRulesCurrentFailureState_x_de.copy();
+//			this.forwardingRules_Aout_ne = origin.forwardingRules_Aout_ne.copy();
+//			this.forwardingRules_Ain_ne = origin.forwardingRules_Ain_ne.copy();
 		}
 		else
 		{
-			this.forwardingRulesNoFailureState_f_de = null;
-			this.forwardingRulesCurrentFailureState_x_de = null;
-			this.forwardingRules_Aout_ne = null;
-			this.forwardingRules_Ain_ne = null;
+//			this.forwardingRulesNoFailureState_f_de = null;
+//			this.forwardingRulesCurrentFailureState_x_de = null;
+//			this.forwardingRules_Aout_ne = null;
+//			this.forwardingRules_Ain_ne = null;
 		}
 		
 		this.cache_linksDown.clear (); for (Link e : origin.cache_linksDown) this.cache_linksDown.add(this.netPlan.getLinkFromId (e.id));
@@ -167,10 +173,10 @@ public class NetworkLayer extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.routes , e2.routes)) return false;
 		if (!NetPlan.isDeepCopy(this.multicastTrees , e2.multicastTrees)) return false;
 		if (!NetPlan.isDeepCopy(this.multicastTrees , e2.multicastTrees)) return false;
-		if ((this.forwardingRulesNoFailureState_f_de != null) && (!this.forwardingRulesNoFailureState_f_de.equals(e2.forwardingRulesNoFailureState_f_de))) return false;
-		if ((this.forwardingRulesCurrentFailureState_x_de != null) && (!this.forwardingRulesCurrentFailureState_x_de.equals(e2.forwardingRulesCurrentFailureState_x_de))) return false;
-		if ((this.forwardingRules_Aout_ne != null) && (!this.forwardingRules_Aout_ne.equals(e2.forwardingRules_Aout_ne))) return false;
-		if ((this.forwardingRules_Ain_ne != null) && (!this.forwardingRules_Ain_ne.equals(e2.forwardingRules_Ain_ne))) return false;
+//		if ((this.forwardingRulesNoFailureState_f_de != null) && (!this.forwardingRulesNoFailureState_f_de.equals(e2.forwardingRulesNoFailureState_f_de))) return false;
+//		if ((this.forwardingRulesCurrentFailureState_x_de != null) && (!this.forwardingRulesCurrentFailureState_x_de.equals(e2.forwardingRulesCurrentFailureState_x_de))) return false;
+//		if ((this.forwardingRules_Aout_ne != null) && (!this.forwardingRules_Aout_ne.equals(e2.forwardingRules_Aout_ne))) return false;
+//		if ((this.forwardingRules_Ain_ne != null) && (!this.forwardingRules_Ain_ne.equals(e2.forwardingRules_Ain_ne))) return false;
 		if (!NetPlan.isDeepCopy(this.cache_linksDown , e2.cache_linksDown)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_coupledLinks , e2.cache_coupledLinks)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_coupledDemands , e2.cache_coupledDemands)) return false;
@@ -252,68 +258,6 @@ public class NetworkLayer extends NetworkElement
 		if (this.routingType != routingType) throw new Net2PlanException("Routing type of layer " + this + " must be " + routingType);
 	}
 
-	/* Updates all the network state, to the new situation where the hop-by-hop routing of a demand has changed */
-	void updateHopByHopRoutingDemand (Demand demand)
-	{
-		NetworkLayer layer = demand.layer;
-		if (layer != this) throw new RuntimeException ("Bad");
-
-//		System.out.println ("updateHopByHopRoutingDemand demand: " + demand + ", cache links down: " + cache_linksDown);
-
-		/* set 0 in the down links and the link in-out from the down nodes (they do not send traffic) */
-		DoubleMatrix1D fowardingRulesThisFailureState_f_e;
-		if (cache_linksDown.isEmpty() && netPlan.cache_nodesDown.isEmpty())
-			fowardingRulesThisFailureState_f_e = forwardingRulesNoFailureState_f_de.viewRow(demand.index);
-		else
-		{
-			fowardingRulesThisFailureState_f_e = forwardingRulesNoFailureState_f_de.viewRow(demand.index).copy();
-			for (Link downLink : cache_linksDown) 
-				fowardingRulesThisFailureState_f_e.set(downLink.index , 0);
-			for (Node downNode : netPlan.cache_nodesDown)
-			{
-				for (Link downLink : downNode.cache_nodeIncomingLinks) 
-					if (downLink.layer.equals (this))
-						fowardingRulesThisFailureState_f_e.set(downLink.index , 0);
-				for (Link downLink : downNode.cache_nodeOutgoingLinks) 
-					if (downLink.layer.equals (this)) 
-						fowardingRulesThisFailureState_f_e.set(downLink.index , 0);
-			}
-		}
-
-//		System.out.println ("updateHopByHopRoutingDemand demand: " + demand + ", forwardingthisdemand_e: " + forwardingRules_f_de.viewRow(demand.index));
-
-		Quadruple<DoubleMatrix2D, RoutingCycleType , Double , DoubleMatrix1D> fundMatrixComputation = demand.computeRoutingFundamentalMatrixDemand (fowardingRulesThisFailureState_f_e);
-		DoubleMatrix2D M = fundMatrixComputation.getFirst ();
-		double s_egressNode = fundMatrixComputation.getThird();
-		DoubleMatrix1D dropFraction_n = fundMatrixComputation.getFourth();
-
-		/* update the demand routing cycle information */
-		demand.routingCycleType = fundMatrixComputation.getSecond();
-		if (demand.routingCycleType == RoutingCycleType.CLOSED_CYCLES) 
-			throw new ClosedCycleRoutingException("Closed routing cycle for demand " + demand); 
-		
-		/* update the demand carried traffic */
-		demand.carriedTraffic = demand.offeredTraffic * M.get(demand.ingressNode.index , demand.egressNode.index) * s_egressNode;
-		if (demand.coupledUpperLayerLink != null) demand.coupledUpperLayerLink.capacity = demand.carriedTraffic;
-
-		if (demand.carriedTraffic > demand.offeredTraffic + 1E-5) throw new RuntimeException ("Bad");
-		
-		/* update the carried traffic of this demand in each link */
-		final double h_d = demand.offeredTraffic;
-		for (Link link : links)
-		{
-			final double oldXde = layer.forwardingRulesCurrentFailureState_x_de.get (demand.index , link.index);
-			final double newXde = h_d * M.get (demand.ingressNode.index , link.originNode.index) * fowardingRulesThisFailureState_f_e.get (link.index);
-			if (newXde < -1E-5) throw new RuntimeException ("Bad");
-			layer.forwardingRulesCurrentFailureState_x_de.set (demand.index , link.index , newXde);
-			link.cache_carriedTraffic += newXde - oldXde; // in hop-by-hop carried traffic is the same as occupied capacity
-			link.cache_occupiedCapacity += newXde - oldXde;
-			if ((newXde > 1e-3) && (!link.isUp)) throw new RuntimeException ("Bad");
-		}
-
-//		System.out.println ("updateHopByHopRoutingDemand demand: " + demand + ", this demand x_e: " + forwardingRules_x_de.viewRow(demand.index));
-	}
-
 	/**
 	 * <p>Returns a {@code String} representation of the network layer.</p>
 	 * @return {@code String} representation of the network layer
@@ -325,21 +269,6 @@ public class NetworkLayer extends NetworkElement
 	{
 		super.checkCachesConsistency ();
 
-		final int N = netPlan.nodes.size();
-		final int E = links.size ();
-		final int D = demands.size ();
-		if (routingType == RoutingType.HOP_BY_HOP_ROUTING)
-		{
-			if ((forwardingRulesNoFailureState_f_de.rows () != D) || (forwardingRulesNoFailureState_f_de.columns () != E)) throw new RuntimeException ("Bad");
-			if ((forwardingRulesCurrentFailureState_x_de.rows () != D) || (forwardingRulesCurrentFailureState_x_de.columns () != E)) throw new RuntimeException ("Bad");
-			if ((forwardingRules_Aout_ne.rows () != N) || (forwardingRules_Aout_ne.columns () != E)) throw new RuntimeException ("Bad");
-			if ((forwardingRules_Ain_ne.rows () != N) || (forwardingRules_Ain_ne.columns () != E)) throw new RuntimeException ("Bad");
-			if ((D > 0) && (E > 0))
-			{
-				DoubleMatrix2D F_dn = forwardingRulesNoFailureState_f_de.zMult(forwardingRules_Aout_ne , null , 1 , 0 , false , true);
-				if (F_dn.getMaxLocation() [0] > 1 + 1e-5) throw new RuntimeException ("Bad");
-			}
-		}
 		for (Link link : cache_linksDown) if (link.isUp) throw new RuntimeException ("Bad");
 		for (Link link : cache_coupledLinks) if ((link.coupledLowerLayerDemand == null) && (link.coupledLowerLayerMulticastDemand == null)) throw new RuntimeException ("Bad");
 		for (Demand demand : cache_coupledDemands) if (demand.coupledUpperLayerLink == null) throw new RuntimeException ("Bad");

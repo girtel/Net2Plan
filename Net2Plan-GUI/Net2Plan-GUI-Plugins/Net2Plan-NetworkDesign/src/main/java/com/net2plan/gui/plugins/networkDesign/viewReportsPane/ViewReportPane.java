@@ -123,7 +123,7 @@ public class ViewReportPane extends JSplitPane implements ThreadExecutionControl
         Triple<File, String, Class> report = reportSelector.getRunnable();
         Map<String, String> reportParameters = reportSelector.getRunnableParameters();
         Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
-        IReport instance = ClassLoaderUtils.getInstance(report.getFirst(), report.getSecond(), IReport.class);
+        IReport instance = ClassLoaderUtils.getInstance(report.getFirst(), report.getSecond(), IReport.class , null);
         String title = null;
         try {
             title = instance.getTitle();

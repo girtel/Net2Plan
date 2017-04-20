@@ -125,7 +125,7 @@ public class ErrorHandling
 	/**
 	 * Adds the output of a {@code Throwable} to the console. In case that debug 
 	 * mode is disabled, the stack trace will stop once a stack element refers to 
-	 * the given classe.
+	 * the given class.
 	 * 
 	 * @param throwable {@code Throwable}
 	 * @param _class Class that should be omitted from the output

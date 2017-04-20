@@ -20,6 +20,7 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.LongUtils;
 import com.net2plan.utils.Pair;
 import org.codehaus.stax2.XMLStreamReader2;
@@ -58,7 +59,7 @@ class ReaderNetPlanN2PVersion_2 implements IReaderNetPlan
 		parseNetwork(netPlan, xmlStreamReader);
 		
 		// System.out.println ("netPlan leido: --- " + netPlan + " --- netPlan leido");
-		netPlan.checkCachesConsistency();
+		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 
 	}
 	

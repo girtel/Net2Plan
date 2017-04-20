@@ -49,14 +49,14 @@ public final class VisualizationConstants
 
     public final static boolean DEFAULT_REGGUILINK_HASARROW = false;
 
-    public final static Stroke DEFAULT_REGGUILINK_EDGESTROKE = new BasicStroke(2);
-    public final static Stroke DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER = new BasicStroke(2 * INCREASELINKSTROKEFACTORACTIVE);
-    public final static Stroke DEFAULT_REGGUILINK_EDGESTROKE_PICKED = new BasicStroke(2 * INCREASELINKSTROKEFACTORACTIVE * INCREASELINKSTROKEFACTORACTIVE);
-    public final static Stroke DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALNONACTIVELAYER = new BasicStroke(2, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f);
-    public final static Stroke DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALACTVELAYER = new BasicStroke(2 * INCREASELINKSTROKEFACTORACTIVE, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f);
-    public final static Stroke DEFAULT_REGGUILINK_EDGESTROKE_BACKUP = new BasicStroke(3, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{5}, 0.0f);
-    public final static Stroke DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_ACTIVE = new BasicStroke(3 * INCREASELINKSTROKEFACTORACTIVE, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f);
-    public final static Stroke DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_PICKED = new BasicStroke(3 * INCREASELINKSTROKEFACTORACTIVE * INCREASELINKSTROKEFACTORACTIVE, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f);
+    public final static BasicStroke DEFAULT_REGGUILINK_EDGESTROKE = new BasicStroke(2);
+    public final static BasicStroke DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER = new BasicStroke(2 * INCREASELINKSTROKEFACTORACTIVE);
+    public final static BasicStroke DEFAULT_REGGUILINK_EDGESTROKE_PICKED = new BasicStroke(2 * INCREASELINKSTROKEFACTORACTIVE * INCREASELINKSTROKEFACTORACTIVE);
+    public final static BasicStroke DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALNONACTIVELAYER = new BasicStroke(2, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f);
+    public final static BasicStroke DEFAULT_REGGUILINK_EDGESTROKE_PICKED_COLATERALACTVELAYER = new BasicStroke(2 * INCREASELINKSTROKEFACTORACTIVE, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f);
+    public final static BasicStroke DEFAULT_REGGUILINK_EDGESTROKE_BACKUP = new BasicStroke(3, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{5}, 0.0f);
+    public final static BasicStroke DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_ACTIVE = new BasicStroke(3 * INCREASELINKSTROKEFACTORACTIVE, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f);
+    public final static BasicStroke DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_PICKED = new BasicStroke(3 * INCREASELINKSTROKEFACTORACTIVE * INCREASELINKSTROKEFACTORACTIVE, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f);
 
     public final static Paint DEFAULT_REGGUILINK_EDGECOLOR = Color.BLACK;
     public final static Paint DEFAULT_REGGUILINK_EDGECOLOR_PICKED = Color.BLUE;
@@ -66,8 +66,8 @@ public final class VisualizationConstants
     public final static Paint DEFAULT_REGGUILINK_EDGECOLOR_FAILED = Color.RED;
 
     public final static boolean DEFAULT_INTRANODEGUILINK_HASARROW = false;
-    public final static Stroke DEFAULT_INTRANODEGUILINK_EDGESTROKE = new BasicStroke(1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f);
-    public final static Stroke DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED = new BasicStroke(1 * INCREASELINKSTROKEFACTORACTIVE, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f);
+    public final static BasicStroke DEFAULT_INTRANODEGUILINK_EDGESTROKE = new BasicStroke(1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f);
+    public final static BasicStroke DEFAULT_INTRANODEGUILINK_EDGESTROKE_PICKED = new BasicStroke(1 * INCREASELINKSTROKEFACTORACTIVE, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f);
     public final static Paint DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR = Color.BLACK;
     public final static Paint DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR_PICKED = Color.BLUE;
 }

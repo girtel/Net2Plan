@@ -20,18 +20,33 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
+
+import org.apache.commons.lang3.mutable.MutableLong;
+import org.codehaus.stax2.XMLStreamReader2;
+
+import com.net2plan.internal.ErrorHandling;
+import com.net2plan.libraries.ProfileUtils;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.LongUtils;
 import com.net2plan.utils.Pair;
-import org.apache.commons.lang3.mutable.MutableLong;
-import org.codehaus.stax2.XMLStreamReader2;
 
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.XMLEvent;
-import java.net.URL;
-import java.util.*;
-import java.util.Map.Entry;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanFormat_v3
 {
@@ -43,15 +58,18 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 	
 	public void create(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
 	{
+		ProfileUtils.printTime("" , -1);
 		this.hasAlreadyReadOneLayer = false;
 		this.xmlStreamReader = xmlStreamReader;
 		this.backupRouteIdsMap = new HashMap<Route,List<Long>> ();
 		this.nodeAndLayerToIconURLMap = new HashMap<> ();
+
 		parseNetwork(netPlan);
 
 //		System.out.println ("End ReaderNetPlan_v5: " + netPlan + " ----------- ");
 		
-		netPlan.checkCachesConsistency();
+		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+		ProfileUtils.printTime("Reading n2p file");
 	}
 
 	protected void parseNetwork(NetPlan netPlan) throws XMLStreamException
@@ -138,7 +156,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final double xCoord = getDouble ("xCoord");
 		final double yCoord = getDouble ("yCoord");
 		final String nodeName = getString ("name");
-		final double population = getDouble ("population");
+		double population = 0; try { population = getDouble ("population"); } catch (Exception e) {}
 		String siteName = null; try { siteName = getString ("siteName"); } catch (Exception e) {}
 		boolean isUp = true; try { isUp = getBoolean ("isUp"); } catch (Exception e) {} 
 		//netPlan.nextNodeId = new MutableLong(nodeId);
@@ -243,19 +261,23 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 	}
 	
 	
-	private void parseForwardingRule(NetPlan netPlan, long layerId) throws XMLStreamException
+	private void parseForwardingRule(NetPlan netPlan, long layerId , DoubleMatrix2D f_de) throws XMLStreamException
 	{
 		final long linkId = getLong ("linkId");
 		final long demandId = getLong ("demandId");
 		final double splittingRatio = getDouble ("splittingRatio");
 
-		netPlan.getNetworkLayerFromId(layerId).forwardingRulesNoFailureState_f_de.set (netPlan.getDemandFromId(demandId).index , netPlan.getLinkFromId(linkId).index  , splittingRatio);
+		f_de.set (netPlan.getDemandFromId(demandId).index , netPlan.getLinkFromId(linkId).index  , splittingRatio);
 		readAndAddAttributesToEnd(null, "forwardingRule");
 	}
 
 	private void parseHopByHopRouting(NetPlan netPlan, long layerId) throws XMLStreamException
 	{
 		netPlan.setRoutingType (RoutingType.HOP_BY_HOP_ROUTING , netPlan.getNetworkLayerFromId(layerId) );
+		final NetworkLayer layer = netPlan.getNetworkLayerFromId(layerId);
+		final int D = netPlan.getNumberOfDemands(layer);
+		final int E = netPlan.getNumberOfLinks(layer);
+		DoubleMatrix2D f_de = DoubleFactory2D.sparse.make (D,E);
 
 		while(xmlStreamReader.hasNext())
 		{
@@ -268,7 +290,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 					switch(startElementName)
 					{
 						case "forwardingRule":
-							parseForwardingRule(netPlan, layerId);
+							parseForwardingRule(netPlan, layerId,f_de);
 							break;
 
 						default:
@@ -281,7 +303,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 					if (endElementName.equals("hopByHopRouting")) 
 					{ 
 						NetworkLayer thisLayer = netPlan.getNetworkLayerFromId(layerId); 
-						netPlan.setForwardingRules(netPlan.getMatrixDemandBasedForwardingRules(thisLayer).copy() , thisLayer); 
+						netPlan.setForwardingRules(f_de , thisLayer); 
 						return; 
 					}
 					break;

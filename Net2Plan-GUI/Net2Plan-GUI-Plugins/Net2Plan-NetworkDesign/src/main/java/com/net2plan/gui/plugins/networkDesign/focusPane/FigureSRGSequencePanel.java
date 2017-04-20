@@ -79,13 +79,19 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
         Point initialDnTopLeftPosition = new Point(maxIconSize, topCoordinateLineNodes);
         int xSeparationDnCenters = maxIconSize * 3;
 
+        int maxWidth = 0;
+        int maxHeight = 0;
+
         // Drawing nodes
         int graphicsColumn = 0;
         for (Node node : riskGroup.getNodes())
         {
             final DrawNode drawNode = new DrawNode(node, callback.getDesign().getNetworkLayerDefault(), maxIconSize);
             drawnNodes.add(drawNode);
-            DrawNode.addNodeToGraphics(g2d, drawNode, new Point(initialDnTopLeftPosition.x + (xSeparationDnCenters * (graphicsColumn++)), initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
+            final Dimension dimension = DrawNode.addNodeToGraphics(g2d, drawNode, new Point(initialDnTopLeftPosition.x + (xSeparationDnCenters * (graphicsColumn++)), initialDnTopLeftPosition.y), fontMetrics, regularInterlineSpacePixels, null);
+
+            if (dimension.width > maxWidth) maxWidth = dimension.width + XYMARGIN;
+            if (dimension.height > maxHeight) maxHeight = dimension.height + XYMARGIN;
         }
 
         // Draw layers
@@ -103,9 +109,6 @@ public class FigureSRGSequencePanel extends FigureSequencePanel
         // Icons two rows below the text
         iconRow = addLineJump(textRow);
         iconRow = addLineJump(iconRow);
-
-        int maxWidth = 0;
-        int maxHeight = 0;
 
         // Drawing each layer
         // NOTE: Random order

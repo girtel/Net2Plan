@@ -140,7 +140,7 @@ public abstract class IGUIModule extends JPanel implements Plugin
 	 * 
 	 * @since 0.3.0
 	 */
-	public final void start()
+	public void start()
 	{
 		if (title == null || title.isEmpty())
 		{
@@ -166,6 +166,9 @@ public abstract class IGUIModule extends JPanel implements Plugin
 		configure(contentPane);
 	}
 
+	/**
+	 * Ask the tool to stop itself before exiting.
+	 */
 	public abstract void stop();
 
 	/**
