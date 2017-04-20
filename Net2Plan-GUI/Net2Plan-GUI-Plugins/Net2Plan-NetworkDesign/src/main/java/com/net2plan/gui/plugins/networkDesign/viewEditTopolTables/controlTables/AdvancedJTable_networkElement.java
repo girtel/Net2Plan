@@ -142,8 +142,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 final int upRow = Ints.min(table.getSelectedRows());
                 final int downRow = Ints.max(table.getSelectedRows());
 
-                if (upRow > 0)
-                    table.setRowSelectionInterval(upRow - 1, downRow);
+                table.setRowSelectionInterval(upRow - 1, downRow);
 
                 final ElementSelection selectedElements = getSelectedElements();
                 if (selectedElements.isEmpty()) return;
@@ -159,11 +158,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             {
                 final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
                 final int upRow = Ints.min(table.getSelectedRows());
-                if (upRow > 0)
-                {
-                    int row = upRow - 1;
-                    table.setRowSelectionInterval(row, row);
-                }
+
+                int row = upRow - 1;
+                table.setRowSelectionInterval(row, row);
 
                 final ElementSelection selectedElements = getSelectedElements();
                 if (selectedElements.isEmpty()) return;
@@ -180,10 +177,8 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
                 final int upRow = Ints.min(table.getSelectedRows());
                 final int downRow = Ints.max(table.getSelectedRows());
-                if (downRow < table.getRowCount())
-                {
-                    table.setRowSelectionInterval(upRow, downRow + 1);
-                }
+
+                table.setRowSelectionInterval(upRow, downRow + 1);
 
                 final ElementSelection selectedElements = getSelectedElements();
                 if (selectedElements.isEmpty()) return;
@@ -198,13 +193,10 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             public void actionPerformed(ActionEvent e)
             {
                 final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-                final int upRow = Ints.min(table.getSelectedRows());
                 final int downRow = Ints.max(table.getSelectedRows());
-                if (downRow < table.getRowCount())
-                {
-                    int row = downRow + 1;
-                    table.setRowSelectionInterval(row, row);
-                }
+
+                int row = downRow + 1;
+                table.setRowSelectionInterval(row, row);
 
                 final ElementSelection selectedElements = getSelectedElements();
                 if (selectedElements.isEmpty()) return;
