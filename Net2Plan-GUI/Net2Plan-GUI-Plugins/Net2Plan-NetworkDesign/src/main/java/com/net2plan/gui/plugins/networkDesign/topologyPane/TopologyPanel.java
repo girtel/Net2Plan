@@ -52,6 +52,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance;
     private final JButton btn_increaseNodeSize, btn_decreaseNodeSize, btn_increaseFontSize, btn_decreaseFontSize;
+    private final JButton btn_increaseLinkSize, btn_decreaseLinkSize;
     private final JButton btn_npChangeUndo, btn_npChangeRedo;
     private final JToggleButton btn_showLowerLayerInfo, btn_showUpperLayerInfo, btn_showThisLayerInfo;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
@@ -171,6 +172,10 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_increaseNodeSize.setToolTipText("Increase node size");
         btn_decreaseNodeSize = new JButton();
         btn_decreaseNodeSize.setToolTipText("Decrease node size");
+        btn_increaseLinkSize = new JButton();
+        btn_increaseLinkSize.setToolTipText("Increase link thickness");
+        btn_decreaseLinkSize = new JButton();
+        btn_decreaseLinkSize.setToolTipText("Decrease link thickness");
         btn_increaseFontSize = new JButton();
         btn_increaseFontSize.setToolTipText("Increase font size");
         btn_decreaseFontSize = new JButton();
@@ -222,6 +227,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_takeSnapshot.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/takeSnapshot.png")));
         btn_increaseNodeSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseNode.png")));
         btn_decreaseNodeSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseNode.png")));
+        btn_increaseLinkSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseLink.png")));
+        btn_decreaseLinkSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseLink.png")));
         btn_increaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseFont.png")));
         btn_decreaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseFont.png")));
         btn_increaseInterLayerDistance.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseLayerDistance.png")));
@@ -253,6 +260,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_showThisLayerInfo.addActionListener(this);
         btn_increaseNodeSize.addActionListener(this);
         btn_decreaseNodeSize.addActionListener(this);
+        btn_increaseLinkSize.addActionListener(this);
+        btn_decreaseLinkSize.addActionListener(this);
         btn_increaseFontSize.addActionListener(this);
         btn_decreaseFontSize.addActionListener(this);
         btn_npChangeUndo.addActionListener(this);
@@ -275,6 +284,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(new JToolBar.Separator());
         toolbar.add(btn_increaseNodeSize);
         toolbar.add(btn_decreaseNodeSize);
+        toolbar.add(btn_increaseLinkSize);
+        toolbar.add(btn_decreaseLinkSize);
         toolbar.add(btn_increaseFontSize);
         toolbar.add(btn_decreaseFontSize);
         toolbar.add(new JToolBar.Separator());
@@ -413,7 +424,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         {
         	if (callback.inOnlineSimulationMode()) return;
         	
-            callback.setCurrentNetPlanDoNotUpdateVisualization(new NetPlan());
+            callback.setDesign(new NetPlan());
             Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
@@ -488,6 +499,14 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         } else if (src == btn_decreaseNodeSize)
         {
             callback.getVisualizationState().decreaseCanvasNodeSizeAll();
+            canvas.refresh();
+        } else if (src == btn_increaseLinkSize)
+        {
+            callback.getVisualizationState().increaseCanvasLinkSizeAll();
+            canvas.refresh();
+        } else if (src == btn_decreaseLinkSize)
+        {
+            callback.getVisualizationState().decreaseCanvasLinkSizeAll();
             canvas.refresh();
         } else if (src == btn_increaseFontSize)
         {
@@ -572,7 +591,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             NetPlan aux = fc_netPlan.readNetPlan();
 
-            callback.setCurrentNetPlanDoNotUpdateVisualization(aux);
+            callback.setDesign(aux);
             final VisualizationState vs = callback.getVisualizationState();
             Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
@@ -610,7 +629,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             checkNetPlanFileChooser();
             fc_netPlan.setCurrentDirectory(file.getParentFile());
 
-            callback.setCurrentNetPlanDoNotUpdateVisualization(netPlan);
+            callback.setDesign(netPlan);
             final VisualizationState vs = callback.getVisualizationState();
             Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));

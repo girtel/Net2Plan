@@ -21,8 +21,11 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.PriorityQueue;
 
@@ -183,7 +186,7 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
                 simKernel.getSimCore().setSimulationState(SimState.STOPPED);
                 simKernel.reset();
                 simKernel.setNetPlan(simKernel.getInitialNetPlan());
-                mainWindow.setCurrentNetPlanDoNotUpdateVisualization(simKernel.getInitialNetPlan());
+                mainWindow.setDesign(simKernel.getInitialNetPlan());
                 final VisualizationState vs = mainWindow.getVisualizationState();
         		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
         				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
@@ -322,7 +325,7 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
         if (simulationState == SimState.NOT_STARTED || simulationState == SimState.PAUSED || simulationState == SimState.STEP || simulationState == SimState.STOPPED) 
         {
             updateSimulationInfo();
-            mainWindow.setCurrentNetPlanDoNotUpdateVisualization(simKernel.getCurrentNetPlan());
+            mainWindow.setDesign(simKernel.getCurrentNetPlan());
             final VisualizationState vs = mainWindow.getVisualizationState();
     		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
     				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
@@ -359,15 +362,35 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
                 Map<String, String> simulationParameters = simulationConfigurationPanel.getParameters();
                 Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
 
-                Triple<File, String, Class> aux;
+                final Triple<File, String, Class> eventGeneratorInfo = eventGeneratorPanel.getRunnable();
+                final Triple<File, String, Class> eventProcessorInfo = eventProcessorPanel.getRunnable();
 
-                aux = eventGeneratorPanel.getRunnable();
-                Map<String, String> eventGeneratorParameters = eventGeneratorPanel.getRunnableParameters();
-                IExternal eventGenerator = ClassLoaderUtils.getInstance(aux.getFirst(), aux.getSecond(), simKernel.getEventGeneratorClass());
+                File classFileForClassLoader_generator;
+                File classFileForClassLoader_processor;
+                switch (SystemUtils.getExtension(eventGeneratorInfo.getFirst()).toLowerCase(Locale.getDefault()))
+                {
+                case "jar": classFileForClassLoader_generator = eventGeneratorInfo.getFirst(); break;
+                case "class": classFileForClassLoader_generator = ClassLoaderUtils.getClasspathAndQualifiedNameFromClassFile(eventGeneratorInfo.getFirst()).getFirst(); break;
+                default: throw new Net2PlanException ("'file' is not a valid Java file (.jar or .class)");
+                }
+                switch (SystemUtils.getExtension(eventProcessorInfo.getFirst()).toLowerCase(Locale.getDefault()))
+                {
+                case "jar": classFileForClassLoader_processor = eventProcessorInfo.getFirst(); break;
+                case "class": classFileForClassLoader_processor = ClassLoaderUtils.getClasspathAndQualifiedNameFromClassFile(eventProcessorInfo.getFirst()).getFirst(); break;
+                default: throw new Net2PlanException ("'file' is not a valid Java file (.jar or .class)");
+                }
+                
+                URLClassLoader ucl = null;
+                try 
+                {
+                	ucl = new URLClassLoader(new URL[] { classFileForClassLoader_generator.toURI().toURL() , classFileForClassLoader_processor.toURI().toURL() }, ClassLoader.getSystemClassLoader());
+                } catch (Exception e) { throw new Net2PlanException ("Unable to create the URL for class loading. Wrong file name.");  }
 
-                aux = eventProcessorPanel.getRunnable();
-                IExternal eventProcessor = ClassLoaderUtils.getInstance(aux.getFirst(), aux.getSecond(), simKernel.getEventProcessorClass());
-                Map<String, String> eventProcessorParameters = eventProcessorPanel.getRunnableParameters();
+                final IExternal eventGenerator = ClassLoaderUtils.getInstance(eventGeneratorInfo.getFirst(), eventGeneratorInfo.getSecond(), simKernel.getEventGeneratorClass() , ucl);
+                final IExternal eventProcessor = ClassLoaderUtils.getInstance(eventProcessorInfo.getFirst(), eventProcessorInfo.getSecond(), simKernel.getEventProcessorClass() , ucl);
+                
+                final Map<String, String> eventGeneratorParameters = eventGeneratorPanel.getRunnableParameters();
+                final Map<String, String> eventProcessorParameters = eventProcessorPanel.getRunnableParameters();
                 simKernel.configureSimulation(simulationParameters, net2planParameters, eventGenerator, eventGeneratorParameters, eventProcessor, eventProcessorParameters);
                 simKernel.initialize();
                 simKernel.getSimCore().setSimulationState(stepByStep ? SimCore.SimState.STEP : SimCore.SimState.RUNNING);

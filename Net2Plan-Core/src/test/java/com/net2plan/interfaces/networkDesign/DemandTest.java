@@ -287,11 +287,17 @@ public class DemandTest
 		List<Link> path1213 = new LinkedList<Link> (); path1213.add(link12); path1213.add(link21); path1213.add(link13); 
 		Route r1213 = np.addRoute(d13,1,1.5,path1213,null);
 		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.OPEN_CYCLES);
+		np.checkCachesConsistency();
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		np.checkCachesConsistency();
 		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.OPEN_CYCLES);
+		np.checkCachesConsistency();
 		d12.removeAllForwardingRules();
+		np.checkCachesConsistency();
 		np.setForwardingRule(d12, link12 , 1);
-		try { np.setForwardingRule(d12, link21 , 1); fail ("An exception should be here"); } catch (ClosedCycleRoutingException e) {} 
+		np.checkCachesConsistency();
+		try { np.setForwardingRule(d12, link21 , 1); fail ("An exception should be here"); } catch (ClosedCycleRoutingException e) {}
+		np.checkCachesConsistency();
 	}
 
 	@Test
@@ -399,6 +405,7 @@ public class DemandTest
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		np.checkCachesConsistency();
 		np.setRoutingType(RoutingType.SOURCE_ROUTING , lowerLayer);
+		np.checkCachesConsistency();
 		assertEquals(d12.getRoutes().size() , 1);
 		assertEquals(d12.getRoutes().iterator().next().getSeqLinks() , Collections.singletonList(link12));
 	}

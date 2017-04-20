@@ -896,7 +896,9 @@ public class NetPlanTest
 		sc123.remove();
 		scd123.setServiceChainSequenceOfTraversedResourceTypes(null);
 		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		np.checkCachesConsistency();
 		np.setForwardingRule(d12, link12 , 0.7);
+		np.checkCachesConsistency();
 		assertEquals(np.getForwardingRuleSplittingFactor(d12,   link12) , 0.7 , 0);
 		try { np.setForwardingRule(d12, link13 , 0.7); fail (); } catch (Exception e) {}
 	}

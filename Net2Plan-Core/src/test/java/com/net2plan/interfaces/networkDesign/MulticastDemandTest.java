@@ -99,7 +99,7 @@ public class MulticastDemandTest
 	public void testGetWorseCasePropagationTimeInMs() 
 	{
 		assertEquals(d123.getWorseCasePropagationTimeInMs() , 200000 , 0);
-		assertEquals(upperMd123.getWorseCasePropagationTimeInMs() , 100000 , 0);
+		assertEquals(upperMd123.getWorseCasePropagationTimeInMs() , 200000 , 0);
 	}
 
 	@Test

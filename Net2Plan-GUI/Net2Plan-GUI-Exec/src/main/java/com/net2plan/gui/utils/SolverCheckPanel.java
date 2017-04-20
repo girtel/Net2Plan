@@ -429,46 +429,49 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         }
 
         // Checking Linux
-        if (isLinuxPathSet)
+        if (currentOS == OS.linux)
         {
-            txt_info.append(MESSAGE_HEADER + "Checking for solver at Linux library path: " + linuxPath + NEW_LINE);
-
-            final List<String> strings = splitPath(linuxPath);
-            if (strings != null)
+            if (isLinuxPathSet)
             {
-                for (String separatedPath : strings)
+                txt_info.append(MESSAGE_HEADER + "Checking for solver at Linux library path: " + linuxPath + NEW_LINE);
+
+                final List<String> strings = splitPath(linuxPath);
+                if (strings != null)
                 {
-                    File dir = new File(separatedPath);
-                    File[] files = dir.listFiles((file, name) -> name.toLowerCase().contains(solver.name()));
-
-                    if (files != null)
+                    for (String separatedPath : strings)
                     {
-                        for (File file : files)
+                        File dir = new File(separatedPath);
+                        File[] files = dir.listFiles((file, name) -> name.toLowerCase().contains(solver.name()));
+
+                        if (files != null)
                         {
-                            message = callJOM(solver, file.getAbsolutePath());
+                            for (File file : files)
+                            {
+                                message = callJOM(solver, file.getAbsolutePath());
 
-                            if (message.isEmpty())
-                            {
-                                txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at directory: " + file.getAbsolutePath() + NEW_LINE);
-                                showSaveDialog(solver, file.getAbsolutePath());
-                                return;
-                            } else
-                            {
-                                txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + file.getAbsolutePath() + NEW_LINE);
+                                if (message.isEmpty())
+                                {
+                                    txt_info.append(MESSAGE_HEADER + "Solver " + solver.name().toUpperCase() + " has been found at directory: " + file.getAbsolutePath() + NEW_LINE);
+                                    showSaveDialog(solver, file.getAbsolutePath());
+                                    return;
+                                } else
+                                {
+                                    txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + file.getAbsolutePath() + NEW_LINE);
+                                }
                             }
+                        } else
+                        {
+                            txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + separatedPath + NEW_LINE);
                         }
-                    } else
-                    {
-                        txt_info.append(WARNING_HEADER + "Solver " + solver.name().toUpperCase() + " could not be found at directory: " + separatedPath + NEW_LINE);
                     }
+                } else
+                {
+                    throw new RuntimeException("Internal: String not properly split.");
                 }
             } else
             {
-                throw new RuntimeException("Internal: String not properly split.");
+                txt_info.append(WARNING_HEADER + "Linux library path not set. Ignoring..." + NEW_LINE);
             }
-        } else
-        {
-            txt_info.append(WARNING_HEADER + "Linux library path not set. Ignoring..." + NEW_LINE);
         }
 
         txt_info.append(MESSAGE_HEADER + "Checking for solver by using system defaults..." + NEW_LINE);

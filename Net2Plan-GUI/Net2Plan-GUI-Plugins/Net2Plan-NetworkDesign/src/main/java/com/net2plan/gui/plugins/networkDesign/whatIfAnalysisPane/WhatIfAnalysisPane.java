@@ -50,7 +50,6 @@ import java.util.List;
 public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener, ActionListener
 {
     private final GUINetworkDesign callback;
-    private JTextArea simInfo;
     private Thread simThread;
     private ParameterValueDescriptionPanel simulationConfigurationPanel;
     private RunnableSelector eventProcessorPanel;
@@ -177,7 +176,7 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
 
         if (reason instanceof EndSimulationException)
         {
-            callback.setCurrentNetPlanDoNotUpdateVisualization(simKernel.getCurrentNetPlan());
+            callback.setDesign(simKernel.getCurrentNetPlan());
             synchronized (this)
             {
                 this.lastWhatIfExecutionException = null;
@@ -250,7 +249,7 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
             };
 
             Triple<File, String, Class> aux = eventProcessorPanel.getRunnable();
-            IExternal eventProcessor = ClassLoaderUtils.getInstance(aux.getFirst(), aux.getSecond(), simKernel.getEventProcessorClass());
+            IExternal eventProcessor = ClassLoaderUtils.getInstance(aux.getFirst(), aux.getSecond(), simKernel.getEventProcessorClass() , null);
             Map<String, String> eventProcessorParameters = eventProcessorPanel.getRunnableParameters();
 //			IExternal eventProcessor = new Online_evProc_ipOverWdm();
 //			Map<String, String> eventProcessorParameters = InputParameter.getDefaultParameters(eventProcessor.getParameters());

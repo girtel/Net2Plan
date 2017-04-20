@@ -12,25 +12,36 @@
 
 package com.net2plan.gui.plugins.networkDesign;
 
-import com.net2plan.gui.utils.DefaultTableCellHeaderRenderer;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_NetworkElement;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_link;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_multicastTree;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_route;
-import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.utils.DoubleUtils;
-import com.net2plan.utils.Pair;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JTable;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_link;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_multicastTree;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_route;
+import com.net2plan.gui.utils.DefaultTableCellHeaderRenderer;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.utils.DoubleUtils;
+import com.net2plan.utils.Pair;
 
 /**
  * Set of several cell renderers used into the GUI.
@@ -57,7 +68,7 @@ public class CellRenderers
         {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             if (value == null) return c;
-            if (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue)
+            if (value instanceof AdvancedJTable_networkElement.LastRowAggregatedValue)
             {
                 c.setBackground(bgColorLastRow);
                 c.setForeground(fgColorLastRow);
@@ -116,7 +127,7 @@ public class CellRenderers
         {
             Component c = cellRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-            if (value != null && value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue)
+            if (value != null && value instanceof AdvancedJTable_networkElement.LastRowAggregatedValue)
             {
                 c.setBackground(bgColorLastRow);
                 c.setForeground(fgColorLastRow);
@@ -138,7 +149,9 @@ public class CellRenderers
                     {
                         itemId = Pair.of(Integer.parseInt(table.getModel().getValueAt(row, 1).toString().split(" ")[0]), Integer.parseInt(table.getModel().getValueAt(row, 2).toString().split(" ")[0]));
                     } else
-                        itemId = (Long) table.getModel().getValueAt(row, 0);
+                    {
+                        itemId = table.getModel().getValueAt(row, 0);
+                    }
 
                     setCurrentState(c, table, itemId, row, column, isSelected);
                 }
@@ -201,7 +214,7 @@ public class CellRenderers
         @Override
         public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected)
         {
-            if (itemId != null && itemId instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue)
+            if (itemId != null && itemId instanceof AdvancedJTable_networkElement.LastRowAggregatedValue)
             {
                 c.setBackground(bgColorLastRow);
                 c.setForeground(fgColorLastRow);
@@ -283,7 +296,7 @@ public class CellRenderers
                 c = tcr.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             else
                 c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            if ((value != null) && (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            if ((value != null) && (value instanceof AdvancedJTable_networkElement.LastRowAggregatedValue))
             {
                 c.setForeground(fgColorLastRow);
                 c.setBackground(bgColorLastRow);
@@ -336,7 +349,7 @@ public class CellRenderers
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
         {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            if ((value != null) && (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            if ((value != null) && (value instanceof AdvancedJTable_networkElement.LastRowAggregatedValue))
             {
                 c.setForeground(fgColorLastRow);
                 c.setBackground(bgColorLastRow);
@@ -400,7 +413,7 @@ public class CellRenderers
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
         {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            if (value != null && value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue)
+            if (value != null && value instanceof AdvancedJTable_networkElement.LastRowAggregatedValue)
             {
                 c.setBackground(bgColorLastRow);
                 c.setForeground(fgColorLastRow);
@@ -456,7 +469,7 @@ public class CellRenderers
             }
 
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            if ((value != null) && (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            if ((value != null) && (value instanceof AdvancedJTable_networkElement.LastRowAggregatedValue))
             {
                 c.setForeground(fgColorLastRow);
                 c.setBackground(bgColorLastRow);
@@ -511,7 +524,7 @@ public class CellRenderers
         @Override
         public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected)
         {
-            if ((itemId != null) && (itemId instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            if ((itemId != null) && (itemId instanceof AdvancedJTable_networkElement.LastRowAggregatedValue))
             {
                 c.setForeground(fgColorLastRow);
                 c.setBackground(bgColorLastRow);
@@ -522,13 +535,13 @@ public class CellRenderers
 
             long routeId = (long) itemId;
             double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-            double bottleneckValue = (Double) table.getModel().getValueAt(rowIndexModel, AdvancedJTable_route.COLUMN_BOTTLENECKUTILIZATION);
+            double bottleneckValue = (Double) table.getModel().getValueAt(rowIndexModel, AdvancedJTable_route.getBottleneckColumnIndex());
             if (DoubleUtils.isEqualWithinAbsoluteTolerance(bottleneckValue, 1, PRECISION_FACTOR))
                 c.setBackground(Color.ORANGE);
             else if (bottleneckValue > 1)
             {
                 c.setBackground(Color.RED);
-                if (columnIndexModel == AdvancedJTable_route.COLUMN_BOTTLENECKUTILIZATION)
+                if (columnIndexModel == AdvancedJTable_route.getBottleneckColumnIndex())
                 {
                     c.setForeground(Color.WHITE);
                 }
@@ -574,7 +587,7 @@ public class CellRenderers
         @Override
         public void setCurrentStateUp(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected)
         {
-            if ((itemId != null) && (itemId instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            if ((itemId != null) && (itemId instanceof AdvancedJTable_networkElement.LastRowAggregatedValue))
             {
                 c.setForeground(fgColorLastRow);
                 c.setBackground(bgColorLastRow);
@@ -585,7 +598,7 @@ public class CellRenderers
             NetPlan initialNetPlan = callback.getInitialDesign();
 
             long treeId = (long) itemId;
-            if (columnIndexModel == AdvancedJTable_multicastTree.COLUMN_BOTTLENECKUTILIZATION)
+            if (columnIndexModel == AdvancedJTable_multicastTree.getBottleneckColumnIndex())
             {
                 double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
                 double doubleValue = (Double) table.getModel().getValueAt(rowIndexModel, columnIndexModel);
@@ -660,7 +673,7 @@ public class CellRenderers
         @Override
         public void setCurrentState(Component c, JTable table, Object itemId, int rowIndexModel, int columnIndexModel, boolean isSelected)
         {
-            if ((itemId != null) && (itemId instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            if ((itemId != null) && (itemId instanceof AdvancedJTable_networkElement.LastRowAggregatedValue))
             {
                 c.setForeground(fgColorLastRow);
                 c.setBackground(bgColorLastRow);
@@ -737,7 +750,7 @@ public class CellRenderers
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
         {
             final Component c = super.getTableCellRendererComponent(table, value, isSelected, false, row, column);
-            if ((value != null) && (value instanceof AdvancedJTable_NetworkElement.LastRowAggregatedValue))
+            if ((value != null) && (value instanceof AdvancedJTable_networkElement.LastRowAggregatedValue))
             {
                 c.setForeground(fgColorLastRow);
                 c.setBackground(bgColorLastRow);

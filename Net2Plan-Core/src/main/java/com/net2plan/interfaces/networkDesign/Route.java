@@ -18,6 +18,7 @@ package com.net2plan.interfaces.networkDesign;
 
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
+import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
@@ -63,7 +64,9 @@ public class Route extends NetworkElement
 	List<Node> cache_seqNodesRealPath;
 	Map<NetworkElement,Double> cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap;
 	Set<Route> cache_routesIAmBackUp;
-
+	boolean cache_hasLoops;
+	double cache_propagationDelayMs;
+	
 	Route (NetPlan netPlan , long id , int index , Demand demand , List<? extends NetworkElement> seqLinksAndResourcesTraversed , AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);
@@ -92,6 +95,10 @@ public class Route extends NetworkElement
 		this.cache_seqNodesRealPath = Route.listTraversedNodes(cache_seqLinksRealPath);
 		this.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap = updateLinkResourceOccupationCache ();
 		this.cache_routesIAmBackUp = new HashSet<Route> ();
+		this.cache_hasLoops = hasLoops (cache_seqNodesRealPath);
+		if (cache_hasLoops) demand.routingCycleType = RoutingCycleType.OPEN_CYCLES;
+		this.cache_propagationDelayMs = 0;
+		this.updatePropagationAndProcessingDelayInMiliseconds();
 	}
 
 	boolean isDeepCopy (Route e2)
@@ -130,6 +137,7 @@ public class Route extends NetworkElement
 		this.cache_routesIAmBackUp = (Set<Route>) getInThisNetPlan(origin.cache_routesIAmBackUp);
 		this.cache_seqLinksRealPath = (List<Link>) getInThisNetPlan(origin.cache_seqLinksRealPath);
 		this.cache_seqNodesRealPath = (List<Node>) getInThisNetPlan(origin.cache_seqNodesRealPath);
+		this.cache_hasLoops = origin.cache_hasLoops;
 		this.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.clear();
 		for (Entry<NetworkElement,Double> e : origin.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.entrySet()) this.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.put(getInThisNetPlan (e.getKey()) , e.getValue());
 	}
@@ -361,15 +369,24 @@ public class Route extends NetworkElement
 	 */
 	public double getPropagationDelayInMiliseconds ()
 	{
-		double accum = 0; 
+		return cache_propagationDelayMs;
+	}
+	void updatePropagationAndProcessingDelayInMiliseconds ()
+	{
+		this.cache_propagationDelayMs = 0;
+		double thisRouteLengthKm = 0;
 		for (NetworkElement e : currentPath)
 		{
 			if (e instanceof Link)
-				accum += ((Link) e).getPropagationDelayInMs();
+			{
+				cache_propagationDelayMs += ((Link) e).getPropagationDelayInMs();
+				thisRouteLengthKm += ((Link) e).getLengthInKm();
+			}
 			else if (e instanceof Resource)
-				accum += ((Resource) e).processingTimeToTraversingTrafficInMs;
+				cache_propagationDelayMs += ((Resource) e).processingTimeToTraversingTrafficInMs;
 		}
-		return accum;
+		demand.cache_worstCasePropagationTimeMs = Math.max(demand.cache_worstCasePropagationTimeMs, this.cache_propagationDelayMs);
+		demand.cache_worstCaseLengthInKm = Math.max(demand.cache_worstCaseLengthInKm, thisRouteLengthKm);
 	}
 
 	/** Returns the route average propagation speed in km per second, as the ratio between the total route length and the total route delay 
@@ -449,9 +466,12 @@ public class Route extends NetworkElement
 	 */
 	public boolean hasLoops ()
 	{
-		Set<Node> nodes = new HashSet<Node> ();
-		nodes.addAll (cache_seqNodesRealPath);
-		return nodes.size () < cache_seqNodesRealPath.size();
+		return this.cache_hasLoops;
+	}
+	private static boolean hasLoops (List<Node> seqNodes)
+	{
+		Set<Node> nodes = new HashSet<Node> (seqNodes);
+		return nodes.size () < seqNodes.size();
 	}
 	
 	/**
@@ -490,8 +510,27 @@ public class Route extends NetworkElement
 			if (e instanceof Resource) ((Resource) e).removeTraversingRoute(this);
 		
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
+        
+        /* potentially update demand routing cycle type */
+        if (cache_hasLoops)
+        {
+        	demand.routingCycleType = RoutingCycleType.LOOPLESS;
+        	for (Route r : demand.cache_routes) if (r.cache_hasLoops) { demand.routingCycleType = RoutingCycleType.OPEN_CYCLES; break; }
+        }
 
-		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+        if (demand.cache_worstCasePropagationTimeMs <= this.cache_propagationDelayMs)
+        {
+        	demand.cache_worstCasePropagationTimeMs = 0;
+        	for (Route r : demand.cache_routes) demand.cache_worstCasePropagationTimeMs = Math.max(demand.cache_worstCasePropagationTimeMs, r.cache_propagationDelayMs);
+        }
+        
+        if (demand.cache_worstCaseLengthInKm <= this.getLengthInKm())
+        {
+        	demand.cache_worstCaseLengthInKm = 0;
+        	for (Route r : demand.cache_routes) demand.cache_worstCaseLengthInKm = Math.max(demand.cache_worstCaseLengthInKm, r.getLengthInKm());
+        }
+
+        if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		removeId();
 	}
 
@@ -520,6 +559,8 @@ public class Route extends NetworkElement
 	{
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		netPlan.checkIsModifiable();
+		final double oldRouteCarriedTrafficIfNotFailing = this.currentCarriedTrafficIfNotFailing; 
+		final boolean isThisRouteDown = this.isDown();
 		if (linkAndResourcesOccupationInformation == null)
 			linkAndResourcesOccupationInformation = new ArrayList<Double> (this.currentLinksAndResourcesOccupationIfNotFailing); //Collections.nCopies(this.currentPath.size(), newCarriedTraffic);
 		if (linkAndResourcesOccupationInformation.size() != this.currentPath.size()) throw new Net2PlanException ("Wrong vector size"); 
@@ -545,14 +586,15 @@ public class Route extends NetworkElement
 		/* Now the update of the links and resources occupation */
 		this.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap = updateLinkResourceOccupationCache ();
 
+		demand.carriedTraffic = 0; for (Route r : demand.cache_routes) demand.carriedTraffic += r.getCarriedTraffic();
+		if (demand.coupledUpperLayerLink != null) demand.coupledUpperLayerLink.capacity = demand.carriedTraffic;
+
 		for (NetworkElement e : cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.keySet())
 			if (e instanceof Resource)
 				((Resource) e).addTraversingRoute(this , cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.get(e));
 			else if (e instanceof Link)
 				((Link) e).updateLinkTrafficAndOccupation();
 		
-		demand.carriedTraffic = 0; for (Route r : demand.cache_routes) demand.carriedTraffic += r.getCarriedTraffic();
-		if (demand.coupledUpperLayerLink != null) demand.coupledUpperLayerLink.capacity = demand.carriedTraffic;
 		
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
@@ -604,7 +646,11 @@ public class Route extends NetworkElement
 		}
 		for (Node node : cache_seqNodesRealPath)
 			node.cache_nodeAssociatedRoutes.add (this);
+		this.cache_hasLoops = hasLoops(cache_seqNodesRealPath);
+		if (cache_hasLoops) demand.routingCycleType = RoutingCycleType.OPEN_CYCLES;
 
+		this.updatePropagationAndProcessingDelayInMiliseconds();
+		
 		setCarriedTraffic (newCarriedTraffic , newOccupationInformation);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
@@ -647,6 +693,7 @@ public class Route extends NetworkElement
 		assertNotNull (cache_seqLinksRealPath);
 		assertNotNull (cache_seqNodesRealPath);
 		assertNotNull (cache_routesIAmBackUp);
+		assertEquals (!this.cache_hasLoops , new HashSet<> (cache_seqNodesRealPath).size() == cache_seqNodesRealPath.size());
 
 		netPlan.checkInThisNetPlanAndLayer(currentPath , layer);
 		netPlan.checkInThisNetPlanAndLayer(cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.keySet() , layer);

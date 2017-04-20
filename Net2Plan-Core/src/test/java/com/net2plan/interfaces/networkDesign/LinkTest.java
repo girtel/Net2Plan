@@ -241,19 +241,16 @@ public class LinkTest
 	public void testGetLengthInKm() 
 	{
 		assertEquals(link13.getLengthInKm() , 100 , 0);
-		assertEquals(upperLink12.getLengthInKm() , 100 , 0);
-		assertEquals(upperMdLink12.getLengthInKm() , 100 , 0);
+		assertEquals(upperLink12.getLengthInKm() , d12.getWorstCaseLengthInKm() , 0);
+		assertEquals(upperMdLink12.getLengthInKm() , d123.getWorstCaseLengthInKm() , 0);
 	}
 
 	@Test
 	public void testSetLengthInKm() 
 	{
 		link13.setLengthInKm(200);
-		upperLink12.setLengthInKm(200);
-		upperMdLink12.setLengthInKm(200);
+		try { upperLink12.setLengthInKm(200); fail (); } catch (Exception e) {}
 		assertEquals(link13.getLengthInKm() , 200 , 0);
-		assertEquals(upperLink12.getLengthInKm() , 200 , 0);
-		assertEquals(upperMdLink12.getLengthInKm() , 200 , 0);
 	}
 
 	@Test
@@ -302,8 +299,8 @@ public class LinkTest
 		assertEquals(link23.getPropagationDelayInMs() , 100000 , 0);
 		assertEquals(link13.getPropagationDelayInMs() , 100000 , 0);
 		assertEquals(upperLink12.getPropagationDelayInMs() , 100000 , 0);
-		assertEquals(upperMdLink12.getPropagationDelayInMs() , 100000 , 0);
-		assertEquals(upperMdLink13.getPropagationDelayInMs() , 100000 , 0);
+		assertEquals(upperMdLink12.getPropagationDelayInMs() , d123.getWorseCasePropagationTimeInMs() , 0);
+		assertEquals(upperMdLink13.getPropagationDelayInMs() , d123.getWorseCasePropagationTimeInMs() , 0);
 	}
 
 	@Test
@@ -447,30 +444,25 @@ public class LinkTest
 	public void testGetLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  ()
 	{
 		Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple;
-		triple = link12.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (false);
+		triple = link12.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  ();
 		assertEquals (triple.getFirst() , ImmutableMap.of(d12 , Sets.newHashSet(link12) , d13 , Sets.newHashSet(link12 , link23)
 				, scd123 , Sets.newHashSet(link12 , link23)));
 		assertEquals (triple.getSecond() , ImmutableMap.of());
 		assertEquals (triple.getThird() , ImmutableMap.of(Pair.of(d123,n3) , Sets.newHashSet(link12 , link23) , Pair.of(d123,n2) , Sets.newHashSet(link12)  ));
 		
 		link23.setFailureState(false);
-		triple = link12.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (true);
-		assertEquals (triple.getFirst() , ImmutableMap.of(d12 , Sets.newHashSet(link12) , d13 , Sets.newHashSet(link12 , link23)
-				, scd123 , Sets.newHashSet(link12 , link23)));
-		assertEquals (triple.getSecond() , ImmutableMap.of());
-		assertEquals (triple.getThird() , ImmutableMap.of(Pair.of(d123,n3) , Sets.newHashSet(link12 , link23) , Pair.of(d123,n2) , Sets.newHashSet(link12)  ));
-		triple = link12.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (false);
+		triple = link12.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  ();
 		assertEquals (triple.getFirst() , ImmutableMap.of(d12 , Sets.newHashSet(link12)));
 		assertEquals (triple.getSecond() , ImmutableMap.of());
 		assertEquals (triple.getThird() , ImmutableMap.of(Pair.of(d123,n2) , Sets.newHashSet(link12)  ));
 		
 		link23.setFailureState(true);
-		triple = link13.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (false);
+		triple = link13.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  ();
 		assertEquals (triple.getFirst() , ImmutableMap.of());
 		assertEquals (triple.getSecond() , ImmutableMap.of(d13 , Sets.newHashSet(link13)));
 		assertEquals (triple.getThird() , ImmutableMap.of(Pair.of(d123,n3) , Sets.newHashSet(link13)));
 		link23.setFailureState(false);
-		triple = link13.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (false);
+		triple = link13.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  ();
 		assertEquals (triple.getFirst() , ImmutableMap.of());
 		assertEquals (triple.getSecond() , ImmutableMap.of(d13 , Sets.newHashSet(link13)));
 		assertEquals (triple.getThird() , ImmutableMap.of(Pair.of(d123,n3) , Sets.newHashSet(link13)));

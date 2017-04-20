@@ -39,33 +39,6 @@ public class GUINode
     private Paint borderPaint, fillPaint;
     private double iconHeightIfNotActive;
 
-    /**
-     * Creates a copy of this GUINode. Used by undo/redo
-     *
-     * @param translateToThisNp if not null, translate elements to this np. This is null iff translateToThisVs should be also null
-     * @param translateToThisVs if not null, translate elements to this np. This is null iff translateToThisNp should be also null
-     * @return
-     */
-    public GUINode copy(NetPlan translateToThisNp, VisualizationState translateToThisVs)
-    {
-        if ((translateToThisNp == null != (translateToThisVs == null))) throw new RuntimeException();
-        GUINode copyGn = null;
-        if (translateToThisNp != null)
-        {
-            final Node tNpNode = translateToThisNp.getNode(this.npNode.getIndex());
-            final NetworkLayer tLayer = translateToThisNp.getNetworkLayer(this.layer.getIndex());
-            copyGn = new GUINode(tNpNode, tLayer);
-        } else
-        {
-            copyGn = new GUINode(this.npNode, this.layer);
-        }
-        copyGn.font = this.font;
-        copyGn.borderPaint = this.borderPaint;
-        copyGn.fillPaint = this.fillPaint;
-        copyGn.iconHeightIfNotActive = this.iconHeightIfNotActive;
-        return copyGn;
-    }
-
 
     /**
      * Constructor that allows to set a node label.
@@ -73,7 +46,7 @@ public class GUINode
      * @param npNode Node identifier
      * @since 0.3.0
      */
-    public GUINode(Node npNode, NetworkLayer layer)
+    public GUINode(Node npNode, NetworkLayer layer , double iconHeightIfNotActive)
     {
         this.layer = layer;
         this.npNode = npNode;
@@ -83,7 +56,7 @@ public class GUINode
         this.borderPaint = VisualizationConstants.DEFAULT_GUINODE_COLOR;
         this.fillPaint = VisualizationConstants.DEFAULT_GUINODE_COLOR;
         this.font = new Font("Helvetica", Font.BOLD, 11);
-        this.iconHeightIfNotActive = npNode.getNetPlan().getNumberOfNodes() > 100? VisualizationConstants.DEFAULT_GUINODE_SHAPESIZE_MORETHAN100NODES : VisualizationConstants.DEFAULT_GUINODE_SHAPESIZE;
+        this.iconHeightIfNotActive = iconHeightIfNotActive;
     }
 
     public Node getAssociatedNode()

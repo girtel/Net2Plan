@@ -12,14 +12,18 @@
 
 package com.net2plan.gui.plugins.networkDesign.topologyPane;
 
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
-import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
+import com.net2plan.interfaces.networkDesign.Node;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.util.List;
 
 /**
  * Plugin that enables to move nodes.
@@ -74,7 +78,7 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
         if (startVertex != null) {
             final Point p = e.getPoint();
 
-            callback.moveNodeTo(startVertex, p);
+            this.moveNodeTo(startVertex, p);
 
             e.consume();
         }
@@ -103,5 +107,47 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void setModifiers(int modifiers) {
         this.modifiers = modifiers;
+    }
+
+    private void moveNodeTo(final GUINode guiNode, final Point2D toPoint)
+    {
+        final VisualizationState vs = callback.getVisualizationState();
+        if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("NetPlan is not editable");
+
+        final Node node = guiNode.getAssociatedNode();
+
+        final Point2D netPlanPoint = canvas.getCanvasPointFromMovement(toPoint);
+        if (netPlanPoint == null) return;
+
+        final Point2D jungPoint = canvas.getCanvasPointFromNetPlanPoint(toPoint);
+
+        node.setXYPositionMap(netPlanPoint);
+
+        callback.updateVisualizationJustTables();
+
+        // Updating GUINodes position having in mind the selected layer.
+        final List<GUINode> guiNodes = vs.getCanvasVerticallyStackedGUINodes(node);
+        final int selectedLayerVisualizationOrder = vs.getCanvasVisualizationOrderRemovingNonVisible(guiNode.getLayer());
+
+        for (GUINode stackedGUINode : guiNodes)
+        {
+            final int vlIndex = vs.getCanvasVisualizationOrderRemovingNonVisible(stackedGUINode.getLayer());
+            final double interLayerDistanceInNpCoord = canvas.getInterLayerDistanceInNpCoordinates();
+
+            if (vlIndex > selectedLayerVisualizationOrder)
+            {
+                final int layerDistance = vlIndex - selectedLayerVisualizationOrder;
+                canvas.moveVertexToXYPosition(stackedGUINode, new Point2D.Double(jungPoint.getX(), -(jungPoint.getY() + (layerDistance * interLayerDistanceInNpCoord))));
+            } else if (vlIndex == selectedLayerVisualizationOrder)
+            {
+                canvas.moveVertexToXYPosition(stackedGUINode, new Point2D.Double(jungPoint.getX(), -(jungPoint.getY())));
+            } else
+            {
+                final int layerDistance = selectedLayerVisualizationOrder - vlIndex;
+                canvas.moveVertexToXYPosition(stackedGUINode, new Point2D.Double(jungPoint.getX(), -(jungPoint.getY() - (layerDistance * interLayerDistanceInNpCoord))));
+            }
+        }
+
+        canvas.refresh();
     }
 }

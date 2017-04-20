@@ -143,14 +143,14 @@ public final class JUNGCanvas implements ITopologyCanvas
 
         vv.getRenderContext().setEdgeIncludePredicate(context -> callback.getVisualizationState().isVisibleInCanvas(context.element));
         vv.getRenderContext().setEdgeArrowPredicate(context -> callback.getVisualizationState().isVisibleInCanvas(context.element) && context.element.getHasArrow());
-        vv.getRenderContext().setEdgeArrowStrokeTransformer(i -> i.getArrowStroke());
+        vv.getRenderContext().setEdgeArrowStrokeTransformer(i -> i.getStroke());
         vv.getRenderContext().setEdgeArrowTransformer(new ConstantTransformer(ArrowFactory.getNotchedArrow(7, 10, 5)));
         vv.getRenderContext().setEdgeLabelClosenessTransformer(new ConstantDirectionalEdgeValueTransformer(.6, .6));
         vv.getRenderContext().setEdgeStrokeTransformer(i -> i.getEdgeStroke());
 
         vv.getRenderContext().setEdgeDrawPaintTransformer(e -> e.getEdgeDrawPaint());
-        vv.getRenderContext().setArrowDrawPaintTransformer(e -> e.getArrowDrawPaint());
-        vv.getRenderContext().setArrowFillPaintTransformer(e -> e.getArrowFillPaint());
+        vv.getRenderContext().setArrowDrawPaintTransformer(e -> e.getEdgeDrawPaint());
+        vv.getRenderContext().setArrowFillPaintTransformer(e -> e.getEdgeDrawPaint());
 
         vv.getRenderContext().setEdgeLabelRenderer(new DefaultEdgeLabelRenderer(Color.BLUE));
         vv.getRenderer().setEdgeLabelRenderer(new BasicEdgeLabelRenderer<GUINode, GUILink>()
