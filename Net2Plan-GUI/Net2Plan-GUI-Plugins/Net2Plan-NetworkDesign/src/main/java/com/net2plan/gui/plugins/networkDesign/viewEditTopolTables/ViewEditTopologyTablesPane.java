@@ -185,7 +185,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         menuBar = new JMenuBar();
 
-        exportMenu = new JMenu("Export...");
+        exportMenu = new JMenu("Export tables...");
         exportMenu.add(writeToExcel);
 
         menuBar.add(exportMenu);
