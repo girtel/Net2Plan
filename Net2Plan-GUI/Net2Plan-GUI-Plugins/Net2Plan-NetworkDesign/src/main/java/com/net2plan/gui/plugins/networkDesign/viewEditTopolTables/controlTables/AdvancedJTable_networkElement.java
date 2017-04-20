@@ -129,7 +129,10 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         getTableHeader().addMouseMotionListener(tips);
 
 		/* add the popup menu listener (this) */
-        addMouseListener(new PopupMenuAdapter());
+        addMouseListener(new PopupMenuMouseAdapter());
+
+        // List change event
+        this.getSelectionModel().addListSelectionListener(new TableChangeEvent());
 
         this.getTableHeader().setReorderingAllowed(true);
 
@@ -1151,67 +1154,37 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     }
 
-    public class PopupMenuAdapter extends MouseAdapter
+    private class PopupMenuMouseAdapter extends MouseAdapter
     {
         @Override
         public void mouseClicked(final MouseEvent e)
         {
             try
             {
-                final Pair<List<NetworkElement>, List<Pair<Demand, Link>>> selection = getSelectedElements();
-                final boolean nothingSelected = selection.getFirst().isEmpty() && selection.getSecond().isEmpty();
-
-                // Checking for selection type
-                final ElementSelection elementHolder;
-
-                if (!nothingSelected)
-                {
-                    if (!selection.getFirst().isEmpty())
-                        elementHolder = new ElementSelection(getElementType(selection.getFirst()), selection.getFirst());
-                    else if (!selection.getSecond().isEmpty())
-                        elementHolder = new ElementSelection(selection.getSecond());
-                    else elementHolder = new ElementSelection();
-                } else
-                {
-                    elementHolder = new ElementSelection();
-                }
-
                 if (SwingUtilities.isRightMouseButton(e))
-                {
-                    doPopup(e, elementHolder);
-                    return;
-                }
-
-                if (SwingUtilities.isLeftMouseButton(e))
-                {
-                    if (nothingSelected)
-                        callback.resetPickedStateAndUpdateView();
-                    else
-                        SwingUtilities.invokeLater(() -> showInCanvas(e, elementHolder));
-                }
+                    getPopup(getSelectedElements()).show(e.getComponent(), e.getX(), e.getY());
             } catch (Exception ex)
             {
-                ErrorHandling.showErrorDialog("The GUI has suffered a problem. Please see the console for more information.", "Error");
+                ErrorHandling.showErrorDialog("Error");
                 ex.printStackTrace();
             }
         }
+    }
 
-        private JTable getTable(MouseEvent e)
+    private class TableChangeEvent implements ListSelectionListener
+    {
+        @Override
+        public void valueChanged(ListSelectionEvent listSelectionEvent)
         {
-            Object src = e.getSource();
-            if (src instanceof JTable)
-            {
-                JTable table = (JTable) src;
-                if (table.getModel() != model) throw new RuntimeException("Table model is not valid");
-
-                return table;
-            }
-
-            throw new RuntimeException("Bad - Event source is not a JTable");
+            final ElementSelection selection = getSelectedElements();
+            if (selection.isEmpty())
+                callback.resetPickedStateAndUpdateView();
+            else
+                SwingUtilities.invokeLater(() -> showInCanvas(selection));
         }
     }
 
-    final protected void addPopupMenuAttributeOptions(final MouseEvent e, ElementSelection selection, JPopupMenu popup)
+    protected final void addPopupMenuAttributeOptions(ElementSelection selection, JPopupMenu popup)
     {
         assert popup != null;
         assert selection != null;
@@ -1522,7 +1495,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
      *
      * @return
      */
-    public Pair<List<NetworkElement>, List<Pair<Demand, Link>>> getSelectedElements()
+    public ElementSelection getSelectedElements()
     {
         final int[] rowIndexes = this.getSelectedRows();
         final NetPlan np = callback.getDesign();
@@ -1530,7 +1503,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         final List<NetworkElement> elementList = new ArrayList<>();
         final List<Pair<Demand, Link>> frList = new ArrayList<>();
 
-        if (rowIndexes.length == 0) return Pair.of(elementList, frList);
+        if (rowIndexes.length == 0) return new ElementSelection();
         final int maxValidRowIndex = model.getRowCount() - 1 - (hasAggregationRow() ? 1 : 0);
         final List<Integer> validRows = new ArrayList<Integer>();
         for (int a : rowIndexes) if ((a >= 0) && (a <= maxValidRowIndex)) validRows.add(a);
@@ -1549,11 +1522,31 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         {
             for (int rowIndex : validRows)
             {
-                final long id = (long) ((DefaultTableModel) getModel()).getValueAt(rowIndex, 0);
+                final long id = (long) getModel().getValueAt(rowIndex, 0);
                 elementList.add(np.getNetworkElement(id));
             }
         }
-        return Pair.of(elementList, frList);
+
+        // Parse into ElementSelection
+        final Pair<List<NetworkElement>, List<Pair<Demand, Link>>> selection = Pair.of(elementList, frList);
+        final boolean nothingSelected = selection.getFirst().isEmpty() && selection.getSecond().isEmpty();
+
+        // Checking for selection type
+        final ElementSelection elementHolder;
+
+        if (!nothingSelected)
+        {
+            if (!selection.getFirst().isEmpty())
+                elementHolder = new ElementSelection(getElementType(selection.getFirst()), selection.getFirst());
+            else if (!selection.getSecond().isEmpty())
+                elementHolder = new ElementSelection(selection.getSecond());
+            else elementHolder = new ElementSelection();
+        } else
+        {
+            elementHolder = new ElementSelection();
+        }
+
+        return elementHolder;
     }
 
 
@@ -1599,7 +1592,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    protected void addFilterOptions(MouseEvent e, ElementSelection selection, JPopupMenu popup)
+    protected void addFilterOptions(ElementSelection selection, JPopupMenu popup)
     {
         final NetPlan netPlan = callback.getDesign();
         final VisualizationState vs = callback.getVisualizationState();
@@ -1613,7 +1606,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             else
                 submenuFilters = new JMenu("Filters: Apply to all layers");
 
-            for (FilterCombinationType filterCombinationType : vs.getTableRowFilter() == null? new FilterCombinationType [] { FilterCombinationType.INCLUDEIF_AND } : FilterCombinationType.values())
+            for (FilterCombinationType filterCombinationType : vs.getTableRowFilter() == null ? new FilterCombinationType[]{FilterCombinationType.INCLUDEIF_AND} : FilterCombinationType.values())
             {
                 final JMenu filterCombinationSubMenu;
                 switch (filterCombinationType)
@@ -1802,7 +1795,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public abstract boolean hasElements();
 
-    public abstract int getNumberOfElements (boolean consideringFilters);
+    public abstract int getNumberOfElements(boolean consideringFilters);
 
     public abstract int getAttributesColumnIndex();
 
@@ -1824,9 +1817,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     @Nonnull
     protected abstract List<JComponent> getExtraOptions(ElementSelection selection);
 
-    protected abstract void doPopup(final MouseEvent e, ElementSelection selection);
+    protected abstract JPopupMenu getPopup(ElementSelection selection);
 
-    protected abstract void showInCanvas(MouseEvent e, ElementSelection selection);
+    protected abstract void showInCanvas(ElementSelection selection);
 
     static class MenuItem_RemovedFiltered extends JMenuItem
     {

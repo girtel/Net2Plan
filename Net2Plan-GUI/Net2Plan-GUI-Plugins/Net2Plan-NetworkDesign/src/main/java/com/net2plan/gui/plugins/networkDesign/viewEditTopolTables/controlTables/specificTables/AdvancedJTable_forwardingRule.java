@@ -34,7 +34,10 @@ import net.miginfocom.swing.MigLayout;
 import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.table.TableModel;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.*;
 
 /**
@@ -276,7 +279,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
     }
 
 
-    public void showInCanvas(MouseEvent e, ElementSelection selection)
+    public void showInCanvas(ElementSelection selection)
     {
         if (selection.getElementType() != NetworkElementType.FORWARDING_RULE)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
@@ -286,7 +289,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
-    public void doPopup(final MouseEvent e, final ElementSelection selection)
+    public JPopupMenu getPopup(final ElementSelection selection)
     {
         assert selection != null;
 
@@ -301,7 +304,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         final List<Pair<Demand, Link>> selectedFRs = selection.getForwardingRules();
         if (!frRowsInTheTable.isEmpty())
         {
-            addFilterOptions(e, selection, popup);
+            addFilterOptions(selection, popup);
             popup.addSeparator();
         }
 
@@ -347,7 +350,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
                 popup.add(item);
         }
 
-        popup.show(e.getComponent(), e.getX(), e.getY());
+        return popup;
     }
 
     @Nonnull

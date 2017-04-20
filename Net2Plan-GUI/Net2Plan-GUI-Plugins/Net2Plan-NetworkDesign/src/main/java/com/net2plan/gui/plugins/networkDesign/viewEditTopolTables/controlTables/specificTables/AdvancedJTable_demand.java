@@ -36,7 +36,10 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -375,7 +378,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         return attColumnsHeaders;
     }
 
-    public void doPopup(final MouseEvent e, final ElementSelection selection)
+    public JPopupMenu getPopup(final ElementSelection selection)
     {
         assert selection != null;
 
@@ -394,7 +397,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
         if (!demandRowsInTheTable.isEmpty())
         {
-            addFilterOptions(e, selection, popup);
+            addFilterOptions(selection, popup);
             popup.addSeparator();
         }
 
@@ -451,14 +454,14 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                     for (JComponent item : extraOptions) popup.add(item);
                 }
 
-                addPopupMenuAttributeOptions(e, selection, popup);
+                addPopupMenuAttributeOptions(selection, popup);
             }
         }
 
-        popup.show(e.getComponent(), e.getX(), e.getY());
+        return popup;
     }
 
-    public void showInCanvas(MouseEvent e, ElementSelection selection)
+    public void showInCanvas(ElementSelection selection)
     {
         if (selection.getElementType() != NetworkElementType.DEMAND)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());

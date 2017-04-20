@@ -42,7 +42,6 @@ import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.util.*;
 
@@ -414,7 +413,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
 
     @Override
-    protected void doPopup(final MouseEvent e, ElementSelection selection)
+    protected JPopupMenu getPopup(ElementSelection selection)
     {
         assert selection != null;
 
@@ -432,7 +431,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         /* Add the popup menu option of the filters */
         if (!rowsInTheTable.isEmpty())
         {
-            addFilterOptions(e, selection, popup);
+            addFilterOptions(selection, popup);
             popup.addSeparator();
         }
 
@@ -458,15 +457,15 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                 if (!extraOptions.isEmpty()) popup.addSeparator();
                 for (JComponent item : extraOptions) popup.add(item);
 
-                addPopupMenuAttributeOptions(e, selection, popup);
+                addPopupMenuAttributeOptions(selection, popup);
             }
         }
 
-        popup.show(e.getComponent(), e.getX(), e.getY());
+        return popup;
     }
 
     @Override
-    protected void showInCanvas(MouseEvent e, ElementSelection selection)
+    protected void showInCanvas(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.NODE)
