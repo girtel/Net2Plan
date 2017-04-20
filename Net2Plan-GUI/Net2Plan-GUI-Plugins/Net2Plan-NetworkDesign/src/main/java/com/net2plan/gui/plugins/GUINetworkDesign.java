@@ -67,9 +67,7 @@ import java.util.List;
  * based on constrained optimization formulations (i.e. ILPs) can be fast-prototyped
  * using the open-source Java Optimization Modeler library, to interface
  * to a number of external solvers such as GPLK, CPLEX or IPOPT.
- */
-
-/**
+ *
  * @author Pablo
  */
 public class GUINetworkDesign extends IGUIModule implements IVisualizationCallback
@@ -148,7 +146,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         final Triple<NetPlan, Map<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> forward = undoRedoManager.getNavigationForwardElement();
         if (forward == null) return;
         this.currentNetPlan = forward.getFirst();
-         this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, forward.getSecond(), forward.getThird());
+        this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, forward.getSecond(), forward.getThird());
         updateVisualizationAfterNewTopology();
     }
 
@@ -376,7 +374,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             if (backOrForward != null)
             {
                 final NetworkElement ne = backOrForward instanceof NetworkElement ? (NetworkElement) backOrForward : null; // For network elements
-                final Pair<Demand, Link> fr = backOrForward instanceof Pair ? (Pair) backOrForward: null; // For forwarding rules
+                final Pair<Demand, Link> fr = backOrForward instanceof Pair ? (Pair) backOrForward : null; // For forwarding rules
 
                 if (ne != null)
                     GUINetworkDesign.this.getVisualizationState().pickElement(ne);
@@ -474,8 +472,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @Override
     public void setCurrentNetPlanDoNotUpdateVisualization(NetPlan netPlan)
     {
-    	if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+        if (netPlan == null) throw new NullPointerException();
+        if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
         currentNetPlan = netPlan;
+        vs.setCanvasLayerVisibilityAndOrder(netPlan, null, null);
     }
 
     public void showTableControlWindow()
@@ -548,24 +548,31 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     @SuppressWarnings("unchecked")
     private void selectNetPlanViewItem(NetworkElementType type, Object itemId)
     {
-        NetworkLayer elementLayer = null;
-        if (type.equals(NetworkElementType.LINK)) elementLayer = getDesign().getLinkFromId((long) itemId).getLayer();
-        else if (type.equals(NetworkElementType.DEMAND))
-            elementLayer = getDesign().getDemandFromId((long) itemId).getLayer();
-        else if (type.equals(NetworkElementType.FORWARDING_RULE))
-            elementLayer = getDesign().getDemand(((Pair<Integer, Integer>) itemId).getFirst()).getLayer();
-        else if (type.equals(NetworkElementType.MULTICAST_DEMAND))
-            elementLayer = getDesign().getMulticastDemandFromId((long) itemId).getLayer();
-        else if (type.equals(NetworkElementType.MULTICAST_TREE))
-            elementLayer = getDesign().getMulticastTreeFromId((long) itemId).getLayer();
-        else if (type.equals(NetworkElementType.ROUTE))
-            elementLayer = getDesign().getRouteFromId((long) itemId).getLayer();
-        if (elementLayer != null)
-            if (elementLayer != getDesign().getNetworkLayerDefault())
+        if (itemId != null)
+        {
+            NetworkLayer elementLayer = null;
+            if (type.equals(NetworkElementType.LINK))
+                elementLayer = getDesign().getLinkFromId((long) itemId).getLayer();
+            else if (type.equals(NetworkElementType.DEMAND))
+                elementLayer = getDesign().getDemandFromId((long) itemId).getLayer();
+            else if (type.equals(NetworkElementType.FORWARDING_RULE))
+                elementLayer = getDesign().getDemand(((Pair<Integer, Integer>) itemId).getFirst()).getLayer();
+            else if (type.equals(NetworkElementType.MULTICAST_DEMAND))
+                elementLayer = getDesign().getMulticastDemandFromId((long) itemId).getLayer();
+            else if (type.equals(NetworkElementType.MULTICAST_TREE))
+                elementLayer = getDesign().getMulticastTreeFromId((long) itemId).getLayer();
+            else if (type.equals(NetworkElementType.ROUTE))
+                elementLayer = getDesign().getRouteFromId((long) itemId).getLayer();
+
+            if (elementLayer != null)
             {
-                getDesign().setNetworkLayerDefault(elementLayer);
-                viewEditTopTables.updateView();
+                if (elementLayer != getDesign().getNetworkLayerDefault())
+                {
+                    getDesign().setNetworkLayerDefault(elementLayer);
+                    viewEditTopTables.updateView();
+                }
             }
+        }
         topologyPanel.updateMultilayerVisibilityAndOrderPanel();
         viewEditTopTables.selectViewItem(type, itemId);
     }
@@ -763,23 +770,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
     @Override
-    public void updateVisualizationAfterPick()
-    {
-        if (vs.getPickedElementType() != null) // can be null if picked a resource type
-        {
-            if (vs.getPickedNetworkElement() != null)
-                selectNetPlanViewItem(vs.getPickedElementType(), vs.getPickedNetworkElement().getId());
-            else
-            {
-                final Pair<Demand, Link> fr = vs.getPickedForwardingRule();
-                selectNetPlanViewItem(vs.getPickedElementType(), Pair.of(fr.getFirst().getIndex(), fr.getSecond().getIndex()));
-            }
-        }
-        topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
-        focusPanel.updateView();
-    }
-
-    @Override
     public void putTransientColorInElementTopologyCanvas(Collection<? extends NetworkElement> linksAndNodes, Color color)
     {
         for (NetworkElement e : linksAndNodes)
@@ -805,8 +795,25 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
     @Override
+    public void updateVisualizationAfterPick()
+    {
+        if (vs.getPickedElementType() != null) // can be null if picked a resource type
+            selectNetPlanViewItem(vs.getPickedElementType(), null);
+
+        for (NetworkElement networkElement : vs.getPickedNetworkElements())
+            viewEditTopTables.selectItem(NetworkElementType.getType(networkElement), networkElement);
+
+        for (Pair<Demand,Link> fr : vs.getPickedForwardingRules())
+            viewEditTopTables.selectItem(NetworkElementType.FORWARDING_RULE, fr);
+
+        topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
+        focusPanel.updateView();
+    }
+
+    @Override
     public void updateVisualizationAfterNewTopology()
     {
+        vs.updateTableRowFilter(null, null);
         topologyPanel.updateMultilayerVisibilityAndOrderPanel();
         topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
         topologyPanel.getCanvas().zoomAll();
@@ -1052,10 +1059,14 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         void hideAllWindows()
         {
-            if (offlineWindow != null) offlineWindow.dispatchEvent(new WindowEvent(offlineWindow, WindowEvent.WINDOW_CLOSING));
-            if (onlineWindow != null) onlineWindow.dispatchEvent(new WindowEvent(onlineWindow, WindowEvent.WINDOW_CLOSING));
-            if (whatifWindow != null) whatifWindow.dispatchEvent(new WindowEvent(whatifWindow, WindowEvent.WINDOW_CLOSING));
-            if (reportWindow != null) reportWindow.dispatchEvent(new WindowEvent(reportWindow, WindowEvent.WINDOW_CLOSING));
+            if (offlineWindow != null)
+                offlineWindow.dispatchEvent(new WindowEvent(offlineWindow, WindowEvent.WINDOW_CLOSING));
+            if (onlineWindow != null)
+                onlineWindow.dispatchEvent(new WindowEvent(onlineWindow, WindowEvent.WINDOW_CLOSING));
+            if (whatifWindow != null)
+                whatifWindow.dispatchEvent(new WindowEvent(whatifWindow, WindowEvent.WINDOW_CLOSING));
+            if (reportWindow != null)
+                reportWindow.dispatchEvent(new WindowEvent(reportWindow, WindowEvent.WINDOW_CLOSING));
         }
 
         private class CloseWindowAdapter extends WindowAdapter

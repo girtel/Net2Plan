@@ -8,9 +8,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
+import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.utils.*;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -21,6 +21,7 @@ import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.SwingUtils;
 import net.miginfocom.swing.MigLayout;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
@@ -43,9 +44,9 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     private static final int COLUMN_DEMANDOFFEREDTRAFFIC = 5;
     private static final int COLUMN_CARRIEDTRAFFIC = 6;
     private static final int COLUMN_OCCUPIEDCAPACITY = 7;
-    private static final int COLUMN_SEQUENCEOFNODES = 8;
-    private static final int COLUMN_NUMHOPS = 9;
-    private static final int COLUMN_NUMBEROFTRAVRESOURCES = 10;
+    private static final int COLUMN_SEQUENCEOFLINKSANDRESOURCES = 8;
+    private static final int COLUMN_SEQUENCEOFNODES = 9;
+    private static final int COLUMN_NUMHOPS = 10;
     private static final int COLUMN_LENGTH = 11;
     private static final int COLUMN_PROPDELAY = 12;
     private static final int COLUMN_BOTTLENECKUTILIZATION = 13;
@@ -55,14 +56,13 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     private static final int COLUMN_ATTRIBUTES = 17;
     private static final String netPlanViewTabName = "Routes";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Demand", "Ingress node", "Egress node",
-            "Demand offered traffic", "Carried traffic", "Occupied capacity", "Sequence of nodes", 
-            "# links", "# resources", "Length (km)",
+            "Demand offered traffic", "Carried traffic", "Occupied capacity", "Sequence of links/resources", "Sequence of nodes", "Number of hops", "Length (km)",
             "Propagation delay (ms)", "Bottleneck utilization", "Is backup?", "Has backup?", "Tags", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf(
             "Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Demand", "Ingress node", "Egress node", "Demand offered traffic",
-            "Carried traffic", "Occupied capacity", 
+            "Carried traffic", "Occupied capacity", "Sequence of indexes of the links (Lxx) and resources (Rxx) traversed",
             "Sequence of nodes traversed, in parenthesis the indexes of the resources in each node",
-            "Number of traversed links", "Number of traversed resources" , "Total route length", "Propagation delay (ms)", "Highest utilization among all traversed links",
+            "Number of hops", "Total route length", "Propagation delay (ms)", "Highest utilization among all traversed links",
             "Indicates if this route is designated as a backup route, of other route for the same demand. If so, shows the index of the primary route that this route is backing up",
             "Indicates if this route has backup routes. If so, their indexes are shown in parenthesis",
             "Route-specific tags", "Route-specific attributes");
@@ -109,12 +109,12 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
             routeData[COLUMN_DEMAND] = demand.getIndex();
             routeData[COLUMN_INGRESSNODE] = ingressNode.getIndex() + (ingressNodeName.isEmpty() ? "" : " (" + ingressNodeName + ")");
             routeData[COLUMN_EGRESSNODE] = egressNode.getIndex() + (egressNodeName.isEmpty() ? "" : " (" + egressNodeName + ")");
-            routeData[COLUMN_SEQUENCEOFNODES] = getSequenceNodeIndexesWithResourceInfo(route);
             routeData[COLUMN_DEMANDOFFEREDTRAFFIC] = demand.getOfferedTraffic();
             routeData[COLUMN_CARRIEDTRAFFIC] = route.getCarriedTraffic();
             routeData[COLUMN_OCCUPIEDCAPACITY] = getSequenceOccupiedCapacities(route);
+            routeData[COLUMN_SEQUENCEOFLINKSANDRESOURCES] = getSequenceLinkResourceIndexes(route);
+            routeData[COLUMN_SEQUENCEOFNODES] = getSequenceNodeIndexesWithResourceInfo(route);
             routeData[COLUMN_NUMHOPS] = route.getNumberOfHops();
-            routeData[COLUMN_NUMBEROFTRAVRESOURCES] = route.getSeqResourcesTraversed().size();
             routeData[COLUMN_LENGTH] = route.getLengthInKm();
             routeData[COLUMN_PROPDELAY] = route.getPropagationDelayInMiliseconds();
             routeData[COLUMN_BOTTLENECKUTILIZATION] = maxUtilization;
@@ -198,6 +198,17 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
         return rf == null ? callback.getDesign().hasRoutes(layer) : rf.hasRoutes(layer);
     }
+    
+    public int getNumberOfElements (boolean consideringFilters)
+    {
+        final NetPlan np = callback.getDesign();
+        final NetworkLayer layer = np.getNetworkLayerDefault();
+    	if (!consideringFilters) return np.getNumberOfRoutes(layer);
+    	
+        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+        return rf.getNumberOfRoutes(layer);
+    }
+
 
     @Override
     public int getAttributesColumnIndex()
@@ -331,82 +342,49 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, final Object itemId)
+    public void doPopup(final MouseEvent e, final ElementSelection selection)
     {
-        JPopupMenu popup = new JPopupMenu();
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+        assert selection != null;
+
+        final JScrollPopupMenu popup = new JScrollPopupMenu(20);
         final List<Route> routeRowsInTheTable = getVisibleElementsInTable();
 
         /* Add the popup menu option of the filters */
-        final List<Route> selectedRoutes = (List<Route>) (List<?>) getSelectedElements().getFirst();
-        final JMenu submenuFilters = new JMenu("Filters");
-        if (!selectedRoutes.isEmpty())
-        {
-            final JMenuItem filterKeepElementsAffectedThisLayer = new JMenuItem("This layer: Keep elements associated to this route traffic");
-            final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this route traffic");
-            submenuFilters.add(filterKeepElementsAffectedThisLayer);
-            if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
-            filterKeepElementsAffectedThisLayer.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    if (selectedRoutes.size() > 1) throw new RuntimeException();
-                    TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedRoutes.get(0), true);
-                    callback.getVisualizationState().updateTableRowFilter(filter);
-                    callback.updateVisualizationJustTables();
-                }
-            });
-            filterKeepElementsAffectedAllLayers.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    if (selectedRoutes.size() > 1) throw new RuntimeException();
-                    TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedRoutes.get(0), false);
-                    callback.getVisualizationState().updateTableRowFilter(filter);
-                    callback.updateVisualizationJustTables();
-                }
-            });
-        }
-        final JMenuItem tagFilter = new JMenuItem("This layer: Keep elements of tag...");
-        submenuFilters.add(tagFilter);
-        tagFilter.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e) { dialogToFilterByTag (true); } });
-        final JMenuItem tagFilterAllLayers = new JMenuItem("All layers: Keep elements of tag...");
-        submenuFilters.add(tagFilterAllLayers);
-        tagFilterAllLayers.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e) { dialogToFilterByTag (false); } });
 
-        popup.add(submenuFilters);
-        popup.addSeparator();
+        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        {
+            if (selection.getElementType() != NetworkElementType.ROUTE)
+                throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+        }
+
+        final List<Route> selectedRoutes = (List<Route>) selection.getNetworkElements();
+
+        final JMenu submenuFilters = new JMenu("Filters");
+        if (!routeRowsInTheTable.isEmpty())
+        {
+            addFilterOptions(e, selection, popup);
+            popup.addSeparator();
+        }
 
         if (callback.getVisualizationState().isNetPlanEditable())
         {
             popup.add(getAddOption());
 
-            if (callback.getDesign().hasDemands())
-                for (JComponent item : getExtraAddOptions())
-                    popup.add(item);
-        }
-
-        if (!routeRowsInTheTable.isEmpty())
-        {
-            if (callback.getVisualizationState().isNetPlanEditable())
+            if (!routeRowsInTheTable.isEmpty())
             {
-                if (row != -1)
+                if (!selectedRoutes.isEmpty())
                 {
-                    if (popup.getSubElements().length > 0) popup.addSeparator();
-
-                    JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
+                    JMenuItem removeItem = new JMenuItem("Remove selected routes");
 
                     removeItem.addActionListener(new ActionListener()
                     {
                         @Override
                         public void actionPerformed(ActionEvent e)
                         {
-                            NetPlan netPlan = callback.getDesign();
                             try
                             {
-                                netPlan.getRouteFromId((long) itemId).remove();
+                                for (Route selectedRoute : selectedRoutes) selectedRoute.remove();
+
                                 callback.getVisualizationState().resetPickedState();
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
                                 callback.addNetPlanChange();
@@ -420,50 +398,32 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
                     popup.add(removeItem);
                 }
+            }
 
-                JMenuItem removeItems = new JMenuItem("Remove all table " + networkElementType + "s");
+            final List<JComponent> extraAddOptions = getExtraAddOptions();
+            if (!extraAddOptions.isEmpty())
+            {
+                popup.addSeparator();
+                for (JComponent item : extraAddOptions) popup.add(item);
+            }
 
-                removeItems.addActionListener(new ActionListener()
+            if (!selectedRoutes.isEmpty() && !routeRowsInTheTable.isEmpty())
+            {
+                List<JComponent> forcedOptions = getForcedOptions(selection);
+                if (!forcedOptions.isEmpty())
                 {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        final NetPlan netPlan = callback.getDesign();
+                    if (popup.getSubElements().length > 0) popup.addSeparator();
+                    for (JComponent item : forcedOptions) popup.add(item);
+                }
 
-                        try
-                        {
-                            if (rf == null)
-                                netPlan.removeAllRoutes();
-                            else
-                                for (Route r : routeRowsInTheTable) r.remove();
-                            callback.getVisualizationState().resetPickedState();
-                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                            callback.addNetPlanChange();
-                        } catch (Throwable ex)
-                        {
-                            ex.printStackTrace();
-                            ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
-                        }
-                    }
-                });
-
-                popup.add(removeItems);
-
-                addPopupMenuAttributeOptions(e, row, itemId, popup);
-
-                List<JComponent> extraOptions = getExtraOptions(row, itemId);
+                List<JComponent> extraOptions = getExtraOptions(selection);
                 if (!extraOptions.isEmpty())
                 {
                     if (popup.getSubElements().length > 0) popup.addSeparator();
                     for (JComponent item : extraOptions) popup.add(item);
                 }
-            }
 
-            List<JComponent> forcedOptions = getForcedOptions();
-            if (!forcedOptions.isEmpty())
-            {
-                if (popup.getSubElements().length > 0) popup.addSeparator();
-                for (JComponent item : forcedOptions) popup.add(item);
+                addPopupMenuAttributeOptions(e, selection, popup);
             }
         }
 
@@ -471,14 +431,19 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, Object itemId)
+    public void showInCanvas(MouseEvent e, ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
-        callback.getVisualizationState().pickRoute(callback.getDesign().getRouteFromId((long) itemId));
+        if (selection.getElementType() != NetworkElementType.ROUTE)
+            throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
+
+        callback.getVisualizationState().pickRoute((List<Route>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
-    private JMenuItem getAddOption()
+    @Nonnull
+    @Override
+    protected JMenuItem getAddOption()
     {
         JMenuItem addItem = new JMenuItem("Add " + networkElementType);
         addItem.addActionListener(new ActionListener()
@@ -519,160 +484,44 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         final JPanel seqLinks_pnl = new JPanel();
         seqLinks_pnl.setLayout(new BoxLayout(seqLinks_pnl, BoxLayout.Y_AXIS));
 
-        demandSelector.addItemListener(new ItemListener()
+        demandSelector.addItemListener(e ->
         {
-            @Override
-            public void itemStateChanged(ItemEvent e)
+            StringLabeller item = (StringLabeller) e.getItem();
+            long demandId = (Long) item.getObject();
+            Demand demand = netPlan.getDemandFromId(demandId);
+
+            double h_d = demand.getOfferedTraffic();
+            double r_d = demand.getCarriedTraffic();
+            txt_carriedTraffic.setText(Double.toString(Math.max(0, h_d - r_d)));
+            txt_occupiedCapacity.setText(Double.toString(Math.max(0, h_d - r_d)));
+
+            seqLinks_cmb.clear();
+            seqLinks_pnl.removeAll();
+
+            Node ingressNode = demand.getIngressNode();
+            String ingressNodeName = ingressNode.getName();
+
+            Collection<Link> outgoingLinks = ingressNode.getOutgoingLinks();
+            final JComboBox firstLink = new WiderJComboBox();
+            for (Link link : outgoingLinks)
             {
-                StringLabeller item = (StringLabeller) e.getItem();
-                long demandId = (Long) item.getObject();
-                Demand demand = netPlan.getDemandFromId(demandId);
+                long destinationNodeId = link.getDestinationNode().getId();
+                String destinationNodeName = link.getDestinationNode().getName();
+                firstLink.addItem(StringLabeller.of(link.getId(), String.format("e%d: n%d (%s) => n%d (%s)", link.getId(), ingressNode.getId(), ingressNodeName, destinationNodeId, destinationNodeName)));
+            }
 
-                double h_d = demand.getOfferedTraffic();
-                double r_d = demand.getCarriedTraffic();
-                txt_carriedTraffic.setText(Double.toString(Math.max(0, h_d - r_d)));
-                txt_occupiedCapacity.setText(Double.toString(Math.max(0, h_d - r_d)));
+            firstLink.addItemListener(e1 ->
+            {
+                JComboBox me = (JComboBox) e1.getSource();
+                Iterator<JComboBox> it = seqLinks_cmb.iterator();
+                while (it.hasNext()) if (it.next() == me) break;
 
-                seqLinks_cmb.clear();
-                seqLinks_pnl.removeAll();
-
-                Node ingressNode = demand.getIngressNode();
-                String ingressNodeName = ingressNode.getName();
-
-                Collection<Link> outgoingLinks = ingressNode.getOutgoingLinks();
-                final JComboBox firstLink = new WiderJComboBox();
-                for (Link link : outgoingLinks)
+                while (it.hasNext())
                 {
-                    long destinationNodeId = link.getDestinationNode().getId();
-                    String destinationNodeName = link.getDestinationNode().getName();
-                    firstLink.addItem(StringLabeller.of(link.getId(), String.format("e%d: n%d (%s) => n%d (%s)", link.getId(), ingressNode.getId(), ingressNodeName, destinationNodeId, destinationNodeName)));
+                    JComboBox aux = it.next();
+                    seqLinks_pnl.remove(aux);
+                    it.remove();
                 }
-
-                firstLink.addItemListener(new ItemListener()
-                {
-                    @Override
-                    public void itemStateChanged(ItemEvent e)
-                    {
-                        JComboBox me = (JComboBox) e.getSource();
-                        Iterator<JComboBox> it = seqLinks_cmb.iterator();
-                        while (it.hasNext()) if (it.next() == me) break;
-
-                        while (it.hasNext())
-                        {
-                            JComboBox aux = it.next();
-                            seqLinks_pnl.remove(aux);
-                            it.remove();
-                        }
-
-                        seqLinks_pnl.revalidate();
-
-                        List<Link> seqLinks = new LinkedList<Link>();
-                        for (JComboBox link : seqLinks_cmb)
-                            seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) link.getSelectedItem()).getObject()));
-                        callback.putTransientColorInElementTopologyCanvas(seqLinks, Color.BLUE);
-                    }
-                });
-
-                setMaxSize(firstLink);
-
-                seqLinks_cmb.add(firstLink);
-                seqLinks_pnl.add(firstLink);
-
-                JPanel pane = new JPanel(new FlowLayout());
-                JButton addLink_btn = new JButton("Add new link");
-                addLink_btn.addActionListener(new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        long linkId = (Long) ((StringLabeller) seqLinks_cmb.get(seqLinks_cmb.size() - 1).getSelectedItem()).getObject();
-                        Link link = netPlan.getLinkFromId(linkId);
-                        long destinationNodeId = link.getDestinationNode().getId();
-                        String destinationNodeName = link.getDestinationNode().getName();
-
-                        Set<Link> outgoingLinks = link.getDestinationNode().getOutgoingLinks();
-                        if (outgoingLinks.isEmpty())
-                        {
-                            ErrorHandling.showErrorDialog("Last node has no outgoing links", "Error");
-                            return;
-                        }
-
-                        final JComboBox newLink = new WiderJComboBox();
-                        for (Link nextLink : outgoingLinks)
-                        {
-                            long nextDestinationNodeId = nextLink.getDestinationNode().getId();
-                            String nextDestinationNodeName = nextLink.getDestinationNode().getName();
-                            newLink.addItem(StringLabeller.of(nextLink.getId(), String.format("e%d: n%d (%s) => n%d (%s)", nextLink.getId(), destinationNodeId, destinationNodeName, nextDestinationNodeId, nextDestinationNodeName)));
-                        }
-
-                        newLink.addItemListener(new ItemListener()
-                        {
-                            @Override
-                            public void itemStateChanged(ItemEvent e)
-                            {
-                                JComboBox me = (JComboBox) e.getSource();
-                                Iterator<JComboBox> it = seqLinks_cmb.iterator();
-                                while (it.hasNext()) if (it.next() == me) break;
-
-                                while (it.hasNext())
-                                {
-                                    JComboBox aux = it.next();
-                                    seqLinks_pnl.remove(aux);
-                                    it.remove();
-                                }
-
-                                seqLinks_pnl.revalidate();
-
-                                List<Link> seqLinks = new LinkedList<Link>();
-                                for (JComboBox link : seqLinks_cmb)
-                                    seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) link.getSelectedItem()).getObject()));
-                                callback.putTransientColorInElementTopologyCanvas(seqLinks, Color.BLUE);
-                            }
-                        });
-
-                        setMaxSize(newLink);
-
-                        seqLinks_cmb.add(newLink);
-                        seqLinks_pnl.add(newLink, seqLinks_pnl.getComponentCount() - 1);
-                        seqLinks_pnl.revalidate();
-
-                        List<Link> seqLinks = new LinkedList<Link>();
-                        for (JComboBox auxLink : seqLinks_cmb)
-                        {
-                            seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) auxLink.getSelectedItem()).getObject()));
-                        }
-                        callback.putTransientColorInElementTopologyCanvas(seqLinks, Color.BLUE);
-                    }
-                });
-
-                pane.add(addLink_btn);
-
-                JButton removeLink_btn = new JButton("Remove last link");
-                removeLink_btn.addActionListener(new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        if (seqLinks_cmb.size() < 2)
-                        {
-                            ErrorHandling.showErrorDialog("Initial link cannot be removed", "Error");
-                            return;
-                        }
-
-                        JComboBox cmb = seqLinks_cmb.get(seqLinks_cmb.size() - 1);
-                        seqLinks_cmb.remove(cmb);
-                        seqLinks_pnl.remove(cmb);
-                        seqLinks_pnl.revalidate();
-
-                        List<Link> seqLinks = new LinkedList<Link>();
-                        for (JComboBox link : seqLinks_cmb)
-                            seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) link.getSelectedItem()).getObject()));
-                        callback.putTransientColorInElementTopologyCanvas(seqLinks, Color.BLUE);
-                    }
-                });
-
-                pane.add(removeLink_btn);
-                seqLinks_pnl.add(pane);
 
                 seqLinks_pnl.revalidate();
 
@@ -680,7 +529,103 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                 for (JComboBox link : seqLinks_cmb)
                     seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) link.getSelectedItem()).getObject()));
                 callback.putTransientColorInElementTopologyCanvas(seqLinks, Color.BLUE);
-            }
+            });
+
+            setMaxSize(firstLink);
+
+            seqLinks_cmb.add(firstLink);
+            seqLinks_pnl.add(firstLink);
+
+            JPanel pane = new JPanel(new FlowLayout());
+            JButton addLink_btn = new JButton("Add new link");
+            addLink_btn.addActionListener(e1 ->
+            {
+                long linkId = (Long) ((StringLabeller) seqLinks_cmb.get(seqLinks_cmb.size() - 1).getSelectedItem()).getObject();
+                Link link = netPlan.getLinkFromId(linkId);
+                long destinationNodeId = link.getDestinationNode().getId();
+                String destinationNodeName = link.getDestinationNode().getName();
+
+                Set<Link> outgoingLinks1 = link.getDestinationNode().getOutgoingLinks();
+                if (outgoingLinks1.isEmpty())
+                {
+                    ErrorHandling.showErrorDialog("Last node has no outgoing links", "Error");
+                    return;
+                }
+
+                final JComboBox newLink = new WiderJComboBox();
+                for (Link nextLink : outgoingLinks1)
+                {
+                    long nextDestinationNodeId = nextLink.getDestinationNode().getId();
+                    String nextDestinationNodeName = nextLink.getDestinationNode().getName();
+                    newLink.addItem(StringLabeller.of(nextLink.getId(), String.format("e%d: n%d (%s) => n%d (%s)", nextLink.getId(), destinationNodeId, destinationNodeName, nextDestinationNodeId, nextDestinationNodeName)));
+                }
+
+                newLink.addItemListener(e2 ->
+                {
+                    JComboBox me = (JComboBox) e2.getSource();
+                    Iterator<JComboBox> it = seqLinks_cmb.iterator();
+                    while (it.hasNext()) if (it.next() == me) break;
+
+                    while (it.hasNext())
+                    {
+                        JComboBox aux = it.next();
+                        seqLinks_pnl.remove(aux);
+                        it.remove();
+                    }
+
+                    seqLinks_pnl.revalidate();
+
+                    List<Link> seqLinks = new LinkedList<Link>();
+                    for (JComboBox link1 : seqLinks_cmb)
+                        seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) link1.getSelectedItem()).getObject()));
+                    callback.putTransientColorInElementTopologyCanvas(seqLinks, Color.BLUE);
+                });
+
+                setMaxSize(newLink);
+
+                seqLinks_cmb.add(newLink);
+                seqLinks_pnl.add(newLink, seqLinks_pnl.getComponentCount() - 1);
+                seqLinks_pnl.revalidate();
+
+                List<Link> seqLinks = new LinkedList<Link>();
+                for (JComboBox auxLink : seqLinks_cmb)
+                {
+                    seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) auxLink.getSelectedItem()).getObject()));
+                }
+                callback.putTransientColorInElementTopologyCanvas(seqLinks, Color.BLUE);
+            });
+
+            pane.add(addLink_btn);
+
+            JButton removeLink_btn = new JButton("Remove last link");
+            removeLink_btn.addActionListener(e1 ->
+            {
+                if (seqLinks_cmb.size() < 2)
+                {
+                    ErrorHandling.showErrorDialog("Initial link cannot be removed", "Error");
+                    return;
+                }
+
+                JComboBox cmb = seqLinks_cmb.get(seqLinks_cmb.size() - 1);
+                seqLinks_cmb.remove(cmb);
+                seqLinks_pnl.remove(cmb);
+                seqLinks_pnl.revalidate();
+
+                List<Link> seqLinks = new LinkedList<Link>();
+                for (JComboBox link : seqLinks_cmb)
+                    seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) link.getSelectedItem()).getObject()));
+                callback.putTransientColorInElementTopologyCanvas(seqLinks, Color.BLUE);
+            });
+
+            pane.add(removeLink_btn);
+            seqLinks_pnl.add(pane);
+
+            seqLinks_pnl.revalidate();
+
+            List<Link> seqLinks = new LinkedList<Link>();
+            for (JComboBox link : seqLinks_cmb)
+                seqLinks.add(netPlan.getLinkFromId((Long) ((StringLabeller) link.getSelectedItem()).getObject()));
+            callback.putTransientColorInElementTopologyCanvas(seqLinks, Color.BLUE);
         });
 
         for (long demandId : demandIds)
@@ -791,10 +736,11 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         c.setMaximumSize(max);
     }
 
-    private List<JComponent> getExtraAddOptions()
+    @Nonnull
+    @Override
+    protected List<JComponent> getExtraAddOptions()
     {
         List<JComponent> options = new LinkedList<JComponent>();
-        NetPlan netPlan = callback.getDesign();
 
         final JMenuItem oneRoutePerDemandSPFHops = new JMenuItem("Add one route per demand, shortest path (Service chain) in hops");
         options.add(oneRoutePerDemandSPFHops);
@@ -915,31 +861,30 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
             callback.addNetPlanChange();
         }
+
     }
 
-    private List<JComponent> getExtraOptions(final int row, final Object itemId)
+    @Nonnull
+    @Override
+    protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
-        List<JComponent> options = new LinkedList<JComponent>();
+        assert selection != null;
 
-        final int numRows = model.getRowCount();
-        final NetPlan netPlan = callback.getDesign();
+        final List<JComponent> options = new LinkedList<>();
+        final List<Route> selectedRoutes = (List<Route>) selection.getNetworkElements();
 
-        if (itemId != null)
+        if (!selectedRoutes.isEmpty() && selectedRoutes.size() == 1)
         {
             JMenuItem viewEditBackupRoutes = new JMenuItem("View/edit backup routes");
-            viewEditBackupRoutes.addActionListener(new ActionListener()
+            viewEditBackupRoutes.addActionListener(e ->
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
+                try
                 {
-                    try
-                    {
-                        viewEditBackupRoutesGUI(callback, (long) itemId);
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error viewing/editing backup routes");
-                        ex.printStackTrace();
-                    }
+                    viewEditBackupRoutesGUI(callback, selectedRoutes.get(0));
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error viewing/editing backup routes");
+                    ex.printStackTrace();
                 }
             });
 
@@ -950,11 +895,13 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         return options;
     }
 
-    private static void viewEditBackupRoutesGUI(final GUINetworkDesign callback, final long routeId)
+    private static void viewEditBackupRoutesGUI(final GUINetworkDesign callback, Route route)
     {
         final NetPlan netPlan = callback.getDesign();
-        final Route route = netPlan.getRouteFromId(routeId);
+
         if (route.isBackupRoute()) throw new Net2PlanException("A backup route cannot have backup routes itself.");
+
+        long routeId = route.getId();
 
         Set<Route> candidateBackupRoutes = route.getDemand().getRoutesAreNotBackup();
         List<Route> currentBackupRoutes = route.getBackupRoutes();
@@ -981,44 +928,36 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
         final JPanel addSegment_pnl = new JPanel(new MigLayout("", "[grow][][]", "[]"));
         JButton addSegment_btn = new JButton("Add");
-        addSegment_btn.addActionListener(new ActionListener()
+        addSegment_btn.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                Object selectedItem = backupRouteSelector.getSelectedItem();
-                long backupRouteId = (Long) ((StringLabeller) selectedItem).getObject();
-                Route backupRoute = netPlan.getRouteFromId(backupRouteId);
-                route.addBackupRoute(backupRoute);
-                callback.getVisualizationState().resetPickedState();
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                callback.addNetPlanChange();
+            Object selectedItem = backupRouteSelector.getSelectedItem();
+            long backupRouteId = (Long) ((StringLabeller) selectedItem).getObject();
+            Route backupRoute = netPlan.getRouteFromId(backupRouteId);
+            route.addBackupRoute(backupRoute);
+            callback.getVisualizationState().resetPickedState();
+            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
+            callback.addNetPlanChange();
 
-                backupRouteSelector.removeItem(selectedItem);
-                if (backupRouteSelector.getItemCount() == 0) addSegment_pnl.setVisible(false);
+            backupRouteSelector.removeItem(selectedItem);
+            if (backupRouteSelector.getItemCount() == 0) addSegment_pnl.setVisible(false);
 
-                if (!table.isEnabled()) model.removeRow(0);
-                model.addRow(new Object[]
-                        {backupRouteId,
-                                getSequenceLinkResourceIndexes(backupRoute),
-                                getSequenceNodeIndexesWithResourceInfo(backupRoute),
-                                getSequenceOccupiedCapacities(backupRoute), "Remove", "View"});
-                table.setEnabled(true);
-            }
+            if (!table.isEnabled()) model.removeRow(0);
+            model.addRow(new Object[]
+                    {backupRouteId,
+                            getSequenceLinkResourceIndexes(backupRoute),
+                            getSequenceNodeIndexesWithResourceInfo(backupRoute),
+                            getSequenceOccupiedCapacities(backupRoute), "Remove", "View"});
+            table.setEnabled(true);
         });
 
         JButton viewSegment_btn1 = new JButton("View");
-        viewSegment_btn1.addActionListener(new ActionListener()
+        viewSegment_btn1.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                Object selectedItem = backupRouteSelector.getSelectedItem();
-                long backupRouteId = (Long) ((StringLabeller) selectedItem).getObject();
-                List<NetworkElement> backupRoutePath = netPlan.getRouteFromId(backupRouteId).getPath();
-                callback.putTransientColorInElementTopologyCanvas(seqLinksAndResources, Color.ORANGE);
-                callback.putTransientColorInElementTopologyCanvas(backupRoutePath, Color.ORANGE);
-            }
+            Object selectedItem = backupRouteSelector.getSelectedItem();
+            long backupRouteId = (Long) ((StringLabeller) selectedItem).getObject();
+            List<NetworkElement> backupRoutePath = netPlan.getRouteFromId(backupRouteId).getPath();
+            callback.putTransientColorInElementTopologyCanvas(seqLinksAndResources, Color.ORANGE);
+            callback.putTransientColorInElementTopologyCanvas(backupRoutePath, Color.ORANGE);
         });
 
         addSegment_pnl.add(backupRouteSelector, "growx, wmin 50");
@@ -1078,7 +1017,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                     final Route backupRoute = netPlan.getRouteFromId(backupRouteId);
                     callback.putTransientColorInElementTopologyCanvas(seqLinksAndResources, Color.ORANGE);
                     callback.putTransientColorInElementTopologyCanvas(backupRoute.getPath(), Color.ORANGE);
-                } catch (Throwable e1)
+                } catch (Throwable ignored)
                 {
                 }
             }
@@ -1147,9 +1086,11 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         callback.resetPickedStateAndUpdateView();
     }
 
-    private List<JComponent> getForcedOptions()
+    @Nonnull
+    @Override
+    protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
-        return new LinkedList<JComponent>();
+        return new LinkedList<>();
     }
 
     private static String getSequenceLinkResourceIndexes(Route r)

@@ -16,13 +16,14 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
+import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.JScrollPopupMenu;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -36,6 +37,7 @@ import com.net2plan.utils.StringUtils;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.collections15.BidiMap;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.awt.event.ActionEvent;
@@ -56,8 +58,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     public static final int COLUMN_STATE = 4;
     public static final int COLUMN_XCOORD = 5;
     public static final int COLUMN_YCOORD = 6;
-    public static final int COLUMN_NUMOUTLINKS = 7;
-    public static final int COLUMN_NUMINLINKS = 8;
+    public static final int COLUMN_OUTLINKS = 7;
+    public static final int COLUMN_INLINKS = 8;
     public static final int COLUMN_INGRESSTRAFFIC = 9;
     public static final int COLUMN_EGRESSTRAFFIC = 10;
     public static final int COLUMN_INGRESSMULTICASTTRAFFIC = 11;
@@ -70,14 +72,13 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     public static final int COLUMN_ATTRIBUTES = 18;
     private static final String netPlanViewTabName = "Nodes";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Show/Hide", "Name",
-            "State", "xCoord / Longitude", "yCoord / Latitude", "#Out links", "#In links",
+            "State", "xCoord / Longitude", "yCoord / Latitude", "Outgoing links", "Incoming links",
             "Ingress traffic", "Egress traffic", "Incoming traffic", "Outgoing traffic", "Ingress traffic (multicast)", "Egress traffic (multicast)", "SRGs", "Population", "Tags", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)",
             "Index (consecutive integer starting in zero)",
             "Indicates whether or not the node is visible in the topology canvas",
-            "Node name", "Indicates whether the node is in up/down state", 
-            "Coordinate along x-axis (i.e. longitude)",
-            "Coordinate along y-axis (i.e. latitude)", "Number of outgoing links", "Number of incoming links",
+            "Node name", "Indicates whether the node is in up/down state", "Coordinate along x-axis (i.e. longitude)",
+            "Coordinate along y-axis (i.e. latitude)", "Outgoing links", "Incoming links",
             "Total UNICAST traffic entering to the network from this node (offered / carried)",
             "Total UNICAST traffic of demands ending in this node (offered / carried)",
             "Total MULTICAST traffic entering to the network from this node",
@@ -86,7 +87,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             "Total traffic (unicast and multicast) in the node output links",
             "SRGs including this node", "Total population in this node", "Node-specific tags", "Node-specific attributes");
     private boolean updateVisualization = true;
-    
+
     /**
      * Default constructor.
      *
@@ -130,14 +131,14 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             nodeData[COLUMN_STATE] = node.isUp();
             nodeData[COLUMN_XCOORD] = node.getXYPositionMap().getX();
             nodeData[COLUMN_YCOORD] = node.getXYPositionMap().getY();
-            nodeData[COLUMN_NUMOUTLINKS] = "" + outgoingLinks.size ();
-            nodeData[COLUMN_NUMINLINKS] = "" + incomingLinks.size ();
+            nodeData[COLUMN_OUTLINKS] = outgoingLinks.isEmpty() ? "none" : outgoingLinks.size() + " (" + CollectionUtils.join(outgoingLinks, ", ") + ")";
+            nodeData[COLUMN_INLINKS] = incomingLinks.isEmpty() ? "none" : incomingLinks.size() + " (" + CollectionUtils.join(incomingLinks, ", ") + ")";
             nodeData[COLUMN_INGRESSTRAFFIC] = node.getIngressOfferedTraffic() + "(" + node.getIngressCarriedTraffic() + ")";
             nodeData[COLUMN_EGRESSTRAFFIC] = node.getEgressOfferedTraffic() + "(" + node.getEgressCarriedTraffic() + ")";
             nodeData[COLUMN_INCOMINGLINKTRAFFIC] = node.getIncomingLinksTraffic();
             nodeData[COLUMN_OUTGOINGLINKTRAFFIC] = node.getOutgoingLinksTraffic();
-            nodeData[COLUMN_INGRESSMULTICASTTRAFFIC] = node.getIngressOfferedMulticastTraffic() + "(" + node.getIngressCarriedMulticastTraffic() + ")";
-            nodeData[COLUMN_EGRESSMULTICASTTRAFFIC] = node.getEgressOfferedMulticastTraffic() + "(" + node.getEgressCarriedMulticastTraffic() + ")";
+            nodeData[COLUMN_INGRESSMULTICASTTRAFFIC] = node.getIngressOfferedMulticastTraffic() + "(" + node.getIngressOfferedMulticastTraffic() + ")";
+            nodeData[COLUMN_EGRESSMULTICASTTRAFFIC] = node.getEgressOfferedMulticastTraffic() + "(" + node.getEgressOfferedMulticastTraffic() + ")";
             nodeData[COLUMN_SRGS] = node.getSRGs().isEmpty() ? "none" : node.getSRGs().size() + " (" + CollectionUtils.join(currentState.getIndexes(node.getSRGs()), ", ") + ")";
             nodeData[COLUMN_POPULATION] = node.getPopulation();
             nodeData[COLUMN_TAGS] = StringUtils.listToString(Lists.newArrayList(node.getTags()));
@@ -215,6 +216,16 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
         return rf == null ? callback.getDesign().hasNodes() : rf.hasNodes(layer);
     }
+    public int getNumberOfElements (boolean consideringFilters)
+    {
+        final NetPlan np = callback.getDesign();
+        final NetworkLayer layer = np.getNetworkLayerDefault();
+    	if (!consideringFilters) return np.getNumberOfNodes();
+    	
+        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
+        return rf.getNumberOfNodes(layer);
+    }
+
 
     @Override
     public int getAttributesColumnIndex()
@@ -385,7 +396,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     public void setColumnRowSortingFixedAndNonFixedTable()
     {
         setAutoCreateRowSorter(true);
-        final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_NUMOUTLINKS, COLUMN_NUMINLINKS, COLUMN_INGRESSTRAFFIC, COLUMN_EGRESSTRAFFIC, COLUMN_INGRESSMULTICASTTRAFFIC, COLUMN_EGRESSMULTICASTTRAFFIC);
+        final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_OUTLINKS, COLUMN_INLINKS, COLUMN_INGRESSTRAFFIC, COLUMN_EGRESSTRAFFIC, COLUMN_INGRESSMULTICASTTRAFFIC, COLUMN_EGRESSMULTICASTTRAFFIC);
         DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
         for (int col = 0; col <= COLUMN_ATTRIBUTES; col++)
             rowSorter.setComparator(col, new AdvancedJTable_networkElement.ColumnComparator(rowSorter, columnsWithDoubleAndThenParenthesis.contains(col)));
@@ -403,162 +414,51 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
 
     @Override
-    public void doPopup(final MouseEvent e, final int row, final Object itemId)
+    protected void doPopup(final MouseEvent e, ElementSelection selection)
     {
-        JPopupMenu popup = new JPopupMenu();
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        final List<Node> rowsInTheTable = getVisibleElementsInTable();
+        assert selection != null;
+
+        final JScrollPopupMenu popup = new JScrollPopupMenu(20);
+
+        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        {
+            if (selection.getElementType() != NetworkElementType.NODE)
+                throw new RuntimeException("Unmatched selected items with table, selected items are of type: " + selection.getElementType());
+        }
+
+        final List<Node> rowsInTheTable = this.getVisibleElementsInTable(); // Only visible rows
+        final List<Node> selectedNodes = (List<Node>) selection.getNetworkElements();
 
         /* Add the popup menu option of the filters */
-        final List<Node> selectedNodes = (List<Node>) (List<?>) getSelectedElements().getFirst();
-        final JMenu submenuFilters = new JMenu("Filters");
-        if (!selectedNodes.isEmpty())
-        {
-            final JMenuItem filterKeepElementsAffectedThisLayer = new JMenuItem("This layer: Keep elements associated to this node traffic");
-            final JMenuItem filterKeepElementsAffectedAllLayers = new JMenuItem("All layers: Keep elements associated to this node traffic");
-            submenuFilters.add(filterKeepElementsAffectedThisLayer);
-            if (callback.getDesign().getNumberOfLayers() > 1) submenuFilters.add(filterKeepElementsAffectedAllLayers);
-            filterKeepElementsAffectedThisLayer.addActionListener(e1 ->
-            {
-                if (selectedNodes.size() > 1) throw new RuntimeException();
-                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedNodes.get(0), callback.getDesign().getNetworkLayerDefault(), true);
-                callback.getVisualizationState().updateTableRowFilter(filter);
-                callback.updateVisualizationJustTables();
-            });
-            filterKeepElementsAffectedAllLayers.addActionListener(e2 ->
-            {
-                if (selectedNodes.size() > 1) throw new RuntimeException();
-                TBFToFromCarriedTraffic filter = new TBFToFromCarriedTraffic(selectedNodes.get(0), callback.getDesign().getNetworkLayerDefault(), false);
-                callback.getVisualizationState().updateTableRowFilter(filter);
-                callback.updateVisualizationJustTables();
-            });
-        }
-        final JMenuItem tagFilter = new JMenuItem("This layer: Keep elements of tag...");
-        submenuFilters.add(tagFilter);
-        tagFilter.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e) { dialogToFilterByTag (true); } });
-        final JMenuItem tagFilterAllLayers = new JMenuItem("All layers: Keep elements of tag...");
-        submenuFilters.add(tagFilterAllLayers);
-        tagFilterAllLayers.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e) { dialogToFilterByTag (false); } });
-
-        popup.add(submenuFilters);
-        popup.addSeparator();
-        
-        if (callback.getVisualizationState().isNetPlanEditable())
-        {
-            popup.add(getAddOption());
-            for (JComponent item : getExtraAddOptions())
-                popup.add(item);
-        }
-
         if (!rowsInTheTable.isEmpty())
         {
-            if (callback.getVisualizationState().isNetPlanEditable())
+            addFilterOptions(e, selection, popup);
+            popup.addSeparator();
+        }
+
+        // Popup buttons
+        if (callback.getVisualizationState().isNetPlanEditable())
+        {
+            popup.add(this.getAddOption());
+
+            if (!rowsInTheTable.isEmpty())
             {
-                if (row != -1)
+                if (!selectedNodes.isEmpty())
                 {
-                    if (popup.getSubElements().length > 0) popup.addSeparator();
-
-                    JMenuItem removeItem = new JMenuItem("Remove " + networkElementType);
-                    removeItem.addActionListener(new ActionListener()
-                    {
-                        @Override
-                        public void actionPerformed(ActionEvent e)
-                        {
-                            try
-                            {
-                                callback.getDesign().getNodeFromId((long) itemId).remove();
-                                callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                                callback.addNetPlanChange();
-                            } catch (Throwable ex)
-                            {
-                                ErrorHandling.addErrorOrException(ex, getClass());
-                                ErrorHandling.showErrorDialog("Unable to remove " + networkElementType);
-                            }
-                        }
-                    });
-
-                    popup.add(removeItem);
+                    popup.add(new MenuItem_RemoveNodes(callback, selectedNodes));
+                    popup.addSeparator();
                 }
-                JMenuItem removeItems = new JMenuItem("Remove all " + networkElementType + "s in the table");
-                removeItems.addActionListener(new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        NetPlan netPlan = callback.getDesign();
 
-                        try
-                        {
-                            if (rf == null)
-                                netPlan.removeAllNodes();
-                            else
-                                for (Node n : rowsInTheTable) n.remove();
-                            callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                            callback.addNetPlanChange();
-                        } catch (Throwable ex)
-                        {
-                            ex.printStackTrace();
-                            ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to remove all " + networkElementType + "s");
-                        }
-                    }
-                });
-                popup.add(removeItems);
+                for (JComponent item : getExtraAddOptions()) popup.add(item);
 
-                JMenuItem removeAllNodesFilteredOut = new JMenuItem("Remove all nodes filtered out");
-                removeAllNodesFilteredOut.addActionListener(new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        NetPlan netPlan = callback.getDesign();
-                        try
-                        {
-                            for (Node n : new ArrayList<> (netPlan.getNodes())) if (!rowsInTheTable.contains(n)) n.remove();
-                            callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                            callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                            callback.addNetPlanChange();
-                        } catch (Throwable ex)
-                        {
-                            ex.printStackTrace();
-                            ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to complete this action");
-                        }
-                    }
-                });
-                popup.add(removeAllNodesFilteredOut);
-
-                JMenuItem hideAllNodesFilteredOut = new JMenuItem("Hide all nodes filtered out");
-                hideAllNodesFilteredOut.addActionListener(new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                    	Set<Node> rowsInTheTableSet = new HashSet<Node> (rowsInTheTable);
-                        for (Node n : callback.getDesign().getNodes()) 
-                        	if (!rowsInTheTableSet.contains(n)) 
-                        		callback.getVisualizationState().hideOnCanvas(n);
-                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                        callback.addNetPlanChange();
-                    }
-                });
-                popup.add(hideAllNodesFilteredOut);
-
-                addPopupMenuAttributeOptions(e, row, itemId, popup);
-
-                List<JComponent> extraOptions = getExtraOptions(row, itemId);
-                if (!extraOptions.isEmpty())
-                {
-                    if (popup.getSubElements().length > 0) popup.addSeparator();
-                    for (JComponent item : extraOptions) popup.add(item);
-                }
-            }
-
-            List<JComponent> forcedOptions = getForcedOptions();
-            if (!forcedOptions.isEmpty())
-            {
-                if (popup.getSubElements().length > 0) popup.addSeparator();
+                List<JComponent> forcedOptions = getForcedOptions(selection);
                 for (JComponent item : forcedOptions) popup.add(item);
+
+                List<JComponent> extraOptions = getExtraOptions(selection);
+                if (!extraOptions.isEmpty()) popup.addSeparator();
+                for (JComponent item : extraOptions) popup.add(item);
+
+                addPopupMenuAttributeOptions(e, selection, popup);
             }
         }
 
@@ -566,383 +466,67 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, Object itemId)
+    protected void showInCanvas(MouseEvent e, ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
-        callback.getVisualizationState().pickNode(callback.getDesign().getNodeFromId((long) itemId));
+        if (selection.getElementType() != NetworkElementType.NODE)
+            throw new RuntimeException("Unmatched selected items with table, selected items are of type: " + selection.getElementType());
+
+        callback.getVisualizationState().pickNode((List<Node>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
-    private JMenuItem getAddOption()
+    @Nonnull
+    @Override
+    protected JMenuItem getAddOption()
     {
-        JMenuItem addItem = new JMenuItem("Add " + networkElementType);
-        addItem.addActionListener(e ->
-        {
-            NetPlan netPlan = callback.getDesign();
-
-            String nodeName = "Node " + netPlan.getNumberOfNodes();
-
-            try
-            {
-                Node node = netPlan.addNode(0, 0, nodeName, null);
-                callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                callback.getVisualizationState().pickNode(node);
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                callback.addNetPlanChange();
-
-                if (networkElementType == NetworkElementType.NODE)
-                    callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-            } catch (Throwable ex)
-            {
-                ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add " + networkElementType);
-
-                final Node node = netPlan.getNodeByName(nodeName);
-                if (node != null) node.remove();
-            }
-        });
-        return addItem;
+        return new MenuItem_AddNode(callback);
     }
 
-    private List<JComponent> getExtraAddOptions()
+    @Nonnull
+    @Override
+    protected List<JComponent> getExtraAddOptions()
     {
-        return new LinkedList<JComponent>();
+        return new LinkedList<>();
     }
 
-    private List<JComponent> getExtraOptions(final int row, final Object itemId)
+    @Nonnull
+    @Override
+    protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
-        List<JComponent> options = new LinkedList<JComponent>();
-        final int numRows = model.getRowCount();
-        final List<Node> tableVisibleNodes = getVisibleElementsInTable();
+        assert selection != null;
 
-        if (itemId != null)
+        final List<Node> selectedNodes = (List<Node>) selection.getNetworkElements();
+
+        final List<JComponent> options = new LinkedList<>();
+
+        if (!selectedNodes.isEmpty())
         {
-            JMenuItem switchCoordinates_thisNode = new JMenuItem("Switch node coordinates from (x,y) to (y,x)");
-
-            switchCoordinates_thisNode.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    NetPlan netPlan = callback.getDesign();
-                    Node node = netPlan.getNodeFromId((long) itemId);
-                    Point2D currentPosition = node.getXYPositionMap();
-                    node.setXYPositionMap(new Point2D.Double(currentPosition.getY(), currentPosition.getX()));
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                    callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-                    callback.addNetPlanChange();
-                }
-            });
-
-            options.add(switchCoordinates_thisNode);
-
-            JMenuItem xyPositionFromAttributes_thisNode = new JMenuItem("Set node coordinates from attributes");
-
-            xyPositionFromAttributes_thisNode.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    NetPlan netPlan = callback.getDesign();
-
-                    Set<String> attributeSet = new LinkedHashSet<String>();
-                    Node node = netPlan.getNodeFromId((long) itemId);
-                    attributeSet.addAll(node.getAttributes().keySet());
-
-                    try
-                    {
-                        if (attributeSet.isEmpty()) throw new Exception("No attribute to select");
-
-                        final JComboBox latSelector = new WiderJComboBox();
-                        final JComboBox lonSelector = new WiderJComboBox();
-                        for (String attribute : attributeSet)
-                        {
-                            latSelector.addItem(attribute);
-                            lonSelector.addItem(attribute);
-                        }
-
-                        JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[][]"));
-                        pane.add(new JLabel("X-coordinate / Longitude: "));
-                        pane.add(lonSelector, "growx, wrap");
-                        pane.add(new JLabel("Y-coordinate / Latitude: "));
-                        pane.add(latSelector, "growx, wrap");
-
-                        while (true)
-                        {
-                            int result = JOptionPane.showConfirmDialog(null, pane, "Please select the attributes for coordinates", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                            if (result != JOptionPane.OK_OPTION) return;
-
-                            try
-                            {
-                                String latAttribute = latSelector.getSelectedItem().toString();
-                                String lonAttribute = lonSelector.getSelectedItem().toString();
-
-                                node.setXYPositionMap(new Point2D.Double(Double.parseDouble(node.getAttribute(lonAttribute)), Double.parseDouble(node.getAttribute(latAttribute))));
-                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                                callback.addNetPlanChange();
-                                break;
-                            } catch (Throwable ex)
-                            {
-                                ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving coordinates from attributes");
-                                break;
-                            }
-                        }
-                        callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving coordinates from attributes");
-                    }
-                }
-            });
-
-            options.add(xyPositionFromAttributes_thisNode);
-
-            JMenuItem nameFromAttribute_thisNode = new JMenuItem("Set node name from attribute");
-            nameFromAttribute_thisNode.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    NetPlan netPlan = callback.getDesign();
-
-                    Set<String> attributeSet = new LinkedHashSet<String>();
-                    long nodeId = (long) itemId;
-                    attributeSet.addAll(netPlan.getNodeFromId(nodeId).getAttributes().keySet());
-
-                    try
-                    {
-                        if (attributeSet.isEmpty()) throw new Exception("No attribute to select");
-
-                        final JComboBox selector = new WiderJComboBox();
-                        for (String attribute : attributeSet)
-                            selector.addItem(attribute);
-
-                        JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[]"));
-                        pane.add(new JLabel("Name: "));
-                        pane.add(selector, "growx, wrap");
-
-                        while (true)
-                        {
-                            int result = JOptionPane.showConfirmDialog(null, pane, "Please select the attribute for name", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                            if (result != JOptionPane.OK_OPTION) return;
-
-                            try
-                            {
-                                String name = selector.getSelectedItem().toString();
-                                netPlan.getNodeFromId(nodeId).setName(netPlan.getNodeFromId(nodeId).getAttribute(name));
-                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                                callback.addNetPlanChange();
-
-                                break;
-                            } catch (Throwable ex)
-                            {
-                                ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving name from attribute");
-                                break;
-                            }
-                        }
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving name from attribute");
-                    }
-                }
-            });
-
-            options.add(nameFromAttribute_thisNode);
+            options.add(new MenuItem_SwitchCoordinates(callback, selectedNodes));
+            options.add(new MenuItem_NameFromAttribute(callback, selectedNodes));
         }
-
-        if (numRows > 1)
-        {
-            if (!options.isEmpty()) options.add(new JPopupMenu.Separator());
-
-            JMenuItem switchCoordinates_allNodes = new JMenuItem("Switch all table node coordinates from (x,y) to (y,x)");
-
-            switchCoordinates_allNodes.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    for (Node n : tableVisibleNodes)
-                    {
-                        Point2D currentPosition = n.getXYPositionMap();
-                        double newX = currentPosition.getY();
-                        double newY = currentPosition.getX();
-                        Point2D newPosition = new Point2D.Double(newX, newY);
-                        n.setXYPositionMap(newPosition);
-                    }
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                    callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-                    callback.addNetPlanChange();
-                }
-            });
-
-            options.add(switchCoordinates_allNodes);
-
-            JMenuItem xyPositionFromAttributes_allNodes = new JMenuItem("Set all table node coordinates from attributes");
-
-            xyPositionFromAttributes_allNodes.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    Set<String> attributeSet = new LinkedHashSet<String>();
-                    for (Node node : tableVisibleNodes)
-                        attributeSet.addAll(node.getAttributes().keySet());
-
-                    try
-                    {
-                        if (attributeSet.isEmpty()) throw new Exception("No attribute to select");
-
-                        final JComboBox latSelector = new WiderJComboBox();
-                        final JComboBox lonSelector = new WiderJComboBox();
-                        for (String attribute : attributeSet)
-                        {
-                            latSelector.addItem(attribute);
-                            lonSelector.addItem(attribute);
-                        }
-
-                        JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[][]"));
-                        pane.add(new JLabel("X-coordinate / Longitude: "));
-                        pane.add(lonSelector, "growx, wrap");
-                        pane.add(new JLabel("Y-coordinate / Latitude: "));
-                        pane.add(latSelector, "growx, wrap");
-
-                        while (true)
-                        {
-                            int result = JOptionPane.showConfirmDialog(null, pane, "Please select the attributes for coordinates", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                            if (result != JOptionPane.OK_OPTION) return;
-
-                            try
-                            {
-                                String latAttribute = latSelector.getSelectedItem().toString();
-                                String lonAttribute = lonSelector.getSelectedItem().toString();
-
-                                for (Node node : tableVisibleNodes)
-                                    node.setXYPositionMap(new Point2D.Double(Double.parseDouble(node.getAttribute(lonAttribute)), Double.parseDouble(node.getAttribute(latAttribute))));
-                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                                callback.addNetPlanChange();
-                                break;
-                            } catch (Throwable ex)
-                            {
-                                ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving coordinates from attributes");
-                                break;
-                            }
-                        }
-                        callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving coordinates from attributes");
-                    }
-                }
-            });
-
-            options.add(xyPositionFromAttributes_allNodes);
-
-            JMenuItem nameFromAttribute_allNodes = new JMenuItem("Set all table node names from attribute");
-            nameFromAttribute_allNodes.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-
-                    Set<String> attributeSet = new LinkedHashSet<String>();
-                    for (Node node : tableVisibleNodes)
-                        attributeSet.addAll(node.getAttributes().keySet());
-
-                    try
-                    {
-                        if (attributeSet.isEmpty()) throw new Exception("No attribute to select");
-
-                        final JComboBox selector = new WiderJComboBox();
-                        for (String attribute : attributeSet)
-                            selector.addItem(attribute);
-
-                        JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[]"));
-                        pane.add(new JLabel("Name: "));
-                        pane.add(selector, "growx, wrap");
-
-                        while (true)
-                        {
-                            int result = JOptionPane.showConfirmDialog(null, pane, "Please select the attribute for name", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                            if (result != JOptionPane.OK_OPTION) return;
-
-                            try
-                            {
-                                String name = selector.getSelectedItem().toString();
-
-                                for (Node node : tableVisibleNodes)
-                                    node.setName(node.getAttribute(name) != null ? node.getAttribute(name) : "");
-                                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                                callback.addNetPlanChange();
-                                break;
-                            } catch (Throwable ex)
-                            {
-                                ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving name from attribute");
-                                break;
-                            }
-                        }
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving name from attribute");
-                    }
-                }
-            });
-
-            options.add(nameFromAttribute_allNodes);
-        }
-
 
         return options;
     }
 
-    private List<JComponent> getForcedOptions()
+    @Nonnull
+    @Override
+    protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
-        List<JComponent> options = new LinkedList<JComponent>();
+        assert selection != null;
+
+        List<JComponent> options = new LinkedList<>();
 
         final int numRows = model.getRowCount();
         if (numRows > 1)
         {
-            JMenuItem showAllNodes = new JMenuItem("Show all nodes");
-            showAllNodes.addActionListener(new ActionListener()
+            if (!selection.isEmpty())
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    final int numRows = model.getRowCount();
-                    for (int row = 0; row < numRows; row++)
-                        if (model.getValueAt(row, COLUMN_SHOWHIDE) != null)
-                        {
-                        	if (model.getValueAt(row, 0) instanceof LastRowAggregatedValue) continue;
-                            final long nodeId = (Long) model.getValueAt(row, 0);
-                            final Node node = callback.getDesign().getNodeFromId(nodeId);
-                            callback.getVisualizationState().showOnCanvas(node);
-                        }
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                    callback.addNetPlanChange();
-                }
-            });
+                final List<Node> nodes = (List<Node>) selection.getNetworkElements();
 
-            options.add(showAllNodes);
-
-            JMenuItem hideAllNodes = new JMenuItem("Hide all nodes");
-            hideAllNodes.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    final int numRows = model.getRowCount();
-                    for (int row = 0; row < numRows; row++)
-                        if (model.getValueAt(row, COLUMN_SHOWHIDE) != null)
-                        {
-                        	if (model.getValueAt(row, 0) instanceof LastRowAggregatedValue) continue;
-                            final long nodeId = (Long) model.getValueAt(row, 0);
-                            final Node node = callback.getDesign().getNodeFromId(nodeId);
-                            callback.getVisualizationState().hideOnCanvas(node);
-                        }
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                    callback.addNetPlanChange();
-                }
-            });
-
-            options.add(hideAllNodes);
+                options.add(new MenuItem_ShowSelection(callback, nodes));
+                options.add(new MenuItem_HideSelection(callback, nodes));
+            }
         }
 
         return options;
@@ -953,5 +537,162 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
         return rf == null ? callback.getDesign().getNodes() : rf.getVisibleNodes(layer);
+    }
+
+    static class MenuItem_ShowSelection extends JMenuItem
+    {
+        MenuItem_ShowSelection(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        {
+            this.setText("Show selected nodes");
+
+            this.addActionListener(e ->
+            {
+                for (Node node : nodes)
+                {
+                    callback.getVisualizationState().showOnCanvas(node);
+                }
+
+                callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.NODE));
+                callback.addNetPlanChange();
+            });
+        }
+    }
+
+    static class MenuItem_HideSelection extends JMenuItem
+    {
+        MenuItem_HideSelection(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        {
+            this.setText("Hide selected nodes");
+            this.addActionListener(e ->
+            {
+                for (Node node : nodes)
+                    callback.getVisualizationState().hideOnCanvas(node);
+
+                callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.NODE));
+                callback.addNetPlanChange();
+            });
+        }
+    }
+
+    static class MenuItem_SwitchCoordinates extends JMenuItem
+    {
+        MenuItem_SwitchCoordinates(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        {
+            this.setText("Switch selected nodes' coordinates from (x,y) to (y,x)");
+            this.addActionListener(e ->
+            {
+                for (Node node : nodes)
+                {
+                    Point2D currentPosition = node.getXYPositionMap();
+                    node.setXYPositionMap(new Point2D.Double(currentPosition.getY(), currentPosition.getX()));
+                }
+
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
+                callback.addNetPlanChange();
+            });
+        }
+    }
+
+    static class MenuItem_NameFromAttribute extends JMenuItem
+    {
+        MenuItem_NameFromAttribute(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        {
+            this.setText("Set selected nodes' name from attribute");
+            this.addActionListener(e ->
+            {
+                Set<String> attributeSet = new LinkedHashSet<String>();
+                for (Node selectedNode : nodes)
+                    attributeSet.addAll(selectedNode.getAttributes().keySet());
+
+                try
+                {
+                    if (attributeSet.isEmpty()) throw new Exception("No attribute to select");
+
+                    final JComboBox selector = new WiderJComboBox();
+                    for (String attribute : attributeSet)
+                        selector.addItem(attribute);
+
+                    JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[]"));
+                    pane.add(new JLabel("Name: "));
+                    pane.add(selector, "growx, wrap");
+
+                    int result = JOptionPane.showConfirmDialog(null, pane, "Please select the attribute for name", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    if (result != JOptionPane.OK_OPTION) return;
+
+                    String name = selector.getSelectedItem().toString();
+
+                    for (Node node : nodes)
+                        node.setName(node.getAttribute(name));
+
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                    callback.addNetPlanChange();
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error retrieving name from attribute");
+                }
+            });
+        }
+    }
+
+    static class MenuItem_RemoveNodes extends JMenuItem
+    {
+        MenuItem_RemoveNodes(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        {
+            this.setText("Remove selected nodes");
+            this.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    try
+                    {
+                        for (Node selectedNode : nodes) selectedNode.remove();
+                        callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                        callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                        callback.addNetPlanChange();
+                    } catch (Throwable ex)
+                    {
+                        ErrorHandling.addErrorOrException(ex, getClass());
+                        ErrorHandling.showErrorDialog("Unable to remove nodes");
+                    }
+                }
+            });
+        }
+    }
+
+    static class MenuItem_AddNode extends JMenuItem
+    {
+        MenuItem_AddNode(@Nonnull GUINetworkDesign callback)
+        {
+            this.setText("Add node");
+            this.addActionListener(e ->
+            {
+                NetPlan netPlan = callback.getDesign();
+
+                int index = netPlan.getNumberOfNodes();
+                String nodeName = "Node " + index;
+
+                // Check for name validity
+                while (netPlan.getNodeByName(nodeName) != null)
+                    nodeName = "Node " + (index++);
+
+                try
+                {
+                    Node node = netPlan.addNode(0, 0, nodeName, null);
+                    callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                    callback.getVisualizationState().pickNode(node);
+                    callback.addNetPlanChange();
+                    callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
+                } catch (Throwable ex)
+                {
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add node");
+
+                    final Node node = netPlan.getNodeByName(nodeName);
+                    if (node != null) node.remove();
+                }
+            });
+        }
     }
 }
