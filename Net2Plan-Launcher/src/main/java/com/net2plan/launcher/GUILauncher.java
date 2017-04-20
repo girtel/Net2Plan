@@ -70,7 +70,7 @@ public class GUILauncher
         HelpFormatter formatter = new HelpFormatter();
         try
         {
-            parser.parse(OPTIONS, args, false);
+            parser.parse(OPTIONS, args, true);
 
             if (LAUNCH_TYPE.getSelected() == null) LAUNCH_TYPE.setSelected(OPTIONS.getOption("v"));
 
