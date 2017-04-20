@@ -65,8 +65,8 @@ public class GUINet2Plan extends JFrame implements ActionListener {
     private Map<JMenuItem, Object> itemObject;
     private IGUIModule runningModule;
 
-    private static InputMap inputMap;
-    private static ActionMap actionMap;
+    private static InputMap inputMap = new InputMap();
+    private static ActionMap actionMap = new ActionMap();
 
     private final static WindowAdapter CLOSE_NET2PLAN;
     private final static String ABOUT_TEXT = "<html><p align='justify'>Welcome to "
@@ -98,6 +98,12 @@ public class GUINet2Plan extends JFrame implements ActionListener {
      */
     public static void addGlobalActions(InputMap iMap, ActionMap aMap)
     {
+        assert inputMap != null;
+        assert actionMap != null;
+
+        if (inputMap.allKeys() == null) return;
+        if (actionMap.allKeys() == null) return;
+
         for (KeyStroke keyStroke : inputMap.allKeys())
         {
             final Object o = inputMap.get(keyStroke);
@@ -384,9 +390,6 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         setMinimumSize(new Dimension(800, 600));
 
         itemObject = new HashMap<>();
-
-        inputMap = new InputMap();
-        actionMap = new ActionMap();
 
         URL iconURL = GUINet2Plan.class.getResource("/resources/gui/icon.png");
         ImageIcon icon = new ImageIcon(iconURL);

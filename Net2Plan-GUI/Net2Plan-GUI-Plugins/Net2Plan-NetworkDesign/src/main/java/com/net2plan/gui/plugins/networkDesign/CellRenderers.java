@@ -149,7 +149,9 @@ public class CellRenderers
                     {
                         itemId = Pair.of(Integer.parseInt(table.getModel().getValueAt(row, 1).toString().split(" ")[0]), Integer.parseInt(table.getModel().getValueAt(row, 2).toString().split(" ")[0]));
                     } else
-                        itemId = (Long) table.getModel().getValueAt(row, 0);
+                    {
+                        itemId = table.getModel().getValueAt(row, 0);
+                    }
 
                     setCurrentState(c, table, itemId, row, column, isSelected);
                 }

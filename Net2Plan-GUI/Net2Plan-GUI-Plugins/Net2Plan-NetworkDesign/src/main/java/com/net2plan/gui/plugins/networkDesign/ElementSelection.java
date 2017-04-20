@@ -81,7 +81,7 @@ public class ElementSelection
 
     public boolean isEmpty()
     {
-        return selectionType == SelectionType.EMPTY || (networkElementList.isEmpty() && forwardingRuleList.isEmpty());
+        return selectionType == SelectionType.EMPTY || (networkElementList.isEmpty() && forwardingRuleList.isEmpty()) || elementType == null;
     }
 
     public List<? extends NetworkElement> getNetworkElements()

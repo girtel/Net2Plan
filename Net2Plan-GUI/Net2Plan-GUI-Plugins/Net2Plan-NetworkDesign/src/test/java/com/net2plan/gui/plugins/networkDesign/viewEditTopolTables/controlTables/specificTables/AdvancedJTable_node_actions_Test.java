@@ -54,7 +54,8 @@ public class AdvancedJTable_node_actions_Test
         selection.add(node1);
         selection.add(node2);
 
-        networkDesign.setCurrentNetPlanDoNotUpdateVisualization(netPlan);
+        networkDesign.setDesign(netPlan);
+        networkDesign.getVisualizationState().setCanvasLayerVisibilityAndOrder(netPlan, null, null);
         networkDesign.updateVisualizationAfterNewTopology();
     }
 

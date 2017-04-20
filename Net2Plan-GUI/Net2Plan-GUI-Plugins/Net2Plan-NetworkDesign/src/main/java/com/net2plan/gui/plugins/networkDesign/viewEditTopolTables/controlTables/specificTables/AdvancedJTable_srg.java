@@ -40,7 +40,6 @@ import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -315,7 +314,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void doPopup(final MouseEvent e, final ElementSelection selection)
+    public JPopupMenu getPopup(final ElementSelection selection)
     {
         assert selection != null;
 
@@ -333,7 +332,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
 
         if (!rowsInTheTable.isEmpty())
         {
-            addFilterOptions(e, selection, popup);
+            addFilterOptions(selection, popup);
             popup.addSeparator();
         }
 
@@ -392,15 +391,15 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
                     for (JComponent item : extraOptions) popup.add(item);
                 }
 
-                addPopupMenuAttributeOptions(e, selection, popup);
+                addPopupMenuAttributeOptions(selection, popup);
             }
         }
 
-        popup.show(e.getComponent(), e.getX(), e.getY());
+        return popup;
     }
 
     @Override
-    public void showInCanvas(MouseEvent e, ElementSelection selection)
+    public void showInCanvas(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.SRG)

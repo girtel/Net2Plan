@@ -38,7 +38,7 @@ public class AdvancedJTable_networkElement_actions_Test
         node1 = netPlan.addNode(0, 0, "Node 1", null);
         node2 = netPlan.addNode(0, 0, "Node 2", null);
 
-        networkDesign.setCurrentNetPlanDoNotUpdateVisualization(netPlan);
+        networkDesign.setDesign(netPlan);
         networkDesign.updateVisualizationAfterNewTopology();
 
         final TBFSelectionBased filter = new TBFSelectionBased(netPlan, new ElementSelection(NetworkElementType.NODE, Collections.singletonList(node1)));

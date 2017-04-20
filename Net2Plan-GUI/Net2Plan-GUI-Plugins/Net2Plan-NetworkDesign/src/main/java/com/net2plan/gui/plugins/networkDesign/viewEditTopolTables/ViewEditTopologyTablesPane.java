@@ -185,7 +185,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         menuBar = new JMenuBar();
 
-        exportMenu = new JMenu("Export...");
+        exportMenu = new JMenu("Export tables...");
         exportMenu.add(writeToExcel);
 
         menuBar.add(exportMenu);
@@ -331,12 +331,4 @@ public class ViewEditTopologyTablesPane extends JPanel
             }
         }
     }
-
-
-    public void clearSelection(NetworkElementType type)
-    {
-        AdvancedJTable_networkElement table = netPlanViewTable.get(type);
-        table.clearSelection();
-    }
-
 }
