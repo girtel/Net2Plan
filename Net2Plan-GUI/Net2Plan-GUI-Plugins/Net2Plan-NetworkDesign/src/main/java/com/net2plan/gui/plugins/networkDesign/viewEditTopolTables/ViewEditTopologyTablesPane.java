@@ -331,12 +331,4 @@ public class ViewEditTopologyTablesPane extends JPanel
             }
         }
     }
-
-
-    public void clearSelection(NetworkElementType type)
-    {
-        AdvancedJTable_networkElement table = netPlanViewTable.get(type);
-        table.clearSelection();
-    }
-
 }
