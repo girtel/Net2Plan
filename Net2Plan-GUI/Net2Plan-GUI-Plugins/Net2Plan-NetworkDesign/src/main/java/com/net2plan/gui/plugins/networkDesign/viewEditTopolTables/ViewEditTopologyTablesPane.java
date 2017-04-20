@@ -230,9 +230,9 @@ public class ViewEditTopologyTablesPane extends JPanel
             final JLabel label = netPlanViewTableNumEntriesLabel.get(entry.getKey());
             if (label != null)
             {
-                final int numEntries = table.getModel().getRowCount() - 1; // last colums is for the aggregation
+                final int numEntries = table.getModel().getRowCount() - 1; // last columns is for the aggregation
                 if (callback.getVisualizationState().getTableRowFilter() != null)
-                    label.setText("Number of entries: " + numEntries + ", FILTERED VIEW: " + callback.getVisualizationState().getTableRowFilter().getDescription());
+                    label.setText("Number of entries: " + numEntries + " / " + table.getNumberOfElements(false) + ", FILTERED VIEW: " + callback.getVisualizationState().getTableRowFilter().getDescription());
                 else
                     label.setText("Number of entries: " + numEntries);
             }
