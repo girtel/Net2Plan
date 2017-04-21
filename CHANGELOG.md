@@ -9,7 +9,7 @@ All notable changes to Net2Plan will be documented in this file.
     - Added a helper under the options window for looking for solvers under the PC.
     - New development tools.
 ### Changed
-    - Improve performance for large scale algorithms.
+    - Improved performance for large scale algorithms.
     - Tools now ask for confirmation when changing between them.
     - Tables' window can now run all keyboard shortcuts.
 ### Fixed
