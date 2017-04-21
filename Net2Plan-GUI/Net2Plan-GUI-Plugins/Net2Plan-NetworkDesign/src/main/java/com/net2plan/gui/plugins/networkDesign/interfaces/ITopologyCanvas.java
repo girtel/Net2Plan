@@ -102,9 +102,11 @@ public interface ITopologyCanvas extends Plugin
 
 	void removeNode(Node node);
 
+	void runSiteView(Node node);
+
 	void runOSMSupport();
 
-	void stopOSMSupport();
+	void runDefaultView();
 
 	boolean isOSMRunning();
 

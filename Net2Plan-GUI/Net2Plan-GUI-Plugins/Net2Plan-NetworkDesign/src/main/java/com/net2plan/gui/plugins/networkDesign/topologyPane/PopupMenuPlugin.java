@@ -87,7 +87,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
                 actions = getLinkActions(link, positionInNetPlanCoordinates);
             } else {
             	callback.resetPickedStateAndUpdateView();
-                actions = getCanvasActionsMouseInNoNodeNorLinkPoint(positionInNetPlanCoordinates);
+                actions = getCanvasActions(positionInNetPlanCoordinates);
             }
 
             if (actions == null || actions.isEmpty()) return;
@@ -145,6 +145,10 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
             actions.add(unidirectionalMenu);
             actions.add(bidirectionalMenu);
         }
+
+        actions.add(new JPopupMenu.Separator());
+        actions.add(new JMenuItem(new ActivateSiteViewAction("Activate site view", node)));
+
         return actions;
     }
 
@@ -210,7 +214,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
 
     }
 
-    public List<JComponent> getCanvasActionsMouseInNoNodeNorLinkPoint(Point2D positionInNetPlanCoordinates)
+    public List<JComponent> getCanvasActions(Point2D positionInNetPlanCoordinates)
     {
         final List<JComponent> actions = new LinkedList<>();
         final VisualizationState vs = callback.getVisualizationState();
@@ -278,6 +282,23 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         public void actionPerformed(ActionEvent e)
         {
             canvas.addNode(positionInNetPlanCoordinates);
+        }
+    }
+
+    private class ActivateSiteViewAction extends AbstractAction
+    {
+        private final Node node;
+
+        public ActivateSiteViewAction(String name, Node node)
+        {
+            super(name);
+            this.node = node;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent actionEvent)
+        {
+            canvas.runSiteView(node);
         }
     }
 

@@ -5,6 +5,7 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMController;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.internal.ErrorHandling;
 
 import java.awt.geom.Point2D;
 
@@ -25,7 +26,10 @@ public class JUNGStateController
 
     private final OSMController mapController;
 
-    public enum JUNGState { ViewState, OSMState, SiteState }
+    public enum JUNGState
+    {
+        ViewState, OSMState, SiteState
+    }
 
     public JUNGStateController(GUINetworkDesign callback, TopologyPanel topologyPanel, ITopologyCanvas canvas)
     {
@@ -41,29 +45,43 @@ public class JUNGStateController
 
         viewState = new ViewState(callback, canvas, mapController);
         osmState = new OSMState(callback, canvas, mapController);
-        siteState = new SiteState();
+        siteState = new SiteState(callback, canvas, mapController);
 
         currentState = viewState;
     }
 
-    public void setState(JUNGState state)
+    public void setState(JUNGState state, Object... stateParameters)
     {
         currentState.stop();
 
-        switch (state)
+        try
         {
-            case ViewState:
-                currentState = viewState;
-                break;
-            case OSMState:
-                currentState = osmState;
-                break;
-            case SiteState:
-                currentState = siteState;
-                break;
-        }
+            switch (state)
+            {
+                case ViewState:
+                    currentState = viewState;
+                    break;
+                case OSMState:
+                    currentState = osmState;
+                    break;
+                case SiteState:
+                    assert stateParameters.length == 1;
+                    assert stateParameters[0] instanceof Node;
 
-        currentState.start();
+                    final Node node = (Node) stateParameters[0];
+                    currentState = siteState;
+
+                    ((SiteState) currentState).zoomSite(node.getSiteName());
+                    break;
+            }
+
+            currentState.start();
+        } catch (RuntimeException e)
+        {
+            ErrorHandling.showErrorDialog("Error");
+            e.printStackTrace();
+            this.setState(JUNGState.ViewState);
+        }
     }
 
     public void panTo(final Point2D initialPoint, final Point2D currentPoint)

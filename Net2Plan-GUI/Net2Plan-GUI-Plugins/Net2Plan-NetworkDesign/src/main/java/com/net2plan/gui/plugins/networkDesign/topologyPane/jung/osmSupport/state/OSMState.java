@@ -23,7 +23,7 @@ import java.util.Collections;
  * @author Jorge San Emeterio
  * @date 01-Dec-16
  */
-final class OSMState implements IJUNGState
+class OSMState implements IJUNGState
 {
     private final GUINetworkDesign callback;
     private final ITopologyCanvas canvas;

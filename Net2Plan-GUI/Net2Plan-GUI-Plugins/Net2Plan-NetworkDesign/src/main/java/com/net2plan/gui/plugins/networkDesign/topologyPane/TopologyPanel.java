@@ -768,6 +768,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         if (doSwitch)
             canvas.runOSMSupport();
         else
-            canvas.stopOSMSupport();
+            canvas.runDefaultView();
     }
 }

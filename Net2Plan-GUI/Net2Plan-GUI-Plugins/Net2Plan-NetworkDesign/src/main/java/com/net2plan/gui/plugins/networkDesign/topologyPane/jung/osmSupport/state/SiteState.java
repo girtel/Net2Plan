@@ -1,84 +1,41 @@
 package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state;
 
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMController;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
+import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 
-import java.awt.geom.Point2D;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Jorge San Emeterio
  * @date 21/04/17
  */
-final class SiteState implements IJUNGState
+class SiteState extends ViewState
 {
-    @Override
-    public void start()
+    SiteState(GUINetworkDesign callback, ITopologyCanvas canvas, OSMController mapController)
     {
-
+        super(callback, canvas, mapController);
     }
 
-    @Override
-    public void stop()
+    public void zoomSite(String siteName)
     {
+        final VisualizationState visualizationState = callback.getVisualizationState();
+        final NetPlan netPlan = callback.getDesign();
 
-    }
+        // Finding site nodes
+        final Set<GUINode> visibleGUINodes = new HashSet<>();
+        for (Node n : netPlan.getNodes())
+        {
+            if (n.getSiteName() == null) continue;
+            if (n.getSiteName().equals(siteName))
+                visibleGUINodes.addAll(visualizationState.getCanvasVerticallyStackedGUINodes(n));
+        }
 
-    @Override
-    public void panTo(Point2D initialPoint, Point2D currentPoint)
-    {
-
-    }
-
-    @Override
-    public void zoomIn()
-    {
-
-    }
-
-    @Override
-    public void zoomOut()
-    {
-
-    }
-
-    @Override
-    public void zoomAll()
-    {
-
-    }
-
-    @Override
-    public void addNode(Point2D pos)
-    {
-
-    }
-
-    @Override
-    public void removeNode(Node node)
-    {
-
-    }
-
-    @Override
-    public void takeSnapshot()
-    {
-
-    }
-
-    @Override
-    public void updateNodesXYPosition()
-    {
-
-    }
-
-    @Override
-    public double getInterLayerDistance(int interLayerDistanceInPixels)
-    {
-        return 0;
-    }
-
-    @Override
-    public Point2D getCanvasPoint(Point2D pos)
-    {
-        return null;
+        zoomNodes(visibleGUINodes);
     }
 }

@@ -369,6 +369,15 @@ public final class JUNGCanvas implements ITopologyCanvas
         stateController.removeNode(node);
     }
 
+    /** STATE CONTROL **/
+
+    @Override
+    public void runSiteView(Node node)
+    {
+        assert node != null;
+        stateController.setState(JUNGState.SiteState, node);
+    }
+
     @Override
     public void runOSMSupport()
     {
@@ -376,7 +385,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public void stopOSMSupport()
+    public void runDefaultView()
     {
         stateController.setState(JUNGState.ViewState);
     }
@@ -386,6 +395,8 @@ public final class JUNGCanvas implements ITopologyCanvas
     {
         return stateController.isMapActivated();
     }
+
+    /** ------ **/
 
     @Override
     public void moveCanvasTo(Point2D destinationPoint)

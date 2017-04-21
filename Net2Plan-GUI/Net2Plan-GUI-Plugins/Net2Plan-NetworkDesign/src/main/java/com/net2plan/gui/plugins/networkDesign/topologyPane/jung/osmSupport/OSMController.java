@@ -59,7 +59,7 @@ public class OSMController
 
             if (!OSMMapUtils.isInsideBounds(x, y))
             {
-                canvas.stopOSMSupport();
+                canvas.runDefaultView();
 
                 final String message = "Node: " + node.getName() + " is out of the accepted bounds.\n" +
                         "All nodes must have their coordinates between the ranges: \n" +
