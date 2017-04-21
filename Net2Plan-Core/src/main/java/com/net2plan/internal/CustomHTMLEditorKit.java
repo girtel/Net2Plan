@@ -123,6 +123,30 @@ public class CustomHTMLEditorKit extends HTMLEditorKit
 		html = html.replaceAll("<body>", "<body>" + header);
 		return html;
 	}
+        
+        public static String includeStyle(String html)
+        {
+        
+                StringBuilder style = new StringBuilder();
+                style.append("<style>");
+                style.append("body {font-family: Tahoma, Verdana, Segoe, sans-serif;" 
+                        + " font-style: normal; font-variant: normal; padding: 5px 5px 5px 5px;}");    
+                style.append("p, ul, ol, table {font-size: 12px; font-weight: 300; line-height: 15px;}");    
+                style.append("h1, h2 {font-family:Arial, \"Helvetica Neue\", Helvetica, sans-serif;"
+                        + "font-style: normal; font-variant: normal; font-weight: 500; line-height: 22px;}");
+                style.append("h1 {font-size: 22px}");
+                style.append("h2 {color: #303030; font-size: 16px}");
+                style.append("ul {list-style-type: disk;}");
+                style.append("table, table*p {padding: 5px; width: 100%; font-size: 10px}");
+                style.append("table, tr, td, th {border: 0px;}");
+                style.append("th, td {border-bottom: 2px solid darkgray;}");
+                style.append("table, td {text-align: left;}");
+                style.append("th {background-color: darkgray; text-align: center; height: 20px; padding: 10px;}");
+                style.append("</style>");
+            
+                html = html.replaceAll("</head>", style.toString() + "</head>");
+                return html;
+        }
 	
 	/**
 	 * <p>Saves an HTML content to a given file.</p>
@@ -176,8 +200,8 @@ public class CustomHTMLEditorKit extends HTMLEditorKit
 		@Override
 		public void setText(String t)
 		{
-			Document doc = getDocument();
-			doc.putProperty("IgnoreCharsetDirective", true);
+			//Document doc = getDocument();
+			//doc.putProperty("IgnoreCharsetDirective", true);
 			t = t.replaceAll("^-(?=0(.0*)?$)", ""); /* Remove negative zeros */
 
 			super.setText(t);
