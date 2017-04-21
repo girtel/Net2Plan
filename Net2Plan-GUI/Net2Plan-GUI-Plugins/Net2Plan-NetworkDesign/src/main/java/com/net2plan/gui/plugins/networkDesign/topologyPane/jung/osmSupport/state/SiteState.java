@@ -11,6 +11,18 @@ import java.awt.geom.Point2D;
 final class SiteState implements IJUNGState
 {
     @Override
+    public void start()
+    {
+
+    }
+
+    @Override
+    public void stop()
+    {
+
+    }
+
+    @Override
     public void panTo(Point2D initialPoint, Point2D currentPoint)
     {
 

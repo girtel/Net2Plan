@@ -29,7 +29,7 @@ final class OSMState implements IJUNGState
     private final ITopologyCanvas canvas;
     private final OSMController mapController;
 
-    OSMState(final GUINetworkDesign callback, final ITopologyCanvas canvas, final OSMController mapController)
+    OSMState(GUINetworkDesign callback, ITopologyCanvas canvas, OSMController mapController)
     {
         this.callback = callback;
         this.canvas = canvas;
@@ -37,7 +37,18 @@ final class OSMState implements IJUNGState
     }
 
     @Override
-    public void panTo(final Point2D initialPoint, final Point2D currentPoint)
+    public void start()
+    {
+        mapController.startMap();
+    }
+
+    @Override
+    public void stop()
+    {
+    }
+
+    @Override
+    public void panTo(Point2D initialPoint, Point2D currentPoint)
     {
         final double dxPanelPixelCoord = (currentPoint.getX() - initialPoint.getX());
         final double dyPanelPixelCoord = (currentPoint.getY() - initialPoint.getY());
@@ -64,7 +75,7 @@ final class OSMState implements IJUNGState
     }
 
     @Override
-    public void addNode(final Point2D pos)
+    public void addNode(Point2D pos)
     {
         final double scale = canvas.getCurrentCanvasScale();
         final Point2D swingPoint = new Point2D.Double(pos.getX() * scale, -pos.getY() * scale);
@@ -84,7 +95,7 @@ final class OSMState implements IJUNGState
     }
 
     @Override
-    public void removeNode(final Node node)
+    public void removeNode(Node node)
     {
         node.remove();
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();

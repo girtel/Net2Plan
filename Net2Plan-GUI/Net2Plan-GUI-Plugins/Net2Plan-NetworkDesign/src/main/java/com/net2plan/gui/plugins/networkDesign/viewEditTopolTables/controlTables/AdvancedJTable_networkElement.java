@@ -36,7 +36,7 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
-import javax.annotation.Nonnull;
+
 import javax.swing.*;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.event.*;

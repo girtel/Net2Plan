@@ -1,6 +1,7 @@
 package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state;
 
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMController;
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
@@ -30,18 +31,24 @@ final class ViewState implements IJUNGState
 {
     private final GUINetworkDesign callback;
     private final JUNGCanvas canvas;
+    private final OSMController mapController;
 
-    @SuppressWarnings("unchecked")
-    ViewState(final GUINetworkDesign callback, final ITopologyCanvas canvas)
+    ViewState(GUINetworkDesign callback, ITopologyCanvas canvas, OSMController mapController)
     {
         this.callback = callback;
-
-        if (!(canvas instanceof JUNGCanvas))
-        {
-            throw new RuntimeException("Trying to use JUNG canvas state controller with another type of canvas.");
-        }
-
         this.canvas = (JUNGCanvas) canvas;
+        this.mapController = mapController;
+    }
+
+    @Override
+    public void start()
+    {
+        mapController.cleanMap();
+    }
+
+    @Override
+    public void stop()
+    {
     }
 
     @Override

@@ -55,6 +55,8 @@ import java.awt.geom.Rectangle2D;
 import java.util.*;
 import java.util.List;
 
+import static com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.JUNGStateController.*;
+
 /**
  * Topology canvas using JUNG library [<a href='#jung'>JUNG</a>].
  *
@@ -370,13 +372,13 @@ public final class JUNGCanvas implements ITopologyCanvas
     @Override
     public void runOSMSupport()
     {
-        stateController.setRunningState();
+        stateController.setState(JUNGState.OSMState);
     }
 
     @Override
     public void stopOSMSupport()
     {
-        stateController.setStoppedState();
+        stateController.setState(JUNGState.ViewState);
     }
 
     @Override

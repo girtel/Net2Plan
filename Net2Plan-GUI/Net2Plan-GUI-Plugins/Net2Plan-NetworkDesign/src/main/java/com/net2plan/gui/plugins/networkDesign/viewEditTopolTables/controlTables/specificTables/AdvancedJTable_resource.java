@@ -15,7 +15,7 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 
-import javax.annotation.Nonnull;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;

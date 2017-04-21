@@ -27,16 +27,19 @@ public class JUNGStateController
 
     public enum JUNGState { ViewState, OSMState, SiteState }
 
-
     public JUNGStateController(GUINetworkDesign callback, TopologyPanel topologyPanel, ITopologyCanvas canvas)
     {
+        assert callback != null;
+        assert topologyPanel != null;
+        assert canvas != null;
+
         this.callback = callback;
         this.topologyPanel = topologyPanel;
         this.canvas = canvas;
 
-        this.mapController = new OSMController();
+        this.mapController = new OSMController(callback, topologyPanel, canvas);
 
-        viewState = new ViewState(callback, canvas);
+        viewState = new ViewState(callback, canvas, mapController);
         osmState = new OSMState(callback, canvas, mapController);
         siteState = new SiteState();
 
@@ -45,30 +48,22 @@ public class JUNGStateController
 
     public void setState(JUNGState state)
     {
+        currentState.stop();
+
         switch (state)
         {
             case ViewState:
-
+                currentState = viewState;
                 break;
             case OSMState:
+                currentState = osmState;
                 break;
             case SiteState:
+                currentState = siteState;
                 break;
         }
-    }
 
-    public void setRunningState()
-    {
-        if (currentState == osmState) return;
-        currentState = osmState;
-        mapController.startMap(callback, topologyPanel, canvas);
-    }
-
-    public void setStoppedState()
-    {
-        if (currentState == viewState) return;
-        currentState = viewState;
-        mapController.cleanMap();
+        currentState.start();
     }
 
     public void panTo(final Point2D initialPoint, final Point2D currentPoint)

@@ -16,8 +16,6 @@ import com.net2plan.gui.plugins.networkDesign.visualizationControl.Visualization
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Set;
 
 /**

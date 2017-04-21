@@ -15,7 +15,7 @@ import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.MapUtils;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
-import javax.annotation.Nullable;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;

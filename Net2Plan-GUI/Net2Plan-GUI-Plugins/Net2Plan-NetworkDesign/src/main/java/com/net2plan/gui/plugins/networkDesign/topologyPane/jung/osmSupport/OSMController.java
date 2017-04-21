@@ -35,15 +35,18 @@ public class OSMController
     private Rectangle previousOSMViewportBounds;
     private int previousZoomLevel;
 
+    public OSMController(GUINetworkDesign callback, TopologyPanel topologyPanel, ITopologyCanvas canvas)
+    {
+        this.callback = callback;
+        this.topologyPanel = topologyPanel;
+        this.canvas = canvas;
+    }
+
     /**
      * Starts and runs the OSM map to its original state.
      * This method should be executed when the OSM map is not yet loaded.
-     *
-     * @param topologyPanel The topology panel.
-     * @param canvas        The JUNG canvas.
-     * @param callback      The interface to the NetPlan.
      */
-    public void startMap(final GUINetworkDesign callback, final TopologyPanel topologyPanel, final ITopologyCanvas canvas)
+    public void startMap()
     {
         // Checking if the nodes are valid for this operation.
         // They may not go outside the bounds: x: -180, 180: y: -90, 90
@@ -302,7 +305,7 @@ public class OSMController
      * @param dx Moves OSM map dx pixels over the X axis.
      * @param dy Moves OSM map dy pixels over the Y axis.
      */
-    public void moveMap(final double dx, final double dy)
+    public void moveMap(double dx, double dy)
     {
         if (canvas.isOSMRunning())
         {
@@ -362,19 +365,19 @@ public class OSMController
 
     public static class OSMMapUtils
     {
-        public static GeoPosition convertPointToGeo(final Point2D point)
+        public static GeoPosition convertPointToGeo(Point2D point)
         {
             // Pixel to geo must be calculated at the zoom level where canvas and map align.
             // That zoom level is the one given by the restore map method.
             return mapViewer.getTileFactory().pixelToGeo(point, mapViewer.getZoom());
         }
 
-        public static Point2D convertGeoToPoint(final GeoPosition geoPosition)
+        public static Point2D convertGeoToPoint(GeoPosition geoPosition)
         {
             return mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
         }
 
-        public static boolean isInsideBounds(final double x, final double y)
+        public static boolean isInsideBounds(double x, double y)
         {
             return !((x > 180 || x < -180) || (y > 90 || y < -90));
         }
