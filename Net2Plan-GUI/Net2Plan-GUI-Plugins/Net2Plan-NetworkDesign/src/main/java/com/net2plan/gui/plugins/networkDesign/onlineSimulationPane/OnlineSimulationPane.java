@@ -186,7 +186,7 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
                 simKernel.getSimCore().setSimulationState(SimState.STOPPED);
                 simKernel.reset();
                 simKernel.setNetPlan(simKernel.getInitialNetPlan());
-                mainWindow.setCurrentNetPlanDoNotUpdateVisualization(simKernel.getInitialNetPlan());
+                mainWindow.setDesign(simKernel.getInitialNetPlan());
                 final VisualizationState vs = mainWindow.getVisualizationState();
         		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
         				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));
@@ -325,7 +325,7 @@ public class OnlineSimulationPane extends JTabbedPane implements ActionListener,
         if (simulationState == SimState.NOT_STARTED || simulationState == SimState.PAUSED || simulationState == SimState.STEP || simulationState == SimState.STOPPED) 
         {
             updateSimulationInfo();
-            mainWindow.setCurrentNetPlanDoNotUpdateVisualization(simKernel.getCurrentNetPlan());
+            mainWindow.setDesign(simKernel.getCurrentNetPlan());
             final VisualizationState vs = mainWindow.getVisualizationState();
     		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
     				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (mainWindow.getDesign().getNetworkLayers()));

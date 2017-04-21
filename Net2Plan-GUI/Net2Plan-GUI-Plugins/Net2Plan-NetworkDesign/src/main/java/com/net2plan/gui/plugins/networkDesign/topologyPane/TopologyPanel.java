@@ -424,7 +424,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         {
         	if (callback.inOnlineSimulationMode()) return;
         	
-            callback.setCurrentNetPlanDoNotUpdateVisualization(new NetPlan());
+            callback.setDesign(new NetPlan());
             Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
             vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
@@ -591,7 +591,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
 
             NetPlan aux = fc_netPlan.readNetPlan();
 
-            callback.setCurrentNetPlanDoNotUpdateVisualization(aux);
+            callback.setDesign(aux);
             final VisualizationState vs = callback.getVisualizationState();
             Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
@@ -629,7 +629,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             checkNetPlanFileChooser();
             fc_netPlan.setCurrentDirectory(file.getParentFile());
 
-            callback.setCurrentNetPlanDoNotUpdateVisualization(netPlan);
+            callback.setDesign(netPlan);
             final VisualizationState vs = callback.getVisualizationState();
             Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));

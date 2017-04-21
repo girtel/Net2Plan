@@ -1,7 +1,7 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_layer;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_layer;
 import com.net2plan.gui.utils.*;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants.NetworkElementType;

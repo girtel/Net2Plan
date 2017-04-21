@@ -29,7 +29,7 @@ Net2Plan offers an alternative method of running the program without the need of
 
 Which can be found at:
 
-`Net2Plan -> Net2Plan-GUI -> Net2Plan-GUI-Launcher`
+`Net2Plan -> Net2Plan-Launcher`
 
 Note that this is meant for running the graphical interface of the project.
 

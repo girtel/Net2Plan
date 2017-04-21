@@ -28,10 +28,10 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_networkElement;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_link;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_multicastTree;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.specificTables.AdvancedJTable_route;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_link;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_multicastTree;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_route;
 import com.net2plan.gui.utils.DefaultTableCellHeaderRenderer;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -149,7 +149,9 @@ public class CellRenderers
                     {
                         itemId = Pair.of(Integer.parseInt(table.getModel().getValueAt(row, 1).toString().split(" ")[0]), Integer.parseInt(table.getModel().getValueAt(row, 2).toString().split(" ")[0]));
                     } else
-                        itemId = (Long) table.getModel().getValueAt(row, 0);
+                    {
+                        itemId = table.getModel().getValueAt(row, 0);
+                    }
 
                     setCurrentState(c, table, itemId, row, column, isSelected);
                 }

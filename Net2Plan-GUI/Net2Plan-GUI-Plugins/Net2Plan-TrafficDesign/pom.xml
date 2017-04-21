@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.net2plan.net2plan-gui</groupId>
         <artifactId>net2plan-gui-plugins</artifactId>
-        <version>0.5.0.4-SNAPSHOT</version>
+        <version>0.5.1-Beta.2-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
