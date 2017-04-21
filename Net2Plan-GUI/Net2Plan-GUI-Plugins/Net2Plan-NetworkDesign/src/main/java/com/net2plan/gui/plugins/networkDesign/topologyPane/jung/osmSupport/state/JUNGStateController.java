@@ -6,7 +6,6 @@ import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMController;
 import com.net2plan.interfaces.networkDesign.Node;
 
-import javax.annotation.Nonnull;
 import java.awt.geom.Point2D;
 
 /**
@@ -26,10 +25,10 @@ public class JUNGStateController
 
     private final OSMController mapController;
 
-    public enum JUNGState { ViewState, OSMState, SiteState };
+    public enum JUNGState { ViewState, OSMState, SiteState }
 
 
-    public JUNGStateController(final GUINetworkDesign callback, final TopologyPanel topologyPanel, final ITopologyCanvas canvas)
+    public JUNGStateController(GUINetworkDesign callback, TopologyPanel topologyPanel, ITopologyCanvas canvas)
     {
         this.callback = callback;
         this.topologyPanel = topologyPanel;
@@ -44,7 +43,7 @@ public class JUNGStateController
         currentState = viewState;
     }
 
-    public void setState( JUNGState state)
+    public void setState(JUNGState state)
     {
         switch (state)
         {
@@ -92,12 +91,12 @@ public class JUNGStateController
         currentState.zoomAll();
     }
 
-    public void addNode(final Point2D pos)
+    public void addNode(Point2D pos)
     {
         currentState.addNode(pos);
     }
 
-    public void removeNode(final Node node)
+    public void removeNode(Node node)
     {
         currentState.removeNode(node);
     }
@@ -112,12 +111,12 @@ public class JUNGStateController
         currentState.updateNodesXYPosition();
     }
 
-    public double getCanvasInterlayerDistance(final int interLayerDistanceInPixels)
+    public double getCanvasInterlayerDistance(int interLayerDistanceInPixels)
     {
         return currentState.getInterLayerDistance(interLayerDistanceInPixels);
     }
 
-    public Point2D getCanvasCoordinateFromScreenPoint(final Point2D pos)
+    public Point2D getCanvasCoordinateFromScreenPoint(Point2D pos)
     {
         return currentState.getCanvasPoint(pos);
     }
