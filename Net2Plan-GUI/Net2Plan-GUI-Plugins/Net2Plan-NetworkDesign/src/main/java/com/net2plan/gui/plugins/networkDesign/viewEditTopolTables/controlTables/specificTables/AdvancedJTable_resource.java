@@ -459,7 +459,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return popup;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -557,14 +557,14 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return addItem;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
         return new LinkedList<>();
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -722,7 +722,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {

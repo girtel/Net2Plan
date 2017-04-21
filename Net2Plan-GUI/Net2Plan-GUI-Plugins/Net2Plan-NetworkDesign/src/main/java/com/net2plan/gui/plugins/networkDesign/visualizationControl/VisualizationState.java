@@ -102,7 +102,7 @@ public class VisualizationState
         this.whatIfAnalysisActive = isWhatIfAnalysisActive;
     }
 
-    @Nullable
+
     public ITableRowFilter getTableRowFilter()
     {
         return tableRowFilter;
@@ -113,7 +113,7 @@ public class VisualizationState
         this.tableRowFilter = null;
     }
 
-    public void updateTableRowFilter(@Nullable ITableRowFilter tableRowFilterToApply, @Nullable FilterCombinationType filterCombinationType)
+    public void updateTableRowFilter( ITableRowFilter tableRowFilterToApply,  FilterCombinationType filterCombinationType)
     {
         /* If clicked reset button, remove all existing filters */
         if (tableRowFilterToApply == null)
@@ -790,13 +790,13 @@ public class VisualizationState
         return pickedElementType;
     }
 
-    @Nullable
+
     public List<NetworkElement> getPickedNetworkElements()
     {
         return pickedElement == null ? new ArrayList<>() : Collections.unmodifiableList(pickedElement);
     }
 
-    @Nullable
+
     public List<Pair<Demand, Link>> getPickedForwardingRules()
     {
         return pickedForwardingRule == null ? new ArrayList<>() : Collections.unmodifiableList(pickedForwardingRule);

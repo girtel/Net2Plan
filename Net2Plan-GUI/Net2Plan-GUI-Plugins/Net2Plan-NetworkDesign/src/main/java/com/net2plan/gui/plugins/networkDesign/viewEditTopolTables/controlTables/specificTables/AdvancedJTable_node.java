@@ -475,21 +475,21 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {
         return new MenuItem_AddNode(callback);
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
         return new LinkedList<>();
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -508,7 +508,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
@@ -540,7 +540,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
     static class MenuItem_ShowSelection extends JMenuItem
     {
-        MenuItem_ShowSelection(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        MenuItem_ShowSelection( GUINetworkDesign callback,  List<Node> nodes)
         {
             this.setText("Show selected nodes");
 
@@ -559,7 +559,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
     static class MenuItem_HideSelection extends JMenuItem
     {
-        MenuItem_HideSelection(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        MenuItem_HideSelection( GUINetworkDesign callback,  List<Node> nodes)
         {
             this.setText("Hide selected nodes");
             this.addActionListener(e ->
@@ -575,7 +575,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
     static class MenuItem_SwitchCoordinates extends JMenuItem
     {
-        MenuItem_SwitchCoordinates(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        MenuItem_SwitchCoordinates( GUINetworkDesign callback,  List<Node> nodes)
         {
             this.setText("Switch selected nodes' coordinates from (x,y) to (y,x)");
             this.addActionListener(e ->
@@ -595,7 +595,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
     static class MenuItem_NameFromAttribute extends JMenuItem
     {
-        MenuItem_NameFromAttribute(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        MenuItem_NameFromAttribute( GUINetworkDesign callback,  List<Node> nodes)
         {
             this.setText("Set selected nodes' name from attribute");
             this.addActionListener(e ->
@@ -636,7 +636,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
     static class MenuItem_RemoveNodes extends JMenuItem
     {
-        MenuItem_RemoveNodes(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)
+        MenuItem_RemoveNodes( GUINetworkDesign callback,  List<Node> nodes)
         {
             this.setText("Remove selected nodes");
             this.addActionListener(new ActionListener()
@@ -662,7 +662,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
     static class MenuItem_AddNode extends JMenuItem
     {
-        MenuItem_AddNode(@Nonnull GUINetworkDesign callback)
+        MenuItem_AddNode( GUINetworkDesign callback)
         {
             this.setText("Add node");
             this.addActionListener(e ->

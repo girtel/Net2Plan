@@ -284,21 +284,21 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         return;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
         return new ArrayList<>();
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
         return null;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(ElementSelection selection)
     {
@@ -310,7 +310,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         return false;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {

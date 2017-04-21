@@ -14,7 +14,7 @@ import static com.net2plan.gui.plugins.networkDesign.ElementSelection.*;
 @SuppressWarnings("unchecked")
 public class TBFSelectionBased extends ITableRowFilter
 {
-    public TBFSelectionBased(@Nonnull NetPlan netPlan, @Nonnull ElementSelection elementSelection)
+    public TBFSelectionBased( NetPlan netPlan,  ElementSelection elementSelection)
     {
         super(netPlan);
 

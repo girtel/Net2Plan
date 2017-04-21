@@ -104,7 +104,7 @@ public class ElementSelection
         return selectionType;
     }
 
-    @Nullable
+
     public ElementSelection invertSelection()
     {
         if (selectionType == SelectionType.EMPTY) return null;
@@ -179,7 +179,7 @@ public class ElementSelection
         return elementSelection;
     }
 
-    @Nullable
+
     public static NetworkElementType getElementType(final List<? extends NetworkElement> networkElements)
     {
         NetworkElementType res = null, aux = null;

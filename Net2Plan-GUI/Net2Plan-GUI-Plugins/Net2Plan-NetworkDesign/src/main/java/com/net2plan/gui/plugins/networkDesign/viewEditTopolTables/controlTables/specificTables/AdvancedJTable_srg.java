@@ -409,7 +409,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -437,7 +437,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         return addItem;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
@@ -542,7 +542,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -808,7 +808,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         dialog.setVisible(true);
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {

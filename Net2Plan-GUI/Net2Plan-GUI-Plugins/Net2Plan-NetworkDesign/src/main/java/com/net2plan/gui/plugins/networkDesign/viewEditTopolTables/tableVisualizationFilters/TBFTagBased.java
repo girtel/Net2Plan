@@ -15,7 +15,7 @@ public class TBFTagBased extends ITableRowFilter
     private final NetworkLayer restrictToThisLayer;
     private final String tagContainsName, tagDoesNotContainName;
 
-    public TBFTagBased(@Nonnull NetPlan netPlan, @Nullable NetworkLayer restrictToThisLayer, String tagContainsName, String tagDoesNotContainName)
+    public TBFTagBased( NetPlan netPlan,  NetworkLayer restrictToThisLayer, String tagContainsName, String tagDoesNotContainName)
     {
         super(netPlan);
 

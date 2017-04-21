@@ -1833,7 +1833,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    public void writeTableToFile(@Nonnull File file)
+    public void writeTableToFile( File file)
     {
         ExcelWriter.writeToFile(file, this.getTabName(), buildData());
     }
@@ -1888,16 +1888,16 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public abstract ArrayList<String> getAttributesColumnsHeaders();
 
-    @Nonnull
+
     protected abstract List<JComponent> getExtraAddOptions();
 
-    @Nonnull
+
     protected abstract JMenuItem getAddOption();
 
-    @Nonnull
+
     protected abstract List<JComponent> getForcedOptions(ElementSelection selection);
 
-    @Nonnull
+
     protected abstract List<JComponent> getExtraOptions(ElementSelection selection);
 
     protected abstract JPopupMenu getPopup(ElementSelection selection);
@@ -1906,7 +1906,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     static class MenuItem_RemovedFiltered extends JMenuItem
     {
-        MenuItem_RemovedFiltered(@Nonnull GUINetworkDesign callback, @Nonnull NetworkElementType networkElementType)
+        MenuItem_RemovedFiltered( GUINetworkDesign callback,  NetworkElementType networkElementType)
         {
             final NetPlan netPlan = callback.getDesign();
 
@@ -1980,7 +1980,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     static class MenuItem_HideFiltered extends JMenuItem
     {
-        MenuItem_HideFiltered(@Nonnull GUINetworkDesign callback, @Nonnull NetworkElementType networkElementType)
+        MenuItem_HideFiltered( GUINetworkDesign callback,  NetworkElementType networkElementType)
         {
             final NetPlan netPlan = callback.getDesign();
             this.setText("Hide all filtered out " + networkElementType + "s");

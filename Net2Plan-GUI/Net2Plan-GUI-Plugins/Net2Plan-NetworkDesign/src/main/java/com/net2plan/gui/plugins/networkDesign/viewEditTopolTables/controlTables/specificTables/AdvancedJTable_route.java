@@ -442,7 +442,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -737,7 +737,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         c.setMaximumSize(max);
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
@@ -865,7 +865,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -1087,7 +1087,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         callback.resetPickedStateAndUpdateView();
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {

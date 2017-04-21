@@ -581,7 +581,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -605,7 +605,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         return addItem;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
@@ -626,7 +626,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -983,7 +983,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
@@ -1054,7 +1054,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_RemoveLinks extends JMenuItem
     {
-        MenuItem_RemoveLinks(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> selectedLinks)
+        MenuItem_RemoveLinks( GUINetworkDesign callback,  List<Link> selectedLinks)
         {
             this.setText("Remove selected links");
             this.addActionListener(new ActionListener()
@@ -1081,7 +1081,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_ShowLinks extends JMenuItem
     {
-        MenuItem_ShowLinks(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> links)
+        MenuItem_ShowLinks( GUINetworkDesign callback,  List<Link> links)
         {
             this.setText("Show selected links");
             this.addActionListener(e ->
@@ -1097,7 +1097,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_HideLinks extends JMenuItem
     {
-        MenuItem_HideLinks(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> links)
+        MenuItem_HideLinks( GUINetworkDesign callback,  List<Link> links)
         {
             this.setText("Hide selected links");
             this.addActionListener(e ->
@@ -1113,7 +1113,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_DecoupleLinks extends JMenuItem
     {
-        MenuItem_DecoupleLinks(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> selectedLinks)
+        MenuItem_DecoupleLinks( GUINetworkDesign callback,  List<Link> selectedLinks)
         {
             this.setText("Decouple coupled links from selection");
             this.addActionListener(e ->
@@ -1130,7 +1130,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_LengthToEuclidean extends JMenuItem
     {
-        MenuItem_LengthToEuclidean(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> selectedLinks)
+        MenuItem_LengthToEuclidean( GUINetworkDesign callback,  List<Link> selectedLinks)
         {
             this.setText("Set selected links length to node-pair Euclidean distance");
             this.addActionListener(e ->
@@ -1152,7 +1152,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_LengthToHaversine extends JMenuItem
     {
-        MenuItem_LengthToHaversine(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> selectedLinks)
+        MenuItem_LengthToHaversine( GUINetworkDesign callback,  List<Link> selectedLinks)
         {
             this.setText("Set selected links length to node-pair Haversine distance (longitude-latitude) in km");
             this.addActionListener(e ->

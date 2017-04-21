@@ -423,7 +423,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         return Integer.MAX_VALUE;
     }
 
-    @Nonnull
+
     @Override
     public NetPlan getDesign()
     {
@@ -431,7 +431,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         else return currentNetPlan;
     }
 
-    @Nullable
     @Override
     public NetPlan getInitialDesign()
     {
@@ -471,13 +470,13 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         updateVisualizationAfterNewTopology();
     }
 
-    public void setDesign(@Nonnull NetPlan netPlan)
+    public void setDesign( NetPlan netPlan)
     {
     	if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
         this.currentNetPlan = netPlan;
     }
 
-    @Nonnull
+
     public VisualizationState getVisualizationState()
     {
         return vs;
@@ -848,7 +847,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         }
     }
 
-    public void runCanvasOperation(@Nonnull ITopologyCanvas.CanvasOperation... canvasOperation)
+    public void runCanvasOperation( ITopologyCanvas.CanvasOperation... canvasOperation)
     {
         // NOTE: The operations should executed in the same order as their are brought.
         for (ITopologyCanvas.CanvasOperation operation : canvasOperation)

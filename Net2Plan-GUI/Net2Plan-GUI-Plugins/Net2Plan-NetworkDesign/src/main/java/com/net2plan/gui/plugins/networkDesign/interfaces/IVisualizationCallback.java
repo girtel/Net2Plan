@@ -35,12 +35,12 @@ public interface IVisualizationCallback
 
     void updateVisualizationAfterPick();
 
-    @Nonnull
+
     NetPlan getDesign();
 
-    @Nullable
+
     NetPlan getInitialDesign();
 
-    @Nonnull
+
     VisualizationState getVisualizationState();
 }

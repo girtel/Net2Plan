@@ -28,7 +28,7 @@ public class JUNGStateController
 
     public enum JUNGState { ViewState, OSMState, SiteState };
 
-    @Nonnull
+
     public JUNGStateController(final GUINetworkDesign callback, final TopologyPanel topologyPanel, final ITopologyCanvas canvas)
     {
         this.callback = callback;
@@ -44,7 +44,7 @@ public class JUNGStateController
         currentState = viewState;
     }
 
-    public void setState(@Nonnull JUNGState state)
+    public void setState( JUNGState state)
     {
         switch (state)
         {

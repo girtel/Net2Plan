@@ -437,7 +437,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         callback.updateVisualizationAfterPick();
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -513,7 +513,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         }
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
@@ -531,7 +531,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -662,7 +662,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
