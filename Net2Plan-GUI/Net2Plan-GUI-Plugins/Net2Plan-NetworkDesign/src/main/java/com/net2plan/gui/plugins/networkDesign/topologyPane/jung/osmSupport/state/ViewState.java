@@ -26,13 +26,13 @@ import java.util.stream.Collectors;
  * @author Jorge San Emeterio
  * @date 19-Jan-17
  */
-public class OSMJUNGOffState implements OSMState
+final class ViewState implements IJUNGState
 {
     private final GUINetworkDesign callback;
     private final JUNGCanvas canvas;
 
     @SuppressWarnings("unchecked")
-    OSMJUNGOffState(final GUINetworkDesign callback, final ITopologyCanvas canvas)
+    ViewState(final GUINetworkDesign callback, final ITopologyCanvas canvas)
     {
         this.callback = callback;
 

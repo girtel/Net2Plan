@@ -1,22 +1,24 @@
 package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state;
 
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMController;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
-import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.Node;
 
+import javax.annotation.Nonnull;
 import java.awt.geom.Point2D;
 
 /**
  * @author Jorge San Emeterio
  * @date 17-Jan-17
  */
-public class OSMStateManager
+public class JUNGStateController
 {
-    private OSMState currentState;
-    private final OSMOnState runningState;
-    private final OSMJUNGOffState stoppedState;
+    private IJUNGState currentState;
+    private final ViewState viewState;
+    private final OSMState osmState;
+    private final SiteState siteState;
 
     private final GUINetworkDesign callback;
     private final TopologyPanel topologyPanel;
@@ -24,31 +26,49 @@ public class OSMStateManager
 
     private final OSMController mapController;
 
-    public OSMStateManager(final GUINetworkDesign callback, final TopologyPanel topologyPanel, final ITopologyCanvas canvas)
+    public enum JUNGState { ViewState, OSMState, SiteState };
+
+    @Nonnull
+    public JUNGStateController(final GUINetworkDesign callback, final TopologyPanel topologyPanel, final ITopologyCanvas canvas)
     {
         this.callback = callback;
         this.topologyPanel = topologyPanel;
         this.canvas = canvas;
+
         this.mapController = new OSMController();
 
-        runningState = new OSMOnState(callback, canvas, mapController);
-        // Using JUNG canvas off state.
-        stoppedState = new OSMJUNGOffState(callback, canvas);
+        viewState = new ViewState(callback, canvas);
+        osmState = new OSMState(callback, canvas, mapController);
+        siteState = new SiteState();
 
-        currentState = stoppedState;
+        currentState = viewState;
+    }
+
+    public void setState(@Nonnull JUNGState state)
+    {
+        switch (state)
+        {
+            case ViewState:
+
+                break;
+            case OSMState:
+                break;
+            case SiteState:
+                break;
+        }
     }
 
     public void setRunningState()
     {
-        if (currentState == runningState) return;
-        currentState = runningState;
+        if (currentState == osmState) return;
+        currentState = osmState;
         mapController.startMap(callback, topologyPanel, canvas);
     }
 
     public void setStoppedState()
     {
-        if (currentState == stoppedState) return;
-        currentState = stoppedState;
+        if (currentState == viewState) return;
+        currentState = viewState;
         mapController.cleanMap();
     }
 
@@ -104,6 +124,6 @@ public class OSMStateManager
 
     public boolean isMapActivated()
     {
-        return currentState instanceof OSMOnState;
+        return currentState instanceof OSMState;
     }
 }
