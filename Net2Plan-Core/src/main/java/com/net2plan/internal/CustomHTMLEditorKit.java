@@ -126,7 +126,6 @@ public class CustomHTMLEditorKit extends HTMLEditorKit
         
         public static String includeStyle(String html)
         {
-        
                 StringBuilder style = new StringBuilder();
                 style.append("<style>");
                 style.append("body {font-family: Tahoma, Verdana, Segoe, sans-serif;" 

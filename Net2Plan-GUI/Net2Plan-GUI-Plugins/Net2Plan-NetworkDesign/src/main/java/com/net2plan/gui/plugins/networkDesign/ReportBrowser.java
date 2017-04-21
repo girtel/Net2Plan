@@ -57,7 +57,7 @@ public class ReportBrowser extends JPanel {
         editor.setContentType("text/html;charset=UTF-8");
         editor.setEditable(false);
         
-		/* Configure HTML viewer */
+	/* Configure HTML viewer */
         htmlEditorKit = new CustomHTMLEditorKit();
         editor.setEditorKit(htmlEditorKit);
         
