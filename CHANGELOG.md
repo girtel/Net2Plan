@@ -2,7 +2,7 @@
 
 All notable changes to Net2Plan will be documented in this file.
 
-## [0.5.1-Beta] - 2017-04-20
+## [0.5.1-Beta.1] - 2017-04-20
 ### Added
     - Added capacity for multiple line selection on tables.
     - Exporting function for writing tables on an Excel file.
