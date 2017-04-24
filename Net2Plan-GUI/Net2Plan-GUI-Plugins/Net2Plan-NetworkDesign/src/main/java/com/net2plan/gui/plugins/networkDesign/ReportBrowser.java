@@ -62,12 +62,12 @@ public class ReportBrowser extends JPanel {
         editor.setEditorKit(htmlEditorKit);
         
         StyleSheet styleSheet = htmlEditorKit.getStyleSheet();
-        styleSheet.addRule("body {padding: 5px 5px 5px 5px;}");    
+        styleSheet.addRule("body {padding: 5px 5px 5px 10px;}");    
         styleSheet.addRule("p, ul, ol, table {font-family: Tahoma, Verdana, Segoe, sans-serif;"
                 + " font-size: 11px; font-style: normal; font-variant: normal;"
                 + " font-weight: 300; line-height: 15px;}");    
         styleSheet.addRule("h1, h2 {font-family:Arial, \"Helvetica Neue\", Helvetica, sans-serif;"
-                + "font-style: normal; font-variant: normal; font-weight: 500; line-height: 22px;}");
+                + "font-weight: 500; line-height: 22px;}");
 	styleSheet.addRule("h1 {font-size: 16px}");
 	styleSheet.addRule("h2 {color:#303030; font-size: 14px}");
 	styleSheet.addRule("ul {list-style-type: disk;}");
@@ -77,6 +77,7 @@ public class ReportBrowser extends JPanel {
         styleSheet.addRule("th {background-color: #A0A0A0;}");
         styleSheet.addRule("table, td {text-align: left;}");
         styleSheet.addRule("th {text-align: center; height: 10px; padding: 5px;}");
+        styleSheet.addRule("caption {caption-side: bottom; padding-bottom: 10px; font-weight: bold;}");
         
         Document doc = htmlEditorKit.createDefaultDocument();
         doc.putProperty("IgnoreCharsetDirective", true);

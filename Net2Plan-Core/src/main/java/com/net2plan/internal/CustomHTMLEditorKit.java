@@ -111,7 +111,7 @@ public class CustomHTMLEditorKit extends HTMLEditorKit
 	 */
 	public static String includeNet2PlanHeader(String html)
 	{
-		org.jsoup.nodes.Document doc = Jsoup.parse(html, StandardCharsets.UTF_8.name());
+            	org.jsoup.nodes.Document doc = Jsoup.parse(html, StandardCharsets.UTF_8.name());
 		org.jsoup.nodes.Element title = doc.head().getElementsByTag("title").first();
 		String reportTitle = title != null && title.hasText() ? title.text() : "Net2Plan Report";
 
@@ -129,10 +129,10 @@ public class CustomHTMLEditorKit extends HTMLEditorKit
                 StringBuilder style = new StringBuilder();
                 style.append("<style>");
                 style.append("body {font-family: Tahoma, Verdana, Segoe, sans-serif;" 
-                        + " font-style: normal; font-variant: normal; padding: 5px 5px 5px 5px;}");    
+                        + " font-style: normal; font-variant: normal; padding: 0px 15px 15px 10px;}");    
                 style.append("p, ul, ol, table {font-size: 12px; font-weight: 300; line-height: 15px;}");    
                 style.append("h1, h2 {font-family:Arial, \"Helvetica Neue\", Helvetica, sans-serif;"
-                        + "font-style: normal; font-variant: normal; font-weight: 500; line-height: 22px;}");
+                        + "font-weight: 500; line-height: 22px;}");
                 style.append("h1 {font-size: 22px}");
                 style.append("h2 {color: #303030; font-size: 16px}");
                 style.append("ul {list-style-type: disk;}");
@@ -141,6 +141,7 @@ public class CustomHTMLEditorKit extends HTMLEditorKit
                 style.append("th, td {border-bottom: 2px solid darkgray;}");
                 style.append("table, td {text-align: left;}");
                 style.append("th {background-color: darkgray; text-align: center; height: 20px; padding: 10px;}");
+                style.append("caption {caption-side: bottom; padding-bottom: 10px; font-weight: bold;}");
                 style.append("</style>");
             
                 html = html.replaceAll("</head>", style.toString() + "</head>");
