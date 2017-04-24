@@ -481,10 +481,11 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         {
             final JMenuItem oneDemandPerNodePair = new JMenuItem("Add one demand per node pair");
             options.add(oneDemandPerNodePair);
-
-            oneDemandPerNodePair.addActionListener(new FullMeshTrafficActionListener());
+            oneDemandPerNodePair.addActionListener(new FullMeshTrafficActionListener(false));
         }
-
+        final JMenuItem oneDemandPerNodePairConnectedThisLayer = new JMenuItem("Add one demand per node pair linked at this layer");
+        options.add(oneDemandPerNodePairConnectedThisLayer);
+        oneDemandPerNodePairConnectedThisLayer.addActionListener(new FullMeshTrafficActionListener(true));
         return options;
     }
 
@@ -608,6 +609,8 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
     private class FullMeshTrafficActionListener implements ActionListener
     {
+    	private final boolean onlyConnectedAtThisLayer;
+    	FullMeshTrafficActionListener (boolean onlyConnectedAtThisLayer) { this.onlyConnectedAtThisLayer = onlyConnectedAtThisLayer; }
         @Override
         public void actionPerformed(ActionEvent e)
         {
@@ -620,15 +623,11 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                 if (result == JOptionPane.CANCEL_OPTION || result == JOptionPane.CLOSED_OPTION) return;
                 if (result == JOptionPane.YES_OPTION) netPlan.removeAllDemands();
             }
-
-            for (Node n1 : netPlan.getNodes())
-            {
-                for (Node n2 : netPlan.getNodes())
-                {
-                    if (n1.getIndex() >= n2.getIndex()) continue;
-                    netPlan.addDemandBidirectional(n1, n2, 0, null, layer);
-                }
-            }
+            final List<Node> nodes = onlyConnectedAtThisLayer? netPlan.getNodes().stream().filter(n->!n.getIncomingLinks(layer).isEmpty()).filter(n->!n.getOutgoingLinks(layer).isEmpty()).collect(Collectors.toList()): netPlan.getNodes();
+            for (Node n1 : nodes)
+                for (Node n2 : nodes)
+                    if (n1.getIndex() < n2.getIndex()) 
+                    	netPlan.addDemandBidirectional(n1, n2, 0, null, layer);
             callback.getVisualizationState().resetPickedState();
             callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
             callback.addNetPlanChange();

@@ -24,6 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 import javax.swing.DefaultRowSorter;
@@ -51,11 +52,16 @@ import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisP
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.JScrollPopupMenu;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.InterLayerPropagationGraph;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
+import com.net2plan.libraries.GraphUtils;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
@@ -515,6 +521,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         {
             options.add(new MenuItem_SwitchCoordinates(callback, selectedNodes));
             options.add(new MenuItem_NameFromAttribute(callback, selectedNodes));
+            options.add(new MenuItem_CreatePlanningDomain(callback, selectedNodes));
+            
         }
 
         return options;
@@ -585,6 +593,24 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         }
     }
 
+    
+    static class MenuItem_CreatePlanningDomain extends JMenuItem
+    {
+    	MenuItem_CreatePlanningDomain(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> selectedNodes)
+        {
+            this.setText("Create planning domain restricted to traffic between nodes");
+            this.addActionListener(e ->
+            {
+        		final NetPlan np = callback.getDesign();
+        		final NetworkLayer layer = np.getNetworkLayerDefault();
+        		np.restrictToPlanningDomain (new HashSet<> (selectedNodes) , layer , true);
+                callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
+                callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
+                callback.addNetPlanChange();
+            });
+        }
+    }
     static class MenuItem_SwitchCoordinates extends JMenuItem
     {
         MenuItem_SwitchCoordinates(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> nodes)

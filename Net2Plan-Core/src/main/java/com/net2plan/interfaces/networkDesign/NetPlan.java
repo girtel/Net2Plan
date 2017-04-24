@@ -11,13 +11,41 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import cern.colt.function.tdouble.DoubleFunction;
-import cern.colt.list.tdouble.DoubleArrayList;
-import cern.colt.list.tint.IntArrayList;
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import java.awt.geom.Point2D;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
+
+import org.apache.commons.lang3.mutable.MutableLong;
+import org.codehaus.stax2.XMLInputFactory2;
+import org.codehaus.stax2.XMLOutputFactory2;
+import org.codehaus.stax2.XMLStreamReader2;
+import org.codehaus.stax2.XMLStreamWriter2;
+import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
+
 import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
@@ -32,22 +60,14 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
-import org.apache.commons.lang3.mutable.MutableLong;
-import org.codehaus.stax2.XMLInputFactory2;
-import org.codehaus.stax2.XMLOutputFactory2;
-import org.codehaus.stax2.XMLStreamReader2;
-import org.codehaus.stax2.XMLStreamWriter2;
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 
-import javax.xml.stream.FactoryConfigurationError;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.XMLEvent;
-import java.awt.geom.Point2D;
-import java.io.*;
-import java.net.URL;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
+import cern.colt.function.tdouble.DoubleFunction;
+import cern.colt.list.tdouble.DoubleArrayList;
+import cern.colt.list.tint.IntArrayList;
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 /**
  * <p>Class defining a complete multi-layer network structure. Layers may
@@ -1886,6 +1906,67 @@ public class NetPlan extends NetworkElement
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         if (ErrorHandling.isDebugEnabled()) npCopy.checkCachesConsistency();
         return npCopy;
+    }
+
+    /**
+     * Eliminates from this design all the links, nodes, demands, multicast demands which do not 
+     * carry traffic of the existing demands between the selected nodes, at the given layer. 
+     * Lower layer demands/links etc. that carry traffic of the demands are kept.
+     * Upper layer demands/links etc. are removed.  
+     * If keepConnectivitySets is set, all the links in the shortest path between the selected nodes 
+     * in the given layer, and those that would carry its traffic, are kept. Then, the resulting design has the 
+     * same connected components than the original graph.
+     * @param selectedNodes the selected nodes
+     * @param trafficLayer see above
+     * @param keepConnectivitySets see above
+     */
+    public void restrictToPlanningDomain (Set<Node> selectedNodes , NetworkLayer trafficLayer , boolean keepConnectivitySets)
+    {
+        if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
+    	if (selectedNodes.equals(new HashSet<> (this.getNodes ()))) return;
+    	final Set<Link> linksAddedToMakeConnected = new HashSet<> ();
+		if (keepConnectivitySets)
+		{
+			for (Node n1 : selectedNodes)
+				for (Node n2 : selectedNodes)
+					if (n1 != n2)
+						linksAddedToMakeConnected.addAll(GraphUtils.getShortestPath(getNodes(), getLinks(trafficLayer), n1, n2, null));
+		}
+		
+    	final Set<Demand> affectedDemandsThisLayer = getDemands (trafficLayer).stream().
+    			filter(d->selectedNodes.contains(d.getIngressNode())).
+    			filter(d->selectedNodes.contains(d.getEgressNode())).
+    			collect(Collectors.toSet());
+    	final Set<Pair<MulticastDemand,Node>> affectedMDemandsThisLayer = new HashSet<> ();
+    	for (MulticastDemand md : getMulticastDemands (trafficLayer))
+    		for (Node n : md.getEgressNodes ())
+    			affectedMDemandsThisLayer.add(Pair.of(md, n));
+        final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(affectedDemandsThisLayer , 
+        		linksAddedToMakeConnected , affectedMDemandsThisLayer , false);
+        final Set<Demand> demandsToKeep = ipg.getDemandsInGraph();
+        final Set<Link> linksToKeep = ipg.getLinksInGraph();
+        final Set<MulticastDemand> mdemandsToKeep = ipg.getMulticastDemandFlowsInGraph().stream().map(d->d.getFirst()).collect(Collectors.toSet());
+        final Set<Node> nodesToKeep = new HashSet<> ();
+        nodesToKeep.addAll(linksToKeep.stream().map(d->d.getOriginNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(linksToKeep.stream().map(d->d.getDestinationNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(linksAddedToMakeConnected.stream().map(d->d.getOriginNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(linksAddedToMakeConnected.stream().map(d->d.getDestinationNode ()).collect(Collectors.toList()));
+        
+        /* remove all links, demands and mdemands not applicatble  */
+        for (NetworkLayer layerFromLowerToUpper : getNetworkLayerInTopologicalOrder())
+        {
+        	for (Link link : new ArrayList<>(getLinks(layerFromLowerToUpper)))
+        		if (!linksToKeep.contains(link)) link.remove ();
+        	for (Demand demand : new ArrayList<>(getDemands(layerFromLowerToUpper)))
+        		if (!demandsToKeep.contains(demand)) demand.remove ();
+        	for (MulticastDemand mdemand : new ArrayList<>(getMulticastDemands(layerFromLowerToUpper)))
+        		if (!mdemandsToKeep.contains(mdemand)) mdemand.remove ();
+        }
+        /* remove all nodes unconnected nodes */
+        for (Node n : new ArrayList<>(getNodes()))
+        	if (!nodesToKeep.contains(n))
+        		n.remove ();
+        if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 
     

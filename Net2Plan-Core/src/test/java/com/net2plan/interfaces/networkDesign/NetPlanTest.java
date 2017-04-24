@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -985,5 +986,18 @@ public class NetPlanTest
 		for (Demand d : np.getDemands (lowerLayer))
 			assertEquals (d.getOfferedTraffic() , 3.0 , 0);
 	}
+
+	@Test
+	public void testRestrictPlanning ()
+	{
+		NetPlan np = NetPlan.loadFromFile(new File ("C:\\Dropbox\\eLighthouse\\Projects\\TOP - Comarch\\20170420 WDM Data Argentina\\aaa.n2p"));
+		final NetworkLayer trafficLayer = np.getNetworkLayer("OTNODU");
+		List<Node> orderedNodeList = np.getNodes().stream().
+				sorted((a, b) -> Double.compare(b.getOutgoingDemands(trafficLayer).stream().mapToDouble(e->e.getOfferedTraffic()).sum() , 
+						a.getOutgoingDemands(trafficLayer).stream().mapToDouble(e->e.getOfferedTraffic()).sum())).
+				limit(100).collect(Collectors.toList());
+		np.restrictToPlanningDomain(new HashSet<> (orderedNodeList), trafficLayer, false);
+	}
+
 
 }

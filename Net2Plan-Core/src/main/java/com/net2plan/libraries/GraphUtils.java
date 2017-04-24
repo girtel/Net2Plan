@@ -15,6 +15,70 @@
 
 package com.net2plan.libraries;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.swing.JComponent;
+
+import org.apache.commons.collections15.ListUtils;
+import org.apache.commons.collections15.Predicate;
+import org.apache.commons.collections15.Transformer;
+import org.apache.commons.collections15.functors.ConstantTransformer;
+import org.apache.commons.collections15.functors.MapTransformer;
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.UndirectedGraph;
+import org.jgrapht.alg.ConnectivityInspector;
+import org.jgrapht.alg.StrongConnectivityInspector;
+import org.jgrapht.graph.AsWeightedGraph;
+import org.jgrapht.graph.DirectedSubgraph;
+import org.jgrapht.graph.DirectedWeightedMultigraph;
+import org.jgrapht.graph.Subgraph;
+import org.jgrapht.graph.UndirectedSubgraph;
+
+import com.jom.OptimizationProblem;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.utils.CollectionUtils;
+import com.net2plan.utils.Constants;
+import com.net2plan.utils.Constants.CheckRoutingCycleType;
+import com.net2plan.utils.Constants.RoutingCycleType;
+import com.net2plan.utils.ImageUtils;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Quadruple;
+import com.net2plan.utils.Quintuple;
+
 import cern.colt.list.tdouble.DoubleArrayList;
 import cern.colt.list.tint.IntArrayList;
 import cern.colt.matrix.tdouble.DoubleFactory1D;
@@ -26,13 +90,6 @@ import cern.colt.matrix.tdouble.algo.SparseDoubleAlgebra;
 import cern.colt.matrix.tdouble.impl.SparseCCDoubleMatrix2D;
 import cern.jet.math.tdouble.DoubleFunctions;
 import cern.jet.math.tdouble.DoublePlusMultFirst;
-import com.jom.OptimizationProblem;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.utils.*;
-import com.net2plan.utils.Constants.CheckRoutingCycleType;
-import com.net2plan.utils.Constants.RoutingCycleType;
-import com.net2plan.utils.Constants.RoutingType;
-
 import edu.uci.ics.jung.algorithms.filters.EdgePredicateFilter;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.algorithms.layout.StaticLayout;
@@ -49,26 +106,6 @@ import edu.uci.ics.jung.visualization.decorators.EdgeShape;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.renderers.DefaultVertexLabelRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
-import org.apache.commons.collections15.ListUtils;
-import org.apache.commons.collections15.Predicate;
-import org.apache.commons.collections15.Transformer;
-import org.apache.commons.collections15.functors.ConstantTransformer;
-import org.apache.commons.collections15.functors.MapTransformer;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.UndirectedGraph;
-import org.jgrapht.alg.ConnectivityInspector;
-import org.jgrapht.alg.StrongConnectivityInspector;
-import org.jgrapht.graph.*;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
-import java.util.*;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 /** <p>Auxiliary static methods to work with graphs.</p>
  * 
@@ -1745,6 +1782,18 @@ public class GraphUtils
 	{
 		org.jgrapht.Graph<Node, Link> graph = JGraphTUtils.getGraphFromLinkMap(nodes, links);
 		return JGraphTUtils.isConnected(graph, new HashSet<Node>(nodes));
+	}
+
+	/** Returns the connected components of the given graph
+	 * 
+	 * @param nodes List of nodes
+	 * @param links List of links
+	 * @return see above */
+	public static List<Set<Node>> getConnectedComponents (List<Node> nodes, List<Link> links)
+	{
+		org.jgrapht.Graph<Node, Link> graph = JGraphTUtils.getGraphFromLinkMap(nodes, links);
+		final ConnectivityInspector<Node, Link> inspector = new ConnectivityInspector<Node, Link>((DirectedGraph<Node,Link>) graph);
+		return inspector.connectedSets();
 	}
 
 	/** Check whether the physical topology is simple, that is, if it has at most one unidirectional link from a node to each other.
