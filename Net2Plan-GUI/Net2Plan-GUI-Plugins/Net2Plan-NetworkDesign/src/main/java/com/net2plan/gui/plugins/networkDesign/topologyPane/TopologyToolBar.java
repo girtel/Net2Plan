@@ -179,6 +179,7 @@ public class TopologyToolBar extends JToolBar implements StateObserver, ActionLi
         {
             case ViewState:
             case SiteState:
+                btn_siteMode.setSelected(true);
                 btn_osmMap.setSelected(false);
                 break;
             case OSMState:
@@ -293,6 +294,9 @@ public class TopologyToolBar extends JToolBar implements StateObserver, ActionLi
                 {
                     btn_siteMode.setSelected(false);
                 }
+            } else
+            {
+                // TODO: Go back to previous state
             }
         }
     }
