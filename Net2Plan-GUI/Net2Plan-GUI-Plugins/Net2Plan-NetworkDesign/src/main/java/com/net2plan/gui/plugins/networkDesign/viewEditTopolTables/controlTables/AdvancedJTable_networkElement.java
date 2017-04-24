@@ -360,6 +360,8 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             this.buildAttributeControls();
         }
 
+        checkNewIndexes();
+
         this.setRowSelectionAllowed(true);
         this.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     }
@@ -776,13 +778,13 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             mainTable.getColumnModel().removeColumn(columnToHide);
             shownColumns.remove(columnToHide);
         }
-        checkNewIndexes();
         String currentColumnName = "";
         for (int j = 0; j < mapToSaveState.size(); j++)
         {
             currentColumnName = mapToSaveState.get(j);
             showColumn(currentColumnName, j, false);
         }
+        checkNewIndexes();
     }
 
     /**
@@ -928,16 +930,15 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
      *
      * @param
      */
-
-
     private void checkNewIndexes()
     {
         indexForEachColumn.clear();
-        for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
-        {
-            indexForEachColumn.put(mainTable.getColumnModel().getColumn(i).getHeaderValue().toString(), i);
-        }
 
+        for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
+            indexForEachColumn.put(mainTable.getColumnModel().getColumn(i).getHeaderValue().toString(), i);
+
+        for (int i = 0; i < fixedTable.getColumnModel().getColumnCount(); i++)
+            indexForEachColumn.put(fixedTable.getColumnModel().getColumn(i).getHeaderValue().toString(), i);
     }
 
     /**
