@@ -15,7 +15,9 @@ import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.JUNGState;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.JUNGStateController;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.StateSubject;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -54,8 +56,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.*;
 import java.util.List;
-
-import static com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.JUNGStateController.*;
 
 /**
  * Topology canvas using JUNG library [<a href='#jung'>JUNG</a>].
@@ -370,6 +370,12 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     /** STATE CONTROL **/
+
+    @Override
+    public StateSubject getStateSubject()
+    {
+        return stateController;
+    }
 
     @Override
     public void runSiteView(Node node)

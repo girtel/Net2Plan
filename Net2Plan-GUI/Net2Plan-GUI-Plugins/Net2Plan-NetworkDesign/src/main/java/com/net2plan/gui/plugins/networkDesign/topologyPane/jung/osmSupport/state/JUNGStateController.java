@@ -13,22 +13,16 @@ import java.awt.geom.Point2D;
  * @author Jorge San Emeterio
  * @date 17-Jan-17
  */
-public class JUNGStateController
+public class JUNGStateController extends StateSubject
 {
     private IJUNGState currentState;
     private final ViewState viewState;
     private final OSMState osmState;
 
     private final GUINetworkDesign callback;
-    private final TopologyPanel topologyPanel;
     private final ITopologyCanvas canvas;
 
     private final OSMController mapController;
-
-    public enum JUNGState
-    {
-        ViewState, OSMState, SiteState
-    }
 
     public JUNGStateController(GUINetworkDesign callback, TopologyPanel topologyPanel, ITopologyCanvas canvas)
     {
@@ -37,7 +31,6 @@ public class JUNGStateController
         assert canvas != null;
 
         this.callback = callback;
-        this.topologyPanel = topologyPanel;
         this.canvas = canvas;
 
         this.mapController = new OSMController(callback, topologyPanel, canvas);
@@ -48,6 +41,7 @@ public class JUNGStateController
         currentState = viewState;
     }
 
+    @Override
     public void setState(JUNGState state, Object... stateParameters)
     {
         currentState.stop();
@@ -73,12 +67,27 @@ public class JUNGStateController
             }
 
             currentState.start();
+
+            notifyAllObservers();
         } catch (RuntimeException e)
         {
             ErrorHandling.showErrorDialog("Error");
             e.printStackTrace();
             this.setState(JUNGState.ViewState);
         }
+    }
+
+    @Override
+    public JUNGState getState()
+    {
+        if (currentState instanceof ViewState)
+            return JUNGState.ViewState;
+        else if (currentState instanceof SiteState)
+            return JUNGState.SiteState;
+        else if (currentState instanceof OSMState)
+            return JUNGState.OSMState;
+
+        throw new RuntimeException();
     }
 
     public void panTo(final Point2D initialPoint, final Point2D currentPoint)

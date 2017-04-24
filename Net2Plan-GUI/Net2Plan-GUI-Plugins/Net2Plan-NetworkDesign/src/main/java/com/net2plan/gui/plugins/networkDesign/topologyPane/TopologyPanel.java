@@ -17,6 +17,9 @@ import com.net2plan.gui.plugins.networkDesign.FileChooserNetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMException;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.JUNGState;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.StateObserver;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.StateSubject;
 import com.net2plan.gui.utils.FileDrop;
 import com.net2plan.gui.utils.JPopUpButton;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
@@ -42,7 +45,7 @@ import java.util.*;
 import java.util.List;
 
 @SuppressWarnings("unchecked")
-public class TopologyPanel extends JPanel implements ActionListener//FrequentisBackgroundPanel implements ActionListener//JPanel implements ActionListener
+public class TopologyPanel extends JPanel implements ActionListener, StateObserver//FrequentisBackgroundPanel implements ActionListener//JPanel implements ActionListener
 {
     private final GUINetworkDesign callback;
     private final ITopologyCanvas canvas;
@@ -63,6 +66,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final MultiLayerControlPanel multilayerControlPanel;
 
     private final File defaultDesignDirectory, defaultDemandDirectory;
+
+    private final StateSubject subject;
 
     private FileChooserNetworkDesign fc_netPlan, fc_demands;
 
@@ -374,7 +379,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             addPlugin(new MoveNodePlugin(callback, canvas, MouseEvent.BUTTON1_MASK | MouseEvent.CTRL_MASK));
 
         setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Network topology"));
-//        setAllowLoadTrafficDemand(callback.allowLoadTrafficDemands());
+
+        this.subject = canvas.getStateSubject();
+        this.subject.attach(this);
     }
 
     public VisualizationState getVisualizationState()
@@ -769,5 +776,22 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             canvas.runOSMSupport();
         else
             canvas.runDefaultView();
+    }
+
+    @Override
+    public void update()
+    {
+        final JUNGState state = subject.getState();
+
+        switch (state)
+        {
+            case ViewState:
+
+            case SiteState:
+                btn_osmMap.setSelected(false);
+                break;
+            case OSMState:
+                break;
+        }
     }
 }
