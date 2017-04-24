@@ -87,6 +87,11 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     protected final JTable mainTable;
     protected final JTable fixedTable;
 
+    public static final String COLUMN_ID = "Unique identifier";
+    public static final String COLUMN_INDEX = "Index";
+
+    public static final String COLUMN_ATTRIBUTES = "Attributes";
+
     private final JPopupMenu fixedTableMenu, mainTableMenu;
     private final JMenu showMenu;
     private final JMenuItem showAllItem, hideAllItem, resetItem, saveStateItem, loadStateItem;
@@ -168,30 +173,26 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         loadStateItem = new JMenuItem("Load tables visualization profile");
         saveStateItem = new JMenuItem("Save tables visualization profile");
 
-        if (canExpandAttributes)
+        if (hasAttributes())
         {
-            this.getModel().addTableModelListener(new TableModelListener()
+            this.getModel().addTableModelListener(e ->
             {
-                @Override
-                public void tableChanged(TableModelEvent e)
+                int changedColumn = e.getColumn();
+                int selectedRow = mainTable.getSelectedRow();
+                Object value = null;
+                if (changedColumn > getAttributesColumnIndex())
                 {
-                    int changedColumn = e.getColumn();
-                    int selectedRow = mainTable.getSelectedRow();
-                    Object value = null;
-                    if (changedColumn > getAttributesColumnIndex())
+                    attributesColumnsNames = getAttributesColumnsHeaders();
+                    for (String title : attributesColumnsNames)
                     {
-                        attributesColumnsNames = getAttributesColumnsHeaders();
-                        for (String title : attributesColumnsNames)
+                        if (getModel().getColumnName(changedColumn).equals("Att: " + title))
                         {
-                            if (getModel().getColumnName(changedColumn).equals("Att: " + title))
-                            {
-                                value = getModel().getValueAt(selectedRow, changedColumn);
-                                if (value != null)
-                                    callback.getDesign().getNetworkElement((Long) getModel().getValueAt(selectedRow, 0)).setAttribute(title, (String) value);
-                            }
+                            value = getModel().getValueAt(selectedRow, changedColumn);
+                            if (value != null)
+                                callback.getDesign().getNetworkElement((Long) getModel().getValueAt(selectedRow, 0)).setAttribute(title, (String) value);
                         }
-                        callback.updateVisualizationJustTables();
                     }
+                    callback.updateVisualizationJustTables();
                 }
             });
         }
@@ -1836,6 +1837,15 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     public void writeTableToFile(@Nonnull File file)
     {
         ExcelWriter.writeToFile(file, this.getTabName(), buildData());
+    }
+
+    public boolean hasAttributes()
+    {
+        for (int i = 0; i < this.getColumnCount(); i++)
+            if (this.getColumnName(i).equals(COLUMN_ATTRIBUTES))
+                return true;
+
+        return false;
     }
 
     private Object[][] buildData()
