@@ -45,6 +45,7 @@ class OSMState implements IJUNGState
     @Override
     public void stop()
     {
+        mapController.cleanMap();
     }
 
     @Override

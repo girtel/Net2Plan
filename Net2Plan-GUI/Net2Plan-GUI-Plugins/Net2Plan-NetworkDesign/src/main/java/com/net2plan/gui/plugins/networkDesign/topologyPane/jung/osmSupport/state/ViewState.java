@@ -44,7 +44,9 @@ class ViewState implements IJUNGState
     @Override
     public void start()
     {
-        mapController.cleanMap();
+        // Reset nodes' original position
+        canvas.updateAllVerticesXYPosition();
+        canvas.zoomAll();
     }
 
     @Override

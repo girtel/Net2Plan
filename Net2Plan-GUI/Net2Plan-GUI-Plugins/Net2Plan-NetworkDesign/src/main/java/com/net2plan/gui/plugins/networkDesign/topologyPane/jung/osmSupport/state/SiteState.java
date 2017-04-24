@@ -22,6 +22,11 @@ class SiteState extends ViewState
         super(callback, canvas, mapController);
     }
 
+    @Override
+    public void start()
+    {
+    }
+
     public void zoomSite(String siteName)
     {
         final VisualizationState visualizationState = callback.getVisualizationState();

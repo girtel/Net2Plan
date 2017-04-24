@@ -273,10 +273,6 @@ public class OSMController
             // Repaint canvas on the topology panel
             canvasPanel.add(canvas.getCanvasComponent(), BorderLayout.CENTER);
 
-            // Reset nodes' original position
-            canvas.updateAllVerticesXYPosition();
-            canvas.zoomAll();
-
             canvasPanel.validate();
             canvasPanel.repaint();
 
