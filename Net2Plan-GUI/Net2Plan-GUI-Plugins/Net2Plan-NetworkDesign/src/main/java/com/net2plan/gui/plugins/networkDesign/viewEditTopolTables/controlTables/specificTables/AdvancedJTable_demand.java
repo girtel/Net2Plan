@@ -96,7 +96,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
      */
     public AdvancedJTable_demand(final GUINetworkDesign callback)
     {
-        super(createTableModel(callback), callback, NetworkElementType.DEMAND, true);
+        super(createTableModel(callback), callback, NetworkElementType.DEMAND);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
         setColumnRowSortingFixedAndNonFixedTable();

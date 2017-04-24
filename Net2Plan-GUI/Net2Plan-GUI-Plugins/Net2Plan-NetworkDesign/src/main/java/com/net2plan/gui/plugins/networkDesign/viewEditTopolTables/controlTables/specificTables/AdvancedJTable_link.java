@@ -83,7 +83,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     public AdvancedJTable_link(final GUINetworkDesign callback)
     {
-        super(createTableModel(callback), callback, NetworkElementType.LINK, true);
+        super(createTableModel(callback), callback, NetworkElementType.LINK);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
         setColumnRowSortingFixedAndNonFixedTable();

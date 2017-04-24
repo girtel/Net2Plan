@@ -129,7 +129,7 @@ public interface ITopologyCanvas extends Plugin
 	 *
 	 * @since 0.3.0
 	 */
-	void resetPickedStateAndRefresh();
+	void cleanSelection();
 
 	/**
 	 * Refreshes the canvas.
@@ -143,7 +143,7 @@ public interface ITopologyCanvas extends Plugin
 	 *
 	 * @since 0.3.0
 	 */
-	void rebuildCanvasGraphAndRefresh();
+	void rebuildGraph();
 
 	/**
 	 * Takes a snapshot of the canvas.

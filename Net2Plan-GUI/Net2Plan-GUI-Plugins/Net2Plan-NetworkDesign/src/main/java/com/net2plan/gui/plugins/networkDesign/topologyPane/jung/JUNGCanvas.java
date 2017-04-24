@@ -305,7 +305,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public void resetPickedStateAndRefresh()
+    public void cleanSelection()
     {
         vv.getPickedVertexState().clear();
         vv.getPickedEdgeState().clear();
@@ -313,7 +313,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public void rebuildCanvasGraphAndRefresh()
+    public void rebuildGraph()
     {
         for (GUILink gl : new ArrayList<>(g.getEdges()))
             g.removeEdge(gl);

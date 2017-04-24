@@ -65,7 +65,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
 
     public AdvancedJTable_layer(final GUINetworkDesign networkViewer)
     {
-        super(createTableModel(networkViewer), networkViewer, NetworkElementType.LAYER, false);
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.LAYER);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         this.getTableHeader().setReorderingAllowed(false);

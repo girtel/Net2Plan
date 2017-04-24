@@ -71,7 +71,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
 
     public AdvancedJTable_srg(final GUINetworkDesign callback)
     {
-        super(createTableModel(callback), callback, NetworkElementType.SRG, true);
+        super(createTableModel(callback), callback, NetworkElementType.SRG);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
         setColumnRowSortingFixedAndNonFixedTable();

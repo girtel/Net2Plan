@@ -95,7 +95,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
      */
     public AdvancedJTable_node(final GUINetworkDesign callback)
     {
-        super(createTableModel(callback), callback, NetworkElementType.NODE, true);
+        super(createTableModel(callback), callback, NetworkElementType.NODE);
         this.updateVisualization = true;
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();

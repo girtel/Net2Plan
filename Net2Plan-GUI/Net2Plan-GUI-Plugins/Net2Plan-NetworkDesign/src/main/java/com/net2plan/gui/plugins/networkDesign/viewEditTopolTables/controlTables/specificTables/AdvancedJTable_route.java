@@ -70,7 +70,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
     public AdvancedJTable_route(final GUINetworkDesign callback)
     {
-        super(createTableModel(callback), callback, NetworkElementType.ROUTE, true);
+        super(createTableModel(callback), callback, NetworkElementType.ROUTE);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
         setColumnRowSortingFixedAndNonFixedTable();
