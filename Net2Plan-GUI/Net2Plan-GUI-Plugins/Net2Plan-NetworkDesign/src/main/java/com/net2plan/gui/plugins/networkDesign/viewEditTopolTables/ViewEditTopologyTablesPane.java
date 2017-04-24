@@ -248,7 +248,7 @@ public class ViewEditTopologyTablesPane extends JPanel
      * @param type   Network element type
      * @param itemId Item identifier (if null, it will just show the tab)
      */
-    public void selectViewItem(NetworkElementType type, Object itemId)
+    public void selectItemTab(NetworkElementType type, Object itemId)
     {
         AdvancedJTable_networkElement table = netPlanViewTable.get(type);
         int tabIndex = netPlanView.getSelectedIndex();
@@ -318,13 +318,17 @@ public class ViewEditTopologyTablesPane extends JPanel
     public void selectItem (NetworkElementType type, NetworkElement element)
     {
         final AdvancedJTable_networkElement table = netPlanViewTable.get(type);
-        final TableModel model = table.getModel();
-        final int numRows = model.getRowCount();
+        final int numRows = table.getRowCount();
+
+        final JTable fixedTable = table.getFixedTable();
+        final JTable mainTable = table.getMainTable();
+
         for (int row = 0; row < numRows; row++)
         {
-        	final Object idTableObject = model.getValueAt(row, 0);
+        	final Object idTableObject = table.getValueAt(row, 0);
         	if (idTableObject == null) continue;
-            if ((long) idTableObject == element.getId()) 
+        	if (!(idTableObject instanceof Long)) continue;
+            if ((long) idTableObject == element.getId())
             {
                 table.addRowSelectionInterval(table.convertRowIndexToModel(row), table.convertRowIndexToModel(row));
             	return;

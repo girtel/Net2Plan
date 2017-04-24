@@ -994,9 +994,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
      *
      * @param columnName name of the column whose index we want to know
      */
-    private int getColumnIndexByName(String columnName)
+    public int getColumnIndexByName(String columnName)
     {
-
+        if (!indexForEachColumn.containsKey(columnName)) return -1;
         return indexForEachColumn.get(columnName);
     }
 
@@ -1475,7 +1475,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    public static class ColumnComparator implements Comparator<Object>
+    protected static class ColumnComparator implements Comparator<Object>
     {
         private final boolean isDoubleWithParenthesis;
         private final RowSorter rs;
@@ -1576,7 +1576,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
      *
      * @return
      */
-    public ElementSelection getSelectedElements()
+    private ElementSelection getSelectedElements()
     {
         final int[] rowIndexes = this.getSelectedRows();
         final NetPlan np = callback.getDesign();

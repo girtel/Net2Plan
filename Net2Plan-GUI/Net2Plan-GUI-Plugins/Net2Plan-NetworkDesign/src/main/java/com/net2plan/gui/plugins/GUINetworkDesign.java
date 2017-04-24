@@ -530,7 +530,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     public void resetPickedStateAndUpdateView()
     {
         vs.resetPickedState();
-        topologyPanel.getCanvas().resetPickedStateAndRefresh();
+        topologyPanel.getCanvas().cleanSelection();
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.DEMAND).clearSelection();
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.MULTICAST_DEMAND).clearSelection();
         viewEditTopTables.getNetPlanViewTable().get(NetworkElementType.FORWARDING_RULE).clearSelection();
@@ -577,7 +577,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             }
         }
         topologyPanel.updateMultilayerVisibilityAndOrderPanel();
-        viewEditTopTables.selectViewItem(type, itemId);
+        viewEditTopTables.selectItemTab(type, itemId);
     }
 
     /**
@@ -810,7 +810,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     {
         vs.updateTableRowFilter(null, null);
         topologyPanel.updateMultilayerVisibilityAndOrderPanel();
-        topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
+        topologyPanel.getCanvas().rebuildGraph();
         topologyPanel.getCanvas().zoomAll();
         viewEditTopTables.updateView();
         focusPanel.updateView();
@@ -833,12 +833,12 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         if (modificationsMade.contains(NetworkElementType.LAYER))
         {
             topologyPanel.updateMultilayerVisibilityAndOrderPanel();
-            topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
+            topologyPanel.getCanvas().rebuildGraph();
             viewEditTopTables.updateView();
             focusPanel.updateView();
         } else if ((modificationsMade.contains(NetworkElementType.LINK) || modificationsMade.contains(NetworkElementType.NODE) || modificationsMade.contains(NetworkElementType.LAYER)))
         {
-            topologyPanel.getCanvas().rebuildCanvasGraphAndRefresh();
+            topologyPanel.getCanvas().rebuildGraph();
             viewEditTopTables.updateView();
             focusPanel.updateView();
         } else
