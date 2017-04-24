@@ -53,7 +53,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
 
     public AdvancedJTable_resource(final GUINetworkDesign callback)
     {
-        super(createTableModel(callback), callback, Constants.NetworkElementType.RESOURCE, true);
+        super(createTableModel(callback), callback, Constants.NetworkElementType.RESOURCE);
         setDefaultCellRenderers();
         setSpecificCellRenderers();
         setColumnRowSortingFixedAndNonFixedTable();

@@ -68,7 +68,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
 
     public AdvancedJTable_multicastTree(final GUINetworkDesign callback)
     {
-        super(createTableModel(callback), callback, NetworkElementType.MULTICAST_TREE, true);
+        super(createTableModel(callback), callback, NetworkElementType.MULTICAST_TREE);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
         setColumnRowSortingFixedAndNonFixedTable();

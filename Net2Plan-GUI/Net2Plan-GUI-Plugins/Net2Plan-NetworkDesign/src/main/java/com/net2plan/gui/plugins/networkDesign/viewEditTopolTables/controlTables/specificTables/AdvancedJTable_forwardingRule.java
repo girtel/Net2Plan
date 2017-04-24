@@ -56,7 +56,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
 
     public AdvancedJTable_forwardingRule(final GUINetworkDesign callback)
     {
-        super(createTableModel(callback), callback, NetworkElementType.FORWARDING_RULE, false);
+        super(createTableModel(callback), callback, NetworkElementType.FORWARDING_RULE);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
         setColumnRowSortingFixedAndNonFixedTable();
