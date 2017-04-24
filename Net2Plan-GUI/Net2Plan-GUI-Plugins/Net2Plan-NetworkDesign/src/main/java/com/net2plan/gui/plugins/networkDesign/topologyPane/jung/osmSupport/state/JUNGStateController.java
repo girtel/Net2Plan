@@ -18,7 +18,6 @@ public class JUNGStateController
     private IJUNGState currentState;
     private final ViewState viewState;
     private final OSMState osmState;
-    private final SiteState siteState;
 
     private final GUINetworkDesign callback;
     private final TopologyPanel topologyPanel;
@@ -45,7 +44,6 @@ public class JUNGStateController
 
         viewState = new ViewState(callback, canvas, mapController);
         osmState = new OSMState(callback, canvas, mapController);
-        siteState = new SiteState(callback, canvas, mapController);
 
         currentState = viewState;
     }
@@ -69,9 +67,8 @@ public class JUNGStateController
                     assert stateParameters[0] instanceof Node;
 
                     final Node node = (Node) stateParameters[0];
-                    currentState = siteState;
 
-                    ((SiteState) currentState).zoomSite(node.getSiteName());
+                    currentState = new SiteState(callback, canvas, mapController, node.getSiteName());
                     break;
             }
 

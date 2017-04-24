@@ -17,17 +17,23 @@ import java.util.Set;
  */
 class SiteState extends ViewState
 {
-    SiteState(GUINetworkDesign callback, ITopologyCanvas canvas, OSMController mapController)
+    private final String siteName;
+
+    SiteState(GUINetworkDesign callback, ITopologyCanvas canvas, OSMController mapController, String siteName)
     {
         super(callback, canvas, mapController);
+
+        this.siteName = siteName;
     }
 
     @Override
     public void start()
     {
+        updateNodesXYPosition();
+        zoomSite();
     }
 
-    public void zoomSite(String siteName)
+    public void zoomSite()
     {
         final VisualizationState visualizationState = callback.getVisualizationState();
         final NetPlan netPlan = callback.getDesign();
