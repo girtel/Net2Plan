@@ -67,7 +67,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
     public AdvancedJTable_multicastDemand(final GUINetworkDesign callback)
     {
-        super(createTableModel(callback), callback, NetworkElementType.MULTICAST_DEMAND, true);
+        super(createTableModel(callback), callback, NetworkElementType.MULTICAST_DEMAND);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
         setColumnRowSortingFixedAndNonFixedTable();

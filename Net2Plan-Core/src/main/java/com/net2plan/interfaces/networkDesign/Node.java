@@ -29,9 +29,6 @@ import com.net2plan.internal.UnmodifiablePoint2D;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
-import cern.colt.list.tdouble.DoubleArrayList;
-import cern.colt.list.tint.IntArrayList;
-
 
 /** <p>This class contains a representation of a node.
  * <ul>
@@ -476,6 +473,17 @@ public class Node extends NetworkElement
 		return res;
 	}
 
+	public boolean isConnectedRelevantAtLayer(NetworkLayer layer)
+	{
+		if (!getOutgoingLinks(layer).isEmpty()) return true;
+		if (!getIncomingLinks(layer).isEmpty()) return true;
+		if (!getOutgoingDemands(layer).isEmpty()) return true;
+		if (!getIncomingDemands(layer).isEmpty()) return true;
+		if (!getOutgoingMulticastDemands(layer).isEmpty()) return true;
+		if (!getIncomingMulticastDemands(layer).isEmpty()) return true;
+		return false;
+	}
+	
 	/**
 	 * <p>Returns the set of links initiated in the node, in the given layer. If no layer is provided, the default layer is assumed.</p>
 	 * @param optionalLayerParameter Network layer (optional)
