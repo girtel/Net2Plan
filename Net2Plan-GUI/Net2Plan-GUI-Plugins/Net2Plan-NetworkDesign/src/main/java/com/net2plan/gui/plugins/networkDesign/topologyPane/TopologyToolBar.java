@@ -3,6 +3,7 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMException;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.JUNGState;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.StateObserver;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.StateSubject;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
@@ -32,7 +33,7 @@ public class TopologyToolBar extends JToolBar implements StateObserver, ActionLi
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseNodeSize, btn_decreaseNodeSize, btn_increaseFontSize, btn_decreaseFontSize;
     private final JButton btn_increaseLinkSize, btn_decreaseLinkSize, btn_tableControlWindow;
-    private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes, btn_osmMap;
+    private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes, btn_osmMap, btn_siteMode;
 
     public TopologyToolBar(GUINetworkDesign callback, TopologyPanel topologyPanel, ITopologyCanvas canvas)
     {
@@ -85,8 +86,10 @@ public class TopologyToolBar extends JToolBar implements StateObserver, ActionLi
         btn_increaseFontSize.setToolTipText("Increase font size");
         btn_decreaseFontSize = new JButton();
         btn_decreaseFontSize.setToolTipText("Decrease font size");
-        btn_osmMap = new JToggleButton();
-        btn_osmMap.setToolTipText("Toggle between on/off the OSM support. An internet connection is required in order for this to work.");
+        btn_siteMode = new JToggleButton("Site");
+        btn_siteMode.setToolTipText("Toggle between ");
+        btn_osmMap = new JToggleButton("Toggle on/off node site view.");
+        btn_osmMap.setToolTipText("Toggle on/off OSM support. An Internet connection is requires for this function.");
         btn_tableControlWindow = new JButton();
         btn_tableControlWindow.setToolTipText("Show the network topology control window.");
         btn_reset = new JButton("Reset");
@@ -131,6 +134,7 @@ public class TopologyToolBar extends JToolBar implements StateObserver, ActionLi
         btn_decreaseLinkSize.addActionListener(this);
         btn_increaseFontSize.addActionListener(this);
         btn_decreaseFontSize.addActionListener(this);
+        btn_siteMode.addActionListener(this);
         btn_osmMap.addActionListener(this);
         btn_tableControlWindow.addActionListener(this);
 
@@ -155,6 +159,7 @@ public class TopologyToolBar extends JToolBar implements StateObserver, ActionLi
         this.add(btn_decreaseFontSize);
         this.add(new JToolBar.Separator());
         this.add(Box.createHorizontalGlue());
+        this.add(btn_siteMode);
         this.add(btn_osmMap);
         this.add(btn_tableControlWindow);
         this.add(btn_reset);
@@ -167,6 +172,16 @@ public class TopologyToolBar extends JToolBar implements StateObserver, ActionLi
     @Override
     public void update()
     {
+        final JUNGState state = subject.getState();
+        switch (state)
+        {
+            case ViewState:
+            case SiteState:
+                btn_osmMap.setSelected(false);
+                break;
+            case OSMState:
+                break;
+        }
     }
 
     @Override

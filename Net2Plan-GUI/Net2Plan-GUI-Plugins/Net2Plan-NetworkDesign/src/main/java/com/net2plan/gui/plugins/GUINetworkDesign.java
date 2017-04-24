@@ -573,7 +573,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                 }
             }
         }
-        topologyPanel.updateMultilayerVisibilityAndOrderPanel();
+        topologyPanel.updateMultilayerPanel();
         viewEditTopTables.selectItemTab(type, itemId);
     }
 
@@ -806,7 +806,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     public void updateVisualizationAfterNewTopology()
     {
         vs.updateTableRowFilter(null, null);
-        topologyPanel.updateMultilayerVisibilityAndOrderPanel();
+        topologyPanel.updateMultilayerPanel();
         topologyPanel.getCanvas().rebuildGraph();
         topologyPanel.getCanvas().zoomAll();
         viewEditTopTables.updateView();
@@ -829,7 +829,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         if (modificationsMade.contains(NetworkElementType.LAYER))
         {
-            topologyPanel.updateMultilayerVisibilityAndOrderPanel();
+            topologyPanel.updateMultilayerPanel();
             topologyPanel.getCanvas().rebuildGraph();
             viewEditTopTables.updateView();
             focusPanel.updateView();
