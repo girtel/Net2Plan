@@ -87,6 +87,11 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     protected final JTable mainTable;
     protected final JTable fixedTable;
 
+    public static final String COLUMN_ID = "Unique identifier";
+    public static final String COLUMN_INDEX = "Index";
+
+    public static final String COLUMN_ATTRIBUTES = "Attributes";
+
     private final JPopupMenu fixedTableMenu, mainTableMenu;
     private final JMenu showMenu;
     private final JMenuItem showAllItem, hideAllItem, resetItem, saveStateItem, loadStateItem;
@@ -111,7 +116,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
      * @param networkElementType Network element type
      * @since 0.2.0
      */
-    public AdvancedJTable_networkElement(TableModel model, final GUINetworkDesign networkViewer, NetworkElementType networkElementType, boolean canExpandAttributes)
+    public AdvancedJTable_networkElement(TableModel model, final GUINetworkDesign networkViewer, NetworkElementType networkElementType)
     {
         super(model);
         this.model = model;
@@ -168,30 +173,26 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         loadStateItem = new JMenuItem("Load tables visualization profile");
         saveStateItem = new JMenuItem("Save tables visualization profile");
 
-        if (canExpandAttributes)
+        if (hasAttributes())
         {
-            this.getModel().addTableModelListener(new TableModelListener()
+            this.getModel().addTableModelListener(e ->
             {
-                @Override
-                public void tableChanged(TableModelEvent e)
+                int changedColumn = e.getColumn();
+                int selectedRow = mainTable.getSelectedRow();
+                Object value = null;
+                if (changedColumn > getAttributesColumnIndex())
                 {
-                    int changedColumn = e.getColumn();
-                    int selectedRow = mainTable.getSelectedRow();
-                    Object value = null;
-                    if (changedColumn > getAttributesColumnIndex())
+                    attributesColumnsNames = getAttributesColumnsHeaders();
+                    for (String title : attributesColumnsNames)
                     {
-                        attributesColumnsNames = getAttributesColumnsHeaders();
-                        for (String title : attributesColumnsNames)
+                        if (getModel().getColumnName(changedColumn).equals("Att: " + title))
                         {
-                            if (getModel().getColumnName(changedColumn).equals("Att: " + title))
-                            {
-                                value = getModel().getValueAt(selectedRow, changedColumn);
-                                if (value != null)
-                                    callback.getDesign().getNetworkElement((Long) getModel().getValueAt(selectedRow, 0)).setAttribute(title, (String) value);
-                            }
+                            value = getModel().getValueAt(selectedRow, changedColumn);
+                            if (value != null)
+                                callback.getDesign().getNetworkElement((Long) getModel().getValueAt(selectedRow, 0)).setAttribute(title, (String) value);
                         }
-                        callback.updateVisualizationJustTables();
                     }
+                    callback.updateVisualizationJustTables();
                 }
             });
         }
@@ -358,6 +359,8 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
             this.buildAttributeControls();
         }
+
+        checkNewIndexes();
 
         this.setRowSelectionAllowed(true);
         this.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -775,13 +778,13 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             mainTable.getColumnModel().removeColumn(columnToHide);
             shownColumns.remove(columnToHide);
         }
-        checkNewIndexes();
         String currentColumnName = "";
         for (int j = 0; j < mapToSaveState.size(); j++)
         {
             currentColumnName = mapToSaveState.get(j);
             showColumn(currentColumnName, j, false);
         }
+        checkNewIndexes();
     }
 
     /**
@@ -924,19 +927,16 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     /**
      * When a column is moved into mainTable,
      * we have to know which are the new indexes and update indexForEachColumn
-     *
-     * @param
      */
-
-
     private void checkNewIndexes()
     {
         indexForEachColumn.clear();
-        for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
-        {
-            indexForEachColumn.put(mainTable.getColumnModel().getColumn(i).getHeaderValue().toString(), i);
-        }
 
+        for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
+            indexForEachColumn.put(mainTable.getColumnModel().getColumn(i).getHeaderValue().toString(), i);
+
+        for (int i = 0; i < fixedTable.getColumnModel().getColumnCount(); i++)
+            indexForEachColumn.put(fixedTable.getColumnModel().getColumn(i).getHeaderValue().toString(), i);
     }
 
     /**
@@ -989,21 +989,34 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         mainTable.getColumnModel().addColumn(columnToRecover);
     }
 
-    /**
-     * Gets the index of a column
-     *
-     * @param columnName name of the column whose index we want to know
-     */
-    private int getColumnIndexByName(String columnName)
+    public long getElementID(int row)
     {
+        for (int i = 0; i < mainTable.getColumnCount(); i++)
+        {
+            if (COLUMN_ID.equals(mainTable.getColumnName(i)))
+            {
+                final Object value = mainTable.getValueAt(row, i);
+                if (!(value instanceof Long)) return -1;
+                return (long) value;
+            }
+        }
 
-        return indexForEachColumn.get(columnName);
+        for (int i = 0; i < fixedTable.getColumnCount(); i++)
+        {
+            if (COLUMN_ID.equals(fixedTable.getColumnName(i)))
+            {
+                final Object value = fixedTable.getValueAt(row, i);
+                if (!(value instanceof Long)) return -1;
+                return (long) value;
+            }
+        }
+
+        return -1;
     }
 
     /**
      * Expands attributes in different columns, one for each attribute
      */
-
     private void attributesInDifferentColumns()
     {
         saveColumnsPositions();
@@ -1475,7 +1488,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    public static class ColumnComparator implements Comparator<Object>
+    protected static class ColumnComparator implements Comparator<Object>
     {
         private final boolean isDoubleWithParenthesis;
         private final RowSorter rs;
@@ -1576,7 +1589,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
      *
      * @return
      */
-    public ElementSelection getSelectedElements()
+    private ElementSelection getSelectedElements()
     {
         final int[] rowIndexes = this.getSelectedRows();
         final NetPlan np = callback.getDesign();
@@ -1836,6 +1849,15 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     public void writeTableToFile(@Nonnull File file)
     {
         ExcelWriter.writeToFile(file, this.getTabName(), buildData());
+    }
+
+    public boolean hasAttributes()
+    {
+        for (int i = 0; i < this.getColumnCount(); i++)
+            if (this.getColumnName(i).equals(COLUMN_ATTRIBUTES))
+                return true;
+
+        return false;
     }
 
     private Object[][] buildData()

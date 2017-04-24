@@ -196,7 +196,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     /**
      * Converts a point from the SWING coordinates system into a point from the JUNG coordinates system.
      *
-     * @param jungLayoutCoord (@code Point2D) on the SWING canvas.
+     * @param npCoord (@code Point2D) on the SWING canvas.
      * @return (@code Point2D) on the JUNG canvas.
      */
     @Override
@@ -306,7 +306,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public void resetPickedStateAndRefresh()
+    public void cleanSelection()
     {
         vv.getPickedVertexState().clear();
         vv.getPickedEdgeState().clear();
@@ -314,7 +314,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public void rebuildCanvasGraphAndRefresh()
+    public void rebuildGraph()
     {
         for (GUILink gl : new ArrayList<>(g.getEdges()))
             g.removeEdge(gl);
@@ -423,63 +423,6 @@ public final class JUNGCanvas implements ITopologyCanvas
     public Point2D getCanvasCenter()
     {
         return vv.getCenter();
-    }
-
-    public void setBackgroundImage(final File bgFile, final double x, final double y)
-    {
-        final Double x1 = x;
-        final Double y1 = y;
-
-        setBackgroundImage(bgFile, x1.intValue(), y1.intValue());
-    }
-
-    public void setBackgroundImage(final File bgFile, final int x, final int y)
-    {
-        final ImageIcon background = new ImageIcon(bgFile.getAbsolutePath());
-        updateBackgroundImage(background, x, y);
-    }
-
-    public void setBackgroundImage(final ImageIcon image, final int x, final int y)
-    {
-        updateBackgroundImage(image, x, y);
-    }
-
-    public void updateBackgroundImage(final ImageIcon icon)
-    {
-        updateBackgroundImage(icon, 0, 0);
-    }
-
-    public void updateBackgroundImage(final ImageIcon icon, final int x, final int y)
-    {
-        if (paintableAssociatedToBackgroundImage != null)
-            vv.removePreRenderPaintable(paintableAssociatedToBackgroundImage);
-        paintableAssociatedToBackgroundImage = null;
-        if (icon != null)
-        {
-            this.paintableAssociatedToBackgroundImage = new VisualizationViewer.Paintable()
-            {
-                public void paint(Graphics g)
-                {
-                    Graphics2D g2d = (Graphics2D) g;
-                    AffineTransform oldXform = g2d.getTransform();
-                    AffineTransform lat = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.LAYOUT).getTransform();
-                    AffineTransform vat = vv.getRenderContext().getMultiLayerTransformer().getTransformer(Layer.VIEW).getTransform();
-                    AffineTransform at = new AffineTransform();
-                    at.concatenate(g2d.getTransform());
-                    at.concatenate(vat);
-                    at.concatenate(lat);
-                    g2d.setTransform(at);
-                    g.drawImage(icon.getImage(), x, y, icon.getIconWidth(), icon.getIconHeight(), vv);
-                    g2d.setTransform(oldXform);
-                }
-
-                public boolean useTransform()
-                {
-                    return false;
-                }
-            };
-            vv.addPreRenderPaintable(paintableAssociatedToBackgroundImage);
-        }
     }
 
     @Override

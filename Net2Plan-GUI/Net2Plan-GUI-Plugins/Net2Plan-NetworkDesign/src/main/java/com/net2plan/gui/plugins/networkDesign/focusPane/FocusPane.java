@@ -46,11 +46,8 @@ public class FocusPane extends JPanel
         final List<NetworkElement> pickedElement = vs.getPickedNetworkElements();
         final List<Pair<Demand, Link>> pickedForwardingRule = vs.getPickedForwardingRules();
 
-//		/* Do nothing if more than one element is picked */
-//        if (pickedElement.size() > 1) return;
-//        if (pickedForwardingRule.size() > 1) return;
-//
-		this.removeAll(); this.revalidate(); this.repaint();
+        assert pickedElement != null;
+        assert pickedForwardingRule != null;
 
 		/* Return empty panel if zero or more than one element is picked */
 		/* Check if remove everything */
