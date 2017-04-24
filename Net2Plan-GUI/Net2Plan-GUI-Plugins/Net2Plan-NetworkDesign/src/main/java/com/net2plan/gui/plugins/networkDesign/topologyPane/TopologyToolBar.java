@@ -9,6 +9,8 @@ import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
 import org.apache.commons.collections15.BidiMap;
 
@@ -87,8 +89,8 @@ public class TopologyToolBar extends JToolBar implements StateObserver, ActionLi
         btn_decreaseFontSize = new JButton();
         btn_decreaseFontSize.setToolTipText("Decrease font size");
         btn_siteMode = new JToggleButton("Site");
-        btn_siteMode.setToolTipText("Toggle between ");
-        btn_osmMap = new JToggleButton("Toggle on/off node site view.");
+        btn_siteMode.setToolTipText("Toggle on/off node site view.");
+        btn_osmMap = new JToggleButton();
         btn_osmMap.setToolTipText("Toggle on/off OSM support. An Internet connection is requires for this function.");
         btn_tableControlWindow = new JButton();
         btn_tableControlWindow.setToolTipText("Show the network topology control window.");
@@ -180,6 +182,7 @@ public class TopologyToolBar extends JToolBar implements StateObserver, ActionLi
                 btn_osmMap.setSelected(false);
                 break;
             case OSMState:
+                btn_siteMode.setSelected(false);
                 break;
         }
     }
@@ -275,6 +278,22 @@ public class TopologyToolBar extends JToolBar implements StateObserver, ActionLi
         } else if (src == btn_tableControlWindow)
         {
             callback.showTableControlWindow();
+        } else if (src == btn_siteMode)
+        {
+            if (btn_siteMode.isSelected())
+            {
+                if (vs.getPickedElementType() == NetworkElementType.NODE)
+                {
+                    if (vs.getPickedNetworkElements().size() == 1)
+                    {
+                        final Node node = (Node) vs.getPickedNetworkElements().get(0);
+                        canvas.runSiteView(node);
+                    }
+                } else
+                {
+                    btn_siteMode.setSelected(false);
+                }
+            }
         }
     }
 }
