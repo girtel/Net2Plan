@@ -116,7 +116,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
      * @param networkElementType Network element type
      * @since 0.2.0
      */
-    public AdvancedJTable_networkElement(TableModel model, final GUINetworkDesign networkViewer, NetworkElementType networkElementType, boolean canExpandAttributes)
+    public AdvancedJTable_networkElement(TableModel model, final GUINetworkDesign networkViewer, NetworkElementType networkElementType)
     {
         super(model);
         this.model = model;
