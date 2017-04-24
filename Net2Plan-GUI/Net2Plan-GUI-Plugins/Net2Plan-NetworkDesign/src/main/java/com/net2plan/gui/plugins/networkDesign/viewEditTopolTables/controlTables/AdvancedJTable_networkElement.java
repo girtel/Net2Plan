@@ -927,8 +927,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     /**
      * When a column is moved into mainTable,
      * we have to know which are the new indexes and update indexForEachColumn
-     *
-     * @param
      */
     private void checkNewIndexes()
     {
@@ -991,21 +989,34 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         mainTable.getColumnModel().addColumn(columnToRecover);
     }
 
-    /**
-     * Gets the index of a column
-     *
-     * @param columnName name of the column whose index we want to know
-     */
-    public int getColumnIndexByName(String columnName)
+    public long getElementID(int row)
     {
-        if (!indexForEachColumn.containsKey(columnName)) return -1;
-        return indexForEachColumn.get(columnName);
+        for (int i = 0; i < mainTable.getColumnCount(); i++)
+        {
+            if (COLUMN_ID.equals(mainTable.getColumnName(i)))
+            {
+                final Object value = mainTable.getValueAt(row, i);
+                if (!(value instanceof Long)) return -1;
+                return (long) value;
+            }
+        }
+
+        for (int i = 0; i < fixedTable.getColumnCount(); i++)
+        {
+            if (COLUMN_ID.equals(fixedTable.getColumnName(i)))
+            {
+                final Object value = fixedTable.getValueAt(row, i);
+                if (!(value instanceof Long)) return -1;
+                return (long) value;
+            }
+        }
+
+        return -1;
     }
 
     /**
      * Expands attributes in different columns, one for each attribute
      */
-
     private void attributesInDifferentColumns()
     {
         saveColumnsPositions();
