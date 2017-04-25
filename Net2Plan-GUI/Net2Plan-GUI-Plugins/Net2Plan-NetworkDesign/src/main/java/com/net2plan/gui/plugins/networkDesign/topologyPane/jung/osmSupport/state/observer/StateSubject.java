@@ -1,4 +1,6 @@
-package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state;
+package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.observer;
+
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.JUNGState;
 
 import java.util.ArrayList;
 import java.util.List;

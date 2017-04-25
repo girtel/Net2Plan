@@ -17,7 +17,7 @@ import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.FileChooserNetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.AddLinkGraphPlugin;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.plugins.AddLinkGraphPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.JUNGCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.plugins.MoveNodePlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.plugins.PanGraphPlugin;

@@ -10,12 +10,14 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.plugins.networkDesign.topologyPane.jung;
+package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.plugins;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import edu.uci.ics.jung.visualization.VisualizationServer.Paintable;
