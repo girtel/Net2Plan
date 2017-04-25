@@ -292,7 +292,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         // Building tab controller
         this.windowController = new WindowController(executionPane, onlineSimulationPane, whatIfAnalysisPane, reportPane);
 
-        addAllKeyCombinationActions();
+        addKeyCombinationActions();
         updateVisualizationAfterNewTopology();
     }
 
@@ -591,7 +591,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         return simState == SimState.PAUSED || simState == SimState.RUNNING || simState == SimState.STEP;
     }
 
-    private void addAllKeyCombinationActions()
+    private void addKeyCombinationActions()
     {
         addKeyCombinationAction("Resets the tool", new AbstractAction()
         {
@@ -622,73 +622,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.CTRL_DOWN_MASK));
 
-        /* From the TOPOLOGY PANEL */
-        addKeyCombinationAction("Load design", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                topologyPanel.loadDesign();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Save design", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                topologyPanel.saveDesign();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Zoom in", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0)
-                    topologyPanel.getCanvas().zoomIn();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Zoom out", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0)
-                    topologyPanel.getCanvas().zoomOut();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Zoom all", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0)
-                    topologyPanel.getCanvas().zoomAll();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_MULTIPLY, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Take snapshot", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                topologyPanel.takeSnapshot();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_F12, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Load traffic demands", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                topologyPanel.loadTrafficDemands();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
-        
         /* FROM REPORT */
         addKeyCombinationAction("Close selected report", new AbstractAction()
         {

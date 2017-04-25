@@ -218,7 +218,7 @@ public class TopologyTopBar extends JToolBar implements StateObserver, ActionLis
             canvas.refresh();
         } else if (src == btn_takeSnapshot)
         {
-            topologyPanel.takeSnapshot();
+            canvas.takeSnapshot();
         } else if (src == btn_zoomIn)
         {
             canvas.zoomIn();

@@ -40,9 +40,10 @@ public class TopologySideBar extends JToolBar implements ActionListener
         this.multilayerControlPanel = new MultiLayerControlPanel(callback);
 
         // MultiLayer control window
-        JPopupMenu multiLayerPopUp = new JPopupMenu();
+        final JPopupMenu multiLayerPopUp = new JPopupMenu();
         multiLayerPopUp.add(multilayerControlPanel);
-        JPopUpButton btn_multilayer = new JPopUpButton("", multiLayerPopUp);
+
+        final JPopUpButton btn_multilayer = new JPopUpButton("", multiLayerPopUp);
 
         /* Multilayer buttons */
         btn_increaseInterLayerDistance = new JButton();

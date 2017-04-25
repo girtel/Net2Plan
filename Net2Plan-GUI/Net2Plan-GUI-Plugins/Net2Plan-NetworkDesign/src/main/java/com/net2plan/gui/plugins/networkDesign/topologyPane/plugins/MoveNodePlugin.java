@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.plugins.networkDesign.topologyPane;
+package com.net2plan.gui.plugins.networkDesign.topologyPane.plugins;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;

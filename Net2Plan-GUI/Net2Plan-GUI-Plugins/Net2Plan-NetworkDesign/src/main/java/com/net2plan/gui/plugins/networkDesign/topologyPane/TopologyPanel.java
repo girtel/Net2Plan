@@ -19,6 +19,9 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.AddLinkGraphPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.plugins.MoveNodePlugin;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.plugins.PanGraphPlugin;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.plugins.PopupMenuPlugin;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.FileDrop;
 import com.net2plan.interfaces.networkDesign.*;
@@ -33,10 +36,7 @@ import org.apache.commons.collections15.BidiMap;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
+import java.awt.event.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -102,6 +102,10 @@ public class TopologyPanel extends JPanel
             this.defaultDesignDirectory = defaultDesignDirectory == null ? new File(currentDir + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "data" + SystemUtils.getDirectorySeparator() + "networkTopologies") : defaultDesignDirectory;
             this.defaultDemandDirectory = defaultDemandDirectory == null ? new File(currentDir + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "data" + SystemUtils.getDirectorySeparator() + "trafficMatrices") : defaultDemandDirectory;
 
+            // File chooser
+            this.fc_netPlan = new FileChooserNetworkDesign(defaultDesignDirectory, DialogType.NETWORK_DESIGN);
+            this.fc_demands = new FileChooserNetworkDesign(defaultDemandDirectory, DialogType.DEMANDS);
+
             // Declare canvas : Reflections
             this.canvas = canvasType.getDeclaredConstructor(GUINetworkDesign.class, TopologyPanel.class).newInstance(callback, this);
 
@@ -162,6 +166,9 @@ public class TopologyPanel extends JPanel
                 }
             });
 
+            // Key actions
+            this.addKeyCombinationActions();
+
             // File drop listener
             new FileDrop(canvasComponent, new LineBorder(Color.BLACK), files ->
             {
@@ -208,32 +215,85 @@ public class TopologyPanel extends JPanel
      * @param plugin Plugin to be added
      * @since 0.3.0
      */
-
     public void addPlugin(ITopologyCanvasPlugin plugin)
     {
         canvas.addPlugin(plugin);
     }
 
-    private void checkNetPlanFileChooser()
+    private void addKeyCombinationActions()
     {
-        if (fc_netPlan == null)
+        final TopologyPanel topologyPanel = TopologyPanel.this;
+
+        callback.addKeyCombinationAction("Load design", new AbstractAction()
         {
-            fc_netPlan = new FileChooserNetworkDesign(defaultDesignDirectory, DialogType.NETWORK_DESIGN);
-        }
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                topologyPanel.loadDesign();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Save design", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                topologyPanel.saveDesign();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Zoom in", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0)
+                    topologyPanel.getCanvas().zoomIn();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Zoom out", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0)
+                    topologyPanel.getCanvas().zoomOut();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Zoom all", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0)
+                    topologyPanel.getCanvas().zoomAll();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_MULTIPLY, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Take snapshot", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                canvas.takeSnapshot();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_F12, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Load traffic demands", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                topologyPanel.loadTrafficDemands();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
     }
 
-    private void checkDemandFileChooser()
+    public final void updateMultilayerPanel()
     {
-        if (fc_demands == null)
-        {
-            fc_demands = new FileChooserNetworkDesign(defaultDemandDirectory, DialogType.DEMANDS);
-        }
-    }
-
-    private String createLayerName(long layerId)
-    {
-        final NetworkLayer layer = callback.getDesign().getNetworkLayerFromId(layerId);
-        return "Layer " + layer.getIndex() + (layer.getName().isEmpty() ? "" : ": " + layer.getName());
+        sideBar.getMultilayerControlPanel().refreshTable();
     }
 
     public JPanel getCanvasPanel()
@@ -263,7 +323,7 @@ public class TopologyPanel extends JPanel
 
         try
         {
-            checkNetPlanFileChooser();
+            assert fc_netPlan != null;
 
             int rc = fc_netPlan.showOpenDialog(null);
             if (rc != JFileChooser.APPROVE_OPTION) return;
@@ -299,8 +359,9 @@ public class TopologyPanel extends JPanel
     {
         try
         {
+            assert fc_netPlan != null;
+
             NetPlan netPlan = new NetPlan(file);
-            checkNetPlanFileChooser();
             fc_netPlan.setCurrentDirectory(file.getParentFile());
 
             callback.setDesign(netPlan);
@@ -330,7 +391,7 @@ public class TopologyPanel extends JPanel
     {
         try
         {
-            checkDemandFileChooser();
+            assert fc_demands != null;
 
             int rc = fc_demands.showOpenDialog(null);
             if (rc != JFileChooser.APPROVE_OPTION) return;
@@ -389,7 +450,7 @@ public class TopologyPanel extends JPanel
     {
         try
         {
-            checkNetPlanFileChooser();
+            assert fc_netPlan != null;
 
             int rc = fc_netPlan.showSaveDialog(null);
             if (rc != JFileChooser.APPROVE_OPTION) return;
@@ -408,21 +469,5 @@ public class TopologyPanel extends JPanel
             ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
             ErrorHandling.showErrorDialog("Error saving network design");
         }
-    }
-
-
-    /**
-     * Take a snapshot of the canvas.
-     *
-     * @since 0.3.0
-     */
-    public void takeSnapshot()
-    {
-        canvas.takeSnapshot();
-    }
-
-    public final void updateMultilayerPanel()
-    {
-        sideBar.getMultilayerControlPanel().refreshTable();
     }
 }
