@@ -33,6 +33,12 @@ class SiteState extends ViewState
         zoomSite();
     }
 
+    @Override
+    public void zoomAll()
+    {
+        zoomSite();
+    }
+
     public void zoomSite()
     {
         final VisualizationState visualizationState = callback.getVisualizationState();

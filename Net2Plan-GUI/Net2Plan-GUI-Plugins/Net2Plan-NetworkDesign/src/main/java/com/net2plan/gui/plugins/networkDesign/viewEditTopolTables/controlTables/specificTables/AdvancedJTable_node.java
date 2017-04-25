@@ -71,7 +71,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     public static final int COLUMN_ATTRIBUTES = 18;
     private static final String netPlanViewTabName = "Nodes";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Show/Hide", "Name",
-            "State", "xCoord / Longitude", "yCoord / Latitude", "Outgoing links", "Incoming links",
+            "CanvasState", "xCoord / Longitude", "yCoord / Latitude", "Outgoing links", "Incoming links",
             "Ingress traffic", "Egress traffic", "Incoming traffic", "Outgoing traffic", "Ingress traffic (multicast)", "Egress traffic (multicast)", "SRGs", "Population", "Tags", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)",
             "Index (consecutive integer starting in zero)",

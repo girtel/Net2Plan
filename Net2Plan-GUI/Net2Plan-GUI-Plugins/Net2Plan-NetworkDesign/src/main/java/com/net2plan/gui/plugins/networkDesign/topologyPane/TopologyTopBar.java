@@ -3,7 +3,7 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMException;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.JUNGState;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.CanvasState;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.observer.StateObserver;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.observer.StateSubject;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
@@ -175,7 +175,7 @@ public class TopologyTopBar extends JToolBar implements StateObserver, ActionLis
     @Override
     public void update()
     {
-        final JUNGState state = subject.getState();
+        final CanvasState state = subject.getState();
         switch (state)
         {
             case ViewState:

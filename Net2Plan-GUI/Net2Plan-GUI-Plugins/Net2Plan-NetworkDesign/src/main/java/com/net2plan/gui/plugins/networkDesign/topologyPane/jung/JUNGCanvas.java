@@ -15,8 +15,8 @@ import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.JUNGState;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.JUNGStateController;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.CanvasState;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.CanvasStateController;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.observer.StateSubject;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.plugins.GraphMousePluginAdapter;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
@@ -80,7 +80,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     private final Transformer<Context<Graph<GUINode, GUILink>, GUILink>, Shape> originalEdgeShapeTransformer;
     private VisualizationServer.Paintable paintableAssociatedToBackgroundImage;
 
-    private final JUNGStateController stateController;
+    private final CanvasStateController stateController;
 
     /**
      * Default constructor.
@@ -103,7 +103,7 @@ public final class JUNGCanvas implements ITopologyCanvas
         l = new StaticLayout<>(g, transformNetPlanCoordinatesToJungCoordinates); 
         vv = new VisualizationViewer<>(l);
 
-        stateController = new JUNGStateController(callback, topologyPanel, this);
+        stateController = new CanvasStateController(callback, topologyPanel, this);
 
         originalEdgeShapeTransformer = new EdgeShape.QuadCurve<>();
         ((EdgeShape.QuadCurve<GUINode, GUILink>) originalEdgeShapeTransformer).setControlOffsetIncrement(10); // how much they separate from the direct line (default is 20)
@@ -382,19 +382,19 @@ public final class JUNGCanvas implements ITopologyCanvas
     public void runSiteView(Node node)
     {
         assert node != null;
-        stateController.setState(JUNGState.SiteState, node);
+        stateController.setState(CanvasState.SiteState, node);
     }
 
     @Override
     public void runOSMSupport()
     {
-        stateController.setState(JUNGState.OSMState);
+        stateController.setState(CanvasState.OSMState);
     }
 
     @Override
     public void runDefaultView()
     {
-        stateController.setState(JUNGState.ViewState);
+        stateController.setState(CanvasState.ViewState);
     }
 
     @Override

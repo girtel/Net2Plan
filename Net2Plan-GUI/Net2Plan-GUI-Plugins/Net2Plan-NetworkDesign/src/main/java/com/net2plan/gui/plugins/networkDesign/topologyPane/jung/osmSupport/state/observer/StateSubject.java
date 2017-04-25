@@ -1,6 +1,6 @@
 package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.observer;
 
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.JUNGState;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.CanvasState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,9 +13,9 @@ public abstract class StateSubject
 {
     protected List<StateObserver> observers = new ArrayList<>();
 
-    public abstract void setState(JUNGState state, Object... params);
+    public abstract void setState(CanvasState state, Object... params);
 
-    public abstract JUNGState getState();
+    public abstract CanvasState getState();
 
     public void attach(StateObserver observer)
     {

@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * @author Jorge San Emeterio
  * @date 19-Jan-17
  */
-class ViewState implements IJUNGState
+class ViewState implements ICanvasState
 {
     protected final GUINetworkDesign callback;
     protected final JUNGCanvas canvas;

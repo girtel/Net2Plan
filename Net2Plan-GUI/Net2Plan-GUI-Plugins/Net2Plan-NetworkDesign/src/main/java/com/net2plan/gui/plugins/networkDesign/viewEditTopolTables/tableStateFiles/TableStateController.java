@@ -102,7 +102,7 @@ public final class TableStateController
         return tStateMap;
     }
 
-    /*Takes the current State from table and saves in a external file .n2pst
+    /*Takes the current CanvasState from table and saves in a external file .n2pst
 
      */
     public static void saveTableState(Map<Constants.NetworkElementType, AdvancedJTable_networkElement> tables) throws XMLStreamException

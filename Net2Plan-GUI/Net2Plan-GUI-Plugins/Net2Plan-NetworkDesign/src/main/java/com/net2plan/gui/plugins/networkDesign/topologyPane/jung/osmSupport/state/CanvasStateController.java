@@ -14,9 +14,10 @@ import java.awt.geom.Point2D;
  * @author Jorge San Emeterio
  * @date 17-Jan-17
  */
-public class JUNGStateController extends StateSubject
+public class CanvasStateController extends StateSubject
 {
-    private IJUNGState currentState;
+    private ICanvasState currentState;
+
     private final ViewState viewState;
     private final OSMState osmState;
 
@@ -25,7 +26,7 @@ public class JUNGStateController extends StateSubject
 
     private final OSMController mapController;
 
-    public JUNGStateController(GUINetworkDesign callback, TopologyPanel topologyPanel, ITopologyCanvas canvas)
+    public CanvasStateController(GUINetworkDesign callback, TopologyPanel topologyPanel, ITopologyCanvas canvas)
     {
         assert callback != null;
         assert topologyPanel != null;
@@ -43,7 +44,7 @@ public class JUNGStateController extends StateSubject
     }
 
     @Override
-    public void setState(JUNGState state, Object... stateParameters)
+    public void setState(CanvasState state, Object... stateParameters)
     {
         currentState.stop();
 
@@ -74,23 +75,30 @@ public class JUNGStateController extends StateSubject
         {
             ErrorHandling.showErrorDialog("Error");
             e.printStackTrace();
-            this.setState(JUNGState.ViewState);
+            this.setState(CanvasState.ViewState);
         }
     }
 
     @Override
-    public JUNGState getState()
+    public CanvasState getState()
     {
         if (currentState instanceof ViewState)
-            return JUNGState.ViewState;
+            return CanvasState.ViewState;
         else if (currentState instanceof SiteState)
-            return JUNGState.SiteState;
+            return CanvasState.SiteState;
         else if (currentState instanceof OSMState)
-            return JUNGState.OSMState;
+            return CanvasState.OSMState;
 
         throw new RuntimeException();
     }
 
+    // ** Back step controller **
+    public void returnToPreviousState()
+    {
+
+    }
+
+    // ** Mediator interface **
     public void panTo(final Point2D initialPoint, final Point2D currentPoint)
     {
         currentState.panTo(initialPoint, currentPoint);
