@@ -25,7 +25,7 @@ import java.util.Map;
  * @author Jorge San Emeterio
  * @date 24/04/17
  */
-public class TopologyToolBar extends JToolBar implements StateObserver, ActionListener
+public class TopologyTopBar extends JToolBar implements StateObserver, ActionListener
 {
     private final GUINetworkDesign callback;
     private final TopologyPanel topologyPanel;
@@ -37,7 +37,7 @@ public class TopologyToolBar extends JToolBar implements StateObserver, ActionLi
     private final JButton btn_increaseLinkSize, btn_decreaseLinkSize, btn_tableControlWindow;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes, btn_osmMap, btn_siteMode;
 
-    public TopologyToolBar(GUINetworkDesign callback, TopologyPanel topologyPanel, ITopologyCanvas canvas)
+    public TopologyTopBar(GUINetworkDesign callback, TopologyPanel topologyPanel, ITopologyCanvas canvas)
     {
         super();
 
@@ -51,6 +51,7 @@ public class TopologyToolBar extends JToolBar implements StateObserver, ActionLi
         this.subject = canvas.getStateSubject();
         subject.attach(this);
 
+        this.setOrientation(JToolBar.HORIZONTAL);
         this.setRollover(true);
         this.setFloatable(false);
         this.setOpaque(false);
