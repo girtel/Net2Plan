@@ -108,13 +108,17 @@ public class CanvasStateController extends StateSubject
     public void returnToPreviousState()
     {
         // Save state information
-        stateMirror = new CanvasStateMirror(currentState.getState(), canvas.getCanvasCenter(), canvas.getCurrentCanvasScale());
+        final CanvasStateMirror newMirror = new CanvasStateMirror(currentState.getState(), canvas.getCanvasCenter(), canvas.getCurrentCanvasScale());
 
         // Move to old state
         setState(stateMirror.getState());
 
         canvas.panTo(canvas.getCanvasCenter(), stateMirror.getCanvasCenter());
+
+        canvas.zoom(canvas.getCanvasCenter(), 1 / ((float) canvas.getCurrentCanvasScale()));
         canvas.zoom(stateMirror.getCanvasCenter(), (float) stateMirror.getZoomLevel());
+
+        stateMirror = newMirror;
     }
 
     // ** Mediator interface **

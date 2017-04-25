@@ -298,6 +298,7 @@ public class TopologyTopBar extends JToolBar implements StateObserver, ActionLis
             } else
             {
                 canvas.returnToPreviousState();
+                btn_siteMode.setSelected(false);
             }
         }
     }
