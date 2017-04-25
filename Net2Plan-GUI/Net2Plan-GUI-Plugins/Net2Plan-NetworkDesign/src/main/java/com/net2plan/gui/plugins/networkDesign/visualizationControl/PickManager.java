@@ -22,6 +22,8 @@ class PickManager
 {
     private final VisualizationState vs;
 
+    private PickTimeLineManager pickTimeLineManager;
+
     private NetworkElementType pickedElementType;
     private List<? extends NetworkElement> pickedElement;
     private List<Pair<Demand, Link>> pickedForwardingRule;
@@ -30,14 +32,11 @@ class PickManager
     {
         this.vs = vs;
 
+        this.pickTimeLineManager = new PickTimeLineManager();
+        
         this.pickedElementType = null;
         this.pickedElement = null;
         this.pickedForwardingRule = null;
-    }
-
-    void restartManager()
-    {
-
     }
 
     boolean isElementPicked()
@@ -61,58 +60,13 @@ class PickManager
         return pickedForwardingRule == null ? new ArrayList<>() : Collections.unmodifiableList(pickedForwardingRule);
     }
 
-    void pickNode(Node node)
-    {
-        pickNode(Collections.singletonList(node));
-    }
-
-    void pickLink(Link link)
-    {
-        pickLink(Collections.singletonList(link));
-    }
-
-    void pickDemand(Demand demand)
-    {
-        pickDemand(Collections.singletonList(demand));
-    }
-
-    void pickSRG(SharedRiskGroup srg)
-    {
-        pickSRG(Collections.singletonList(srg));
-    }
-
-    void pickMulticastDemand(MulticastDemand multicastDemand)
-    {
-        pickMulticastDemand(Collections.singletonList(multicastDemand));
-    }
-
-    void pickRoute(Route route)
-    {
-        pickRoute(Collections.singletonList(route));
-    }
-
-    void pickMulticastTree(MulticastTree tree)
-    {
-        pickMulticastTree(Collections.singletonList(tree));
-    }
-
-    void pickResource(Resource resource)
-    {
-        pickResource(Collections.singletonList(resource));
-    }
-
-    void pickForwardingRule(Pair<Demand, Link> fr)
-    {
-        pickForwardingRule(Collections.singletonList(fr));
-    }
-
     void pickLayer(NetworkLayer pickedLayer)
     {
         resetPickedState();
         this.pickedElementType = NetworkElementType.LAYER;
         this.pickedForwardingRule = null;
         this.pickedElement = Arrays.asList(pickedLayer);
-        vs.addElementToPickTimeline(pickedLayer);
+        this.addElementToPickTimeline(pickedLayer);
     }
 
     void pickDemand(List<Demand> pickedDemands)
@@ -121,7 +75,7 @@ class PickManager
         this.pickedElementType = NetworkElementType.DEMAND;
         this.pickedForwardingRule = null;
         this.pickedElement = pickedDemands;
-        if (pickedDemands.size() == 1) vs.addElementToPickTimeline(pickedDemands.get(0));
+        if (pickedDemands.size() == 1) this.addElementToPickTimeline(pickedDemands.get(0));
 
         Pair<Set<Link>, Set<Link>> thisLayerPropagation = null;
         for (Demand pickedDemand : pickedDemands)
@@ -186,7 +140,7 @@ class PickManager
         this.pickedElementType = NetworkElementType.SRG;
         this.pickedForwardingRule = null;
         this.pickedElement = pickedSRGs;
-        if (pickedSRGs.size() == 1) vs.addElementToPickTimeline(pickedSRGs.get(0));
+        if (pickedSRGs.size() == 1) this.addElementToPickTimeline(pickedSRGs.get(0));
 
         for (SharedRiskGroup pickedSRG : pickedSRGs)
         {
@@ -252,7 +206,7 @@ class PickManager
         this.pickedElementType = NetworkElementType.MULTICAST_DEMAND;
         this.pickedForwardingRule = null;
         this.pickedElement = pickedDemands;
-        if (pickedDemands.size() == 1) vs.addElementToPickTimeline(pickedDemands.get(0));
+        if (pickedDemands.size() == 1) this.addElementToPickTimeline(pickedDemands.get(0));
 
         for (MulticastDemand pickedDemand : pickedDemands)
         {
@@ -307,7 +261,7 @@ class PickManager
         this.pickedElementType = NetworkElementType.ROUTE;
         this.pickedForwardingRule = null;
         this.pickedElement = pickedRoutes;
-        if (pickedRoutes.size() == 1) vs.addElementToPickTimeline(pickedRoutes.get(0));
+        if (pickedRoutes.size() == 1) this.addElementToPickTimeline(pickedRoutes.get(0));
 
         for (Route pickedRoute : pickedRoutes)
         {
@@ -349,7 +303,7 @@ class PickManager
         this.pickedElementType = NetworkElementType.MULTICAST_TREE;
         this.pickedForwardingRule = null;
         this.pickedElement = pickedTrees;
-        if (pickedTrees.size() == 1) vs.addElementToPickTimeline(pickedTrees.get(0));
+        if (pickedTrees.size() == 1) this.addElementToPickTimeline(pickedTrees.get(0));
 
         for (MulticastTree pickedTree : pickedTrees)
         {
@@ -398,7 +352,7 @@ class PickManager
         this.pickedElementType = NetworkElementType.LINK;
         this.pickedForwardingRule = null;
         this.pickedElement = pickedLinks;
-        if (pickedLinks.size() == 1) vs.addElementToPickTimeline(pickedLinks.get(0));
+        if (pickedLinks.size() == 1) this.addElementToPickTimeline(pickedLinks.get(0));
 
         for (Link pickedLink : pickedLinks)
         {
@@ -449,7 +403,7 @@ class PickManager
         this.pickedElementType = NetworkElementType.NODE;
         this.pickedForwardingRule = null;
         this.pickedElement = pickedNodes;
-        if (pickedNodes.size() == 1) vs.addElementToPickTimeline(pickedNodes.get(0));
+        if (pickedNodes.size() == 1) this.addElementToPickTimeline(pickedNodes.get(0));
 
         for (Node pickedNode : pickedNodes)
         {
@@ -473,7 +427,7 @@ class PickManager
         this.pickedElementType = NetworkElementType.RESOURCE;
         this.pickedForwardingRule = null;
         this.pickedElement = pickedResources;
-        if (pickedResources.size() == 1) vs.addElementToPickTimeline(pickedResources.get(0));
+        if (pickedResources.size() == 1) this.addElementToPickTimeline(pickedResources.get(0));
 
         for (Resource pickedResource : pickedResources)
         {
@@ -491,7 +445,7 @@ class PickManager
         this.pickedElementType = NetworkElementType.FORWARDING_RULE;
         this.pickedForwardingRule = pickedFRs;
         this.pickedElement = null;
-        if (pickedFRs.size() == 1) vs.addElementToPickTimeline(pickedFRs.get(0));
+        if (pickedFRs.size() == 1) this.addElementToPickTimeline(pickedFRs.get(0));
 
         for (Pair<Demand, Link> pickedFR : pickedFRs)
         {
@@ -536,19 +490,6 @@ class PickManager
                 gl.getDestinationNode().setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
             }
         }
-    }
-
-    void pickElement(NetworkElement es)
-    {
-        if (es instanceof Node) pickNode((Node) es);
-        else if (es instanceof Link) pickLink((Link) es);
-        else if (es instanceof Demand) pickDemand((Demand) es);
-        else if (es instanceof Route) pickRoute((Route) es);
-        else if (es instanceof MulticastDemand) pickMulticastDemand((MulticastDemand) es);
-        else if (es instanceof MulticastTree) pickMulticastTree((MulticastTree) es);
-        else if (es instanceof Resource) pickResource((Resource) es);
-        else if (es instanceof SharedRiskGroup) pickSRG((SharedRiskGroup) es);
-        else throw new RuntimeException();
     }
 
     void pickElement(List<? extends NetworkElement> es)
@@ -667,5 +608,25 @@ class PickManager
     private void setCurrentDefaultEdgeStroke(GUILink e, BasicStroke a, BasicStroke na)
     {
         e.setEdgeStroke(vs.resizedBasicStroke(a, vs.getLinkWidthFactor()), vs.resizedBasicStroke(na, vs.getLinkWidthFactor()));
+    }
+
+    private void addElementToPickTimeline(NetworkElement element)
+    {
+        pickTimeLineManager.addElement(vs.getNetPlan(), element);
+    }
+
+    private void addElementToPickTimeline(Pair<Demand, Link> element)
+    {
+        pickTimeLineManager.addElement(vs.getNetPlan(), element);
+    }
+
+    Object getPickNavigationBackElement()
+    {
+        return pickTimeLineManager.getPickNavigationBackElement();
+    }
+
+    Object getPickNavigationForwardElement()
+    {
+        return pickTimeLineManager.getPickNavigationForwardElement();
     }
 }

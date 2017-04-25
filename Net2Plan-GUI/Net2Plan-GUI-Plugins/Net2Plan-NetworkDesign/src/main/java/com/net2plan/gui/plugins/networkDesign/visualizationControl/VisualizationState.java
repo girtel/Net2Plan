@@ -14,7 +14,6 @@ import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.MapUtils;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
-
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -28,8 +27,7 @@ public class VisualizationState
 {
     private static Map<Triple<URL, Integer, Color>, Pair<ImageIcon, Shape>> databaseOfAlreadyReadIcons = new HashMap<>(); // for each url, height, and border color, an image
 
-    private final PickTimeLineManager pickTimeLineManager;
-    private final PickManager pickManager;
+    private PickManager pickManager;
 
     private boolean showInCanvasNodeNames;
     private boolean showInCanvasLinkLabels;
@@ -83,7 +81,6 @@ public class VisualizationState
         this.linkWidthFactor = 1;
         this.nodeSizeFactor = 1;
 
-        this.pickTimeLineManager = new PickTimeLineManager();
         this.pickManager = new PickManager(this);
 
         this.setCanvasLayerVisibilityAndOrder(currentNp, mapLayer2VisualizationOrder, layerVisibilityMap);
@@ -414,7 +411,7 @@ public class VisualizationState
         }
 
         /* implicitly we restart the picking state */
-        pickManager.restartManager();
+        pickManager = new PickManager(this);
 
         this.cache_canvasIntraNodeGUILinks = new HashMap<>();
         this.cache_canvasRegularLinkMap = new HashMap<>();
@@ -906,28 +903,107 @@ public class VisualizationState
 
     public Object getPickNavigationBackElement()
     {
-        return pickTimeLineManager.getPickNavigationBackElement();
+        return pickManager.getPickNavigationBackElement();
     }
 
     public Object getPickNavigationForwardElement()
     {
-        return pickTimeLineManager.getPickNavigationForwardElement();
+        return pickManager.getPickNavigationForwardElement();
     }
 
-    static BasicStroke resizedBasicStroke(BasicStroke a, float multFactorSize)
+    public void pickNode(Node node)
     {
-        if (multFactorSize == 1) return a;
-        return new BasicStroke(a.getLineWidth() * multFactorSize, a.getEndCap(), a.getLineJoin(), a.getMiterLimit(), a.getDashArray(), a.getDashPhase());
+        pickNode(Collections.singletonList(node));
     }
 
-    void addElementToPickTimeline(NetworkElement element)
+    public void pickLink(Link link)
     {
-        pickTimeLineManager.addElement(this.getNetPlan(), element);
+        pickLink(Collections.singletonList(link));
     }
 
-    void addElementToPickTimeline(Pair<Demand, Link> element)
+    public void pickDemand(Demand demand)
     {
-        pickTimeLineManager.addElement(this.getNetPlan(), element);
+        pickDemand(Collections.singletonList(demand));
+    }
+
+    public void pickSRG(SharedRiskGroup srg)
+    {
+        pickSRG(Collections.singletonList(srg));
+    }
+
+    public void pickMulticastDemand(MulticastDemand multicastDemand)
+    {
+        pickMulticastDemand(Collections.singletonList(multicastDemand));
+    }
+
+    public void pickRoute(Route route)
+    {
+        pickRoute(Collections.singletonList(route));
+    }
+
+    public void pickMulticastTree(MulticastTree tree)
+    {
+        pickMulticastTree(Collections.singletonList(tree));
+    }
+
+    public void pickResource(Resource resource)
+    {
+        pickResource(Collections.singletonList(resource));
+    }
+
+    public void pickForwardingRule(Pair<Demand, Link> fr)
+    {
+        pickForwardingRule(Collections.singletonList(fr));
+    }
+
+    public void pickLayer(NetworkLayer pickedLayer)
+    {
+        pickManager.pickLayer(pickedLayer);
+    }
+
+    public void pickDemand(List<Demand> pickedDemands)
+    {
+        pickManager.pickDemand(pickedDemands);
+    }
+
+    public void pickSRG(List<SharedRiskGroup> pickedSRGs)
+    {
+        pickManager.pickSRG(pickedSRGs);
+    }
+
+    public void pickMulticastDemand(List<MulticastDemand> pickedDemands)
+    {
+        pickManager.pickMulticastDemand(pickedDemands);
+    }
+
+    public void pickRoute(List<Route> pickedRoutes)
+    {
+        pickManager.pickRoute(pickedRoutes);
+    }
+
+    public void pickMulticastTree(List<MulticastTree> pickedTrees)
+    {
+        pickManager.pickMulticastTree(pickedTrees);
+    }
+
+    public void pickLink(List<Link> pickedLinks)
+    {
+        pickManager.pickLink(pickedLinks);
+    }
+
+    public void pickNode(List<Node> pickedNodes)
+    {
+        pickManager.pickNode(pickedNodes);
+    }
+
+    public void pickResource(List<Resource> pickedResources)
+    {
+        pickManager.pickResource(pickedResources);
+    }
+
+    public void pickForwardingRule(List<Pair<Demand, Link>> pickedFRs)
+    {
+        pickManager.pickForwardingRule(pickedFRs);
     }
 
     float getLinkWidthFactor()
@@ -938,5 +1014,11 @@ public class VisualizationState
     float getNodeSizeFactor()
     {
         return nodeSizeFactor;
+    }
+
+    static BasicStroke resizedBasicStroke(BasicStroke a, float multFactorSize)
+    {
+        if (multFactorSize == 1) return a;
+        return new BasicStroke(a.getLineWidth() * multFactorSize, a.getEndCap(), a.getLineJoin(), a.getMiterLimit(), a.getDashArray(), a.getDashPhase());
     }
 }
