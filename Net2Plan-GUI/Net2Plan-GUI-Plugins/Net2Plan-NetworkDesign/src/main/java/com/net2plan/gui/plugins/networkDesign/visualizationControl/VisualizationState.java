@@ -6,6 +6,7 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterC
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
@@ -804,11 +805,11 @@ public class VisualizationState
         if (showLowerLayerPropagation == this.showInCanvasLowerLayerPropagation) return;
         this.showInCanvasLowerLayerPropagation = showLowerLayerPropagation;
 
-        if (pickManager.getPickedElementType() != null)
-            if (pickManager.getPickedNetworkElements() != null)
-                this.pickElement(pickManager.getPickedNetworkElements());
+        if (this.getPickedElementType() != null)
+            if (this.getPickedNetworkElements() != null)
+                this.pickElement(this.getPickedNetworkElements());
             else
-                pickManager.pickForwardingRule(pickManager.getPickedForwardingRules());
+                this.pickForwardingRule(this.getPickedForwardingRules());
     }
 
     /**
@@ -836,7 +837,7 @@ public class VisualizationState
         if (showUpperLayerPropagation == this.showInCanvasUpperLayerPropagation) return;
         this.showInCanvasUpperLayerPropagation = showUpperLayerPropagation;
 
-        if (pickManager.getPickedElementType() != null)
+        if (this.getPickedElementType() != null)
             if (pickManager.getPickedNetworkElements() != null)
                 this.pickElement(pickManager.getPickedNetworkElements());
             else
@@ -850,11 +851,11 @@ public class VisualizationState
     {
         if (showThisLayerPropagation == this.showInCanvasThisLayerPropagation) return;
         this.showInCanvasThisLayerPropagation = showThisLayerPropagation;
-        if (pickManager.getPickedElementType() != null)
-            if (pickManager.getPickedNetworkElements() != null)
-                this.pickElement(pickManager.getPickedNetworkElements());
+        if (this.getPickedElementType() != null)
+            if (this.getPickedNetworkElements() != null)
+                this.pickElement(this.getPickedNetworkElements());
             else
-                pickManager.pickForwardingRule(pickManager.getPickedForwardingRules());
+                this.pickForwardingRule(this.getPickedForwardingRules());
     }
 
     public Map<NetworkLayer, Boolean> getCanvasLayerVisibilityMap()
@@ -1010,7 +1011,15 @@ public class VisualizationState
 
     public NetworkElementType getPickedElementType()
     {
-        return pickManager.getPickedElementType();
+        final List<NetworkElement> pickedNetworkElements = getPickedNetworkElements();
+        final List<Pair<Demand, Link>> pickedForwardingRules = getPickedForwardingRules();
+
+        if (!pickedNetworkElements.isEmpty())
+            return NetworkElementType.getType(pickedNetworkElements);
+        else if (!pickedForwardingRules.isEmpty())
+            return NetworkElementType.FORWARDING_RULE;
+        else
+            return null;
     }
 
     public List<NetworkElement> getPickedNetworkElements()
@@ -1026,28 +1035,42 @@ public class VisualizationState
 
     public void pickElement(NetworkElement es)
     {
-        if (es instanceof Node) pickNode((Node) es);
-        else if (es instanceof Link) pickLink((Link) es);
-        else if (es instanceof Demand) pickDemand((Demand) es);
-        else if (es instanceof Route) pickRoute((Route) es);
-        else if (es instanceof MulticastDemand) pickMulticastDemand((MulticastDemand) es);
-        else if (es instanceof MulticastTree) pickMulticastTree((MulticastTree) es);
-        else if (es instanceof Resource) pickResource((Resource) es);
-        else if (es instanceof SharedRiskGroup) pickSRG((SharedRiskGroup) es);
-        else throw new RuntimeException();
+        try
+        {
+            if (es instanceof Node) pickNode((Node) es);
+            else if (es instanceof Link) pickLink((Link) es);
+            else if (es instanceof Demand) pickDemand((Demand) es);
+            else if (es instanceof Route) pickRoute((Route) es);
+            else if (es instanceof MulticastDemand) pickMulticastDemand((MulticastDemand) es);
+            else if (es instanceof MulticastTree) pickMulticastTree((MulticastTree) es);
+            else if (es instanceof Resource) pickResource((Resource) es);
+            else if (es instanceof SharedRiskGroup) pickSRG((SharedRiskGroup) es);
+            else throw new RuntimeException();
+        } catch (ClassCastException e)
+        {
+            ErrorHandling.showErrorDialog("Error");
+            e.printStackTrace();
+        }
     }
 
     public void pickElement(List<? extends NetworkElement> es)
     {
-        if (es.get(0) instanceof Node) pickNode((List<Node>) es);
-        else if (es.get(0) instanceof Link) pickLink((List<Link>) es);
-        else if (es.get(0) instanceof Demand) pickDemand((List<Demand>) es);
-        else if (es.get(0) instanceof Route) pickRoute((List<Route>) es);
-        else if (es.get(0) instanceof MulticastDemand) pickMulticastDemand((List<MulticastDemand>) es);
-        else if (es.get(0) instanceof MulticastTree) pickMulticastTree((List<MulticastTree>) es);
-        else if (es.get(0) instanceof Resource) pickResource((List<Resource>) es);
-        else if (es.get(0) instanceof SharedRiskGroup) pickSRG((List<SharedRiskGroup>) es);
-        else throw new RuntimeException();
+        try
+        {
+            if (es.get(0) instanceof Node) pickNode((List<Node>) es);
+            else if (es.get(0) instanceof Link) pickLink((List<Link>) es);
+            else if (es.get(0) instanceof Demand) pickDemand((List<Demand>) es);
+            else if (es.get(0) instanceof Route) pickRoute((List<Route>) es);
+            else if (es.get(0) instanceof MulticastDemand) pickMulticastDemand((List<MulticastDemand>) es);
+            else if (es.get(0) instanceof MulticastTree) pickMulticastTree((List<MulticastTree>) es);
+            else if (es.get(0) instanceof Resource) pickResource((List<Resource>) es);
+            else if (es.get(0) instanceof SharedRiskGroup) pickSRG((List<SharedRiskGroup>) es);
+            else throw new RuntimeException();
+        } catch (ClassCastException e)
+        {
+            ErrorHandling.showErrorDialog("Error");
+            e.printStackTrace();
+        }
     }
 
     public void resetPickedState()

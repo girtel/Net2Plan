@@ -24,7 +24,6 @@ class PickManager
 
     private PickTimeLineManager pickTimeLineManager;
 
-    private NetworkElementType pickedElementType;
     private List<? extends NetworkElement> pickedElement;
     private List<Pair<Demand, Link>> pickedForwardingRule;
 
@@ -34,14 +33,8 @@ class PickManager
 
         this.pickTimeLineManager = new PickTimeLineManager();
 
-        this.pickedElementType = null;
         this.pickedElement = null;
         this.pickedForwardingRule = null;
-    }
-
-    NetworkElementType getPickedElementType()
-    {
-        return pickedElementType;
     }
 
     List<NetworkElement> getPickedNetworkElements()
@@ -58,7 +51,6 @@ class PickManager
     void pickLayer(NetworkLayer pickedLayer)
     {
         resetPickedState();
-        this.pickedElementType = NetworkElementType.LAYER;
         this.pickedForwardingRule = null;
         this.pickedElement = Arrays.asList(pickedLayer);
         this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedLayer);
@@ -67,7 +59,6 @@ class PickManager
     void pickDemand(List<Demand> pickedDemands)
     {
         resetPickedState();
-        this.pickedElementType = NetworkElementType.DEMAND;
         this.pickedForwardingRule = null;
         this.pickedElement = pickedDemands;
         if (pickedDemands.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedDemands.get(0));
@@ -132,7 +123,6 @@ class PickManager
     void pickSRG(List<SharedRiskGroup> pickedSRGs)
     {
         resetPickedState();
-        this.pickedElementType = NetworkElementType.SRG;
         this.pickedForwardingRule = null;
         this.pickedElement = pickedSRGs;
         if (pickedSRGs.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedSRGs.get(0));
@@ -198,7 +188,6 @@ class PickManager
     void pickMulticastDemand(List<MulticastDemand> pickedDemands)
     {
         resetPickedState();
-        this.pickedElementType = NetworkElementType.MULTICAST_DEMAND;
         this.pickedForwardingRule = null;
         this.pickedElement = pickedDemands;
         if (pickedDemands.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedDemands.get(0));
@@ -253,7 +242,6 @@ class PickManager
     void pickRoute(List<Route> pickedRoutes)
     {
         resetPickedState();
-        this.pickedElementType = NetworkElementType.ROUTE;
         this.pickedForwardingRule = null;
         this.pickedElement = pickedRoutes;
         if (pickedRoutes.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedRoutes.get(0));
@@ -295,7 +283,6 @@ class PickManager
     void pickMulticastTree(List<MulticastTree> pickedTrees)
     {
         resetPickedState();
-        this.pickedElementType = NetworkElementType.MULTICAST_TREE;
         this.pickedForwardingRule = null;
         this.pickedElement = pickedTrees;
         if (pickedTrees.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedTrees.get(0));
@@ -344,7 +331,6 @@ class PickManager
     void pickLink(List<Link> pickedLinks)
     {
         resetPickedState();
-        this.pickedElementType = NetworkElementType.LINK;
         this.pickedForwardingRule = null;
         this.pickedElement = pickedLinks;
         if (pickedLinks.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedLinks.get(0));
@@ -395,7 +381,6 @@ class PickManager
     void pickNode(List<Node> pickedNodes)
     {
         resetPickedState();
-        this.pickedElementType = NetworkElementType.NODE;
         this.pickedForwardingRule = null;
         this.pickedElement = pickedNodes;
         if (pickedNodes.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedNodes.get(0));
@@ -419,7 +404,6 @@ class PickManager
     void pickResource(List<Resource> pickedResources)
     {
         resetPickedState();
-        this.pickedElementType = NetworkElementType.RESOURCE;
         this.pickedForwardingRule = null;
         this.pickedElement = pickedResources;
         if (pickedResources.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedResources.get(0));
@@ -437,7 +421,6 @@ class PickManager
     void pickForwardingRule(List<Pair<Demand, Link>> pickedFRs)
     {
         resetPickedState();
-        this.pickedElementType = NetworkElementType.FORWARDING_RULE;
         this.pickedForwardingRule = pickedFRs;
         this.pickedElement = null;
         if (pickedFRs.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedFRs.get(0));
@@ -499,7 +482,6 @@ class PickManager
 
     void resetPickedState()
     {
-        this.pickedElementType = null;
         this.pickedElement = null;
         this.pickedForwardingRule = null;
 

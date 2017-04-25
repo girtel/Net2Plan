@@ -61,7 +61,7 @@ public class ElementSelection
 
         this.selectionType = SelectionType.NETWORK_ELEMENT;
 
-        final NetworkElementType aux = getElementType(networkElements);
+        final NetworkElementType aux = NetworkElementType.getType(networkElements);
         if (aux == null) throw new RuntimeException("All elements in selection do not belong to the same type");
         if (aux != this.elementType) throw new RuntimeException("Given element type and list do not match up");
 
@@ -177,22 +177,5 @@ public class ElementSelection
         }
 
         return elementSelection;
-    }
-
-
-    public static NetworkElementType getElementType(final List<? extends NetworkElement> networkElements)
-    {
-        NetworkElementType res = null, aux = null;
-        for (NetworkElement networkElement : networkElements)
-        {
-            aux = NetworkElementType.getType(networkElement);
-
-            if (aux == null) throw new RuntimeException();
-            if (res == null) res = aux;
-
-            if (res != aux) return null;
-        }
-
-        return res;
     }
 }

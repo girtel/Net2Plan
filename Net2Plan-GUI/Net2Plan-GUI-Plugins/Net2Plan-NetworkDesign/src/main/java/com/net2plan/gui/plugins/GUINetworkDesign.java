@@ -468,9 +468,9 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         updateVisualizationAfterNewTopology();
     }
 
-    public void setDesign( NetPlan netPlan)
+    public void setDesign(NetPlan netPlan)
     {
-    	if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+        if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
         this.currentNetPlan = netPlan;
     }
 
@@ -726,9 +726,13 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             selectNetPlanViewItem(vs.getPickedElementType(), null);
 
         for (NetworkElement networkElement : vs.getPickedNetworkElements())
-            viewEditTopTables.selectItem(NetworkElementType.getType(networkElement), networkElement);
+        {
+            final NetworkElementType type = NetworkElementType.getType(networkElement);
+            if (type != null)
+                viewEditTopTables.selectItem(type, networkElement);
+        }
 
-        for (Pair<Demand,Link> fr : vs.getPickedForwardingRules())
+        for (Pair<Demand, Link> fr : vs.getPickedForwardingRules())
             viewEditTopTables.selectItem(NetworkElementType.FORWARDING_RULE, fr);
 
         topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
@@ -778,7 +782,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         }
     }
 
-    public void runCanvasOperation( ITopologyCanvas.CanvasOperation... canvasOperation)
+    public void runCanvasOperation(ITopologyCanvas.CanvasOperation... canvasOperation)
     {
         // NOTE: The operations should executed in the same order as their are brought.
         for (ITopologyCanvas.CanvasOperation operation : canvasOperation)
