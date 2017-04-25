@@ -23,6 +23,8 @@ import java.net.URL;
 import java.util.*;
 import java.util.List;
 
+import static com.net2plan.internal.Constants.NetworkElementType;
+
 public class VisualizationState
 {
     private static Map<Triple<URL, Integer, Color>, Pair<ImageIcon, Shape>> databaseOfAlreadyReadIcons = new HashMap<>(); // for each url, height, and border color, an image
@@ -804,7 +806,7 @@ public class VisualizationState
 
         if (pickManager.getPickedElementType() != null)
             if (pickManager.getPickedNetworkElements() != null)
-                pickManager.pickElement(pickManager.getPickedNetworkElements());
+                this.pickElement(pickManager.getPickedNetworkElements());
             else
                 pickManager.pickForwardingRule(pickManager.getPickedForwardingRules());
     }
@@ -836,7 +838,7 @@ public class VisualizationState
 
         if (pickManager.getPickedElementType() != null)
             if (pickManager.getPickedNetworkElements() != null)
-                pickManager.pickElement(pickManager.getPickedNetworkElements());
+                this.pickElement(pickManager.getPickedNetworkElements());
             else
                 pickManager.pickForwardingRule(pickManager.getPickedForwardingRules());
     }
@@ -850,7 +852,7 @@ public class VisualizationState
         this.showInCanvasThisLayerPropagation = showThisLayerPropagation;
         if (pickManager.getPickedElementType() != null)
             if (pickManager.getPickedNetworkElements() != null)
-                pickManager.pickElement(pickManager.getPickedNetworkElements());
+                this.pickElement(pickManager.getPickedNetworkElements());
             else
                 pickManager.pickForwardingRule(pickManager.getPickedForwardingRules());
     }
@@ -1004,6 +1006,53 @@ public class VisualizationState
     public void pickForwardingRule(List<Pair<Demand, Link>> pickedFRs)
     {
         pickManager.pickForwardingRule(pickedFRs);
+    }
+
+    public NetworkElementType getPickedElementType()
+    {
+        return pickManager.getPickedElementType();
+    }
+
+    public List<NetworkElement> getPickedNetworkElements()
+    {
+        return pickManager.getPickedNetworkElements();
+    }
+
+
+    public List<Pair<Demand, Link>> getPickedForwardingRules()
+    {
+        return pickManager.getPickedForwardingRules();
+    }
+
+    public void pickElement(NetworkElement es)
+    {
+        if (es instanceof Node) pickNode((Node) es);
+        else if (es instanceof Link) pickLink((Link) es);
+        else if (es instanceof Demand) pickDemand((Demand) es);
+        else if (es instanceof Route) pickRoute((Route) es);
+        else if (es instanceof MulticastDemand) pickMulticastDemand((MulticastDemand) es);
+        else if (es instanceof MulticastTree) pickMulticastTree((MulticastTree) es);
+        else if (es instanceof Resource) pickResource((Resource) es);
+        else if (es instanceof SharedRiskGroup) pickSRG((SharedRiskGroup) es);
+        else throw new RuntimeException();
+    }
+
+    public void pickElement(List<? extends NetworkElement> es)
+    {
+        if (es.get(0) instanceof Node) pickNode((List<Node>) es);
+        else if (es.get(0) instanceof Link) pickLink((List<Link>) es);
+        else if (es.get(0) instanceof Demand) pickDemand((List<Demand>) es);
+        else if (es.get(0) instanceof Route) pickRoute((List<Route>) es);
+        else if (es.get(0) instanceof MulticastDemand) pickMulticastDemand((List<MulticastDemand>) es);
+        else if (es.get(0) instanceof MulticastTree) pickMulticastTree((List<MulticastTree>) es);
+        else if (es.get(0) instanceof Resource) pickResource((List<Resource>) es);
+        else if (es.get(0) instanceof SharedRiskGroup) pickSRG((List<SharedRiskGroup>) es);
+        else throw new RuntimeException();
+    }
+
+    public void resetPickedState()
+    {
+        pickManager.resetPickedState();
     }
 
     float getLinkWidthFactor()

@@ -39,11 +39,6 @@ class PickManager
         this.pickedForwardingRule = null;
     }
 
-    boolean isElementPicked()
-    {
-        return pickedElementType != null;
-    }
-
     NetworkElementType getPickedElementType()
     {
         return pickedElementType;
@@ -490,19 +485,6 @@ class PickManager
                 gl.getDestinationNode().setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
             }
         }
-    }
-
-    void pickElement(List<? extends NetworkElement> es)
-    {
-        if (es.get(0) instanceof Node) pickNode((List<Node>) es);
-        else if (es.get(0) instanceof Link) pickLink((List<Link>) es);
-        else if (es.get(0) instanceof Demand) pickDemand((List<Demand>) es);
-        else if (es.get(0) instanceof Route) pickRoute((List<Route>) es);
-        else if (es.get(0) instanceof MulticastDemand) pickMulticastDemand((List<MulticastDemand>) es);
-        else if (es.get(0) instanceof MulticastTree) pickMulticastTree((List<MulticastTree>) es);
-        else if (es.get(0) instanceof Resource) pickResource((List<Resource>) es);
-        else if (es.get(0) instanceof SharedRiskGroup) pickSRG((List<SharedRiskGroup>) es);
-        else throw new RuntimeException();
     }
 
     void resetPickedState()
