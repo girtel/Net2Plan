@@ -55,6 +55,12 @@ class ViewState implements ICanvasState
     }
 
     @Override
+    public CanvasState getState()
+    {
+        return CanvasState.ViewState;
+    }
+
+    @Override
     public void panTo(Point2D initialPoint, Point2D currentPoint)
     {
         final Point2D q = canvas.getCanvasPointFromScreenPoint(initialPoint);

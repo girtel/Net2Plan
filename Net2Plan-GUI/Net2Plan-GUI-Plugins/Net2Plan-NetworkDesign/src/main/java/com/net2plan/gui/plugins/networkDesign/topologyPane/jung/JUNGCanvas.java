@@ -403,6 +403,12 @@ public final class JUNGCanvas implements ITopologyCanvas
         return stateController.isMapActivated();
     }
 
+    @Override
+    public void returnToPreviousState()
+    {
+        stateController.returnToPreviousState();
+    }
+
     /** ------ **/
 
     @Override

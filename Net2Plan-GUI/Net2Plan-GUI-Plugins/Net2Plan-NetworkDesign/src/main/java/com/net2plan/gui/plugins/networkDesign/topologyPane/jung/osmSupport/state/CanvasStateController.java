@@ -20,11 +20,15 @@ public class CanvasStateController extends StateSubject
 
     private final ViewState viewState;
     private final OSMState osmState;
+    private final SiteState siteState;
 
     private final GUINetworkDesign callback;
+    private final TopologyPanel topologyPanel;
     private final ITopologyCanvas canvas;
 
     private final OSMController mapController;
+
+    private CanvasStateMirror stateMirror;
 
     public CanvasStateController(GUINetworkDesign callback, TopologyPanel topologyPanel, ITopologyCanvas canvas)
     {
@@ -33,19 +37,26 @@ public class CanvasStateController extends StateSubject
         assert canvas != null;
 
         this.callback = callback;
+        this.topologyPanel = topologyPanel;
         this.canvas = canvas;
 
         this.mapController = new OSMController(callback, topologyPanel, canvas);
 
         viewState = new ViewState(callback, canvas, mapController);
         osmState = new OSMState(callback, canvas, mapController);
+        siteState = new SiteState(callback, canvas, mapController);
 
         currentState = viewState;
+        stateMirror = new CanvasStateMirror(viewState.getState(), canvas.getCanvasCenter(), canvas.getCurrentCanvasScale());
     }
 
     @Override
     public void setState(CanvasState state, Object... stateParameters)
     {
+        // Save state information
+        stateMirror = new CanvasStateMirror(currentState.getState(), canvas.getCanvasCenter(), canvas.getCurrentCanvasScale());
+
+        // Change state
         currentState.stop();
 
         try
@@ -64,7 +75,8 @@ public class CanvasStateController extends StateSubject
 
                     final Node node = (Node) stateParameters[0];
 
-                    currentState = new SiteState(callback, canvas, mapController, node.getSiteName());
+                    siteState.setSiteName(node.getSiteName());
+                    currentState = siteState;
                     break;
             }
 
@@ -92,10 +104,17 @@ public class CanvasStateController extends StateSubject
         throw new RuntimeException();
     }
 
-    // ** Back step controller **
+    // ** Return to previous state **
     public void returnToPreviousState()
     {
+        // Save state information
+        stateMirror = new CanvasStateMirror(currentState.getState(), canvas.getCanvasCenter(), canvas.getCurrentCanvasScale());
 
+        // Move to old state
+        setState(stateMirror.getState());
+
+        canvas.panTo(canvas.getCanvasCenter(), stateMirror.getCanvasCenter());
+        canvas.zoom(stateMirror.getCanvasCenter(), (float) stateMirror.getZoomLevel());
     }
 
     // ** Mediator interface **

@@ -49,6 +49,12 @@ class OSMState implements ICanvasState
     }
 
     @Override
+    public CanvasState getState()
+    {
+        return CanvasState.OSMState;
+    }
+
+    @Override
     public void panTo(Point2D initialPoint, Point2D currentPoint)
     {
         final double dxPanelPixelCoord = (currentPoint.getX() - initialPoint.getX());

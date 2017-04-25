@@ -14,6 +14,8 @@ interface ICanvasState
 
     void stop();
 
+    CanvasState getState();
+
     void panTo(Point2D initialPoint, Point2D currentPoint);
 
     void zoomIn();

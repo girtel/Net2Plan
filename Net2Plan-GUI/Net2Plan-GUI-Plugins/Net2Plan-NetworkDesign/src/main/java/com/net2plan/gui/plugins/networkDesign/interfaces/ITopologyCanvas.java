@@ -113,6 +113,8 @@ public interface ITopologyCanvas extends Plugin
 
 	boolean isOSMRunning();
 
+	void returnToPreviousState();
+
 	void moveCanvasTo(Point2D destinationPoint);
 
 	void updateAllVerticesXYPosition();

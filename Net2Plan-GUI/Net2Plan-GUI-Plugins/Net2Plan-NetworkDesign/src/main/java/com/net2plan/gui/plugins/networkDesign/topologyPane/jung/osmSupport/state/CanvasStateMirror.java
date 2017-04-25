@@ -11,9 +11,9 @@ class CanvasStateMirror
     private final CanvasState state;
 
     private final Point2D canvasCenter;
-    private final int zoomLevel;
+    private final double zoomLevel;
 
-    CanvasStateMirror(CanvasState state, Point2D mapCenter, int zoomLevel)
+    CanvasStateMirror(CanvasState state, Point2D mapCenter, double zoomLevel)
     {
         this.state = state;
         this.canvasCenter = mapCenter;
@@ -30,7 +30,7 @@ class CanvasStateMirror
         return canvasCenter;
     }
 
-    int getZoomLevel()
+    double getZoomLevel()
     {
         return zoomLevel;
     }

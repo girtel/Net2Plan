@@ -17,13 +17,11 @@ import java.util.Set;
  */
 class SiteState extends ViewState
 {
-    private final String siteName;
+    private String siteName;
 
-    SiteState(GUINetworkDesign callback, ITopologyCanvas canvas, OSMController mapController, String siteName)
+    SiteState(GUINetworkDesign callback, ITopologyCanvas canvas, OSMController mapController)
     {
         super(callback, canvas, mapController);
-
-        this.siteName = siteName;
     }
 
     @Override
@@ -54,5 +52,16 @@ class SiteState extends ViewState
         }
 
         zoomNodes(visibleGUINodes);
+    }
+
+    @Override
+    public CanvasState getState()
+    {
+        return CanvasState.SiteState;
+    }
+
+    public void setSiteName(String siteName)
+    {
+        this.siteName = siteName;
     }
 }

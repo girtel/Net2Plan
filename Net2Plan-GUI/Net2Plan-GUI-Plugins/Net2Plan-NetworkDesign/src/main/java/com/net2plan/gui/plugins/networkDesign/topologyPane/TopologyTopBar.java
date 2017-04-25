@@ -297,7 +297,7 @@ public class TopologyTopBar extends JToolBar implements StateObserver, ActionLis
                 }
             } else
             {
-                // TODO: Go back to previous state
+                canvas.returnToPreviousState();
             }
         }
     }
