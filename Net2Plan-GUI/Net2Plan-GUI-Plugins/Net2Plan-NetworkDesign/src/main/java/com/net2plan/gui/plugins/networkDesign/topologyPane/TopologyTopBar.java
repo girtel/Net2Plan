@@ -3,6 +3,7 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMException;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasState;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -174,22 +175,19 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
     @Override
     public void update()
     {
-//        final IState state = subject.getState();
-//        if (state instanceof ICanvasState)
-//        {
-//            final CanvasState stateDefinition = CanvasState.getStateName((ICanvasState) state);
-//            switch (stateDefinition)
-//            {
-//                case ViewState:
-//                case SiteState:
-//                    btn_siteMode.setSelected(true);
-//                    btn_osmMap.setSelected(false);
-//                    break;
-//                case OSMState:
-//                    btn_siteMode.setSelected(false);
-//                    break;
-//            }
-//        }
+        final CanvasState stateDefinition = CanvasState.getStateName(canvas.getState());
+        if (stateDefinition == null) return;
+        switch (stateDefinition)
+        {
+            case ViewState:
+            case SiteState:
+                btn_siteMode.setSelected(true);
+                btn_osmMap.setSelected(false);
+                break;
+            case OSMState:
+                btn_siteMode.setSelected(false);
+                break;
+        }
     }
 
     @Override
