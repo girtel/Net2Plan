@@ -1,4 +1,4 @@
-package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state;
+package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state;
 
 import java.awt.geom.Point2D;
 

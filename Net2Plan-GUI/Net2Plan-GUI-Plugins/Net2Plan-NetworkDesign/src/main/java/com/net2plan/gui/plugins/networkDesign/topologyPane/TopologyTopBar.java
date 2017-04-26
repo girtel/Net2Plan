@@ -3,13 +3,12 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMException;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.CanvasState;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.observer.StateObserver;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.observer.StateSubject;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.patterns.IObserver;
+import com.net2plan.interfaces.patterns.ISubject;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
 import org.apache.commons.collections15.BidiMap;
@@ -25,12 +24,12 @@ import java.util.Map;
  * @author Jorge San Emeterio
  * @date 24/04/17
  */
-public class TopologyTopBar extends JToolBar implements StateObserver, ActionListener
+public class TopologyTopBar extends JToolBar implements IObserver, ActionListener
 {
     private final GUINetworkDesign callback;
     private final TopologyPanel topologyPanel;
     private final ITopologyCanvas canvas;
-    private final StateSubject subject;
+    private final ISubject subject;
 
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseNodeSize, btn_decreaseNodeSize, btn_increaseFontSize, btn_decreaseFontSize;
@@ -48,8 +47,7 @@ public class TopologyTopBar extends JToolBar implements StateObserver, ActionLis
         this.callback = callback;
         this.topologyPanel = topologyPanel;
         this.canvas = canvas;
-        this.subject = canvas.getStateSubject();
-        subject.attach(this);
+        this.subject = canvas;
 
         this.setOrientation(JToolBar.HORIZONTAL);
         this.setRollover(true);
@@ -170,12 +168,14 @@ public class TopologyTopBar extends JToolBar implements StateObserver, ActionLis
         btn_showNodeNames.setSelected(callback.getVisualizationState().isCanvasShowNodeNames());
         btn_showLinkIds.setSelected(callback.getVisualizationState().isCanvasShowLinkLabels());
         btn_showNonConnectedNodes.setSelected(callback.getVisualizationState().isCanvasShowNonConnectedNodes());
+
+        if (subject != null) subject.attach(this);
     }
 
     @Override
     public void update()
     {
-        final CanvasState state = subject.getState();
+        final CanvasState state = CanvasState;
         switch (state)
         {
             case ViewState:

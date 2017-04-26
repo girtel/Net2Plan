@@ -15,13 +15,12 @@ import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.CanvasState;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.CanvasStateController;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.observer.StateSubject;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.plugins.GraphMousePluginAdapter;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.patterns.IObserver;
+import com.net2plan.interfaces.patterns.IState;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.utils.Triple;
 import edu.uci.ics.jung.algorithms.layout.GraphElementAccessor;
@@ -70,6 +69,7 @@ public final class JUNGCanvas implements ITopologyCanvas
 
     private double currentInterLayerDistanceInNpCoordinates;
 
+    private List<IObserver> observers;
 
     private final Graph<GUINode, GUILink> g;
     private final Layout<GUINode, GUILink> l;
@@ -90,6 +90,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     public JUNGCanvas(GUINetworkDesign callback, TopologyPanel topologyPanel)
     {
         this.callback = callback;
+        this.observers = new ArrayList<>();
 
     	transformNetPlanCoordinatesToJungCoordinates = vertex ->
         {
@@ -367,37 +368,6 @@ public final class JUNGCanvas implements ITopologyCanvas
     /** STATE CONTROL **/
 
     @Override
-    public StateSubject getStateSubject()
-    {
-        return stateController;
-    }
-
-    @Override
-    public void runSiteView(Node node)
-    {
-        assert node != null;
-        stateController.setState(CanvasState.SiteState, node);
-    }
-
-    @Override
-    public void runOSMSupport()
-    {
-        stateController.setState(CanvasState.OSMState);
-    }
-
-    @Override
-    public void runDefaultView()
-    {
-        stateController.setState(CanvasState.ViewState);
-    }
-
-    @Override
-    public boolean isOSMRunning()
-    {
-        return stateController.isMapActivated();
-    }
-
-    @Override
     public void returnToPreviousState()
     {
         stateController.returnToPreviousState();
@@ -458,6 +428,31 @@ public final class JUNGCanvas implements ITopologyCanvas
     public void takeSnapshot()
     {
         stateController.takeSnapshot();
+    }
+
+    @Override
+    public void setState(IState state, Object... stateParams)
+    {
+        stateController.setState(state, stateParams);
+    }
+
+    @Override
+    public IState getState()
+    {
+        return stateController.getState();
+    }
+
+    @Override
+    public void attach(IObserver observer)
+    {
+        observers.add(observer);
+    }
+
+    @Override
+    public void notifyAllObservers()
+    {
+        for (IObserver observer : observers)
+            observer.update();
     }
 
     private class NodeLabelRenderer extends BasicVertexLabelRenderer<GUINode, GUILink>

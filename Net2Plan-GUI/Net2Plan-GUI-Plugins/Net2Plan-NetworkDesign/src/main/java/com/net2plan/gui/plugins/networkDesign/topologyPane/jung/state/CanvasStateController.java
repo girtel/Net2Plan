@@ -1,11 +1,11 @@
-package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state;
+package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMController;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state.observer.StateSubject;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.patterns.IState;
 import com.net2plan.internal.ErrorHandling;
 
 import java.awt.geom.Point2D;
@@ -14,7 +14,7 @@ import java.awt.geom.Point2D;
  * @author Jorge San Emeterio
  * @date 17-Jan-17
  */
-public class CanvasStateController extends StateSubject
+public class CanvasStateController
 {
     private ICanvasState currentState;
 
@@ -50,18 +50,21 @@ public class CanvasStateController extends StateSubject
         stateMirror = new CanvasStateMirror(viewState.getState(), canvas.getCanvasCenter(), canvas.getCurrentCanvasScale());
     }
 
-    @Override
-    public void setState(CanvasState state, Object... stateParameters)
+    public void setState(IState state, Object... stateParameters)
     {
+        if (state == null) throw new NullPointerException();
+        if (!(state instanceof ICanvasState)) throw new ClassCastException();
+
         // Save state information
-        stateMirror = new CanvasStateMirror(currentState.getState(), canvas.getCanvasCenter(), canvas.getCurrentCanvasScale());
+        stateMirror = new CanvasStateMirror(currentState.getState(), canvas.getCanvasPointFromMovement(canvas.getCanvasCenter()), canvas.getCurrentCanvasScale());
 
         // Change state
         currentState.stop();
 
+        final CanvasState stateDefinition = CanvasState.getStateName((ICanvasState) state);
         try
         {
-            switch (state)
+            switch (stateDefinition)
             {
                 case ViewState:
                     currentState = viewState;
@@ -81,27 +84,17 @@ public class CanvasStateController extends StateSubject
             }
 
             currentState.start();
-
-            notifyAllObservers();
         } catch (RuntimeException e)
         {
             ErrorHandling.showErrorDialog("Error");
             e.printStackTrace();
-            this.setState(CanvasState.ViewState);
+            this.setState(viewState);
         }
     }
 
-    @Override
-    public CanvasState getState()
+    public IState getState()
     {
-        if (currentState instanceof ViewState)
-            return CanvasState.ViewState;
-        else if (currentState instanceof SiteState)
-            return CanvasState.SiteState;
-        else if (currentState instanceof OSMState)
-            return CanvasState.OSMState;
-
-        throw new RuntimeException();
+        return currentState;
     }
 
     // ** Return to previous state **
@@ -113,13 +106,16 @@ public class CanvasStateController extends StateSubject
         final double zoomLevel = stateMirror.getZoomLevel();
 
         // Move to old state
-        setState(state);
+        setState(viewState);
         zoomAll();
 
         // Moving the canvas to the center of the map
+        final Point2D zoomAllCenter = canvas.getCanvasPointFromMovement(canvas.getCanvasCenter());
 
-        // Moving the canvas to the center of the map
-        canvas.moveCanvasTo(oldCenter);
+        final double dxJungCoord = (zoomAllCenter.getX() - oldCenter.getX());
+        final double dyJungCoord = (zoomAllCenter.getY() - oldCenter.getY());
+
+        canvas.moveCanvasTo(new Point2D.Double(dxJungCoord, -dyJungCoord));
 
         canvas.zoom(canvas.getCanvasCenter(), 1 / ((float) canvas.getCurrentCanvasScale()));
         canvas.zoom(canvas.getCanvasCenter(), (float) zoomLevel);
@@ -174,10 +170,5 @@ public class CanvasStateController extends StateSubject
     public Point2D getCanvasCoordinateFromScreenPoint(Point2D pos)
     {
         return currentState.getCanvasPoint(pos);
-    }
-
-    public boolean isMapActivated()
-    {
-        return currentState instanceof OSMState;
     }
 }
