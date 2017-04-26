@@ -107,18 +107,22 @@ public class CanvasStateController extends StateSubject
     // ** Return to previous state **
     public void returnToPreviousState()
     {
-        // Save state information
-        final CanvasStateMirror newMirror = new CanvasStateMirror(currentState.getState(), canvas.getCanvasCenter(), canvas.getCurrentCanvasScale());
+        // Mirror data
+        final CanvasState state = stateMirror.getState();
+        final Point2D oldCenter = stateMirror.getCanvasCenter();
+        final double zoomLevel = stateMirror.getZoomLevel();
 
         // Move to old state
-        setState(stateMirror.getState());
+        setState(state);
+        zoomAll();
 
-        canvas.panTo(canvas.getCanvasCenter(), stateMirror.getCanvasCenter());
+        // Moving the canvas to the center of the map
+
+        // Moving the canvas to the center of the map
+        canvas.moveCanvasTo(oldCenter);
 
         canvas.zoom(canvas.getCanvasCenter(), 1 / ((float) canvas.getCurrentCanvasScale()));
-        canvas.zoom(stateMirror.getCanvasCenter(), (float) stateMirror.getZoomLevel());
-
-        stateMirror = newMirror;
+        canvas.zoom(canvas.getCanvasCenter(), (float) zoomLevel);
     }
 
     // ** Mediator interface **

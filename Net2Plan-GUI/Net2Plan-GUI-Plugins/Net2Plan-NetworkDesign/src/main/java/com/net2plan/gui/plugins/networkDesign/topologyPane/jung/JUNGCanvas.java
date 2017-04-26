@@ -193,12 +193,6 @@ public final class JUNGCanvas implements ITopologyCanvas
         if (plugin instanceof GraphMousePlugin) gm.remove((GraphMousePlugin) plugin);
     }
 
-    /**
-     * Converts a point from the SWING coordinates system into a point from the JUNG coordinates system.
-     *
-     * @param npCoord (@code Point2D) on the SWING canvas.
-     * @return (@code Point2D) on the JUNG canvas.
-     */
     @Override
     public Point2D getCanvasPointFromNetPlanPoint(Point2D npCoord)
     {
@@ -208,20 +202,26 @@ public final class JUNGCanvas implements ITopologyCanvas
         return layoutOrViewCoordinates;
     }
 
-    public void resetTransformer()
-    {
-        vv.getRenderContext().getMultiLayerTransformer().setToIdentity();
-    }
-
     @Override
     public Point2D getCanvasPointFromScreenPoint(Point2D screenPoint)
     {
         return vv.getRenderContext().getMultiLayerTransformer().inverseTransform(Layer.LAYOUT, screenPoint);
     }
 
+    @Override
+    public Point2D getCanvasPointFromMovement(Point2D diffPoint)
+    {
+        return stateController.getCanvasCoordinateFromScreenPoint(diffPoint);
+    }
+
     public Rectangle getCurrentCanvasViewWindow()
     {
         return vv.getRenderContext().getMultiLayerTransformer().inverseTransform(vv.getBounds()).getBounds();
+    }
+
+    public void resetTransformer()
+    {
+        vv.getRenderContext().getMultiLayerTransformer().setToIdentity();
     }
 
     @Override
@@ -344,12 +344,6 @@ public final class JUNGCanvas implements ITopologyCanvas
     public void moveVertexToXYPosition(GUINode npNode, Point2D point)
     {
         l.setLocation(npNode, point);
-    }
-
-    @Override
-    public Point2D getCanvasPointFromMovement(Point2D point)
-    {
-        return stateController.getCanvasCoordinateFromScreenPoint(point);
     }
 
     @Override
