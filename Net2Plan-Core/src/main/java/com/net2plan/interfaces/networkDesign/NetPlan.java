@@ -1895,7 +1895,7 @@ public class NetPlan extends NetworkElement
      * @param restrictedSet Restricted set of nodes.
      * @return Deep copy of the restricted current design
      */
-    public NetPlan restrictedCopy(Set<Node> restrictedSet)
+    public NetPlan getRestrictedCopy(Set<Node> restrictedSet)
     {
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         NetPlan npCopy = this.copy();
@@ -1909,10 +1909,13 @@ public class NetPlan extends NetworkElement
     }
 
     /**
-     * Eliminates from this design all the links, nodes, demands, multicast demands which do not 
-     * carry traffic of the existing demands between the selected nodes, at the given layer. 
-     * Lower layer demands/links etc. that carry traffic of the demands are kept.
-     * Upper layer demands/links etc. are removed.  
+     * First computes the nodes to keep in the planning: these are the selected nodes, 
+     * the nodes involved in the demands/mDemands between them in this layer, 
+     * the nodes involved in the links at this layer that carry traffic between the selected nodes, 
+     * and the nodes associated to the links/demands at lower layers, 
+     * that carry the traffic between the selected nodes in the given layer, or carry traffic 
+     * at lower layers, of the links at this layer between the selected nodes.
+     * After computing such nodes, removes from the design all the nodes outside such set.  
      * If keepConnectivitySets is set, all the links in the shortest path between the selected nodes 
      * in the given layer, and those that would carry its traffic, are kept. Then, the resulting design has the 
      * same connected components than the original graph.
@@ -1924,15 +1927,20 @@ public class NetPlan extends NetworkElement
     {
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     	if (selectedNodes.equals(new HashSet<> (this.getNodes ()))) return;
-    	final Set<Link> linksAddedToMakeConnected = new HashSet<> ();
-		if (keepConnectivitySets)
+    	final Set<Node> nodesToKeep = new HashSet<>(selectedNodes); 
+    	final Set<Link> linksThisLayerToKeepAndPropagateDown = new HashSet<> ();
+		for (Node n1 : selectedNodes)
 		{
-			for (Node n1 : selectedNodes)
-				for (Node n2 : selectedNodes)
-					if (n1 != n2)
-						linksAddedToMakeConnected.addAll(GraphUtils.getShortestPath(getNodes(), getLinks(trafficLayer), n1, n2, null));
+			for (Node n2 : selectedNodes)
+				if (n1 != n2)
+				{
+					linksThisLayerToKeepAndPropagateDown.addAll (Sets.intersection(n1.getOutgoingLinks(trafficLayer), n2.getIncomingLinks(trafficLayer)));
+					if (keepConnectivitySets)
+						linksThisLayerToKeepAndPropagateDown.addAll(GraphUtils.getShortestPath(getNodes(), getLinks(trafficLayer), n1, n2, null));
+				}
 		}
-		
+		nodesToKeep.addAll(linksThisLayerToKeepAndPropagateDown.stream().map(e->e.getOriginNode()).collect(Collectors.toList()));
+		nodesToKeep.addAll(linksThisLayerToKeepAndPropagateDown.stream().map(e->e.getDestinationNode()).collect(Collectors.toList()));
     	final Set<Demand> affectedDemandsThisLayer = getDemands (trafficLayer).stream().
     			filter(d->selectedNodes.contains(d.getIngressNode())).
     			filter(d->selectedNodes.contains(d.getEgressNode())).
@@ -1942,26 +1950,17 @@ public class NetPlan extends NetworkElement
     		for (Node n : md.getEgressNodes ())
     			affectedMDemandsThisLayer.add(Pair.of(md, n));
         final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(affectedDemandsThisLayer , 
-        		linksAddedToMakeConnected , affectedMDemandsThisLayer , false);
+        		linksThisLayerToKeepAndPropagateDown , affectedMDemandsThisLayer , false);
         final Set<Demand> demandsToKeep = ipg.getDemandsInGraph();
         final Set<Link> linksToKeep = ipg.getLinksInGraph();
         final Set<MulticastDemand> mdemandsToKeep = ipg.getMulticastDemandFlowsInGraph().stream().map(d->d.getFirst()).collect(Collectors.toSet());
-        final Set<Node> nodesToKeep = new HashSet<> ();
         nodesToKeep.addAll(linksToKeep.stream().map(d->d.getOriginNode ()).collect(Collectors.toList()));
         nodesToKeep.addAll(linksToKeep.stream().map(d->d.getDestinationNode ()).collect(Collectors.toList()));
-        nodesToKeep.addAll(linksAddedToMakeConnected.stream().map(d->d.getOriginNode ()).collect(Collectors.toList()));
-        nodesToKeep.addAll(linksAddedToMakeConnected.stream().map(d->d.getDestinationNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(demandsToKeep.stream().map(d->d.getIngressNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(demandsToKeep.stream().map(d->d.getEgressNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(mdemandsToKeep.stream().map(d->d.getIngressNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(mdemandsToKeep.stream().map(d->d.getEgressNodes ()).flatMap(e->e.stream()).collect(Collectors.toList()));
         
-        /* remove all links, demands and mdemands not applicatble  */
-        for (NetworkLayer layerFromLowerToUpper : getNetworkLayerInTopologicalOrder())
-        {
-        	for (Link link : new ArrayList<>(getLinks(layerFromLowerToUpper)))
-        		if (!linksToKeep.contains(link)) link.remove ();
-        	for (Demand demand : new ArrayList<>(getDemands(layerFromLowerToUpper)))
-        		if (!demandsToKeep.contains(demand)) demand.remove ();
-        	for (MulticastDemand mdemand : new ArrayList<>(getMulticastDemands(layerFromLowerToUpper)))
-        		if (!mdemandsToKeep.contains(mdemand)) mdemand.remove ();
-        }
         /* remove all nodes unconnected nodes */
         for (Node n : new ArrayList<>(getNodes()))
         	if (!nodesToKeep.contains(n))
