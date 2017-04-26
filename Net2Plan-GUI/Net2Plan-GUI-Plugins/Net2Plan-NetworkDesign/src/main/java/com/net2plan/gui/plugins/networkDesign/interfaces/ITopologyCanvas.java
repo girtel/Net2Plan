@@ -22,7 +22,7 @@ package com.net2plan.gui.plugins.networkDesign.interfaces;
 
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.ICanvasSubject;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.ICanvasSubject;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.Plugin;
 

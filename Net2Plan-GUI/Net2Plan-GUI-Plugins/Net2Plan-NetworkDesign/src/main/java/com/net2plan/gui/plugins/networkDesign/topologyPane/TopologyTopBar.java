@@ -3,7 +3,7 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMException;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasState;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasStateOptions;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -175,7 +175,7 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
     @Override
     public void update()
     {
-        final CanvasState stateDefinition = canvas.getState();
+        final CanvasStateOptions stateDefinition = canvas.getState();
         if (stateDefinition == null) return;
         switch (stateDefinition)
         {
@@ -245,14 +245,14 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
             {
                 try
                 {
-                    canvas.setState(CanvasState.OSMState);
+                    canvas.setState(CanvasStateOptions.OSMState);
                 } catch (OSMException ex)
                 {
                     btn_osmMap.setSelected(false);
                 }
             } else if (!btn_osmMap.isSelected())
             {
-                canvas.setState(CanvasState.ViewState);
+                canvas.setState(CanvasStateOptions.ViewState);
             }
         } else if (src == btn_increaseNodeSize)
         {
@@ -290,7 +290,7 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
                     if (vs.getPickedNetworkElements().size() == 1)
                     {
                         final Node node = (Node) vs.getPickedNetworkElements().get(0);
-                        canvas.setState(CanvasState.SiteState, node);
+                        canvas.setState(CanvasStateOptions.SiteState, node);
                     }
                 } else
                 {

@@ -49,7 +49,7 @@ public class CanvasStateController
         stateMirror = new CanvasStateMirror(viewState, canvas.getCanvasCenter(), canvas.getCurrentCanvasScale());
     }
 
-    public void setState(CanvasState state, Object... stateParameters)
+    public void setState(CanvasStateOptions state, Object... stateParameters)
     {
         assert state != null;
 
@@ -90,7 +90,7 @@ public class CanvasStateController
         }
     }
 
-    public CanvasState getState()
+    public CanvasStateOptions getState()
     {
         return currentState.getState();
     }

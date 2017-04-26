@@ -55,9 +55,9 @@ class ViewState implements ICanvasState
     }
 
     @Override
-    public CanvasState getState()
+    public CanvasStateOptions getState()
     {
-        return CanvasState.ViewState;
+        return CanvasStateOptions.ViewState;
     }
 
     @Override

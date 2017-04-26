@@ -19,7 +19,7 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.plugins.AddLinkGraphPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasState;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasStateOptions;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.plugins.MoveNodePlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.plugins.PanGraphPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.plugins.PopupMenuPlugin;
@@ -330,8 +330,8 @@ public class TopologyPanel extends JPanel
             if (rc != JFileChooser.APPROVE_OPTION) return;
 
             // Disable OSM while loading the new topology
-            boolean isOSMRunning = canvas.getState() == CanvasState.OSMState;
-            if (isOSMRunning) canvas.setState(CanvasState.ViewState);
+            boolean isOSMRunning = canvas.getState() == CanvasStateOptions.OSMState;
+            if (isOSMRunning) canvas.setState(CanvasStateOptions.ViewState);
 
             NetPlan aux = fc_netPlan.readNetPlan();
 
@@ -344,7 +344,7 @@ public class TopologyPanel extends JPanel
             callback.addNetPlanChange();
 
             // Reactivating the OSM Support
-            if (isOSMRunning) canvas.setState(CanvasState.OSMState);
+            if (isOSMRunning) canvas.setState(CanvasStateOptions.OSMState);
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);

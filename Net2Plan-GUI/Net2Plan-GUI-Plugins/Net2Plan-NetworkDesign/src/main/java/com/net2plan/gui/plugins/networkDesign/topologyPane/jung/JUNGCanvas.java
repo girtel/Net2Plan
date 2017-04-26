@@ -16,7 +16,7 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.plugins.GraphMousePluginAdapter;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasState;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasStateOptions;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasStateController;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.interfaces.networkDesign.Configuration;
@@ -424,13 +424,13 @@ public final class JUNGCanvas implements ITopologyCanvas
     /** STATE CONTROL **/
 
     @Override
-    public void setState(CanvasState state, Object... stateParams)
+    public void setState(CanvasStateOptions state, Object... stateParams)
     {
         stateController.setState(state, stateParams);
     }
 
     @Override
-    public CanvasState getState()
+    public CanvasStateOptions getState()
     {
         return stateController.getState();
     }

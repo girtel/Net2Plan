@@ -11,7 +11,7 @@ import java.awt.geom.Point2D;
  */
 public interface ICanvasState extends IState
 {
-    CanvasState getState();
+    CanvasStateOptions getState();
 
     void panTo(Point2D initialPoint, Point2D currentPoint);
 
