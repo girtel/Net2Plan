@@ -48,6 +48,7 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
         this.topologyPanel = topologyPanel;
         this.canvas = canvas;
         this.subject = canvas;
+        this.subject.attach(this);
 
         this.setOrientation(JToolBar.HORIZONTAL);
         this.setRollover(true);
@@ -168,25 +169,27 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
         btn_showNodeNames.setSelected(callback.getVisualizationState().isCanvasShowNodeNames());
         btn_showLinkIds.setSelected(callback.getVisualizationState().isCanvasShowLinkLabels());
         btn_showNonConnectedNodes.setSelected(callback.getVisualizationState().isCanvasShowNonConnectedNodes());
-
-        if (subject != null) subject.attach(this);
     }
 
     @Override
     public void update()
     {
-        final CanvasState state = CanvasState;
-        switch (state)
-        {
-            case ViewState:
-            case SiteState:
-                btn_siteMode.setSelected(true);
-                btn_osmMap.setSelected(false);
-                break;
-            case OSMState:
-                btn_siteMode.setSelected(false);
-                break;
-        }
+//        final IState state = subject.getState();
+//        if (state instanceof ICanvasState)
+//        {
+//            final CanvasState stateDefinition = CanvasState.getStateName((ICanvasState) state);
+//            switch (stateDefinition)
+//            {
+//                case ViewState:
+//                case SiteState:
+//                    btn_siteMode.setSelected(true);
+//                    btn_osmMap.setSelected(false);
+//                    break;
+//                case OSMState:
+//                    btn_siteMode.setSelected(false);
+//                    break;
+//            }
+//        }
     }
 
     @Override
@@ -244,14 +247,15 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
             {
                 try
                 {
-                    canvas.runOSMSupport();
+                    canvas.setState(2);
+                    //canvas.runOSMSupport();
                 } catch (OSMException ex)
                 {
                     btn_osmMap.setSelected(false);
                 }
             } else if (!btn_osmMap.isSelected())
             {
-                canvas.runDefaultView();
+                canvas.setState(1);
             }
         } else if (src == btn_increaseNodeSize)
         {
@@ -289,7 +293,8 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
                     if (vs.getPickedNetworkElements().size() == 1)
                     {
                         final Node node = (Node) vs.getPickedNetworkElements().get(0);
-                        canvas.runSiteView(node);
+                        canvas.setState(3, node);
+//                        canvas.runSiteView(node);
                     }
                 } else
                 {

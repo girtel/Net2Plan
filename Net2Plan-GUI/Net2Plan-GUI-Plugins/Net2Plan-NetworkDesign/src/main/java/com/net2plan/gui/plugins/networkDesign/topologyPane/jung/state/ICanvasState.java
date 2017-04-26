@@ -9,7 +9,7 @@ import java.awt.geom.Point2D;
  * @author Jorge San Emeterio
  * @date 01-Dec-16
  */
-interface ICanvasState extends IState
+public interface ICanvasState extends IState
 {
     CanvasState getState();
 

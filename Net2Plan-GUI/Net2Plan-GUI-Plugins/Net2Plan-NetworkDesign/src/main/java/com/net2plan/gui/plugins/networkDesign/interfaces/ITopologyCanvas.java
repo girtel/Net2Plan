@@ -37,8 +37,6 @@ import java.util.Set;
  */
 public interface ITopologyCanvas extends Plugin, ISubject
 {
-	enum CanvasOperation { ZOOM_ALL, ZOOM_IN, ZOOM_OUT}
-
 	Map<String, String> getCurrentOptions();
 
 	/**

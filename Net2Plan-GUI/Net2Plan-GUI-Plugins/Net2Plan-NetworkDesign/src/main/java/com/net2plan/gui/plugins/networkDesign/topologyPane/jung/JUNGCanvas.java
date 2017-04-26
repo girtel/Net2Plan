@@ -16,11 +16,12 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.plugins.GraphMousePluginAdapter;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasState;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasStateController;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.patterns.IObserver;
-import com.net2plan.interfaces.patterns.IState;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.utils.Triple;
 import edu.uci.ics.jung.algorithms.layout.GraphElementAccessor;
@@ -431,15 +432,15 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public void setState(IState state, Object... stateParams)
+    public void setState(int stateCode, Object... stateParams)
     {
-        stateController.setState(state, stateParams);
+        stateController.setState(CanvasState.getStateName(stateCode), stateParams);
     }
 
     @Override
-    public IState getState()
+    public int getState()
     {
-        return stateController.getState();
+        return CanvasState.getStateCode(stateController.getState());
     }
 
     @Override

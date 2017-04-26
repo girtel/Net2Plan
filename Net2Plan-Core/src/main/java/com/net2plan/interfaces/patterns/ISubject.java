@@ -6,8 +6,8 @@ package com.net2plan.interfaces.patterns;
  */
 public interface ISubject
 {
-    void setState(IState state, Object... stateParams);
-    IState getState();
+    void setState(int stateCode, Object... stateParams);
+    int getState();
 
     void attach(IObserver observer);
     void notifyAllObservers();

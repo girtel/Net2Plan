@@ -5,7 +5,6 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMController;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.patterns.IState;
 import com.net2plan.internal.ErrorHandling;
 
 import java.awt.geom.Point2D;
@@ -47,24 +46,22 @@ public class CanvasStateController
         siteState = new SiteState(callback, canvas, mapController);
 
         currentState = viewState;
-        stateMirror = new CanvasStateMirror(viewState.getState(), canvas.getCanvasCenter(), canvas.getCurrentCanvasScale());
+        stateMirror = new CanvasStateMirror(viewState, canvas.getCanvasCenter(), canvas.getCurrentCanvasScale());
     }
 
-    public void setState(IState state, Object... stateParameters)
+    public void setState(CanvasState state, Object... stateParameters)
     {
         if (state == null) throw new NullPointerException();
-        if (!(state instanceof ICanvasState)) throw new ClassCastException();
 
         // Save state information
-        stateMirror = new CanvasStateMirror(currentState.getState(), canvas.getCanvasPointFromMovement(canvas.getCanvasCenter()), canvas.getCurrentCanvasScale());
+        stateMirror = new CanvasStateMirror(currentState, canvas.getCanvasPointFromMovement(canvas.getCanvasCenter()), canvas.getCurrentCanvasScale());
 
         // Change state
         currentState.stop();
 
-        final CanvasState stateDefinition = CanvasState.getStateName((ICanvasState) state);
         try
         {
-            switch (stateDefinition)
+            switch (state)
             {
                 case ViewState:
                     currentState = viewState;
@@ -88,25 +85,25 @@ public class CanvasStateController
         {
             ErrorHandling.showErrorDialog("Error");
             e.printStackTrace();
-            this.setState(viewState);
+            this.setState(viewState.getState());
         }
     }
 
-    public IState getState()
+    public CanvasState getState()
     {
-        return currentState;
+        return currentState.getState();
     }
 
     // ** Return to previous state **
     public void returnToPreviousState()
     {
         // Mirror data
-        final CanvasState state = stateMirror.getState();
+        final ICanvasState state = stateMirror.getState();
         final Point2D oldCenter = stateMirror.getCanvasCenter();
         final double zoomLevel = stateMirror.getZoomLevel();
 
         // Move to old state
-        setState(viewState);
+        setState(state.getState());
         zoomAll();
 
         // Moving the canvas to the center of the map

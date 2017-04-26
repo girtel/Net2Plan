@@ -8,19 +8,19 @@ import java.awt.geom.Point2D;
  */
 class CanvasStateMirror
 {
-    private final CanvasState state;
+    private final ICanvasState state;
 
     private final Point2D canvasCenter;
     private final double zoomLevel;
 
-    CanvasStateMirror(CanvasState state, Point2D mapCenter, double zoomLevel)
+    CanvasStateMirror(ICanvasState state, Point2D mapCenter, double zoomLevel)
     {
         this.state = state;
         this.canvasCenter = mapCenter;
         this.zoomLevel = zoomLevel;
     }
 
-    CanvasState getState()
+    ICanvasState getState()
     {
         return state;
     }

@@ -329,8 +329,8 @@ public class TopologyPanel extends JPanel
             if (rc != JFileChooser.APPROVE_OPTION) return;
 
             // Disable OSM while loading the new topology
-            boolean isOSMRunning = canvas.isOSMRunning();
-            if (isOSMRunning) canvas.runDefaultView();
+            boolean isOSMRunning = true;
+            if (isOSMRunning) canvas.setState(1);
 
             NetPlan aux = fc_netPlan.readNetPlan();
 
@@ -343,7 +343,7 @@ public class TopologyPanel extends JPanel
             callback.addNetPlanChange();
 
             // Reactivating the OSM Support
-            if (isOSMRunning) canvas.runOSMSupport();
+            if (isOSMRunning) canvas.setState(2);
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);

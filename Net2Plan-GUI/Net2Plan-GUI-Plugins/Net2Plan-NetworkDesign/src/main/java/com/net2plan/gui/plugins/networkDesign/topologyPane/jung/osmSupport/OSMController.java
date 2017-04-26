@@ -1,10 +1,11 @@
 package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport;
 
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasState;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
-import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import org.jxmapviewer.viewer.GeoPosition;
@@ -59,7 +60,7 @@ public class OSMController
 
             if (!OSMMapUtils.isInsideBounds(x, y))
             {
-                canvas.runDefaultView();
+                canvas.setState(1);
 
                 final String message = "Node: " + node.getName() + " is out of the accepted bounds.\n" +
                         "All nodes must have their coordinates between the ranges: \n" +
@@ -286,7 +287,7 @@ public class OSMController
      */
     public void zoomAll()
     {
-        if (canvas.isOSMRunning())
+        if (isOSMActive())
         {
             restartMap();
         } else
@@ -303,7 +304,7 @@ public class OSMController
      */
     public void moveMap(double dx, double dy)
     {
-        if (canvas.isOSMRunning())
+        if (isOSMActive())
         {
             final TileFactory tileFactory = mapViewer.getTileFactory();
 
@@ -325,7 +326,7 @@ public class OSMController
      */
     public void zoomIn()
     {
-        if (canvas.isOSMRunning())
+        if (isOSMActive())
         {
             mapViewer.setZoom(mapViewer.getZoom() - 1);
 
@@ -342,7 +343,7 @@ public class OSMController
      */
     public void zoomOut()
     {
-        if (canvas.isOSMRunning())
+        if (isOSMActive())
         {
             mapViewer.setZoom(mapViewer.getZoom() + 1);
 
@@ -357,6 +358,11 @@ public class OSMController
     public JComponent getMapComponent()
     {
         return mapViewer;
+    }
+
+    private boolean isOSMActive()
+    {
+        return CanvasState.getStateName(canvas.getState()) == CanvasState.OSMState;
     }
 
     public static class OSMMapUtils

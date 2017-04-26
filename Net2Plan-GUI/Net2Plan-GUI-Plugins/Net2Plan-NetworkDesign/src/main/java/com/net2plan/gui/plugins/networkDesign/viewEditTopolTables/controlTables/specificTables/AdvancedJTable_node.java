@@ -19,6 +19,7 @@ import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.CanvasOperation;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
@@ -36,7 +37,6 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.collections15.BidiMap;
-
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -587,7 +587,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                 }
 
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-                callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
+                callback.runCanvasOperation(CanvasOperation.ZOOM_ALL);
                 callback.addNetPlanChange();
             });
         }
@@ -683,7 +683,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                     callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                     callback.getVisualizationState().pickNode(node);
                     callback.addNetPlanChange();
-                    callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
+                    callback.runCanvasOperation(CanvasOperation.ZOOM_ALL);
                 } catch (Throwable ex)
                 {
                     ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to add node");
