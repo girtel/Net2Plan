@@ -427,6 +427,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     public void setState(CanvasStateOptions state, Object... stateParams)
     {
         stateController.setState(state, stateParams);
+        notifyAllObservers();
     }
 
     @Override
