@@ -19,6 +19,7 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.CanvasOperation;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasState;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -299,7 +300,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         @Override
         public void actionPerformed(ActionEvent actionEvent)
         {
-            canvas.setState(3, node);
+            canvas.setState(CanvasState.OSMState, node);
         }
     }
 

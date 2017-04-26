@@ -17,23 +17,6 @@ public enum CanvasState
         this.code = code;
     }
 
-    public static CanvasState getStateName(ICanvasState state)
-    {
-        if (state instanceof ViewState)
-        {
-            return ViewState;
-        } else if (state instanceof OSMState)
-        {
-            return OSMState;
-        } else if (state instanceof SiteState)
-        {
-            return SiteState;
-        } else
-        {
-            return null;
-        }
-    }
-
     public static int getStateCode(CanvasState state)
     {
         switch (state)

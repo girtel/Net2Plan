@@ -60,7 +60,7 @@ public class OSMController
 
             if (!OSMMapUtils.isInsideBounds(x, y))
             {
-                canvas.setState(1);
+                canvas.setState(CanvasState.ViewState);
 
                 final String message = "Node: " + node.getName() + " is out of the accepted bounds.\n" +
                         "All nodes must have their coordinates between the ranges: \n" +
@@ -287,7 +287,7 @@ public class OSMController
      */
     public void zoomAll()
     {
-        if (isOSMActive())
+        if (canvas.getState() == CanvasState.OSMState)
         {
             restartMap();
         } else
@@ -304,7 +304,7 @@ public class OSMController
      */
     public void moveMap(double dx, double dy)
     {
-        if (isOSMActive())
+        if (canvas.getState() == CanvasState.OSMState)
         {
             final TileFactory tileFactory = mapViewer.getTileFactory();
 
@@ -326,7 +326,7 @@ public class OSMController
      */
     public void zoomIn()
     {
-        if (isOSMActive())
+        if (canvas.getState() == CanvasState.OSMState)
         {
             mapViewer.setZoom(mapViewer.getZoom() - 1);
 
@@ -343,7 +343,7 @@ public class OSMController
      */
     public void zoomOut()
     {
-        if (isOSMActive())
+        if (canvas.getState() == CanvasState.OSMState)
         {
             mapViewer.setZoom(mapViewer.getZoom() + 1);
 
@@ -358,11 +358,6 @@ public class OSMController
     public JComponent getMapComponent()
     {
         return mapViewer;
-    }
-
-    private boolean isOSMActive()
-    {
-        return CanvasState.getStateName(canvas.getState()) == CanvasState.OSMState;
     }
 
     public static class OSMMapUtils

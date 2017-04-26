@@ -366,16 +366,6 @@ public final class JUNGCanvas implements ITopologyCanvas
         stateController.removeNode(node);
     }
 
-    /** STATE CONTROL **/
-
-    @Override
-    public void returnToPreviousState()
-    {
-        stateController.returnToPreviousState();
-    }
-
-    /** ------ **/
-
     @Override
     public void moveCanvasTo(Point2D destinationPoint)
     {
@@ -431,16 +421,18 @@ public final class JUNGCanvas implements ITopologyCanvas
         stateController.takeSnapshot();
     }
 
+    /** STATE CONTROL **/
+
     @Override
-    public void setState(int stateCode, Object... stateParams)
+    public void setState(CanvasState state, Object... stateParams)
     {
-        stateController.setState(CanvasState.getStateName(stateCode), stateParams);
+        stateController.setState(state, stateParams);
     }
 
     @Override
-    public int getState()
+    public CanvasState getState()
     {
-        return CanvasState.getStateCode(stateController.getState());
+        return stateController.getState();
     }
 
     @Override
@@ -455,6 +447,14 @@ public final class JUNGCanvas implements ITopologyCanvas
         for (IObserver observer : observers)
             observer.update();
     }
+
+    @Override
+    public void returnToPreviousState()
+    {
+        stateController.returnToPreviousState();
+    }
+
+    /** ------ **/
 
     private class NodeLabelRenderer extends BasicVertexLabelRenderer<GUINode, GUILink>
     {

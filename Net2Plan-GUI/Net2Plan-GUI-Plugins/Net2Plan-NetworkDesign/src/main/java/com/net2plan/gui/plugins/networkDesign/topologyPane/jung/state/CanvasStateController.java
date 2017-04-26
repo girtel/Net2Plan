@@ -51,7 +51,7 @@ public class CanvasStateController
 
     public void setState(CanvasState state, Object... stateParameters)
     {
-        if (state == null) throw new NullPointerException();
+        assert state != null;
 
         // Save state information
         stateMirror = new CanvasStateMirror(currentState, canvas.getCanvasPointFromMovement(canvas.getCanvasCenter()), canvas.getCurrentCanvasScale());
@@ -70,6 +70,7 @@ public class CanvasStateController
                     currentState = osmState;
                     break;
                 case SiteState:
+                    assert stateParameters != null;
                     assert stateParameters.length == 1;
                     assert stateParameters[0] instanceof Node;
 

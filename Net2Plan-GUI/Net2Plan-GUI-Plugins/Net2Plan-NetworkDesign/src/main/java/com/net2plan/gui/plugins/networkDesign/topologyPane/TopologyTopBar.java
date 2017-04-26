@@ -175,7 +175,7 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
     @Override
     public void update()
     {
-        final CanvasState stateDefinition = CanvasState.getStateName(canvas.getState());
+        final CanvasState stateDefinition = canvas.getState();
         if (stateDefinition == null) return;
         switch (stateDefinition)
         {
@@ -245,14 +245,14 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
             {
                 try
                 {
-                    canvas.setState(2);
+                    canvas.setState(CanvasState.OSMState);
                 } catch (OSMException ex)
                 {
                     btn_osmMap.setSelected(false);
                 }
             } else if (!btn_osmMap.isSelected())
             {
-                canvas.setState(1);
+                canvas.setState(CanvasState.ViewState);
             }
         } else if (src == btn_increaseNodeSize)
         {
@@ -290,7 +290,7 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
                     if (vs.getPickedNetworkElements().size() == 1)
                     {
                         final Node node = (Node) vs.getPickedNetworkElements().get(0);
-                        canvas.setState(3, node);
+                        canvas.setState(CanvasState.SiteState, node);
                     }
                 } else
                 {
