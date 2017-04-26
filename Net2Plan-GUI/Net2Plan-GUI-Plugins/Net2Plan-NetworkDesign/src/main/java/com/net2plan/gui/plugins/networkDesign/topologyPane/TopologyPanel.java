@@ -19,6 +19,7 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.plugins.AddLinkGraphPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasState;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.plugins.MoveNodePlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.plugins.PanGraphPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.plugins.PopupMenuPlugin;
@@ -329,7 +330,7 @@ public class TopologyPanel extends JPanel
             if (rc != JFileChooser.APPROVE_OPTION) return;
 
             // Disable OSM while loading the new topology
-            boolean isOSMRunning = true;
+            boolean isOSMRunning = CanvasState.getStateName(canvas.getState()) == CanvasState.OSMState;
             if (isOSMRunning) canvas.setState(1);
 
             NetPlan aux = fc_netPlan.readNetPlan();

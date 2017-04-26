@@ -248,7 +248,6 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
                 try
                 {
                     canvas.setState(2);
-                    //canvas.runOSMSupport();
                 } catch (OSMException ex)
                 {
                     btn_osmMap.setSelected(false);
@@ -294,7 +293,6 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
                     {
                         final Node node = (Node) vs.getPickedNetworkElements().get(0);
                         canvas.setState(3, node);
-//                        canvas.runSiteView(node);
                     }
                 } else
                 {
