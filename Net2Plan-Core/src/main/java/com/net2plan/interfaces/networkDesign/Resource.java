@@ -378,6 +378,7 @@ public class Resource extends NetworkElement
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		netPlan.checkInThisNetPlan(upperResource);
+		if (upperResource.hostNode != this.hostNode) throw new Net2PlanException ("Upper resource must be in the same node as this resource");
 		if (occupiedCapacity < 0) throw new Net2PlanException ("The occupied capacity cannot be negative");
 		capacityUpperResourcesOccupyInMe.put(upperResource , occupiedCapacity);
 		updateTotalOccupiedCapacity();

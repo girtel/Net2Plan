@@ -1864,6 +1864,15 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         return false;
     }
 
+    protected static void updateRowSum (Object [] data , double [] aggreg , int index , double val)
+    {
+    	data [index] = val; aggreg [index] += val;
+    }
+    protected static void updateRowMax (Object [] data , double [] aggreg , int index , double val)
+    {
+    	data [index] = val; aggreg [index] = Math.max(val, aggreg[index]);
+    }
+
     private Object[][] buildData()
     {
         final int fixedColumnCount = fixedTable.getColumnCount();
