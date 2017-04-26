@@ -474,7 +474,17 @@ public class Resource extends NetworkElement
 			if (r.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.get(this) != val) throw new RuntimeException ("Bad");
 			if (!r.isDown()) accumOccupCap += val;
 		}
-		org.junit.Assert.assertEquals (accumOccupCap , cache_totalOccupiedCapacity , 0.001);
+
+		if (accumOccupCap != cache_totalOccupiedCapacity)
+		{
+			if (cache_totalOccupiedCapacity != 0)
+			{
+				if ((accumOccupCap / cache_totalOccupiedCapacity) > 0.001) throw new RuntimeException();
+			} else
+			{
+				if (accumOccupCap > 0.001 || accumOccupCap < -0.001) throw new RuntimeException();
+			}
+		}
 	}
 
 	
