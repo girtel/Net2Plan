@@ -60,24 +60,21 @@ public class ReportBrowser extends JPanel {
 	/* Configure HTML viewer */
         htmlEditorKit = new CustomHTMLEditorKit();
         editor.setEditorKit(htmlEditorKit);
-        
+                
         StyleSheet styleSheet = htmlEditorKit.getStyleSheet();
-        styleSheet.addRule("body {padding: 5px 5px 5px 10px;}");    
-        styleSheet.addRule("p, ul, ol, table {font-family: Tahoma, Verdana, Segoe, sans-serif;"
-                + " font-size: 11px; font-style: normal; font-variant: normal;"
-                + " font-weight: 300; line-height: 15px;}");    
-        styleSheet.addRule("h1, h2 {font-family:Arial, \"Helvetica Neue\", Helvetica, sans-serif;"
-                + "font-weight: 500; line-height: 22px;}");
-	styleSheet.addRule("h1 {font-size: 16px}");
-	styleSheet.addRule("h2 {color:#303030; font-size: 14px}");
-	styleSheet.addRule("ul {list-style-type: disk;}");
-        styleSheet.addRule("table, table*p {width: 100%; font-size: 10px}");
-        styleSheet.addRule("table, tr, td, th {border: 0px;}");
-        styleSheet.addRule("th, td {border-bottom: 1px solid #A0A0A0;}");
-        styleSheet.addRule("th {background-color: #A0A0A0;}");
-        styleSheet.addRule("table, td {text-align: left;}");
-        styleSheet.addRule("th {text-align: center; height: 10px; padding: 5px;}");
-        styleSheet.addRule("caption {caption-side: bottom; padding-bottom: 10px; font-weight: bold;}");
+        styleSheet.addRule("body {padding: 5px 5px 5px 5px;");  
+        styleSheet.addRule("p, ul, ol, table {font-family: Tahoma, Verdana, Segoe, sans-serif; font-size: 11px; "
+                + "font-style: normal; font-variant: normal; text-align: justify;}");
+        styleSheet.addRule("h1, h2, h3 {font-family: Tahoma, Verdana, Segoe, sans-serif; font-style: normal; "
+                + "font-variant: normal; font-weight: 500;}");
+	styleSheet.addRule("h1 {font-size: 16px; line-height: 20px;}");
+	styleSheet.addRule("h2 {font-size: 14px; line-height: 16px;}");
+	styleSheet.addRule("h3 {font-size: 12px; line-height: 12px;}");
+        styleSheet.addRule("table, td {font-size: 10px; text-align: justify;}");
+        styleSheet.addRule("table, tr, th {border: 0px;}");
+        styleSheet.addRule("td {border: 2px solid #ccccff;}");
+        styleSheet.addRule("th {background-color: #ccccff; text-align: center; height: 10px; padding: 5px;}");
+        styleSheet.addRule("caption {caption-side: bottom; padding-bottom: 15px; font-weight: bold;}");
         
         Document doc = htmlEditorKit.createDefaultDocument();
         doc.putProperty("IgnoreCharsetDirective", true);

@@ -128,19 +128,16 @@ public class CustomHTMLEditorKit extends HTMLEditorKit
         {
                 StringBuilder style = new StringBuilder();
                 style.append("<style>");
-                style.append("body {font-family: Tahoma, Verdana, Segoe, sans-serif;" 
-                        + " font-style: normal; font-variant: normal; padding: 0px 15px 15px 10px;}");    
-                style.append("p, ul, ol, table {font-size: 12px; font-weight: 300; line-height: 15px;}");    
-                style.append("h1, h2 {font-family:Arial, \"Helvetica Neue\", Helvetica, sans-serif;"
-                        + "font-weight: 500; line-height: 22px;}");
-                style.append("h1 {font-size: 22px}");
-                style.append("h2 {color: #303030; font-size: 16px}");
-                style.append("ul {list-style-type: disk;}");
-                style.append("table, table*p {padding: 5px; width: 100%; font-size: 10px}");
-                style.append("table, tr, td, th {border: 0px;}");
-                style.append("th, td {border-bottom: 2px solid darkgray;}");
-                style.append("table, td {text-align: left;}");
-                style.append("th {background-color: darkgray; text-align: center; height: 20px; padding: 10px;}");
+                style.append("body {font-family: Tahoma, Verdana, Segoe, sans-serif; font-style: normal; "
+                        + "font-variant: normal; font-size: 12px; padding: 0px 30px 15px 10px; text-align: justify;}");    
+                style.append("h1, h2, h3 {font-weight: 500;}");
+                style.append("h1 {font-size: 24px; line-height: 26.4px;}");
+                style.append("h2 {font-size: 18px; line-height: 20.4px;}");
+                style.append("h3 {font-size: 14px; line-height: 15.4px;}");
+                style.append("table, td {font-size: 11px; text-align: justify;}");
+                style.append("table, tr, th {border: 0px;}");
+                style.append("td {border: 2px solid #ccccff;}");
+                style.append("th {background-color: #ccccff; text-align: center; height: 20px; padding: 10px; border-bottom-left-radius: 5px; border-bottom-right-radius: 5px;}");
                 style.append("caption {caption-side: bottom; padding-bottom: 10px; font-weight: bold;}");
                 style.append("</style>");
             

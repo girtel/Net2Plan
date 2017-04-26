@@ -656,12 +656,12 @@ public class Report_WDM_lineEngineering implements IReport
 		out.append("<ul>");
 		out.append("<li>In the net2plan object, nodes are OADMs, links are fiber links, and routes are lightpaths: WDM channels optically switched at intermediate nodes. </li>");
 		out.append("<li>Nodes are connected by unidirectional fiber links. Fiber link distance is given by the link length.");
-		out.append("Other specifications are given by fiber_XXX input parameters. The fiber can be split into spans if optical amplifers (EDFAs)");
+		out.append("Other specifications are given by fiber_XXX input parameters. The fiber can be split into spans if optical amplifers (EDFAs) ");
 		out.append("and/or dispersion compensating modules (DCMs) are placed along the fiber.</li>");
 		out.append("<li>Optical line amplifiers (EDFAs) can be located in none, one or more positions in the");
 		out.append("fiber link, separating them in different spans. EDFAs are supposed to operate in the ");
 		out.append("automatic gain control mode. Thus, the gain is the same, whatever the number of input");
-		out.append("WDM channels. EDFA positions (as distance in km from the link start to the EDFA location)");
+		out.append("WDM channels. EDFA positions (as distance in km from the link start to the EDFA location) ");
 		out.append("and EDFA gains (assumed in dB) are read from the \"edfaPositions_km\" and \"edfaGains_dB\" ");
 		out.append("attributes of the links. The format of both attributes are the same: a string of numbers ");
 		out.append("separated by spaces. The <i>i</i>-th number corresponding to the position/gain of the ");
@@ -733,7 +733,7 @@ public class Report_WDM_lineEngineering implements IReport
 
 			final double[] impInfoInputOADM = imp.getLast().getFirst();
 			StringBuilder warnings = new StringBuilder();
-			for (String s : w) warnings.append("<p>").append(s).append("</p>");
+			for (String s : w) warnings.append(s);
 
 			out.append("<tr><td>").append(e).append(" (").append(st_a_e).append(" --> ").append(st_b_e).append(") </td><td>").append(df_2.format(d_e)).append("</td><td>").append(numEDFAs).append("</td><td>").append(numDCMs).append("</td><td>").append(df_2.format(impInfoInputOADM[1])).append("</td><td>").append(df_2.format(linear2dB(impInfoInputOADM[3]))).append("</td><td>").append(df_2.format(impInfoInputOADM[0])).append("</td><td>").append(df_2.format(Math.sqrt(impInfoInputOADM[2]))).append("</td><td>").append(warnings).append("</td></tr>");
 		}
@@ -763,7 +763,7 @@ public class Report_WDM_lineEngineering implements IReport
 
 			final double[] impInfoInputOADM = imp.getLast().getFirst();
 			StringBuilder warnings = new StringBuilder();
-			for (String s : w) warnings.append("<p>").append(s).append("</p>");
+			for (String s : w) warnings.append(s);
 
 			out.append("<tr><td>").append(r).append(" (").append(st_a_r).append(" --> ").append(st_b_r).append(") </td><td>").append(df_2.format(d_r)).append("</td><td>").append(numEDFAs).append("</td><td>").append(numDCMs).append("</td><td>").append(df_2.format(impInfoInputOADM[1])).append("</td><td>").append(df_2.format(linear2dB(impInfoInputOADM[3]))).append("</td><td>").append(df_2.format(impInfoInputOADM[0])).append("</td><td>").append(df_2.format(Math.sqrt(impInfoInputOADM[2]))).append("</td><td>").append(warnings.toString()).append("</td>" + "</tr>");
 		}
