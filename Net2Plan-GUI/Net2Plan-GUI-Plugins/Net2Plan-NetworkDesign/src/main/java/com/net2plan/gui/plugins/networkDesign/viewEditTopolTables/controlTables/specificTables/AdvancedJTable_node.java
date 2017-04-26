@@ -598,7 +598,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     {
     	MenuItem_CreatePlanningDomain(@Nonnull GUINetworkDesign callback, @Nonnull List<Node> selectedNodes)
         {
-            this.setText("Create planning domain restricted to traffic between nodes");
+            this.setText("Create planning domain restricted to selected nodes");
             this.addActionListener(e ->
             {
         		final NetPlan np = callback.getDesign();
