@@ -1,6 +1,5 @@
-package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.observer;
+package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state;
 
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasState;
 import com.net2plan.interfaces.patterns.ISubject;
 
 /**
