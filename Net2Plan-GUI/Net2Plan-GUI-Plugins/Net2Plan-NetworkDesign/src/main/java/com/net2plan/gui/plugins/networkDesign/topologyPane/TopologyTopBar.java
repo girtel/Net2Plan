@@ -2,14 +2,14 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
+import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.IObserver;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMException;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasOption;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.IObserver;
-import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.ISubject;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
 import org.apache.commons.collections15.BidiMap;
@@ -19,18 +19,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author Jorge San Emeterio
  * @date 24/04/17
  */
-public class TopologyTopBar extends JToolBar implements IObserver, ActionListener
+public class TopologyTopBar extends JToolBar implements ActionListener
 {
     private final GUINetworkDesign callback;
     private final TopologyPanel topologyPanel;
     private final ITopologyCanvas canvas;
-    private final ISubject subject;
 
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseNodeSize, btn_decreaseNodeSize, btn_increaseFontSize, btn_decreaseFontSize;
@@ -48,8 +48,60 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
         this.callback = callback;
         this.topologyPanel = topologyPanel;
         this.canvas = canvas;
-        this.subject = canvas;
-        this.subject.attach(this);
+        this.canvas.addListener(new IObserver()
+        {
+            @Override
+            public void update()
+            {
+                final CanvasOption stateDefinition = canvas.getState();
+                if (stateDefinition == null) return;
+                switch (stateDefinition)
+                {
+                    case ViewState:
+                    case SiteState:
+                        btn_siteMode.setSelected(true);
+                        btn_osmMap.setSelected(false);
+                        break;
+                    case OSMState:
+                        btn_siteMode.setSelected(false);
+                        break;
+                }
+            }
+        });
+
+        final VisualizationState vs = this.callback.getVisualizationState();
+
+        vs.addPickListener(new IObserver()
+        {
+            @Override
+            public void update()
+            {
+                final NetworkElementType pickedElementType = vs.getPickedElementType();
+
+                if (pickedElementType != null)
+                {
+                    if (pickedElementType == NetworkElementType.NODE)
+                    {
+                        final List<NetworkElement> pickedElements = vs.getPickedNetworkElements();
+
+                        if (pickedElements.size() == 1)
+                        {
+                            final Node node = (Node) pickedElements.get(0);
+
+                            if (node.getSiteName() != null)
+                                btn_siteMode.setEnabled(true);
+
+                        } else
+                        {
+                            btn_siteMode.setEnabled(false);
+                        }
+                    }
+                } else
+                {
+                    btn_siteMode.setEnabled(false);
+                }
+            }
+        });
 
         this.setOrientation(JToolBar.HORIZONTAL);
         this.setRollover(true);
@@ -91,6 +143,7 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
         btn_decreaseFontSize.setToolTipText("Decrease font size");
         btn_siteMode = new JToggleButton("Site");
         btn_siteMode.setToolTipText("Toggle on/off node site view.");
+        btn_siteMode.setEnabled(false);
         btn_osmMap = new JToggleButton();
         btn_osmMap.setToolTipText("Toggle on/off OSM support. An Internet connection is requires for this function.");
         btn_tableControlWindow = new JButton();
@@ -170,24 +223,6 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
         btn_showNodeNames.setSelected(callback.getVisualizationState().isCanvasShowNodeNames());
         btn_showLinkIds.setSelected(callback.getVisualizationState().isCanvasShowLinkLabels());
         btn_showNonConnectedNodes.setSelected(callback.getVisualizationState().isCanvasShowNonConnectedNodes());
-    }
-
-    @Override
-    public void update()
-    {
-        final CanvasOption stateDefinition = canvas.getState();
-        if (stateDefinition == null) return;
-        switch (stateDefinition)
-        {
-            case ViewState:
-            case SiteState:
-                btn_siteMode.setSelected(true);
-                btn_osmMap.setSelected(false);
-                break;
-            case OSMState:
-                btn_siteMode.setSelected(false);
-                break;
-        }
     }
 
     @Override

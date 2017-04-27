@@ -268,7 +268,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                             {
                                 demand.setOfferedTraffic(newOfferedTraffic);
                                 callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
-                                callback.getVisualizationState().pickMulticastDemand(demand);
+                                callback.getVisualizationState().pickElement(demand);
                                 callback.updateVisualizationAfterPick();
                                 callback.addNetPlanChange();
                             }

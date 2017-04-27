@@ -3,6 +3,7 @@ package com.net2plan.gui.plugins.networkDesign.visualizationControl;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
+import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.IObserver;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.interfaces.networkDesign.*;
@@ -30,7 +31,6 @@ public class VisualizationState
 {
     private static Map<Triple<URL, Integer, Color>, Pair<ImageIcon, Shape>> databaseOfAlreadyReadIcons = new HashMap<>(); // for each url, height, and border color, an image
 
-    private PickManager pickManager;
 
     private boolean showInCanvasNodeNames;
     private boolean showInCanvasLinkLabels;
@@ -50,6 +50,7 @@ public class VisualizationState
     private Set<Node> nodesToHideInCanvasAsMandatedByUserInTable;
     private Set<Link> linksToHideInCanvasAsMandatedByUserInTable;
 
+    private final PickManager pickManager;
     private VisualizationSnapshot visualizationSnapshot;
 
     /* These need is recomputed inside a rebuild */
@@ -414,7 +415,7 @@ public class VisualizationState
         }
 
         /* implicitly we restart the picking state */
-        pickManager = new PickManager(this);
+        pickManager.reset();
 
         this.cache_canvasIntraNodeGUILinks = new HashMap<>();
         this.cache_canvasRegularLinkMap = new HashMap<>();
@@ -950,6 +951,8 @@ public class VisualizationState
 
     public void pickElement(NetworkElement es)
     {
+        if (es == null) return;
+
         try
         {
             if (es instanceof NetworkLayer) pickManager.pickLayer((NetworkLayer) es);
@@ -974,6 +977,9 @@ public class VisualizationState
 
     public void pickElement(List<? extends NetworkElement> es)
     {
+        if (es == null) return;
+        if (es.isEmpty()) return;
+
         try
         {
             if (es.get(0) instanceof Node) pickManager.pickNode((List<Node>) es);
@@ -992,9 +998,14 @@ public class VisualizationState
         }
     }
 
+    public void addPickListener(IObserver observer)
+    {
+        pickManager.addListener(observer);
+    }
+
     public void resetPickedState()
     {
-        pickManager.resetPickedState();
+        pickManager.cleanPick();
     }
 
     float getLinkWidthFactor()

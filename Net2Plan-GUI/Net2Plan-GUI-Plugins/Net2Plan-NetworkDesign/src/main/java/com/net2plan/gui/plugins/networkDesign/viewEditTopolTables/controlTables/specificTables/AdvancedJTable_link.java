@@ -341,7 +341,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                                 vs.showOnCanvas(link);
                             }
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                            callback.getVisualizationState().pickLink(link);
+                            callback.getVisualizationState().pickElement(link);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -370,7 +370,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                             {
                                 link.setFailureState(isLinkUp);
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                                callback.getVisualizationState().pickLink(link);
+                                callback.getVisualizationState().pickElement(link);
                                 callback.updateVisualizationAfterPick();
                             }
                             break;
@@ -380,21 +380,21 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                             link.setCapacity(text.equalsIgnoreCase("inf") ? Double.MAX_VALUE : Double.parseDouble(text));
                             newValue = link.getCapacity();
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                            callback.getVisualizationState().pickLink(link);
+                            callback.getVisualizationState().pickElement(link);
                             callback.updateVisualizationAfterPick();
                             break;
 
                         case COLUMN_LENGTH:
                             link.setLengthInKm(Double.parseDouble(newValue.toString()));
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                            callback.getVisualizationState().pickLink(link);
+                            callback.getVisualizationState().pickElement(link);
                             callback.updateVisualizationAfterPick();
                             break;
 
                         case COLUMN_PROPSPEED:
                             link.setPropagationSpeedInKmPerSecond(Double.parseDouble(newValue.toString()));
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                            callback.getVisualizationState().pickLink(link);
+                            callback.getVisualizationState().pickElement(link);
                             callback.updateVisualizationAfterPick();
                             break;
 

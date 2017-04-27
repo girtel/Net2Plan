@@ -225,7 +225,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                         case COLUMN_NAME:
                             res.setName(newValue.toString());
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            callback.getVisualizationState().pickResource(res);
+                            callback.getVisualizationState().pickElement(res);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -234,7 +234,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                             if (newValue == null) return;
                             res.setCapacity((Double) newValue, netPlan.getResourceFromId(resId).getCapacityOccupiedInBaseResourcesMap());
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            callback.getVisualizationState().pickResource(res);
+                            callback.getVisualizationState().pickElement(res);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -243,7 +243,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                             if (newValue == null) return;
                             res.setProcessingTimeToTraversingTrafficInMs((Double) newValue);
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            callback.getVisualizationState().pickResource(res);
+                            callback.getVisualizationState().pickElement(res);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;

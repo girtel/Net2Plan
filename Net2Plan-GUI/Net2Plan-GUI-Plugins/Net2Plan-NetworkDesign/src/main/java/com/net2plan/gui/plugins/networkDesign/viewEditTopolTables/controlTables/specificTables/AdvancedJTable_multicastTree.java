@@ -251,14 +251,14 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
                         case COLUMN_CARRIEDTRAFFIC:
                             tree.setCarriedTraffic(Double.parseDouble(newValue.toString()), tree.getOccupiedLinkCapacity());
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
-                            callback.getVisualizationState().pickMulticastTree(tree);
+                            callback.getVisualizationState().pickElement(tree);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
 
                         case COLUMN_OCCUPIEDCAPACITY:
                             tree.setCarriedTraffic(tree.getCarriedTraffic(), Double.parseDouble(newValue.toString()));
-                            callback.getVisualizationState().pickMulticastTree(tree);
+                            callback.getVisualizationState().pickElement(tree);
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();

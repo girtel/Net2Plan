@@ -422,7 +422,7 @@ public final class JUNGCanvas implements ITopologyCanvas
     public void setState(CanvasOption state, Object... stateParams)
     {
         stateController.setState(state, stateParams);
-        notifyAllObservers();
+        notifyAllListeners();
     }
 
     @Override
@@ -432,13 +432,13 @@ public final class JUNGCanvas implements ITopologyCanvas
     }
 
     @Override
-    public void attach(IObserver observer)
+    public void addListener(IObserver observer)
     {
         observers.add(observer);
     }
 
     @Override
-    public void notifyAllObservers()
+    public void notifyAllListeners()
     {
         for (IObserver observer : observers)
             observer.update();

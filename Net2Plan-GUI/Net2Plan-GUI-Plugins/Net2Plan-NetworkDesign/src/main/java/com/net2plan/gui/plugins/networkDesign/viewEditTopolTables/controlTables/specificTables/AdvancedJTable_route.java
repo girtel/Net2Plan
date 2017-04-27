@@ -259,7 +259,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                         case COLUMN_CARRIEDTRAFFIC:
                             route.setCarriedTraffic(Double.parseDouble(newValue.toString()), route.getOccupiedCapacity());
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                            callback.getVisualizationState().pickRoute(route);
+                            callback.getVisualizationState().pickElement(route);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -267,7 +267,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                         case COLUMN_OCCUPIEDCAPACITY:
                             route.setCarriedTraffic(route.getCarriedTraffic(), Double.parseDouble(newValue.toString()));
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                            callback.getVisualizationState().pickRoute(route);
+                            callback.getVisualizationState().pickElement(route);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;

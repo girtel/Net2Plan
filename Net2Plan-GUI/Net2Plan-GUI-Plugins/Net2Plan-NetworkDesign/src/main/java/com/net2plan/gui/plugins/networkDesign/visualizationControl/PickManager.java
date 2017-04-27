@@ -1,6 +1,8 @@
 package com.net2plan.gui.plugins.networkDesign.visualizationControl;
 
 import com.google.common.collect.Sets;
+import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.IObserver;
+import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.ISubject;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.interfaces.networkDesign.*;
@@ -12,17 +14,17 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.net2plan.internal.Constants.*;
-
 /**
  * @author Jorge San Emeterio
  * @date 25/04/17
  */
-class PickManager
+class PickManager implements ISubject
 {
     private final VisualizationState vs;
 
-    private PickTimeLineManager pickTimeLineManager;
+    private final PickTimeLineManager pickTimeLineManager;
+
+    private final List<IObserver> observers;
 
     private List<? extends NetworkElement> pickedElement;
     private List<Pair<Demand, Link>> pickedForwardingRule;
@@ -32,7 +34,11 @@ class PickManager
         this.vs = vs;
 
         this.pickTimeLineManager = new PickTimeLineManager();
+        this.observers = new ArrayList<>();
+    }
 
+    void reset()
+    {
         this.pickedElement = null;
         this.pickedForwardingRule = null;
     }
@@ -50,15 +56,17 @@ class PickManager
 
     void pickLayer(NetworkLayer pickedLayer)
     {
-        resetPickedState();
+        cleanPick();
         this.pickedForwardingRule = null;
         this.pickedElement = Arrays.asList(pickedLayer);
         this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedLayer);
+
+        notifyAllListeners();
     }
 
     void pickDemand(List<Demand> pickedDemands)
     {
-        resetPickedState();
+        cleanPick();
         this.pickedForwardingRule = null;
         this.pickedElement = pickedDemands;
         if (pickedDemands.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedDemands.get(0));
@@ -118,11 +126,13 @@ class PickManager
                 gnDestination.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
             }
         }
+
+        notifyAllListeners();
     }
 
     void pickSRG(List<SharedRiskGroup> pickedSRGs)
     {
-        resetPickedState();
+        cleanPick();
         this.pickedForwardingRule = null;
         this.pickedElement = pickedSRGs;
         if (pickedSRGs.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedSRGs.get(0));
@@ -183,11 +193,13 @@ class PickManager
                 gl.setShownSeparated(true);
             }
         }
+
+        notifyAllListeners();
     }
 
     void pickMulticastDemand(List<MulticastDemand> pickedDemands)
     {
-        resetPickedState();
+        cleanPick();
         this.pickedForwardingRule = null;
         this.pickedElement = pickedDemands;
         if (pickedDemands.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedDemands.get(0));
@@ -237,11 +249,12 @@ class PickManager
             }
         }
 
+        notifyAllListeners();
     }
 
     void pickRoute(List<Route> pickedRoutes)
     {
-        resetPickedState();
+        cleanPick();
         this.pickedForwardingRule = null;
         this.pickedElement = pickedRoutes;
         if (pickedRoutes.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedRoutes.get(0));
@@ -278,11 +291,13 @@ class PickManager
                 gnDestination.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
             }
         }
+
+        notifyAllListeners();
     }
 
     void pickMulticastTree(List<MulticastTree> pickedTrees)
     {
-        resetPickedState();
+        cleanPick();
         this.pickedForwardingRule = null;
         this.pickedElement = pickedTrees;
         if (pickedTrees.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedTrees.get(0));
@@ -326,11 +341,13 @@ class PickManager
                 gnOrigin.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
             }
         }
+
+        notifyAllListeners();
     }
 
     void pickLink(List<Link> pickedLinks)
     {
-        resetPickedState();
+        cleanPick();
         this.pickedForwardingRule = null;
         this.pickedElement = pickedLinks;
         if (pickedLinks.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedLinks.get(0));
@@ -376,11 +393,13 @@ class PickManager
                 gl.setShownSeparated(true);
             }
         }
+
+        notifyAllListeners();
     }
 
     void pickNode(List<Node> pickedNodes)
     {
-        resetPickedState();
+        cleanPick();
         this.pickedForwardingRule = null;
         this.pickedElement = pickedNodes;
         if (pickedNodes.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedNodes.get(0));
@@ -399,11 +418,13 @@ class PickManager
                 gl.setHasArrow(true);
             }
         }
+
+        notifyAllListeners();
     }
 
     void pickResource(List<Resource> pickedResources)
     {
-        resetPickedState();
+        cleanPick();
         this.pickedForwardingRule = null;
         this.pickedElement = pickedResources;
         if (pickedResources.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedResources.get(0));
@@ -416,11 +437,13 @@ class PickManager
                 gn.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_RESOURCE);
             }
         }
+
+        notifyAllListeners();
     }
 
     void pickForwardingRule(List<Pair<Demand, Link>> pickedFRs)
     {
-        resetPickedState();
+        cleanPick();
         this.pickedForwardingRule = pickedFRs;
         this.pickedElement = null;
         if (pickedFRs.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedFRs.get(0));
@@ -468,6 +491,8 @@ class PickManager
                 gl.getDestinationNode().setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
             }
         }
+
+
     }
 
     Object getPickNavigationBackElement()
@@ -480,7 +505,7 @@ class PickManager
         return pickTimeLineManager.getPickNavigationForwardElement();
     }
 
-    void resetPickedState()
+    void cleanPick()
     {
         this.pickedElement = null;
         this.pickedForwardingRule = null;
@@ -505,6 +530,23 @@ class PickManager
             DrawUtils.setCurrentDefaultEdgeStroke(vs, e, VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE);
             e.setEdgeDrawPaint(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
             e.setShownSeparated(false);
+        }
+
+        notifyAllListeners();
+    }
+
+    @Override
+    public void addListener(IObserver observer)
+    {
+        observers.add(observer);
+    }
+
+    @Override
+    public void notifyAllListeners()
+    {
+        for (IObserver observer : observers)
+        {
+            observer.update();
         }
     }
 

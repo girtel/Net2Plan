@@ -304,7 +304,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                             {
                                 demand.setOfferedTraffic(newOfferedTraffic);
                                 callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                                callback.getVisualizationState().pickDemand(demand);
+                                callback.getVisualizationState().pickElement(demand);
                                 callback.updateVisualizationAfterPick();
                                 callback.addNetPlanChange();
                             }
@@ -585,7 +585,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                     final Link e = netPlan.addLink(originNode, destinationNode, 0, 0, 200000, null);
                     callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                     callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
-                    callback.getVisualizationState().pickLink(e);
+                    callback.getVisualizationState().pickElement(e);
                     callback.updateVisualizationAfterPick();
                     callback.addNetPlanChange();
 
@@ -593,7 +593,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                 {
                     final Demand d = netPlan.addDemand(originNode, destinationNode, 0, null);
                     callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                    callback.getVisualizationState().pickDemand(d);
+                    callback.getVisualizationState().pickElement(d);
                     callback.updateVisualizationAfterPick();
                     callback.addNetPlanChange();
                 }

@@ -6,6 +6,6 @@ package com.net2plan.gui.plugins.networkDesign.interfaces.patterns;
  */
 public interface ISubject
 {
-    void attach(IObserver observer);
-    void notifyAllObservers();
+    void addListener(IObserver observer);
+    void notifyAllListeners();
 }
