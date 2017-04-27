@@ -55,16 +55,9 @@ public class CanvasStateController
         assert state != null;
 
         // Save state information
-        switch (currentState.getState())
-        {
-            case SiteState:
-            case ViewState:
-                stateMirror = new CanvasStateMirror(currentState, canvas.getCanvasPointFromMovement(canvas.getCanvasCenter()), canvas.getCurrentCanvasScale());
-                break;
-            case OSMState:
-                stateMirror = new CanvasStateMirror(currentState, canvas.getCanvasPointFromMovement(canvas.getCanvasCenter()), mapController.getZoomLevel());
-                break;
-        }
+        stateMirror = new CanvasStateMirror(currentState
+                , canvas.getCanvasPointFromMovement(canvas.getCanvasCenter())
+                , currentState.getState() == CanvasOption.OSMState ? mapController.getZoomLevel() : canvas.getCurrentCanvasScale());
 
         // Change state
         currentState.stop();
@@ -105,7 +98,6 @@ public class CanvasStateController
         return currentState.getState();
     }
 
-    // ** Return to previous state **
     public void returnToPreviousState()
     {
         // Mirror data

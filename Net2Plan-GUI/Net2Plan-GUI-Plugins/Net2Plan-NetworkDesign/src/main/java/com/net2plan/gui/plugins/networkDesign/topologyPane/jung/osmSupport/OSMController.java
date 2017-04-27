@@ -153,7 +153,7 @@ public class OSMController
     private void alignTopologyToOSMMap()
     {
         final NetPlan netPlan = callback.getDesign();
-        final Map<Node, GeoPosition> nodeToGeoPositionMap = netPlan.getNodes().stream().collect(Collectors.toMap(node->node, node -> new GeoPosition(node.getXYPositionMap().getY(), node.getXYPositionMap().getX())));
+        final Map<Node, GeoPosition> nodeToGeoPositionMap = netPlan.getNodes().stream().collect(Collectors.toMap(node -> node, node -> new GeoPosition(node.getXYPositionMap().getY(), node.getXYPositionMap().getX())));
 
         final VisualizationState topologyVisualizationState = callback.getVisualizationState();
 
@@ -308,6 +308,11 @@ public class OSMController
         }
     }
 
+    /**
+     * Moves the map to a given GeoPosition.
+     *
+     * @param position GeoPosition the map will be moved to.
+     */
     public void moveMapTo(GeoPosition position)
     {
         if (canvas.getState() == CanvasOption.OSMState)
@@ -322,11 +327,22 @@ public class OSMController
         }
     }
 
-    public int getZoomLevel()
+    /**
+     * Returns current map center in a GeoPosition format.
+     *
+     * @return GeoPosition indicating map center.
+     */
+    public GeoPosition getMapCenter()
     {
-        return mapViewer.getZoom();
+        return mapViewer.getCenterPosition();
     }
 
+    /**
+     * Sets the zoom level to a given value.
+     * If the value is out of limits, the map will zoom to the closest level possible.
+     *
+     * @param level Zoom level.
+     */
     public void zoomToLevel(int level)
     {
         if (canvas.getState() == CanvasOption.OSMState)
@@ -364,16 +380,7 @@ public class OSMController
      */
     public void zoomIn()
     {
-        if (canvas.getState() == CanvasOption.OSMState)
-        {
-            mapViewer.setZoom(mapViewer.getZoom() - 1);
-
-            // Align the topology to the newly change OSM map.
-            alignZoomJUNGToOSMMap();
-        } else
-        {
-            throw new OSMException("Map is currently deactivated");
-        }
+        this.zoomToLevel(mapViewer.getZoom() - 1);
     }
 
     /**
@@ -381,16 +388,17 @@ public class OSMController
      */
     public void zoomOut()
     {
-        if (canvas.getState() == CanvasOption.OSMState)
-        {
-            mapViewer.setZoom(mapViewer.getZoom() + 1);
+        this.zoomToLevel(mapViewer.getZoom() + 1);
+    }
 
-            // Align the topology to the newly change OSM map.
-            alignZoomJUNGToOSMMap();
-        } else
-        {
-            throw new OSMException("Map is currently deactivated");
-        }
+    /**
+     * Returns the current zoom level.
+     *
+     * @return Zoom level value.
+     */
+    public int getZoomLevel()
+    {
+        return mapViewer.getZoom();
     }
 
     public JComponent getMapComponent()
