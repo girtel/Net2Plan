@@ -44,9 +44,9 @@ public class MulticastDemand extends NetworkElement
 	Map<Node,Link> coupledUpperLayerLinks;
 	
 	
-	MulticastDemand (NetPlan netPlan , long id , int index , NetworkLayer layer , Node ingressNode , Set<Node> egressNodes , double offeredTraffic , AttributeMap attributes)
+	MulticastDemand (NetPlan netPlan , long id , int index , NetworkLayer layer , Node ingressNode , Set<Node> egressNodes , double offeredTraffic , String planningDomain , AttributeMap attributes)
 	{
-		super (netPlan , id , index , attributes);
+		super (netPlan , id , index , planningDomain , attributes);
 		
 		if (!netPlan.equals(layer.netPlan)) throw new RuntimeException ("Bad");
 		if (!netPlan.equals(ingressNode.netPlan)) throw new RuntimeException ("Bad");
@@ -273,6 +273,7 @@ public class MulticastDemand extends NetworkElement
 	public void couple(Set<Link> links)
 	{
 		this.checkAttachedToNetPlanObject();
+		links.stream().forEach(e->checkSamePlanningDomain(e));
 		netPlan.checkIsModifiable();
 		if (links.size () != egressNodes.size ()) throw new Net2PlanException ("Multicast demands can be coupled to a set of links, starting in the demand ingress node, and ending in each of the multicast demand egress nodes");
 		final NetworkLayer lowerLayer = layer;
@@ -331,11 +332,14 @@ public class MulticastDemand extends NetworkElement
 		Set<Link> newLinks = new HashSet<Link> ();
 		try
 		{
+			final String oldPd = netPlan.defaultPlanningDomainForNewElements;
+			netPlan.defaultPlanningDomainForNewElements = this.getPlanningDomain();
 			for (Node egressNode : egressNodes)
 			{
 				Link newLink = netPlan.addLink(ingressNode , egressNode , carriedTraffic , netPlan.getNodePairEuclideanDistance(ingressNode , egressNode) , 200000 , null , newLinkLayer);
 				newLinks.add (newLink);
 			}
+			netPlan.defaultPlanningDomainForNewElements = oldPd;
 			couple (newLinks);
 		} catch (Exception e) { for (Link link : newLinks) link.remove (); throw e; }
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
@@ -401,7 +405,7 @@ public class MulticastDemand extends NetworkElement
 		for (Node egressNode : egressNodes) egressNode.cache_nodeIncomingMulticastDemands.remove (this);
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId();
+		removeIdAndFromPlanningDomain();
 	}
 
 	
@@ -454,6 +458,7 @@ public class MulticastDemand extends NetworkElement
 	public Set<Link> getLinksThisLayerPotentiallyCarryingTraffic  (Node egressNode)
 	{
 		checkAttachedToNetPlanObject();
+		egressNode.checkHasPlanningDomain(this.getPlanningDomain());
 		if (!this.egressNodes.contains(egressNode)) throw new Net2PlanException ("This is not an egress node of the multicast demand");
 		
 		Set<Link> res = new HashSet<> ();

@@ -44,9 +44,9 @@ public class SharedRiskGroup extends NetworkElement
 	double meanTimeToRepairInHours;
 	
 
-	SharedRiskGroup (NetPlan netPlan , long id , int index , Set<Node> nodes , Set<Link> links , double meanTimeToFailInHours ,  double meanTimeToRepairInHours , AttributeMap attributes)
+	SharedRiskGroup (NetPlan netPlan , long id , int index , Set<Node> nodes , Set<Link> links , double meanTimeToFailInHours ,  double meanTimeToRepairInHours , String planningDomain , AttributeMap attributes)
 	{
-		super (netPlan , id , index , attributes);
+		super (netPlan , id , index , planningDomain , attributes);
 
 		if (links == null) links = new HashSet<Link> ();
 		if (nodes == null) nodes = new HashSet<Node> ();
@@ -176,6 +176,7 @@ public class SharedRiskGroup extends NetworkElement
 	 */
 	public boolean affectsAnyOf (Collection<? extends NetworkElement> col)
 	{
+		col.stream().forEach(e->checkSamePlanningDomain(e));
 		for (NetworkElement e : col)
 		{
 			if (e instanceof Link)
@@ -296,6 +297,7 @@ public class SharedRiskGroup extends NetworkElement
 	public void removeLink (Link e)
 	{
 		checkAttachedToNetPlanObject();
+		checkSamePlanningDomain(e);
 		netPlan.checkIsModifiable();
 		e.cache_srgs.remove (this);
 		links.remove (e);
@@ -309,6 +311,7 @@ public class SharedRiskGroup extends NetworkElement
 	public void removeNode (Node n)
 	{
 		checkAttachedToNetPlanObject();
+		checkSamePlanningDomain(n);
 		netPlan.checkIsModifiable();
 		n.cache_nodeSRGs.remove (this);
 		nodes.remove (n);
@@ -329,7 +332,7 @@ public class SharedRiskGroup extends NetworkElement
 		netPlan.cache_id2srgMap.remove (id);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.srgs , index);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId ();
+		removeIdAndFromPlanningDomain ();
 	}
 
 	/**
@@ -339,6 +342,7 @@ public class SharedRiskGroup extends NetworkElement
 	public void addLink(Link link)
 	{
 		checkAttachedToNetPlanObject();
+		checkSamePlanningDomain(link);
 		netPlan.checkIsModifiable();
 		link.checkAttachedToNetPlanObject(this.netPlan);
 		if (this.links.contains(link)) return;
@@ -354,6 +358,7 @@ public class SharedRiskGroup extends NetworkElement
 	public void addNode(Node node)
 	{
 		checkAttachedToNetPlanObject();
+		checkSamePlanningDomain(node);
 		netPlan.checkIsModifiable();
 		node.checkAttachedToNetPlanObject(this.netPlan);
 		if (this.nodes.contains(node)) return;

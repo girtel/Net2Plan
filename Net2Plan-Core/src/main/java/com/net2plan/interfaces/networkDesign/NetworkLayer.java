@@ -70,7 +70,7 @@ public class NetworkLayer extends NetworkElement
 
 	NetworkLayer(NetPlan netPlan, long id, int index , String demandTrafficUnitsName, String description, String name, String linkCapacityUnitsName, URL defaultNodeIconURL , AttributeMap attributes)
 	{
-		super(netPlan, id , index , attributes);
+		super(netPlan, id , index , (Set<String>) null , attributes);
 		this.demandTrafficUnitsName = (demandTrafficUnitsName == null)? "" : demandTrafficUnitsName;
 		this.description =  (description == null)? "" : description;
 		this.name =  (name == null)? "" : name;

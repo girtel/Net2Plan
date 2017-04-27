@@ -72,9 +72,9 @@ public class Node extends NetworkElement
 	 * @param attributes Node attributes
 	 * @since 0.2.0
 	 */
-	protected Node (NetPlan netPlan , long id , int index , double xCoord, double yCoord, String name, AttributeMap attributes)
+	protected Node (NetPlan netPlan , long id , int index , double xCoord, double yCoord, String name, Set<String> planningDomains , AttributeMap attributes)
 	{
-		super (netPlan , id , index , attributes);
+		super (netPlan , id , index , planningDomains , attributes);
 		
 		this.nodeXYPositionMap = new UnmodifiablePoint2D(xCoord, yCoord);
 		this.name = name == null? "" : name;
@@ -487,7 +487,7 @@ public class Node extends NetworkElement
 		return false;
 	}
 
-	/** Returns true if the node is fully isoltaed at all layers, with no links nor demands affecting it
+	/** Returns true if the node is fully isolated at all layers, with no links nor demands affecting it
 	 * @return see above
 	 */
 	public boolean isFullyIsolated ()
@@ -769,7 +769,7 @@ public class Node extends NetworkElement
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.nodes , this.index);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId ();
+		removeIdAndFromPlanningDomain ();
 	}
 
 	/**
@@ -804,6 +804,7 @@ public class Node extends NetworkElement
 	 */
 	public Map<Pair<Demand,Link>,Double> getForwardingRules (Demand demand)
 	{
+		checkSamePlanningDomain(demand);
 		NetworkLayer layer = demand.layer;
 		layer.checkAttachedToNetPlanObject(netPlan); 
 		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
@@ -867,6 +868,7 @@ public class Node extends NetworkElement
 	public void addPlanningDomain (String pd)
 	{
 		if (!netPlan.cache_planningDomain2networkElements.containsKey(pd)) throw new Net2PlanException ("Planning domain " + pd + " was not defined");
+		netPlan.cache_planningDomain2networkElements.get(pd).add(this);
 		this.planningDomains.add(pd);
 	}
 

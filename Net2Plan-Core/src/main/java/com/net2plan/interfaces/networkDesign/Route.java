@@ -67,9 +67,9 @@ public class Route extends NetworkElement
 	boolean cache_hasLoops;
 	double cache_propagationDelayMs;
 	
-	Route (NetPlan netPlan , long id , int index , Demand demand , List<? extends NetworkElement> seqLinksAndResourcesTraversed , AttributeMap attributes)
+	Route (NetPlan netPlan , long id , int index , Demand demand , List<? extends NetworkElement> seqLinksAndResourcesTraversed , String planningDomain , AttributeMap attributes)
 	{
-		super (netPlan , id , index , attributes);
+		super (netPlan , id , index , planningDomain , attributes);
 
 		if (!netPlan.equals(demand.netPlan)) throw new RuntimeException ("Bad");
 		for (NetworkElement e : seqLinksAndResourcesTraversed) 
@@ -188,6 +188,7 @@ public class Route extends NetworkElement
 	public void addBackupRoute (Route backupRoute)
 	{
 		if (backupRoute == null) throw new Net2PlanException ("The passed element is NULL");
+		checkSamePlanningDomain(backupRoute);
 		this.checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		if (!backupRoute.demand.equals(demand)) throw new Net2PlanException ("The backup route must be of the same demand as the primary");
@@ -205,6 +206,7 @@ public class Route extends NetworkElement
 	public void removeBackupRoute (Route backupRoute)
 	{
 		if (backupRoute == null) throw new Net2PlanException ("The passed element is NULL");
+		checkSamePlanningDomain(backupRoute);
 		this.checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		if (!backupRoutes.contains(backupRoute)) throw new Net2PlanException ("This route is not a backup");
@@ -254,6 +256,7 @@ public class Route extends NetworkElement
 	public double getOccupiedCapacityInNoFailureState (NetworkElement ... e)
 	{
 		final NetworkElement linkResource = e.length == 0? currentPath.get(0) : e [0];
+		for (NetworkElement networkElement : e) checkSamePlanningDomain(networkElement);
 		final Double res = cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.get(linkResource);
 		return res == null? 0.0 : res;
 	}
@@ -439,6 +442,7 @@ public class Route extends NetworkElement
 	 */
 	public int getNumberOfTimesIsTraversed (NetworkElement e)
 	{
+		checkSamePlanningDomain(e);
 		if (e instanceof Link)
 		{
 			Integer num = ((Link) e).cache_traversingRoutes.get (this); return num == null? 0 : num;
@@ -531,7 +535,7 @@ public class Route extends NetworkElement
         }
 
         if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId();
+		removeIdAndFromPlanningDomain();
 	}
 
 	/** Sets the route carried traffic and the occupied capacity in the traversed links and resources (typically the same as the carried traffic),
@@ -609,6 +613,7 @@ public class Route extends NetworkElement
 	public void setPath (double newCarriedTraffic , List<? extends NetworkElement> newPath , List<Double> newOccupationInformation)
 	{
 		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		newPath.stream().forEach(e->checkSamePlanningDomain(e));
 		netPlan.checkIsModifiable();
 		Pair<List<Link>,List<Resource>> res = netPlan.checkPathValidityForDemand (newPath, demand);
 		List<Link> newSeqLinks = res.getFirst();
@@ -667,6 +672,7 @@ public class Route extends NetworkElement
 	public void setSeqLinks(List<Link> seqLinks)
 	{
 		if (demand.isServiceChainRequest()) throw new Net2PlanException ("This method is not valid for service chains");
+		seqLinks.stream().forEach(e->checkSamePlanningDomain(e));
 		final double firstLinkOccup = this.currentLinksAndResourcesOccupationIfNotFailing.get(0);
 		for (double val : currentLinksAndResourcesOccupationIfNotFailing) if (val != firstLinkOccup) throw new Net2PlanException ("This method can only be used when the occupation in all the lnks is the same");
 		if (seqLinks.equals(this.cache_seqLinksRealPath)) return;

@@ -131,6 +131,8 @@ public class NetPlanTest
 
 		/* Triangle link cap 100, length 1, demands offered 1 */
 		this.netTriangle = new NetPlan ();
+		this.netTriangle.addGlobalPlanningDomain("new");
+		this.netTriangle.setDefaultPlanningDomain("new");
 		this.netTriangle_n1 = this.netTriangle.addNode(0 , 0 , "node1" , null);
 		this.netTriangle_n2 = this.netTriangle.addNode(0 , 0 , "node2" , null);
 		this.netTriangle_n3 = this.netTriangle.addNode(0 , 0 , "node3" , null);
@@ -1002,6 +1004,60 @@ public class NetPlanTest
 		
 		final NetPlan npCopy = np.getRestrictedCopy(Sets.newHashSet(n1,n2));
 		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n2.getId()));
+	}
+
+	@Test
+	public void testAddPlanningDomain ()
+	{
+		assertEquals (np.getDefaultPlanningDomain() , "");
+		assertEquals (np.getGlobalPlanningDomains() , Sets.newHashSet(""));
+		np.addGlobalPlanningDomain("new");
+		assertEquals (np.getDefaultPlanningDomain() , "");
+		assertEquals (np.getGlobalPlanningDomains() , Sets.newHashSet("" , "new"));
+		np.setDefaultPlanningDomain("new");
+		assertEquals (np.getDefaultPlanningDomain() , "new");
+		assertEquals (np.getGlobalPlanningDomains() , Sets.newHashSet("" , "new"));
+		try { np.setDefaultPlanningDomain("tofail"); fail (); } catch (Exception e) {}
+
+		Set<NetworkElement> allElements = new HashSet<> ();
+		allElements.addAll(np.getNodes());
+		allElements.addAll(np.getResources());
+		allElements.addAll(np.getSRGs());
+		for (NetworkLayer layer : np.getNetworkLayers())
+		{
+			allElements.addAll(np.getLinks (layer));
+			allElements.addAll(np.getDemands (layer));
+			allElements.addAll(np.getRoutes (layer));
+			allElements.addAll(np.getMulticastDemands (layer));
+			allElements.addAll(np.getMulticastTrees (layer));
+		}
+		assertEquals (np.getGlobalPlanningDomainElements("") , allElements);
+		assertEquals (np.getGlobalPlanningDomainElements("new") , Sets.newHashSet());
+		assertEquals (np.getGlobalPlanningDomainElements("other") , null);
+		
+		np.setDefaultPlanningDomain("new");
+		n1.addPlanningDomain("new");
+		assertEquals(n1.getPlanningDomains(), Sets.newHashSet("","new"));
+		try { np.addLink(n1, n2, 0, 0, 200000, null, lowerLayer); fail (); } catch (Exception e) {}
+		n2.addPlanningDomain("new");
+		final Link new12 = np.addLink(n1, n2, 0, 0, 200000, null, lowerLayer); 
+		assertEquals (np.getGlobalPlanningDomainElements("new") , Sets.newHashSet(n1,n2,new12));
+
+		allElements = new HashSet<> ();
+		allElements.addAll(netTriangle.getNodes());
+		allElements.addAll(netTriangle.getResources());
+		allElements.addAll(netTriangle.getSRGs());
+		for (NetworkLayer layer : netTriangle.getNetworkLayers())
+		{
+			allElements.addAll(netTriangle.getLinks (layer));
+			allElements.addAll(netTriangle.getDemands (layer));
+			allElements.addAll(netTriangle.getRoutes (layer));
+			allElements.addAll(netTriangle.getMulticastDemands (layer));
+			allElements.addAll(netTriangle.getMulticastTrees (layer));
+		}
+		assertEquals (netTriangle.getGlobalPlanningDomainElements("new") , allElements);
+		assertEquals (netTriangle.getGlobalPlanningDomainElements("") , Sets.newHashSet());
+		assertEquals (netTriangle.getGlobalPlanningDomainElements("other") , null);
 	}
 	
 	@Test

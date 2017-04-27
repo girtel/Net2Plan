@@ -1,4 +1,11 @@
+//- AÑADIR TESTS PARA PD [faltan de restrict PD]
+//- AÑADIR A CHECKCONSISTENCY Y REPETIR TESTS
+//- CAMBIO DE PLANNING DOMAIN DE ELEMENTOS YA HAYA SE PUEDA HACER (TODOS A LA VEZ)
+//- SE PUEDA RESTRICT TO PLANNING DOMAIN DESPUES (SE COGE LO QUE HAY EN LOS MAPAS Y YA ESTÁ)
+//- HACER MÁS RAPIDO LO DE LAS TABLAS
+
 /*******************************************************************************
+ * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Lesser Public License v2.1
  * which accompanies this distribution, and is available at
@@ -159,7 +166,9 @@ public class NetPlan extends NetworkElement
     Map<String, Set<NetworkElement>> cache_planningDomain2networkElements;
 
     DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping> interLayerCoupling;
-
+    String defaultPlanningDomainForNewElements;
+    
+    
     /**
      * <p>Default constructor. Creates an empty design</p>
      *
@@ -167,7 +176,7 @@ public class NetPlan extends NetworkElement
      */
     public NetPlan()
     {
-        super(null, 0, 0, new AttributeMap());
+        super(null, 0, 0, (Set<String>) null , new AttributeMap());
 
         this.netPlan = this;
         DEFAULT_ROUTING_TYPE = RoutingType.SOURCE_ROUTING;
@@ -198,7 +207,8 @@ public class NetPlan extends NetworkElement
         this.cache_taggedElements = new HashMap<> ();
         this.cache_nodesPerSiteName = new HashMap<> ();
         this.cache_planningDomain2networkElements = new HashMap<> ();
-        
+        this.defaultPlanningDomainForNewElements = "";
+        this.cache_planningDomain2networkElements.put(this.defaultPlanningDomainForNewElements, new HashSet<> ());
         interLayerCoupling = new DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping>(DemandLinkMapping.class);
 
         defaultLayer = addLayer("Layer 0", null, null, null, null, null);
@@ -386,13 +396,18 @@ public class NetPlan extends NetworkElement
         if (!this.cache_taggedElements.keySet().equals(np2.cache_taggedElements.keySet())) throw new RuntimeException("Bad");
         if (!this.cache_nodesPerSiteName.keySet().equals(np2.cache_nodesPerSiteName.keySet())) throw new RuntimeException("Bad");
         if (!this.cache_planningDomain2networkElements.keySet().equals(np2.cache_planningDomain2networkElements.keySet())) throw new RuntimeException("Bad");
+        if (!this.defaultPlanningDomainForNewElements.equals(np2.defaultPlanningDomainForNewElements)) throw new RuntimeException("Bad");
         for (String tag : cache_taggedElements.keySet()) 
        		if (this.cache_taggedElements.get(tag).size() != np2.cache_taggedElements.get(tag).size())
        			throw new RuntimeException("Bad");
         for (String pd : cache_planningDomain2networkElements.keySet()) 
         {
-       		if (NetPlan.getIds(this.cache_planningDomain2networkElements.get(pd)).equals(NetPlan.getIds(np2.cache_planningDomain2networkElements.get(pd))))
+       		if (!NetPlan.getIds(this.cache_planningDomain2networkElements.get(pd)).equals(NetPlan.getIds(np2.cache_planningDomain2networkElements.get(pd))))
+       		{
+       			System.out.println(this.cache_planningDomain2networkElements);
+       			System.out.println(np2.cache_planningDomain2networkElements);
        			throw new RuntimeException("Bad");
+       		}
         }
         for (String pd : cache_planningDomain2networkElements.keySet()) 
        		if (this.cache_planningDomain2networkElements.get(pd).size() != np2.cache_planningDomain2networkElements.get(pd).size())
@@ -466,10 +481,10 @@ public class NetPlan extends NetworkElement
      */
     public Demand addDemand(Node ingressNode, Node egressNode, double offeredTraffic, Map<String, String> attributes, NetworkLayer... optionalLayerParameter)
     {
-        return addDemand(null, ingressNode, egressNode, offeredTraffic, attributes, optionalLayerParameter);
+        return addDemand(null, ingressNode, egressNode, offeredTraffic, this.defaultPlanningDomainForNewElements , attributes, optionalLayerParameter);
     }
 
-    Demand addDemand(Long demandId, Node ingressNode, Node egressNode, double offeredTraffic, Map<String, String> attributes, NetworkLayer... optionalLayerParameter)
+    Demand addDemand(Long demandId, Node ingressNode, Node egressNode, double offeredTraffic, String planningDomain , Map<String, String> attributes, NetworkLayer... optionalLayerParameter)
     {
         offeredTraffic = NetPlan.adjustToTolerance(offeredTraffic);
         checkIsModifiable();
@@ -478,16 +493,19 @@ public class NetPlan extends NetworkElement
         checkInThisNetPlan(egressNode);
         if (ingressNode.equals(egressNode)) throw new Net2PlanException("Self-demands are not allowed");
         if (offeredTraffic < 0) throw new Net2PlanException("Offered traffic must be non-negative");
-
+        if (!ingressNode.getPlanningDomains().contains(planningDomain)) throw new Net2PlanException ("Wrong planning domain");
+        if (!egressNode.getPlanningDomains().contains(planningDomain)) throw new Net2PlanException ("Wrong planning domain");
+        
         if (demandId == null)
         {
             demandId = nextElementId.longValue();
             nextElementId.increment();
         }
 
-        Demand demand = new Demand(this, demandId, layer.demands.size(), layer, ingressNode, egressNode, offeredTraffic, new AttributeMap(attributes));
+        Demand demand = new Demand(this, demandId, layer.demands.size(), layer, ingressNode, egressNode, offeredTraffic, planningDomain , new AttributeMap(attributes));
 
         cache_id2DemandMap.put(demandId, demand);
+        cache_planningDomain2networkElements.get(planningDomain).add(demand);
         layer.demands.add(demand);
         egressNode.cache_nodeIncomingDemands.add(demand);
         ingressNode.cache_nodeOutgoingDemands.add(demand);
@@ -647,10 +665,10 @@ public class NetPlan extends NetworkElement
      */
     public Link addLink(Node originNode, Node destinationNode, double capacity, double lengthInKm, double propagationSpeedInKmPerSecond, Map<String, String> attributes, NetworkLayer... optionalLayerParameter)
     {
-        return addLink(null, originNode, destinationNode, capacity, lengthInKm, propagationSpeedInKmPerSecond, attributes, optionalLayerParameter);
+        return addLink(null, originNode, destinationNode, capacity, lengthInKm, propagationSpeedInKmPerSecond, this.defaultPlanningDomainForNewElements , attributes, optionalLayerParameter);
     }
 
-    Link addLink(Long linkId, Node originNode, Node destinationNode, double capacity, double lengthInKm, double propagationSpeedInKmPerSecond, Map<String, String> attributes, NetworkLayer... optionalLayerParameter)
+    Link addLink(Long linkId, Node originNode, Node destinationNode, double capacity, double lengthInKm, double propagationSpeedInKmPerSecond, String planningDomain , Map<String, String> attributes, NetworkLayer... optionalLayerParameter)
     {
         capacity = NetPlan.adjustToTolerance(capacity);
         checkIsModifiable();
@@ -661,16 +679,19 @@ public class NetPlan extends NetworkElement
         if (capacity < 0) throw new Net2PlanException("Link capacity must be non-negative");
         if (lengthInKm < 0) throw new Net2PlanException("Link length must be non-negative");
         if (propagationSpeedInKmPerSecond <= 0) throw new Net2PlanException("Propagation speed must be positive");
-
+        if (!originNode.getPlanningDomains().contains(planningDomain)) { System.out.println(planningDomain); System.out.println(originNode.getPlanningDomains().size());throw new Net2PlanException("Wrong planning domain"); }
+        if (!destinationNode.getPlanningDomains().contains(planningDomain)) throw new Net2PlanException("Wrong planning domain");
+        
         if (linkId == null)
         {
             linkId = nextElementId.longValue();
             nextElementId.increment();
         }
 
-        Link link = new Link(this, linkId, layer.links.size(), layer, originNode, destinationNode, lengthInKm, propagationSpeedInKmPerSecond, capacity, new AttributeMap(attributes));
+        Link link = new Link(this, linkId, layer.links.size(), layer, originNode, destinationNode, lengthInKm, propagationSpeedInKmPerSecond, capacity, planningDomain , new AttributeMap(attributes));
 
         cache_id2LinkMap.put(linkId, link);
+        cache_planningDomain2networkElements.get(planningDomain).add(link);
         layer.links.add(link);
         originNode.cache_nodeOutgoingLinks.add(link);
         destinationNode.cache_nodeIncomingLinks.add(link);
@@ -734,10 +755,10 @@ public class NetPlan extends NetworkElement
      */
     public MulticastDemand addMulticastDemand(Node ingressNode, Set<Node> egressNodes, double offeredTraffic, Map<String, String> attributes, NetworkLayer... optionalLayerParameter)
     {
-        return addMulticastDemand(null, ingressNode, egressNodes, offeredTraffic, attributes, optionalLayerParameter);
+        return addMulticastDemand(null, ingressNode, egressNodes, offeredTraffic, this.defaultPlanningDomainForNewElements , attributes, optionalLayerParameter);
     }
 
-    MulticastDemand addMulticastDemand(Long demandId, Node ingressNode, Set<Node> egressNodes, double offeredTraffic, Map<String, String> attributes, NetworkLayer... optionalLayerParameter)
+    MulticastDemand addMulticastDemand(Long demandId, Node ingressNode, Set<Node> egressNodes, double offeredTraffic, String planningDomain , Map<String, String> attributes, NetworkLayer... optionalLayerParameter)
     {
         offeredTraffic = NetPlan.adjustToTolerance(offeredTraffic);
         checkIsModifiable();
@@ -747,7 +768,9 @@ public class NetPlan extends NetworkElement
         if (egressNodes.contains(ingressNode))
             throw new Net2PlanException("The ingress node cannot be also an egress node");
         if (offeredTraffic < 0) throw new Net2PlanException("Offered traffics must be non-negative");
-
+        if (!ingressNode.getPlanningDomains().contains(planningDomain)) throw new Net2PlanException("Wrong planning domain");
+        if (egressNodes.stream().anyMatch(e->!e.getPlanningDomains().contains(planningDomain))) throw new Net2PlanException("Wrong planning domain");
+        
         for (Node n : egressNodes) n.checkAttachedToNetPlanObject(this);
         if (egressNodes.contains(ingressNode))
             throw new Net2PlanException("The ingress node is also an egress node of the multicast demand");
@@ -759,9 +782,11 @@ public class NetPlan extends NetworkElement
             nextElementId.increment();
         }
 
-        MulticastDemand demand = new MulticastDemand(this, demandId, layer.multicastDemands.size(), layer, ingressNode, egressNodes, offeredTraffic, new AttributeMap(attributes));
+        MulticastDemand demand = new MulticastDemand(this, demandId, layer.multicastDemands.size(), layer, ingressNode, egressNodes, 
+        		offeredTraffic, planningDomain , new AttributeMap(attributes));
 
         cache_id2MulticastDemandMap.put(demandId, demand);
+        cache_planningDomain2networkElements.get(planningDomain).add(demand);
         layer.multicastDemands.add(demand);
         for (Node n : egressNodes) n.cache_nodeIncomingMulticastDemands.add(demand);
         ingressNode.cache_nodeOutgoingMulticastDemands.add(demand);
@@ -785,10 +810,10 @@ public class NetPlan extends NetworkElement
      */
     public MulticastTree addMulticastTree(MulticastDemand demand, double carriedTraffic, double occupiedLinkCapacity, Set<Link> linkSet, Map<String, String> attributes)
     {
-        return addMulticastTree(null, demand, carriedTraffic, occupiedLinkCapacity, linkSet, attributes);
+        return addMulticastTree(null, demand, carriedTraffic, occupiedLinkCapacity, linkSet, this.defaultPlanningDomainForNewElements , attributes);
     }
 
-    MulticastTree addMulticastTree(Long treeId, MulticastDemand demand, double carriedTraffic, double occupiedLinkCapacity, Set<Link> linkSet, Map<String, String> attributes)
+    MulticastTree addMulticastTree(Long treeId, MulticastDemand demand, double carriedTraffic, double occupiedLinkCapacity, Set<Link> linkSet, String planningDomain , Map<String, String> attributes)
     {
         carriedTraffic = NetPlan.adjustToTolerance(carriedTraffic);
         occupiedLinkCapacity = NetPlan.adjustToTolerance(occupiedLinkCapacity);
@@ -797,6 +822,8 @@ public class NetPlan extends NetworkElement
         checkMulticastTreeValidityForDemand(linkSet, demand);
         if (carriedTraffic < 0) throw new Net2PlanException("Carried traffic must be non-negative");
         if (occupiedLinkCapacity < 0) occupiedLinkCapacity = carriedTraffic;
+        if (!demand.getPlanningDomain().equals(planningDomain)) throw new Net2PlanException("Wrong planning domain");
+        if (linkSet.stream().anyMatch(e->!e.getPlanningDomain().equals(planningDomain))) throw new Net2PlanException("Wrong planning domain");
         NetworkLayer layer = demand.layer;
 
         if (treeId == null)
@@ -805,9 +832,10 @@ public class NetPlan extends NetworkElement
             nextElementId.increment();
         }
 
-        MulticastTree tree = new MulticastTree(this, treeId, layer.multicastTrees.size(), demand, linkSet, new AttributeMap(attributes));
+        MulticastTree tree = new MulticastTree(this, treeId, layer.multicastTrees.size(), demand, linkSet, planningDomain , new AttributeMap(attributes));
 
         cache_id2MulticastTreeMap.put(treeId, tree);
+        cache_planningDomain2networkElements.get(planningDomain).add(tree);
         layer.multicastTrees.add(tree);
         boolean treeIsUp = true;
         for (Node node : tree.cache_traversedNodes)
@@ -839,10 +867,10 @@ public class NetPlan extends NetworkElement
      */
     public Node addNode(double xCoord, double yCoord, String name, Map<String, String> attributes)
     {
-        return addNode(null, xCoord, yCoord, name, attributes);
+        return addNode(null, xCoord, yCoord, name, Sets.newHashSet(this.defaultPlanningDomainForNewElements) , attributes);
     }
 
-    Node addNode(Long nodeId, double xCoord, double yCoord, String name, Map<String, String> attributes)
+    Node addNode(Long nodeId, double xCoord, double yCoord, String name, Set<String> planningDomains , Map<String, String> attributes)
     {
         checkIsModifiable();
         if (nodeId == null)
@@ -850,11 +878,14 @@ public class NetPlan extends NetworkElement
             nodeId = nextElementId.longValue();
             nextElementId.increment();
         }
-
-        Node node = new Node(this, nodeId, nodes.size(), xCoord, yCoord, name, new AttributeMap(attributes));
+        System.out.println("1. " + planningDomains + ", " + planningDomains.size());
+        Node node = new Node(this, nodeId, nodes.size(), xCoord, yCoord, name, planningDomains , new AttributeMap(attributes));
 
         nodes.add(node);
         cache_id2NodeMap.put(nodeId, node);
+        for (String pd : planningDomains)
+        	cache_planningDomain2networkElements.get(pd).add(node);
+
 
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return node;
@@ -877,11 +908,12 @@ public class NetPlan extends NetworkElement
                                 Map<Resource, Double> capacityIOccupyInBaseResource, double processingTimeToTraversingTrafficInMs, AttributeMap attributes)
     {
         return addResource(null, type, name, hostNode, capacity, capacityMeasurementUnits,
-                capacityIOccupyInBaseResource, processingTimeToTraversingTrafficInMs, attributes);
+                capacityIOccupyInBaseResource, processingTimeToTraversingTrafficInMs, this.defaultPlanningDomainForNewElements , attributes);
     }
 
     Resource addResource(Long resourceId, String type, String name, Node hostNode, double capacity, String capacityMeasurementUnits,
-                         Map<Resource, Double> capacityIOccupyInBaseResource, double processingTimeToTraversingTrafficInMs, AttributeMap attributes)
+                         Map<Resource, Double> capacityIOccupyInBaseResource, double processingTimeToTraversingTrafficInMs, 
+                         String planningDomain , AttributeMap attributes)
     {
         checkIsModifiable();
         if (capacity < 0) throw new Net2PlanException("Resource capacity cannot be negative");
@@ -890,7 +922,9 @@ public class NetPlan extends NetworkElement
         if (capacityIOccupyInBaseResource == null) capacityIOccupyInBaseResource = new HashMap<Resource, Double>();
         for (Double val : capacityIOccupyInBaseResource.values())
             if (val < 0) throw new Net2PlanException("Resource capacity cannot be negative");
-
+        if (!hostNode.getPlanningDomains().contains(planningDomain)) throw new Net2PlanException("Wrong planning domain");
+        if (capacityIOccupyInBaseResource.keySet().stream().anyMatch(e->!e.getPlanningDomain().equals(planningDomain))) throw new Net2PlanException("Wrong planning domain"); 
+        
         if (resourceId == null)
         {
             resourceId = nextElementId.longValue();
@@ -898,10 +932,11 @@ public class NetPlan extends NetworkElement
         }
 
         Resource resource = new Resource(this, resourceId, resources.size(), type, name, hostNode, capacity,
-                capacityMeasurementUnits, capacityIOccupyInBaseResource, processingTimeToTraversingTrafficInMs, attributes);
+                capacityMeasurementUnits, capacityIOccupyInBaseResource, processingTimeToTraversingTrafficInMs, planningDomain , attributes);
 
         resources.add(resource);
         cache_id2ResourceMap.put(resourceId, resource);
+        cache_planningDomain2networkElements.get(planningDomain).add(resource);
         Set<Resource> resOfThisType = cache_type2Resources.get(type);
         if (resOfThisType == null)
         {
@@ -947,10 +982,10 @@ public class NetPlan extends NetworkElement
      */
     public Route addServiceChain(Demand demand, double carriedTraffic, List<Double> occupiedLinkAndResourceCapacities, List<? extends NetworkElement> sequenceOfLinksAndResources, Map<String, String> attributes)
     {
-        return addServiceChain(null, demand, carriedTraffic, occupiedLinkAndResourceCapacities, sequenceOfLinksAndResources, attributes);
+        return addServiceChain(null, demand, carriedTraffic, occupiedLinkAndResourceCapacities, sequenceOfLinksAndResources, this.defaultPlanningDomainForNewElements , attributes);
     }
 
-    Route addServiceChain(Long routeId, Demand demand, double carriedTraffic, List<Double> occupiedLinkAndResourceCapacities, List<? extends NetworkElement> sequenceOfLinksAndResources, Map<String, String> attributes)
+    Route addServiceChain(Long routeId, Demand demand, double carriedTraffic, List<Double> occupiedLinkAndResourceCapacities, List<? extends NetworkElement> sequenceOfLinksAndResources, String planningDomain , Map<String, String> attributes)
     {
         carriedTraffic = NetPlan.adjustToTolerance(carriedTraffic);
         occupiedLinkAndResourceCapacities = NetPlan.adjustToTolerance(occupiedLinkAndResourceCapacities);
@@ -964,6 +999,9 @@ public class NetPlan extends NetworkElement
             throw new Net2PlanException("Wrong size of occupations vector");
         for (double val : occupiedLinkAndResourceCapacities)
             if (val < 0) throw new Net2PlanException("Occupied capacities cannot be negative");
+        if (!demand.getPlanningDomain().equals(planningDomain)) throw new Net2PlanException ("Wrong planning domain");
+        if (sequenceOfLinksAndResources.stream().anyMatch(e->!e.getPlanningDomain().equals(planningDomain))) throw new Net2PlanException ("Wrong planning domain");
+        
         NetworkLayer layer = demand.layer;
 
         if (routeId == null)
@@ -972,10 +1010,11 @@ public class NetPlan extends NetworkElement
             nextElementId.increment();
         }
 
-        Route route = new Route(this, routeId, layer.routes.size(), demand, sequenceOfLinksAndResources, new AttributeMap(attributes));
+        Route route = new Route(this, routeId, layer.routes.size(), demand, sequenceOfLinksAndResources, planningDomain , new AttributeMap(attributes));
 
         layer.routes.add(route);
         cache_id2RouteMap.put(routeId, route);
+        cache_planningDomain2networkElements.get(planningDomain).add(route);
         boolean isUpThisRoute = true;
         for (Node node : route.cache_seqNodesRealPath)
         {
@@ -1461,10 +1500,10 @@ public class NetPlan extends NetworkElement
      */
     public SharedRiskGroup addSRG(double mttfInHours, double mttrInHours, Map<String, String> attributes)
     {
-        return addSRG(null, mttfInHours, mttrInHours, attributes);
+        return addSRG(null, mttfInHours, mttrInHours, this.defaultPlanningDomainForNewElements , attributes);
     }
 
-    SharedRiskGroup addSRG(Long srgId, double mttfInHours, double mttrInHours, Map<String, String> attributes)
+    SharedRiskGroup addSRG(Long srgId, double mttfInHours, double mttrInHours, String planningDomain , Map<String, String> attributes)
     {
         checkIsModifiable();
         if (mttfInHours <= 0) throw new Net2PlanException("Mean Time To Fail must be a positive value");
@@ -1476,10 +1515,11 @@ public class NetPlan extends NetworkElement
             nextElementId.increment();
         }
 
-        SharedRiskGroup srg = new SharedRiskGroup(this, srgId, srgs.size(), new HashSet<Node>(), new HashSet<Link>(), mttfInHours, mttrInHours, new AttributeMap(attributes));
+        SharedRiskGroup srg = new SharedRiskGroup(this, srgId, srgs.size(), new HashSet<Node>(), new HashSet<Link>(), mttfInHours, mttrInHours, planningDomain , new AttributeMap(attributes));
 
         srgs.add(srg);
         cache_id2srgMap.put(srgId, srg);
+        cache_planningDomain2networkElements.get(planningDomain).add(srg);
 
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return srg;
@@ -1523,6 +1563,7 @@ public class NetPlan extends NetworkElement
         this.cache_taggedElements = netPlan.cache_taggedElements;
         this.cache_nodesPerSiteName = netPlan.cache_nodesPerSiteName;
         this.cache_planningDomain2networkElements = netPlan.cache_planningDomain2networkElements;
+        this.defaultPlanningDomainForNewElements = netPlan.defaultPlanningDomainForNewElements;
         this.interLayerCoupling = netPlan.interLayerCoupling;
         this.tags.clear(); this.tags.addAll(netPlan.tags);
         for (String tag : this.tags) // remove reference to origin netPlan in tags (the other network elements do not change, but NetPlan does) 
@@ -2013,7 +2054,9 @@ public class NetPlan extends NetworkElement
         this.cache_id2MulticastTreeMap = new HashMap<Long, MulticastTree>();
         this.cache_taggedElements = new HashMap<> ();
         this.cache_nodesPerSiteName = new HashMap<> ();
-        this.cache_planningDomain2networkElements = new HashMap<> ();
+        this.cache_planningDomain2networkElements = new HashMap<> (); 
+        for (String pd : originNetPlan.cache_planningDomain2networkElements.keySet()) this.cache_planningDomain2networkElements.put(pd, new HashSet<> ());
+        this.defaultPlanningDomainForNewElements = originNetPlan.defaultPlanningDomainForNewElements; 
         this.DEFAULT_ROUTING_TYPE = originNetPlan.DEFAULT_ROUTING_TYPE;
         this.isModifiable = true;
         this.networkDescription = originNetPlan.networkDescription;
@@ -2026,10 +2069,14 @@ public class NetPlan extends NetworkElement
 		/* Create the new network elements, not all the fields filled */
         for (Node originNode : originNetPlan.nodes)
         {
-            Node newElement = new Node(this, originNode.id, originNode.index, originNode.nodeXYPositionMap.getX(), originNode.nodeXYPositionMap.getY(), originNode.name, originNode.attributes);
+            Node newElement = new Node(this, originNode.id, originNode.index, originNode.nodeXYPositionMap.getX(), originNode.nodeXYPositionMap.getY(), 
+            		originNode.name, originNode.getPlanningDomains() , originNode.attributes);
+            for (String pd : originNode.getPlanningDomains ()) newElement.addPlanningDomain(pd);
             for (String tag : originNode.getTags ()) newElement.addTag (tag);
             newElement.setSiteName(originNode.siteName);
             cache_id2NodeMap.put(originNode.id, newElement);
+            for (String pd : originNode.getPlanningDomains ()) 
+            	cache_planningDomain2networkElements.get(pd).add(newElement);
             nodes.add(newElement);
             if (!originNode.isUp) cache_nodesDown.add(newElement);
         }
@@ -2037,9 +2084,11 @@ public class NetPlan extends NetworkElement
         {
             Resource newElement = new Resource(this, originResource.id, originResource.index, originResource.type,
                     originResource.name, this.cache_id2NodeMap.get(originResource.hostNode.id),
-                    originResource.capacity, originResource.capacityMeasurementUnits, null, originResource.processingTimeToTraversingTrafficInMs, originResource.attributes);
+                    originResource.capacity, originResource.capacityMeasurementUnits, null, 
+                    originResource.processingTimeToTraversingTrafficInMs, originResource.getPlanningDomain() , originResource.attributes);
             for (String tag : originResource.getTags ()) newElement.addTag (tag);
             cache_id2ResourceMap.put(originResource.id, newElement);
+           	cache_planningDomain2networkElements.get(originResource.getPlanningDomain()).add(newElement);
             Set<Resource> resOfThisType = cache_type2Resources.get(originResource.type);
             if (resOfThisType == null)
             {
@@ -2051,9 +2100,10 @@ public class NetPlan extends NetworkElement
         }
         for (SharedRiskGroup originSrg : originNetPlan.srgs)
         {
-            SharedRiskGroup newElement = new SharedRiskGroup(this, originSrg.id, originSrg.index, null, null, originSrg.meanTimeToFailInHours, originSrg.meanTimeToRepairInHours, originSrg.attributes);
+            SharedRiskGroup newElement = new SharedRiskGroup(this, originSrg.id, originSrg.index, null, null, originSrg.meanTimeToFailInHours, originSrg.meanTimeToRepairInHours, originSrg.getPlanningDomain() , originSrg.attributes);
             for (String tag : originSrg.getTags ()) newElement.addTag (tag);
             cache_id2srgMap.put(originSrg.id, newElement);
+           	cache_planningDomain2networkElements.get(originSrg.getPlanningDomain()).add(newElement);
             srgs.add(newElement);
         }
         for (NetworkLayer originLayer : originNetPlan.layers)
@@ -2067,10 +2117,11 @@ public class NetPlan extends NetworkElement
 
             for (Demand originDemand : originLayer.demands)
             {
-                Demand newElement = new Demand(this, originDemand.id, originDemand.index, newLayer, this.cache_id2NodeMap.get(originDemand.ingressNode.id), this.cache_id2NodeMap.get(originDemand.egressNode.id), originDemand.offeredTraffic, originDemand.attributes);
+                Demand newElement = new Demand(this, originDemand.id, originDemand.index, newLayer, this.cache_id2NodeMap.get(originDemand.ingressNode.id), this.cache_id2NodeMap.get(originDemand.egressNode.id), originDemand.offeredTraffic, originDemand.getPlanningDomain() , originDemand.attributes);
                 for (String tag : originDemand.getTags ()) newElement.addTag (tag);
                 newElement.mandatorySequenceOfTraversedResourceTypes = new LinkedList<String>(originDemand.mandatorySequenceOfTraversedResourceTypes);
                 cache_id2DemandMap.put(originDemand.id, newElement);
+               	cache_planningDomain2networkElements.get(originDemand.getPlanningDomain()).add(newElement);
                 newLayer.demands.add(newElement);
             }
             for (MulticastDemand originDemand : originLayer.multicastDemands)
@@ -2078,36 +2129,40 @@ public class NetPlan extends NetworkElement
                 Set<Node> newEgressNodes = new HashSet<Node>();
                 for (Node oldEgressNode : originDemand.egressNodes)
                     newEgressNodes.add(this.cache_id2NodeMap.get(oldEgressNode.id));
-                MulticastDemand newElement = new MulticastDemand(this, originDemand.id, originDemand.index, newLayer, this.cache_id2NodeMap.get(originDemand.ingressNode.id), newEgressNodes, originDemand.offeredTraffic, originDemand.attributes);
+                MulticastDemand newElement = new MulticastDemand(this, originDemand.id, originDemand.index, newLayer, this.cache_id2NodeMap.get(originDemand.ingressNode.id), newEgressNodes, originDemand.offeredTraffic, originDemand.getPlanningDomain() , originDemand.attributes);
                 for (String tag : originDemand.getTags ()) newElement.addTag (tag);
                 cache_id2MulticastDemandMap.put(originDemand.id, newElement);
+               	cache_planningDomain2networkElements.get(originDemand.getPlanningDomain()).add(newElement);
                 newLayer.multicastDemands.add(newElement);
             }
             for (Link originLink : originLayer.links)
             {
-                Link newElement = new Link(this, originLink.id, originLink.index, newLayer, this.cache_id2NodeMap.get(originLink.originNode.id), this.cache_id2NodeMap.get(originLink.destinationNode.id), originLink.lengthInKm, originLink.propagationSpeedInKmPerSecond, originLink.capacity, originLink.attributes);
+                Link newElement = new Link(this, originLink.id, originLink.index, newLayer, this.cache_id2NodeMap.get(originLink.originNode.id), this.cache_id2NodeMap.get(originLink.destinationNode.id), originLink.lengthInKm, originLink.propagationSpeedInKmPerSecond, originLink.capacity, originLink.getPlanningDomain() , originLink.attributes);
                 for (String tag : originLink.getTags ()) newElement.addTag (tag);
                 cache_id2LinkMap.put(originLink.id, newElement);
+               	cache_planningDomain2networkElements.get(originLink.getPlanningDomain()).add(newElement);
                 newLayer.links.add(newElement);
             }
             for (Route originRoute : originLayer.routes)
             {
                 Route newElement = new Route(this, originRoute.id, originRoute.index, cache_id2DemandMap.get(originRoute.demand.id),
                         (List<NetworkElement>) translateCollectionToThisNetPlan(originRoute.currentPath),
-                        originRoute.attributes);
+                        originRoute.getPlanningDomain() , originRoute.attributes);
                 for (String tag : originRoute.getTags ()) newElement.addTag (tag);
                 newElement.currentCarriedTrafficIfNotFailing = originRoute.currentCarriedTrafficIfNotFailing;
                 newElement.currentLinksAndResourcesOccupationIfNotFailing = new ArrayList<Double>(originRoute.currentLinksAndResourcesOccupationIfNotFailing);
                 cache_id2RouteMap.put(originRoute.id, newElement);
+               	cache_planningDomain2networkElements.get(originRoute.getPlanningDomain()).add(newElement);
                 newLayer.routes.add(newElement);
             }
             for (MulticastTree originTree : originLayer.multicastTrees)
             {
                 Set<Link> newSetLinks = new HashSet<Link>();
                 for (Link oldLink : originTree.linkSet) newSetLinks.add(this.cache_id2LinkMap.get(oldLink.id));
-                MulticastTree newElement = new MulticastTree(this, originTree.id, originTree.index, cache_id2MulticastDemandMap.get(originTree.demand.id), newSetLinks, originTree.attributes);
+                MulticastTree newElement = new MulticastTree(this, originTree.id, originTree.index, cache_id2MulticastDemandMap.get(originTree.demand.id), newSetLinks, originTree.getPlanningDomain() , originTree.attributes);
                 for (String tag : originTree.getTags ()) newElement.addTag (tag);
                 cache_id2MulticastTreeMap.put(originTree.id, newElement);
+               	cache_planningDomain2networkElements.get(originTree.getPlanningDomain()).add(newElement);
                 newLayer.multicastTrees.add(newElement);
                 newElement.carriedTrafficIfNotFailing = originTree.carriedTrafficIfNotFailing;
                 newElement.occupiedLinkCapacityIfNotFailing = originTree.occupiedLinkCapacityIfNotFailing;
@@ -4873,11 +4928,36 @@ public class NetPlan extends NetworkElement
     	if (res == null) return new HashSet<> (); else return res;
     }
 
+    /** Returns the current default planning domain: the one used when creating new elements
+     * @return see above
+     */
+    public String getDefaultPlanningDomain () { return this.defaultPlanningDomainForNewElements; }
+    
+    /** Sets the default planning domain, to the one specified (it should exist). 
+     * @param defaultPlanningDomain
+     */
+    public void setDefaultPlanningDomain (String defaultPlanningDomain) 
+    {
+    	if (!this.cache_planningDomain2networkElements.containsKey(defaultPlanningDomain)) throw new Net2PlanException ("Planning domain " + defaultPlanningDomain + " does not exist");
+    	this.defaultPlanningDomainForNewElements = defaultPlanningDomain;
+    }
+    
     /** Returns the set of defined planning domains in this network design 
+     * @return see above
      */
     public Set<String> getGlobalPlanningDomains ()
     {
     	return this.cache_planningDomain2networkElements.keySet();
+    }
+
+    /** Returns the network elements associated to the given planning domain, or null if the planning domain was not defined
+     * @param planningDomain the planning domain
+     * @return see above
+     */
+    public Set<NetworkElement> getGlobalPlanningDomainElements (String planningDomain)
+    {
+    	final Set<NetworkElement> res = this.cache_planningDomain2networkElements.get(planningDomain);
+    	return res == null? null : Collections.unmodifiableSet(res);
     }
 
     /** Adds a new planning domain to which elements can be assigned in the design. If the planning domain already exists, an exception is raised
@@ -4896,6 +4976,8 @@ public class NetPlan extends NetworkElement
     {
     	if (!this.cache_planningDomain2networkElements.containsKey(planningDomain)) return;
     	if (!this.cache_planningDomain2networkElements.get(planningDomain).isEmpty()) throw new Net2PlanException ("Planning domain " + planningDomain + " cannot be removed while having elements in it");
+    	if (this.defaultPlanningDomainForNewElements.equals(planningDomain))throw new Net2PlanException ("Default planning domain cannot be removed. Please change before the default planning domain");
+    	
     	if (this.cache_planningDomain2networkElements.size () == 1) throw new RuntimeException ();
     	this.cache_planningDomain2networkElements.remove(planningDomain);
     }
@@ -5344,7 +5426,7 @@ public class NetPlan extends NetworkElement
         NetPlan.removeNetworkElementAndShiftIndexes(netPlan.layers, layer.index);
         if (netPlan.defaultLayer.equals(layer)) netPlan.defaultLayer = netPlan.layers.get(0);
         if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-        layer.removeId();
+        layer.removeIdAndFromPlanningDomain();
     }
 
     /**
@@ -5512,7 +5594,7 @@ public class NetPlan extends NetworkElement
     		netPlan.cache_id2RouteMap.remove(r.id);
     		layer.cache_routesDown.remove (r);
             for (String tag : r.tags) netPlan.cache_taggedElements.get(tag).remove(r);
-            r.removeId();
+            r.removeIdAndFromPlanningDomain();
         }
         for (Demand d : netPlan.getDemands(layer))
         {
@@ -5686,6 +5768,19 @@ public class NetPlan extends NetworkElement
             writer.writeAttribute("name", getNetworkName());
             writer.writeAttribute("version", Version.getFileFormatVersion());
             writer.writeAttribute("nextElementId", nextElementId.toString());
+            writer.writeAttribute("defaultPlanningDomain", this.defaultPlanningDomainForNewElements);
+            int counter = 0; 
+            for (String planningDomain : this.cache_planningDomain2networkElements.keySet())
+            	writer.writeAttribute("planningDomain_" + (counter++), planningDomain); 
+            
+            
+//            for (String planningDomain : this.cache_planningDomain2networkElements.keySet())
+//            {
+//                XMLUtils.indent(writer, 2);
+//                writer.writeEmptyElement("planningDomain");
+//                writer.writeAttribute("name", "");
+//                writer.writeAttribute("value", planningDomain);
+//            }
 
             //Set<Long> nodeIds_thisNetPlan = new HashSet<Long> (getNodeIds());
             for (Node node : nodes)
@@ -5700,8 +5795,10 @@ public class NetPlan extends NetworkElement
                 writer.writeAttribute("name", node.name);
                 writer.writeAttribute("population", Double.toString(node.population));
                 if (node.siteName != null) writer.writeAttribute("siteName", node.siteName);
-                
                 writer.writeAttribute("isUp", Boolean.toString(node.isUp));
+                int pdCounter = 0; for (String pd : node.getPlanningDomains()) 
+                	writer.writeAttribute("planningDomain_" + (pdCounter++), pd); 
+                
                 final Set<NetworkLayer> layersWithIcons = layers.stream().filter(l -> node.getUrlNodeIcon(l) != null).collect(Collectors.toSet());
                 final List<Long> idsLayersWithIcons = layersWithIcons.stream().map(l -> l.getId()).collect(Collectors.toList());
                 writer.writeAttribute("layersWithIconsDefined", CollectionUtils.join(idsLayersWithIcons, " "));
@@ -5735,6 +5832,7 @@ public class NetPlan extends NetworkElement
                 writer.writeAttribute("capacityMeasurementUnits", res.capacityMeasurementUnits);
                 writer.writeAttribute("processingTimeToTraversingTrafficInMs", Double.toString(res.processingTimeToTraversingTrafficInMs));
                 writer.writeAttribute("capacity", Double.toString(res.capacity));
+                writer.writeAttribute("planningDomain", res.getPlanningDomain());
                 if (res.urlIcon != null) writer.writeAttribute("urlIcon", res.urlIcon.toString());
 
                 List<Double> baseResourceAndOccupiedCapacitiesMap = new LinkedList<Double>();
@@ -5785,6 +5883,7 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("lengthInKm", Double.toString(link.lengthInKm));
                     writer.writeAttribute("propagationSpeedInKmPerSecond", Double.toString(link.propagationSpeedInKmPerSecond));
                     writer.writeAttribute("isUp", Boolean.toString(link.isUp));
+                    writer.writeAttribute("planningDomain", link.getPlanningDomain());
 
                     for (String tag : link.tags) { XMLUtils.indent(writer, 3); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
@@ -5810,6 +5909,7 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("egressNodeId", Long.toString(demand.egressNode.id));
                     writer.writeAttribute("offeredTraffic", Double.toString(demand.offeredTraffic));
                     writer.writeAttribute("intendedRecoveryType", demand.recoveryType.toString());
+                    writer.writeAttribute("planningDomain", demand.getPlanningDomain());
 
                     for (String type : demand.mandatorySequenceOfTraversedResourceTypes)
                     {
@@ -5843,6 +5943,7 @@ public class NetPlan extends NetworkElement
                     for (Node n : demand.egressNodes) egressNodeIds.add(n.id);
                     writer.writeAttribute("egressNodeIds", CollectionUtils.join(egressNodeIds, " "));
                     writer.writeAttribute("offeredTraffic", Double.toString(demand.offeredTraffic));
+                    writer.writeAttribute("planningDomain", demand.getPlanningDomain());
 
                     for (String tag : demand.tags) { XMLUtils.indent(writer, 3); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
@@ -5867,6 +5968,8 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("demandId", Long.toString(tree.demand.id));
                     writer.writeAttribute("carriedTrafficIfNotFailing", Double.toString(tree.carriedTrafficIfNotFailing));
                     writer.writeAttribute("occupiedLinkCapacityIfNotFailing", Double.toString(tree.occupiedLinkCapacityIfNotFailing));
+                    writer.writeAttribute("planningDomain", tree.getPlanningDomain());
+
                     List<Long> linkIds = new LinkedList<Long>();
                     for (Link e : tree.linkSet) linkIds.add(e.id);
                     writer.writeAttribute("currentSetLinks", CollectionUtils.join(linkIds, " "));
@@ -5910,6 +6013,7 @@ public class NetPlan extends NetworkElement
 
                         writer.writeAttribute("id", Long.toString(route.id));
                         writer.writeAttribute("demandId", Long.toString(route.demand.id));
+                        writer.writeAttribute("planningDomain", route.getPlanningDomain());
 
                         writer.writeAttribute("currentCarriedTrafficIfNotFailing", Double.toString(route.currentCarriedTrafficIfNotFailing));
                         writer.writeAttribute("currentLinksAndResourcesOccupationIfNotFailing", CollectionUtils.join(route.currentLinksAndResourcesOccupationIfNotFailing, " "));
@@ -5981,6 +6085,7 @@ public class NetPlan extends NetworkElement
                 writer.writeAttribute("meanTimeToRepairInHours", Double.toString(srg.meanTimeToRepairInHours));
                 writer.writeAttribute("nodes", CollectionUtils.join(NetPlan.getIds(srg.nodes), " "));
                 writer.writeAttribute("links", CollectionUtils.join(NetPlan.getIds(srg.links), " "));
+                writer.writeAttribute("planningDomain", srg.getPlanningDomain());
 
                 for (String tag : srg.tags) { XMLUtils.indent(writer, 2); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
@@ -6020,7 +6125,7 @@ public class NetPlan extends NetworkElement
             
             
             for (String tag : this.tags) { XMLUtils.indent(writer, 1); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
-            
+
             for (Entry<String, String> entry : this.attributes.entrySet())
             {
                 XMLUtils.indent(writer, 1);
@@ -6201,6 +6306,7 @@ public class NetPlan extends NetworkElement
     {
         checkIsModifiable();
         checkInThisNetPlan(demand);
+        demand.checkSamePlanningDomain(link);
         final NetworkLayer layer = demand.layer;
         checkInThisNetPlanAndLayer(link, demand.layer);
         layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
@@ -6236,6 +6342,10 @@ public class NetPlan extends NetworkElement
         if ((demands.size() != links.size()) || (demands.size() != splittingFactors.size()))
             throw new Net2PlanException("The number of demands, links and aplitting factors must be the same");
         if (demands.isEmpty()) return;
+        final Iterator<Demand> iit_d = demands.iterator();
+        final Iterator<Link> iit_e = links.iterator();
+        while (iit_d.hasNext()) iit_d.next().checkSamePlanningDomain(iit_e.next());
+        
         NetworkLayer layer = demands.iterator().next().layer;
         checkInThisNetPlanAndLayer(demands, layer);
         checkInThisNetPlanAndLayer(links, layer);
@@ -6299,10 +6409,12 @@ public class NetPlan extends NetworkElement
         int E = layer.links.size();
         if (f_de.rows() != D || f_de.columns() != E)
             throw new Net2PlanException("'f_de' should be a " + D + " x" + E + " matrix (demands x links)");
-        
         if ((D == 0) || (E == 0))
             return;
-
+        final String commonPlanningDomain = netPlan.getDemand(0 , optionalLayerParameter).getPlanningDomain();
+        netPlan.getDemands(optionalLayerParameter).stream().forEach(d->d.checkHasPlanningDomain(commonPlanningDomain));
+        netPlan.getLinks(optionalLayerParameter).stream().forEach(d->d.checkHasPlanningDomain(commonPlanningDomain));
+        
         if ((D > 0) && (E > 0))
             if ((f_de.getMinLocation()[0] < -1e-3) || (f_de.getMaxLocation()[0] > 1 + 1e-3))
                 throw new Net2PlanException("Splitting ratios must be greater or equal than zero and lower or equal than one");
@@ -6492,7 +6604,11 @@ public class NetPlan extends NetworkElement
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         final DoubleMatrix2D trafficBased_xde = xdeValueAsFractionsRespectToDemandOfferedTraffic ? DoubleFactory2D.sparse.diagonal(getVectorDemandOfferedTraffic(layer)).zMult(x_de, null) : x_de;
         checkMatrixDemandLinkCarriedTrafficFlowConservationConstraints(trafficBased_xde, false, layer);
-
+        if (x_de.rows() == 0) return;
+        final String commonPlanningDomain = netPlan.getDemand(0 , optionalLayerParameter).getPlanningDomain();
+        netPlan.getDemands(optionalLayerParameter).stream().forEach(d->d.checkHasPlanningDomain(commonPlanningDomain));
+        netPlan.getLinks(optionalLayerParameter).stream().forEach(d->d.checkHasPlanningDomain(commonPlanningDomain));
+        
         if (removeCycles)
             x_de = GraphUtils.removeCyclesFrom_xde(nodes, layer.links, layer.demands, x_de, xdeValueAsFractionsRespectToDemandOfferedTraffic, Configuration.getOption("defaultILPSolver"), null, -1);
 
@@ -6544,6 +6660,10 @@ public class NetPlan extends NetworkElement
         checkIsModifiable();
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         checkMatrixDestinationLinkCarriedTrafficFlowConservationConstraints(x_te, layer);
+        final String commonPlanningDomain = netPlan.getDemand(0 , optionalLayerParameter).getPlanningDomain();
+        netPlan.getDemands(optionalLayerParameter).stream().forEach(d->d.checkHasPlanningDomain(commonPlanningDomain));
+        netPlan.getLinks(optionalLayerParameter).stream().forEach(d->d.checkHasPlanningDomain(commonPlanningDomain));
+        
 
         if (removeCycles)
             x_te = GraphUtils.removeCyclesFrom_xte(nodes, layer.links, getMatrixNode2NodeOfferedTraffic(layer), x_te, Configuration.getOption("defaultILPSolver"), null, -1);

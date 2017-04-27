@@ -108,9 +108,9 @@ public class Demand extends NetworkElement
 	 * @param offeredTraffic Offered traffic
 	 * @param attributes Attributes map
 	 */
-	Demand (NetPlan netPlan , long id , int index , NetworkLayer layer , Node ingressNode , Node egressNode , double offeredTraffic , AttributeMap attributes)
+	Demand (NetPlan netPlan , long id , int index , NetworkLayer layer , Node ingressNode , Node egressNode , double offeredTraffic , String planningDomain , AttributeMap attributes)
 	{
-		super (netPlan , id , index , attributes);
+		super (netPlan , id , index , planningDomain ,attributes);
 
 		if (ingressNode.equals (egressNode)) throw new Net2PlanException("Self-demands are not allowed");
 		if (offeredTraffic < 0) throw new Net2PlanException("Offered traffic must be non-negative");
@@ -569,8 +569,7 @@ public class Demand extends NetworkElement
 	{
 		netPlan.checkIsModifiable();
 		checkAttachedToNetPlanObject();
-		link.checkAttachedToNetPlanObject(this.netPlan);
-		
+		checkSamePlanningDomain(link);
 		final NetworkLayer upperLayer = link.layer;
 		final NetworkLayer lowerLayer = this.layer;
 		
@@ -618,7 +617,10 @@ public class Demand extends NetworkElement
 		Link newLink = null;
 		try
 		{
+			final String oldDefaultPd = netPlan.defaultPlanningDomainForNewElements;
+			netPlan.setDefaultPlanningDomain(this.getPlanningDomain());
 			newLink = netPlan.addLink(ingressNode , egressNode , carriedTraffic , netPlan.getNodePairEuclideanDistance(ingressNode , egressNode) , 200000 , null , newLinkLayer);
+			netPlan.setDefaultPlanningDomain(oldDefaultPd);
 			coupleToUpperLayerLink(newLink);
 		} catch (Exception e) { if (newLink != null) newLink.remove (); throw e; }
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
@@ -740,7 +742,7 @@ public class Demand extends NetworkElement
 		ingressNode.cache_nodeOutgoingDemands.remove (this);
 		egressNode.cache_nodeIncomingDemands.remove (this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId();
+		removeIdAndFromPlanningDomain();
 	}
 	
 	/**

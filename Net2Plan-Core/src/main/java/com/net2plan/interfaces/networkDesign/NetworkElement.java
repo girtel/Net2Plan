@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
 
 /**
@@ -35,8 +36,28 @@ public abstract class NetworkElement
 	protected final Set<String> tags;
 	protected final Set<String> planningDomains;
 	
-	NetworkElement (NetPlan netPlan , long id , int index , AttributeMap attributes) { this.netPlan = netPlan; this.id = id; this.index = index; this.attributes = new AttributeMap (attributes); this.tags = new HashSet<> (); this.planningDomains = new HashSet<> (); this.planningDomains.add(""); }
+	NetworkElement (NetPlan netPlan , long id , int index , String planningDomain , AttributeMap attributes) 
+	{ 
+		this(netPlan , id , index , planningDomain == null? null : Sets.newHashSet(planningDomain) , attributes);
+	}
+	NetworkElement (NetPlan netPlan , long id , int index , Set<String> planningDomains , AttributeMap attributes) 
+	{ 
+		this.netPlan = netPlan; 
+		this.id = id; 
+		this.index = index; 
+		this.attributes = new AttributeMap (attributes); 
+		this.tags = new HashSet<> (); 
+		this.planningDomains = new HashSet<> (); 
+		if (planningDomains == null)
+		{
+			if (!(this instanceof NetPlan || this instanceof NetworkLayer))
+				throw new RuntimeException ();
+		}
+		else
+			this.planningDomains.addAll(planningDomains);
+	}
 
+	
 	/**
 	 * <p>Checks whether this element (demand, node, route...) is attached to a netPlan object. When negative, an exception will be thrown.</p>
 	 */
@@ -47,6 +68,10 @@ public abstract class NetworkElement
 	 * @param np NetPlan object
 	 */
 	public final void checkAttachedToNetPlanObject (NetPlan np) { np.checkInThisNetPlan(this); if (np != this.netPlan) throw new Net2PlanException ("The element " + this + " is not associated to the given NetPlan object"); }
+
+	void checkHasPlanningDomain (String pd) { if (!this.planningDomains.contains(pd)) throw new Net2PlanException ("Wrong planning domain"); }
+
+	void checkSamePlanningDomain (NetworkElement e) { if (e == null) throw new Net2PlanException ("Element is null"); if (!this.planningDomains.equals(e.planningDomains)) throw new Net2PlanException ("Wrong planning domain"); }
 	
 	/**
 	 * <p>Return true if the Object o is an IdetifiedElement, with the same identifier and attached to the same NetPlan object</p>
@@ -231,7 +256,12 @@ public abstract class NetworkElement
 	 */
 	final public boolean wasRemoved () { return (netPlan == null); }
 
-	final protected void removeId () { this.netPlan = null; } // called when the element is removed from the net2plan object
+	final protected void removeIdAndFromPlanningDomain () 
+	{ 
+		for (String pd : this.planningDomains)
+			if (!netPlan.cache_planningDomain2networkElements.get(pd).remove(this)) throw new RuntimeException ();
+		this.netPlan = null;
+	} // called when the element is removed from the net2plan object
 
 
 	void checkCachesConsistency ()
@@ -253,29 +283,31 @@ public abstract class NetworkElement
 		return this.planningDomains.iterator().next();
 	}
 	
-	/** Sets the planning domain of this network element. 
-	 * @param pd
-	 */
-	public void setPlanningDomain (String pd)
-	{
-		if (!netPlan.cache_planningDomain2networkElements.containsKey(pd)) throw new Net2PlanException ("Planning domain " + pd + " was not defined");
-		if (this instanceof NetPlan) throw new Net2PlanException ("The planning domains of NetPlan object are the ones defined this addGlobalPlanningDomain function");
-		if (this instanceof NetworkLayer) throw new Net2PlanException ("The planning domains of NetworkLayer objects are the ones of its constituent elements. Cannot be set directly");
-		if (this instanceof Node) throw new Net2PlanException ("Node objects can have more than one planning domain, which should be modified with methods node.addPlanningDomain and node.removePlanningDomain");
-		if (this.planningDomains.size () != 1) throw new Net2PlanException ("Element " + this + " has more than one planning domain");  
-
-		/* */
-		if (this instanceof Link)
-		{
-			final Node originNode;
-			final Node destinationNode;
-
-		}
-		
-		
-		this.planningDomains.clear();
-		this.planningDomains.add(pd);
-	}
+	
+	
+//	/** Sets the planning domain of this network element. 
+//	 * @param pd
+//	 */
+//	public void setPlanningDomain (String pd)
+//	{
+//		if (!netPlan.cache_planningDomain2networkElements.containsKey(pd)) throw new Net2PlanException ("Planning domain " + pd + " was not defined");
+//		if (this instanceof NetPlan) throw new Net2PlanException ("The planning domains of NetPlan object are the ones defined this addGlobalPlanningDomain function");
+//		if (this instanceof NetworkLayer) throw new Net2PlanException ("The planning domains of NetworkLayer objects are the ones of its constituent elements. Cannot be set directly");
+//		if (this instanceof Node) throw new Net2PlanException ("Node objects can have more than one planning domain, which should be modified with methods node.addPlanningDomain and node.removePlanningDomain");
+//		if (this.planningDomains.size () != 1) throw new Net2PlanException ("Element " + this + " has more than one planning domain");  
+//
+//		/* */
+//		if (this instanceof Link)
+//		{
+//			final Node originNode;
+//			final Node destinationNode;
+//
+//		}
+//		
+//		
+//		this.planningDomains.clear();
+//		this.planningDomains.add(pd);
+//	}
 
 
 	/** The set of network elements that must have a common planning domain, with the planning domain/s of this network element.

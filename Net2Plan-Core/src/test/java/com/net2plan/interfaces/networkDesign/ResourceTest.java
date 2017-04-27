@@ -3,14 +3,26 @@
  */
 package com.net2plan.interfaces.networkDesign;
 
-import com.net2plan.interfaces.TestConstants;
-import org.junit.*;
-
-import java.io.File;
-import java.util.*;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.net2plan.interfaces.TestConstants;
 
 /**
  * @author Pablo
@@ -338,6 +350,12 @@ public class ResourceTest
 		NetPlan np1 = new NetPlan (fileIn);
 		np1.checkCachesConsistency();
 		np1.saveToFile(fileOut);
+		try
+		{
+			BufferedReader reader = new BufferedReader(new FileReader(fileIn));
+			do { String s = reader.readLine(); if (s == null) break; System.out.println(s); } while (true); 
+			reader.close();
+		} catch (Exception e) {}
 		NetPlan np2 = new NetPlan (fileOut);
 		np2.checkCachesConsistency();
 		assertTrue (np1.isDeepCopy(np2));

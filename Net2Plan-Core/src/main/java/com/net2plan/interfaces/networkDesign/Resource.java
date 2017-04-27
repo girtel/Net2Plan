@@ -54,9 +54,10 @@ public class Resource extends NetworkElement
 	
 	Resource (NetPlan netPlan , long id , int index , String type , String name , Node hostNode , 
 			double capacity , String capacityMeasurementUnits,
-			Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTraffic , AttributeMap attributes)
+			Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTraffic , 
+			String planningDomain, AttributeMap attributes)
 	{
-		super (netPlan , id , index , attributes);
+		super (netPlan , id , index , planningDomain, attributes);
 
 		if (!netPlan.equals(hostNode.netPlan)) throw new Net2PlanException ("The Resource host node is in a different NetPlan object (or removed)"); 
 		if (capacity < 0) throw new Net2PlanException ("The capacity of a resource cannot be negative");
@@ -272,6 +273,7 @@ public class Resource extends NetworkElement
 	 */
 	public double getCapacityOccupiedInBaseResource (Resource baseResource)
 	{
+		checkSamePlanningDomain(baseResource);
 		Double info = capacityIOccupyInBaseResource.get(baseResource);
 		if (info == null) return 0; else return info;
 	}
@@ -282,6 +284,7 @@ public class Resource extends NetworkElement
 	 */
 	public double getCapacityOccupiedByUpperResource (Resource upperResource)
 	{
+		checkSamePlanningDomain(upperResource);
 		Double info = capacityUpperResourcesOccupyInMe.get(upperResource);
 		if (info == null) return 0; else return info;
 	}
@@ -327,6 +330,7 @@ public class Resource extends NetworkElement
 	 */
 	public double getTraversingRouteOccupiedCapacity(Route route) 
 	{
+		checkSamePlanningDomain(route);
 		Double info = cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(route);
 		return (info == null) || (route.isDown())? 0.0 : info;
 	}
@@ -352,6 +356,7 @@ public class Resource extends NetworkElement
 	public void setCapacity(double newCapacity , Map<Resource,Double> newCapacityIOccupyInBaseResourcesMap) 
 	{
 		checkAttachedToNetPlanObject();
+		newCapacityIOccupyInBaseResourcesMap.keySet().stream().forEach(e->checkSamePlanningDomain(e));
 		netPlan.checkIsModifiable();
 		if (newCapacityIOccupyInBaseResourcesMap == null) newCapacityIOccupyInBaseResourcesMap = new HashMap<Resource,Double> ();
 		for (Entry<Resource,Double> entry : newCapacityIOccupyInBaseResourcesMap.entrySet())
@@ -437,7 +442,7 @@ public class Resource extends NetworkElement
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.resources , index);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId ();
+		removeIdAndFromPlanningDomain ();
 	}
 
 	
