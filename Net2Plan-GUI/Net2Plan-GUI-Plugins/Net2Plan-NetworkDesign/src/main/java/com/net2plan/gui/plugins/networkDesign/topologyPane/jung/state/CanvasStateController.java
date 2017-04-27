@@ -99,24 +99,47 @@ public class CanvasStateController
     public void returnToPreviousState()
     {
         // Mirror data
-        final ICanvasState state = stateMirror.getState();
-        final Point2D oldCenter = stateMirror.getCanvasCenter();
-        final double zoomLevel = stateMirror.getZoomLevel();
+        final ICanvasState prevState = stateMirror.getState();
+        final Point2D prevCenter = stateMirror.getCanvasCenter();
+        final double prevZoom = stateMirror.getZoomLevel();
+
+        if (prevState == siteState) return;
 
         // Move to old state
-        setState(state.getState());
+        setState(prevState.getState());
+
+        // Setting to reference point
         zoomAll();
 
-        // Moving the canvas to the center of the map
-        final Point2D zoomAllCenter = canvas.getCanvasPointFromMovement(canvas.getCanvasCenter());
+        // Moving to previous positions.
+        if (prevState == viewState)
+        {
+            // Moving the canvas to the center of the map
+            final Point2D referenceCenter = canvas.getCanvasPointFromMovement(canvas.getCanvasCenter());
 
-        final double dxJungCoord = (zoomAllCenter.getX() - oldCenter.getX());
-        final double dyJungCoord = (zoomAllCenter.getY() - oldCenter.getY());
+            final double dxJungCoord = (referenceCenter.getX() - prevCenter.getX());
+            final double dyJungCoord = (referenceCenter.getY() - prevCenter.getY());
 
-        canvas.moveCanvasTo(new Point2D.Double(dxJungCoord, -dyJungCoord));
+            canvas.moveCanvasTo(new Point2D.Double(dxJungCoord, -dyJungCoord));
 
-        canvas.zoom(canvas.getCanvasCenter(), 1 / ((float) canvas.getCurrentCanvasScale()));
-        canvas.zoom(canvas.getCanvasCenter(), (float) zoomLevel);
+            canvas.zoom(canvas.getCanvasCenter(), 1 / ((float) canvas.getCurrentCanvasScale()));
+            canvas.zoom(canvas.getCanvasCenter(), (float) prevZoom);
+        } else if (prevState == osmState)
+        {
+            final Point2D referenceCenter = canvas.getCanvasPointFromMovement(canvas.getCanvasCenter());
+
+            final Point2D canvasPointFromMovement = canvas.getCanvasPointFromMovement(canvas.getCanvasCenter());
+
+            System.out.println(canvasPointFromMovement);
+            System.out.println(canvas.getCanvasCenter());
+
+            final double dxPanelPixelCoord = (referenceCenter.getX() - prevCenter.getX());
+            final double dyPanelPixelCoord = (referenceCenter.getY() - prevCenter.getY());
+
+            mapController.moveMap(-dxPanelPixelCoord, -dyPanelPixelCoord);
+        }
+
+        canvas.notifyAllListeners();
     }
 
     // ** Mediator interface **

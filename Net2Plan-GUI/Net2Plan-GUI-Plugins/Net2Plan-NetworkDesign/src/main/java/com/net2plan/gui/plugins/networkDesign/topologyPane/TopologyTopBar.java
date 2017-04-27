@@ -58,11 +58,15 @@ public class TopologyTopBar extends JToolBar implements ActionListener
                 switch (stateDefinition)
                 {
                     case ViewState:
+                        btn_siteMode.setSelected(false);
+                        btn_osmMap.setSelected(false);
+                        break;
                     case SiteState:
                         btn_siteMode.setSelected(true);
                         btn_osmMap.setSelected(false);
                         break;
                     case OSMState:
+                        btn_osmMap.setSelected(true);
                         btn_siteMode.setSelected(false);
                         break;
                 }
@@ -70,7 +74,6 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         });
 
         final VisualizationState vs = this.callback.getVisualizationState();
-
         vs.addPickListener(new IObserver()
         {
             @Override
