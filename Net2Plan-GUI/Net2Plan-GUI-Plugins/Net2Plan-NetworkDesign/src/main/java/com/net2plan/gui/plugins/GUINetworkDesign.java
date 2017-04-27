@@ -20,7 +20,6 @@ import com.net2plan.gui.plugins.networkDesign.GUIWindow;
 import com.net2plan.gui.plugins.networkDesign.NetworkDesignWindow;
 import com.net2plan.gui.plugins.networkDesign.focusPane.FocusPane;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
-import com.net2plan.gui.plugins.networkDesign.interfaces.IVisualizationCallback;
 import com.net2plan.gui.plugins.networkDesign.offlineExecPane.OfflineExecutionPanel;
 import com.net2plan.gui.plugins.networkDesign.onlineSimulationPane.OnlineSimulationPane;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
@@ -63,7 +62,7 @@ import java.util.List;
  *
  * @author Pablo
  */
-public class GUINetworkDesign extends IGUIModule implements IVisualizationCallback
+public class GUINetworkDesign extends IGUIModule
 {
     private final static String TITLE = "Offline network design & Online network simulation";
     private final static int MAXSIZEUNDOLISTCHANGES = 0; // deactivate, not robust yet
@@ -423,14 +422,12 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
     }
 
 
-    @Override
     public NetPlan getDesign()
     {
         if (inOnlineSimulationMode()) return onlineSimulationPane.getSimKernel().getCurrentNetPlan();
         else return currentNetPlan;
     }
 
-    @Override
     public NetPlan getInitialDesign()
     {
         if (inOnlineSimulationMode()) return onlineSimulationPane.getSimKernel().getInitialNetPlan();
@@ -720,7 +717,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         resetPickedStateAndUpdateView();
     }
 
-    @Override
     public void updateVisualizationAfterPick()
     {
         if (vs.getPickedElementType() != null) // can be null if picked a resource type
@@ -740,7 +736,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         focusPanel.updateView();
     }
 
-    @Override
     public void updateVisualizationAfterNewTopology()
     {
         vs.updateTableRowFilter(null, null);
@@ -751,13 +746,11 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         focusPanel.updateView();
     }
 
-    @Override
     public void updateVisualizationJustCanvasLinkNodeVisibilityOrColor()
     {
         topologyPanel.getCanvas().refresh();
     }
 
-    @Override
     public void updateVisualizationAfterChanges(Set<NetworkElementType> modificationsMade)
     {
         if (modificationsMade == null)
@@ -803,17 +796,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         }
     }
 
-//    public void updateWarnings()
-//    {
-//        Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
-//        List<String> warnings = NetworkPerformanceMetrics.checkNetworkState(getDesign(), net2planParameters);
-//        String warningMsg = warnings.isEmpty() ? "Design is successfully completed!" : StringUtils.join(warnings, StringUtils.getLineSeparator());
-//        txt_netPlanLog.setText(null);
-//        txt_netPlanLog.setText(warningMsg);
-//        txt_netPlanLog.setCaretPosition(0);
-//    }
-
-    @Override
     public void updateVisualizationJustTables()
     {
         viewEditTopTables.updateView();
