@@ -843,4 +843,21 @@ public class Route extends NetworkElement
 		}
 		return res;
 	}
+
+
+	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
+	{
+		final Set<NetworkElement> res = new HashSet<> ();
+		res.add(demand);
+		res.add(ingressNode);
+		res.add(egressNode);
+		initialStatePath.stream().filter(e->!e.wasRemoved()).forEach(e->res.add(e));
+		res.addAll(currentPath);
+		res.addAll(backupRoutes);
+		res.addAll(cache_seqLinksRealPath);
+		res.addAll(cache_seqNodesRealPath);
+		res.addAll(cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.keySet());
+		res.addAll(cache_routesIAmBackUp);
+		return res;
+	}
 }

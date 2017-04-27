@@ -142,7 +142,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         
         for (Node node : rowVisibleNodes)
         {
-        	if (!node.isConnectedRelevantAtLayer(layer)) continue;
+        	if (!node.isFullyIsolated() && !node.isConnectedRelevantAtLayer(layer)) continue;
             Object[] nodeData = new Object[netPlanViewTableHeader.length + attributesTitles.size()];
             nodeData[COLUMN_ID] = node.getId();
             nodeData[COLUMN_INDEX] = node.getIndex();

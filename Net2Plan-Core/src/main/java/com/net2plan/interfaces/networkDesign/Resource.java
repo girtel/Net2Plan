@@ -478,5 +478,14 @@ public class Resource extends NetworkElement
 		org.junit.Assert.assertEquals (accumOccupCap , cache_totalOccupiedCapacity , 0.001);
 	}
 
-	
+	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
+	{
+		final Set<NetworkElement> res = new HashSet<> ();
+		res.add(hostNode);
+		res.addAll(capacityUpperResourcesOccupyInMe.keySet());
+		res.addAll(capacityIOccupyInBaseResource.keySet());
+		res.addAll(cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet());
+		return res;
+	}
+
 }
