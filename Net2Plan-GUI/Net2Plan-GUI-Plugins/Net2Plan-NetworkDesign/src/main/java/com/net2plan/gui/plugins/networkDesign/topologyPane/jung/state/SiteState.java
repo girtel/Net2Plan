@@ -44,12 +44,11 @@ class SiteState extends ViewState
 
         // Finding site nodes
         final Set<GUINode> visibleGUINodes = new HashSet<>();
-        for (Node n : netPlan.getNodes())
-        {
-            if (n.getSiteName() == null) continue;
-            if (n.getSiteName().equals(siteName))
-                visibleGUINodes.addAll(visualizationState.getCanvasVerticallyStackedGUINodes(n));
-        }
+
+        final Set<Node> siteNodes = netPlan.getSiteNodes(siteName);
+
+        for (Node siteNode : siteNodes)
+            visibleGUINodes.addAll(visualizationState.getCanvasVerticallyStackedGUINodes(siteNode));
 
         zoomNodes(visibleGUINodes);
     }
