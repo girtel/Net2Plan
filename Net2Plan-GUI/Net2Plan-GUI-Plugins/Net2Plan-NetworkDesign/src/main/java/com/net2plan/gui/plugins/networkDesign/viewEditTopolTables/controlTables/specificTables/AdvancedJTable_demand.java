@@ -466,7 +466,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         if (selection.getElementType() != NetworkElementType.DEMAND)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickDemand((List<Demand>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<Demand>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 

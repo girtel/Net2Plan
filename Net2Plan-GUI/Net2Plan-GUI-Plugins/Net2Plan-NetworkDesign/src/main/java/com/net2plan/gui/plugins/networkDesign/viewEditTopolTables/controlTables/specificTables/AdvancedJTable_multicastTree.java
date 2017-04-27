@@ -430,7 +430,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
         if (selection.getElementType() != NetworkElementType.MULTICAST_TREE)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickMulticastTree((List<MulticastTree>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<MulticastTree>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 

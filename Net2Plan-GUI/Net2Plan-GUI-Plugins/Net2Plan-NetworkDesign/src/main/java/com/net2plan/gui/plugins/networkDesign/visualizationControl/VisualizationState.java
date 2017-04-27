@@ -914,94 +914,9 @@ public class VisualizationState
         return pickManager.getPickNavigationForwardElement();
     }
 
-    public void pickNode(Node node)
-    {
-        pickNode(Collections.singletonList(node));
-    }
-
-    public void pickLink(Link link)
-    {
-        pickLink(Collections.singletonList(link));
-    }
-
-    public void pickDemand(Demand demand)
-    {
-        pickDemand(Collections.singletonList(demand));
-    }
-
-    public void pickSRG(SharedRiskGroup srg)
-    {
-        pickSRG(Collections.singletonList(srg));
-    }
-
-    public void pickMulticastDemand(MulticastDemand multicastDemand)
-    {
-        pickMulticastDemand(Collections.singletonList(multicastDemand));
-    }
-
-    public void pickRoute(Route route)
-    {
-        pickRoute(Collections.singletonList(route));
-    }
-
-    public void pickMulticastTree(MulticastTree tree)
-    {
-        pickMulticastTree(Collections.singletonList(tree));
-    }
-
-    public void pickResource(Resource resource)
-    {
-        pickResource(Collections.singletonList(resource));
-    }
-
     public void pickForwardingRule(Pair<Demand, Link> fr)
     {
         pickForwardingRule(Collections.singletonList(fr));
-    }
-
-    public void pickLayer(NetworkLayer pickedLayer)
-    {
-        pickManager.pickLayer(pickedLayer);
-    }
-
-    public void pickDemand(List<Demand> pickedDemands)
-    {
-        pickManager.pickDemand(pickedDemands);
-    }
-
-    public void pickSRG(List<SharedRiskGroup> pickedSRGs)
-    {
-        pickManager.pickSRG(pickedSRGs);
-    }
-
-    public void pickMulticastDemand(List<MulticastDemand> pickedDemands)
-    {
-        pickManager.pickMulticastDemand(pickedDemands);
-    }
-
-    public void pickRoute(List<Route> pickedRoutes)
-    {
-        pickManager.pickRoute(pickedRoutes);
-    }
-
-    public void pickMulticastTree(List<MulticastTree> pickedTrees)
-    {
-        pickManager.pickMulticastTree(pickedTrees);
-    }
-
-    public void pickLink(List<Link> pickedLinks)
-    {
-        pickManager.pickLink(pickedLinks);
-    }
-
-    public void pickNode(List<Node> pickedNodes)
-    {
-        pickManager.pickNode(pickedNodes);
-    }
-
-    public void pickResource(List<Resource> pickedResources)
-    {
-        pickManager.pickResource(pickedResources);
     }
 
     public void pickForwardingRule(List<Pair<Demand, Link>> pickedFRs)
@@ -1037,15 +952,19 @@ public class VisualizationState
     {
         try
         {
-            if (es instanceof Node) pickNode((Node) es);
-            else if (es instanceof Link) pickLink((Link) es);
-            else if (es instanceof Demand) pickDemand((Demand) es);
-            else if (es instanceof Route) pickRoute((Route) es);
-            else if (es instanceof MulticastDemand) pickMulticastDemand((MulticastDemand) es);
-            else if (es instanceof MulticastTree) pickMulticastTree((MulticastTree) es);
-            else if (es instanceof Resource) pickResource((Resource) es);
-            else if (es instanceof SharedRiskGroup) pickSRG((SharedRiskGroup) es);
-            else throw new RuntimeException();
+            if (es instanceof NetworkLayer) pickManager.pickLayer((NetworkLayer) es);
+            else if (es instanceof Node) pickManager.pickNode(Collections.singletonList((Node) es));
+            else if (es instanceof Link) pickManager.pickLink(Collections.singletonList((Link) es));
+            else if (es instanceof Demand) pickManager.pickDemand(Collections.singletonList((Demand) es));
+            else if (es instanceof Route) pickManager.pickRoute(Collections.singletonList((Route) es));
+            else if (es instanceof MulticastDemand)
+                pickManager.pickMulticastDemand(Collections.singletonList((MulticastDemand) es));
+            else if (es instanceof MulticastTree)
+                pickManager.pickMulticastTree(Collections.singletonList((MulticastTree) es));
+            else if (es instanceof Resource) pickManager.pickResource(Collections.singletonList((Resource) es));
+            else if (es instanceof SharedRiskGroup)
+                pickManager.pickSRG(Collections.singletonList((SharedRiskGroup) es));
+            else return;
         } catch (ClassCastException e)
         {
             ErrorHandling.showErrorDialog("Error");
@@ -1057,15 +976,15 @@ public class VisualizationState
     {
         try
         {
-            if (es.get(0) instanceof Node) pickNode((List<Node>) es);
-            else if (es.get(0) instanceof Link) pickLink((List<Link>) es);
-            else if (es.get(0) instanceof Demand) pickDemand((List<Demand>) es);
-            else if (es.get(0) instanceof Route) pickRoute((List<Route>) es);
-            else if (es.get(0) instanceof MulticastDemand) pickMulticastDemand((List<MulticastDemand>) es);
-            else if (es.get(0) instanceof MulticastTree) pickMulticastTree((List<MulticastTree>) es);
-            else if (es.get(0) instanceof Resource) pickResource((List<Resource>) es);
-            else if (es.get(0) instanceof SharedRiskGroup) pickSRG((List<SharedRiskGroup>) es);
-            else throw new RuntimeException();
+            if (es.get(0) instanceof Node) pickManager.pickNode((List<Node>) es);
+            else if (es.get(0) instanceof Link) pickManager.pickLink((List<Link>) es);
+            else if (es.get(0) instanceof Demand) pickManager.pickDemand((List<Demand>) es);
+            else if (es.get(0) instanceof Route) pickManager.pickRoute((List<Route>) es);
+            else if (es.get(0) instanceof MulticastDemand) pickManager.pickMulticastDemand((List<MulticastDemand>) es);
+            else if (es.get(0) instanceof MulticastTree) pickManager.pickMulticastTree((List<MulticastTree>) es);
+            else if (es.get(0) instanceof Resource) pickManager.pickResource((List<Resource>) es);
+            else if (es.get(0) instanceof SharedRiskGroup) pickManager.pickSRG((List<SharedRiskGroup>) es);
+            else return;
         } catch (ClassCastException e)
         {
             ErrorHandling.showErrorDialog("Error");

@@ -405,7 +405,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         if (selection.getElementType() != NetworkElementType.SRG)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickSRG((List<SharedRiskGroup>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<SharedRiskGroup>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 

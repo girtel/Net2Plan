@@ -438,7 +438,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         if (selection.getElementType() != NetworkElementType.ROUTE)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickRoute((List<Route>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<Route>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 

@@ -433,7 +433,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
 
-        callback.getVisualizationState().pickMulticastDemand((List<MulticastDemand>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<MulticastDemand>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 

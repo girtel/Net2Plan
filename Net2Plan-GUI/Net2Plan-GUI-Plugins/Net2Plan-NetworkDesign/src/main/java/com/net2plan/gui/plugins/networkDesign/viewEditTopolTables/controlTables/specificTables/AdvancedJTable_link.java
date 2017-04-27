@@ -577,7 +577,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         if (selection.getElementType() != NetworkElementType.LINK)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickLink((List<Link>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<Link>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 

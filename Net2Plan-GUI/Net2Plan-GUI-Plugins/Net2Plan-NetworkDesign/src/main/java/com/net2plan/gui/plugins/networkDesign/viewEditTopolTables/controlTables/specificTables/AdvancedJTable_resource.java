@@ -736,7 +736,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         if (selection.getElementType() != NetworkElementType.RESOURCE)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickResource((List<Resource>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<Resource>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
